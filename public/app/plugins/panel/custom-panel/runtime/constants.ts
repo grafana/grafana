@@ -41,17 +41,16 @@ export const CAPTURE_TIMEOUT_MS = 3_000;
 export const MAX_CAPTURE_LENGTH = 8 * 1024 * 1024;
 /** Element count under #root after each draw. */
 export const MAX_DOM_NODES = 20_000;
-/** Elements the layout report looks at after a draw; past this it reports truncated. */
+/** How long the host waits for the frame to return a layout report of its drawing. */
+export const LAYOUT_TIMEOUT_MS = 3_000;
+/** Elements the layout report looks at; past this it reports truncated. */
 export const MAX_LAYOUT_ELEMENTS = 800;
-/** Line boxes of text the layout report keeps for coverage and overlap checks. */
+/** Line boxes of text the layout report keeps for the overlap check. */
 export const MAX_LAYOUT_TEXT_RECTS = 400;
 /** Examples per finding in the layout report; the counts stay exact. */
 export const MAX_LAYOUT_SAMPLES = 5;
-export const MAX_LAYOUT_EMPTY_REGIONS = 3;
 /** Length of an element label or text excerpt in the layout report. */
 export const MAX_LAYOUT_LABEL_LENGTH = 120;
-/** Upper bound on the columns and rows of the grid that measures coverage. */
-export const LAYOUT_GRID_CELLS = 48;
 /** Extra links inside this window are dropped silently. */
 export const LINK_MIN_INTERVAL_MS = 1_000;
 

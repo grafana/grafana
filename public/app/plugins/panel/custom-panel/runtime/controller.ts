@@ -1,6 +1,7 @@
 import {
   CAPTURE_TIMEOUT_MS,
   HEARTBEAT_MS,
+  LAYOUT_TIMEOUT_MS,
   LINK_MIN_INTERVAL_MS,
   MAX_DIAGNOSTIC_LENGTH,
   MAX_FRAME_MESSAGES_PER_SECOND,
@@ -41,7 +42,7 @@ export interface RenderFrameError {
 
 export interface RenderFrameHandlers {
   onReady(): void;
-  onRenderComplete(event: { seq: number; durationMs: number; nodeCount: number; layout?: LayoutReport }): void;
+  onRenderComplete(event: { seq: number; durationMs: number; nodeCount: number }): void;
   onHeight(height: number): void;
   onError(error: RenderFrameError): void;
   /** Raw href, already rate-limited; the host validates it with validateRenderLink. */
@@ -80,11 +81,65 @@ export interface RenderFrameController {
    * answer within the timeout.
    */
   capture(timeoutMs?: number): Promise<string>;
+  /** Asks the frame for a layout report of its drawing as it is now; rejects like capture. */
+  measureLayout(timeoutMs?: number): Promise<LayoutReport>;
   getState(): RenderFrameState;
   dispose(): void;
 }
 
 const RATE_WINDOW_MS = 1000;
+
+interface FrameRequests<T> {
+  /** Sends a request with a new id; rejects with timeoutMessage when no answer comes in time. */
+  start(send: (id: number) => void, timeoutMs: number, timeoutMessage: string): Promise<T>;
+  /** Settles the request with this id. False when the frame answered a request that was never sent. */
+  settle(id: number, value: T | undefined, error: string): boolean;
+  rejectAll(reason: string): void;
+}
+
+/** Requests the frame answers by id, like a capture of its drawing. */
+function createFrameRequests<T>(): FrameRequests<T> {
+  let lastId = 0;
+  const pending = new Map<
+    number,
+    { resolve: (value: T) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
+  >();
+  return {
+    start(send, timeoutMs, timeoutMessage) {
+      const id = ++lastId;
+      return new Promise<T>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          pending.delete(id);
+          reject(new Error(timeoutMessage));
+        }, timeoutMs);
+        pending.set(id, { resolve, reject, timer });
+        send(id);
+      });
+    },
+    settle(id, value, error) {
+      const request = pending.get(id);
+      if (!request) {
+        // A late answer to a request that timed out is harmless; one never sent is not.
+        return id >= 1 && id <= lastId;
+      }
+      pending.delete(id);
+      clearTimeout(request.timer);
+      if (value !== undefined) {
+        request.resolve(value);
+      } else {
+        request.reject(new Error(error));
+      }
+      return true;
+    },
+    rejectAll(reason) {
+      for (const request of pending.values()) {
+        clearTimeout(request.timer);
+        request.reject(new Error(reason));
+      }
+      pending.clear();
+    },
+  };
+}
 
 function defaultChannel(): { port1: PortLike; port2: Transferable } {
   const channel = new MessageChannel();
@@ -134,19 +189,8 @@ export function createRenderFrameController(
   let recentMessages: Array<{ at: number; type: string }> = [];
   let lastLinkAt = -Infinity;
 
-  let captureId = 0;
-  const captures = new Map<
-    number,
-    { resolve: (image: string) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
-  >();
-
-  const settleCaptures = (reason: string) => {
-    for (const pending of captures.values()) {
-      clearTimeout(pending.timer);
-      pending.reject(new Error(reason));
-    }
-    captures.clear();
-  };
+  const captures = createFrameRequests<string>();
+  const layouts = createFrameRequests<LayoutReport>();
 
   const isClosed = () => state === 'failed' || state === 'disposed';
 
@@ -236,7 +280,8 @@ export function createRenderFrameController(
     lastInput = undefined;
     awaitingSeq = undefined;
     recentMessages = [];
-    settleCaptures('The panel frame stopped before it returned its drawing.');
+    captures.rejectAll('The panel frame stopped before it returned its drawing.');
+    layouts.rejectAll('The panel frame stopped before it returned its layout.');
     if (port) {
       port.onmessage = null;
       try {
@@ -339,12 +384,7 @@ export function createRenderFrameController(
           awaitingSeq = undefined;
           clearRenderTimer();
         }
-        handlers.onRenderComplete({
-          seq: message.seq,
-          durationMs: message.durationMs,
-          nodeCount: message.nodeCount,
-          ...(message.layout && { layout: message.layout }),
-        });
+        handlers.onRenderComplete({ seq: message.seq, durationMs: message.durationMs, nodeCount: message.nodeCount });
         return;
       case 'height':
         handlers.onHeight(message.height);
@@ -376,24 +416,20 @@ export function createRenderFrameController(
           fail('protocol', `The panel frame answered a heartbeat that was not sent (id ${message.id}).`);
         }
         return;
-      case 'capture': {
-        const pending = captures.get(message.id);
-        if (!pending) {
-          // A late answer to a capture that timed out is harmless; one never asked for is not.
-          if (message.id < 1 || message.id > captureId) {
-            fail('protocol', `The panel frame returned a capture that was not requested (id ${message.id}).`);
-          }
-          return;
-        }
-        captures.delete(message.id);
-        clearTimeout(pending.timer);
-        if (message.image) {
-          pending.resolve(message.image);
-        } else {
-          pending.reject(new Error(message.error || 'The panel frame could not capture its drawing.'));
+      case 'capture':
+        if (
+          !captures.settle(message.id, message.image, message.error || 'The panel frame could not capture its drawing.')
+        ) {
+          fail('protocol', `The panel frame returned a capture that was not requested (id ${message.id}).`);
         }
         return;
-      }
+      case 'layout':
+        if (
+          !layouts.settle(message.id, message.layout, message.error || 'The panel frame could not measure its layout.')
+        ) {
+          fail('protocol', `The panel frame returned a layout that was not requested (id ${message.id}).`);
+        }
+        return;
     }
   }
 
@@ -487,15 +523,21 @@ export function createRenderFrameController(
       if (state !== 'ready') {
         return Promise.reject(new Error('The panel frame is not running, so it cannot capture its drawing.'));
       }
-      const id = ++captureId;
-      return new Promise<string>((resolve, reject) => {
-        const timer = setTimeout(() => {
-          captures.delete(id);
-          reject(new Error(`The panel frame did not return its drawing within ${timeoutMs / 1000} seconds.`));
-        }, timeoutMs);
-        captures.set(id, { resolve, reject, timer });
-        send({ type: 'capture', id });
-      });
+      return captures.start(
+        (id) => send({ type: 'capture', id }),
+        timeoutMs,
+        `The panel frame did not return its drawing within ${timeoutMs / 1000} seconds.`
+      );
+    },
+    measureLayout(timeoutMs = LAYOUT_TIMEOUT_MS) {
+      if (state !== 'ready') {
+        return Promise.reject(new Error('The panel frame is not running, so it cannot measure its layout.'));
+      }
+      return layouts.start(
+        (id) => send({ type: 'measure', id }),
+        timeoutMs,
+        `The panel frame did not return its layout within ${timeoutMs / 1000} seconds.`
+      );
     },
     getState() {
       return state;

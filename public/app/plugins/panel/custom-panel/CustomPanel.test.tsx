@@ -8,6 +8,7 @@ import {
   getPanelRenderData,
   getPanelRenderStatus,
   getPanelRenderStatuses,
+  measurePanelLayout,
 } from 'app/features/panel/panelRenderStatus';
 
 import { getPanelProps } from '../test-utils';
@@ -25,6 +26,7 @@ interface FakeController {
   resume: jest.Mock;
   getState: jest.Mock;
   capture: jest.Mock;
+  measureLayout: jest.Mock;
   dispose: jest.Mock;
 }
 interface FakeHold {
@@ -50,6 +52,7 @@ jest.mock('./runtime', () => ({
       resume: jest.fn(),
       getState: jest.fn(() => 'ready'),
       capture: jest.fn(() => Promise.resolve('data:image/png;base64,AA==')),
+      measureLayout: jest.fn(() => Promise.resolve(LAYOUT)),
       dispose: jest.fn(),
     };
     mockControllers.push(controller);
@@ -76,6 +79,20 @@ jest.mock('./followLink', () => ({
 }));
 
 const CODE = "panel.onRender(({ root }) => { root.textContent = 'hi'; });";
+
+const LAYOUT = {
+  width: 400,
+  height: 300,
+  overflowing: {
+    count: 1,
+    samples: [{ element: 'div.wide', x: 0, y: 0, width: 500, height: 20, sides: ['right'] }],
+  },
+  clippedText: { count: 0, samples: [] },
+  overlaps: { count: 0, samples: [] },
+  inspected: 3,
+  truncated: false,
+  durationMs: 0.2,
+};
 
 function makeData(values: number[], state = LoadingState.Done): PanelData {
   const props = getPanelProps<Options>({ code: CODE });
@@ -418,26 +435,14 @@ describe('CustomPanel', () => {
       );
     });
 
-    it('reports the layout report of the draw', () => {
+    it('measures the layout through the frame only when asked', async () => {
       const { props } = setup();
-      const layout = {
-        width: 400,
-        height: 300,
-        coverage: 0.1,
-        emptyRegions: [],
-        overflowing: {
-          count: 1,
-          samples: [{ element: 'div.wide', x: 0, y: 0, width: 500, height: 20, sides: ['right' as const] }],
-        },
-        clippedText: { count: 0, samples: [] },
-        overlaps: { count: 0, samples: [] },
-        inspected: 3,
-        truncated: false,
-        durationMs: 0.2,
-      };
-      act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 4, nodeCount: 2, layout }));
+      act(() => latestController().handlers.onRenderComplete({ seq: 1, durationMs: 4, nodeCount: 2 }));
+      expect(latestController().measureLayout).not.toHaveBeenCalled();
+      expect(getPanelRenderStatus(props.id)).not.toHaveProperty('layout');
 
-      expect(getPanelRenderStatus(props.id)).toEqual(expect.objectContaining({ state: 'drawn', layout }));
+      await expect(measurePanelLayout(props.id)).resolves.toEqual(LAYOUT);
+      expect(latestController().measureLayout).toHaveBeenCalledTimes(1);
     });
 
     it('reports a draw error, and keeps non-fatal problems with a draw that still finishes', () => {

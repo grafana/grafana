@@ -6,7 +6,6 @@ import {
   MAX_HEIGHT_HINT_PX,
   MAX_HREF_LENGTH,
   MAX_LAYOUT_ELEMENTS,
-  MAX_LAYOUT_EMPTY_REGIONS,
   MAX_LAYOUT_LABEL_LENGTH,
   MAX_LAYOUT_SAMPLES,
   RENDER_PROTOCOL_VERSION,
@@ -131,6 +130,7 @@ export type HostMessage =
   | { type: 'resize'; seq: number; size: RenderSize }
   | { type: 'ping'; id: number }
   | { type: 'capture'; id: number }
+  | { type: 'measure'; id: number }
   | { type: 'pause' }
   | { type: 'resume' };
 
@@ -143,7 +143,7 @@ export interface RenderInitMessage {
 const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]*={0,2}$/;
 
 const layoutNumber = z.number().finite();
-const layoutShare = z.number().finite().min(0).max(1);
+const layoutShare = layoutNumber.min(0).max(1);
 const layoutLabel = z.string().max(MAX_LAYOUT_LABEL_LENGTH);
 const layoutRect = { x: layoutNumber, y: layoutNumber, width: layoutNumber.min(0), height: layoutNumber.min(0) };
 
@@ -151,12 +151,10 @@ function layoutFinding<Sample extends z.ZodType>(sample: Sample) {
   return z.strictObject({ count: z.number().int().min(0), samples: z.array(sample).max(MAX_LAYOUT_SAMPLES) });
 }
 
-/** The layout report of a draw; see PanelRenderLayout. Every array and string is capped. */
+/** The layout report of a drawing; see PanelRenderLayout. Every array and string is capped. */
 export const layoutReportSchema = z.strictObject({
   width: layoutNumber.min(0),
   height: layoutNumber.min(0),
-  coverage: layoutShare,
-  emptyRegions: z.array(z.strictObject({ ...layoutRect, share: layoutShare })).max(MAX_LAYOUT_EMPTY_REGIONS),
   overflowing: layoutFinding(
     z.strictObject({
       ...layoutRect,
@@ -169,12 +167,11 @@ export const layoutReportSchema = z.strictObject({
   ),
   overlaps: layoutFinding(
     z.strictObject({
-      kind: z.enum(['text', 'box']),
       a: layoutLabel,
       b: layoutLabel,
       area: layoutNumber.min(0),
-      aText: layoutLabel.optional(),
-      bText: layoutLabel.optional(),
+      aText: layoutLabel,
+      bText: layoutLabel,
     })
   ),
   inspected: z.number().int().min(0).max(MAX_LAYOUT_ELEMENTS),
@@ -197,7 +194,6 @@ export const frameMessageSchema = z.discriminatedUnion('type', [
     seq: z.number().int().min(0),
     durationMs: z.number().finite().min(0),
     nodeCount: z.number().int().min(0),
-    layout: layoutReportSchema.optional(),
   }),
   z.strictObject({ type: z.literal('height'), height: z.number().finite().min(0).max(MAX_HEIGHT_HINT_PX) }),
   z.strictObject({
@@ -212,6 +208,12 @@ export const frameMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('capture'),
     id: z.number().int(),
     image: z.string().max(MAX_CAPTURE_LENGTH).regex(PNG_DATA_URL).optional(),
+    error: z.string().max(MAX_DIAGNOSTIC_LENGTH).optional(),
+  }),
+  z.strictObject({
+    type: z.literal('layout'),
+    id: z.number().int(),
+    layout: layoutReportSchema.optional(),
     error: z.string().max(MAX_DIAGNOSTIC_LENGTH).optional(),
   }),
 ]);

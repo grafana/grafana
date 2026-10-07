@@ -1,6 +1,7 @@
 import {
   CAPTURE_TIMEOUT_MS,
   HEARTBEAT_MS,
+  LAYOUT_TIMEOUT_MS,
   LINK_MIN_INTERVAL_MS,
   MAX_FRAME_MESSAGES_PER_SECOND,
   RENDER_TIMEOUT_MS,
@@ -214,26 +215,6 @@ describe('createRenderFrameController', () => {
     expect(handlers.onError).not.toHaveBeenCalledWith(expect.objectContaining({ kind: 'render-timeout' }));
   });
 
-  it('passes the layout report of a draw through', () => {
-    const { controller, handlers, connect, fromFrame } = setup();
-    connect();
-    const seq = controller.render(input());
-    const layout = {
-      width: 400,
-      height: 300,
-      coverage: 0.4,
-      emptyRegions: [{ x: 0, y: 150, width: 400, height: 150, share: 0.5 }],
-      overflowing: { count: 0, samples: [] },
-      clippedText: { count: 1, samples: [{ element: 'div.card', text: 'Long label', visible: 0.5, ellipsis: false }] },
-      overlaps: { count: 0, samples: [] },
-      inspected: 12,
-      truncated: false,
-      durationMs: 0.4,
-    };
-    fromFrame({ type: 'render-complete', seq, durationMs: 3, nodeCount: 5, layout });
-    expect(handlers.onRenderComplete).toHaveBeenCalledWith({ seq, durationMs: 3, nodeCount: 5, layout });
-  });
-
   it('forwards frame errors as non-fatal', () => {
     const { handlers, connect, fromFrame, controller } = setup();
     connect();
@@ -254,8 +235,8 @@ describe('createRenderFrameController', () => {
     ['an oversized link', { type: 'link', href: 'x'.repeat(2049) }],
     ['a wrong ready version', { type: 'ready', version: 2 }],
     [
-      'a layout report with extra payload',
-      { type: 'render-complete', seq: 0, durationMs: 1, nodeCount: 1, layout: { width: 1, extra: 'x' } },
+      'a draw report with extra payload',
+      { type: 'render-complete', seq: 0, durationMs: 1, nodeCount: 1, layout: { width: 1 } },
     ],
   ])('fails with a protocol error on %s', (_, message) => {
     const { handlers, connect, fromFrame, controller, port } = setup();
@@ -516,6 +497,56 @@ describe('createRenderFrameController', () => {
       fromFrame({ type: 'capture', id: 1, image: PNG });
       expect(handlers.onError).not.toHaveBeenCalled();
       expect(controller.getState()).toBe('ready');
+    });
+  });
+
+  describe('measureLayout', () => {
+    const LAYOUT = {
+      width: 400,
+      height: 300,
+      overflowing: { count: 0, samples: [] },
+      clippedText: { count: 1, samples: [{ element: 'div.card', text: 'Long label', visible: 0.5, ellipsis: false }] },
+      overlaps: { count: 0, samples: [] },
+      inspected: 4,
+      truncated: false,
+      durationMs: 0.3,
+    };
+
+    it('asks the frame for a layout report and resolves with the one it returns', async () => {
+      const { controller, connect, port, fromFrame } = setup();
+      connect();
+      const measured = controller.measureLayout();
+      expect(port.sent).toContainEqual({ type: 'measure', id: 1 });
+      fromFrame({ type: 'layout', id: 1, layout: LAYOUT });
+      await expect(measured).resolves.toEqual(LAYOUT);
+    });
+
+    it('rejects with the reason the frame reports, before the frame is ready and after the timeout', async () => {
+      const { controller, connect, fromFrame } = setup();
+      await expect(controller.measureLayout()).rejects.toThrow('not running');
+      connect();
+      const failed = controller.measureLayout();
+      fromFrame({ type: 'layout', id: 1, error: 'The panel has no size, so its layout cannot be measured.' });
+      await expect(failed).rejects.toThrow('no size');
+      const late = controller.measureLayout();
+      jest.advanceTimersByTime(LAYOUT_TIMEOUT_MS);
+      await expect(late).rejects.toThrow('did not return its layout');
+    });
+
+    it('fails on a layout that was never requested, answers a capture id, or carries extra payload', () => {
+      const unrequested = setup();
+      unrequested.connect();
+      void unrequested.controller.capture().catch(() => {});
+      unrequested.fromFrame({ type: 'layout', id: 1, layout: LAYOUT });
+      expect(unrequested.handlers.onError).toHaveBeenCalledWith(
+        expect.objectContaining({ kind: 'protocol', fatal: true })
+      );
+
+      const extra = setup();
+      extra.connect();
+      void extra.controller.measureLayout().catch(() => {});
+      extra.fromFrame({ type: 'layout', id: 1, layout: { ...LAYOUT, coverage: 0.5 } });
+      expect(extra.handlers.onError).toHaveBeenCalledWith(expect.objectContaining({ kind: 'protocol', fatal: true }));
     });
   });
 });

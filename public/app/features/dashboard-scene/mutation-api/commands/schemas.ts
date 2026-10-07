@@ -706,6 +706,13 @@ const getPanelRenderStatusPayloadSchema = z
       .describe(
         'When true, also return the shape of the data each drawing received: per frame its refId, name, length and source panel, and per field its name, type, display name, unit and formatted last value.'
       ),
+    includeLayout: z
+      .boolean()
+      .optional()
+      .default(false)
+      .describe(
+        'When true, also measure the layout of each drawing: elements that reach past the panel edges, text cut by its box, and text drawn over other text.'
+      ),
     reveal: z
       .boolean()
       .optional()
@@ -953,7 +960,7 @@ export const payloads = {
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
   getPanelRenderStatus: getPanelRenderStatusPayloadSchema.describe(
-    'Read the last draw result of panels that report one (today the Custom panel, whose drawing runs in a sandboxed frame no other tool can see): state, error, diagnostics, timing and element count, a layout report (coverage, empty regions, overflow, clipped text, overlaps), whether the panel is paused out of view, and optionally a capture of the drawing and the shape of the data it received. A Custom panel that is not rendered (inactive tab, collapsed row, not scrolled to yet) is state not-mounted; reveal brings one panel into view and waitMs waits for its draw.'
+    'Read the last draw result of panels that report one (today the Custom panel, whose drawing runs in a sandboxed frame no other tool can see): state, error, diagnostics, timing and element count, whether the panel is paused out of view, and optionally a capture of the drawing, the shape of the data it received and a layout report (overflow, clipped text, text over text). A Custom panel that is not rendered (inactive tab, collapsed row, not scrolled to yet) is state not-mounted; reveal brings one panel into view and waitMs waits for its draw.'
   ),
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'

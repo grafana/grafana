@@ -140,6 +140,7 @@ function RenderFrameHost({
     const current = controllerRef.current;
     if (current) {
       reporter.setCapture(() => current.capture());
+      reporter.setMeasureLayout(() => current.measureLayout());
     }
     return () => {
       reporter.dispose();
@@ -203,19 +204,10 @@ function RenderFrameHost({
 
     const created = createRenderFrameController({
       onReady: () => {},
-      onRenderComplete: ({ seq, durationMs, nodeCount, layout }) => {
+      onRenderComplete: ({ seq, durationMs, nodeCount }) => {
         setFrameError(null);
         const diagnostics = diagnosticsRef.current;
-        report(
-          {
-            state: 'drawn',
-            durationMs,
-            nodeCount,
-            ...(diagnostics.length > 0 && { diagnostics }),
-            ...(layout && { layout }),
-          },
-          seq
-        );
+        report({ state: 'drawn', durationMs, nodeCount, ...(diagnostics.length > 0 && { diagnostics }) }, seq);
         settleSeq(seq);
       },
       onHeight: (value) => setHeightHint(value),
@@ -242,6 +234,7 @@ function RenderFrameHost({
     controllerRef.current = created;
     setController(created);
     reporterRef.current?.setCapture(() => created.capture());
+    reporterRef.current?.setMeasureLayout(() => created.measureLayout());
 
     if (pendingLoadRef.current) {
       created.handleLoad(pendingLoadRef.current);
@@ -252,6 +245,7 @@ function RenderFrameHost({
       created.dispose();
       releaseHold();
       reporterRef.current?.setCapture(undefined);
+      reporterRef.current?.setMeasureLayout(undefined);
       if (controllerRef.current === created) {
         controllerRef.current = null;
       }

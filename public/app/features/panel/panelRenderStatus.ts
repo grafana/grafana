@@ -27,8 +27,6 @@ export interface PanelRenderStatus {
   durationMs?: number;
   /** Elements in the drawing after the last draw. */
   nodeCount?: number;
-  /** Where the last draw put its content in the panel, to spot a bad layout without an image. */
-  layout?: PanelRenderLayout;
   /** True while the panel is out of view: it does not draw until it is scrolled into view. */
   paused?: boolean;
   /** The scene key of the mounted panel; repeat clones of one panel differ only here. */
@@ -55,17 +53,14 @@ export interface PanelRenderLayoutFinding<Sample> {
 }
 
 /**
- * A bounded summary of the layout after a draw. Diagnostics only: it reads the drawing, it is not
- * a way to draw. Samples are capped; counts are exact for the elements looked at.
+ * A bounded summary of the layout of a drawing, measured on request. Diagnostics only: it reads
+ * the drawing, it is not a way to draw. Samples are capped; counts are exact for the elements
+ * looked at.
  */
 export interface PanelRenderLayout {
   /** The panel area, in pixels. */
   width: number;
   height: number;
-  /** Share of the panel area (0 to 1) covered by text, media and filled boxes smaller than half the panel. */
-  coverage: number;
-  /** The largest empty rectangles, each at least a tenth of the panel; share is of the panel area. */
-  emptyRegions: Array<PanelRenderRect & { share: number }>;
   /** Outermost visible elements that reach past the panel edges. */
   overflowing: PanelRenderLayoutFinding<PanelRenderRect & { element: PanelRenderElementLabel; sides: string[] }>;
   /** Text cut by its own box or an ancestor with overflow hidden; visible is the share still shown. */
@@ -76,15 +71,13 @@ export interface PanelRenderLayout {
     /** True when the cut is a text-overflow: ellipsis the code asked for. */
     ellipsis: boolean;
   }>;
-  /** Text lines over other text lines, and in-flow sibling boxes over each other; area in px². */
+  /** Text lines drawn over other text lines, with an excerpt of each; area in px². */
   overlaps: PanelRenderLayoutFinding<{
-    kind: 'text' | 'box';
     a: PanelRenderElementLabel;
     b: PanelRenderElementLabel;
     area: number;
-    /** For text overlaps, an excerpt of each text. */
-    aText?: string;
-    bText?: string;
+    aText: string;
+    bText: string;
   }>;
   /** Elements looked at, and whether the drawing had more than the report looks at. */
   inspected: number;
@@ -130,6 +123,8 @@ export interface PanelRenderReporter {
   report(update: PanelRenderStatusUpdate): void;
   /** How to get a PNG data URL of the drawing, for panels the host page cannot capture itself. */
   setCapture(capture: (() => Promise<string>) | undefined): void;
+  /** How to get a layout report of the drawing, for panels the host page cannot measure itself. */
+  setMeasureLayout(measure: (() => Promise<PanelRenderLayout>) | undefined): void;
   /** Marks the panel out of view (it skips draws) or back in view; the last report stays. */
   setPaused(paused: boolean): void;
   /** The shape of the data last sent to the drawing. */
@@ -140,6 +135,7 @@ export interface PanelRenderReporter {
 interface Entry {
   status: PanelRenderStatus;
   capture?: () => Promise<string>;
+  measureLayout?: () => Promise<PanelRenderLayout>;
   data?: PanelRenderDataSummary;
 }
 
@@ -187,6 +183,11 @@ export function registerPanelRenderReporter(
         entry.capture = capture;
       }
     },
+    setMeasureLayout(measure) {
+      if (!disposed) {
+        entry.measureLayout = measure;
+      }
+    },
     dispose() {
       if (disposed) {
         return;
@@ -225,6 +226,11 @@ export function getPanelRenderStatuses(panelId: number): PanelRenderStatus[] {
 /** Undefined when the panel does not report, or reports without a capture. */
 export function capturePanelRender(panelId: number, instanceKey?: string): Promise<string> | undefined {
   return findEntry(panelId, instanceKey)?.capture?.();
+}
+
+/** Undefined when the panel does not report, or reports without a way to measure its layout. */
+export function measurePanelLayout(panelId: number, instanceKey?: string): Promise<PanelRenderLayout> | undefined {
+  return findEntry(panelId, instanceKey)?.measureLayout?.();
 }
 
 /** The shape of the data the panel last sent to its drawing, when it reports one. */

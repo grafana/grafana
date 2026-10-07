@@ -5,7 +5,8 @@
  * app/features/panel/panelRenderStatus). Today that is the Custom panel, whose drawing runs in a
  * sandboxed frame that neither the DOM nor a browser-side screenshot can see into. With
  * includeImage, each reporting panel that can capture itself also returns a PNG data URL of its
- * drawing; with includeData, the shape of the data the drawing received. reveal brings one panel
+ * drawing; with includeData, the shape of the data the drawing received; with includeLayout, a
+ * report of content that spills out, is cut or is drawn over other text. reveal brings one panel
  * into view first (switching tabs, expanding rows, scrolling), which changes the view but not the
  * dashboard, and waitMs waits for its drawing to settle. No permissions required.
  */
@@ -17,7 +18,9 @@ import {
   capturePanelRender,
   getPanelRenderData,
   getPanelRenderStatuses,
+  measurePanelLayout,
   type PanelRenderDataSummary,
+  type PanelRenderLayout,
   type PanelRenderStatus,
 } from 'app/features/panel/panelRenderStatus';
 
@@ -45,6 +48,8 @@ export interface PanelRenderStatusEntry extends Omit<PanelRenderStatus, 'updated
   /** Milliseconds since the status last changed. */
   ageMs: number;
   data?: PanelRenderDataSummary;
+  layout?: PanelRenderLayout;
+  layoutError?: string;
   image?: string;
   imageError?: string;
 }
@@ -124,6 +129,9 @@ export const getPanelRenderStatusCommand: MutationCommand<GetPanelRenderStatusPa
         }
       }
 
+      if (payload.includeLayout) {
+        await addLayouts(panels);
+      }
       if (payload.includeImage) {
         await addImages(panels);
       }
@@ -160,6 +168,26 @@ export const getPanelRenderStatusCommand: MutationCommand<GetPanelRenderStatusPa
     }
   },
 };
+
+async function addLayouts(panels: PanelRenderStatusEntry[]): Promise<void> {
+  await Promise.all(
+    panels.map(async (entry) => {
+      if (entry.state === 'not-mounted') {
+        return;
+      }
+      const measure = measurePanelLayout(entry.panelId, entry.instanceKey);
+      if (!measure) {
+        entry.layoutError = 'This panel cannot measure its layout.';
+        return;
+      }
+      try {
+        entry.layout = await measure;
+      } catch (error) {
+        entry.layoutError = error instanceof Error ? error.message : String(error);
+      }
+    })
+  );
+}
 
 /** Captures one at a time, so the response and the memory it takes stay under a total budget. */
 async function addImages(panels: PanelRenderStatusEntry[]): Promise<void> {

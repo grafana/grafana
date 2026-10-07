@@ -395,25 +395,26 @@ background when the drawing is transparent), so it reads on its own.
 The panel reports the result of its last draw to Grafana, so tools that cannot see into the frame
 can read it with the Mutation API command `GET_PANEL_RENDER_STATUS`: `pending`, `drawn` or `error`,
 whether the drawn data is final, the error kind and message, problems reported during a draw that
-still finished, the draw time, the element count and a layout report (below). The report carries a digest of the code, so a
-tool that just wrote the code can wait for the report of that code. A draw of an input older than
-the latest one sent is never final. With `includeImage` the command also returns the frame's
-capture of its drawing, and with `includeData` the shape of the data the drawing received (frames,
-fields, units and formatted last values, no other values).
+still finished, the draw time and the element count. The report carries a digest of the code, so
+a tool that just wrote the code can wait for the report of that code. A draw of an input older
+than the latest one sent is never final. With `includeImage` the command also returns the frame's
+capture of its drawing, with `includeData` the shape of the data the drawing received (frames,
+fields, units and formatted last values, no other values), and with `includeLayout` a layout
+report (below).
 
 ### Layout report
 
-After each draw, the frame also reports `layout`, a bounded summary of where the drawing put its
-content, so a tool that cannot see the panel can spot a bad layout. It is a diagnostics aid that
-reads the drawing's DOM, not part of the drawing API: the code cannot read or change it, and its
-heuristics may be tuned. Positions are panel pixels from the top left corner.
+When asked, the frame measures `layout`, a bounded summary of content that is cut, spills out of
+the panel or is drawn over other text, so a tool that cannot see the panel can spot a broken
+layout. The frame measures only on request, never after each draw, and a request that comes during
+a draw is answered once the draw finishes. It is a diagnostics aid that reads the drawing's DOM,
+not part of the drawing API: the code cannot read or change it, and its heuristics may be tuned.
+Positions are panel pixels from the top left corner.
 
 ```json
 {
   "width": 400,
   "height": 300,
-  "coverage": 0.18,
-  "emptyRegions": [{ "x": 112, "y": 95, "width": 288, "height": 95, "share": 0.23 }],
   "overflowing": {
     "count": 1,
     "samples": [{ "element": "div.wide", "x": 0, "y": 60, "width": 500, "height": 20, "sides": ["right"] }]
@@ -424,9 +425,7 @@ heuristics may be tuned. Positions are panel pixels from the top left corner.
   },
   "overlaps": {
     "count": 1,
-    "samples": [
-      { "kind": "text", "a": "div > span.a", "b": "div > span.b", "area": 1050, "aText": "Requests", "bText": "Errors" }
-    ]
+    "samples": [{ "a": "div > span.a", "b": "div > span.b", "area": 1050, "aText": "Requests", "bText": "Errors" }]
   },
   "inspected": 10,
   "truncated": false,
@@ -434,25 +433,19 @@ heuristics may be tuned. Positions are panel pixels from the top left corner.
 }
 ```
 
-- `coverage` (0 to 1): share of the panel area under text lines, media (`img`, `svg`, `canvas`,
-  `video`, form controls) and boxes with a background, border or shadow that are at most half the
-  panel. A background that fills the panel counts only for what is drawn on it.
-- `emptyRegions`: up to 3 of the largest rectangles with nothing drawn, each at least a tenth of
-  the panel, with `share` of the panel area. Measured on a grid of at most 48 by 48 cells.
 - `overflowing`: visible elements that reach past the panel edges (`sides`: `left`, `top`,
   `right`, and `bottom` unless the panel fits its content), outermost only. Content clipped by
   an ancestor with `overflow` other than `visible` does not count.
 - `clippedText`: text cut by its own box or an ancestor with `overflow: hidden` or `clip`
   (scrollable boxes do not count). `visible` is the share still shown; `ellipsis` is true when the
   box uses `text-overflow: ellipsis`, which is usually intended.
-- `overlaps`: text lines drawn over other text lines (`kind: "text"`, with an excerpt of each), and
-  sibling boxes in normal flow over each other (`kind: "box"`); absolutely positioned and fixed
-  boxes are layered on purpose and only count through their text. `area` is the overlap in px².
+- `overlaps`: text lines drawn over other text lines, with an excerpt of each. Boxes over boxes do
+  not count, since drawings layer them on purpose. `area` is the overlap in px².
 - `element` labels are the tag, id and up to two classes, after the parent's (`div.card > span`).
   Labels and excerpts are at most 120 characters.
 - Each finding has an exact `count` and at most 5 `samples`. The report looks at up to 800
   elements (`inspected`; `truncated` when there were more) and keeps the time under a few
-  milliseconds (`durationMs`). It is left out when the frame has no size.
+  milliseconds (`durationMs`). A frame with no size answers with an error instead.
 
 A panel scrolled out of view does not draw and reports `paused: true`. A Custom panel that is not
 rendered at all (an inactive tab, a collapsed row, or not reached yet by lazy loading) has no

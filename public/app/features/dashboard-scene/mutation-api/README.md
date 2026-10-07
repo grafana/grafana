@@ -724,6 +724,11 @@ It never changes the dashboard; `reveal` changes only what is in view.
   received: per frame `refId`, `name`, `length` and, for `-- Dashboard --` frames, `sourcePanelId`,
   `sourcePanelTitle` and `sourceRefId`; per field `name`, `type`, `displayName`, `unit` and `last`
   (the last non-null value as the panel formats it). At most 20 frames of 30 fields, no values.
+- `includeLayout` (optional, default `false`): also measure the drawing as it is now and return
+  `layout`: `overflowing` (elements that reach past the panel edges), `clippedText` (text cut by
+  its box) and `overlaps` (text drawn over other text), each with an exact `count` and at most 5
+  `samples`. A panel that cannot measure itself returns `layoutError` instead. Diagnostics only;
+  see "Layout report" in the Custom panel README for the fields.
 - `reveal` (optional, default `false`): bring the one requested panel into view first, switching
   to its tab, expanding its row and scrolling to it, so it mounts and draws. Requires exactly one
   element.
@@ -772,10 +777,6 @@ It never changes the dashboard; `reveal` changes only what is in view.
 - `diagnostics`: non-fatal problems reported during a draw that still finished, such as a resource
   the sandbox blocked.
 - `durationMs`, `nodeCount`: time of the last draw and elements in the drawing after it.
-- `layout`: a bounded summary of where the last draw put its content, to spot a bad layout
-  without an image: `coverage` (0 to 1), `emptyRegions`, and `overflowing`, `clippedText` and
-  `overlaps`, each with an exact `count` and at most 5 `samples`. Diagnostics only; see "Layout
-  report" in the Custom panel README for the fields.
 
 Requested panels that are not on the dashboard, or do not report, and Custom panels that are
 `not-mounted`, are named in `warnings`.

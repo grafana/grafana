@@ -107,6 +107,39 @@ describe('GET_PANEL_RENDER_STATUS', () => {
     ]);
   });
 
+  it('measures the layout only when includeLayout is set, or says why there is none', async () => {
+    const layout = {
+      width: 400,
+      height: 300,
+      overflowing: { count: 0, samples: [] },
+      clippedText: { count: 1, samples: [{ element: 'div.card', text: 'Long label', visible: 0.5, ellipsis: false }] },
+      overlaps: { count: 0, samples: [] },
+      inspected: 4,
+      truncated: false,
+      durationMs: 0.3,
+    };
+    const measured = register(2);
+    measured.report({ state: 'drawn', final: true });
+    const measure = jest.fn(() => Promise.resolve(layout));
+    measured.setMeasureLayout(measure);
+    const failing = register(3);
+    failing.report({ state: 'drawn', final: true });
+    failing.setMeasureLayout(() => Promise.reject(new Error('The panel frame is not running.')));
+    register(4).report({ state: 'pending', final: false });
+
+    const plain = await run({}, buildScene([2]));
+    expect((plain.data as { panels: Array<Record<string, unknown>> }).panels[0]).not.toHaveProperty('layout');
+    expect(measure).not.toHaveBeenCalled();
+
+    const result = await run({ includeLayout: true }, buildScene([2, 3, 4]));
+    const panels = (result.data as { panels: Array<Record<string, unknown>> }).panels;
+    expect(panels.map((entry) => [entry.element, entry.layout, entry.layoutError])).toEqual([
+      ['panel-2', layout, undefined],
+      ['panel-3', undefined, 'The panel frame is not running.'],
+      ['panel-4', undefined, 'This panel cannot measure its layout.'],
+    ]);
+  });
+
   it('marks a Custom panel that is not rendered as not-mounted instead of a panel that does not report', async () => {
     const result = await run({ elements: ['panel-5'] }, buildScene([5], 'custom-panel', 'panel.onRender(() => {})'));
     expect((result.data as { panels: unknown[] }).panels).toEqual([

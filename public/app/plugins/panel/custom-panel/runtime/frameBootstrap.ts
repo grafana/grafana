@@ -4,9 +4,7 @@ import {
   MAX_DOM_NODES,
   MAX_HEIGHT_HINT_PX,
   MAX_HREF_LENGTH,
-  LAYOUT_GRID_CELLS,
   MAX_LAYOUT_ELEMENTS,
-  MAX_LAYOUT_EMPTY_REGIONS,
   MAX_LAYOUT_LABEL_LENGTH,
   MAX_LAYOUT_SAMPLES,
   MAX_LAYOUT_TEXT_RECTS,
@@ -97,9 +95,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var MAX_LAYOUT_ELEMENTS = ${MAX_LAYOUT_ELEMENTS};
   var MAX_LAYOUT_TEXT_RECTS = ${MAX_LAYOUT_TEXT_RECTS};
   var MAX_LAYOUT_SAMPLES = ${MAX_LAYOUT_SAMPLES};
-  var MAX_LAYOUT_EMPTY_REGIONS = ${MAX_LAYOUT_EMPTY_REGIONS};
   var MAX_LAYOUT_LABEL = ${MAX_LAYOUT_LABEL_LENGTH};
-  var LAYOUT_GRID = ${LAYOUT_GRID_CELLS};
   var MAX_BUFFERED_ERRORS = 20;
   var RESIZE_OBSERVER_LOOP = 'ResizeObserver loop';
   var XLINK = 'http://www.w3.org/1999/xlink';
@@ -126,6 +122,8 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   var lastInput = null;
   var scheduled = false;
   var drawing = false;
+  // Layout report requests that came during a draw; answered once the draw finishes.
+  var measureRequests = [];
   var lastHeight = -1;
   var heightScheduled = false;
   var themeKey = '';
@@ -655,6 +653,11 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   function finish() {
     drawing = false;
     scheduleHeight();
+    var waiting = measureRequests;
+    measureRequests = [];
+    for (var i = 0; i < waiting.length; i++) {
+      postLayout(waiting[i]);
+    }
     schedule();
   }
 
@@ -689,10 +692,10 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
   }
 
   /*
-   * The layout report: a bounded summary of where the draw put its content, so a caller that
-   * cannot see the panel can tell a bad layout (content cut, spilling out, piled up or lost in a
-   * mostly empty panel). It reads the DOM only. The drawing runs in this realm and can skew its own
-   * report, so the host bounds and validates it like any other message.
+   * The layout report: a bounded summary of where the drawing put its content, measured when the
+   * host asks for it, so a caller that cannot see the panel can tell content that is cut, spills
+   * out of the panel or is drawn over other text. It reads the DOM only. The drawing runs in this
+   * realm and can skew its own report, so the host bounds and validates it like any other message.
    */
   var LAYOUT_MEDIA = { img: true, svg: true, canvas: true, video: true, input: true, select: true, textarea: true, progress: true, meter: true };
 
@@ -747,29 +750,6 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     return Math.round(value * 100) / 100;
   }
 
-  function isPainted(style) {
-    if (style.backgroundImage && style.backgroundImage !== 'none') {
-      return true;
-    }
-    if (!isTransparentColor(style.backgroundColor)) {
-      return true;
-    }
-    if (style.boxShadow && style.boxShadow !== 'none') {
-      return true;
-    }
-    if (style.borderStyle === 'none' || style.borderStyle === '') {
-      return false;
-    }
-    var sides = ['Top', 'Right', 'Bottom', 'Left'];
-    for (var i = 0; i < sides.length; i++) {
-      if (parseFloat(style['border' + sides[i] + 'Width']) > 0 && style['border' + sides[i] + 'Style'] !== 'none' &&
-        !isTransparentColor(style['border' + sides[i] + 'Color'])) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   /** The clip a box with this overflow puts on its content, per axis; null when it clips nothing. */
   function overflowClip(box, overflowX, overflowY, values) {
     var clipX = values[overflowX] === true;
@@ -796,36 +776,6 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     return clip ? layoutIntersect(clip, next) || NOTHING : next;
   }
 
-  /** The largest rectangle of empty cells, as [col, row, cols, rows], or null. */
-  function largestEmpty(empty, cols, rows) {
-    var heights = [];
-    for (var c = 0; c < cols; c++) {
-      heights.push(0);
-    }
-    var best = null;
-    var bestArea = 0;
-    for (var r = 0; r < rows; r++) {
-      for (var x = 0; x < cols; x++) {
-        heights[x] = empty[r * cols + x] ? heights[x] + 1 : 0;
-      }
-      var stack = [];
-      for (var i = 0; i <= cols; i++) {
-        var h = i < cols ? heights[i] : 0;
-        while (stack.length > 0 && heights[stack[stack.length - 1]] >= h) {
-          var top = stack.pop();
-          var start = stack.length > 0 ? stack[stack.length - 1] + 1 : 0;
-          var area = heights[top] * (i - start);
-          if (area > bestArea) {
-            bestArea = area;
-            best = [start, r - heights[top] + 1, i - start, heights[top]];
-          }
-        }
-        stack.push(i);
-      }
-    }
-    return best;
-  }
-
   function measureLayout(fitContent) {
     var started = now();
     var html = document.documentElement;
@@ -834,42 +784,11 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     if (!(width > 0 && height > 0)) {
       return null;
     }
-    var view = { left: 0, top: 0, right: width, bottom: height };
-    var viewArea = width * height;
-    var cols = Math.max(1, Math.min(LAYOUT_GRID, Math.ceil(width / 16)));
-    var rows = Math.max(1, Math.min(LAYOUT_GRID, Math.ceil(height / 16)));
-    var cellWidth = width / cols;
-    var cellHeight = height / rows;
-    var cells = [];
-    for (var n = 0; n < cols * rows; n++) {
-      cells.push(0);
-    }
-
-    function cover(rect) {
-      var onView = rect && layoutIntersect(rect, view);
-      if (!onView) {
-        return;
-      }
-      var c0 = Math.floor(onView.left / cellWidth);
-      var c1 = Math.min(cols - 1, Math.ceil(onView.right / cellWidth) - 1);
-      var r0 = Math.floor(onView.top / cellHeight);
-      var r1 = Math.min(rows - 1, Math.ceil(onView.bottom / cellHeight) - 1);
-      for (var y = r0; y <= r1; y++) {
-        var overlapY = Math.min(onView.bottom, (y + 1) * cellHeight) - Math.max(onView.top, y * cellHeight);
-        for (var x = c0; x <= c1; x++) {
-          var overlapX = Math.min(onView.right, (x + 1) * cellWidth) - Math.max(onView.left, x * cellWidth);
-          if (overlapX > 0 && overlapY > 0) {
-            cells[y * cols + x] += overlapX * overlapY;
-          }
-        }
-      }
-    }
 
     var overflowing = { count: 0, samples: [] };
     var clippedText = { count: 0, samples: [] };
     var overlaps = { count: 0, samples: [] };
     var outside = new Map();
-    var siblings = new Map();
     var runs = [];
     var textRects = 0;
     var range = typeof document.createRange === 'function' ? document.createRange() : null;
@@ -921,21 +840,6 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
             }
           }
         }
-        if (element !== root && (LAYOUT_MEDIA[tag] === true || (layoutArea(shown) <= viewArea / 2 && isPainted(style)))) {
-          cover(shown);
-        }
-      }
-
-      if (element !== root && visible && shown && layoutArea(shown) >= 16) {
-        var parent = element.parentElement;
-        var list = siblings.get(parent);
-        if (!list) {
-          list = [];
-          siblings.set(parent, list);
-        }
-        if (list.length < 40 && (style.float === 'none' || !style.float) && style.position !== 'absolute' && style.position !== 'fixed') {
-          list.push({ element: element, rect: shown });
-        }
       }
 
       if (LAYOUT_MEDIA[tag] === true) {
@@ -971,7 +875,6 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
             kept += cut ? layoutArea(layoutIntersect(fragment, cut)) : fragmentArea;
             var seen = clip ? layoutIntersect(fragment, clip) : fragment;
             if (seen) {
-              cover(seen);
               if (textRects < MAX_LAYOUT_TEXT_RECTS) {
                 run.rects.push(seen);
                 run.bounds = run.bounds ? {
@@ -1044,56 +947,14 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
           }
         }
         if (worst > 0) {
-          addOverlap({ kind: 'text', a: layoutLabel(first.element), b: layoutLabel(second.element), area: Math.round(worst), aText: layoutText(first.node.data), bText: layoutText(second.node.data) });
+          addOverlap({ a: layoutLabel(first.element), b: layoutLabel(second.element), area: Math.round(worst), aText: layoutText(first.node.data), bText: layoutText(second.node.data) });
         }
       }
-    }
-
-    // In-flow siblings over each other: absolute and fixed boxes are layered on purpose.
-    siblings.forEach(function (list) {
-      for (var a = 0; a < list.length; a++) {
-        for (var b = a + 1; b < list.length; b++) {
-          var common = layoutArea(layoutIntersect(list[a].rect, list[b].rect));
-          if (common >= 16 && common >= Math.min(layoutArea(list[a].rect), layoutArea(list[b].rect)) * 0.25) {
-            addOverlap({ kind: 'box', a: layoutLabel(list[a].element), b: layoutLabel(list[b].element), area: Math.round(common) });
-          }
-        }
-      }
-    });
-
-    var cellArea = cellWidth * cellHeight;
-    var covered = 0;
-    var empty = [];
-    for (var e = 0; e < cells.length; e++) {
-      covered += Math.min(cells[e], cellArea);
-      empty.push(cells[e] < cellArea * 0.1);
-    }
-    var emptyRegions = [];
-    while (emptyRegions.length < MAX_LAYOUT_EMPTY_REGIONS) {
-      var found = largestEmpty(empty, cols, rows);
-      if (!found || found[2] * found[3] < cells.length * 0.1) {
-        break;
-      }
-      for (var y = found[1]; y < found[1] + found[3]; y++) {
-        for (var x = found[0]; x < found[0] + found[2]; x++) {
-          empty[y * cols + x] = false;
-        }
-      }
-      var region = layoutBox({
-        left: found[0] * cellWidth,
-        top: found[1] * cellHeight,
-        right: (found[0] + found[2]) * cellWidth,
-        bottom: (found[1] + found[3]) * cellHeight
-      });
-      region.share = layoutRound((found[2] * found[3]) / cells.length);
-      emptyRegions.push(region);
     }
 
     return {
       width: Math.round(width),
       height: Math.round(height),
-      coverage: layoutRound(Math.min(1, covered / viewArea)),
-      emptyRegions: emptyRegions,
       overflowing: overflowing,
       clippedText: clippedText,
       overlaps: overlaps,
@@ -1101,6 +962,21 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
       truncated: truncated,
       durationMs: Math.round((now() - started) * 10) / 10
     };
+  }
+
+  function postLayout(id) {
+    var layout = null;
+    var error = null;
+    try {
+      layout = measureLayout(lastInput !== null && lastInput.fitContent === true);
+    } catch (e) {
+      error = e;
+    }
+    if (layout) {
+      post({ type: 'layout', id: id, layout: layout });
+    } else {
+      post({ type: 'layout', id: id, error: toText(error || 'The panel has no size, so its layout cannot be measured.') });
+    }
   }
 
   function afterDraw(job, started) {
@@ -1113,17 +989,7 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
     }
     scheduleHeight();
     waitForPaint().then(function () {
-      var message = { type: 'render-complete', seq: job.seq, durationMs: Math.max(0, now() - started), nodeCount: nodeCount };
-      var layout = null;
-      try {
-        layout = measureLayout(job.input.fitContent === true);
-      } catch (e) {
-        // The report is optional; a drawing that breaks the DOM APIs only loses it.
-      }
-      if (layout) {
-        message.layout = layout;
-      }
-      post(message);
+      post({ type: 'render-complete', seq: job.seq, durationMs: Math.max(0, now() - started), nodeCount: nodeCount });
       finish();
     });
   }
@@ -1342,6 +1208,16 @@ export const CONTENT_BOOTSTRAP_SOURCE = `(function () {
       case 'capture':
         if (typeof message.id === 'number') {
           captureDrawing(message.id);
+        }
+        return;
+      case 'measure':
+        if (typeof message.id !== 'number') {
+          return;
+        }
+        if (drawing) {
+          measureRequests.push(message.id);
+        } else {
+          postLayout(message.id);
         }
         return;
       case 'pause':
