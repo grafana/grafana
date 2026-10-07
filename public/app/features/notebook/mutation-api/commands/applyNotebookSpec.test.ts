@@ -511,5 +511,106 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
 
       stopPanel();
     });
+
+    // Discard goes back to the look from before the reader's change, as the modal's discard does. That
+    // is not always the saved look: an edit whose save failed is still the notebook's own.
+    it('keeps an earlier edit whose save failed when discarding a later view-only change', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const panel = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!.state
+        .body as VizPanel;
+      const stopPanel = panel.activate();
+
+      // The writer's own edit, which the server refuses.
+      scene.onEnterEditMode();
+      recolour(panel, 'red');
+      jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+      scene.onExitEditMode();
+      await scene.autosave.awaitPendingSave().catch(() => undefined);
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+
+      // Then a reader changes the same panel in view mode.
+      recolour(panel, 'green');
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ title: 'Renamed by assistant' }), viewOnlyChanges: 'discard' },
+      });
+
+      expect(result.success).toBe(true);
+      const [, sent] = jest.mocked(updateNotebook).mock.calls[1];
+      const element = sent.elements['latency-panel'];
+      expect(element.kind).toBe('Panel');
+      if (element.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides[0].properties[0].value).toEqual({
+          mode: 'fixed',
+          fixedColor: 'red',
+        });
+      }
+
+      stopPanel();
+    });
+  });
+
+  // Entering edit mode changes the mode and what autosave counts as edited, so it has to wait until the
+  // replacement exists. A spec that cannot be rebuilt must leave the notebook as it was.
+  describe('when the spec cannot be rebuilt', () => {
+    function unbuildableSpec() {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- deliberately malformed
+      return { ...notebookSpec(), elements: undefined } as unknown as ReturnType<typeof notebookSpec>;
+    }
+
+    it('fails without putting the notebook into edit mode', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const before = cellNamesOf(scene);
+      expect(scene.state.isEditing).toBeFalsy();
+
+      const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: unbuildableSpec() } });
+
+      expect(result.success).toBe(false);
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(cellNamesOf(scene)).toEqual(before);
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('does not forget an edit whose save failed, so a retry still writes it', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const panel = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!.state
+        .body as VizPanel;
+      const stopPanel = panel.activate();
+
+      scene.onEnterEditMode();
+      panel.setState({
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'up' },
+              properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+            },
+          ],
+        },
+      });
+      jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+      scene.onExitEditMode();
+      await scene.autosave.awaitPendingSave().catch(() => undefined);
+
+      const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: unbuildableSpec() } });
+      expect(result.success).toBe(false);
+
+      scene.autosave.retry();
+      await scene.autosave.awaitPendingSave();
+
+      const [, sent] = jest.mocked(updateNotebook).mock.calls.at(-1) ?? [];
+      const element = sent?.elements['latency-panel'];
+      expect(element?.kind).toBe('Panel');
+      if (element?.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides).toHaveLength(1);
+      }
+
+      stopPanel();
+    });
   });
 });

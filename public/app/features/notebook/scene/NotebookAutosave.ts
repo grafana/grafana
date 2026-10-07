@@ -10,6 +10,7 @@ import {
 } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
+import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -281,16 +282,26 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
    * own and so has no modal to show (APPLY_NOTEBOOK_SPEC, from the assistant). The vizConfig for each
    * element is read off the scene/autosave directly rather than off the caller's spec, so the result is
    * correct regardless of what that spec happens to say about the same panel: 'keep' is the panel's
-   * current live look, 'discard' is its last-saved one.
+   * current live look, 'discard' is its look from immediately before the reader changed it. That is
+   * usually the saved look, but can include an edit whose save failed, as in `discardVizChanges`.
+   * Reads only: the scene is replaced by the caller's write, so nothing here needs restoring.
    */
   public resolveViewOnlyVizChanges(action: 'keep' | 'discard'): Map<string, PanelKind['spec']['vizConfig']> {
     const pending = new Set(this.viewOnlyVizChanges());
     const resolved = new Map<string, PanelKind['spec']['vizConfig']>();
 
     if (action === 'discard') {
-      for (const { elementName, vizConfig } of this.restorablePanels()) {
-        if (pending.has(elementName)) {
-          resolved.set(elementName, vizConfig);
+      for (const { elementName, panel } of this.restorablePanels()) {
+        const beforeChange = this.vizConfigsBeforeReadingChange.get(elementName);
+        if (!pending.has(elementName) || !beforeChange || beforeChange.panel !== panel) {
+          continue;
+        }
+
+        // Serialized like a save would, from a copy of the panel carrying the earlier look, so the live
+        // panel keeps showing the reader's change until the write replaces it.
+        const element = vizPanelToSchemaV2(panel.clone(beforeChange.config));
+        if (element.kind === 'Panel') {
+          resolved.set(elementName, element.spec.vizConfig);
         }
       }
       return resolved;

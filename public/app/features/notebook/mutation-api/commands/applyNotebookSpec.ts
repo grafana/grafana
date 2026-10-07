@@ -118,13 +118,15 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         }
       }
 
-      scene.enterEditModeForDocumentWrite(NOTEBOOK_EDIT_SESSION_SOURCE.ASSISTANT);
-
       const { transformNotebookToScene } = await import(
         /* webpackChunkName: "notebook-serialization" */ '../../serialization/transformNotebookToScene'
       );
 
       const rebuilt = transformNotebookToScene(notebookResourceFor(scene.state.uid, notebookSpec));
+
+      // Only once the replacement exists: entering edit mode changes the mode and what autosave counts as
+      // edited, which a spec that fails to rebuild must not leave behind.
+      scene.enterEditModeForDocumentWrite(NOTEBOOK_EDIT_SESSION_SOURCE.ASSISTANT);
 
       scene.setState({
         ...sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }),
