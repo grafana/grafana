@@ -1,3 +1,5 @@
+import { textUtil } from '@grafana/data';
+
 export interface BlockedResource {
   directive: string;
   origin?: string;
@@ -76,7 +78,7 @@ export function mountTextSandbox(host: HTMLElement, options: MountOptions): () =
   frame.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none;width:100%;height:1px;border:0;';
   frame.setAttribute('aria-hidden', 'true');
   frame.tabIndex = -1;
-  const escapedPolicy = options.policy.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const escapedPolicy = textUtil.escapeHtml(options.policy);
   // Never put user HTML in srcdoc: the listener must exist before the first resource load.
   frame.srcdoc = `<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="${escapedPolicy}"><base target="_blank"></head><body></body></html>`;
 

@@ -15,6 +15,7 @@ declare global {
 const script = buildSync({
   entryPoints: [path.resolve(__dirname, '../../public/app/plugins/panel/text/v2/sandboxFrame.ts')],
   bundle: true,
+  conditions: ['@grafana-app/source'],
   write: false,
   format: 'iife',
   globalName: 'textSandbox',
