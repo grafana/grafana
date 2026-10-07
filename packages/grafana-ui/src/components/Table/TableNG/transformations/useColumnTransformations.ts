@@ -43,14 +43,13 @@ export function useColumnTransformations(
       return undefined;
     }
 
-    const state = Object.values(columnTransformations).reduce<Pick<TableNGProps, 'hiddenColumns' | 'columnOrder'>>(
-      (state, transformation) => ({ ...state, ...transformation.read(transformations, context) }),
-      {}
-    );
+    const columnProps = Object.values(columnTransformations).reduce<
+      Pick<TableNGProps, 'hiddenColumns' | 'columnOrder'>
+    >((columnProps, transformation) => ({ ...columnProps, ...transformation.read(transformations, context) }), {});
 
     return {
-      ...state,
-      columnCatalog: state.columnOrder ?? context.catalog,
+      ...columnProps,
+      columnCatalog: columnProps.columnOrder ?? context.catalog,
       onColumnOrderChange,
       onHiddenColumnsChange,
     };

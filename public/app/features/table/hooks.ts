@@ -155,12 +155,29 @@ export function useTableRefreshNewFeatures(): boolean {
 export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, enabled: boolean) {
   const api = usePanelContext().adHocTransformations;
   const sourceSeries = api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
-  const sourceIndex =
-    enabled && supportsColumnManagement(frames[frameIndex]) && sourceSeries
-      ? getSourceFrameIndex(frames, frameIndex, sourceSeries)
-      : undefined;
-  const eligibleSourceIndex =
-    sourceIndex !== undefined && supportsColumnManagement(sourceSeries?.[sourceIndex]) ? sourceIndex : undefined;
+  const sourceIndex = getEligibleColumnSourceIndex(frames, frameIndex, sourceSeries, enabled);
 
-  return useColumnTransformations(eligibleSourceIndex, api, TABLE_TRANSFORMATIONS_OWNER);
+  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER);
+}
+
+function getEligibleColumnSourceIndex(
+  frames: DataFrame[],
+  frameIndex: number,
+  sourceSeries: readonly DataFrame[] | undefined,
+  enabled: boolean
+): number | undefined {
+  if (!enabled) {
+    return undefined;
+  }
+
+  let sourceIndex: number | undefined;
+  if (sourceSeries && supportsColumnManagement(frames[frameIndex])) {
+    sourceIndex = getSourceFrameIndex(frames, frameIndex, sourceSeries);
+  }
+
+  if (sourceIndex !== undefined && !supportsColumnManagement(sourceSeries?.[sourceIndex])) {
+    return undefined;
+  }
+
+  return sourceIndex;
 }
