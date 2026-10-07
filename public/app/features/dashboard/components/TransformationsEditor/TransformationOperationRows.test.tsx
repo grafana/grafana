@@ -9,8 +9,7 @@ import { TemplateSrv } from 'app/features/templating/template_srv';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import { TransformationOperationRows } from './TransformationOperationRows';
-import { type TransformationData } from './TransformationsEditor';
-import { type TransformationsEditorTransformation } from './types';
+import { type TransformationData, type TransformationsEditorTransformation } from './types';
 
 const data: TransformationData = { series: [], annotations: [] };
 

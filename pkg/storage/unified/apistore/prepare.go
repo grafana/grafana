@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -19,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -160,7 +159,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetUID() == "" {
-		obj.SetUID(types.UID(uuid.NewString()))
+		obj.SetUID(types.UID(uuid.NewV4().String()))
 	}
 	if err = s.verifyFolder(obj); err != nil {
 		return v, err
@@ -213,7 +212,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -240,7 +239,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Group:     s.gr.Group,
+				Group:     s.storageGroup(),
 				Resource:  s.gr.Resource,
 				Namespace: obj.GetNamespace(),
 			},
@@ -252,7 +251,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -303,12 +302,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if previous.GetUID() == "" {
-		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
+		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
 		// Eventually this should be a real error or logged
 		// However the dashboard dual write behavior hits this every time, so we will ignore it
 		// if obj.GetUID() != "" {
-		// 	klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
 		// }
 		obj.SetUID(previous.GetUID())
 	}
@@ -325,7 +324,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -469,9 +468,9 @@ func (s *Storage) encode(ctx context.Context, obj runtime.Object, enforceCap boo
 	gv := persistedVersion(raw, obj)
 	// A custom serializer may pick a GVK outside this resource's group. Such a version cannot be ranked
 	// against the group's cap (it would look unregistered and slip through), so reject rather than store it.
-	if gv.Group != s.gr.Group {
+	if gv.Group != s.storageGroup() {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf(
-			"%s: encoded apiVersion group %q does not match resource group %q", s.gr.String(), gv.Group, s.gr.Group))
+			"%s: encoded apiVersion group %q does not match storage group %q", s.gr.String(), gv.Group, s.storageGroup()))
 	}
 	if err := s.enforceMaxAllowedVersion(gv.Version); err != nil {
 		return nil, err

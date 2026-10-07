@@ -13,16 +13,19 @@ const (
 
 	// KindSearchQuery and friends are the envelope kinds carried in the
 	// request/response TypeMeta. Each endpoint accepts one request kind and
-	// rejects the other.
-	KindSearchQuery   = "SearchQuery"
-	KindSearchResults = "SearchResults"
-	KindTrashQuery    = "TrashQuery"
-	KindTrashResults  = "TrashResults"
+	// rejects the others.
+	KindSearchQuery         = "SearchQuery"
+	KindSearchResults       = "SearchResults"
+	KindTrashQuery          = "TrashQuery"
+	KindTrashResults        = "TrashResults"
+	KindHybridSearchQuery   = "HybridSearchQuery"
+	KindHybridSearchResults = "HybridSearchResults"
 
 	// Here rather than beside the routes because the authorization chain needs
 	// them and cannot depend on the handler package.
-	SearchPathSegment = "search"
-	TrashPathSegment  = "trash"
+	SearchPathSegment       = "search"
+	TrashPathSegment        = "trash"
+	HybridSearchPathSegment = "hybrid"
 )
 
 // WhereNode is a single node of the where tree. Exactly one field must be set;

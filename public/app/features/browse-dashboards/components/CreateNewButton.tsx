@@ -17,9 +17,6 @@ import { CONTENT_KINDS, SOURCE_ENTRY_POINTS } from 'app/features/dashboard/dashg
 import { useTemplateDashboardsAvailability } from 'app/features/dashboard/dashgrid/DashboardLibrary/hooks/useTemplateDashboardsAvailability';
 import { DashboardLibraryInteractions } from 'app/features/dashboard/dashgrid/DashboardLibrary/interactions';
 import { type RepoType } from 'app/features/provisioning/Wizard/types';
-import { NewProvisionedFolderForm } from 'app/features/provisioning/components/Folders/NewProvisionedFolderForm';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
-import { isItemManagedByRepository } from 'app/features/provisioning/utils/managedResource';
 import { getReadOnlyTooltipText } from 'app/features/provisioning/utils/tooltip';
 import {
   getImportPhrase,
@@ -30,7 +27,7 @@ import {
 } from 'app/features/search/tempI18nPhrases';
 import { type FolderDTO } from 'app/types/folders';
 
-import { NewFolderForm } from './NewFolderForm';
+import { NewFolderDrawerContent } from './NewFolderDrawerContent';
 
 interface Props {
   parentFolder?: FolderDTO;
@@ -52,7 +49,6 @@ export default function CreateNewButton({
   const [newFolder] = useCreateFolder();
   const [showNewFolderDrawer, setShowNewFolderDrawer] = useState(false);
   const notifyApp = useAppNotification();
-  const isProvisionedInstance = useIsProvisionedInstance();
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   const isCustomDashboardTemplatesEnabled = useFlagGrafanaCustomDashboardTemplates();
   const { isAvailable: renderPreBuiltDashboardAction } = useTemplateDashboardsAvailability();
@@ -194,15 +190,11 @@ export default function CreateNewButton({
           onClose={() => setShowNewFolderDrawer(false)}
           size="sm"
         >
-          {isItemManagedByRepository(parentFolder) || isProvisionedInstance ? (
-            <NewProvisionedFolderForm onDismiss={() => setShowNewFolderDrawer(false)} parentFolder={parentFolder} />
-          ) : (
-            <NewFolderForm
-              onConfirm={onCreateFolder}
-              onCancel={() => setShowNewFolderDrawer(false)}
-              parentFolder={parentFolder}
-            />
-          )}
+          <NewFolderDrawerContent
+            parentFolder={parentFolder}
+            onDismiss={() => setShowNewFolderDrawer(false)}
+            onCreateDatabaseFolder={onCreateFolder}
+          />
         </Drawer>
       )}
     </>

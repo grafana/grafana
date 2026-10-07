@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
@@ -115,7 +115,7 @@ func writeEvent(t *testing.T, ctx context.Context, storageBackend *kvStorageBack
 	event := WriteEvent{
 		Type:  action,
 		Value: value,
-		GUID:  uuid.New().String(),
+		GUID:  uuid.NewV4().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,
@@ -575,7 +575,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 				Resource:        "resource",
 				Name:            "resource1",
 				Folder:          "folderuid",
-				ResourceVersion: storageBackend.snowflake.Generate().Int64(),
+				ResourceVersion: requireGeneratedResourceVersion(t, storageBackend.resourceVersions),
 				Action:          action,
 			}, bytes.NewReader([]byte("{}")))
 			require.NoError(t, err)
@@ -892,7 +892,7 @@ func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
 				Resource:        "resource",
 				Name:            "resource1",
 				Folder:          "folderuid",
-				ResourceVersion: b.snowflake.Generate().Int64(),
+				ResourceVersion: requireGeneratedResourceVersion(t, b.resourceVersions),
 				Action:          action,
 			}, bytes.NewReader([]byte("{}")))
 			require.NoError(t, err)

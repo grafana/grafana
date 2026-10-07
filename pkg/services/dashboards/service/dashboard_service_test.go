@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gopkg.in/ini.v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -38,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	"github.com/grafana/grafana/pkg/services/org"
@@ -1644,7 +1647,7 @@ func TestCountDashboardsInOrgEmbeddedError(t *testing.T) {
 	count, err := service.CountDashboardsInOrg(ctx, 1)
 
 	require.Zero(t, count)
-	require.Equal(t, resource.GetError(failure), err)
+	require.Equal(t, resource.StatusError(failure), err)
 	k8sCliMock.AssertExpectations(t)
 }
 
@@ -1717,15 +1720,56 @@ func TestCountInFolders(t *testing.T) {
 	require.Equal(t, result, int64(2))
 }
 
+func TestSearchDashboardsThroughK8sRawErrors(t *testing.T) {
+	result := &resourcepb.ErrorResult{
+		Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid), Message: "invalid search",
+		Details: &resourcepb.ErrorDetails{
+			Group: "dashboard.grafana.app", Kind: "dashboards", Name: "dashboard", Uid: "uid",
+			Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueInvalid", Field: "query", Message: "invalid value"}},
+		},
+	}
+	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+		want error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: result}, want: resource.StatusError(result)},
+		{name: "grpc nil response", err: grpcStatus.Err(), want: grpcStatus.Err()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("GetNamespace", int64(1)).Return("default").Once()
+			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return req.Page == 2 && req.Limit == 3 && req.Offset == 3
+			})).Return(tc.resp, tc.err).Once()
+			svc := &DashboardServiceImpl{k8sclient: cli}
+			got, err := svc.searchDashboardsThroughK8sRaw(t.Context(), &dashboards.FindPersistedDashboardsQuery{OrgId: 1, Page: 2, Limit: 3})
+			require.Equal(t, tc.want, err)
+			if tc.err != nil {
+				require.Same(t, tc.err, err)
+			} else {
+				require.IsType(t, &apierrors.StatusError{}, err)
+			}
+			require.Empty(t, got.Hits)
+			cli.AssertExpectations(t)
+		})
+	}
+}
+
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
-	t.Run("uses unspecified result format by default", func(t *testing.T) {
+	t.Run("uses field-value results with the requested response fields", func(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+		fields := []string{resource.SEARCH_FIELD_TITLE}
 
-		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1})
+		request, err := service.buildDashboardSearchRequest(&dashboards.FindPersistedDashboardsQuery{OrgId: 1}, fields)
 		require.NoError(t, err)
-		assert.Equal(t, resourcepb.ResourceSearchRequest_UNSPECIFIED, request.ResultFormat)
+		assert.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, request.ResultFormat)
+		assert.Equal(t, fields, request.Fields)
 	})
 
 	t.Run("internal searches request field-value results and accept a legacy response", func(t *testing.T) {
@@ -1758,21 +1802,13 @@ func TestSearchDashboardsThroughK8sRaw(t *testing.T) {
 		k8sCliMock := new(client.MockK8sHandler)
 		service := &DashboardServiceImpl{k8sclient: k8sCliMock}
 		query := &dashboards.FindPersistedDashboardsQuery{
-			OrgId:                1,
-			Sort:                 sort.SortAlphaAsc,
-			UseFieldValueResults: true,
+			OrgId: 1,
+			Sort:  sort.SortAlphaAsc,
 		}
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Search", mock.Anything, mock.Anything, mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
 			return req.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES &&
-				slices.Equal(req.Fields, []string{
-					resource.SEARCH_FIELD_TITLE,
-					resource.SEARCH_FIELD_TAGS,
-					resource.SEARCH_FIELD_FOLDER,
-					resource.SEARCH_FIELD_DESCRIPTION,
-					resource.SEARCH_FIELD_LEGACY_ID,
-					resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
-				}) &&
+				slices.Equal(req.Fields, dashboardsearch.FieldValueIncludeFields) &&
 				len(req.SortBy) == 1 &&
 				// should be converted to "title" due to ParseSortName
 				req.SortBy[0].Field == "title" &&

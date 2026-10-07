@@ -15,16 +15,16 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/services/gcom"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -53,7 +53,7 @@ func withSettleDelay(d time.Duration) func(*KVBackendOptions) {
 	}
 }
 
-func withLogger(l log.Logger) func(*KVBackendOptions) {
+func withLogger(l logging.Logger) func(*KVBackendOptions) {
 	return func(opts *KVBackendOptions) {
 		opts.Log = l
 	}
@@ -99,7 +99,7 @@ func TestNewLeaseHolder(t *testing.T) {
 
 func requireValidLeaseHolderUUID(t *testing.T, holder string) string {
 	t.Helper()
-	uuidLength := len(uuid.Nil.String())
+	uuidLength := len(uuid.Nil().String())
 	require.Greater(t, len(holder), uuidLength+1)
 	separatorIndex := len(holder) - uuidLength - 1
 	require.Equal(t, byte('-'), holder[separatorIndex])
@@ -117,7 +117,36 @@ func TestNewKvStorageBackend(t *testing.T) {
 
 	assert.NotNil(t, backend.eventStore)
 	assert.NotNil(t, backend.notifier)
-	assert.NotNil(t, backend.snowflake)
+	assert.NotNil(t, backend.resourceVersions)
+}
+
+func TestKVStorageBackendListResourceLastImportTimesSkipsMalformedKeys(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	now := time.Now().UTC().Truncate(time.Second)
+	expected := map[NamespacedResource]time.Time{
+		{Namespace: "aaa", Group: "dashboards", Resource: "dashboard"}: now.Add(-time.Minute),
+		{Namespace: "zzz", Group: "dashboards", Resource: "dashboard"}: now,
+	}
+	for key, importedAt := range expected {
+		require.NoError(t, backend.lastImportStore.Save(t.Context(), ResourceLastImportTime{
+			NamespacedResource: key, LastImportTime: importedAt,
+		}))
+	}
+	malformed := []string{"bbb-invalid-key", "yyy-invalid-key"}
+	for _, key := range malformed {
+		writer, err := backend.kv.Save(t.Context(), lastImportTimesSection, key)
+		require.NoError(t, err)
+		_, err = writer.Write([]byte{1})
+		require.NoError(t, err)
+		require.NoError(t, writer.Close())
+	}
+
+	times, err := backend.ListResourceLastImportTimes(t.Context())
+	require.Error(t, err)
+	for _, key := range malformed {
+		require.ErrorContains(t, err, key)
+	}
+	require.Equal(t, expected, times, "valid imports before and after malformed keys are returned")
 }
 
 func TestKVStorageBackendPendingDeleteStoreDefaultsToMainKV(t *testing.T) {
@@ -189,7 +218,7 @@ func TestKVStorageBackendRoutesTenantMetadataToExperimentalKV(t *testing.T) {
 
 	// Reconciling a tenant writes its pending-delete record to the experimental
 	// KV while the resource label update goes through the main backend.
-	previousRV := backend.snowflake.Generate().Int64()
+	previousRV := requireGeneratedResourceVersion(t, backend.resourceVersions)
 	saveTestResource(t, backend.dataStore, testStacksNS1, "apps", "dashboards", "dash1", previousRV, nil)
 	backend.tenantWatcher.handleTenant(t.Context(), pendingDeleteTenant(testStacksNS1, pastTime()))
 
@@ -923,7 +952,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 	}
 
 	t.Run("storage error is logged once and the stream continues", func(t *testing.T) {
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		kvStore := &failingBatchGetKV{KV: setupBadgerKV(t), err: errors.New("storage is down")}
 		backend := setupTestStorageBackend(t, withKV(kvStore), withLogger(logger))
 
@@ -937,7 +966,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 	})
 
 	t.Run("cancellation stops the stream without logging", func(t *testing.T) {
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		backend := setupTestStorageBackend(t, withLogger(logger))
 
 		ctx, cancel := context.WithCancel(t.Context())
@@ -953,7 +982,7 @@ func TestKvStorageBackend_WatchWriteEvents_ReadFailuresAreNotReportedAsMissing(t
 
 	t.Run("an unreadable value is reported once, not also as missing data", func(t *testing.T) {
 		const numEvents = 3
-		logger := &logtest.Fake{}
+		logger := newFakeLogger()
 		kvStore := &unreadableValueKV{
 			KV:        setupBadgerKV(t),
 			nameMatch: "unreadable-1",
@@ -1358,6 +1387,71 @@ func TestKvStorageBackend_ReadResource_DeletedResource(t *testing.T) {
 	require.Equal(t, objectToJSONBytes(t, testObj), response.Value)
 }
 
+func TestKvStorageBackend_BatchReadResource_ReturnsDeletionMarkerWhenIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	testObj, rv1 := createAndWriteTestObject(t, backend)
+	meta, err := utils.MetaAccessor(testObj)
+	require.NoError(t, err)
+	meta.SetFolder("folder-1")
+	rv2, err := writeObject(t, backend, testObj, resourcepb.WatchEvent_DELETED, rv1)
+	require.NoError(t, err)
+
+	key := storageTestKey("test-resource")
+	requests := []*resourcepb.ReadRequest{{Key: key, ResourceVersion: rv2}}
+	regularValues := batchReadResources(t, ctx, backend, requests, false)
+	require.Len(t, regularValues, 1)
+	require.Equal(t, int32(404), regularValues[0].Error.GetCode())
+
+	trashValues := batchReadResources(t, ctx, backend, requests, true)
+	require.Len(t, trashValues, 1)
+	require.Nil(t, trashValues[0].Error)
+	require.Equal(t, rv2, trashValues[0].ResourceVersion)
+	require.Equal(t, "folder-1", trashValues[0].Folder)
+	require.Equal(t, objectToJSONBytes(t, testObj), trashValues[0].Value)
+}
+
+func TestKvStorageBackend_BatchReadResource_MixesLiveAndDeletedResourcesWhenIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+
+	live, liveRV := createAndWriteTestObject(t, backend)
+	deleted := live.DeepCopy()
+	deleted.SetName("deleted-resource")
+	deletedRV, err := writeObject(t, backend, deleted, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+	markerRV, err := writeObject(t, backend, deleted, resourcepb.WatchEvent_DELETED, deletedRV)
+	require.NoError(t, err)
+
+	values := batchReadResources(t, ctx, backend, []*resourcepb.ReadRequest{
+		{Key: storageTestKey("test-resource"), ResourceVersion: liveRV},
+		{Key: storageTestKey("deleted-resource"), ResourceVersion: markerRV},
+	}, true)
+	require.Len(t, values, 2)
+	require.Nil(t, values[0].Error)
+	require.Equal(t, liveRV, values[0].ResourceVersion)
+	require.Equal(t, objectToJSONBytes(t, live), values[0].Value)
+	require.Nil(t, values[1].Error)
+	require.Equal(t, markerRV, values[1].ResourceVersion)
+	require.Equal(t, objectToJSONBytes(t, deleted), values[1].Value)
+}
+
+func TestKvStorageBackend_BatchReadResource_RejectsTooHighResourceVersionWhenDeletedIncluded(t *testing.T) {
+	backend := setupTestStorageBackend(t)
+	ctx := context.Background()
+	_, rv := createAndWriteTestObject(t, backend)
+
+	values := batchReadResources(t, ctx, backend, []*resourcepb.ReadRequest{{
+		Key:             storageTestKey("test-resource"),
+		ResourceVersion: rv + 1000000000000,
+	}}, true)
+	require.Len(t, values, 1)
+	require.NotNil(t, values[0].Error)
+	require.Equal(t, int32(400), values[0].Error.Code)
+	require.Contains(t, values[0].Error.Message, "too large resource version")
+}
+
 func TestKvStorageBackend_ReadResource_TooHighResourceVersion(t *testing.T) {
 	backend := setupTestStorageBackend(t)
 	ctx := context.Background()
@@ -1395,7 +1489,7 @@ func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T)
 	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{
 		{Key: key},
 		{Key: key, ResourceVersion: rv + 1000000000000},
-	})
+	}, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 2)
@@ -1415,7 +1509,7 @@ func TestKvStorageBackend_BatchReadResource_LatestResourceVersionFailureIsUpfron
 	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{{
 		Key:             appsKey("test-resource"),
 		ResourceVersion: rv,
-	}})
+	}}, false)
 
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, responses)
@@ -1436,7 +1530,7 @@ func TestKvStorageBackend_BatchReadResource_YieldsInRequestOrder(t *testing.T) {
 	}
 	requests[0], requests[2] = requests[2], requests[0]
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, len(requests))
@@ -1459,7 +1553,7 @@ func TestKvStorageBackend_BatchReadResource_InvalidName(t *testing.T) {
 		{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "a"}},
 		{Key: invalidKey, ResourceVersion: rv + 1000000000000},
 	}
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 3)
@@ -1492,7 +1586,7 @@ func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(
 		})
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	const wanted = 3
 	read := 0
@@ -1525,7 +1619,7 @@ func TestKvStorageBackend_BatchReadResource_MissingBodyKeepsPosition(t *testing.
 		})
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 3)
@@ -1548,7 +1642,7 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 		{Key: appsKey("after"), ResourceVersion: seedResource(t, backend, t.Context(), "after", "")},
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests)
+	responses, err := backend.BatchReadResource(t.Context(), requests, false)
 	require.NoError(t, err)
 	for response := range responses {
 		require.Equal(t, int32(http.StatusNotFound), response.Error.Code)
@@ -1597,7 +1691,7 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 				folders = append(folders, folder)
 			}
 
-			responses, err := backend.BatchReadResource(t.Context(), requests)
+			responses, err := backend.BatchReadResource(t.Context(), requests, false)
 			require.NoError(t, err)
 			got := collectBatchReadResponses(t, responses)
 			require.Len(t, got, tc.firstError+1)
@@ -1617,7 +1711,7 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 }
 
 func TestUnimplementedStorageBackend_BatchReadResourceReturnsUnsupportedUpFront(t *testing.T) {
-	responses, err := (UnimplementedStorageBackend{}).BatchReadResource(t.Context(), nil)
+	responses, err := (UnimplementedStorageBackend{}).BatchReadResource(t.Context(), nil, false)
 	require.ErrorIs(t, err, ErrBatchReadUnsupported)
 	require.Nil(t, responses)
 }
@@ -1629,6 +1723,17 @@ func collectBatchReadResponses(t *testing.T, responses iter.Seq[*BackendReadResp
 		got = append(got, response)
 	}
 	return got
+}
+
+func batchReadResources(t *testing.T, ctx context.Context, backend StorageBackend, requests []*resourcepb.ReadRequest, includeDeleted bool) []*BackendReadResponse {
+	t.Helper()
+	responses, err := backend.BatchReadResource(ctx, requests, includeDeleted)
+	require.NoError(t, err)
+	return collectBatchReadResponses(t, responses)
+}
+
+func storageTestKey(name string) *resourcepb.ResourceKey {
+	return &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name}
 }
 
 type bodyReadCountingKV struct {
@@ -3666,7 +3771,6 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		// Create defaultPrunerHistoryLimit deleted events by repeatedly deleting and recreating the resource
 		// This will create: 1 initial ADDED + defaultPrunerHistoryLimit cycles of (DELETE + ADDED)
 		// = 1 + 20 + 20 = 41 total events (21 ADDED + 20 DELETED)
-		// Multiple deleted events for a resource shouldn't happen - this is just to ensure the pruner won't remove deleted events
 		previousRV := rv1
 		for i := range defaultPrunerHistoryLimit {
 			testObj.Object["spec"].(map[string]any)["value"] = fmt.Sprintf("delete-%d", i)
@@ -3703,9 +3807,8 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 		err = backend.pruneEvents(ctx, pruningKey)
 		require.NoError(t, err)
 
-		// Assert all deleted events exist (20) + the most recent 20 non-deleted events
-		// Pruner should keep: all 20 DELETED + 20 most recent non-deleted = 40 total
-		// The oldest non-deleted event (initial ADDED) should be pruned
+		// Every incarnation has a single non-deleted revision, so each stays
+		// within its own retention budget and remains available with its delete.
 		counter := 0
 		deletedCount := 0
 		for datakey, err := range backend.dataStore.Keys(ctx, ListRequestKey{
@@ -3721,7 +3824,7 @@ func TestKvStorageBackend_PruneEvents(t *testing.T) {
 			counter++
 		}
 		require.Equal(t, defaultPrunerHistoryLimit, deletedCount, "All deleted events should be kept")
-		require.Equal(t, defaultPrunerHistoryLimit*2, counter, "Should have 20 deleted + 20 non-deleted events")
+		require.Equal(t, defaultPrunerHistoryLimit*2+1, counter, "Should retain all 20 deleted and 21 non-deleted revisions")
 	})
 
 	t.Run("will prune oldest events for cluster-scoped resources", func(t *testing.T) {
@@ -4822,7 +4925,7 @@ func TestListModifiedSinceSingleConnection(t *testing.T) {
 			backend := &kvStorageBackend{
 				dataStore:  newDataStore(store, nil),
 				eventStore: newEventStore(store),
-				log:        log.NewNopLogger(),
+				log:        &logging.NoOpLogger{},
 			}
 			since := snowflakeFromTime(time.Now().Add(-age))
 			// Cross a page boundary to exercise continuation in both scan directions.
