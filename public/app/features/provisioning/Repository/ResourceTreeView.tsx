@@ -53,6 +53,7 @@ function getGrafanaLink(item: TreeItem) {
   return undefined;
 }
 
+// TODO fcai: tree view of status
 export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
   const styles = useStyles2(getStyles);
   const name = repo.metadata?.name ?? '';
@@ -178,6 +179,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
         header: t('provisioning.resource-tree.header-status', 'Status'),
         cell: ({ row: { original } }: TreeCell) => {
           const category = getStatusCategory(original.item, provisioningFolderMetadataEnabled);
+          // Where we calculate status
           if (category === 'warning') {
             return (
               <Tooltip
@@ -196,7 +198,7 @@ export function ResourceTreeView({ repo }: ResourceTreeViewProps) {
           }
           return (
             <Icon
-              name={category === 'synced' ? 'check-circle' : 'sync'}
+              name={category === 'synced' ? 'sync' : 'check-circle'}
               className={category === 'synced' ? styles.syncedIcon : undefined}
               title={
                 category === 'synced'

@@ -1161,6 +1161,35 @@ func (DeletionStatus) OpenAPIModelName() string {
 	return OpenAPIPrefix + "DeletionStatus"
 }
 
+// ResourceSyncIssue describes a single categorized error or warning encountered
+// while processing one file/resource during a job.
+// SyncIssueReason is a machine-readable category for a ResourceSyncIssue.
+// Shares its vocabulary with the PullStatus/Quota condition ReasonX constants
+// (e.g. ReasonQuotaExceeded, ReasonResourceInvalid) declared in health.go,
+// since those already enumerate the same underlying error taxonomy.
+// +enum
+type SyncIssueReason string
+
+func (SyncIssueReason) OpenAPIModelName() string {
+	return OpenAPIPrefix + "SyncIssueReason"
+}
+
+type ResourceSyncIssue struct {
+	// Reason is a machine-readable category for this issue (see the ReasonX
+	// constants). Empty when the underlying error has no classifier.
+	Reason SyncIssueReason `json:"reason,omitempty"`
+
+	// Message is a human-readable, actionable description of the issue.
+	Message string `json:"message"`
+
+	// Path is the repository file path this issue applies to, when known.
+	Path string `json:"path,omitempty"`
+}
+
+func (ResourceSyncIssue) OpenAPIModelName() string {
+	return OpenAPIPrefix + "ResourceSyncIssue"
+}
+
 // HistoryList is a list of versions of a resource
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type HistoryList struct {
