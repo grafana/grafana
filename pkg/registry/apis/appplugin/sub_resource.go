@@ -25,7 +25,7 @@ type subResourceREST struct {
 	contextProvider func(ctx context.Context) (context.Context, backend.PluginContext, error)
 }
 
-var _ = rest.Connecter(&subResourceREST{})
+var _ rest.Connecter = (*subResourceREST)(nil)
 
 func (r *subResourceREST) New() runtime.Object {
 	return &metav1.Status{}

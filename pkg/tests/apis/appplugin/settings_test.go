@@ -42,21 +42,25 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationAppPluginSettings(t *testing.T) {
-	testIntegrationAppPluginSettings(t)
+	testIntegrationAppPluginSettings(t, "")
 }
 
 func TestIntegrationAppPluginSettingsWithRouter(t *testing.T) {
-	testIntegrationAppPluginSettings(t, featuremgmt.FlagGrafanaUseRouterMiddleware)
+	testIntegrationAppPluginSettings(t, "", featuremgmt.FlagGrafanaUseRouterMiddleware)
 }
 
-func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
+func TestIntegrationAppPluginSettingsWithManifestRouter(t *testing.T) {
+	testIntegrationAppPluginSettings(t, "app-sdk-manifest.json", featuremgmt.FlagGrafanaUseRouterMiddleware)
+}
+
+func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, features ...string) {
 	t.Helper()
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode2, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
-			helper := setupHelper(t, mode, features...)
+			helper := setupHelperFull(t, mode, manifestFile, features...)
 			ctx := context.Background()
 
 			client := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -352,17 +356,16 @@ func testIntegrationAppPluginSettings(t *testing.T, features ...string) {
 	}
 }
 
-func setupHelper(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, false, extraFeatures...)
-}
-
 // setupHelperWithManifest installs and enables the test app manifest.
 func setupHelperWithManifest(t *testing.T, mode rest.DualWriterMode, extraFeatures ...string) *apis.K8sTestHelper {
-	return setupHelperFull(t, mode, true, extraFeatures...)
+	return setupHelperFull(t, mode, "app-sdk-manifest.json", extraFeatures...)
 }
 
-func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, extraFeatures ...string) *apis.K8sTestHelper {
+// setupHelperFull installs the test app with the named testdata manifest, or
+// with no manifest when manifestFile is empty.
+func setupHelperFull(t *testing.T, mode rest.DualWriterMode, manifestFile string, extraFeatures ...string) *apis.K8sTestHelper {
 	t.Helper()
+	withManifest := manifestFile != ""
 
 	features := slices.Clone(extraFeatures)
 	if !slices.Contains(features, featuremgmt.FlagGrafanaUseRouterMiddleware) {
@@ -372,20 +375,13 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, 
 		}
 	}
 
-	// The settings resource moves to the manifest group along with the rest of
-	// the plugin's API, and the storage config is keyed by <resource>.<group>.
-	storageGroup := testAppID
-	if withManifest {
-		storageGroup = testAppGroup
-	}
-
 	baseOpts := testinfra.GrafanaOpts{
 		DisableAnonymous:                 true,
 		OpenFeatureAPIEnabled:            true,
 		SecretsManagerEnableDBMigrations: true,
 		EnableFeatureToggles:             features,
 		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			fmt.Sprintf("app.%s", storageGroup): {
+			fmt.Sprintf("app.%s", testAppID): {
 				DualWriterMode: mode,
 			},
 		},
@@ -404,7 +400,7 @@ func setupHelperFull(t *testing.T, mode rest.DualWriterMode, withManifest bool, 
 	require.NoError(t, grafanafs.CopyRecursive(testAppSrc, testAppDst))
 
 	if withManifest {
-		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", "app-sdk-manifest.json")
+		manifestSrc := filepath.Join(filepath.Dir(thisFile), "testdata", manifestFile)
 		require.NoError(t, grafanafs.CopyFile(manifestSrc, filepath.Join(testAppDst, "app-sdk-manifest.json")))
 	}
 

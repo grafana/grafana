@@ -76,7 +76,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane, previousState } = useSceneObjectState(sidebar, {
+  const { selectionContext, openPane, previousState, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
 
@@ -92,7 +92,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane),
+    hasOpenPane: Boolean(openPane) || Boolean(isLoading),
     contentMargin: 1,
     position: 'right',
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
@@ -286,6 +286,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     bodyWrapperKiosk: css({
+      flex: 1,
       padding: theme.spacing(0, 2, 2, 2),
     }),
     scrollContainer: css({

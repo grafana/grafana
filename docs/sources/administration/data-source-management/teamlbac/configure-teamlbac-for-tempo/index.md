@@ -1,5 +1,4 @@
 ---
-title: 'Configure Team LBAC for Tempo or Cloud Traces'
 description: 'Use label-based access control (LBAC) to restrict Cloud Traces data by team and attribute rules.'
 keywords:
   - tempo
@@ -41,9 +40,13 @@ Multiple conditions in the same rule use **AND** (`,`), while multiple rules acr
 
 ## Before you begin
 
-- Be sure that you have the permission setup to create a Tempo or Cloud Traces tenant in Grafana Cloud.
-- Be sure that you have administrator permissions for Grafana.
-- Be sure that you have a team setup in Grafana.
+To use team LBAC for Tempo or Cloud Traces, you need to have the following:
+
+- The permission setup to create a Tempo or Cloud Traces tenant in Grafana Cloud
+- Administrator permissions for Grafana
+- A team setup in Grafana
+
+Team LBAC works with Grafana Cloud and Grafana Enterprise v12.3 and later when the data source uses Grafana Cloud Traces. It doesn't work with self-hosted Tempo OSS or Grafana Enterprise Traces (GET).
 
 ### Known limitations
 
@@ -68,7 +71,9 @@ Follow this workflow when adding a new data source. The data source must be host
 6. Navigate back to the Tempo or Cloud Traces data source.
    - Set up the Tempo or Cloud Traces data source using basic authentication. Use the [userID/tenantID](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/) as the username. Use the token from your access policy as the password.
    - Select **Save and connect**.
+   - After a successful connection test, the data source is ready to use.
 7. Go to the **Permissions** tab of the newly created Tempo or Cloud Traces data source. Here, you find the LBAC for data sources rules section.
+   The **Data access** section shows the LBAC rules UI for the selected data source.
 
 8. Choose a team from the **Team** dropdown.
 9. Enter attribute selectors such as:
@@ -80,11 +85,11 @@ Follow this workflow when adding a new data source. The data source must be host
    Refer to the Examples section below for more examples.
 
 10. Select **Save**.
+    The rule appears under the team's attribute filters. Team members see only spans matching the rule in Explore search and metrics.
 
 ### Examples of LBAC rules
 
-An LBAC rule is a `logql` query that filters logs or metrics based on labels.
-LBAC rules for traces also use some TraceQL syntax for attribute selection.
+LBAC rules for traces use TraceQL attribute selector syntax.
 Each rule operates independently as its own filter, separate from other rules within a team.
 
 LBAC rules guidelines:
@@ -93,6 +98,7 @@ LBAC rules guidelines:
 - Only string values are supported.
 - Use double quotes for string values, for example: `{ resource.env="prod" }`.
 - You can use regular expressions matching with `=~` operator, for example: `{ resource.team =~ "team-a|team-b" }`.
+- If you use negation (`!=` or `!~`), refer to [Troubleshoot missing service traces](#troubleshoot-missing-service-traces). TraceQL negation behaves differently from PromQL when an attribute is missing.
 - You can have up to two conditions in the same rule using a comma (`,`) as an `AND` operator, for example: `{ resource.env="prod", resource.team="frontend" }`.
 
 Refer to [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/next/administration/data-source-management/teamlbac/create-teamlbac-rules/) for more information.
@@ -159,6 +165,42 @@ If any span in a requested trace does not match the LBAC policy, the entire requ
 
 For Search, metrics, and autocomplete endpoints, only spans matching the LBAC rules appear regardless of the configured redaction mode.
 
+## Troubleshoot missing service traces
+
+If a team can't see traces from a service you expect, a negation rule combined with a missing attribute may be excluding those spans.
+
+If you're familiar with PromQL label matching, TraceQL attribute selectors behave differently for negation.
+
+In PromQL, `labelFoo != "abc"` matches series that don't have `labelFoo` or have a value other than `"abc"`.
+In TraceQL, `resource.attr != "abc"` and `resource.attr !~ "abc"` match only spans that **have** `resource.attr` and whose value matches the condition.
+Spans that don't include that attribute aren't returned.
+
+This difference matters when you combine attributes in one rule with `,` (AND).
+For example, this rule matches only spans from `checkout-api` that also have the `resource.k8s.namespace.name` attribute.
+Services such as `checkout-api` that don't set `resource.k8s.namespace.name` won't match, even if you want to include them.
+
+```
+{ resource.service.name="checkout-api", resource.k8s.namespace.name !~ "prod-main" }
+```
+
+To include services that don't set the attribute, add a separate rule for each service.
+Multiple rules for a team combine with **OR**:
+
+```
+{ resource.service.name="checkout-api", resource.k8s.namespace.name !~ "prod-main" }
+{ resource.service.name="checkout-api" }
+```
+
+Add similar OR rules for other services that don't set the namespace attribute.
+
+To find services that don't set an attribute, run this query in Grafana Explore:
+
+```
+{ resource.k8s.namespace.name = nil } | rate() by (resource.service.name)
+```
+
+This query returns services that don't have `resource.k8s.namespace.name` set.
+
 ## Manage LBAC rules
 
 To edit an existing LBAC rule, follow these steps:
@@ -172,10 +214,16 @@ To edit an existing LBAC rule, follow these steps:
 
 To delete an existing LBAC rule, follow these steps:
 
-Open your stack and select your **Tempo** or **Cloud Traces** data source.
+1. Open your stack and select your **Tempo** or **Cloud Traces** data source.
+2. Select **Permissions**.
+3. Scroll to **Data access**.
+4. Select the rule you want to delete.
+5. Select the **X** (Delete) icon.
+6. Confirm deletion.
 
-1. Select **Permissions**.
-2. Scroll to **Data access**.
-3. Select the rule you want to edit.
-4. Select the **X** (Delete) icon.
-5. Confirm deletion.
+## Next steps
+
+- Refer to [Label Based Access Control (LBAC) for data sources](../_index/) for an overview and supported data sources.
+- Refer to [Create LBAC for data sources rules for a supported data source](../create-teamlbac-rules/) for rule-creation reference.
+- Refer to [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/) for attribute selector syntax, including `!=`, `!~`, and `= nil`.
+- Refer to [Search traces using the query builder](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/) to run the diagnostic query in Explore.

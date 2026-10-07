@@ -1,10 +1,69 @@
 package options
 
 import (
+	"context"
+	"net"
+	"net/http"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+type retryTestStorageServer struct {
+	resourcepb.UnimplementedResourceStoreServer
+	failure  error
+	attempts atomic.Int32
+}
+
+func (s *retryTestStorageServer) Update(context.Context, *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
+	if s.attempts.Add(1) == 1 {
+		return nil, s.failure
+	}
+	return &resourcepb.UpdateResponse{}, nil
+}
+
+func TestStorageOptionsRetryCodes(t *testing.T) {
+	for _, code := range []codes.Code{codes.Aborted, codes.Unavailable, codes.ResourceExhausted, codes.InvalidArgument} {
+		t.Run(code.String(), func(t *testing.T) {
+			st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+			require.NoError(t, err)
+			srv := &retryTestStorageServer{failure: st.Err()}
+			listener := bufconn.Listen(1024 * 1024)
+			t.Cleanup(func() { require.NoError(t, listener.Close()) })
+			server := grpc.NewServer()
+			resourcepb.RegisterResourceStoreServer(server, srv)
+			t.Cleanup(server.Stop)
+			go func() { _ = server.Serve(listener) }()
+
+			opts := NewStorageOptions().buildGrpcDialOptions()
+			opts = append(opts, grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+				return listener.DialContext(ctx)
+			}))
+			conn, err := grpc.NewClient("passthrough:///storage", opts...)
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, conn.Close()) })
+			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+			defer cancel()
+			_, err = resourcepb.NewResourceStoreClient(conn).Update(ctx, &resourcepb.UpdateRequest{})
+			if code == codes.Unavailable || code == codes.ResourceExhausted {
+				require.NoError(t, err)
+				require.Equal(t, int32(2), srv.attempts.Load())
+			} else {
+				require.Equal(t, int32(1), srv.attempts.Load())
+				require.Equal(t, st.Proto(), status.Convert(err).Proto())
+			}
+		})
+	}
+}
 
 func TestStorageOptions_Validate(t *testing.T) {
 	tests := []struct {

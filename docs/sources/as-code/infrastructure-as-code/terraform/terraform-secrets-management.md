@@ -10,14 +10,13 @@ labels:
   products:
     - cloud
   stage: general-availability
-menuTitle: Provision with Terraform
-title: Use Terraform to provision secure values
+title: Manage secrets in Grafana Cloud using Terraform
 weight: 130
 review_date: '2026-09-14'
 canonical: https://grafana.com/docs/grafana/latest/as-code/infrastructure-as-code/terraform/terraform-secrets-management/
 ---
 
-# Use Terraform to provision secure values
+# Manage secrets in Grafana Cloud using Terraform
 
 Use the Terraform Grafana provider to create and manage secure values in [Grafana Secrets Management](https://grafana.com/docs/grafana-cloud/platform/security-and-account-management/security-and-access/manage-secrets/) as code.
 With Terraform, you keep secrets such as API keys, tokens, passwords, and certificates in version-controlled, declarative infrastructure alongside the rest of your Grafana stack.

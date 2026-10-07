@@ -34,14 +34,112 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "datasources:query", action)
 
-		// The group exposes both the datasources resource and its query subresource.
+		// The group exposes the datasources resource plus its query and caching subresources.
 		all := reg.GetAll(group)
-		require.Len(t, all, 2)
+		require.Len(t, all, 3)
 	}
 
 	// Security: wildcard-matched group must not resolve to resources from other groups
 	_, ok := reg.Get("loki.datasource.grafana.app", "dashboards", "")
 	assert.False(t, ok, "Get(datasource group, \"dashboards\") must not return a mapping")
+}
+
+// Unified storage stores every datasource type under datasource.grafana.app, so
+// storage checks must resolve to the same permissions as the per-plugin groups.
+func TestMapperRegistry_DatasourceSharedGroup(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	for _, subresource := range []string{"", "query", "caching"} {
+		shared, ok := reg.Get("datasource.grafana.app", "datasources", subresource)
+		require.True(t, ok)
+		plugin, ok := reg.Get("loki.datasource.grafana.app", "datasources", subresource)
+		require.True(t, ok)
+
+		assert.Equal(t, plugin.Prefix(), shared.Prefix())
+		for _, verb := range []string{
+			utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbCreate, utils.VerbUpdate,
+			utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+		} {
+			sharedAction, sharedOK := shared.Action(verb)
+			pluginAction, pluginOK := plugin.Action(verb)
+			assert.Equal(t, pluginOK, sharedOK, "subresource %q, verb %q", subresource, verb)
+			assert.Equal(t, pluginAction, sharedAction, "subresource %q, verb %q", subresource, verb)
+			assert.Equal(t, plugin.ActionSets(verb), shared.ActionSets(verb), "subresource %q, verb %q", subresource, verb)
+		}
+	}
+
+	query, ok := reg.Get("datasource.grafana.app", "query", "")
+	require.True(t, ok)
+	action, ok := query.Action(utils.VerbCreate)
+	require.True(t, ok)
+	assert.Equal(t, "datasources:query", action)
+}
+
+// App plugin settings are stored as plugins.grafana.app/app/{pluginID}, so the
+// name resolves to the legacy plugins:id:{pluginID} scope.
+func TestMapperRegistry_AppSettings(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("plugins.grafana.app", "app", "")
+	require.True(t, ok)
+	assert.Equal(t, "plugins:id:grafana-lokiexplore-app", mapping.Scope("grafana-lokiexplore-app"))
+
+	for verb, expected := range map[string]string{
+		utils.VerbGet:    "plugins.app:access",
+		utils.VerbList:   "plugins.app:access",
+		utils.VerbUpdate: "plugins:write",
+		utils.VerbDelete: "plugins:write",
+	} {
+		action, ok := mapping.Action(verb)
+		require.True(t, ok, "verb %q", verb)
+		assert.Equal(t, expected, action, "verb %q", verb)
+	}
+}
+
+func TestMapperRegistry_DatasourceCachingSubresource(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	for _, group := range []string{"datasource.grafana.app", "prometheus.datasource.grafana.app", "loki.datasource.grafana.app"} {
+		mapping, ok := reg.Get(group, "datasources", "caching")
+		require.True(t, ok, "Get(%q, \"datasources\", \"caching\") should find mapping", group)
+		require.NotNil(t, mapping)
+
+		assert.Equal(t, "datasources:uid:", mapping.Prefix())
+
+		for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch} {
+			action, ok := mapping.Action(verb)
+			require.True(t, ok, "verb %q should map", verb)
+			assert.Equal(t, "datasources.caching:read", action, "verb %q", verb)
+		}
+
+		for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+			action, ok := mapping.Action(verb)
+			require.True(t, ok, "verb %q should map", verb)
+			assert.Equal(t, "datasources.caching:write", action, "verb %q", verb)
+		}
+	}
+
+	_, ok := reg.Get("dashboard.grafana.app", "datasources", "caching")
+	assert.False(t, ok, "caching subresource must not resolve outside the datasource groups")
+}
+
+// Mapping :edit or :query here would grant caching to users who lack it.
+func TestMapperRegistry_DatasourceCachingActionSets(t *testing.T) {
+	reg := NewMapperRegistry()
+
+	mapping, ok := reg.Get("prometheus.datasource.grafana.app", "datasources", "caching")
+	require.True(t, ok)
+
+	allVerbs := []string{
+		utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbCreate,
+		utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection,
+	}
+	for _, verb := range allVerbs {
+		sets := mapping.ActionSets(verb)
+		require.NotEmpty(t, sets, "verb %q must map to an action set", verb)
+		assert.Equal(t, []string{"datasources:admin"}, sets,
+			"verb %q: only datasources:admin carries the caching actions", verb)
+	}
 }
 
 // TestMapperRegistry_Playlist verifies playlists map to their real two-action model

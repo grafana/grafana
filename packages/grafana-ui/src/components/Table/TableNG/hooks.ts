@@ -37,6 +37,8 @@ import {
   CELL_HORIZONTAL_CHROME,
   FIRST_COLUMN_EXTRA_PADDING,
   getPaginationChromeHeight,
+  NESTED_TABLE_VERTICAL_PADDING,
+  REFRESHED_NESTED_TABLE_VERTICAL_PADDING,
   SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
@@ -51,6 +53,7 @@ import {
   type TableSortByFieldState,
   type TableSummaryRow,
   type TypographyCtx,
+  type TextWrapFallback,
 } from './types';
 import {
   getDisplayName,
@@ -186,6 +189,7 @@ export function useNotifyDisplayedRowIndices(
 }
 
 export interface PaginatedRowsOptions {
+  tableRefreshEnabled?: boolean;
   height: number;
   width: number;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -224,6 +228,7 @@ export function usePaginatedRows(
     hasNestedFrames,
     pageSize,
     noPanelPadding,
+    tableRefreshEnabled = false,
   }: PaginatedRowsOptions
 ): PaginatedRowsResult {
   // TODO: allow persisted page selection via url
@@ -280,7 +285,9 @@ export function usePaginatedRows(
       // ensure at least one row per page so a fractional size in (0, 1) doesn't floor to 0
       rowsPerPage = Math.max(1, Math.floor(pageSize));
     } else {
-      const rowAreaHeight = height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding);
+      const frameHeight = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+      const rowAreaHeight =
+        height - headerHeight - footerHeight - getPaginationChromeHeight(noPanelPadding) - frameHeight;
       const heightPerRow = Math.floor(rowAreaHeight / (avgRowHeight || 1));
       // ensure at least one row per page is displayed
       rowsPerPage = heightPerRow > 1 ? heightPerRow : 1;
@@ -300,7 +307,18 @@ export function usePaginatedRows(
       pageRangeStart,
       pageRangeEnd,
     };
-  }, [height, headerHeight, footerHeight, avgRowHeight, enabled, numRows, page, pageSize, noPanelPadding]);
+  }, [
+    height,
+    headerHeight,
+    footerHeight,
+    avgRowHeight,
+    enabled,
+    numRows,
+    page,
+    pageSize,
+    noPanelPadding,
+    tableRefreshEnabled,
+  ]);
 
   // safeguard against page overflow on panel resize or other factors
   useLayoutEffect(() => {
@@ -402,6 +420,8 @@ export const useNestedRows = (
 };
 
 interface UseHeaderHeightOptions {
+  hasAssistantAction?: boolean;
+  lastColumnExtraPadding?: number;
   enabled: boolean;
   fields: Field[];
   columnWidths: number[];
@@ -427,6 +447,8 @@ export function useHeaderHeight({
   noPanelPadding = false,
   tableRefreshEnabled = false,
   filter,
+  lastColumnExtraPadding = 0,
+  hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
   const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
@@ -440,6 +462,9 @@ export function useHeaderHeight({
 
         const field = fields[idx];
         let width = c - CELL_HORIZONTAL_CHROME;
+        if (idx === fields.length - 1) {
+          width -= lastColumnExtraPadding;
+        }
         if (noPanelPadding && idx === 0) {
           width -= FIRST_COLUMN_EXTRA_PADDING;
         }
@@ -447,10 +472,20 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          hasAssistantAction,
         });
         return Math.floor(width);
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys]
+    [
+      fields,
+      columnWidths,
+      showTypeIcons,
+      noPanelPadding,
+      tableRefreshEnabled,
+      filteredKeys,
+      lastColumnExtraPadding,
+      hasAssistantAction,
+    ]
   );
 
   const headerHeight = useMemo(() => {
@@ -472,7 +507,52 @@ export function useHeaderHeight({
   return headerHeight;
 }
 
+export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
+  // A new result may contain only short values despite having the same schema or value buffers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const epoch = useMemo(() => ({ disabled: new Set<string>(), pending: new Set<string>() }), [data]);
+  const [version, setVersion] = useState(0);
+
+  // Height callbacks run inside the grid's render, after columns have already been built. Collect
+  // discoveries without updating another component during render, then repair all heights and
+  // column styles together before paint. Finishing the scan batches discoveries across columns.
+  // Check every commit: pagination and expansion can expose new values without changing fields.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (epoch.pending.size > 0) {
+      for (const name of epoch.pending) {
+        epoch.disabled.add(name);
+      }
+      epoch.pending.clear();
+      setVersion((value) => value + 1);
+    }
+  });
+
+  return useMemo(
+    () => ({
+      disabledFields: new Set(epoch.disabled),
+      shouldDisable: (field: Field, value: unknown) => {
+        const name = getDisplayName(field);
+        if (epoch.disabled.has(name) || epoch.pending.has(name)) {
+          return true;
+        }
+        if (value != null && String(value).length > TABLE.MAX_WRAP_TEXT_LENGTH) {
+          epoch.pending.add(name);
+          return true;
+        }
+        return false;
+      },
+    }),
+    // version publishes discoveries as a new immutable snapshot and invalidates height caches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [epoch, version]
+  );
+}
+
 interface UseRowHeightOptions {
+  wrapFallback?: TextWrapFallback;
+  nestedWrapFallback?: TextWrapFallback;
+  lastColumnExtraPadding?: number;
   columnWidths: number[];
   fields: Field[];
   hasNestedFrames: boolean;
@@ -486,13 +566,22 @@ interface UseRowHeightOptions {
   nestedFields: Field[];
   nestedColWidths: number[];
   nestedFooterHeight?: number;
+  tableRefreshEnabled?: boolean;
 }
 
-const getTrueColWidths = (cw: number[], noPanelPadding = false): number[] =>
-  cw.map((c, i) => c - CELL_HORIZONTAL_CHROME - (noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0));
+const getTrueColWidths = (cw: number[], noPanelPadding = false, lastColumnExtraPadding = 0): number[] =>
+  cw.map(
+    (c, i) =>
+      c -
+      CELL_HORIZONTAL_CHROME -
+      (noPanelPadding && i === 0 ? FIRST_COLUMN_EXTRA_PADDING : 0) -
+      (i === cw.length - 1 ? lastColumnExtraPadding : 0)
+  );
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
+  wrapFallback,
+  nestedWrapFallback,
   columnWidths,
   fields,
   defaultHeight,
@@ -506,12 +595,15 @@ export function useRowHeight({
   nestedColWidths,
   visibleNestedRowCounts,
   nestedFooterHeight = 0,
+  lastColumnExtraPadding = 0,
+  tableRefreshEnabled = false,
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight),
-    [nestedFields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight, nestedWrapFallback),
+    [nestedFields, typographyCtx, maxHeight, theme, nestedWrapFallback]
   );
+  const hasWrappedNestedCols = (nestedMeasurers?.length ?? 0) > 0;
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
   const totalNestedWidth = useMemo(() => nestedColWidths.reduce((acc, width) => acc + width, 0), [nestedColWidths]);
@@ -556,8 +648,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
-    [fields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight, wrapFallback),
+    [fields, typographyCtx, maxHeight, theme, wrapFallback]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -570,7 +662,7 @@ export function useRowHeight({
       return () => defaultHeight;
     }
 
-    const trueColWidths = getTrueColWidths(columnWidths);
+    const trueColWidths = getTrueColWidths(columnWidths, false, lastColumnExtraPadding);
     const cache: Array<number | undefined> = Array(fields[0].values.length);
     return (row: TableRow) => {
       let result = cache[row.__index];
@@ -579,7 +671,7 @@ export function useRowHeight({
       }
       return result;
     };
-  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols]);
+  }, [fields, columnWidths, defaultHeight, measurers, hasWrappedCols, lastColumnExtraPadding]);
 
   const rowHeight = useMemo(() => {
     // row height is only complicated when there are nested frames or wrapped columns.
@@ -606,12 +698,16 @@ export function useRowHeight({
         }
 
         const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultNestedHeight;
-        const nestedRowsHeight = nestedRows[row.__index].final.reduce(
-          (acc, row) => acc + getNestedRowHeightWithCache(row),
-          0
-        );
+        const nestedRowsHeight = hasWrappedNestedCols
+          ? nestedRows[row.__index].final.reduce((acc, row) => acc + getNestedRowHeightWithCache(row), 0)
+          : nestedRows[row.__index].final.length * defaultNestedHeight;
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
-        return nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + TABLE.CELL_PADDING * 2 + scrollbarHeight;
+        const nestedTableVerticalPadding = tableRefreshEnabled
+          ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING
+          : NESTED_TABLE_VERTICAL_PADDING;
+        return (
+          nestedRowsHeight + nestedHeaderHeight + nestedFooterHeight + nestedTableVerticalPadding + scrollbarHeight
+        );
       }
 
       return row.__parentIndex != null ? getNestedRowHeightWithCache(row) : getRowHeightWithCache(row);
@@ -623,10 +719,12 @@ export function useRowHeight({
     defaultNestedHeight,
     hasNestedFrames,
     hasWrappedCols,
+    hasWrappedNestedCols,
     nestedFooterHeight,
     nestedHasOverflow,
     nestedRows,
     nestedData,
+    tableRefreshEnabled,
     visibleNestedRowCounts,
   ]);
 
@@ -634,6 +732,7 @@ export function useRowHeight({
 }
 
 interface UseFlatRowHeightOptions {
+  wrapFallback?: TextWrapFallback;
   columnWidths: number[];
   fields: Field[];
   defaultHeight: NonNullable<CSSProperties['height']>;
@@ -647,6 +746,7 @@ interface UseFlatRowHeightOptions {
  * Unlike `useRowHeight`, this does not handle nested frame rows.
  */
 export function useFlatRowHeight({
+  wrapFallback,
   columnWidths,
   fields,
   defaultHeight,
@@ -656,8 +756,8 @@ export function useFlatRowHeight({
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
-    [fields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight, wrapFallback),
+    [fields, typographyCtx, maxHeight, theme, wrapFallback]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -763,27 +863,24 @@ export function useColumnResize(
 export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
-  const updateScrollbarDimensions = debounce(() => {
-    const el = ref.current?.element;
-    if (el) {
-      setScrollbarWidth(el!.offsetWidth - el!.clientWidth);
-    }
-  }, 150);
-
   useLayoutEffect(() => {
     const el = ref.current?.element;
     if (!el || IS_SAFARI_26) {
       return;
     }
 
-    updateScrollbarDimensions();
+    const measureScrollbarWidth = () => setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    // Reserve scrollbar space before paint; debouncing this first read makes the columns jump.
+    measureScrollbarWidth();
 
+    const updateScrollbarDimensions = debounce(measureScrollbarWidth, 150);
     const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
     resizeObserver.observe(el);
     return () => {
       resizeObserver.disconnect();
+      updateScrollbarDimensions.cancel();
     };
-  }, [ref, height, updateScrollbarDimensions]);
+  }, [ref, height]);
 
   return scrollbarWidth;
 }
@@ -921,6 +1018,7 @@ export function useHeaderTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
 }
 
 interface UseContentAwareWidthsOptions {
+  hasAssistantAction?: boolean;
   enabled: boolean;
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
@@ -947,6 +1045,7 @@ export function useContentAwareWidths({
   filter,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
+  hasAssistantAction = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
@@ -956,6 +1055,7 @@ export function useContentAwareWidths({
         ? {
             typographyCtx,
             headerTypographyCtx,
+            hasAssistantAction,
             theme,
             showTypeIcons,
             hasHeader,
@@ -970,6 +1070,7 @@ export function useContentAwareWidths({
       enabled,
       typographyCtx,
       headerTypographyCtx,
+      hasAssistantAction,
       showTypeIcons,
       hasHeader,
       getActions,

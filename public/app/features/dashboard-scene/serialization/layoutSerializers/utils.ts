@@ -40,8 +40,8 @@ import { VizPanelSubHeader } from '../../scene/VizPanelSubHeader';
 import { type AutoGridItem } from '../../scene/layout-auto-grid/AutoGridItem';
 import { type DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
-import { getPlanningPanelData } from '../../scene/planningSampleData';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
@@ -106,6 +106,8 @@ export function buildVizPanelState(
   delete options.__angularMigration;
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     title: panel.spec.title?.substring(0, 5000),
     description: panel.spec.description,
@@ -123,10 +125,9 @@ export function buildVizPanelState(
     titleItems,
     $behaviors: [],
     _UNSAFE_clearPreviousFieldValues: true,
-    // Spread before options/fieldConfig below: this only supplies a synthetic $data series so a
-    // query-less placeholder has something to render. The spec's own options/fieldConfig are the
-    // assistant's planned visualization settings and must win, not be clobbered by the sample's.
-    ...(buildOptions.withoutQueries ? getPlanningPanelData(panel.spec.title, panel.spec.vizConfig.group) : {}),
+    // The spec's own options/fieldConfig are the assistant's planned visualization settings
+    // and must win, not be clobbered by the sample's. RENDER_PLAN supplies synthetic $data
+    // for query-less previews; keeping samples there also avoids loading them for real dashboards.
     options,
     fieldConfig: transformMappingsToV1(panel.spec.vizConfig.spec.fieldConfig),
   };
@@ -167,9 +168,7 @@ function addDashboardPanelChrome(vizPanelState: VizPanelState): void {
   vizPanelState.headerActions = new VizPanelHeaderActions({
     hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
   });
-  vizPanelState.subHeader = new VizPanelSubHeader({
-    hideNonApplicableDrilldowns: !config.featureToggles.perPanelNonApplicableDrilldowns,
-  });
+  vizPanelState.subHeader = new VizPanelSubHeader({});
   vizPanelState.extendPanelContext = setDashboardPanelContext;
 
   if (!config.publicDashboardAccessToken) {
@@ -201,6 +200,8 @@ export function buildLibraryPanelState(panel: LibraryPanelKind, id?: number): Vi
   }
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(id ?? panel.spec.id),
     titleItems,
     seriesLimit: config.panelSeriesLimit,

@@ -15,58 +15,6 @@ labels:
 menuTitle: Import Alertmanager configuration
 title: Import Alertmanager configuration to Grafana-managed notifications
 weight: 460
-refs:
-  import-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
-  configure-notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/
-  notification-policy-trees:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees
-  notification-policy-default-timing:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#edit-the-default-notification-policy
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-notification-policy/#edit-the-default-notification-policy
-  configure-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  configure-mute-timings:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/mute-timings/
-  images-in-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/images-in-notifications/
-  configure-inhibition-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/inhibition-rules/
-  rbac:
-    - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/
-  feature-toggles:
-    - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/
 ---
 
 # Import Alertmanager configuration to Grafana-managed notifications
@@ -80,10 +28,10 @@ The import happens in two stages:
 - **Stage**: Grafana keeps the imported configuration as a unit of its own and combines it with your Grafana resources at runtime.
 - **Promote**: Grafana merges the imported configuration permanently into your Grafana configuration. Every imported resource becomes a normal, editable Grafana resource, and you can no longer revert the import in one action.
 
-Holding a staged configuration apart is what lets you revert or re-import all of it at once, instead of resource by resource. Its resources are read-only, and no Grafana resource can reference them. The imported policy tree is the exception: an alert rule can route to it by name. Until a rule does, your existing notifications are unchanged.
+Because Grafana keeps the staged configuration separate, you can revert or re-import it all at once instead of resource by resource. Its resources are read-only, and no Grafana resource can reference them. The imported policy tree is the exception: an alert rule can route to it by name. Until a rule does, your existing notifications are unchanged.
 
 {{< admonition type="note" >}}
-Importing Alertmanager configuration is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview). The API is behind the `alertingImportAlertmanagerAPI` [feature toggle](ref:feature-toggles) and the user interface is behind `alertingMigrationWizardUI`. Both are disabled by default. In Grafana Cloud, contact Support to enable them.
+Importing Alertmanager configuration is in [public preview](https://grafana.com/docs/release-life-cycle/#public-preview). The API is behind the `alertingImportAlertmanagerAPI` [feature toggle](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/) and the user interface is behind `alertingMigrationWizardUI`. Both are disabled by default. In Grafana Cloud, contact Support to enable them.
 {{< /admonition >}}
 
 ## Before you begin
@@ -91,15 +39,15 @@ Importing Alertmanager configuration is in [public preview](https://grafana.com/
 Before you import an Alertmanager configuration, make sure you have the following:
 
 - **A source Grafana can read**: A configuration YAML file with its template files, or a configured Mimir Alertmanager data source. Prometheus Alertmanager data sources aren't supported.
-- **Permissions**: Creating, reading, updating, or deleting an import requires the corresponding scoped Alertmanager import permissions. Promoting an import requires read and delete permissions for the import, create permissions for contact points and notification policy trees, and write permissions for any notification templates, time intervals, and inhibition rules in the configuration. The Admin role has these permissions by default. For more details, refer to [RBAC permissions](ref:rbac).
+- **Permissions**: Creating, reading, updating, or deleting an import requires the corresponding scoped Alertmanager import permissions. Promoting an import requires read and delete permissions for the import, create permissions for contact points and notification policy trees, and write permissions for any notification templates, time intervals, and inhibition rules in the configuration. The Admin role has these permissions by default. For more details, refer to [RBAC permissions](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/).
 
-Not every Alertmanager configuration can be imported as it is. Refer to [limitations](#limitations) before you start.
+Not every Alertmanager configuration can be imported as-is. Refer to [limitations](#limitations) before you start.
 
 ## How it works
 
 Grafana imports the configuration as it is and evaluates it the way your source Alertmanager does. Receivers keep their Alertmanager fields, and they notify with the same logic and message format, because Grafana runs them as Mimir-compatible integrations instead of rewriting them into native Grafana ones.
 
-Mimir-compatible integrations don't offer what a native Grafana integration adds on top, such as [images in notifications](ref:images-in-notifications). To use those features, promote the import and then rebuild the contact point as a Grafana one.
+Mimir-compatible integrations don't offer what a native Grafana integration adds on top, such as [images in notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/). To use those features, promote the import and then rebuild the contact point as a Grafana one.
 
 ### What gets imported
 
@@ -109,9 +57,9 @@ The `global` section is the one part with no place of its own. Grafana resolves 
 
 ### Routing
 
-Grafana adds the imported routing tree as a named policy tree of its own, alongside your default notification policy and any other named policy trees. Alerts reach it only when an alert rule routes to it by name. The matchers inside the imported tree then route those alerts the way they did in your source Alertmanager. For more details on serving more than one policy tree, refer to [manage multiple notification policies](ref:notification-policy-trees).
+Grafana adds the imported routing tree as a named policy tree of its own, alongside your default notification policy and any other named policy trees. Alerts reach it only when an alert rule routes to it by name. The matchers inside the imported tree then route those alerts the way they did in your source Alertmanager. For more details on serving more than one policy tree, refer to [manage multiple notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#manage-multiple-notification-policy-trees).
 
-If the imported root route leaves `group_wait`, `group_interval`, or `repeat_interval` unset, Grafana uses the [default notification timing values](ref:notification-policy-default-timing).
+If the imported root route leaves `group_wait`, `group_interval`, or `repeat_interval` unset, Grafana uses the [default notification timing values](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/#edit-the-default-notification-policy).
 
 You choose the tree name when you import. This name is also the identifier of the import, so pick something you recognize, such as `mimir-prod`. The name can't be `default` or match another named policy tree. It must be a valid DNS subdomain name and is length-limited; for more details, refer to [limitations](#limitations).
 
@@ -140,7 +88,7 @@ Grafana stores one imported configuration per organization. Before you stage ano
 
 ## Import with the Grafana Alerting user interface
 
-The Grafana Alerting user interface imports notification resources and alert rules in one flow. It requires both the `alertingImportAlertmanagerAPI` and `alertingMigrationWizardUI` [feature toggles](ref:feature-toggles).
+The Grafana Alerting user interface imports notification resources and alert rules in one flow. It requires both the `alertingImportAlertmanagerAPI` and `alertingMigrationWizardUI` [feature toggles](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/feature-toggles/).
 
 1. Go to **Alerting** > **Alert rules**.
 1. In the **More** menu, click **Import to Grafana Alerting**.
@@ -155,8 +103,46 @@ The Grafana Alerting user interface imports notification resources and alert rul
 
    Grafana validates the configuration as you fill in the form and reports any conflicts. The form lists the resources that Grafana renames before you import.
 
-1. Click **Next**, and either configure the [alert rules import](ref:import-rules) or skip the step.
+1. Click **Next**, and either configure the [alert rules import](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) or skip the step.
 1. Review the summary, then click **Start import**.
+
+## Auto-sync an Alertmanager configuration
+
+Auto-sync keeps a staged notification configuration up to date with a Mimir or Cortex Alertmanager data source. Grafana periodically reads the source configuration and applies changes to the staged resources without writing back to the source. Auto-sync doesn't import or synchronize alert rules.
+
+{{< admonition type="note" >}}
+Auto-sync is in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview). The `alerting.syncExternalAlertmanager` feature toggle is disabled by default and requires a Grafana restart when enabled. To access **Settings** > **Import**, also enable `alertingMigrationWizardUI`. In Grafana Cloud, contact Support to request access.
+{{< /admonition >}}
+
+### Enable auto-sync
+
+Before you begin, configure a Mimir or Cortex Alertmanager data source. Auto-sync supports only these data sources. If a staged configuration with a different identifier already exists, promote or revert it first.
+
+You need the following permissions, scoped to `configs:uid:default`:
+
+- `notifications.alerting.grafana.app/configs:get` to read the configuration and sync status.
+- `notifications.alerting.grafana.app/configs:update` to enable or disable auto-sync.
+
+Organization administrators have these permissions by default. You can also grant them through [RBAC](/docs/grafana/<GRAFANA_VERSION>/administration/roles-and-permissions/access-control/).
+
+1. Go to **Alerting** > **Settings**.
+1. Click the **Import** tab.
+1. In **Auto-sync configuration**, select the Alertmanager data source.
+1. Click **Save**.
+
+Grafana uses the data source UID as the import identifier and notification policy tree name. The imported resources remain read-only while staged. To send notifications through the imported policy tree, route your Grafana-managed alert rules to that tree. Use the data source UID as the routing tree name.
+
+The **Auto-sync configuration** section shows the sync status and any errors from the last sync attempt. If Grafana can't fetch or validate an update, it keeps the configuration from the last successful sync.
+
+### Stop auto-sync or promote the configuration
+
+While auto-sync is configured, you can't manually import another notification configuration, and the user interface hides **Revert** for the sync-managed configuration. You can still import alert rules separately.
+
+To stop synchronization, click **Disable sync** in **Auto-sync configuration** and confirm. Disabling sync doesn't delete the staged configuration. You can then [review, promote, or revert it](#review-promote-or-revert-a-staged-configuration).
+
+[Promoting the sync-managed configuration](#promote-a-staged-configuration) stops synchronization from that data source.
+
+If **Auto-sync configuration** shows **Managed by operator**, you can't change the setting through the user interface. In Grafana Cloud, contact Support to change or disable auto-sync.
 
 ## Import with the API
 
@@ -197,6 +183,61 @@ A successful import returns the merge result:
   }
 }
 ```
+
+### Configure auto-sync and read its status
+
+Auto-sync uses a dedicated notification configuration API. Use credentials with the [auto-sync permissions](#enable-auto-sync).
+
+{{< admonition type="note" >}}
+Enable the `alerting.syncExternalAlertmanager` feature toggle before using this API. For availability and restart requirements, refer to [Auto-sync an Alertmanager configuration](#auto-sync-an-alertmanager-configuration).
+{{< /admonition >}}
+
+The configuration is a per-organization resource named `default`. Grafana creates it automatically.
+
+Read the configuration and status with `GET /apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/configs/default`:
+
+```sh
+curl \
+  -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
+  "<GRAFANA_BASE_URL>/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/<NAMESPACE>/configs/default"
+```
+
+Replace the following placeholders in these examples:
+
+- `<GRAFANA_BASE_URL>`: The base URL of your Grafana instance.
+- `<SERVICE_ACCOUNT_TOKEN>`: A service account token with the required configuration permissions.
+- `<NAMESPACE>`: The API namespace for your Grafana organization.
+- `<DATASOURCE_UID>`: The UID of the Mimir or Cortex Alertmanager data source to synchronize.
+
+Enable auto-sync with `PATCH /apis/notifications.alerting.grafana.app/v0alpha1/namespaces/{namespace}/configs/default`. Set `spec.externalAlertmanagerSync.datasourceUid` with a JSON patch:
+
+```sh
+curl -X PATCH \
+  -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
+  -H "Content-Type: application/json-patch+json" \
+  "<GRAFANA_BASE_URL>/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/<NAMESPACE>/configs/default" \
+  --data '[{"op":"add","path":"/spec/externalAlertmanagerSync","value":{"datasourceUid":"<DATASOURCE_UID>"}}]'
+```
+
+A successful patch saves the setting; it doesn't mean the first sync has completed. Read the resource again to inspect these status fields:
+
+- `status.externalAlertmanagerSync.datasourceUid`: The data source UID used on the last sync attempt.
+- `status.externalAlertmanagerSync.origin`: Whether the source is configured through the API or managed by an operator. For an operator-managed source in Grafana Cloud, contact Support to change or disable it.
+- `status.conditions`: Find the condition with `type` set to `ExternalAlertmanagerSynced`. Its `status` is `True` after a successful sync, `False` after a failed attempt, or `Unknown` when no sync is configured. Read `reason` and `message` for details. The `MergeCommitted` reason means the configuration was promoted and synchronization has stopped.
+
+Status updates are asynchronous and can lag behind configuration changes.
+
+To disable an API-configured sync, clear the setting with the same PATCH endpoint:
+
+```sh
+curl -X PATCH \
+  -H "Authorization: Bearer <SERVICE_ACCOUNT_TOKEN>" \
+  -H "Content-Type: application/json-patch+json" \
+  "<GRAFANA_BASE_URL>/apis/notifications.alerting.grafana.app/v0alpha1/namespaces/<NAMESPACE>/configs/default" \
+  --data '[{"op":"add","path":"/spec/externalAlertmanagerSync","value":{}}]'
+```
+
+Clearing the setting stops future synchronization but doesn't delete the staged notification resources. It doesn't override an operator-managed source. Read the status again to confirm that synchronization is no longer configured. Don't delete the `default` configuration resource or write its status; Grafana manages both its lifecycle and status.
 
 ### Optional headers
 
@@ -260,7 +301,7 @@ Staged configurations are managed in Grafana Alerting settings.
 
 The **Staged configuration** section lists the contact points, notification policies, templates, time intervals, and inhibition rules the import contains, and links to each resource so you can inspect it before promoting.
 
-To discard the import and everything it added, click **Revert**. Your Grafana configuration is unaffected.
+To discard the import and everything it added, click **Revert**. Your Grafana configuration is unaffected. For a configuration managed by [auto-sync](#auto-sync-an-alertmanager-configuration), disable auto-sync before reverting. The user interface hides **Revert** while auto-sync is active. Deleting the staged configuration through the API doesn't disable auto-sync: Grafana can import it again when the source configuration changes or Grafana restarts.
 
 {{< admonition type="warning" >}}
 Reverting deletes the imported notification policy tree. Alert rules that route to that tree lose their target, and their alerts fall back to the root of your default notification policy. Update those rules to point elsewhere before you revert.
@@ -277,11 +318,11 @@ Consider the following when you import an Alertmanager configuration:
 - **One staged configuration at a time**: Grafana stores one staged configuration per organization. Before you stage another configuration, promote or revert the existing one. You can also explicitly replace the existing configuration during import.
 - **Template name conflicts across imports**: Grafana renames colliding template files, but the templates defined inside those files share one namespace. Say an earlier import defines a template called `default.email` that renders `X`, and a new import defines `default.email` again, in a file under a different name, rendering `Y`. Which definition wins isn't deterministic, and every contact point that uses that template gets the winner. As a result, contact points from the earlier import can start sending the wrong content. Check the names of the templates you define, not just the filenames, before you import a second configuration.
 - **Deprecated provisioning API**: A staged configuration isn't visible in the deprecated provisioning API, which doesn't return its contact points, templates, or time intervals. Use the Grafana Alerting notification API (`notifications.alerting.grafana.app`) instead.
-- **Inhibition rules**: Imported inhibition rules are supported through the API only. There's no user interface for creating or editing them. For more details, refer to [configure inhibition rules](ref:configure-inhibition-rules).
+- **Inhibition rules**: Imported inhibition rules are supported through the API only. There's no user interface for creating or editing them. For more details, refer to [configure inhibition rules](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/inhibition-rules/).
 
 ## Next steps
 
 After you import your notification configuration:
 
-- [Import your data source-managed alert rules](ref:import-rules) and route them through the imported policy tree.
-- Review the imported [contact points](ref:configure-contact-points), [notification policies](ref:configure-notification-policies), [templates](ref:configure-templates), and [time intervals](ref:configure-mute-timings).
+- [Import your data source-managed alert rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/) and route them through the imported policy tree.
+- Review the imported [contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/), [notification policies](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-notification-policy/), [templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/), and [time intervals](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/mute-timings/).

@@ -1,8 +1,14 @@
+import { act, renderHook } from '@testing-library/react';
+import { createElement, type PropsWithChildren } from 'react';
+import { delay, of, Subject } from 'rxjs';
+
 import {
   type AdHocVariableModel,
   CoreApp,
   EventBusSrv,
+  getDefaultTimeRange,
   type GroupByVariableModel,
+  LoadingState,
   type Scope,
   type VariableModel,
 } from '@grafana/data';
@@ -11,19 +17,21 @@ import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import {
   AdHocFiltersVariable,
   GroupByVariable,
+  SceneDataNode,
   sceneGraph,
+  SceneDataTransformer,
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext, PanelContextProvider, useAdHocTransformations } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { DashboardScene } from './DashboardScene';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
@@ -49,6 +57,28 @@ jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn().mockResolvedValue({ uid: 'my-ds-uid', type: 'prometheus' }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
+}));
+
+const mockIsAssistantAvailable = jest.fn();
+const mockOpenAssistant = jest.fn();
+const mockCreateAssistantContextItem = jest.fn();
+
+jest.mock('@grafana/assistant', () => ({
+  isAssistantAvailable: () => mockIsAssistantAvailable(),
+  openAssistant: (...args: unknown[]) => mockOpenAssistant(...args),
+  createAssistantContextItem: (...args: unknown[]) => mockCreateAssistantContextItem(...args),
+}));
+
+// Opaque on purpose. The real `createAssistantContextItem` returns a `{ node: { ... } }` tree, so
+// standing in a different shape here and then asserting against that shape would pass no matter
+// how this call site drifted. Instead the tests assert the arguments we pass it (its real
+// signature still type-checks the call site) and that whatever it returns reaches `openAssistant`.
+const PANEL_CONTEXT_ITEM = Symbol('panel context item');
+
+const mockGetAssistantChatIdToContinue = jest.fn();
+
+jest.mock('app/core/assistant/assistantSidebarState', () => ({
+  getAssistantChatIdToContinue: () => mockGetAssistantChatIdToContinue(),
 }));
 
 const mockIsAnnotationApiAvailable = jest.mocked(isAnnotationApiAvailable);
@@ -87,9 +117,110 @@ beforeEach(() => {
   mockIsAnnotationApiAvailable.mockReset();
   getBooleanValueFn.mockReset();
   stubFFEnabled(false);
+  mockIsAssistantAvailable.mockReset().mockReturnValue(of(false));
+  mockOpenAssistant.mockReset();
+  mockCreateAssistantContextItem.mockReset().mockReturnValue(PANEL_CONTEXT_ITEM);
+  mockGetAssistantChatIdToContinue.mockReset();
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('adHocTransformations', () => {
+    it('reads and updates only the selected owner through the panel context hook', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      api.set('table', [{ id: 'organize', options: {} }]);
+      api.set('other', [{ id: 'limit', options: { limitField: 2 } }]);
+      const { result, rerender } = renderHook(({ owner }) => useAdHocTransformations(owner), {
+        initialProps: { owner: 'table' },
+        wrapper: ({ children }: PropsWithChildren) => createElement(PanelContextProvider, { value: context }, children),
+      });
+
+      expect(result.current?.transformations).toEqual([{ id: 'organize', options: {} }]);
+      act(() => result.current?.setTransformations([]));
+      expect(api.get('table')).toEqual([]);
+      expect(api.get('other')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+
+      rerender({ owner: 'other' });
+      act(() => api.set('table', [{ id: 'organize', options: {} }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      act(() => api.set('other', [{ id: 'limit', options: { limitField: 3 } }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 3 } }]);
+    });
+
+    it('keeps each panel’s single view list and subscriptions independent', () => {
+      const first = buildTestScene({});
+      const second = buildTestScene({});
+      const firstApi = first.context.adHocTransformations!;
+      const secondApi = second.context.adHocTransformations!;
+      const firstChanged = jest.fn();
+      const secondChanged = jest.fn();
+      const unsubscribe = firstApi.subscribe('grafana:table-view', firstChanged);
+      const unsubscribeSecond = secondApi.subscribe('grafana:table-view', secondChanged);
+
+      firstApi.set('grafana:table-view', [{ id: 'organize', options: { excludeByName: { hidden: true } } }]);
+      secondApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      firstApi.set('grafana:table-view', []);
+
+      expect(firstApi.get('grafana:table-view')).toEqual([]);
+      expect(secondApi.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      expect(secondChanged).toHaveBeenCalledTimes(1);
+      unsubscribe();
+      firstApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 1 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      unsubscribeSecond();
+    });
+
+    it('replaces the entire view list with an immutable snapshot', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      const configs = [{ id: 'limit', options: { limitField: 2 } }];
+      api.set('grafana:table-view', configs);
+      const snapshot = api.get('grafana:table-view');
+      configs[0].options.limitField = 99;
+
+      expect(api.get('grafana:table-view')).toBe(snapshot);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(Object.isFrozen(snapshot[0].options)).toBe(true);
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+
+    it('retains source values while active and restores cleanup after clearing or changing plugins', () => {
+      const { context, vizPanel } = buildTestScene({});
+      vizPanel.setState({ _UNSAFE_clearPreviousFieldValues: true });
+      const api = context.adHocTransformations!;
+      const changed = jest.fn();
+      const unsubscribe = api.subscribe('grafana:table-view', changed);
+
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      api.set('grafana:table-view', []);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      api.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      vizPanel.setState({ pluginId: 'table' });
+      expect(api.get('grafana:table-view')).toEqual([]);
+      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      expect(changed).toHaveBeenCalledTimes(4);
+      unsubscribe();
+    });
+
+    it('uses the panel runtime transformation controller across data replacements', () => {
+      const { context, vizPanel } = buildTestScene({ dashboardCanEdit: false });
+      const controller = vizPanel.getRuntimeTransformations();
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([]);
+
+      controller.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      vizPanel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+  });
+
   describe('app', () => {
     it('Is PanelEditor while the panel edit pane is open', () => {
       const { scene, vizPanel, context } = buildTestScene({});
@@ -255,7 +386,6 @@ describe('setDashboardPanelContext', () => {
       await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
       expect(putFn).toHaveBeenCalledWith('/api/annotations/event-id-123', {
-        id: 'event-id-123',
         dashboardUID: 'dash-1',
         isRegion: true,
         panelId: 4,
@@ -315,7 +445,7 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', async () => {
+    it('should delete annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       await context.onAnnotationDelete!('I-do-not-want-you');
@@ -354,7 +484,7 @@ describe('setDashboardPanelContext', () => {
         canDelete: true,
       });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
@@ -377,7 +507,7 @@ describe('setDashboardPanelContext', () => {
       );
       const { scene, context } = buildTestScene({ dashboardCanEdit: true });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', panelCount: 1, onBuild: () => {}, onDismiss: () => {} },
+        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       expect(context.onOpenInspector).toBeDefined();
@@ -672,6 +802,257 @@ describe('setDashboardPanelContext', () => {
 
       await context.onAddAdHocFilters?.(filters);
       expect(variable.state.filters).toEqual([]);
+    });
+  });
+
+  describe('onInvestigateErrors', () => {
+    beforeEach(() => {
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? true : defaultValue
+      );
+    });
+
+    it('is not set when the new panel query errors UI feature flag is disabled', () => {
+      stubFFEnabled(false);
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+
+      expect(context.onInvestigateErrors).toBeUndefined();
+    });
+
+    it('is not set when the assistant is unavailable', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(false));
+
+      const { context } = buildTestScene({});
+
+      expect(context.onInvestigateErrors).toBeUndefined();
+    });
+
+    it('is set once the assistant reports available', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+    });
+
+    it('picks up availability reported after the initial (stale) check, and forces a re-render', () => {
+      // The assistant app plugin can still be loading when this runs, so the very first
+      // emission can be `false` even though the plugin registers moments later. A live
+      // subscription (not a one-shot check) needs to catch that second emission.
+      const availability = new Subject<boolean>();
+      mockIsAssistantAvailable.mockReturnValue(availability);
+
+      const { vizPanel, context } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+
+      availability.next(false);
+      expect(context.onInvestigateErrors).toBeUndefined();
+
+      availability.next(true);
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+      expect(forceRenderSpy).toHaveBeenCalled();
+    });
+
+    it('ignores registry churn that does not change availability, and stops watching once available', () => {
+      // `isAssistantAvailable()` re-emits on every plugin extension registration, not only when
+      // availability actually changes, so every panel would otherwise re-render on each one.
+      const availability = new Subject<boolean>();
+      mockIsAssistantAvailable.mockReturnValue(availability);
+
+      const { vizPanel } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+
+      availability.next(false);
+      availability.next(false);
+      availability.next(false);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
+
+      availability.next(true);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(2);
+
+      // Availability never flips back, so the subscription completes here instead of living on
+      // past the panel it closes over — nothing in a panel context can tear it down.
+      expect(availability.observed).toBe(false);
+    });
+
+    it('stops watching once the availability wait times out, so the panel is not held onto forever', () => {
+      // If the assistant app is never installed, `isAssistantAvailable()` never emits `true` and
+      // never completes on its own. Without a hard cutoff the subscription — and the `vizPanel` it
+      // closes over — would live for the app's whole lifetime, since extendPanelContext has no
+      // deactivation hook to unsubscribe through.
+      jest.useFakeTimers();
+      try {
+        const availability = new Subject<boolean>();
+        mockIsAssistantAvailable.mockReturnValue(availability);
+
+        const { context } = buildTestScene({});
+        availability.next(false);
+        expect(context.onInvestigateErrors).toBeUndefined();
+        expect(availability.observed).toBe(true);
+
+        jest.runAllTimers();
+
+        expect(availability.observed).toBe(false);
+        expect(context.onInvestigateErrors).toBeUndefined();
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('re-renders when availability arrives asynchronously, as it always does in practice', async () => {
+      // `isAssistantAvailable()` resolves through the plugin extension registries, which are
+      // promise-backed, so its first value always lands after the render that built this panel
+      // context. Without the re-render the popover never picks the action up — a panel sitting in
+      // a static error state has no other reason to render again.
+      mockIsAssistantAvailable.mockReturnValue(of(true).pipe(delay(0)));
+
+      const { vizPanel, context } = buildTestScene({});
+      const forceRenderSpy = jest.spyOn(vizPanel, 'forceRender');
+      expect(context.onInvestigateErrors).toBeUndefined();
+
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(context.onInvestigateErrors).toBeInstanceOf(Function);
+      expect(forceRenderSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('does nothing when the panel currently has no errors or notices', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { context } = buildTestScene({});
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).not.toHaveBeenCalled();
+    });
+
+    it('opens the assistant with a fix-errors prompt when the panel has a query error', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        title: 'CPU usage',
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          origin: 'grafana/panel-status-popover',
+          prompt: expect.stringContaining('fix the query errors'),
+          context: [PANEL_CONTEXT_ITEM],
+        })
+      );
+      // Attaches a reference to the panel itself (matching the assistant's own "select a panel as
+      // context" picker) rather than a text snapshot of its errors.
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: { name: 'Panel: CPU usage', panelId: '4', panelKey: 'panel-4' },
+      });
+    });
+
+    it('falls back to a placeholder name for an untitled panel', () => {
+      // Otherwise the context pill reads "Panel: " with nothing after it.
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        title: '',
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith(
+        'structured',
+        expect.objectContaining({ data: expect.objectContaining({ name: 'Panel: Untitled' }) })
+      );
+    });
+
+    it('does not target a chat when the assistant is not on screen', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      mockGetAssistantChatIdToContinue.mockReturnValue(undefined);
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(expect.objectContaining({ chatId: undefined }));
+    });
+
+    it('targets the active chat when the assistant is already on screen', async () => {
+      // Otherwise this silently does nothing: opening the assistant while it's already open just
+      // republishes the same props instead of landing in the active conversation.
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      mockGetAssistantChatIdToContinue.mockReturnValue('active-chat-id');
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Error,
+            series: [],
+            timeRange: getDefaultTimeRange(),
+            errors: [{ message: 'boom' }],
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({ appendContext: true, chatId: 'active-chat-id' })
+      );
+    });
+
+    it('opens the assistant with an explain-notices prompt when the panel only has notices', async () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+
+      const { vizPanel, context } = buildTestScene({});
+      vizPanel.setState({
+        $data: new SceneDataNode({
+          data: {
+            state: LoadingState.Done,
+            series: [
+              { name: 'A', fields: [], length: 0, meta: { notices: [{ severity: 'warning', text: 'slow query' }] } },
+            ],
+            timeRange: getDefaultTimeRange(),
+          },
+        }),
+      });
+
+      context.onInvestigateErrors?.();
+
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: expect.stringContaining('Investigate the query notices'),
+        })
+      );
     });
   });
 });

@@ -1,15 +1,14 @@
 package apistore
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	authlib "github.com/grafana/authlib/types"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -20,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/klog/v2"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -35,7 +33,7 @@ import (
 
 type objectForStorage struct {
 	// The value to save in unistore
-	raw bytes.Buffer
+	raw json.RawMessage
 
 	// Reference to the owner object
 	ref common.ObjectReference
@@ -161,7 +159,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return v, storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetUID() == "" {
-		obj.SetUID(types.UID(uuid.NewString()))
+		obj.SetUID(types.UID(uuid.NewV4().String()))
 	}
 	if err = s.verifyFolder(obj); err != nil {
 		return v, err
@@ -214,12 +212,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
 
-	err = s.encode(newObject, &v.raw, true)
+	v.raw, err = s.encode(ctx, newObject, true)
 	return v, err
 }
 
@@ -241,7 +239,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Group:     s.gr.Group,
+				Group:     s.storageGroup(),
 				Resource:  s.gr.Resource,
 				Namespace: obj.GetNamespace(),
 			},
@@ -253,7 +251,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -304,12 +302,12 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	}
 
 	if previous.GetUID() == "" {
-		klog.Errorf("object is missing UID: %s, %s", obj.GetGroupVersionKind().String(), obj.GetName())
+		logging.FromContext(ctx).Error("object is missing UID", "gvk", obj.GetGroupVersionKind().String(), "name", obj.GetName())
 	} else if obj.GetUID() != previous.GetUID() {
 		// Eventually this should be a real error or logged
 		// However the dashboard dual write behavior hits this every time, so we will ignore it
 		// if obj.GetUID() != "" {
-		// 	klog.Errorf("object UID mismatch: %s, was:%s, now: %s", obj.GetGroupVersionKind().String(), previous.GetName(), obj.GetUID())
+		// 	logging.FromContext(ctx).Error("object UID mismatch", "gvk", obj.GetGroupVersionKind().String(), "was", previous.GetUID(), "now", obj.GetUID())
 		// }
 		obj.SetUID(previous.GetUID())
 	}
@@ -326,7 +324,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -388,7 +386,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// for deletion. A soft delete sets the deletionTimestamp (and finalizer/status writes run while it is
 	// set); exempt those so an already-over-cap object stays removable. Net: over-cap objects are drain-only.
 	deleting := obj.GetDeletionTimestamp() != nil || previous.GetDeletionTimestamp() != nil
-	err = s.encode(updateObject, &v.raw, !deleting)
+	v.raw, err = s.encode(ctx, updateObject, !deleting)
 	return v, err
 }
 
@@ -430,12 +428,10 @@ func (s *Storage) getParentFolder(ctx context.Context, obj utils.GrafanaMetaAcce
 }
 
 // checkGVK completes obj's group+version+kind from [StorageOptions.GVK] when the
-// object does not carry a full one of its own. [Storage.encode] writes whatever
-// GVK the object holds, so an incomplete one would otherwise persist without an
-// apiVersion.
+// object does not carry a full one of its own. Serializers that do not infer the
+// GVK from a scheme need it populated to persist an apiVersion and kind.
 //
-// A resource that declares no GVK is left alone here and encoded through the
-// versioning codec instead -- see [Storage.encodeViaCodec].
+// A resource that declares no GVK is left alone here for the serializer.
 func (s *Storage) checkGVK(obj runtime.Object) {
 	info := obj.GetObjectKind()
 	gvk := info.GroupVersionKind()
@@ -454,52 +450,32 @@ func (s *Storage) checkGVK(obj runtime.Object) {
 	info.SetGroupVersionKind(gvk)
 }
 
-// encode serializes obj into buf. enforceCap applies the group's maxAllowedVersion ceiling. Callers pass
+// encode returns the JSON representation of obj. enforceCap applies the group's maxAllowedVersion ceiling. Callers pass
 // true on create and on non-deletion updates; deletion-related updates pass false so an object already
 // stored above the cap stays removable (its deletion, finalizer and status writes all go through here).
-func (s *Storage) encode(obj runtime.Object, buf *bytes.Buffer, enforceCap bool) error {
-	// Encoding the object directly needs the kind it is stored as, which only a
-	// declared GVK settles. A resource that declares none goes through the codec.
-	if s.opts.GVK.Empty() {
-		return s.encodeViaCodec(obj, buf, enforceCap)
-	}
+func (s *Storage) encode(ctx context.Context, obj runtime.Object, enforceCap bool) (json.RawMessage, error) {
 	s.checkGVK(obj)
-	// The JSON encoder writes obj's own (checkGVK-resolved) GVK, so the checked version is the persisted version.
-	// This always writes the saved GVK, unlike:
-	// https://github.com/kubernetes/kubernetes/blob/v1.34.3/staging/src/k8s.io/apimachinery/pkg/runtime/serializer/versioning/versioning.go#L267
-	// that picks an arbitrary GVK that may not match the same group!
-	if enforceCap {
-		if err := s.enforceMaxAllowedVersion(obj.GetObjectKind().GroupVersionKind().Version); err != nil {
-			return err
-		}
-	}
-	return json.NewEncoder(buf).Encode(obj)
-}
 
-// encodeViaCodec serializes through the versioning codec. That codec may convert the object
-// to a higher-priority storage version, so the cap is enforced against the persisted apiVersion read back
-// from the encoded bytes, not the declared version. Encoding goes straight into the destination buffer;
-// a rejected write resets it so no rejected payload is retained.
-func (s *Storage) encodeViaCodec(obj runtime.Object, buf *bytes.Buffer, enforceCap bool) error {
-	if err := s.codec.Encode(obj, buf); err != nil {
-		return err
+	raw, err := s.serializer.Encode(ctx, obj)
+	if err != nil {
+		return nil, err
 	}
+
 	if !enforceCap || s.opts.VersionPolicy == nil || !s.opts.VersionPolicy.HasMaxAllowed(s.gr.Group) {
-		return nil
+		return raw, nil
 	}
-	gv := persistedVersion(buf.Bytes(), obj)
-	// The versioning codec may pick a GVK outside this resource's group. Such a version cannot be ranked
+
+	gv := persistedVersion(raw, obj)
+	// A custom serializer may pick a GVK outside this resource's group. Such a version cannot be ranked
 	// against the group's cap (it would look unregistered and slip through), so reject rather than store it.
-	if gv.Group != s.gr.Group {
-		buf.Reset()
-		return apierrors.NewBadRequest(fmt.Sprintf(
-			"%s: encoded apiVersion group %q does not match resource group %q", s.gr.String(), gv.Group, s.gr.Group))
+	if gv.Group != s.storageGroup() {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf(
+			"%s: encoded apiVersion group %q does not match storage group %q", s.gr.String(), gv.Group, s.storageGroup()))
 	}
 	if err := s.enforceMaxAllowedVersion(gv.Version); err != nil {
-		buf.Reset()
-		return err
+		return nil, err
 	}
-	return nil
+	return raw, nil
 }
 
 // enforceMaxAllowedVersion rejects (never rewrites) a write whose version outranks the group's configured maxAllowedVersion.
@@ -519,7 +495,7 @@ func (s *Storage) enforceMaxAllowedVersion(version string) error {
 		s.gr.String(), version, maxAllowed, s.gr.Group))
 }
 
-// persistedVersion reads the group/version actually written by the codec, so the cap is enforced against
+// persistedVersion reads the group/version actually written by the serializer, so the cap is enforced against
 // the stored version. It falls back to the object's declared GVK if the encoded form has no parseable
 // TypeMeta, so it never silently skips the cap.
 func persistedVersion(encoded []byte, obj runtime.Object) schema.GroupVersion {

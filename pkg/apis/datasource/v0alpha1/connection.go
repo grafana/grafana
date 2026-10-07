@@ -43,7 +43,7 @@ type DataSourceConnection struct {
 
 	Plugin string `json:"plugin,omitempty"`
 
-	// TODO: labels? things the UI would need to show in a list
+	Labels map[string]string `json:"labels,omitempty"`
 }
 
 func (DataSourceConnection) OpenAPIModelName() string {

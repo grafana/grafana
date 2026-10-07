@@ -21,19 +21,14 @@ import (
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1"
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alertingnotifications/v1beta1/fakes"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
-	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder/foldertest"
 	policy_exports "github.com/grafana/grafana/pkg/services/ngalert/api/test-data/policy-exports"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1model "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/provenance"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/tests/api/alerting"
 	"github.com/grafana/grafana/pkg/tests/apis"
@@ -543,7 +538,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.NoError(t, err)
 		managedRoute := v1model.NewManagedRoute(models.DefaultRoutingTreeName, &route)
 		managedRoute.Version = "" // Avoid version conflict.
-		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, func(int64) string { return "default" }, nil)
+		v1Route, err := routingtree.ConvertToK8sResource(helper.Org1.Admin.Identity.GetOrgID(), managedRoute, managedRoute.GetUID(), func(int64) string { return "default" }, nil)
 		require.NoError(t, err)
 		_, err = routeClient.Update(ctx, v1Route, resource.UpdateOptions{})
 		require.NoError(t, err)
@@ -876,9 +871,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 	require.NoError(t, err)
 
 	env := helper.GetEnv()
-	ac := acimpl.ProvideAccessControl(env.FeatureToggles)
-	db, err := store.ProvideDBStore(env.Cfg, env.FeatureToggles, env.SQLStore, &foldertest.FakeService{}, &dashboards.FakeDashboardService{}, ac, bus.ProvideBus(tracing.InitializeTracerForTest()))
-	require.NoError(t, err)
+	db := provenance.ProvideProvenanceStore(env.FeatureToggles, env.SQLStore)
 
 	nameToIdentifier := func(name string) resource.Identifier {
 		return resource.Identifier{
@@ -1121,6 +1114,44 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 				})
 			})
 		}
+	})
+
+	t.Run("Default routing tree alias", func(t *testing.T) {
+		resetPolicies(t)
+
+		t.Run("Get resolves to the default route and echoes the alias name", func(t *testing.T) {
+			got, err := adminClient.Get(ctx, nameToIdentifier(models.DefaultRoutingTreeNameAlias))
+			require.NoError(t, err)
+
+			expected := k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
+			assert.Equal(t, expected.Spec, got.Spec)
+			assert.Equal(t, models.DefaultRoutingTreeNameAlias, got.Name)
+		})
+
+		t.Run("Update modifies the root route and echoes the alias name", func(t *testing.T) {
+			updated, err := adminClient.Update(ctx, k8sRoute(t, models.DefaultRoutingTreeNameAlias, policy_exports.Legacy()), resource.UpdateOptions{ResourceVersion: ""})
+			require.NoError(t, err)
+			assert.Equal(t, models.DefaultRoutingTreeNameAlias, updated.Name)
+
+			// Same behavior as updating via the canonical name: the root route itself was modified,
+			// not a new managed route created under the alias.
+			viaCanonicalName, err := adminClient.Get(ctx, nameToIdentifier(models.DefaultRoutingTreeName))
+			require.NoError(t, err)
+			assert.Equal(t, updated.Spec, viaCanonicalName.Spec)
+			assert.Equal(t, models.DefaultRoutingTreeName, viaCanonicalName.Name)
+		})
+
+		t.Run("Create fails", func(t *testing.T) {
+			_, err := adminClient.Create(ctx, k8sRoute(t, models.DefaultRoutingTreeNameAlias, &defaultPolicy), resource.CreateOptions{})
+			require.Error(t, err)
+		})
+
+		t.Run("Delete resets the default route, same as deleting via the canonical name", func(t *testing.T) {
+			err := adminClient.Delete(ctx, nameToIdentifier(models.DefaultRoutingTreeNameAlias), resource.DeleteOptions{})
+			require.NoError(t, err)
+
+			validateGetEqual(t, models.DefaultRoutingTreeName, k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy))
+		})
 	})
 }
 
@@ -1514,7 +1545,7 @@ func k8sRoute(t *testing.T, name string, r *v1model.Route) *v1beta1.RoutingTree 
 	allPermissions.Set(models.RoutePermissionWrite, true)
 	allPermissions.Set(models.RoutePermissionDelete, true)
 	allPermissions.Set(models.RoutePermissionAdmin, true)
-	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
+	v1Route, err := routingtree.ConvertToK8sResource(-1, managedRoute, name, func(int64) string { return apis.DefaultNamespace }, &allPermissions)
 	require.NoError(t, err)
 	v1Route.TypeMeta = v1.TypeMeta{
 		Kind:       v1beta1.RoutingTreeKind().Kind(),

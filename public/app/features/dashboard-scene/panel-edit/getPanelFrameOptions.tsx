@@ -5,7 +5,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { type VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch, Stack, Label, Field } from '@grafana/ui';
-import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
+import { LazyGenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/LazyGenAIButtons';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
@@ -24,6 +24,7 @@ export function createPresetApplyHandler(panel: VizPanel) {
   return function onApplyPreset(preset: PanelPluginVisualizationSuggestion, prevFieldConfig: FieldConfigSource) {
     const prevOptions = panel.state.options;
     edit({
+      meta: { actionId: 'panel.applyPreset' },
       description: t('dashboard.edit-actions.panel-preset', 'Apply panel preset'),
       source: panel,
       perform: () => {
@@ -81,7 +82,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
           return <PanelFrameTitleInput id={descriptor.props.id} panel={panel} />;
         },
         addon: (
-          <GenAIPanelTitleButton
+          <LazyGenAIPanelTitleButton
             onGenerate={(title) => editPanelTitleAction(panel, title)}
             panel={vizPanelToPanel(panel)}
             dashboard={transformSceneToSaveModel(dashboard)}
@@ -200,6 +201,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const onCommitDescriptionChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     edit({
+      meta: { actionId: 'panel.changeDescription' },
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => panel.setState({ [propName]: value }),
@@ -209,6 +211,7 @@ export function PanelDescriptionTextArea({ panel, id }: { panel: VizPanel; id?: 
 
   const onToggleSubtitle = (evt: React.ChangeEvent<HTMLInputElement>) => {
     edit({
+      meta: { actionId: 'panel.toggleSubtitle' },
       description: t('dashboard.edit-actions.panel-description', 'panel description change'),
       source: panel,
       perform: () => {
@@ -280,6 +283,7 @@ export function PanelBackgroundSwitch({ panel, id }: { panel: VizPanel; id?: str
     const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
 
     edit({
+      meta: { actionId: 'panel.changeBackground' },
       description: t('dashboard.edit-actions.panel-background', 'panel background change'),
       source: panel,
       perform: () => panel.setState({ displayMode: newDisplayMode }),
@@ -300,6 +304,7 @@ export function editPanelTitleAction(panel: VizPanel, title: string, prevTitle: 
   }
 
   edit({
+    meta: { actionId: 'panel.changeTitle' },
     description: t('dashboard.edit-actions.panel-title', 'panel title change'),
     source: panel,
     perform: () => updatePanelTitleState(panel, title),
