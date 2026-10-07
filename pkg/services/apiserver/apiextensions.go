@@ -50,9 +50,6 @@ type ApiExtensionsDelegateConfig struct {
 	// namespace-scoped (user identity via request context) access, so no OBO
 	// token exchange is required.
 	StorageClient resource.ResourceClient
-	// SearchAPIEnabled is retained for the Enterprise runner until its callers are updated.
-	// The core server always sets it to true.
-	SearchAPIEnabled bool
 	// HybridAPIEnabled follows the core server's hybrid setting for CRD-backed APIs.
 	HybridAPIEnabled bool
 	// AccessClient is the in-process RBAC access client.

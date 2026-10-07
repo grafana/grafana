@@ -1202,8 +1202,6 @@ type GrafanaOpts struct {
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
 
-	// Deprecated: search routes are always enabled. Retained until Enterprise tests are updated.
-	EnableSearchAPI bool
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
