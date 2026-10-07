@@ -10,8 +10,8 @@ import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { PAGE_HISTORY_MAX, PAGE_HISTORY_MAX_BYTES, PageHistorySrv } from './pageHistorySrv';
-import { type PageHistoryEntry } from './types';
+import { PAGE_HISTORY_MAX_BYTES, PageHistorySrv } from './pageHistorySrv';
+import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry } from './types';
 
 setBackendSrv(backendSrv);
 setupMockServer();
@@ -214,31 +214,33 @@ describe('PageHistorySrv', () => {
     expect(await srv.getEntries()).toEqual([]);
   });
 
-  it('caps the list by count and by stored size, evicting the oldest first', async () => {
-    const srv = startAt('/');
+  it('keeps the newest pages per kind and a byte budget, evicting the oldest first', async () => {
+    const srv = startAt('/alerting/list');
     await srv.getEntries();
 
-    for (let i = 0; i <= PAGE_HISTORY_MAX; i++) {
+    for (let i = 0; i <= PAGE_HISTORY_MAX_PER_KIND; i++) {
       locationService.push(`/d/${i}`);
     }
 
-    const byCount = await srv.getEntries();
-    expect(byCount).toHaveLength(PAGE_HISTORY_MAX);
-    expect(byCount[0]).toEqual(expect.objectContaining({ uid: `${PAGE_HISTORY_MAX}` }));
-    expect(byCount.some((e) => e.kind === 'dashboard' && e.uid === '0')).toBe(false);
+    const byKind = await srv.getEntries();
+    expect(byKind.map((e) => e.href)).toEqual([
+      ...Array.from({ length: PAGE_HISTORY_MAX_PER_KIND }, (_, i) => `/d/${PAGE_HISTORY_MAX_PER_KIND - i}`),
+      // A burst of dashboards never pushes out another kind.
+      '/alerting/list',
+    ]);
 
-    const bigQuery = `?q=${'x'.repeat(3000)}`;
-    for (let i = 0; i < 70; i++) {
+    const bigQuery = `?q=${'x'.repeat(Math.ceil(PAGE_HISTORY_MAX_BYTES / 3))}`;
+    for (let i = 0; i < PAGE_HISTORY_MAX_PER_KIND; i++) {
       locationService.push(`/d/big-${i}${bigQuery}`);
     }
     await jest.advanceTimersByTimeAsync(1000);
 
-    const byBytes = await srv.getEntries();
-    expect(byBytes.length).toBeLessThan(70);
+    const byBytes = (await srv.getEntries()).filter((e) => e.kind === 'dashboard');
+    expect(byBytes.length).toBeLessThan(PAGE_HISTORY_MAX_PER_KIND);
     expect(window.localStorage.getItem(STORAGE_KEY)!.length).toBeLessThanOrEqual(PAGE_HISTORY_MAX_BYTES);
     // Every surviving row is one of the newest pushes, contiguous from the top.
     expect(byBytes.map((e) => e.kind === 'dashboard' && e.uid)).toEqual(
-      Array.from({ length: byBytes.length }, (_, i) => `big-${69 - i}`)
+      Array.from({ length: byBytes.length }, (_, i) => `big-${PAGE_HISTORY_MAX_PER_KIND - 1 - i}`)
     );
   });
 

@@ -82,6 +82,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
     minWidth: 0,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
     padding: theme.spacing(1),
+    // A truncated title or subtitle otherwise runs its ellipsis into the trailing cell.
+    gap: theme.spacing(2),
     justifyContent: 'space-between',
     alignItems: 'center',
   }),

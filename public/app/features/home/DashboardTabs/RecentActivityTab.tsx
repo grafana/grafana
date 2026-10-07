@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Badge, type BadgeColor, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { type LocationInfo } from 'app/features/search/service/types';
@@ -15,15 +14,16 @@ import { ctaClicked } from '../analytics/main';
 import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
 import { SEPARATOR, describeAppState, describeDashboardState, getNavTitle } from './describePageState';
-import { type PickUpItem } from './getPickUpItems';
+import { type RecentActivityItem } from './getRecentActivity';
 
 interface Props {
-  items: PickUpItem[];
+  items: RecentActivityItem[];
+  /** A kind filter is active, so an empty list means "none of this kind", not "nothing visited". */
+  filtered: boolean;
   loading: boolean;
   error: Error | undefined;
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
-  density?: 'default' | 'compact'; // 'compact' is only used in the homepage redesign
 }
 
 interface Row {
@@ -33,54 +33,57 @@ interface Row {
   badge: { text: string; color: BadgeColor };
 }
 
+const AREA_PREFIX = { alerting: /^\/alerting\/?/, app: /^\/a\/?/ };
+
 /** Everything a row shows for one kind of page, in one place. */
-function toRow(item: PickUpItem, navTree: NavModelItem[], foldersByUid: Record<string, LocationInfo>): Row {
+function toRow(item: RecentActivityItem, navTree: NavModelItem[], foldersByUid: Record<string, LocationInfo>): Row {
   const { pathname, search } = new URL(item.href, 'http://localhost');
   switch (item.kind) {
     case 'dashboard':
       return {
         title: item.dashboard.name,
         details: [foldersByUid[item.dashboard.location]?.name, describeDashboardState(search)],
-        badge: { text: t('home.pick-up-tab.kind-dashboard', 'Dashboard'), color: 'blue' },
+        badge: { text: t('home.recent-activity-tab.kind-dashboard', 'Dashboard'), color: 'blue' },
       };
     case 'explore':
       return {
-        title: t('home.pick-up-tab.kind-explore', 'Explore'),
+        title: t('home.recent-activity-tab.kind-explore', 'Explore'),
         details: [item.state],
-        badge: { text: t('home.pick-up-tab.kind-explore', 'Explore'), color: 'orange' },
+        badge: { text: t('home.recent-activity-tab.kind-explore', 'Explore'), color: 'orange' },
       };
     case 'alerting':
     case 'app': {
       // Pages in the nav tree use their nav label. Deep links use the title the page set, which
       // often is just the section's ("Incidents" for every incident), so the path tells them apart.
+      // The badge already names the area, so the path drops its `/alerting` or `/a` prefix.
       const navTitle = getNavTitle(navTree, pathname);
       const title = navTitle ?? item.title ?? pathname;
-      const path = navTitle || title === pathname ? undefined : pathname;
+      const path = navTitle || title === pathname ? undefined : pathname.replace(AREA_PREFIX[item.kind], '');
       return {
         title,
         details: [path, describeAppState(search)],
         badge:
           item.kind === 'alerting'
-            ? { text: t('home.pick-up-tab.kind-alerting', 'Alerting'), color: 'red' }
-            : { text: t('home.pick-up-tab.kind-app', 'App'), color: 'darkgrey' },
+            ? { text: t('home.recent-activity-tab.kind-alerting', 'Alerting'), color: 'red' }
+            : { text: t('home.recent-activity-tab.kind-app', 'App'), color: 'purple' },
       };
     }
   }
 }
 
-export function PickUpTab({ items, loading, error, retry, foldersByUid, density }: Props) {
-  const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const styles = useStyles2(getStyles, redesignEnabled);
+/** Only rendered on the redesigned homepage, so rows are always compact. */
+export function RecentActivityTab({ items, filtered, loading, error, retry, foldersByUid }: Props) {
+  const styles = useStyles2(getStyles);
   const navTree = useSelector((state) => state.navBarTree);
 
   if (loading) {
-    return <PageLoader text={t('home.pick-up-tab.loading', 'Loading your recent activity...')} />;
+    return <PageLoader text={t('home.recent-activity-tab.loading', 'Loading your recent activity...')} />;
   }
 
   if (error) {
     return (
       <DashboardTabError
-        title={t('home.pick-up-tab.error-title', 'Could not load your recent activity')}
+        title={t('home.recent-activity-tab.error-title', 'Could not load your recent activity')}
         retry={retry}
       />
     );
@@ -89,9 +92,13 @@ export function PickUpTab({ items, loading, error, retry, foldersByUid, density 
   if (items.length === 0) {
     return (
       <DashboardTabEmptyState
-        message={t('home.pick-up-tab.empty', 'Nothing to pick up yet. Pages you visit will show up here.')}
+        message={
+          filtered
+            ? t('home.recent-activity-tab.empty-filtered', 'No recent pages of this type.')
+            : t('home.recent-activity-tab.empty', 'No recent activity yet. Pages you visit will show up here.')
+        }
         variant="completed"
-        density={density}
+        density="compact"
       />
     );
   }
@@ -103,16 +110,23 @@ export function PickUpTab({ items, loading, error, retry, foldersByUid, density 
         return (
           <li key={item.href}>
             <ListRow
-              isCompact={density === 'compact'}
+              isCompact
               title={row.title}
               subtitle={row.details.filter(Boolean).join(SEPARATOR) || undefined}
               href={item.href}
               onClick={() =>
-                ctaClicked({ surface: 'pick_up_tab', action: 'open_page', placement: 'list', page_kind: item.kind })
+                ctaClicked({
+                  surface: 'recent_activity_tab',
+                  action: 'open_page',
+                  placement: 'list',
+                  page_kind: item.kind,
+                })
               }
               trailing={
-                <Stack gap={1} alignItems="center">
-                  <Badge text={row.badge.text} color={row.badge.color} />
+                <Stack gap={0.5} alignItems="center">
+                  <span className={styles.kind}>
+                    <Badge text={row.badge.text} color={row.badge.color} />
+                  </span>
                   <SummaryCardAge date={item.lastVisited} />
                 </Stack>
               }
@@ -124,10 +138,18 @@ export function PickUpTab({ items, loading, error, retry, foldersByUid, density 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, redesign: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
-    padding: theme.spacing(0, redesign ? 0 : 0.5),
+    padding: 0,
     margin: 0,
+  }),
+  // Fixed column sized for the widest badge ("Dashboard"), badges centered in it, so the column
+  // reads as one block next to the right-aligned times.
+  kind: css({
+    display: 'inline-flex',
+    flexShrink: 0,
+    justifyContent: 'center',
+    minWidth: theme.spacing(10),
   }),
 });

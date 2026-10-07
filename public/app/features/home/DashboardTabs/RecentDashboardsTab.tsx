@@ -2,7 +2,6 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -23,12 +22,11 @@ interface Props {
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
   onStarChange?: () => void;
-  density?: 'default' | 'compact';
 }
 
-export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange, density }: Props) {
-  const redesignEnabled = useFlagGrafanaGrowthHomepage();
-  const styles = useStyles2(getStyles, redesignEnabled);
+/** Recently viewed dashboards; the redesigned homepage shows RecentActivityTab instead. */
+export function RecentDashboardsTab({ dashboards, loading, error, retry, foldersByUid, onStarChange }: Props) {
+  const styles = useStyles2(getStyles);
 
   if (loading) {
     return <PageLoader text={t('home.recent-dashboards-tab.loading', 'Loading recently viewed dashboards...')} />;
@@ -66,7 +64,7 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
     );
 
     return (
-      <DashboardTabEmptyState message={message} variant="call-to-action" button={button} density={density}>
+      <DashboardTabEmptyState message={message} variant="call-to-action" button={button}>
         <Trans i18nKey="home.recent-dashboards-tab.empty-description">
           After you&apos;ve connected data, you can use dashboards to query and visualize your data with charts, stats
           and tables or create lists, markdowns and other widgets.
@@ -88,21 +86,19 @@ export function RecentDashboardsTab({ dashboards, loading, error, retry, folders
               layoutMode="list"
               source="homepage_recentTab"
               onStarChange={onStarChange}
-              density={density}
             />
           </li>
         ))}
       </ul>
-      {/* In the redesign the clear button is pinned outside the scroll area by DashboardTabs. */}
-      {density !== 'compact' && <RecentDashboardsClearButton dashboards={dashboards} retry={retry} />}
+      <RecentDashboardsClearButton dashboards={dashboards} retry={retry} />
     </Stack>
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, redesign: boolean) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
-    padding: theme.spacing(0, redesign ? 0 : 0.5),
+    padding: theme.spacing(0, 0.5),
     margin: 0,
   }),
 });

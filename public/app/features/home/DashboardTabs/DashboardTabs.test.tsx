@@ -167,20 +167,15 @@ describe('DashboardTabs', () => {
     expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
   });
 
-  it('renders the compact empty Recent tab with its create CTA on the redesigned homepage', async () => {
+  it('renders the compact empty Recent activity tab on the redesigned homepage', async () => {
     await act(async () => {
       setTestFlags({ 'grafana.growthHomepage': true });
     });
-    jest
-      .spyOn(contextSrv, 'hasPermission')
-      .mockImplementation((action: string) => action === AccessControlAction.DashboardsCreate);
 
     render(<DashboardTabs extensionComponents={[]} />);
 
-    expect(await screen.findByText("Dashboards you've recently viewed will appear here.")).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /create your first dashboard/i })).toBeInTheDocument();
-    // The description paragraph is what makes the full EmptyState overflow the shorter card.
-    expect(screen.queryByText(/After you've connected data/)).not.toBeInTheDocument();
+    expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
   });
 
   it('shows empty state when no starred dashboards', async () => {
@@ -394,7 +389,7 @@ describe('DashboardTabs', () => {
     });
   });
 
-  describe('Pick up tab', () => {
+  describe('Recent activity tab', () => {
     const exploreHref = `/explore?schemaVersion=1&panes=${encodeURIComponent(
       JSON.stringify({
         abc: {
@@ -445,25 +440,20 @@ describe('DashboardTabs', () => {
 
       render(<DashboardTabs extensionComponents={[]} />);
 
-      expect(await screen.findByRole('tab', { name: /recent/i })).toBeInTheDocument();
-      expect(screen.queryByRole('tab', { name: /continue|pick up/i })).not.toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /recent dashboards/i, selected: true })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /recent activity/i })).not.toBeInTheDocument();
       expect(pageHistorySrv.getEntries).not.toHaveBeenCalled();
     });
 
     it('lists visited pages with their restored state, newest first', async () => {
       await enableRedesign();
-      seedRecent(['recent-1', 'recent-2']);
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([appEntry, exploreEntry, dashboardEntry, alertingEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
+      render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
 
-      await user.click(await screen.findByRole('tab', { name: /continue/i }));
-
-      expect(screen.getByRole('tab', { name: /pick up where you left off.*4/i })).toHaveAttribute(
-        'aria-selected',
-        'true'
-      );
+      expect(await screen.findByRole('tab', { name: /recent activity.*4/i, selected: true })).toBeInTheDocument();
+      expect(screen.queryByRole('tab', { name: /recent dashboards/i })).not.toBeInTheDocument();
 
       const links = within(screen.getByRole('list')).getAllByRole('link');
       expect(links.map((link) => link.getAttribute('href'))).toEqual([
@@ -480,18 +470,50 @@ describe('DashboardTabs', () => {
       expect(screen.getByRole('link', { name: /Alert rules/ })).toHaveTextContent('search=firing');
       expect(screen.getByRole('link', { name: /Alert rules/ })).not.toHaveTextContent('/alerting/list');
       expect(screen.getByRole('link', { name: /^Incidents/ })).toHaveTextContent(
-        '/a/grafana-irm-app/incidents/5987 · tab=timeline'
+        'grafana-irm-app/incidents/5987 · tab=timeline'
       );
 
-      expect(screen.getByText('Dashboard')).toBeInTheDocument();
-      expect(screen.getByText('Alerting')).toBeInTheDocument();
-      expect(screen.getByText('App')).toBeInTheDocument();
-      expect(screen.getAllByText('Explore')).toHaveLength(2);
+      const list = within(screen.getByRole('list'));
+      expect(list.getByText('Dashboard')).toBeInTheDocument();
+      expect(list.getByText('Alerting')).toBeInTheDocument();
+      expect(list.getByText('App')).toBeInTheDocument();
+      expect(list.getAllByText('Explore')).toHaveLength(2);
+
+      // Kind chips cover the whole history; "All" is active until one is picked.
+      const chips = within(screen.getByRole('group', { name: /show only/i }));
+      expect(chips.getAllByRole('button').map((chip) => chip.textContent)).toEqual([
+        'All',
+        'Dashboards',
+        'Explore',
+        'Alerting',
+        'Apps',
+      ]);
+      expect(chips.getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+    });
+
+    it('backfills dashboards from the recently viewed list while page history has few', async () => {
+      await enableRedesign();
+      seedRecent(['recent-1', 'recent-2']);
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry]);
+      server.use(getCustomSearchHandler(recentHits));
+
+      render(<DashboardTabs extensionComponents={[]} />);
+
+      expect(await screen.findByRole('tab', { name: /recent activity.*3/i, selected: true })).toBeInTheDocument();
+      const links = within(screen.getByRole('list')).getAllByRole('link');
+      // Real visits first, backfilled dashboards after them, without a visit time.
+      expect(links.map((link) => link.textContent)).toEqual([
+        expect.stringMatching(/^Explore/),
+        expect.stringMatching(/^Recent Dashboard 1/),
+        expect.stringMatching(/^Recent Dashboard 2/),
+      ]);
+      expect(within(screen.getByRole('list')).getAllByText('Dashboard')).toHaveLength(2);
+      expect(screen.getAllByText(/ago$/)).toHaveLength(1);
+      expect(screen.getByRole('button', { name: 'Dashboards' })).toBeEnabled();
     });
 
     it('drops dashboards the user can no longer see before applying the cap', async () => {
       await enableRedesign();
-      seedRecent(['recent-1', 'recent-2']);
       const gone: PageHistoryEntry[] = Array.from({ length: 20 }, (_, i) => ({
         kind: 'dashboard',
         uid: `gone-${i}`,
@@ -501,10 +523,9 @@ describe('DashboardTabs', () => {
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([...gone, exploreEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs extensionComponents={[]} />);
 
-      await user.click(await screen.findByRole('tab', { name: /continue.*1/i }));
-
+      expect(await screen.findByRole('tab', { name: /recent activity.*1/i, selected: true })).toBeInTheDocument();
       const rows = within(screen.getByRole('list'));
       expect(rows.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
       expect(rows.getAllByRole('link')).toHaveLength(1);
@@ -512,45 +533,32 @@ describe('DashboardTabs', () => {
 
     it('tracks the tab switch and row clicks', async () => {
       await enableRedesign();
-      seedRecent(['recent-1', 'recent-2']);
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
       const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
-      await user.click(await screen.findByRole('tab', { name: /continue/i }));
-      expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: 'pick-up' });
+      await user.click(await screen.findByRole('tab', { name: /starred/i }));
+      await user.click(screen.getByRole('tab', { name: /^recent/i }));
+      expect(jest.mocked(tabChanged)).toHaveBeenLastCalledWith({ tab: 'recent-activity' });
 
       await user.click(screen.getByRole('link', { name: /^Explore/ }));
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'pick_up_tab',
+        surface: 'recent_activity_tab',
         action: 'open_page',
         placement: 'list',
         page_kind: 'explore',
       });
     });
 
-    it('shows the empty state when nothing was visited yet', async () => {
+    it('auto-switches to a tab with content when there is no recent activity', async () => {
       await enableRedesign();
-      seedRecent(['recent-1', 'recent-2']);
-      server.use(getCustomSearchHandler(recentHits));
-
-      const { user } = render(<DashboardTabs extensionComponents={[]} />);
-
-      await user.click(await screen.findByRole('tab', { name: /continue/i }));
-
-      expect(await screen.findByText('Nothing to pick up yet. Pages you visit will show up here.')).toBeInTheDocument();
-    });
-
-    it('is auto-selected when it is the only tab with content', async () => {
-      await enableRedesign();
-      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry]);
+      setMockStarredDashboards(['starred-1']);
+      server.use(getCustomSearchHandler(starredHits));
 
       render(<DashboardTabs extensionComponents={[]} />);
 
-      expect(
-        await screen.findByRole('tab', { name: /pick up where you left off/i, selected: true })
-      ).toBeInTheDocument();
+      expect(await screen.findByRole('tab', { name: /starred dashboards/i, selected: true })).toBeInTheDocument();
       expect(jest.mocked(tabChanged)).not.toHaveBeenCalled();
     });
 
@@ -561,14 +569,14 @@ describe('DashboardTabs', () => {
 
       const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
-      await user.click(await screen.findByRole('tab', { name: /continue/i }));
       expect(await screen.findByText('Could not load your recent activity')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
 
       server.use(getCustomSearchHandler(recentHits));
       await user.click(screen.getByRole('button', { name: /retry/i }));
 
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
-      expect(screen.getByRole('tab', { name: /pick up where you left off/i })).toHaveAttribute('aria-selected', 'true');
+      expect(screen.getByRole('tab', { name: /recent activity/i })).toHaveAttribute('aria-selected', 'true');
     });
   });
 });

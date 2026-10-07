@@ -1,4 +1,10 @@
-import { dateTimeFormat, dateTimeFormatTimeAgo, dateTimeFormatWithAbbrevation, timeZoneAbbrevation } from './formatter';
+import {
+  dateTimeFormat,
+  dateTimeFormatTimeAgo,
+  dateTimeFormatTimeAgoShort,
+  dateTimeFormatWithAbbrevation,
+  timeZoneAbbrevation,
+} from './formatter';
 
 describe('dateTimeFormat', () => {
   describe('when no time zone have been set', () => {
@@ -101,6 +107,30 @@ describe('dateTimeFormatTimeAgo', () => {
   it('should return the correct format for years ago', () => {
     const options = { timeZone: 'Europe/Stockholm' };
     expect(dateTimeFormatTimeAgo(1587126975779, options)).toContain('years ago');
+  });
+});
+
+describe('dateTimeFormatTimeAgoShort', () => {
+  const now = 1587126975779;
+  const ago = (ms: number) => dateTimeFormatTimeAgoShort(now - ms, { now });
+
+  it.each([
+    [400, '0s ago'],
+    [5_000, '5s ago'],
+    [11 * 60_000, '11m ago'],
+    // Rounds before picking the unit, so 59.6 minutes is an hour, not 60m.
+    [59.6 * 60_000, '1h ago'],
+    [2 * 3_600_000, '2h ago'],
+    [3 * 86_400_000, '3d ago'],
+    [45 * 86_400_000, '2mo ago'],
+    [2 * 365 * 86_400_000, '2y ago'],
+    [-5 * 60_000, 'in 5m'],
+  ])('formats a difference of %i ms as %s', (ms, expected) => {
+    expect(ago(ms)).toBe(expected);
+  });
+
+  it('returns Invalid date for invalid input', () => {
+    expect(dateTimeFormatTimeAgoShort(new Date(NaN), { now })).toBe('Invalid date');
   });
 });
 

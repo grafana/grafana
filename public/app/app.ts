@@ -363,7 +363,7 @@ export class GrafanaApp {
       const newAssetsChecker = new NewFrontendAssetsChecker();
       newAssetsChecker.start();
 
-      // Feeds the homepage "Pick up where you left off" tab; same flag as the tab so the control arm pays no storage writes.
+      // Feeds the homepage "Recent activity" tab; same flag as the tab so the control arm pays no storage writes.
       if (getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaGrowthHomepage, false)) {
         pageHistorySrv.start(chromeService);
       }

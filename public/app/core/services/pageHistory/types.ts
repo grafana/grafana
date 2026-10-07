@@ -1,3 +1,6 @@
+/** Newest entries kept per kind, so a burst of one kind of page never evicts the others. */
+export const PAGE_HISTORY_MAX_PER_KIND = 5;
+
 /** What a visited URL resolves to; one history row per identity. Derived from the pathname, never stored. */
 export type PageIdentity =
   | { kind: 'dashboard'; uid: string }

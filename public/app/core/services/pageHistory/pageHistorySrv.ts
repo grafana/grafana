@@ -10,11 +10,10 @@ import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { classifyPage, pageKey } from './classifyPage';
-import { type PageHistoryEntry } from './types';
+import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry, type PageHistoryKind } from './types';
 
 const STORAGE_SERVICE = 'grafana-page-history';
 const PERSIST_MS = 1000;
-export const PAGE_HISTORY_MAX = 100;
 /** Serialized JSON length. Explore hrefs can be several KB each, so the count cap alone does not bound bytes. */
 export const PAGE_HISTORY_MAX_BYTES = 200_000;
 /** JS `Date` range; `formatDistanceToNowStrict` throws beyond it. */
@@ -58,16 +57,22 @@ function mergeByPage(...lists: PageHistoryEntry[][]): PageHistoryEntry[] {
   return [...byKey.values()].sort((a, b) => b.lastVisited - a.lastVisited);
 }
 
-/** Count cap, then byte budget on the stored form; always evicts the oldest (last) entries first. */
+/** Newest N per kind, then a byte budget on the stored form; always evicts the oldest (last) entries first. */
 function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
+  const kept = new Map<PageHistoryKind, number>();
   const capped: PageHistoryEntry[] = [];
   // `[` and `]`, then one `,` per additional row: exactly JSON.stringify(rows).length.
   let bytes = 2;
-  for (const entry of entries.slice(0, PAGE_HISTORY_MAX)) {
+  for (const entry of entries) {
+    const count = kept.get(entry.kind) ?? 0;
+    if (count >= PAGE_HISTORY_MAX_PER_KIND) {
+      continue;
+    }
     bytes += JSON.stringify(toStored(entry)).length + (capped.length > 0 ? 1 : 0);
     if (bytes > PAGE_HISTORY_MAX_BYTES) {
       break;
     }
+    kept.set(entry.kind, count + 1);
     capped.push(entry);
   }
   return capped;
@@ -157,6 +162,14 @@ export class PageHistorySrv {
     }
     await this.ready;
     return [...this.entries];
+  }
+
+  /** Forgets every recorded page and persists the empty list right away. */
+  async clear(): Promise<void> {
+    await this.ready;
+    this.entries = [];
+    this.persist.cancel();
+    await this.write();
   }
 
   stop(): void {

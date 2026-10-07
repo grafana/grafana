@@ -1,5 +1,7 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
 
+import { formatRelativeTime } from '@grafana/i18n';
+
 import { type TimeZone } from '../types/time';
 
 import { type DateTimeOptions, getTimeZone } from './common';
@@ -26,6 +28,16 @@ export interface DateTimeOptionsWithTimeAgo extends DateTimeOptions {
 }
 
 type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc: DateTimeInput, options?: T) => string;
+
+/** Largest first; the first unit whose rounded count reaches 1 wins, so 59.6 minutes reads as 1h. */
+const TIME_AGO_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
+  ['year', 365 * 24 * 60 * 60 * 1000],
+  ['month', 30 * 24 * 60 * 60 * 1000],
+  ['day', 24 * 60 * 60 * 1000],
+  ['hour', 60 * 60 * 1000],
+  ['minute', 60 * 1000],
+  ['second', 1000],
+];
 
 // NOTE:
 // These date formatting functions now just wrap the @grafana/i18n formatting functions
@@ -71,6 +83,35 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter<DateTimeOptionsWithTimeAgo
   const date = toTz(dateInUtc, timeZone);
 
   return options?.now == null ? date.fromNow() : date.from(toTz(options.now, timeZone));
+};
+
+/**
+ * Compact form of {@link dateTimeFormatTimeAgo} for dense lists: `11m ago`, `2h ago`, `3d ago`, `in 5m`.
+ * Uses the browser's narrow relative-time style in the current language.
+ *
+ * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, UNIX epoch in seconds etc.
+ * @param options
+ *
+ * @public
+ */
+export const dateTimeFormatTimeAgoShort: DateTimeFormatter<DateTimeOptionsWithTimeAgo> = (dateInUtc, options?) => {
+  const timeZone = getTimeZone(options);
+  const date = toTz(dateInUtc, timeZone);
+  if (!date.isValid()) {
+    return 'Invalid date';
+  }
+
+  const now = options?.now == null ? Date.now() : toTz(options.now, timeZone).valueOf();
+  const diff = date.valueOf() - now;
+  for (const [unit, size] of TIME_AGO_UNITS) {
+    // Round the magnitude: Math.round(-1.5) is -1, which would make 45 days "1mo ago".
+    const count = Math.sign(diff) * Math.round(Math.abs(diff) / size);
+    if (Math.abs(count) >= 1) {
+      return formatRelativeTime(count, unit, { style: 'narrow', numeric: 'always' });
+    }
+  }
+  // Under half a second either way; -0 keeps the past-tense form ("0s ago", not "in 0s").
+  return formatRelativeTime(-0, 'second', { style: 'narrow', numeric: 'always' });
 };
 
 /**

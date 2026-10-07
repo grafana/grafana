@@ -17,6 +17,16 @@ const createDurationFormatter = deepMemoize((locale: string | undefined, options
   return new Intl.DurationFormat(locale, options);
 });
 
+const createRelativeTimeFormatter = deepMemoize(
+  (locale: string | undefined, options: Intl.RelativeTimeFormatOptions) => {
+    try {
+      return new Intl.RelativeTimeFormat(locale, options);
+    } catch {
+      return new Intl.RelativeTimeFormat('en-US', options);
+    }
+  }
+);
+
 export const formatDate = deepMemoize(
   (_value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
     const value = typeof _value === 'string' ? new Date(_value) : _value;
@@ -29,6 +39,13 @@ export const formatDuration = deepMemoize(
   (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
     const dateFormatter = createDurationFormatter(getLanguage(), options);
     return dateFormatter.format(duration);
+  }
+);
+
+/** `formatRelativeTime(-11, 'minute', { style: 'narrow' })` → `11m ago` in the current language. */
+export const formatRelativeTime = deepMemoize(
+  (value: number, unit: Intl.RelativeTimeFormatUnit, options: Intl.RelativeTimeFormatOptions = {}): string => {
+    return createRelativeTimeFormatter(getLanguage(), options).format(value, unit);
   }
 );
 
