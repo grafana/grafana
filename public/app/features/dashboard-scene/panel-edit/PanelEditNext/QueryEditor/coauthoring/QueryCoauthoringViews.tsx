@@ -103,6 +103,7 @@ export function QueryCoauthoringPromptInput({
 }: PromptInputProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const initialActiveElementRef = useRef(document.activeElement);
   const localUserGestureRef = useRef(false);
   const hasOutsideUserGestureRef = userGestureRef ?? localUserGestureRef;
   const menuId = useId();
@@ -140,6 +141,21 @@ export function QueryCoauthoringPromptInput({
     let firstFocusFrame: number | undefined;
     let secondFocusFrame: number | undefined;
     let focusFrame: number | undefined;
+    let retryFocusFrame: number | undefined;
+    const focusPrompt = () => {
+      const input = inputRef.current;
+      const currentActiveElement = document.activeElement;
+      if (
+        input &&
+        !hasOutsideUserGestureRef.current &&
+        (currentActiveElement === activeElement ||
+          currentActiveElement === initialActiveElementRef.current ||
+          currentActiveElement === document.body ||
+          currentActiveElement === input)
+      ) {
+        input.focus();
+      }
+    };
     const cancelFocus = () => {
       if (firstFocusFrame !== undefined) {
         cancelAnimationFrame(firstFocusFrame);
@@ -153,6 +169,10 @@ export function QueryCoauthoringPromptInput({
         cancelAnimationFrame(focusFrame);
         focusFrame = undefined;
       }
+      if (retryFocusFrame !== undefined) {
+        cancelAnimationFrame(retryFocusFrame);
+        retryFocusFrame = undefined;
+      }
     };
 
     // Wait until Monaco has finished its two-frame surface placement before taking focus.
@@ -162,18 +182,12 @@ export function QueryCoauthoringPromptInput({
         secondFocusFrame = undefined;
         focusFrame = requestAnimationFrame(() => {
           focusFrame = undefined;
-          const input = inputRef.current;
-          const currentActiveElement = document.activeElement;
-
-          if (
-            input &&
-            !hasOutsideUserGestureRef.current &&
-            (currentActiveElement === activeElement ||
-              currentActiveElement === document.body ||
-              currentActiveElement === input)
-          ) {
-            input.focus();
-          }
+          focusPrompt();
+          // Monaco can reclaim focus after placement; retry once while respecting user navigation.
+          retryFocusFrame = requestAnimationFrame(() => {
+            retryFocusFrame = undefined;
+            focusPrompt();
+          });
         });
       });
     });
