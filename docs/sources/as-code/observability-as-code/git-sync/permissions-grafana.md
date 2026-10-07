@@ -300,7 +300,7 @@ Git Sync operations run as jobs, but not all job actions are gated the same way:
 - **Manual sync (pull from Git) and orphan-resource cleanup** require `provisioning.repositories:write`, which is admin-only. This keeps Editors from triggering repository-wide operations even though they hold `provisioning.jobs:create`.
 
 {{< admonition type="note" >}}
-Move and delete permission checks work the same way regardless of which branch the job targets, including a feature branch under the repository's branch workflow. The one exception is the destination folder for a move: it's resolved from the repository's configured branch, so moving into a folder that only exists on a not-yet-merged branch isn't supported yet - the destination folder must already exist on the configured branch.
+Move and delete permission checks work the same way regardless of which branch the job targets, including a feature branch under the repository's branch workflow. Moving into a folder that Grafana hasn't synced yet is allowed as long as you have create permission on its nearest existing parent folder, so a destination created on a feature branch doesn't block the move.
 {{< /admonition >}}
 
 Pushing changes to Git isn't a permission of its own. Saving a dashboard, moving it, or deleting it all push changes to Git - on the configured branch, or on a feature branch to raise a pull request from - and each follows the folder and dashboard permissions above. `provisioning.jobs:create` only ever covered the export (`push`) job, so a folder-scoped `Viewer` can get changes into Git, and reviewed, without an `Editor` role.
