@@ -63,15 +63,11 @@ const (
 var tracer = otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/search")
 
 func init() {
-	// zapx sizes each new segment buffer for the batch plus 100 extra documents,
-	// using the average document size of whatever batch any index built last, and
-	// the segment keeps that whole buffer. In-memory indexes never merge or persist
-	// their segments, so every small build or single-document update kept roughly a
-	// hundred documents' worth of unused memory until the index was evicted.
-	// Zeroing the factor also stops sizing from other indexes' documents, so a
-	// segment's buffer only grows with what it actually holds. Despite its name,
-	// this factor scales the borrowed average document size.
-	zapv16.NewSegmentBufferNumResultsBump = 0
+	// zapx reserves each new segment buffer for the batch plus 100 extra documents,
+	// sized from whatever batch any index wrote last, and the segment keeps it.
+	// In-memory indexes never merge or persist segments, so that unused space
+	// stayed until eviction. Despite its name, this factor scales the borrowed
+	// document size; zero turns the reservation off.
 	zapv16.NewSegmentBufferNumResultsFactor = 0
 }
 
