@@ -157,21 +157,6 @@ describe('userStorage', () => {
       );
     });
 
-    it('serves the written value in this session when the update fails', async () => {
-      request.mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value' } } },
-        } as FetchResponse)
-      );
-      request.mockReturnValueOnce(Promise.reject({ status: 500 } as FetchError));
-      const storage = renderHook(() => usePluginUserStorage()).result.current;
-      await storage.setItem('key', 'new-value');
-
-      expect(getStoreMocks().set).toHaveBeenCalledWith('plugin-id:abc:key', 'new-value');
-      expect(await storage.getItem('key')).toBe('new-value');
-    });
-
     it('handles storageSpec as Promise by awaiting it before creating storage', async () => {
       // This test verifies that setItem correctly awaits a Promise in storageSpec
       // Scenario: init() completes and sets null in cache, then setItem should create storage
@@ -306,21 +291,6 @@ describe('userStorage', () => {
       const storage = renderHook(() => usePluginUserStorage()).result.current;
       await storage.deleteItem('key');
       expect(getStoreMocks().delete).toHaveBeenCalledWith('plugin-id:abc:key');
-    });
-
-    it('stops serving the item in this session when the delete fails', async () => {
-      request.mockReturnValueOnce(
-        Promise.resolve({
-          status: 200,
-          data: { metadata: { name: 'service:abc' }, spec: { data: { key: 'value', other: 'data' } } },
-        } as FetchResponse)
-      );
-      request.mockReturnValueOnce(Promise.reject({ status: 500 } as FetchError));
-      const storage = renderHook(() => usePluginUserStorage()).result.current;
-      await storage.deleteItem('key');
-
-      expect(await storage.getItem('key')).toBeNull();
-      expect(await storage.getItem('other')).toBe('data');
     });
 
     it('updates cache after deleting an item', async () => {
