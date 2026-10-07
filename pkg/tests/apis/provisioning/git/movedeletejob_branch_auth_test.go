@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
@@ -187,7 +188,12 @@ func TestIntegrationGit_MoveDeleteJob_BranchKindConfusionDenied(t *testing.T) {
 			},
 		})
 		require.Error(t, err, "authorization must reflect the poisoned branch's actual content, not resolve it as a dashboard")
-		require.NotEqual(t, http.StatusAccepted, statusCode)
+		// Assert the exact status: a deterministic property of the target's content
+		// is a refusal to authorize, not a server fault. "not 202" would also pass
+		// on a 500, which is what this used to return before the unsupported-kind
+		// error carried a status.
+		require.Equal(t, http.StatusForbidden, statusCode)
+		require.True(t, apierrors.IsForbidden(err), "expected Forbidden, got %v", err)
 	})
 
 	t.Run("still succeeds against the configured branch", func(t *testing.T) {

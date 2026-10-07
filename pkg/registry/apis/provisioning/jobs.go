@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	movepkg "github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/move"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -479,9 +480,13 @@ func wrapAuthzError(err error, format string, args ...any) error {
 // skipped rather than authorized - a ResourceRef only carries a name/kind/group,
 // with nothing tying it to the repository the job was created against, so a ref
 // could otherwise name a resource the caller controls in a different repository
-// whose file path happens to collide with a protected path in this one. Skipping
-// mismatched refs here mirrors the same check the worker applies when it later
-// resolves the ref to a path (RepositoryResources.FindResourcePath). Pass false
+// whose file path happens to collide with a protected path in this one. The
+// worker applies the same ownership check when it resolves the ref to a path
+// (RepositoryResources.FindResourcePath), though it doesn't handle the result
+// uniformly: the delete worker skips an unresolvable ref, while the move worker
+// records it as an error and, with StrictMaxErrors(1), aborts the job. So
+// skipping here keeps a mixed delete working, but a mixed move can still fail at
+// execution without moving anything. Pass false
 // only for callers whose resources are legitimately unmanaged by this repository
 // (e.g. a selective migration's export inputs) and whose execution path doesn't
 // resolve refs to this repository's file paths, so the collision this guards
@@ -557,7 +562,7 @@ func (c *jobsConnector) authorizeResourceRefs(ctx context.Context, authorizer re
 
 		if verifyKind {
 			if source, ok := meta.GetSourceProperties(); ok && source.Path != "" {
-				if err := authorizer.VerifyFileKind(ctx, source.Path, targetRef, gvr); err != nil {
+				if err := authorizer.VerifyFileTarget(ctx, source.Path, targetRef, gvr, ref.Name); err != nil {
 					return found, wrapAuthzError(err, "authorize %s %s/%s/%s", action, ref.Group, ref.Kind, ref.Name)
 				}
 			}
@@ -726,6 +731,17 @@ func (c *jobsConnector) authorizeDeleteJob(ctx context.Context, repo repository.
 func (c *jobsConnector) authorizeMoveJob(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository, opts *provisioning.MoveJobOptions) error {
 	if len(opts.Paths) == 0 && len(opts.Resources) == 0 {
 		return apierrors.NewBadRequest("move jobs must target at least one path or resource")
+	}
+
+	// A move whose source already sits at its target is a no-op the worker skips,
+	// but with an empty Ref it still runs the follow-up full sync afterwards -
+	// the same admin-only side effect the empty-target check above exists to keep
+	// out of reach. Reject it here so a syntactically non-empty move can't be used
+	// to trigger a resync without changing anything.
+	for _, path := range opts.Paths {
+		if path == movepkg.TargetPath(opts.TargetPath, path) {
+			return apierrors.NewBadRequest(fmt.Sprintf("move jobs must change a path: %q is already at %q", path, opts.TargetPath))
+		}
 	}
 
 	authorizer, err := c.newJobAuthorizer(ctx, repo, cfg)

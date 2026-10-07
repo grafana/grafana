@@ -61,6 +61,15 @@ func testDashboardFileInfo() *repository.FileInfo {
 	}
 }
 
+// testDashboardFileInfoNamed is testDashboardFileInfo with a specific uid, for
+// resource-ref cases where VerifyFileTarget compares the branch content's name
+// against the ref's name - the two have to agree for a legitimate request.
+func testDashboardFileInfoNamed(name string) *repository.FileInfo {
+	return &repository.FileInfo{
+		Data: []byte(fmt.Sprintf(`{"uid":%q,"schemaVersion":7,"panels":[],"tags":[]}`, name)),
+	}
+}
+
 // testFolderManifestFileInfo returns a FileInfo containing a folder manifest -
 // used to simulate a path resolving to a different kind on one ref than another,
 // since resolveFileGVR explicitly rejects folders (they're authorized through a
@@ -1048,7 +1057,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(cfg).Maybe()
-		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfoNamed("my-dash"), nil)
 		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testFolderManifestFileInfo(), nil).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
@@ -1109,7 +1118,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		}), "folder-abc").Return(nil)
 
 		mockReader := repository.NewMockReader(t)
-		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfoNamed("my-dash"), nil)
 		clientsMock := resources.NewMockClientFactory(t)
 
 		dynClient := &mockDynamic{}
@@ -1131,7 +1140,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 	})
 
 	t.Run("resource ref on a different branch is denied when the branch's content is a different kind", func(t *testing.T) {
-		// The residual gap VerifyFileKind closes: the check above only
+		// The residual gap VerifyFileTarget closes: the check above only
 		// authorizes the resource's *live* Grafana state, but the worker
 		// resolves it to sourcePath and acts on whatever is at that path on the
 		// caller's ref. If that content changed kind on the branch, this must
@@ -1161,6 +1170,74 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
 		}, "feature-branch", true)
 		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err), "a deterministic content mismatch must be a 403, not a 500: %v", err)
+	})
+
+	t.Run("resource ref on a different branch is denied when the branch has a different resource of the same kind", func(t *testing.T) {
+		// Comparing only the kind would let permission on one dashboard authorize
+		// acting on a different dashboard that the branch happens to have at the
+		// same resolved path, so the name has to match too.
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbDelete
+		}), "folder-abc").Return(nil)
+
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").
+			Return(testDashboardFileInfoNamed("someone-elses-dash"), nil)
+		clientsMock := resources.NewMockClientFactory(t)
+
+		dynClient := &mockDynamic{}
+		dynClient.On("Get", mock.Anything, "my-dash", metav1.GetOptions{}, []string(nil)).
+			Return(makeUnstructuredWithSource("my-dash", "folder-abc", "team-a/dashboard.json"), nil)
+
+		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
+			Group: "dashboard.grafana.app", Kind: "Dashboard",
+		}).Return(dynClient, dashGVR, nil)
+		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+			{Name: "my-dash", Kind: "Dashboard", Group: "dashboard.grafana.app"},
+		}, "feature-branch", true)
+		require.Error(t, err)
+		assert.True(t, apierrors.IsForbidden(err), "expected 403, got %v", err)
+	})
+
+	t.Run("folder resource ref on a different branch is authorized", func(t *testing.T) {
+		// Regression: VerifyFileTarget used to run for every kind, but folder
+		// manifests are deliberately unresolvable as file resources, so a folder
+		// ref failed on every branch except the configured one. Folder identity is
+		// pinned to the configured branch regardless of ref, so there is nothing
+		// here for the branch's content to decide.
+		folderGVR := resources.FolderResource
+		accessMock := auth.NewMockAccessChecker(t)
+		accessMock.EXPECT().Check(mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == folderGVR.Group && req.Resource == folderGVR.Resource && req.Verb == utils.VerbDelete
+		}), "folder-abc").Return(nil)
+
+		// No Read expectation at all: a folder ref must not reach the file reader.
+		mockReader := repository.NewMockReader(t)
+		clientsMock := resources.NewMockClientFactory(t)
+
+		dynClient := &mockDynamic{}
+		dynClient.On("Get", mock.Anything, "my-folder", metav1.GetOptions{}, []string(nil)).
+			Return(makeUnstructuredWithSource("my-folder", "folder-abc", "team-a/"), nil)
+
+		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
+		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
+			Group: "folder.grafana.app", Kind: "Folder",
+		}).Return(dynClient, folderGVR, nil)
+		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
+
+		c := &jobsConnector{access: accessMock, clients: clientsMock}
+		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, []provisioning.ResourceRef{
+			{Name: "my-folder", Kind: "Folder", Group: "folder.grafana.app"},
+		}, "feature-branch", true)
+		require.NoError(t, err)
 	})
 }
 
@@ -1169,6 +1246,22 @@ func TestAuthorizeMoveJob(t *testing.T) {
 	cfg := newTestRepo("my-repo", "default")
 	dashGVR := resources.DashboardResource
 	forbidden := apierrors.NewForbidden(schema.GroupResource{Group: "test", Resource: "test"}, "test", fmt.Errorf("forbidden"))
+
+	t.Run("no-op move rejected", func(t *testing.T) {
+		// A move whose source already sits at its target is skipped by the worker,
+		// but with an empty Ref the follow-up full sync still runs - the same
+		// admin-only side effect the empty-target check guards. So a syntactically
+		// non-empty move must not be usable to trigger a resync for free.
+		accessMock := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
+		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
+			Paths:      []string{"team-a/dashboard.json"},
+			TargetPath: "team-a/",
+		})
+		require.Error(t, err)
+		assert.True(t, apierrors.IsBadRequest(err), "expected 400, got %v", err)
+	})
 
 	t.Run("empty targets rejected", func(t *testing.T) {
 		// Same reasoning as the delete job: an empty move isn't a no-op given how
@@ -1320,7 +1413,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 
 		mockReader := repository.NewMockReader(t)
 		mockReader.On("Config").Return(cfg).Maybe()
-		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfoNamed("my-dash"), nil)
 		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testFolderManifestFileInfo(), nil).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
@@ -1405,7 +1498,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		}), mock.AnythingOfType("string")).Return(nil)
 
 		mockReader := repository.NewMockReader(t)
-		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").Return(testDashboardFileInfoNamed("my-dash"), nil)
 		clientsMock := resources.NewMockClientFactory(t)
 
 		dynClient := &mockDynamic{}
@@ -1431,7 +1524,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 	})
 
 	t.Run("resource ref on a different branch is denied when the branch's content is a different kind", func(t *testing.T) {
-		// The residual gap VerifyFileKind closes: authorizeResourceRefs only
+		// The residual gap VerifyFileTarget closes: authorizeResourceRefs only
 		// checks update on the resource's *live* Grafana state above, but the
 		// worker resolves it to sourcePath and acts on whatever is at that path
 		// on the caller's ref. If that content changed kind on the branch, this
@@ -1541,7 +1634,7 @@ func makeUnstructured(name, folder string) *unstructured.Unstructured {
 }
 
 // makeUnstructuredWithSource is makeUnstructured plus a sourcePath annotation,
-// for tests exercising VerifyFileKind (which only runs when a resource ref
+// for tests exercising VerifyFileTarget (which only runs when a resource ref
 // resolves to a known source path).
 func makeUnstructuredWithSource(name, folder, sourcePath string) *unstructured.Unstructured {
 	obj := makeUnstructured(name, folder)

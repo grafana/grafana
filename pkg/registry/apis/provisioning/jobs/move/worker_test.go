@@ -597,8 +597,7 @@ func TestMoveWorker_constructTargetPath(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			worker := NewWorker(nil, nil, nil, jobs.RegisterJobMetrics(prometheus.NewPedanticRegistry()))
-			result := worker.constructTargetPath(tt.jobTargetPath, tt.sourcePath)
+			result := TargetPath(tt.jobTargetPath, tt.sourcePath)
 			require.Equal(t, tt.expectedTarget, result)
 		})
 	}

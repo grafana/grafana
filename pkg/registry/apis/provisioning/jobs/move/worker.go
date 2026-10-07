@@ -149,7 +149,7 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 	for _, path := range paths {
 		resultBuilder := jobs.NewPathOnlyResult(path).WithAction(repository.FileActionRenamed)
 		// Construct the target path by combining the job's target path with the file/folder name
-		targetPath := w.constructTargetPath(opts.TargetPath, path)
+		targetPath := TargetPath(opts.TargetPath, path)
 
 		if path == targetPath {
 			progress.SetMessage(ctx, "Skipping "+path+" because it is already in "+opts.TargetPath)
@@ -174,10 +174,12 @@ func (w *Worker) moveFiles(ctx context.Context, rw repository.ReaderWriter, prog
 	return nil
 }
 
-// constructTargetPath combines the job's target path with the file/folder name from the source path.
+// TargetPath combines the job's target path with the file/folder name from the source path.
+// Exported so move authorization can predict what the worker will do with a path
+// (see authorizeMoveJob's no-op rejection) without duplicating the rule.
 // safepath.Clean normalises the target directory ("/" and "." become "", trailing slashes are stripped),
 // and safepath.Join produces a correct relative repository path.
-func (w *Worker) constructTargetPath(jobTargetPath, sourcePath string) string {
+func TargetPath(jobTargetPath, sourcePath string) string {
 	fileName := safepath.Base(sourcePath)
 	targetDir := safepath.Clean(jobTargetPath)
 

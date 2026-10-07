@@ -117,20 +117,26 @@ type Authorizer interface {
 	// content is read from ref while folder identity is not.
 	AuthorizeMoveByPath(ctx context.Context, sourcePath, targetPath, ref string) error
 
-	// VerifyFileKind checks that the file at path, read from ref, still has the
-	// given resource kind. It exists for resource-ref-based move/delete targets:
-	// those are authorized against the resource's live Grafana state (via
-	// AuthorizeResource), but the worker resolves that resource to a path and
-	// acts on whatever is at that path on the caller's ref - if ref's content at
-	// that path has changed kind since the live object was checked, the two can
-	// disagree. AuthorizeDeleteByPath/AuthorizeMoveByPath close the equivalent gap
-	// for path-based targets by reading the kind directly; this does the same
+	// VerifyFileTarget checks that the file at path, read from ref, is still the
+	// same resource that was authorized. It exists for resource-ref-based
+	// move/delete targets: those are authorized against the resource's live Grafana
+	// state (via AuthorizeResource), but the worker resolves that resource to a path
+	// and acts on whatever is at that path on the caller's ref - if ref's content at
+	// that path is a different resource than the live object that was checked, the
+	// two disagree. AuthorizeDeleteByPath/AuthorizeMoveByPath close the equivalent
+	// gap for path-based targets by reading the file directly; this does the same
 	// check for the resource-ref case, after the fact.
+	//
+	// Both the kind and the name must match: comparing only the kind would let
+	// permission on one dashboard authorize acting on a different dashboard that
+	// the branch happens to have at the same path.
 	//
 	// A missing file (ErrFileNotFound) is not an error here: the worker treats a
 	// resolved path that no longer exists on ref as a no-op, so there's nothing
 	// to authorize.
-	VerifyFileKind(ctx context.Context, path, ref string, gvr schema.GroupVersionResource) error
+	//
+	// Folder targets are exempt - see the implementation for why.
+	VerifyFileTarget(ctx context.Context, path, ref string, gvr schema.GroupVersionResource, name string) error
 
 	// AuthorizeCreateInFolder checks if the current user has create permission for
 	// the given resource kind in the folder that targetPath resolves to. This is
@@ -287,10 +293,7 @@ func (a *ProvisioningAuthorizer) getFolderID(ctx context.Context, path string) (
 // type is not in SupportedProvisioningResources — we block operations on missing,
 // unrecognisable, or unsupported files.
 func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path, ref string) (schema.GroupVersionResource, error) {
-	info, err := a.reader.Read(ctx, path, ref)
-	if errors.Is(err, repository.ErrRefNotFound) {
-		info, err = a.reader.Read(ctx, path, "")
-	}
+	info, err := a.readFileFromRef(ctx, path, ref)
 	if err != nil {
 		return schema.GroupVersionResource{}, fmt.Errorf("read file %q: %w", path, err)
 	}
@@ -300,11 +303,27 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path, ref s
 		return schema.GroupVersionResource{}, fmt.Errorf("parse file %q: %w", path, err)
 	}
 
-	// Folders are authorized through their own dedicated path (authorizeFolder,
-	// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
-	// Match on group AND kind: resources can share a group (e.g. dashboards and library
-	// panels both live in dashboard.grafana.app), so matching on group alone would
-	// mis-authorize one as the other. The plural resource is resolved via discovery.
+	return a.gvrForKind(ctx, *gvk, path)
+}
+
+// readFileFromRef reads path from ref, falling back to the configured branch when
+// ref doesn't exist yet. See resolveFileGVR for why that fallback is safe.
+func (a *ProvisioningAuthorizer) readFileFromRef(ctx context.Context, path, ref string) (*repository.FileInfo, error) {
+	info, err := a.reader.Read(ctx, path, ref)
+	if errors.Is(err, repository.ErrRefNotFound) {
+		return a.reader.Read(ctx, path, "")
+	}
+	return info, err
+}
+
+// gvrForKind maps a parsed file's kind to its supported GroupVersionResource.
+//
+// Folders are authorized through their own dedicated path (authorizeFolder,
+// authorizeDeleteFolder, authorizeMoveFolder) — skip them here.
+// Match on group AND kind: resources can share a group (e.g. dashboards and library
+// panels both live in dashboard.grafana.app), so matching on group alone would
+// mis-authorize one as the other. The plural resource is resolved via discovery.
+func (a *ProvisioningAuthorizer) gvrForKind(ctx context.Context, gvk schema.GroupVersionKind, path string) (schema.GroupVersionResource, error) {
 	for _, supported := range a.clients.SupportedResources() {
 		if supported.GroupKind == FolderKind.GroupKind() {
 			continue
@@ -318,7 +337,16 @@ func (a *ProvisioningAuthorizer) resolveFileGVR(ctx context.Context, path, ref s
 		}
 	}
 
-	return schema.GroupVersionResource{}, fmt.Errorf("unsupported resource type %s/%s at %q", gvk.Group, gvk.Kind, path)
+	// Forbidden rather than a plain error: this is a deterministic property of the
+	// target's content, not a transient failure, and callers surface it to the API.
+	// A plain error loses its status through wrapAuthzError's type switch and renders
+	// as a 500, which reads as a server fault for what is really a refusal to
+	// authorize an unsupported target.
+	return schema.GroupVersionResource{}, apierrors.NewForbidden(
+		schema.GroupResource{Group: gvk.Group, Resource: gvk.Kind},
+		path,
+		fmt.Errorf("unsupported resource type %s/%s at %q", gvk.Group, gvk.Kind, path),
+	)
 }
 
 // authorizeFileVerb checks if the user has the given verb permission on a file at path
@@ -618,22 +646,44 @@ func (a *ProvisioningAuthorizer) AuthorizeCreateInFolder(ctx context.Context, gv
 	return a.checkGVRVerb(ctx, gvr, targetFolderID, utils.VerbCreate)
 }
 
-// VerifyFileKind checks that the file at path, read from ref, still has the given
-// resource kind. See the Authorizer doc comment for the gap this closes.
-func (a *ProvisioningAuthorizer) VerifyFileKind(ctx context.Context, path, ref string, gvr schema.GroupVersionResource) error {
-	actual, err := a.resolveFileGVR(ctx, path, ref)
+// VerifyFileTarget checks that the file at path, read from ref, is still the
+// resource that was authorized. See the Authorizer doc comment for the gap this closes.
+func (a *ProvisioningAuthorizer) VerifyFileTarget(ctx context.Context, path, ref string, gvr schema.GroupVersionResource, name string) error {
+	// Folders are exempt, for the same reason the folder paths in
+	// AuthorizeDeleteByPath/AuthorizeMoveByPath ignore ref: folder identity is
+	// always resolved from the configured branch, so there is nothing about a
+	// folder target that the branch's content is allowed to decide. Attempting it
+	// anyway would also fail unconditionally - resolveFileGVR deliberately doesn't
+	// recognise folder manifests - which would make resource-ref folder operations
+	// work on the configured branch and break on every other one.
+	if gvr.GroupResource() == FolderResource.GroupResource() {
+		return nil
+	}
+
+	info, err := a.readFileFromRef(ctx, path, ref)
 	if err != nil {
 		if errors.Is(err, repository.ErrFileNotFound) {
 			return nil
 		}
+		return fmt.Errorf("read file %q: %w", path, err)
+	}
+
+	obj, gvk, _, err := ParseFileResource(ctx, info)
+	if err != nil {
+		return fmt.Errorf("parse file %q: %w", path, err)
+	}
+
+	actual, err := a.gvrForKind(ctx, *gvk, path)
+	if err != nil {
 		return err
 	}
 
-	if actual != gvr {
+	if actual != gvr || obj.GetName() != name {
 		return apierrors.NewForbidden(
 			schema.GroupResource{Group: gvr.Group, Resource: gvr.Resource},
-			path,
-			fmt.Errorf("resource at %q is a %s/%s on the requested ref, not %s/%s", path, actual.Group, actual.Resource, gvr.Group, gvr.Resource),
+			name,
+			fmt.Errorf("resource at %q on the requested ref is %s/%s %q, not %s/%s %q",
+				path, actual.Group, actual.Resource, obj.GetName(), gvr.Group, gvr.Resource, name),
 		)
 	}
 	return nil
