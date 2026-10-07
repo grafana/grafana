@@ -5,10 +5,14 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
-var logger = log.New("versionpolicy")
+// Resolved per call because Grafana installs the App SDK default logger at startup, after
+// package-level variables are initialized.
+func logger() logging.Logger {
+	return logging.DefaultLogger.With("logger", "versionpolicy")
+}
 
 // versionRE parses a Kubernetes version string into (major, stage, stageNumber).
 var versionRE = regexp.MustCompile(`^v(\d+)(?:(alpha|beta)(\d+))?$`)
@@ -84,7 +88,7 @@ func (r *Resolver) resolveField(group, field string, layers ...string) string {
 			continue
 		}
 		if !r.isRegistered(group, version) {
-			logger.Warn("ignoring unregistered version in version policy layer",
+			logger().Warn("ignoring unregistered version in version policy layer",
 				"group", group, "field", field, "version", version)
 			continue
 		}
@@ -128,6 +132,12 @@ func (r *Resolver) Outranks(group, a, b string) bool {
 		}
 	}
 	return false
+}
+
+// IsRankableVersion reports whether version is a Kubernetes version the resolver can rank.
+func IsRankableVersion(version string) bool {
+	_, ok := capRank(version)
+	return ok
 }
 
 // capRank turns a version string into a comparable [major, stage, stageNumber] tuple, stage being

@@ -17,7 +17,7 @@ const subjectRoot = "us.watch.v1"
 // token under subjectRoot, so a SubjectAllResources consumer (e.g. the unified
 // storage notifier) never sees writes it did not make, and a resource in a dual
 // write mode announces each store's write on its own root.
-const legacySubjectRoot = "legacy.watch.v1"
+const legacySubjectRoot = "legacysql.watch.v1"
 
 // anyToken is the NATS single-token wildcard, used in the namespace or resource
 // position to match every value of it.

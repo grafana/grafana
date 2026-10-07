@@ -13259,8 +13259,6 @@
       "count-loading": "Loading {{shown}} of {{total}}...",
       "count-of-total": "Showing {{shown}} of {{total}}",
       "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
-      "count-truncated_one": "First {{count}} notebook loaded",
-      "count-truncated_other": "First {{count}} notebooks loaded",
       "created-by-me": "Created by me",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
@@ -16137,6 +16135,7 @@
       "update-preferences": "Error updating preferences"
     },
     "fields": {
+      "home-dashboard-global-home": "Grafana home",
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",

@@ -337,6 +337,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,alerting.syncExternalAlertmanager,privatePreview,@grafana/alerting-squad,false,true,false
 2026-09-16,grafana.enableScopesFirstMode,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.useDefaultScopesEndpoint,experimental,@grafana/grafana-operator-experience-squad,false,false,true
+2026-10-06,grafana.scopesDashboardsMegaMenu,experimental,@grafana/grafana-operator-experience-squad,false,false,true
 2026-09-16,grafana.logLevelInference,deprecated,@grafana/observability-logs,false,false,true
 2026-09-16,plugins.initDataSourcesAsync,experimental,@grafana/grafana-catalog,false,false,true
 2026-09-16,frontendService.reducedBootDataAPI,experimental,@grafana/grafana-frontend-platform,false,false,false
@@ -400,3 +401,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.pluginExtensionReactElementProps,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-09-16,grafana.logDetailsDisplayedFieldControls,deprecated,@grafana/observability-logs,false,false,true
 2026-09-16,grafana.mtFallback,experimental,@grafana/grafana-frontend-platform,false,false,true
+2026-10-07,grafana.globalHomePreference,experimental,@grafana/grafana-frontend-navigation,false,false,true

@@ -2913,6 +2913,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.scopesDashboardsMegaMenu",
+			Description:  "Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.logLevelInference",
 			Description:  "Enables log level inference from log line contents when level is not defined as a field or a label",
 			Stage:        FeatureStageDeprecated,
@@ -3453,6 +3462,15 @@ var (
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
 			Expression:   "{}",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "grafana.globalHomePreference",
+			Description:  "Offers the reserved Grafana home option in the home dashboard preference",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!

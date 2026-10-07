@@ -2625,6 +2625,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.globalHomePreference",
+        "resourceVersion": "1791348293298",
+        "creationTimestamp": "2026-10-07T04:44:53Z"
+      },
+      "spec": {
+        "description": "Offers the reserved Grafana home option in the home dashboard preference",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -2919,6 +2934,21 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.scopesDashboardsMegaMenu",
+        "resourceVersion": "1791299236241",
+        "creationTimestamp": "2026-10-06T15:07:16Z"
+      },
+      "spec": {
+        "description": "Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
