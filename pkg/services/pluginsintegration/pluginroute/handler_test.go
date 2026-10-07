@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,10 +25,6 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana-app-sdk/app"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
@@ -36,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -77,8 +75,8 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 	root := "/apis/example.ext.grafana.app/v1alpha1/"
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds")
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
-	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
-	require.Contains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
+	require.NotContains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
+	require.NotContains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
 }
 
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
@@ -489,6 +487,14 @@ func TestHandlerLegacySettings(t *testing.T) {
 				}})
 			opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
 			handler := withRequester(loadHandler(t, plugin, opts))
+			if withManifest {
+				for _, version := range group.Versions {
+					res := httptest.NewRecorder()
+					handler.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/apis/"+version.GroupVersion+"/namespaces/default/app/instance", nil))
+					require.Equal(t, http.StatusNotFound, res.Code)
+				}
+				return
+			}
 			for _, version := range group.Versions {
 				var settings apppluginV0.Settings
 				getJSON(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/"+apppluginV0.INSTANCE_NAME, &settings)

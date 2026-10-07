@@ -318,7 +318,8 @@
       "metadata": {
         "name": "alertingBulkActionsInUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-24T14:49:59Z"
+        "creationTimestamp": "2025-04-24T14:49:59Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alerting bulk actions in the UI",
@@ -477,7 +478,8 @@
       "metadata": {
         "name": "alertingMigrationUI",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-03-14T16:40:05Z"
+        "creationTimestamp": "2025-03-14T16:40:05Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
@@ -583,7 +585,8 @@
       "metadata": {
         "name": "alertingNotificationsStepMode",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-11-22T11:07:45Z"
+        "creationTimestamp": "2024-11-22T11:07:45Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables simplified step mode in the notifications section",
@@ -666,7 +669,8 @@
       "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-03T11:18:25Z"
+        "creationTimestamp": "2025-04-03T11:18:25Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables UI functionality to permanently delete alert rules",
@@ -695,7 +699,8 @@
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-02-17T12:25:32Z"
+        "creationTimestamp": "2025-02-17T12:25:32Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables the alert rule version history restore feature",
@@ -767,7 +772,8 @@
       "metadata": {
         "name": "alertingUIOptimizeReducer",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-11-18T10:59:00Z"
+        "creationTimestamp": "2024-11-18T10:59:00Z",
+        "deletionTimestamp": "2026-10-07T10:45:52Z"
       },
       "spec": {
         "description": "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
@@ -2639,6 +2645,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.globalHomePreference",
+        "resourceVersion": "1791348293298",
+        "creationTimestamp": "2026-10-07T04:44:53Z"
+      },
+      "spec": {
+        "description": "Offers the reserved Grafana home option in the home dashboard preference",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.growthHomepage",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
@@ -2933,6 +2954,21 @@
         "frontend": true,
         "hideFromDocs": true,
         "expression": "true"
+      }
+    },
+    {
+      "metadata": {
+        "name": "grafana.scopesDashboardsMegaMenu",
+        "resourceVersion": "1791299236241",
+        "creationTimestamp": "2026-10-06T15:07:16Z"
+      },
+      "spec": {
+        "description": "Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
       }
     },
     {
@@ -4164,14 +4200,17 @@
     {
       "metadata": {
         "name": "panelTimeSettings",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-10-29T08:06:23Z"
+        "resourceVersion": "1791345985856",
+        "creationTimestamp": "2025-10-29T08:06:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables a new panel time settings drawer",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5534,15 +5573,18 @@
     {
       "metadata": {
         "name": "timeComparison",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-24T20:07:28Z"
+        "resourceVersion": "1791345985856",
+        "creationTimestamp": "2025-07-24T20:07:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-07 04:06:25.856468 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables time comparison option in supported panels",
-        "stage": "preview",
+        "stage": "GA",
         "codeowner": "@grafana/dataviz-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
