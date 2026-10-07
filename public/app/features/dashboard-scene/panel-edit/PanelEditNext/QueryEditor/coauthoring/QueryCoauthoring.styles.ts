@@ -48,6 +48,7 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
         }),
       },
     }),
+    dimmed: css({ opacity: 0.04 }),
     header: css({
       display: 'flex',
       flex: '0 0 auto',

@@ -1,3 +1,4 @@
+import { cx } from '@emotion/css';
 import { type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -105,7 +106,10 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
   return createPortal(
     <div
       ref={containerRef}
-      className={styles.container}
+      className={cx(
+        styles.container,
+        session.state.kind === 'proposal' && session.state.peekIndex !== undefined && styles.dimmed
+      )}
       role="dialog"
       aria-label={t('query-editor-coauthoring.dialog', 'Query coauthor')}
       tabIndex={-1}
@@ -287,6 +291,8 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           optionCount={state.proposal.options.length}
           selectedIndex={state.proposal.selectedIndex}
           onSelect={state.selectOption}
+          onPeek={state.peek}
+          onStopPeek={state.stopPeek}
           isPreviewRunning={state.isPreviewRunning}
           previewOutcome={state.previewOutcome}
           onFeedback={state.setFeedback}

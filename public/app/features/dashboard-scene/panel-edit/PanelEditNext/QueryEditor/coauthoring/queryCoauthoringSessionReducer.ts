@@ -15,6 +15,8 @@ import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession'
 type SessionAction =
   | 'accept'
   | 'selectOption'
+  | 'peek'
+  | 'stopPeek'
   | 'continueHere'
   | 'continueInAssistant'
   | 'retry'
@@ -67,6 +69,8 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
   | { type: 'option-selected'; index: number; previewData?: PanelData }
   | { type: 'preview-data-changed'; previewData?: PanelData }
+  | { type: 'peek-started'; index: number }
+  | { type: 'peek-stopped'; previewData?: PanelData }
   | {
       type: 'invocation-updated';
       context?: QueryEditorCoauthoringContextV1;
@@ -507,8 +511,31 @@ export function queryCoauthoringSessionReducer(
           view.kind === 'proposal' && event.index >= -1 && event.index < view.proposal.options.length
             ? {
                 ...view,
+                peekIndex: undefined,
                 previewOutcome: classifyQueryPreview(event.previewData, view.proposal.options[0].prepared.query.refId),
                 proposal: { ...view.proposal, selectedIndex: event.index },
+              }
+            : view
+        )
+      );
+    case 'peek-started':
+      return transition(
+        state,
+        updateSession(current, (view) =>
+          view.kind === 'proposal' && event.index >= -1 && event.index < view.proposal.options.length
+            ? { ...view, peekIndex: event.index }
+            : view
+        )
+      );
+    case 'peek-stopped':
+      return transition(
+        state,
+        updateSession(current, (view) =>
+          view.kind === 'proposal' && view.peekIndex !== undefined
+            ? {
+                ...view,
+                peekIndex: undefined,
+                previewOutcome: classifyQueryPreview(event.previewData, view.proposal.options[0].prepared.query.refId),
               }
             : view
         )
@@ -519,7 +546,7 @@ export function queryCoauthoringSessionReducer(
         updateSession(
           current,
           (view) =>
-            view.kind === 'proposal'
+            view.kind === 'proposal' && view.peekIndex === undefined
               ? {
                   ...view,
                   previewOutcome: classifyQueryPreview(

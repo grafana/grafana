@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Profiler, useCallback, useLayoutEffect, useRef, useState } from 'react';
 
@@ -236,6 +236,8 @@ async function setup(
         : () => ({
             dispose: () => undefined,
             select: () => true,
+            peek: () => true,
+            stopPeek: () => undefined,
             subscribeToState: () => () => undefined,
             subscribeToData: () => () => undefined,
           }),
@@ -257,6 +259,8 @@ async function setup(
             previewData: transaction.previewData,
             readPreviewData: transaction.readPreviewData,
             preview: transaction.preview,
+            peek: transaction.peek,
+            stopPeek: transaction.stopPeek,
             accept: transaction.accept,
             revert: transaction.revert,
           }}
@@ -590,6 +594,102 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
+
+  async function setupPeek() {
+    const fixture = await setup(0, true, undefined, { transaction: true, realPreview: true });
+    await fixture.user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+    await fixture.user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts selected requests.'] },
+          { proposedQuery: 'irate(http_requests_total[5m])', why: ['Uses the latest two samples.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const selected = fixture.panelResult(11);
+    act(() => fixture.previewRequests[0].setState({ data: selected }));
+    return { ...fixture, selected };
+  }
+
+  it('press-and-hold peeks without changing the editor or selection, and release restores the selected panel', async () => {
+    const { user, previewRequests, panelResult, queryRunner, baselineData, selected } = await setupPeek();
+    const second = screen.getByRole('tab', { name: 'Option 2' });
+    await user.pointer({ keys: '[MouseLeft>]', target: second });
+    await waitFor(() => expect(previewRequests).toHaveLength(2));
+    const peeked = panelResult(12);
+    act(() => previewRequests[1].setState({ data: peeked }));
+    expect(queryRunner.state.data).toBe(peeked);
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Counts selected requests.')).toBeVisible();
+    expect(screen.queryByText('Uses the latest two samples.')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ keys: '[/MouseLeft]', target: second });
+    expect(queryRunner.state.data).toBe(selected);
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+    const original = screen.getByRole('tab', { name: 'Original' });
+    await user.pointer({ keys: '[MouseLeft>]', target: original });
+    await waitFor(() => expect(queryRunner.state.data).toBe(baselineData));
+    await user.pointer({ keys: '[/MouseLeft]', target: original });
+    expect(queryRunner.state.data).toBe(selected);
+    await user.click(second);
+    expect(queryRunner.state.data).toBe(peeked);
+    expect(previewRequests).toHaveLength(2);
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('irate(http_requests_total[5m])');
+    const peeks = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_option_peeked'
+    );
+    expect(peeks.map(([, properties]) => properties)).toEqual([{ rank: 2 }, { rank: 0 }]);
+  });
+
+  it.each(['accept', 'pointercancel', 'blur', 'lostpointercapture', 'outside-release', 'unmount', 'close'])(
+    'restores a press-and-hold peek on %s and Accept always commits the selected option',
+    async (ending) => {
+      const { user, previewRequests, panelResult, queryRunner, onAccept, selected, baselineData, unmount } =
+        await setupPeek();
+      const chip = screen.getByRole('tab', { name: 'Option 2' });
+      await user.pointer({ keys: '[MouseLeft>]', target: chip });
+      await waitFor(() => expect(previewRequests).toHaveLength(2));
+      act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      if (ending === 'accept') {
+        fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
+        expect(onAccept).toHaveBeenLastCalledWith(
+          expect.objectContaining({ expr: 'increase(http_requests_total[5m])' }),
+          'A'
+        );
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      } else if (ending === 'unmount' || ending === 'close') {
+        if (ending === 'unmount') {
+          unmount();
+        } else {
+          fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+        }
+        expect(queryRunner.state.data).toBe(baselineData);
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      } else {
+        if (ending === 'outside-release') {
+          await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+        } else if (ending === 'blur') {
+          fireEvent.blur(window);
+        } else if (ending === 'pointercancel') {
+          fireEvent.pointerCancel(chip);
+        } else {
+          fireEvent.lostPointerCapture(chip);
+        }
+        expect(queryRunner.state.data).toBe(selected);
+        expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+        await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+        await user.keyboard('{ArrowRight}');
+        expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+      }
+    }
+  );
 
   it.each([
     {

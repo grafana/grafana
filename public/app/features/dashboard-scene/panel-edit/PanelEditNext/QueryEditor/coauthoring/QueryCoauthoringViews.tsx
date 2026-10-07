@@ -23,6 +23,7 @@ import { type QueryCoauthoringDiffHunk } from './queryCoauthoringDiff';
 import { type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
+import { useQueryCoauthoringChipPeek } from './useQueryCoauthoringChipPeek';
 
 interface HeaderProps {
   children?: ReactNode;
@@ -456,6 +457,8 @@ interface ProposalProps {
   optionCount: number;
   selectedIndex: number;
   onSelect: (index: number, source?: 'keyboard') => void;
+  onPeek?: (index: number) => void;
+  onStopPeek?: () => void;
   isPreviewRunning: boolean;
   previewOutcome?: QueryPreviewOutcome;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
@@ -472,6 +475,8 @@ export function QueryCoauthoringProposal({
   optionCount,
   selectedIndex,
   onSelect,
+  onPeek,
+  onStopPeek,
   isPreviewRunning,
   previewOutcome,
   onFeedback,
@@ -480,6 +485,7 @@ export function QueryCoauthoringProposal({
   onAccept,
 }: ProposalProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
+  const chipPeek = useQueryCoauthoringChipPeek(onPeek, onStopPeek);
   const acceptButton = (
     <Button className={styles.compactButton} size="sm" icon="check" onClick={onAccept} disabled={selectedIndex < 0}>
       <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
@@ -524,7 +530,13 @@ export function QueryCoauthoringProposal({
             data-option-index={rank - 1}
             aria-selected={selectedIndex === rank - 1}
             tabIndex={selectedIndex === rank - 1 ? 0 : -1}
-            onClick={() => onSelect(rank - 1)}
+            onPointerDown={(event) => chipPeek.start(event, rank - 1)}
+            onLostPointerCapture={chipPeek.stop}
+            onClick={(event) => {
+              if (!chipPeek.consumeClick(event)) {
+                onSelect(rank - 1);
+              }
+            }}
           >
             {rank === 0
               ? t('query-editor-coauthoring.original', 'Original')

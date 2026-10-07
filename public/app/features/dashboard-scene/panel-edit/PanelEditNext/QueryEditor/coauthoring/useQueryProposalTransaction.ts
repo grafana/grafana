@@ -167,6 +167,9 @@ export function useQueryProposalTransaction({
     [clear, queryKey, startQueryPreview]
   );
 
+  const peek = useCallback((query: DataQuery) => previewRef.current?.peek(query) ?? false, []);
+  const stopPeek = useCallback(() => previewRef.current?.stopPeek(), []);
+
   const revert = useCallback(() => {
     if (clear()) {
       runQueries();
@@ -210,6 +213,8 @@ export function useQueryProposalTransaction({
     editorQuery: proposal?.refId === query?.refId ? proposal : query,
     onChange,
     preview,
+    peek,
+    stopPeek,
     previewData,
     readPreviewData,
     previewPhase,
