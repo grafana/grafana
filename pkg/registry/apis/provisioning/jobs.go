@@ -349,11 +349,11 @@ func (c *jobsConnector) authorizeJob(ctx context.Context, repo repository.Reposi
 }
 
 // newJobAuthorizer creates an Authorizer for the given repository. Returns an error
-// if the repository does not implement Reader.
+// if the repository does not implement ReaderWriter.
 func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Repository, cfg *provisioning.Repository) (resources.Authorizer, error) {
-	reader, ok := repo.(repository.Reader)
+	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {
-		return nil, apierrors.NewBadRequest("repository does not support reading")
+		return nil, apierrors.NewBadRequest("repository does not support reading and writing")
 	}
 	clients, err := c.clients.Clients(ctx, cfg.Namespace)
 	if err != nil {
@@ -363,8 +363,8 @@ func (c *jobsConnector) newJobAuthorizer(ctx context.Context, repo repository.Re
 	if err != nil {
 		return nil, fmt.Errorf("get folder client for authorization: %w", err)
 	}
-	folders := resources.NewFolderManager(reader, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
-	return resources.NewAuthorizer(cfg, reader, c.access, clients, folders, c.folderMetadataEnabled), nil
+	folders := resources.NewFolderManager(rw, folderClient, resources.NewEmptyFolderTree(), folderGVK, resources.WithFolderMetadataEnabled(c.folderMetadataEnabled))
+	return resources.NewAuthorizer(cfg, rw, c.access, clients, folders, c.folderMetadataEnabled), nil
 }
 
 // authorizeResourceRefs fetches each referenced resource and checks that the user

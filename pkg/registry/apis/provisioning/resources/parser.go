@@ -337,17 +337,10 @@ func (f *ParsedResource) IsFolder() bool {
 	return f.GVR.GroupResource() == FolderResource.GroupResource()
 }
 
-// GetFolderPath returns the source file's containing directory when folder lookup applies.
-// A folder manifest represents its containing directory, even when its parent
-// folder annotation is empty.
-func (f *ParsedResource) GetFolderPath() (string, bool) {
-	if !f.FolderScoped || f.Info == nil || f.Info.Path == "" || (f.Meta.GetFolder() == "" && !f.IsFolder()) {
-		return "", false
-	}
-	if IsPathSupported(f.Info.Path) != nil || safepath.IsDir(f.Info.Path) {
-		return "", false
-	}
-	return safepath.Dir(f.Info.Path), true
+// IsPreviewRead classifies a read using its ref; callers must use it only for reads.
+// Folder manifests retain their existing authorization.
+func (f *ParsedResource) IsPreviewRead(configuredBranch string) bool {
+	return !f.IsFolder() && f.Info != nil && f.Info.Ref != "" && f.Info.Ref != configuredBranch
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {

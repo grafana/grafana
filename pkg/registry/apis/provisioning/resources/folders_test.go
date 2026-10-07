@@ -124,7 +124,6 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 		wantID          string
 		wantProbes      []string
 		wantErr         error
-		wantNotFound    bool
 	}{
 		{
 			name: "stops at the starting directory", dir: "a/b/c/",
@@ -147,8 +146,8 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			wantProbes: []string{leafID, parentID, ancestorID, repoName},
 		},
 		{
-			name: "no ancestor found including the repository root returns an error", dir: "a/b/c/",
-			wantProbes: []string{leafID, parentID, ancestorID, repoName}, wantNotFound: true,
+			name: "no ancestor found including the repository root", dir: "a/b/c/",
+			wantProbes: []string{leafID, parentID, ancestorID, repoName},
 		},
 		{
 			name: "instance target has no root to probe", dir: "a/b/c/", target: provisioning.SyncTargetTypeInstance,
@@ -176,7 +175,7 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			wantID: repoName, wantProbes: []string{repoName},
 		},
 		{
-			name: "missing root for an empty path returns an error", wantProbes: []string{repoName}, wantNotFound: true,
+			name: "missing root for an empty path", wantProbes: []string{repoName},
 		},
 		{
 			name: "empty instance root does not look up a folder", target: provisioning.SyncTargetTypeInstance,
@@ -193,8 +192,8 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 			name: "empty folderless root does not look up a folder", target: provisioning.SyncTargetTypeFolderless,
 		},
 		{
-			name: "unknown repository target cannot use an implicit root", dir: "a/b/c/", target: provisioning.SyncTargetType("unknown"),
-			wantProbes: []string{leafID, parentID, ancestorID}, wantNotFound: true,
+			name: "target without a wrapper root has no stored ancestor", dir: "a/b/c/", target: provisioning.SyncTargetType("unknown"),
+			wantProbes: []string{leafID, parentID, ancestorID},
 		},
 		{
 			name: "lookup error stops before a higher existing ancestor", dir: "a/b/c/",
@@ -341,34 +340,18 @@ func TestFolderManager_FindExistingAncestor(t *testing.T) {
 				dir = safepath.Dir(dir)
 			}
 			manager := NewFolderManager(repo, client, tree, FolderKind, WithFolderMetadataEnabled(tt.metadataEnabled))
-			ancestor, err := manager.FindExistingAncestor(ctx, tt.dir, tt.ref)
-			if tt.wantNotFound {
-				require.True(t, apierrors.IsNotFound(err), "expected not found, got %v", err)
-			} else if tt.wantErr != nil {
+			ancestor, found, err := manager.FindExistingAncestor(ctx, tt.dir, tt.ref)
+			if tt.wantErr != nil {
 				require.ErrorIs(t, err, tt.wantErr)
 			} else {
 				require.NoError(t, err)
 			}
 			require.Equal(t, tt.wantID, ancestor)
+			require.Equal(t, tt.wantID != "", found)
 			require.Equal(t, tt.wantProbes, probes)
 			client.AssertExpectations(t)
 		})
 	}
-}
-
-func TestFolderManager_ReadOnlyRepositoryCannotWriteFolderTree(t *testing.T) {
-	repo := repository.NewMockReader(t)
-	repo.EXPECT().Read(mock.Anything, "team/", "").Return(nil, repository.ErrFileNotFound)
-	tree := NewEmptyFolderTree()
-	tree.Add(Folder{ID: "team", Path: "team/"}, "")
-	manager := NewFolderManager(repo, nil, NewEmptyFolderTree(), FolderKind)
-	err := manager.EnsureFolderTreeExists(t.Context(), tree, EnsureFolderTreeExistsOptions{
-		OnFolder: func(_ Folder, created bool, _ time.Time, err error) error {
-			require.False(t, created)
-			return err
-		},
-	})
-	require.EqualError(t, err, "repository does not support writing folders")
 }
 
 func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
@@ -378,33 +361,33 @@ func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 	}
 	owner := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name}
 	for _, tt := range []struct {
-		name          string
-		dir           string
-		sourcePath    string
-		metadataUID   string
-		manager       utils.ManagerProperties
-		legacy        bool
-		wantForbidden bool
+		name        string
+		dir         string
+		sourcePath  string
+		metadataUID string
+		manager     utils.ManagerProperties
+		legacy      bool
+		wantMissing bool
 	}{
 		{name: "owned directory", dir: "a/b/", sourcePath: "a/b/", manager: owner},
 		{name: "source without trailing slash", dir: "a/b/", sourcePath: "a/b", manager: owner},
 		{name: "owned root without source annotations", manager: owner},
 		{name: "legacy repository annotations", dir: "a/b/", sourcePath: "a/b/", manager: owner, legacy: true},
-		{name: "unmanaged decoy", dir: "a/b/", sourcePath: "a/b/", wantForbidden: true},
+		{name: "unmanaged decoy", dir: "a/b/", sourcePath: "a/b/", wantMissing: true},
 		{
 			name: "other repository even when edits are allowed", dir: "a/b/", sourcePath: "a/b/",
-			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other-repo", AllowsEdits: true}, wantForbidden: true,
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "other-repo", AllowsEdits: true}, wantMissing: true,
 		},
 		{
 			name: "same identity with a different manager kind", dir: "a/b/", sourcePath: "a/b/",
-			manager: utils.ManagerProperties{Kind: utils.ManagerKindPlugin, Identity: cfg.Name}, wantForbidden: true,
+			manager: utils.ManagerProperties{Kind: utils.ManagerKindPlugin, Identity: cfg.Name}, wantMissing: true,
 		},
-		{name: "same repository with a different source path", dir: "a/b/", sourcePath: "elsewhere/", manager: owner, wantForbidden: true},
-		{name: "nested folder without a source path", dir: "a/b/", manager: owner, wantForbidden: true},
-		{name: "unmanaged root decoy", wantForbidden: true},
-		{name: "root with a nested source path", sourcePath: "a/b/", manager: owner, wantForbidden: true},
+		{name: "same repository with a different source path", dir: "a/b/", sourcePath: "elsewhere/", manager: owner, wantMissing: true},
+		{name: "nested folder without a source path", dir: "a/b/", manager: owner, wantMissing: true},
+		{name: "unmanaged root decoy", wantMissing: true},
+		{name: "root with a nested source path", sourcePath: "a/b/", manager: owner, wantMissing: true},
 		{name: "owned configured UID", dir: "a/b/", sourcePath: "a/b/", metadataUID: "stable-uid", manager: owner},
-		{name: "configured UID at a different path", dir: "a/b/", sourcePath: "elsewhere/", metadataUID: "stable-uid", manager: owner, wantForbidden: true},
+		{name: "configured UID at a different path", dir: "a/b/", sourcePath: "elsewhere/", metadataUID: "stable-uid", manager: owner, wantMissing: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := repository.NewMockReaderWriter(t)
@@ -433,19 +416,34 @@ func TestFolderManager_FindExistingAncestorValidatesOwnership(t *testing.T) {
 			client := &MockDynamicResourceInterface{}
 			client.Test(t)
 			t.Cleanup(func() { client.AssertExpectations(t) })
-			client.On("Get", mock.Anything, folderID, metav1.GetOptions{}, []string(nil)).Return(folder, nil).Once()
+			var probes []string
+			client.On("Get", mock.Anything, folderID, metav1.GetOptions{}, []string(nil)).Return(folder, nil).
+				Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Once()
+			wantProbes := []string{folderID}
+			if tt.wantMissing && tt.dir != "" {
+				parentID := ParseFolder("a/", cfg.Name).ID
+				if tt.metadataUID != "" {
+					repo.EXPECT().Read(mock.Anything, "a/"+folderMetadataFileName, "").Return(nil, repository.ErrFileNotFound).Once()
+				}
+				for _, id := range []string{parentID, cfg.Name} {
+					client.On("Get", mock.Anything, id, metav1.GetOptions{}, []string(nil)).
+						Return(nil, apierrors.NewNotFound(FolderResource.GroupResource(), id)).
+						Run(func(args mock.Arguments) { probes = append(probes, args.String(1)) }).Once()
+					wantProbes = append(wantProbes, id)
+				}
+			}
 			manager := NewFolderManager(repo, client, NewEmptyFolderTree(), FolderKind, WithFolderMetadataEnabled(tt.metadataUID != ""))
 
-			ancestor, err := manager.FindExistingAncestor(t.Context(), tt.dir, "")
-			if tt.wantForbidden {
-				require.True(t, apierrors.IsForbidden(err), "expected forbidden, got %v", err)
+			ancestor, found, err := manager.FindExistingAncestor(t.Context(), tt.dir, "")
+			require.NoError(t, err)
+			if tt.wantMissing {
 				require.Empty(t, ancestor)
 			} else {
-				require.NoError(t, err)
 				require.Equal(t, folderID, ancestor)
 			}
+			require.Equal(t, !tt.wantMissing, found)
 			require.Equal(t, original, folder, "ancestor lookup must not claim or relocate a folder")
-			require.Len(t, client.Calls, 1, "an ownership mismatch must not fall back to a higher ancestor")
+			require.Equal(t, wantProbes, probes, "ownership mismatches must be skipped just like missing folders")
 		})
 	}
 }

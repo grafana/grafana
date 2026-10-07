@@ -104,14 +104,6 @@ func TestIntegrationGitFiles_PreviewAuthorizationWithFolderMetadata(t *testing.T
 			path: "team/new/deep/new.json", user: sourceReader, forbidden: true,
 		},
 		{
-			name: "new folder inherits from existing configured ancestor",
-			path: "team/new/deep/_folder.json", user: teamReader, uid: deepUID, kind: "Folder",
-		},
-		{
-			name: "new folder denied without ancestor access",
-			path: "team/new/deep/_folder.json", user: sourceReader, forbidden: true,
-		},
-		{
 			name: "moved dashboard requires source and destination ancestor access",
 			path: "team/new/deep/moved.json", user: bothReader, uid: movedDash, kind: "Dashboard", existing: true,
 		},
@@ -130,14 +122,6 @@ func TestIntegrationGitFiles_PreviewAuthorizationWithFolderMetadata(t *testing.T
 		{
 			name: "same folder dashboard preview denied without access",
 			path: "source/existing.json", user: teamReader, forbidden: true,
-		},
-		{
-			name: "existing folder uses its own UID rather than requiring parent access",
-			path: "team/_folder.json", user: teamReader, uid: teamUID, kind: "Folder", existing: true,
-		},
-		{
-			name: "existing folder denied without its own read permission",
-			path: "team/_folder.json", user: sourceReader, forbidden: true,
 		},
 		{
 			name: "allowed feature branch UID cannot bypass configured folder denial",
@@ -238,8 +222,6 @@ func TestIntegrationGitFiles_PreviewAtUnwrappedRootWithFolderMetadata(t *testing
 			}{
 				{name: "named-grants", role: org.RoleNone, allowed: true, permissions: []resourcepermissions.SetResourcePermissionCommand{
 					{Actions: []string{"dashboards:read"}, Resource: "dashboards", ResourceAttribute: "uid", ResourceID: dashUID},
-					{Actions: []string{"folders:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: folderUID},
-					{Actions: []string{"folders:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: parentUID},
 				}},
 				{name: "no-grant", role: org.RoleNone},
 				{name: "general-only", role: org.RoleNone, permissions: []resourcepermissions.SetResourcePermissionCommand{{
@@ -253,142 +235,20 @@ func TestIntegrationGitFiles_PreviewAtUnwrappedRootWithFolderMetadata(t *testing
 				t.Run(tt.name, func(t *testing.T) {
 					reader := helper.CreateUser(repoName+"-"+tt.name, apis.Org1, tt.role, tt.permissions)
 					gv := provisioning.RepositoryResourceInfo.GroupVersion()
-					for _, resource := range []struct {
-						path string
-						uid  string
-					}{
-						{path: dashPath, uid: dashUID},
-						{path: "new/deep/_folder.json", uid: folderUID},
-						{path: "new/_folder.json", uid: parentUID},
-					} {
-						t.Run(resource.path, func(t *testing.T) {
-							result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
-								Suffix("files/"+resource.path).Param("ref", branch).Do(t.Context())
-							if tt.allowed {
-								require.NoError(t, result.Error())
-								var preview provisioning.ResourceWrapper
-								require.NoError(t, result.Into(&preview))
-								require.Empty(t, preview.Errors)
-								require.Equal(t, resource.uid, common.MustNestedString(preview.Resource.File.Object, "metadata", "name"))
-								require.Empty(t, preview.Resource.Existing.Object)
-							} else {
-								require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
-							}
-							helper.RequireFoldersNotFound(t, repoName, parentUID, folderUID)
-							helper.RequireDashboardsNotFound(t, dashUID)
-						})
+					result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
+						Suffix("files/"+dashPath).Param("ref", branch).Do(t.Context())
+					if tt.allowed {
+						require.NoError(t, result.Error())
+						var preview provisioning.ResourceWrapper
+						require.NoError(t, result.Into(&preview))
+						require.Empty(t, preview.Errors)
+						require.Equal(t, dashUID, common.MustNestedString(preview.Resource.File.Object, "metadata", "name"))
+						require.Empty(t, preview.Resource.Existing.Object)
+					} else {
+						require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
 					}
-				})
-			}
-		})
-	}
-}
-
-func TestIntegrationGitFiles_PreviewTopLevelFolderUsesConfiguredDirectory(t *testing.T) {
-	for _, target := range []string{"instance", "folderless"} {
-		t.Run(target, func(t *testing.T) {
-			helper := sharedGitHelper(t)
-			repoName := "top-level-preview-" + target
-			const (
-				branch      = "feature-preview"
-				readableUID = "top-level-readable"
-				newUID      = "top-level-unsynced"
-			)
-			previews := []struct {
-				name          string
-				path          string
-				configuredUID string
-				proposedUID   string
-				existing      bool
-			}{
-				{name: "new", path: "team/_folder.json", configuredUID: "top-level-team", proposedUID: newUID},
-				{name: "existing", path: "other/_folder.json", configuredUID: "top-level-other", proposedUID: readableUID, existing: true},
-			}
-			initialFiles := map[string][]byte{
-				"readable/_folder.json": folderMetadataJSON(readableUID, "Readable"),
-			}
-			for _, preview := range previews {
-				initialFiles[preview.path] = folderMetadataJSON(preview.configuredUID, preview.configuredUID)
-			}
-			createRepo := helper.CreateGitRepo
-			if target == "folderless" {
-				createRepo = helper.CreateFolderlessTargetGitRepo
-			}
-			_, local := createRepo(t, repoName, initialFiles, "write", "branch")
-			helper.ProvisioningTestHelper.SyncAndWait(t, repoName, nil)
-			helper.RequireFolders(t, "top-level-team", "top-level-other", readableUID)
-			helper.RequireFoldersNotFound(t, repoName, newUID)
-
-			storedFolders := make([]*unstructured.Unstructured, 0, 3)
-			for _, uid := range []string{"top-level-team", "top-level-other", readableUID} {
-				folder, err := helper.Folders.Resource.Get(t.Context(), uid, metav1.GetOptions{})
-				require.NoError(t, err)
-				require.Empty(t, folder.GetAnnotations()[utils.AnnoKeyFolder])
-				storedFolders = append(storedFolders, folder)
-			}
-			_, err := local.Git("checkout", "-b", branch)
-			require.NoError(t, err)
-			for _, preview := range previews {
-				require.NoError(t, local.UpdateFile(preview.path, string(folderMetadataJSON(preview.proposedUID, "Preview "+preview.name))))
-			}
-			_, err = local.Git("add", ".")
-			require.NoError(t, err)
-			_, err = local.Git("commit", "-m", "Replace top-level folder UIDs on the preview branch")
-			require.NoError(t, err)
-			_, err = local.Git("push", "origin", branch)
-			require.NoError(t, err)
-
-			for _, preview := range previews {
-				t.Run(preview.name, func(t *testing.T) {
-					for _, tt := range []struct {
-						name    string
-						grants  []string
-						allowed bool
-					}{
-						{name: "proposed-only", grants: []string{preview.proposedUID}},
-						{name: "configured-only", grants: []string{preview.configuredUID}, allowed: !preview.existing},
-						{name: "both", grants: []string{preview.configuredUID, preview.proposedUID}, allowed: true},
-						{name: "neither"},
-					} {
-						t.Run(tt.name, func(t *testing.T) {
-							permissions := make([]resourcepermissions.SetResourcePermissionCommand, 0, len(tt.grants))
-							for _, uid := range tt.grants {
-								permissions = append(permissions, resourcepermissions.SetResourcePermissionCommand{
-									Actions: []string{"folders:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: uid,
-								})
-							}
-							// RoleNone ensures only the explicit folder grants can authorize the preview.
-							reader := helper.CreateUser(repoName+"-"+preview.name+"-"+tt.name, apis.Org1, org.RoleNone, permissions)
-							gv := provisioning.RepositoryResourceInfo.GroupVersion()
-							result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
-								Suffix("files/"+preview.path).Param("ref", branch).Do(t.Context())
-							if tt.allowed {
-								require.NoError(t, result.Error())
-								var response provisioning.ResourceWrapper
-								require.NoError(t, result.Into(&response))
-								require.Empty(t, response.Errors)
-								require.Equal(t, branch, response.Ref)
-								require.Equal(t, preview.path, response.Path)
-								require.Equal(t, "Folder", response.Resource.Type.Kind)
-								require.Equal(t, preview.proposedUID, common.MustNestedString(response.Resource.File.Object, "metadata", "name"))
-								require.NotEmpty(t, response.Resource.DryRun.Object)
-								if preview.existing {
-									require.Equal(t, preview.proposedUID, common.MustNestedString(response.Resource.Existing.Object, "metadata", "name"))
-								} else {
-									require.Empty(t, response.Resource.Existing.Object)
-								}
-							} else {
-								require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
-							}
-							helper.RequireFoldersNotFound(t, repoName, newUID)
-							for _, before := range storedFolders {
-								after, err := helper.Folders.Resource.Get(t.Context(), before.GetName(), metav1.GetOptions{})
-								require.NoError(t, err)
-								require.Equal(t, before.Object["spec"], after.Object["spec"])
-								require.Equal(t, before.GetAnnotations(), after.GetAnnotations())
-							}
-						})
-					}
+					helper.RequireFoldersNotFound(t, repoName, parentUID, folderUID)
+					helper.RequireDashboardsNotFound(t, dashUID)
 				})
 			}
 		})

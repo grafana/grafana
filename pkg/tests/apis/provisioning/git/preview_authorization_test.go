@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
+// A feature branch can add dashboards below directories that do not exist in storage.
+// These cases verify that previews use read access on the nearest synced ancestor or
+// repository root, deny users without a grant, and leave dashboards and folders unsynced.
+// RoleNone users exercise explicit grants without the Viewer fallback masking denials.
 func TestIntegrationGitFiles_PreviewUnsyncedFolders(t *testing.T) {
 	helper := sharedGitHelper(t)
 	const (
@@ -123,6 +127,10 @@ func TestIntegrationGitFiles_PreviewUnsyncedFolders(t *testing.T) {
 	}
 }
 
+// Folder targets authorize root previews against the synced repository folder;
+// instance and folderless targets use resource permissions without a folder scope.
+// These cases cover allowed and denied reads, including a readable unmanaged folder
+// whose matching UID must be skipped before checking root access.
 func TestIntegrationGitFiles_PreviewRootAcrossTargets(t *testing.T) {
 	for _, target := range []string{"folder", "instance", "folderless"} {
 		t.Run(target, func(t *testing.T) {
@@ -206,17 +214,35 @@ func TestIntegrationGitFiles_PreviewRootAcrossTargets(t *testing.T) {
 				})
 			}
 
-			t.Run("readable unmanaged decoy blocks root fallback", func(t *testing.T) {
+			t.Run("unmanaged decoy is skipped before root authorization", func(t *testing.T) {
 				decoyUID := resources.ParseFolder("new/deep/", repoName).ID
 				helper.CreateUnmanagedFolderWithName(t, decoyUID, "Readable decoy", "")
-				reader := helper.CreateUser(repoName+"-decoy-reader", apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{rootGrant, {
-					Actions: []string{"folders:read", "dashboards:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: decoyUID,
-				}})
-				gv := provisioning.RepositoryResourceInfo.GroupVersion()
-				result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
-					Suffix("files/"+path).Param("ref", branch).Do(t.Context())
-				require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
-				require.ErrorContains(t, result.Error(), "folder does not belong to the configured repository path")
+				for _, canReadRoot := range []bool{false, true} {
+					name := "decoy-only"
+					permissions := []resourcepermissions.SetResourcePermissionCommand{{
+						Actions: []string{"folders:read", "dashboards:read"}, Resource: "folders", ResourceAttribute: "uid", ResourceID: decoyUID,
+					}}
+					if canReadRoot {
+						name = "decoy-and-root"
+						permissions = append(permissions, rootGrant)
+					}
+					t.Run(name, func(t *testing.T) {
+						reader := helper.CreateUser(repoName+"-"+name, apis.Org1, org.RoleNone, permissions)
+						gv := provisioning.RepositoryResourceInfo.GroupVersion()
+						result := reader.RESTClient(t, &gv).Get().Namespace("default").Resource("repositories").Name(repoName).
+							Suffix("files/"+path).Param("ref", branch).Do(t.Context())
+						if canReadRoot {
+							require.NoError(t, result.Error())
+							var preview provisioning.ResourceWrapper
+							require.NoError(t, result.Into(&preview))
+							require.Empty(t, preview.Errors)
+							require.Equal(t, uid, common.MustNestedString(preview.Resource.File.Object, "metadata", "name"))
+							require.Empty(t, preview.Resource.Existing.Object)
+						} else {
+							require.True(t, apierrors.IsForbidden(result.Error()), "expected forbidden, got %v", result.Error())
+						}
+					})
+				}
 				decoy, err := helper.Folders.Resource.Get(t.Context(), decoyUID, metav1.GetOptions{})
 				require.NoError(t, err)
 				require.Empty(t, decoy.GetAnnotations()[utils.AnnoKeyManagerIdentity])
@@ -227,6 +253,9 @@ func TestIntegrationGitFiles_PreviewRootAcrossTargets(t *testing.T) {
 	}
 }
 
+// An implicit or explicit configured-branch read must retain ordinary authorization.
+// An admin can read before the first sync without meeting preview ancestor requirements
+// or creating the dashboard and its folders in storage.
 func TestIntegrationGitFiles_ConfiguredBranchReadWithoutSyncedFolders(t *testing.T) {
 	helper := sharedGitHelper(t)
 	const repoName = "configured-read-unsynced"
@@ -250,6 +279,9 @@ func TestIntegrationGitFiles_ConfiguredBranchReadWithoutSyncedFolders(t *testing
 	}
 }
 
+// A folder-target preview needs an existing ancestor, even for an admin. Before the
+// first sync, the repository root is also missing, so the read must fail without
+// creating any folders or dashboards.
 func TestIntegrationGitFiles_PreviewWithoutRepositoryRoot(t *testing.T) {
 	helper := sharedGitHelper(t)
 	const (

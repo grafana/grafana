@@ -9,11 +9,14 @@ import (
 
 type WalkFunc = func(ctx context.Context, path string) error
 
+// WalkUpFunc processes a directory visited by WalkUp. Returning (true, nil) stops
+// traversal successfully; (false, nil) continues to the parent unless at the root.
+// A non-nil error stops traversal and is returned by WalkUp, regardless of stop.
 type WalkUpFunc = func(ctx context.Context, path string) (stop bool, err error)
 
-// WalkUp visits a directory and its parents, ending with the root "".
-// Non-root paths have a trailing slash. Returning true or an error stops the walk.
+// WalkUp calls fn for a directory and each parent, ending with the root "".
 func WalkUp(ctx context.Context, p string, fn WalkUpFunc) error {
+	// Non-root paths have a trailing slash.
 	for p = EnsureTrailingSlash(p); ; p = Dir(p) {
 		stop, err := fn(ctx, p)
 		if err != nil {
