@@ -236,8 +236,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
   public enrichDataRequest(source: SceneObject): Partial<DataQueryRequest> {
     const panel = getClosestVizPanel(source);
-    // panel.state.title is kept blank for a non-library panel (see NotebookCellItemState.panelTitle)
-    // - the cell's own field is the real name, falling back to the panel's for a library panel.
+    // Falls back to the panel's own title for a library panel, which has no panelTitle.
     const cell = panel?.parent;
     const panelName = (cell && isNotebookCellItem(cell) ? cell.state.panelTitle : undefined) ?? panel?.state.title;
 

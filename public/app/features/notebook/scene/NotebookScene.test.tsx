@@ -85,8 +85,7 @@ function buildScene(hideTimeControls: boolean, uid?: string) {
 }
 
 function buildSceneWithPanel() {
-  // Matches the real pipeline (see deserializeNotebookLayout): a notebook panel's own title stays
-  // blank, and the cell's panelTitle is the real name.
+  // Matches the real pipeline: the panel's own title stays blank, panelTitle is the real name.
   const panel = new VizPanel({ key: 'panel-4', pluginId: 'timeseries' });
   const scene = new NotebookScene({
     title: 'My notebook',
@@ -525,8 +524,7 @@ describe('NotebookScene', () => {
       });
     });
 
-    // panelTitle is never populated for a library panel (see deserializeNotebookLayout), so its own
-    // title - the one actually shown - is what attribution falls back to.
+    // A library panel never gets a panelTitle, so attribution falls back to its own title.
     it('falls back to the panel title for a library panel', () => {
       const panel = new VizPanel({
         key: 'panel-5',

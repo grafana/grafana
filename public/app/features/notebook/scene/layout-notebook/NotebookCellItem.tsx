@@ -23,9 +23,7 @@ export interface NotebookCellItemState extends SceneObjectState {
   // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
   // override at all.
   $timeRange?: SceneTimeRangeLike;
-  // The panel's title, held here rather than on `body.state.title`: VizPanelRenderer always
-  // interpolates `title` to a plain string, so there's no way to hand PanelChrome a clickable one.
-  // `body.state.title` stays '' instead (see NotebookCellRenderer); this is the real value.
+  // The real title; `body.state.title` stays '' (see NotebookCellRenderer).
   panelTitle?: string;
 }
 

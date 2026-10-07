@@ -64,8 +64,7 @@ function getElements(scene: NotebookScene): Record<string, NotebookElement> {
       // here either. Neither constraint is visible in the signature, and the save PR is where
       // someone would thread a mapping through to preserve datasource references.
       let built = vizPanelToSchemaV2(panel);
-      // panel.state.title is kept blank (see NotebookCellItemState.panelTitle) - the cell's own
-      // field is the real value, and a library panel's built.kind is 'LibraryPanel', never reached here.
+      // A library panel's built.kind is 'LibraryPanel', never reached here.
       if (built.kind === 'Panel') {
         built = { ...built, spec: { ...built.spec, title: panelTitle ?? '' } };
       }

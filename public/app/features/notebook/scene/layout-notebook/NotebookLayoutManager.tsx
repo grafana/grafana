@@ -97,8 +97,7 @@ interface PendingQueriesEdit {
   timer?: ReturnType<typeof setTimeout>;
 }
 
-// Scoped by elementName rather than cell identity, like PendingContentEdit: two cells can legally
-// reference the same panel element, and both need to show the rename as it's typed.
+// Scoped by elementName, like PendingContentEdit, since two cells can share one panel element.
 interface PendingPanelTitleEdit {
   elementName: string;
   before: string;

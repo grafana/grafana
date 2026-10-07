@@ -1660,8 +1660,6 @@ describe('NotebookLayoutManager', () => {
       expect(history.state.undoLabel).toBeUndefined();
     });
 
-    // Typing back to where the rename started leaves nothing to undo, as setCellContent's own test
-    // for the same thing covers.
     it('discards the rename if it lands back where it started', () => {
       const { cell } = panelCell('viz');
       const { manager, history } = withHistory([cell]);

@@ -329,8 +329,7 @@ describe('NotebookCellRenderer', () => {
       });
     }
 
-    // titleItems is an array of SceneObjects that vizPanelToSchemaV2 reads back on save (panel
-    // links, datasource notices) - replacing it wholesale would silently drop them.
+    // vizPanelToSchemaV2 reads panel links back out of this array on save.
     it('adds itself to titleItems without discarding what was already there', async () => {
       const existingLink = buildPanelLink();
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', titleItems: [existingLink] });

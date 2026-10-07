@@ -63,7 +63,7 @@ export function deserializeNotebookLayout(
       // buildVizPanelState is dashboard-typed and takes this directly: the notebook panel chain
       // carries the dashboard v2 shape, so the two generated types are structurally identical.
       const panel = new VizPanel(buildVizPanelState(panelElement, panelIdGenerator?.()));
-      // Stashed on the cell and blanked on the panel - see NotebookCellItemState.panelTitle for why.
+      // See NotebookCellItemState.panelTitle for why this moves to the cell.
       const panelTitle = panel.state.title;
       panel.setState({ title: '' });
 

@@ -108,20 +108,15 @@ function PanelCell({
   // where there is no query editor to be inline with.
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
 
-  // A stable SceneReactObject, not a plain element: titleItems is an array of SceneObjects
-  // (buildVizPanelState already put VizPanelLinks/PanelNotices there for panel links and
-  // datasource notices), and vizPanelToSchemaV2 reads that array back out on save - replacing it
-  // wholesale silently discards configured panel links on the next autosave.
+  // A SceneReactObject, not a plain element: titleItems also holds VizPanelLinks/PanelNotices,
+  // and replacing the array wholesale would drop a panel's configured links on the next save.
   const titleEditor = useMemo(
     () =>
       new SceneReactObject({ reactNode: <NotebookPanelTitleEditor cell={cell} panel={panel} isEditing={isEditing} /> }),
     [cell, panel, isEditing]
   );
 
-  // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
-  // panels, so this notebook-only chrome is layered on here instead. hoverHeader: false keeps the
-  // title always visible, not just on hover. Skipped for a library panel: its title belongs to the
-  // shared panel, and panelTitle is never populated for one (see deserializeNotebookLayout).
+  // Skipped for a library panel - its title belongs to the shared panel, not this notebook.
   useEffect(() => {
     if (isLibraryPanel(panel)) {
       return;

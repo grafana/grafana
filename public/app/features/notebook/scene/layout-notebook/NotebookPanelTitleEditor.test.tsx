@@ -11,8 +11,7 @@ import { NotebookPanelTitleEditor } from './NotebookPanelTitleEditor';
 function setup(panelTitle = 'p95 latency', isEditing = true) {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
   const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', panelTitle, body: panel });
-  // A NotebookScene, not just a layout manager: interpolating a time macro in the title needs a
-  // $timeRange to resolve against, same as a real notebook provides.
+  // Needed for a $timeRange to interpolate a time macro against.
   new NotebookScene({
     title: 'Test notebook',
     body: new NotebookLayoutManager({ cells: [cell] }),
@@ -25,8 +24,7 @@ function setup(panelTitle = 'p95 latency', isEditing = true) {
   return { ...rendered, cell, panel };
 }
 
-// Named by its fixed tooltip, not its (variable) displayed text - see NotebookTitleEditor.test.tsx's
-// own getTrigger for the same convention.
+// Named by its fixed tooltip, not its variable displayed text.
 function getTrigger() {
   return screen.getByRole('button', { name: 'Edit panel title' });
 }
@@ -44,7 +42,6 @@ describe('NotebookPanelTitleEditor', () => {
       expect(screen.queryByRole('button')).not.toBeInTheDocument();
     });
 
-    // Nothing for a reader to click, so there's nothing to prompt them with either.
     it('shows nothing at all when there is no title', () => {
       setup('', false);
 
@@ -52,8 +49,6 @@ describe('NotebookPanelTitleEditor', () => {
       expect(screen.queryByText('Add a title')).not.toBeInTheDocument();
     });
 
-    // buildPanelElementFromDashboard preserves a time macro in the title so it tracks the
-    // notebook's own range - this is what resolves it for display, same as a native title would.
     it('interpolates a time macro rather than showing it literally', () => {
       setup('Errors since $__from', false);
 
@@ -120,8 +115,7 @@ describe('NotebookPanelTitleEditor', () => {
       expect(getTrigger()).toHaveTextContent('Errors');
     });
 
-    // Unlike the notebook's own title, an empty panel title is a normal, valid state - there is
-    // nothing here to refuse or show an error for.
+    // Unlike the notebook's own title, empty is valid here - nothing to refuse.
     it('clears to the placeholder when emptied and closed', async () => {
       const { user, cell } = setup();
 
@@ -145,8 +139,7 @@ describe('NotebookPanelTitleEditor', () => {
       expect(getTrigger()).toHaveTextContent('p95 latency');
     });
 
-    // An IME sends both while composing - Enter to confirm the candidate, Escape to abandon it -
-    // and neither is meant for the field. fireEvent rather than `user`, which cannot set isComposing.
+    // fireEvent rather than `user`, which cannot set isComposing.
     describe('while an IME composition is in progress', () => {
       it.each(['Enter', 'Escape'])('leaves the field open on %s', async (key) => {
         const { user } = setup();
