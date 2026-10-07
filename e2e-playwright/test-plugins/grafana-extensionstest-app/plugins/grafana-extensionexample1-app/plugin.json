@@ -36,6 +36,13 @@
         "description": "A component that can be reused by other app plugins."
       }
     ],
+    "addedComponents": [
+      {
+        "targets": ["grafana/commandpalette/result-item/v1"],
+        "title": "Dashboard owner",
+        "description": "Shows a hello world owner on dashboard rows in the command palette"
+      }
+    ],
     "addedLinks": [
       {
         "targets": [
