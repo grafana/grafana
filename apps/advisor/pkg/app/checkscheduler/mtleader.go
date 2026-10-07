@@ -67,11 +67,16 @@ func (r *Runner) runMTElectionRound(ctx context.Context, logger logging.Logger) 
 		defer metrics.MTSchedulerIsLeader.Set(0)
 		logger.Info("checkscheduler acquired leader lease, starting MT scheduler")
 
-		if err := r.runMT(leaderCtx, logger); err != nil && !isContextErr(err) {
+		// Whether the scheduler failed is decided by leaderCtx, not by the error
+		// type: discovery runs on a non-cancellable context, so a request timeout
+		// can surface as DeadlineExceeded while this replica still leads.
+		if err := r.runMT(leaderCtx, logger); err != nil && leaderCtx.Err() == nil {
 			logger.Error("checkscheduler failed while leading, releasing lease", "error", err)
 			schedulerErr = err
-			stopRound()
 		}
+		// The elector keeps renewing the lease until the round is cancelled, so
+		// end it whenever the scheduler stops, or no replica would run checks.
+		stopRound()
 	})
 
 	if claimed.CompareAndSwap(false, true) {

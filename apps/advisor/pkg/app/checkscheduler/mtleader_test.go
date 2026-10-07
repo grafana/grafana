@@ -3,6 +3,7 @@ package checkscheduler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -144,6 +145,31 @@ func TestRunMTAsLeader_SchedulerErrorReleasesLeaseAndIsReturned(t *testing.T) {
 	err := r.Run(ctx)
 
 	assert.ErrorIs(t, err, bootErr)
+	assert.True(t, released.Load(), "lease must be released when the scheduler fails")
+	assert.NoError(t, ctx.Err(), "the error must surface without waiting for the parent context")
+}
+
+// TestRunMTAsLeader_SchedulerContextErrorWhileLeadingReleasesLease covers a
+// request-level timeout from discovery: it wraps context.DeadlineExceeded even
+// though the lease is still held, and must not be mistaken for lease loss.
+func TestRunMTAsLeader_SchedulerContextErrorWhileLeadingReleasesLease(t *testing.T) {
+	listErr := fmt.Errorf("list checks: %w", context.DeadlineExceeded)
+	var listCalls atomic.Int32
+	r := newCountingMTRunner(&listCalls, listErr)
+
+	var released atomic.Bool
+	r.leaderElector = &fakeElector{run: func(ctx context.Context, fn func(ctx context.Context)) error {
+		go fn(ctx)
+		<-ctx.Done()
+		released.Store(true)
+		return ctx.Err()
+	}}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	err := r.Run(ctx)
+
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
 	assert.True(t, released.Load(), "lease must be released when the scheduler fails")
 	assert.NoError(t, ctx.Err(), "the error must surface without waiting for the parent context")
 }
