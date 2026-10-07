@@ -13,7 +13,7 @@ import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { getNormalizedFieldName } from './processing';
 
-interface LogLineOTelDetailsErrorProps {
+interface LogLineDetailsErrorProps {
   fields: FieldDef[];
   labels: LabelWithLinks[];
 }
@@ -23,7 +23,7 @@ interface ErrorDisplayItem {
   value: string;
 }
 
-export const LogLineOTelDetailsError = ({ fields, labels }: LogLineOTelDetailsErrorProps) => {
+export const LogLineDetailsError = ({ fields, labels }: LogLineDetailsErrorProps) => {
   const { fontSize } = useLogListContext();
   const styles = useStyles2(getStyles, fontSize);
 
@@ -154,7 +154,6 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
     background: theme.colors.error.transparent,
     border: `1px solid ${theme.colors.error.border}`,
     borderRadius: theme.shape.radius.default,
-    margin: theme.spacing(1),
     padding: theme.spacing(1),
   }),
   header: css({
