@@ -195,6 +195,10 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 			continue
 		}
 
+		if include.FeatureFlag != "" && !openfeature.NewDefaultClient().Boolean(ctx, include.FeatureFlag, false, openfeature.TransactionContext(ctx)) {
+			continue
+		}
+
 		if !s.shouldIncludeAssistantNavigation(plugin, include, assistantTrialMode, assistantOSSMode, assistantOSSModeSet) {
 			continue
 		}

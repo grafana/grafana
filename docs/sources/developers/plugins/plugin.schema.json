@@ -305,6 +305,10 @@
             "type": "string",
             "description": "The RBAC action a user must have to see this page in the navigation menu. **Warning**: unless the action targets the plugin, only the action is verified, not what it applies to."
           },
+          "featureFlag": {
+            "type": "string",
+            "description": "An OpenFeature flag that Grafana evaluates server-side to show this include in navigation, in addition to role or RBAC checks. The include is hidden if the flag is false, missing, or cannot be evaluated. The flag must be available through Grafana's server-side OpenFeature provider. This field does not restrict direct route or API access."
+          },
           "path": {
             "type": "string",
             "description": "Used for app plugins."

@@ -177,6 +177,10 @@ export interface PluginInclude {
   // The action will take precedence over the role.
   action?: string;
 
+  // Server-side OpenFeature flag required in addition to role/action checks for navigation visibility.
+  // Missing flags and evaluation errors hide the include. This does not restrict route or API access.
+  featureFlag?: string;
+
   // Adds the "page" or "dashboard" type includes to the navigation if set to `true`.
   addToNav?: boolean;
 
