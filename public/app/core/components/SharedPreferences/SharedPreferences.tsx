@@ -55,7 +55,6 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
     useSharedPreferences(resourceUri);
 
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
-  // Rollout gate: the merged preferences backend must resolve the sentinel before it is offered.
   const includeGlobalHomeOption = useFlagGrafanaGlobalHomePreference();
   const homeDashboardStaticOptions = useMemo(
     () => (includeGlobalHomeOption ? [getGlobalHomeOption()] : undefined),
