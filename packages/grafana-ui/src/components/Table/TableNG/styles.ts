@@ -360,11 +360,6 @@ export const getGridStyles = memoize(
       lastRowWithoutBorder: css({
         '& > .rdg-cell': { borderBlockEnd: 'none' },
       }),
-      // Only flat tables subtract the gutter from their auto column widths. Nested grids
-      // must keep their full width, even though they also use role="grid".
-      gridFlat: css({
-        ...(!IS_SAFARI_26 && { scrollbarGutter: 'stable' }),
-      }),
       gridNested: css({
         // react-data-grid's root sets `content-visibility: auto`. The nested grid's wrapper has no
         // definite height, so its skipped-contents size is 0, and in Firefox a zero-size element never

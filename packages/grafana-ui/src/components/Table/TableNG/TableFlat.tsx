@@ -22,7 +22,7 @@ import {
   useManagedSort,
   useNotifyDisplayedRowIndices,
   usePaginatedRows,
-  useScrollbarWidth,
+  useNativeScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
@@ -36,7 +36,7 @@ import {
   useDataGridRows,
 } from './render-hooks';
 import { shouldReserveScrollbarGutter } from './scrollbar';
-import { getGridStyles, IS_SAFARI_26 } from './styles';
+import { getGridStyles } from './styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -259,8 +259,10 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
   });
   const showPagination = enablePagination && numRows > 0;
-  const reserveGutter = useMemo(
+  const scrollbarWidth = useNativeScrollbarWidth(gridRef);
+  const needsScrollbarSpace = useMemo(
     () =>
+      scrollbarWidth > 0 &&
       shouldReserveScrollbarGutter(
         paginatedRows,
         fullRowHeight,
@@ -273,6 +275,7 @@ export function TableFlat(props: TableNGProps) {
           (showPagination ? getPaginationChromeHeight(noPanelPadding) : 0)
       ),
     [
+      scrollbarWidth,
       paginatedRows,
       fullRowHeight,
       fullWidths,
@@ -286,8 +289,7 @@ export function TableFlat(props: TableNGProps) {
       noPanelPadding,
     ]
   );
-  const scrollbarWidth = useScrollbarWidth(gridRef, height, reserveGutter);
-  const availableWidth = fullWidth - (reserveGutter ? scrollbarWidth : 0);
+  const availableWidth = fullWidth - (needsScrollbarSpace ? scrollbarWidth : 0);
   const [widths, numFrozenColsFullyInView] = useColWidths(
     preparedFields,
     availableWidth,
@@ -420,7 +422,6 @@ export function TableFlat(props: TableNGProps) {
   return (
     <TableDataGrid
       role="grid"
-      style={IS_SAFARI_26 ? undefined : { scrollbarGutter: reserveGutter ? 'stable' : 'auto' }}
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}
@@ -431,7 +432,7 @@ export function TableFlat(props: TableNGProps) {
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
-      className={clsx(styles.gridFlat, noPanelPadding && styles.firstColumnInset)}
+      className={clsx(noPanelPadding && styles.firstColumnInset)}
       onCellKeyDown={({ column, row }, event) => {
         if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();
