@@ -172,13 +172,14 @@ export function TableFlat(props: TableNGProps) {
   useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
   const canHideAnotherColumn =
-    orderedVisibleFields.filter((field) => !hiddenColumns.has(getDisplayName(field))).length > 1;
+    (columnCatalog ?? orderedVisibleFields.map(getDisplayName)).filter((name) => !hiddenColumns.has(name)).length > 1;
 
   const handleHideColumn = useCallback(
     (displayName: string) => {
-      if (canHideAnotherColumn) {
-        setHiddenColumns(new Set(hiddenColumns).add(displayName));
+      if (!canHideAnotherColumn) {
+        return;
       }
+      setHiddenColumns(new Set(hiddenColumns).add(displayName));
       setFilter((current) => {
         if (!(displayName in current)) {
           return current;
@@ -206,7 +207,10 @@ export function TableFlat(props: TableNGProps) {
   );
 
   // Also filter controlled data during the render before its transformed frame arrives.
-  const displayedFields = filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns);
+  const displayedFields = useMemo(
+    () => filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns),
+    [orderedVisibleFields, hiddenColumns]
+  );
   const displayedRawFields = useMemo(
     () => filterFieldsByHiddenColumns(visibleFields, hiddenColumns),
     [visibleFields, hiddenColumns]
@@ -234,6 +238,9 @@ export function TableFlat(props: TableNGProps) {
     setIsColumnVisibilityPanelOpen(showColumnsSidebar);
   }
   const [columnVisibilityPanelWidth, setColumnVisibilityPanelWidth] = useState(COLUMN_VISIBILITY_PANEL_DEFAULT_WIDTH);
+  const splitterAvailableWidth = Math.max(width - COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH, 0);
+  const maxSidebarWidth = Math.min(COLUMN_VISIBILITY_PANEL_MAX_WIDTH, splitterAvailableWidth / 2);
+  const sidebarWidth = clamp(columnVisibilityPanelWidth, 0, maxSidebarWidth);
   const handlePanelResizing = useCallback((_flexFraction: number, sidebarPixels: number) => {
     setColumnVisibilityPanelWidth(sidebarPixels);
   }, []);
@@ -248,11 +255,7 @@ export function TableFlat(props: TableNGProps) {
   // useSplitter applies the fraction after reserving the handle, so exclude it from the denominator.
   const { containerProps, primaryProps, secondaryProps, splitterProps } = useSplitter({
     direction: 'row',
-    initialSize: clamp(
-      columnVisibilityPanelWidth / Math.max(width - COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH, 1),
-      0,
-      0.5
-    ),
+    initialSize: sidebarWidth / Math.max(splitterAvailableWidth, 1),
     dragPosition: 'middle',
     handleSize: 'sm',
     onResizing: handlePanelResizing,
@@ -281,11 +284,11 @@ export function TableFlat(props: TableNGProps) {
 
   const gridRef = useRef<DataGridHandle>(null);
   const columnVisibilityPanelAllocation =
-    hasColumnSidebar && isColumnVisibilityPanelOpen
-      ? columnVisibilityPanelWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH + COLUMN_VISIBILITY_TABLE_BORDER_WIDTH
+    hasColumnSidebar && hasHeader && isColumnVisibilityPanelOpen
+      ? sidebarWidth + COLUMN_VISIBILITY_SPLITTER_HANDLE_WIDTH + COLUMN_VISIBILITY_TABLE_BORDER_WIDTH
       : 0;
   const frameSize = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
-  const fullWidth = width - frameSize - columnVisibilityPanelAllocation;
+  const fullWidth = Math.max(width - frameSize - columnVisibilityPanelAllocation, 0);
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
@@ -612,7 +615,7 @@ export function TableFlat(props: TableNGProps) {
           ...primaryProps.style,
           // Override the flex min-content width so the pane can cross the close threshold.
           minWidth: 0,
-          maxWidth: COLUMN_VISIBILITY_PANEL_MAX_WIDTH,
+          maxWidth: maxSidebarWidth,
           overflow: 'hidden',
         }}
       >

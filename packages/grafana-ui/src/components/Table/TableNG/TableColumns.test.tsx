@@ -4,11 +4,106 @@ import { useState } from 'react';
 
 import { applyFieldOverrides, createDataFrame, createTheme, FieldType } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
-import { mockClientSize } from '@grafana/test-utils';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { TableNG } from './TableNG';
 
-beforeAll(() => mockClientSize({ width: 800, height: 600 }));
+beforeAll(() => {
+  mockClientSize({ width: 800, height: 600 });
+  mockBoundingClientRect({ width: 800, height: 600 });
+});
+
+it('sizes the grid from the clamped sidebar width when the panel shrinks, grows, and is dragged', async () => {
+  const data = createDataFrame({
+    fields: [
+      {
+        name: 'A',
+        type: FieldType.string,
+        values: ['value'],
+        config: { custom: { hideable: true, minWidth: 50 } },
+        display: () => ({ text: 'value', numeric: NaN }),
+      },
+    ],
+  });
+  const table = (width: number) => (
+    <TableNG data={data} width={width} height={400} tableRefreshEnabled noPanelPadding showColumnsSidebar />
+  );
+  const { rerender } = render(table(800));
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
+
+  rerender(table(200));
+  expect(screen.getByRole('separator')).toHaveAttribute('aria-valuenow', '50');
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '95px' });
+
+  rerender(table(800));
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '571px' });
+
+  const pane = screen.getByRole('group', { name: 'Column visibility' }).parentElement!;
+  const rect = pane.getBoundingClientRect();
+  let paneWidth = 220;
+  // useSplitter measures its CSS limits by temporarily collapsing and expanding the pane.
+  const paneRect = jest.spyOn(pane, 'getBoundingClientRect').mockImplementation(() => ({
+    ...rect,
+    width:
+      pane.style.flexGrow === '0' ? 0 : pane.style.flexGrow === '100' ? parseFloat(pane.style.maxWidth) : paneWidth,
+  }));
+  const splitter = screen.getByRole('separator');
+  splitter.setPointerCapture = jest.fn();
+  splitter.releasePointerCapture = jest.fn();
+  const user = userEvent.setup();
+  await user.pointer([
+    { keys: '[MouseLeft>]', target: splitter, coords: { clientX: 0, clientY: 0 } },
+    { target: splitter, coords: { clientX: 300, clientY: 0 } },
+  ]);
+  expect(pane).toHaveStyle({ maxWidth: '396px' });
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
+
+  paneWidth = 396;
+  await user.pointer({ keys: '[/MouseLeft]', target: splitter });
+  expect(screen.getByRole('grid')).toHaveStyle({ gridTemplateColumns: '395px' });
+  paneRect.mockRestore();
+});
+
+it('reuses wrapped-cell measurements during unrelated renders with hidden columns', () => {
+  const display = jest.fn(() => ({ text: 'A wrapped value', numeric: NaN }));
+  const data = createDataFrame({
+    fields: [
+      {
+        name: 'A',
+        type: FieldType.number,
+        values: [1],
+        display,
+        config: { custom: { wrapText: true, cellOptions: { type: TableCellDisplayMode.Auto } } },
+      },
+      { name: 'B', type: FieldType.string, values: ['hidden'], config: {} },
+    ],
+  });
+  const props = {
+    data,
+    width: 800,
+    height: 400,
+    hiddenColumns: new Set(['B']),
+    onHiddenColumnsChange: jest.fn(),
+  };
+  const baselineDisplay = jest.fn(() => ({ text: 'A wrapped value', numeric: NaN }));
+  const baselineData = createDataFrame({ fields: [{ ...data.fields[0], display: baselineDisplay }] });
+  const tables = (transparent = false) => (
+    <>
+      <TableNG {...props} transparent={transparent} />
+      <TableNG data={baselineData} width={800} height={400} transparent={transparent} />
+    </>
+  );
+  const { rerender } = render(tables());
+  expect(display).toHaveBeenCalled();
+  display.mockClear();
+  baselineDisplay.mockClear();
+
+  rerender(tables(true));
+
+  expect(screen.getAllByRole('gridcell', { name: 'A wrapped value' })).toHaveLength(2);
+  // Both cells redraw; hidden columns must not add extra formatting for sizing.
+  expect(display).toHaveBeenCalledTimes(baselineDisplay.mock.calls.length);
+});
 
 it('does not wrap JSON display processors again when filtering hidden columns', () => {
   const data = createDataFrame({
@@ -81,6 +176,10 @@ it('keeps restore controls when the only hideable column is absent from transfor
   expect(screen.getByRole('group', { name: 'Column visibility' })).toBe(sidebar);
   expect(screen.getByRole('checkbox', { name: 'Hide B' })).toBeChecked();
   expect(screen.queryByRole('columnheader', { name: 'B' })).not.toBeInTheDocument();
+
+  onHiddenColumnsChange.mockClear();
+  await userEvent.click(screen.getByRole('checkbox', { name: 'Hide B' }));
+  expect(onHiddenColumnsChange).toHaveBeenCalledWith(new Set(['B']));
 
   await userEvent.click(screen.getByRole('button', { name: 'Close column visibility panel' }));
   await userEvent.click(screen.getByRole('button', { name: 'Column options for A' }));
