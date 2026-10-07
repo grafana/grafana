@@ -1,3 +1,7 @@
+import {
+  SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES,
+  type SupportedExternalPrometheusFlavoredRulesSourceType,
+} from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings, type DataSourceJsonData, type DataSourceSettings } from '@grafana/data';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
@@ -31,17 +35,19 @@ import {
   PERMISSIONS_TIME_INTERVALS,
   notificationsPermissions,
 } from './alertmanagerPermissions';
-import { getAllDataSources } from './config';
-import { GRAFANA_RULES_SOURCE_NAME } from './constants';
+import { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME } from './constants';
 import { isGrafanaRuleIdentifier } from './rules';
 
 // Re-exported for backward compatibility. Moved to constants.ts to break a circular dependency
 // via k8s/utils.ts → datasource.ts → ability hooks → access-control.ts.
 // eslint-disable-next-line no-barrel-files/no-barrel-files
-export { GRAFANA_RULES_SOURCE_NAME };
-export const GRAFANA_DATASOURCE_NAME = '-- Grafana --';
+export { GRAFANA_DATASOURCE_NAME, GRAFANA_RULES_SOURCE_NAME };
 
 const collator = new Intl.Collator();
+
+function getAllDataSources(): Array<DataSourceInstanceSettings<DataSourceJsonData>> {
+  return Object.values(config.datasources);
+}
 
 export const GrafanaRulesSource: GrafanaRulesSourceIdentifier = {
   uid: GrafanaRulesSourceSymbol,
@@ -338,10 +344,6 @@ export function isDataSourceManagingAlerts(ds: DataSourceInstanceSettings<DataSo
   return ds.jsonData.manageAlerts ?? config.defaultDatasourceManageAlertsUiToggle;
 }
 
-export function isDataSourceAllowedAsRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>) {
-  return ds.jsonData.allowAsRecordingRulesTarget !== false; // if this prop is undefined it defaults to true
-}
-
 export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentifier): RulesSourceIdentifier {
   if (isGrafanaRuleIdentifier(ruleIdentifier)) {
     return { uid: GrafanaRulesSourceSymbol, name: GRAFANA_RULES_SOURCE_NAME, ruleSourceType: 'grafana' };
@@ -353,22 +355,6 @@ export function ruleIdentifierToRuleSourceIdentifier(ruleIdentifier: RuleIdentif
     ruleSourceType: 'datasource',
   };
 }
-
-/**
- * Check if the given type is a supported external Prometheus flavored rules source type.
- */
-export function isSupportedExternalPrometheusFlavoredRulesSourceType(
-  type: string
-): type is SupportedExternalPrometheusFlavoredRulesSourceType {
-  return SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES.find((t) => t === type) !== undefined;
-}
-export const SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES = [
-  'prometheus',
-  'grafana-amazonprometheus-datasource',
-  'grafana-azureprometheus-datasource',
-] as const;
-export type SupportedExternalPrometheusFlavoredRulesSourceType =
-  (typeof SUPPORTED_EXTERNAL_PROMETHEUS_FLAVORED_RULE_SOURCE_TYPES)[number]; // infer the type from the tuple above so we can maintain a single source of truth
 
 /**
  * Check if the given type is a supported external rules source type. Includes Loki and Prometheus flavored types.
@@ -393,7 +379,3 @@ export const SUPPORTED_RULE_SOURCE_TYPES = [
   GRAFANA_RULES_SOURCE_NAME,
   ...SUPPORTED_EXTERNAL_RULE_SOURCE_TYPES,
 ] as const satisfies string[];
-
-export function isValidRecordingRulesTarget(ds: DataSourceInstanceSettings<DataSourceJsonData>): boolean {
-  return isSupportedExternalPrometheusFlavoredRulesSourceType(ds.type) && isDataSourceAllowedAsRecordingRulesTarget(ds);
-}

@@ -310,9 +310,7 @@ func Test_permissionRegistry_ConcurrentPluginAndFixedRoleRegistration(t *testing
 	var wg sync.WaitGroup
 
 	for worker := range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			<-start
 
 			for iteration := range iterations {
@@ -347,7 +345,7 @@ func Test_permissionRegistry_ConcurrentPluginAndFixedRoleRegistration(t *testing
 					errs <- fmt.Errorf("scope prefixes not found for %s", action)
 				}
 			}
-		}()
+		})
 	}
 
 	close(start)

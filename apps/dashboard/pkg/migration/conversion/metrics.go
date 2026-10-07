@@ -31,8 +31,7 @@ func getLogger() logging.Logger {
 
 // getErroredSchemaVersionFunc determines the schema version function that errored
 func getErroredSchemaVersionFunc(err error) string {
-	var migrationErr *schemaversion.MigrationError
-	if errors.As(err, &migrationErr) {
+	if migrationErr, ok := errors.AsType[*schemaversion.MigrationError](err); ok {
 		return migrationErr.GetFunctionName()
 	}
 	return ""
@@ -40,18 +39,15 @@ func getErroredSchemaVersionFunc(err error) string {
 
 // getErroredConversionFunc determines the conversion function that errored
 func getErroredConversionFunc(err error) string {
-	var conversionErr *ConversionError
-	if errors.As(err, &conversionErr) {
+	if conversionErr, ok := errors.AsType[*ConversionError](err); ok {
 		return conversionErr.GetFunctionName()
 	}
 
-	var migrationErr *schemaversion.MigrationError
-	if errors.As(err, &migrationErr) {
+	if migrationErr, ok := errors.AsType[*schemaversion.MigrationError](err); ok {
 		return migrationErr.GetFunctionName()
 	}
 
-	var dataLossErr *ConversionDataLossError
-	if errors.As(err, &dataLossErr) {
+	if dataLossErr, ok := errors.AsType[*ConversionDataLossError](err); ok {
 		return dataLossErr.GetFunctionName()
 	}
 

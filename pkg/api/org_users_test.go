@@ -789,6 +789,16 @@ func searchHits(n int, startID int64) []*user.UserSearchHitDTO {
 	return out
 }
 
+// searchHitsWithModules builds n hits, assigning auth modules round-robin so
+// each module appears across the whole range (and across pages).
+func searchHitsWithModules(n int, startID int64, modules ...string) []*user.UserSearchHitDTO {
+	out := searchHits(n, startID)
+	for i, h := range out {
+		h.AuthModule = user.AuthModuleConversion{modules[i%len(modules)]}
+	}
+	return out
+}
+
 func TestSearchOrgUsersUsingK8s(t *testing.T) {
 	created := time.Date(2024, 1, 2, 3, 4, 5, 0, time.UTC)
 	lastSeen := time.Date(2025, 6, 1, 10, 0, 0, 0, time.UTC)
@@ -917,6 +927,80 @@ func TestSearchOrgUsersUsingK8s(t *testing.T) {
 		assert.Equal(t, 1, svc.calls, "explicit limit must fetch exactly one page")
 		require.Len(t, res.OrgUsers, 50)
 	})
+}
+
+// The externally-synced check depends only on the auth module, so it is
+// resolved once per module per request, not once per user or per page.
+func TestSearchOrgUsersUsingK8s_ResolvesExternallySyncedPerModule(t *testing.T) {
+	githubModule := login.GithubAuthModule
+	gitlabModule := login.GitLabAuthModule
+
+	svc := &countingAuthnService{
+		FakeService: &authntest.FakeService{ExpectedClientConfig: &authntest.FakeSSOClientConfig{}},
+	}
+	// Two pages force the resolver to span more than one page; both modules
+	// appear on each page.
+	userSvc := &pagedUserService{
+		FakeUserService: &usertest.FakeUserService{},
+		pages: []user.SearchUserQueryResult{
+			{Users: searchHitsWithModules(1000, 1, githubModule, gitlabModule), TotalCount: 1500, Page: 1, PerPage: 1000},
+			{Users: searchHitsWithModules(500, 1001, githubModule, gitlabModule), TotalCount: 1500, Page: 2, PerPage: 1000},
+		},
+	}
+	hs := &HTTPServer{Cfg: setting.NewCfg(), authnService: svc, userService: userSvc}
+	reqCtx := &contextmodel.ReqContext{Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)}}
+
+	res, err := hs.searchOrgUsersUsingK8s(reqCtx, &org.SearchOrgUsersQuery{OrgID: 1})
+	require.NoError(t, err)
+	require.Equal(t, 2, userSvc.calls, "both pages must be fetched")
+	require.Len(t, res.OrgUsers, 1500)
+	for _, u := range res.OrgUsers {
+		assert.True(t, u.IsExternallySynced)
+	}
+
+	// Each module is resolved exactly once, regardless of user or page count.
+	want := map[string]int{authn.ClientWithPrefix("github"): 1, authn.ClientWithPrefix("gitlab"): 1}
+	assert.Equal(t, want, svc.enabledCalls)
+	assert.Equal(t, want, svc.configCalls)
+}
+
+// Same invariant as the K8s path, for the legacy searchOrgUsersHelper loop.
+func TestSearchOrgUsersHelper_ResolvesExternallySyncedPerModule(t *testing.T) {
+	const userCount = 50
+	modules := []string{login.GithubAuthModule, login.GitLabAuthModule}
+
+	users := make([]*org.OrgUserDTO, userCount)
+	labels := make(map[int64]string, userCount)
+	for i := range users {
+		id := int64(i + 1)
+		users[i] = &org.OrgUserDTO{UserID: id, Login: fmt.Sprintf("user-%d", id)}
+		labels[id] = modules[i%len(modules)]
+	}
+
+	svc := &countingAuthnService{
+		FakeService: &authntest.FakeService{ExpectedClientConfig: &authntest.FakeSSOClientConfig{}},
+	}
+	hs := &HTTPServer{
+		Cfg:          setting.NewCfg(),
+		authnService: svc,
+		orgService: &orgtest.FakeOrgService{
+			ExpectedSearchOrgUsersResult: &org.SearchOrgUsersQueryResult{OrgUsers: users, TotalCount: userCount},
+		},
+		authInfoService: &authinfotest.FakeService{ExpectedRecentlyUsedLabel: labels},
+	}
+	reqCtx := &contextmodel.ReqContext{Context: &web.Context{Req: httptest.NewRequest(http.MethodGet, "/", nil)}}
+
+	res, err := hs.searchOrgUsersHelper(reqCtx, &org.SearchOrgUsersQuery{OrgID: 1})
+	require.NoError(t, err)
+	require.Len(t, res.OrgUsers, userCount)
+	for _, u := range res.OrgUsers {
+		assert.True(t, u.IsExternallySynced)
+	}
+
+	// Each module is resolved exactly once, regardless of user count.
+	want := map[string]int{authn.ClientWithPrefix("github"): 1, authn.ClientWithPrefix("gitlab"): 1}
+	assert.Equal(t, want, svc.enabledCalls)
+	assert.Equal(t, want, svc.configCalls)
 }
 
 func TestGetOrgUsersForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
@@ -1065,5 +1149,126 @@ func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 
 		assert.Equal(t, http.StatusOK, statusCode)
 		assert.Nil(t, d.updateCmd, "user service update should not be called on the legacy path")
+	})
+}
+
+func TestRemoveOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
+	permissions := []accesscontrol.Permission{
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+	}
+
+	orgUsersWithTwoAdmins := user.SearchUserQueryResult{
+		TotalCount: 2,
+		Users: []*user.UserSearchHitDTO{
+			{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
+			{ID: 2, Login: "other", Role: string(identity.RoleAdmin)},
+		},
+	}
+
+	type deps struct {
+		deleteCmd       *user.DeleteUserCommand
+		orgListResponse orgtest.OrgListResponse
+		deleteError     error
+		searchUsers     user.SearchUserQueryResult
+		singleOrg       bool
+		targetUser      *user.User
+	}
+
+	setup := func(t *testing.T, d *deps) *webtest.Server {
+		targetUser := d.targetUser
+		if targetUser == nil {
+			targetUser = &user.User{ID: 1, IsAdmin: false}
+		}
+		return SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = setting.NewCfg()
+			hs.Cfg.RBAC.SingleOrganization = d.singleOrg
+			hs.userService = &usertest.FakeUserService{
+				ExpectedUser:        targetUser,
+				ExpectedSearchUsers: d.searchUsers,
+				DeleteFn: func(_ context.Context, cmd *user.DeleteUserCommand) error {
+					d.deleteCmd = cmd
+					return d.deleteError
+				},
+			}
+			hs.orgService = &orgtest.FakeOrgService{ExpectedOrgListResponse: d.orgListResponse}
+			hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: permissions}
+		})
+	}
+
+	sendDelete := func(t *testing.T, server *webtest.Server) int {
+		signedInUser := userWithPermissions(1, permissions)
+		signedInUser.OrgRole = identity.RoleAdmin
+		req := server.NewRequest(http.MethodDelete, "/api/org/users/1", nil)
+		res, err := server.Send(webtest.RequestWithSignedInUser(req, signedInUser))
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+		return res.StatusCode
+	}
+
+	t.Run("routes the removal through the user service when the flag is enabled and single-org", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{searchUsers: orgUsersWithTwoAdmins, singleOrg: true}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		require.NotNil(t, d.deleteCmd)
+		assert.Equal(t, int64(1), d.deleteCmd.UserID)
+	})
+
+	t.Run("returns 500 when the user service delete fails", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{deleteError: errors.New("boom"), searchUsers: orgUsersWithTwoAdmins, singleOrg: true}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusInternalServerError, statusCode)
+	})
+
+	t.Run("blocks removing the last org admin", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{singleOrg: true, searchUsers: user.SearchUserQueryResult{
+			TotalCount: 2,
+			Users: []*user.UserSearchHitDTO{
+				{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
+				{ID: 2, Login: "other", Role: string(identity.RoleViewer)},
+			},
+		}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusBadRequest, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called when the removal is blocked")
+	})
+
+	t.Run("blocks removing a Grafana server admin from their only org", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{singleOrg: true, searchUsers: orgUsersWithTwoAdmins, targetUser: &user.User{ID: 1, IsAdmin: true}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusBadRequest, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called for a Grafana server admin")
+	})
+
+	t.Run("keeps using the legacy org service when not single-org", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{searchUsers: orgUsersWithTwoAdmins, singleOrg: false, orgListResponse: orgtest.OrgListResponse{{OrgID: 1, Response: nil}}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called on the legacy path")
+	})
+
+	t.Run("keeps using the legacy org service when the flag is disabled", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
+
+		d := &deps{searchUsers: orgUsersWithTwoAdmins, singleOrg: true, orgListResponse: orgtest.OrgListResponse{{OrgID: 1, Response: nil}}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called on the legacy path")
 	})
 }

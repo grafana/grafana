@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { useFlagFoldersAppPlatformAPI } from '@grafana/runtime/internal';
 import { type DashboardsTreeItem } from 'app/features/browse-dashboards/types';
 import { type PermissionLevel } from 'app/types/acl';
 
@@ -21,6 +21,7 @@ export function useFoldersQuery({
   rootFolderUID,
   rootFolderItem,
 }: UseFoldersQueryProps) {
+  const shouldUseAppPlatformAPI = useFlagFoldersAppPlatformAPI();
   const resultLegacy = useFoldersQueryLegacy({ isBrowsing, openFolders, permission, rootFolderUID, rootFolderItem });
   const resultAppPlatform = useFoldersQueryAppPlatform({
     isBrowsing,
@@ -32,5 +33,5 @@ export function useFoldersQuery({
 
   // Running the hooks themselves don't have any side effects, so we can just conditionally use one or the other
   // requestNextPage function from the result
-  return config.featureToggles.foldersAppPlatformAPI ? resultAppPlatform : resultLegacy;
+  return shouldUseAppPlatformAPI ? resultAppPlatform : resultLegacy;
 }

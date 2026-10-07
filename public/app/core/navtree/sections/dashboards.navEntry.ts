@@ -21,14 +21,11 @@ const DASHBOARD_CHILDREN: NavEntryBuilder[] = [
   {
     // Playlists are visible to anonymous users too, so the nav stays consistent
     // with the playlist page and API which both serve anonymous Viewers.
-    //
-    // playlistsRBAC is still a legacy toggle (not yet OpenFeature). The
-    // multi-tenant frontend service's reduced boot ships config.featureToggles
-    // empty, so this reads false there and the gate falls back to the legacy
-    // role check — a known divergence pending the toggle's migration to
-    // OpenFeature, after which this should read via getFeatureFlagClient().
     when: () =>
-      anonymousOrSignedIn() && (config.featureToggles.playlistsRBAC ? playlistsAccess() : legacyPlaylistsAccess()),
+      anonymousOrSignedIn() &&
+      (getFeatureFlagClient().getBooleanValue(FlagKeys.PlaylistsRBAC, false)
+        ? playlistsAccess()
+        : legacyPlaylistsAccess()),
     build: () => ({
       text: 'Playlists',
       subTitle: 'Groups of dashboards that are displayed in a sequence',

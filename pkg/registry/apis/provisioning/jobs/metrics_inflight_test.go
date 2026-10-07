@@ -119,9 +119,9 @@ func TestJobMetrics_RecordJobDurationOnAllOutcomes(t *testing.T) {
 			[]string{"action", "resources_dryrun_bucket", "outcome"}),
 	}
 
-	m.RecordJob("pull", utils.SuccessOutcome, 3, 3, 2.0)
-	m.RecordJob("pull", utils.ErrorOutcome, 0, 0, 7.0)
-	m.RecordJob("pull", "warning", 5, 5, 3.0) // string(provisioning.JobStateWarning)
+	m.RecordJob("pull", "full", utils.SuccessOutcome, 3, 3, 2.0)
+	m.RecordJob("pull", "full", utils.ErrorOutcome, 0, 0, 7.0)
+	m.RecordJob("pull", "full", "warning", 5, 5, 3.0) // string(provisioning.JobStateWarning)
 
 	// All three outcomes recorded a duration series (before, only success did).
 	require.Equal(t, 3, testutil.CollectAndCount(m.durationHist))
@@ -148,7 +148,7 @@ func TestJobMetrics_RecordJob_PullRequestUsesDryRunBucketOnly(t *testing.T) {
 			[]string{"action", "resources_dryrun_bucket", "outcome"}),
 	}
 
-	m.RecordJob(string(provisioning.JobActionPullRequest), utils.SuccessOutcome, 3, 7, 2.0)
+	m.RecordJob(string(provisioning.JobActionPullRequest), "", utils.SuccessOutcome, 3, 7, 2.0)
 
 	require.Equal(t, 0, testutil.CollectAndCount(m.durationHist))
 	require.Equal(t, 1, testutil.CollectAndCount(m.dryRunDurationHist))

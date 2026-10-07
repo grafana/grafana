@@ -39,6 +39,8 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		ManagedBy{}.OpenAPIModelName():                                                             schema_pkg_apis_dashboard_v0alpha1_ManagedBy(ref),
 		SearchResults{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref),
 		Snapshot{}.OpenAPIModelName():                                                              schema_pkg_apis_dashboard_v0alpha1_Snapshot(ref),
+		SnapshotBlobReference{}.OpenAPIModelName():                                                 schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobReference(ref),
+		SnapshotBlobs{}.OpenAPIModelName():                                                         schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobs(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SnapshotClient":     schema_pkg_apis_dashboard_v0alpha1_SnapshotClient(ref),
 		"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1.SnapshotJSONCodec":  schema_pkg_apis_dashboard_v0alpha1_SnapshotJSONCodec(ref),
 		SnapshotList{}.OpenAPIModelName():                                                          schema_pkg_apis_dashboard_v0alpha1_SnapshotList(ref),
@@ -457,9 +459,8 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -486,9 +487,8 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -505,12 +505,6 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardHit(ref common.ReferenceCallbac
 							Description: "When using \"real\" search, this is the score",
 							Type:        []string{"number"},
 							Format:      "double",
-						},
-					},
-					"explain": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Explain the score (if possible)",
-							Ref:         ref(commonv0alpha1.Unstructured{}.OpenAPIModelName()),
 						},
 					},
 				},
@@ -565,8 +559,7 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardList(ref common.ReferenceCallba
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Dashboard{}.OpenAPIModelName()),
+										Ref: ref(Dashboard{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -615,6 +608,12 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 							Ref:         ref(SnapshotSpec{}.OpenAPIModelName()),
 						},
 					},
+					"blobs": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(SnapshotBlobs{}.OpenAPIModelName()),
+						},
+					},
 					"deleteKey": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The delete key is only returned when the item is created.  It is not returned from a get request",
@@ -623,11 +622,11 @@ func schema_pkg_apis_dashboard_v0alpha1_DashboardSnapshotWithDeleteKey(ref commo
 						},
 					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "blobs"},
 			},
 		},
 		Dependencies: []string{
-			SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			SnapshotBlobs{}.OpenAPIModelName(), SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
 	}
 }
 
@@ -738,8 +737,7 @@ func schema_pkg_apis_dashboard_v0alpha1_FacetResult(ref common.ReferenceCallback
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(TermFacet{}.OpenAPIModelName()),
+										Ref: ref(TermFacet{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -875,8 +873,7 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelList(ref common.ReferenceCal
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(LibraryPanel{}.OpenAPIModelName()),
+										Ref: ref(LibraryPanel{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1018,9 +1015,8 @@ func schema_pkg_apis_dashboard_v0alpha1_LibraryPanelStatus(ref common.ReferenceC
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -1108,8 +1104,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallba
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(DashboardHit{}.OpenAPIModelName()),
+										Ref: ref(DashboardHit{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1143,8 +1138,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SearchResults(ref common.ReferenceCallba
 								Allows: true,
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(FacetResult{}.OpenAPIModelName()),
+										Ref: ref(FacetResult{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1192,12 +1186,75 @@ func schema_pkg_apis_dashboard_v0alpha1_Snapshot(ref common.ReferenceCallback) c
 							Ref:         ref(SnapshotSpec{}.OpenAPIModelName()),
 						},
 					},
+					"blobs": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref(SnapshotBlobs{}.OpenAPIModelName()),
+						},
+					},
 				},
-				Required: []string{"metadata", "spec"},
+				Required: []string{"metadata", "spec", "blobs"},
 			},
 		},
 		Dependencies: []string{
-			SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+			SnapshotBlobs{}.OpenAPIModelName(), SnapshotSpec{}.OpenAPIModelName(), "io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobReference(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"uid": {
+						SchemaProps: spec.SchemaProps{
+							Default: "",
+							Type:    []string{"string"},
+							Format:  "",
+						},
+					},
+					"size": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"integer"},
+							Format: "int64",
+						},
+					},
+					"hash": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+					"contentType": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
+				},
+				Required: []string{"uid"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_dashboard_v0alpha1_SnapshotBlobs(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"dashboard": {
+						SchemaProps: spec.SchemaProps{
+							Ref: ref(SnapshotBlobReference{}.OpenAPIModelName()),
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			SnapshotBlobReference{}.OpenAPIModelName()},
 	}
 }
 
@@ -1264,8 +1321,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SnapshotList(ref common.ReferenceCallbac
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Snapshot{}.OpenAPIModelName()),
+										Ref: ref(Snapshot{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -1484,8 +1540,7 @@ func schema_pkg_apis_dashboard_v0alpha1_SortableFields(ref common.ReferenceCallb
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SortableField{}.OpenAPIModelName()),
+										Ref: ref(SortableField{}.OpenAPIModelName()),
 									},
 								},
 							},

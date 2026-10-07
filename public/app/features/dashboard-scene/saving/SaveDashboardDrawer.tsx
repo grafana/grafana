@@ -1,10 +1,15 @@
 import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase, type SceneObjectState, type SceneObjectRef } from '@grafana/scenes';
-import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { AnnoKeyIgnorePredefinedVariables } from 'app/features/apiserver/types';
+import { Drawer, Spinner, Stack, Tab, TabsBar } from '@grafana/ui';
+import { AnnoKeyUseCrossDashboardVariables } from 'app/features/apiserver/types';
 import { SaveDashboardDiff } from 'app/features/dashboard/components/SaveDashboard/SaveDashboardDiff';
+import { FolderDeadEndAlert } from 'app/features/provisioning/components/Dashboards/FolderDeadEndAlert';
 import { SaveProvisionedDashboard } from 'app/features/provisioning/components/Dashboards/SaveProvisionedDashboard';
-import { useIsProvisionedNG } from 'app/features/provisioning/hooks/useIsProvisionedNG';
+import { SaveTargetSwitch } from 'app/features/provisioning/components/Shared/SaveTargetSwitch';
+import { useDashboardRepositoryView } from 'app/features/provisioning/hooks/useDashboardRepositoryView';
+import { RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { getSaveTarget, type SaveTarget } from 'app/features/provisioning/hooks/useSaveRepositoryView';
+import { type RecoverToNewBranch } from 'app/features/provisioning/types';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 import {
@@ -17,6 +22,7 @@ import { SaveDashboardForm } from './SaveDashboardForm';
 import { SaveProvisionedDashboardForm } from './SaveProvisionedDashboardForm';
 import { getSaveAsTemplateForm } from './enterprise-components/SaveAsTemplateFormExtension';
 import { getSaveDashboardTemplateForm } from './enterprise-components/SaveDashboardTemplateFormExtension';
+import { isNewDashboard } from './shared';
 
 interface SaveDashboardDrawerState extends SceneObjectState {
   dashboardRef: SceneObjectRef<DashboardScene>;
@@ -29,16 +35,31 @@ interface SaveDashboardDrawerState extends SceneObjectState {
   saveDashboardTemplate?: boolean;
   showVariablesWarning?: boolean;
   onSaveSuccess?: () => void;
+  recoverToNewBranch?: RecoverToNewBranch;
+  /** Where a new save at the root of a folderless repository goes; unset means wherever the lookup says */
+  saveTarget?: SaveTarget;
+}
+
+/** Title and description a save form shows, so a form swap can hand them to the next one */
+export interface SaveFormDraft {
+  title?: string;
+  description?: string;
 }
 
 export class SaveDashboardDrawer extends SceneObjectBase<SaveDashboardDrawerState> {
+  /**
+   * Title/description a save form shows, parked by useParkSaveFormDraft as they change and read once by
+   * the form that replaces it after a folder pick or target switch. Not scene state: it changes per
+   * keystroke, and reactivity would re-render the drawer (and re-diff the dashboard) each time.
+   */
+  public saveFormDraft: SaveFormDraft | undefined;
+
   public onClose = () => {
     const dashboard = this.state.dashboardRef.resolve();
-    const changeInfo = dashboard.getDashboardChanges();
     // Save As folder picker mutates live meta; restore on cancel so the source dash isn't left dirty.
-    const shouldRestoreMeta = changeInfo.isNew || Boolean(this.state.saveAsCopy);
+    const shouldRestoreMeta = Boolean(this.state.saveAsCopy) || isNewDashboard(dashboard.state);
+    dashboard.closeModal();
     dashboard.setState({
-      overlay: undefined,
       meta: shouldRestoreMeta ? (dashboard.getInitialState()?.meta ?? dashboard.state.meta) : dashboard.state.meta,
     });
   };
@@ -67,6 +88,8 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     saveTimeRange,
     saveVariables,
     saveRefresh,
+    recoverToNewBranch,
+    saveTarget,
   } = model.useState();
 
   const changeInfo = model.state.dashboardRef.resolve().getDashboardChanges(saveTimeRange, saveVariables, saveRefresh);
@@ -85,7 +108,9 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
   const { meta } = dashboard.useState();
   const { provisioned: isProvisioned, folderTitle } = meta;
   const managedResourceCannotBeEdited = dashboard.managedResourceCannotBeEdited();
-  const isProvisionedNG = useIsProvisionedNG(dashboard);
+  const view = useDashboardRepositoryView(dashboard, saveAsCopy);
+  const { isNewSave } = view;
+  const target = getSaveTarget(view, saveTarget);
 
   const tabs = (
     <TabsBar>
@@ -112,32 +137,14 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-update-template', 'Save template');
   } else if (saveAsCopy) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-copy', 'Save dashboard copy');
-  } else if (isProvisioned || isProvisionedNG) {
+  } else if (!isNewSave && (isProvisioned || view.isProvisioned)) {
     title = t('dashboard-scene.save-dashboard-drawer.tabs.title-provisioned', 'Provisioned dashboard');
   }
 
-  const renderBody = () => {
-    if (showDiff) {
-      const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyIgnorePredefinedVariables];
-      const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
-      return (
-        <SaveDashboardDiff
-          diff={diffs}
-          oldValue={initialSaveModel}
-          newValue={changedSaveModel}
-          hasFolderChanges={hasFolderChanges}
-          hasPredefinedVariablesChanges={hasPredefinedVariablesChanges}
-          hasMigratedToV2={hasMigratedToV2}
-          oldFolder={dashboard.getInitialState()?.meta.folderTitle}
-          newFolder={folderTitle}
-          oldPredefinedVariables={formatPredefinedVariablesAnnotationLabel(
-            typeof initialAnnotation === 'string' ? initialAnnotation : undefined
-          )}
-          newPredefinedVariables={formatPredefinedVariablesAnnotationLabel(currentAnnotation)}
-        />
-      );
-    }
+  const initialAnnotation = dashboard.getInitialState()?.meta.k8s?.annotations?.[AnnoKeyUseCrossDashboardVariables];
+  const currentAnnotation = getPredefinedVariablesAnnotation(dashboard);
 
+  const renderForm = () => {
     if (saveDashboardTemplate) {
       const SaveDashboardTemplateForm = getSaveDashboardTemplateForm();
       if (SaveDashboardTemplateForm) {
@@ -152,19 +159,26 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
       }
     }
 
-    if (isProvisionedNG) {
+    if (target === 'repository') {
       return (
         <SaveProvisionedDashboard
           dashboard={dashboard}
           changeInfo={changeInfo}
           drawer={model}
           saveAsCopy={saveAsCopy}
+          recoverToNewBranch={recoverToNewBranch}
+          view={view}
         />
       );
     }
 
-    if (saveAsCopy || changeInfo.isNew) {
-      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} onCancel={model.onClose} />;
+    // First lookup of a new save: nothing settled to hold, so the form waits
+    if (view.status === RepoViewStatus.Loading) {
+      return <Spinner />;
+    }
+
+    if (isNewSave) {
+      return <SaveDashboardAsForm dashboard={dashboard} changeInfo={changeInfo} drawer={model} isHeld={view.isHeld} />;
     }
 
     if (isProvisioned || managedResourceCannotBeEdited) {
@@ -176,7 +190,36 @@ function SaveDashboardDrawerComponent({ model }: SceneComponentProps<SaveDashboa
 
   return (
     <Drawer title={title} subtitle={dashboard.state.title} onClose={model.onClose} tabs={tabs}>
-      {renderBody()}
+      {/* The form stays mounted (hidden) while the Changes tab is open so its field state survives tab switches */}
+      <div style={{ display: showDiff ? 'none' : 'contents' }}>
+        <Stack direction="column" gap={2}>
+          {isNewSave && <FolderDeadEndAlert {...view.lookup} />}
+          {renderForm()}
+          {view.canChooseTarget && (
+            <SaveTargetSwitch
+              resource="dashboard"
+              target={target}
+              onChange={(saveTarget) => model.setState({ saveTarget })}
+            />
+          )}
+        </Stack>
+      </div>
+      {showDiff && (
+        <SaveDashboardDiff
+          diff={diffs}
+          oldValue={initialSaveModel}
+          newValue={changedSaveModel}
+          hasFolderChanges={hasFolderChanges}
+          hasPredefinedVariablesChanges={hasPredefinedVariablesChanges}
+          hasMigratedToV2={hasMigratedToV2}
+          oldFolder={dashboard.getInitialState()?.meta.folderTitle}
+          newFolder={folderTitle}
+          oldPredefinedVariables={formatPredefinedVariablesAnnotationLabel(
+            typeof initialAnnotation === 'string' ? initialAnnotation : undefined
+          )}
+          newPredefinedVariables={formatPredefinedVariablesAnnotationLabel(currentAnnotation)}
+        />
+      )}
     </Drawer>
   );
 }

@@ -96,6 +96,16 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(result.data).toEqual({ applied: true, spec: next });
   });
 
+  it("echoes the save's resourceVersion, so a caller does not need a follow-up read to learn the new revision", async () => {
+    jest.mocked(updateNotebook).mockResolvedValue({ generation: 2, resourceVersion: '1756' });
+    const client = new NotebookMutationClient(notebookScene());
+    const next = notebookSpec({ title: 'Echoed' });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
+    expect(result.data).toEqual({ applied: true, spec: next, resourceVersion: '1756' });
+  });
+
   it('warns about a cell it silently dropped', async () => {
     const client = new NotebookMutationClient(notebookScene());
 
@@ -109,6 +119,37 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
 
     expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['These cells were not applied and are missing from the notebook: ghost.']);
+  });
+
+  // The save model leaves out the empty block the editor keeps at the bottom, so a caller that sends one
+  // would otherwise be told its cell went missing when nothing did.
+  it('does not warn about a trailing empty block it was asked to apply', async () => {
+    const client = new NotebookMutationClient(notebookScene());
+
+    const next = notebookSpec({
+      elements: { intro: markdownCell('## Intro'), trailing: markdownCell('') },
+      cells: ['intro', 'trailing'],
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toBeUndefined();
+  });
+
+  // The exemption has to be precise: excusing the trailing block must not excuse a cell genuinely lost
+  // from in front of it. 'ghost' is referenced with no element, so it really does go missing.
+  it('still warns about a lost cell sitting in front of a trailing empty block', async () => {
+    const client = new NotebookMutationClient(notebookScene());
+
+    const next = notebookSpec({
+      elements: { intro: markdownCell('## Intro'), trailing: markdownCell('') },
+      cells: ['intro', 'ghost', 'trailing'],
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
     expect(result.warnings).toEqual(['These cells were not applied and are missing from the notebook: ghost.']);
   });
 

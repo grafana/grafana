@@ -67,6 +67,8 @@ spec:
               trigger:
                 properties:
                   interval:
+                    not:
+                      pattern: hmuµn
                     pattern: ^((([0-9]+)y)?(([0-9]+)w)?(([0-9]+)d)?(([0-9]+)h)?(([0-9]+)m)?(([0-9]+)s)?|0)$
                     type: string
                 required:
@@ -85,6 +87,22 @@ spec:
                 description: additionalFields is reserved for future use
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
+              evaluationDuration:
+                description: duration of the last evaluation in seconds
+                type: number
+              health:
+                enum:
+                - Unknown
+                - Recording
+                - Paused
+                - Error
+                - NoData
+                type: string
+              lastError:
+                type: string
+              lastEvaluationTime:
+                format: date-time
+                type: string
               operatorStates:
                 additionalProperties:
                   properties:

@@ -36,8 +36,7 @@ func ToFolderErrorResponse(err error) response.Response {
 	var dashboardErr dashboardaccess.DashboardErr
 	if ok := errors.As(err, &dashboardErr); ok {
 		msg := err.Error()
-		var grafanaErr errutil.Error
-		if errors.As(err, &grafanaErr) {
+		if _, ok := errors.AsType[errutil.Error](err); ok {
 			for _, s := range stableDashboardErrSentinels {
 				if errors.Is(err, s) {
 					msg = s.Error()
@@ -53,8 +52,7 @@ func ToFolderErrorResponse(err error) response.Response {
 		errors.Is(err, folder.ErrFolderCannotBeParentOfItself) ||
 		errors.Is(err, folder.ErrMaximumDepthReached) ||
 		errors.Is(err, folder.ErrInvalidUID) {
-		var grafanaErr errutil.Error
-		if errors.As(err, &grafanaErr) {
+		if _, ok := errors.AsType[errutil.Error](err); ok {
 			for _, s := range stableFolderErrSentinels {
 				if errors.Is(err, s) {
 					return response.Error(http.StatusBadRequest, s.Error(), nil)
@@ -80,15 +78,16 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.Error(http.StatusConflict, err.Error(), nil)
 	}
 
+	statusErr := storageStatusError(err)
+
 	// --- 412 Precondition Failed ---
 	if errors.Is(err, folder.ErrVersionMismatch) ||
-		k8sErrors.IsAlreadyExists(err) {
+		k8sErrors.IsAlreadyExists(err) || (statusErr != nil && k8sErrors.IsAlreadyExists(statusErr)) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()})
 	}
 
 	// --- Kubernetes status errors ---
-	var statusErr *k8sErrors.StatusError
-	if errors.As(err, &statusErr) {
+	if statusErr != nil {
 		message := statusErr.ErrStatus.Message
 		if message == "" {
 			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))
@@ -140,8 +139,7 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 	// can match the rejection without relying on the human-readable message.
 	// errutil.Error.Status() is the source of truth for the message ID; if
 	// the underlying error is one, copy its Details across.
-	var grafanaErr errutil.Error
-	if errors.As(err, &grafanaErr) {
+	if grafanaErr, ok := errors.AsType[errutil.Error](err); ok {
 		if details := grafanaErr.Status().Details; details != nil {
 			statusErr.ErrStatus.Details = details
 		}

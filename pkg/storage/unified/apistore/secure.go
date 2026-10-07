@@ -20,14 +20,13 @@ const LEGACY_DATASOURCE_SECURE_VALUE_NAME_PREFIX = "lds-sv-"
 
 // prepareSecureValues will create any new secure values and register changes inside the provided objectForStorage
 // any call to this function MUST be followed by a call to info.finish(ctx, nil, store) to ensure that the secure values are cleaned up
-func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor, v *objectForStorage) (err error) {
+func prepareSecureValues(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, previousObject utils.GrafanaMetaAccessor, owner common.ObjectReference, v *objectForStorage) (err error) {
 	secure, err := obj.GetSecureValues()
 	if err != nil {
 		return err
 	}
 
-	// Owner reference for inline values
-	v.ref = utils.ToObjectReference(obj)
+	v.ref = owner
 
 	var previous common.InlineSecureValues
 	if previousObject == nil {
@@ -152,7 +151,7 @@ func cleanupSecureValues(v *objectForStorage, obj utils.GrafanaMetaAccessor, sec
 }
 
 // Mutation hook that will delete secure values
-func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor) error {
+func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValueSupport, obj utils.GrafanaMetaAccessor, owner common.ObjectReference) error {
 	secure, err := obj.GetSecureValues()
 	if err != nil || len(secure) == 0 {
 		return err
@@ -162,7 +161,6 @@ func handleSecureValuesDelete(ctx context.Context, store secret.InlineSecureValu
 		return fmt.Errorf("secure value support is not configured (delete)")
 	}
 
-	owner := utils.ToObjectReference(obj)
 	for _, v := range secure {
 		if err = store.DeleteWhenOwnedByResource(ctx, owner, v.Name); err != nil {
 			return err

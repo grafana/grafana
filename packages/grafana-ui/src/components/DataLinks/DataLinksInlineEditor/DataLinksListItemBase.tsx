@@ -1,11 +1,11 @@
 import { css, cx } from '@emotion/css';
-import { Draggable } from '@hello-pangea/dnd';
 
 import { type Action, type DataFrame, type DataLink, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { Badge } from '../../Badge/Badge';
+import { useDragAndDrop } from '../../DragAndDrop/useDragAndDrop';
 import { Icon } from '../../Icon/Icon';
 import { IconButton } from '../../IconButton/IconButton';
 
@@ -28,12 +28,16 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
   index,
   itemKey,
 }: DataLinksListItemBaseProps<T>) {
+  const { Draggable } = useDragAndDrop();
   const styles = useStyles2(getDataLinkListItemStyles);
   const { title = '', oneClick = false } = item;
 
   const url = ('type' in item ? item[item.type]?.url : item.url) ?? '';
   const hasTitle = title.trim() !== '';
   const hasUrl = url.trim() !== '';
+  const dragHandleLabel = t('grafana-ui.data-links-inline-editor.drag-handle-label', 'Reorder data link {{title}}', {
+    title: hasTitle ? title : url,
+  });
 
   return (
     <Draggable key={itemKey} draggableId={itemKey} index={index}>
@@ -72,14 +76,8 @@ export function DataLinksListItemBase<T extends DataLink | Action>({
               className={styles.icon}
               tooltip={t('grafana-ui.data-links-inline-editor.tooltip-remove', 'Remove')}
             />
-            <div className={styles.dragIcon} {...provided.dragHandleProps}>
-              <Icon
-                name="draggabledots"
-                size="lg"
-                title={t('grafana-ui.data-links-inline-editor.drag-handle-label', 'Reorder data link {{title}}', {
-                  title: hasTitle ? title : url,
-                })}
-              />
+            <div className={styles.dragIcon} {...provided.dragHandleProps} aria-label={dragHandleLabel}>
+              <Icon name="draggabledots" size="lg" title={dragHandleLabel} />
             </div>
           </div>
         </div>

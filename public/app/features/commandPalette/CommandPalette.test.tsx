@@ -1,7 +1,9 @@
-import { KBarProvider } from 'kbar';
+import { KBarPortal, KBarProvider } from 'kbar';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
+import { PluginExtensionTypes } from '@grafana/data';
 import { reportInteraction, setBackendSrv, setPluginLinksHook } from '@grafana/runtime';
 import {
   setGetObservablePluginLinks,
@@ -11,7 +13,10 @@ import {
 } from '@grafana/runtime/internal';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
 
@@ -69,6 +74,13 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
+    setTestFlags({ 'dashboard.notebooks': false });
+    jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
+    setPluginLinksHook(() => ({
+      links: [],
+      isLoading: false,
+    }));
+
     // Deep search is gated on both vector-search toggles; default them on so most
     // tests exercise the deep column, overridden where needed. Hybrid search
     // supersedes (and disables) the deep column, so default it off
@@ -77,6 +89,109 @@ describe('CommandPalette', () => {
     (useFlagGrafanaCmdkHybridSearch as jest.Mock).mockReturnValue(false);
     (useAssistant as jest.Mock).mockReturnValue({ isLoading: false, isAvailable: true });
     (reportInteraction as jest.Mock).mockClear();
+  });
+
+  it('reevaluates extension links each time the palette opens', async () => {
+    let isPaletteOpen = false;
+    let isExtensionEnabled = false;
+    const pluginLinksHook = jest.fn(() => ({
+      links: isExtensionEnabled
+        ? [
+            {
+              id: 'test-plugin/command-palette-link',
+              type: PluginExtensionTypes.link as const,
+              title: 'Dynamic extension action',
+              description: 'Enabled after the palette first opens',
+              pluginId: 'test-plugin',
+              path: '/test-plugin',
+            },
+          ]
+        : [],
+      isLoading: false,
+    }));
+    setPluginLinksHook(pluginLinksHook);
+    jest.mocked(KBarPortal).mockImplementation(({ children }) => (isPaletteOpen ? <div>{children}</div> : null));
+
+    const view = setup();
+    expect(pluginLinksHook).not.toHaveBeenCalled();
+
+    isPaletteOpen = true;
+    await act(async () => {
+      view.rerender(
+        <KBarProvider>
+          <CommandPalette />
+        </KBarProvider>
+      );
+    });
+    await screen.findByPlaceholderText('Search or jump to...');
+    const callsAfterFirstOpen = pluginLinksHook.mock.calls.length;
+    expect(callsAfterFirstOpen).toBeGreaterThan(0);
+    expect(screen.queryByText('Dynamic extension action')).not.toBeInTheDocument();
+
+    isPaletteOpen = false;
+    await act(async () => {
+      view.rerender(
+        <KBarProvider>
+          <CommandPalette />
+        </KBarProvider>
+      );
+    });
+
+    isExtensionEnabled = true;
+    isPaletteOpen = true;
+    await act(async () => {
+      view.rerender(
+        <KBarProvider>
+          <CommandPalette />
+        </KBarProvider>
+      );
+    });
+
+    expect(pluginLinksHook.mock.calls.length).toBeGreaterThan(callsAfterFirstOpen);
+    const user = userEvent.setup();
+    await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
+    expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
+  });
+
+  describe('notebook results', () => {
+    // contextSrv.user is a mutable singleton, so these are restored even when an assertion throws —
+    // otherwise a failure here leaks a signed-in user with notebooks:read into every later test.
+    const originalPermissions = contextSrv.user.permissions;
+    const originalIsSignedIn = contextSrv.user.isSignedIn;
+
+    beforeEach(() => {
+      contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
+      contextSrv.user.isSignedIn = true;
+      setTestFlags({ 'dashboard.notebooks': true });
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = originalPermissions;
+      contextSrv.user.isSignedIn = originalIsSignedIn;
+    });
+
+    it('shows notebook search results alongside other palette actions', async () => {
+      server.use(
+        http.post('*/apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/search', () =>
+          HttpResponse.json({
+            items: [
+              {
+                resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
+                fields: { title: 'Incident latency notes' },
+              },
+            ],
+          })
+        )
+      );
+
+      setup();
+      await userEvent.setup().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
+
+      expect(await screen.findByRole('option', { name: 'Notebooks: Incident latency notes' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('/notebooks/nb1')
+      );
+    });
   });
 
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {

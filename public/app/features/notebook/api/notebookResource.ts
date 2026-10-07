@@ -26,6 +26,10 @@ const NOTEBOOK_API_VERSION = `${API_GROUP}/${API_VERSION}`;
 export interface CreatedNotebook {
   uid: string;
   url: string;
+  /** The generation the server assigned it, when the response reported one. */
+  generation?: number;
+  /** The resourceVersion the server assigned it, when the response reported one. */
+  resourceVersion?: string;
 }
 
 /**
@@ -70,7 +74,83 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
 
   // The route's own helper, not a path restated here: `opened` compares this against where the push
   // landed, so a second spelling of the route reports success from a page with no notebook on it.
-  return { uid, url: notebookViewUrl(uid) };
+  //
+  // The generation comes back so a notebook created by autosave can be reopened without rebuilding its
+  // scene: NotebookPageStateManager compares it, and a missing number reads as somebody else's write.
+  //
+  // The resourceVersion comes back too, so a caller that just wrote through the scene (e.g. the
+  // mutation-api commands) can report the new revision without a second, racy read of its own.
+  return {
+    uid,
+    url: notebookViewUrl(uid),
+    generation: result.data?.metadata?.generation,
+    resourceVersion: result.data?.metadata?.resourceVersion,
+  };
+}
+
+/**
+ * Someone else wrote to the notebook between the read and the write below. Its own type rather than a
+ * status code the caller has to sniff for: this is the one write failure a user can act on, and the
+ * resourceVersion that produces it is this module's business, not the caller's.
+ */
+export class NotebookConflictError extends Error {}
+
+/**
+ * Read-modify-write of a notebook's spec.
+ *
+ * The whole resource goes back, not just the spec, because that carries its `resourceVersion` — which
+ * is what makes the apiserver reject a notebook someone else edited in between instead of silently
+ * overwriting them. A caller that only sent the spec would win every race by accident.
+ *
+ * The read is deliberately uncached: a spec left over from an earlier fetch would be written straight
+ * back, dropping whatever changed since.
+ */
+export async function updateNotebookSpec(
+  uid: string,
+  update: (spec: NotebookSpec) => NotebookSpec
+): Promise<NotebookSpec> {
+  const read = await dispatch(
+    dashboardAPIv2beta1.endpoints.getNotebook.initiate({ name: uid }, { subscribe: false, forceRefetch: true })
+  );
+
+  if ('error' in read && read.error) {
+    throw new Error(extractErrorMessage(read.error, 'Failed to read the notebook.'));
+  }
+
+  const current = read.data;
+  if (!current) {
+    throw new Error('The notebook could not be read, so the change was not applied.');
+  }
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the read seam
+  const next = update(current.spec as unknown as NotebookSpec);
+
+  // `track: false` for the same reason as the create above: nothing renders this mutation's state, so
+  // a tracked write parks its result in the store with no component subscribed and nothing to reset
+  // it - and for a PUT that result is the whole notebook the server echoed back. The invalidation
+  // that drops this notebook's cached GET is unaffected: RTK Query keys tag invalidation off the
+  // thunk being fulfilled, not off `track`.
+  const result = await dispatch(
+    dashboardAPIv2beta1.endpoints.replaceNotebook.initiate(
+      {
+        name: uid,
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- generated client type bridged to the schema spec type at the write seam
+        notebook: { ...current, spec: next as unknown as Notebook['spec'] },
+      },
+      { track: false }
+    )
+  );
+
+  if ('error' in result && result.error) {
+    if (isConflict(result.error)) {
+      throw new NotebookConflictError(
+        extractErrorMessage(result.error, 'The notebook changed while you were editing.')
+      );
+    }
+    throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
+  }
+
+  return next;
 }
 
 /**
@@ -81,21 +161,46 @@ export async function createNotebook(spec: NotebookSpec): Promise<CreatedNoteboo
  * the notebook's folder annotation. Full reasoning in the spec, section 5.1.
  *
  * `generation` is optional rather than defaulted to 0, because the caller compares it with `===` against
- * an optional field and a 0 would read as a difference.
+ * an optional field and a 0 would read as a difference. `resourceVersion` is carried the same way, for a
+ * caller that needs to report the post-write revision without a second read racing this write's own
+ * persistence.
  */
-export async function updateNotebook(uid: string, spec: NotebookSpec): Promise<{ generation?: number }> {
+export async function updateNotebook(
+  uid: string,
+  spec: NotebookSpec,
+  resourceVersion?: string
+): Promise<{ generation?: number; resourceVersion?: string }> {
+  const patch = [
+    { op: 'replace', path: '/spec', value: spec },
+    ...(resourceVersion !== undefined
+      ? [{ op: 'replace', path: '/metadata/resourceVersion', value: resourceVersion }]
+      : []),
+  ];
+
   const result = await dispatch(
     dashboardAPIv2beta1.endpoints.updateNotebook.initiate(
       // `createBaseQuery` infers the json-patch content type from the array of ops.
-      { name: uid, patch: [{ op: 'replace', path: '/spec', value: spec }] },
+      { name: uid, patch },
       // Untracked like the create: nothing renders this mutation's state, and autosave writes often.
       { track: false }
     )
   );
 
   if ('error' in result && result.error) {
+    if (isConflict(result.error)) {
+      throw new NotebookConflictError(
+        extractErrorMessage(result.error, 'The notebook changed while you were editing.')
+      );
+    }
     throw new Error(extractErrorMessage(result.error, 'Failed to save the notebook.'));
   }
 
-  return { generation: result.data?.metadata?.generation };
+  return {
+    generation: result.data?.metadata?.generation,
+    resourceVersion: result.data?.metadata?.resourceVersion,
+  };
+}
+
+function isConflict(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'status' in error && error.status === 409;
 }

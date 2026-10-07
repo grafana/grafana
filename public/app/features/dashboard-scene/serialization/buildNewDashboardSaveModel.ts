@@ -1,3 +1,4 @@
+import { type AdHocVariableModel } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
@@ -34,14 +35,14 @@ export async function buildNewDashboardSaveModel(urlFolderUid?: string): Promise
     };
 
     if (defaultDs.getTagKeys) {
-      const filterVariable = {
+      const filterVariable: VariableModel & Pick<AdHocVariableModel, 'filters' | 'type'> = {
         datasource: datasourceRef,
         filters: [],
         name: 'Filter',
         type: 'adhoc',
       };
 
-      variablesList = (variablesList || []).concat([filterVariable as VariableModel]);
+      variablesList = (variablesList || []).concat([filterVariable]);
     }
 
     if (defaultDs.getGroupByKeys) {

@@ -367,11 +367,11 @@ func (t *Tree) matchSubtree(globLevel int, segment, url string, params map[strin
 }
 
 func (t *Tree) matchNextSegment(globLevel int, url string, params map[string]string) (Handle, bool) {
-	i := strings.Index(url, "/")
-	if i == -1 {
+	before, after, ok := strings.Cut(url, "/")
+	if !ok {
 		return t.matchLeaf(globLevel, url, params)
 	}
-	return t.matchSubtree(globLevel, url[:i], url[i+1:], params)
+	return t.matchSubtree(globLevel, before, after, params)
 }
 
 func (t *Tree) Match(url string) (Handle, map[string]string, bool) {

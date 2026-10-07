@@ -18,7 +18,6 @@ import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
 import { edit } from '../../actions/utils/edit';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { ObjectsReorderedOnCanvasEvent } from '../../sidebar/events';
 import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
@@ -30,7 +29,7 @@ import { type TabItem } from '../layout-tabs/TabItem';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { convertRowToTab } from '../layouts-shared/convertRowToTab';
 import { convertTabToRow } from '../layouts-shared/convertTabToRow';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import {
@@ -152,16 +151,6 @@ export class RowsLayoutManager
     return canGroupSelection(items, target);
   }
 
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
-  }
-
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone({});
   }
@@ -188,6 +177,7 @@ export class RowsLayoutManager
     }
 
     addElement({
+      meta: { actionId: 'row.add' },
       addedObject: newRow,
       source: this,
       perform: () => {
@@ -345,6 +335,7 @@ export class RowsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
+      meta: { actionId: 'row.ungroup' },
       description: t('dashboard.rows-layout.edit.ungroup-rows', 'Ungroup rows'),
       source: scene,
       perform: () => {
@@ -516,20 +507,13 @@ export class RowsLayoutManager
       perform();
     } else {
       removeElement({
+        meta: { actionId: 'row.remove' },
         removedObject: row,
         source: this,
         perform,
         undo,
       });
     }
-  }
-
-  public moveRow(_rowKey: string, fromIndex: number, toIndex: number) {
-    const rows = [...this.state.rows];
-    const [removed] = rows.splice(fromIndex, 1);
-    rows.splice(toIndex, 0, removed);
-    this.setState({ rows });
-    this.publishEvent(new ObjectsReorderedOnCanvasEvent(this), true);
   }
 
   public forceSelectRow(rowKey: string) {
@@ -659,28 +643,30 @@ export class RowsLayoutManager
   }
 
   public collapseAllRows() {
-    this.state.rows.forEach((row) => {
-      if (!row.getCollapsedState()) {
-        row.setCollapsedState(true);
-      }
-      row.state.repeatedRows?.forEach((repeatedRow) => {
-        if (!repeatedRow.getCollapsedState()) {
-          repeatedRow.setCollapsedState(true);
-        }
-      });
-    });
+    this.setAllRowsCollapsed(true, t('dashboard.edit-actions.collapse-all-rows', 'Collapse all rows'));
   }
 
   public expandAllRows() {
-    this.state.rows.forEach((row) => {
-      if (row.getCollapsedState()) {
-        row.setCollapsedState(false);
-      }
-      row.state.repeatedRows?.forEach((repeatedRow) => {
-        if (repeatedRow.getCollapsedState()) {
-          repeatedRow.setCollapsedState(false);
-        }
-      });
+    this.setAllRowsCollapsed(false, t('dashboard.edit-actions.expand-all-rows', 'Expand all rows'));
+  }
+
+  private setAllRowsCollapsed(collapse: boolean, description: string) {
+    // Only rows whose state actually changes are captured, so undo restores exactly the rows
+    // that were toggled and leaves the rest untouched.
+    const rowsToToggle = this.state.rows
+      .flatMap((row) => [row, ...(row.state.repeatedRows ?? [])])
+      .filter((row) => row.getCollapsedState() !== collapse);
+
+    if (rowsToToggle.length === 0) {
+      return;
+    }
+
+    edit({
+      meta: { actionId: collapse ? 'row.collapseAll' : 'row.expandAll' },
+      source: this,
+      description,
+      perform: () => rowsToToggle.forEach((row) => row.setCollapsedState(collapse)),
+      undo: () => rowsToToggle.forEach((row) => row.setCollapsedState(!collapse)),
     });
   }
 }

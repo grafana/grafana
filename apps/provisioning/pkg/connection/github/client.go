@@ -236,8 +236,7 @@ func (r *githubClient) CreateInstallationAccessToken(ctx context.Context, instal
 
 	token, _, err := r.gh.Apps.CreateInstallationToken(ctx, int64(id), opts)
 	if err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) {
+		if ghErr, ok := errors.AsType[*github.ErrorResponse](err); ok {
 			switch ghErr.Response.StatusCode {
 			case http.StatusServiceUnavailable:
 				return InstallationToken{}, ErrServiceUnavailable

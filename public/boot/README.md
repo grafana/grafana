@@ -9,8 +9,13 @@ This directory contains the TypeScript source for the Grafana frontend service b
 
 ## How it's used by the backend
 
-The script is inlined into the HTML response served by the `IndexProvider` (`pkg/services/frontend/index.go`). At startup, the backend reads `public/build/boot.js` from disk and stores it as a `template.JS` value. It is then injected directly into the `<script>` tag in `index.html`.
+The `IndexProvider` (`pkg/services/frontend/index.go`) inlines the script into the HTML response it serves. At startup, the backend reads `boot.js` from both build directories, `public/build` and `public/build/rspack`, and keeps each one as a `template.JS` value. It then injects one of them into the `<script>` tag in `index.html`. The `grafana.rspackBuild` feature flag selects which build directory the script comes from.
 
 ## How it's built
 
-`public/boot/index.ts` is a separate webpack entry point named `boot`. Run the standard frontend build to produce it.
+Each bundler builds its own copy from `public/boot/index.ts`:
+
+- webpack builds `public/build/boot.js` from a separate entry point named `boot`. The standard frontend build produces it.
+- rspack builds `public/build/rspack/boot.js` from its own config, `scripts/rspack/rspack.boot.ts`. `yarn build:rspack` and the rspack dev commands build it first. To build only this file, run `yarn build:rspack:boot`.
+
+The rspack config is separate because the main rspack build emits ES modules. The backend inlines this file into a classic `<script>` tag, so the file must be one self-contained IIFE with no `import` or `export`.

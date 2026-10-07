@@ -57,6 +57,25 @@ describe('provisioning data mapping', () => {
       const data = specToData(spec);
       expect(data.tokenUser).toBe('x-token-auth');
     });
+
+    it('forces webhook disabled without email or connection', () => {
+      const formData = makeFormData('bitbucket');
+      formData.email = '';
+      formData.webhook = { baseUrl: 'https://x.example' };
+
+      const spec = dataToSpec(formData);
+      expect(spec.webhook).toEqual({ disabled: true });
+    });
+
+    it('keeps webhook enabled without email when a connection is used', () => {
+      const formData = makeFormData('bitbucket');
+      formData.email = '';
+      formData.webhook = { baseUrl: 'https://x.example' };
+
+      const spec = dataToSpec(formData, 'bb-conn');
+      expect(spec.webhook).toEqual({ baseUrl: 'https://x.example' });
+      expect(spec.connection).toEqual({ name: 'bb-conn' });
+    });
   });
 
   describe('pure git', () => {

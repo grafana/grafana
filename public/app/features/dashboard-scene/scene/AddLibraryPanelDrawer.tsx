@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { config } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -10,6 +11,7 @@ import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
 import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
+import { replacePanel } from '../actions/panel/replacePanel';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -24,9 +26,9 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
     getDashboardSceneFor(this).closeModal();
   };
 
-  public onAddLibraryPanel = (panelInfo: LibraryPanel) => {
+  public onAddLibraryPanel = async (panelInfo: LibraryPanel) => {
     const dashboard = getDashboardSceneFor(this);
-    const newPanel = getDefaultVizPanel();
+    const newPanel = await getDefaultVizPanel();
 
     newPanel.setState({
       // Panel title takes precedence over library panel title when resolving the library panel
@@ -41,10 +43,16 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
-        // keep the same key from the panelToReplace
-        // this is important for edit mode
-        newPanel.setState({ key: panelToReplace.state.key });
-        layoutItem.setElementBody(newPanel);
+        // eslint-disable-next-line @grafana/no-config-feature-toggles -- blocked by #133263
+        if (config.featureToggles.dashboardNewLayouts) {
+          replacePanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
+        } else {
+          // This else block is needed only for old architecture which reuses the same component
+          // but has no way to trigger dashboard actions. It can be removed when
+          // the dashboardNewLayouts toggle is removed
+          newPanel.setState({ key: panelToReplace.state.key });
+          layoutItem.setElementBody(newPanel);
+        }
       }
     } else {
       dashboard.addPanel(newPanel);

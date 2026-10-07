@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { useParams } from 'react-router-dom-v5-compat';
+import { useMatch, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
+import { locationService, useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 import { UrlSyncContextProvider } from '@grafana/scenes';
 import { Box } from '@grafana/ui';
@@ -9,8 +10,12 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
+import { NotebookAnalytics } from '../analytics/main';
+import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
-import { NotebookToolbar } from '../toolbar/NotebookToolbar';
+import { NotebookSceneControls } from '../scene/NotebookSceneControls';
+import { NOTEBOOK_NEW_URL, notebookViewUrl } from '../urls';
 
 import { NotebookPageError } from './NotebookPageError';
 import { getNotebookPageStateManager } from './NotebookPageStateManager';
@@ -24,18 +29,28 @@ export function NotebookScenePage() {
   const notebooksEnabled = useFlagDashboardNotebooks();
 
   const { uid } = useParams();
+  // Both routes render this page, and the blank one has no uid to tell them apart by. Matched against
+  // the path rather than read off a route prop, so the page stays driven by the url like its edit mode.
+  const isNew = Boolean(useMatch(NOTEBOOK_NEW_URL));
   const stateManager = getNotebookPageStateManager();
   const { scene, isLoading, loadError } = stateManager.useState();
 
   useEffect(() => {
-    if (notebooksEnabled && uid) {
-      stateManager.loadNotebook(uid);
+    if (notebooksEnabled) {
+      if (uid) {
+        stateManager.loadNotebook(uid);
+      } else if (isNew) {
+        stateManager.newNotebook();
+        // The list's create button is the only link to this route today, so the source is fixed here.
+        // A second way in has to pass its own, or this event keeps naming the list.
+        NotebookAnalytics.newStarted(NOTEBOOK_ENTRY_POINT.NOTEBOOK_LIST);
+      }
     }
 
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, uid, notebooksEnabled]);
+  }, [stateManager, uid, isNew, notebooksEnabled]);
 
   if (!notebooksEnabled) {
     return <PageNotFound />;
@@ -60,25 +75,41 @@ export function NotebookScenePage() {
   // (editPanel, editview, shareView) at all.
   return (
     <UrlSyncContextProvider scene={scene} updateUrlOnInit={true} createBrowserHistorySteps={true}>
-      <NotebookDocument scene={scene} />
+      <NotebookDocument scene={scene} isNew={isNew} />
     </UrlSyncContextProvider>
   );
 }
 
-function NotebookDocument({ scene }: { scene: NotebookScene }) {
+function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boolean }) {
   // uid comes off the scene rather than the route param: it is the notebook's identity
   // (metadata.name), and the scene already carries it for the same reason it carries the title.
   const { title, uid } = scene.useState();
+  // Varies with the mega menu, and this page is what knows there is an app header at all.
+  const headerHeight = useChromeHeaderHeight();
 
   useEffect(() => scene.activate(), [scene]);
+
+  // A blank notebook that has just been created by its first save: point the url at it instead of the
+  // route that made it. Replace rather than push, or Back lands back on the blank route and reads as a
+  // second empty notebook. Keep the current search params: they hold the scene's own time range, and
+  // dropping them would reset the range to nothing.
+  useEffect(() => {
+    if (isNew && uid) {
+      locationService.replace({ pathname: notebookViewUrl(uid), search: locationService.getLocation().search });
+    }
+  }, [isNew, uid]);
 
   // The Notebooks nav section supplies the parent breadcrumb, so pageNav only carries the title.
   const pageNav = { text: title };
 
   return (
     <Page navId="notebooks" pageNav={pageNav} layout={PageLayoutType.Custom}>
-      {uid && <NotebookToolbar uid={uid} scene={scene} />}
+      {/* Composed here rather than by the scene: whether a surface shows the controls row is a
+          property of the surface. Page's own wrapper is already a flex column, so this and the
+          document below sit in it as siblings. The toolbar rides inside the row. */}
+      <NotebookSceneControls model={scene} stickyOffset={headerHeight ?? 0} />
       <scene.Component model={scene} />
+      <NotebookPrompt scene={scene} />
     </Page>
   );
 }

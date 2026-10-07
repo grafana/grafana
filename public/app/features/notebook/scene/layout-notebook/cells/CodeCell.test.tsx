@@ -38,7 +38,7 @@ jest.mock('@grafana/ui/unstable', () => {
       const ref = useRef(null);
 
       useEffect(() => {
-        if (!extensions?.length) {
+        if (!extensions || extensions.length < 2) {
           return;
         }
 

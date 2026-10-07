@@ -8,6 +8,7 @@ import (
 	"io"
 	"iter"
 	"math"
+	"slices"
 	"strings"
 	"text/template"
 	"time"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -67,6 +69,10 @@ type dataImportBatchWriter interface {
 }
 
 func newDataStore(kv KV, metrics *kvBackendMetrics) *dataStore {
+	// Recording sites should not have to check for nil.
+	if metrics == nil {
+		metrics = newKVBackendMetrics(nil)
+	}
 	ds := &dataStore{
 		kv:      kv,
 		cache:   gocache.New(time.Hour, 10*time.Minute), // 1 hour expiration, 10 minute cleanup
@@ -224,11 +230,11 @@ func (d *dataStore) Keys(ctx context.Context, key ListRequestKey, sort SortOrder
 	prefix := key.Prefix()
 	return func(yield func(DataKey, error) bool) {
 		defer span.End()
-		for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
+		for k, err := range pagedKeys(ctx, d.kv, dataSection, ListOptions{
 			StartKey: prefix,
 			EndKey:   PrefixRangeEnd(prefix),
 			Sort:     sort,
-		}) {
+		}, keyPageSize) {
 			if err != nil {
 				yield(DataKey{}, err)
 				return
@@ -272,62 +278,15 @@ func (d *dataStore) LastResourceVersion(ctx context.Context, key ListRequestKey)
 	return DataKey{}, ErrNotFound
 }
 
-// GetLatestAndPredecessor returns the latest resource version and its immediate predecessor
-// in a single atomic operation. Returns (latest, predecessor, error).
-// If there's only one version, predecessor will be an empty DataKey (ResourceVersion == 0).
-func (d *dataStore) GetLatestAndPredecessor(ctx context.Context, key ListRequestKey) (DataKey, DataKey, error) {
-	if err := key.Validate(); err != nil {
-		return DataKey{}, DataKey{}, fmt.Errorf("invalid data key: %w", err)
-	}
-	if key.Group == "" || key.Resource == "" || key.Name == "" {
-		return DataKey{}, DataKey{}, fmt.Errorf("group, resource or name is empty")
-	}
-
-	ctx, span := tracer.Start(ctx, "resource.dataStore.GetLatestAndPredecessor")
-	defer span.End()
-
-	prefix := key.Prefix()
-	var latest, predecessor DataKey
-	count := 0
-	for k, err := range d.kv.Keys(ctx, dataSection, ListOptions{
-		StartKey: prefix,
-		EndKey:   PrefixRangeEnd(prefix),
-		Limit:    2, // Get latest and predecessor
-		Sort:     SortOrderDesc,
-	}) {
-		if err != nil {
-			return DataKey{}, DataKey{}, err
-		}
-		parsedKey, err := ParseKey(k)
-		if err != nil {
-			return DataKey{}, DataKey{}, err
-		}
-		switch count {
-		case 0:
-			latest = parsedKey
-		case 1:
-			predecessor = parsedKey
-		}
-		count++
-	}
-	if count == 0 {
-		return DataKey{}, DataKey{}, ErrNotFound
-	}
-	if count == 1 {
-		return latest, DataKey{}, nil
-	}
-	return latest, predecessor, nil
-}
-
 // GetLatestResourceKey retrieves the data key for the latest version of a resource.
 // Returns the key with the highest resource version that is not deleted.
 func (d *dataStore) GetLatestResourceKey(ctx context.Context, key GetRequestKey) (DataKey, error) {
-	return d.GetResourceKeyAtRevision(ctx, key, 0)
+	return d.GetResourceKeyAtRevision(ctx, key, 0, false)
 }
 
 // GetResourceKeyAtRevision retrieves the data key for a resource at a specific revision.
-// If rv is 0, it returns the latest version. Returns the highest version <= rv that is not deleted.
-func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequestKey, rv int64) (DataKey, error) {
+// If rv is 0, it returns the latest version. Deleted keys are returned only when requested.
+func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequestKey, rv int64, includeDeleted bool) (DataKey, error) {
 	if err := key.Validate(); err != nil {
 		return DataKey{}, fmt.Errorf("invalid get request key: %w", err)
 	}
@@ -339,7 +298,7 @@ func (d *dataStore) GetResourceKeyAtRevision(ctx context.Context, key GetRequest
 
 	listKey := ListRequestKey(key)
 
-	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv})
+	iter := d.ListResourceKeysAtRevision(ctx, ListRequestOptions{Key: listKey, ResourceVersion: rv, IncludeDeleted: includeDeleted})
 	for dataKey, err := range iter {
 		if err != nil {
 			return DataKey{}, err
@@ -358,6 +317,7 @@ type ListRequestOptions struct {
 	// ContinueName is the name to continue from.
 	ContinueName    string
 	ResourceVersion int64
+	IncludeDeleted  bool
 }
 
 // Validate checks that the ListRequestOptions are valid.
@@ -383,7 +343,8 @@ func (d *dataStore) ListLatestResourceKeys(ctx context.Context, key ListRequestK
 // pagedKeys scans keys in the given range one bounded page at a time. Each page
 // is read fully into memory (which lets the underlying KV close its cursor)
 // before its keys are yielded, so no cursor is held open while the consumer
-// reads. It yields the same lexical key sequence as a single unbounded scan.
+// reads. Bounds and ordering are preserved, but pages are separate reads, not
+// a transactional snapshot. Callers use an unlimited overall scan (base.Limit = 0).
 func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pageSize int) iter.Seq2[string, error] {
 	return func(yield func(string, error) bool) {
 		opts := base
@@ -416,14 +377,19 @@ func pagedKeys(ctx context.Context, kv KV, section string, base ListOptions, pag
 				return
 			}
 
-			// StartKey is inclusive, so advance past the last key we saw.
-			opts.StartKey = PrefixRangeEnd(page[len(page)-1])
+			if opts.Sort == SortOrderDesc {
+				// EndKey is exclusive; keep the original inclusive lower bound.
+				opts.EndKey = page[len(page)-1]
+			} else {
+				// StartKey is inclusive, so advance past the last key we saw.
+				opts.StartKey = PrefixRangeEnd(page[len(page)-1])
+			}
 		}
 	}
 }
 
 // ListResourceKeysAtRevision returns an iterator over data keys for resources at a specific revision.
-// If rv is 0, it returns the latest versions. Only returns keys for resources that are not deleted at the given revision.
+// If rv is 0, it returns the latest versions. Deleted keys are returned only when requested.
 func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options ListRequestOptions) iter.Seq2[DataKey, error] {
 	if err := options.Validate(); err != nil {
 		return func(yield func(DataKey, error) bool) {
@@ -471,9 +437,9 @@ func (d *dataStore) ListResourceKeysAtRevision(ctx context.Context, options List
 		var candidateKey *DataKey // The current candidate key we are iterating over
 
 		// yieldCandidate is a helper function to yield results.
-		// Won't yield if the resource was last deleted.
+		// Won't yield if the resource was last deleted unless the caller requested it.
 		yieldCandidate := func() bool {
-			if candidateKey.Action == DataActionDeleted {
+			if candidateKey.Action == DataActionDeleted && !options.IncludeDeleted {
 				// Skip because the resource was last deleted.
 				return true
 			}
@@ -559,10 +525,7 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 
 		// Process keys in batches
 		for i := 0; i < len(keys); i += dataBatchSize {
-			end := i + dataBatchSize
-			if end > len(keys) {
-				end = len(keys)
-			}
+			end := min(i+dataBatchSize, len(keys))
 			batch := keys[i:end]
 
 			// Convert DataKeys to string keys and create a mapping
@@ -654,19 +617,13 @@ func (d *dataStore) Delete(ctx context.Context, key DataKey) error {
 	return d.kv.Delete(ctx, dataSection, key.String())
 }
 
-func (n *dataStore) batchDelete(ctx context.Context, keys []DataKey) error {
-	ctx, span := tracer.Start(ctx, "resource.dataStore.batchDelete", trace.WithAttributes(
+func (n *dataStore) BatchDelete(ctx context.Context, keys []DataKey) error {
+	ctx, span := tracer.Start(ctx, "resource.dataStore.BatchDelete", trace.WithAttributes(
 		attribute.Int("batchSize", len(keys)),
 	))
 	defer span.End()
 
-	for len(keys) > 0 {
-		batch := keys
-		if len(batch) > dataBatchSize {
-			batch = batch[:dataBatchSize]
-		}
-
-		keys = keys[len(batch):]
+	for batch := range slices.Chunk(keys, dataBatchSize) {
 		stringKeys := make([]string, 0, len(batch))
 		for _, dataKey := range batch {
 			stringKeys = append(stringKeys, dataKey.String())
@@ -1169,7 +1126,7 @@ func (d *dataStore) applyBackwardsCompatibleChanges(ctx context.Context, tx db.T
 func checkLegacyCASConflict(res db.Result, event WriteEvent, key DataKey) (bool, error) {
 	rows, err := res.RowsAffected()
 	if err != nil {
-		return false, fmt.Errorf("compatibility layer: failed to verify optimistic lock result: %w", err)
+		return false, fmt.Errorf("compatibility layer: failed to verify conditional update result: %w", err)
 	}
 	if rows == 1 {
 		return false, nil
@@ -1186,18 +1143,15 @@ func isRowAlreadyExistsError(err error) bool {
 		return true
 	}
 
-	var pg *pgconn.PgError
-	if errors.As(err, &pg) {
+	if pg, ok := errors.AsType[*pgconn.PgError](err); ok {
 		return pg.Code == "23505"
 	}
 
-	var pqerr *pq.Error
-	if errors.As(err, &pqerr) {
+	if pqerr, ok := errors.AsType[*pq.Error](err); ok {
 		return pqerr.Code == "23505"
 	}
 
-	var mysqlerr *mysql.MySQLError
-	if errors.As(err, &mysqlerr) {
+	if mysqlerr, ok := errors.AsType[*mysql.MySQLError](err); ok {
 		return mysqlerr.Number == 1062
 	}
 
@@ -1310,19 +1264,6 @@ func (d *dataStore) lookupCanonicalName(
 	return res[0].Name, nil
 }
 
-// snowflakeRVThreshold separates snowflake RVs (new) from legacy microsecond-timestamp
-// RVs (old). The two encodings occupy disjoint numeric bands for any realistic resource
-// timestamp: a snowflake is (ms_since_2010_epoch << 22), so its <<22 shift lifts it ~150x
-// above the microsecond form of the same instant. For resources dated 2013–2030, micro-RVs
-// span ~1.4e15–1.9e15 while snowflakes span ~2.9e17–2.5e18, leaving an empty gap between them.
-//
-// The cut sits in that gap. 1e17 as a UnixMicros timestamp is year ~5138, so no real
-// micro-RV reaches it; the smallest snowflake we can emit is ~1e16 (epoch + a few days),
-// and any snowflake from a post-2011 timestamp is well above 1e17.
-const snowflakeRVThreshold = int64(1e17)
-
-// IsSnowflake returns whether the argument is a snowflake ID (new) or a microsecond
-// timestamp (old).
 func IsSnowflake(rv int64) bool {
-	return rv >= snowflakeRVThreshold
+	return resourceutil.IsSnowflake(rv)
 }

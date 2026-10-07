@@ -24,7 +24,7 @@ export type DashboardPickerDTO = Pick<DashboardQueryResult, 'uid' | 'name'> &
 
 const formatLabel = (folderTitle = 'Dashboards', dashboardTitle: string) => `${folderTitle}/${dashboardTitle}`;
 
-// Reserved homeDashboardUID value; must equal pref.GlobalHomeDashboardUID in the Go backend.
+// Reserved homeDashboardUID value; the contract is documented on PreferencesSpec.homeDashboardUID.
 export const GLOBAL_HOME_DASHBOARD_UID = 'global-home';
 
 const getGlobalHomeOption = (): SelectableValue<DashboardPickerDTO> => ({

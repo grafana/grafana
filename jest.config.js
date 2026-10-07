@@ -4,6 +4,7 @@
 process.env.TZ = 'Pacific/Easter'; // UTC-06:00 or UTC-05:00 depending on daylight savings
 
 const esModules = [
+  '@faker-js/faker',
   '@wojtekmaj/date-utils',
   'ol',
   'd3',
@@ -28,6 +29,8 @@ const esModules = [
   '@bsull/augurs',
   '@grafana/react-data-grid',
   '@grafana/llm',
+  '@grafana/prometheus',
+  '@grafana/plugin-ui',
   'pkce-challenge',
   'quickselect',
   'rbush',
@@ -60,7 +63,13 @@ module.exports = {
     `/node_modules/(?!(?:${esModules})|(?:.*/(?:${esModules})/))`,
   ],
   moduleDirectories: ['public', 'node_modules'],
-  roots: ['<rootDir>/public/app', '<rootDir>/public/test', '<rootDir>/packages', '<rootDir>/scripts/tests'],
+  roots: [
+    '<rootDir>/public/app',
+    '<rootDir>/public/swagger',
+    '<rootDir>/public/test',
+    '<rootDir>/packages',
+    '<rootDir>/scripts/tests',
+  ],
   testRegex: '(\\.|/)(test)\\.(jsx?|tsx?)$',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'cjs'],
   setupFiles: ['jest-canvas-mock', './public/test/jest-setup.ts'],

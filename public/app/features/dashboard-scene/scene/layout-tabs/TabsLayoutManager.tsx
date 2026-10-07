@@ -27,7 +27,7 @@ import { RowItem } from '../layout-rows/RowItem';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { convertRowToTab } from '../layouts-shared/convertRowToTab';
 import { convertTabToRow } from '../layouts-shared/convertTabToRow';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { moveSectionVariablesUp } from '../layouts-shared/moveSectionVariablesUp';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import {
@@ -210,16 +210,6 @@ export class TabsLayoutManager
     return canGroupSelection(items, target);
   }
 
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
-  }
-
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
     return this.clone();
   }
@@ -253,6 +243,7 @@ export class TabsLayoutManager
     }
 
     addElement({
+      meta: { actionId: 'tab.add' },
       addedObject: newTab,
       source: this,
       perform: () => {
@@ -405,6 +396,7 @@ export class TabsLayoutManager
     let nextVariables: SceneVariable[] | undefined;
 
     edit({
+      meta: { actionId: 'tab.ungroup' },
       description: t('dashboard.tabs-layout.edit.ungroup-tabs', 'Ungroup tabs'),
       source: scene,
       perform: () => {
@@ -589,6 +581,7 @@ export class TabsLayoutManager
       perform();
     } else {
       removeElement({
+        meta: { actionId: 'tab.remove' },
         removedObject: tab,
         source: this,
         perform,
@@ -624,6 +617,7 @@ export class TabsLayoutManager
     const originalToIndex = this.state.tabs.findIndex((tab) => tab === destinationTab);
 
     moveElement({
+      meta: { actionId: 'tab.reorder' },
       source: this,
       movedObject: objectToMove,
       perform: () => {

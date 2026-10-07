@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Point } from 'ol/geom';
 import { fromLonLat } from 'ol/proj';
@@ -13,17 +13,29 @@ import {
   FieldColorModeId,
   FieldType,
   type LinkModel,
+  ThemeContext,
   ThresholdsMode,
   toDataFrame,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { TableCellBackgroundDisplayMode } from '@grafana/schema';
+import { mockBoundingClientRect, mockClientSize } from '@grafana/test-utils';
 
 import { type PanelContext, PanelContextProvider } from '../../PanelChrome';
 import { TableCellDisplayMode } from '../types';
 
 import { TableNG } from './TableNG';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_LAST_ROW_CLASS, OVERFLOW_CELL_CLASS, TABLE } from './constants';
+
+// react-data-grid sizes its virtualized viewport from the client box, which jsdom reports as 0 - without
+// this the grid renders no rows at all.
+beforeAll(() => {
+  // Keep offsetWidth consistent with clientWidth so delayed scrollbar measurement cannot go negative.
+  mockBoundingClientRect({ width: 800, height: 600 });
+  mockClientSize({ width: 800, height: 600 });
+  // Keep bounding and offset dimensions consistent with the client box for viewport measurement.
+  mockBoundingClientRect({ width: 800, height: 600 });
+});
 
 // Shared helpers for test data frame construction
 const withFieldOverrides = (frame: ReturnType<typeof toDataFrame>): DataFrame =>
@@ -75,6 +87,73 @@ const createBasicDataFrame = (): DataFrame =>
     })
   );
 
+it.each([false, true])('adds the entire field from its header after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom = { ...frame.fields[0].config.custom, filterable: filtered };
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onFieldAddToAssistant={onFieldAddToAssistant}
+    />
+  );
+  const menu = screen.getByRole('button', { name: 'Column options for Column A' });
+  if (filtered) {
+    await userEvent.click(menu);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+    expect(screen.getByText('A2')).toBeInTheDocument();
+    expect(screen.queryByText('A1')).not.toBeInTheDocument();
+  }
+  act(() => menu.focus());
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledTimes(1);
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] })
+  );
+});
+
+it.each([false, true])('adds the original cell to Assistant after sorting (filtered=%s)', async (filtered) => {
+  const frame = createBasicDataFrame();
+  frame.fields[0].config.custom.filterable = true;
+  const onCellAddToAssistant = jest.fn();
+  render(
+    <TableNG
+      data={frame}
+      width={800}
+      height={600}
+      tableRefreshEnabled
+      sortBy={[{ displayName: 'Column B', desc: true }]}
+      onCellAddToAssistant={onCellAddToAssistant}
+    />
+  );
+  if (filtered) {
+    await userEvent.click(
+      screen.getByTestId(selectors.components.Panels.Visualization.TableNG.headerColumnMenu.button)
+    );
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Filter values' }));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'A2' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Ok' }));
+  }
+  const firstRow = screen.getAllByRole('row')[1];
+  expect(within(firstRow).getByText(filtered ? 'A2' : 'A3')).toBeInTheDocument();
+  within(firstRow).getAllByRole('button', { name: 'Cell actions' })[0].focus();
+  await userEvent.keyboard('{Enter}');
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onCellAddToAssistant).toHaveBeenCalledWith(
+    frame,
+    expect.objectContaining({ name: 'Column A', values: ['A1', 'A2', 'A3'] }),
+    filtered ? 1 : 2
+  );
+});
+
 // A `FieldType.other` column, which the Auto cell pretty-prints as JSON.
 const createJsonDataFrame = (wrapText: boolean): DataFrame =>
   withFieldOverrides(
@@ -100,6 +179,33 @@ const createJsonDataFrame = (wrapText: boolean): DataFrame =>
       ],
     })
   );
+
+it.each([false, true])('highlights Auto JSON independently of table.refresh=%s', async (tableRefreshEnabled) => {
+  const theme = createTheme();
+  const { rerender } = render(
+    <TableNG
+      data={createJsonDataFrame(true)}
+      width={800}
+      height={400}
+      tableRefreshEnabled={tableRefreshEnabled}
+      jsonSyntaxHighlightingEnabled
+    />
+  );
+  expect(await screen.findByText('"us-east-1"')).toHaveStyle({ color: theme.components.codeEditor.string });
+  expect(screen.getByText('3')).toHaveStyle({ color: theme.components.codeEditor.number });
+  expect(screen.getByRole('gridcell', { name: /us-east-1/ })).toHaveTextContent(
+    '{\n "region": "us-east-1",\n "replicas": 3\n}',
+    { normalizeWhitespace: false }
+  );
+  rerender(
+    <TableNG data={createJsonDataFrame(true)} width={800} height={400} tableRefreshEnabled={tableRefreshEnabled} />
+  );
+  expect(screen.getByRole('gridcell', { name: /us-east-1/ })).toHaveTextContent(
+    '{\n "region": "us-east-1",\n "replicas": 3\n}',
+    { normalizeWhitespace: false }
+  );
+  expect(screen.queryByText('"us-east-1"')).not.toBeInTheDocument();
+});
 
 // Field has a raw `name` distinct from its configured `displayName`, and no pre-cached
 // `field.state.displayName` (applyFieldOverrides explicitly nulls it out). This lets tests
@@ -204,6 +310,21 @@ const createNestedDataFrame = (meta?: DataFrame['meta']): DataFrame => {
     })
   );
 };
+
+it('attaches the nested field from its own frame', async () => {
+  const frame = createNestedDataFrame();
+  const onFieldAddToAssistant = jest.fn();
+  render(
+    <TableNG data={frame} width={800} height={600} tableRefreshEnabled onFieldAddToAssistant={onFieldAddToAssistant} />
+  );
+  await userEvent.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+  await userEvent.click(screen.getByRole('button', { name: 'Column options for Nested B' }));
+  await userEvent.click(screen.getByRole('menuitem', { name: 'Add to Assistant' }));
+  expect(onFieldAddToAssistant).toHaveBeenCalledWith(
+    expect.objectContaining({ name: 'NestedData' }),
+    expect.objectContaining({ name: 'Nested B', values: [10, 20] })
+  );
+});
 
 /**
  * A nested table where the apply-to-row background lives on a field *inside the nested frame*
@@ -313,6 +434,65 @@ const createNestedDataFrameWithFooter = (): DataFrame => {
       length: 1,
       fields: [
         { name: 'Column A', type: FieldType.string, values: ['A1'], config: { custom: {} } },
+        {
+          name: '__nestedFrames',
+          type: FieldType.nestedFrames,
+          values: [[processedNestedFrame]],
+          config: { custom: {} },
+        },
+      ],
+    })
+  );
+};
+
+/**
+ * A nested frame whose first field carries a header label long enough to set that column's
+ * content-aware width on its own, with the nested frame's own header visibility
+ * (`meta.custom.noHeader`) under the caller's control. The outer table always keeps its header,
+ * so the nested `noHeader` is the only thing that varies.
+ */
+const LONG_NESTED_HEADER = 'Nested A, with a header label long enough to size this column on its own';
+
+const createNestedDataFrameWithLongNestedHeader = (nestedNoHeader: boolean): DataFrame => {
+  const processedNestedFrame = withFieldOverrides(
+    toDataFrame({
+      name: 'NestedLongHeader',
+      length: 2,
+      meta: { custom: { noHeader: nestedNoHeader } },
+      fields: [
+        {
+          name: LONG_NESTED_HEADER,
+          type: FieldType.string,
+          values: ['N1', 'N2'],
+          config: {},
+          display: displayString,
+          ...stdField,
+        },
+        {
+          name: 'Nested B',
+          type: FieldType.string,
+          values: ['n1', 'n2'],
+          config: {},
+          display: displayString,
+          ...stdField,
+        },
+      ],
+    })
+  );
+
+  return withFieldOverrides(
+    toDataFrame({
+      name: 'TestData',
+      length: 1,
+      fields: [
+        {
+          name: 'Column A',
+          type: FieldType.string,
+          values: ['A1'],
+          config: {},
+          display: displayString,
+          ...stdField,
+        },
         {
           name: '__nestedFrames',
           type: FieldType.nestedFrames,
@@ -435,34 +615,20 @@ describe('TableNG', () => {
 
   describe('initialRowIndex', () => {
     it('should not scroll by default', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createSortingTestDataFrame()} width={100} height={10} />
-      );
+      const { container } = render(<TableNG data={createSortingTestDataFrame()} width={100} height={10} />);
       expect(jestScrollIntoView).not.toHaveBeenCalled();
       expect(container.querySelector('[aria-selected="true"][role="row"]')).not.toBeInTheDocument();
     });
     it('initialRowIndex should scroll', async () => {
       const { container } = render(
-        <TableNG
-          initialRowIndex={4}
-          enableVirtualization={false}
-          data={createSortingTestDataFrame()}
-          width={100}
-          height={10}
-        />
+        <TableNG initialRowIndex={4} data={createSortingTestDataFrame()} width={100} height={10} />
       );
       expect(jestScrollIntoView).toHaveBeenCalledTimes(1);
       expect(container.querySelector('[aria-selected="true"][role="row"]')).toBeVisible();
     });
     it('sorting should not retrigger initialRowIndex scroll', async () => {
       const { container } = render(
-        <TableNG
-          initialRowIndex={4}
-          enableVirtualization={false}
-          data={createSortingTestDataFrame()}
-          width={100}
-          height={10}
-        />
+        <TableNG initialRowIndex={4} data={createSortingTestDataFrame()} width={100} height={10} />
       );
 
       expect(container.querySelector('[aria-selected="true"][role="row"]')).toBeVisible();
@@ -493,7 +659,6 @@ describe('TableNG', () => {
               },
             ]}
             initialRowIndex={5}
-            enableVirtualization={false}
             data={createSortingTestDataFrame(6)}
             width={100}
             height={10}
@@ -520,7 +685,6 @@ describe('TableNG', () => {
               desc,
             },
           ]}
-          enableVirtualization={false}
           data={createBasicDataFrame()}
           width={800}
           height={600}
@@ -539,7 +703,6 @@ describe('TableNG', () => {
               desc: true,
             },
           ]}
-          enableVirtualization={false}
           data={createBasicDataFrame()}
           width={800}
           height={600}
@@ -557,7 +720,6 @@ describe('TableNG', () => {
               desc: false,
             },
           ]}
-          enableVirtualization={false}
           data={createBasicDataFrame()}
           width={800}
           height={600}
@@ -577,7 +739,6 @@ describe('TableNG', () => {
             },
           ]}
           sortByBehavior={'managed'}
-          enableVirtualization={false}
           data={createBasicDataFrame()}
           width={800}
           height={600}
@@ -596,7 +757,6 @@ describe('TableNG', () => {
             },
           ]}
           sortByBehavior={'managed'}
-          enableVirtualization={false}
           data={createBasicDataFrame()}
           width={800}
           height={600}
@@ -610,9 +770,7 @@ describe('TableNG', () => {
 
   describe('Basic TableNG rendering', () => {
     it('renders a simple table with columns and rows', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       // Check for the data grid container
       const dataGridContainer = container.querySelector('[role="grid"]');
@@ -636,9 +794,7 @@ describe('TableNG', () => {
 
   describe('Nested tables', () => {
     it('renders table with nested data structure', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createNestedDataFrame()} width={800} height={600} />);
 
       const expectedContent = ['Column A', 'Column B', 'A1', 'A2'];
       expectedContent.forEach((text) => {
@@ -653,9 +809,7 @@ describe('TableNG', () => {
     });
 
     it('expands nested data when clicking expand button', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createNestedDataFrame()} width={800} height={600} />);
 
       // Verify initial state
       const expectedContent = ['Column A', 'Column B', 'A1', 'A2'];
@@ -695,15 +849,119 @@ describe('TableNG', () => {
       }
     });
 
+    it.each([
+      [true, '12px'],
+      [false, '6px'],
+    ])('sets only the outer final-column padding with table.refresh=%s', async (tableRefreshEnabled, expected) => {
+      const { container } = render(
+        <TableNG data={createNestedDataFrame()} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />
+      );
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const outerGrid = screen.getByRole('treegrid');
+      const innerGrid = screen.getByRole('grid');
+      for (const rowSelector of ['.rdg-header-row', '.rdg-row']) {
+        const outerCell = outerGrid.querySelector(`:scope > ${rowSelector} > .${LAST_COLUMN_CLASS}`)!;
+        const innerCell = innerGrid.querySelector(`:scope > ${rowSelector} > .${LAST_COLUMN_CLASS}`)!;
+        const outerStyle = window.getComputedStyle(outerCell);
+        const innerStyle = window.getComputedStyle(innerCell);
+        expect(outerStyle.paddingInlineEnd || outerStyle.paddingRight).toBe(expected);
+        expect(innerStyle.paddingInlineEnd || innerStyle.paddingRight).toBe('6px');
+      }
+    });
+
+    it.each([
+      ['dark', false, 'medium'],
+      ['dark', true, 'table'],
+      ['light', false, 'table'],
+    ] as const)(
+      'uses the %s theme border for nested tables when transparent=%s and table.refresh is enabled',
+      async (mode, transparent, borderToken) => {
+        const theme = createTheme({ colors: { mode }, components: { table: { border: '#123456' } } });
+        const { container } = render(
+          <ThemeContext.Provider value={theme}>
+            <TableNG
+              data={createNestedDataFrame()}
+              width={800}
+              height={600}
+              tableRefreshEnabled
+              transparent={transparent}
+            />
+          </ThemeContext.Provider>
+        );
+
+        await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+        const nestedGrid = container.querySelector<HTMLElement>('[role="grid"]');
+        const nestedGridClasses = Array.from(nestedGrid?.classList ?? []);
+        const nestedGridRule = Array.from(document.styleSheets)
+          .flatMap((sheet) => Array.from(sheet.cssRules))
+          .find(
+            (rule): rule is CSSStyleRule =>
+              rule instanceof CSSStyleRule &&
+              nestedGridClasses.some((className) => rule.selectorText === `.${className}`) &&
+              rule.style.getPropertyValue('scrollbar-color') === `${theme.colors.scrollbar} transparent`
+          );
+        expect(nestedGridRule).toBeDefined();
+        expect(nestedGridRule?.style.getPropertyValue('border-inline')).toBe(
+          `1px solid ${borderToken === 'medium' ? theme.colors.border.medium : theme.components.table.border}`
+        );
+        expect(nestedGridRule?.style.getPropertyValue('overflow-x')).toBe('auto');
+        expect(nestedGridRule?.style.getPropertyValue('border-start-start-radius')).toBe(theme.shape.radius.default);
+        expect(nestedGridRule?.style.getPropertyValue('border-start-end-radius')).toBe(theme.shape.radius.default);
+        expect(nestedGridRule?.style.getPropertyValue('border-end-start-radius')).toBe(theme.shape.radius.default);
+        expect(nestedGridRule?.style.getPropertyValue('border-end-end-radius')).toBe(theme.shape.radius.default);
+
+        const finalRow = nestedGrid?.querySelector(`.${NESTED_LAST_ROW_CLASS}`);
+        expect(finalRow).toBeInTheDocument();
+        expect(finalRow?.querySelector(`.${FIRST_COLUMN_CLASS}`)).toHaveStyle({
+          borderEndStartRadius: theme.shape.radius.default,
+        });
+        expect(finalRow?.querySelector(`.${LAST_COLUMN_CLASS}`)).toHaveStyle({
+          borderEndEndRadius: theme.shape.radius.default,
+        });
+      }
+    );
+
+    it('does not add the refreshed nested border when table.refresh is disabled', async () => {
+      const { container } = render(<TableNG data={createNestedDataFrame()} width={800} height={600} />);
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      expect(window.getComputedStyle(screen.getByRole('grid')).borderInlineStartStyle).toBe('');
+    });
+
+    it('rounds the nested footer instead of the final data row when table.refresh is enabled', async () => {
+      const theme = createTheme();
+      const { container } = render(
+        <ThemeContext.Provider value={theme}>
+          <TableNG data={createNestedDataFrameWithFooter()} width={800} height={600} tableRefreshEnabled />
+        </ThemeContext.Provider>
+      );
+
+      await user.click(container.querySelector('[aria-label="Expand row"]')!);
+
+      const nestedGrid = container.querySelector<HTMLElement>('[role="grid"]');
+      const footer = nestedGrid?.querySelector('.rdg-bottom-summary-row');
+      const nestedRows = nestedGrid?.querySelectorAll<HTMLElement>('.rdg-row:not(.rdg-summary-row)');
+      const finalNestedRow = nestedRows?.[nestedRows.length - 1];
+      expect(nestedGrid?.querySelector(`.${NESTED_LAST_ROW_CLASS}`)).not.toBeInTheDocument();
+      expect(window.getComputedStyle(finalNestedRow!.querySelector('.rdg-cell')!).borderBlockEnd).toBe('none');
+      expect(footer?.querySelector(`.${FIRST_COLUMN_CLASS}`)).toHaveStyle({
+        borderEndStartRadius: theme.shape.radius.default,
+        borderBlockEnd: `1px solid ${theme.colors.border.medium}`,
+      });
+      expect(footer?.querySelector(`.${LAST_COLUMN_CLASS}`)).toHaveStyle({
+        borderEndEndRadius: theme.shape.radius.default,
+      });
+    });
+
     it('colors each expanded nested row from its own nested apply-to-row field value (10 -> red, 20 -> blue)', async () => {
       // Regression: apply-to-row coloring configured on a field *inside* the nested frame must
       // resolve each nested row's background from that nested field's own value at the nested
       // row index — not from the top-level frame (which here has no apply-to-row field at all).
       window.HTMLElement.prototype.scrollIntoView = jest.fn();
 
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createNestedDataFrameWithRowColor()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createNestedDataFrameWithRowColor()} width={800} height={600} />);
 
       await user.click(container.querySelector('[aria-label="Expand row"]')!);
 
@@ -716,12 +974,7 @@ describe('TableNG', () => {
 
     it('auto-expands all rows when expandAllRows is set in frame meta', () => {
       const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createNestedDataFrame({ custom: { expandAllRows: true } })}
-          width={800}
-          height={600}
-        />
+        <TableNG data={createNestedDataFrame({ custom: { expandAllRows: true } })} width={800} height={600} />
       );
 
       const expandedRows = container.querySelectorAll('[aria-expanded="true"]');
@@ -735,13 +988,20 @@ describe('TableNG', () => {
     it('renders the empty state when there are no rows but a nested transform is present', () => {
       // Regression: with zero rows the nested data is empty, so there is no first nested frame
       // to read nested fields from. The table must render its empty state instead of throwing.
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createEmptyNestedDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} />);
 
       expect(container.querySelector('[role="treegrid"]')).toBeInTheDocument();
       expect(screen.getByText('No rows')).toBeInTheDocument();
       expect(container.querySelector('[aria-label="Expand row"]')).not.toBeInTheDocument();
+    });
+
+    it('gives the columns the full frame content width when there are no rows to expand', () => {
+      // With no nested frame to expand into there's no expander column, so its width shouldn't be
+      // held back from the real columns — rdg's grid-template-columns shows what they actually got.
+      const { container } = render(<TableNG data={createEmptyNestedDataFrame()} width={800} height={600} />);
+
+      const grid = container.querySelector<HTMLElement>('[role="treegrid"]')!;
+      expect(grid).toHaveStyle({ gridTemplateColumns: '400px 400px' });
     });
   });
 
@@ -750,9 +1010,7 @@ describe('TableNG', () => {
       // The outer table has no footer reducers. The nested frame fields do.
       // Before the fix, bottomSummaryRows was driven by the top-level hasFooter, so the nested
       // footer never rendered. After the fix, each table controls its own footer independently.
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createNestedDataFrameWithFooter()} width={800} height={600} />);
 
       // Before expansion: no footer row should be visible at all
       expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
@@ -767,9 +1025,7 @@ describe('TableNG', () => {
     });
 
     it('nested footer displays values computed from the nested fields (sum of Nested B = 30)', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createNestedDataFrameWithFooter()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createNestedDataFrameWithFooter()} width={800} height={600} />);
 
       await user.click(container.querySelector('[aria-label="Expand row"]')!);
 
@@ -779,9 +1035,7 @@ describe('TableNG', () => {
 
     it('does not show a footer row in the nested table when nested fields have no footer reducers', async () => {
       // Uses the plain nested frame (no footer reducers on nested fields)
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createNestedDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createNestedDataFrame()} width={800} height={600} />);
 
       await user.click(container.querySelector('[aria-label="Expand row"]')!);
 
@@ -803,9 +1057,7 @@ describe('TableNG', () => {
         })),
       };
 
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={frameWithTopLevelFooter} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={frameWithTopLevelFooter} width={800} height={600} />);
 
       // Top-level footer is visible before expansion
       expect(container.querySelector('.rdg-summary-row')).toBeInTheDocument();
@@ -858,7 +1110,7 @@ describe('TableNG', () => {
       };
 
       const { rerender, container } = render(
-        <TableNG enableVirtualization={false} data={makeStableFrame(['key-A', 'key-B'])} width={800} height={600} />
+        <TableNG data={makeStableFrame(['key-A', 'key-B'])} width={800} height={600} />
       );
 
       // Expand the first row (key-A is at index 0)
@@ -869,9 +1121,7 @@ describe('TableNG', () => {
       expect(screen.queryByText('nested-B')).not.toBeInTheDocument();
 
       // Re-render with reversed row order: key-B is now at index 0, key-A at index 1
-      rerender(
-        <TableNG enableVirtualization={false} data={makeStableFrame(['key-B', 'key-A'])} width={800} height={600} />
-      );
+      rerender(<TableNG data={makeStableFrame(['key-B', 'key-A'])} width={800} height={600} />);
 
       // key-A is now at index 1 but should still be expanded via its stable key
       expect(screen.getByText('nested-A')).toBeInTheDocument();
@@ -919,9 +1169,7 @@ describe('TableNG', () => {
         );
       };
 
-      const { rerender, container } = render(
-        <TableNG enableVirtualization={false} data={makeIndexedFrame(['A', 'B'])} width={800} height={600} />
-      );
+      const { rerender, container } = render(<TableNG data={makeIndexedFrame(['A', 'B'])} width={800} height={600} />);
 
       // Expand the row at index 0 (A's subframe).
       const expandButton = container.querySelector('[aria-label="Expand row"]');
@@ -932,7 +1180,7 @@ describe('TableNG', () => {
 
       // Reverse the row order. Without a stable key, expansion sticks to index 0,
       // which now holds B's subframe.
-      rerender(<TableNG enableVirtualization={false} data={makeIndexedFrame(['B', 'A'])} width={800} height={600} />);
+      rerender(<TableNG data={makeIndexedFrame(['B', 'A'])} width={800} height={600} />);
 
       expect(screen.getByText('nested-B')).toBeInTheDocument();
       expect(screen.queryByText('nested-A')).not.toBeInTheDocument();
@@ -941,9 +1189,7 @@ describe('TableNG', () => {
 
   describe('Header options', () => {
     it('defaults to showing headers', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       // Check for column headers
       const headers = container.querySelectorAll('[role="columnheader"]');
@@ -951,9 +1197,7 @@ describe('TableNG', () => {
     });
 
     it('hides headers when noHeader is true', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} noHeader={true} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} noHeader={true} />);
 
       // Get the grid container
       const gridContainer = container.querySelector('[role="grid"]');
@@ -971,10 +1215,107 @@ describe('TableNG', () => {
       expect(screen.getByText('1')).toBeInTheDocument();
     });
 
-    it('shows full column name in title attribute for truncated headers', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+    it('leaves the hidden header label out of content-aware auto widths', () => {
+      // A header long enough that it, not the cell content, would set the column width. With the
+      // header hidden there is no label to fit, so the column should size to its content instead.
+      const longHeader = 'Category, with a header label long enough to size this column on its own';
+      const frame = withFieldOverrides(
+        toDataFrame({
+          name: 'AutoWidths',
+          length: 3,
+          fields: [
+            {
+              name: longHeader,
+              type: FieldType.string,
+              values: ['A', 'B', 'C'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+            {
+              name: 'Name',
+              type: FieldType.string,
+              values: ['x', 'y', 'z'],
+              config: {},
+              display: displayString,
+              ...stdField,
+            },
+          ],
+        })
       );
+
+      const renderWidths = (noHeader: boolean) => {
+        const { container, unmount } = render(
+          <TableNG
+            enableVirtualization={false}
+            contentAwareWidthsEnabled={true}
+            data={frame}
+            width={800}
+            height={600}
+            noHeader={noHeader}
+          />
+        );
+        // rdg lays the grid out with an inline grid-template-columns, so it holds every column width.
+        const widths = container
+          .querySelector<HTMLElement>('[role="grid"]')!
+          .style.gridTemplateColumns.split(' ')
+          .map(parseFloat);
+        unmount();
+        return widths;
+      };
+
+      const [withHeader] = renderWidths(false);
+      const [withoutHeader] = renderWidths(true);
+
+      expect(withHeader).toBeGreaterThan(0);
+      expect(withoutHeader).toBeLessThan(withHeader);
+    });
+
+    it("leaves a nested frame's hidden header label out of its content-aware auto widths", async () => {
+      jest.useFakeTimers();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      // A nested frame carries its own header visibility in `meta.custom.noHeader`, so the nested
+      // columns can't inherit the outer table's `hasHeader`. The outer header stays visible in both
+      // renders; only the nested frame's own `noHeader` changes.
+      const renderNestedWidths = async (nestedNoHeader: boolean) => {
+        const { container, unmount } = render(
+          <TableNG
+            enableVirtualization={false}
+            contentAwareWidthsEnabled={true}
+            data={createNestedDataFrameWithLongNestedHeader(nestedNoHeader)}
+            width={800}
+            height={600}
+          />
+        );
+
+        await user.click(container.querySelector('[aria-label="Expand row"]')!);
+        const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+        const initialWidths = grid.style.gridTemplateColumns;
+        act(() => jest.advanceTimersByTime(150));
+        expect(grid.style.gridTemplateColumns).toBe(initialWidths);
+
+        // The outer grid is a treegrid; the nested DataGrid is the only plain grid in the tree.
+        const widths = container
+          .querySelector<HTMLElement>('[role="grid"]')!
+          .style.gridTemplateColumns.split(' ')
+          .map(parseFloat);
+        unmount();
+        return widths;
+      };
+
+      try {
+        const [withNestedHeader] = await renderNestedWidths(false);
+        const [withoutNestedHeader] = await renderNestedWidths(true);
+
+        expect(withNestedHeader).toBeGreaterThan(0);
+        expect(withoutNestedHeader).toBeLessThan(withNestedHeader);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('shows full column name in title attribute for truncated headers', () => {
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       const headers = container.querySelectorAll('[role="columnheader"]');
       const firstHeaderSpan = headers[0].querySelector('button');
@@ -996,7 +1337,7 @@ describe('TableNG', () => {
       const frame = createDisplayNameDataFrame('Pretty Name');
       expect(frame.fields[0].state?.displayName).toBeFalsy();
 
-      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      render(<TableNG data={frame} width={800} height={600} />);
 
       expect(frame.fields[0].state?.displayName).toBe('Pretty Name');
     });
@@ -1009,7 +1350,7 @@ describe('TableNG', () => {
         field.state = { ...field.state, displayName: `Already Cached ${i}` };
       });
 
-      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      render(<TableNG data={frame} width={800} height={600} />);
 
       frame.fields.forEach((field, i) => {
         expect(field.state?.displayName).toBe(`Already Cached ${i}`);
@@ -1022,7 +1363,7 @@ describe('TableNG', () => {
       // and fall back to caching the whole frame, so even the "cached" first field gets recomputed.
       frame.fields[0].state = { ...frame.fields[0].state, displayName: 'Already Cached' };
 
-      render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      render(<TableNG data={frame} width={800} height={600} />);
 
       expect(frame.fields[0].state?.displayName).toBe('Pretty Name 0');
       expect(frame.fields[1].state?.displayName).toBe('Pretty Name 1');
@@ -1031,11 +1372,11 @@ describe('TableNG', () => {
 
     it('recaches display names when a new data frame instance is passed in', () => {
       const frame1 = createDisplayNameDataFrame('Pretty Name');
-      const { rerender } = render(<TableNG enableVirtualization={false} data={frame1} width={800} height={600} />);
+      const { rerender } = render(<TableNG data={frame1} width={800} height={600} />);
       expect(frame1.fields[0].state?.displayName).toBe('Pretty Name');
 
       const frame2 = createDisplayNameDataFrame('Different Name');
-      rerender(<TableNG enableVirtualization={false} data={frame2} width={800} height={600} />);
+      rerender(<TableNG data={frame2} width={800} height={600} />);
 
       expect(frame2.fields[0].state?.displayName).toBe('Different Name');
       // frame1 is untouched by the later render — proves recaching is keyed off the new frame, not a stale one.
@@ -1075,7 +1416,7 @@ describe('TableNG', () => {
         })
       );
 
-      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      const { container } = render(<TableNG data={frame} width={800} height={600} />);
 
       const columnHeaders = container.querySelectorAll('[role="columnheader"]');
       const valueColumnButton = columnHeaders[1].querySelector('button') || columnHeaders[1];
@@ -1093,11 +1434,27 @@ describe('TableNG', () => {
     });
   });
 
+  describe('Visual refresh borders', () => {
+    it.each([
+      [false, ''],
+      [true, 'solid'],
+    ] as const)(
+      'renders the expected frame and a thin selection border when table.refresh=%s',
+      (tableRefreshEnabled, expectedFrameStyle) => {
+        const { container } = render(
+          <TableNG data={createBasicDataFrame()} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />
+        );
+        const grid = container.querySelector<HTMLElement>('[role="grid"]')!;
+
+        expect(window.getComputedStyle(grid.parentElement!.parentElement!).borderTopStyle).toBe(expectedFrameStyle);
+        expect(window.getComputedStyle(grid).getPropertyValue('--rdg-selection-width')).toBe('0.5px');
+      }
+    );
+  });
+
   describe('Footer options', () => {
     it('defaults to not showing footer', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
       expect(container.querySelector('.rdg-summary-row')).not.toBeInTheDocument();
     });
 
@@ -1116,9 +1473,7 @@ describe('TableNG', () => {
           },
         })),
       };
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={frameWithReducers} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={frameWithReducers} width={800} height={600} />);
 
       // Check for footer row
       const footerRow = container.querySelector('.rdg-summary-row');
@@ -1127,13 +1482,43 @@ describe('TableNG', () => {
       // Sum of Column B values (1+2+3=6)
       expect(screen.getByText('6')).toBeInTheDocument();
     });
+
+    it("drops the footer cells' bottom border under table.refresh", () => {
+      // The footer is the grid's last row, so react-data-grid's per-cell bottom border draws a
+      // hairline along the table's own bottom edge. Its top border still divides it from the rows.
+      const baseFrame = createBasicDataFrame();
+      const frameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
+        })),
+      };
+      const { container } = render(<TableNG data={frameWithReducers} width={800} height={600} tableRefreshEnabled />);
+
+      const footerCell = container.querySelector<HTMLElement>('.rdg-bottom-summary-row .rdg-cell')!;
+      expect(window.getComputedStyle(footerCell).getPropertyValue('border-block-end')).toBe('none');
+    });
+
+    it("preserves the footer cells' bottom border when table.refresh is disabled", () => {
+      const baseFrame = createBasicDataFrame();
+      const frameWithReducers = {
+        ...baseFrame,
+        fields: baseFrame.fields.map((field) => ({
+          ...field,
+          config: { ...field.config, custom: { footer: { reducers: ['sum'] } } },
+        })),
+      };
+      const { container } = render(<TableNG data={frameWithReducers} width={800} height={600} />);
+
+      const footerCell = container.querySelector<HTMLElement>('.rdg-bottom-summary-row .rdg-cell')!;
+      expect(window.getComputedStyle(footerCell).getPropertyValue('border-block-end')).not.toBe('none');
+    });
   });
 
   describe('Pagination', () => {
     it('defaults to not showing pagination', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
       expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
     });
 
@@ -1182,6 +1567,37 @@ describe('TableNG', () => {
       // Verify that pagination summary text is shown
       const paginationText = container.textContent;
       expect(paginationText).toContain('of 100 rows');
+    });
+
+    it('only gives the pagination controls a bottom margin when the panel has no padding of its own', () => {
+      const frame = toDataFrame({
+        name: 'LargeData',
+        fields: [
+          {
+            name: 'Index',
+            type: FieldType.number,
+            values: Array.from({ length: 100 }, (_, i) => i),
+            config: { custom: {} },
+            display: (v: number) => ({ text: String(v), numeric: Number(v) }),
+          },
+        ],
+      });
+
+      function pagerMarginBlockEnd(noPanelPadding: boolean) {
+        const { container, unmount } = render(
+          <TableNG data={frame} width={800} height={300} enablePagination noPanelPadding={noPanelPadding} />
+        );
+        const pager = container.querySelector('.table-ng-pagination')!.parentElement!;
+        // logical property: jsdom doesn't fold `margin-block-end` into `marginBottom`
+        const marginBlockEnd = window.getComputedStyle(pager).getPropertyValue('margin-block-end');
+        unmount();
+        return marginBlockEnd;
+      }
+
+      // the panel's own padding already sits below the controls here...
+      expect(pagerMarginBlockEnd(false)).toBe('0');
+      // ...but with it dropped, the controls would otherwise sit on the panel edge
+      expect(pagerMarginBlockEnd(true)).toBe('8px');
     });
 
     it('navigates between pages when pagination controls are clicked', async () => {
@@ -1272,13 +1688,7 @@ describe('TableNG', () => {
 
     it('does not show pagination when there are no rows even if pagination is enabled', () => {
       const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createEmptyDataFrame()}
-          width={800}
-          height={300}
-          enablePagination={true}
-        />
+        <TableNG data={createEmptyDataFrame()} width={800} height={300} enablePagination={true} />
       );
 
       expect(container.querySelector('.table-ng-pagination')).not.toBeInTheDocument();
@@ -1287,7 +1697,7 @@ describe('TableNG', () => {
 
   describe('Geo cells', () => {
     it('renders the geo cell as WKT once the lazy OpenLayers provider loads', async () => {
-      render(<TableNG enableVirtualization={false} data={createGeoDataFrame()} width={800} height={600} />);
+      render(<TableNG data={createGeoDataFrame()} width={800} height={600} />);
 
       // A geo field sends TableNG down the Suspense/LazyOpenLayersProvider branch. Until the
       // provider resolves, GeoCell has no formatGeometry and stringifies the raw geometry (a plain
@@ -1300,36 +1710,20 @@ describe('TableNG', () => {
 
   describe('Empty state', () => {
     it('displays the default no rows message when there are no rows', () => {
-      render(<TableNG enableVirtualization={false} data={createEmptyDataFrame()} width={800} height={600} />);
+      render(<TableNG data={createEmptyDataFrame()} width={800} height={600} />);
 
       expect(screen.getByText('No rows')).toBeInTheDocument();
     });
 
     it('displays the custom noValue message when provided', () => {
-      render(
-        <TableNG
-          enableVirtualization={false}
-          data={createEmptyDataFrame()}
-          width={800}
-          height={600}
-          noValue="Custom empty table message"
-        />
-      );
+      render(<TableNG data={createEmptyDataFrame()} width={800} height={600} noValue="Custom empty table message" />);
 
       expect(screen.getByText('Custom empty table message')).toBeInTheDocument();
       expect(screen.queryByText('No rows')).not.toBeInTheDocument();
     });
 
     it('does not display the noValue message when there is at least one row', () => {
-      render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          noValue="Custom empty table message"
-        />
-      );
+      render(<TableNG data={createBasicDataFrame()} width={800} height={600} noValue="Custom empty table message" />);
 
       expect(screen.queryByText('Custom empty table message')).not.toBeInTheDocument();
       expect(screen.queryByText('No rows')).not.toBeInTheDocument();
@@ -1339,9 +1733,7 @@ describe('TableNG', () => {
 
   describe('Sorting', () => {
     it('allows sorting when clicking on column headers', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       // Ensure there are column headers
       const columnHeader = container.querySelector('[role="columnheader"]');
@@ -1391,9 +1783,7 @@ describe('TableNG', () => {
     });
 
     it('cycles through ascending, descending, and no sort states', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       // Get the first column header
       const columnHeader = container.querySelector('[role="columnheader"]');
@@ -1420,9 +1810,7 @@ describe('TableNG', () => {
     });
 
     it('supports multi-column sorting with cmd or ctrl key', async () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createSortingTestDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createSortingTestDataFrame()} width={800} height={600} />);
 
       // Get all column headers
       const columnHeaders = container.querySelectorAll('[role="columnheader"]');
@@ -1678,9 +2066,7 @@ describe('TableNG', () => {
         theme: createTheme(),
       })[0];
 
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={processedFrame} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={processedFrame} width={800} height={600} />);
 
       // Get column headers
       const columnHeaders = container.querySelectorAll('[role="columnheader"]');
@@ -1714,13 +2100,7 @@ describe('TableNG', () => {
       const onSortByChange = jest.fn();
 
       const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createBasicDataFrame()}
-          width={800}
-          height={600}
-          onSortByChange={onSortByChange}
-        />
+        <TableNG data={createBasicDataFrame()} width={800} height={600} onSortByChange={onSortByChange} />
       );
 
       // Ensure there are column headers
@@ -1779,9 +2159,7 @@ describe('TableNG', () => {
         })
       );
 
-      const { container } = render(
-        <TableNG enableVirtualization={false} contentAwareWidthsEnabled={true} data={frame} width={800} height={600} />
-      );
+      const { container } = render(<TableNG contentAwareWidthsEnabled={true} data={frame} width={800} height={600} />);
 
       // rdg lays the grid out with an inline grid-template-columns, so it holds every column width.
       const grid = container.querySelector<HTMLElement>('[role="grid"]');
@@ -1809,9 +2187,7 @@ describe('TableNG', () => {
       };
 
       // First render with unfiltered data
-      const { container, rerender } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container, rerender } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       // Check initial row count
       const initialRows = container.querySelectorAll('[role="row"]');
@@ -1819,7 +2195,7 @@ describe('TableNG', () => {
       expect(initialRowCount).toBe(3); // Our basic frame has 3 rows
 
       // Rerender with filtered data
-      rerender(<TableNG enableVirtualization={false} data={filteredFrame} width={800} height={600} />);
+      rerender(<TableNG data={filteredFrame} width={800} height={600} />);
 
       // Check filtered row count
       const filteredRows = container.querySelectorAll('[role="row"]');
@@ -1850,9 +2226,7 @@ describe('TableNG', () => {
       };
 
       // First render with unfiltered data
-      const { container, rerender } = render(
-        <TableNG enableVirtualization={false} data={baseFrame} width={800} height={600} />
-      );
+      const { container, rerender } = render(<TableNG data={baseFrame} width={800} height={600} />);
 
       // Check initial row count
       const initialRows = container.querySelectorAll('[role="row"]');
@@ -1860,7 +2234,7 @@ describe('TableNG', () => {
       expect(initialRowCount).toBe(3);
 
       // Rerender with filtered data
-      rerender(<TableNG enableVirtualization={false} data={filteredFrame} width={800} height={600} />);
+      rerender(<TableNG data={filteredFrame} width={800} height={600} />);
 
       // Check filtered row count
       const filteredRows = container.querySelectorAll('[role="row"]');
@@ -1907,9 +2281,7 @@ describe('TableNG', () => {
       };
 
       // Render with unfiltered data and footer options
-      const { container, rerender } = render(
-        <TableNG enableVirtualization={false} data={baseFrameWithReducers} width={800} height={600} />
-      );
+      const { container, rerender } = render(<TableNG data={baseFrameWithReducers} width={800} height={600} />);
 
       // Check initial footer sum (1+2+3=6)
       const initialFooter = container.querySelector('.rdg-summary-row');
@@ -1923,7 +2295,7 @@ describe('TableNG', () => {
       expect(initialFooterTexts[1]).toBe('6');
 
       // Rerender with filtered data
-      rerender(<TableNG enableVirtualization={false} data={filteredFrame} width={800} height={600} />);
+      rerender(<TableNG data={filteredFrame} width={800} height={600} />);
       // Check filtered footer sum (should be 1)
       const filteredFooter = container.querySelector('.rdg-summary-row');
       expect(filteredFooter).toBeInTheDocument();
@@ -1968,7 +2340,7 @@ describe('TableNG', () => {
         })
       );
 
-      render(<TableNG enableVirtualization={false} data={crossFilterFrame} width={800} height={600} />);
+      render(<TableNG data={crossFilterFrame} width={800} height={600} />);
 
       // Two filter buttons: [0]=Category, [1]=Status
       const filterButtons = screen.getAllByTestId(
@@ -2063,7 +2435,7 @@ describe('TableNG', () => {
         })
       );
 
-      render(<TableNG enableVirtualization={false} data={nestedCrossFilterFrame} width={800} height={600} />);
+      render(<TableNG data={nestedCrossFilterFrame} width={800} height={600} />);
 
       // Apply top-level Column A filter to keep only row A1
       const filterButtons = screen.getAllByTestId(
@@ -2091,12 +2463,10 @@ describe('TableNG', () => {
       };
 
       // First render with unfiltered data
-      const { container, rerender } = render(
-        <TableNG enableVirtualization={false} data={baseFrame} width={800} height={600} />
-      );
+      const { container, rerender } = render(<TableNG data={baseFrame} width={800} height={600} />);
 
       // Rerender with filtered data
-      rerender(<TableNG enableVirtualization={false} data={filteredFrame} width={800} height={600} />);
+      rerender(<TableNG data={filteredFrame} width={800} height={600} />);
 
       // Check filtered row count
       const filteredRows = container.querySelectorAll('[role="row"]');
@@ -2112,10 +2482,161 @@ describe('TableNG', () => {
   });
 
   describe('Text wrapping', () => {
-    it('defaults to not wrapping text', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
+    const inspectButton = selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton;
+    function wrappedFrame(values: string[]) {
+      return withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values,
+              config: { custom: { wrapText: true, width: 300 } },
+            },
+          ],
+        })
       );
+    }
+
+    it.each([0, 1, 2])('repairs grid positions when oversized text occurs at row %i', (index) => {
+      jest.spyOn(uwrap, 'varPreLine').mockReturnValue({
+        count: (text) => text.split('\n').length,
+        each: () => {},
+        split: () => [],
+        test: () => false,
+      });
+      const values = ['one\ntwo\nthree', 'four\nfive', 'six\nseven'];
+      values[index] = 'stack trace\n'.repeat(2_500);
+      const data = wrappedFrame(values);
+      const { container } = render(<TableNG data={data} width={800} height={600} structureRev={1} />);
+
+      expect(getComputedStyle(screen.getByRole('grid')).gridTemplateRows).toBe('repeat(1, 34px) repeat(3, 34px)');
+      expect(screen.getAllByTestId(inspectButton)).toHaveLength(3);
+      for (const cell of screen.getAllByRole('gridcell')) {
+        expect(getComputedStyle(cell).whiteSpace).not.toBe('pre-line');
+      }
+      expect(container.querySelector(`.${OVERFLOW_CELL_CLASS}`)).not.toBeInTheDocument();
+      expect(data.fields[0].config.custom).toEqual({ wrapText: true, width: 300 });
+    });
+
+    it('keeps fallback across resize, but reevaluates every new result with the same structure revision', () => {
+      const data = wrappedFrame(['x'.repeat(10_001)]);
+      const { rerender } = render(<TableNG data={data} width={800} height={600} structureRev={1} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+
+      rerender(<TableNG data={data} width={500} height={600} structureRev={1} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).not.toBe('pre-line');
+
+      rerender(<TableNG data={wrappedFrame(['short\nmessage'])} width={500} height={600} structureRev={1} />);
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).toBe('pre-line');
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+
+      rerender(<TableNG data={wrappedFrame(['y'.repeat(10_001)])} width={500} height={600} structureRev={1} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).not.toBe('pre-line');
+    });
+
+    it('opens the complete oversized value in Inspect without hover expansion under a height cap', async () => {
+      const value = 'stack trace\n'.repeat(2_500) + 'END OF STACK';
+      const { container } = render(
+        <TableNG data={wrappedFrame([value])} width={800} height={600} maxRowHeight={100} />
+      );
+      await user.click(screen.getByTestId(inspectButton));
+
+      expect(screen.getByRole('dialog')).toHaveTextContent('END OF STACK');
+      expect(screen.getByRole('dialog').querySelector('pre')?.textContent).toBe(value);
+      expect(container.querySelector(`.${OVERFLOW_CELL_CLASS}`)).not.toBeInTheDocument();
+    });
+
+    it('detects oversized pretty-printed JSON and leaves a separate table unaffected', () => {
+      const json = createJsonDataFrame(true);
+      json.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      render(
+        <>
+          <TableNG data={json} width={800} height={600} />
+          <TableNG data={wrappedFrame(['normal text'])} width={800} height={600} />
+        </>
+      );
+
+      const grids = screen.getAllByRole('grid');
+      expect(within(grids[0]).getByTestId(inspectButton)).toBeInTheDocument();
+      expect(getComputedStyle(within(grids[1]).getByRole('gridcell')).whiteSpace).toBe('pre-line');
+      expect(within(grids[1]).queryByTestId(inspectButton)).not.toBeInTheDocument();
+    });
+
+    it('resets fallback on a new frame that reuses the fields and value buffer', () => {
+      const data = wrappedFrame(['x'.repeat(10_001)]);
+      const { rerender } = render(<TableNG data={data} width={800} height={600} />);
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+
+      data.fields[0].values[0] = 'short text';
+      rerender(<TableNG data={{ ...data }} width={800} height={600} />);
+      expect(getComputedStyle(screen.getByRole('gridcell')).whiteSpace).toBe('pre-line');
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+    });
+
+    it('discovers oversized text beyond the pagination sample when its page opens', async () => {
+      const values = Array.from({ length: 101 }, (_, index) => `message ${index}`);
+      values[100] = 'x'.repeat(10_001);
+      render(<TableNG data={wrappedFrame(values)} width={800} height={600} enablePagination pageSize={100} />);
+      expect(getComputedStyle(screen.getAllByRole('gridcell')[0]).whiteSpace).toBe('pre-line');
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /next page/i }));
+      expect(screen.getByTestId(inspectButton)).toBeInTheDocument();
+      expect(getComputedStyle(screen.getByRole('grid')).gridTemplateRows).toBe('repeat(1, 34px) repeat(1, 34px)');
+    });
+
+    it('repairs expanded nested heights without disabling a parent column with the same name', async () => {
+      const first = wrappedFrame(['one\ntwo\nthree', 'short']);
+      const second = wrappedFrame(['x'.repeat(10_001), 'short']);
+      const data = withFieldOverrides(
+        toDataFrame({
+          fields: [
+            {
+              name: 'message',
+              type: FieldType.string,
+              values: ['parent one', 'parent two'],
+              config: { custom: { wrapText: true } },
+            },
+            { name: 'nested', type: FieldType.nestedFrames, values: [[first], [second]] },
+          ],
+        })
+      );
+      const { rerender } = render(<TableNG data={data} width={800} height={600} structureRev={1} />);
+      await user.click(screen.getAllByRole('button', { name: 'Expand row' })[0]);
+      expect(getComputedStyle(within(screen.getByRole('grid')).getAllByRole('gridcell')[0]).whiteSpace).toBe(
+        'pre-line'
+      );
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Expand row' }));
+      expect(screen.getAllByTestId(inspectButton)).toHaveLength(4);
+      expect(getComputedStyle(screen.getByRole('gridcell', { name: 'parent one' })).whiteSpace).toBe('pre-line');
+      for (const grid of screen.getAllByRole('grid')) {
+        // JSDOM preserves repeat() syntax instead of resolving it to individual track heights.
+        const rowHeights = getComputedStyle(grid)
+          .gridTemplateRows.replace(/repeat\((\d+),\s*([\d.]+px)\)/g, (_, count, height) =>
+            `${height} `.repeat(Number(count))
+          )
+          .trim()
+          .split(/\s+/);
+        expect(rowHeights).toEqual(['34px', '34px', '34px']);
+      }
+      expect(first.fields[0].config.custom?.wrapText).toBe(true);
+
+      data.fields[1].values[1] = [wrappedFrame(['short message', 'short'])];
+      rerender(<TableNG data={{ ...data }} width={800} height={600} structureRev={1} />);
+      expect(screen.getByRole('gridcell', { name: 'short message' })).toBeInTheDocument();
+      expect(getComputedStyle(within(screen.getAllByRole('grid')[0]).getAllByRole('gridcell')[0]).whiteSpace).toBe(
+        'pre-line'
+      );
+      expect(screen.queryByTestId(inspectButton)).not.toBeInTheDocument();
+    });
+
+    it('defaults to not wrapping text', () => {
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       const cellStyles = window.getComputedStyle(cells[0]);
@@ -2133,7 +2654,6 @@ describe('TableNG', () => {
 
       const { container } = render(
         <TableNG
-          enableVirtualization={false}
           data={frame}
           width={800}
           height={600}
@@ -2160,9 +2680,7 @@ describe('TableNG', () => {
       // `pre-line` collapses runs of whitespace, which flattens the indentation displayJsonValue
       // produces. The JSON and auto style classes both declare white-space at the same specificity,
       // so this also guards against the winner coming down to emotion's insertion order.
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createJsonDataFrame(true)} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createJsonDataFrame(true)} width={800} height={600} />);
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       const jsonCellStyles = window.getComputedStyle(cells[1]);
@@ -2185,17 +2703,15 @@ describe('TableNG', () => {
         test: () => false,
       });
 
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createJsonDataFrame(true)} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createJsonDataFrame(true)} width={800} height={600} />);
 
       // metadata's value ({ region: 'us-east-1', replicas: 3 }) pretty-prints to 4 lines:
       // `{\n "region": "us-east-1",\n "replicas": 3\n}`.
-      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
       const grid = container.querySelector('.rdg');
       const gridStyles = window.getComputedStyle(grid!);
-      expect(gridStyles.getPropertyValue('grid-template-rows')).toBe(
-        `repeat(1, ${TABLE.HEADER_HEIGHT}px) ${expectedRowHeight}px`
+      const expectedRowHeight = 4 * TABLE.LINE_HEIGHT + TABLE.CELL_PADDING * 2;
+      expect(gridStyles.getPropertyValue('grid-template-rows')).toMatch(
+        new RegExp(`^repeat\\(1, ${TABLE.HEADER_HEIGHT}px\\)\\s*${expectedRowHeight}px$`)
       );
     });
 
@@ -2204,9 +2720,7 @@ describe('TableNG', () => {
       // moment it's hovered, which un-hovers it, which snaps it back — an infinite flicker. min-width
       // pins the floor to the cell's own size so the cap can only ever grow it, never shrink it.
       const user = userEvent.setup();
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       await user.click(cells[1]);
@@ -2216,14 +2730,37 @@ describe('TableNG', () => {
       expect(jsonCellStyles.getPropertyValue('max-width')).toBe('600px');
     });
 
+    it('only expands a selected cell when hover overflow is disabled', async () => {
+      const user = userEvent.setup();
+      const { container } = render(
+        <TableNG data={createJsonDataFrame(false)} width={800} height={600} hoverOverflow={false} />
+      );
+
+      const cell = container.querySelectorAll('[role="gridcell"]')[1];
+      const expansionRules = Array.from(document.styleSheets)
+        .flatMap((sheet) => Array.from(sheet.cssRules))
+        .filter((rule): rule is CSSStyleRule => 'selectorText' in rule)
+        .filter(
+          (rule) =>
+            Array.from(cell.classList).some(
+              (className) => className !== OVERFLOW_CELL_CLASS && rule.selectorText.includes(`.${className}`)
+            ) && rule.style.getPropertyValue('max-width') === '600px'
+        );
+
+      expect(expansionRules).not.toHaveLength(0);
+      expect(expansionRules.every((rule) => rule.selectorText.includes('aria-selected'))).toBe(true);
+      expect(expansionRules.every((rule) => !rule.selectorText.includes(':hover'))).toBe(true);
+
+      await user.click(cell);
+      expect(window.getComputedStyle(cell).getPropertyValue('max-width')).toBe('600px');
+    });
+
     it('collapses a click-expanded JSON cell once focus leaves the table', async () => {
       // react-data-grid keeps a cell selected after the grid loses focus and exposes no way to clear
       // it, so the expanded state hangs off `:focus-within` rather than the selection alone. Without
       // that, clicking away from the table leaves the cell stuck open over its neighbors.
       const user = userEvent.setup();
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       await user.click(cells[1]);
@@ -2240,9 +2777,7 @@ describe('TableNG', () => {
       // selected, and that outlives the grid's focus, so the reset that hides it has to as well —
       // gating it too puts an outline back on the header the moment the user clicks away.
       const user = userEvent.setup();
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
 
       const header = container.querySelector('[role="columnheader"]')!;
       await user.click(header);
@@ -2256,7 +2791,7 @@ describe('TableNG', () => {
       // Both expand over their neighbors, so whichever is on top wins the overlap. A selection
       // outlives the pointer, so ranking it above hover leaves a stale selected cell clipping the
       // overflow of whatever the user hovers next.
-      render(<TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />);
+      render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
 
       // jsdom's selector engine never matches `:hover`, so the two values have to be compared as
       // declared rather than as computed on an element.
@@ -2283,9 +2818,7 @@ describe('TableNG', () => {
       // to the top — pushing the first several lines into the negative-scroll region above scrollTop
       // 0, where they're unreachable no matter how far up you scroll.
       const user = userEvent.setup();
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       await user.click(cells[1]);
@@ -2301,13 +2834,7 @@ describe('TableNG', () => {
       // grow unbounded on hover too, the exact panel-escaping overflow this option exists to stop.
       const user = userEvent.setup();
       const { container } = render(
-        <TableNG
-          enableVirtualization={false}
-          data={createJsonDataFrame(true)}
-          width={800}
-          height={600}
-          maxRowHeight={100}
-        />
+        <TableNG data={createJsonDataFrame(true)} width={800} height={600} maxRowHeight={100} />
       );
 
       const cells = container.querySelectorAll('[role="gridcell"]');
@@ -2341,9 +2868,7 @@ describe('TableNG', () => {
     it('renders an unwrapped JSON cell with the indentation intact in the DOM', () => {
       // the collapsing happens in CSS, so the text node itself must still carry the newlines and
       // indentation for the hover expansion to have anything to reveal.
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createJsonDataFrame(false)} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createJsonDataFrame(false)} width={800} height={600} />);
 
       const cells = container.querySelectorAll('[role="gridcell"]');
       // read the raw node rather than using toHaveTextContent, which normalizes away the very
@@ -2354,6 +2879,30 @@ describe('TableNG', () => {
   });
 
   describe('Cell inspection', () => {
+    it('opens the refreshed cell menu by keyboard and applies a filter from the grid', async () => {
+      const data = createBasicDataFrame();
+      data.fields[0].config.filterable = true;
+      data.fields[0].config.custom = { ...data.fields[0].config.custom, inspect: true };
+      const onCellFilterAdded = jest.fn();
+      render(
+        <TableNG data={data} width={800} height={600} tableRefreshEnabled onCellFilterAdded={onCellFilterAdded} />
+      );
+
+      const cell = screen.getByRole('gridcell', { name: 'A1' });
+      const trigger = within(cell).getByTestId(
+        selectors.components.Panels.Visualization.TableNG.cellActions.triggerButton
+      );
+      trigger.focus();
+      await user.keyboard('{Enter}');
+      expect(screen.getByRole('menu', { name: 'Cell actions' })).toBeVisible();
+      await user.keyboard('{Escape}');
+      expect(trigger).toHaveFocus();
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('menuitem', { name: 'Filter for value' }));
+      expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Column A', operator: '=', value: 'A1' });
+      expect(trigger).toHaveAttribute('aria-expanded', 'false');
+    });
+
     it('shows inspect icon when hovering over a cell with inspection enabled', async () => {
       const inspectDataFrame = {
         ...createBasicDataFrame(),
@@ -2372,7 +2921,6 @@ describe('TableNG', () => {
       // Render the component
       const { container } = render(
         <TableNG
-          enableVirtualization={false}
           // fieldConfig={inspectDataFrame.fields[0].config}
           data={inspectDataFrame}
           width={800}
@@ -2403,9 +2951,7 @@ describe('TableNG', () => {
 
   describe('Accessibility', () => {
     it('has proper ARIA attributes for accessibility', () => {
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={createBasicDataFrame()} width={800} height={600} />
-      );
+      const { container } = render(<TableNG data={createBasicDataFrame()} width={800} height={600} />);
 
       // Check that the table has a grid role
       const grid = container.querySelector('[role="grid"]');
@@ -2449,7 +2995,7 @@ describe('TableNG', () => {
         };
       };
 
-      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      const { container } = render(<TableNG data={frame} width={800} height={600} />);
 
       // Find cells in the first column
       const cells = container.querySelectorAll('[role="gridcell"]');
@@ -2486,7 +3032,7 @@ describe('TableNG', () => {
         };
       };
 
-      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      const { container } = render(<TableNG data={frame} width={800} height={600} />);
 
       // Find cells in the first column
       const cells = container.querySelectorAll('[role="gridcell"]');
@@ -2527,7 +3073,7 @@ describe('TableNG', () => {
         };
       };
 
-      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      const { container } = render(<TableNG data={frame} width={800} height={600} />);
 
       // Find rows in the table
       const rows = container.querySelectorAll('[role="row"]');
@@ -2572,7 +3118,7 @@ describe('TableNG', () => {
         color: '#0000ff', // second column: blue, should be ignored in favor of the row color
       });
 
-      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      const { container } = render(<TableNG data={frame} width={800} height={600} />);
 
       const rows = container.querySelectorAll('[role="row"]');
       const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
@@ -2616,7 +3162,7 @@ describe('TableNG', () => {
         color: '#0000ff', // visible column's own color, should defer to the hidden column
       });
 
-      const { container } = render(<TableNG enableVirtualization={false} data={frame} width={800} height={600} />);
+      const { container } = render(<TableNG data={frame} width={800} height={600} />);
 
       const rows = container.querySelectorAll('[role="row"]');
       const cells = rows[1].querySelectorAll('[role="gridcell"]'); // Skip header row
@@ -2663,7 +3209,7 @@ describe('TableNG', () => {
       const data = createTimeDataFrame();
       render(
         <PanelContextProvider value={mockPanelContext}>
-          <TableNG enableVirtualization={false} data={data} width={800} height={600} enableSharedCrosshair />
+          <TableNG data={data} width={800} height={600} enableSharedCrosshair />
         </PanelContextProvider>
       );
 
@@ -2682,13 +3228,7 @@ describe('TableNG', () => {
     it('should not publish DataHoverEvent when enableSharedCrosshair is false', async () => {
       render(
         <PanelContextProvider value={mockPanelContext}>
-          <TableNG
-            enableVirtualization={false}
-            data={createTimeDataFrame()}
-            width={800}
-            height={600}
-            enableSharedCrosshair={false}
-          />
+          <TableNG data={createTimeDataFrame()} width={800} height={600} enableSharedCrosshair={false} />
         </PanelContextProvider>
       );
 
@@ -2700,13 +3240,7 @@ describe('TableNG', () => {
     it('should not publish DataHoverEvent when time field is not present', async () => {
       render(
         <PanelContextProvider value={mockPanelContext}>
-          <TableNG
-            enableVirtualization={false}
-            data={createBasicDataFrame()}
-            width={800}
-            height={600}
-            enableSharedCrosshair
-          />
+          <TableNG data={createBasicDataFrame()} width={800} height={600} enableSharedCrosshair />
         </PanelContextProvider>
       );
 
@@ -2718,13 +3252,7 @@ describe('TableNG', () => {
     it('should publish DataHoverClearEvent when leaving a row', async () => {
       render(
         <PanelContextProvider value={mockPanelContext}>
-          <TableNG
-            enableVirtualization={false}
-            data={createTimeDataFrame()}
-            width={800}
-            height={600}
-            enableSharedCrosshair
-          />
+          <TableNG data={createTimeDataFrame()} width={800} height={600} enableSharedCrosshair />
         </PanelContextProvider>
       );
 
@@ -2741,13 +3269,7 @@ describe('TableNG', () => {
     it('should not publish DataHoverClearEvent when enableSharedCrosshair is false', async () => {
       render(
         <PanelContextProvider value={mockPanelContext}>
-          <TableNG
-            enableVirtualization={false}
-            data={createTimeDataFrame()}
-            width={800}
-            height={600}
-            enableSharedCrosshair={false}
-          />
+          <TableNG data={createTimeDataFrame()} width={800} height={600} enableSharedCrosshair={false} />
         </PanelContextProvider>
       );
 
@@ -2778,7 +3300,7 @@ describe('TableNG', () => {
       dataFrame.fields[0].config.links = links;
       dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
 
-      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
+      render(<TableNG data={dataFrame} width={800} height={600} />);
 
       const cell = screen.getByText('A1');
       await userEvent.click(cell);
@@ -2798,7 +3320,7 @@ describe('TableNG', () => {
       dataFrame.fields[0].config.links = links;
       dataFrame.fields[0].getLinks = () => links.map(toLinkModel);
 
-      render(<TableNG enableVirtualization={false} data={dataFrame} width={800} height={600} />);
+      render(<TableNG data={dataFrame} width={800} height={600} />);
 
       const cell = screen.getByText('A1');
 
@@ -2867,7 +3389,7 @@ describe('TableNG', () => {
         })
       );
 
-      const { container } = render(<TableNG enableVirtualization={false} data={outerFrame} width={800} height={600} />);
+      const { container } = render(<TableNG data={outerFrame} width={800} height={600} />);
 
       // Expand the second outer row (index 1), which has State='Up'
       const expandButtons = container.querySelectorAll('[aria-label="Expand row"]');
@@ -2922,7 +3444,7 @@ describe('TableNG', () => {
     });
 
     const renderAtWidth = (data: DataFrame, width: number) =>
-      render(<TableNG enableVirtualization={false} data={data} width={width} height={300} />);
+      render(<TableNG data={data} width={width} height={300} />);
 
     it('applies width changes immediately when no auto-sized column is width-sensitive', () => {
       const data = frameWithFields([
@@ -2932,8 +3454,22 @@ describe('TableNG', () => {
       const { container, rerender } = renderAtWidth(data, 400);
       expect(columnTemplate(container)).toBe('200px 200px');
 
-      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      rerender(<TableNG data={data} width={900} height={300} />);
       expect(columnTemplate(container)).toBe('450px 450px');
+    });
+
+    it('reserves frame width only for refreshed tables that are not flush with their panel', () => {
+      const data = frameWithFields([
+        { name: 'Name', type: FieldType.string, values: ['a', 'b'], config: {} },
+        valueField,
+      ]);
+      const { container, rerender } = render(<TableNG data={data} width={400} height={300} tableRefreshEnabled />);
+
+      expect(columnTemplate(container)).toBe('199px 199px');
+
+      rerender(<TableNG data={data} width={400} height={300} tableRefreshEnabled noPanelPadding />);
+
+      expect(columnTemplate(container)).toBe('200px 200px');
     });
 
     it('applies width changes immediately for an auto-sized pill column', () => {
@@ -2941,7 +3477,7 @@ describe('TableNG', () => {
       const { container, rerender } = renderAtWidth(data, 400);
       expect(columnTemplate(container)).toBe('200px 200px');
 
-      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      rerender(<TableNG data={data} width={900} height={300} />);
       expect(columnTemplate(container)).toBe('450px 450px');
     });
 
@@ -2958,7 +3494,7 @@ describe('TableNG', () => {
       const { container, rerender } = renderAtWidth(data, 400);
       expect(columnTemplate(container)).toBe('200px 200px');
 
-      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      rerender(<TableNG data={data} width={900} height={300} />);
       expect(columnTemplate(container)).toBe('450px 450px');
     });
 
@@ -2980,7 +3516,7 @@ describe('TableNG', () => {
       const { container, rerender } = renderAtWidth(insensitive, 400);
       const gridBefore = gridNode(container);
 
-      rerender(<TableNG enableVirtualization={false} data={sensitive} width={400} height={300} />);
+      rerender(<TableNG data={sensitive} width={400} height={300} />);
       expect(gridNode(container)).toBe(gridBefore);
     });
 
@@ -2989,7 +3525,7 @@ describe('TableNG', () => {
       const { container, rerender } = renderAtWidth(data, 400);
       expect(columnTemplate(container)).toBe('100px 300px');
 
-      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      rerender(<TableNG data={data} width={900} height={300} />);
       expect(columnTemplate(container)).toBe('100px 800px');
     });
 
@@ -3011,7 +3547,7 @@ describe('TableNG', () => {
       const { container, rerender } = renderAtWidth(data, 400);
       const initialTemplate = columnTemplate(container);
 
-      rerender(<TableNG enableVirtualization={false} data={data} width={900} height={300} />);
+      rerender(<TableNG data={data} width={900} height={300} />);
       expect(columnTemplate(container)).not.toBe(initialTemplate);
     });
 
@@ -3034,9 +3570,7 @@ describe('TableNG', () => {
       // Narrow enough that available width can't cover both columns' content width, so there's no
       // leftover to redistribute — each column's measured content width is what actually lands,
       // rather than being masked by growth filling out the panel.
-      const { container } = render(
-        <TableNG enableVirtualization={false} data={data} width={250} height={300} contentAwareWidthsEnabled />
-      );
+      const { container } = render(<TableNG data={data} width={250} height={300} contentAwareWidthsEnabled />);
 
       const [serviceWidth, metadataWidth] = columnTemplate(container)
         .split(' ')

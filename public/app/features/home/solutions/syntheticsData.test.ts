@@ -12,7 +12,7 @@ import {
 import { type BackendSrv, createQueryRunner, getBackendSrv } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { resetProbeCandidates } from './probeUtils';
+import { resetProbeHealth } from './probeUtils';
 import {
   fetchSyntheticsHealth,
   fetchSyntheticsStats,
@@ -41,13 +41,18 @@ const SM_CHECK_PROBE = 'count(count by (job, instance) (last_over_time(sm_check_
 const SM_SUCCESS_RATIO_1H =
   'sum by (job, instance) (rate(probe_all_success_sum[1h])) / sum by (job, instance) (rate(probe_all_success_count[1h]))';
 
+// The regex escape of the dot is itself string-escaped, so the query text carries two backslashes.
+const IGNORE_SCOPE = { job: ['canary', 'shop.example'], instance: ['shop.example:443'], probe: ['Amsterdam'] };
+const IGNORE_SEL = '{job!~"canary|shop\\\\.example",instance!~"shop\\\\.example:443",probe!~"Amsterdam"}';
+const IGNORED_SUCCESS_RATIO_1H = `sum by (job, instance) (rate(probe_all_success_sum${IGNORE_SEL}[1h])) / sum by (job, instance) (rate(probe_all_success_count${IGNORE_SEL}[1h]))`;
+const NO_IGNORES = { job: [], instance: [], probe: [] };
+
 function createPrometheusListItem(ds: { uid: string; name: string; isDefault?: boolean }): DataSourceInstanceListItem {
   return {
     uid: ds.uid,
     name: ds.name,
     type: 'prometheus',
     meta: { id: 'prometheus' } as DataSourceInstanceListItem['meta'],
-    readOnly: false,
     isDefault: ds.isDefault ?? false,
   };
 }
@@ -74,10 +79,10 @@ beforeEach(() => {
   mockCreateQueryRunner.mockReset();
   mockGetDataSourceInstanceList.mockReset();
   healthGet.mockReset();
-  // Health pre-filter: every candidate healthy unless a test overrides by uid.
+  // Health gate: every candidate healthy unless a test overrides by uid.
   healthGet.mockResolvedValue({ status: 'OK' });
   jest.mocked(getBackendSrv).mockReturnValue({ get: healthGet } as unknown as BackendSrv);
-  resetProbeCandidates();
+  resetProbeHealth();
   dataByUid = {};
   probeErrorUids = new Set();
   framesByRefId = {};
@@ -168,23 +173,40 @@ describe('Synthetics datasource resolution', () => {
 });
 
 describe('fetchSyntheticsStats', () => {
-  it('issues the stats batch with the expected PromQL and reads its scalars', async () => {
+  it('reads the check count and success ratio off the batch', async () => {
     framesByRefId = {
       checks: numberFrame('checks', [12]),
       successRatio: numberFrame('successRatio', [0.985]),
     };
 
-    await expect(fetchSyntheticsStats(datasource)).resolves.toEqual({ checks: 12, successRatio: 0.985 });
+    await expect(fetchSyntheticsStats(datasource, null)).resolves.toEqual({ checks: 12, successRatio: 0.985 });
+  });
+
+  it.each([
+    { name: 'no filter', scope: null },
+    { name: 'empty ignore lists', scope: NO_IGNORES },
+  ])('issues the bare stats queries with $name', async ({ scope }) => {
+    await fetchSyntheticsStats(datasource, scope);
 
     const [stats] = statsCalls();
     expect(Object.fromEntries(stats[0].queries.map((q) => [q.refId, q.expr]))).toEqual({
-      checks: SM_CHECK_PROBE,
+      checks: `${SM_CHECK_PROBE} or vector(0)`,
       successRatio: 'sum(rate(probe_all_success_sum[24h])) / sum(rate(probe_all_success_count[24h]))',
     });
   });
 
   it('reads empty instant vectors as nulls', async () => {
-    await expect(fetchSyntheticsStats(datasource)).resolves.toEqual({ checks: null, successRatio: null });
+    await expect(fetchSyntheticsStats(datasource, null)).resolves.toEqual({ checks: null, successRatio: null });
+  });
+
+  it('excludes the ignored jobs, targets and probes from both stats queries', async () => {
+    await fetchSyntheticsStats(datasource, IGNORE_SCOPE);
+
+    const [stats] = statsCalls();
+    expect(Object.fromEntries(stats[0].queries.map((q) => [q.refId, q.expr]))).toEqual({
+      checks: `count(count by (job, instance) (last_over_time(sm_check_info${IGNORE_SEL}[24h]))) or vector(0)`,
+      successRatio: `sum(rate(probe_all_success_sum${IGNORE_SEL}[24h])) / sum(rate(probe_all_success_count${IGNORE_SEL}[24h]))`,
+    });
   });
 });
 
@@ -195,7 +217,7 @@ describe('fetchSyntheticsHealth', () => {
       worst: numberFrame('worst', [0.42], { job: 'checkout-flow', instance: 'https://shop.example' }),
     };
 
-    await expect(fetchSyntheticsHealth(datasource)).resolves.toEqual({
+    await expect(fetchSyntheticsHealth(datasource, null)).resolves.toEqual({
       failing: 2,
       worstCheck: 'checkout-flow',
       worstRatio: 0.42,
@@ -208,8 +230,18 @@ describe('fetchSyntheticsHealth', () => {
     });
   });
 
+  it('excludes the ignored series from the failing count and the worst-check lookup', async () => {
+    await fetchSyntheticsHealth(datasource, IGNORE_SCOPE);
+
+    const [health] = healthCalls();
+    expect(Object.fromEntries(health[0].queries.map((q) => [q.refId, q.expr]))).toEqual({
+      failing: `count((${IGNORED_SUCCESS_RATIO_1H}) < 0.9)`,
+      worst: `bottomk(1, (${IGNORED_SUCCESS_RATIO_1H}) < 0.9)`,
+    });
+  });
+
   it('reads empty health vectors as nulls', async () => {
-    await expect(fetchSyntheticsHealth(datasource)).resolves.toEqual({
+    await expect(fetchSyntheticsHealth(datasource, null)).resolves.toEqual({
       failing: null,
       worstCheck: null,
       worstRatio: null,
@@ -222,7 +254,7 @@ describe('fetchSyntheticsHealth', () => {
       worst: numberFrame('worst', [0.5]),
     };
 
-    await expect(fetchSyntheticsHealth(datasource)).resolves.toEqual({
+    await expect(fetchSyntheticsHealth(datasource, null)).resolves.toEqual({
       failing: 1,
       worstCheck: null,
       worstRatio: 0.5,
@@ -235,7 +267,7 @@ describe('fetchSyntheticsHealth', () => {
       worst: numberFrame('worst', [0.5], { instance: 'https://shop.example' }),
     };
 
-    await expect(fetchSyntheticsHealth(datasource)).resolves.toMatchObject({
+    await expect(fetchSyntheticsHealth(datasource, null)).resolves.toMatchObject({
       worstCheck: 'https://shop.example',
       worstRatio: 0.5,
     });
@@ -254,7 +286,7 @@ describe('fetchSyntheticsSuccessSeries', () => {
       }),
     };
 
-    const series = await fetchSyntheticsSuccessSeries(datasource);
+    const series = await fetchSyntheticsSuccessSeries(datasource, null);
 
     expect(series).not.toBeNull();
     expect(seriesCalls()[0][0].queries[0].expr).toBe(
@@ -262,7 +294,15 @@ describe('fetchSyntheticsSuccessSeries', () => {
     );
   });
 
+  it('excludes the ignored series from the success-rate range query', async () => {
+    await fetchSyntheticsSuccessSeries(datasource, IGNORE_SCOPE);
+
+    expect(seriesCalls()[0][0].queries[0].expr).toBe(
+      `sum(rate(probe_all_success_sum${IGNORE_SEL}[1h])) / sum(rate(probe_all_success_count${IGNORE_SEL}[1h]))`
+    );
+  });
+
   it('returns null when the probe metrics are absent', async () => {
-    await expect(fetchSyntheticsSuccessSeries(datasource)).resolves.toBeNull();
+    await expect(fetchSyntheticsSuccessSeries(datasource, null)).resolves.toBeNull();
   });
 });

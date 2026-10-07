@@ -126,6 +126,10 @@ interface QueryVariableModel extends VariableModel {
   datasource?: { uid?: string };
 }
 
+interface VariableWithDatasource extends VariableModel {
+  datasource?: { uid?: string };
+}
+
 interface DatasourceVariableModel {
   type: string;
   current?: { value?: string; text?: string; selected?: boolean };
@@ -971,6 +975,39 @@ describe('applyV1Inputs', () => {
     expect(dsVariable.current?.value).toBe('ds-uid');
   });
 
+  it('resolves templateized datasources on adhoc and groupby variables', () => {
+    const dashboard = {
+      title: 'old',
+      uid: 'old',
+      schemaVersion: 42,
+      templating: {
+        list: [
+          { type: 'adhoc', name: 'Filters', datasource: { type: 'prometheus', uid: '${DS}' } },
+          { type: 'groupby', name: 'GroupBy', datasource: { type: 'prometheus', uid: '${DS}' } },
+        ],
+      },
+    } as unknown as Dashboard;
+
+    const form: ImportDashboardDTO = {
+      title: 'new-title',
+      uid: 'new-uid',
+      gnetId: '',
+      constants: [],
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      dataSources: [{ uid: 'ds-uid', type: 'prometheus', name: 'My DS' } as DataSourceInstanceSettings],
+      elements: [],
+      folder: { uid: 'folder' },
+    };
+
+    const result = applyV1Inputs(dashboard, sampleV1Inputs, form);
+
+    const adhocVariable = result.templating?.list?.[0] as VariableWithDatasource;
+    expect(adhocVariable.datasource?.uid).toBe('ds-uid');
+
+    const groupByVariable = result.templating?.list?.[1] as VariableWithDatasource;
+    expect(groupByVariable.datasource?.uid).toBe('ds-uid');
+  });
+
   it('handles legacy string datasource format', () => {
     const dashboard = {
       title: 'PostgreSQL Database',
@@ -1544,8 +1581,7 @@ describe('applyV2Inputs', () => {
     const updatedPanel = result.elements.panel as PanelKind;
     const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
     const updatedQuery = queries[0];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const querySpec = updatedQuery?.spec as any;
+    const querySpec = updatedQuery?.spec;
     expect(querySpec?.query?.datasource?.name).toBe('ds-uid');
 
     // export-only labels must be stripped after applying inputs
@@ -1612,10 +1648,8 @@ describe('applyV2Inputs', () => {
     const queries = updatedPanel.spec.data?.kind === 'QueryGroup' ? updatedPanel.spec.data.spec.queries : [];
     const firstQuery = queries[0];
     const secondQuery = queries[1];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const firstSpec = firstQuery?.spec as any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const secondSpec = secondQuery?.spec as any;
+    const firstSpec = firstQuery?.spec;
+    const secondSpec = secondQuery?.spec;
     expect(firstSpec?.query?.datasource?.name).toBe('ds-uid-1');
     expect(secondSpec?.query?.datasource?.name).toBe('ds-uid-2');
   });
@@ -1821,6 +1855,43 @@ describe('applyV2Inputs', () => {
     }
     const sectionConst = result.layout.spec.rows[0].spec.variables?.[0];
     expect(sectionConst?.kind === 'ConstantVariable' && sectionConst.spec.query).toBe('row-staging');
+  });
+
+  it('keeps the query variable refresh setting when binding the datasource picked at import', () => {
+    const dashboard = {
+      title: 'old',
+      elements: {},
+      annotations: [],
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            name: 'duration',
+            refresh: 'onTimeRangeChanged',
+            options: [],
+            current: { text: '', value: '' },
+            query: {
+              group: 'prometheus',
+              labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Original Prometheus' },
+            },
+          },
+        },
+      ],
+      layout: { kind: 'GridLayout', spec: { items: [] } },
+    } as unknown as DashboardV2Spec;
+
+    const form: ImportFormDataV2 = {
+      dashboard,
+      folderUid: 'folder',
+      message: '',
+      'datasource-prometheus-1': { uid: 'ds-uid', type: 'prometheus', name: 'My DS' },
+    };
+
+    const result = applyV2Inputs(dashboard, form);
+    const variable = result.variables?.[0] as QueryVariableKind;
+
+    expect(variable.spec.query?.datasource?.name).toBe('ds-uid');
+    expect(variable.spec.refresh).toBe('onTimeRangeChanged');
   });
 
   it('remaps datasources on section QueryVariables and clears export labels', () => {
@@ -2160,6 +2231,27 @@ describe('replaceDatasourcesInDashboard', () => {
       expect(variable?.spec.options).toEqual([]);
       expect(variable?.spec.current).toEqual({ text: '', value: '' });
       expect(variable?.spec.refresh).toBe('onDashboardLoad');
+    });
+
+    it.each([
+      { refresh: 'onTimeRangeChanged' as const, expected: 'onTimeRangeChanged' },
+      { refresh: 'never' as const, expected: 'never' },
+      { refresh: 'onDashboardLoad' as const, expected: 'onDashboardLoad' },
+    ])('maps refresh $refresh to $expected when remapping the datasource', ({ refresh, expected }) => {
+      const base = createQueryVariable('prometheus', 'old-prom-uid');
+      // @ts-ignore - using minimal test schema
+      const dashboard: DashboardV2Spec = {
+        ...baseDashboard,
+        variables: [{ ...base, spec: { ...base.spec, refresh } }],
+      };
+
+      const result = replaceDatasourcesInDashboard(dashboard, mappings);
+      const variable = getQueryVariable(result);
+
+      // confirms the datasource was actually remapped, which is the branch that rewrote refresh
+      expect(variable?.spec.query?.datasource?.name).toBe('new-prom-uid');
+      expect(variable?.spec.options).toEqual([]);
+      expect(variable?.spec.refresh).toBe(expected);
     });
 
     it('preserves variable reference and keeps options intact', () => {
