@@ -721,7 +721,7 @@ describe('LogLineDetails', () => {
 
         await userEvent.type(input, 'something else');
 
-        expect(screen.getAllByText('No results to display.')).toHaveLength(3);
+        expect(screen.getAllByText('No matching results.')).toHaveLength(3);
       });
     });
     describe('Default label types', () => {
