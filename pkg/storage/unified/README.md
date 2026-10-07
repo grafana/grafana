@@ -7,6 +7,19 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
+## Remote blob streaming
+
+The additive `BlobStoreStreaming` service in `proto/blob.proto` supports remote
+uploads and downloads against the existing `resource_blob` SQL table, including
+SQL-backed KV. The unary `BlobStore` service remains unchanged. Streaming uses
+64 KiB chunks, a 64 MiB total-blob limit, two active transfers per tenant per
+server, and a two-minute deadline. Interrupted uploads roll back. CDK and
+file-backed KV do not support streaming yet; snapshot clients still use unary
+calls until a separately deployed client change switches them over.
+
+This is a proof of concept: appending to one SQL BLOB row holds a transaction
+open and may be expensive for large blobs. Load-test it before enabling clients.
+
 ## Storage Overview
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.

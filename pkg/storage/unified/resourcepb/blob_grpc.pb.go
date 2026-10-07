@@ -19,10 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	BlobStore_PutBlob_FullMethodName       = "/resource.BlobStore/PutBlob"
-	BlobStore_GetBlob_FullMethodName       = "/resource.BlobStore/GetBlob"
-	BlobStore_PutBlobStream_FullMethodName = "/resource.BlobStore/PutBlobStream"
-	BlobStore_GetBlobStream_FullMethodName = "/resource.BlobStore/GetBlobStream"
+	BlobStore_PutBlob_FullMethodName = "/resource.BlobStore/PutBlob"
+	BlobStore_GetBlob_FullMethodName = "/resource.BlobStore/GetBlob"
 )
 
 // BlobStoreClient is the client API for BlobStore service.
@@ -31,15 +29,9 @@ const (
 type BlobStoreClient interface {
 	// Upload a blob that will be saved in a resource
 	PutBlob(ctx context.Context, in *PutBlobRequest, opts ...grpc.CallOption) (*PutBlobResponse, error)
-	// Get blob contents.  When possible, this will return a signed URL
-	// Large payloads should use GetBlobStream instead of a whole-message response.
+	// Get blob contents. When possible, this will return a signed URL.
+	// Large payloads should use BlobStoreStreaming.GetBlobStream instead.
 	GetBlob(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (*GetBlobResponse, error)
-	// Additive remote transport. First upload message has metadata only;
-	// subsequent messages have only value (up to 64 KiB each).
-	PutBlobStream(ctx context.Context, opts ...grpc.CallOption) (BlobStore_PutBlobStreamClient, error)
-	// First response has content_type (or error); subsequent responses have
-	// value only (up to 64 KiB each). Consume the stream to EOF to detect errors.
-	GetBlobStream(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (BlobStore_GetBlobStreamClient, error)
 }
 
 type blobStoreClient struct {
@@ -70,89 +62,15 @@ func (c *blobStoreClient) GetBlob(ctx context.Context, in *GetBlobRequest, opts 
 	return out, nil
 }
 
-func (c *blobStoreClient) PutBlobStream(ctx context.Context, opts ...grpc.CallOption) (BlobStore_PutBlobStreamClient, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &BlobStore_ServiceDesc.Streams[0], BlobStore_PutBlobStream_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &blobStorePutBlobStreamClient{ClientStream: stream}
-	return x, nil
-}
-
-type BlobStore_PutBlobStreamClient interface {
-	Send(*PutBlobRequest) error
-	CloseAndRecv() (*PutBlobResponse, error)
-	grpc.ClientStream
-}
-
-type blobStorePutBlobStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *blobStorePutBlobStreamClient) Send(m *PutBlobRequest) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *blobStorePutBlobStreamClient) CloseAndRecv() (*PutBlobResponse, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(PutBlobResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *blobStoreClient) GetBlobStream(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (BlobStore_GetBlobStreamClient, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &BlobStore_ServiceDesc.Streams[1], BlobStore_GetBlobStream_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &blobStoreGetBlobStreamClient{ClientStream: stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type BlobStore_GetBlobStreamClient interface {
-	Recv() (*GetBlobResponse, error)
-	grpc.ClientStream
-}
-
-type blobStoreGetBlobStreamClient struct {
-	grpc.ClientStream
-}
-
-func (x *blobStoreGetBlobStreamClient) Recv() (*GetBlobResponse, error) {
-	m := new(GetBlobResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
 // BlobStoreServer is the server API for BlobStore service.
 // All implementations should embed UnimplementedBlobStoreServer
 // for forward compatibility
 type BlobStoreServer interface {
 	// Upload a blob that will be saved in a resource
 	PutBlob(context.Context, *PutBlobRequest) (*PutBlobResponse, error)
-	// Get blob contents.  When possible, this will return a signed URL
-	// Large payloads should use GetBlobStream instead of a whole-message response.
+	// Get blob contents. When possible, this will return a signed URL.
+	// Large payloads should use BlobStoreStreaming.GetBlobStream instead.
 	GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error)
-	// Additive remote transport. First upload message has metadata only;
-	// subsequent messages have only value (up to 64 KiB each).
-	PutBlobStream(BlobStore_PutBlobStreamServer) error
-	// First response has content_type (or error); subsequent responses have
-	// value only (up to 64 KiB each). Consume the stream to EOF to detect errors.
-	GetBlobStream(*GetBlobRequest, BlobStore_GetBlobStreamServer) error
 }
 
 // UnimplementedBlobStoreServer should be embedded to have forward compatible implementations.
@@ -164,12 +82,6 @@ func (UnimplementedBlobStoreServer) PutBlob(context.Context, *PutBlobRequest) (*
 }
 func (UnimplementedBlobStoreServer) GetBlob(context.Context, *GetBlobRequest) (*GetBlobResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBlob not implemented")
-}
-func (UnimplementedBlobStoreServer) PutBlobStream(BlobStore_PutBlobStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method PutBlobStream not implemented")
-}
-func (UnimplementedBlobStoreServer) GetBlobStream(*GetBlobRequest, BlobStore_GetBlobStreamServer) error {
-	return status.Errorf(codes.Unimplemented, "method GetBlobStream not implemented")
 }
 
 // UnsafeBlobStoreServer may be embedded to opt out of forward compatibility for this service.
@@ -219,53 +131,6 @@ func _BlobStore_GetBlob_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
-func _BlobStore_PutBlobStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(BlobStoreServer).PutBlobStream(&blobStorePutBlobStreamServer{ServerStream: stream})
-}
-
-type BlobStore_PutBlobStreamServer interface {
-	SendAndClose(*PutBlobResponse) error
-	Recv() (*PutBlobRequest, error)
-	grpc.ServerStream
-}
-
-type blobStorePutBlobStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *blobStorePutBlobStreamServer) SendAndClose(m *PutBlobResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *blobStorePutBlobStreamServer) Recv() (*PutBlobRequest, error) {
-	m := new(PutBlobRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _BlobStore_GetBlobStream_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(GetBlobRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(BlobStoreServer).GetBlobStream(m, &blobStoreGetBlobStreamServer{ServerStream: stream})
-}
-
-type BlobStore_GetBlobStreamServer interface {
-	Send(*GetBlobResponse) error
-	grpc.ServerStream
-}
-
-type blobStoreGetBlobStreamServer struct {
-	grpc.ServerStream
-}
-
-func (x *blobStoreGetBlobStreamServer) Send(m *GetBlobResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
 // BlobStore_ServiceDesc is the grpc.ServiceDesc for BlobStore service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -282,15 +147,202 @@ var BlobStore_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BlobStore_GetBlob_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "blob.proto",
+}
+
+const (
+	BlobStoreStreaming_PutBlobStream_FullMethodName = "/resource.BlobStoreStreaming/PutBlobStream"
+	BlobStoreStreaming_GetBlobStream_FullMethodName = "/resource.BlobStoreStreaming/GetBlobStream"
+)
+
+// BlobStoreStreamingClient is the client API for BlobStoreStreaming service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// Separate service preserves the deployed unary BlobStore client interface.
+type BlobStoreStreamingClient interface {
+	// First upload message has metadata only; subsequent messages have only value.
+	PutBlobStream(ctx context.Context, opts ...grpc.CallOption) (BlobStoreStreaming_PutBlobStreamClient, error)
+	// First response has content_type (or error); subsequent responses have only
+	// value. Consume the stream to EOF to detect errors.
+	GetBlobStream(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (BlobStoreStreaming_GetBlobStreamClient, error)
+}
+
+type blobStoreStreamingClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBlobStoreStreamingClient(cc grpc.ClientConnInterface) BlobStoreStreamingClient {
+	return &blobStoreStreamingClient{cc}
+}
+
+func (c *blobStoreStreamingClient) PutBlobStream(ctx context.Context, opts ...grpc.CallOption) (BlobStoreStreaming_PutBlobStreamClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &BlobStoreStreaming_ServiceDesc.Streams[0], BlobStoreStreaming_PutBlobStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &blobStoreStreamingPutBlobStreamClient{ClientStream: stream}
+	return x, nil
+}
+
+type BlobStoreStreaming_PutBlobStreamClient interface {
+	Send(*PutBlobRequest) error
+	CloseAndRecv() (*PutBlobResponse, error)
+	grpc.ClientStream
+}
+
+type blobStoreStreamingPutBlobStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *blobStoreStreamingPutBlobStreamClient) Send(m *PutBlobRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *blobStoreStreamingPutBlobStreamClient) CloseAndRecv() (*PutBlobResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(PutBlobResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *blobStoreStreamingClient) GetBlobStream(ctx context.Context, in *GetBlobRequest, opts ...grpc.CallOption) (BlobStoreStreaming_GetBlobStreamClient, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &BlobStoreStreaming_ServiceDesc.Streams[1], BlobStoreStreaming_GetBlobStream_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &blobStoreStreamingGetBlobStreamClient{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+type BlobStoreStreaming_GetBlobStreamClient interface {
+	Recv() (*GetBlobResponse, error)
+	grpc.ClientStream
+}
+
+type blobStoreStreamingGetBlobStreamClient struct {
+	grpc.ClientStream
+}
+
+func (x *blobStoreStreamingGetBlobStreamClient) Recv() (*GetBlobResponse, error) {
+	m := new(GetBlobResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+// BlobStoreStreamingServer is the server API for BlobStoreStreaming service.
+// All implementations should embed UnimplementedBlobStoreStreamingServer
+// for forward compatibility
+//
+// Separate service preserves the deployed unary BlobStore client interface.
+type BlobStoreStreamingServer interface {
+	// First upload message has metadata only; subsequent messages have only value.
+	PutBlobStream(BlobStoreStreaming_PutBlobStreamServer) error
+	// First response has content_type (or error); subsequent responses have only
+	// value. Consume the stream to EOF to detect errors.
+	GetBlobStream(*GetBlobRequest, BlobStoreStreaming_GetBlobStreamServer) error
+}
+
+// UnimplementedBlobStoreStreamingServer should be embedded to have forward compatible implementations.
+type UnimplementedBlobStoreStreamingServer struct {
+}
+
+func (UnimplementedBlobStoreStreamingServer) PutBlobStream(BlobStoreStreaming_PutBlobStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method PutBlobStream not implemented")
+}
+func (UnimplementedBlobStoreStreamingServer) GetBlobStream(*GetBlobRequest, BlobStoreStreaming_GetBlobStreamServer) error {
+	return status.Errorf(codes.Unimplemented, "method GetBlobStream not implemented")
+}
+
+// UnsafeBlobStoreStreamingServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BlobStoreStreamingServer will
+// result in compilation errors.
+type UnsafeBlobStoreStreamingServer interface {
+	mustEmbedUnimplementedBlobStoreStreamingServer()
+}
+
+func RegisterBlobStoreStreamingServer(s grpc.ServiceRegistrar, srv BlobStoreStreamingServer) {
+	s.RegisterService(&BlobStoreStreaming_ServiceDesc, srv)
+}
+
+func _BlobStoreStreaming_PutBlobStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(BlobStoreStreamingServer).PutBlobStream(&blobStoreStreamingPutBlobStreamServer{ServerStream: stream})
+}
+
+type BlobStoreStreaming_PutBlobStreamServer interface {
+	SendAndClose(*PutBlobResponse) error
+	Recv() (*PutBlobRequest, error)
+	grpc.ServerStream
+}
+
+type blobStoreStreamingPutBlobStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *blobStoreStreamingPutBlobStreamServer) SendAndClose(m *PutBlobResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *blobStoreStreamingPutBlobStreamServer) Recv() (*PutBlobRequest, error) {
+	m := new(PutBlobRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _BlobStoreStreaming_GetBlobStream_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(GetBlobRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(BlobStoreStreamingServer).GetBlobStream(m, &blobStoreStreamingGetBlobStreamServer{ServerStream: stream})
+}
+
+type BlobStoreStreaming_GetBlobStreamServer interface {
+	Send(*GetBlobResponse) error
+	grpc.ServerStream
+}
+
+type blobStoreStreamingGetBlobStreamServer struct {
+	grpc.ServerStream
+}
+
+func (x *blobStoreStreamingGetBlobStreamServer) Send(m *GetBlobResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+// BlobStoreStreaming_ServiceDesc is the grpc.ServiceDesc for BlobStoreStreaming service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BlobStoreStreaming_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "resource.BlobStoreStreaming",
+	HandlerType: (*BlobStoreStreamingServer)(nil),
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "PutBlobStream",
-			Handler:       _BlobStore_PutBlobStream_Handler,
+			Handler:       _BlobStoreStreaming_PutBlobStream_Handler,
 			ClientStreams: true,
 		},
 		{
 			StreamName:    "GetBlobStream",
-			Handler:       _BlobStore_GetBlobStream_Handler,
+			Handler:       _BlobStoreStreaming_GetBlobStream_Handler,
 			ServerStreams: true,
 		},
 	},

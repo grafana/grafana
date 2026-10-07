@@ -92,18 +92,20 @@ service BlobStore {
   // Upload a blob that will be saved in a resource
   rpc PutBlob(PutBlobRequest) returns (PutBlobResponse);
 
-  // Get blob contents.  When possible, this will return a signed URL
-  // Large payloads should use GetBlobStream instead of a whole-message response.
+  // Get blob contents. When possible, this will return a signed URL.
+  // Large payloads should use BlobStoreStreaming.GetBlobStream instead.
   rpc GetBlob(GetBlobRequest) returns (GetBlobResponse);
-
-  // Additive remote transport. First upload message has metadata only;
-  // subsequent messages have only value (up to 64 KiB each).
-  rpc PutBlobStream(stream PutBlobRequest) returns (PutBlobResponse);
-
-  // First response has content_type (or error); subsequent responses have
-  // value only (up to 64 KiB each). Consume the stream to EOF to detect errors.
-  rpc GetBlobStream(GetBlobRequest) returns (stream GetBlobResponse);
 
   // NOTE: there is no direct access to delete blobs
   // >> cleanup will be managed via garbage collection or direct access to the underlying storage
+}
+
+// Separate service preserves the deployed unary BlobStore client interface.
+service BlobStoreStreaming {
+  // First upload message has metadata only; subsequent messages have only value.
+  rpc PutBlobStream(stream PutBlobRequest) returns (PutBlobResponse);
+
+  // First response has content_type (or error); subsequent responses have only
+  // value. Consume the stream to EOF to detect errors.
+  rpc GetBlobStream(GetBlobRequest) returns (stream GetBlobResponse);
 }

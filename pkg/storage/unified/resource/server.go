@@ -106,6 +106,7 @@ type ResourceServer interface {
 	resourcepb.ResourceStatsServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
+	resourcepb.BlobStoreStreamingServer
 	resourcepb.QuotasServer
 	// Deprecated: clients should use grpc.health.v1.Health with modules.StorageServer service name instead
 	resourcepb.DiagnosticsServer //nolint:staticcheck

@@ -51,7 +51,7 @@ func (s *server) acquireBlobTransfer(tenant string) (func(), error) {
 	}, nil
 }
 
-func (s *server) PutBlobStream(stream resourcepb.BlobStore_PutBlobStreamServer) error {
+func (s *server) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
 	first, err := stream.Recv()
 	if err != nil {
 		return err
@@ -85,7 +85,7 @@ func (s *server) PutBlobStream(stream resourcepb.BlobStore_PutBlobStreamServer) 
 	return stream.SendAndClose(rsp)
 }
 
-func (s *server) GetBlobStream(req *resourcepb.GetBlobRequest, stream resourcepb.BlobStore_GetBlobStreamServer) error {
+func (s *server) GetBlobStream(req *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
 	info, failure := s.resolveBlobGet(stream.Context(), req)
 	if failure != nil {
 		return stream.Send(&resourcepb.GetBlobResponse{Error: failure})

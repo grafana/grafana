@@ -4,10 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"net/http"
-
-	"google.golang.org/grpc"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -71,7 +68,7 @@ func loadDashboardContent(ctx context.Context, blobs resourcepb.BlobStoreClient,
 		Resource:       snapshotBlobKey(snap),
 		Uid:            ref.Uid,
 		MustProxyBytes: true,
-	}, grpc.MaxCallRecvMsgSize(math.MaxInt32))
+	})
 	if err != nil {
 		return nil, err
 	}
