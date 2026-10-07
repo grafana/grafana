@@ -200,6 +200,8 @@ export function useQueryProposalTransaction({
     [updateQuery]
   );
 
+  const readPreviewData = useCallback(() => previewRef.current?.data, []);
+
   return {
     accept,
     editorQueries: proposal
@@ -209,6 +211,7 @@ export function useQueryProposalTransaction({
     onChange,
     preview,
     previewData,
+    readPreviewData,
     previewPhase,
     revert,
     run,

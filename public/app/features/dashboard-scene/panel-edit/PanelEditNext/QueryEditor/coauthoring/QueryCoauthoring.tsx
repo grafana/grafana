@@ -288,6 +288,7 @@ export function QueryCoauthoring({ portalTarget, ...sessionOptions }: Props) {
           selectedIndex={state.proposal.selectedIndex}
           onSelect={state.selectOption}
           isPreviewRunning={state.isPreviewRunning}
+          previewOutcome={state.previewOutcome}
           onFeedback={state.setFeedback}
           onClose={session.dismiss}
           onContinue={state.continueInAssistant}

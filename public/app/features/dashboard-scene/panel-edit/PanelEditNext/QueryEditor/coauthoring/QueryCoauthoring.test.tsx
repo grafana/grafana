@@ -254,6 +254,8 @@ async function setup(
               ? { from: data.timeRange.from.valueOf(), to: data.timeRange.to.valueOf() }
               : undefined,
             previewPhase: transaction.previewPhase,
+            previewData: transaction.previewData,
+            readPreviewData: transaction.readPreviewData,
             preview: transaction.preview,
             accept: transaction.accept,
             revert: transaction.revert,
@@ -588,6 +590,81 @@ describe('QueryCoauthoring', () => {
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
     expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
   });
+
+  it.each([
+    {
+      kind: 'error',
+      text: 'Vector matching requires unique labels',
+      severity: 'error',
+      errorMessage: 'Vector matching requires unique labels',
+    },
+    { kind: 'error', text: 'The query preview failed.', severity: 'error', errorMessage: '' },
+    { kind: 'no-data', text: 'Try another option or widen the time range.', severity: 'warning' },
+    {
+      kind: 'no-signal',
+      text: 'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.',
+      severity: undefined,
+    },
+    { kind: 'ok', text: 'Results were truncated', severity: undefined },
+  ])(
+    'shows the $kind preview callout above why and reclassifies cached selections without logging returned text',
+    async ({ kind, text, severity, errorMessage }) => {
+      const { user, previewRequests, panelResult } = await setup(0, true, undefined, {
+        transaction: true,
+        realPreview: true,
+      });
+      await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      const request = mockGenerate.mock.calls[0][0];
+      await act(async () => {
+        await request.tools[0].invoke({
+          options: [
+            { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts selected requests.'] },
+            { proposedQuery: 'irate(http_requests_total[5m])', why: ['Uses the latest two samples.'] },
+          ],
+        });
+        request.onComplete('');
+      });
+      const result = panelResult(kind === 'no-signal' ? 0 : 11);
+      if (kind === 'error') {
+        result.state = LoadingState.Error;
+        result.errors = [{ refId: 'A', message: errorMessage }];
+      } else if (kind === 'no-data') {
+        result.series = [];
+      } else if (kind === 'ok') {
+        result.series[0].meta = { notices: [{ severity: 'warning', text }] };
+      }
+      act(() => previewRequests[0].setState({ data: result }));
+      const slot = await screen.findByRole('region', { name: 'Preview result' });
+      expect(within(slot).getByText(text)).toBeVisible();
+      if (severity) {
+        expect(within(slot).getByTestId(selectors.components.Alert.alertV2(severity))).toBeInTheDocument();
+      } else {
+        expect(within(slot).getByRole('status')).toHaveTextContent(text);
+      }
+      expect(
+        slot.compareDocumentPosition(screen.getByText('Counts selected requests.')) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+      await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+      expect(screen.getByText('Uses the latest two samples.')).toBeVisible();
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+      act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      await user.click(screen.getByRole('tab', { name: 'Original' }));
+      expect(screen.getByText('Original query')).toBeVisible();
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+      await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+      expect(within(screen.getByRole('region', { name: 'Preview result' })).getByText(text)).toBeVisible();
+      expect(previewRequests).toHaveLength(2);
+      const outcomes = mockReportInteraction.mock.calls.filter(
+        ([name]) => name === 'grafana_query_coauthoring_preview_outcome_shown'
+      );
+      expect(outcomes.map(([, properties]) => properties)).toContainEqual({ kind });
+      for (const [, properties] of outcomes) {
+        expect(Object.keys(properties)).toEqual(['kind']);
+      }
+      expect(JSON.stringify(outcomes)).not.toContain(text);
+    }
+  );
 
   it('ranks surviving options, selects Original with the keyboard, and accepts the exact selected query', async () => {
     const { user, stagePreview, onPreview, onAccept, baseline, dismissInvocation } = await setup();
