@@ -454,7 +454,7 @@ interface ProposalProps {
   unconfirmedValues?: string[];
   optionCount: number;
   selectedIndex: number;
-  onSelect: (index: number) => void;
+  onSelect: (index: number, source?: 'keyboard') => void;
   isPreviewRunning: boolean;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
   onClose: () => void;
@@ -508,7 +508,7 @@ export function QueryCoauthoringProposal({
               return;
           }
           event.preventDefault();
-          onSelect(next);
+          onSelect(next, 'keyboard');
           event.currentTarget.querySelector<HTMLButtonElement>(`[data-option-index="${next}"]`)?.focus();
         }}
       >

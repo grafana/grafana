@@ -47,6 +47,7 @@ import {
   trackQueryCoauthoringProposalAccepted,
   trackQueryCoauthoringOptionSelected,
 } from './queryCoauthoringTracking';
+import { type QueryPreviewSelection } from './queryPreview';
 import { useQueryCoauthoringInvocation } from './useQueryCoauthoringInvocation';
 
 interface QueryClarification {
@@ -104,7 +105,7 @@ export type QueryCoauthoringSessionState =
       kind: 'proposal';
       isPreviewRunning: boolean;
       proposal: RankedProposal;
-      selectOption(index: number): void;
+      selectOption(index: number, source?: 'keyboard'): void;
       accept(): void;
       continueInAssistant(): void;
       setFeedback(feedback: QueryCoauthoringFeedbackState): void;
@@ -116,7 +117,7 @@ export interface QueryCoauthoringSessionOptions {
   datasourceType: string;
   onBaseline: (query: DataQuery) => boolean;
   onAccept: (query: DataQuery) => boolean;
-  onPreview: (query: DataQuery) => boolean;
+  onPreview: (query: DataQuery, options?: QueryPreviewSelection) => boolean;
   onRevertPreview: () => void;
   isPreviewRunning?: boolean;
   timeRange?: { from: number; to: number };
@@ -434,7 +435,7 @@ export function useQueryCoauthoringSession({
     dismiss();
   }, [datasourceType, dismiss, onAccept, send]);
 
-  const selectOption = (index: number) => {
+  const selectOption = (index: number, source?: 'keyboard') => {
     const current = sessionRef.current;
     if (current.kind !== 'proposal') {
       return;
@@ -444,7 +445,8 @@ export function useQueryCoauthoringSession({
       return;
     }
     const query = index < 0 ? readBaseline() : proposal.options[index].prepared.query;
-    if (!query || !onPreview(query)) {
+    const previewed = query && (source === 'keyboard' ? onPreview(query, { debounce: true }) : onPreview(query));
+    if (!previewed) {
       send({
         type: 'preview-failed',
         error: {
