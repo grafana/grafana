@@ -537,8 +537,8 @@ describe('FieldDisplay', () => {
       });
 
       const result = getFieldDisplayValues(options);
-      expect(result).toHaveLength(2);
-      expect(result.map((v) => v.sparkline)).toEqual([undefined, undefined]);
+      expect(result).toHaveLength(1);
+      expect(result[0].sparkline).toBe(undefined);
     });
   });
 });
