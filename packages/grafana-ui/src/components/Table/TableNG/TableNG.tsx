@@ -71,6 +71,7 @@ import {
   useScrollbarWidth,
   useSortedRows,
 } from './hooks';
+import { shouldReserveScrollbarGutter } from './scrollbar';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -285,13 +286,7 @@ export function TableNG(props: TableNGProps) {
   });
   const [selectedRows, setSelectedRows] = useState((): ReadonlySet<string> => new Set());
 
-  // vt scrollbar accounting for column auto-sizing
   const gridRef = useRef<DataGridHandle>(null);
-  const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  const availableWidth = useMemo(
-    () => (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - scrollbarWidth,
-    [width, hasNestedFrames, scrollbarWidth]
-  );
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const applyToRowBgFn = useMemo(
     () => getApplyToRowBgFn(data.fields, getCellColorInlineStyles) ?? undefined,
@@ -321,6 +316,59 @@ export function TableNG(props: TableNGProps) {
 
   prevConfiguredWidthCount.current = configuredWidthCount;
 
+  const defaultRowHeight = useMemo(
+    () => getDefaultRowHeight(theme, visibleFields, cellHeight),
+    [theme, visibleFields, cellHeight]
+  );
+  const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
+
+  const [fullWidths] = useColWidths(visibleFields, width, frozenColumns, widthConfigResetKey);
+  const fullHeaderHeight = useHeaderHeight({
+    columnWidths: fullWidths,
+    fields: visibleFields,
+    enabled: hasHeader,
+    sortColumns,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx,
+  });
+  const fullRowHeight = useRowHeight({
+    columnWidths: fullWidths,
+    fields: visibleFields,
+    defaultHeight: defaultRowHeight,
+    typographyCtx,
+    maxHeight: maxRowHeight,
+    hasNestedFrames: false,
+    defaultNestedHeight: defaultRowHeight,
+    visibleNestedRowCounts: [],
+    nestedColWidths: [],
+    nestedFields: [],
+    nestedRows: [],
+  });
+  const fullPagination = usePaginatedRows(sortedRows, {
+    enabled: enablePagination && !hasNestedFrames,
+    width,
+    height,
+    footerHeight,
+    headerHeight: hasHeader ? fullHeaderHeight : 0,
+    rowHeight: fullRowHeight,
+    hasNestedFrames: false,
+  });
+  const reserveGutter =
+    !hasNestedFrames &&
+    shouldReserveScrollbarGutter(
+      fullPagination.rows,
+      fullRowHeight,
+      fullWidths,
+      width,
+      height -
+        (hasHeader ? fullHeaderHeight : 0) -
+        footerHeight -
+        (enablePagination && fullPagination.numRows > 0 ? 32 : 0)
+    );
+  const scrollbarWidth = useScrollbarWidth(gridRef, height, reserveGutter);
+  const availableWidth =
+    (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - (hasNestedFrames || reserveGutter ? scrollbarWidth : 0);
+
   const [widths, numFrozenColsFullyInView] = useColWidths(
     visibleFields,
     availableWidth,
@@ -336,8 +384,6 @@ export function TableNG(props: TableNGProps) {
     showTypeIcons: showTypeIcons ?? false,
     typographyCtx,
   });
-  // the minimum max row height we should honor is a single line of text.
-  const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
   const visibleNestedRowCounts = useMemo(
     () => nestedRows.map((row, idx) => (expandedRows.has(getStableRowKeyForRowIdx(idx)) ? row.final.length : null)),
     [nestedRows, expandedRows, getStableRowKeyForRowIdx]
@@ -359,10 +405,6 @@ export function TableNG(props: TableNGProps) {
     typographyCtx,
   });
 
-  const defaultRowHeight = useMemo(
-    () => getDefaultRowHeight(theme, visibleFields, cellHeight),
-    [theme, visibleFields, cellHeight]
-  );
   const defaultNestedRowHeight = useMemo(
     () => getDefaultRowHeight(theme, nestedVisibleFields, cellHeight),
     [theme, nestedVisibleFields, cellHeight]
@@ -383,6 +425,15 @@ export function TableNG(props: TableNGProps) {
     nestedFooterHeight,
   });
 
+  const nestedPagination = usePaginatedRows(sortedRows, {
+    enabled: enablePagination && hasNestedFrames,
+    width: availableWidth,
+    height,
+    footerHeight,
+    headerHeight: hasHeader ? headerHeight : 0,
+    rowHeight,
+    hasNestedFrames,
+  });
   const {
     rows: paginatedRows,
     page,
@@ -392,15 +443,7 @@ export function TableNG(props: TableNGProps) {
     pageRangeStart,
     pageRangeEnd,
     smallPagination,
-  } = usePaginatedRows(sortedRows, {
-    enabled: enablePagination,
-    width: availableWidth,
-    height,
-    footerHeight,
-    headerHeight: hasHeader ? headerHeight : 0,
-    rowHeight,
-    hasNestedFrames,
-  });
+  } = hasNestedFrames ? nestedPagination : fullPagination;
 
   const showPagination = enablePagination && numRows > 0;
   const styles = useStyles2(getGridStyles, showPagination, transparent);
@@ -1055,6 +1098,7 @@ export function TableNG(props: TableNGProps) {
       <DataGrid<TableRow, TableSummaryRow, string>
         {...commonDataGridProps}
         role={hasNestedFrames ? 'treegrid' : 'grid'}
+        style={IS_SAFARI_26 || hasNestedFrames ? undefined : { scrollbarGutter: reserveGutter ? 'stable' : 'auto' }}
         ref={gridRef}
         className={styles.grid}
         columns={structureRevColumns}
