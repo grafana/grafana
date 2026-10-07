@@ -1476,17 +1476,23 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 				pending = append(pending, i)
 			}
 		}
-		hits := k.readExactVersions(ctx, requests, pending, includeDeleted, func(i int, response *BackendReadResponse) {
+		hits, err := k.readExactVersions(ctx, requests, pending, includeDeleted, func(i int, response *BackendReadResponse) {
 			entries[i].response = response
 		})
+		if err != nil {
+			yield(&BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}})
+			return
+		}
 
 		keys := make([]kv.DataKey, 0, len(entries))
+		resolves := 0
 		for i := range entries {
 			entry := &entries[i]
 			if entry.response != nil {
 				continue
 			}
 			req := entry.request
+			resolves++
 			meta, err := k.dataStore.GetResourceKeyAtRevision(ctx, GetRequestKey{
 				Group:     req.Key.Group,
 				Resource:  req.Key.Resource,
@@ -1515,7 +1521,7 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 		}
 		span.SetAttributes(
 			attribute.Int("exact_hits", hits),
-			attribute.Int("resolve_fallbacks", len(keys)),
+			attribute.Int("resolve_fallbacks", resolves),
 		)
 
 		next, stopPull := iter.Pull2(k.dataStore.BatchGet(ctx, keys))
@@ -1587,12 +1593,15 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 // readExactVersions reads, in one call, the pending requests whose expected
 // folder names the stored key at their exact resource version, and hands each
 // hit to found. A key is the name, version, action and folder, and the action is
-// not known up front, so every action the read may return is tried. A miss is not
-// an answer: the caller resolves it as usual. It returns the number of hits.
+// not known up front, so every action the read may return is tried. A missing key
+// is not an answer, only a wrong hint: the caller resolves it as usual.
+//
+// It returns the number of hits, or the storage or body read failure that
+// stopped the read.
 //
 // Search knows the exact version and folder of every row it returns, so a
 // search-backed read normally skips the per-object key lookup entirely.
-func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []BatchReadRequest, pending []int, includeDeleted bool, found func(int, *BackendReadResponse)) int {
+func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []BatchReadRequest, pending []int, includeDeleted bool, found func(int, *BackendReadResponse)) (int, error) {
 	actions := []kv.DataAction{DataActionCreated, DataActionUpdated}
 	if includeDeleted {
 		actions = append(actions, DataActionDeleted)
@@ -1621,16 +1630,14 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 		}
 	}
 	if len(candidates) == 0 {
-		return 0
+		return 0, nil
 	}
 
 	hits := 0
 	seen := make(map[int]bool, len(pending))
 	for obj, err := range k.dataStore.BatchGet(ctx, candidates) {
 		if err != nil {
-			// The resolve that follows reads the misses again and reports a lasting failure.
-			k.log.Debug("Exact batch read failed, resolving keys instead", "error", err)
-			break
+			return hits, err
 		}
 		i, ok := byKey[obj.Key.String()]
 		if !ok || seen[i] {
@@ -1640,8 +1647,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 		seen[i] = true
 		value, err := readAndClose(obj.Value)
 		if err != nil {
-			// Left to the resolved read, which reports a body it cannot read.
-			continue
+			return hits, err
 		}
 		hits++
 		found(i, &BackendReadResponse{
@@ -1651,7 +1657,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 			Folder:          obj.Key.Folder,
 		})
 	}
-	return hits
+	return hits, nil
 }
 
 func (*kvStorageBackend) SupportsDeletedBatchReads() bool {

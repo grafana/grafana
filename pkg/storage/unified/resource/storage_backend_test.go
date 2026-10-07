@@ -1655,24 +1655,49 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 }
 
 func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) {
+	// The exact read fails on a right folder hint, before any row is answered, so
+	// its error belongs to the batch and names no object. A wrong hint sends every
+	// request to the resolved read, which fails at the object it was reading.
 	tests := []struct {
 		name       string
 		firstError int
 		message    string
+		wrongHint  bool
+		batchError bool
 		wrap       func(KV) KV
 	}{
 		{
-			name:       "batch get",
+			name:       "exact batch get",
 			firstError: 0,
 			message:    "storage is down",
+			batchError: true,
 			wrap: func(store KV) KV {
 				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
 			},
 		},
 		{
-			name:       "body read",
+			name:       "exact body read",
+			firstError: 0,
+			message:    "value is corrupt",
+			batchError: true,
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failure-1", err: errors.New("value is corrupt")}
+			},
+		},
+		{
+			name:       "resolved batch get",
+			firstError: 0,
+			message:    "storage is down",
+			wrongHint:  true,
+			wrap: func(store KV) KV {
+				return &failDataBatchGetsKV{KV: store, err: errors.New("storage is down"), failFrom: 2}
+			},
+		},
+		{
+			name:       "resolved body read",
 			firstError: 1,
 			message:    "value is corrupt",
+			wrongHint:  true,
 			wrap: func(store KV) KV {
 				return &unreadableValueKV{KV: store, nameMatch: "failure-1", err: errors.New("value is corrupt")}
 			},
@@ -1684,24 +1709,32 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 				opts.KvStore = tc.wrap(opts.KvStore)
 			})
-			requests := make([]*resourcepb.ReadRequest, 0, 3)
+			requests := make([]BatchReadRequest, 0, 3)
 			folders := make([]string, 0, 3)
 			for i := range 3 {
 				name := fmt.Sprintf("failure-%d", i)
 				folder := fmt.Sprintf("folder-%d", i)
 				rv := seedResource(t, backend, t.Context(), name, folder)
-				requests = append(requests, &resourcepb.ReadRequest{Key: appsKey(name), ResourceVersion: rv})
+				hint := folder
+				if tc.wrongHint {
+					hint = "elsewhere"
+				}
+				requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{Key: appsKey(name), ResourceVersion: rv}, Folder: hint})
 				folders = append(folders, folder)
 			}
 
-			responses, err := backend.BatchReadResource(t.Context(), asBatchReads(requests), false)
+			responses, err := backend.BatchReadResource(t.Context(), requests, false)
 			require.NoError(t, err)
 			got := collectBatchReadResponses(t, responses)
 			require.Len(t, got, tc.firstError+1)
 			for i, response := range got {
-				require.Equal(t, requests[i].Key, response.Key)
-				require.Equal(t, requests[i].ResourceVersion, response.ResourceVersion)
-				require.Equal(t, folders[i], response.Folder)
+				if i < tc.firstError || !tc.batchError {
+					require.Equal(t, requests[i].Key, response.Key)
+					require.Equal(t, requests[i].ResourceVersion, response.ResourceVersion)
+					require.Equal(t, folders[i], response.Folder)
+				} else {
+					require.Equal(t, &BackendReadResponse{Error: response.Error}, response, "a batch error names no object")
+				}
 				if i < tc.firstError {
 					require.Nil(t, response.Error)
 					continue

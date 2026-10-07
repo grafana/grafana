@@ -1384,9 +1384,9 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 	require.Empty(t, resp.Items)
 	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
 	require.Equal(t, "transient storage failure", resp.Error.Message)
-	// The first chunk is read by exact key; the second chunk's exact read fails, and
-	// so does the resolved read that retries it.
-	require.Equal(t, 3, kvWrapper.dataCalls)
+	// The first chunk is read by exact key; the second chunk's exact read fails and
+	// ends the list without another read.
+	require.Equal(t, 2, kvWrapper.dataCalls)
 }
 
 // folderSearchResponse is a field-values search response whose rows carry a folder.
