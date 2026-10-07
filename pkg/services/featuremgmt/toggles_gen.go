@@ -287,10 +287,6 @@ const (
 	// In-development feature that will allow injection of labels into loki queries.
 	FlagLogQLScope = "logQLScope"
 
-	// FlagSqlExpressions
-	// Enables SQL Expressions, which can execute SQL queries against data source results.
-	FlagSqlExpressions = "sqlExpressions"
-
 	// FlagKubernetesAggregator
 	// Enable grafana's embedded kube-aggregator
 	FlagKubernetesAggregator = "kubernetesAggregator"
