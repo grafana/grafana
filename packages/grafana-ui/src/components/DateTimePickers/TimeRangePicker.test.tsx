@@ -136,6 +136,7 @@ describe('TimePicker', () => {
     expect(screen.getByTestId(selectors.toField)).toHaveValue(dateTimeFormat(value.raw.to, { timeZone: 'utc' }));
   });
 
+  // TODO: Delete this test when TimeRangeProvider is removed.
   it('shows a sync button if two are rendered inside a TimeRangeProvider', async () => {
     const onChange1 = jest.fn();
     const onChange2 = jest.fn();

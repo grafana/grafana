@@ -104,6 +104,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     initialIsSynced,
   } = props;
 
+  // TODO: Inline manual-prop passthrough and drop initialIsSynced when TimeRangeProvider is removed.
   const { onChangeWithSync, isSynced, timeSyncButton } = useTimeSync({
     initialIsSynced,
     value,

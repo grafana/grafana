@@ -1,3 +1,4 @@
+// TODO: Delete this file when TimeRangeProvider is removed; only the dormant context branch uses it.
 import { t } from '@grafana/i18n';
 
 import { ToolbarButton } from '../ToolbarButton/ToolbarButton';
