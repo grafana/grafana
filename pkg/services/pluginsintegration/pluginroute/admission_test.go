@@ -1,4 +1,4 @@
-package appplugin
+package pluginroute
 
 import (
 	"context"
@@ -71,7 +71,7 @@ func TestBuilderAdmissionDispatch(t *testing.T) {
 	}, nil)
 	require.NoError(t, err)
 
-	b := &AppPluginAPIBuilder{kinds: map[schema.GroupVersionResource]*kindstore.Store{
+	b := &manifestBuilder{kinds: map[schema.GroupVersionResource]*kindstore.Store{
 		testAdmissionGVR: store,
 	}}
 	ctx := context.Background()

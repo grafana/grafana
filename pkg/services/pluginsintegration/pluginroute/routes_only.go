@@ -1,4 +1,4 @@
-package appplugin
+package pluginroute
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"

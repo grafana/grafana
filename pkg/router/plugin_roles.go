@@ -1,6 +1,7 @@
-package appplugin
+package router
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -51,6 +52,9 @@ func declareManifestRoles(service ac.Service, group, pluginName string, manifest
 	registrations := manifestRoleRegistrations(group, pluginName, manifest)
 	if len(registrations) == 0 {
 		return nil
+	}
+	if service == nil {
+		return fmt.Errorf("access control service is required to declare manifest roles")
 	}
 	return service.DeclareFixedRoles(registrations...)
 }
