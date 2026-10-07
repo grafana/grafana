@@ -2206,6 +2206,34 @@ describe('UnifiedDashboardScenePageStateManager', () => {
       expect(v2Manager.state.dashboard?.state.uid).toBe('linked-dash');
     });
 
+    it('clears the previous dashboard when a later load fails', async () => {
+      setTestFlags({ dashboardNewLayouts: true });
+      setupV1FailureV2Success();
+
+      const manager = new UnifiedDashboardScenePageStateManager({});
+      await manager.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(manager.state.dashboard?.state.uid).toBe('fake-dash');
+      expect(manager['v2Manager'].state.dashboard?.state.uid).toBe('fake-dash');
+
+      const notFound = {
+        status: 404,
+        statusText: 'Not Found',
+        data: { message: 'Dashboard not found' },
+        config: { method: 'GET', url: 'api/dashboards/uid/missing-dash' },
+        isHandled: true,
+      };
+      manager['v2Manager']['dashboardLoader'] = {
+        loadDashboard: jest.fn().mockRejectedValue(notFound),
+        loadSnapshot: jest.fn(),
+      } as unknown as DashboardLoaderSrvV2;
+
+      await manager.loadDashboard({ uid: 'missing-dash', route: DashboardRoutes.Normal });
+
+      expect(manager.state.dashboard).toBeUndefined();
+      expect(manager.state.isLoading).toBe(false);
+    });
+
     it('should not sync state back to v1 manager after loadDashboard', async () => {
       setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', editable: true }, meta: {} });
 
