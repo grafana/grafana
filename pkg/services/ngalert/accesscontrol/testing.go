@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-var _ accesscontrol.AccessControl = &recordingAccessControlFake{}
+var _ accesscontrol.AccessControl = (*recordingAccessControlFake)(nil)
 
 type recordingAccessControlFake struct {
 	accesscontrol.AccessControl

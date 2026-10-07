@@ -356,6 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "選取自訂命名空間",
+      "aria-label-select-dimension-name": "",
+      "aria-label-select-metric-name": "",
       "aria-label-select-namespace": "選擇命名空間",
       "aria-label-select-query-type": "選取查詢類型",
       "aria-label-select-region": "選取地區",
@@ -363,6 +365,8 @@
       "aria-label-select-resource-group": "選取資源群組",
       "aria-label-select-subscription": "選取訂閱",
       "label-custom-namespace": "自訂命名空間",
+      "label-dimension-name": "",
+      "label-metric-name": "",
       "label-namespace": "命名空間",
       "label-query-type": "查詢類型",
       "label-region": "地區",

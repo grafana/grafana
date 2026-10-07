@@ -4,7 +4,7 @@ import { useDebounce } from 'react-use';
 
 import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
 
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
@@ -175,6 +175,9 @@ export const MetricsList = memo(function MetricsList({
   const pagingKey = `${dsKey(dsRef)}|${rangeKey(timeRange)}|${searchTerm}`;
   const { visibleCount, showMore } = useVisibleBatch(pagingKey);
   const visible = metrics.slice(0, visibleCount);
+  // While rows are showing, a line of text above them would push the list down and back on every
+  // keystroke of a server-side search, so the input carries the signal instead.
+  const refreshing = loading && metrics.length > 0;
   const setSentinel = useLoadMoreSentinel(showMore, visibleCount);
 
   // The search box sits outside the scroll region, so a new list would otherwise open at the old
@@ -216,8 +219,9 @@ export const MetricsList = memo(function MetricsList({
         onChange={setSearchTerm}
         escapeRegex={false}
         placeholder={t('explore.metrics-list.search-placeholder', 'Search metrics')}
+        suffix={refreshing ? <Spinner inline /> : undefined}
       />
-      {loading && (
+      {loading && !refreshing && (
         <Text color="secondary" variant="bodySmall">
           {t('explore.metrics-list.loading', 'Loading metrics…')}
         </Text>

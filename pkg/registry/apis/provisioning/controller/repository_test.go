@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -406,7 +407,10 @@ func TestRepositoryController_handleDelete_ReturnsErrorWhenConflictPersists(t *t
 	statusPatcher.
 		On("Patch", mock.Anything, mock.AnythingOfType("*v0alpha1.Repository"),
 			mock.AnythingOfType("map[string]interface {}"),
-			mock.AnythingOfType("map[string]interface {}")).
+			mock.MatchedBy(func(op map[string]interface{}) bool {
+				deletion, ok := op["value"].(*provisioning.DeletionStatus)
+				return ok && deletion.Cause == provisioning.DeletionCauseSystem
+			})).
 		Once().
 		Return(nil)
 
@@ -473,6 +477,147 @@ func TestRepositoryController_handleDelete_ObservesPendingAge(t *testing.T) {
 	assert.Equal(t, 1.0, counterValue(t, reg, repositoryDeletionsMetric))
 }
 
+func TestRepositoryController_handleDelete_ObservesPendingCauseBeforeFinalizers(t *testing.T) {
+	tests := []struct {
+		name   string
+		status provisioning.RepositoryStatus
+		cause  string
+	}{
+		{name: "no recorded failure", cause: ""},
+		{
+			name: "user cause takes precedence over legacy error",
+			status: provisioning.RepositoryStatus{
+				DeleteError: "connection refused",
+				Deletion:    &provisioning.DeletionStatus{Cause: provisioning.DeletionCauseUser, Message: "provider rejected deletion"},
+			},
+			cause: reconcileCauseUser,
+		},
+		{
+			name: "message does not override system cause",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{Cause: provisioning.DeletionCauseSystem, Message: "permission denied"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name: "structured failure without cause",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{State: provisioning.DeletionStateBlocked, Message: "permission denied"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name: "unknown cause stays bounded",
+			status: provisioning.RepositoryStatus{
+				Deletion: &provisioning.DeletionStatus{Cause: "unexpected-cause"},
+			},
+			cause: reconcileCauseSystem,
+		},
+		{
+			name:   "legacy failure without structured status",
+			status: provisioning.RepositoryStatus{DeleteError: "permission denied"},
+			cause:  reconcileCauseSystem,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			finalizer := NewMockFinalizerProcessor(t)
+			finalizer.On("process", mock.Anything, mock.Anything).Once().Run(func(mock.Arguments) {
+				assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
+			}).Return(nil)
+			repoClient := &mockRepoInterface{
+				patchFunc: func(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*provisioning.Repository, error) {
+					return &provisioning.Repository{}, nil
+				},
+			}
+			c := &RepositoryController{
+				finalizer:       finalizer,
+				tracer:          tracing.InitializeTracerForTest(),
+				deletionMetrics: registerRepositoryDeletionMetrics(reg),
+				client: &mockProvisioningV0alpha1Interface{
+					repositoriesFunc: func(string) client.RepositoryInterface { return repoClient },
+				},
+			}
+			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					DeletionTimestamp: &deletion,
+					Finalizers:        []string{repository.CleanFinalizer},
+				},
+				Status: tc.status,
+			}
+			require.NoError(t, c.handleDelete(context.Background(), repo))
+			family := gatherMetrics(t, reg)[repositoryDeletionPendingMetric]
+			require.NotNil(t, family)
+			require.Len(t, family.GetMetric(), 1)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", tc.cause))
+		})
+	}
+}
+
+func TestRepositoryController_handleDelete_RecordsCauseForNextReconcile(t *testing.T) {
+	tests := []struct {
+		name  string
+		err   error
+		cause provisioning.DeletionCause
+	}{
+		{name: "repository unauthorized", err: repository.ErrUnauthorized, cause: provisioning.DeletionCauseUser},
+		{name: "repository permission denied", err: repository.ErrPermissionDenied, cause: provisioning.DeletionCauseUser},
+		{name: "connection authentication", err: connection.ErrAuthentication, cause: provisioning.DeletionCauseUser},
+		{name: "connection not found", err: connection.ErrNotFound, cause: provisioning.DeletionCauseUser},
+		{name: "connection repository access", err: connection.ErrRepositoryAccess, cause: provisioning.DeletionCauseUser},
+		{name: "infrastructure failure", err: errors.New("connection reset by peer"), cause: provisioning.DeletionCauseSystem},
+		{name: "misleading message", err: errors.New("permission denied"), cause: provisioning.DeletionCauseSystem},
+		{
+			name: "non-empty folder",
+			err: &nonEmptyFolderError{
+				folder: &provisioning.ResourceListItem{Name: "folder-1", Title: "Folder one"},
+			},
+			cause: provisioning.DeletionCauseUser,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			finalizer := NewMockFinalizerProcessor(t)
+			finalizer.On("process", mock.Anything, mock.Anything).Twice().Return(&finalizerError{
+				finalizer: repository.CleanFinalizer,
+				err:       fmt.Errorf("delete webhook: %w", tc.err),
+			})
+			patcher := &capturePatcher{}
+			reg := prometheus.NewPedanticRegistry()
+			c := &RepositoryController{
+				finalizer:       finalizer,
+				statusPatcher:   patcher,
+				tracer:          tracing.InitializeTracerForTest(),
+				deletionMetrics: registerRepositoryDeletionMetrics(reg),
+			}
+			deletion := metav1.NewTime(time.Now().Add(-30 * time.Minute))
+			repo := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					DeletionTimestamp: &deletion,
+					Finalizers:        []string{repository.CleanFinalizer},
+				},
+			}
+
+			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			require.Len(t, patcher.ops, 2)
+			recorded := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
+			assert.Equal(t, tc.cause, recorded.Cause)
+			assert.Equal(t, repository.CleanFinalizer, recorded.Finalizer)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", ""))
+
+			data, err := json.Marshal(recorded)
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(data, &repo.Status.Deletion))
+			repo.Status.DeleteError = recorded.Message
+			require.ErrorIs(t, c.handleDelete(context.Background(), repo), tc.err)
+			assert.Equal(t, uint64(1), histogramCountWithLabel(t, reg, repositoryDeletionPendingMetric, "cause", string(tc.cause)))
+			assert.Len(t, patcher.ops, 2, "unchanged status must not trigger another patch")
+		})
+	}
+}
+
 // TestRepositoryController_handleDelete_EmptyFinalizersDoesNotCount verifies that
 // re-observing a terminating repository whose finalizers are already gone (an
 // informer re-enqueue before GC, or a resync while it lingers) does not
@@ -512,11 +657,36 @@ func TestRepositoryController_updateDeleteStatus_SkipsWhenUnchanged(t *testing.T
 			Deletion: &provisioning.DeletionStatus{
 				State:   provisioning.DeletionStateBlocked,
 				Message: "boom",
+				Cause:   provisioning.DeletionCauseSystem,
 			},
 		},
 	}
 	err := c.updateDeleteStatus(context.Background(), repo, errors.New("boom"))
 	require.NoError(t, err)
+}
+
+func TestRepositoryController_updateDeleteStatus_BackfillsCause(t *testing.T) {
+	for _, previousCause := range []provisioning.DeletionCause{"", provisioning.DeletionCauseSystem} {
+		t.Run("previous cause="+string(previousCause), func(t *testing.T) {
+			patcher := &capturePatcher{}
+			c := &RepositoryController{statusPatcher: patcher}
+			err := fmt.Errorf("remove finalizers: %w", repository.ErrPermissionDenied)
+			repo := &provisioning.Repository{
+				Status: provisioning.RepositoryStatus{
+					DeleteError: err.Error(),
+					Deletion: &provisioning.DeletionStatus{
+						State:   provisioning.DeletionStateBlocked,
+						Message: err.Error(),
+						Cause:   previousCause,
+					},
+				},
+			}
+			require.NoError(t, c.updateDeleteStatus(context.Background(), repo, err))
+			require.Len(t, patcher.ops, 2)
+			deletion := patcher.ops[1]["value"].(*provisioning.DeletionStatus)
+			assert.Equal(t, provisioning.DeletionCauseUser, deletion.Cause)
+		})
+	}
 }
 
 // TestRepositoryController_updateDeleteStatus_BackfillsMissingStructuredStatus
@@ -619,7 +789,8 @@ func TestRepositoryController_updateDeleteStatus_UsesNonEmptyFolderError(t *test
 			}),
 			mock.MatchedBy(func(op map[string]interface{}) bool {
 				ds, ok := op["value"].(*provisioning.DeletionStatus)
-				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer && ds.Message == folderErr.Error()
+				return ok && ds.Finalizer == repository.RemoveOrphanResourcesFinalizer &&
+					ds.Message == folderErr.Error() && ds.Cause == provisioning.DeletionCauseUser
 			}),
 		).
 		Once().
@@ -1361,7 +1532,7 @@ func TestRepositoryController_process_RepoIDBackfillGuardsAgainstStaleURL(t *tes
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().
-				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Maybe()
 
 			tester := repository.NewTester()
@@ -1493,7 +1664,7 @@ func TestRepositoryController_process_QuotaUpdateTriggersReconciliation(t *testi
 
 			healthMetrics := NewMockHealthMetricsRecorder(t)
 			healthMetrics.EXPECT().
-				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+				RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 				Maybe()
 
 			tester := repository.NewTester()
@@ -2208,7 +2379,7 @@ func TestRepositoryController_process_QuotaTimestampOnlyDoesNotForceStatusPatch(
 
 			patcher := &capturePatcher{}
 			healthMetrics := NewMockHealthMetricsRecorder(t)
-			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+			healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 			healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
 			repoFactory := repository.NewMockFactory(t)
 
@@ -2257,7 +2428,7 @@ func TestRepositoryController_process_ConditionsNotOverwritten(t *testing.T) {
 	mockLister := &MockRepositoryLister{namespaceLister: mockNamespaceLister}
 
 	mockMetrics := NewMockHealthMetricsRecorder(t)
-	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Return()
+	mockMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
 
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(nil, tester, mockMetrics)
@@ -2458,7 +2629,7 @@ func TestRepositoryController_process_TokenRefreshedWhileOverQuota(t *testing.T)
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Maybe()
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
-	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 
 	patcher := &capturePatcher{}
 	tester := repository.NewTester()
@@ -2667,7 +2838,7 @@ func TestRepositoryController_process_RegeneratesTokenWhenSecretNotFound(t *test
 	repoFactory.On("Build", mock.Anything, mock.Anything).Return(mockRepo, nil).Once()
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
-	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 
 	patcher := &capturePatcher{}
 	healthChecker := NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics)
@@ -3079,7 +3250,7 @@ func TestRepositoryController_process_HookFailureCooldownSuppressesRetry(t *test
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3168,7 +3339,7 @@ func TestRepositoryController_process_RotationSuppressedDuringCooldown(t *testin
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3249,7 +3420,7 @@ func TestRepositoryController_process_RotationErrorRecordsMetric(t *testing.T) {
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3399,7 +3570,7 @@ func newRecoveryController(t *testing.T, repo *provisioning.Repository, stub *ho
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()
@@ -3647,6 +3818,189 @@ func TestRepositoryController_process_UnauthorizedTestResultSuppressesHooks(t *t
 	assert.False(t, obsPatched, "observedGeneration must not advance while hooks are suppressed as unreachable")
 }
 
+// blockedOverQuotaRepo returns a repository fully converged on "blocked, over quota":
+// every field a reconcile would compute already matches what is stored, so a
+// steady-state pass has nothing to write.
+func blockedOverQuotaRepo(namespace, name string, checked time.Time, syncEnabled bool) *provisioning.Repository {
+	quotaMsg := "namespace quota exceeded: 2/1 repositories"
+	condition := func(t, reason string) metav1.Condition {
+		return metav1.Condition{
+			Type:               t,
+			Status:             metav1.ConditionFalse,
+			Reason:             reason,
+			Message:            quotaMsg,
+			ObservedGeneration: 1,
+			LastTransitionTime: metav1.Now(),
+		}
+	}
+
+	return &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: name, Namespace: namespace, Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitHubRepositoryType,
+			Sync: provisioning.SyncOptions{Enabled: syncEnabled, IntervalSeconds: 60},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Quota:              provisioning.QuotaStatus{MaxRepositories: 1},
+			Health: provisioning.HealthStatus{
+				Healthy: false,
+				Error:   provisioning.HealthFailureHealth,
+				Checked: checked.UnixMilli(),
+				Message: []string{quotaMsg},
+			},
+			Sync: provisioning.SyncStatus{
+				State: provisioning.JobStateError,
+				// A blocked repository never completes a sync, so this stays put while
+				// the interval elapses: the sync goes permanently overdue.
+				Finished: time.Now().Add(-time.Hour).UnixMilli(),
+				Message:  []string{"Repository is unhealthy"},
+			},
+			Conditions: []metav1.Condition{
+				condition(provisioning.ConditionTypeNamespaceQuota, provisioning.ReasonQuotaExceeded),
+				condition(provisioning.ConditionTypeReady, provisioning.ReasonQuotaExceeded),
+			},
+		},
+	}
+}
+
+// newQuotaController wires a controller whose namespace holds the given repositories
+// against a limit of maxRepositories.
+func newQuotaController(t *testing.T, maxRepositories int64, repos ...*provisioning.Repository) (*RepositoryController, *capturePatcher, *hookRepoStub, *repository.MockFactory) {
+	t.Helper()
+
+	indexer := cache.NewIndexer(
+		cache.MetaNamespaceKeyFunc,
+		cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc},
+	)
+	for _, r := range repos {
+		require.NoError(t, indexer.Add(r))
+	}
+
+	patcher := &capturePatcher{}
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
+
+	stub := &hookRepoStub{cfg: repos[0], hookErrSet: true, hookErr: nil}
+	repoFactory := repository.NewMockFactory(t)
+	repoFactory.On("Build", mock.Anything, mock.Anything).Return(stub, nil).Maybe()
+
+	repoGetter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+	rc := &RepositoryController{
+		repos:         repoGetter,
+		quotaGetter:   quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{MaxRepositories: maxRepositories}),
+		quotaChecker:  NewRepositoryQuotaChecker(repoGetter),
+		healthChecker: NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics),
+		statusPatcher: patcher,
+		repoFactory:   repoFactory,
+		jobs: &mockJobsQueueStore{
+			MockQueue: jobs.NewMockQueue(t),
+			MockStore: jobs.NewMockStore(t),
+		},
+		logger: logging.DefaultLogger.With("logger", loggerName),
+		tracer: tracing.InitializeTracerForTest(),
+	}
+
+	return rc, patcher, stub, repoFactory
+}
+
+// Blocked and still over quota is a steady state, not a change, so it must not trigger
+// a reconcile. It used to, matching on every requeue -- and because a reconcile patches
+// its own status and the informer turns that into another requeue, the controller fed
+// itself at ~0.9/s, calling the git provider each pass until the customer's API quota
+// was exhausted. A health check that is genuinely due must still run.
+func TestRepositoryController_process_BlockedOverQuotaSteadyStateIsNotATrigger(t *testing.T) {
+	namespace, repoName := "default", "test-repo"
+
+	tests := []struct {
+		name              string
+		checked           time.Time
+		syncEnabled       bool
+		expectedTestCalls int32
+		// No status write means no informer update, so no self-requeue.
+		expectNoStatusWrite bool
+	}{
+		{
+			name:                "steady state does not reconcile",
+			checked:             time.Now(),
+			expectedTestCalls:   0,
+			expectNoStatusWrite: true,
+		},
+		{
+			// shouldResync stays true for good once blocked, so without the quota
+			// condition on that case the resync trigger fires on every requeue.
+			name:                "steady state with an overdue sync does not reconcile",
+			checked:             time.Now(),
+			syncEnabled:         true,
+			expectedTestCalls:   0,
+			expectNoStatusWrite: true,
+		},
+		{
+			// Guards against a fix that just stops health-checking blocked repositories.
+			name:              "stale health is still checked",
+			checked:           time.Now().Add(-2 * time.Minute),
+			expectedTestCalls: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := blockedOverQuotaRepo(namespace, repoName, tt.checked, tt.syncEnabled)
+			// A second repository keeps the namespace over its limit of 1.
+			other := blockedOverQuotaRepo(namespace, "other-repo", tt.checked, tt.syncEnabled)
+			rc, patcher, stub, repoFactory := newQuotaController(t, 1, repo, other)
+
+			_, err := rc.process(namespace + "/" + repoName)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expectedTestCalls, stub.testCalls.Load(),
+				"a steady-state requeue must not spend the customer's provider API rate limit")
+
+			if tt.expectNoStatusWrite {
+				assert.Empty(t, patcher.ops, "a status write requeues the repository, restarting the loop")
+				// Stop at the switch rather than build the repository, which decrypts the token.
+				repoFactory.AssertNotCalled(t, "Build", mock.Anything, mock.Anything)
+			}
+
+			// The user must still be told why their repository is not syncing.
+			assert.True(t, isQuotaExceeded(repo.Status.Conditions))
+		})
+	}
+}
+
+// Dropping the steady-state trigger must not strand a blocked repository. Quota is
+// resolved before the trigger switch on every reconcile, and the informer re-lists
+// every repository on the resync interval, so the next resync after the namespace
+// comes back within quota re-checks health and clears the block.
+func TestRepositoryController_process_BlockedRepositoryRecoversOnResync(t *testing.T) {
+	namespace, repoName := "default", "test-repo"
+
+	// Still carrying the QuotaExceeded condition, but now the only repository in the
+	// namespace against a limit of 1 -- i.e. back within quota.
+	repo := blockedOverQuotaRepo(namespace, repoName, time.Now(), false)
+	rc, patcher, stub, _ := newQuotaController(t, 1, repo)
+
+	_, err := rc.process(namespace + "/" + repoName)
+	require.NoError(t, err)
+
+	assert.Equal(t, int32(1), stub.testCalls.Load(),
+		"health must be re-checked so the repository can be reported healthy again")
+
+	quotaOp, quotaPatched := patcher.findPatchOp("/status/conditions/0")
+	require.True(t, quotaPatched, "the quota condition must be re-evaluated and cleared")
+	quotaCondition, ok := quotaOp["value"].(metav1.Condition)
+	require.True(t, ok)
+	assert.Equal(t, metav1.ConditionTrue, quotaCondition.Status)
+	assert.NotEqual(t, provisioning.ReasonQuotaExceeded, quotaCondition.Reason)
+	assert.False(t, isQuotaExceeded([]metav1.Condition{quotaCondition}), "repository must be unblocked")
+
+	healthOp, healthPatched := patcher.findPatchOp("/status/health")
+	require.True(t, healthPatched, "health must be rewritten once the quota override no longer applies")
+	healthStatus, ok := healthOp["value"].(provisioning.HealthStatus)
+	require.True(t, ok)
+	assert.True(t, healthStatus.Healthy)
+}
+
 // TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks
 // verifies that being over the namespace quota does not suppress webhook
 // hooks: quota and reachability are different concerns, and processHooks must
@@ -3685,7 +4039,7 @@ func TestRepositoryController_process_QuotaBlockedButReachableStillRunsHooks(t *
 
 	patcher := &capturePatcher{}
 	healthMetrics := NewMockHealthMetricsRecorder(t)
-	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).Maybe()
+	healthMetrics.EXPECT().RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Maybe()
 	tester := repository.NewTester()
 	healthChecker := NewRepositoryHealthChecker(patcher, tester, healthMetrics)
 
@@ -4072,7 +4426,7 @@ func TestRepositoryController_process_FailedFlushDoesNotDuplicatePatches(t *test
 
 	healthMetrics := NewMockHealthMetricsRecorder(t)
 	healthMetrics.EXPECT().
-		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything).
+		RecordHealthCheck(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 		Maybe()
 
 	tester := repository.NewTester()

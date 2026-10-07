@@ -9,12 +9,15 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -37,7 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error)
+type PluginClientProvider = func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error)
 
 // The dependencies are configured at startup and used across all plugins
 type PluginDependencies struct {
@@ -52,6 +55,7 @@ type PluginDependencies struct {
 	PluginSettings     pluginsettings.Service
 	Unified            resource.ResourceClient
 	Decrypter          decrypt.DecryptService
+	TokenExchanger     authn.TokenExchanger       // used for delegation
 	Tracer             tracing.Tracer             // needed for proxy (legacy)
 	Features           featuremgmt.FeatureToggles // needed for proxy (legacy)
 	Cfg                *setting.Cfg
@@ -106,8 +110,20 @@ func ProvidePluginLoaderDependencies(
 			Tracer:             tracer,
 			Features:           features,
 			Cfg:                cfg,
+			TokenExchanger:     newClientV3TokenExchanger(cfg),
 		},
 	}
+}
+
+func newClientV3TokenExchanger(cfg *setting.Cfg) authn.TokenExchanger {
+	// A missing exchange configuration leaves requests unauthenticated: the
+	// caller's identity is not propagated, and plugins that authenticate reject
+	// them. An invalid one fails each request with the configuration error.
+	exchanger, err := appplugin.NewClientV3TokenExchanger(cfg)
+	if err != nil {
+		return appplugin.InvalidClientV3TokenExchanger(err)
+	}
+	return exchanger
 }
 
 // The router module supplies these clients so its Wire graph does not construct
@@ -150,20 +166,43 @@ func ProvidePluginLoaderDependenciesWithClients(
 	)
 }
 
-func newPluginLoader(deps PluginLoaderDependencies) (RoutesLoader, error) {
-	return &PluginLoader{deps: deps}, nil
+func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error {
+	// Declare roles during dependency construction, before startup registers fixed
+	// roles. Reconciliation must not append the same declarations on every load.
+	pluginDefs, err := loadLocalPluginDefinitions(ctx, deps.PluginSources, false)
+	if err != nil {
+		return err
+	}
+	for _, plugin := range pluginDefs {
+		// The handler installs settings on a copy of the storage config, so resolve
+		// the wildcard default where the shared dual-write service reads it.
+		if deps.Cfg != nil {
+			appplugin.ApplyDefaultSettingsStorageConfig(deps.Cfg.UnifiedStorage, plugin.JSONData.ID)
+		}
+		if plugin.Manifest == nil {
+			continue
+		}
+		group := plugin.Manifest.Group
+		if !strings.HasSuffix(group, pluginManifestGroupSuffix) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+			logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
+			continue
+		}
+		if err := declareManifestRoles(deps.ACService, group, plugin.JSONData.Name, plugin.Manifest); err != nil {
+			return fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+		}
+	}
+	return nil
 }
 
 type PluginLoader struct {
 	deps PluginLoaderDependencies
 }
 
-func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
-	pluginDefs, err := definition.LoadPluginDefinition(ctx, pl.deps.PluginSources, definition.Options{
+func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
+	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
-				// TODO? should we fail more loudly
-				if !isPluginAPIGroup(jsonData.ID) || jsonData.ID == "v1" {
+				if jsonData.ID == "v1" || !isPluginAPIGroup(jsonData.ID) {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
@@ -171,18 +210,34 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 			}
 			return false
 		},
-		Schemas:     true,
+		Schemas:     schemas,
 		AppManifest: true, // Load manifests
 	})
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting list of app plugins: %w", err)
 	}
+	return pluginDefs, nil
+}
 
+func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
+	pluginDefs, err := loadLocalPluginDefinitions(ctx, pl.deps.PluginSources, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// Settings retain the plugin ID even when the manifest declares another group.
+	for _, plugin := range pluginDefs {
+		if plugin.Manifest != nil {
+			settings := plugin
+			settings.Manifest = nil
+			pluginDefs = append(pluginDefs, settings)
+		}
+	}
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
 		backend, err := NewPluginBackend(plugin,
-			func(ctx context.Context, id string) (plugins.Client, v3.ClientV3, error) {
+			func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 				return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, plugin.JSONData.ID), nil
 			}, pl.deps.PluginDependencies,
 		)
@@ -276,6 +331,19 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
+	if clientV2 != nil {
+		clientV2 = &breakerPluginClient{Client: clientV2}
+	}
+	if clientV3 != nil {
+		clientV3 = &breakerPluginClientV3{Client: clientV3}
+	}
+	// Keep authentication outside the breaker: token exchange failures do not
+	// indicate whether the plugin is reachable.
+	clientV3, err = v3.WithAuthentication(clientV3, b.plugin.JSONData.ID,
+		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.plugin.JSONData.ID, b.deps.TokenExchanger))
+	if err != nil {
+		return nil, err
+	}
 
 	cfg := b.deps.Cfg
 	if cfg == nil {
@@ -283,22 +351,21 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	}
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	opts := pluginroute.Options{
-		Storage:         pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
-		PluginClient:    clientV2,
-		ClientV3:        clientV3,
-		ContextProvider: b.deps.ContextProvider,
-		Decrypter:       b.deps.Decrypter,
-		Search:          b.deps.Unified,
-		Store:           b.deps.Unified,
+		Storage:          pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
+		PluginClient:     clientV2,
+		ClientV3:         clientV3,
+		ContextProvider:  b.deps.ContextProvider,
+		Decrypter:        b.deps.Decrypter,
+		Search:           b.deps.Unified,
+		Store:            b.deps.Unified,
+		HybridAPIEnabled: apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true),
+		KeysAPIEnabled:   apiserverSection.Key(keysapi.ConfigKey).MustBool(false),
 		Runner: appplugin.AppPluginRunnerOptions{
 			RegisterProxy:            openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagApppluginsHandleProxyRequests, false, openfeature.TransactionContext(ctx)),
 			AccessControl:            b.deps.AccessControl,
 			DataProxyLogging:         cfg.DataProxyLogging,
 			SendUserHeader:           cfg.SendUserHeader,
 			PluginsAppsSkipVerifyTLS: cfg.PluginsAppsSkipVerifyTLS,
-			SearchAPIEnabled:         apiserverSection.Key(searchapi.ConfigKey).MustBool(true),
-			TrashAPIEnabled:          apiserverSection.Key(searchapi.ConfigKeyTrash).MustBool(true),
-			KeysAPIEnabled:           apiserverSection.Key(keysapi.ConfigKey).MustBool(false),
 		},
 		Tracer:          b.deps.Tracer,
 		Features:        b.deps.Features,
