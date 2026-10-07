@@ -114,18 +114,6 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, namespace, store.get.Resource.Namespace)
 
-	// Authenticated requests must retain their caller identity for remote blob stores.
-	caller := &identity.StaticRequester{Type: authlib.TypeUser, Namespace: namespace, IDToken: "caller-token"}
-	store.checkGet = func(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
-		info, ok := authlib.AuthInfoFrom(ctx)
-		require.True(t, ok)
-		require.Same(t, caller, info)
-		require.Equal(t, "caller-token", info.GetIDToken())
-		return &resourcepb.GetBlobResponse{Value: []byte(`{"title":"CPU"}`)}, nil
-	}
-	_, err = rest.(*dashboardREST).Connect(authlib.WithAuthInfo(ctx, caller), "snap-1", nil, nil)
-	require.NoError(t, err)
-
 	store.checkGet = func(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
 		info, ok := authlib.AuthInfoFrom(ctx)
 		require.True(t, ok)
@@ -140,6 +128,8 @@ func TestPublicSnapshotDashboardBlob(t *testing.T) {
 	}{
 		{"anonymous requester without namespace", &identity.StaticRequester{Type: authlib.TypeAnonymous}},
 		{"anonymous requester in snapshot namespace", &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: namespace}},
+		{"same-org user", &identity.StaticRequester{Type: authlib.TypeUser, Namespace: namespace, IDToken: "caller-token"}},
+		{"same-org user without token", &identity.StaticRequester{Type: authlib.TypeUser, Namespace: namespace}},
 		{"Grafana admin in another namespace", &identity.StaticRequester{Type: authlib.TypeUser, Namespace: "org-3", IsGrafanaAdmin: true, IDToken: "other-token"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

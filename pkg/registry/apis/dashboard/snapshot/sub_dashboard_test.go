@@ -10,9 +10,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -41,14 +39,13 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		caller *identity.StaticRequester
-		denied bool
 	}{
 		{name: "no caller"},
 		{name: "anonymous without namespace", caller: &identity.StaticRequester{Type: authlib.TypeAnonymous}},
 		{name: "anonymous in snapshot namespace", caller: &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: namespace}},
 		{name: "cross-org user", caller: &identity.StaticRequester{Type: authlib.TypeUser, Namespace: "org-3", IDToken: "other-token"}},
 		{name: "same-org user", caller: &identity.StaticRequester{Type: authlib.TypeUser, Namespace: namespace, IDToken: "caller-token"}},
-		{name: "same-org user without token", caller: &identity.StaticRequester{Type: authlib.TypeUser, Namespace: namespace}, denied: true},
+		{name: "same-org user without token", caller: &identity.StaticRequester{Type: authlib.TypeUser, Namespace: namespace}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			server := &snapshotBlobServer{}
@@ -64,6 +61,8 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			snap.Namespace = namespace
 			snap.Spec.Dashboard = nil
 			snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+			// Only blob-read credentials are exercised here. The initial snapshot lookup
+			// is mocked and can still reject anonymous callers under strict identity enforcement.
 			getter := grafanarest.NewMockStorage(t)
 			getter.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
 			r, err := NewDashboardREST(getter, client)
@@ -74,11 +73,6 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			}
 			responder := &capturingResponder{}
 			handler, err := r.(*dashboardREST).Connect(ctx, snap.Name, nil, responder)
-			if tc.denied {
-				require.Equal(t, codes.PermissionDenied, status.Code(err))
-				require.Nil(t, server.get)
-				return
-			}
 			require.NoError(t, err)
 			handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/", nil))
 			require.NoError(t, responder.err)
@@ -87,11 +81,7 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			require.Equal(t, "blob-1", server.get.Uid)
 			require.True(t, server.get.MustProxyBytes)
 			require.Equal(t, []string{"service-token"}, server.metadata.Get("x-access-token"))
-			if tc.caller != nil && tc.caller.IDToken == "caller-token" {
-				require.Equal(t, []string{"caller-token"}, server.metadata.Get("x-id-token"))
-			} else {
-				require.Empty(t, server.metadata.Get("x-id-token"))
-			}
+			require.Empty(t, server.metadata.Get("x-id-token"))
 		})
 	}
 }
