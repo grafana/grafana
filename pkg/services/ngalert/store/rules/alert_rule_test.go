@@ -996,6 +996,39 @@ func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *
 	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 }
 
+// TestIntegration_GetLatestVersionOfRulesByUID_DefaultPathJoinsAmbientSession is the mirror of
+// the test above: with no LegacyDatabaseProvider configured, this must stay on the caller's
+// transaction, or a caller rollback would not roll back the read's effects.
+func TestIntegration_GetLatestVersionOfRulesByUID_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := store.getLatestVersionOfRulesByUID(ctx, 1, []string{"does-not-exist"})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
+}
+
 // TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession is the same regression
 // test as above, for the analogous folder-key read.
 func TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession(t *testing.T) {
@@ -1134,6 +1167,41 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	assert.Same(t, requester, got)
 }
 
+// TestIntegration_ListAlertRuleUIDsInFolder_DefaultPathJoinsAmbientSession is the mirror of the
+// ambient-session check above: with no LegacyDatabaseProvider configured, this must stay on the
+// caller's transaction, or a caller rollback would not roll back the read's effects.
+func TestIntegration_ListAlertRuleUIDsInFolder_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	rule := createRule(t, store, nil)
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := store.ListAlertRuleUIDsInFolder(ctx, rule.OrgID, rule.NamespaceUID)
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
+}
+
 // TestIntegration_CountInFolders_LegacyDatabaseProvider is a regression test: the folder delete
 // preflight check (in folder_unifiedstorage.go) relies on this count to block deleting a
 // non-empty folder. If it read st.SQLStore instead of a routed database, it would see zero rules
@@ -1192,6 +1260,41 @@ func TestIntegration_CountInFolders_LegacyDatabaseProvider(t *testing.T) {
 	assert.Same(t, requester, got)
 }
 
+// TestIntegration_CountInFolders_DefaultPathJoinsAmbientSession is the mirror of the ambient-
+// session check above: with no LegacyDatabaseProvider configured, this must stay on the caller's
+// transaction.
+func TestIntegration_CountInFolders_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	rule := createRule(t, store, nil)
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := store.CountInFolders(ctx, rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
+}
+
 // TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider is a regression test:
 // folderlabelsyncer.FullSync calls this alongside CountInFolders to decide which folders need a
 // has-rules label. If this read st.SQLStore instead of a routed database, a full sync would see
@@ -1242,6 +1345,41 @@ func TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider(t *testing.T)
 	require.NotNil(t, ambientSess)
 	require.NotNil(t, spy.lastSession)
 	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
+}
+
+// TestIntegration_GetAllFoldersWithRules_DefaultPathJoinsAmbientSession is the mirror of the
+// ambient-session check above: with no LegacyDatabaseProvider configured, this must stay on the
+// caller's transaction.
+func TestIntegration_GetAllFoldersWithRules_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	rule := createRule(t, store, nil)
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		_, err := store.GetAllFoldersWithRules(ctx, rule.OrgID)
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
