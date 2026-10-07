@@ -66,6 +66,7 @@ import {
   usePaginatedRows,
   useRowHeight,
   useScrollbarWidth,
+  useNativeScrollbarWidth,
   useSortedRows,
 } from './hooks';
 import { shouldReserveScrollbarGutter } from './scrollbar';
@@ -311,7 +312,7 @@ export function TableNG(props: TableNGProps) {
     rowHeight: fullRowHeight,
     hasNestedFrames: false,
   });
-  const reserveGutter =
+  const needsScrollbarSpace =
     !hasNestedFrames &&
     shouldReserveScrollbarGutter(
       fullPagination.rows,
@@ -323,9 +324,11 @@ export function TableNG(props: TableNGProps) {
         footerHeight -
         (enablePagination && fullPagination.numRows > 0 ? 32 : 0)
     );
-  const scrollbarWidth = useScrollbarWidth(gridRef, height, reserveGutter);
-  const availableWidth =
-    (hasNestedFrames ? width - COLUMN.EXPANDER_WIDTH : width) - (hasNestedFrames || reserveGutter ? scrollbarWidth : 0);
+  const nativeScrollbarWidth = useNativeScrollbarWidth(gridRef, !hasNestedFrames);
+  const nestedScrollbarWidth = useScrollbarWidth(gridRef, height, undefined, hasNestedFrames);
+  const availableWidth = hasNestedFrames
+    ? width - COLUMN.EXPANDER_WIDTH - nestedScrollbarWidth
+    : width - (needsScrollbarSpace ? nativeScrollbarWidth : 0);
 
   const [widths, numFrozenColsFullyInView] = useColWidths(visibleFields, availableWidth, frozenColumns);
 
@@ -1017,7 +1020,6 @@ export function TableNG(props: TableNGProps) {
       <DataGrid<TableRow, TableSummaryRow, string>
         {...commonDataGridProps}
         role={hasNestedFrames ? 'treegrid' : 'grid'}
-        style={IS_SAFARI_26 || hasNestedFrames ? undefined : { scrollbarGutter: reserveGutter ? 'stable' : 'auto' }}
         ref={gridRef}
         className={styles.grid}
         columns={structureRevColumns}
