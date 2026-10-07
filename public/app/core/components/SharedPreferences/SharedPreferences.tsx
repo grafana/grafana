@@ -1,5 +1,5 @@
 import { useBooleanFlagValue } from '@openfeature/react-sdk';
-import { memo, useState, useEffect, type ReactNode } from 'react';
+import { memo, useState, useEffect, useMemo, type ReactNode } from 'react';
 
 import { FeatureState } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -26,12 +26,19 @@ import {
 import { changeTheme } from 'app/core/services/theme';
 import { VisualRefreshInfo } from 'app/features/visual-refresh/components/VisualRefreshInfo/VisualRefreshInfo';
 
-import { DashboardPicker, GLOBAL_HOME_DASHBOARD_UID } from '../Select/DashboardPicker';
+import { DashboardPicker } from '../Select/DashboardPicker';
 import { getSelectableThemes } from '../ThemeSelector/getSelectableThemes';
 
 import { homeDashboardChanged, languageChanged, saveButtonClicked, themeChanged } from './analytics/main';
 import { useSharedPreferences } from './useSharedPreferences';
-import { getLanguageOptions, getStyles, getTranslatedThemeName, type PrefsState } from './utils';
+import {
+  getGlobalHomeOption,
+  getLanguageOptions,
+  getStyles,
+  getTranslatedThemeName,
+  GLOBAL_HOME_DASHBOARD_UID,
+  type PrefsState,
+} from './utils';
 
 interface SharedPreferencesProps {
   resourceUri: string;
@@ -50,6 +57,10 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
   const isAnalyticsFrameworkEnabled = useBooleanFlagValue('analyticsFramework', true);
   // Rollout gate: the merged preferences backend must resolve the sentinel before it is offered.
   const includeGlobalHomeOption = useFlagGrafanaGlobalHomePreference();
+  const homeDashboardStaticOptions = useMemo(
+    () => (includeGlobalHomeOption ? [getGlobalHomeOption()] : undefined),
+    [includeGlobalHomeOption]
+  );
   const [state, setState] = useState<PrefsState>({
     theme: undefined,
     timezone: '',
@@ -227,7 +238,7 @@ export const SharedPreferences = memo((props: SharedPreferencesProps) => {
               value={state.homeDashboardUID}
               onChange={(v) => handleDashboardChanged(v?.uid ?? '')}
               defaultOptions={true}
-              includeGlobalHomeOption={includeGlobalHomeOption}
+              staticOptions={homeDashboardStaticOptions}
               isClearable={true}
               showUnknown={true}
               placeholder={t('shared-preferences.fields.home-dashboard-placeholder', 'Default dashboard')}

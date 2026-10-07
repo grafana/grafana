@@ -11,10 +11,9 @@ import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 
-import { GLOBAL_HOME_DASHBOARD_UID } from '../Select/DashboardPicker';
-
 import { SharedPreferences } from './SharedPreferences';
 import { homeDashboardChanged } from './analytics/main';
+import { GLOBAL_HOME_DASHBOARD_UID } from './utils';
 
 jest.mock('./analytics/main', () => ({
   saveButtonClicked: jest.fn(),

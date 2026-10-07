@@ -6850,7 +6850,6 @@
     }
   },
   "dashboard-picker": {
-    "global-home-option": "Grafana home",
     "no-options": "No dashboards found",
     "placeholder": "Select dashboard",
     "unknown-dashboard": "Unknown dashboard ({{uid}})"
@@ -16138,6 +16137,7 @@
       "update-preferences": "Error updating preferences"
     },
     "fields": {
+      "home-dashboard-global-home": "Grafana home",
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",
