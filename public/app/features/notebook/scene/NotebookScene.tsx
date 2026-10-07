@@ -42,6 +42,7 @@ import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
+import { isNotebookCellItem } from './layout-notebook/isNotebookCellItem';
 
 export interface NotebookSceneState extends SceneObjectState {
   title: string;
@@ -235,6 +236,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
   public enrichDataRequest(source: SceneObject): Partial<DataQueryRequest> {
     const panel = getClosestVizPanel(source);
+    // panel.state.title is kept blank for a non-library panel (see NotebookCellItemState.panelTitle)
+    // - the cell's own field is the real name, falling back to the panel's for a library panel.
+    const cell = panel?.parent;
+    const panelName = (cell && isNotebookCellItem(cell) ? cell.state.panelTitle : undefined) ?? panel?.state.title;
 
     return {
       // Not Unknown: that is indistinguishable from a genuinely unattributed query, and it would
@@ -243,7 +248,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // interaction for it), and notebooks are not dashboards.
       app: CoreApp.Notebook,
       panelId: (panel && getPanelIdForVizPanel(panel)) ?? 0,
-      panelName: panel?.state.title,
+      panelName,
       panelPluginId: panel?.state.pluginId,
     };
   }

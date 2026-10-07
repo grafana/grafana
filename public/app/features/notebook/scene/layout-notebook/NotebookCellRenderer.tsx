@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneReactObject, useSceneObjectState, type VizPanel } from '@grafana/scenes';
 import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
@@ -108,6 +108,16 @@ function PanelCell({
   // where there is no query editor to be inline with.
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
 
+  // A stable SceneReactObject, not a plain element: titleItems is an array of SceneObjects
+  // (buildVizPanelState already put VizPanelLinks/PanelNotices there for panel links and
+  // datasource notices), and vizPanelToSchemaV2 reads that array back out on save - replacing it
+  // wholesale silently discards configured panel links on the next autosave.
+  const titleEditor = useMemo(
+    () =>
+      new SceneReactObject({ reactNode: <NotebookPanelTitleEditor cell={cell} panel={panel} isEditing={isEditing} /> }),
+    [cell, panel, isEditing]
+  );
+
   // Set once per panel rather than at construction: buildVizPanelState is shared with real dashboard
   // panels, so this notebook-only chrome is layered on here instead. hoverHeader: false keeps the
   // title always visible, not just on hover. Skipped for a library panel: its title belongs to the
@@ -120,11 +130,16 @@ function PanelCell({
     panel.setState({
       hoverHeader: false,
       title: '',
-      // VizPanelRenderer renders this inside a list alongside its own title items (links, series
-      // limit, ...), so it needs a key even though it isn't written as a list here.
-      titleItems: <NotebookPanelTitleEditor key="panel-title" cell={cell} isEditing={isEditing} />,
+      titleItems: [titleEditor, ...(Array.isArray(panel.state.titleItems) ? panel.state.titleItems : [])],
     });
-  }, [panel, cell, isEditing]);
+
+    return () => {
+      const titleItems = panel.state.titleItems;
+      if (Array.isArray(titleItems)) {
+        panel.setState({ titleItems: titleItems.filter((item) => item !== titleEditor) });
+      }
+    };
+  }, [panel, titleEditor]);
 
   return (
     <Stack direction="column" gap={1}>

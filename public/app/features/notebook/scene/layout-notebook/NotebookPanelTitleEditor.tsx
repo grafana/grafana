@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { sceneGraph, type VizPanel } from '@grafana/scenes';
 import { Input, Text, useStyles2 } from '@grafana/ui';
 
 import { type NotebookCellItem } from './NotebookCellItem';
@@ -17,10 +18,24 @@ import { type NotebookCellItem } from './NotebookCellItem';
  * panel is already labelled by the prose around it. `isEditing` is the notebook's edit mode, not this
  * control's own open/closed state (`renaming`): a reader can't rename a panel, so view mode renders
  * plain text or nothing, never the "Add a title" prompt.
+ *
+ * `panelTitle` can carry a time macro (e.g. `${__from:date}`, preserved by buildPanelElementFromDashboard
+ * so the title tracks the notebook's own time range) - `displayTitle` interpolates it for display,
+ * the same way VizPanelRenderer would for a native title. The raw, uninterpolated value is what's
+ * edited and stored; only the shown text is resolved.
  */
-export function NotebookPanelTitleEditor({ cell, isEditing }: { cell: NotebookCellItem; isEditing: boolean }) {
+export function NotebookPanelTitleEditor({
+  cell,
+  panel,
+  isEditing,
+}: {
+  cell: NotebookCellItem;
+  panel: VizPanel;
+  isEditing: boolean;
+}) {
   const styles = useStyles2(getStyles);
   const { panelTitle = '' } = cell.useState();
+  const displayTitle = sceneGraph.interpolate(panel, panelTitle, undefined, 'text');
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(panelTitle);
   /** What Escape puts back. */
@@ -94,7 +109,7 @@ export function NotebookPanelTitleEditor({ cell, isEditing }: { cell: NotebookCe
     return panelTitle ? (
       <div className={styles.wrapper}>
         <Text element="h2" variant="h6" truncate>
-          {panelTitle}
+          {displayTitle}
         </Text>
       </div>
     ) : null;
@@ -116,7 +131,7 @@ export function NotebookPanelTitleEditor({ cell, isEditing }: { cell: NotebookCe
             setRenaming(true);
           }}
         >
-          {panelTitle || t('notebook.cell.panel.title-placeholder', 'Add a title')}
+          {displayTitle || t('notebook.cell.panel.title-placeholder', 'Add a title')}
         </button>
       </div>
     );

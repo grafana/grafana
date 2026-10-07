@@ -26,6 +26,7 @@ import {
 import { type DataQuery } from '@grafana/schema';
 import { contextSrv } from 'app/core/services/context_srv';
 import { Echo } from 'app/core/services/echo/Echo';
+import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
@@ -84,11 +85,15 @@ function buildScene(hideTimeControls: boolean, uid?: string) {
 }
 
 function buildSceneWithPanel() {
-  const panel = new VizPanel({ key: 'panel-4', title: 'Checkout latency', pluginId: 'timeseries' });
+  // Matches the real pipeline (see deserializeNotebookLayout): a notebook panel's own title stays
+  // blank, and the cell's panelTitle is the real name.
+  const panel = new VizPanel({ key: 'panel-4', pluginId: 'timeseries' });
   const scene = new NotebookScene({
     title: 'My notebook',
     body: new NotebookLayoutManager({
-      cells: [new NotebookCellItem({ elementName: 'latency', source: 'user', body: panel })],
+      cells: [
+        new NotebookCellItem({ elementName: 'latency', source: 'user', panelTitle: 'Checkout latency', body: panel }),
+      ],
     }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
@@ -518,6 +523,28 @@ describe('NotebookScene', () => {
         panelName: 'Checkout latency',
         panelPluginId: 'timeseries',
       });
+    });
+
+    // panelTitle is never populated for a library panel (see deserializeNotebookLayout), so its own
+    // title - the one actually shown - is what attribution falls back to.
+    it('falls back to the panel title for a library panel', () => {
+      const panel = new VizPanel({
+        key: 'panel-5',
+        pluginId: 'timeseries',
+        title: 'Shared panel title',
+        $behaviors: [new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' })],
+      });
+      const scene = new NotebookScene({
+        title: 'My notebook',
+        body: new NotebookLayoutManager({
+          cells: [new NotebookCellItem({ elementName: 'shared', source: 'user', body: panel })],
+        }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+
+      expect(scene.enrichDataRequest(panel)).toMatchObject({ panelName: 'Shared panel title' });
     });
 
     // dashboardUID is deliberately absent — a notebook is not a dashboard, and sending its uid

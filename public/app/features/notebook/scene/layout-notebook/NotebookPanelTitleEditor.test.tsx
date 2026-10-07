@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from 'test/test-utils';
 
-import { VizPanel } from '@grafana/scenes';
+import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
+
+import { NotebookScene } from '../NotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
@@ -9,11 +11,18 @@ import { NotebookPanelTitleEditor } from './NotebookPanelTitleEditor';
 function setup(panelTitle = 'p95 latency', isEditing = true) {
   const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
   const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', panelTitle, body: panel });
-  // Gives onPanelTitleChange/onPanelTitleCommit a layout manager to delegate to.
-  new NotebookLayoutManager({ cells: [cell] });
+  // A NotebookScene, not just a layout manager: interpolating a time macro in the title needs a
+  // $timeRange to resolve against, same as a real notebook provides.
+  new NotebookScene({
+    title: 'Test notebook',
+    body: new NotebookLayoutManager({ cells: [cell] }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({}),
+  });
 
-  const rendered = render(<NotebookPanelTitleEditor cell={cell} isEditing={isEditing} />);
-  return { ...rendered, cell };
+  const rendered = render(<NotebookPanelTitleEditor cell={cell} panel={panel} isEditing={isEditing} />);
+  return { ...rendered, cell, panel };
 }
 
 // Named by its fixed tooltip, not its (variable) displayed text - see NotebookTitleEditor.test.tsx's
@@ -41,6 +50,15 @@ describe('NotebookPanelTitleEditor', () => {
 
       expect(screen.queryByRole('heading')).not.toBeInTheDocument();
       expect(screen.queryByText('Add a title')).not.toBeInTheDocument();
+    });
+
+    // buildPanelElementFromDashboard preserves a time macro in the title so it tracks the
+    // notebook's own range - this is what resolves it for display, same as a native title would.
+    it('interpolates a time macro rather than showing it literally', () => {
+      setup('Errors since $__from', false);
+
+      const heading = screen.getByRole('heading');
+      expect(heading).not.toHaveTextContent('$__from');
     });
   });
 
@@ -146,12 +164,12 @@ describe('NotebookPanelTitleEditor', () => {
 
   // The notebook's own Done button can leave edit mode without this field ever blurring.
   it('closes the field rather than leaving it open when edit mode is left mid-rename', async () => {
-    const { user, rerender, cell } = setup();
+    const { user, rerender, cell, panel } = setup();
 
     await user.click(getTrigger());
     expect(getInput()).toBeInTheDocument();
 
-    rerender(<NotebookPanelTitleEditor cell={cell} isEditing={false} />);
+    rerender(<NotebookPanelTitleEditor cell={cell} panel={panel} isEditing={false} />);
 
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });

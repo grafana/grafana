@@ -11,6 +11,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
+import { VizPanelLinks, VizPanelLinksMenu } from 'app/features/dashboard-scene/scene/PanelLinks';
 import * as libraryPanelsApi from 'app/features/library-panels/state/api';
 
 import { NotebookScene } from '../NotebookScene';
@@ -305,6 +306,72 @@ describe('NotebookCellRenderer', () => {
       expect(cell.state.$timeRange?.state.value.from.toISOString()).toBe('2024-01-01T11:00:00.000Z');
 
       jest.useRealTimers();
+    });
+  });
+
+  describe('the panel title editor', () => {
+    function buildPanelCellInLayout(panel: VizPanel) {
+      const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel });
+      new NotebookScene({
+        title: 'Test notebook',
+        body: new NotebookLayoutManager({ cells: [cell] }),
+        $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+        timePicker: new SceneTimePicker({}),
+        refreshPicker: new SceneRefreshPicker({}),
+      });
+      return cell;
+    }
+
+    function buildPanelLink() {
+      return new VizPanelLinks({
+        rawLinks: [{ title: 'Docs', url: 'https://example.com' }],
+        menu: new VizPanelLinksMenu({}),
+      });
+    }
+
+    // titleItems is an array of SceneObjects that vizPanelToSchemaV2 reads back on save (panel
+    // links, datasource notices) - replacing it wholesale would silently drop them.
+    it('adds itself to titleItems without discarding what was already there', async () => {
+      const existingLink = buildPanelLink();
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', titleItems: [existingLink] });
+      const cell = buildPanelCellInLayout(panel);
+
+      render(<NotebookCellRenderer cell={cell} isEditing={false} />);
+      await screen.findByTestId('loading-plugin-panel-1');
+
+      const titleItems = panel.state.titleItems;
+      expect(Array.isArray(titleItems)).toBe(true);
+      expect(titleItems).toContain(existingLink);
+      expect(titleItems).toHaveLength(2);
+    });
+
+    it('swaps its own entry rather than accumulating one per render', async () => {
+      const existingLink = buildPanelLink();
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', titleItems: [existingLink] });
+      const cell = buildPanelCellInLayout(panel);
+
+      const { rerender } = render(<NotebookCellRenderer cell={cell} isEditing={false} />);
+      await screen.findByTestId('loading-plugin-panel-1');
+      rerender(<NotebookCellRenderer cell={cell} isEditing={true} />);
+      rerender(<NotebookCellRenderer cell={cell} isEditing={false} />);
+
+      expect(panel.state.titleItems).toHaveLength(2);
+      expect(panel.state.titleItems).toContain(existingLink);
+    });
+
+    it('leaves a library panel title untouched', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        title: 'Shared panel title',
+        $behaviors: [new LibraryPanelBehavior({ uid: 'lp-1', name: 'Shared panel' })],
+      });
+      const cell = buildPanelCellInLayout(panel);
+
+      render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+      await screen.findByTestId('loading-plugin-panel-1');
+
+      expect(panel.state.title).toBe('Shared panel title');
     });
   });
 
