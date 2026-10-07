@@ -167,7 +167,7 @@ func (s *Server) listGeneric(ctx context.Context, subject, relation string, reso
 			StoreId:              store.ID,
 			AuthorizationModelId: store.ModelID,
 			Type:                 common.TypeFolder,
-			Relation:             common.SubresourcePermissionRelation(folderRelation),
+			Relation:             resource.FolderResourcePermissionRelation(folderRelation),
 			User:                 subject,
 			Context:              resourceCtx,
 		}, contextuals)
