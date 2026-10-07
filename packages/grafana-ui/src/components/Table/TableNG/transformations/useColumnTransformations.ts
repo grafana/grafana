@@ -35,13 +35,13 @@ export function useColumnTransformations(
       return undefined;
     }
 
-    const state = Object.values(columnTransformations).reduce<Pick<TableNGProps, 'hiddenColumns'>>(
-      (state, transformation) => ({ ...state, ...transformation.read(transformations, context) }),
+    const columnProps = Object.values(columnTransformations).reduce<Pick<TableNGProps, 'hiddenColumns'>>(
+      (columnProps, transformation) => ({ ...columnProps, ...transformation.read(transformations, context) }),
       {}
     );
 
     return {
-      ...state,
+      ...columnProps,
       columnCatalog: context.catalog,
       onHiddenColumnsChange,
     };
