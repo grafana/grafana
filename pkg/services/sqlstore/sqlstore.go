@@ -646,5 +646,11 @@ func TestMain(m *testing.M) {
 		return nil, err
 	}
 
+	// The store outlives the server that created it, so events published after a
+	// commit must go to the bus of the server now using it, where its listeners are.
+	if bus != nil {
+		testSQLStore.bus = bus
+	}
+
 	return testSQLStore, nil
 }

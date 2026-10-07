@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,13 +46,32 @@ type Publisher struct {
 	namespace request.NamespaceMapper
 }
 
-func ProvidePublisher(cfg *setting.Cfg, bus Bus) *Publisher {
+// LegacyWatchNotification is a change to announce once the SQL transaction that makes it
+// commits. A writer that runs inside a caller's xorm transaction, and so cannot
+// publish itself, queues it with db.Session.PublishAfterCommit; the Publisher
+// receives it from the in-process bus after the commit. Its name is the bus key.
+type LegacyWatchNotification struct {
+	Type            resourcepb.WatchNotification_Type
+	Resource        schema.GroupResource
+	OrgID           int64
+	Name            string
+	ResourceVersion int64
+}
+
+func ProvidePublisher(cfg *setting.Cfg, nats Bus, events bus.Bus) *Publisher {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagGrafanaPublishLegacySQLEvents, false, openfeature.TransactionContext(ctx)) {
 		return nil
 	}
-	return NewPublisher(bus, request.GetNamespaceMapper(cfg))
+	p := NewPublisher(nats, request.GetNamespaceMapper(cfg))
+	events.AddEventListener(p.onNotification)
+	return p
+}
+
+func (p *Publisher) onNotification(ctx context.Context, n *LegacyWatchNotification) error {
+	p.Publish(ctx, n.Type, n.Resource, n.OrgID, n.Name, n.ResourceVersion)
+	return nil
 }
 
 func NewPublisher(bus Bus, namespace request.NamespaceMapper) *Publisher {
