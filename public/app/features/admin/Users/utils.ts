@@ -30,28 +30,34 @@ export function getUsersTableSortBy(sort?: string) {
   return [{ id, desc: direction === 'desc' }];
 }
 
-export function getUsersPage(options: UserPageOptions): Promise<PageInfo & { users: UserDTO[] }> {
-  return getBackendSrv().get(getUsersSearchUrl(options));
+export function getUsersPage(options: UserPageOptions, requestId?: string): Promise<PageInfo & { users: UserDTO[] }> {
+  return getBackendSrv().get(getUsersSearchUrl(options), undefined, requestId);
 }
 
-export function getOrgUsers({
-  perPage,
-  page,
-  query,
-  sort,
-}: Omit<UserPageOptions, 'filters'>): Promise<PageInfo & { orgUsers: OrgUser[] }> {
-  return getBackendSrv().get('/api/org/users/search', accessControlQueryParam({ perpage: perPage, page, query, sort }));
+export function getOrgUsers(
+  { perPage, page, query, sort }: Omit<UserPageOptions, 'filters'>,
+  requestId?: string
+): Promise<PageInfo & { orgUsers: OrgUser[] }> {
+  return getBackendSrv().get(
+    '/api/org/users/search',
+    accessControlQueryParam({ perpage: perPage, page, query, sort }),
+    requestId
+  );
 }
 
 function canShowRoles(): boolean {
   return contextSrv.licensedAccessControlEnabled() && contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
 }
 
-function getUserRoles(userIds: number[]): Promise<Record<number, Role[]>> {
-  return getBackendSrv().post('/api/access-control/users/roles/search?includeMapped=true', {
-    userIds,
-    orgId: contextSrv.user.orgId,
-  });
+function getUserRoles(userIds: number[], requestId?: string): Promise<Record<number, Role[]>> {
+  return getBackendSrv().post(
+    '/api/access-control/users/roles/search?includeMapped=true',
+    {
+      userIds,
+      orgId: contextSrv.user.orgId,
+    },
+    { requestId }
+  );
 }
 
 /** Whether `withUserRoles` would request roles for these users. */
@@ -60,12 +66,15 @@ export function canLoadUserRoles(users: OrgUser[]): boolean {
 }
 
 /** Returns copies of the users with their custom roles, or the users unchanged when roles can't be shown. */
-export async function withUserRoles(users: OrgUser[]): Promise<OrgUser[]> {
+export async function withUserRoles(users: OrgUser[], requestId?: string): Promise<OrgUser[]> {
   if (!canLoadUserRoles(users)) {
     return users;
   }
 
-  const roles = await getUserRoles(users.map((user) => user.userId));
+  const roles = await getUserRoles(
+    users.map((user) => user.userId),
+    requestId
+  );
   return users.map((user) => ({ ...user, roles: roles?.[user.userId] ?? [] }));
 }
 

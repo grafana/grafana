@@ -76,9 +76,13 @@ it('downloads every page of all users with the same search, filters and sort', a
   expect(get.mock.calls).toEqual([
     [
       '/api/users/search?perpage=1000&page=1&query=a%2Bb+%26+c&activeLast30Days=true&auth_module=saml&auth_module=oauth&sort=login-desc',
+      undefined,
+      undefined,
     ],
     [
       '/api/users/search?perpage=1000&page=2&query=a%2Bb+%26+c&activeLast30Days=true&auth_module=saml&auth_module=oauth&sort=login-desc',
+      undefined,
+      undefined,
     ],
   ]);
   expect(await savedCsv()).toBe(
@@ -103,12 +107,28 @@ it('downloads every organization user page including permitted custom roles', as
   await exportUsers({ scope: 'organization', query: 'example.com', sort: 'email-asc' });
 
   expect(get.mock.calls).toEqual([
-    ['/api/org/users/search', { perpage: 1000, page: 1, query: 'example.com', sort: 'email-asc', accesscontrol: true }],
-    ['/api/org/users/search', { perpage: 1000, page: 2, query: 'example.com', sort: 'email-asc', accesscontrol: true }],
+    [
+      '/api/org/users/search',
+      { perpage: 1000, page: 1, query: 'example.com', sort: 'email-asc', accesscontrol: true },
+      undefined,
+    ],
+    [
+      '/api/org/users/search',
+      { perpage: 1000, page: 2, query: 'example.com', sort: 'email-asc', accesscontrol: true },
+      undefined,
+    ],
   ]);
   expect(post.mock.calls).toEqual([
-    ['/api/access-control/users/roles/search?includeMapped=true', { userIds: [1], orgId: contextSrv.user.orgId }],
-    ['/api/access-control/users/roles/search?includeMapped=true', { userIds: [2], orgId: contextSrv.user.orgId }],
+    [
+      '/api/access-control/users/roles/search?includeMapped=true',
+      { userIds: [1], orgId: contextSrv.user.orgId },
+      { requestId: undefined },
+    ],
+    [
+      '/api/access-control/users/roles/search?includeMapped=true',
+      { userIds: [2], orgId: contextSrv.user.orgId },
+      { requestId: undefined },
+    ],
   ]);
   expect(await savedCsv()).toBe(
     'Login,Email,Name,Last active,Role,Origin,Provisioned,Disabled\r\n' +

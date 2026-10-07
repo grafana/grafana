@@ -284,9 +284,13 @@ export function fetchUsers(): ThunkResult<void> {
     try {
       dispatch(usersFetchBegin());
       const { perPage, page, query, filters, sort } = getState().userListAdmin;
-      const result = await getUsersPage({ perPage, page, query, filters, sort });
+      const result = await getUsersPage({ perPage, page, query, filters, sort }, 'all-users-list');
       dispatch(usersFetched(result));
     } catch (error) {
+      // A replacement request owns the loading state when the previous one is cancelled.
+      if (isFetchError(error) && error.cancelled) {
+        return;
+      }
       dispatch(usersFetchEnd());
       console.error(error);
     }

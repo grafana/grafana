@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { OrgRole } from '@grafana/data';
 import { getBackendSrv } from '@grafana/runtime';
@@ -155,14 +155,56 @@ it.each(['users', 'roles'])(
     await user.type(search, 'bob');
 
     expect(await screen.findByRole('cell', { name: 'Bob' })).toBeInTheDocument();
-    expect(get).toHaveBeenCalledWith('/api/org/users/search', {
-      perpage: 30,
-      page: 0,
-      query: 'bob',
-      sort: undefined,
-      accesscontrol: true,
-    });
+    expect(get).toHaveBeenCalledWith(
+      '/api/org/users/search',
+      {
+        perpage: 30,
+        page: 0,
+        query: 'bob',
+        sort: undefined,
+        accesscontrol: true,
+      },
+      'org-users-list'
+    );
     expect(search).toHaveValue('bob');
     expect(screen.queryByRole('status', { name: 'Loading users...' })).not.toBeInTheDocument();
   }
 );
+
+it('keeps the previous results during the search debounce until the server responds', async () => {
+  jest.useFakeTimers();
+  get.mockResolvedValue(usersPage);
+  render(<UsersListPageContent />);
+  expect(await screen.findByRole('cell', { name: 'Alice' })).toBeVisible();
+  get.mockClear();
+  let finish!: (result: UsersFetchResult) => void;
+  get.mockReturnValue(
+    new Promise<UsersFetchResult>((resolve) => {
+      finish = resolve;
+    })
+  );
+  const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+  await user.type(screen.getByPlaceholderText('Search user by login, email or name'), 'bob');
+
+  expect(screen.getByRole('cell', { name: 'Alice' })).toBeVisible();
+  expect(screen.queryByText('No users found')).not.toBeInTheDocument();
+  expect(get).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(299));
+  expect(get).not.toHaveBeenCalled();
+  act(() => jest.advanceTimersByTime(1));
+  expect(get).toHaveBeenCalledWith(
+    '/api/org/users/search',
+    {
+      perpage: 30,
+      page: 0,
+      query: 'bob',
+      accesscontrol: true,
+    },
+    'org-users-list'
+  );
+  expect(screen.queryByText('No users found')).not.toBeInTheDocument();
+  const bob = { ...alice, userId: 2, uid: 'bob', login: 'bob', name: 'Bob', email: 'bob@example.com' };
+  await act(async () => finish({ ...usersPage, orgUsers: [bob] }));
+  expect(screen.getByRole('cell', { name: 'Bob' })).toBeVisible();
+  expect(screen.queryByText('No users found')).not.toBeInTheDocument();
+});

@@ -1,6 +1,6 @@
 import { debounce } from 'lodash';
 
-import { getBackendSrv } from '@grafana/runtime';
+import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { type FetchDataArgs } from '@grafana/ui';
 import { canLoadUserRoles, getOrgUsers, withUserRoles } from 'app/features/admin/Users/utils';
 import { type ThunkResult } from 'app/types/store';
@@ -17,23 +17,32 @@ import {
   rolesFetchEnd,
 } from './reducers';
 
+// Share the cancellation group across both stages so a new search also cancels old role loading.
+const usersRequestId = 'org-users-list';
+
 export function loadUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
+    let rolesRequested = false;
     try {
       dispatch(usersFetchBegin());
       const { perPage, page, searchQuery, sort } = getState().users;
-      const users = await getOrgUsers({ perPage, page, query: searchQuery, sort });
+      const users = await getOrgUsers({ perPage, page, query: searchQuery, sort }, usersRequestId);
       let { orgUsers } = users;
       if (canLoadUserRoles(orgUsers)) {
+        rolesRequested = true;
         dispatch(rolesFetchBegin());
-        try {
-          orgUsers = await withUserRoles(orgUsers);
-        } finally {
-          dispatch(rolesFetchEnd());
-        }
+        orgUsers = await withUserRoles(orgUsers, usersRequestId);
+        dispatch(rolesFetchEnd());
       }
       dispatch(usersLoaded({ ...users, orgUsers }));
     } catch (error) {
+      // Do not clear the replacement request's loading indicators or results on cancellation.
+      if (isFetchError(error) && error.cancelled) {
+        return;
+      }
+      if (rolesRequested) {
+        dispatch(rolesFetchEnd());
+      }
       dispatch(usersFetchEnd());
     }
   };

@@ -52,7 +52,7 @@ const usersSlice = createSlice({
       sort: action.payload,
     }),
     usersFetchBegin: (state) => {
-      return { ...state, isLoading: true };
+      return { ...state, isLoading: true, rolesLoading: false };
     },
     usersFetchEnd: (state) => {
       return { ...state, isLoading: false, users: [], totalPages: 0 };

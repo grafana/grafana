@@ -97,7 +97,9 @@ it('exports all users from the toolbar between filters and New user using the cu
     )
   );
   expect(get).toHaveBeenCalledWith(
-    '/api/users/search?perpage=1000&page=1&query=alice&activeLast30Days=true&sort=email-desc'
+    '/api/users/search?perpage=1000&page=1&query=alice&activeLast30Days=true&sort=email-desc',
+    undefined,
+    undefined
   );
 });
 
@@ -117,13 +119,17 @@ it('exports organization users with the current search and hides the button for 
       { autoBom: true }
     )
   );
-  expect(get).toHaveBeenCalledWith('/api/org/users/search', {
-    perpage: 1000,
-    page: 1,
-    query: 'saml',
-    sort: 'login-desc',
-    accesscontrol: true,
-  });
+  expect(get).toHaveBeenCalledWith(
+    '/api/org/users/search',
+    {
+      perpage: 1000,
+      page: 1,
+      query: 'saml',
+      sort: 'login-desc',
+      accesscontrol: true,
+    },
+    undefined
+  );
 
   rerender(<UsersActionBar showInvites={true} onShowInvites={jest.fn()} />);
   expect(screen.queryByRole('button', { name: 'Download table as CSV' })).not.toBeInTheDocument();

@@ -46,7 +46,11 @@ it('disables the button while gathering pages and enables it after the download'
   expect(exportingButton).toHaveAttribute('aria-disabled', 'true');
   await userEvent.click(exportingButton);
   expect(get).toHaveBeenCalledTimes(1);
-  expect(get).toHaveBeenCalledWith('/api/users/search?perpage=1000&page=1&query=alice&sort=login-asc');
+  expect(get).toHaveBeenCalledWith(
+    '/api/users/search?perpage=1000&page=1&query=alice&sort=login-asc',
+    undefined,
+    undefined
+  );
   expect(saveAs).not.toHaveBeenCalled();
 
   await act(async () => finish({ users: [], totalCount: 0 }));

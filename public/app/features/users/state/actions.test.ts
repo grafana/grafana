@@ -48,17 +48,25 @@ it('loads the requested table page with custom roles and pagination metadata', a
 
   await store.dispatch(loadUsers());
 
-  expect(get).toHaveBeenCalledWith('/api/org/users/search', {
-    perpage: 30,
-    page: 2,
-    query: 'alice',
-    sort: 'email-desc',
-    accesscontrol: true,
-  });
-  expect(post).toHaveBeenCalledWith('/api/access-control/users/roles/search?includeMapped=true', {
-    userIds: [1],
-    orgId: contextSrv.user.orgId,
-  });
+  expect(get).toHaveBeenCalledWith(
+    '/api/org/users/search',
+    {
+      perpage: 30,
+      page: 2,
+      query: 'alice',
+      sort: 'email-desc',
+      accesscontrol: true,
+    },
+    'org-users-list'
+  );
+  expect(post).toHaveBeenCalledWith(
+    '/api/access-control/users/roles/search?includeMapped=true',
+    {
+      userIds: [1],
+      orgId: contextSrv.user.orgId,
+    },
+    { requestId: 'org-users-list' }
+  );
   expect(store.getState().users).toMatchObject({
     users: [{ ...alice, roles: [role] }],
     page: 2,

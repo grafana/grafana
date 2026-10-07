@@ -80,10 +80,14 @@ describe('withUserRoles', () => {
       { ...alice, roles: [role] },
       { ...bob, roles: [] },
     ]);
-    expect(post).toHaveBeenCalledWith('/api/access-control/users/roles/search?includeMapped=true', {
-      userIds: [1, 2],
-      orgId: contextSrv.user.orgId,
-    });
+    expect(post).toHaveBeenCalledWith(
+      '/api/access-control/users/roles/search?includeMapped=true',
+      {
+        userIds: [1, 2],
+        orgId: contextSrv.user.orgId,
+      },
+      { requestId: undefined }
+    );
     expect(users).toEqual([alice, bob]);
   });
 

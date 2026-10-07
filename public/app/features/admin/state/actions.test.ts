@@ -47,7 +47,11 @@ it('only enters loading when the debounced search request starts and stores an e
   expect(store.getState().userListAdmin).toMatchObject({ users: undefined, query: 'alice', isLoading: false });
   expect(get).not.toHaveBeenCalled();
   jest.advanceTimersByTime(500);
-  expect(get).toHaveBeenCalledWith('/api/users/search?perpage=50&page=0&query=alice&activeLast30Days=false');
+  expect(get).toHaveBeenCalledWith(
+    '/api/users/search?perpage=50&page=0&query=alice&activeLast30Days=false',
+    undefined,
+    'all-users-list'
+  );
   expect(store.getState().userListAdmin.isLoading).toBe(true);
 
   finish();
