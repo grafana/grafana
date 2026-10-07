@@ -8,7 +8,6 @@ import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import {
   type QueryEditorCoauthoringAdapterV1,
   type QueryEditorCoauthoringContextV1,
-  type QueryEditorCoauthoringProposalResultV1,
 } from './internalCoauthoringContract';
 import { queryCoauthoringMentionOptions, type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
 import {
@@ -22,12 +21,12 @@ import {
   selectionSummary,
   type QueryExplanation,
   type QueryFallback,
-  type QueryProposal,
 } from './queryCoauthoringPrompts';
 import {
   createQueryCoauthoringRequest,
   type QueryCoauthoringRequestError,
   type QueryCoauthoringRequestOutcome,
+  type PreparedQueryProposal,
 } from './queryCoauthoringRequest';
 import {
   createQueryCoauthoringSessionState,
@@ -46,6 +45,7 @@ import {
   trackQueryCoauthoringOpened,
   trackQueryCoauthoringPromptSubmitted,
   trackQueryCoauthoringProposalAccepted,
+  trackQueryCoauthoringOptionSelected,
 } from './queryCoauthoringTracking';
 import { useQueryCoauthoringInvocation } from './useQueryCoauthoringInvocation';
 
@@ -53,9 +53,10 @@ interface QueryClarification {
   message: string;
 }
 
-interface PreparedQueryProposal extends QueryProposal {
+interface RankedProposal {
   context: QueryEditorCoauthoringContextV1;
-  prepared: Extract<QueryEditorCoauthoringProposalResultV1, { status: 'ready' }>;
+  options: PreparedQueryProposal[];
+  selectedIndex: number;
 }
 
 interface StagedFallback extends QueryFallback {
@@ -102,7 +103,8 @@ export type QueryCoauthoringSessionState =
   | {
       kind: 'proposal';
       isPreviewRunning: boolean;
-      proposal: PreparedQueryProposal;
+      proposal: RankedProposal;
+      selectOption(index: number): void;
       accept(): void;
       continueInAssistant(): void;
       setFeedback(feedback: QueryCoauthoringFeedbackState): void;
@@ -149,6 +151,7 @@ export function useQueryCoauthoringSession({
     contextError,
     loadContext,
     readContext,
+    readBaseline,
   } = useQueryCoauthoringInvocation({
     adapter,
     invocationId,
@@ -179,7 +182,17 @@ export function useQueryCoauthoringSession({
     send({ type: 'intent-changed', intent, caret });
   };
   const setFeedback = (feedback: QueryCoauthoringFeedbackState): void => {
-    send({ type: 'feedback-changed', feedback });
+    send({
+      type: 'feedback-changed',
+      feedback:
+        proposal && feedback.outcome === 'proposal'
+          ? {
+              ...feedback,
+              selectedOptionRank: proposal.selectedIndex + 1,
+              optionCount: proposal.options.length,
+            }
+          : feedback,
+    });
   };
 
   useEffect(() => {
@@ -318,7 +331,7 @@ export function useQueryCoauthoringSession({
       if (outcome.status !== 'proposal') {
         return;
       }
-      if (!onPreview(outcome.prepared.query)) {
+      if (!onPreview(outcome.options[0].prepared.query)) {
         send({
           type: 'preview-failed',
           error: {
@@ -397,10 +410,12 @@ export function useQueryCoauthoringSession({
   };
 
   const accept = useCallback(() => {
-    if (!proposal) {
+    const current = sessionRef.current;
+    const selected = current.kind === 'proposal' ? current.proposal.options[current.proposal.selectedIndex] : undefined;
+    if (!selected) {
       return;
     }
-    if (!onAccept(proposal.prepared.query)) {
+    if (!onAccept(selected.prepared.query)) {
       send({
         type: 'accept-failed',
         error: {
@@ -417,7 +432,34 @@ export function useQueryCoauthoringSession({
     previewActiveRef.current = false;
     trackQueryCoauthoringProposalAccepted({ datasourceType });
     dismiss();
-  }, [datasourceType, dismiss, onAccept, proposal, send]);
+  }, [datasourceType, dismiss, onAccept, send]);
+
+  const selectOption = (index: number) => {
+    const current = sessionRef.current;
+    if (current.kind !== 'proposal') {
+      return;
+    }
+    const proposal = current.proposal;
+    if (index < -1 || index >= proposal.options.length || index === proposal.selectedIndex) {
+      return;
+    }
+    const query = index < 0 ? readBaseline() : proposal.options[index].prepared.query;
+    if (!query || !onPreview(query)) {
+      send({
+        type: 'preview-failed',
+        error: {
+          message: t(
+            'query-editor-coauthoring.error-preview-failed',
+            'The query proposal could not be previewed. Try again.'
+          ),
+          retryable: true,
+        },
+      });
+      return;
+    }
+    send({ type: 'option-selected', index });
+    trackQueryCoauthoringOptionSelected(index + 1);
+  };
 
   const continueInAssistant = (sourceState: QueryCoauthoringHandoffSource, reason?: string) => {
     const activeContext = proposal?.context ?? fallback?.context ?? context;
@@ -505,6 +547,7 @@ export function useQueryCoauthoringSession({
         kind: 'proposal',
         isPreviewRunning: session.isPreviewRunning,
         proposal: session.proposal,
+        selectOption,
         accept,
         continueInAssistant: () => continueInAssistant('proposal'),
         setFeedback,

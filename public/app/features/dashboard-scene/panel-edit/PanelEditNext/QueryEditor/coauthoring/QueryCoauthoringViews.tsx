@@ -13,7 +13,7 @@ import {
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Icon, IconButton, Portal, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
@@ -451,6 +451,10 @@ export function QueryCoauthoringFallback({ reason, onClose, onFeedback, onContin
 interface ProposalProps {
   why: string[];
   changes: QueryEditorCoauthoringChangeV1[];
+  unconfirmedValues?: string[];
+  optionCount: number;
+  selectedIndex: number;
+  onSelect: (index: number) => void;
   isPreviewRunning: boolean;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
   onClose: () => void;
@@ -461,6 +465,10 @@ interface ProposalProps {
 export function QueryCoauthoringProposal({
   why,
   changes,
+  unconfirmedValues,
+  optionCount,
+  selectedIndex,
+  onSelect,
   isPreviewRunning,
   onFeedback,
   onClose,
@@ -468,8 +476,58 @@ export function QueryCoauthoringProposal({
   onAccept,
 }: ProposalProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
+  const acceptButton = (
+    <Button className={styles.compactButton} size="sm" icon="check" onClick={onAccept} disabled={selectedIndex < 0}>
+      <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
+    </Button>
+  );
   return (
     <div className={styles.proposal}>
+      <div
+        role="tablist"
+        tabIndex={-1}
+        aria-label={t('query-editor-coauthoring.options', 'Query options')}
+        className={styles.footerActions}
+        onKeyDown={(event) => {
+          let next: number;
+          switch (event.key) {
+            case 'ArrowRight':
+              next = selectedIndex === optionCount - 1 ? -1 : selectedIndex + 1;
+              break;
+            case 'ArrowLeft':
+              next = selectedIndex === -1 ? optionCount - 1 : selectedIndex - 1;
+              break;
+            case 'Home':
+              next = -1;
+              break;
+            case 'End':
+              next = optionCount - 1;
+              break;
+            default:
+              return;
+          }
+          event.preventDefault();
+          onSelect(next);
+          event.currentTarget.querySelector<HTMLButtonElement>(`[data-option-index="${next}"]`)?.focus();
+        }}
+      >
+        {Array.from({ length: optionCount + 1 }, (_, rank) => (
+          <Button
+            key={rank}
+            size="sm"
+            variant="secondary"
+            role="tab"
+            data-option-index={rank - 1}
+            aria-selected={selectedIndex === rank - 1}
+            tabIndex={selectedIndex === rank - 1 ? 0 : -1}
+            onClick={() => onSelect(rank - 1)}
+          >
+            {rank === 0
+              ? t('query-editor-coauthoring.original', 'Original')
+              : t('query-editor-coauthoring.option', 'Option {{rank}}', { rank })}
+          </Button>
+        ))}
+      </div>
       <QueryCoauthoringHeader onClose={onClose} pulse={isPreviewRunning}>
         <QueryCoauthoringLiveStatus>
           {isPreviewRunning ? (
@@ -492,12 +550,24 @@ export function QueryCoauthoringProposal({
       >
         <div className={styles.proposalBody}>
           <Text variant="body" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.suggestion-updated">Suggestion updated</Trans>
+            {selectedIndex < 0
+              ? t('query-editor-coauthoring.original-query', 'Original query')
+              : t('query-editor-coauthoring.suggestion-updated', 'Suggestion updated')}
           </Text>
           {why.map((reason, index) => (
             <Text variant="body" key={index}>
               {reason}
             </Text>
+          ))}
+          {unconfirmedValues?.map((value, index) => (
+            <div key={index}>
+              <Icon
+                name="exclamation-triangle"
+                size="sm"
+                title={t('query-editor-coauthoring.unconfirmed-value', 'Unconfirmed filter value')}
+              />{' '}
+              <Text variant="body">{value}</Text>
+            </div>
           ))}
         </div>
         {changes.length > 0 && (
@@ -541,11 +611,15 @@ export function QueryCoauthoringProposal({
             <Trans i18nKey="query-editor-coauthoring.cancel">Cancel</Trans>
           </Button>
           <Button className={styles.compactButton} size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
-            <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in chat</Trans>
+            <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
           </Button>
-          <Button className={styles.compactButton} size="sm" icon="check" onClick={onAccept}>
-            <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
-          </Button>
+          {selectedIndex < 0 ? (
+            <Tooltip content={t('query-editor-coauthoring.select-to-accept', 'Select an option to accept')}>
+              <span>{acceptButton}</span>
+            </Tooltip>
+          ) : (
+            acceptButton
+          )}
         </div>
       </div>
     </div>
