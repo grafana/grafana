@@ -110,7 +110,7 @@ func (r *VersionPolicyRegistry) Validate(resourceChecker ResourceEnabledChecker)
 	for _, layer := range r.base {
 		for group, p := range layer {
 			if !r.resolver.hasGroup(group) {
-				logger.Warn("ignoring version policy for group not registered on this instance", "group", group)
+				logger().Warn("ignoring version policy for group not registered on this instance", "group", group)
 				continue
 			}
 			if p.PreferredVersion != "" && !r.resolver.isRegistered(group, p.PreferredVersion) {
@@ -138,12 +138,12 @@ func (r *VersionPolicyRegistry) Validate(resourceChecker ResourceEnabledChecker)
 			continue
 		}
 		if resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: p.MaxAllowedVersion}.WithResource("")) {
-			logger.Warn("maxAllowedVersion is registered but disabled; the cap version itself is unreachable via the API",
+			logger().Warn("maxAllowedVersion is registered but disabled; the cap version itself is unreachable via the API",
 				"group", group, "version", p.MaxAllowedVersion)
 		}
 		advertised := p.PreferredVersion
 		if advertised != "" && resourceChecker != nil && !resourceChecker.ResourceEnabled(schema.GroupVersion{Group: group, Version: advertised}.WithResource("")) {
-			logger.Warn("ApplyPreferredForGroup skips the preferred resource version because it is disabled",
+			logger().Warn("ApplyPreferredForGroup skips the preferred resource version because it is disabled",
 				"group", group, "version", advertised)
 			advertised = ""
 		}
