@@ -1,21 +1,13 @@
 import { css } from '@emotion/css';
 import yaml from 'js-yaml';
-import type * as MonacoEditorModule from 'monaco-editor';
-import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import {
-  CodeEditor,
-  RadioButtonGroup,
-  Spinner,
-  Stack,
-  Tooltip,
-  useStyles2,
-  type Monaco,
-  type MonacoEditor,
-} from '@grafana/ui';
+import { RadioButtonGroup, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 
+import { createDashboardSchemaExtensions, createDashboardSchemaValidator } from './dashboardSchemaExtensions';
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
 export type SchemaEditorFormat = 'json' | 'yaml';
@@ -23,9 +15,6 @@ export type SchemaEditorFormat = 'json' | 'yaml';
 interface JSONSchema {
   [key: string]: unknown;
 }
-
-// Internal Monaco schema registry key -- not a real URL
-const SCHEMA_URI = 'http://grafana.com/schemas/dashboard-v2.json';
 
 export interface DashboardSchemaEditorProps {
   /** The JSON value to edit */
@@ -70,13 +59,6 @@ export function DashboardSchemaEditor({
   const [yamlParseError, setYamlParseError] = useState<string | null>(null);
   const [localYamlContent, setLocalYamlContent] = useState<string | null>(null);
 
-  const monacoRef = useRef<Monaco | null>(null);
-  const editorRef = useRef<MonacoEditor | null>(null);
-  const schemaRef = useRef<JSONSchema | null>(null);
-  const disposablesRef = useRef<{ dispose: () => void } | null>(null);
-
-  schemaRef.current = schema;
-
   const formatOptions: Array<{ label: string; value: SchemaEditorFormat }> = [
     { label: t('dashboard-scene.resource-export.label.json', 'JSON'), value: 'json' },
     { label: t('dashboard-scene.resource-export.label.yaml', 'YAML'), value: 'yaml' },
@@ -100,26 +82,35 @@ export function DashboardSchemaEditor({
     }
   }, [value, format, localYamlContent]);
 
+  const validate = useMemo(() => createDashboardSchemaValidator(schema ?? {}), [schema]);
+  const extensions = useMemo(() => createDashboardSchemaExtensions(schema ?? {}, { format }), [schema, format]);
+
+  // Diff/content overrides unmount the editor, so validation belongs to the buffer,
+  // rather than the lifetime of a CodeMirror view.
+  useEffect(() => {
+    onValidationChange?.(isSchemaLoading || validate(displayValue, format).hasErrors);
+  }, [displayValue, format, isSchemaLoading, validate, onValidationChange]);
+
   const handleFormatChange = useCallback(
     (newFormat: SchemaEditorFormat) => {
       if (newFormat === 'yaml' && !isValidJson(value)) {
         return;
       }
       if (newFormat === 'json' && localYamlContent !== null) {
-        try {
-          onChange?.(JSON.stringify(yaml.load(localYamlContent), null, 2));
-        } catch (e) {
-          setYamlParseError(e instanceof Error ? e.message : 'Invalid YAML');
+        const result = validate(localYamlContent, 'yaml');
+        if (result.hasParseError) {
+          setYamlParseError(result.diagnostics[0].message);
           onValidationChange?.(true);
           return;
         }
+        onChange?.(result.json!);
       }
       setFormat(newFormat);
       setYamlParseError(null);
       setLocalYamlContent(null);
       onFormatChange?.(newFormat);
     },
-    [localYamlContent, value, onChange, onValidationChange, onFormatChange]
+    [localYamlContent, value, onChange, onValidationChange, onFormatChange, validate]
   );
 
   useEffect(() => {
@@ -131,91 +122,15 @@ export function DashboardSchemaEditor({
       .catch(() => setIsSchemaLoading(false));
   }, []);
 
-  const checkValidationErrors = useCallback(() => {
-    const monaco = monacoRef.current;
-    const model = editorRef.current?.getModel();
-    if (!monaco || !model) {
-      return;
-    }
-    const markers = monaco.editor.getModelMarkers({ resource: model.uri });
-    const hasErrors = markers.some((m) => m.severity === monaco.MarkerSeverity.Error);
-    onValidationChange?.(hasErrors);
-  }, [onValidationChange]);
-
-  useEffect(() => {
-    if (yamlParseError) {
-      onValidationChange?.(true);
-    }
-  }, [yamlParseError, onValidationChange]);
-
-  // A YAML parse error means `value` no longer reflects the buffer on screen - consumers that
-  // derive views from `value` (e.g. the diff) need to know.
+  // A YAML parse error means `value` no longer reflects the buffer on screen.
   useEffect(() => {
     onParseErrorChange?.(yamlParseError !== null);
   }, [yamlParseError, onParseErrorChange]);
 
-  // Validate YAML by creating a hidden JSON model with schema validation
-  useEffect(() => {
-    if (format !== 'yaml' || yamlParseError || !schema) {
-      return;
-    }
-    let disposed = false;
-    import('monaco-editor').then((monaco) => {
-      if (disposed) {
-        return;
-      }
-      const uri = monaco.Uri.parse('inmemory://yaml-validation-' + Date.now() + '.json');
-      const tempModel = monaco.editor.createModel(value, 'json', uri);
-      configureSchemaDiagnostics(monaco, schema);
-
-      setTimeout(() => {
-        if (!disposed) {
-          const markers = monaco.editor.getModelMarkers({ resource: tempModel.uri });
-          onValidationChange?.(markers.some((m) => m.severity === monaco.MarkerSeverity.Error));
-        }
-        tempModel.dispose();
-      }, 150);
-    });
-    return () => {
-      disposed = true;
-    };
-  }, [format, yamlParseError, schema, value, onValidationChange]);
-
-  const handleEditorDidMount = useCallback(
-    (editor: MonacoEditor, monaco: Monaco) => {
-      editorRef.current = editor;
-      monacoRef.current = monaco;
-
-      if (schemaRef.current) {
-        configureSchemaDiagnostics(monaco, schemaRef.current);
-      }
-
-      const markerListener = monaco.editor.onDidChangeMarkers((uris) => {
-        const model = editor.getModel();
-        if (model && uris.some((u) => u.toString() === model.uri.toString())) {
-          checkValidationErrors();
-        }
-      });
-      const contentListener = editor.onDidChangeModelContent(() => {
-        setTimeout(checkValidationErrors, 200);
-      });
-
-      disposablesRef.current = {
-        dispose: () => {
-          markerListener.dispose();
-          contentListener.dispose();
-        },
-      };
-
-      setTimeout(checkValidationErrors, 100);
-    },
-    [checkValidationErrors]
-  );
-
-  useEffect(() => () => disposablesRef.current?.dispose(), []);
-
   const handleChange = useCallback(
     (newValue: string) => {
+      const result = validate(newValue, format);
+      onValidationChange?.(isSchemaLoading || result.hasErrors);
       if (format === 'json') {
         setYamlParseError(null);
         setLocalYamlContent(null);
@@ -223,15 +138,14 @@ export function DashboardSchemaEditor({
         return;
       }
       setLocalYamlContent(newValue);
-      try {
-        setYamlParseError(null);
-        onChange?.(JSON.stringify(yaml.load(newValue), null, 2));
-      } catch (e) {
-        setYamlParseError(e instanceof Error ? e.message : 'Invalid YAML');
-        onValidationChange?.(true);
+      if (result.hasParseError) {
+        setYamlParseError(result.diagnostics[0].message);
+        return;
       }
+      setYamlParseError(null);
+      onChange?.(result.json!);
     },
-    [format, onChange, onValidationChange]
+    [format, isSchemaLoading, onChange, onValidationChange, validate]
   );
 
   const wrapperClassName = containerStyles ? `${styles.wrapper} ${containerStyles}` : styles.wrapper;
@@ -280,23 +194,18 @@ export function DashboardSchemaEditor({
       )}
       <div className={styles.editorContainer}>
         {contentOverride ?? (
-          <CodeEditor
-            key={format}
-            width="100%"
-            height="100%"
-            value={displayValue}
-            language={format}
-            showLineNumbers={true}
-            showMiniMap={true}
-            readOnly={readOnly}
-            containerStyles={styles.codeEditorContainer}
-            onBeforeEditorMount={(monaco) => {
-              monacoRef.current = monaco;
-            }}
-            onEditorDidMount={format === 'json' ? handleEditorDidMount : undefined}
-            onChange={handleChange}
-            monacoOptions={{ hover: { enabled: true, delay: 300 }, overviewRulerLanes: 3, fixedOverflowWidgets: false }}
-          />
+          <div className={styles.codeEditorContainer}>
+            <CodeMirrorEditor
+              key={format}
+              height="100%"
+              value={displayValue}
+              language={format}
+              extensions={extensions}
+              readOnly={readOnly}
+              aria-label={t('dashboard-schema-editor.editor-label', 'Dashboard schema')}
+              onChange={handleChange}
+            />
+          </div>
         )}
       </div>
     </div>
@@ -310,15 +219,6 @@ function isValidJson(value: string): boolean {
   } catch {
     return false;
   }
-}
-
-function configureSchemaDiagnostics(monaco: typeof MonacoEditorModule, schema: JSONSchema): void {
-  monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-    validate: true,
-    allowComments: false,
-    schemaValidation: 'error',
-    schemas: [{ uri: SCHEMA_URI, fileMatch: ['*'], schema }],
-  });
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
@@ -345,6 +245,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     flexDirection: 'column',
   }),
   codeEditorContainer: css({
+    height: '100%',
     flex: '1 1 0',
     minHeight: 0,
     overflow: 'visible',

@@ -7949,6 +7949,7 @@
     "support-bundle": "You can also retrieve a support bundle containing information concerning your Grafana instance and configured datasources in the <1>support bundles section</1>."
   },
   "dashboard-schema-editor": {
+    "editor-label": "Dashboard schema",
     "json-disabled-tooltip": "Fix YAML syntax errors to switch to JSON",
     "yaml-disabled-tooltip": "Fix JSON syntax errors to switch to YAML"
   },

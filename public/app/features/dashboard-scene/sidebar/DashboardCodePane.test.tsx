@@ -1,35 +1,54 @@
-import { render, screen } from '@testing-library/react';
+/** @jest-environment-options {"customExportConditions": ["@grafana-app/source", "node", "node-addons"]} */
+
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactNode } from 'react';
 
 import { Sidebar, useSidebar } from '@grafana/ui';
 
+import { DashboardSchemaEditor } from '../v2schema/DashboardSchemaEditor';
+
 import { DashboardCodePane } from './DashboardCodePane';
-import { getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
+import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
 
 jest.mock('../utils/utils', () => ({
   getDashboardSceneFor: jest.fn(() => ({})),
 }));
 
 jest.mock('../v2schema/DashboardSchemaEditor', () => ({
-  DashboardSchemaEditor: ({
-    headerActions,
-    headerLeftActions,
-    contentOverride,
-    onParseErrorChange,
-  }: {
-    headerActions?: ReactNode;
-    headerLeftActions?: ReactNode;
-    contentOverride?: ReactNode;
-    onParseErrorChange?: (hasParseError: boolean) => void;
-  }) => (
-    <div data-testid="schema-editor">
-      {headerLeftActions}
-      {headerActions}
-      {contentOverride ?? <div data-testid="code-editor" />}
-      <button data-testid="trigger-parse-error" onClick={() => onParseErrorChange?.(true)} />
-    </div>
+  DashboardSchemaEditor: jest.fn(
+    ({
+      headerActions,
+      headerLeftActions,
+      contentOverride,
+      onParseErrorChange,
+    }: {
+      headerActions?: ReactNode;
+      headerLeftActions?: ReactNode;
+      contentOverride?: ReactNode;
+      onParseErrorChange?: (hasParseError: boolean) => void;
+    }) => (
+      <div data-testid="schema-editor">
+        {headerLeftActions}
+        {headerActions}
+        {contentOverride ?? <div data-testid="code-editor" />}
+        <button data-testid="trigger-parse-error" onClick={() => onParseErrorChange?.(true)} />
+      </div>
+    )
   ),
+}));
+
+jest.mock('../v2schema/dashboardSchemaFetcher', () => ({
+  fetchDashboardSchema: jest.fn().mockResolvedValue({
+    type: 'object',
+    required: ['spec'],
+    properties: { spec: { type: 'object', required: ['title'], properties: { title: { type: 'string' } } } },
+  }),
+}));
+
+// Shiki's ESM/WASM tooltip renderer cannot run in Jest's CommonJS environment.
+jest.mock(require.resolve('codemirror-json-schema').replace('index.js', 'utils/markdown.js'), () => ({
+  renderMarkdown: (text: string) => text,
 }));
 
 jest.mock('app/core/components/MonacoDiffEditor/MonacoDiffEditor', () => ({
@@ -153,5 +172,67 @@ describe('DashboardCodePane', () => {
 
     expect(screen.getByText(/migration to the new dashboard format/)).toBeInTheDocument();
     expect(screen.getByTestId('diff-viewer')).toBeInTheDocument();
+  });
+});
+
+describe('DashboardCodePane CodeMirror editing', () => {
+  const mockEditor = jest.mocked(DashboardSchemaEditor);
+  const defaultEditorImplementation = mockEditor.getMockImplementation()!;
+
+  beforeEach(() => {
+    mockEditor.mockImplementation(jest.requireActual('../v2schema/DashboardSchemaEditor').DashboardSchemaEditor);
+    jest.mocked(getDashboardResourceText).mockReturnValue('{"spec":{"title":"Original"}}');
+    jest.mocked(applyJsonToDashboard).mockClear();
+  });
+
+  afterEach(() => {
+    mockEditor.mockImplementation(defaultEditorImplementation);
+  });
+
+  it('applies current edits in the expanded editor and blocks invalid JSON/YAML', async () => {
+    const user = userEvent.setup();
+    setup();
+    const apply = await screen.findByRole('button', { name: 'Apply changes' });
+    await waitFor(() => expect(apply).toBeEnabled());
+    await user.click(await screen.findByRole('textbox', { name: 'Dashboard schema' }));
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('{"spec":{"title":"Edited"}}');
+    await user.click(screen.getByRole('button', { name: 'Expand editor' }));
+    expect(await screen.findByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('Edited');
+    const modal = within(screen.getByRole('dialog'));
+    await waitFor(() => expect(modal.getByRole('button', { name: 'Apply changes' })).toBeEnabled());
+    await user.click(modal.getByRole('button', { name: 'Apply changes' }));
+    expect(applyJsonToDashboard).toHaveBeenLastCalledWith({}, '{"spec":{"title":"Edited"}}');
+    await user.click(modal.getByRole('button', { name: 'Collapse editor' }));
+    expect(await screen.findByRole('textbox', { name: 'Dashboard schema' })).toHaveTextContent('Edited');
+
+    await user.click(screen.getByRole('textbox', { name: 'Dashboard schema' }));
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('{');
+    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Show diff' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'YAML' })).toBeDisabled();
+
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('{"spec":{"title":"Edited"}}');
+    await user.click(screen.getByRole('radio', { name: 'YAML' }));
+    await user.click(await screen.findByRole('textbox', { name: 'Dashboard schema' }));
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('spec:\n  title: 123');
+    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'JSON' })).toBeEnabled();
+
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('spec: [');
+    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'Show diff' })).toBeDisabled();
+    expect(screen.getByRole('radio', { name: 'JSON' })).toBeDisabled();
+
+    await user.keyboard('{Control>}a{/Control}');
+    await user.paste('spec:\n  title: YAML edit');
+    expect(screen.getByRole('button', { name: 'Apply changes' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Apply changes' }));
+    expect(applyJsonToDashboard).toHaveBeenLastCalledWith({}, '{\n  "spec": {\n    "title": "YAML edit"\n  }\n}');
+    expect(screen.getByRole('switch', { name: 'Show diff' })).toBeEnabled();
   });
 });
