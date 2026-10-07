@@ -35,10 +35,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 
+	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
 	rbacstore "github.com/grafana/grafana/pkg/services/authz/rbac/store"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -798,6 +800,285 @@ func TestIntegrationRBACParityDashboardWildcardCreate(t *testing.T) {
 					})
 				})
 			}
+		})
+	}
+}
+
+// ---------------------------------------------------------------------------
+// Notebook creation parity
+// ---------------------------------------------------------------------------
+
+func TestIntegrationRBACParityNotebookCreate(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	notebooks := dashv2beta1.NotebookResourceInfo.GroupResource()
+	type creationGrant struct {
+		action  string
+		allowed bool
+	}
+	scopes := []struct {
+		scope    string
+		wildcard bool
+	}{
+		{"folders:uid:parent", false},
+		{"folders:uid:*", true},
+		{"notebooks:uid:*", true},
+	}
+	srv := setupOpenFGAServer(t)
+	namespaceIndex := 0
+	for _, scope := range scopes {
+		t.Run(scope.scope, func(t *testing.T) {
+			grants := []creationGrant{
+				{"notebooks:view", false},
+				{"notebooks:edit", false},
+				{"notebooks:admin", false},
+				{"notebooks:create", true},
+			}
+			if !scope.wildcard {
+				grants = append(grants,
+					creationGrant{"folders:view", false},
+					creationGrant{"folders:edit", true},
+					creationGrant{"folders:admin", true},
+					creationGrant{"folders:create", false},
+				)
+			}
+			for _, grant := range grants {
+				t.Run(grant.action, func(t *testing.T) {
+					ns := parityNamespace(namespaceIndex)
+					namespaceIndex++
+					permissions := []accesscontrol.Permission{{Action: grant.action, Scope: scope.scope}}
+					folders := []rbacstore.Folder{{UID: "parent"}, {UID: "child", ParentUID: new("parent")}, {UID: "unrelated"}}
+					rbacService := rbac.NewTestService(parityUserUID, permissions, folders)
+					writeParityTuples(t, srv, ns, permissions, folders)
+
+					targets := []struct {
+						name    string
+						folder  string
+						allowed bool
+					}{
+						{"parent", "parent", grant.allowed},
+						{"child", "child", grant.allowed},
+						{"unrelated", "unrelated", grant.allowed && scope.wildcard},
+						{"root", "", grant.allowed && scope.wildcard},
+					}
+					t.Run("Check", func(t *testing.T) {
+						for _, target := range targets {
+							t.Run(target.name, func(t *testing.T) {
+								req := parityCheckReq(notebooks.Group, notebooks.Resource, "", utils.VerbCreate, "", target.folder)
+								rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, ns))
+								require.NoError(t, err)
+								require.Equal(t, target.allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+								zanzanaRes, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, ns))
+								require.NoError(t, err)
+								assert.Equal(t, target.allowed, zanzanaRes.GetAllowed(), "Zanzana diverges from RBAC")
+							})
+						}
+					})
+					t.Run("List", func(t *testing.T) {
+						expected := parityListResult{}
+						if grant.allowed {
+							if scope.wildcard {
+								expected.All = true
+							} else {
+								expected.Folders = []string{"parent", "child"}
+							}
+						}
+						req := parityListReq(notebooks.Group, notebooks.Resource, "", utils.VerbCreate)
+						rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, ns))
+						require.NoError(t, err)
+						require.Equal(t, normalizeParityList(expected), toParityListResult(rbacRes), "RBAC answer changed")
+						zanzanaRes, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, ns))
+						require.NoError(t, err)
+						assert.Equal(t, normalizeParityList(expected), toParityListResult(zanzanaRes), "Zanzana diverges from RBAC")
+					})
+					t.Run("BatchCheck", func(t *testing.T) {
+						req := &authzv1.BatchCheckRequest{Namespace: ns, Subject: paritySubject}
+						for _, target := range targets {
+							req.Checks = append(req.Checks, &authzv1.BatchCheckItem{
+								CorrelationId: target.name,
+								Group:         notebooks.Group,
+								Resource:      notebooks.Resource,
+								Verb:          utils.VerbCreate,
+								Folder:        target.folder,
+							})
+						}
+						rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						require.Len(t, rbacRes.GetResults(), len(targets))
+						zanzanaRes, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						require.Len(t, zanzanaRes.GetResults(), len(targets))
+						for _, target := range targets {
+							t.Run(target.name, func(t *testing.T) {
+								require.Contains(t, rbacRes.GetResults(), target.name)
+								require.Contains(t, zanzanaRes.GetResults(), target.name)
+								rbacResult := rbacRes.GetResults()[target.name]
+								zanzanaResult := zanzanaRes.GetResults()[target.name]
+								require.Empty(t, rbacResult.GetError())
+								require.Empty(t, zanzanaResult.GetError())
+								require.Equal(t, target.allowed, rbacResult.GetAllowed(), "RBAC answer changed")
+								assert.Equal(t, target.allowed, zanzanaResult.GetAllowed(), "Zanzana diverges from RBAC")
+							})
+						}
+					})
+				})
+			}
+		})
+	}
+}
+
+// Base-resource action sets require explicit creation grants, while subresource
+// action sets retain their existing behavior.
+func TestIntegrationZanzanaCreatePolicy(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	cases := []struct {
+		resource    string
+		subresource string
+		relation    string
+		allowed     bool
+	}{
+		{"variables", "", common.RelationSetEdit, false},
+		{"variables", "", common.RelationSetAdmin, false},
+		{"variables", "", common.RelationCreate, true},
+		{"dashboards", "annotations", common.RelationSetEdit, true},
+		{"dashboards", "annotations", common.RelationSetAdmin, true},
+		{"dashboards", "annotations", common.RelationCreate, true},
+	}
+	for _, tc := range cases {
+		for _, scope := range []string{"global", "folder"} {
+			t.Run(tc.resource+"/"+tc.subresource+"/"+tc.relation+"/"+scope, func(t *testing.T) {
+				srv := setupOpenFGAServer(t)
+				tuple := common.NewGroupResourceTuple(paritySubject, tc.relation, dashboardGroup, tc.resource, tc.subresource)
+				expectedList := parityListResult{}
+				if scope == "folder" {
+					tuple = common.NewFolderResourceTuple(paritySubject, tc.relation, dashboardGroup, tc.resource, tc.subresource, "parent")
+					if tc.allowed {
+						expectedList.Folders = []string{"parent", "child"}
+					}
+				} else {
+					expectedList.All = tc.allowed
+				}
+				setupOpenFGADatabase(t, srv, []*openfgav1.TupleKey{
+					tuple,
+					common.NewFolderParentTuple("child", "parent"),
+				})
+
+				t.Run("Check", func(t *testing.T) {
+					req := parityCheckReq(dashboardGroup, tc.resource, tc.subresource, utils.VerbCreate, "", "child")
+					res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+					require.NoError(t, err)
+					assert.Equal(t, tc.allowed, res.GetAllowed())
+				})
+				t.Run("List", func(t *testing.T) {
+					req := parityListReq(dashboardGroup, tc.resource, tc.subresource, utils.VerbCreate)
+					res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+					require.NoError(t, err)
+					assert.Equal(t, normalizeParityList(expectedList), toParityListResult(res))
+				})
+				t.Run("BatchCheck", func(t *testing.T) {
+					res, err := srv.BatchCheck(newContextWithNamespace(), &authzv1.BatchCheckRequest{
+						Namespace: namespace,
+						Subject:   paritySubject,
+						Checks: []*authzv1.BatchCheckItem{{
+							CorrelationId: "create",
+							Group:         dashboardGroup,
+							Resource:      tc.resource,
+							Subresource:   tc.subresource,
+							Verb:          utils.VerbCreate,
+							Folder:        "child",
+						}},
+					})
+					require.NoError(t, err)
+					require.Len(t, res.GetResults(), 1)
+					require.Contains(t, res.GetResults(), "create")
+					result := res.GetResults()["create"]
+					require.Empty(t, result.GetError())
+					assert.Equal(t, tc.allowed, result.GetAllowed())
+				})
+			})
+		}
+	}
+}
+
+func TestIntegrationRBACParityCreateExceptions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	cases := []struct {
+		name       string
+		permission accesscontrol.Permission
+		group      string
+		resource   string
+		tuples     []*openfgav1.TupleKey
+	}{
+		{
+			name:       "wildcard folder edit",
+			permission: accesscontrol.Permission{Action: "folders:edit", Scope: "folders:uid:*"},
+			group:      folderGroup,
+			resource:   folderResource,
+			tuples:     []*openfgav1.TupleKey{common.NewGroupResourceTuple(paritySubject, common.RelationSetEdit, folderGroup, folderResource, "")},
+		},
+		{
+			name:       "wildcard folder admin",
+			permission: accesscontrol.Permission{Action: "folders:admin", Scope: "folders:uid:*"},
+			group:      folderGroup,
+			resource:   folderResource,
+			tuples:     []*openfgav1.TupleKey{common.NewGroupResourceTuple(paritySubject, common.RelationSetAdmin, folderGroup, folderResource, "")},
+		},
+		{
+			name:       "role management write",
+			permission: accesscontrol.Permission{Action: "roles:write", Scope: "permissions:type:delegate"},
+			group:      "iam.grafana.app",
+			resource:   "roles",
+			tuples: zanzana.RoleManagementToTuples(paritySubject, zanzana.RolePermission{
+				Action: "roles:write", Kind: "permissions", Identifier: "delegate",
+			}),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			srv := setupOpenFGAServer(t)
+			setupOpenFGADatabase(t, srv, tc.tuples)
+			rbacService := rbac.NewTestService(parityUserUID, []accesscontrol.Permission{tc.permission}, nil)
+			t.Run("Check", func(t *testing.T) {
+				req := parityCheckReq(tc.group, tc.resource, "", utils.VerbCreate, "", "")
+				rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+				require.NoError(t, err)
+				require.True(t, rbacRes.GetAllowed())
+				res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+				require.NoError(t, err)
+				assert.True(t, res.GetAllowed())
+			})
+			t.Run("List", func(t *testing.T) {
+				req := parityListReq(tc.group, tc.resource, "", utils.VerbCreate)
+				expected := normalizeParityList(parityListResult{All: true})
+				rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+				require.NoError(t, err)
+				require.Equal(t, expected, toParityListResult(rbacRes))
+				res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+				require.NoError(t, err)
+				assert.Equal(t, expected, toParityListResult(res))
+			})
+			t.Run("BatchCheck", func(t *testing.T) {
+				req := &authzv1.BatchCheckRequest{
+					Namespace: namespace,
+					Subject:   paritySubject,
+					Checks: []*authzv1.BatchCheckItem{{
+						CorrelationId: "create", Group: tc.group, Resource: tc.resource, Verb: utils.VerbCreate,
+					}},
+				}
+				rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+				require.NoError(t, err)
+				res, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(req).(*authzv1.BatchCheckRequest))
+				require.NoError(t, err)
+				for engine, response := range map[string]*authzv1.BatchCheckResponse{"RBAC": rbacRes, "Zanzana": res} {
+					require.Len(t, response.GetResults(), 1, engine)
+					require.Contains(t, response.GetResults(), "create", engine)
+					result := response.GetResults()["create"]
+					require.Empty(t, result.GetError(), engine)
+					assert.True(t, result.GetAllowed(), engine)
+				}
+			})
 		})
 	}
 }
