@@ -707,11 +707,6 @@
       "count": 1
     }
   },
-  "public/app/AppWrapper.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 4
