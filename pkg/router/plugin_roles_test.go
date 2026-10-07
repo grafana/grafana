@@ -1,4 +1,4 @@
-package appplugin
+package router
 
 import (
 	"testing"
@@ -39,7 +39,7 @@ func byName(t *testing.T, regs []ac.RoleRegistration) map[string]ac.RoleRegistra
 // A manifest that declares no roles still has to be usable, so its kinds are
 // granted through the basic roles and folder permissions decide the rest.
 func TestManifestRoleRegistrationsDefaults(t *testing.T) {
-	regs := manifestRoleRegistrations(testRoleGroup, "Example", testManifest(t))
+	regs := manifestRoleRegistrations(testRoleGroup, "Example", roleTestManifest())
 	roles := byName(t, regs)
 
 	reader, ok := roles["fixed:"+testRoleGroup+":reader"]
@@ -62,7 +62,7 @@ func TestManifestRoleRegistrationsDefaults(t *testing.T) {
 
 // A manifest that declares roles gets those, named and bound as it asked.
 func TestManifestRoleRegistrationsFromManifest(t *testing.T) {
-	manifest := testManifest(t)
+	manifest := roleTestManifest()
 	editor := app.ManifestRolePermissionSetEditor
 	manifest.Roles = map[string]app.ManifestRole{
 		"testkind:reader": {
@@ -95,7 +95,7 @@ func TestManifestRoleRegistrationsFromManifest(t *testing.T) {
 // Nothing a manifest can say may produce a registration access control refuses,
 // or one that names an action no check ever asks for.
 func TestManifestRoleRegistrationsSkipsUnusable(t *testing.T) {
-	manifest := testManifest(t)
+	manifest := roleTestManifest()
 	unknownSet := "superuser"
 	manifest.Roles = map[string]app.ManifestRole{
 		"unknown-kind": {
@@ -132,17 +132,24 @@ func TestManifestRoleRegistrationsWithoutResources(t *testing.T) {
 	require.Nil(t, manifestRoleRegistrations(testRoleGroup, "Example", nil),
 		"a plugin without a manifest serves only settings, which storage does not check")
 
-	manifest := testManifest(t)
+	manifest := roleTestManifest()
 	for i := range manifest.Versions {
 		manifest.Versions[i].Served = false
 	}
 	require.Empty(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
 
-	manifest = testManifest(t)
+	manifest = roleTestManifest()
 	for i := range manifest.Versions {
 		for j := range manifest.Versions[i].Kinds {
 			manifest.Versions[i].Kinds[j].Plural = ""
 		}
 	}
 	require.Empty(t, manifestRoleRegistrations(testRoleGroup, "Example", manifest))
+}
+
+func roleTestManifest() *app.ManifestData {
+	return &app.ManifestData{Group: testRoleGroup, Versions: []app.ManifestVersion{
+		{Name: "v1", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced"}}},
+		{Name: "v2", Served: true, Kinds: []app.ManifestVersionKind{{Kind: "TestKind", Plural: "TestKinds", Scope: "Namespaced"}}},
+	}}
 }

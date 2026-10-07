@@ -1,4 +1,4 @@
-package appplugin
+package pluginroute
 
 import (
 	"context"
@@ -17,7 +17,6 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -25,27 +24,29 @@ import (
 )
 
 // testBuilder is a builder over the manifest, served under the group
-// NewAppPluginAPIBuilder would pick for it.
-func testBuilder(t *testing.T, manifest *app.ManifestData) *AppPluginAPIBuilder {
+// NewmanifestBuilder would pick for it.
+func testBuilder(t *testing.T, manifest *app.ManifestData) *manifestBuilder {
 	t.Helper()
 
 	plugin := definition.PluginDefinition{
 		JSONData: plugins.JSONData{ID: "example-app"},
 		Manifest: manifest,
 	}
-	return &AppPluginAPIBuilder{
-		group:           apiGroupForPlugin(plugin),
-		manifest:        manifest,
-		pluginJSON:      plugin.JSONData,
-		client:          struct{ PluginClient }{},
-		contextProvider: struct{ PluginContextWrapper }{},
-		clientV3:        &fakeRouteClient{},
+	group := plugin.JSONData.ID
+	if manifest != nil {
+		group = manifest.Group
+	}
+	return &manifestBuilder{
+		group:      group,
+		manifest:   manifest,
+		pluginJSON: plugin.JSONData,
+		clientV3:   &fakeRouteClient{},
 	}
 }
 
 // testAPIGroupOptions builds what server startup hands UpdateAPIGroupInfo. The
 // storage it registers is never read: only the shape of the resource map matters.
-func testAPIGroupOptions(t *testing.T, b *AppPluginAPIBuilder) (*genericapiserver.APIGroupInfo, builder.APIGroupOptions) {
+func testAPIGroupOptions(t *testing.T, b *manifestBuilder) (*genericapiserver.APIGroupInfo, builder.APIGroupOptions) {
 	t.Helper()
 
 	scheme := runtime.NewScheme()
@@ -97,17 +98,11 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		info, opts := testAPIGroupOptions(t, b)
 		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
 
-		// The settings resource and its subresources are in every version,
-		// whether or not the manifest mentions the version.
-		for _, version := range []string{"v0alpha1", "v1alpha1", "v2alpha1"} {
-			storage := info.VersionedResourcesStorageMap[version]
-			require.Contains(t, storage, apppluginV0.APP_RESOURCE_NAME, "version %s", version)
-			require.Contains(t, storage, apppluginV0.APP_RESOURCE_NAME+"/health", "version %s", version)
-			require.Contains(t, storage, apppluginV0.APP_RESOURCE_NAME+"/resources", "version %s", version)
-			require.NotContains(t, storage, apppluginV0.APP_RESOURCE_NAME+"/proxy",
-				"the proxy is only registered when the plugin declares routes and the toggle is on")
+		for _, storage := range info.VersionedResourcesStorageMap {
+			require.NotContains(t, storage, "app")
+			require.NotContains(t, storage, "app/health")
+			require.NotContains(t, storage, "app/resources")
 		}
-
 		// The plural names the path, lower-cased.
 		require.Contains(t, info.VersionedResourcesStorageMap["v0alpha1"], "testkinds")
 		require.Contains(t, info.VersionedResourcesStorageMap["v1alpha1"], "testkinds")
@@ -128,19 +123,10 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		})
 	})
 
-	t.Run("a plugin without a manifest serves only settings", func(t *testing.T) {
-		b := testBuilder(t, nil)
-		info, opts := testAPIGroupOptions(t, b)
-		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
-
-		require.Len(t, info.VersionedResourcesStorageMap, 1)
-		require.Empty(t, b.kinds)
-	})
-
 	// The apiserver skips a version with no storage, which would take its custom
 	// routes out of discovery and OpenAPI.
 	t.Run("a routes-only version gets placeholder storage", func(t *testing.T) {
-		routesOnly := func(routes app.ManifestVersionRoutes) *AppPluginAPIBuilder {
+		routesOnly := func(routes app.ManifestVersionRoutes) *manifestBuilder {
 			b := testBuilder(t, &app.ManifestData{
 				Group: "example.ext.grafana.app",
 				Versions: []app.ManifestVersion{{
@@ -149,7 +135,6 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 					Routes: routes,
 				}},
 			})
-			b.client = nil // no settings, so the routes are all the version has
 			return b
 		}
 		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}
@@ -173,7 +158,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 	// A kind whose plural collides would silently replace the resource already in
 	// the map, so the API would serve one kind under another kind's path.
 	t.Run("a kind claiming a taken resource is an error", func(t *testing.T) {
-		for _, plural := range []string{apppluginV0.APP_RESOURCE_NAME, "things"} {
+		for _, plural := range []string{"things"} {
 			b := testBuilder(t, &app.ManifestData{
 				Group: "example.ext.grafana.app",
 				Versions: []app.ManifestVersion{{
@@ -310,13 +295,7 @@ func TestUpdateAPIGroupInfoFolderScopeIsPerVersion(t *testing.T) {
 	require.ElementsMatch(t, []string{"v1alpha1", "v2alpha1"}, versions,
 		"each store is identified by the version it serves")
 
-	// One settings store is shared by every served version, so its GVK is the
-	// version it persists as, not the version a request arrived through.
-	settingsGR := schema.GroupResource{Group: "example.ext.grafana.app", Resource: apppluginV0.APP_RESOURCE_NAME}
-	require.Len(t, recorder.recorded[settingsGR], 1)
-	require.Equal(t, schema.GroupVersionKind{
-		Group: "example.ext.grafana.app", Version: "v0alpha1", Kind: "Settings",
-	}, recorder.recorded[settingsGR][0].GVK)
+	require.NotContains(t, recorder.recorded, schema.GroupResource{Group: "example.ext.grafana.app", Resource: "app"})
 }
 
 // recordingOptsGetter captures the storage options each store is completed with.

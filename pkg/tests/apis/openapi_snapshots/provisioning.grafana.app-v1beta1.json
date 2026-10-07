@@ -906,7 +906,7 @@
           "Connection"
         ],
         "summary": "List external repositories",
-        "description": "List repositories available from the external git provider through this connection",
+        "description": "List repositories available from the external git provider through this connection. Returns 501 Not Implemented for connection types that cannot list repositories",
         "operationId": "getConnectionRepositories",
         "responses": {
           "200": {
