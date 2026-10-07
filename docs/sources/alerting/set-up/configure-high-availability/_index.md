@@ -163,8 +163,6 @@ For a demo, see this [example using Docker Compose](https://github.com/grafana/a
 
 ## Single-node evaluation mode
 
-{{< docs/public-preview product="Single-node evaluation mode" >}}
-
 By default, all Grafana instances in a high-availability cluster evaluate all alert rules. This means query load on data sources is multiplied by the number of Grafana instances. Single-node evaluation mode changes this so that only one instance evaluates alert rules, reducing query load from N times to 1.
 
 **To enable single-node evaluation mode**, add the following to your `[unified_alerting]` section:
