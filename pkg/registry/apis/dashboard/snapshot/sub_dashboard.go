@@ -84,20 +84,18 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
 	}
 
-	content := snap.Spec.Dashboard
 	blobCtx := ctx
 	if snap.Blobs.Dashboard != nil && snap.Blobs.Dashboard.Uid != "" {
 		caller, ok := authlib.AuthInfoFrom(ctx)
-		if !ok || caller == nil || !authlib.NamespaceMatches(caller.GetNamespace(), snap.Namespace) {
-			// The public GET was already authorized. Anonymous and cross-org callers
-			// need a namespace-scoped identity for the delegated blob read.
-			blobCtx = authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: snap.Namespace})
+		if !ok || caller == nil || caller.GetIdentityType() == authlib.TypeAnonymous || !authlib.NamespaceMatches(caller.GetNamespace(), snap.Namespace) {
+			// The public GET was already authorized. Delegate the blob read explicitly
+			// so tokenless public callers do not depend on the client's service fallback.
+			blobCtx = identity.WithServiceIdentityForSingleNamespaceContext(ctx, snap.Namespace)
 		}
 	}
-	if fromBlob, ok, err := readDashboardBlob(blobCtx, r.blobs, snap); err != nil {
+	content, err := loadDashboardContent(blobCtx, r.blobs, snap)
+	if err != nil {
 		return nil, err
-	} else if ok {
-		content = fromBlob
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
