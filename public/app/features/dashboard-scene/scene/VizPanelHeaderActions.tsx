@@ -11,6 +11,8 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 
+import { BlockedImagesStatusIcon, isRightPositionPreview } from 'app/features/text-image-guard/BlockedImagesIndicator';
+
 import { PanelGroupByAction } from './panel-actions/PanelGroupByAction/PanelGroupByAction';
 
 export interface VizPanelHeaderActionsState extends SceneObjectState {
@@ -175,6 +177,7 @@ function VizPanelHeaderActionsRenderer({ model }: SceneComponentProps<VizPanelHe
 
   return (
     <>
+      {model.parent instanceof VizPanel && isRightPositionPreview() && <BlockedImagesStatusIcon panel={model.parent} />}
       {!hideGroupByAction && isGroupByActionSupported && (groupByVariable || adhocGroupByVariable) && (
         <div className="show-on-hover">
           <PanelGroupByAction

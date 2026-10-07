@@ -75,6 +75,14 @@ export function useImageGuardState(): ImageGuardState {
   return useSyncExternalStore(subscribe, getSnapshot);
 }
 
+/** Distinct hosts currently blocked in one panel, keyed by panel id. */
+export function usePanelBlockedHostCount(panelKey: string): number {
+  return useSyncExternalStore(subscribe, () => {
+    const report = state.reports.get(panelKey);
+    return report ? new Set(report.images.map((img) => img.host)).size : 0;
+  });
+}
+
 export function useAllowedHosts(): ReadonlySet<string> {
   return useSyncExternalStore(subscribe, () => state.allowedHosts);
 }

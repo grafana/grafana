@@ -1,6 +1,6 @@
 import { css, cx } from '@emotion/css';
 import DangerouslySetHtmlContent from 'dangerously-set-html-content';
-import { lazy, Suspense, useEffect, useId, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import {
@@ -46,7 +46,8 @@ export function TextNGPanel(props: Props) {
   const { app } = usePanelContext();
   const { options, onOptionsChange, replaceVariables, data, renderCounter, fitContent, title } = props;
   const isEditing = app === CoreApp.PanelEditor;
-  const guardKey = useId();
+  // Keyed by panel id so the dashboard can show a status icon on this panel's header.
+  const guardKey = String(props.id);
   // Fit-content only applies to the rendered view: the inline editor keeps its
   // bounded, scrollable layout since active editing needs stable interactive space.
   const fitContentOn = fitContent && !isEditing;

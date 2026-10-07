@@ -24,6 +24,7 @@ import {
   type DataQueryKind,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { BlockedImagesTitleItem } from 'app/features/text-image-guard/BlockedImagesIndicator';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -70,6 +71,8 @@ export function buildVizPanelState(panel: PanelKind, id?: number): VizPanelState
   if (!isNewPanelQueryErrorsUIEnabled()) {
     titleItems.push(new PanelNotices());
   }
+
+  titleItems.push(new BlockedImagesTitleItem());
 
   const queryOptions = panel.spec.data.spec.queryOptions;
   const timeOverrideShown =

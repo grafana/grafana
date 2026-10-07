@@ -21,6 +21,7 @@ import {
   LocalValueVariable,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
+import { BlockedImagesTitleItem } from 'app/features/text-image-guard/BlockedImagesIndicator';
 import { getK8sV1DashboardApiConfig } from 'app/features/dashboard/api/v1';
 import {
   getDashboardSceneProfilerWithMetadata,
@@ -481,6 +482,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   if (!isNewPanelQueryErrorsUIEnabled()) {
     titleItems.push(new PanelNotices());
   }
+
+  titleItems.push(new BlockedImagesTitleItem());
 
   const timeOverrideShown = (panel.timeFrom || panel.timeShift || panel.timeCompare) && !panel.hideTimeOverride;
 
