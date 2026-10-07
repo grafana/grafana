@@ -90,6 +90,8 @@ func applyPerKindLeaves(req *Query, leaves []searchv0.WhereNode) {
 			req.Text = n.Text.Value
 		case n.Filter != nil:
 			req.Filters = append(req.Filters, perKindFilterRequirement(n.Filter))
+		case n.Regex != nil:
+			req.Regexes = append(req.Regexes, n.Regex)
 		}
 	}
 }
