@@ -254,7 +254,7 @@ func TestLexicalHitsFromResponse(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			hits, err := lexicalHitsFromResponse(test.response)
+			hits, err := lexicalHitsFromResponse(test.response, nil, "")
 			require.NoError(t, err)
 			require.Len(t, hits, 2)
 			assert.Equal(t, lexicalHit{uid: "u1", title: "Title One", folder: "f1"}, hits[0])
@@ -303,7 +303,7 @@ func TestLexicalHitsFromResponse_ManagerColumns(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			hits, err := lexicalHitsFromResponse(test.response)
+			hits, err := lexicalHitsFromResponse(test.response, nil, "")
 			require.NoError(t, err)
 			require.Len(t, hits, 1)
 			assert.Equal(t, lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}, hits[0])
@@ -319,7 +319,7 @@ func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
 			Rows: []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "u1"}}},
 		}},
 	} {
-		hits, err := lexicalHitsFromResponse(response)
+		hits, err := lexicalHitsFromResponse(response, nil, "")
 		require.NoError(t, err)
 		if response != nil && response.Results != nil {
 			require.Len(t, hits, 1)
@@ -331,7 +331,7 @@ func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
 }
 
 func TestLexicalHitsFromResponseRejectsMalformedFieldValues(t *testing.T) {
-	_, err := lexicalHitsFromResponse(malformedFieldValueResponse())
+	_, err := lexicalHitsFromResponse(malformedFieldValueResponse(), nil, "")
 	require.ErrorContains(t, err, `field "title": scalar has 2 values`)
 }
 
