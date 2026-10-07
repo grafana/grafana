@@ -64,10 +64,12 @@ export interface DashboardWithAccessInfo<T> extends Resource<T, Status, 'Dashboa
     annotationsPermissions?: AnnotationsPermissions;
     isPublic?: boolean;
   }; // TODO...
-  /**
-   * Set by the client, not returned by the API. Marks a spec that came from the apiserver, whose
-   * v1->v2 conversion resolves library panel repeats.
-   */
+}
+
+// A DashboardWithAccessInfo plus what the client knows about where it came from.
+export interface DashboardWithLoadInfo<T> extends DashboardWithAccessInfo<T> {
+  // Whether a library panel's repeat is already resolved onto the grid item.
+  // Currently only true when this spec came from the apiserver.
   libraryPanelRepeatResolved?: boolean;
 }
 

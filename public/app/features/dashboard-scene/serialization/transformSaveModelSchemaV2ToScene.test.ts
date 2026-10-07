@@ -35,7 +35,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -669,7 +669,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           undefined
         );
 
-        const resolved: DashboardWithAccessInfo<DashboardV2Spec> = {
+        const resolved: DashboardWithLoadInfo<DashboardV2Spec> = {
           ...defaultDashboard,
           libraryPanelRepeatResolved: true,
         };

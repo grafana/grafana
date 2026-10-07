@@ -52,8 +52,8 @@ export interface DashboardMeta {
   annotationsPermissions?: AnnotationsPermissions;
   publicDashboardEnabled?: boolean;
   /**
-   * True only when the spec this scene was built from came from the apiserver, which resolves a
-   * library panel's repeat onto the grid item during the v1->v2 conversion.
+   * Whether the library panel's repeat options are resolved onto the grid item during the v1->v2 conversion.
+   * Currently true only when the spec this dashboard scene was built from came from the apiserver.
    */
   libraryPanelRepeatResolved?: boolean;
   isEmbedded?: boolean;

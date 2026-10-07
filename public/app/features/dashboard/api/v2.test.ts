@@ -15,7 +15,7 @@ import {
 } from 'app/features/apiserver/types';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
-import { type DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from './types';
 import { K8sDashboardV2API } from './v2';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -131,13 +131,11 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
   });
 
-  // LibraryPanelBehavior relies on this: only a spec that came through the apiserver had its
-  // library panel repeats resolved onto the grid item by the v1->v2 conversion.
   it('marks the response as having its library panel repeats resolved by the server', async () => {
     mockGet.mockResolvedValueOnce(mockDashboardDto);
 
     const api = new K8sDashboardV2API();
-    const result = (await api.getDashboardDTO('test')) as DashboardWithAccessInfo<DashboardV2Spec>;
+    const result = (await api.getDashboardDTO('test')) as DashboardWithLoadInfo<DashboardV2Spec>;
 
     expect(result.libraryPanelRepeatResolved).toBe(true);
   });
