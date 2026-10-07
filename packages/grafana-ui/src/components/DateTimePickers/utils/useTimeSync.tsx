@@ -3,7 +3,7 @@ import { usePrevious } from 'react-use';
 
 import { type TimeRange } from '@grafana/data';
 
-import { useTimeRangeContext } from '../TimeRangeContext';
+import { useTimeRangeContext } from '../../../graveyard/TimeRangeContext/TimeRangeContext';
 import { TimeSyncButton } from '../TimeSyncButton';
 
 /**

@@ -49,7 +49,11 @@ export interface TimeRangePickerProps {
   // Use to manually set the synced styles for the time range picker if you need to control the sync state yourself.
   isSynced?: boolean;
 
-  // Use to manually set the initial sync state for the time range picker. It will use the current value to sync.
+  /**
+   * @deprecated Only had an effect inside a `TimeRangeProvider`, which was gated by the
+   * removed `timeRangeProvider` feature flag. This prop is now a no-op and will be
+   * removed in the next major version of `@grafana/ui`.
+   */
   initialIsSynced?: boolean;
 
   onChange: (timeRange: TimeRange) => void;

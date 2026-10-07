@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { dateTime, dateTimeFormat, guessBrowserTimeZone, makeTimeRange, type TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 
-import { TimeRangeProvider } from './TimeRangeContext';
+import { TimeRangeProvider } from '../../graveyard/TimeRangeContext/TimeRangeContext';
+
 import { TimePickerTooltip, TimeRangePicker } from './TimeRangePicker';
 
 const selectors = e2eSelectors.components.TimePicker;
