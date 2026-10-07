@@ -283,7 +283,12 @@ export function AddPanelToNotebookModalBody({
               />
             )}
 
-            <LockTimeRangeField control={control} capturedTimeRange={capturedTimeRange} disabled={isSubmitting} />
+            {/* Wrapped so the column Stack stretches the div rather than the Checkbox inside. Checkbox is
+                an inline-grid with no column sizes, so stretching it hands the spare width to the
+                checkbox column and pushes the label away from its box. */}
+            <div>
+              <LockTimeRangeField control={control} capturedTimeRange={capturedTimeRange} disabled={isSubmitting} />
+            </div>
           </Stack>
         </form>
       </Box>
