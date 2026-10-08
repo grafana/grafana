@@ -979,7 +979,8 @@ func (s *dbSpy) WithTransactionalDbSession(ctx context.Context, callback sqlstor
 // sqlstore.startSessionOrUseExisting reuses whatever session is on ctx regardless of which db.DB
 // created it, so a routed read must strip that session first or it silently runs on the wrong
 // connection when called from inside another db.DB's InTransaction (as provisioning's delete
-// path does).
+// path does). It stays off the ambient session even on the caller's own database, since its failure
+// is ignored and would abort a Postgres transaction.
 func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
@@ -989,7 +990,7 @@ func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
 
-	spy := &dbSpy{DB: sqlStore, engine: new(xorm.Engine)}
+	spy := &dbSpy{DB: sqlStore}
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
 			DB:    spy,

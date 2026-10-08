@@ -156,7 +156,7 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 		}
 		conn = dbHelper.DB
 		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
-		ctx = ambientSessionFor(ctx, conn)
+		ctx = withoutAmbientSession(ctx)
 	}
 
 	var result []alertRuleVersion

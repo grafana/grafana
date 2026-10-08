@@ -74,5 +74,11 @@ func ambientSessionFor(ctx context.Context, conn db.DB) context.Context {
 			return ctx
 		}
 	}
+	return withoutAmbientSession(ctx)
+}
+
+// withoutAmbientSession forces a fresh session. Use it for reads whose failure is ignored: on
+// Postgres a failed statement would otherwise abort the caller's transaction.
+func withoutAmbientSession(ctx context.Context) context.Context {
 	return context.WithValue(ctx, sqlstore.ContextSessionKey{}, nil)
 }
