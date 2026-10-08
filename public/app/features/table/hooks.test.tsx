@@ -115,6 +115,23 @@ describe('useAdHocColumnState', () => {
     });
   }
 
+  it('recovers visibility even when the transformation dropped every output frame', () => {
+    const source = [makeFrame({ refId: 'A' })];
+    const context = contextWithSource(source);
+    const transformations: DataTransformerConfig[] = [
+      {
+        id: 'organize',
+        filter: { id: 'byRefId', options: 'A' },
+        options: { excludeByName: { value: true } },
+      },
+    ];
+    context.adHocTransformations!.get = () => transformations;
+
+    renderHook(() => useAdHocColumnState([], 0, true), { wrapper: wrapperWith(context) });
+
+    expect(context.adHocTransformations!.set).toHaveBeenCalledWith('grafana:table-view', []);
+  });
+
   it('calculates the catalog without mutating the source fields', () => {
     const sourceFrame = makeFrame({
       fields: [{ name: 'raw', type: FieldType.number, config: { displayName: 'Nice name' }, values: [1] }],

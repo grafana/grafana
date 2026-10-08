@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Contact point",
-          "notification-policy": "Notification policy",
-          "select-contact-point": "Select contact point",
-          "use-notification-policy": "Use notification policy"
+          "notification-policy": "Notification policy"
         }
       }
     },
@@ -13173,15 +13171,9 @@
       "card-author": "By {{author}}",
       "card-selected": "{{title}} (selected)",
       "card-updated": "Updated {{when}}",
-      "create-description": "Description",
-      "create-description-help": "Optional context for collaborators",
-      "create-description-placeholder": "What are you investigating?",
       "create-name": "Notebook name",
       "create-name-required": "A notebook name is required",
       "create-name-taken": "A notebook with this name already exists",
-      "create-tags": "Tags",
-      "create-tags-help": "Optional — used for search and filtering",
-      "create-tags-placeholder": "Add a tag",
       "created-by-me": "Created by me",
       "error-conflict": "This notebook changed while you were adding to it. Try again to add the panel to the latest version.",
       "error-generic": "Failed to add the panel to the notebook",
@@ -13191,6 +13183,8 @@
       "list-none": "You have no notebooks yet. Create one instead.",
       "list-none-read-only": "You have no notebooks yet, and no permission to create one.",
       "list-truncated": "Not every notebook is shown. Narrow the search to find others.",
+      "lock-time-range": "Lock to {{range}}",
+      "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-label": "Sort notebooks",
@@ -13267,8 +13261,6 @@
       "count-loading": "Loading {{shown}} of {{total}}...",
       "count-of-total": "Showing {{shown}} of {{total}}",
       "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
-      "count-truncated_one": "First {{count}} notebook loaded",
-      "count-truncated_other": "First {{count}} notebooks loaded",
       "created-by-me": "Created by me",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
@@ -14137,6 +14129,7 @@
       "title": "You can also use Git Sync on Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "Code example",
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
@@ -15078,7 +15071,6 @@
       "alert-point-folder-cleanup": "You may need to manually remove or manage original folders after migration.",
       "alert-point-folder-structure": "When migrating existing dashboards, the folder structure will be replicated in the repository. Original folders will be emptied of dashboards but may still contain alerts or library panels.",
       "alert-point-instance-alerts": "Existing alerts and library panels will be lost and will not be usable after migration.",
-      "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
       "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
       "alert-title": "Important: Review Git Sync limitations before proceeding",
       "app-mode-label": "App configuration",
@@ -15799,9 +15791,6 @@
     "description-tooltip": {
       "label": "Description"
     },
-    "generate-columns": {
-      "score": "Score"
-    },
     "results-table": {
       "datasource-header": "Data source",
       "deleted-by-header": "Deleted by",
@@ -16145,6 +16134,7 @@
       "update-preferences": "Error updating preferences"
     },
     "fields": {
+      "home-dashboard-global-home": "Grafana home",
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",

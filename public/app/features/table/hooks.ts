@@ -147,7 +147,7 @@ export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, ena
   const sourceSeries = api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
   const sourceIndex = getEligibleColumnSourceIndex(frames, frameIndex, sourceSeries, enabled);
 
-  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER);
+  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER, enabled);
 }
 
 function getEligibleColumnSourceIndex(

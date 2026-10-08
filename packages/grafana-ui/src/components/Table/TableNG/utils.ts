@@ -1476,11 +1476,6 @@ export function isFieldHideable(field: Field): boolean {
   return field.config.custom?.hideable ?? false;
 }
 
-/** Whether the sidebar can reorder columns or hide any field. @internal */
-export function canManageColumns(fields: Field[], reorderable = false): boolean {
-  return reorderable || fields.some(isFieldHideable);
-}
-
 /** Whether the column menu has an action to show. @internal */
 export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): boolean {
   return isFieldFilterable(field) || isFieldHideable(field) || hasColumnSidebar;

@@ -33,4 +33,66 @@ it('reads visibility and order from the registered column transformations', () =
   expect(result.current?.hiddenColumns).toEqual(new Set(['B']));
   expect(result.current?.columnOrder).toEqual(['C', 'A', 'B']);
   expect(result.current?.columnCatalog).toEqual(['C', 'A', 'B']);
+  expect(api.set).not.toHaveBeenCalled();
+});
+
+it('reveals one remaining source column when a refresh leaves the entire frame hidden', () => {
+  const source = [
+    createDataFrame({
+      fields: ['B', 'C'].map((name) => ({ name, type: FieldType.number, values: [1] })),
+    }),
+  ];
+  const configs: DataTransformerConfig[] = [
+    { id: 'organize', options: { excludeByName: { B: true, C: true, Missing: true } } },
+  ];
+  const api: PanelRuntimeTransformations = {
+    get: () => configs,
+    getSourceSeries: () => source,
+    set: jest.fn(),
+    subscribe: () => () => {},
+  };
+
+  renderHook(() => useColumnTransformations(0, api, 'table'));
+
+  expect(api.set).toHaveBeenCalledWith('table', [
+    {
+      id: 'organize',
+      options: { indexByName: {}, excludeByName: { C: true, Missing: true }, renameByName: {} },
+    },
+  ]);
+});
+
+it.each([false, true])('recovers a missing output frame only when enabled=%s', (enabled) => {
+  const source = [
+    createDataFrame({
+      refId: 'A',
+      fields: [{ name: 'Hidden', type: FieldType.number, values: [1] }],
+    }),
+    createDataFrame({
+      refId: 'B',
+      fields: [{ name: 'Visible', type: FieldType.number, values: [2] }],
+    }),
+  ];
+  const configs: DataTransformerConfig[] = [
+    {
+      id: 'organize',
+      filter: { id: 'byRefId', options: 'A' },
+      options: { excludeByName: { Hidden: true } },
+    },
+    { id: 'limit', options: { limitField: 3 } },
+  ];
+  const api: PanelRuntimeTransformations = {
+    get: () => configs,
+    getSourceSeries: () => source,
+    set: jest.fn(),
+    subscribe: () => () => {},
+  };
+
+  renderHook(() => useColumnTransformations(undefined, api, 'table', enabled));
+
+  if (enabled) {
+    expect(api.set).toHaveBeenCalledWith('table', [configs[1]]);
+  } else {
+    expect(api.set).not.toHaveBeenCalled();
+  }
 });

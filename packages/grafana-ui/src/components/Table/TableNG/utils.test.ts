@@ -2862,29 +2862,6 @@ describe('TableNG utils', () => {
       expect(widths).toEqual([73, 83]);
     });
 
-    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
-      // Fractional header widths must round independently when the columns already overflow.
-      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
-      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
-      jest
-        .spyOn(typographyCtx.ctx, 'measureText')
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        .mockImplementation(((text: string) => ({
-          width: headerWidths[String(text)],
-        })) as typeof typographyCtx.ctx.measureText);
-
-      const fields: Field[] = [
-        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
-        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
-      ];
-      const widths = computeContentAwareColWidths(fields, 110, {
-        typographyCtx: makeTypographyCtx(),
-        headerTypographyCtx: typographyCtx,
-      });
-
-      expect(widths).toEqual([73, 83]);
-    });
-
     it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
       const display = jest.fn((v) => ({ text: String(v), numeric: Number(v) }));
       const fields: Field[] = [
@@ -3065,6 +3042,20 @@ describe('TableNG utils', () => {
       const [only] = markEdgeColumns([col('a')]);
       expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('keeps edge markers out of columns reused in a reordered view', () => {
+      const a = col('a', { headerCellClass: 'a' });
+      const b = col('b', { headerCellClass: 'b' });
+      const c = col('c', { headerCellClass: 'c' });
+
+      const original = markEdgeColumns([a, b, c]);
+      const reordered = markEdgeColumns([b, a, c]);
+
+      expect(original[0].headerCellClass).toBe(`a ${FIRST_COLUMN_CLASS}`);
+      expect(reordered[0].headerCellClass).toBe(`b ${FIRST_COLUMN_CLASS}`);
+      expect(reordered[1].headerCellClass).toBe('a');
+      expect([a.headerCellClass, b.headerCellClass, c.headerCellClass]).toEqual(['a', 'b', 'c']);
     });
 
     it('keeps existing classes, including ones computed per row', () => {

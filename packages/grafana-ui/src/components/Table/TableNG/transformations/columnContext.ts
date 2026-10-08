@@ -33,11 +33,11 @@ export function getSourceFrameIndex(
 }
 
 /**
- * Scopes a column transformation to the selected query when a table contains multiple frames.
- * Returns no filter for a single frame, or when the selected frame has no refId that can be matched safely.
+ * Keeps the selected query's scope stable when other queries appear or disappear.
+ * Returns no filter when the selected frame has no refId.
  */
 export function frameFilterFor(frames: readonly DataFrame[], frameIndex: number): MatcherConfig | undefined {
-  const refId = frames.length > 1 ? frames[frameIndex]?.refId : undefined;
+  const refId = frames[frameIndex]?.refId;
 
   // An unresolvable frame matcher is dropped, which would apply the transform to every frame.
   return refId ? { id: FrameMatcherID.byRefId, options: refId } : undefined;

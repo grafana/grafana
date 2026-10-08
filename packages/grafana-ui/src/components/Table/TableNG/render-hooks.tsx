@@ -48,9 +48,9 @@ import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
 import {
   getCellActionStyles,
-  getColumnSettleStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
+  getColumnSettleStyles,
   getLinkStyles,
   getMaxHeightCellStyles,
   getTooltipStyles,

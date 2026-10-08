@@ -69,7 +69,7 @@ export function TablePanel(props: Props) {
   const rawMain = frames[currentIndex];
   const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
   const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
-  const adHocColumns = useAdHocColumnState(frames, currentIndex, columnManagementEnabled);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, tableRefreshNewFeaturesEnabled);
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain

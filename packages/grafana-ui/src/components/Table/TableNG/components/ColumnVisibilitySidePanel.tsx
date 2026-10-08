@@ -46,7 +46,7 @@ export function ColumnVisibilitySidePanel({
   willCloseOnRelease = false,
 }: ColumnVisibilitySidePanelProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
-  const visibleCount = columns.length - hiddenColumns.size;
+  const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
 
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
@@ -204,7 +204,7 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(1),
-    padding: theme.spacing(0.75, 1),
+    padding: theme.spacing(0.75, 1, 0.75, 1.5),
     // Prevent text selection from stealing the native drag gesture.
     userSelect: 'none',
     '&:hover': {
@@ -239,17 +239,5 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
     userSelect: 'none',
-  }),
-  pinButton: css({
-    display: 'flex',
-    alignItems: 'center',
-    background: 'transparent',
-    border: 'none',
-    padding: 0,
-    cursor: 'pointer',
-    color: theme.colors.text.secondary,
-    '&[aria-pressed="true"]': {
-      color: theme.colors.warning.text,
-    },
   }),
 }));

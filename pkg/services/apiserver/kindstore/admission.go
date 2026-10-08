@@ -25,7 +25,7 @@ type admissionOps map[admission.Operation]bool
 // newAdmissionOps expands a manifest capability's operations. CONNECT is dropped:
 // the v3 admission request cannot express it, connect requests reach the plugin
 // through custom routes instead, and admission never sees one anyway -- those
-// requests name a subresource, which [AppPluginAPIBuilder.kindStoreFor] skips.
+// requests name a subresource, which the plugin route admission dispatcher skips.
 // Recording it would only fail a kind that declares nothing else at startup, for
 // a hook that could never be called.
 func newAdmissionOps(ops []app.AdmissionOperation) admissionOps {
