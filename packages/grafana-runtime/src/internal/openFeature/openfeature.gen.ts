@@ -80,8 +80,6 @@ export const FlagKeys = {
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
   EnableExtensionsAdminPage: "enableExtensionsAdminPage",
-  /** A/A test for recently viewed dashboards feature */
-  ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the feedback button in the dashboard edit sidebar */
@@ -621,17 +619,6 @@ export const useFlagEnableColorblindSafePanelOptions = (options?: ReactFlagEvalu
  */
 export const useFlagEnableExtensionsAdminPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("enableExtensionsAdminPage", false, options).value;
-};
-
-/**
- * A/A test for recently viewed dashboards feature
- *
- * **Details:**
- * - flag key: `experimentRecentlyViewedDashboards`
- * - default value: `false`
- */
-export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("experimentRecentlyViewedDashboards", false, options).value;
 };
 
 /**

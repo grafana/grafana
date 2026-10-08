@@ -2168,7 +2168,8 @@
       "metadata": {
         "name": "experimentRecentlyViewedDashboards",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-13T15:22:20Z"
+        "creationTimestamp": "2026-01-13T15:22:20Z",
+        "deletionTimestamp": "2026-10-08T15:34:53Z"
       },
       "spec": {
         "description": "A/A test for recently viewed dashboards feature",
