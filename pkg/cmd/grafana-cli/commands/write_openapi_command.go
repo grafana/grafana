@@ -128,6 +128,11 @@ func writeSpecTo(w io.Writer, oas *spec3.OpenAPI) error {
 // natural way to type this.
 func writeOpenAPIArgs(c *cli.Context) (target, output, version string, err error) {
 	output, version = c.String("output"), c.String("api-version")
+	for _, name := range []string{"output", "api-version"} {
+		if c.IsSet(name) && c.String(name) == "" {
+			return "", "", "", fmt.Errorf("missing value for --%s", name)
+		}
+	}
 	args := c.Args().Slice()
 	for i := 0; i < len(args); i++ {
 		arg := args[i]

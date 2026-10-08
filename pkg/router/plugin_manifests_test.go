@@ -431,4 +431,62 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 	<-dirty
 	target.poll(t.Context(), dirty)
 	require.Empty(t, dirty)
+	second.Versions = append(append([]app.ManifestVersion(nil), second.Versions...), app.ManifestVersion{Name: "v2", Served: true})
+	target.poll(t.Context(), dirty)
+	updated := target.Backends()
+	require.Equal(t, backends[0].Key(), updated[0].Key(), "a sibling change must preserve this group's handler and watches")
+	require.NotEqual(t, backends[1].Key(), updated[1].Key())
+
+	deployment.Plugins[0].Definition.JSONData.Info.Version = "2"
+	target.poll(t.Context(), dirty)
+	for i, backend := range target.Backends() {
+		require.NotEqual(t, updated[i].Key(), backend.Key(), "shared metadata changes affect every group")
+		require.Equal(t, "2", backend.(*pluginDeploymentBackend).Backend.(*PluginBackend).info.Version)
+	}
+
+}
+
+func TestFetchPluginManifestsMigratesSingularManifest(t *testing.T) {
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
+	plugin := payload["plugins"].([]any)[0].(map[string]any)["definition"].(map[string]any)
+	plugin["manifest"] = plugin["manifests"].([]any)[0]
+	delete(plugin, "manifests")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(payload))
+	}))
+	defer srv.Close()
+	deployment, err := fetchPluginManifests(t.Context(), srv.Client(), srv.URL)
+	require.NoError(t, err)
+	require.Len(t, deployment.Plugins[0].Definition.Manifests, 1)
+	require.Equal(t, "appsdktest.ext.grafana.app", deployment.Plugins[0].Definition.Manifests[0].Group)
+	require.Nil(t, deployment.Plugins[0].Definition.Manifest) //nolint:staticcheck
+
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+}
+
+func TestFetchPluginManifestsPrefersPluralEntry(t *testing.T) {
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
+	plugin := payload["plugins"].([]any)[0].(map[string]any)["definition"].(map[string]any)
+	current := plugin["manifests"].([]any)[0].(map[string]any)
+	legacy := map[string]any{}
+	for key, value := range current {
+		legacy[key] = value
+	}
+	legacy["versions"] = []any{map[string]any{"name": "v0alpha1", "served": true}}
+	plugin["manifest"] = legacy
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(payload))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	backends := target.Backends()
+	require.Len(t, backends, 1)
+	require.Equal(t, "v1alpha1", backends[0].Group().Versions[0].Version)
 }

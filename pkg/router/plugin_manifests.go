@@ -4,11 +4,11 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
@@ -141,13 +142,15 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 				continue
 			}
 
+			backend.info = entry.Definition.JSONData.Info
+
 			// The host is outside PluginDefinition, but changing it must reload the backend.
-			key, keyErr := pluginDeploymentKey(entry)
+			key, keyErr := pluginDeploymentKey(entry, manifest)
 			if keyErr != nil {
 				logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
 				continue
 			}
-			deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key + ":" + manifest.Group}
+			deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
 			backends = append(backends, deploymentBackend)
 			keys[deploymentBackend.Key()] = struct{}{}
 		}
@@ -240,18 +243,25 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 
 	// Move any deprecated singular manifest properties to the multiple flavor
 	// nolint:staticcheck
-	for _, plugin := range deployment.Plugins {
+	for i := range deployment.Plugins {
+		plugin := &deployment.Plugins[i]
 		if plugin.Definition.Manifest == nil {
 			continue // OK
 		}
-		plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
+		// The plural entry is authoritative when both formats contain the same group.
+		if !slices.ContainsFunc(plugin.Definition.Manifests, func(manifest *app.ManifestData) bool {
+			return manifest != nil && manifest.Group == plugin.Definition.Manifest.Group
+		}) {
+			plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
+		}
+		plugin.Definition.Manifest = nil
 	}
 
 	return deployment, nil
 }
 
-func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
-	body, err := json.Marshal(entry)
+func pluginDeploymentKey(entry definition.PluginDeployment, manifest *app.ManifestData) (string, error) {
+	body, err := pluginManifestKeyData(entry.Definition, manifest, entry.Host)
 	if err != nil {
 		return "", fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
 	}

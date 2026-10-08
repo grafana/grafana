@@ -236,26 +236,39 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
-		key, err := json.Marshal(plugin) // used to define the key
-		if err != nil {
-			return nil, err
-		}
-
 		client := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
 			return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, id), nil
 		}
 
 		for _, manifest := range plugin.Manifests {
+			key, err := pluginManifestKeyData(plugin, manifest, "")
+			if err != nil {
+				logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin manifest", "pluginId", plugin.JSONData.ID, "err", err)
+				continue
+			}
 			backend, err := newPluginBackend(plugin.JSONData.ID, manifest, client, pl.deps.PluginDependencies, key)
 			if err != nil {
 				// One bad manifest must not keep its siblings or other plugins from loading.
 				logging.FromContext(ctx).Warn("router: skipping app plugin", "pluginId", plugin.JSONData.ID, "err", err)
 				continue
 			}
+			backend.info = plugin.JSONData.Info
 			backends = append(backends, backend)
 		}
 	}
 	return backends, nil
+}
+
+// Shared plugin metadata affects every group, but sibling manifests must not
+// invalidate each other's handlers and active watches.
+func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.ManifestData, host string) ([]byte, error) {
+	plugin.Manifests = nil
+	plugin.Manifest = nil //nolint:staticcheck
+	return json.Marshal(struct {
+		Definition definition.PluginDefinition
+		Manifest   *app.ManifestData
+		Host       string
+	}{plugin, manifest, host})
 }
 
 // pluginManifestGroupSuffix is required on manifest groups: unified storage
@@ -321,6 +334,7 @@ type PluginBackend struct {
 	key string
 
 	pluginID string
+	info     plugins.Info
 	group    metav1.APIGroup
 	manifest *app.ManifestData
 	client   PluginClientProvider
@@ -363,6 +377,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	}
 	apiserverSection := cfg.SectionWithEnvOverrides(searchapi.ConfigSection)
 	opts := pluginroute.Options{
+		PluginInfo:       b.info,
 		Storage:          pluginroute.UnifiedStorage(b.deps.Unified, b.deps.SecureValues, b.deps.RESTConfigProvider),
 		PluginClient:     clientV2,
 		ClientV3:         clientV3,

@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
@@ -52,6 +53,7 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
+	PluginInfo       plugins.Info
 	Storage          StorageProvider
 	PluginClient     appplugin.PluginClient
 	ClientV3         appclientv3.Client

@@ -517,3 +517,29 @@ func TestAPIGroupPreferredVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestHandlerOpenAPIPluginMetadata(t *testing.T) {
+	for _, version := range []string{"", "1.2.3"} {
+		t.Run(version, func(t *testing.T) {
+			opts := allowAll(testOptions())
+			opts.PluginInfo.Description = "Example plugin"
+			opts.PluginInfo.Version = version
+			if version != "" {
+				opts.PluginInfo.Build.Time = 1234567890
+			}
+			handler := withRequester(loadHandler(t, testPlugin(), opts))
+			var document spec3.OpenAPI
+			getJSON(t, handler, "/openapi/v3/apis/example.ext.grafana.app/v1alpha1", &document)
+			require.Equal(t, "Example plugin", document.Info.Description)
+			info := document.Info.Extensions["x-grafana-plugin"].(map[string]any)
+			require.Equal(t, "example-app", info["id"])
+			if version == "" {
+				require.NotContains(t, info, "version")
+				require.NotContains(t, info, "build")
+			} else {
+				require.Equal(t, version, info["version"])
+				require.Equal(t, float64(1234567890), info["build"])
+			}
+		})
+	}
+}

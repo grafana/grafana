@@ -67,7 +67,15 @@ func (b *manifestBuilder) unstructuredOpenAPIDefinition(kindSuffix string) commo
 func (b *manifestBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, error) {
 	version := b.specVersion(oas)
 	root := fmt.Sprintf("/apis/%s/%s/", b.group, version)
-	oas.Info.AddExtension("x-grafana-plugin", map[string]any{"id": b.pluginID})
+	oas.Info.Description = b.opts.PluginInfo.Description
+	info := map[string]any{"id": b.pluginID}
+	if b.opts.PluginInfo.Version != "" {
+		info["version"] = b.opts.PluginInfo.Version
+	}
+	if b.opts.PluginInfo.Build.Time > 0 {
+		info["build"] = b.opts.PluginInfo.Build.Time
+	}
+	oas.Info.AddExtension("x-grafana-plugin", info)
 	b.postProcessManifestKinds(oas, root, version)
 	b.dropUnstructuredModels(oas, version)
 	return oas, nil

@@ -3,7 +3,6 @@ package pluginroute
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -48,11 +47,7 @@ func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
 	gvs := make([]schema.GroupVersion, 0, len(group.Versions))
 	for _, v := range group.Versions {
 		gv := schema.GroupVersion{Group: group.Name, Version: v.Version}
-		if v.Version == group.PreferredVersion.Version {
-			gvs = slices.Insert(gvs, 0, gv)
-		} else {
-			gvs = append(gvs, gv)
-		}
+		gvs = append(gvs, gv)
 	}
 	return gvs
 }

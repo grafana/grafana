@@ -73,6 +73,7 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (pluginroute.P
 			tracing.NewNoopTracerService(), featuremgmt.WithFeatures())
 	}
 	return pluginroute.NewAPI(plugin.JSONData.ID, plugin.Manifests[0], pluginroute.Options{
+		PluginInfo:   plugin.JSONData.Info,
 		PluginClient: offlinePluginClient{}, ClientV3: offlineClientV3{}, ContextProvider: offlinePluginContext{},
 		AccessChecker: appplugin.NewPluginAccessChecker(nil), Search: offlineSearchClient{}, Store: offlineStoreClient{},
 		HybridAPIEnabled: true, KeysAPIEnabled: true,
@@ -160,20 +161,7 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 		return nil, err
 	}
 
-	oas, err := buildSpec(server, serverConfig, gv)
-	if err != nil {
-		return nil, err
-	}
-	oas.Info.Description = plugin.JSONData.Info.Description
-	info := map[string]any{"id": plugin.JSONData.ID}
-	if plugin.JSONData.Info.Version != "" {
-		info["version"] = plugin.JSONData.Info.Version
-	}
-	if plugin.JSONData.Info.Build.Time > 0 {
-		info["build"] = plugin.JSONData.Info.Build.Time
-	}
-	oas.Info.AddExtension("x-grafana-plugin", info)
-	return oas, nil
+	return buildSpec(server, serverConfig, gv)
 }
 
 // buildSpec renders one group version using the registered web services, as the

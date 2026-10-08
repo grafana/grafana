@@ -527,5 +527,34 @@ func TestPluginLoaderPreparesMultipleManifests(t *testing.T) {
 	require.NoError(t, err)
 	for i := range backends {
 		require.NotEqual(t, backends[i].Key(), updated[i].Key())
+		require.Equal(t, "2", updated[i].(*PluginBackend).info.Version)
 	}
+	second.Versions = append(second.Versions, app.ManifestVersion{Name: "v3", Served: true})
+	changed, err := loader.prepareBackends(t.Context(), defs)
+	require.NoError(t, err)
+	require.Equal(t, updated[0].Key(), changed[0].Key())
+	require.NotEqual(t, updated[1].Key(), changed[1].Key())
+
+}
+
+func TestPluginLoaderIsolatesFingerprintFailure(t *testing.T) {
+	good := &app.ManifestData{AppName: "example", Group: "good.ext.grafana.app",
+		Versions: []app.ManifestVersion{{Name: "v1", Served: true}}}
+	bad := *good
+	bad.Group = "bad.ext.grafana.app"
+	bad.Versions = append([]app.ManifestVersion(nil), good.Versions...)
+	path := spec3.PathProps{Post: &spec3.Operation{}}
+	path.Post.AddExtension("x-unencodable", func() {})
+	bad.Versions[0].Routes.Namespaced = map[string]spec3.PathProps{"/bad": path} //nolint:staticcheck
+	defs := []definition.PluginDefinition{
+		{JSONData: plugins.JSONData{ID: "example-app"}, Manifests: []*app.ManifestData{&bad, good}},
+		{JSONData: plugins.JSONData{ID: "other-app"}, Manifests: []*app.ManifestData{good}},
+	}
+	_, err := pluginManifestKeyData(defs[0], &bad, "")
+	require.Error(t, err)
+	backends, err := (PluginLoader{}).prepareBackends(t.Context(), defs)
+	require.NoError(t, err)
+	require.Len(t, backends, 2)
+	require.Equal(t, "example-app", backends[0].(*PluginBackend).pluginID)
+	require.Equal(t, "other-app", backends[1].(*PluginBackend).pluginID)
 }

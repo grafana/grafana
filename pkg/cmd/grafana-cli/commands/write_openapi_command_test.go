@@ -76,6 +76,8 @@ func TestWriteOpenAPIArgs(t *testing.T) {
 		{name: "version before target", args: []string{"--api-version", "v1", "manifest.json"}, target: "manifest.json", version: "v1"},
 		{name: "version after target", args: []string{"manifest.json", "--api-version=v1"}, target: "manifest.json", version: "v1"},
 		{name: "missing version", args: []string{"manifest.json", "--api-version"}, wantErr: "missing value for --api-version"},
+		{name: "empty version before target", args: []string{"--api-version=", "manifest.json"}, wantErr: "missing value for --api-version"},
+		{name: "empty output before target", args: []string{"--output=", "manifest.json"}, wantErr: "missing value for --output"},
 		{name: "empty version", args: []string{"manifest.json", "--api-version="}, wantErr: "missing value for --api-version"},
 		{name: "flag as output value", args: []string{"manifest.json", "-o", "--api-version=v1"}, wantErr: "missing value for -o"},
 	}
