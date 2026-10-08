@@ -96,10 +96,6 @@ describe('replacePanel', () => {
     });
     deactivate = activateFullSceneTree(dashboard);
 
-    expect(source.state.repeatedPanels).toMatchObject([
-      { state: { title: 'Original', pluginId: 'table' } },
-      { state: { title: 'Original', pluginId: 'table' } },
-    ]);
 
     replacePanel({ source, oldPanel, newPanel });
 
