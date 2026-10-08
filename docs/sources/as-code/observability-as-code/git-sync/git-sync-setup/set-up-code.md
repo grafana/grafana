@@ -116,7 +116,7 @@ Replace the placeholders with your values:
 - _`<OAUTH_CONNECTION_NAME>`_: The name of your OAuth App connection
 - _`<CONNECTION_TITLE>`_: Human-readable name displayed in Grafana UI
 - _`<CONNECTION_TYPE>`_: The OAuth connection type for your provider
-- _`<CLIENT_ID>`_: The client ID of the OAuth App. For GitLab, the application ID. For Bitbucket, the key of the OAuth consumer.
+- _`<CLIENT_ID>`_: The client ID of the OAuth App
 - _`<CLIENT_SECRET>`_: The client secret of the OAuth App
 - _`<GITHUB_ENTERPRISE_SERVER_URL>`_: The URL of your GitHub Enterprise instance
 - _`<BITBUCKET_WORKSPACE>`_: The workspace that the OAuth consumer belongs to
@@ -206,7 +206,7 @@ secure:
   token: { create: 'GIT_PAT' }
 ```
 
-To use an OAuth App connection, add `spec.connection.name` with the name of the connection, and remove `secure.token`. This works for the `github`, `githubEnterprise`, `gitlab`, `bitbucket`, and `git` repository types. For `git`, set `tokenUser` to the username that your provider expects with OAuth tokens, for example `oauth2` for GitLab or `x-token-auth` for Bitbucket.
+To use an OAuth App connection, add `spec.connection.name` with the name of the connection, and remove `secure.token`. This works for the `github`, `githubEnterprise`, `gitlab`, `bitbucket`, and `git` repository types. For `git`, if your provider expects a specific username with OAuth tokens, set it in `tokenUser`, for example `x-token-auth` for Bitbucket.
 
 Replace the placeholders with your values:
 

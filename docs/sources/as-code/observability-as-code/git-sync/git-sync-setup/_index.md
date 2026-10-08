@@ -212,12 +212,12 @@ To connect with an OAuth App, select **Connect with OAuth App** as the authentic
      - GitHub: **Client ID** and **Client secret**.
      - GitHub Enterprise: **Custom server URL**, **Client ID**, and **Client secret**.
      - GitLab: **Application ID** and **Client secret**.
-     - Bitbucket: **Client ID**, **Workspace**, and **Client secret**. Use the key of the OAuth consumer as the client ID.
+     - Bitbucket: **Client ID**, **Workspace**, and **Client secret**.
      - Pure Git: **Client ID**, **Client secret**, **Authorization URL**, **Token URL**, and **Scopes**.
   1. Click **Create and authorize**. Grafana opens the consent page of your provider in a new tab.
   1. Approve the access.
 
-For Pure Git, also enter the **Username** that your provider expects with OAuth tokens, for example `oauth2` for GitLab or `x-token-auth` for Bitbucket, and the **Repository URL**.
+For Pure Git, also enter the **Repository URL**. If your provider expects a specific username with OAuth tokens, enter it in **Username**, for example `x-token-auth` for Bitbucket.
 
 Select **Configure repository** to set up your provisioning folder.
 

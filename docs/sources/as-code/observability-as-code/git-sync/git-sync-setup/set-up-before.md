@@ -49,7 +49,7 @@ If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure
 
 ## Enable OAuth connection types
 
-In self-managed Grafana, OAuth App connections are disabled by default. To use them, add the connection types you need to `connection_types` in your configuration file:
+In self-managed Grafana, you can choose which OAuth App connection types are available with `connection_types` in your configuration file:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
 1. Add the connection types:
@@ -184,7 +184,7 @@ An OAuth App lets Grafana act on your behalf in your Git provider. You create th
 
 If you chose to authenticate with an OAuth App, you need the following parameters:
 
-- The client ID of the app. GitLab calls it the application ID, and Bitbucket calls it the key.
+- The client ID of the app.
 - The client secret of the app.
 
 Every OAuth App needs the Grafana callback URL. Grafana shows it in the setup wizard, and it has this format:
@@ -201,7 +201,7 @@ The following instructions are informative only. Always refer to the official do
 
 To create a GitHub OAuth App, follow these steps:
 
-1. In GitHub, go to **Settings > Developer settings > OAuth Apps** and click **New OAuth App**. For GitHub Enterprise, use the same menu on your enterprise instance.
+1. In GitHub, go to **Settings > Developer settings > OAuth apps** and click **New OAuth App**. For GitHub Enterprise, use the same menu on your enterprise instance.
 1. Enter an **Application name** and a **Homepage URL**, for example your Grafana instance URL.
 1. Paste the Grafana callback URL in **Authorization callback URL**.
 1. Click **Register application**.
@@ -213,10 +213,12 @@ Grafana requests the `repo` scope when you authorize the app. For more details, 
 
 To create a GitLab OAuth application, follow these steps:
 
-1. In GitLab, go to your user or group settings and select **Applications**.
+1. In GitLab, create the application for your user or for a group:
+   - For your user, select your avatar, then **Edit profile > Access > Applications > Add new application**.
+   - For a group, go to the group and select **Settings > Applications**.
 1. Enter a **Name** and paste the Grafana callback URL in **Redirect URI**.
 1. Keep **Confidential** selected, and select the `api` scope.
-1. Save the application.
+1. Click **Save application**.
 1. Copy the **Application ID** and the **Secret**.
 
 For more details, refer to [Configure GitLab as an OAuth 2.0 authentication identity provider](https://docs.gitlab.com/integration/oauth_provider/).
@@ -225,14 +227,14 @@ For more details, refer to [Configure GitLab as an OAuth 2.0 authentication iden
 
 To create a Bitbucket OAuth consumer, follow these steps:
 
-1. In Bitbucket, go to your workspace settings and select **OAuth consumers > Add consumer**.
+1. In Bitbucket, go to **Workspace settings > Apps and features > OAuth consumers** and click **Add consumer**.
 1. Enter a **Name** and paste the Grafana callback URL in **Callback URL**.
 1. Set these permissions:
    - **Repositories**: Read and write permission
    - **Pull requests**: Read and write permission
    - **Webhooks**: Read and write permission
-1. Save the consumer.
-1. Copy the **Key** and the **Secret**, and note the name of the workspace.
+1. Click **Save**.
+1. Select the consumer name to show the **Key** and the **Secret**, copy them, and note the name of the workspace.
 
 For more details, refer to [Use OAuth on Bitbucket Cloud](https://support.atlassian.com/bitbucket-cloud/docs/use-oauth-on-bitbucket-cloud/).
 
