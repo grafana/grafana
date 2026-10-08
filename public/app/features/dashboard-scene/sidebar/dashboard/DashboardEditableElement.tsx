@@ -1,7 +1,6 @@
 import { type ReactNode, useId, useMemo } from 'react';
 
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useFlagGrafanaDashboardGlobalVariables } from '@grafana/runtime/internal';
 import { type SceneObject, SceneVariableSet } from '@grafana/scenes';
 import { Button } from '@grafana/ui';
@@ -107,7 +106,7 @@ export class DashboardEditableElement implements EditableDashboardElement {
       return body.getOutlineChildren();
     }
     return [
-      ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [this.getFiltersSet()] : []),
+      this.getFiltersSet(),
       $variables,
       dashboardSceneGraph.getDataLayers(this.dashboard),
       this.getLinksSet(),
@@ -140,10 +139,6 @@ function useFiltersCategory(dashboard: DashboardScene): OptionsPaneCategoryDescr
   const includePredefined = useFlagGrafanaDashboardGlobalVariables();
 
   return useMemo(() => {
-    if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-      return [];
-    }
-
     const filterCount =
       $variables instanceof SceneVariableSet
         ? countSidebarVariables(
@@ -185,13 +180,12 @@ function useVariablesCategory(dashboard: DashboardScene): OptionsPaneCategoryDes
   const includePredefined = useFlagGrafanaDashboardGlobalVariables();
 
   return useMemo(() => {
-    const excludeFilters = Boolean(config.featureToggles.dashboardUnifiedDrilldownControls);
     const variableCount =
       $variables instanceof SceneVariableSet
         ? countSidebarVariables(
             partitionSidebarVariables($variables.state.variables, {
               includePredefined,
-              excludeFilters,
+              excludeFilters: true,
             })
           )
         : 0;

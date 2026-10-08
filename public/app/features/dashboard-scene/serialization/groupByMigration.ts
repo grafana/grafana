@@ -1,18 +1,16 @@
 /**
  * Runtime migration: GroupByVariable → AdHocFiltersVariable groupBy extension.
  *
- * When `dashboardUnifiedDrilldownControls` is enabled, GroupByVariable entries
- * are merged into the matching AdHocFiltersVariable (same datasource) as
- * groupBy-operator filters. The GroupByVariable is then dropped from the
- * variable list so it is never instantiated.
+ * GroupByVariable entries are merged into the matching AdHocFiltersVariable
+ * (same datasource) as groupBy-operator filters. The GroupByVariable is then
+ * dropped from the variable list so it is never instantiated.
  *
- * Since this is a runtime layer the schema will not be persisted until the user saves the dashboard,
- * so reverting back to the old model by turning the FF off won't work without re-adding a GroupByVariable manually.
+ * Since this is a runtime layer the schema will not be persisted until the user saves the dashboard.
  *
  * This is a temporary compat layer — remove once GroupByVariable is fully deprecated.
  */
 import type { GroupByVariableModel, TypedVariableModel } from '@grafana/data';
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import type {
   AdhocVariableKind,
   GroupByVariableKind,
@@ -116,10 +114,6 @@ function rewriteUrlForGroupByMigration(groupByName: string, adhocName: string): 
  * Returns a new list (no GroupByVariables). Does not mutate the input.
  */
 export function migrateGroupByVariablesV1(variables: TypedVariableModel[]): TypedVariableModel[] {
-  if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-    return variables;
-  }
-
   const groupByVars = variables.filter(isGroupByModel);
   if (groupByVars.length === 0) {
     return variables;
@@ -195,10 +189,6 @@ function extractV1Entries(option?: { value?: string | string[]; text?: string | 
  * Returns a new list (no GroupByVariableKinds). Does not mutate the input.
  */
 export function migrateGroupByVariablesV2(variables: VariableKind[]): VariableKind[] {
-  if (!config.featureToggles.dashboardUnifiedDrilldownControls) {
-    return variables;
-  }
-
   const groupByVars = variables.filter((v): v is GroupByVariableKind => v.kind === 'GroupByVariable');
   if (groupByVars.length === 0) {
     return variables;

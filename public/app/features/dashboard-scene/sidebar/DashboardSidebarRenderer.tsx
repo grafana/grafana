@@ -162,9 +162,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
-            <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
-          )}
+          {config.featureToggles.dashboardNewLayouts && <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
           {renderEnterpriseItems()}
           <DashboardSidebarExtensionPoint />

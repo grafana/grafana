@@ -229,9 +229,7 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
     menu: new VizPanelMenu({
       $behaviors: [panelMenuBehavior],
     }),
-    headerActions: new VizPanelHeaderActions({
-      hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
-    }),
+    headerActions: new VizPanelHeaderActions({}),
     $data: datasourceSettings
       ? new SceneDataTransformer({
           $data: new SceneQueryRunner({
