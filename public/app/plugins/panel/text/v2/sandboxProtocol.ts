@@ -23,7 +23,7 @@ export interface MermaidCommand {
 }
 
 export type FrameNotification =
-  | { type: 'ready' | 'rendered' | 'hide' | 'error' | 'mermaid-needed' }
+  | { type: 'ready' | 'rendered' | 'error' | 'mermaid-needed' }
   | { type: 'resize'; height: number; contentHeight: number }
   | { type: 'blocked'; resources: BlockedResource[] };
 
@@ -44,7 +44,6 @@ export function isFrameNotification(
   switch (value.type) {
     case 'ready':
     case 'rendered':
-    case 'hide':
     case 'error':
     case 'mermaid-needed':
       return true;

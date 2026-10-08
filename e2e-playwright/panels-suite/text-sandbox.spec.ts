@@ -7,7 +7,7 @@ import type * as Sandbox from './text-sandbox.fixture';
 declare global {
   interface Window {
     textSandbox: typeof Sandbox;
-    sandboxStates: Sandbox.TextSandboxState[];
+    sandboxStates: Array<Sandbox.TextSandboxState | undefined>;
     disposeSandbox?: () => void;
     sandboxSession: ReturnType<typeof Sandbox.renderSandbox>;
     sandboxHeights: number[];
@@ -124,6 +124,55 @@ test.describe('Text sandbox network boundary', () => {
     await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('ready');
   });
 
+  test('keeps permitted content, Mermaid, sizing, and reporting alive after initial and late violations', async ({
+    page,
+  }) => {
+    const requests: string[] = [];
+    await page.route('https://external.test/**', (route) => {
+      requests.push(route.request().url());
+      return route.abort();
+    });
+    await page.evaluate(() => {
+      window.sandboxStates = [];
+      window.sandboxSession = window.textSandbox.renderSandbox(document.getElementById('host')!, {
+        html: '<p>Permitted content</p><img src="https://external.test/initial?secret=one"><pre class="mermaid">flowchart LR\nA[checkout] --> B[healthy]</pre>',
+        globalCss: '',
+        title: 'Text panel content',
+        policy: window.textSandbox.textSandboxPolicy([], '/public/fonts/'),
+        mermaid: window.textSandbox.mermaidConfig(),
+        onState: (state) => window.sandboxStates.push(state),
+        onHeight: () => {},
+      });
+    });
+    const iframe = page.getByTitle('Text panel content');
+    const element = await iframe.elementHandle();
+    const content = page.frameLocator('iframe');
+    await expect(content.getByText('Permitted content')).toBeVisible();
+    await expect(content.locator('.mermaid-diagram svg')).toHaveCount(1);
+    await expect
+      .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
+      .toEqual([{ directive: 'img-src', origin: 'https://external.test' }]);
+    await content.locator('[data-text-blocks]').evaluate((container) => {
+      container.style.minHeight = '900px';
+      const image = document.createElement('img');
+      image.src = 'https://external.test/repeated?secret=two';
+      const video = document.createElement('video');
+      video.preload = 'auto';
+      video.src = 'https://external.test/late?secret=three';
+      container.append(image, video);
+    });
+    await expect
+      .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
+      .toEqual([
+        { directive: 'img-src', origin: 'https://external.test' },
+        { directive: 'media-src', origin: 'https://external.test' },
+      ]);
+    await expect(iframe).toHaveCSS('height', '900px');
+    await expect(content.getByText('Permitted content')).toBeVisible();
+    expect(await element!.evaluate((frame) => frame.isConnected)).toBe(true);
+    expect(requests).toEqual([]);
+  });
+
   test('blocks image requests before consent, recreates with approved origin, and blocks a new origin', async ({
     page,
   }) => {
@@ -160,11 +209,11 @@ test.describe('Text sandbox network boundary', () => {
     await expect
       .poll(() => page.evaluate(() => window.sandboxStates.at(-1)))
       .toEqual({
-        status: 'blocked',
+        status: 'ready',
         resources: [{ directive: 'img-src', origin: 'https://external.test' }],
       });
     expect(requests).toEqual([]);
-    await expect(page.getByTitle('Text panel content')).toHaveCount(0);
+    await expect(page.getByTitle('Text panel content')).toBeVisible();
 
     await mount('<img src="https://external.test/collect?secret=first">', ['https://external.test']);
     await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('ready');
@@ -180,9 +229,9 @@ test.describe('Text sandbox network boundary', () => {
         image.src = 'https://second.test/collect?secret=later';
         doc.body.append(image);
       });
-    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('blocked');
+    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources.length ?? 0)).toBeGreaterThan(0);
     expect(requests).toEqual(['https://external.test/collect?secret=first']);
-    await expect(page.getByTitle('Text panel content')).toHaveCount(0);
+    await expect(page.getByTitle('Text panel content')).toBeVisible();
   });
 
   for (const [directive, html] of [
@@ -192,7 +241,7 @@ test.describe('Text sandbox network boundary', () => {
       '<div style="height:20px;background-image:url(https://external.test/background?secret=value)">Content</div>',
     ],
   ]) {
-    test(`blocks ${directive} resources without exposing the frame`, async ({ page }) => {
+    test(`blocks ${directive} resources while leaving the frame visible`, async ({ page }) => {
       const requests: string[] = [];
       await page.route('https://external.test/**', (route) => {
         requests.push(route.request().url());
@@ -209,10 +258,12 @@ test.describe('Text sandbox network boundary', () => {
           onHeight: () => {},
         }).unmount;
       }, html);
-      await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('blocked');
+      await expect
+        .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources.length ?? 0))
+        .toBeGreaterThan(0);
       expect(requests).toEqual([]);
-      expect(await page.evaluate(() => window.sandboxStates.some((state) => state.status === 'ready'))).toBe(false);
-      await expect(page.getByTitle('Text panel content')).toHaveCount(0);
+      await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('ready');
+      await expect(page.getByTitle('Text panel content')).toBeVisible();
     });
   }
 
@@ -274,8 +325,8 @@ test.describe('Text sandbox network boundary', () => {
     await page.evaluate(() =>
       window.sandboxSession.update({ html: '<img src="https://external.test/refresh?secret=data">' })
     );
-    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('blocked');
-    await expect(page.locator('iframe')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources.length ?? 0)).toBeGreaterThan(0);
+    await expect(page.locator('iframe')).toHaveCount(1);
     expect(requests).toEqual([]);
     await page.evaluate(() =>
       window.sandboxSession.update({
@@ -337,11 +388,11 @@ test.describe('Text sandbox network boundary', () => {
     await expect
       .poll(() => page.evaluate(() => window.sandboxStates.at(-1)), { timeout: 15000 })
       .toEqual({
-        status: 'blocked',
+        status: 'ready',
         resources: [{ directive: 'img-src', origin: 'https://external.test' }],
       });
     expect(requests).toEqual([]);
-    await expect(page.locator('iframe')).toHaveCount(0);
+    await expect(page.locator('iframe')).toHaveCount(1);
     await page.evaluate(() =>
       window.sandboxSession.update({
         policy: window.textSandbox.textSandboxPolicy(['https://external.test'], '/public/fonts/'),
@@ -402,7 +453,7 @@ test.describe('Text sandbox network boundary', () => {
         onHeight: () => {},
       });
     });
-    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('blocked');
+    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources.length ?? 0)).toBeGreaterThan(0);
     expect(await page.evaluate(() => window.sandboxStates.at(-1))).toMatchObject({
       resources: [expect.objectContaining({ directive: 'script-src-attr' })],
     });

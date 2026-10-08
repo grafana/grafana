@@ -1,9 +1,8 @@
-import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Alert, Button, useTheme2 } from '@grafana/ui';
+import { useTheme2 } from '@grafana/ui';
 import { getMermaidConfig } from 'app/core/utils/mermaidConfig';
 
 import { SandboxFrame } from './SandboxFrame';
@@ -11,23 +10,28 @@ import { inlineSandboxFonts } from './sandboxFonts';
 import { getGlobalCss, textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
 import { isTextNewFeaturesEnabled } from './utils';
 
-export interface TextSandboxConsent {
-  resources: Extract<TextSandboxState, { status: 'blocked' }>['resources'];
+export interface TextSandboxRemediation {
+  canAllow: boolean;
   allow: () => void;
 }
 
-interface Props {
+export interface TextSandboxReport extends TextSandboxRemediation {
+  state: TextSandboxState;
+}
+
+export interface TextSandboxProps {
   html: string;
   hasData?: boolean;
   testId?: string;
   className?: string;
-  renderConsent?: (consent: TextSandboxConsent) => ReactNode;
+  /** Undefined invalidates the previous report when the document or consumer is removed. */
+  onStateChange?: (report: TextSandboxReport | undefined) => void;
 }
 
-export function TextSandbox({ html, hasData = true, testId, className, renderConsent = DefaultConsent }: Props) {
+export function TextSandbox({ html, hasData = true, testId, className, onStateChange }: TextSandboxProps) {
   const theme = useTheme2();
   const host = useRef<HTMLDivElement>(null);
-  const [state, setState] = useState<TextSandboxState>({ status: 'loading' });
+  const currentReport = useRef<TextSandboxReport | undefined>(undefined);
   const [origins, setOrigins] = useState<string[]>([]);
   const [globalCss, setGlobalCss] = useState('');
   const mermaid = useMemo(() => (isTextNewFeaturesEnabled() ? getMermaidConfig(theme) : undefined), [theme]);
@@ -51,27 +55,39 @@ export function TextSandbox({ html, hasData = true, testId, className, renderCon
   const onHeight = useCallback(() => {
     host.current?.dispatchEvent(new Event('text-content-resized', { bubbles: true }));
   }, []);
+  const onState = useCallback(
+    (state: TextSandboxState | undefined) => {
+      currentReport.current = undefined;
+      if (!state) {
+        onStateChange?.(undefined);
+        return;
+      }
+      const canAllow = state.resources.length > 0 && state.resources.every((resource) => resource.origin !== undefined);
+      const report: TextSandboxReport = {
+        state,
+        canAllow,
+        allow: () => {
+          // A dashboard may retain a report after its document or resource snapshot has changed.
+          if (!canAllow || currentReport.current !== report) {
+            return;
+          }
+          currentReport.current = undefined;
+          setOrigins((current) => [
+            ...new Set([
+              ...current,
+              ...state.resources.flatMap((resource) => (resource.origin ? [resource.origin] : [])),
+            ]),
+          ]);
+        },
+      };
+      currentReport.current = report;
+      onStateChange?.(report);
+    },
+    [onStateChange]
+  );
 
   return (
     <div className={className} data-testid={testId}>
-      {state.status === 'loading' && <div role="status">{t('textng.sandbox.loading', 'Loading content…')}</div>}
-      {state.status === 'error' && (
-        <Alert
-          severity="warning"
-          title={t('textng.sandbox.unavailable', 'Secure text rendering is unavailable in this browser')}
-        />
-      )}
-      {state.status === 'blocked' &&
-        renderConsent({
-          resources: state.resources,
-          allow: () =>
-            setOrigins((current) => [
-              ...new Set([
-                ...current,
-                ...state.resources.flatMap((resource) => (resource.origin ? [resource.origin] : [])),
-              ]),
-            ]),
-        })}
       <div ref={host} style={{ position: 'relative' }}>
         <SandboxFrame
           html={hasData ? textUtil.sanitizeTextPanelContent(html) : html}
@@ -80,26 +96,10 @@ export function TextSandbox({ html, hasData = true, testId, className, renderCon
           mermaid={mermaid}
           diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
           title={t('textng.sandbox.title', 'Text panel content')}
-          onState={setState}
+          onState={onState}
           onHeight={onHeight}
         />
       </div>
     </div>
-  );
-}
-
-function DefaultConsent({ resources, allow }: TextSandboxConsent) {
-  const canAllow = resources.every((resource) => resource.origin !== undefined);
-  return (
-    <Alert severity="warning" title={t('textng.sandbox.blocked', 'External resources were blocked')}>
-      <p>{resources.map((resource) => resource.origin ?? resource.directive).join(', ')}</p>
-      {canAllow ? (
-        <Button data-testid={selectors.components.Panels.Visualization.Text.allowResourcesButton} onClick={allow}>
-          {t('textng.sandbox.allow', 'Allow')}
-        </Button>
-      ) : (
-        <p>{t('textng.sandbox.policy-blocked', 'These resources cannot be allowed by the text panel.')}</p>
-      )}
-    </Alert>
   );
 }

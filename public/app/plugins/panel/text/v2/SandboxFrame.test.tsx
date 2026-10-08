@@ -48,29 +48,34 @@ beforeEach(() => {
 });
 afterEach(() => jest.useRealTimers());
 
-it('sends data only after the current runtime is ready and reveals only after rendering', async () => {
+it('mounts visibly immediately but sends data only after the current runtime is ready', async () => {
   const options = props();
   render(
     <StrictMode>
       <SandboxFrame {...options} />
     </StrictMode>
   );
+  const initial = screen.getByTitle('Text content');
+  expect(initial).toBeVisible();
+  expect(initial).not.toHaveAttribute('srcdoc');
   const element = await frame();
+  expect(element).toBe(initial);
+  expect(element).toHaveAttribute('srcdoc', expect.stringContaining('trusted runtime'));
   const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
   expect(element.srcdoc).not.toContain('Private content');
   expect(element.getAttribute('sandbox')).toContain('allow-scripts');
   expect(element.getAttribute('sandbox')).not.toContain('allow-same-origin');
-  expect(element.style.visibility).toBe('hidden');
+  expect(element).toBeVisible();
   expect(postMessage).not.toHaveBeenCalled();
   notify(element, 'ready');
   expect(postMessage).toHaveBeenCalledWith(
     expect.objectContaining({ type: 'render', html: '<p>Private content</p>' }),
     '*'
   );
-  expect(element.style.visibility).toBe('hidden');
+  expect(element).toBeVisible();
   notify(element, 'rendered');
-  expect(element.style.visibility).toBe('visible');
-  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready' });
+  expect(element).toBeVisible();
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
 });
 
 it('rejects foreign sources, origins, channels, and premature rendered messages', async () => {
@@ -82,27 +87,26 @@ it('rejects foreign sources, origins, channels, and premature rendered messages'
   notify(element, 'ready', {}, { origin: 'https://other.test' });
   notify(element, 'ready', { channel: 'wrong' });
   notify(element, 'rendered');
-  expect(element.style.visibility).toBe('hidden');
+  expect(element).toBeVisible();
   expect(postMessage).not.toHaveBeenCalled();
   notify(element, 'ready');
   notify(element, 'ready');
   expect(postMessage).toHaveBeenCalledTimes(1);
 });
 
-it('hides on a late violation and removes the frame for consent', async () => {
+it('retains the visible frame and reports a late violation', async () => {
   const options = props();
   render(<SandboxFrame {...options} />);
   const element = await frame();
   notify(element, 'ready');
   notify(element, 'rendered');
-  notify(element, 'hide');
-  expect(element.style.visibility).toBe('hidden');
+  expect(element).toBeVisible();
   notify(element, 'rendered');
-  expect(element.style.visibility).toBe('hidden');
+  expect(element).toBeVisible();
   notify(element, 'blocked', { resources: [{ directive: 'img-src', origin: 'https://external.test/secret' }] });
-  expect(element).not.toBeInTheDocument();
+  expect(element).toBeInTheDocument();
   expect(options.onState).toHaveBeenLastCalledWith({
-    status: 'blocked',
+    status: 'ready',
     resources: [{ directive: 'img-src', origin: 'https://external.test' }],
   });
 });
@@ -119,6 +123,45 @@ it('omits CSP and sandbox completely without data', async () => {
     expect.objectContaining({ html: '<script>legacy()</script>' }),
     window.location.origin
   );
+});
+
+it('accumulates normalized violations across rendering and errors while continuing to resize', async () => {
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'blocked', { resources: [{ directive: 'img-src', origin: 'https://premature.test' }] });
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'loading', resources: [] });
+  notify(element, 'ready');
+  const first = { directive: 'img-src', origin: 'https://first.test' };
+  const second = { directive: 'media-src', origin: 'https://second.test' };
+  notify(element, 'blocked', { resources: [{ ...first, origin: first.origin + '/private?data=secret' }] });
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [first] });
+  const count = jest.mocked(options.onState).mock.calls.length;
+  notify(element, 'blocked', { resources: [first] });
+  expect(options.onState).toHaveBeenCalledTimes(count);
+  notify(element, 'error');
+  notify(element, 'blocked', { resources: [first, second] });
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [first, second] });
+  notify(element, 'resize', { height: 220, contentHeight: 200 });
+  expect(options.onHeight).toHaveBeenLastCalledWith(220, 200);
+  expect(screen.getByTitle('Text content')).toBe(element);
+  expect(element).toBeVisible();
+});
+
+it('finishes Mermaid loading despite an unrelated CSP violation', async () => {
+  let resolve!: (source: string) => void;
+  jest.mocked(loadSandboxMermaid).mockReturnValueOnce(new Promise((done) => (resolve = done)));
+  const options = props({ mermaid: {} });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  notify(element, 'blocked', { resources: [{ directive: 'img-src', origin: 'https://external.test' }] });
+  await act(async () => resolve('Mermaid runtime'));
+  expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ type: 'mermaid-source' }), '*');
 });
 
 it('updates height and pagination metrics only from valid runtime messages', async () => {
@@ -153,10 +196,10 @@ it.each(['html', 'policy', 'globalCss'] as const)(
       { resources: [{ directive: 'img-src' }], channel: staleChannel },
       { source: staleWindow }
     );
-    expect(current.style.visibility).toBe('hidden');
+    expect(current).toBeVisible();
     notify(current, 'ready');
     notify(current, 'rendered');
-    expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready' });
+    expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
   }
 );
 
@@ -166,8 +209,8 @@ it('fails closed if bootstrap or rendering never completes', async () => {
   const element = await frame();
   expect(element.srcdoc).not.toContain('Private content');
   act(() => jest.advanceTimersByTime(15000));
-  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error' });
-  expect(element).not.toBeInTheDocument();
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+  expect(element).toBeInTheDocument();
 });
 
 it('ignores runtime loading after unmount and clears the watchdog', async () => {
@@ -179,7 +222,7 @@ it('ignores runtime loading after unmount and clears the watchdog', async () => 
   );
   const options = props();
   const { unmount } = render(<SandboxFrame {...options} />);
-  expect(options.onState).toHaveBeenCalledWith({ status: 'loading' });
+  expect(options.onState).toHaveBeenCalledWith({ status: 'loading', resources: [] });
   unmount();
   jest.mocked(options.onState).mockClear();
   await act(async () => resolve('late runtime'));
@@ -205,9 +248,9 @@ it('loads Mermaid once only after a verified frame requests it', async () => {
     expect.objectContaining({ type: 'mermaid-source', source: '/* trusted Mermaid */' }),
     '*'
   );
-  expect(element.style.visibility).toBe('hidden');
+  expect(element).toBeVisible();
   notify(element, 'rendered');
-  expect(element.style.visibility).toBe('visible');
+  expect(element).toBeVisible();
 });
 
 it('ignores Mermaid requests when diagrams are disabled', async () => {
@@ -216,11 +259,11 @@ it('ignores Mermaid requests when diagrams are disabled', async () => {
   notify(element, 'ready');
   notify(element, 'mermaid-needed');
   notify(element, 'rendered');
-  expect(element.style.visibility).toBe('visible');
+  expect(element).toBeVisible();
   expect(loadSandboxMermaid).not.toHaveBeenCalled();
 });
 
-it.each(['refresh', 'unmount', 'violation'] as const)('discards Mermaid loading after %s', async (action) => {
+it.each(['refresh', 'unmount'] as const)('discards Mermaid loading after %s', async (action) => {
   let resolve!: (source: string) => void;
   jest.mocked(loadSandboxMermaid).mockReturnValueOnce(new Promise((done) => (resolve = done)));
   const options = props({ mermaid: { securityLevel: 'strict' } });
@@ -235,14 +278,12 @@ it.each(['refresh', 'unmount', 'violation'] as const)('discards Mermaid loading 
     rerender(<SandboxFrame {...options} html="<p>Refreshed</p>" />);
   } else if (action === 'unmount') {
     unmount();
-  } else {
-    notify(element, 'hide');
   }
   await act(async () => resolve('late Mermaid source'));
   expect(postMessage).not.toHaveBeenCalled();
 });
 
-it('fails closed when the requested Mermaid bundle cannot load', async () => {
+it('reports a Mermaid loading error without removing permitted content', async () => {
   jest.mocked(loadSandboxMermaid).mockRejectedValueOnce(new Error('Chunk unavailable'));
   const options = props({ mermaid: { securityLevel: 'strict' } });
   render(<SandboxFrame {...options} />);
@@ -250,6 +291,6 @@ it('fails closed when the requested Mermaid bundle cannot load', async () => {
   notify(element, 'ready');
   notify(element, 'mermaid-needed');
   await act(async () => {});
-  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error' });
-  expect(element).not.toBeInTheDocument();
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+  expect(element).toBeInTheDocument();
 });

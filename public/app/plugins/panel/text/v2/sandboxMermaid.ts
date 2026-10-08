@@ -47,7 +47,7 @@ const renderDiagrams: RenderDiagrams = async (command, container, isCancelled) =
       diagram.innerHTML = DOMPurify.sanitize(result.svg, { USE_PROFILES: { svg: true, svgFilters: true } });
       target.replaceWith(diagram);
     } catch {
-      // CSP failures can reject Mermaid's image decoding too. The violation handler owns consent.
+      // CSP failures can reject image decoding too; the runtime reports those independently.
       if (!isCancelled()) {
         const error = document.createElement('div');
         error.className = 'mermaid-diagram-error';

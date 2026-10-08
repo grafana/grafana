@@ -3,10 +3,10 @@ export interface BlockedResource {
   origin?: string;
 }
 
-export type TextSandboxState =
-  | { status: 'loading' | 'ready' }
-  | { status: 'blocked'; resources: BlockedResource[] }
-  | { status: 'error' };
+export interface TextSandboxState {
+  status: 'loading' | 'ready' | 'error';
+  resources: BlockedResource[];
+}
 
 export const RESOURCE_DIRECTIVES = new Set([
   'img-src',

@@ -19,10 +19,9 @@ const nonce = bootstrap.nonce;
 bootstrap.remove();
 
 let disposed = false;
-let blocked = false;
 let verified = policy === undefined;
 let started = false;
-let removalTimer = 0;
+let violationTimer = 0;
 let verificationTimer = 0;
 let readyTimer = 0;
 let observer: ResizeObserver | undefined;
@@ -53,13 +52,6 @@ function onViolation(event: SecurityPolicyViolationEvent) {
     }
     return;
   }
-  blocked = true;
-  receiveMermaid?.('');
-  receiveMermaid = undefined;
-  // Hide in the same task as the violation; parent React receives the message asynchronously.
-  document.documentElement.style.setProperty('display', 'none', 'important');
-  observer?.disconnect();
-  send({ type: 'hide' });
   const resource: BlockedResource = {
     directive: event.effectiveDirective,
     origin:
@@ -69,14 +61,14 @@ function onViolation(event: SecurityPolicyViolationEvent) {
   };
   if (!resources.some((entry) => entry.directive === resource.directive && entry.origin === resource.origin)) {
     resources.push(resource);
+    // Batch queued violations without interrupting permitted content or later reports.
+    clearTimeout(violationTimer);
+    violationTimer = window.setTimeout(() => send({ type: 'blocked', resources }), 0);
   }
-  // Preserve already queued violations in a single consent request.
-  clearTimeout(removalTimer);
-  removalTimer = window.setTimeout(() => send({ type: 'blocked', resources }), 0);
 }
 
 function measure() {
-  if (!content || blocked || disposed) {
+  if (!content || disposed) {
     return;
   }
   const first = content.firstElementChild;
@@ -89,14 +81,14 @@ function measure() {
 }
 
 async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
-  if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || blocked || disposed) {
+  if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || disposed) {
     return;
   }
   const source = await new Promise<string>((resolve) => {
     receiveMermaid = resolve;
     send({ type: 'mermaid-needed' });
   });
-  if (blocked || disposed) {
+  if (disposed) {
     return;
   }
   let render: RenderDiagrams | undefined;
@@ -112,7 +104,7 @@ async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
   if (!render) {
     throw new Error('Text diagram runtime did not initialize');
   }
-  await render(command, container, () => blocked || disposed);
+  await render(command, container, () => disposed);
 }
 
 async function render(command: RenderCommand) {
@@ -135,13 +127,13 @@ async function render(command: RenderCommand) {
   observer.observe(content);
   await document.fonts.ready;
   await renderDiagrams(command, content);
-  if (blocked || disposed) {
+  if (disposed) {
     return;
   }
   measure();
   // Hidden/offscreen cross-origin frames can suspend animation frames. Yield a task for queued CSP reports instead.
   readyTimer = window.setTimeout(() => {
-    if (!blocked && !disposed) {
+    if (!disposed) {
       send({ type: 'rendered' });
     }
   }, 0);
@@ -156,7 +148,6 @@ function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
     command.protocol !== TEXT_FRAME_PROTOCOL ||
     command.channel !== channel ||
     !verified ||
-    blocked ||
     disposed
   ) {
     return;
@@ -183,7 +174,7 @@ function dispose() {
   receiveMermaid?.('');
   receiveMermaid = undefined;
   observer?.disconnect();
-  clearTimeout(removalTimer);
+  clearTimeout(violationTimer);
   clearTimeout(readyTimer);
   clearTimeout(verificationTimer);
   document.removeEventListener('securitypolicyviolation', onViolation);

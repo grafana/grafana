@@ -8,8 +8,8 @@ no-data content; Text v1 is unchanged.
 
 ## Lifecycle
 
-`SandboxFrame.tsx` owns a keyed document generation, visibility, height, and the
-message listener through React state and effects. It mounts a hidden shell before
+`SandboxFrame.tsx` owns a keyed document generation, height, and the
+message listener through React state and effects. It mounts a visible empty shell before
 sending panel content. The protected runtime first verifies CSP violation delivery
 using a fixed, non-sensitive blocked image. Only then does the parent send content.
 The frame must be connected to load; a detached iframe cannot perform this check.
@@ -26,27 +26,37 @@ The base runtime is approximately 3.5 KB minified. The Mermaid runtime is approx
 3.45 MB before transfer compression, downloaded once per application session and
 executed only in frames that need diagrams. Plain text panels never request it.
 
-One cancellable task lets queued violations arrive before initial visibility.
-Animation frames cannot be used here: hidden/offscreen cross-origin documents can
-suspend them indefinitely. This is a presentation optimization, not a security boundary. CSP blocks requests
-synchronously throughout the document's lifetime. Violations immediately hide the
-child document, then batch normalized reports to the parent, which removes the
-iframe and shows consent. HTML, theme, protection mode, or consent changes create a
+One cancellable task yields before reporting rendering completion; offscreen
+cross-origin documents can suspend animation frames indefinitely. CSP blocks requests
+synchronously throughout the document's lifetime. Violations batch normalized reports
+to the parent without hiding or removing the iframe. Permitted content, resizing,
+and Mermaid continue, and later violations are collected too.
+HTML, theme, protection mode, or origin-grant changes create a
 fresh document; an applied CSP cannot be relaxed in place.
 
 Messages are checked against the current WindowProxy, expected origin, protocol,
 and per-generation channel. The child accepts one render command from its parent.
-A watchdog fails closed if initialization or diagram loading stalls. Failed bundle
-loads can be retried by later generations; late responses cannot reach replaced or
-blocked frames. Cleanup removes listeners,
+A watchdog reports an error if initialization or diagram loading stalls, without
+removing the frame. Unverified frames never receive panel content. Failed bundle
+loads can be retried by later generations; late responses cannot reach replaced
+frames. Cleanup removes listeners,
 observers and timers. React StrictMode and stale generations
 are covered by tests.
 
-## Consent integration
+## Reporting and remediation integration
 
-`TextSandbox` owns temporary origin grants and exposes `renderConsent`, receiving
-normalized resources and an `allow` callback. Replace the default alert/button here
-with the consent UX. There is no persistent consent storage in this prototype.
+`TextSandbox` owns temporary origin grants and exposes an optional `onStateChange`
+callback. Reports contain `state`, `canAllow`, and `allow`. State tracks lifecycle
+(`loading`, `ready`, or `error`) independently from accumulated `resources`.
+Rendering completion and errors preserve violations. A fresh document resets them.
+The callback receives `undefined` when its document or consumer is removed, so a
+future dashboard consumer can clear its report. Old snapshot callbacks are inert.
+`allow` is available only when every violation can be relaxed, and applies only the
+origins captured in that snapshot by creating a fresh document.
+
+There is no panel-scoped loading, error, or consent UI. Browser-native failed resources
+may remain visible alongside permitted content. Dashboard reporting, remediation UX,
+and persistent consent belong to a follow-up PR; this PR only exposes the local callback.
 Only origins, never blocked URL paths or query strings, are sent to the UI.
 
 Consent enables an origin for images, media, fonts, stylesheets, and nested frames.
@@ -76,8 +86,7 @@ inherited even when custom CSP is omitted.
 
 ## Known prototype limits
 
-- Late violations may briefly display broken resources before the asynchronous
-  callback hides the document. Forbidden requests are blocked before transmission.
+- Failed resources may appear broken; forbidden requests are blocked before transmission.
 - Grants last only for the mounted component. Persistent grants, revocation UX,
   and dashboard-scoped lifetime belong to the consent integration.
 - The self-contained Mermaid bundle is relatively large and is instantiated per

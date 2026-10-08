@@ -16,7 +16,7 @@ export interface SandboxFrameProps {
   mermaid?: MermaidConfig;
   diagramError?: string;
   title: string;
-  onState: (state: TextSandboxState) => void;
+  onState: (state: TextSandboxState | undefined) => void;
   onHeight: (height: number, contentHeight: number) => void;
 }
 
@@ -53,8 +53,7 @@ function FrameDocument({
   onHeight,
 }: SandboxFrameProps) {
   const frame = useRef<HTMLIFrameElement>(null);
-  const [state, setState] = useState<TextSandboxState>({ status: 'loading' });
-  const [hidden, setHidden] = useState(true);
+  const [state, setState] = useState<TextSandboxState>({ status: 'loading', resources: [] });
   const [size, setSize] = useState({ height: 1, contentHeight: 0 });
   const [source, setSource] = useState<string>();
   const [channel] = useState(randomChannel);
@@ -62,16 +61,16 @@ function FrameDocument({
   const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomChannel());
   const appliedPolicy = policy?.replace("script-src 'none'", `script-src 'nonce-${nonce}'`);
   const protectedFrame = policy !== undefined;
-  const terminal = state.status === 'blocked' || state.status === 'error';
 
   useLayoutEffect(() => {
     onState(state);
   }, [onState, state]);
+  useLayoutEffect(() => () => onState(undefined), [onState]);
   useLayoutEffect(() => {
-    if (size.contentHeight > 0 && !terminal) {
+    if (size.contentHeight > 0) {
       onHeight(size.height, size.contentHeight);
     }
-  }, [onHeight, size, terminal]);
+  }, [onHeight, size]);
 
   useLayoutEffect(() => {
     let disposed = false;
@@ -83,7 +82,7 @@ function FrameDocument({
       })
       .catch(() => {
         if (!disposed) {
-          setState({ status: 'error' });
+          setState((current) => ({ ...current, status: 'error' }));
         }
       });
     return () => {
@@ -92,14 +91,15 @@ function FrameDocument({
   }, []);
 
   useLayoutEffect(() => {
-    if (terminal) {
-      return;
-    }
     let sent = false;
-    let blocked = false;
     let disposed = false;
     let mermaidRequested = false;
-    const watchdog = window.setTimeout(() => setState({ status: 'error' }), 15000);
+    let failed = false;
+    const fail = () => {
+      failed = true;
+      setState((current) => ({ ...current, status: 'error' }));
+    };
+    const watchdog = window.setTimeout(fail, 15000);
     const onMessage = (event: MessageEvent) => {
       const message = event.data;
       if (
@@ -113,14 +113,14 @@ function FrameDocument({
       }
       switch (message.type) {
         case 'mermaid-needed': {
-          if (!sent || blocked || !mermaid || mermaidRequested) {
+          if (!sent || failed || !mermaid || mermaidRequested) {
             return;
           }
           mermaidRequested = true;
           const target = frame.current.contentWindow;
           void loadSandboxMermaid()
             .then((source) => {
-              if (disposed || blocked || !target || frame.current?.contentWindow !== target) {
+              if (disposed || failed || !target || frame.current?.contentWindow !== target) {
                 return;
               }
               const command: MermaidCommand = {
@@ -132,14 +132,15 @@ function FrameDocument({
               target.postMessage(command, protectedFrame ? '*' : window.location.origin);
             })
             .catch(() => {
-              if (!disposed && !blocked) {
-                setState({ status: 'error' });
+              if (!disposed) {
+                clearTimeout(watchdog);
+                fail();
               }
             });
           break;
         }
         case 'ready': {
-          if (sent) {
+          if (sent || failed) {
             return;
           }
           sent = true;
@@ -157,37 +158,41 @@ function FrameDocument({
           break;
         }
         case 'rendered':
-          if (sent && !blocked) {
+          if (sent && !failed) {
             clearTimeout(watchdog);
-            setHidden(false);
-            setState({ status: 'ready' });
+            setState((current) => ({ ...current, status: 'ready' }));
           }
           break;
         case 'resize':
-          if (sent && !blocked) {
+          if (sent) {
             setSize({ height: message.height, contentHeight: message.contentHeight });
           }
           break;
-        case 'hide':
-          blocked = true;
-          setHidden(true);
-          setState({ status: 'loading' });
-          break;
         case 'blocked':
-          blocked = true;
-          clearTimeout(watchdog);
-          setState({
-            status: 'blocked',
-            resources: message.resources.map((resource) => ({
-              directive: resource.directive,
-              origin: resource.origin ? resourceOrigin(resource.origin) : undefined,
-            })),
+          if (!sent) {
+            break;
+          }
+          setState((current) => {
+            const resources = [...current.resources];
+            for (const resource of message.resources) {
+              const normalized = {
+                directive: resource.directive,
+                origin: resource.origin ? resourceOrigin(resource.origin) : undefined,
+              };
+              if (
+                !resources.some(
+                  (entry) => entry.directive === normalized.directive && entry.origin === normalized.origin
+                )
+              ) {
+                resources.push(normalized);
+              }
+            }
+            return resources.length === current.resources.length ? current : { ...current, resources };
           });
           break;
         case 'error':
-          if (!blocked) {
-            setState({ status: 'error' });
-          }
+          clearTimeout(watchdog);
+          fail();
           break;
       }
     };
@@ -197,7 +202,7 @@ function FrameDocument({
       clearTimeout(watchdog);
       window.removeEventListener('message', onMessage);
     };
-  }, [channel, diagramError, globalCss, html, mermaid, protectedFrame, terminal]);
+  }, [channel, diagramError, globalCss, html, mermaid, protectedFrame]);
 
   const shell = useMemo(() => {
     if (source === undefined) {
@@ -211,9 +216,6 @@ function FrameDocument({
     const policyAttribute = appliedPolicy === undefined ? '' : ` data-policy="${escape(appliedPolicy)}"`;
     return `<!doctype html><html><head>${csp}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(window.location.origin)}"${policyAttribute}>${source.replace(/<\/script/gi, '<\\/script')}</script></body></html>`;
   }, [appliedPolicy, channel, nonce, source]);
-  if (terminal || shell === undefined) {
-    return null;
-  }
   return (
     <iframe
       ref={frame}
@@ -224,17 +226,13 @@ function FrameDocument({
           : undefined
       }
       referrerPolicy={protectedFrame ? 'no-referrer' : undefined}
-      aria-hidden={hidden ? true : undefined}
-      tabIndex={hidden ? -1 : undefined}
       data-text-content-height={size.contentHeight || undefined}
       style={{
-        position: hidden ? 'absolute' : 'static',
-        visibility: hidden ? 'hidden' : 'visible',
-        pointerEvents: hidden ? 'none' : 'auto',
         width: '100%',
         height: size.height,
         border: 0,
       }}
+      // An empty srcdoc can race the runtime navigation and leave Chromium on a blank document.
       srcDoc={shell}
     />
   );
