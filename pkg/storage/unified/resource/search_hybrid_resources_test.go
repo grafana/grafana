@@ -204,12 +204,6 @@ func TestHybridSearchResources_Validation(t *testing.T) {
 		{name: "missing group", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources[0].Group = "" }},
 		{name: "missing resource", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources[0].Resource = "" }},
 		{name: "duplicate resource", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources = append(r.Resources, r.Resources[0]) }},
-		{name: "too many resources", change: func(r *resourcepb.HybridSearchResourcesRequest) {
-			r.Resources = make([]*resourcepb.HybridSearchResourcesRequest_Resource, 11)
-			for i := range r.Resources {
-				r.Resources[i] = &resourcepb.HybridSearchResourcesRequest_Resource{Group: "g", Resource: fmt.Sprintf("resource-%d", i)}
-			}
-		}},
 		{name: "empty query", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Query = " " }},
 		{name: "long query", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Query = strings.Repeat("q", 1001) }},
 		{name: "empty semantic query", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.SemanticQuery = " " }},
@@ -238,6 +232,16 @@ func TestHybridSearchResources_Validation(t *testing.T) {
 		s, _ := newHybridResourcesTestServer(nil)
 		_, err := s.HybridSearchResources(authedCtx(), nil)
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+	t.Run("more than ten resources", func(t *testing.T) {
+		req := hybridResourcesTestRequest()
+		req.Resources = make([]*resourcepb.HybridSearchResourcesRequest_Resource, 11)
+		for i := range req.Resources {
+			req.Resources[i] = &resourcepb.HybridSearchResourcesRequest_Resource{Group: "g", Resource: fmt.Sprintf("resource-%d", i)}
+		}
+		requests, err := hybridResourceRequests(req)
+		require.NoError(t, err)
+		assert.Len(t, requests, len(req.Resources))
 	})
 }
 

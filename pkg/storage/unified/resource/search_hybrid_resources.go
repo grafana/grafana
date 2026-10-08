@@ -14,8 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-const maxHybridSearchResources = 10
-
 func (s *searchServer) HybridSearchResources(ctx context.Context, req *resourcepb.HybridSearchResourcesRequest) (resp *resourcepb.HybridSearchResponse, retErr error) {
 	ctx, span := tracer.Start(ctx, "resource.searchServer.HybridSearchResources")
 	defer span.End()
@@ -97,8 +95,8 @@ func hybridResourceRequests(req *resourcepb.HybridSearchResourcesRequest) ([]*re
 	if req == nil || req.Namespace == "" {
 		return nil, invalid("namespace is required")
 	}
-	if len(req.Resources) == 0 || len(req.Resources) > maxHybridSearchResources {
-		return nil, invalid(fmt.Sprintf("resources must contain between 1 and %d resource types", maxHybridSearchResources))
+	if len(req.Resources) == 0 {
+		return nil, invalid("at least one resource is required")
 	}
 	for _, filter := range req.Filters {
 		if filter == nil || (filter.Key != "uid" && filter.Key != "folder") {
