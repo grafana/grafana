@@ -31,7 +31,6 @@ COPY public/img/icons public/img/icons
 
 ADD devenv/frontend-service/build/grafana bin/grafana
 
-# Tilt passes the directory the backend reads the build from.
 ARG BUILD_DIR=build/rspack
 COPY public/${BUILD_DIR}/assets-manifest.json public/${BUILD_DIR}/assets-manifest.json
 COPY public/${BUILD_DIR}/boot.js public/${BUILD_DIR}/boot.js

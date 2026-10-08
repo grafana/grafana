@@ -50,15 +50,10 @@ export function initializeCrashDetection() {
       return new Worker(new URL('./client.worker', import.meta.url));
     },
 
-    /**
-     *  There are limitations that require us to manually assert the type here.
-     *  1) The bundler uses static code analysis to create a new entry point for a SharedWorker.
-     *     It requires constructing an object with exact syntax new SharedWorker(...)
-     *  2) Some browsers may not support SharedWorkers hence we cannot extend CorsSharedWorker like CorsWorker and
-     *     window.SharedWorker needs to be referenced during runtime only if it is supported (https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker)
-     *
-     *  We guarantee the type assertion is correct by returning a SharedWorker in CorsSharedWorker constructor.
-     */
+    // CorsSharedWorker is imported as SharedWorker because the bundler only creates a worker
+    // entry point for the literal `new SharedWorker(new URL(...))` syntax. It returns a real
+    // SharedWorker but cannot extend window.SharedWorker, which some browsers lack, hence the
+    // assertion.
     createDetectorWorker() {
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
       return new SharedWorker(new URL('./detector.worker', import.meta.url)) as globalThis.SharedWorker;

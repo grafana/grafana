@@ -1,10 +1,8 @@
-// Wrapped Worker constructor that allows cross-origin worker modules to be loaded in browsers.
-// JSON.stringify escapes quotes/backslashes so scriptUrl can't break out of or inject into
-// the generated import statement.
-// The worker revokes its own blob URL rather than the constructor doing it after super():
-// WebKit fails to start the worker when the blob is revoked before it has been read. Inside a
-// blob worker `self.location.href` is that blob URL, and the import is hoisted, so the revoke
-// runs only once the real worker script has evaluated.
+// Browsers refuse to start a worker from another origin, such as the CDN, so this starts a
+// same-origin blob worker that imports the real script. JSON.stringify escapes the URL so it
+// cannot break out of the import statement.
+// The worker revokes its own blob URL because WebKit fails to start a worker whose blob was
+// revoked before it was read. The import is hoisted, so the revoke runs after the real script.
 export class CorsWorker extends window.Worker {
   constructor(url: URL, options?: WorkerOptions) {
     const scriptUrl = url.toString();
