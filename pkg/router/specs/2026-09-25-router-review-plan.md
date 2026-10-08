@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630; P7 partly addressed)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630, O1 in #133638, O2 not pursued; P6–P10 in progress)
 Package: `pkg/router`
 
 ## Context
@@ -123,30 +123,39 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
   - **Fallback if per-caller fetches must stay:** at least run them in parallel with timeouts per
     backend, and deduplicate backends that share one upstream target.
 
-- [ ] **P6. The preferred version can be an unserved version.** When no preferred version is set,
+- [x] **P6. The preferred version can be an unserved version.** When no preferred version is set,
   `apiGroupFromManifestSpec` (`cloud_router.go`) picks the last entry in `spec.Versions`, even if
   that version isn't served. Pick the highest served version by kube version ordering
   (`version.CompareKubeAwareVersionStrings`).
 
-- [ ] **P7. Managed plugins can override core groups.**
+- [x] **P7. Managed plugins can override core groups.**
   - **Problem:** in `cloudLoader.Load`, the managed-plugins source (`plugins_url`) is applied last,
     so it overrides every other source. A plugin manifest can claim a core group such as
     `dashboard.grafana.app`. `plugins_group_regex` defaults to allowing every group.
   - **Fix:** protect reserved groups, or give plugins a mandatory default group pattern. Log (and
     later, count via O1) whenever one source overrides another for the same group.
+  - **Done:** managed plugins are built by `NewPluginBackend`, which rejects any group that isn't
+    plugin-shaped (`isPluginAPIGroup`, #133578), so a plugin can't claim a core group. The cloud
+    loader logs when one source shadows another, and `grafana_router_shadowed_groups` counts it
+    (#133638).
 
-- [ ] **P8. Confirm remote plugin authorization before rollout.** `pluginManifestAccessControl`
+- [x] **P8. Confirm remote plugin authorization before rollout.** `pluginManifestAccessControl`
   (`plugin_manifests_ac.go`) grants app access to every requester, and `authenticatingWrapper` only
   checks that the token is valid. Confirm that the storage layer (via the OBO token exchange)
   enforces the token's namespace. If it doesn't, add a check in the router that the namespace in the
   path matches the token.
+  - **Confirmed:** the plugin's API server runs Grafana's namespace authorizer
+    (`pluginroute.NewHandler`), which refuses a requester whose namespace doesn't match the path.
+    `TestIntegrationPluginsOverRouter` ("rejects another namespace") shows a managed plugin answering
+    `Forbidden` for another stack's namespace. Unified storage also always enforces RBAC on
+    `*.ext.grafana.app` groups, the groups manifest plugins must use.
 
-- [ ] **P9. The router needs its own retry after a failed reconcile.** The code comments say "a later
+- [x] **P9. The router needs its own retry after a failed reconcile.** The code comments say "a later
   wake retries", but nothing guarantees a wake. For example, if the initial `ListAll` fails and the
   informers don't replay existing objects, `Ready` stays failing indefinitely. `Run` should schedule a
   retry with backoff whenever `reconcile` returns an error.
 
-- [ ] **P10. The OpenAPI document cache never drops removed groups.** Entries in `openapiDocs`
+- [x] **P10. The OpenAPI document cache never drops removed groups.** Entries in `openapiDocs`
   (`router.go`) for groups that are no longer served stay in memory forever. Prune them in `publish`.
 
 - [x] **P11. One bad plugin blocks every local plugin.** `PluginLoader.Load` (`plugin.go`) returns an
@@ -290,17 +299,24 @@ Found by checking each part of the proxy path against a watch that streams for 3
 
 ## O: Operability
 
-- [ ] **O1. Metrics for route state, not just requests.** kube-aggregator's main operational
+- [x] **O1. Metrics for route state, not just requests.** kube-aggregator's main operational
   advantage is `APIService` status, which shows who serves each group and whether it is available.
   Minimum set:
   - gauge: groups served, labeled by source;
   - gauge: breaker state per group;
   - counters: reconcile runs and reconcile errors;
-  - counter: source conflicts (one source overriding another for the same group);
+  - counter: source conflicts (one source overriding another for the same group). Implemented as a
+    gauge of groups currently shadowed, since a lasting conflict would bump a counter on every
+    reconcile;
   - timestamp: last successful poll, per source.
+  - The metrics audit added readiness, last-reconcile time, per-state breaker series and
+    transitions, backend failure reasons, discovery results, poll attempts and stack lookups, plus a
+    `route` label on request metrics. See `specs/2026-09-26-router-metrics.md`.
 
-- [ ] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
+- ~~**O2. Read-only debug endpoint.**~~ A JSON view of the current snapshot showing, for each group:
   source, key, target host and breaker state.
+  - Not pursued: the same information is available from the OpenAPI discovery index (each group's
+    key identifies its backend) and the O1 metrics. A draft implementation was #133639.
 
 - [x] **O3. One logger.** The package mixes global `slog`, Grafana's `infra/log`
   (`obo_exchanger.go`) and the app-sdk logger (`plugin.go`). Inject a single

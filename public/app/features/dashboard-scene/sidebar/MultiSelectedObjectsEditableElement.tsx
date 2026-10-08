@@ -46,11 +46,14 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
       t('dashboard.edit-actions.remove-multiple', 'Remove {{typeName}} ({{num}})', {
         num: this._elements.length,
         typeName: this.getEditableElementInfo().typeName.toLowerCase(),
-      })
+      }),
+      { actionId: 'selection.remove' }
     );
 
-    this._elements.forEach((item) => item.onDelete());
-
-    endBatch(this._dashboard);
+    try {
+      this._elements.forEach((item) => item.onDelete());
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 }

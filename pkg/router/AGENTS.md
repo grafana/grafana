@@ -55,6 +55,11 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
   Without a requester (standalone), they pass through. `X-Forwarded-*` is always set.
+  - Identity-assertion headers (`X-Remote-User`, `X-Remote-Group`, `X-Remote-Extra-*`,
+    `X-Webauth-*`) are always dropped: the router never asserts identity that way.
+  - With a requester, `Impersonate-*` and `X-Grafana-Org-Id` are dropped too, so only the
+    requester's tokens decide who the request acts as. Without one, the backend authorizes them
+    against the caller's own credentials.
 - **Log through the app-sdk logger from the context:** `logging.FromContext(ctx)` from
   `github.com/grafana/grafana-app-sdk/logging`. Don't use `log/slog` or `pkg/infra/log`. If a
   function that logs has no context, pass one in from its caller (a request's `Context()`, or the
@@ -86,7 +91,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Loader selection | `loader_factory.go` |
 | Forward-mode backend (RouteBackend CR) | `forward.go` |
 | Cloud loader: RouteBackend/AppManifest CRs, source priority | `cloud_router.go` |
-| Aggregate targets (`baas_apiserver`, `cloud_app_platform_apiserver`) | `aggregate_*.go` |
+| Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader and `PluginBackend` | `plugin.go` |
 | Single-tenant (ST) fallback | `st_fallback.go` |
@@ -97,7 +102,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 `ProvideRoutesLoader` picks exactly one loader:
 
-1. **The cloud loader**, when any `[cloud_router]` source is configured (see Settings).
+1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is configured (see Settings).
 2. **Otherwise the local plugin loader**, when plugin sources are available.
 3. **Otherwise the dummy loader**, which serves two static dummy groups.
 
@@ -106,8 +111,8 @@ earlier ones:
 
 1. **ST fallback discovery** (`st_discovery_url`). Groups found on a single-tenant instance are
    routed to the right stack by the namespace in the path.
-2. **Aggregate targets**, discovered by polling each target's `/apis`. A later target overrides an
-   earlier one.
+2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
+   order wins when multiple targets discover the same group.
 3. **RouteBackend CRs**, correlated by name with an AppManifest CR, or with the manifests embedded
    in the binary for core groups. Only Forward mode is implemented. Backends without a `Forward`
    block (Operator and Plugin modes) are skipped with a warning.
@@ -124,7 +129,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 | `/apis/{group}[/...]` | Proxied to the owning backend, through its breaker. |
 | `/apis` | Synthesized: `APIGroupList`, or `APIGroupDiscoveryList` when the aggregated format is negotiated. |
 | `/openapi/v3` | Synthesized index; per-version URLs are cache-busted with the backend key. |
-| `/openapi/v3/apis/{group}/{version}` | Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`. |
+| `/openapi/v3/apis/{group}/{version}` | GET and HEAD only (405 otherwise). Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`, or larger than `maxCachedOpenAPIDocBytes`. |
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
@@ -141,13 +146,38 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
-- **Metrics:** unknown groups are labelled `unknown` (`KnownGroup`) so arbitrary client paths can't
-  create new series. The duration histogram is labelled by group, verb and status code.
+- **Size limits:** nothing the router buffers or decodes can grow without bound.
+  - `captureWriter` buffers OpenAPI documents up to `maxCachedOpenAPIDocBytes` (32 MiB). A larger
+    one streams to the client and isn't cached.
+  - It buffers discovery sub-requests up to `maxDiscoveryDocBytes` (16 MiB). Past that, the rest is
+    discarded and the read fails as incomplete. Both limits are variables, so tests can lower them.
+  - A write past the limit never fails: `ReverseProxy` panics when a write fails, and discovery
+    fetches run on their own goroutines.
+  - Polled responses go through `decodeLimitedJSON`: aggregate and ST discovery (16 MiB),
+    `plugins_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
+    (`maxStackResponseBytes`, 1 MiB). A response over its limit fails the poll.
+- **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric, its labels and example
+  dashboard queries; keep it in sync with `metrics.go`.
+  - Request metrics are recorded in `metrics.go`. Route state is read at scrape time by
+    `routerCollector` (also in `metrics.go`), from atomics and the snapshot, so reconcile and
+    serving never update gauges.
+  - Labels stay bounded. `group` is only a served group; any other is `unknown` (`KnownGroup`).
+    `verb` is limited to `metricVerbs`, and any other value is `other`. `route`, `reason`, `state`
+    and `result` have fixed sets of values. A new label value must come from a fixed set too.
+  - In middleware mode, only requests the router owns (`owns`) are instrumented.
+  - New backends must name their source (`Backend.Source`), and new sources should report through
+    `loaderStatus`, or their loads don't appear in the metrics.
+  - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
+    instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
+    Connections are keyed by host and plugin ID, because each records its calls under one
+    `plugin_id`. Local plugins are measured by `grafana_plugin_request_*` instead.
 
 ## Lifecycle
 
 - **Standalone:** the dskit `router` target. `pkg/server`'s `initRouterModule` builds the loader
-  (the Wire injector `InitializeRoutesLoader`) and the `Service`. `RegisterTargetRoutes` mounts it on
+  and the `Service`. The loader is `ProvideCloudRoutesLoader` when `[cloud_router]` configures a
+  source, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
+  migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
   the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
   implements `services.Service` (such as `cloudLoader`, which runs informers and poll loops) is run
   alongside it with `newCompositeService`, so both start and stop together.
@@ -168,14 +198,45 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `appmanifest_apiserver_url` | Remote apiserver serving the RouteBackend and AppManifest CRs. Unset disables the CR source. The legacy `apiserver_url` is a hard error. |
 | `apiserver_ca_file`, `apiserver_insecure` | TLS settings for `appmanifest_apiserver_url` only. |
-| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target is set. The CAP token is exchanged per request. |
-| `<target>.url` | Base URL for `baas_apiserver` or `cloud_app_platform_apiserver`. Unset skips that target. |
-| `<target>.audience` | Required when `<target>.url` is set. |
-| `<target>.group_regex` | Comma-separated globs that narrow the discovered groups. Unset matches all. |
-| `<target>.ca_file`, `<target>.insecure` | Per-target TLS settings. |
+| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
+
+Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
+priority order. Repeating a section name merges its keys; it does not create another target.
+Keys support environment overrides, for example `GF_ROUTER_AGGREGATE_BAAS_APISERVER_URL`;
+the corresponding section must contain at least one nonempty setting (for example `audience`)
+in the INI configuration, because Grafana's config loader drops empty sections.
+The old `[cloud_router]` `baas_apiserver.*` and `cloud_app_platform_apiserver.*` settings
+remain supported during rollout, including environment overrides. New sections take priority; a
+section with the same target name replaces the entire legacy target (an empty URL disables it).
+Legacy targets keep their previous relative priority: cloud app platform before BaaS.
+
+| Key | Meaning |
+| --- | --- |
+| `url` | Target base URL. Unset skips the target. |
+| `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
+| `poll_interval` | Positive discovery polling duration, default `30s`. |
+| `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
+| `ca_file`, `insecure` | Per-target TLS settings. |
+
+```ini
+[router.aggregate.baas_apiserver]
+url = https://baas.example.com
+audience = apiextensions.k8s.io
+poll_interval = 10m
+group_regex = *.ext.grafana.app
+
+[router.aggregate.cloud_app_platform_apiserver]
+url = https://cap.example.com
+audience = cloudAppPlatformDiscovery
+group_regex = *.ext.grafana.com
+```
+
+Shared authentication settings remain in `[cloud_router]`. Discovery uses `Authorization` for
+`cloud_app_platform_apiserver` and `X-Access-Token` for other target names.
 
 Every URL must be absolute; a trailing slash is tolerated.
 

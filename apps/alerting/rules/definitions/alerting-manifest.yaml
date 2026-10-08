@@ -39,6 +39,25 @@ spec:
           - Error
           - NoData
           type: string
+        AlertRuleInstanceTotals:
+          additionalProperties: false
+          description: |-
+            Count of alert instances per state. error also counts instances whose evaluation
+            errored but were mapped to another state via execErrState, so it can overlap.
+          properties:
+            error:
+              type: integer
+            firing:
+              type: integer
+            healthy:
+              type: integer
+            nodata:
+              type: integer
+            pending:
+              type: integer
+            recovering:
+              type: integer
+          type: object
         AlertRuleState:
           enum:
           - Inactive
@@ -295,10 +314,50 @@ spec:
               $ref: '#/components/schemas/AlertRuleState'
             stateReason:
               $ref: '#/components/schemas/AlertRuleStateReason'
+            totals:
+              $ref: '#/components/schemas/AlertRuleInstanceTotals'
           type: object
       scope: Namespaced
       searchFields:
       - capabilities:
+        - retrieve
+        description: The number of healthy alert instances
+        name: totalsHealthy
+        path: status.totals.healthy
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of firing alert instances
+        name: totalsFiring
+        path: status.totals.firing
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of pending alert instances
+        name: totalsPending
+        path: status.totals.pending
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of recovering alert instances
+        name: totalsRecovering
+        path: status.totals.recovering
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of no-data alert instances
+        name: totalsNoData
+        path: status.totals.nodata
+        type: int64
+      - capabilities:
+        - retrieve
+        description: The number of alert instances with evaluation errors, including
+          errors mapped to another state
+        name: totalsError
+        path: status.totals.error
+        type: int64
+      - capabilities:
+        - filter
         - retrieve
         description: The health of the rule
         name: health
@@ -323,6 +382,7 @@ spec:
         path: status.lastError
         type: string
       - capabilities:
+        - filter
         - retrieve
         description: The state of the alert rule
         name: state
@@ -606,6 +666,7 @@ spec:
       scope: Namespaced
       searchFields:
       - capabilities:
+        - filter
         - retrieve
         description: The health of the rule
         name: health
@@ -948,6 +1009,647 @@ spec:
       scope: Namespaced
       userReadable: false
     name: v0alpha1
+    openapi:
+      components:
+        schemas:
+          listAlertRuleSearchRulesV0alpha1FacetValue:
+            additionalProperties: false
+            properties:
+              count:
+                type: integer
+              value:
+                type: string
+            required:
+            - value
+            - count
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchExistsLeaf:
+            additionalProperties: false
+            description: Retained for generic schema compatibility; rejected by the
+              compatibility handler.
+            properties:
+              field:
+                type: string
+            required:
+            - field
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchFilterLeaf:
+            additionalProperties: false
+            properties:
+              field:
+                type: string
+              operator:
+                enum:
+                - In
+                - NotIn
+                - All
+                type: string
+              values:
+                items:
+                  type: string
+                type: array
+            required:
+            - field
+            - operator
+            - values
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchLabelSelector:
+            additionalProperties: false
+            description: |-
+              Selects metadata.labels, not alerting labels, and is ANDed with where.
+              Filter alerting labels through the indexed "labels" field instead.
+            properties:
+              matchExpressions:
+                items:
+                  $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement'
+                type: array
+              matchLabels:
+                additionalProperties:
+                  type: string
+                type: object
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchLabelSelectorRequirement:
+            additionalProperties: false
+            description: Only In and NotIn are accepted by the compatibility handler.
+            properties:
+              key:
+                type: string
+              operator:
+                enum:
+                - In
+                - NotIn
+                - Exists
+                - DoesNotExist
+                type: string
+              values:
+                items:
+                  type: string
+                type: array
+            required:
+            - key
+            - operator
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchRangeLeaf:
+            additionalProperties: false
+            description: Retained for generic schema compatibility; rejected by the
+              compatibility handler.
+            properties:
+              field:
+                type: string
+              gt:
+                type: number
+              gte:
+                type: number
+              lt:
+                type: number
+              lte:
+                type: number
+            required:
+            - field
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchRegexLeaf:
+            additionalProperties: false
+            description: |-
+              Supported on the "labels" field only, as "key=<value regex>": the key is
+              literal, and the value regex matches the whole label value, case-sensitively
+              unless it starts with (?i). A missing label is matched as an empty value.
+            properties:
+              field:
+                type: string
+              negate:
+                type: boolean
+              pattern:
+                type: string
+            required:
+            - field
+            - pattern
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchResultHit:
+            additionalProperties: false
+            properties:
+              fields:
+                additionalProperties: true
+                description: Open to match the generic endpoint's unstructured field
+                  values.
+                type: object
+              resource:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultResource'
+              score:
+                description: Present only when a text query was evaluated.
+                type: number
+            required:
+            - resource
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchResultResource:
+            additionalProperties: false
+            description: Namespace is implicit in the URL.
+            properties:
+              group:
+                type: string
+              kind:
+                type: string
+              name:
+                type: string
+              resource:
+                type: string
+            required:
+            - group
+            - resource
+            - kind
+            - name
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchResultsMetadata:
+            additionalProperties: false
+            properties:
+              continue:
+                description: Opaque next-page token; clients must not construct it.
+                type: string
+              totalHits:
+                description: Interpret with totalHitsRelation, not as an exact count
+                  unconditionally.
+                type: integer
+              totalHitsRelation:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1TotalHitsRelation'
+            required:
+            - totalHits
+            - totalHitsRelation
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchSortField:
+            additionalProperties: false
+            description: Defaults to ascending; only scalar fields with the sort capability
+              are valid.
+            properties:
+              direction:
+                enum:
+                - asc
+                - desc
+                type: string
+              field:
+                type: string
+            required:
+            - field
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchTextLeaf:
+            additionalProperties: false
+            description: |-
+              Omitted fields default to title. All whitespace-separated terms must match
+              in any order; punctuation and short-term matching are backend-defined.
+            properties:
+              boost:
+                description: boost is a future per-leaf score multiplier. Setting
+                  it is rejected.
+                type: number
+              fields:
+                items:
+                  type: string
+                type: array
+              value:
+                type: string
+            required:
+            - value
+            type: object
+          listAlertRuleSearchRulesV0alpha1SearchWhereNode:
+            additionalProperties: false
+            description: |-
+              Exactly one key must be set. The compatibility handler accepts only a
+              text/filter/regex leaf or a top-level "and" of those leaves.
+            properties:
+              and:
+                items:
+                  $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
+                type: array
+              exists:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchExistsLeaf'
+              filter:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchFilterLeaf'
+              not:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
+              or:
+                items:
+                  $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
+                type: array
+              range:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRangeLeaf'
+              regex:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchRegexLeaf'
+              text:
+                $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchTextLeaf'
+            type: object
+          listAlertRuleSearchRulesV0alpha1TotalHitsRelation:
+            description: '"eq" means exact; "lte" means totalHits is an upper bound
+              after authorisation.'
+            enum:
+            - eq
+            - lte
+            type: string
+          listRecordingRuleSearchRulesV0alpha1FacetValue:
+            additionalProperties: false
+            properties:
+              count:
+                type: integer
+              value:
+                type: string
+            required:
+            - value
+            - count
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf:
+            additionalProperties: false
+            description: Retained for generic schema compatibility; rejected by the
+              compatibility handler.
+            properties:
+              field:
+                type: string
+            required:
+            - field
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf:
+            additionalProperties: false
+            properties:
+              field:
+                type: string
+              operator:
+                enum:
+                - In
+                - NotIn
+                - All
+                type: string
+              values:
+                items:
+                  type: string
+                type: array
+            required:
+            - field
+            - operator
+            - values
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchLabelSelector:
+            additionalProperties: false
+            description: |-
+              Selects metadata.labels, not alerting labels, and is ANDed with where.
+              Filter alerting labels through the indexed "labels" field instead.
+            properties:
+              matchExpressions:
+                items:
+                  $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement'
+                type: array
+              matchLabels:
+                additionalProperties:
+                  type: string
+                type: object
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchLabelSelectorRequirement:
+            additionalProperties: false
+            description: Only In and NotIn are accepted by the compatibility handler.
+            properties:
+              key:
+                type: string
+              operator:
+                enum:
+                - In
+                - NotIn
+                - Exists
+                - DoesNotExist
+                type: string
+              values:
+                items:
+                  type: string
+                type: array
+            required:
+            - key
+            - operator
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf:
+            additionalProperties: false
+            description: Retained for generic schema compatibility; rejected by the
+              compatibility handler.
+            properties:
+              field:
+                type: string
+              gt:
+                type: number
+              gte:
+                type: number
+              lt:
+                type: number
+              lte:
+                type: number
+            required:
+            - field
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf:
+            additionalProperties: false
+            description: |-
+              Supported on the "labels" field only, as "key=<value regex>": the key is
+              literal, and the value regex matches the whole label value, case-sensitively
+              unless it starts with (?i). A missing label is matched as an empty value.
+            properties:
+              field:
+                type: string
+              negate:
+                type: boolean
+              pattern:
+                type: string
+            required:
+            - field
+            - pattern
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchResultHit:
+            additionalProperties: false
+            properties:
+              fields:
+                additionalProperties: true
+                description: Open to match the generic endpoint's unstructured field
+                  values.
+                type: object
+              resource:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultResource'
+              score:
+                description: Present only when a text query was evaluated.
+                type: number
+            required:
+            - resource
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchResultResource:
+            additionalProperties: false
+            description: Namespace is implicit in the URL.
+            properties:
+              group:
+                type: string
+              kind:
+                type: string
+              name:
+                type: string
+              resource:
+                type: string
+            required:
+            - group
+            - resource
+            - kind
+            - name
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata:
+            additionalProperties: false
+            properties:
+              continue:
+                description: Opaque next-page token; clients must not construct it.
+                type: string
+              totalHits:
+                description: Interpret with totalHitsRelation, not as an exact count
+                  unconditionally.
+                type: integer
+              totalHitsRelation:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1TotalHitsRelation'
+            required:
+            - totalHits
+            - totalHitsRelation
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchSortField:
+            additionalProperties: false
+            description: Defaults to ascending; only scalar fields with the sort capability
+              are valid.
+            properties:
+              direction:
+                enum:
+                - asc
+                - desc
+                type: string
+              field:
+                type: string
+            required:
+            - field
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchTextLeaf:
+            additionalProperties: false
+            description: |-
+              Omitted fields default to title. All whitespace-separated terms must match
+              in any order; punctuation and short-term matching are backend-defined.
+            properties:
+              boost:
+                description: boost is a future per-leaf score multiplier. Setting
+                  it is rejected.
+                type: number
+              fields:
+                items:
+                  type: string
+                type: array
+              value:
+                type: string
+            required:
+            - value
+            type: object
+          listRecordingRuleSearchRulesV0alpha1SearchWhereNode:
+            additionalProperties: false
+            description: |-
+              Exactly one key must be set. The compatibility handler accepts only a
+              text/filter/regex leaf or a top-level "and" of those leaves.
+            properties:
+              and:
+                items:
+                  $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
+                type: array
+              exists:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchExistsLeaf'
+              filter:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchFilterLeaf'
+              not:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
+              or:
+                items:
+                  $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
+                type: array
+              range:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRangeLeaf'
+              regex:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf'
+              text:
+                $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchTextLeaf'
+            type: object
+          listRecordingRuleSearchRulesV0alpha1TotalHitsRelation:
+            description: '"eq" means exact; "lte" means totalHits is an upper bound
+              after authorisation.'
+            enum:
+            - eq
+            - lte
+            type: string
+      paths:
+        /namespaces/{namespace}/alertrules/searchRules:
+          parameters:
+          - in: path
+            name: namespace
+            required: true
+            schema:
+              type: string
+          post:
+            operationId: listAlertRuleSearchRulesV0alpha1
+            requestBody:
+              content:
+                application/json:
+                  schema:
+                    additionalProperties: false
+                    properties:
+                      apiVersion:
+                        type: string
+                      continue:
+                        description: Opaque token from the previous page.
+                        type: string
+                      facetLimit:
+                        description: Per-facet term limit. Zero uses the default;
+                          larger values are clamped.
+                        type: integer
+                      facets:
+                        items:
+                          type: string
+                        type: array
+                      fields:
+                        items:
+                          type: string
+                        type: array
+                      kind:
+                        type: string
+                      labelSelector:
+                        $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchLabelSelector'
+                      limit:
+                        description: Page size. Zero uses the default; larger values
+                          are clamped.
+                        type: integer
+                      sort:
+                        items:
+                          $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchSortField'
+                        type: array
+                      where:
+                        $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchWhereNode'
+                        description: Omitted where matches all authorised rules satisfying
+                          labelSelector.
+                    type: object
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      description: SearchResults supplies its own metadata; omit listMeta.
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        facets:
+                          additionalProperties:
+                            items:
+                              $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1FacetValue'
+                            type: array
+                          description: Counts use a bounded sample and are best-effort.
+                          type: object
+                        items:
+                          items:
+                            $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          $ref: '#/components/schemas/listAlertRuleSearchRulesV0alpha1SearchResultsMetadata'
+                      required:
+                      - metadata
+                      - items
+                      - apiVersion
+                      - kind
+                      type: object
+                description: Default OK response
+        /namespaces/{namespace}/recordingrules/searchRules:
+          parameters:
+          - in: path
+            name: namespace
+            required: true
+            schema:
+              type: string
+          post:
+            operationId: listRecordingRuleSearchRulesV0alpha1
+            requestBody:
+              content:
+                application/json:
+                  schema:
+                    additionalProperties: false
+                    properties:
+                      apiVersion:
+                        type: string
+                      continue:
+                        description: Opaque token from the previous page.
+                        type: string
+                      facetLimit:
+                        description: Per-facet term limit. Zero uses the default;
+                          larger values are clamped.
+                        type: integer
+                      facets:
+                        items:
+                          type: string
+                        type: array
+                      fields:
+                        items:
+                          type: string
+                        type: array
+                      kind:
+                        type: string
+                      labelSelector:
+                        $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchLabelSelector'
+                      limit:
+                        description: Page size. Zero uses the default; larger values
+                          are clamped.
+                        type: integer
+                      sort:
+                        items:
+                          $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchSortField'
+                        type: array
+                      where:
+                        $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchWhereNode'
+                        description: Omitted where matches all authorised rules satisfying
+                          labelSelector.
+                    type: object
+            responses:
+              default:
+                content:
+                  application/json:
+                    schema:
+                      additionalProperties: false
+                      properties:
+                        apiVersion:
+                          description: 'APIVersion defines the versioned schema of
+                            this representation of an object. Servers should convert
+                            recognized schemas to the latest internal value, and may
+                            reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+                          type: string
+                        facets:
+                          additionalProperties:
+                            items:
+                              $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1FacetValue'
+                            type: array
+                          description: Counts use a bounded sample and are best-effort.
+                          type: object
+                        items:
+                          items:
+                            $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultHit'
+                          type: array
+                        kind:
+                          description: 'Kind is a string value representing the REST
+                            resource this object represents. Servers may infer this
+                            from the endpoint the client submits requests to. Cannot
+                            be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+                          type: string
+                        metadata:
+                          $ref: '#/components/schemas/listRecordingRuleSearchRulesV0alpha1SearchResultsMetadata'
+                      required:
+                      - metadata
+                      - items
+                      - apiVersion
+                      - kind
+                      type: object
+                description: Default OK response
     routes:
       namespaced:
         /alertrules/searchRules:
@@ -1213,8 +1915,10 @@ spec:
           type: object
         listAlertRuleSearchRulesV0alpha1SearchRegexLeaf:
           additionalProperties: false
-          description: Retained for generic schema compatibility; rejected by the
-            compatibility handler.
+          description: |-
+            Supported on the "labels" field only, as "key=<value regex>": the key is
+            literal, and the value regex matches the whole label value, case-sensitively
+            unless it starts with (?i). A missing label is matched as an empty value.
           properties:
             field:
               type: string
@@ -1314,7 +2018,7 @@ spec:
           additionalProperties: false
           description: |-
             Exactly one key must be set. The compatibility handler accepts only a
-            text/filter leaf or a top-level "and" of those leaves.
+            text/filter/regex leaf or a top-level "and" of those leaves.
           properties:
             and:
               items:
@@ -1441,8 +2145,10 @@ spec:
           type: object
         listRecordingRuleSearchRulesV0alpha1SearchRegexLeaf:
           additionalProperties: false
-          description: Retained for generic schema compatibility; rejected by the
-            compatibility handler.
+          description: |-
+            Supported on the "labels" field only, as "key=<value regex>": the key is
+            literal, and the value regex matches the whole label value, case-sensitively
+            unless it starts with (?i). A missing label is matched as an empty value.
           properties:
             field:
               type: string
@@ -1542,7 +2248,7 @@ spec:
           additionalProperties: false
           description: |-
             Exactly one key must be set. The compatibility handler accepts only a
-            text/filter leaf or a top-level "and" of those leaves.
+            text/filter/regex leaf or a top-level "and" of those leaves.
           properties:
             and:
               items:

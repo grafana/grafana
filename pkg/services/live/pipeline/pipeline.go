@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"os"
 
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-	"go.opentelemetry.io/otel/exporters/jaeger"
-	"go.opentelemetry.io/otel/sdk/resource"
-	tracesdk "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -21,36 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/live/model"
 )
-
-const (
-	service     = "grafana"
-	environment = "dev"
-	id          = 1
-)
-
-// tracerProvider returns an OpenTelemetry TracerProvider configured to use
-// the Jaeger exporter that will send spans to the provided url. The returned
-// TracerProvider will also use a Resource configured with all the information
-// about the application.
-func tracerProvider(url string) (*tracesdk.TracerProvider, error) {
-	// Create the Jaeger exporter
-	exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(url)))
-	if err != nil {
-		return nil, err
-	}
-	tp := tracesdk.NewTracerProvider(
-		// Always be sure to batch in production.
-		tracesdk.WithBatcher(exp),
-		// Record information about this application in an Resource.
-		tracesdk.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(service),
-			attribute.String("environment", environment),
-			attribute.Int64("ID", id),
-		)),
-	)
-	return tp, nil
-}
 
 // ChannelData is a wrapper over raw data with additional channel information.
 // Channel is used for rule routing, if the channel is empty then data processing
@@ -192,16 +159,9 @@ func New(ruleGetter ChannelRuleGetter) (*Pipeline, error) {
 	}
 
 	if os.Getenv("GF_LIVE_PIPELINE_TRACE") != "" {
-		// Traces for development only at the moment.
-		// Start local Jaeger and then run Grafana with GF_LIVE_PIPELINE_TRACE:
-		// docker run --rm -it --name jaeger -e COLLECTOR_ZIPKIN_HOST_PORT=:9411 -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 -p 14250:14250 -p 9411:9411 jaegertracing/all-in-one:1.26
-		// Then visit http://localhost:16686/ where Jaeger UI is served.
-		tp, err := tracerProvider("http://localhost:14268/api/traces")
-		if err != nil {
-			return nil, err
-		}
-		tracer := tp.Tracer("gf.live.pipeline")
-		p.tracer = tracer
+		// Keep payload and frame capture opt-in while sharing Grafana's
+		// configured exporter, sampling, and provider lifecycle.
+		p.tracer = otel.Tracer("github.com/grafana/grafana/pkg/services/live/pipeline")
 	}
 
 	if os.Getenv("GF_LIVE_PIPELINE_DEV") != "" {

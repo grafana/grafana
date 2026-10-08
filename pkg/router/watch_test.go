@@ -130,7 +130,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		}
 	}
 
-	svc := newService(&mutableLoader{backends: backends}, prometheus.NewRegistry())
+	svc := newService(&mutableLoader{backends: backends}, nil, prometheus.NewRegistry())
 	svc.middleware = middleware
 	svc.router.unregisteredGroupHandler = fallback
 	require.NoError(t, svc.router.reconcile(t.Context()))
@@ -140,7 +140,7 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 			svc.HandleFunc(w, req, http.NotFoundHandler())
 			return
 		}
-		svc.metrics.instrument(svc.router, w, req, http.NotFoundHandler())
+		svc.metrics.instrument(svc.router, w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() {
@@ -250,7 +250,7 @@ func TestWatchReleasesHalfOpenBreakerOnceItsStatusIsKnown(t *testing.T) {
 	})
 	router := withGroupHandlerAndBreaker(watchGroup, backend, cb)
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		router.HandleFunc(w, req, http.NotFoundHandler())
+		router.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
 	}))
 	t.Cleanup(server.Close)
 	t.Cleanup(func() { close(backend.release) })
@@ -292,7 +292,7 @@ func TestWatchMetricsAreSeparate(t *testing.T) {
 	require.NoError(t, err)
 	_ = resp.Body.Close()
 	require.Equal(t, 1, testutil.CollectAndCount(metrics.duration))
-	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", "204")))
+	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend, "204")))
 }
 
 func histogramCount(t *testing.T, observer prometheus.Observer) uint64 {

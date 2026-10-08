@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -60,6 +61,19 @@ func discoverGroupResources(ctx context.Context, client *http.Client, baseURL st
 	return decodeDiscoveryResponse(resp, baseURL)
 }
 
+// decodeLimitedJSON decodes a JSON body of at most limit bytes into v. A
+// polled source must not be able to make the router buffer without bound.
+func decodeLimitedJSON(body io.Reader, limit int64, v any) error {
+	data, err := io.ReadAll(io.LimitReader(body, limit+1))
+	if err != nil {
+		return err
+	}
+	if int64(len(data)) > limit {
+		return fmt.Errorf("response is larger than %d bytes", limit)
+	}
+	return json.Unmarshal(data, v)
+}
+
 // decodeDiscoveryResponse decodes an /apis response as aggregated discovery
 // when the server actually served that format (its Content-Type carries the
 // apidiscovery.k8s.io group), and as the classic APIGroupList otherwise -- a
@@ -68,7 +82,7 @@ func discoverGroupResources(ctx context.Context, client *http.Client, baseURL st
 func decodeDiscoveryResponse(resp *http.Response, baseURL string) ([]discoveredGroup, error) {
 	if strings.Contains(resp.Header.Get("Content-Type"), "apidiscovery.k8s.io") {
 		var list apidiscoveryv2.APIGroupDiscoveryList
-		if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+		if err := decodeLimitedJSON(resp.Body, int64(maxDiscoveryDocBytes), &list); err != nil {
 			return nil, fmt.Errorf("router: decoding APIGroupDiscoveryList from %s: %w", baseURL, err)
 		}
 		groups := apiGroupDiscoveryListToGroups(list)
@@ -80,7 +94,7 @@ func decodeDiscoveryResponse(resp *http.Response, baseURL string) ([]discoveredG
 	}
 
 	var list metav1.APIGroupList
-	if err := json.NewDecoder(resp.Body).Decode(&list); err != nil {
+	if err := decodeLimitedJSON(resp.Body, int64(maxDiscoveryDocBytes), &list); err != nil {
 		return nil, fmt.Errorf("router: decoding APIGroupList from %s: %w", baseURL, err)
 	}
 	discovered := make([]discoveredGroup, len(list.Groups))
@@ -127,8 +141,8 @@ type aggregateBackend struct {
 }
 
 var (
-	_ Backend           = &aggregateBackend{}
-	_ DiscoveryProvider = &aggregateBackend{}
+	_ Backend           = (*aggregateBackend)(nil)
+	_ DiscoveryProvider = (*aggregateBackend)(nil)
 )
 
 func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
@@ -168,6 +182,7 @@ func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup
 
 func (b *aggregateBackend) Group() metav1.APIGroup { return b.group }
 func (b *aggregateBackend) Key() string            { return b.key }
+func (b *aggregateBackend) Source() string         { return aggregateSource(b.targetName) }
 func (b *aggregateBackend) Discovery() (apidiscoveryv2.APIGroupDiscovery, bool) {
 	if b.discovery == nil {
 		return apidiscoveryv2.APIGroupDiscovery{}, false
