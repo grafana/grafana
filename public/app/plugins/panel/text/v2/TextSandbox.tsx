@@ -1,11 +1,15 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 
 import { textUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { Alert, Button, useTheme2 } from '@grafana/ui';
+import { getMermaidConfig } from 'app/core/utils/mermaidConfig';
 
-import { getGlobalCss, mountTextSandbox, textSandboxPolicy, type TextSandboxState } from './sandboxFrame';
+import { SandboxFrame } from './SandboxFrame';
+import { inlineSandboxFonts } from './sandboxFonts';
+import { getGlobalCss, textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
+import { isTextNewFeaturesEnabled } from './utils';
 
 export interface TextSandboxConsent {
   resources: Extract<TextSandboxState, { status: 'blocked' }>['resources'];
@@ -14,31 +18,39 @@ export interface TextSandboxConsent {
 
 interface Props {
   html: string;
+  hasData?: boolean;
   testId?: string;
   className?: string;
   renderConsent?: (consent: TextSandboxConsent) => ReactNode;
 }
 
-export function TextSandbox({ html, testId, className, renderConsent = DefaultConsent }: Props) {
+export function TextSandbox({ html, hasData = true, testId, className, renderConsent = DefaultConsent }: Props) {
   const theme = useTheme2();
   const host = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<TextSandboxState>({ status: 'loading' });
   const [origins, setOrigins] = useState<string[]>([]);
+  const [globalCss, setGlobalCss] = useState('');
+  const mermaid = useMemo(() => (isTextNewFeaturesEnabled() ? getMermaidConfig(theme) : undefined), [theme]);
+  const fontRoot = `${window.__grafana_public_path__ || 'public/'}fonts/`;
 
   useLayoutEffect(() => {
-    if (!host.current) {
-      return;
+    let disposed = false;
+    const css = getGlobalCss();
+    setGlobalCss(css.replace(/@font-face\s*\{[^}]*\}/g, ''));
+    if (css.includes('@font-face')) {
+      void inlineSandboxFonts(css, fontRoot).then((css) => {
+        if (!disposed) {
+          setGlobalCss(css);
+        }
+      });
     }
-    const fontRoot = `${window.__grafana_public_path__ || 'public/'}fonts/`;
-    return mountTextSandbox(host.current, {
-      html: textUtil.sanitizeTextPanelContent(html),
-      css: getGlobalCss(),
-      policy: textSandboxPolicy(origins, fontRoot),
-      title: t('textng.sandbox.title', 'Text panel content'),
-      onState: setState,
-      onHeight: () => host.current?.dispatchEvent(new Event('text-content-resized', { bubbles: true })),
-    });
-  }, [html, origins, theme]);
+    return () => {
+      disposed = true;
+    };
+  }, [theme, fontRoot]);
+  const onHeight = useCallback(() => {
+    host.current?.dispatchEvent(new Event('text-content-resized', { bubbles: true }));
+  }, []);
 
   return (
     <div className={className} data-testid={testId}>
@@ -60,7 +72,18 @@ export function TextSandbox({ html, testId, className, renderConsent = DefaultCo
               ]),
             ]),
         })}
-      <div ref={host} style={{ position: 'relative' }} />
+      <div ref={host} style={{ position: 'relative' }}>
+        <SandboxFrame
+          html={hasData ? textUtil.sanitizeTextPanelContent(html) : html}
+          globalCss={globalCss}
+          policy={hasData ? textSandboxPolicy(origins, fontRoot) : undefined}
+          mermaid={mermaid}
+          diagramError={t('textng.sandbox.diagram-error', 'Diagram could not be rendered')}
+          title={t('textng.sandbox.title', 'Text panel content')}
+          onState={setState}
+          onHeight={onHeight}
+        />
+      </div>
     </div>
   );
 }

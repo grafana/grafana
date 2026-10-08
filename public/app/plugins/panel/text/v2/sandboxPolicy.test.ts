@@ -1,4 +1,4 @@
-import { resourceOrigin, textSandboxPolicy } from './sandboxFrame';
+import { resourceOrigin, textSandboxPolicy } from './sandboxPolicy';
 
 it('allows only normalized HTTP origins without granting script or connection privileges', () => {
   expect(
@@ -12,7 +12,7 @@ it('allows only normalized HTTP origins without granting script or connection pr
       'https://grafana.example/public/fonts/'
     )
   ).toBe(
-    "default-src 'none'; script-src 'none'; style-src 'unsafe-inline' https://images.example; img-src data: https://images.example; font-src https://grafana.example/public/fonts/ https://images.example; media-src https://images.example; frame-src https://images.example; object-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'"
+    "default-src 'none'; script-src 'none'; style-src 'unsafe-inline' https://images.example; img-src data: https://images.example; font-src data: https://grafana.example/public/fonts/ https://images.example; media-src https://images.example; frame-src https://images.example; object-src 'none'; connect-src 'none'; base-uri 'none'; form-action 'none'"
   );
 });
 

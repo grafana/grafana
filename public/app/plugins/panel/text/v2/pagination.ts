@@ -38,9 +38,11 @@ interface Measured {
 // Not scrollHeight: the element holding the blocks is stretched to the box, so it reports
 // the box once a page fits inside it.
 function measureContentHeight(element: HTMLElement): number {
-  const blocks =
-    element.querySelector(`[${BLOCKS_ATTR}]`) ??
-    element.querySelector('iframe')?.contentDocument?.querySelector(`[${BLOCKS_ATTR}]`);
+  const frameHeight = Number(element.querySelector('iframe')?.getAttribute('data-text-content-height'));
+  if (frameHeight > 0) {
+    return frameHeight;
+  }
+  const blocks = element.querySelector(`[${BLOCKS_ATTR}]`);
   const first = blocks?.firstElementChild;
   const last = blocks?.lastElementChild;
 

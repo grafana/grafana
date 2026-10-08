@@ -14,7 +14,7 @@ import { PREVIEW_TEST_ID, TextNGEditor, type TextNGEditorChange } from './TextNG
 import { FORMAT_TOOLBAR_TEST_ID } from './TextNGFormatToolbar';
 import { type ViewMode } from './viewMode';
 
-jest.mock('../sandboxFrame');
+jest.mock('../SandboxFrame');
 
 beforeAll(() => {
   setTestFlags({ [FlagKeys.TextNewFeatures]: true });
@@ -23,19 +23,6 @@ beforeAll(() => {
 afterAll(() => {
   setTestFlags({});
 });
-
-const mermaidRender = jest
-  .fn()
-  .mockResolvedValue({ svg: '<svg xmlns="http://www.w3.org/2000/svg"><text>A</text></svg>' });
-
-jest.mock('mermaid', () => ({
-  __esModule: true,
-  default: {
-    initialize: jest.fn(),
-    parse: jest.fn().mockResolvedValue(true),
-    render: (...args: unknown[]) => mermaidRender(...args),
-  },
-}));
 
 // The real CodeMirrorEditor pulls in a heavy, lazily-loaded CodeMirror bundle;
 // stub it with a plain textarea so these tests stay fast and deterministic.
@@ -324,7 +311,9 @@ describe('TextNGEditor', () => {
         fireEvent.change(screen.getByRole('textbox'), { target: { value: content } });
 
         // Debounced preview settles from the '# Hello' <h1> to the space fallback.
-        await waitFor(() => expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe(''));
+        await waitFor(() =>
+          expect(screen.getByTestId(PREVIEW_TEST_ID).querySelector('[data-text-blocks]')!.innerHTML.trim()).toBe('')
+        );
       }
     );
   });
@@ -436,7 +425,7 @@ describe('TextNGEditor', () => {
 
       expect(onChange).toHaveBeenCalledWith({ mode: TextMode.HTML, content: '# Hello' });
       // HTML mode does not turn '#' into a heading, it renders the text as-is.
-      expect(screen.getByTestId(PREVIEW_TEST_ID).innerHTML.trim()).toBe('# Hello');
+      expect(screen.getByTestId(PREVIEW_TEST_ID).querySelector('[data-text-blocks]')!.innerHTML.trim()).toBe('# Hello');
     });
 
     it('carries a pending draft with the mode change, so typing is not lost', async () => {
