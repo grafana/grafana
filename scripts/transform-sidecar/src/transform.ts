@@ -123,13 +123,27 @@ export async function transformFrames(
   return lastValueFrom(transformDataFrame(transformations, frames, { interpolate: interpolator(vars) }));
 }
 
-export async function runTransformRequest(req: TransformRequest): Promise<TransformResponse> {
-  const output = await transformFrames(
-    req.frames.map((frame) => dataFrameFromJSON(frame)),
-    req.transformations,
-    req
-  );
-  return { frames: output.map(toGoFrameJSON) };
+/** Milliseconds spent in each stage of a request, reported in the Server-Timing header. */
+export type StageTimings = Record<string, number>;
+
+export async function runTransformRequest(
+  req: TransformRequest,
+  timings: StageTimings = {}
+): Promise<TransformResponse> {
+  let mark = performance.now();
+  const lap = (stage: string) => {
+    const now = performance.now();
+    timings[stage] = now - mark;
+    mark = now;
+  };
+
+  const frames = req.frames.map((frame) => dataFrameFromJSON(frame));
+  lap('decode');
+  const output = await transformFrames(frames, req.transformations, req);
+  lap('transform');
+  const response = { frames: output.map(toGoFrameJSON) };
+  lap('encode');
+  return response;
 }
 
 interface GoFieldType {

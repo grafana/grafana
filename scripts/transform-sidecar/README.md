@@ -173,6 +173,59 @@ scripts/transform-sidecar/parity/run.sh [output dir]
 - **`sortBy` and other field matchers use the display name.** A field with `config.displayName: "Latency"` is matched by `Latency`, not `latency`.
 - **`int64` values above 2^53 lose precision when the browser parses the JSON,** before any transformation runs.
 
+## Benchmarks
+
+```sh
+scripts/transform-sidecar/bench/run.sh [output dir] [iterations]
+```
+
+The runner does three things:
+
+1. **Go side.** `TestTransformSidecarBenchmark` in `pkg/expr/transform_bench_test.go` times each stage of a sidecar call. It also times the full transform pipeline and a Go-native expression for the same result, where one exists.
+2. **Browser baseline.** `bench/browser.ts` times what a panel does today: parse the response, decode the frames, run the transformations. It also times what the panel would do with a backend transform: parse and decode the smaller result.
+3. **Report.** It merges both into `report.md`.
+
+Each figure is the median of 5 runs after 1 warm-up run. Setup: Apple M4 Pro (14 cores, 48 GB), localhost, 4 sidecar workers. These are spike numbers from one machine, not capacity planning.
+
+### Results (median ms)
+
+| Workload                                             | Browser today: parse + decode + transform | Server with sidecar: full pipeline | Browser with sidecar | Native Go expression | Payload today → with sidecar |
+| ---------------------------------------------------- | ----------------------------------------- | ---------------------------------- | -------------------- | -------------------- | ---------------------------- |
+| 1k series × 1k points, `reduce` mean                 | 41                                        | 161                                | 0.1                  | 23 (SSE reduce)      | 18.1 MB → 0.05 MB            |
+| 1k series × 1k points, `joinByField` outer (aligned) | 39                                        | 240                                | 14                   | —                    | 18.1 MB → 4.6 MB             |
+| 1k misaligned series, `joinByField` outer            | 67                                        | 271                                | 22                   | —                    | 18.1 MB → 4.6 MB             |
+| 50k log lines, `filterByValue` + `sortBy`            | 14                                        | 48                                 | 1.2                  | 22 (SQL expression)  | 6.0 MB → 1.2 MB              |
+| 100k rows, `groupBy` mean                            | 14                                        | 27                                 | 0.0                  | 24 (SQL expression)  | 1.3 MB → 0.002 MB            |
+
+Sidecar call breakdown (median ms):
+
+| Workload                        | Go encode | Node `JSON.parse` | transform | encode + stringify | Go decode | HTTP total |
+| ------------------------------- | --------- | ----------------- | --------- | ------------------ | --------- | ---------- |
+| 1k × 1k `reduce`                | 109       | 33                | 8.7       | 0.2                | 0.3       | 55         |
+| 1k × 1k `joinByField` (aligned) | 111       | 36                | 1.3       | 34                 | 35        | 94         |
+| 1k misaligned `joinByField`     | 110       | 33                | 30        | 41                 | 35        | 126        |
+| 50k logs                        | 21        | 5.8               | 4.7       | 3.0                | 5.0       | 22         |
+| 100k `groupBy`                  | 10        | 2.9               | 11        | 0.0                | 0.0       | 16         |
+
+Under load, 10 parallel requests × 3 rounds each: p50 36–283 ms and p99 58–404 ms, depending on the workload, with no failures. **Peak sidecar memory (RSS) was 1.9–2.5 GB.**
+
+### What the numbers say
+
+1. **The transform itself costs the same as in the browser,** because it's the same code on V8 (for example, 8.7 vs 7.5 ms for `reduce`, 11 vs 12 ms for `groupBy`). The extra server time is all serialization: Go JSON-encodes the input (109 ms for 18 MB) and Node parses it (33 ms). An Arrow IPC wire format, instead of JSON, is the obvious next experiment.
+2. **On a fast connection the sidecar is slower end to end; on a real network, transforms that shrink data win clearly.** Today the server also encodes the 18 MB for the browser, then sends it over the network. With the sidecar, that encode happens once toward the sidecar, and only the result is sent. Estimated totals at 50 Mbps: server encode + transfer + browser work, versus pipeline + transfer of the result.
+
+   | Workload                    | Today, est. at 50 Mbps | With sidecar, est. at 50 Mbps                              |
+   | --------------------------- | ---------------------- | ---------------------------------------------------------- |
+   | 1k × 1k `reduce`            | ~3.2 s                 | ~0.17 s                                                    |
+   | 1k misaligned `joinByField` | ~3.2 s                 | ~1.1 s (plus Go encode of the 4.6 MB result, not measured) |
+   | 50k logs                    | ~1.0 s                 | ~0.25 s                                                    |
+   | 100k `groupBy`              | ~0.24 s                | ~0.03 s                                                    |
+
+   On localhost, with no network cost, the sidecar is slower in every workload: 170–293 ms versus 24–177 ms. Transforms that keep the data size, such as joins, organize, and rename, gain little from moving.
+
+3. **Native Go is faster where it exists.** SSE reduce takes 23 ms versus 161 ms through the sidecar. For `groupBy`, SQL expressions and the sidecar cost about the same (24 vs 27 ms). For logs, SQL is faster (22 vs 48 ms).
+4. **Memory is the production risk.** Peak RSS of 2–2.5 GB came from 10 concurrent 18 MB requests across 4 workers. Each worker holds the payload string, the parsed objects, and the output. Any production setup would need per-request size limits well below the 64 MB default, and memory-based admission control.
+
 ## Configuration
 
 | Variable                           | Default                        |
@@ -201,5 +254,3 @@ scripts/transform-sidecar/parity/run.sh [output dir]
 7. **The PoC matches DataPro's prototype result.** For a group/mean over api, worker, and idle, Go → Node → Go returns api 180, worker 40, idle null. These are the same values as DataPro's E1 evidence.
 
 ## Not done yet
-
-- Benchmarks (Phase 5)

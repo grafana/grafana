@@ -53,10 +53,16 @@ function readBody(req: IncomingMessage, limit: number): Promise<string> {
   });
 }
 
-function send(res: ServerResponse, status: number, body: string | object) {
+function send(res: ServerResponse, status: number, body: string | object, headers: Record<string, string> = {}) {
   const text = typeof body === 'string' ? body : JSON.stringify(body);
-  res.writeHead(status, { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text) });
+  res.writeHead(status, { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), ...headers });
   res.end(text);
+}
+
+function serverTiming(timings: Record<string, number>): string {
+  return Object.entries(timings)
+    .map(([stage, ms]) => `${stage};dur=${ms.toFixed(2)}`)
+    .join(', ');
 }
 
 const pool = new WorkerPool<string, WorkerResult>(join(__dirname, 'worker.cjs'), {
@@ -69,12 +75,19 @@ async function handleTransform(req: IncomingMessage, res: ServerResponse) {
   const start = performance.now();
   let status: number;
   let body: string | object;
+  const headers: Record<string, string> = {};
 
   try {
-    const result = await pool.run(await readBody(req, config.maxBodyBytes));
+    const payload = await readBody(req, config.maxBodyBytes);
+    const read = performance.now() - start;
+    const result = await pool.run(payload);
     if (result.ok) {
       status = 200;
       body = result.body;
+      const inWorker = Object.values(result.timings).reduce((sum, ms) => sum + ms, 0);
+      // queue covers waiting for a free worker plus copying the payload to and from it.
+      const queue = performance.now() - start - read - inWorker;
+      headers['server-timing'] = serverTiming({ read, queue, ...result.timings });
     } else {
       status = result.kind === 'bad_request' ? 400 : 422;
       body = { error: result.message };
@@ -93,7 +106,7 @@ async function handleTransform(req: IncomingMessage, res: ServerResponse) {
     body = { error: message };
   }
 
-  send(res, status, body);
+  send(res, status, body, headers);
   log(status >= 500 ? 'error' : 'info', 'transform', { status, durationMs: Math.round(performance.now() - start) });
 }
 
@@ -107,7 +120,7 @@ const server = createServer((req, res) => {
       send(res, 200, { transformations: supportedTransformations() });
       return;
     case 'GET /health':
-      send(res, 200, { status: 'ok', pool: pool.stats });
+      send(res, 200, { status: 'ok', pool: pool.stats, memory: process.memoryUsage() });
       return;
     default:
       send(res, 404, { error: `no route for ${route}` });

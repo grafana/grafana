@@ -1,9 +1,9 @@
 import { parentPort } from 'node:worker_threads';
 
-import { BadRequestError, parseTransformRequest, runTransformRequest } from './transform';
+import { BadRequestError, parseTransformRequest, runTransformRequest, type StageTimings } from './transform';
 
 export type WorkerResult =
-  | { ok: true; body: string }
+  | { ok: true; body: string; timings: StageTimings }
   | { ok: false; kind: 'bad_request' | 'transform_error'; message: string };
 
 if (!parentPort) {
@@ -16,8 +16,17 @@ const port = parentPort;
 port.on('message', async ({ id, payload }: { id: number; payload: string }) => {
   let result: WorkerResult;
   try {
-    const response = await runTransformRequest(parseTransformRequest(payload));
-    result = { ok: true, body: JSON.stringify(response) };
+    const timings: StageTimings = {};
+    let start = performance.now();
+    const request = parseTransformRequest(payload);
+    timings.parse = performance.now() - start;
+
+    const response = await runTransformRequest(request, timings);
+
+    start = performance.now();
+    const body = JSON.stringify(response);
+    timings.stringify = performance.now() - start;
+    result = { ok: true, body, timings };
   } catch (err) {
     result = {
       ok: false,

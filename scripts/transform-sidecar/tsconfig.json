@@ -10,6 +10,7 @@
     "./src/**/*.ts",
     "./test/**/*.ts",
     "./parity/**/*.ts",
+    "./bench/**/*.ts",
     "../../public/app/types/jquery/*.ts",
     "../../public/app/types/*.d.ts",
     "../../packages/grafana-ui/src/types/react-table-config.d.ts"
