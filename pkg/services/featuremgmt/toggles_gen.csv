@@ -229,7 +229,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-07-31,favoriteDatasources,experimental,@grafana/grafana-catalog,false,false,true
 2025-07-31,newClickhouseConfigPageDesign,GA,@grafana/data-sources-plugins,false,false,false
 2026-09-16,grafana.starredFolders,experimental,@grafana/grafana-frontend-navigation,false,false,true
-2026-09-16,grafana.newTextPanel,experimental,@grafana/dataviz-squad,false,false,true
+2026-09-16,grafana.newTextPanel,preview,@grafana/dataviz-squad,false,false,true
 2026-09-16,text.newFeatures,experimental,@grafana/dataviz-squad,false,false,true
 2025-10-22,interactiveLearning,preview,@grafana/pathfinder,false,false,false
 2025-07-31,alertingTriage,experimental,@grafana/alerting-squad,false,false,false
