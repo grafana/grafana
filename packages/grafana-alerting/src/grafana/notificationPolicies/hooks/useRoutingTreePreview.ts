@@ -1,5 +1,4 @@
 import { type Label } from '../../matchers/types';
-import { USER_DEFINED_TREE_NAME } from '../routingTree.utils';
 import { type RouteWithID } from '../types';
 
 import { useMatchInstancesToSpecificRouteTree } from './useMatchPolicies';
@@ -7,10 +6,10 @@ import { useResolvedRoutingTree } from './useResolvedRoutingTree';
 
 /**
  * The routes of a tree that match the given instances, or `null` when there is nothing to show: the tree is
- * still loading, was deleted or failed to load. An unset name means the default policy, not "no tree".
+ * still loading, was deleted or failed to load.
  */
 export function useRoutingTreePreview(routingTreeName: string | undefined, instances: Label[][]): RouteWithID[] | null {
-  const { tree } = useResolvedRoutingTree(routingTreeName || USER_DEFINED_TREE_NAME);
+  const { tree } = useResolvedRoutingTree(routingTreeName);
   const match = useMatchInstancesToSpecificRouteTree(tree, instances);
 
   if (!tree) {

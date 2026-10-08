@@ -4,23 +4,26 @@ import { findRoutingTreeByName } from '../routingTree.utils';
 import { useRoutingTrees } from './useRoutingTrees';
 
 export interface ResolvedRoutingTree {
-  /** The tree named `name`, or `null` when no name is given or none matches. */
+  /** The tree named `name`, or `null` while loading, when none matches, or when the list failed to load. */
   tree: RoutingTree | null;
-  /** A name was given but the list hasn't loaded yet, so `tree === null` doesn't mean "missing". */
+  /** The list hasn't loaded yet, so `tree === null` doesn't mean "missing". */
   isResolving: boolean;
-  /** A name was given, the list loaded, and no tree has it - e.g. the tree was deleted. */
+  /** The list loaded and no tree has the name - e.g. the tree was deleted. */
   isNotFound: boolean;
+  /** The list failed to load and there is no earlier result to fall back on. */
   isError: boolean;
 }
 
 /** Looks a routing tree up by name, telling apart "still loading", "doesn't exist" and "failed to load"
- * so callers don't fall back to the default policy for a tree they merely couldn't confirm yet. */
+ * so callers don't fall back to the default policy for a tree they merely couldn't confirm yet.
+ * An unset or default name resolves the default tree, like `findRoutingTreeByName`. */
 export function useResolvedRoutingTree(name?: string): ResolvedRoutingTree {
   const { trees, currentData, isError } = useRoutingTrees();
 
-  const tree = name ? (findRoutingTreeByName(trees, name) ?? null) : null;
-  const isResolving = Boolean(name) && !currentData && !isError;
-  const isNotFound = Boolean(name) && Boolean(currentData) && !tree;
+  const tree = findRoutingTreeByName(trees, name) ?? null;
+  const isResolving = !currentData && !isError;
+  const isNotFound = Boolean(currentData) && !tree;
 
-  return { tree, isResolving, isNotFound, isError };
+  // A refetch that fails keeps the last good list; that list is still a valid answer.
+  return { tree, isResolving, isNotFound, isError: isError && !currentData };
 }
