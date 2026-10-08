@@ -39,6 +39,9 @@ type Service interface {
 	// settings lookup); the reload itself runs in the background and reports failures
 	// via logs and metrics.
 	Reload(ctx context.Context, provider string) error
+	// GetDefaults returns the default setting values of the provider, or nil if the
+	// provider doesn't have default values registered
+	GetDefaults(provider string) map[string]any
 }
 
 // Reloadable is an interface that can be implemented by a provider to allow it to be validated and reloaded
@@ -47,6 +50,14 @@ type Service interface {
 type Reloadable interface {
 	Reload(ctx context.Context, settings models.SSOSettings) error
 	Validate(ctx context.Context, settings models.SSOSettings, oldSettings models.SSOSettings, requester identity.Requester) error
+}
+
+// DefaultsProvider is an interface to expose the implicit defaults to be applied when a setting is unset
+//
+//go:generate mockery --name DefaultsProvider --structname MockDefaultsProvider --outpkg ssosettingstests --filename defaults_provider_mock.go --output ./ssosettingstests/
+type DefaultsProvider interface {
+	// Defaults returns the provider's default values
+	Defaults() map[string]any
 }
 
 // FallbackStrategy is an interface that can be implemented to allow a provider to load settings from a different source

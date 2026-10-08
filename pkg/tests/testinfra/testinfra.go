@@ -529,8 +529,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 
 	analyticsSect, err := cfg.NewSection("analytics")
 	require.NoError(t, err)
-	_, err = analyticsSect.NewKey("intercom_secret", "intercom_secret_at_config")
-	require.NoError(t, err)
 	// Disable phone-home services in tests. Each of these makes outbound
 	// HTTP requests to grafana.com / stats.grafana.org on startup, which is
 	// a source of flakiness on CI runners and adds nothing to the tests.
@@ -670,6 +668,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
 		require.NoError(t, err)
 		_, err = unifiedAlertingSection.NewKey("limit_email_to_org_members", "true")
+		require.NoError(t, err)
+	}
+	if opts.UnifiedAlertingDisableExecuteAlerts {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("execute_alerts", "false")
 		require.NoError(t, err)
 	}
 	if !opts.EnableLog {
@@ -907,6 +911,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningKeysOnlyReList {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+	}
 	// Write max_repositories if explicitly set.
 	// Write when value != 10 (the default). Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
 	if opts.ProvisioningMaxRepositories != 10 {
@@ -965,10 +975,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		require.NoError(t, err)
 	}
 
-	if opts.EnableSearchAPI {
+	if opts.EnableKeysAPI {
 		apiserverSection, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
-		_, err = apiserverSection.NewKey("enable_search_api", "true")
+		_, err = apiserverSection.NewKey("enable_keys_api", "true")
 		require.NoError(t, err)
 	}
 
@@ -1126,6 +1136,7 @@ type GrafanaOpts struct {
 	UnifiedAlertingDisabledOrgs           []int64
 	UnifiedAlertingAllowedIntegrations    []string
 	UnifiedAlertingEmailsToOrgOnly        bool
+	UnifiedAlertingDisableExecuteAlerts   bool
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int
@@ -1183,9 +1194,14 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
-	// EnableSearchAPI turns on the per-resource /search endpoints, which are off
-	// by default.
-	EnableSearchAPI bool
+	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
+	// connection informer's periodic re-list ask storage for keys instead of whole
+	// objects. Off by default, matching the shipped default.
+	ProvisioningKeysOnlyReList bool
+
+	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
+	EnableKeysAPI bool
+
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver

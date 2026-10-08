@@ -7,7 +7,7 @@ import {
   type DynamicDashboardsTrackingInformation,
 } from '../serialization/DashboardSceneSerializer';
 
-import { type GlobalVariablesMode } from './predefinedVariableDenyList';
+import { type GlobalVariablesMode, type PredefinedVariableScope } from './crossDashboardVariablesSelection';
 
 let isScenesContextSet = false;
 
@@ -32,6 +32,16 @@ export const DashboardInteractions = {
       Partial<{ version_before_migration: number | undefined }>
   ) => {
     reportDashboardInteraction('init_dashboard_completed', properties);
+  },
+
+  textPanelUsage: (properties: {
+    mermaid_count: number;
+    handlebars_count: number;
+    data_macro_count: number;
+    per_row_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('text_panel_usage', properties);
   },
 
   dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
@@ -165,10 +175,11 @@ export const DashboardInteractions = {
     reportDashboardInteraction('global_variables_loaded', properties);
   },
 
-  // dashboards_global_variables_mode_changed
-  // when a user changes the predefined variables radio (None / All / Global / Folder)
-  globalVariablesModeChanged: (properties: { from_mode?: GlobalVariablesMode; to_mode: GlobalVariablesMode }) => {
-    reportDashboardInteraction('global_variables_mode_changed', properties);
+  // dashboards_predefined_variable_toggled
+  // when a user checks or unchecks a global or folder variable on the dashboard.
+  // Do not send variable names — they are customer-authored (cardinality + leak).
+  predefinedVariableToggled: (properties: { scope: PredefinedVariableScope; checked: boolean }) => {
+    reportDashboardInteraction('predefined_variable_toggled', properties);
   },
 
   // dashboards_add_annotation_button_clicked
@@ -183,9 +194,18 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
+    item:
+      | 'configure'
+      | 'configure_dropdown'
+      | 'edit'
+      | 'settings'
+      | 'copy'
+      | 'duplicate'
+      | 'delete'
+      | 'view'
+      | 'use_library_panel',
     id: number,
-    source: 'panel' | 'edit_pane' | 'keyboard',
+    source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
     panelType?: string
   ) {
     reportDashboardInteraction('panel_action_clicked', { item, id, source, panelType });
@@ -206,11 +226,11 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'add_panel', source, target, action });
   },
-  trackGroupRowClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
+  trackGroupRowClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_row', source });
   },
-  trackGroupTabClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab' });
+  trackGroupTabClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab', source });
   },
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
@@ -222,8 +242,8 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
-  trackDeleteDashboardElement(elementType: string) {
-    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
+  trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -291,12 +311,6 @@ export const DashboardInteractions = {
   },
   exportCopyJsonClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_export_copy_json_clicked', properties);
-  },
-  exportSaveJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_save_json_clicked', properties);
-  },
-  exportViewJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_view_json_clicked', properties);
   },
   generatePublicDashboardUrlClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_public_generate_url_clicked', properties);

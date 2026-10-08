@@ -252,7 +252,11 @@ class DataSourceWithBackend<
         types: [],
       });
       if (isQueryServiceCompatible(datasources, allowedTypes)) {
-        url = `/apis/query.grafana.app/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
+        let apiGroup = 'query.grafana.app';
+        if (getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesQuerierNewName, false)) {
+          apiGroup = 'datasource.grafana.app';
+        }
+        url = `/apis/${apiGroup}/v0alpha1/namespaces/${config.namespace}/query?ds_type=${this.type}`;
       }
     }
 
@@ -419,7 +423,8 @@ class DataSourceWithBackend<
   /**
    * Internal function to build the datasource URL based on the feature toggle
    */
-  buildResourcesDatasourceUrl(path: string): string {
+  buildResourcesDatasourceUrl(rawPath: string): string {
+    const path = rawPath.replace(/^\/+/, '');
     const enabledRedirect = getFeatureFlagClient().getBooleanValue(
       'datasources.apiserver.useNewAPIsForDatasourceResources',
       false

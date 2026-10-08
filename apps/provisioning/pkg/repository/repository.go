@@ -37,6 +37,20 @@ var ErrRefNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Message: "ref not found",
 }}
 
+// CompareRefNotFoundError identifies which CompareFiles operand could not be resolved.
+type CompareRefNotFoundError struct {
+	Ref string
+	Err error
+}
+
+func (e *CompareRefNotFoundError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *CompareRefNotFoundError) Unwrap() error {
+	return e.Err
+}
+
 var ErrFileAlreadyExists error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,
 	Code:    http.StatusConflict,
@@ -59,6 +73,11 @@ var ErrPermissionDenied error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Reason:  metav1.StatusReasonForbidden,
 	Message: "permission denied",
 }}
+
+// WritePermissionDeniedDetail is the TestResults.Errors[].Detail reported when a repository
+// is reachable (auth and connectivity succeeded) but the configured credentials lack write
+// access. Unlike a generic 403, this specific case shouldn't be treated as unreachable.
+const WritePermissionDeniedDetail = "write permission denied"
 
 var ErrTooManyRequests error = &apierrors.StatusError{ErrStatus: metav1.Status{
 	Status:  metav1.StatusFailure,

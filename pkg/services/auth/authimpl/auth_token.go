@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"net"
+	"strconv"
 	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
@@ -346,6 +347,19 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return nil, auth.ErrInvalidSessionToken
 	}
 
+	// Same flag LookupToken uses for rotation-race bookkeeping.
+	graceEnabled := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagAuthTokenRotationGracePeriod, false, openfeature.TransactionContext(ctx))
+
+	// Key by session ID so a still-valid-but-superseded token collapses into the same rotation.
+	singleflightKey := cmd.UnHashedToken
+	if graceEnabled {
+		initial, err := s.LookupToken(ctx, cmd.UnHashedToken)
+		if err != nil {
+			return nil, err
+		}
+		singleflightKey = strconv.FormatInt(initial.Id, 10)
+	}
+
 	rotate := func(ctx context.Context) (*auth.UserToken, error) {
 		token, err := s.LookupToken(ctx, cmd.UnHashedToken)
 		if err != nil {
@@ -353,8 +367,18 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		}
 		log := s.log.FromContext(ctx).New("tokenID", token.Id, "userID", token.UserId, "createdAt", token.CreatedAt, "rotatedAt", token.RotatedAt)
 
-		// Avoid multiple instances in HA mode rotating at the same time.
-		if time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime()) {
+		skip := time.Unix(token.RotatedAt, 0).Add(SkipRotationTime).After(getTime())
+
+		// Only skip if the presented token is still current -- otherwise it's about to be evicted anyway.
+		if graceEnabled {
+			cfg, err := s.cfgProvider.Get(ctx)
+			if err != nil {
+				return nil, err
+			}
+			skip = skip && hashToken(cfg.SecretKey, cmd.UnHashedToken) == token.AuthToken
+		}
+
+		if skip {
 			log.Debug("Token was last rotated very recently, skipping rotation")
 			span.SetAttributes(attribute.Bool("skipped", true))
 			return token, nil
@@ -377,7 +401,7 @@ func (s *UserAuthTokenService) RotateToken(ctx context.Context, cmd auth.RotateC
 		return newToken, nil
 	}
 
-	res, err, _ := s.singleflight.Do(cmd.UnHashedToken, func() (any, error) {
+	res, err, _ := s.singleflight.Do(singleflightKey, func() (any, error) {
 		dbHelper, err := s.sql(ctx)
 		if err != nil {
 			return nil, err

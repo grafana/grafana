@@ -12,6 +12,8 @@ describe('Resolver', () => {
     expect(components.PanelEditor.OptionsPane.fieldInput('Test')).toBe(
       'data-testid Panel editor option pane field input Test'
     );
+    expect(components.QueryEditorCoauthoring.selectionToolbar).toBe('data-testid query-coauthoring-selection-toolbar');
+    expect(components.QueryEditorCoauthoring.container).toBe('data-testid query-coauthoring-scroll-body');
     expect(pages.Alerting.AddAlertRule.url).toBe('/alerting/new/alerting');
     expect(pages.AddDashboard.Settings.Variables.Edit.url('test')).toBe(
       '/dashboard/new?orgId=1&editview=variables&editIndex=test'

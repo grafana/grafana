@@ -1,4 +1,6 @@
-import { SceneObjectBase } from '@grafana/scenes';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { SceneObjectBase, type VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -22,6 +24,11 @@ jest.mock('../../api/notebookResource', () => ({
   ...jest.requireActual('../../api/notebookResource'),
   updateNotebook: jest.fn(),
 }));
+
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
 
 /** Concrete stand-in: SceneObjectBase is abstract, and overlay just needs a SceneObject. */
 class TestOverlay extends SceneObjectBase {}
@@ -96,6 +103,16 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(result.data).toEqual({ applied: true, spec: next });
   });
 
+  it("echoes the save's resourceVersion, so a caller does not need a follow-up read to learn the new revision", async () => {
+    jest.mocked(updateNotebook).mockResolvedValue({ generation: 2, resourceVersion: '1756' });
+    const client = new NotebookMutationClient(notebookScene());
+    const next = notebookSpec({ title: 'Echoed' });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
+    expect(result.data).toEqual({ applied: true, spec: next, resourceVersion: '1756' });
+  });
+
   it('warns about a cell it silently dropped', async () => {
     const client = new NotebookMutationClient(notebookScene());
 
@@ -109,6 +126,37 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
 
     expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['These cells were not applied and are missing from the notebook: ghost.']);
+  });
+
+  // The save model leaves out the empty block the editor keeps at the bottom, so a caller that sends one
+  // would otherwise be told its cell went missing when nothing did.
+  it('does not warn about a trailing empty block it was asked to apply', async () => {
+    const client = new NotebookMutationClient(notebookScene());
+
+    const next = notebookSpec({
+      elements: { intro: markdownCell('## Intro'), trailing: markdownCell('') },
+      cells: ['intro', 'trailing'],
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toBeUndefined();
+  });
+
+  // The exemption has to be precise: excusing the trailing block must not excuse a cell genuinely lost
+  // from in front of it. 'ghost' is referenced with no element, so it really does go missing.
+  it('still warns about a lost cell sitting in front of a trailing empty block', async () => {
+    const client = new NotebookMutationClient(notebookScene());
+
+    const next = notebookSpec({
+      elements: { intro: markdownCell('## Intro'), trailing: markdownCell('') },
+      cells: ['intro', 'ghost', 'trailing'],
+    });
+
+    const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: next } });
+
     expect(result.warnings).toEqual(['These cells were not applied and are missing from the notebook: ghost.']);
   });
 
@@ -288,7 +336,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(scene.state.body.state.isEditing).toBe(true);
   });
 
-  it('leaves the rebuilt body out of edit mode when the notebook was not being edited', async () => {
+  it('enters edit mode for the rebuilt body when the notebook was not being edited', async () => {
     const scene = notebookScene();
     expect(scene.state.isEditing).toBeFalsy();
 
@@ -298,10 +346,13 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
     });
 
-    expect(scene.state.body.state.isEditing).toBe(false);
+    // The assistant/workspace writing the notebook puts it into edit mode, same as a person clicking
+    // the toolbar's Edit toggle would, rather than leaving the toggle saying View over changed cells.
+    expect(scene.state.isEditing).toBe(true);
+    expect(scene.state.body.state.isEditing).toBe(true);
   });
 
-  it('saves the applied change, which the scene change signal would otherwise miss', async () => {
+  it('saves the applied change, which the explicit saveDocumentChange call guarantees regardless of debounce', async () => {
     const scene = notebookScene();
     const client = new NotebookMutationClient(scene);
 
@@ -311,8 +362,8 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     });
 
     expect(result.success).toBe(true);
-    // The notebook was never in edit mode, so the scene's own change signal is ignored for this write.
-    expect(scene.state.isEditing).toBeFalsy();
+    // Entering edit mode is itself part of the write; nothing undoes it once the spec is applied.
+    expect(scene.state.isEditing).toBe(true);
     // Asserted on the request, not on a call to autosave, so what was sent is what the caller asked for.
     expect(updateNotebook).toHaveBeenCalledTimes(1);
     const [, sent] = jest.mocked(updateNotebook).mock.calls[0];
@@ -349,5 +400,217 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('insufficient permissions');
     expect(cellNamesOf(scene)).toEqual(before);
+  });
+
+  describe('when the reader has an unsaved view-only panel change', () => {
+    function recolour(panel: VizPanel, color = 'red') {
+      panel.setState({
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'up' },
+              properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: color } }],
+            },
+          ],
+        },
+      });
+    }
+
+    /** `latency-panel` recoloured while the notebook is in view mode, mirroring a reader using it. */
+    async function sceneWithPendingChange() {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const cell = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel');
+
+      const panel = cell!.state.body as VizPanel;
+      const stopPanel = panel.activate();
+
+      recolour(panel);
+
+      return { scene, client, panel, stopPanel };
+    }
+
+    it('is refused and leaves the notebook untouched when the change is not resolved', async () => {
+      const { scene, client, stopPanel } = await sceneWithPendingChange();
+      const before = cellNamesOf(scene);
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+      });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('latency-panel');
+      expect(cellNamesOf(scene)).toEqual(before);
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(updateNotebook).not.toHaveBeenCalled();
+
+      stopPanel();
+    });
+
+    it('saves the reader’s look when told to keep it', async () => {
+      const { client, stopPanel } = await sceneWithPendingChange();
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec(), viewOnlyChanges: 'keep' },
+      });
+
+      expect(result.success).toBe(true);
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+      const [, sent] = jest.mocked(updateNotebook).mock.calls[0];
+      const element = sent.elements['latency-panel'];
+      expect(element.kind).toBe('Panel');
+      if (element.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides).toHaveLength(1);
+      }
+
+      stopPanel();
+    });
+
+    // The assistant may have read this same recoloured look through a prior GET_NOTEBOOK_SPEC and
+    // carried it into its own spec: discard has to win over that, not just over an untouched one. The
+    // title change is an unrelated real edit, so the write actually happens rather than being skipped
+    // as a no-op against the baseline.
+    it('discards the reader’s look when told to, even if the caller’s own spec still carries it', async () => {
+      const { client, stopPanel } = await sceneWithPendingChange();
+
+      const taintedSpec = notebookSpec({ title: 'Renamed by assistant' });
+      const taintedElement = taintedSpec.elements['latency-panel'];
+      if (taintedElement.kind === 'Panel') {
+        taintedElement.spec.vizConfig = {
+          ...taintedElement.spec.vizConfig,
+          spec: {
+            options: {},
+            fieldConfig: {
+              defaults: {},
+              overrides: [
+                {
+                  matcher: { id: 'byName', options: 'up' },
+                  properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+                },
+              ],
+            },
+          },
+        };
+      }
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: taintedSpec, viewOnlyChanges: 'discard' },
+      });
+
+      expect(result.success).toBe(true);
+      const [, sent] = jest.mocked(updateNotebook).mock.calls[0];
+      const element = sent.elements['latency-panel'];
+      expect(element.kind).toBe('Panel');
+      if (element.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides).toEqual([]);
+      }
+
+      stopPanel();
+    });
+
+    // Discard goes back to the look from before the reader's change, as the modal's discard does. That
+    // is not always the saved look: an edit whose save failed is still the notebook's own.
+    it('keeps an earlier edit whose save failed when discarding a later view-only change', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const panel = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!.state
+        .body as VizPanel;
+      const stopPanel = panel.activate();
+
+      // The writer's own edit, which the server refuses.
+      scene.onEnterEditMode();
+      recolour(panel, 'red');
+      jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+      scene.onExitEditMode();
+      await scene.autosave.awaitPendingSave().catch(() => undefined);
+      expect(updateNotebook).toHaveBeenCalledTimes(1);
+
+      // Then a reader changes the same panel in view mode.
+      recolour(panel, 'green');
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ title: 'Renamed by assistant' }), viewOnlyChanges: 'discard' },
+      });
+
+      expect(result.success).toBe(true);
+      const [, sent] = jest.mocked(updateNotebook).mock.calls[1];
+      const element = sent.elements['latency-panel'];
+      expect(element.kind).toBe('Panel');
+      if (element.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides[0].properties[0].value).toEqual({
+          mode: 'fixed',
+          fixedColor: 'red',
+        });
+      }
+
+      stopPanel();
+    });
+  });
+
+  // Entering edit mode changes the mode and what autosave counts as edited, so it has to wait until the
+  // replacement exists. A spec that cannot be rebuilt must leave the notebook as it was.
+  describe('when the spec cannot be rebuilt', () => {
+    function unbuildableSpec() {
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- deliberately malformed
+      return { ...notebookSpec(), elements: undefined } as unknown as ReturnType<typeof notebookSpec>;
+    }
+
+    it('fails without putting the notebook into edit mode', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const before = cellNamesOf(scene);
+      expect(scene.state.isEditing).toBeFalsy();
+
+      const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: unbuildableSpec() } });
+
+      expect(result.success).toBe(false);
+      expect(scene.state.isEditing).toBeFalsy();
+      expect(cellNamesOf(scene)).toEqual(before);
+      expect(updateNotebook).not.toHaveBeenCalled();
+    });
+
+    it('does not forget an edit whose save failed, so a retry still writes it', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const panel = scene.state.body.state.cells.find((c) => c.state.elementName === 'latency-panel')!.state
+        .body as VizPanel;
+      const stopPanel = panel.activate();
+
+      scene.onEnterEditMode();
+      panel.setState({
+        fieldConfig: {
+          defaults: {},
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'up' },
+              properties: [{ id: 'color', value: { mode: 'fixed', fixedColor: 'red' } }],
+            },
+          ],
+        },
+      });
+      jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+      scene.onExitEditMode();
+      await scene.autosave.awaitPendingSave().catch(() => undefined);
+
+      const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: unbuildableSpec() } });
+      expect(result.success).toBe(false);
+
+      scene.autosave.retry();
+      await scene.autosave.awaitPendingSave();
+
+      const [, sent] = jest.mocked(updateNotebook).mock.calls.at(-1) ?? [];
+      const element = sent?.elements['latency-panel'];
+      expect(element?.kind).toBe('Panel');
+      if (element?.kind === 'Panel') {
+        expect(element.spec.vizConfig.spec.fieldConfig.overrides).toHaveLength(1);
+      }
+
+      stopPanel();
+    });
   });
 });

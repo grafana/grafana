@@ -7,7 +7,8 @@ import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { configureStore } from 'app/store/configureStore';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { createJob, createRepository } from '../mocks/factories';
@@ -56,8 +57,12 @@ async function navigateToConnectionStep(
     url?: string;
   }
 ) {
-  if (type === 'github' || type === 'githubEnterprise') {
-    // Select PAT option (GitHub App is the default)
+  if (type !== 'local' && type !== 'git') {
+    // App-based radios appear only after frontend settings load; wait so the PAT click isn't racing them
+    const appRadioName =
+      type === 'github' || type === 'githubEnterprise' ? /Connect with GitHub App/i : /Connect with OAuth App/i;
+    await screen.findByRole('radio', { name: appRadioName });
+    // Select PAT option (app-based auth is the default)
     await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
   }
 
@@ -240,7 +245,7 @@ describe('ProvisioningWizard', () => {
       // Wait for async operations (useConnectionOptions fetches) to settle
       expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
     });
 
@@ -248,6 +253,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       // Select PAT option
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Fill required fields on authType step
@@ -421,6 +427,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="github" />);
 
       // Select PAT option (GitHub App is the default)
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       await typeIntoTokenField(user, 'ghp_xxxxxxxxxxxxxxxxxxxx', 'test-token');
@@ -444,6 +451,21 @@ describe('ProvisioningWizard', () => {
       await user.keyboard('{Enter}');
 
       expect(screen.getByRole('button', { name: /Choose what to synchronize/i })).toBeEnabled();
+    });
+
+    it('blocks submit with a connection error when the connection list fails to load', async () => {
+      server.use(http.get(`${BASE}/connections`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
+      const mockSubmitData = setupMockSubmitData();
+
+      const { user } = setup(<ProvisioningWizard type="github" />);
+
+      // Defaults: GitHub App auth with "Choose an existing app" mode.
+      expect(await screen.findByText('Failed to load connections')).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: /Configure repository$/i }));
+
+      expect(await screen.findByText('Connection is required')).toBeInTheDocument();
+      expect(mockSubmitData).not.toHaveBeenCalled();
     });
   });
 
@@ -558,6 +580,79 @@ describe('ProvisioningWizard', () => {
       await waitFor(() => {
         expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
       });
+    });
+
+    it('enters the synchronize step in the loading state after the bootstrap save bumps the generation', async () => {
+      // Real submission hook: the bootstrap save must perform the actual connection test + PUT round-trip
+      const { useCreateOrUpdateRepository: realUseCreateOrUpdateRepository } = jest.requireActual<{
+        useCreateOrUpdateRepository: typeof useCreateOrUpdateRepository;
+      }>('../hooks/useCreateOrUpdateRepository');
+      mockUseCreateOrUpdateRepository.mockImplementation(realUseCreateOrUpdateRepository);
+
+      let stored = createRepository({ metadata: { resourceVersion: '5' } }); // generation 1, observedGeneration 1
+      const saved = createRepository({ metadata: { generation: 2, resourceVersion: '6' } }); // observedGeneration still 1
+      let savingBootstrap = false;
+      let releaseLists = () => {};
+      const listsReleased = new Promise<void>((resolve) => (releaseLists = resolve));
+
+      server.use(
+        http.post(`${BASE}/repositories`, () => HttpResponse.json(stored)),
+        http.put(`${BASE}/repositories/:name`, () => {
+          if (savingBootstrap) {
+            stored = saved; // the bootstrap step changes title/target: spec change, generation bump
+          }
+          return HttpResponse.json(stored);
+        }),
+        http.get(`${BASE}/repositories`, async () => {
+          const snapshot = stored; // read at request time, like a server does
+          if (savingBootstrap) {
+            await listsReleased; // only the PUT response can reach the cache until released
+          }
+          return HttpResponse.json({
+            items: [snapshot],
+            metadata: { resourceVersion: snapshot.metadata?.resourceVersion },
+          });
+        })
+      );
+
+      const store = configureStore();
+      const { user } = render(
+        <StepStatusProvider>
+          <ProvisioningWizard type="github" />
+        </StepStatusProvider>,
+        { store }
+      );
+      await navigateToBootstrapStep(user);
+
+      savingBootstrap = true;
+      await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
+      expect(
+        await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      // The list refetch triggered by the save lands; the step must stay loading until a watch
+      // event reports the new generation as reconciled.
+      const selectRepositoryList = provisioningAPIv0alpha1.endpoints.listRepository.select({
+        fieldSelector: 'metadata.name=test-repo-abc123',
+        watch: true,
+      });
+      releaseLists();
+      await waitFor(() => expect(selectRepositoryList(store.getState()).isLoading).toBe(false));
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository({
+            metadata: { generation: 2, resourceVersion: '7' },
+            status: { observedGeneration: 2 },
+          }),
+        });
+      });
+      expect(await screen.findByRole('button', { name: /Begin synchronization/i })).toBeEnabled();
     });
   });
 
@@ -711,7 +806,7 @@ describe('ProvisioningWizard', () => {
       // GitHub Enterprise shares GitHub's auth flow: both PAT and GitHub App options
       expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
-      expect(screen.getByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with GitHub App/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Configure repository$/i })).toBeInTheDocument();
     });
 
@@ -719,6 +814,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="githubEnterprise" />);
 
       // Select PAT option (GitHub App is the default)
+      await screen.findByRole('radio', { name: /Connect with GitHub App/i });
       await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields: GHE uses the GitHub PAT placeholder and a GHE-specific URL placeholder
@@ -753,8 +849,21 @@ describe('ProvisioningWizard', () => {
       expect(screen.queryByRole('button', { name: /Synchronize with external storage/i })).not.toBeInTheDocument();
     });
 
+    it('should render choose auth type step initially for GitLab', async () => {
+      setup(<ProvisioningWizard type="gitlab" />);
+
+      expect(await screen.findByRole('heading', { name: /Connect/i })).toBeInTheDocument();
+      expect(await screen.findByRole('radio', { name: /Connect with OAuth App/i })).toBeChecked();
+      expect(screen.getByRole('radio', { name: /Connect with Personal Access Token/i })).toBeInTheDocument();
+      expect(screen.queryByRole('radio', { name: /Connect with GitHub App/i })).not.toBeInTheDocument();
+    });
+
     it('should render GitLab-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="gitlab" />);
+
+      // Select PAT option (OAuth App is the default)
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('Project Access Token *')).toBeInTheDocument();
@@ -771,6 +880,10 @@ describe('ProvisioningWizard', () => {
 
     it('should render Bitbucket-specific fields', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
+
+      // Select PAT option (OAuth App is the default)
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
 
       // Auth step fields
       expect(screen.getByText('API Token *')).toBeInTheDocument();
@@ -821,6 +934,8 @@ describe('ProvisioningWizard', () => {
     it('should accept tokenUser input for Bitbucket provider', async () => {
       const { user } = setup(<ProvisioningWizard type="bitbucket" />);
 
+      await screen.findByRole('radio', { name: /Connect with OAuth App/i });
+      await user.click(screen.getByLabelText(/Connect with Personal Access Token/i));
       await typeIntoTokenField(user, 'ATATTxxxxxxxxxxxxxxxx', 'test-token');
       await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
       await pasteIntoInput(

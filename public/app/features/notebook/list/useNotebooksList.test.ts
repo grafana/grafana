@@ -1,20 +1,14 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { act, getWrapper, renderHook, waitFor } from 'test/test-utils';
 
-import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
-import { defaultSpec as defaultNotebookSpec } from 'app/features/notebook/types';
 
 import { type ResultItem, type SearchResults, useSearchNotebooksInfiniteQuery } from './notebookSearchApi';
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
+import { NOTEBOOKS_PAGE_LIMIT, useNotebooksList } from './useNotebooksList';
 
 jest.mock('app/api/clients/iam/v0alpha1', () => ({
   useGetDisplayMappingQuery: jest.fn(),
-}));
-
-jest.mock('app/api/clients/dashboard/v2beta1', () => ({
-  useListNotebookQuery: jest.fn(),
 }));
 
 jest.mock('./notebookSearchApi', () => ({
@@ -22,7 +16,6 @@ jest.mock('./notebookSearchApi', () => ({
 }));
 
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
-const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
 
 const CREATED_MS = Date.UTC(2026, 0, 1);
@@ -130,52 +123,6 @@ function fullPage(): ResultItem[] {
   return Array.from({ length: NOTEBOOKS_PAGE_LIMIT }, (_, i) => makeHit({ name: `nb${i}`, title: `Notebook ${i}` }));
 }
 
-/** The route-missing failure that makes the hook fall back to LIST. */
-function setSearchRouteMissing(status = 404) {
-  setSearch([], { error: { status, data: { message: 'not found' }, config: { url: '' } } });
-}
-
-function makeNotebook(
-  overrides: {
-    name: string;
-    title: string;
-    tags?: string[];
-    createdBy?: string;
-    created?: string;
-    updated?: string;
-  } // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
-): Notebook {
-  return {
-    metadata: {
-      name: overrides.name,
-      creationTimestamp: overrides.created ?? '2026-01-01T00:00:00Z',
-      annotations: {
-        ...(overrides.createdBy ? { 'grafana.app/createdBy': overrides.createdBy } : {}),
-        ...(overrides.updated ? { 'grafana.app/updatedTimestamp': overrides.updated } : {}),
-      },
-    },
-    spec: {
-      ...defaultNotebookSpec(),
-      // The schema and generated-client element unions are nominally distinct; these fixtures
-      // have no elements, so state that rather than casting the spec across the seam.
-      elements: {},
-      title: overrides.title,
-      tags: overrides.tags ?? [],
-    },
-  };
-}
-
-function setList(items: Notebook[], extra: { isLoading?: boolean; error?: unknown; continueToken?: string } = {}) {
-  const data = { items, metadata: { continue: extra.continueToken } };
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
-  mockUseListNotebookQuery.mockReturnValue({
-    data,
-    currentData: data,
-    isLoading: extra.isLoading ?? false,
-    error: extra.error,
-  } as unknown as ReturnType<typeof useListNotebookQuery>);
-}
-
 function setupHook(enabled = true) {
   const wrapper = getWrapper({ renderWithRouter: false });
   return renderHook(() => useNotebooksList({ enabled }), { wrapper });
@@ -199,21 +146,17 @@ describe('useNotebooksList', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    // The availability latch is module state by design, so each case starts from "unknown".
-    __resetSearchAvailabilityForTests();
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the hook reads
     mockUseGetDisplayMappingQuery.mockReturnValue({ data: undefined } as unknown as ReturnType<
       typeof useGetDisplayMappingQuery
     >);
     setSearch([]);
-    setList([]);
   });
 
   describe('the request', () => {
     it('projects only the fields the table renders', () => {
       setupHook();
 
-      // The point of the migration: LIST cannot ask for less than the whole notebook.
       expect(lastSearchArg()).toMatchObject({
         fields: ['title', 'tags', 'createdBy', 'created', 'updated'],
         limit: NOTEBOOKS_PAGE_LIMIT,
@@ -328,7 +271,6 @@ describe('useNotebooksList', () => {
       setupHook(false);
 
       expect(mockUseSearchNotebooksQuery).toHaveBeenCalledWith(skipToken);
-      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
     });
   });
 
@@ -448,6 +390,102 @@ describe('useNotebooksList', () => {
     });
   });
 
+  describe('tag filtering', () => {
+    // `In` is set membership, so one leaf listing both tags would match a notebook carrying either.
+    // Selecting two tags has to narrow, which an `and` of one leaf each expresses.
+    it('sends a leaf per tag, so several tags narrow rather than widen', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setTagFilter(['latency', 'slo']);
+      });
+
+      await waitFor(() =>
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [
+              { filter: { field: 'tags', operator: 'In', values: ['latency'] } },
+              { filter: { field: 'tags', operator: 'In', values: ['slo'] } },
+            ],
+          },
+        })
+      );
+    });
+
+    it('combines tags with the search text', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setSearchQuery('checkout');
+        result.current.setTagFilter(['errors']);
+      });
+
+      await waitFor(() =>
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [{ text: { value: 'checkout' } }, { filter: { field: 'tags', operator: 'In', values: ['errors'] } }],
+          },
+        })
+      );
+    });
+
+    // The rows offer one tag at a time, so the caller adds rather than replaces.
+    it('adds one tag to the selection, leaving the others in place', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.setTagFilter(['latency']);
+      });
+      act(() => {
+        result.current.addTagFilter('slo');
+      });
+
+      await waitFor(() =>
+        expect(lastSearchArg()).toMatchObject({
+          where: {
+            and: [
+              { filter: { field: 'tags', operator: 'In', values: ['latency'] } },
+              { filter: { field: 'tags', operator: 'In', values: ['slo'] } },
+            ],
+          },
+        })
+      );
+      expect(result.current.tagFilter).toEqual(['latency', 'slo']);
+    });
+
+    // Clicking a tag that is already filtered on should do nothing, rather than list it twice and
+    // send the same leaf twice with it.
+    it('ignores a tag already in the selection', async () => {
+      const { result } = setupHook();
+
+      act(() => {
+        result.current.addTagFilter('latency');
+      });
+      await waitFor(() => expect(result.current.tagFilter).toEqual(['latency']));
+
+      act(() => {
+        result.current.addTagFilter('latency');
+      });
+
+      expect(result.current.tagFilter).toEqual(['latency']);
+      expect(lastSearchArg()).toMatchObject({
+        where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } },
+      });
+    });
+
+    it('counts as filtered, so an empty result reads as no matches rather than no notebooks', async () => {
+      const { result } = setupHook();
+
+      expect(result.current.isFiltered).toBe(false);
+
+      act(() => {
+        result.current.setTagFilter(['latency']);
+      });
+
+      await waitFor(() => expect(result.current.isFiltered).toBe(true));
+    });
+  });
+
   describe('filtering state', () => {
     it('rows are whatever the server returned, without re-filtering', async () => {
       // Server-side filtering is the whole point; narrowing again here would hide a request
@@ -494,7 +532,6 @@ describe('useNotebooksList', () => {
       const { result } = setupHook();
 
       expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1', 'nb2', 'nb3']);
-      expect(result.current.loadedCount).toBe(3);
       // The total comes from the first page, which counts the whole match set, not the page.
       expect(result.current.totalCount).toBe(3);
     });
@@ -531,16 +568,6 @@ describe('useNotebooksList', () => {
       setupHook();
 
       expect(mockFetchNextPage).not.toHaveBeenCalled();
-    });
-
-    it('does not walk on the fallback path, where LIST cannot page', async () => {
-      setSearchRouteMissing();
-      setList([makeNotebook({ name: 'nb1', title: 'From list' })], { continueToken: 'next-page' });
-
-      const { result } = setupHook();
-
-      await waitFor(() => expect(result.current.rows).toHaveLength(1));
-      expect(result.current.isLoadingMore).toBe(false);
     });
   });
 
@@ -675,176 +702,14 @@ describe('useNotebooksList', () => {
     });
   });
 
-  // The search route is mounted from an ini key that is off by default and is not reported in
-  // frontend settings, so the page has to survive its absence.
-  describe('when the search endpoint is not served', () => {
-    it('falls back to LIST on a 404', async () => {
-      setSearchRouteMissing();
-      setList([makeNotebook({ name: 'nb1', title: 'From list' })]);
-
-      const { result } = setupHook();
-
-      await waitFor(() => {
-        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
-      });
-      expect(mockUseListNotebookQuery).toHaveBeenLastCalledWith({ limit: NOTEBOOKS_PAGE_LIMIT });
-      // The fallback is not a failure the user should see.
-      expect(result.current.error).toBeUndefined();
-    });
-
-    it('falls back on a 405 as well', async () => {
-      setSearchRouteMissing(405);
-      setList([makeNotebook({ name: 'nb1', title: 'From list' })]);
-
-      const { result } = setupHook();
-
-      await waitFor(() => {
-        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
-      });
-    });
-
-    it('converts list timestamps to millis so the table gets one shape', async () => {
-      setSearchRouteMissing();
-      setList([
-        makeNotebook({
-          name: 'nb1',
-          title: 'From list',
-          created: '2026-01-01T00:00:00Z',
-          updated: '2026-02-01T00:00:00Z',
-        }),
-      ]);
-
-      const { result } = setupHook();
-
-      await waitFor(() => {
-        expect(result.current.rows[0]).toEqual(expect.objectContaining({ created: CREATED_MS, updated: UPDATED_MS }));
-      });
-    });
-
-    it('falls back to the creation timestamp when the notebook was never updated', async () => {
-      setSearchRouteMissing();
-      setList([makeNotebook({ name: 'nb1', title: 'Never touched', created: '2026-01-01T00:00:00Z' })]);
-
-      const { result } = setupHook();
-
-      await waitFor(() => {
-        expect(result.current.rows[0].updated).toBe(CREATED_MS);
-      });
-    });
-
-    it('filters client-side, since the server did none', async () => {
-      setSearchRouteMissing();
-      setList([
-        makeNotebook({ name: 'nb1', title: 'Checkout error spike' }),
-        makeNotebook({ name: 'nb2', title: 'Q2 latency regression' }),
-      ]);
-
-      const { result } = setupHook();
-
-      act(() => {
-        result.current.setSearchQuery('CHECKOUT');
-      });
-
-      await waitFor(() => {
-        expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
-      });
-    });
-
-    it('reports what it loaded rather than inventing a total LIST never gave', async () => {
-      setSearchRouteMissing();
-      setList([makeNotebook({ name: 'nb1', title: 'One' }), makeNotebook({ name: 'nb2', title: 'Two' })]);
-
-      const { result } = setupHook();
-
-      await waitFor(() => {
-        expect(result.current.loadedCount).toBe(2);
-      });
-      expect(result.current.totalCount).toBeUndefined();
-    });
-
-    // The opposite of the search path: LIST stops at its own byte limit before reaching the
-    // requested count, so here a short page with a cursor is real truncation.
-    it('treats a short LIST page with a continue token as truncated', async () => {
-      setSearchRouteMissing();
-      setList([makeNotebook({ name: 'nb1', title: 'One' })], { continueToken: 'next-page' });
-
-      const { result } = setupHook();
-
-      await waitFor(() => {
-        expect(result.current.isTruncated).toBe(true);
-      });
-    });
-
-    // Every page asks the same URL, so only a 404 with nothing loaded says the route is absent. One
-    // partway through the walk is transient — a pod restarting mid-deploy, a proxy answering for it
-    // — and abandoning search for the session on it would hide the failure behind stale-looking
-    // rows.
-    it('does not fall back when a 404 lands partway through the walk', async () => {
-      setSearchPages([searchPage([makeHit({ name: 'nb1', title: 'From search' })], { continueToken: 'next-page' })], {
-        error: { status: 404, data: { message: 'not found' }, config: { url: '' } },
-        errorAfterPages: true,
-      });
-      setList([makeNotebook({ name: 'nb-from-list', title: 'From list' })]);
-
-      const { result } = setupHook();
-
-      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
-      expect(result.current.error).toEqual(expect.objectContaining({ status: 404 }));
-      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
-    });
-
-    // Same class of bug as the mid-walk case, reached through a new cache key instead: `currentData`
-    // is empty on every filter change, so it cannot tell "the route never answered" from "it has
-    // not answered for these filters yet".
-    it('does not fall back when a 404 lands on a new filter after an earlier query answered', async () => {
-      setSearch([makeHit({ name: 'nb1', title: 'From search' })]);
-      setList([makeNotebook({ name: 'nb-from-list', title: 'From list' })]);
-
-      const { result } = setupHook();
-
-      // The route answered once, so it is served here.
-      expect(result.current.rows.map((row) => row.uid)).toEqual(['nb1']);
-
-      // A new filter is a new cache key, so nothing is held for it — and this one 404s.
-      setSearchRouteMissing();
-      act(() => {
-        result.current.setSearchQuery('checkout');
-      });
-
-      await waitFor(() => {
-        expect(result.current.error).toEqual(expect.objectContaining({ status: 404 }));
-      });
-      expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
-    });
-
-    it('stops asking for the search route once it is known to be missing', async () => {
-      setSearchRouteMissing();
-      setList([makeNotebook({ name: 'nb1', title: 'From list' })]);
-
-      const { result } = setupHook();
-
-      await waitFor(() => {
-        expect(result.current.rows).toHaveLength(1);
-      });
-
-      act(() => {
-        result.current.setSearchQuery('checkout');
-      });
-
-      // Every keystroke would otherwise be a new cache key and a fresh 404.
-      await waitFor(() => {
-        expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(skipToken);
-      });
-    });
-  });
-
-  it('surfaces a real error rather than falling back', () => {
+  // Nothing is swallowed: the rows come from one endpoint, so a failure there is the page's whole
+  // answer and has to reach the reader rather than read as an empty library.
+  it('surfaces a search failure as an error', () => {
     setSearch([], { error: { status: 500, data: { message: 'boom' }, config: { url: '' } } });
 
     const { result } = setupHook();
 
     expect(result.current.error).toEqual(expect.objectContaining({ status: 500 }));
-    expect(mockUseListNotebookQuery).toHaveBeenCalledWith(skipToken);
   });
 
   // The walk halts on a failure but leaves a next page on offer, so "still loading" would never
@@ -881,7 +746,6 @@ describe('useNotebooksList', () => {
       const { result } = setupHook();
 
       expect(result.current.totalCount).toBe(0);
-      expect(result.current.loadedCount).toBe(0);
     });
 
     it('says it is reloading, not loading, once something has been shown', async () => {

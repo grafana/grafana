@@ -875,6 +875,16 @@ describe('DataSourceWithBackend', () => {
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
 
+    test.each([true, false])('strips leading slashes from the path (new APIs: %s)', (enabled) => {
+      mockGetBooleanValue.mockReturnValue(enabled);
+      const { ds } = createMockDatasource();
+      const expectedUrl = enabled
+        ? '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+        : '/api/datasources/uid/abc/resources/api/v1/labels';
+      expect(ds.buildResourcesDatasourceUrl('/api/v1/labels')).toBe(expectedUrl);
+      expect(ds.buildResourcesDatasourceUrl('//api/v1/labels')).toBe(expectedUrl);
+    });
+
     test('prefers meta.id over type when meta is present', () => {
       mockGetBooleanValue.mockReturnValue(true);
       const { ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
@@ -901,6 +911,7 @@ describe('DataSourceWithBackend', () => {
     });
     afterEach(() => {
       config.featureToggles.queryServiceFromUI = oldQsUI;
+      mockGetBooleanValue.mockReset().mockReturnValue(false);
       mockGetObjectValue.mockReset().mockReturnValue({ types: ['prometheus'] });
       mockIsQueryServiceCompatible.mockReset().mockReturnValue(false);
     });
@@ -920,6 +931,63 @@ describe('DataSourceWithBackend', () => {
       type: 'loki',
       jsonData: {},
     } as DataSourceInstanceSettings;
+
+    it('uses query.grafana.app when the new-name flag is disabled', async () => {
+      mockIsQueryServiceCompatible.mockReturnValue(true);
+      mockGetBooleanValue.mockReturnValue(false);
+
+      const { ds, mock } = createMockDatasource();
+
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A' }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
+
+      expect(mock.calls[0][0].url).toBe('/apis/query.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy');
+      expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.querier.newName', false);
+    });
+
+    it('uses datasource.grafana.app when the new-name flag is enabled', async () => {
+      mockIsQueryServiceCompatible.mockReturnValue(true);
+      mockGetBooleanValue.mockReturnValue(true);
+
+      const { ds, mock } = createMockDatasource();
+
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A' }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
+
+      expect(mock.calls[0][0].url).toBe('/apis/datasource.grafana.app/v0alpha1/namespaces/default/query?ds_type=dummy');
+      expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.querier.newName', false);
+    });
+
+    it('uses the legacy endpoint when the datasource is not query-service compatible', async () => {
+      mockIsQueryServiceCompatible.mockReturnValue(false);
+      mockGetBooleanValue.mockReturnValue(true);
+
+      const { ds, mock } = createMockDatasource();
+
+      await firstValueFrom(
+        ds.query({
+          maxDataPoints: 10,
+          intervalMs: 5000,
+          targets: [{ refId: 'A' }],
+          range: getDefaultTimeRange(),
+        } as DataQueryRequest)
+      );
+
+      expect(mock.calls[0][0].url).toBe('/api/ds/query?ds_type=dummy');
+      expect(mockGetBooleanValue).not.toHaveBeenCalledWith('datasources.querier.newName', false);
+    });
 
     it.each([
       [

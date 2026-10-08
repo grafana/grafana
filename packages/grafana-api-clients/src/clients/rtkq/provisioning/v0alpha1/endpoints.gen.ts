@@ -1476,6 +1476,14 @@ export type BitbucketConnectionConfig = {
   /** The workspace the OAuth consumer belongs to */
   workspace: string;
 };
+export type GitOAuthConnectionConfig = {
+  /** The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`). */
+  authURL: string;
+  /** The OAuth scopes to request, granting git read and write access. */
+  scopes?: string[];
+  /** The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`). */
+  tokenURL: string;
+};
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
   appID: string;
@@ -1507,6 +1515,8 @@ export type ConnectionSpec = {
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
+  /** Generic git OAuth app connection configuration Only applicable when provider is "gitOAuth" */
+  gitOAuth?: GitOAuthConnectionConfig;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
@@ -1521,12 +1531,20 @@ export type ConnectionSpec = {
     
     Possible enum values:
      - `"bitbucketOAuth"`
+     - `"gitOAuth"`
      - `"github"`
      - `"githubEnterprise"`
      - `"githubEnterpriseOAuth"`
      - `"githubOAuth"`
      - `"gitlabOAuth"` */
-  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubEnterpriseOAuth' | 'githubOAuth' | 'gitlabOAuth';
+  type:
+    | 'bitbucketOAuth'
+    | 'gitOAuth'
+    | 'github'
+    | 'githubEnterprise'
+    | 'githubEnterpriseOAuth'
+    | 'githubOAuth'
+    | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -1680,7 +1698,7 @@ export type ConnectionAuthorizeRequest = {
   spec: ConnectionAuthorizeRequestSpec;
   status?: ConnectionAuthorizeRequestStatus;
 };
-export type ResourceRef = {
+export type ProvisioningResourceRef = {
   /** Group is the group of the resource, such as "dashboard.grafana.app". */
   group?: string;
   /** Kind is the type of resource, for example, "Dashboard". */
@@ -1694,7 +1712,7 @@ export type DeleteJobOptions = {
   /** Ref to the branch or commit hash to delete from */
   ref?: string;
   /** Resources to delete This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type FixFolderMetadataJobOptions = {
   /** Ref to the branch to create the commit on (uses repository's default branch if not specified) */
@@ -1708,7 +1726,7 @@ export type MigrateJobOptions = {
   /** Message to use when committing the changes in a single commit. Deprecated: set JobSpec.Message instead. This field is kept for backwards compatibility and is only used when JobSpec.Message is empty. */
   message?: string;
   /** Resources to migrate. When empty, every unmanaged resource in the namespace is migrated (legacy behavior). When non-empty, only the listed resources are exported to the repository — the folder hierarchy is still emitted so parent paths resolve, and the subsequent pull phase only takes ownership of those resources. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** SkipResourceDeletion keeps the migrated resources on the instance instead of removing them. By default a migration deletes the resources it moved (the whole namespace for an instance target, or the exported resources for a branch migration); when true, no deletion happens and the resources are left in place. */
   skipResourceDeletion?: boolean;
 };
@@ -1718,13 +1736,17 @@ export type MoveJobOptions = {
   /** Ref to the branch or commit hash that should move */
   ref?: string;
   /** Resources to move This option has been created because currently the frontend does not use standarized app platform APIs. For performance and API consistency reasons, the preferred option is it to use the paths. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
   /** Destination path for the move (e.g. "new-location/") */
   targetPath?: string;
 };
 export type PullRequestJobOptions = {
+  /** URL of the head repository for a pull request from a fork, when available. */
+  forkURL?: string;
   /** The specific commit hash that triggered this notice */
   hash?: string;
+  /** Whether the pull request's head repository differs from its base repository. Omitted when repository identities were unavailable, including older jobs. */
+  isFork?: boolean;
   /** Pull request number (when appropriate) */
   pr?: number;
   /** The branch of commit hash */
@@ -1748,7 +1770,7 @@ export type ExportJobOptions = {
   /** FIXME: we should validate this in admission hooks Prefix in target file system */
   path?: string;
   /** Resources to export. When empty, every unmanaged resource in the namespace is exported (legacy behavior). When non-empty, only the listed resources are exported — the folder hierarchy is still emitted so parent paths resolve. Currently only unmanaged Dashboards are supported. */
-  resources?: ResourceRef[];
+  resources?: ProvisioningResourceRef[];
 };
 export type Duration = string;
 export type TestJobOptions = {
@@ -2044,11 +2066,30 @@ export type RepositorySpec = {
   /** UI driven Workflow that allow changes to the contends of the repository. The order is relevant for defining the precedence of the workflows. When empty, the repository does not support any edits (eg, readonly) */
   workflows: ('branch' | 'write')[];
 };
+export type DeletionStatus = {
+  /** Cause classifies the blocking error. It may be absent on older statuses.
+    
+    Possible enum values:
+     - `"system"` indicates an infrastructure or unclassified failure.
+     - `"user"` indicates a failure that requires user intervention. */
+  cause?: 'system' | 'user';
+  /** Finalizer names the finalizer whose teardown is blocking deletion, i.e. which deletion step failed. A client force-removing deletion removes exactly this finalizer. */
+  finalizer?: string;
+  /** Message is a human-readable explanation of what went wrong, suitable for showing to users. */
+  message?: string;
+  /** State is the phase of the deletion.
+    
+    Possible enum values:
+     - `"Blocked"` indicates the latest finalizer pass failed and deletion did not complete. The controller keeps retrying, so a transient failure (a brief outage, an API conflict) may still clear on its own; a persistent one (credentials expired, a webhook that cannot be removed) needs the user to force-remove the blocking finalizer. Finalizer is the finalizer that failed on that pass. This is the only state the controller emits: status.deletion is written only when a pass fails. While finalizers are still running, status.deletion is absent, which (together with a set deletionTimestamp) is itself the "in progress" signal — so no separate Working state is needed. */
+  state?: 'Blocked';
+};
 export type QuotaStatus = {
   /** MaxRepositories is the maximum number of repositories allowed. 0 means unlimited. */
   maxRepositories?: number;
   /** MaxResourcesPerRepository is the maximum number of resources allowed per repository. 0 means unlimited. */
   maxResourcesPerRepository?: number;
+  /** UpdatedAt is when the controller last successfully refreshed these quota limits. It is expressed as Unix milliseconds. 0 means the quota limits have not been refreshed yet. */
+  updatedAt?: number;
 };
 export type ResourceCount = {
   count: number;
@@ -2062,6 +2103,8 @@ export type SyncStatus = {
   incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
+  /** When the controller last attempted a sync or an interval check (Unix milliseconds). */
+  lastChecked?: number;
   /** The repository ref when the last successful sync ran */
   lastRef?: string;
   /** Summary messages (will be shown to users) */
@@ -2091,8 +2134,10 @@ export type WebhookStatus = {
 export type RepositoryStatus = {
   /** Conditions represent the latest available observations of the repository's state. */
   conditions?: Condition[];
-  /** Error information during repository deletion (if any) */
+  /** Error information during repository deletion (if any). Deprecated: prefer the structured Deletion field. Retained for backwards compatibility with clients that read the concise string. */
   deleteError?: string;
+  /** Deletion reports the progress of an in-progress deletion and the problem blocking it, so a client can explain the holdup and force-remove the blocking finalizer. Populated only while the repository is Terminating. */
+  deletion?: DeletionStatus;
   /** FieldErrors are errors that occurred during validation of the repository spec. These errors are intended to help users identify and fix issues in the spec. */
   fieldErrors?: ErrorDetails[];
   /** This will get updated with the current health status (and updated periodically) */
@@ -2303,6 +2348,7 @@ export type RepositoryViewList = {
   /** AvailableConnectionTypes is the list of connection types supported in this instance */
   availableConnectionTypes?: (
     | 'bitbucketOAuth'
+    | 'gitOAuth'
     | 'github'
     | 'githubEnterprise'
     | 'githubEnterpriseOAuth'

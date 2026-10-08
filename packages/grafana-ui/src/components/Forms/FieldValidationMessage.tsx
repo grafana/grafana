@@ -61,7 +61,7 @@ const getFieldValidationMessageStyles = (theme: GrafanaTheme2) => {
     visualRefreshEnabled && {
       background: theme.colors.error.background,
       border: `1px solid ${theme.colors.error.border}`,
-      color: theme.colors.error.text,
+      color: theme.colors.error.contrastText,
 
       a: {
         color: theme.colors.error.text,

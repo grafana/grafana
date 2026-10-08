@@ -3,6 +3,7 @@ package migrations_test
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"testing"
 	"time"
@@ -10,10 +11,12 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/backoff"
+
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/db"
 	dashboard "github.com/grafana/grafana/pkg/registry/apis/dashboard"
@@ -378,12 +381,8 @@ func verifyRegisteredMigrations(t *testing.T, helper *apis.K8sTestHelper, onlyDe
 	expectedMigrationIDs := []string{createTableMigrationID}
 
 	allMigrationIDs := make(map[string]bool)
-	for id, enabled := range migrationIDsToDefault {
-		allMigrationIDs[id] = enabled
-	}
-	for id, enabled := range extraMigrationIDs {
-		allMigrationIDs[id] = enabled
-	}
+	maps.Copy(allMigrationIDs, migrationIDsToDefault)
+	maps.Copy(allMigrationIDs, extraMigrationIDs)
 
 	for id, enabled := range allMigrationIDs {
 		if onlyDefault && !enabled {
@@ -587,6 +586,45 @@ func TestUnifiedMigration_Migrate_CancelsStreamContext(t *testing.T) {
 			require.Error(t, capturedCtx.Err(), "stream context should be canceled after Migrate returns an error")
 		})
 	}
+}
+
+func TestUnifiedMigration_Migrate_UsesRegisteredResources(t *testing.T) {
+	resources := []schema.GroupResource{
+		{Group: "first.grafana.app", Resource: "firsts"},
+		{Group: "second.grafana.app", Resource: "seconds"},
+	}
+	registry := migrations.NewMigrationRegistry()
+	migrated := make([]schema.GroupResource, 0, len(resources))
+	migrators := make(map[schema.GroupResource]migrations.MigratorFunc)
+	for _, gr := range resources {
+		migrators[gr] = func(ctx context.Context, orgID int64, opts migrations.MigrateOptions, stream resourcepb.BulkStore_BulkProcessClient) error {
+			require.Equal(t, resources, opts.Resources)
+			migrated = append(migrated, gr)
+			return nil
+		}
+	}
+	registry.Register(migrations.MigrationDefinition{ID: "test-migration", Migrators: migrators})
+
+	client := resource.NewMockResourceClient(t)
+	client.EXPECT().BulkProcess(mock.Anything).Run(func(ctx context.Context, _ ...grpc.CallOption) {
+		md, ok := metadata.FromOutgoingContext(ctx)
+		require.True(t, ok)
+		settings, err := resource.NewBulkSettings(md)
+		require.NoError(t, err)
+		require.True(t, settings.SkipValidation)
+		require.Equal(t, []*resourcepb.ResourceKey{
+			{Namespace: "default", Group: resources[0].Group, Resource: resources[0].Resource},
+			{Namespace: "default", Group: resources[1].Group, Resource: resources[1].Resource},
+		}, settings.Collection)
+	}).Return(&noopBulkProcessClient{}, nil)
+
+	response, err := migrations.ProvideUnifiedMigrator(client, registry).Migrate(t.Context(), migrations.MigrateOptions{
+		Namespace: "default",
+		Resources: resources,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, response)
+	require.Equal(t, resources, migrated)
 }
 
 // noopBulkProcessClient is a minimal BulkStore_BulkProcessClient for testing.
@@ -810,7 +848,7 @@ func TestUnifiedMigration_RebuildIndexes_ContextDeadlineExceeded(t *testing.T) {
 }
 
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
-	migrationFinishedAt := time.Now()
+	migrationFinishedAt := time.Unix(1_700_000_000, 500_000_000)
 
 	tests := []struct {
 		name         string
@@ -840,7 +878,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 					{
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
-						BuildTimeUnix: migrationFinishedAt.Unix(),
+						BuildTimeUnix: migrationFinishedAt.Add(time.Second).Unix(),
 					},
 				},
 			},
@@ -871,7 +909,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 			numRetries:   5, // MaxRetries: 5 means 5 total attempts
 		},
 		{
-			name: "build time exactly at migration time succeeds",
+			name: "build time in same second as migration finish succeeds",
 			response: &resourcepb.RebuildIndexesResponse{
 				ContactedAllInstances: true,
 				BuildTimes: []*resourcepb.RebuildIndexesResponse_IndexBuildTime{
@@ -886,7 +924,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 				{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			},
 			expectErr:  false,
-			numRetries: 1, // Only initial attempt, no retries needed
+			numRetries: 1,
 		},
 		{
 			name: "build time after migration time succeeds",
@@ -937,7 +975,7 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 					{
 						Group:         "dashboard.grafana.app",
 						Resource:      "dashboards",
-						BuildTimeUnix: migrationFinishedAt.Unix(),
+						BuildTimeUnix: migrationFinishedAt.Add(time.Second).Unix(),
 					},
 					{
 						Group:         "dashboard.grafana.app",
@@ -1005,11 +1043,11 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor(t *testing.T) {
 }
 
 func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testing.T) {
-	// Test that retries work with distributor - first call has stale build time, second succeeds
-	migrationFinishedAt := time.Now()
+	// A build from the previous second is stale, but a rebuild in the migration finish second is valid.
+	migrationFinishedAt := time.Unix(1_700_000_000, 500_000_000)
 	mockClient := resource.NewMockResourceClient(t)
 
-	// First call returns stale build time (before migration)
+	// First call returns a build time from before migration finished.
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(&resourcepb.RebuildIndexesResponse{
@@ -1018,13 +1056,13 @@ func TestUnifiedMigration_RebuildIndexes_UsingDistributor_RetrySuccess(t *testin
 				{
 					Group:         "dashboard.grafana.app",
 					Resource:      "dashboards",
-					BuildTimeUnix: migrationFinishedAt.Add(-1 * time.Second).Unix(),
+					BuildTimeUnix: migrationFinishedAt.Add(-time.Second).Unix(),
 				},
 			},
 		}, nil).
 		Once()
 
-	// Second call succeeds with fresh build time
+	// Second call succeeds with a build time in the same second as migration finish.
 	mockClient.EXPECT().
 		RebuildIndexes(mock.Anything, mock.Anything).
 		Return(&resourcepb.RebuildIndexesResponse{

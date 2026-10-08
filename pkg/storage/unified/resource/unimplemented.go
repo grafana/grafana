@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -45,6 +47,10 @@ func (UnimplementedStorageBackend) ReadResource(_ context.Context, req *resource
 	}
 }
 
+func (UnimplementedStorageBackend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error) {
+	return nil, ErrBatchReadUnsupported
+}
+
 func (UnimplementedStorageBackend) ListIterator(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error) {
 	return 0, errUnimplemented
 }
@@ -66,6 +72,10 @@ func (UnimplementedStorageBackend) WatchWriteEvents(context.Context) (<-chan *Wr
 	return make(chan *WrittenEvent), nil
 }
 
+func (UnimplementedStorageBackend) WatchWrittenKeys(context.Context, []schema.GroupResource, func(string)) (<-chan *resourcepb.ResourceKey, error) {
+	return nil, ErrWrittenKeysUnsupported
+}
+
 func (UnimplementedStorageBackend) GetResourceStats(context.Context, NamespacedResource, int) ([]ResourceStats, error) {
 	return nil, errUnimplemented
 }
@@ -78,8 +88,10 @@ func (UnimplementedStorageBackend) ListStoredResources(context.Context, Namespac
 	return nil, errUnimplemented
 }
 
-func (UnimplementedStorageBackend) GetResourceLastImportTimes(context.Context) iter.Seq2[ResourceLastImportTime, error] {
-	return func(yield func(ResourceLastImportTime, error) bool) {
-		yield(ResourceLastImportTime{}, errUnimplemented)
-	}
+func (UnimplementedStorageBackend) GetResourceLastImportTime(context.Context, NamespacedResource) (time.Time, error) {
+	return time.Time{}, errUnimplemented
+}
+
+func (UnimplementedStorageBackend) ListResourceLastImportTimes(context.Context) (map[NamespacedResource]time.Time, error) {
+	return nil, errUnimplemented
 }

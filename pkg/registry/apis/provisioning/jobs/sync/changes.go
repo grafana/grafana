@@ -37,6 +37,10 @@ type ResourceFileChange struct {
 	// (e.g. ReasonFolderMetadataUpdated, ReasonFolderMetadataDeleted).
 	Reason string
 
+	// Warning is attached to the change by Compare and reported with its result by
+	// applyChange; it does not change what is applied.
+	Warning error
+
 	// OrphanCleanup marks deletions emitted to clean up duplicate-path orphans.
 	// DetectRenames must skip these so orphan removal is not consumed as a rename.
 	// Folder orphans are deleted late, after any children have been re-parented.
@@ -84,6 +88,7 @@ func Compare(
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("calculate changes: %w", err)
 	}
+	changes = attachUnsupportedPaths(changes)
 
 	var invalidFolderMetadata []*resources.InvalidFolderMetadata
 	if folderMetadataEnabled {
@@ -198,7 +203,8 @@ func Changes(
 			continue
 		}
 
-		if resources.IsPathSupported(file.Path) == nil {
+		pathErr := resources.IsPathSupported(file.Path)
+		if pathErr == nil {
 			// The folder metadata file is not a resource itself.
 			// For new folders the parent directory creation handles it;
 			// for existing folders we compare hashes to detect metadata changes.
@@ -277,6 +283,18 @@ func Changes(
 		safeSegment := safepath.SafeSegment(file.Path)
 		if !safepath.IsDir(safeSegment) {
 			safeSegment = safepath.Dir(safeSegment)
+		}
+
+		// A resource file whose path cannot be synced is kept as a change, so that
+		// applyChange decides what to do with it and the total stays accurate.
+		// Other files (README.md, .keep, hidden files) are not resources.
+		if !safepath.IsHidden(file.Path) && resources.HasResourceExtension(file.Path) {
+			changes = append(changes, ResourceFileChange{
+				Action:  repository.FileActionIgnored,
+				Path:    file.Path,
+				Hash:    file.Hash,
+				Warning: &resources.UnsupportedPathError{Path: file.Path, Err: pathErr},
+			})
 		}
 
 		if safeSegment != "" && resources.IsPathSupported(safeSegment) == nil {
@@ -425,8 +443,7 @@ func processInvalidFolderMetadataChanges(
 			continue
 		}
 
-		var invalidErr *resources.InvalidFolderMetadata
-		if errors.As(err, &invalidErr) {
+		if invalidErr, ok := errors.AsType[*resources.InvalidFolderMetadata](err); ok {
 			logging.FromContext(ctx).Info("invalid folder metadata", "path", change.Path, "action", change.Action, "error", err)
 			invalidErr = invalidErr.WithAction(change.Action)
 			invalidFolderMetadata = append(invalidFolderMetadata, invalidErr)
@@ -585,6 +602,59 @@ func detectFolderUIDChanges(
 		}
 	}
 	return affectedFolders, nil
+}
+
+// attachUnsupportedPaths handles a file whose path cannot be synced. When the same
+// content was deleted from another path, the file was renamed onto the unsupported
+// path: the resource goes with its old file, so the deletion carries the warning and
+// the change for the unsupported file is dropped. Any other such file stays an
+// ignored change that carries its warning, including when a valid file has the same
+// content: that one is the rename target, and DetectRenames pairs it with the deletion.
+func attachUnsupportedPaths(changes []ResourceFileChange) []ResourceFileChange {
+	deletionsByHash := make(map[string]int)
+	ambiguous := make(map[string]bool)
+	for i, change := range changes {
+		if change.Action != repository.FileActionDeleted || change.Existing == nil || change.OrphanCleanup {
+			continue
+		}
+		if safepath.IsDir(change.Path) || change.Existing.Hash == "" {
+			continue
+		}
+		if _, exists := deletionsByHash[change.Existing.Hash]; exists {
+			ambiguous[change.Existing.Hash] = true
+		}
+		deletionsByHash[change.Existing.Hash] = i
+	}
+	for h := range ambiguous {
+		delete(deletionsByHash, h)
+	}
+	for _, change := range changes {
+		if change.Action == repository.FileActionCreated && !safepath.IsDir(change.Path) {
+			delete(deletionsByHash, change.Hash)
+		}
+	}
+
+	dropped := make(map[int]bool)
+	for i, change := range changes {
+		if change.Action == repository.FileActionIgnored && change.Warning != nil && change.Hash != "" {
+			if j, ok := deletionsByHash[change.Hash]; ok {
+				changes[j].Warning = change.Warning
+				delete(deletionsByHash, change.Hash)
+				dropped[i] = true
+			}
+		}
+	}
+	if len(dropped) == 0 {
+		return changes
+	}
+
+	result := make([]ResourceFileChange, 0, len(changes)-len(dropped))
+	for i, change := range changes {
+		if !dropped[i] {
+			result = append(result, change)
+		}
+	}
+	return result
 }
 
 // DetectRenames finds delete+create pairs whose content hash matches and

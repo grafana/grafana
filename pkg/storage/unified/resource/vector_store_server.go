@@ -27,6 +27,10 @@ const maxWriteBatch = 500
 // maxMetadataBytes mirrors the proto contract (metadata ≤ 4 KiB JSON).
 const maxMetadataBytes = 4096
 
+// maxContentBytes keeps content's tsvector under Postgres's 1 MiB limit
+// (the write path stores one per external row).
+const maxContentBytes = 128 * 1024
+
 // maxFilterValues caps total $in/$nin values in a filter. Each value expands
 // to a few SQL parameters, so this keeps a filter well under Postgres's 65535
 // parameter limit instead of failing as Internal at execution.
@@ -77,6 +81,10 @@ func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, ex
 			services[s] = struct{}{}
 		}
 	}
+	// Recording sites should not have to check for nil.
+	if metrics == nil {
+		metrics = ProvideVectorMetrics(nil)
+	}
 	return &VectorStoreServer{
 		store:           store,
 		embedder:        emb,
@@ -90,9 +98,6 @@ func NewVectorStoreServer(store vector.VectorBackend, emb *embedder.Embedder, ex
 // observe records one RPC observation. Wrap in defer at the top of each
 // handler: defer s.observe("upsert", time.Now(), &retErr).
 func (s *VectorStoreServer) observe(rpc string, start time.Time, errp *error) {
-	if s.metrics == nil {
-		return
-	}
 	code := codes.OK
 	if errp != nil && *errp != nil {
 		code = status.Code(*errp)
@@ -102,7 +107,7 @@ func (s *VectorStoreServer) observe(rpc string, start time.Time, errp *error) {
 
 // countRows adds written/deleted rows for one collection.
 func (s *VectorStoreServer) countRows(rpc, group, resource string, n int64) {
-	if s.metrics == nil || n == 0 {
+	if n == 0 {
 		return
 	}
 	s.metrics.WriteRowsTotal.WithLabelValues(rpc, group, resource).Add(float64(n))
@@ -226,10 +231,14 @@ func validateInputs(inputs []*resourcepb.EmbeddingInput, requireUID string) erro
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid exceeds %d chars", i, maxKeyFieldLen)
 		case utf8.RuneCountInString(in.Subresource) > maxKeyFieldLen:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: subresource exceeds %d chars", i, maxKeyFieldLen)
+		case utf8.RuneCountInString(in.Folder) > maxKeyFieldLen:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: folder exceeds %d chars", i, maxKeyFieldLen)
 		case requireUID != "" && in.Uid != "" && in.Uid != requireUID:
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: uid %q does not match request uid %q", i, in.Uid, requireUID)
 		case in.Content == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: content is required", i)
+		case len(in.Content) > maxContentBytes:
+			return status.Errorf(codes.InvalidArgument, "inputs[%d]: content exceeds %d bytes", i, maxContentBytes)
 		case in.Title == "":
 			return status.Errorf(codes.InvalidArgument, "inputs[%d]: title is required", i)
 		case len(in.Metadata) > maxMetadataBytes:
@@ -274,6 +283,7 @@ func (s *VectorStoreServer) embedInputs(ctx context.Context, namespace string, c
 			UID:         rowUID,
 			Title:       in.Title,
 			Subresource: in.Subresource,
+			Folder:      in.Folder,
 			Content:     in.Content,
 			Metadata:    in.Metadata,
 			Embedding:   out.Embeddings[i].Dense,
@@ -363,11 +373,12 @@ func (s *VectorStoreServer) UpsertSubresources(ctx context.Context, req *resourc
 				resp.Updated++
 				toEmbed = append(toEmbed, in)
 			default:
-				// Content unchanged: title/metadata still refresh so sync
-				// markers stay current without re-embed cost.
+				// Content unchanged: title/folder/metadata still refresh so
+				// sync markers (and folder moves) land without re-embed cost.
 				metadataOnly = append(metadataOnly, vector.VectorMeta{
 					Subresource: in.Subresource,
 					Title:       in.Title,
+					Folder:      in.Folder,
 					Metadata:    in.Metadata,
 				})
 			}

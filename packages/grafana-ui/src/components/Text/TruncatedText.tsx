@@ -5,10 +5,9 @@ import { Tooltip } from '../Tooltip/Tooltip';
 
 interface TruncatedTextProps {
   childElement: (ref: React.ForwardedRef<HTMLElement> | undefined) => React.ReactElement;
-  children: NonNullable<React.ReactNode>;
 }
 
-export const TruncatedText = React.forwardRef<HTMLElement, TruncatedTextProps>(({ childElement, children }, ref) => {
+export const TruncatedText = React.forwardRef<HTMLElement, TruncatedTextProps>(({ childElement }, ref) => {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const internalRef = useRef<HTMLElement>(null);
 

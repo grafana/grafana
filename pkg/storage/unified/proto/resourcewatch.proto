@@ -58,4 +58,14 @@ message WatchNotification {
   // unknown (e.g. a create).
   // +optional
   int64 previous_resource_version = 8;
+
+  // Type of the revision identified by previous_resource_version. UNKNOWN means
+  // previous metadata is unavailable, including notifications from older publishers.
+  // +optional
+  Type previous_type = 9;
+
+  // Folder of that previous revision, which can differ from folder after a move.
+  // An empty folder is valid when previous_type is known.
+  // +optional
+  string previous_folder = 10;
 }

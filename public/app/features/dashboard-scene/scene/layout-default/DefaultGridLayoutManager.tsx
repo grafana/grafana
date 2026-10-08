@@ -11,7 +11,6 @@ import {
   SceneGridRow,
   VizPanel,
   sceneGraph,
-  sceneUtils,
   type SceneComponentProps,
   type SceneGridItemLike,
   useSceneObjectState,
@@ -38,18 +37,16 @@ import { dashboardSceneGraph, type PanelIdGenerator } from '../../utils/dashboar
 import { getTestIdForLayout } from '../../utils/test-utils';
 import {
   forceRenderChildren,
-  getPanelIdForVizPanel,
   NEW_PANEL_HEIGHT,
   NEW_PANEL_WIDTH,
-  getVizPanelKeyForPanelId,
-  getGridItemKeyForPanelId,
   useDashboard,
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { getGridItemKeyForPanelId, getPanelIdForVizPanel, getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
-import { buildGroupEdit, canGroupSelection } from '../layouts-shared/groupLayout';
+import { canGroupSelection } from '../layouts-shared/groupLayout';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { dashboardCanvasAddButtonHoverStyles } from '../layouts-shared/styles';
 import { type DashboardLayoutGrid } from '../types/DashboardLayoutGrid';
@@ -167,6 +164,7 @@ export class DefaultGridLayoutManager
       });
 
       addElement({
+        meta: { actionId: 'panel.add', scope: 'custom-grid' },
         addedObject: vizPanel,
         source: this,
         perform: () => {
@@ -208,6 +206,7 @@ export class DefaultGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       edit({
+        meta: { actionId: 'panel.paste', scope: 'custom-grid' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
         source: this,
@@ -257,88 +256,11 @@ export class DefaultGridLayoutManager
     }
 
     removeElement({
+      meta: { actionId: 'panel.remove', scope: 'custom-grid' },
       removedObject: gridItem.state.body,
       source: this,
       perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
       undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
-    });
-  }
-
-  public duplicatePanel(vizPanel: VizPanel) {
-    const gridItem = vizPanel.parent;
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
-      return;
-    }
-
-    let panelState;
-    let panelData;
-    let newGridItem;
-
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-    const grid = this.state.grid;
-
-    if (gridItem instanceof DashboardGridItem) {
-      panelState = sceneUtils.cloneSceneObjectState(gridItem.state.body.state);
-      panelData = sceneGraph.getData(gridItem.state.body).clone();
-    } else {
-      panelState = sceneUtils.cloneSceneObjectState(vizPanel.state);
-      panelData = sceneGraph.getData(vizPanel).clone();
-    }
-
-    // when we duplicate a panel we don't want to clone the alert state
-    delete panelData.state.data?.alertState;
-
-    const newPanel = new VizPanel({
-      ...panelState,
-      $data: panelData,
-      key: getVizPanelKeyForPanelId(newPanelId),
-    });
-
-    newGridItem = new DashboardGridItem({
-      x: gridItem.state.x,
-      y: gridItem.state.y,
-      height: gridItem.state.height,
-      itemHeight: gridItem.state.height,
-      width: gridItem.state.width,
-      variableName: gridItem.state.variableName,
-      repeatDirection: gridItem.state.repeatDirection,
-      maxPerRow: gridItem.state.maxPerRow,
-      key: getGridItemKeyForPanelId(newPanelId),
-      body: newPanel,
-    });
-
-    // No undo/redo support in legacy edit mode
-    if (!config.featureToggles.dashboardNewLayouts) {
-      if (gridItem.parent instanceof SceneGridRow) {
-        const row = gridItem.parent;
-
-        row.setState({ children: [...row.state.children, newGridItem] });
-        grid.forceRender();
-        return;
-      }
-
-      grid.setState({ children: [...grid.state.children, newGridItem] });
-      this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
-      return;
-    }
-
-    const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
-    edit({
-      description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
-      addedObject: newGridItem.state.body,
-      source: this,
-      perform: () => {
-        const oldGridItemIndex = parent.state.children.indexOf(gridItem);
-        const newChildrenArray = [...parent.state.children];
-        newChildrenArray.splice(oldGridItemIndex + 1, 0, newGridItem);
-        parent.setState({ children: newChildrenArray });
-      },
-      undo: () => {
-        parent.setState({
-          children: parent.state.children.filter((child) => child !== newGridItem),
-        });
-      },
     });
   }
 
@@ -494,16 +416,6 @@ export class DefaultGridLayoutManager
 
   public canGroupSelectionInto(items: SceneObject[], target: GroupTarget): GroupingResult {
     return canGroupSelection(items, target);
-  }
-
-  public groupSelectionInto(items: SceneObject[], target: GroupTarget): void {
-    const groupEdit = buildGroupEdit(items, target);
-
-    if (!groupEdit) {
-      return;
-    }
-
-    edit({ ...groupEdit, source: getDashboardSceneFor(this) });
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
@@ -723,6 +635,10 @@ SceneGridRow.Component = SceneGridRowRenderer;
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext?.renderRow) {
+    return soloPanelContext.renderRow(model, <OriginalSceneGridRowRenderer model={model} />);
+  }
 
   if (soloPanelContext) {
     return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);

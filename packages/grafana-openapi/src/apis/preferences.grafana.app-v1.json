@@ -652,12 +652,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/Preferences"
-                }
-              ]
+              "$ref": "#/components/schemas/Preferences"
             }
           },
           "kind": {
@@ -693,8 +688,7 @@
           "bookmarkUrls": {
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             }
           }
         }
@@ -712,7 +706,7 @@
         "type": "object",
         "properties": {
           "homeDashboardUID": {
-            "description": "UID for the home dashboard",
+            "description": "UID for the home dashboard. The reserved value \"global-home\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences.",
             "type": "string"
           },
           "homeURL": {

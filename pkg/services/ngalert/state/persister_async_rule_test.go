@@ -23,8 +23,7 @@ func TestAsyncRuleStatePersister_Async(t *testing.T) {
 			InstanceStore: store,
 		})
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		cache := newCache()
 

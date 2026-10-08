@@ -23,7 +23,7 @@ func applyPreferredAPIVersions(logger log.Logger, cfg *setting.Cfg, scheme *runt
 		return nil
 	}
 
-	for _, part := range strings.Split(raw, ",") {
+	for part := range strings.SplitSeq(raw, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue
@@ -83,13 +83,7 @@ func ApplyPreferredForGroup(logger log.Logger, scheme *runtime.Scheme, apiResour
 		return nil
 	}
 
-	found := false
-	for _, gv := range pvs {
-		if gv == preferred {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(pvs, preferred)
 	if !found {
 		logger.Info("preferred_api_version: version not registered for group, skipping",
 			"group", group, "version", preferred.Version)
@@ -132,7 +126,7 @@ func ReorderGroupVersionsForLegacyCodec(logger log.Logger, cfg *setting.Cfg, sch
 	}
 
 	out := slices.Clone(groupVersions)
-	for _, part := range strings.Split(raw, ",") {
+	for part := range strings.SplitSeq(raw, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			continue

@@ -1,20 +1,20 @@
 import { css } from '@emotion/css';
 import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
-import { memo, useRef, useState } from 'react';
+import { memo, useRef } from 'react';
 
-import { type Field, type GrafanaTheme2, type SelectableValue } from '@grafana/data';
+import { type Field, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Icon } from '../../../Icon/Icon';
 import { Popover } from '../../../Tooltip/Popover';
-import { FilterOperator, type FilterType, type TableRow } from '../types';
+import { type FilterType, type TableRow } from '../types';
 import { getDisplayName } from '../utils';
 
 import { FilterPopup } from './FilterPopup';
-import { operatorSelectableValues } from './utils';
+import { useFilterPopupState } from './useFilterPopupState';
 
 interface Props {
   name: string;
@@ -31,34 +31,18 @@ interface Props {
 }
 
 export const Filter = memo(
-  ({
-    name,
-    rows,
-    filter,
-    setFilter,
-    field,
-    iconClassName,
-    parentIndex,
-    crossFilterRows,
-    crossFilterTailRows,
-  }: Props) => {
-    const filterKey = typeof parentIndex === 'number' ? `${name}-${parentIndex}` : name;
-    const filterValue = filter[filterKey]?.filtered;
-
+  ({ name, filter, setFilter, field, iconClassName, parentIndex, crossFilterRows, crossFilterTailRows }: Props) => {
     const ref = useRef<HTMLButtonElement>(null);
-    const [isPopoverVisible, setPopoverVisible] = useState<boolean>(false);
     const styles = useStyles2(getStyles);
-    const filterEnabled = Boolean(filterValue);
-    const [searchFilter, setSearchFilter] = useState(filter[filterKey]?.searchFilter || '');
-    const [operator, setOperator] = useState<SelectableValue<FilterOperator>>(
-      filter[filterKey]?.operator ?? operatorSelectableValues()[FilterOperator.CONTAINS]
-    );
-
-    // Show options scoped to the current cross-filter state:
-    // - Active filter: rows available before that filter was applied (keeps its own options visible).
-    // - New filter: rows surviving all active filters (the tail).
-    // - No active filters at all: fall back to raw rows.
-    const rowsForPopup = filterKey in crossFilterRows ? crossFilterRows[filterKey] : crossFilterTailRows;
+    const { isPopoverVisible, setPopoverVisible, filterEnabled, popupProps } = useFilterPopupState({
+      name,
+      filter,
+      setFilter,
+      field,
+      parentIndex,
+      crossFilterRows,
+      crossFilterTailRows,
+    });
 
     return (
       <button
@@ -90,22 +74,7 @@ export const Filter = memo(
         <Icon name="filter" className={clsx(iconClassName, filterEnabled ? styles.filterIconEnabled : '')} />
         {isPopoverVisible && ref.current && (
           <Popover
-            content={
-              <FilterPopup
-                name={name}
-                rows={rowsForPopup}
-                filterValue={filterValue}
-                setFilter={setFilter}
-                field={field}
-                onClose={() => setPopoverVisible(false)}
-                searchFilter={searchFilter}
-                setSearchFilter={setSearchFilter}
-                operator={operator}
-                setOperator={setOperator}
-                buttonElement={ref.current}
-                parentIndex={parentIndex}
-              />
-            }
+            content={<FilterPopup {...popupProps} buttonElement={ref.current} />}
             placement="bottom-start"
             referenceElement={ref.current}
             show

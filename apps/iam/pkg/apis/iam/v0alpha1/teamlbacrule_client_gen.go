@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana-app-sdk/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type TeamLBACRuleClient struct {
@@ -76,6 +77,24 @@ func (c *TeamLBACRuleClient) Update(ctx context.Context, obj *TeamLBACRule, opts
 
 func (c *TeamLBACRuleClient) Patch(ctx context.Context, identifier resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions) (*TeamLBACRule, error) {
 	return c.client.Patch(ctx, identifier, req, opts)
+}
+
+func (c *TeamLBACRuleClient) UpdateStatus(ctx context.Context, identifier resource.Identifier, newStatus TeamLBACRuleStatus, opts resource.UpdateOptions) (*TeamLBACRule, error) {
+	return c.client.Update(ctx, &TeamLBACRule{
+		TypeMeta: metav1.TypeMeta{
+			Kind:       TeamLBACRuleKind().Kind(),
+			APIVersion: GroupVersion.Identifier(),
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			ResourceVersion: opts.ResourceVersion,
+			Namespace:       identifier.Namespace,
+			Name:            identifier.Name,
+		},
+		Status: newStatus,
+	}, resource.UpdateOptions{
+		Subresource:     "status",
+		ResourceVersion: opts.ResourceVersion,
+	})
 }
 
 func (c *TeamLBACRuleClient) Delete(ctx context.Context, identifier resource.Identifier, opts resource.DeleteOptions) error {

@@ -30,6 +30,12 @@ For basic configuration provisioning refer to [Provision Grafana](https://grafan
 
 {{< /admonition >}}
 
+## Authentication settings stored in the database take precedence
+
+Grafana stores SAML, OAuth, and LDAP settings in its database when you configure them through the [SSO Settings API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/sso-settings/), the SAML or OAuth UI, Terraform, or [settings updates at runtime](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/). Stored values override this file, and nothing in the UI or the file says so, which most often surprises people during credential rotation.
+
+If a change to this file appears to have no effect, refer to [Check for stored settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+
 ## Configuration file location
 
 The default settings for a Grafana instance are stored in the `<WORKING DIRECTORY>/conf/defaults.ini` file.
@@ -215,6 +221,14 @@ Override log path using the command line argument `cfg:default.paths.logs`:
 Directory where Grafana automatically scans and looks for plugins. For information about manually or automatically installing plugins, refer to [Install Grafana plugins](../../administration/plugin-management/#install-grafana-plugins).
 
 **macOS:** By default, the Mac plugin location is: `/usr/local/var/lib/grafana/plugins`.
+
+#### `bundled_plugins`
+
+Directory where Grafana looks for the plugins that ship with the Grafana distribution, such as the Prometheus and PostgreSQL data sources. Defaults to `data/plugins-bundled`, relative to the Grafana home path.
+
+The Debian and RPM packages install these plugins under `/var/lib/grafana/plugins-bundled` so that Grafana can update them, and the `grafana-server` systemd unit passes a matching `cfg:default.paths.bundled_plugins` argument. If you override this option, or you edit the systemd unit, keep the two values in step. When they disagree, Grafana finds no bundled plugins and the data sources they provide stop working.
+
+Grafana downloads any missing bundled plugin from `grafana.com` on startup, so a mismatch is easy to miss on a host with internet access. On an air-gapped host, this directory decides whether the bundled data sources work at all. For information about installing plugins yourself, refer to [Install Grafana plugins](../../administration/plugin-management/#install-grafana-plugins).
 
 #### `provisioning`
 
@@ -779,6 +793,12 @@ When `false`, the HTTP header `X-Frame-Options: deny` is set in Grafana HTTP res
 The main goal is to mitigate the risk of [Clickjacking](https://owasp.org/www-community/attacks/Clickjacking).
 Default is `false`.
 
+#### `asset_sri_checks_enabled`
+
+Set to `true` to enable [Subresource Integrity (SRI)](https://developer.mozilla.org/en-US/docs/Web/Security/Subresource_Integrity) checks on Grafana's own JavaScript assets. This helps protect against tampered or poisoned JavaScript assets being served to your users. Default is `false`.
+
+Don't enable this setting if a reverse proxy, CDN, or other network intermediary rewrites the contents of JavaScript responses, because doing so causes the integrity checks to fail and Grafana to stop loading.
+
 #### `strict_transport_security`
 
 Set to `true` if you want to enable HTTP `Strict-Transport-Security` (HSTS) response header. Only use this when HTTPS is enabled in your configuration, or when there is another upstream system that ensures your application does HTTPS (like a frontend load balancer). HSTS tells browsers that the site should only be accessed using HTTPS.
@@ -801,6 +821,10 @@ Set to `true` to enable the HSTS includeSubDomains option. Only applied if `stri
 Set to `false` to disable the X-Content-Type-Options response header. The X-Content-Type-Options response HTTP header is a marker used by the server to indicate that the MIME types advertised in the Content-Type headers should not be changed and be followed. The default value is `true`.
 
 #### `x_xss_protection`
+
+{{< admonition type="warning" >}}
+This setting will be removed in a future major version. Support for it has been removed by browsers. Consider disabling it in the meantime and using `content_security_policy` instead.
+{{< /admonition >}}
 
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `true`.
 
@@ -907,10 +931,6 @@ The `preload` value given to newly created dashboards. When `true`, a new dashbo
 The value is written into the dashboard when it is created, so authors can change it in dashboard settings afterwards and their choice wins.
 
 This setting only applies to dashboards created after you set it. Existing dashboards keep whatever `preload` value they already have, so turning it on never changes how they behave. It applies to dashboards created in the UI; dashboards created through the API or provisioning use the `preload` value in the payload.
-
-#### `report_render_query_grace_period`
-
-How long the report render page (/d-report/) waits, after all panel queries appear to have settled, before telling the image renderer the dashboard is done. This guards against repeat panels that register their queries late (e.g. after a repeat variable's own query resolves), which can otherwise get captured blank. Only used when the feature flag `reportRenderQueryDebounce` is enabled. Default is `3s`.
 
 ### `[dashboard_cleanup]`
 
@@ -1131,9 +1151,13 @@ A custom error message for when users are unauthorized. Default is a key for an 
 
 Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
 
-There are five retries in total, so with the default value, the total wait time (for acquiring the lock) is at least 5 seconds (the wait time between retries is calculated as random(n, n + 500)), which means that the maximum token refresh duration must be less than 5-6 seconds.
+The wait time between retries is calculated as `random(n, n * 1.5)`. Values below `100` are treated as `100`. Retries stop once [`oauth_refresh_token_server_lock_wait_budget_ms`](#oauth_refresh_token_server_lock_wait_budget_ms) is spent. A lower value lets a request continue sooner after another instance finishes refreshing the token, at the cost of more lock checks while it waits.
 
-If you experience issues with the OAuth token refresh mechanism, you can increase this value to allow more time for the token refresh to complete.
+#### `oauth_refresh_token_server_lock_wait_budget_ms`
+
+Maximum total time in milliseconds that a request waits to acquire the OAuth token refresh server lock. Default is `5000` (milliseconds). If the lock is still held by another instance when the budget is spent, the request fails.
+
+If you experience issues with the OAuth token refresh mechanism, for example because your identity provider is slow to refresh tokens, you can increase this value to allow more time for the token refresh to complete.
 
 #### `oauth_skip_org_role_update_sync`
 
@@ -2823,12 +2847,20 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 <hr>
 
-### `[marketplace]`
+### `[plugins_marketplace]`
 
 #### `license_directory`
 
 Directory containing Marketplace license files for plugins. Name each file `license-<PLUGIN_ID>.jwt`.
 Defaults to the Grafana data path, alongside the default Enterprise `license.jwt` file.
+
+#### `renewal_enabled`
+
+Available in Grafana Enterprise and Grafana Pro.
+
+Controls periodic renewal of persisted Marketplace plugin licenses. The default is `true`.
+
+Set this option to `false` to disable automatic renewal network requests.
 
 <hr>
 
@@ -2902,6 +2934,8 @@ Whether image rendering is allowed for dashboard previews. Requires the image re
 
 Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
 
+It also allows `http://` authorization and token endpoints on `gitOAuth` connections, which sends the OAuth client secret and tokens in cleartext.
+
 #### `allowed_git_urls`
 
 While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
@@ -2924,7 +2958,7 @@ Supported types: `local`, `git`, `github`. Grafana Enterprise additionally suppo
 
 List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
 
-Supported types: `github` and `githubOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
+Supported types: `github`, `githubOAuth`, and `gitOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
 
 #### `max_repositories`
 

@@ -48,6 +48,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		cfg.AppURL = "https://grafana.example.com/"
 		cfg.AppSubURL = "/grafana"
 		cfg.Anonymous.Enabled = true
+		cfg.PluginImportTelemetryPackages = []string{"custom-router", "custom-history"}
 
 		license := &licensing.OSSLicensingService{Cfg: cfg}
 
@@ -58,6 +59,7 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "https://grafana.example.com/", settings.AppUrl)
 		assert.Equal(t, "/grafana", settings.AppSubUrl)
 		assert.True(t, settings.AnonymousEnabled)
+		assert.Equal(t, []string{"custom-router", "custom-history"}, settings.PluginImportTelemetryPackages)
 	})
 
 	t.Run("enables trusted types policy when CSP template requires it", func(t *testing.T) {
@@ -84,6 +86,19 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		require.NotNil(t, settings.UnifiedAlerting.StateHistory)
 		assert.Equal(t, "loki", settings.UnifiedAlerting.StateHistory.Backend)
 		assert.Equal(t, "loki", settings.UnifiedAlerting.AlertStateHistoryBackend)
+	})
+
+	t.Run("reports whether unified alerting notification history is enabled", func(t *testing.T) {
+		for _, enabled := range []bool{true, false} {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.NotificationHistory.Enabled = enabled
+
+			license := &licensing.OSSLicensingService{Cfg: cfg}
+
+			settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+			require.NoError(t, err)
+			assert.Equal(t, enabled, settings.UnifiedAlerting.NotificationHistoryEnabled)
+		}
 	})
 
 	t.Run("populates plugins CDN base URL when the CDN is enabled", func(t *testing.T) {

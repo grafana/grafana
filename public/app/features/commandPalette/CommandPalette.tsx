@@ -19,13 +19,17 @@ import { KBarSearch } from './KBarSearch';
 import { ResultItem } from './ResultItem';
 import { useHybridSearchEnabled, useSearchResults } from './actions/dashboardActions';
 import { type DeepSearchDashboardResult, useDeepSearchResults } from './actions/deepSearchActions';
-import { useRegisterRecentDashboardsActions, useRegisterStaticActions } from './actions/useActions';
+import {
+  useRegisterExtensionActions,
+  useRegisterRecentDashboardsActions,
+  useRegisterStaticActions,
+} from './actions/useActions';
 import { bucketQueryLength } from './bucketQueryLength';
 import { resetCommandPaletteInputMode, setCommandPaletteInputMode } from './inputMode';
 import { useRegisterRecentScopesActions, useRegisterScopesActions } from './scopes/scopeActions';
 import { type CommandPaletteAction, getActionSectionId } from './types';
 import { useMatches } from './useMatches';
-import { SECTION_DEEP_SEARCH } from './values';
+import { SECTION_DEEP_SEARCH, SECTION_NOTEBOOKS } from './values';
 
 export function CommandPalette() {
   useRegisterStaticActions();
@@ -50,6 +54,10 @@ function CommandPaletteContents() {
     currentRootActionId: state.currentRootActionId,
   }));
 
+  // Even though extension links are defined in plugins at load time, they can contain a configure() method that can
+  // show or hide the link based on dynamic factors. Loading it here instead of next to useStaticActions will give
+  // links opportunity to run the configure() method each time we show the palette.
+  useRegisterExtensionActions();
   useRegisterRecentDashboardsActions();
   useRegisterRecentScopesActions();
 
@@ -238,6 +246,7 @@ const RenderResults = ({
 
   const dashboardsSectionTitle = t('command-palette.section.dashboard-search-results', 'Dashboards');
   const foldersSectionTitle = t('command-palette.section.folder-search-results', 'Folders');
+  const notebooksSectionTitle = t('command-palette.section.notebook-search-results', 'Notebooks');
   // because dashboard search results aren't registered as actions, we need to manually
   // convert them to ActionImpls before passing them as items to KBarResults
   const dashboardResultItems = useMemo(
@@ -254,6 +263,13 @@ const RenderResults = ({
         .map((folder) => new ActionImpl(folder, { store: {} })),
     [searchResults]
   );
+  const notebookResultItems = useMemo(
+    () =>
+      searchResults
+        .filter((item) => item.sectionId === SECTION_NOTEBOOKS)
+        .map((notebook) => new ActionImpl(notebook, { store: {} })),
+    [searchResults]
+  );
 
   const items = useMemo(() => {
     const results = [...kbarResults];
@@ -265,8 +281,20 @@ const RenderResults = ({
       results.push(dashboardsSectionTitle);
       results.push(...dashboardResultItems);
     }
+    if (notebookResultItems.length > 0) {
+      results.push(notebooksSectionTitle);
+      results.push(...notebookResultItems);
+    }
     return results;
-  }, [kbarResults, dashboardsSectionTitle, dashboardResultItems, foldersSectionTitle, folderResultItems]);
+  }, [
+    kbarResults,
+    dashboardsSectionTitle,
+    dashboardResultItems,
+    foldersSectionTitle,
+    folderResultItems,
+    notebooksSectionTitle,
+    notebookResultItems,
+  ]);
 
   // Analytics: single place to assemble the command_palette_action_selected payload,
   // shared by the keyword list and the deep search column.

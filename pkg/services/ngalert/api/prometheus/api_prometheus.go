@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -43,7 +44,7 @@ const (
 
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	ListAlertRulesStoreV2
+	rulestore.RuleGroupReader
 }
 
 type RuleGroupAccessControlService interface {
@@ -281,14 +282,6 @@ type RuleGroupStatusesOptions struct {
 	StatusPreparer    StatusPreparer
 }
 
-type ListAlertRulesStore interface {
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
-}
-
-type ListAlertRulesStoreV2 interface {
-	ListAlertRulesByGroup(ctx context.Context, query *ngmodels.ListAlertRulesExtendedQuery) (ngmodels.RulesGroup, string, error)
-}
-
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
 	// As we are using req.Form directly, this triggers a call to ParseForm() if needed.
 	c.Query("")
@@ -434,6 +427,17 @@ func RuleStateToAPIString(s eval.State) string {
 	}
 }
 
+// AddInstanceToTotals counts an alert instance into totals, keyed by its lowercased
+// state. An instance whose evaluation errored but was mapped to another state via
+// execErrState is also counted under "error", so the counts can overlap.
+func AddInstanceToTotals(totals map[string]int64, s *state.State, execErrState ngmodels.ExecutionErrorState) {
+	totals[strings.ToLower(s.State.String())] += 1
+	// Do not add error twice when execution error state is Error
+	if s.Error != nil && execErrState != ngmodels.ErrorErrState {
+		totals["error"] += 1
+	}
+}
+
 // computeAlertStates computes rule state, totals, and alert details from the given states.
 // It mutates toMutate in place (State, ActiveAt, Alerts) and returns total and filtered-total counts.
 func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMutate *apimodels.AlertingRule, stateFilterSet map[eval.State]struct{}, matchers labels.Matchers, labelOptions []ngmodels.LabelOption, limitAlerts int64) (map[string]int64, map[string]int64) {
@@ -442,12 +446,7 @@ func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMut
 	totalsFiltered := make(map[string]int64)
 	for _, alertState := range states {
 		activeAt := alertState.StartsAt
-		stateKey := strings.ToLower(alertState.State.String())
-		totals[stateKey] += 1
-		// Do not add error twice when execution error state is Error
-		if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
-			totals["error"] += 1
-		}
+		AddInstanceToTotals(totals, alertState, source.ExecErrState)
 
 		// Track earliest ActiveAt for firing alerts
 		if alertState.State == eval.Alerting {
@@ -466,11 +465,7 @@ func computeAlertStates(states []*state.State, source *ngmodels.AlertRule, toMut
 			continue
 		}
 
-		totalsFiltered[stateKey] += 1
-		// Do not add error twice when execution error state is Error
-		if alertState.Error != nil && source.ExecErrState != ngmodels.ErrorErrState {
-			totalsFiltered["error"] += 1
-		}
+		AddInstanceToTotals(totalsFiltered, alertState, source.ExecErrState)
 
 		if limitAlerts != 0 {
 			valString := ""
@@ -540,7 +535,7 @@ func accumulateTotals(dest, source map[string]int64) {
 }
 
 // fetchAndFilterPage fetches one page from the store and applies filters
-func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store ListAlertRulesStoreV2, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
+func (ctx *paginationContext) fetchAndFilterPage(log log.Logger, store rulestore.RuleGroupReader, span trace.Span, token string, remainingGroups, remainingRules int64) (pageResult, error) {
 	// Split matchers: only equality/inequality are supported by the store
 	storeMatchers := filterOutRegexMatchers(ctx.ruleLabelMatchers)
 
@@ -671,7 +666,7 @@ func filterOutRegexMatchers(matchers labels.Matchers) labels.Matchers {
 }
 
 // paginateRuleGroups fetches pages until limits are satisfied applying filters at each step
-func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
+func paginateRuleGroups(log log.Logger, store rulestore.RuleGroupReader, ctx *paginationContext, span trace.Span, maxGroups, maxRules int64, startToken string) ([]apimodels.RuleGroup, map[string]int64, string, error) {
 	allGroups := []apimodels.RuleGroup{}
 	rulesTotals := make(map[string]int64)
 
@@ -730,7 +725,7 @@ func paginateRuleGroups(log log.Logger, store ListAlertRulesStoreV2, ctx *pagina
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
+func PrepareRuleGroupStatusesV2(log log.Logger, store rulestore.RuleGroupReader, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceStore ProvenanceStore) apimodels.RuleResponse {
 	ctx, span := tracer.Start(opts.Ctx, "api.prometheus.PrepareRuleGroupStatusesV2")
 	defer span.End()
 	opts.Ctx = ctx
@@ -979,7 +974,7 @@ func PrepareRuleGroupStatusesV2(log log.Logger, store ListAlertRulesStoreV2, opt
 }
 
 // nolint:gocyclo
-func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
+func PrepareRuleGroupStatuses(log log.Logger, store rulestore.RuleLister, opts RuleGroupStatusesOptions, ruleMutator RuleMutator, provenanceRecords map[string]ngmodels.Provenance) apimodels.RuleResponse {
 	ruleResponse := apimodels.RuleResponse{
 		DiscoveryBase: apimodels.DiscoveryBase{
 			Status: "success",

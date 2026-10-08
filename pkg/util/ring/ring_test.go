@@ -364,7 +364,7 @@ func clearRing[T any](t *testing.T, q *Ring[T]) {
 
 	// dequeueing should yield zero values
 	var zero T
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		var val1, val2 T
 		require.NotPanics(t, func() {
 			val1 = q.Peek()
@@ -389,7 +389,7 @@ func deqAll[T any](t *testing.T, q *Ring[T], expected ...T) {
 
 	// dequeueing further should yield zero values when empty
 	var zero T
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		var val1, val2 T
 		require.NotPanics(t, func() {
 			val1 = q.Peek()

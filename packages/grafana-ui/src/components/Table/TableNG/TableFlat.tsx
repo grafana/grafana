@@ -1,16 +1,17 @@
+import { clsx } from 'clsx';
 import memoize from 'micro-memoize';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { type Field } from '@grafana/data';
 import { type DataGridHandle, type DataGridProps } from '@grafana/react-data-grid';
 
-import { useTheme2 } from '../../../themes/ThemeContext';
+import { useStyles2, useTheme2 } from '../../../themes/ThemeContext';
 import { getTextColorForBackground as _getTextColorForBackground } from '../../../utils/colors';
 import { usePanelContext } from '../../PanelChrome';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { TABLE } from './constants';
+import { FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
   useColumnResize,
   useColWidths,
@@ -19,11 +20,14 @@ import {
   useFilteredRows,
   useHeaderHeight,
   useManagedSort,
+  useNotifyDisplayedRowIndices,
   usePaginatedRows,
-  useScrollbarWidth,
+  useNativeScrollbarWidth,
   useSortedRows,
   useRowCompiler,
   useTypographyCtx,
+  useHeaderTypographyCtx,
+  useTextWrapFallback,
 } from './hooks';
 import {
   type ColumnBuildConfig,
@@ -31,6 +35,8 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
+import { shouldReserveScrollbarGutter } from './scrollbar';
+import { getGridStyles } from './styles';
 import {
   type CellRootRenderer,
   type InspectCellProps,
@@ -45,6 +51,9 @@ import {
   getCellLinks,
   getDefaultRowHeight,
   getVisibleFields,
+  isShiftTabToHeader,
+  makeStripedRowClass,
+  markEdgeColumns,
 } from './utils';
 
 type OnCellClick = NonNullable<DataGridProps<TableRow, TableSummaryRow>['onCellClick']>;
@@ -59,7 +68,9 @@ export function TableFlat(props: TableNGProps) {
     cellHeight,
     data,
     disableKeyboardEvents,
+    hoverOverflow,
     disableSanitizeHtml,
+    jsonSyntaxHighlightingEnabled,
     enablePagination = false,
     enableSharedCrosshair = false,
     enableVirtualization,
@@ -71,17 +82,24 @@ export function TableFlat(props: TableNGProps) {
     noHeader,
     noValue,
     onCellFilterAdded,
+    onFieldAddToAssistant,
+    onCellAddToAssistant,
     onColumnResize,
+    onDisplayedRowIndicesChange,
     onSortByChange,
     showTypeIcons,
     structureRev,
     timeRange,
     transparent,
+    noPanelPadding = false,
     width,
     initialRowIndex,
     sortBy,
     sortByBehavior = 'initial',
     contentAwareWidthsEnabled = false,
+    tableRefreshEnabled = false,
+    preventHorizontalOverflow = false,
+    zebraStriping = false,
   } = props;
 
   const theme = useTheme2();
@@ -99,6 +117,7 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const visibleFields = useMemo(() => getVisibleFields(data.fields), [data.fields]);
+  const wrapFallback = useTextWrapFallback(data);
   // Row-height and column-width measurement must both see the same rendered value column-building
   // does: a JSON cell's `.display` is only JSON-aware on the prepared copy (see
   // `prepareFieldsForDisplay`), so measuring against `visibleFields` directly would stringify its raw
@@ -128,6 +147,7 @@ export function TableFlat(props: TableNGProps) {
   } = useSortedRows(filteredRows, data.fields, [], { initialSortBy: sortBy });
 
   useManagedSort({ sortByBehavior, setSortColumns, sortBy });
+  useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
   const [inspectCell, setInspectCell] = useState<InspectCellProps | null>(null);
   const [tooltipState, setTooltipState] = useState<DataLinksActionsTooltipState>();
@@ -150,14 +170,14 @@ export function TableFlat(props: TableNGProps) {
   );
 
   const gridRef = useRef<DataGridHandle>(null);
-  const scrollbarWidth = useScrollbarWidth(gridRef, height);
-  // A scrollbar appearing/disappearing changes how much room the columns have, so factor it out.
-  const availableWidth = useMemo(() => width - scrollbarWidth, [width, scrollbarWidth]);
+  const frameSize = tableRefreshEnabled && !noPanelPadding ? TABLE.FRAME_BORDER_WIDTH * 2 : 0;
+  const fullWidth = width - frameSize;
 
   const getCellColorInlineStyles = useMemo(() => getCellColorInlineStylesFactory(theme), [theme]);
   const getTextColorForBackground = useMemo(() => memoize(_getTextColorForBackground, { maxSize: 1000 }), []);
 
   const typographyCtx = useTypographyCtx(theme);
+  const headerTypographyCtx = useHeaderTypographyCtx(theme);
 
   const frozenColumns = _frozenColumns;
 
@@ -176,26 +196,30 @@ export function TableFlat(props: TableNGProps) {
   prevConfiguredWidthCount.current = configuredWidthCount;
 
   const contentAwareWidths = useContentAwareWidths({
+    hasAssistantAction: onFieldAddToAssistant != null,
     enabled: contentAwareWidthsEnabled,
     typographyCtx,
     showTypeIcons,
+    hasHeader,
     getActions: getCellActions,
+    tableRefreshEnabled,
+    filter,
+    noPanelPadding,
+    preventHorizontalOverflow,
   });
 
-  const [widths, numFrozenColsFullyInView] = useColWidths(
-    preparedFields,
-    availableWidth,
-    frozenColumns,
-    widthConfigResetKey,
-    contentAwareWidths
-  );
+  const [fullWidths] = useColWidths(preparedFields, fullWidth, frozenColumns, widthConfigResetKey, contentAwareWidths);
 
-  const headerHeight = useHeaderHeight({
-    columnWidths: widths,
+  const fullHeaderHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
+    columnWidths: fullWidths,
     fields: visibleFields,
     enabled: hasHeader,
     showTypeIcons: showTypeIcons ?? false,
-    typographyCtx,
+    typographyCtx: headerTypographyCtx,
+    noPanelPadding,
+    tableRefreshEnabled,
+    filter,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -204,12 +228,14 @@ export function TableFlat(props: TableNGProps) {
     [theme, visibleFields, cellHeight]
   );
 
-  const rowHeight = useFlatRowHeight({
-    columnWidths: widths,
+  const fullRowHeight = useFlatRowHeight({
+    wrapFallback,
+    columnWidths: fullWidths,
     fields: preparedFields,
     defaultHeight: defaultRowHeight,
     typographyCtx,
     maxHeight: maxRowHeight,
+    noPanelPadding,
   });
 
   const {
@@ -223,13 +249,75 @@ export function TableFlat(props: TableNGProps) {
     smallPagination,
   } = usePaginatedRows(sortedRows, {
     enabled: enablePagination,
-    width: availableWidth,
+    width: fullWidth,
     height,
     footerHeight,
-    headerHeight: hasHeader ? headerHeight : 0,
-    rowHeight,
+    headerHeight: hasHeader ? fullHeaderHeight : 0,
+    rowHeight: fullRowHeight,
     pageSize,
+    noPanelPadding,
+    tableRefreshEnabled,
   });
+  const showPagination = enablePagination && numRows > 0;
+  const scrollbarWidth = useNativeScrollbarWidth(gridRef);
+  const needsScrollbarSpace = useMemo(
+    () =>
+      scrollbarWidth > 0 &&
+      shouldReserveScrollbarGutter(
+        paginatedRows,
+        fullRowHeight,
+        fullWidths,
+        fullWidth,
+        height -
+          frameSize -
+          (hasHeader ? fullHeaderHeight : 0) -
+          footerHeight -
+          (showPagination ? getPaginationChromeHeight(noPanelPadding) : 0)
+      ),
+    [
+      scrollbarWidth,
+      paginatedRows,
+      fullRowHeight,
+      fullWidths,
+      fullWidth,
+      height,
+      frameSize,
+      hasHeader,
+      fullHeaderHeight,
+      footerHeight,
+      showPagination,
+      noPanelPadding,
+    ]
+  );
+  const availableWidth = fullWidth - (needsScrollbarSpace ? scrollbarWidth : 0);
+  const [widths, numFrozenColsFullyInView] = useColWidths(
+    preparedFields,
+    availableWidth,
+    frozenColumns,
+    widthConfigResetKey,
+    contentAwareWidths
+  );
+  const headerHeight = useHeaderHeight({
+    hasAssistantAction: onFieldAddToAssistant != null,
+    columnWidths: widths,
+    fields: visibleFields,
+    enabled: hasHeader,
+    showTypeIcons: showTypeIcons ?? false,
+    typographyCtx: headerTypographyCtx,
+    noPanelPadding,
+    tableRefreshEnabled,
+    filter,
+  });
+  const rowHeight = useFlatRowHeight({
+    wrapFallback,
+    columnWidths: widths,
+    fields: preparedFields,
+    defaultHeight: defaultRowHeight,
+    typographyCtx,
+    maxHeight: maxRowHeight,
+    noPanelPadding,
+  });
+  const styles = useStyles2(getGridStyles, showPagination, transparent, tableRefreshEnabled, noPanelPadding);
 
   const rowHeightFn = useMemo((): ((row: TableRow) => number) => {
     if (typeof rowHeight === 'function') {
@@ -252,6 +340,7 @@ export function TableFlat(props: TableNGProps) {
 
   const columnBuildConfig = useMemo(
     (): ColumnBuildConfig => ({
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -263,15 +352,24 @@ export function TableFlat(props: TableNGProps) {
       gridRef,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
+      jsonSyntaxHighlightingEnabled,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
+      typographyCtx,
+      // the first column here is a field column, so it's the one carrying the panel-edge inset
+      firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
     }),
     [
+      wrapFallback,
       theme,
       getCellColorInlineStyles,
       getTextColorForBackground,
@@ -280,23 +378,31 @@ export function TableFlat(props: TableNGProps) {
       filter,
       getCellActions,
       onCellFilterAdded,
+      onFieldAddToAssistant,
+      onCellAddToAssistant,
       frozenColumns,
       numFrozenColsFullyInView,
       maxRowHeight,
       disableKeyboardEvents,
+      hoverOverflow,
       disableSanitizeHtml,
+      jsonSyntaxHighlightingEnabled,
       setFilter,
       showTypeIcons,
       timeRange,
+      tableRefreshEnabled,
+      typographyCtx,
+      noPanelPadding,
     ]
   );
 
   const fromFields = useColumnBuilderFromFields(filterResult, columnBuildConfig);
 
-  const { columns, cellRootRenderers } = useMemo(
-    () => fromFields(visibleFields, widths, data, rows, sortedRows),
-    [fromFields, visibleFields, widths, data, rows, sortedRows]
-  );
+  const { columns, cellRootRenderers } = useMemo(() => {
+    const result = fromFields(visibleFields, widths, data, rows, sortedRows);
+    markEdgeColumns(result);
+    return result;
+  }, [fromFields, visibleFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,22 +412,31 @@ export function TableFlat(props: TableNGProps) {
     [cellRootRenderers]
   );
 
+  // Striping is applied through `rowClass` rather than react-data-grid's own row parity - see
+  // `makeStripedRowClass`.
+  const rowClass = useMemo(
+    () => (zebraStriping ? makeStripedRowClass(paginatedRows) : undefined),
+    [zebraStriping, paginatedRows]
+  );
+
   return (
     <TableDataGrid
       role="grid"
       gridRef={gridRef}
       columns={structureRevColumns}
       rows={paginatedRows}
+      rowClass={rowClass}
       noValue={noValue}
       renderers={{ renderRow, renderCell: renderCellRoot }}
       columnWidths={resetColumnWidths}
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
       onCellClick={onCellClick}
+      className={clsx(noPanelPadding && styles.firstColumnInset)}
       onCellKeyDown={({ column, row }, event) => {
-        if (column.key === columns[0].key && row.__index === 0 && event.shiftKey && event.key === 'Tab') {
+        if (isShiftTabToHeader(column, row, event, columns[0].key)) {
           event.preventGridDefault();
-          gridRef.current?.selectCell({ rowIdx: -1, idx: columns.length - 1 });
+          gridRef.current?.setActivePosition({ rowIdx: -1, idx: columns.length - 1 });
           return;
         }
         if (disableKeyboardEvents) {
@@ -332,12 +447,17 @@ export function TableFlat(props: TableNGProps) {
       setSortColumns={setSortColumns}
       onSortByChange={onSortByChange}
       rowHeight={rowHeight}
+      getRowHeight={rowHeightFn}
+      height={height}
       enableVirtualization={enableVirtualization}
       hasFooter={hasFooter}
       footerHeight={footerHeight}
       noHeader={!!noHeader}
       headerHeight={headerHeight}
       transparent={transparent}
+      tableRefreshEnabled={tableRefreshEnabled}
+      zebraStriping={zebraStriping}
+      noPanelPadding={noPanelPadding}
       initialRowIndex={initialRowIndex}
       sortedRows={sortedRows}
       enablePagination={enablePagination}

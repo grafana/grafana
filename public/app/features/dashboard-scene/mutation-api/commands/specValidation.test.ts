@@ -13,13 +13,21 @@ jest.mock('../../serialization/transformSceneToSaveModelSchemaV2', () => ({
 
 jest.mock('../../serialization/transformSaveModelSchemaV2ToScene', () => ({
   transformSaveModelSchemaV2ToScene: (dto: unknown) => mockTransformSaveModelSchemaV2ToScene(dto),
+  createSceneVariableFromVariableModel: jest.fn(),
+}));
+
+jest.mock('../../serialization/sceneVariablesSetToVariables', () => ({
+  sceneVariablesSetToSchemaV2Variables: () => [],
 }));
 
 jest.mock('@grafana/scenes', () => ({
   sceneUtils: {
     cloneSceneObjectState: (state: unknown) => state,
+    getUrlState: () => ({}),
   },
+  sceneGraph: { findAllObjects: () => [] },
   NewSceneObjectAddedEvent: class {},
+  SceneVariableSet: class {},
 }));
 
 jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => ({
@@ -59,7 +67,7 @@ const stubContext = { scene: {} as DashboardScene } satisfies MutationContext;
 // (edit-mode entry, metadata envelope, state swap), so the rebuild is reached.
 function makeSceneContext(): MutationContext {
   const scene = {
-    state: { isEditing: true, key: 'scene-key', meta: {} },
+    state: { isEditing: true, key: 'scene-key', meta: {}, body: { editModeChanged: jest.fn() } },
     onEnterEditMode: jest.fn(),
     activateSidebar: jest.fn(),
     serializer: {

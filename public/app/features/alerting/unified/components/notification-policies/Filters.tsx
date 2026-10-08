@@ -1,3 +1,4 @@
+import { css, cx } from '@emotion/css';
 import { compact, isEqual } from 'lodash';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useDebounce } from 'react-use';
@@ -7,9 +8,10 @@ import {
   RoutingTreeSelector,
 } from '@grafana/alerting/unstable';
 import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Icon, Input, Label, Stack, Tooltip } from '@grafana/ui';
+import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { ContactPointAction } from 'app/features/alerting/unified/hooks/abilities/types';
 import { type ObjectMatcher, type RouteWithID } from 'app/plugins/datasource/alertmanager/types';
 
@@ -17,12 +19,7 @@ import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useCo
 import { useURLSearchParams } from '../../hooks/useURLSearchParams';
 import { useAlertmanager } from '../../state/AlertmanagerContext';
 import { matcherToObjectMatcher } from '../../utils/alertmanager';
-import {
-  normalizeMatchers,
-  parsePromQLStyleMatcherLoose,
-  parsePromQLStyleMatcherLooseSafe,
-  unquoteIfRequired,
-} from '../../utils/matchers';
+import { normalizeMatchers, parsePromQLStyleMatcherLoose, unquoteIfRequired } from '../../utils/matchers';
 
 import { ExternalAlertmanagerContactPointSelector } from './ContactPointSelector';
 
@@ -37,11 +34,9 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
   const [searchParams, setSearchParams] = useURLSearchParams();
   const { queryString, contactPoint } = getNotificationPoliciesFilters(searchParams);
   const { hasFilters, clearFilters, selectedPolicyTreeNames } = useNotificationPoliciesFilters();
+  const styles = useStyles2(getStyles);
 
-  const matchers = useMemo(
-    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
-    [queryString]
-  );
+  const matchers = useMemo(() => parseNotificationPolicyMatchers(queryString ?? ''), [queryString]);
 
   useDebounce(
     () => {
@@ -68,16 +63,17 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
     if (!queryString) {
       inputValid = true;
     } else {
-      parsePromQLStyleMatcherLoose(queryString);
+      parsePromQLStyleMatcherLoose(queryString, { trimValue: true });
     }
   } catch (err) {
     inputValid = false;
   }
 
   return (
-    <Stack direction="row" alignItems="flex-end" gap={1}>
+    <Stack direction="row" alignItems="flex-end" gap={1} grow={1}>
       <Field
         noMargin
+        className={styles.formField}
         label={
           <Label>
             <Stack gap={0.5}>
@@ -101,7 +97,6 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
         <Input
           data-testid={selectors.pages.Alerting.searchInput}
           placeholder={t('alerting.notification-policies-filter.search-query-input-placeholder-search', 'Search')}
-          width={46}
           prefix={<Icon name="search" />}
           onChange={(event) => {
             setSearchParams({ queryString: event.currentTarget.value });
@@ -112,6 +107,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
       {canSeeContactPoints && (
         <Field
           label={t('alerting.notification-policies-filter.label-search-by-contact-point', 'Contact point')}
+          className={cx(styles.formField, styles.contactPointField)}
           noMargin
         >
           {isGrafanaAlertmanager ? (
@@ -129,7 +125,6 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
                   setSearchParams({ contactPoint: contactPoint.spec.title });
                 }
               }}
-              width={28}
               isClearable
               value={searchParams.get('contactPoint') ?? undefined}
             />
@@ -141,7 +136,7 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
                 onChange: (option) => {
                   setSearchParams({ contactPoint: option?.value?.name });
                 },
-                width: 28,
+                width: 'auto',
                 isClearable: true,
                 placeholder: t(
                   'alerting.notification-policies-filter.placeholder-search-by-contact-point',
@@ -154,13 +149,17 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
         </Field>
       )}
       {isGrafanaAlertmanager && (
-        <Field label={t('alerting.multiple-policies-view.policy-tree-filter-label', 'Policy')} noMargin>
+        <Field
+          label={t('alerting.multiple-policies-view.policy-tree-filter-label', 'Policy')}
+          noMargin
+          className={styles.formField}
+        >
           <RoutingTreeSelector
             multi
             value={selectedPolicyTreeNames}
             onChange={handlePolicyTreeFilterChange}
             placeholder={t('alerting.multiple-policies-view.policy-tree-filter-placeholder', 'Select policy trees')}
-            width={40}
+            minWidth={20}
           />
         </Field>
       )}
@@ -172,6 +171,19 @@ const NotificationPoliciesFilter = ({ onChangeReceiver, onChangeMatchers }: Noti
     </Stack>
   );
 };
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    formField: css({
+      flexGrow: 1,
+    }),
+    // The single-select Combobox only applies minWidth when it's auto sizing, so keep the
+    // floor here instead of passing it as a prop.
+    contactPointField: css({
+      minWidth: theme.spacing(15),
+    }),
+  };
+}
 
 /**
  * Find a list of route IDs that match given input filters
@@ -214,6 +226,14 @@ export function findRoutesMatchingPredicate(
   return matchingRouteIdsWithPath;
 }
 
+function parseNotificationPolicyMatchers(query: string): ObjectMatcher[] {
+  try {
+    return parsePromQLStyleMatcherLoose(query, { trimValue: true }).map(matcherToObjectMatcher);
+  } catch {
+    return [];
+  }
+}
+
 export function findRoutesByMatchers(route: RouteWithID, labelMatchersFilter: ObjectMatcher[]): boolean {
   const filters = labelMatchersFilter.map(unquoteMatchersIfRequired);
   const routeMatchers = normalizeMatchers(route).map(unquoteMatchersIfRequired);
@@ -240,10 +260,7 @@ export function useNotificationPoliciesFilters() {
 
   const selectedPolicyTreeNames = useMemo(() => searchParams.getAll('includeTree').filter(Boolean), [searchParams]);
 
-  const labelMatchers = useMemo(
-    () => parsePromQLStyleMatcherLooseSafe(queryString ?? '').map(matcherToObjectMatcher),
-    [queryString]
-  );
+  const labelMatchers = useMemo(() => parseNotificationPolicyMatchers(queryString ?? ''), [queryString]);
 
   const hasFilters = Boolean(queryString || contactPoint || selectedPolicyTreeNames.length > 0);
 

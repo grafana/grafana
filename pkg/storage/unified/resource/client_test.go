@@ -2,71 +2,87 @@ package resource
 
 import (
 	"context"
+	"fmt"
+	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func TestIDTokenExtractor(t *testing.T) {
-	t.Run("should return an error when no claims found", func(t *testing.T) {
-		token, err := IDTokenExtractor(context.Background())
-		assert.Error(t, err)
-		assert.Empty(t, token)
-	})
-	t.Run("should return an empty token when grafana identity is set", func(t *testing.T) {
-		ctx, _ := identity.WithServiceIdentity(context.Background(), 0)
-		token, err := IDTokenExtractor(ctx)
-		assert.NoError(t, err)
-		assert.Empty(t, token)
-	})
+type retryTestResourceServer struct {
+	ResourceServer
+	failure  error
+	attempts int
 }
 
-func TestNewAuthnGrpcClientInterceptor(t *testing.T) {
-	tracer := noop.NewTracerProvider().Tracer("")
+func (s *retryTestResourceServer) Update(context.Context, *resourcepb.UpdateRequest) (*resourcepb.UpdateResponse, error) {
+	s.attempts++
+	if s.attempts == 1 {
+		return nil, s.failure
+	}
+	return &resourcepb.UpdateResponse{}, nil
+}
 
-	t.Run("empty token exchange url in dev falls back to the in-proc exchanger", func(t *testing.T) {
-		interceptor, err := NewAuthnGrpcClientInterceptor(tracer, RemoteResourceClientConfig{
-			Namespace: "*",
-			Audiences: []string{"resourceStore"},
-			IsDev:     true,
+func TestLocalResourceClientRetryCodes(t *testing.T) {
+	for _, code := range []codes.Code{codes.Aborted, codes.Unavailable, codes.ResourceExhausted, codes.InvalidArgument} {
+		t.Run(code.String(), func(t *testing.T) {
+			st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
+			require.NoError(t, err)
+			srv := &retryTestResourceServer{failure: st.Err()}
+			client := NewLocalResourceClient(srv)
+			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+			_, err = client.Update(ctx, &resourcepb.UpdateRequest{})
+			if code == codes.Unavailable || code == codes.ResourceExhausted {
+				require.NoError(t, err)
+				require.Equal(t, 2, srv.attempts)
+			} else {
+				require.Equal(t, 1, srv.attempts)
+				require.Equal(t, st.Proto(), status.Convert(err).Proto())
+			}
 		})
-		require.NoError(t, err)
-		require.NotNil(t, interceptor)
-	})
+	}
+}
 
-	t.Run("empty token exchange url outside dev is a misconfiguration", func(t *testing.T) {
-		_, err := NewAuthnGrpcClientInterceptor(tracer, RemoteResourceClientConfig{
-			Namespace: "*",
-			Audiences: []string{"resourceStore"},
-			IsDev:     false,
-		})
-		require.Error(t, err, "must not silently self-mint tokens outside dev mode")
-	})
+type missingReadBackend struct{ mockStorageBackend }
 
-	t.Run("an explicit TokenExchanger is used regardless of dev mode", func(t *testing.T) {
-		interceptor, err := NewAuthnGrpcClientInterceptor(tracer, RemoteResourceClientConfig{
-			Namespace:      "*",
-			Audiences:      []string{"resourceStore"},
-			IsDev:          false,
-			TokenExchanger: ProvideInProcExchanger(),
-		})
-		require.NoError(t, err)
-		require.NotNil(t, interceptor)
-	})
+func (*missingReadBackend) ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse {
+	return &BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "missing"}}
+}
 
-	t.Run("a token exchange url builds a real exchange client outside dev", func(t *testing.T) {
-		interceptor, err := NewAuthnGrpcClientInterceptor(tracer, RemoteResourceClientConfig{
-			Token:            "some-token",
-			TokenExchangeURL: "https://example.com/token",
-			Namespace:        "*",
-			Audiences:        []string{"resourceStore"},
-			IsDev:            false,
+func TestLocalResourceClientErrorConversion(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
+			srv, err := NewResourceServer(ResourceServerOptions{
+				Backend: &missingReadBackend{}, GRPCErrorResultToStatus: enabled,
+			})
+			require.NoError(t, err)
+			t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
+			client := NewLocalResourceClient(srv)
+			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
+			resp, err := client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+				Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing",
+			}})
+			if !enabled {
+				require.NoError(t, err)
+				require.Equal(t, int32(http.StatusNotFound), resp.GetError().GetCode())
+				return
+			}
+			require.Equal(t, codes.NotFound, status.Code(err))
+			details := status.Convert(err).Details()
+			require.Len(t, details, 1)
+			require.Equal(t, int32(http.StatusNotFound), details[0].(*resourcepb.ErrorResult).Code)
 		})
-		require.NoError(t, err)
-		require.NotNil(t, interceptor)
-	})
+	}
+}
+
+func TestResourceClientFlagNamesMatchFeatureToggles(t *testing.T) {
+	require.Equal(t, featuremgmt.FlagUnifiedStorageClientRequireCallerIdentity, resourceclient.FlagUnifiedStorageClientRequireCallerIdentity)
+	require.Equal(t, featuremgmt.FlagUnifiedStorageClientOnBehalfOf, resourceclient.FlagUnifiedStorageClientOnBehalfOf)
 }

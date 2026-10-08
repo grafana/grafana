@@ -65,13 +65,14 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 		RudderstackV3SdkUrl:                  cfg.RudderstackV3SDKURL,
 		RudderstackConfigUrl:                 cfg.RudderstackConfigURL,
 		RudderstackIntegrationsUrl:           cfg.RudderstackIntegrationsURL,
+		RudderstackBatchInterval:             cfg.RudderstackBatchInterval,
 		PostHogToken:                         cfg.PostHogToken,
 		PostHogHost:                          cfg.PostHogHost,
 		AnalyticsConsoleReporting:            cfg.FrontendAnalyticsConsoleReporting,
+		PluginImportTelemetryPackages:        cfg.PluginImportTelemetryPackages,
 		DashboardPerformanceMetrics:          cfg.DashboardPerformanceMetrics,
 		PanelSeriesLimit:                     cfg.PanelSeriesLimit,
 		DashboardDefaultPreload:              cfg.DashboardDefaultPreload,
-		ReportRenderQueryGracePeriod:         int(cfg.ReportRenderQueryGracePeriod.Milliseconds()),
 		FeedbackLinksEnabled:                 cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString:  cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:       cfg.ApplicationInsightsEndpointUrl,
@@ -212,6 +213,7 @@ func GetBaseFrontendSettings(reqCtx *contextmodel.ReqContext, cfg *setting.Cfg, 
 	}
 
 	frontendSettings.UnifiedAlerting.RecordingRulesEnabled = cfg.UnifiedAlerting.RecordingRules.Enabled
+	frontendSettings.UnifiedAlerting.NotificationHistoryEnabled = cfg.UnifiedAlerting.NotificationHistory.Enabled
 	frontendSettings.UnifiedAlerting.DefaultRecordingRulesTargetDatasourceUID = cfg.UnifiedAlerting.RecordingRules.DefaultDatasourceUID
 
 	if cfg.UnifiedAlerting.Enabled != nil {

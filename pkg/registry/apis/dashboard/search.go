@@ -17,14 +17,17 @@ import (
 	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	claims "github.com/grafana/authlib/types"
+	dashboardmanifest "github.com/grafana/grafana/apps/dashboard/pkg/apis"
 	dashboardv0alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	foldermanifest "github.com/grafana/grafana/apps/folder/pkg/apis/manifestdata"
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -37,6 +40,7 @@ import (
 	dashboardsearch "github.com/grafana/grafana/pkg/services/dashboards/service/search"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
+	searchsort "github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -247,15 +251,6 @@ func (s *SearchHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *
 										Description: "filter by the user who created the resource (format: user:<uid>)",
 										Required:    false,
 										Schema:      spec.StringProperty(),
-									},
-								},
-								{
-									ParameterProps: spec3.ParameterProps{
-										Name:        "explain",
-										In:          "query",
-										Description: "add debugging info that may help explain why the result matched",
-										Required:    false,
-										Schema:      spec.BoolProperty(),
 									},
 								},
 								{
@@ -588,7 +583,7 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	result, err := s.client.Search(ctx, searchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(result.GetError(), err); err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
@@ -667,11 +662,11 @@ func (s *SearchHandler) DoVectorSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errVectorSearchNotConfigured.Errorf("vector search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 	if result.GetError() != nil {
-		errhttp.Write(ctx, resource.GetError(result.GetError()), w)
+		errhttp.Write(ctx, resource.StatusError(result.GetError()), w)
 		return
 	}
 
@@ -769,7 +764,7 @@ func (s *SearchHandler) DoHybridSearch(w http.ResponseWriter, r *http.Request) {
 			errhttp.Write(ctx, errHybridSearchNotConfigured.Errorf("hybrid search is not configured on this instance"), w)
 			return
 		}
-		errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+		errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 		return
 	}
 
@@ -824,6 +819,38 @@ func hybridSearchResultsToSearchResults(response *resourcepb.HybridSearchRespons
 	return out
 }
 
+var dashboardSearchResponseFields = func() map[string]bool {
+	dashboard := dashboardmanifest.LocalManifest()
+	folder := foldermanifest.LocalManifest()
+	provider := resource.NewManifestBackedProvider(dashboard.ManifestData, folder.ManifestData)
+
+	fields := map[string]bool{
+		resource.SEARCH_FIELD_RV:              true,
+		resource.SEARCH_FIELD_LEGACY_ID:       true,
+		resource.SEARCH_FIELD_SCORE:           true,
+		resource.SEARCH_FIELD_SOURCE_PATH:     true,
+		resource.SEARCH_FIELD_SOURCE_CHECKSUM: true,
+		resource.SEARCH_FIELD_SOURCE_TIME:     true,
+	}
+	for _, definition := range resource.StandardSearchFieldDefinitions() {
+		fields[definition.Name] = true
+	}
+	for _, gvr := range []schema.GroupVersionResource{
+		{Group: dashboardv0alpha1.GROUP, Resource: dashboardv0alpha1.DASHBOARD_RESOURCE},
+		{Group: folders.GROUP, Resource: folders.RESOURCE},
+	} {
+		for _, definition := range provider.Fields(gvr) {
+			fields[definition.Name] = true
+			fields[resource.SEARCH_FIELD_PREFIX+definition.Name] = true
+		}
+	}
+	return fields
+}()
+
+func isDashboardSearchResponseField(field string) bool {
+	return dashboardSearchResponseFields[field] || strings.HasPrefix(field, resource.SEARCH_FIELD_LABELS+".")
+}
+
 // convertHttpSearchRequestToResourceSearchRequest create ResourceSearchRequest from query parameters.
 // Supplied function is used to get dashboards shared with user.
 // nolint:gocyclo
@@ -847,18 +874,18 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	}
 
 	searchRequest := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{},
-		Query:   queryParams.Get("query"),
-		Limit:   int64(limit),
-		Offset:  int64(offset),
-		Page:    int64(page), // for modes 0-2 (legacy)
-		Explain: queryParams.Has("explain") && queryParams.Get("explain") != "false",
+		Options:      &resourcepb.ListOptions{},
+		Query:        queryParams.Get("query"),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Limit:        int64(limit),
+		Offset:       int64(offset),
+		Page:         int64(page), // for modes 0-2 (legacy)
 	}
 	fields := []string{"title", "folder", "tags", "description", "manager.kind", "manager.id", resource.SEARCH_FIELD_OWNER_REFERENCES}
 	if queryParams.Has("field") {
 		// add fields to search and exclude duplicates
 		for _, f := range queryParams["field"] {
-			if f != "" && !slices.Contains(fields, f) {
+			if isDashboardSearchResponseField(f) && !slices.Contains(fields, f) {
 				fields = append(fields, f)
 			}
 		}
@@ -891,16 +918,13 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		return nil, err
 	}
 
-	// Add sorting. Field names are passed through as the client sent them; the
-	// search backend knows where each field lives in the index. The leading "-"
-	// descending marker is stripped first.
+	// Add sorting. Index field names reach the backend unchanged, the other
+	// spellings clients still send are translated first (see parseSortParam).
 	if queryParams.Has("sort") {
 		for _, raw := range queryParams["sort"] {
-			field := raw
-			desc := false
-			if strings.HasPrefix(field, "-") {
-				desc = true
-				field = field[1:]
+			field, desc := parseSortParam(raw)
+			if field == "" {
+				continue
 			}
 			searchRequest.SortBy = append(searchRequest.SortBy, &resourcepb.ResourceSearchRequest_Sort{
 				Field: field,
@@ -1049,6 +1073,37 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 	return searchRequest, nil
 }
 
+// uiSortAliases maps a sort value the Grafana UI has used to the field the index
+// actually holds it under. Grafana keeps the selected sort in browser storage
+// and in the page URL, so these names keep arriving from browsers and bookmarks
+// long after the UI itself stopped sending them.
+var uiSortAliases = map[string]string{
+	"name_sort": resource.SEARCH_FIELD_TITLE,
+}
+
+// parseSortParam turns one "sort" query parameter into the index field to sort on
+// and whether the order is descending.
+//
+// Three spellings reach this endpoint. An index field name, optionally prefixed
+// with "-" for descending, such as "-views_total". A name the UI used for a field
+// the index calls something else, such as "name_sort". And a sort name of the
+// older /api/search endpoint, which carries its direction as a suffix, such as
+// "viewed-recently-desc". The last two name no index field, so without
+// translation they sort on nothing and results come back in an arbitrary order.
+func parseSortParam(raw string) (string, bool) {
+	field, desc := strings.CutPrefix(raw, "-")
+	if field == "" {
+		return "", false
+	}
+	if alias, ok := uiSortAliases[field]; ok {
+		return alias, desc
+	}
+	if mapped, mappedDesc, err := searchsort.ParseSortName(field); err == nil && mapped != "" {
+		return mapped, mappedDesc
+	}
+	return field, desc
+}
+
 func (s *SearchHandler) write(w http.ResponseWriter, obj any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(obj)
@@ -1106,10 +1161,11 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 
 	dashboardSearchRequest := &resourcepb.ResourceSearchRequest{
-		Federated:  []*resourcepb.ResourceKey{folderKey},
-		Fields:     []string{"folder"},
-		Limit:      int64(len(dashboardUids)),
-		Permission: int64(requestedPermission),
+		Federated:    []*resourcepb.ResourceKey{folderKey},
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(dashboardUids)),
+		Permission:   int64(requestedPermission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: key,
 			Fields: []*resourcepb.Requirement{{
@@ -1121,18 +1177,15 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// get all dashboards user has access to, along with their parent folder uid
 	dashboardResult, err := s.client.Search(ctx, dashboardSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(dashboardResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
-	folderUidIdx := -1
-	for i, col := range dashboardResult.Results.Columns {
-		if col.Name == "folder" {
-			folderUidIdx = i
-		}
+	dashboardResults, err := dashboardsearch.ParseResults(dashboardResult, 0)
+	if err != nil {
+		return sharedDashboards, err
 	}
-
-	if folderUidIdx == -1 {
+	if !searchResponseHasField(dashboardResult, resource.SEARCH_FIELD_FOLDER) {
 		return sharedDashboards, fmt.Errorf("error retrieving folder information")
 	}
 
@@ -1140,17 +1193,17 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	// Root-parented dashboards have no parent folder to check, and the apistore may report root
 	// as either the legacy "" or the canonical "general" sentinel, so skip both.
 	allFolders := make([]string, 0)
-	for _, dash := range dashboardResult.Results.Rows {
-		folderUid := string(dash.Cells[folderUidIdx])
-		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(allFolders, folderUid) {
-			allFolders = append(allFolders, folderUid)
+	for _, dash := range dashboardResults.Hits {
+		if !foldermodel.IsRootFolderUID(dash.Folder) && !slices.Contains(allFolders, dash.Folder) {
+			allFolders = append(allFolders, dash.Folder)
 		}
 	}
 
 	folderSearchRequest := &resourcepb.ResourceSearchRequest{
-		Fields:     []string{"folder"},
-		Limit:      int64(len(allFolders)),
-		Permission: int64(requestedPermission),
+		Fields:       []string{resource.SEARCH_FIELD_FOLDER},
+		Limit:        int64(len(allFolders)),
+		Permission:   int64(requestedPermission),
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: folderKey,
 			Fields: []*resourcepb.Requirement{{
@@ -1162,23 +1215,36 @@ func (s *SearchHandler) getDashboardsUIDsSharedWithUser(ctx context.Context, use
 	}
 	// only folders the user has access to will be returned here
 	foldersResult, err := s.client.Search(ctx, folderSearchRequest)
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(foldersResult.GetError(), err); err != nil {
 		return sharedDashboards, err
 	}
 
-	foldersWithAccess := make([]string, 0, len(foldersResult.Results.Rows))
-	for _, fold := range foldersResult.Results.Rows {
-		foldersWithAccess = append(foldersWithAccess, fold.Key.Name)
+	folderResults, err := dashboardsearch.ParseResults(foldersResult, 0)
+	if err != nil {
+		return sharedDashboards, err
+	}
+	foldersWithAccess := make([]string, 0, len(folderResults.Hits))
+	for _, fold := range folderResults.Hits {
+		foldersWithAccess = append(foldersWithAccess, fold.Name)
 	}
 
 	// add to sharedDashboards dashboards user has access to, but does NOT have access to it's parent folder.
 	// Root-parented dashboards (reported as "" or "general") have no parent folder, so skip both sentinels.
-	for _, dash := range dashboardResult.Results.Rows {
-		dashboardUid := dash.Key.Name
-		folderUid := string(dash.Cells[folderUidIdx])
-		if !foldermodel.IsRootFolderUID(folderUid) && !slices.Contains(foldersWithAccess, folderUid) {
-			sharedDashboards = append(sharedDashboards, dashboardUid)
+	for _, dash := range dashboardResults.Hits {
+		if !foldermodel.IsRootFolderUID(dash.Folder) && !slices.Contains(foldersWithAccess, dash.Folder) {
+			sharedDashboards = append(sharedDashboards, dash.Name)
 		}
 	}
 	return sharedDashboards, nil
+}
+
+func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name string) bool {
+	if response.GetResultFormat() == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+		return slices.ContainsFunc(response.GetFields(), func(field *resourcepb.ResourceSearchField) bool {
+			return field.GetName() == name
+		})
+	}
+	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
+		return field.GetName() == name
+	})
 }

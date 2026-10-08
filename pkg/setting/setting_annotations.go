@@ -12,6 +12,7 @@ type AnnotationAppPlatformSettings struct {
 	Enabled      bool
 	StoreBackend string        // "legacy-sql" (default), "grpc", or "postgres"
 	RetentionTTL time.Duration // Retention TTL for annotations
+	MaxAge       time.Duration // Maximum age allowed when validating annotation times.
 
 	GRPCAddress       string // gRPC server address (e.g., "localhost:9090")
 	GRPCUseTLS        bool   // Enable TLS for gRPC connection (default: false)
@@ -34,6 +35,11 @@ type AnnotationAppPlatformSettings struct {
 	// annotation. 0 means no scopes are allowed. Negative values are
 	// rejected at load time. Default 5.
 	MaxScopeCount int
+
+	// FolderCacheEnabled controls whether resolved dashboard->folder mappings are cached.
+	FolderCacheEnabled bool
+	// FolderCacheTTL is how long a resolved dashboard->folder mapping is cached.
+	FolderCacheTTL time.Duration
 
 	// APIMigrationPhase controls legacy API proxy behavior.
 	// Values: "off" (default), "proxy-writes", "proxy-all".
@@ -65,14 +71,17 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 	appPlatformSection := cfg.Raw.Section("annotations.app_platform")
 
 	settings := AnnotationAppPlatformSettings{
-		Enabled:           appPlatformSection.Key("enabled").MustBool(false),
-		StoreBackend:      appPlatformSection.Key("store_backend").MustString("legacy-sql"),
-		RetentionTTL:      appPlatformSection.Key("retention_ttl").MustDuration(0),
-		EnableLegacyID:    appPlatformSection.Key("enable_legacy_id").MustBool(false),
-		MaxScopeCount:     appPlatformSection.Key("max_scope_count").MustInt(5),
-		APIMigrationPhase: appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
-		APIServerURL:      appPlatformSection.Key("api_server_url").MustString(""),
-		TLSClientConfig:   loadTLSClientConfig(cfg),
+		Enabled:            appPlatformSection.Key("enabled").MustBool(false),
+		StoreBackend:       appPlatformSection.Key("store_backend").MustString("legacy-sql"),
+		RetentionTTL:       appPlatformSection.Key("retention_ttl").MustDuration(0),
+		MaxAge:             appPlatformSection.Key("max_age").MustDuration(0),
+		EnableLegacyID:     appPlatformSection.Key("enable_legacy_id").MustBool(false),
+		MaxScopeCount:      appPlatformSection.Key("max_scope_count").MustInt(5),
+		FolderCacheEnabled: appPlatformSection.Key("folder_cache_enabled").MustBool(true),
+		FolderCacheTTL:     appPlatformSection.Key("folder_cache_ttl").MustDuration(30 * time.Second),
+		APIMigrationPhase:  appPlatformSection.Key("api_migration_phase").MustString(AnnotationAPIMigrationPhaseOff),
+		APIServerURL:       appPlatformSection.Key("api_server_url").MustString(""),
+		TLSClientConfig:    loadTLSClientConfig(cfg),
 
 		GRPCAddress:       appPlatformSection.Key("grpc_address").MustString("localhost:9090"),
 		GRPCUseTLS:        appPlatformSection.Key("grpc_use_tls").MustBool(false),
@@ -92,8 +101,16 @@ func loadAnnotationAppPlatformSettings(cfg *Cfg) (AnnotationAppPlatformSettings,
 		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_scope_count] must not be negative")
 	}
 
+	if settings.FolderCacheEnabled && settings.FolderCacheTTL <= 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.folder_cache_ttl] must be positive when folder_cache_enabled is true")
+	}
+
 	if settings.RetentionTTL < 0 {
 		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.retention_ttl] must not be negative")
+	}
+
+	if settings.MaxAge < 0 {
+		return AnnotationAppPlatformSettings{}, fmt.Errorf("[annotations.app_platform.max_age] must not be negative")
 	}
 
 	return settings, nil

@@ -607,6 +607,16 @@ Remove one or more panels by element name.
 
 If some elements fail while others succeed, `success` is `true` and partial failures are reported in `warnings`.
 
+### `GET_PANEL_ERRORS`
+
+Read current errors on the open dashboard without returning panel specifications, queries, layout, or result data. This read-only command does not run queries, activate panels, or enter edit mode.
+
+```json
+{ "type": "GET_PANEL_ERRORS", "payload": { "elements": ["panel-1", "panel-5"] } }
+```
+
+Omit `elements` to inspect all elements. The response includes `errors` (element name, title, and structured query/plugin/error-notice messages), separate `noDataPanels`, `panelsChecked`, and `uncheckedPanels` with reasons `loading`, `status_unavailable`, or `not_found`. Loading panels do not report stale errors. Empty error lists do not establish that unchecked panels are healthy; render those panels and check again. Callers should detect command availability on older Grafana versions.
+
 ### `LIST_PANELS`
 
 List elements on the dashboard (panels, library panels, etc.) as an array of `{ element, layoutItem }` entries. Same shape as write command responses, with the element name embedded in `layoutItem.spec.element.name`.
@@ -1020,6 +1030,108 @@ Get dashboard identity/folder metadata plus every dashboard-level setting that `
   "changes": []
 }
 ```
+
+### `GET_METADATA_ANNOTATIONS`
+
+Read allowlisted keys on `metadata.annotations`. This is **not** the dashboard spec and is **not** a query annotation layer (`LIST_ANNOTATIONS`). `GET_SPEC` / `APPLY_SPEC` do not include these annotations.
+
+Today the only readable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Requires the `grafana.dashboardGlobalVariables` feature toggle. Write the same key with `UPDATE_METADATA_ANNOTATIONS`.
+
+**Request:**
+
+```json
+{
+  "type": "GET_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": ["grafana.app/useCrossDashboardVariables"]
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["env"] }
+    }
+  },
+  "changes": []
+}
+```
+
+The value is `null` when the annotation is missing or invalid (the dashboard is not opted in). Each scope is `"all"`, `"none"`, or a name array.
+
+### `UPDATE_METADATA_ANNOTATIONS`
+
+Write allowlisted keys on `metadata.annotations`. This is **not** the dashboard spec and is **not** a query annotation layer (`ADD_ANNOTATION` / `UPDATE_ANNOTATION` / `LIST_ANNOTATIONS`). `GET_SPEC` / `APPLY_SPEC` do not include these annotations.
+
+Today the only writable key is `grafana.app/useCrossDashboardVariables` (cross-dashboard / global and folder variables). Unknown keys are rejected. Use `GET_METADATA_ANNOTATIONS` to read the current value.
+
+Requires edit permissions, the `grafana.dashboardGlobalVariables` toggle, and a dashboard that is not a locked managed resource. Enters edit mode and re-injects predefined variables.
+
+**Request:**
+
+```json
+{
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["cluster"] }
+    }
+  }
+}
+```
+
+**Clear (delete the annotation):**
+
+```json
+{
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "none", "folder": "none" }
+    }
+  }
+}
+```
+
+`null` is the same as both scopes `"none"`:
+
+```json
+{
+  "type": "UPDATE_METADATA_ANNOTATIONS",
+  "payload": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": null
+    }
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "data": {
+    "annotations": {
+      "grafana.app/useCrossDashboardVariables": { "global": "all", "folder": ["cluster"] }
+    }
+  },
+  "changes": [
+    {
+      "path": "/metadata/annotations/grafana.app/useCrossDashboardVariables",
+      "previousValue": null,
+      "newValue": "{\"global\":\"all\",\"folder\":[\"cluster\"]}"
+    }
+  ]
+}
+```
+
+Each scope is `"all"`, `"none"`, or a name array. `"all"` auto-includes new variables in that scope; a name array does not. After a clear, the response value is `null`.
 
 ---
 
