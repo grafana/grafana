@@ -26,7 +26,7 @@ import {
   useTableFrameScope,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
-import { supportsColumnManagement, withRefreshedTableCapabilities } from 'app/features/table/tableCapabilities';
+import { supportsColumnManagement, withAdHocTransformCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -109,7 +109,7 @@ export function TablePanel(props: Props) {
   const main = useMemo(
     () =>
       tableRefreshNewFeaturesEnabled && rawMain
-        ? withRefreshedTableCapabilities(rawMain, Boolean(adHocColumns))
+        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns))
         : rawMain,
     [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
   );
