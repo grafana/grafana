@@ -515,6 +515,7 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 	))
 	return func(yield func(DataObj, error) bool) {
 		defer span.End()
+		stats := listBodyStatsFromContext(ctx)
 		// Validate all keys first
 		for _, key := range keys {
 			if err := validateDataKey(key); err != nil {
@@ -537,6 +538,9 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 				keyMap[strKey] = key
 			}
 
+			if stats != nil {
+				stats.bodyKeysRequested += len(stringKeys)
+			}
 			// Call kv.BatchGet for this batch
 			for kv, err := range d.kv.BatchGet(ctx, dataSection, stringKeys) {
 				if err != nil {
@@ -551,6 +555,9 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 					return
 				}
 
+				if stats != nil {
+					stats.bodiesConsumed++
+				}
 				// Yield the DataObj
 				if !yield(DataObj{
 					Key:   dataKey,
