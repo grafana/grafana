@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
-import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
+import { ReadOnlyBadge } from 'app/core/components/ReadOnlyBadge/ReadOnlyBadge';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { getIconForItem } from 'app/features/search/service/utils';
 
