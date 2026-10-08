@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"io"
 	"net"
 	"strconv"
@@ -93,7 +94,7 @@ func TestBlobClientStreamingRoundTrip(t *testing.T) {
 					digest, received := md5.New(), 0
 					for {
 						chunk, err := stream.Recv()
-						if err == io.EOF {
+						if errors.Is(err, io.EOF) {
 							break
 						}
 						if err != nil {

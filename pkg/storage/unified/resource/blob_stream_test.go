@@ -194,6 +194,32 @@ func TestBlobStreamLimits(t *testing.T) {
 	require.Equal(t, codes.ResourceExhausted, status.Code(err))
 }
 
+func TestBlobStreamLocalClient(t *testing.T) {
+	srv, _, unary := newBlobAuthzTestServer(t, nil)
+	srv.blob = &testStreamingBlob{stubBlobSupport: unary}
+	client := NewLocalResourceClient(srv)
+	ctx := ctxWithUserInNs("default")
+	key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "local-stream"}
+
+	put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("streamed")})
+	require.NoError(t, err)
+	require.Equal(t, "stream-uid", put.Uid)
+	require.False(t, unary.putReached)
+
+	created, err := srv.Create(ctx, &resourcepb.CreateRequest{
+		Key:   key,
+		Value: []byte(`{"apiVersion":"playlist.grafana.app/v0alpha1","kind":"Playlist","metadata":{"name":"local-stream","namespace":"default"},"spec":{"title":"test","interval":"5m","items":[]}}`),
+	})
+	require.NoError(t, err)
+	require.Nil(t, created.Error)
+
+	get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: put.Uid, MustProxyBytes: true})
+	require.NoError(t, err)
+	require.Equal(t, "application/octet-stream", get.ContentType)
+	require.Equal(t, strings.Repeat("x", 64<<10), string(get.Value))
+	require.False(t, unary.getReached)
+}
+
 func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 	srv, ac, _ := newBlobAuthzTestServer(t, nil)
 	srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
