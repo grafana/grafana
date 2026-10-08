@@ -3078,6 +3078,15 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "reporting.legacySettingServiceUsesK8SClient",
+			Description:     "Redirect legacy report setting service to use the Kubernetes client wrapper",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "reporting.redirectReportsToK8SApi",
 			Description:     "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
 			Stage:           FeatureStageExperimental,
