@@ -85,7 +85,7 @@ func Test_Validate(t *testing.T) {
 			inhibitRule: func() InhibitionRule {
 				tr := testRule()
 				tr.UID = "some-really-long-inhibition-rule-name-001"
-				tr.Provenance = models.ProvenanceConvertedPrometheus
+				tr.SetImported()
 				return tr
 			}(),
 			expErr: nil,
@@ -95,7 +95,7 @@ func Test_Validate(t *testing.T) {
 			inhibitRule: func() InhibitionRule {
 				tr := testRule()
 				tr.UID = "inhibition-rule-1"
-				tr.Provenance = models.ProvenanceNone
+				tr.Manager = models.ProvenanceToManagerProperties(models.ProvenanceNone)
 				return tr
 			}(),
 		},
@@ -137,26 +137,26 @@ func TestInhibitionRuleManagerStorage(t *testing.T) {
 	t.Run("a specific manager is stored inline and read back", func(t *testing.T) {
 		terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
 		rule := newRule()
-		rule.SetManager(terraform)
+		rule.Manager = terraform
 
 		stored, read := roundTrip(t, rule)
 
 		assert.Equal(t, string(utils.ManagerKindTerraform), stored.ManagerKind)
 		assert.Equal(t, "tf-id", stored.ManagerIdentity)
 		assert.Equal(t, terraform, read.Manager)
-		assert.Equal(t, models.ProvenanceAPI, read.Provenance)
+		assert.Equal(t, models.ProvenanceAPI, read.Provenance())
 		assert.Equal(t, rule.Version, read.Version, "the manager must not change the version")
 	})
 
 	t.Run("a manager that the provenance expresses is not stored", func(t *testing.T) {
 		rule := newRule()
-		rule.SetManager(models.ProvenanceToManagerProperties(models.ProvenanceAPI))
+		rule.Manager = models.ProvenanceToManagerProperties(models.ProvenanceAPI)
 
 		stored, read := roundTrip(t, rule)
 
 		assert.Empty(t, stored.ManagerKind)
 		assert.Empty(t, stored.ManagerIdentity)
-		assert.Equal(t, models.ProvenanceAPI, read.Provenance)
+		assert.Equal(t, models.ProvenanceAPI, read.Provenance())
 		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceAPI), read.Manager)
 	})
 
@@ -166,7 +166,7 @@ func TestInhibitionRuleManagerStorage(t *testing.T) {
 
 		read := InhibitionRuleToModel(decoded)
 
-		assert.Equal(t, models.ProvenanceFile, read.Provenance)
+		assert.Equal(t, models.ProvenanceFile, read.Provenance())
 		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), read.Manager)
 		assert.Equal(t, ResourceUID("old-rule"), read.UID)
 	})

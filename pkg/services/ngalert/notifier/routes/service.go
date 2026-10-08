@@ -140,15 +140,11 @@ func (nps *Service) GetManagedRoute(ctx context.Context, orgID int64, name strin
 	// They are not stored in the provenance store, so we must not overwrite with a store lookup
 	// which would return ProvenanceNone and cause a discrepancy with the list view.
 	if route.Origin != models.ResourceOriginImported {
-		provenance, err := nps.provenanceStore.GetProvenance(ctx, route, orgID)
-		if err != nil {
-			return v1.ManagedRoute{}, err
-		}
 		manager, err := nps.provenanceStore.GetManagerProperties(ctx, route, orgID)
 		if err != nil {
 			return v1.ManagedRoute{}, err
 		}
-		route.AssignManager(provenance, manager)
+		route.Manager = manager
 	}
 
 	return *route, nil
@@ -166,10 +162,6 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 		return nil, err
 	}
 
-	provenances, err := nps.provenanceStore.GetProvenances(ctx, orgID, (&v1.ManagedRoute{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
 	managers, err := nps.provenanceStore.GetAllManagerProperties(ctx, orgID, (&v1.ManagedRoute{}).ResourceType())
 	if err != nil {
 		return nil, err
@@ -177,12 +169,8 @@ func (nps *Service) GetManagedRoutes(ctx context.Context, orgID int64, user iden
 
 	managedRoutes := rev.GetManagedRoutes()
 	for _, mr := range managedRoutes {
-		provenance, ok := provenances[mr.ResourceID()]
-		if !ok {
-			provenance = models.ProvenanceNone
-		}
 		// ResourceID() is "" for the default tree (legacy root route key), not its UID.
-		mr.AssignManager(provenance, managers[mr.ResourceID()])
+		mr.Manager = managers[mr.ResourceID()]
 	}
 
 	if nps.includeImported() {
@@ -273,7 +261,7 @@ func (nps *Service) UpdateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	updated.SetManager(manager)
+	updated.Manager = manager
 
 	err = nps.xact.InTransaction(ctx, func(ctx context.Context) error {
 		if err := nps.configStore.Save(ctx, revision, orgID); err != nil {
@@ -407,7 +395,7 @@ func (nps *Service) CreateManagedRoute(ctx context.Context, orgID int64, name st
 	if err != nil {
 		return nil, err
 	}
-	created.SetManager(manager)
+	created.Manager = manager
 
 	// Check if this conflicts with an imported config.
 	if nps.includeImported() {

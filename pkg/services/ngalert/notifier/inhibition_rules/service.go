@@ -88,14 +88,12 @@ func (svc *Service) GetInhibitionRule(ctx context.Context, uid v1.ResourceUID, o
 	return result, nil
 }
 
-// CreateInhibitionRule adds a new inhibition rule. The rule's Manager is stored with it; when it is
-// unknown, it is derived from the rule's Provenance.
+// CreateInhibitionRule adds a new inhibition rule. The rule's Manager is stored with it.
 func (svc *Service) CreateInhibitionRule(ctx context.Context, rule v1.InhibitionRule, orgID int64) (v1.InhibitionRule, error) {
 	// Validate the rule
 	if err := rule.Validate(); err != nil {
 		return v1.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
-	rule.NormalizeManager()
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -106,7 +104,7 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule v1.Inhibition
 		return v1.InhibitionRule{}, models.ErrInhibitionRuleExists.Errorf("")
 	}
 
-	if err := svc.validator(ctx, models.ProvenanceNone, rule.Provenance); err != nil {
+	if err := svc.validator(ctx, models.ProvenanceNone, rule.Provenance()); err != nil {
 		return v1.InhibitionRule{}, err
 	}
 
@@ -119,13 +117,11 @@ func (svc *Service) CreateInhibitionRule(ctx context.Context, rule v1.Inhibition
 	return created, nil
 }
 
-// UpdateInhibitionRule replaces an inhibition rule. The rule's Manager is stored with it; when it is
-// unknown, it is derived from the rule's Provenance.
+// UpdateInhibitionRule replaces an inhibition rule. The rule's Manager is stored with it.
 func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule v1.InhibitionRule, version string, orgID int64) (v1.InhibitionRule, error) {
 	if err := rule.Validate(); err != nil {
 		return v1.InhibitionRule{}, models.MakeErrInhibitionRuleInvalid(err)
 	}
-	rule.NormalizeManager()
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -139,12 +135,12 @@ func (svc *Service) UpdateInhibitionRule(ctx context.Context, rule v1.Inhibition
 		return v1.InhibitionRule{}, models.ErrInhibitionRuleNotFound.Errorf("")
 	}
 
-	existingProv := existing.Provenance
+	existingProv := existing.Provenance()
 	if existingProv == models.ProvenanceConvertedPrometheus {
 		return v1.InhibitionRule{}, models.MakeErrInhibitionRuleOrigin(string(existing.UID), "update")
 	}
 
-	prov := rule.Provenance
+	prov := rule.Provenance()
 	if err := svc.validator(ctx, existingProv, prov); err != nil {
 		return v1.InhibitionRule{}, err
 	}
@@ -177,7 +173,7 @@ func (svc *Service) DeleteInhibitionRule(ctx context.Context, uid v1.ResourceUID
 		return nil
 	}
 
-	existingProv := existing.Provenance
+	existingProv := existing.Provenance()
 	if existingProv == models.ProvenanceConvertedPrometheus {
 		return models.MakeErrInhibitionRuleOrigin(string(existing.UID), "delete")
 	}

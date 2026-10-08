@@ -23,7 +23,7 @@ func (t *TemplateV1) mapToModel() Template {
 			Content: t.Template.Template,
 			Kind:    v1.TemplateKindGrafana,
 			ResourceMetadata: v1.ResourceMetadata{
-				Provenance: alerting_models.ProvenanceFile,
+				Manager: alerting_models.ProvenanceToManagerProperties(alerting_models.ProvenanceFile),
 			},
 		},
 		OrgID: orgID,

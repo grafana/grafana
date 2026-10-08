@@ -75,7 +75,7 @@ func TestIntegrationReceiverService_GetReceiver(t *testing.T) {
 			require.NoError(t, err)
 			assert.Equal(t, models.ResourceOriginImported, recv.Origin)
 			assert.Equal(t, "receiver1", recv.Name)
-			assert.Equal(t, models.ProvenanceConvertedPrometheus, recv.Provenance)
+			assert.Equal(t, models.ProvenanceConvertedPrometheus, recv.Provenance())
 
 			require.Len(t, recv.Integrations, 2)
 		})
@@ -714,8 +714,6 @@ func TestReceiverService_Create(t *testing.T) {
 			}
 
 			tc.expectedCreate.Version = receiverFingerprintCompat(t, &tc.expectedCreate)
-			// Without an explicit manager, the service derives it from the provenance.
-			tc.expectedCreate.NormalizeManager()
 
 			assert.Equal(t, tc.expectedCreate, *created)
 
@@ -1018,7 +1016,7 @@ func TestReceiverService_Update(t *testing.T) {
 
 				for _, integration := range created.Integrations {
 					target := definitions.EmbeddedContactPoint{UID: integration.UID}
-					err = sut.provisioningStore.SetProvenance(context.Background(), &target, tc.user.GetOrgID(), created.Provenance)
+					err = sut.provisioningStore.SetProvenance(context.Background(), &target, tc.user.GetOrgID(), created.Provenance())
 					require.NoError(t, err)
 				}
 
@@ -1060,8 +1058,6 @@ func TestReceiverService_Update(t *testing.T) {
 			}
 
 			tc.expectedUpdate.Version = receiverFingerprintCompat(t, &tc.expectedUpdate)
-			// Without an explicit manager, the service derives it from the provenance.
-			tc.expectedUpdate.NormalizeManager()
 
 			assert.Equal(t, tc.expectedUpdate, *updated)
 
@@ -2091,13 +2087,6 @@ func TestReceiverService_Manager(t *testing.T) {
 	provStore.GetAllManagerPropertiesFunc = func(_ context.Context, _ int64, _ string) (map[string]utils.ManagerProperties, error) {
 		return stored, nil
 	}
-	provStore.GetProvenancesFunc = func(_ context.Context, _ int64, _ string) (map[string]models.Provenance, error) {
-		result := make(map[string]models.Provenance, len(stored))
-		for k, m := range stored {
-			result[k] = models.ManagerPropertiesToProvenance(m)
-		}
-		return result, nil
-	}
 
 	slack := models.IntegrationGen(models.IntegrationMuts.WithName("managed"), models.IntegrationMuts.WithValidConfig("slack"))()
 	email := models.IntegrationGen(models.IntegrationMuts.WithName("managed"), models.IntegrationMuts.WithValidConfig("email"))()
@@ -2107,14 +2096,14 @@ func TestReceiverService_Manager(t *testing.T) {
 	created, err := sut.CreateReceiver(context.Background(), &receiver, writer.GetOrgID(), writer)
 	require.NoError(t, err)
 	assert.Equal(t, terraform, created.Manager)
-	assert.Equal(t, models.ProvenanceAPI, created.Provenance)
+	assert.Equal(t, models.ProvenanceAPI, created.Provenance())
 	// The manager is persisted on every integration.
 	assert.Equal(t, map[string]utils.ManagerProperties{slack.UID: terraform, email.UID: terraform}, stored)
 
 	got, err := sut.GetReceiver(context.Background(), created.UID, false, writer)
 	require.NoError(t, err)
 	assert.Equal(t, terraform, got.Manager)
-	assert.Equal(t, models.ProvenanceAPI, got.Provenance)
+	assert.Equal(t, models.ProvenanceAPI, got.Provenance())
 
 	list, err := sut.GetReceivers(context.Background(), models.GetReceiversQuery{OrgID: writer.GetOrgID(), Names: []string{"managed"}}, writer)
 	require.NoError(t, err)

@@ -56,8 +56,8 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 
 	mr := &v1.ManagedRoute{
 		ResourceMetadata: v1.ResourceMetadata{
-			UID:        "managed",
-			Provenance: models.Provenance("test"),
+			UID:     "managed",
+			Manager: models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 		},
 		Receiver:       "receiver",
 		GroupBy:        []string{"alertname", "cluster"},
@@ -86,7 +86,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 	assert.Equal(t, "managed", route.ObjectMatchers[0].Value)
 
 	// Provenance propagated
-	assert.EqualValues(t, definition.Provenance("test"), route.Provenance)
+	assert.EqualValues(t, definition.Provenance(models.ProvenanceAPI), route.Provenance)
 }
 
 func TestWithManagedRoutes(t *testing.T) {

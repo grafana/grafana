@@ -150,9 +150,9 @@ func TestCreateReceiver(t *testing.T) {
 		{
 			name: "should add the receiver to configuration and set integrations UID",
 			receiver: &models.Receiver{
-				UID:        "some-uid",
-				Name:       "receiver2",
-				Provenance: "test",
+				UID:     "some-uid",
+				Name:    "receiver2",
+				Manager: models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 				Integrations: []*models.Integration{
 					{
 						Config:   cfgSchema,
@@ -174,7 +174,7 @@ func TestCreateReceiver(t *testing.T) {
 				assert.Equal(t, models.ResourceOriginGrafana, receiver.Origin)
 				assert.Equal(t, NameToUid("receiver2"), receiver.UID)
 				assert.Equal(t, postable.GrafanaManagedReceivers[0].UID, receiver.Integrations[0].UID)
-				assert.EqualValues(t, "test", receiver.Provenance)
+				assert.Equal(t, models.ProvenanceAPI, receiver.Provenance())
 			},
 		},
 	}
@@ -245,9 +245,9 @@ func TestUpdateReceiver(t *testing.T) {
 		{
 			name: "should update the existing receiver",
 			receiver: &models.Receiver{
-				UID:        NameToUid("receiver1"),
-				Name:       "receiver-new",
-				Provenance: "test",
+				UID:     NameToUid("receiver1"),
+				Name:    "receiver-new",
+				Manager: models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 				Integrations: []*models.Integration{
 					{
 						Config:   cfgSchema,
@@ -270,7 +270,7 @@ func TestUpdateReceiver(t *testing.T) {
 
 				assert.Equal(t, postable.GrafanaManagedReceivers[0].UID, receiver.Integrations[0].UID)
 				assert.Equal(t, NameToUid("receiver-new"), receiver.UID)
-				assert.EqualValues(t, "test", receiver.Provenance)
+				assert.Equal(t, models.ProvenanceAPI, receiver.Provenance())
 			},
 		},
 	}
@@ -302,11 +302,11 @@ func TestGetReceiver(t *testing.T) {
 
 	t.Run("should return receiver if exists", func(t *testing.T) {
 		expected := &models.Receiver{
-			UID:        NameToUid("receiver1"),
-			Name:       "receiver1",
-			Provenance: models.Provenance("test"),
-			Origin:     models.ResourceOriginGrafana,
-			Version:    "665b906a0c3b3676",
+			UID:     NameToUid("receiver1"),
+			Name:    "receiver1",
+			Manager: models.ProvenanceToManagerProperties(models.ProvenanceAPI),
+			Origin:  models.ResourceOriginGrafana,
+			Version: "665b906a0c3b3676",
 			Integrations: []*models.Integration{
 				{
 					UID:            "integration-uid-1",
@@ -317,8 +317,8 @@ func TestGetReceiver(t *testing.T) {
 			},
 		}
 		rev := getConfigRevisionForTest()
-		rev.AssignReceiverProvenances(map[string]models.Provenance{
-			"integration-uid-1": "test",
+		rev.AssignReceiverManagers(map[string]utils.ManagerProperties{
+			"integration-uid-1": models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 		})
 		result, err := rev.GetReceiver(NameToUid("receiver1"))
 		require.NoError(t, err)
@@ -330,9 +330,9 @@ func TestGetReceivers(t *testing.T) {
 	rev := getConfigRevisionForTest()
 
 	t.Run("should return all receivers with correct provenance", func(t *testing.T) {
-		rev.AssignReceiverProvenances(map[string]models.Provenance{
-			"integration-uid-1": "test",
-			"integration-uid-2": "some",
+		rev.AssignReceiverManagers(map[string]utils.ManagerProperties{
+			"integration-uid-1": models.ProvenanceToManagerProperties(models.ProvenanceAPI),
+			"integration-uid-2": models.ProvenanceToManagerProperties(models.ProvenanceFile),
 		})
 		receivers, err := rev.GetReceivers(nil)
 		require.NoError(t, err)
@@ -341,11 +341,11 @@ func TestGetReceivers(t *testing.T) {
 			assert.Equalf(t, NameToUid(r.Name), r.UID, "receiver UID should be function of receiver name")
 			assert.Equal(t, r.Origin, models.ResourceOriginGrafana)
 			if r.Name == "receiver1" {
-				assert.EqualValues(t, "test", r.Provenance)
+				assert.Equal(t, models.ProvenanceAPI, r.Provenance())
 			} else if r.Name == "dupe-receiver" && r.Integrations[0].UID == "integration-uid-2" {
-				assert.EqualValues(t, "some", r.Provenance)
+				assert.Equal(t, models.ProvenanceFile, r.Provenance())
 			} else {
-				assert.Empty(t, r.Provenance)
+				assert.Empty(t, r.Provenance())
 			}
 		}
 	})
@@ -367,10 +367,6 @@ func TestAssignReceiverManagers(t *testing.T) {
 
 	t.Run("should assign the manager of the first integration with a known manager", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
-		rev.AssignReceiverProvenances(map[string]models.Provenance{
-			"integration-uid-1": models.ProvenanceAPI,
-			"integration-uid-3": models.ProvenanceAPI,
-		})
 		rev.AssignReceiverManagers(map[string]utils.ManagerProperties{
 			"integration-uid-1": models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 			"integration-uid-2": {}, // unknown kind is skipped
@@ -378,22 +374,29 @@ func TestAssignReceiverManagers(t *testing.T) {
 		})
 
 		assert.Equal(t, utils.ManagerProperties{Kind: utils.ManagerKindClassicAPI}, rev.Config.Receivers[v1.ReceiverUID("receiver1")].Manager) //nolint:staticcheck
+		assert.Equal(t, models.ProvenanceAPI, rev.Config.Receivers[v1.ReceiverUID("receiver1")].Provenance())
 		assert.Equal(t, terraform, rev.Config.Receivers[v1.ReceiverUID("dupe-receiver")].Manager)
+		assert.Equal(t, models.ProvenanceAPI, rev.Config.Receivers[v1.ReceiverUID("dupe-receiver")].Provenance())
 
 		// The manager is carried over to the domain receiver.
 		r, err := rev.GetReceiver(NameToUid("dupe-receiver"))
 		require.NoError(t, err)
 		assert.Equal(t, terraform, r.Manager)
-		assert.Equal(t, models.ProvenanceAPI, r.Provenance)
+		assert.Equal(t, models.ProvenanceAPI, r.Provenance())
 	})
 
-	t.Run("should derive the manager from the provenance when none is stored", func(t *testing.T) {
+	t.Run("receivers without a stored manager have no manager", func(t *testing.T) {
 		rev := getConfigRevisionForTest()
-		rev.AssignReceiverProvenances(map[string]models.Provenance{"integration-uid-1": models.ProvenanceFile})
+		stale := rev.Config.Receivers[v1.ReceiverUID("receiver1")]
+		stale.Manager = models.ProvenanceToManagerProperties(models.ProvenanceFile)
+		rev.Config.Receivers[v1.ReceiverUID("receiver1")] = stale
+
 		rev.AssignReceiverManagers(nil)
 
-		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), rev.Config.Receivers[v1.ReceiverUID("receiver1")].Manager)
-		assert.Equal(t, utils.ManagerProperties{}, rev.Config.Receivers[v1.ReceiverUID("dupe-receiver")].Manager)
+		for _, uid := range []v1.ResourceUID{v1.ReceiverUID("receiver1"), v1.ReceiverUID("dupe-receiver")} {
+			assert.Equal(t, utils.ManagerProperties{}, rev.Config.Receivers[uid].Manager)
+			assert.Equal(t, models.ProvenanceNone, rev.Config.Receivers[uid].Provenance())
+		}
 	})
 
 	t.Run("imported receivers get the converted-prometheus manager", func(t *testing.T) {

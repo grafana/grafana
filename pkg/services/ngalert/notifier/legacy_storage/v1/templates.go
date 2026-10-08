@@ -81,10 +81,9 @@ func NewTemplateGroup(uid ResourceUID, name, content string, kind TemplateKind, 
 	}
 	return TemplateGroup{
 		ResourceMetadata: ResourceMetadata{
-			UID:        uid,
-			Version:    calculateTemplateFingerprint(content),
-			Provenance: provenance,
-			Manager:    models.ProvenanceToManagerProperties(provenance),
+			UID:     uid,
+			Version: calculateTemplateFingerprint(content),
+			Manager: models.ProvenanceToManagerProperties(provenance),
 		},
 		Title:   name,
 		Content: content,

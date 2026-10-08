@@ -240,7 +240,9 @@ func TimeIntervals(
 			renames[curName] = newName
 			usedNames[newName] = idx
 			// Rebuild rather than assigning the title so UID and Version are recomputed from the new name.
-			interval = v1.NewTimeInterval(newName, interval.TimeIntervals, interval.Provenance)
+			renamed := v1.NewTimeInterval(newName, interval.TimeIntervals, interval.Provenance())
+			renamed.Manager = interval.Manager
+			interval = renamed
 		}
 		added = append(added, interval.UID)
 		result[interval.UID] = interval
@@ -310,7 +312,9 @@ func Receivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, incoming []*v
 		if i, ok := usedNames[cpy.Name]; ok && i != idx {
 			newName := getUniqueName(cpy.Name, dedupSuffix, usedNames)
 			renames[cpy.Name] = newName
-			cpy = v1.NewReceiver(newName, cpy.GrafanaManagedReceivers, cpy.Provenance)
+			renamed := v1.NewReceiver(newName, cpy.GrafanaManagedReceivers, cpy.Provenance())
+			renamed.Manager = cpy.Manager
+			cpy = renamed
 			usedNames[cpy.Name] = i
 		}
 		added = append(added, cpy.UID)

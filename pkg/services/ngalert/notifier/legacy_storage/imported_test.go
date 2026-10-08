@@ -37,13 +37,13 @@ func TestConfigRevisionImported_GetReceivers(t *testing.T) {
 		require.Len(t, receivers, 2)
 		assert.Equal(t, "imported-receiver-1", receivers[0].Name)
 		assert.Equal(t, NameToUid("imported-receiver-1"), receivers[0].UID)
-		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[0].Provenance)
+		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[0].Provenance())
 		assert.Equal(t, models.ResourceOriginImported, receivers[0].Origin)
 		assert.Len(t, receivers[0].Integrations, 1)
 
 		assert.Equal(t, "imported-receiver-2", receivers[1].Name)
 		assert.Equal(t, NameToUid("imported-receiver-2"), receivers[1].UID)
-		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[1].Provenance)
+		assert.Equal(t, models.ProvenanceConvertedPrometheus, receivers[1].Provenance())
 		assert.Equal(t, models.ResourceOriginImported, receivers[1].Origin)
 		assert.Len(t, receivers[1].Integrations, 1)
 	})
@@ -199,9 +199,8 @@ receivers:
 		route.Version = ""
 		require.Equal(t, &v1.ManagedRoute{
 			ResourceMetadata: v1.ResourceMetadata{
-				UID:        v1.RouteUID(extra.Identifier),
-				Provenance: models.ProvenanceConvertedPrometheus,
-				Manager:    models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus),
+				UID:     v1.RouteUID(extra.Identifier),
+				Manager: models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus),
 			},
 			Receiver: "r1",
 			Routes: []*v1.Route{
@@ -244,9 +243,8 @@ mute_time_intervals:
 		route.Version = ""
 		require.Equal(t, &v1.ManagedRoute{
 			ResourceMetadata: v1.ResourceMetadata{
-				UID:        v1.RouteUID(extra.Identifier),
-				Provenance: models.ProvenanceConvertedPrometheus,
-				Manager:    models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus),
+				UID:     v1.RouteUID(extra.Identifier),
+				Manager: models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus),
 			},
 			Receiver: "receiver1" + expectedDedupSuffix,
 			Routes: []*v1.Route{
@@ -301,7 +299,7 @@ receivers:
 		// UIDs are hash-based; collect them to verify properties without hardcoding the hash.
 		for uid, rule := range result {
 			require.Equal(t, uid, rule.UID)
-			require.Equal(t, models.ProvenanceConvertedPrometheus, rule.Provenance)
+			require.Equal(t, models.ProvenanceConvertedPrometheus, rule.Provenance())
 
 			// Identifier scope matcher must be present in both source and target.
 			var hasSourceScope, hasTargetScope bool

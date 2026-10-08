@@ -15,9 +15,9 @@ func TestReceiverFingerprint(t *testing.T) {
 	baseReceiver := func() PostableApiReceiver {
 		return PostableApiReceiver{
 			ResourceMetadata: ResourceMetadata{
-				UID:        ReceiverUID("test-receiver"),
-				Version:    "some-version",
-				Provenance: models.ProvenanceAPI,
+				UID:     ReceiverUID("test-receiver"),
+				Version: "some-version",
+				Manager: models.ProvenanceToManagerProperties(models.ProvenanceAPI),
 			},
 			Name: "test-receiver",
 			GrafanaManagedReceivers: []*PostableGrafanaReceiver{
@@ -57,10 +57,9 @@ func TestReceiverFingerprint(t *testing.T) {
 
 		metadataType := reflect.TypeFor[ResourceMetadata]()
 		otherMetadata := reflect.ValueOf(ResourceMetadata{
-			UID:        "some-other-uid",
-			Version:    "some-other-version",
-			Provenance: models.ProvenanceFile,
-			Manager:    utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "some-identity"},
+			UID:     "some-other-uid",
+			Version: "some-other-version",
+			Manager: utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "some-identity"},
 		})
 		for i := 0; i < metadataType.NumField(); i++ {
 			field := metadataType.Field(i).Name
@@ -83,5 +82,6 @@ func TestNewReceiver(t *testing.T) {
 
 	assert.Equal(t, ReceiverUID("my-receiver"), r.UID)
 	assert.Equal(t, ReceiverFingerprint(r), r.Version)
-	assert.Equal(t, models.ProvenanceAPI, r.Provenance)
+	assert.Equal(t, models.ProvenanceAPI, r.Provenance())
+	assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceAPI), r.Manager)
 }

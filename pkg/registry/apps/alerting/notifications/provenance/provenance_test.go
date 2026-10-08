@@ -16,7 +16,7 @@ func TestSetAnnotations(t *testing.T) {
 		obj := &model.TimeInterval{}
 		terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
 
-		prov := SetAnnotations(obj, ngmodels.ProvenanceNone, terraform)
+		prov := SetAnnotations(obj, terraform)
 
 		assert.Equal(t, ngmodels.ProvenanceAPI, prov)
 		assert.Equal(t, string(ngmodels.ProvenanceAPI), obj.GetProvenanceStatus())
@@ -27,13 +27,13 @@ func TestSetAnnotations(t *testing.T) {
 		assert.Equal(t, terraform, got)
 	})
 
-	t.Run("unknown manager keeps the given provenance and sets no manager annotations", func(t *testing.T) {
+	t.Run("unknown manager sets no provenance and no manager annotations", func(t *testing.T) {
 		obj := &model.TimeInterval{}
 
-		prov := SetAnnotations(obj, ngmodels.ProvenanceConvertedPrometheus, utils.ManagerProperties{})
+		prov := SetAnnotations(obj, utils.ManagerProperties{})
 
-		assert.Equal(t, ngmodels.ProvenanceConvertedPrometheus, prov)
-		assert.Equal(t, string(ngmodels.ProvenanceConvertedPrometheus), obj.GetProvenanceStatus())
+		assert.Equal(t, ngmodels.ProvenanceNone, prov)
+		assert.Empty(t, obj.GetProvenanceStatus())
 		assert.NotContains(t, obj.GetAnnotations(), utils.AnnoKeyManagerKind)
 	})
 }
@@ -42,12 +42,11 @@ func TestFromAnnotations(t *testing.T) {
 	t.Run("manager annotations win", func(t *testing.T) {
 		obj := &model.TimeInterval{}
 		terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
-		SetAnnotations(obj, ngmodels.ProvenanceNone, terraform)
+		SetAnnotations(obj, terraform)
 
-		prov, manager, err := FromAnnotations(obj)
+		manager, err := FromAnnotations(obj)
 
 		require.NoError(t, err)
-		assert.Equal(t, ngmodels.ProvenanceAPI, prov)
 		assert.Equal(t, terraform, manager)
 	})
 
@@ -55,27 +54,25 @@ func TestFromAnnotations(t *testing.T) {
 		obj := &model.TimeInterval{}
 		obj.SetProvenanceStatus(string(ngmodels.ProvenanceFile))
 
-		prov, manager, err := FromAnnotations(obj)
+		manager, err := FromAnnotations(obj)
 
 		require.NoError(t, err)
-		assert.Equal(t, ngmodels.ProvenanceFile, prov)
 		assert.Equal(t, ngmodels.ProvenanceToManagerProperties(ngmodels.ProvenanceFile), manager)
 	})
 
-	t.Run("no annotations means no provenance and no manager", func(t *testing.T) {
-		prov, manager, err := FromAnnotations(&model.TimeInterval{})
+	t.Run("no annotations means no manager", func(t *testing.T) {
+		manager, err := FromAnnotations(&model.TimeInterval{})
 
 		require.NoError(t, err)
-		assert.Equal(t, ngmodels.ProvenanceNone, prov)
 		assert.Equal(t, utils.ManagerProperties{}, manager)
 	})
 
 	t.Run("rejects a provenance annotation that disagrees with the manager", func(t *testing.T) {
 		obj := &model.TimeInterval{}
-		SetAnnotations(obj, ngmodels.ProvenanceNone, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"})
+		SetAnnotations(obj, utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"})
 		obj.SetProvenanceStatus(string(ngmodels.ProvenanceFile))
 
-		_, _, err := FromAnnotations(obj)
+		_, err := FromAnnotations(obj)
 
 		require.ErrorContains(t, err, "inconsistent")
 	})
@@ -84,7 +81,7 @@ func TestFromAnnotations(t *testing.T) {
 		obj := &model.TimeInterval{}
 		obj.SetProvenanceStatus("bogus")
 
-		_, _, err := FromAnnotations(obj)
+		_, err := FromAnnotations(obj)
 
 		require.Error(t, err)
 	})

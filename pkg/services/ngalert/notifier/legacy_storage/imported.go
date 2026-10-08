@@ -62,8 +62,7 @@ func (e ImportedConfigRevision) GetReceivers(uids []string) ([]*models.Receiver,
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
 
-		recv.Provenance = models.ProvenanceConvertedPrometheus
-		recv.NormalizeManager()
+		recv.Manager = models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
 		result = append(result, recv)
 	}
 	return result, nil
