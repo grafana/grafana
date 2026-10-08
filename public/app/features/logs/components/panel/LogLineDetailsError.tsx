@@ -147,7 +147,7 @@ type ErrorAttributeVariant = 'message' | 'stacktrace' | 'other';
 
 const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   container: css({
-    background: theme.colors.background.primary,
+    background: theme.colors.background.secondary,
     borderLeft: `2px solid ${theme.colors.error.border}`,
     borderRadius: theme.shape.radius.default,
     padding: theme.spacing(1),
