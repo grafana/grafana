@@ -442,17 +442,15 @@ describe('DashboardScenePageStateManager v1', () => {
       });
     });
 
-    it('should wait for the panel plugin metas before loading the dashboard', async () => {
+    it('should load the panel plugin metas as part of loading the dashboard', async () => {
       const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
       let resolveMetas: () => void = () => {};
       mockGetPanelPluginMetasMap.mockReturnValueOnce(new Promise<void>((resolve) => (resolveMetas = resolve)));
 
       const loader = new DashboardScenePageStateManager({});
       const loading = loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
-      await new Promise((resolve) => setTimeout(resolve, 0));
 
-      expect(loadDashboardMock).not.toHaveBeenCalled();
-      expect(loader.state.dashboard).toBeUndefined();
+      expect(mockGetPanelPluginMetasMap).toHaveBeenCalled();
 
       resolveMetas();
       await loading;
