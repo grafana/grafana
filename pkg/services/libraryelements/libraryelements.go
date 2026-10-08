@@ -68,8 +68,8 @@ type LibraryElementService struct {
 	AccessControl     accesscontrol.AccessControl
 	k8sHandler        *libraryElementsK8sHandler
 	treeCache         *folderTreeCache
-	// LegacyDatabaseProvider resolves table names for this service's SQL queries. If unset,
-	// queries use bare table names.
+	// LegacyDatabaseProvider selects the connection and table name for folder-deletion queries. If
+	// unset, those queries use SQLStore and bare table names.
 	LegacyDatabaseProvider legacysql.LegacyDatabaseProvider
 }
 
