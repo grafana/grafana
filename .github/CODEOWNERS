@@ -12,9 +12,9 @@
 # This should make it easy to add new rules without breaking existing ones.
 
 # Documentation
-/.changelog-archive @grafana/grafana-developer-enablement-squad
+/.changelog-archive @grafana/grafana-backend-services-squad
 /AI_POLICY.md @grafana/grafana-community-support
-/CHANGELOG.md @grafana/grafana-developer-enablement-squad
+/CHANGELOG.md @grafana/grafana-backend-services-squad
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
 /GOVERNANCE.md @RichiH
