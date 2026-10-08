@@ -161,6 +161,10 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 
 	created, err := client.Create(ctx, k8sUser, resource.CreateOptions{})
 	if err != nil {
+		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
+			ctxLogger.Debug("k8s user already exists", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
+			return nil, user.ErrUserAlreadyExists
+		}
 		ctxLogger.Error("k8s user create failed", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
 		span.RecordError(err)
 		return nil, err
