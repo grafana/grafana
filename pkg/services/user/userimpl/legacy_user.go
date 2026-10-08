@@ -11,6 +11,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/localcache"
@@ -464,7 +465,25 @@ func (s *LegacyService) BatchDisableUsers(ctx context.Context, cmd *user.BatchDi
 	))
 	defer span.End()
 
-	return s.store.BatchDisableUsers(ctx, cmd)
+	if err := s.store.BatchDisableUsers(ctx, cmd); err != nil {
+		return err
+	}
+	if !s.watch.Enabled() || len(cmd.UserIDs) == 0 {
+		return nil
+	}
+	// disabled is part of each user's spec. The write has committed, so look the
+	// users up even if the request has since been cancelled.
+	users, err := s.store.ListByIdOrUID(context.WithoutCancel(ctx), nil, cmd.UserIDs)
+	if err != nil {
+		logging.FromContext(ctx).Warn("failed to list disabled users for legacy watch notifications", "error", err)
+		return nil
+	}
+	for _, usr := range users {
+		if !usr.IsServiceAccount {
+			s.watch.Publish(ctx, legacywatch.Modified, userResource, usr.OrgID, usr.UID, 0)
+		}
+	}
+	return nil
 }
 
 func (s *LegacyService) GetProfile(ctx context.Context, query *user.GetUserProfileQuery) (*user.UserProfileDTO, error) {

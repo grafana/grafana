@@ -69,8 +69,9 @@ func (s *LegacyService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamComm
 		return err
 	}
 	// The command only carries the internal ID; the notification needs the UID.
+	// The update has committed, so look it up even if the request has been cancelled.
 	if s.watch.Enabled() {
-		if t, err := s.store.GetByID(ctx, &team.GetTeamByIDQuery{OrgID: cmd.OrgID, ID: cmd.ID}); err == nil {
+		if t, err := s.store.GetByID(context.WithoutCancel(ctx), &team.GetTeamByIDQuery{OrgID: cmd.OrgID, ID: cmd.ID}); err == nil {
 			s.watch.Publish(ctx, legacywatch.Modified, teamResource, cmd.OrgID, t.UID, 0)
 		}
 	}

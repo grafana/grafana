@@ -193,7 +193,9 @@ func (s *Service) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) er
 	if err := s.store.AddOrgUser(ctx, cmd); err != nil {
 		return err
 	}
-	if uid := s.watchedUserUID(ctx, cmd.UserID); uid != "" {
+	// The membership has committed, so resolve the user even if the request has
+	// since been cancelled: for a user created without an org this is its only ADDED.
+	if uid := s.watchedUserUID(context.WithoutCancel(ctx), cmd.UserID); uid != "" {
 		s.watch.Publish(ctx, legacywatch.Added, iamv0alpha1.UserResourceInfo.GroupResource(), cmd.OrgID, uid, 0)
 	}
 	return nil
