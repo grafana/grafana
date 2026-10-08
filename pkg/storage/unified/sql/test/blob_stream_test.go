@@ -2,11 +2,16 @@ package test
 
 import (
 	"bytes"
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
+	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -54,6 +59,7 @@ func TestIntegrationBlobStreamingUsesExistingSQLTable(t *testing.T) {
 				})
 				require.NoError(t, err)
 				require.Equal(t, value, streamed.Bytes())
+				require.Empty(t, stagedBlobChunks(t, env))
 			})
 		}
 	}
@@ -70,6 +76,7 @@ func TestIntegrationBlobStreamingRollsBackOnError(t *testing.T) {
 			_, err := writer.store.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{Resource: key}, &failingBlobReader{err: failure})
 			require.ErrorIs(t, err, failure)
 			require.Equal(t, before, env.keys(t, resourcePrefix(key)))
+			require.Empty(t, stagedBlobChunks(t, env))
 		})
 	}
 }
@@ -87,6 +94,140 @@ func TestIntegrationBlobStreamingMissingBlob(t *testing.T) {
 			require.Equal(t, codes.NotFound, status.Code(err), "unexpected error: %v", err)
 		})
 	}
+}
+
+func stagedBlobChunks(t *testing.T, env *kvBlobTestEnv) int {
+	t.Helper()
+	var count int
+	require.NoError(t, env.db.QueryRowContext(env.ctx, "SELECT COUNT(*) FROM resource_blob_upload_chunk").Scan(&count))
+	return count
+}
+
+func TestIntegrationBlobStreamingReclaimsAbandonedChunks(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	env := newKVBlobTestEnv(t)
+	store := env.kv.(*kv.SqlKV)
+	dialect, err := kv.DialectFromDriver(store.DriverName)
+	require.NoError(t, err)
+	query := fmt.Sprintf("INSERT INTO resource_blob_upload_chunk (upload_id, chunk_index, created, value) VALUES (%s, %s, %s, %s)",
+		dialect.Placeholder(1), dialect.Placeholder(2), dialect.Placeholder(3), dialect.Placeholder(4))
+	key := env.newResource(t, "default")
+	for _, age := range []time.Duration{25 * time.Hour, time.Minute} {
+		_, err := env.db.ExecContext(env.ctx, query, newBlobKey(key).UID, 0, time.Now().UTC().Add(-age), []byte("staged"))
+		require.NoError(t, err)
+	}
+	_, err = env.kvBlobs.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{Resource: key}, strings.NewReader("complete"))
+	require.NoError(t, err)
+	require.Equal(t, 1, stagedBlobChunks(t, env))
+}
+
+func TestIntegrationBlobStreamingFailedPublicationCleansUp(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	env := newKVBlobTestEnv(t)
+	key := newBlobKey(env.newResource(t, "default"))
+	env.save(t, key, "text/plain", "existing")
+	_, _, err := env.kv.(*kv.SqlKV).SaveBlobStream(env.ctx, key, "text/plain", strings.NewReader("replacement"))
+	require.Error(t, err)
+	require.Empty(t, stagedBlobChunks(t, env))
+	_, body, err := env.read(t, key)
+	require.NoError(t, err)
+	require.Equal(t, "existing", body)
+}
+
+func TestIntegrationBlobStreamingCleanupAfterCancellation(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	env := newKVBlobTestEnv(t)
+	for _, writer := range env.stores() {
+		t.Run(writer.name, func(t *testing.T) {
+			key := env.newResource(t, "default")
+			ctx, cancel := context.WithCancel(env.ctx)
+			defer cancel()
+			reader := &cancelingBlobReader{cancel: cancel}
+			_, err := writer.store.(resource.StreamingBlobSupport).PutResourceBlobStream(ctx, &resourcepb.PutBlobRequest{Resource: key}, reader)
+			require.ErrorIs(t, err, context.Canceled)
+			require.Empty(t, stagedBlobChunks(t, env))
+			require.Empty(t, env.keys(t, resourcePrefix(key)))
+		})
+	}
+}
+
+type cancelingBlobReader struct {
+	cancel context.CancelFunc
+	read   bool
+}
+
+func (r *cancelingBlobReader) Read(p []byte) (int, error) {
+	if !r.read {
+		r.read = true
+		return copy(p, []byte("partial")), nil
+	}
+	r.cancel()
+	return 0, context.Canceled
+}
+
+func TestIntegrationBlobStreamingDoesNotBlockWritesWhileReceiving(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	env := newKVBlobTestEnv(t)
+	for _, partial := range []bool{false, true} {
+		t.Run(fmt.Sprintf("partial=%v", partial), func(t *testing.T) {
+			key := newBlobKey(env.newResource(t, "default"))
+			reader := &pausedBlobReader{waiting: make(chan struct{}), resume: make(chan struct{})}
+			resume := sync.OnceFunc(func() { close(reader.resume) })
+			defer resume()
+			if partial {
+				reader.pending = []byte("partial")
+			}
+			result := make(chan error, 1)
+			go func() {
+				_, _, err := env.kv.(*kv.SqlKV).SaveBlobStream(env.ctx, key, "text/plain", reader)
+				result <- err
+			}()
+			select {
+			case <-reader.waiting:
+			case err := <-result:
+				t.Fatalf("upload ended before waiting for data: %v", err)
+			case <-time.After(10 * time.Second):
+				t.Fatal("upload did not reach the receive wait")
+			}
+			_, _, readErr := env.read(t, key)
+			ctx, cancel := context.WithTimeout(env.ctx, 2*time.Second)
+			response, writeErr := env.kvBlobs.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{
+				Resource: env.newResource(t, "default"), Value: []byte("unrelated"),
+			})
+			cancel()
+			resume()
+			uploadErr := <-result
+			require.ErrorIs(t, readErr, kv.ErrNotFound)
+			require.NoError(t, writeErr)
+			require.Nil(t, response.Error)
+			if partial {
+				require.NoError(t, uploadErr)
+				_, body, err := env.read(t, key)
+				require.NoError(t, err)
+				require.Equal(t, "partial", body)
+			} else {
+				require.Error(t, uploadErr)
+			}
+			require.Empty(t, stagedBlobChunks(t, env))
+		})
+	}
+}
+
+type pausedBlobReader struct {
+	pending []byte
+	waiting chan struct{}
+	resume  chan struct{}
+}
+
+func (r *pausedBlobReader) Read(p []byte) (int, error) {
+	if len(r.pending) > 0 {
+		n := copy(p, r.pending)
+		r.pending = r.pending[n:]
+		return n, nil
+	}
+	close(r.waiting)
+	<-r.resume
+	return 0, io.EOF
 }
 
 type failingBlobReader struct {
