@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
@@ -147,7 +148,7 @@ func parseChildrenPaging(req *http.Request) (int64, int64, error) {
 	if v := q.Get("limit"); v != "" {
 		parsed, err := strconv.ParseInt(v, 10, 64)
 		if err != nil || parsed < 0 {
-			return 0, 0, fmt.Errorf("invalid limit: %q", v)
+			return 0, 0, apierrors.NewBadRequest(fmt.Sprintf("invalid limit: %q", v))
 		}
 		if parsed > 0 {
 			limit = parsed
@@ -161,7 +162,7 @@ func parseChildrenPaging(req *http.Request) (int64, int64, error) {
 	if v := q.Get("continue"); v != "" {
 		parsed, err := strconv.ParseInt(v, 10, 64)
 		if err != nil || parsed < 0 {
-			return 0, 0, fmt.Errorf("invalid continue token: %q", v)
+			return 0, 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %q", v))
 		}
 		offset = parsed
 	}
