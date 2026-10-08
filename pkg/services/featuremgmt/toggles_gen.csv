@@ -356,6 +356,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-07-02,grafana.growthHomepage,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-07-02,kubernetesReporting,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-17,reporting.legacyServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false
+2026-10-02,reporting.legacySettingServiceUsesK8SClient,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-07-28,reporting.redirectReportsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-09-08,reporting.redirectReportSettingsToK8SApi,experimental,@grafana/grafana-operator-experience-squad,false,true,false
 2026-07-03,grafana.onDemandDiagnostics,experimental,@grafana/data-sources,false,false,false
