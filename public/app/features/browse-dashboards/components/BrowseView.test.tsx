@@ -1,8 +1,11 @@
+import { http, HttpResponse } from 'msw';
 import { act, getByLabelText, render, screen, userEvent, within } from 'test/test-utils';
+
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv } from '@grafana/runtime';
-import { setupMockServer } from '@grafana/test-utils/server';
+import { searchRoute } from '@grafana/test-utils/handlers';
+import server, { setupMockServer } from '@grafana/test-utils/server';
 import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -172,27 +175,54 @@ describe('browse-dashboards BrowseView', () => {
     expect(screen.getByRole('row', { name: dashboard.title })).toBeInTheDocument();
   });
 
-  it('shows a read only badge on folders the user cannot edit', async () => {
-    const editableFolder: DashboardViewItem = { kind: 'folder', uid: 'editable', title: 'Editable folder' };
-    const readOnlyFolder: DashboardViewItem = { kind: 'folder', uid: 'read-only', title: 'Read only folder' };
+  describe('folder edit access', () => {
+    // The shared mock search handler ignores `permission`, so answer edit-permission searches here and let
+    // every other search fall through to it
+    beforeEach(() => {
+      server.use(
+        http.get(searchRoute, ({ request }) => {
+          const url = new URL(request.url);
+          if (url.searchParams.get('permission') !== 'edit') {
+            return undefined;
+          }
 
-    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />, {
-      preloadedState: {
-        browseDashboards: {
-          rootItems: fullyLoadedViewItemCollection([editableFolder, readOnlyFolder]),
-          childrenByParentUID: {},
-          openFolders: {},
-          folderEditAccess: { [editableFolder.uid]: true, [readOnlyFolder.uid]: false },
-          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
-        },
-      },
+          const hits = url.searchParams
+            .getAll('name')
+            .filter((name) => name === folderA.item.uid)
+            .map((name) => ({ resource: 'folders', name, title: folderA.item.title, field: {} }));
+          return HttpResponse.json({ totalHits: hits.length, hits });
+        })
+      );
     });
 
-    const readOnlyRow = await screen.findByRole('row', { name: readOnlyFolder.title });
-    expect(within(readOnlyRow).getByText('Read only')).toBeInTheDocument();
-    expect(
-      within(screen.getByRole('row', { name: editableFolder.title })).queryByText('Read only')
-    ).not.toBeInTheDocument();
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('shows a read only badge on folders the user cannot edit', async () => {
+      setTestFlags({ 'grafana.browseDashboardsFolderEditAccess': true, foldersAppPlatformAPI: true });
+      render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+
+      const readOnlyRow = await screen.findByRole('row', { name: folderC.item.title });
+      expect(await within(readOnlyRow).findByText('Read only')).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('row', { name: folderA.item.title })).queryByText('Read only')
+      ).not.toBeInTheDocument();
+    });
+
+    it.each<{ name: string; flags: Parameters<typeof setTestFlags>[0] }>([
+      { name: 'the feature flag is off', flags: { foldersAppPlatformAPI: true } },
+      {
+        name: 'the app platform folders API is off',
+        flags: { 'grafana.browseDashboardsFolderEditAccess': true, foldersAppPlatformAPI: false },
+      },
+    ])('does not show read only badges when $name', async ({ flags }) => {
+      setTestFlags(flags);
+      render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />);
+
+      await screen.findByRole('row', { name: folderC.item.title });
+      expect(screen.queryByText('Read only')).not.toBeInTheDocument();
+    });
   });
 
   describe('when there is no item in the folder', () => {
