@@ -443,7 +443,6 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 		require.NotEqual(t, updated[i].Key(), backend.Key(), "shared metadata changes affect every group")
 		require.Equal(t, "2", backend.(*pluginDeploymentBackend).Backend.(*PluginBackend).info.Version)
 	}
-
 }
 
 func TestFetchPluginManifestsMigratesSingularManifest(t *testing.T) {

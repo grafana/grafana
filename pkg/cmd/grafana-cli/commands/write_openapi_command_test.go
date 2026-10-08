@@ -139,7 +139,7 @@ func TestWriteOpenAPICommand(t *testing.T) {
 	raw, err = json.Marshal(manifest)
 	require.NoError(t, err)
 	path := filepath.Join(t.TempDir(), "manifest.json")
-	require.NoError(t, os.WriteFile(path, raw, 0600))
+	require.NoError(t, os.WriteFile(path, raw, 0600)) // #nosec G703 -- fixed filename inside t.TempDir().
 
 	t.Run("all served versions", func(t *testing.T) {
 		out := filepath.Join(t.TempDir(), "specs")
@@ -163,7 +163,7 @@ func TestWriteOpenAPICommand(t *testing.T) {
 	t.Run("one version", func(t *testing.T) {
 		out := filepath.Join(t.TempDir(), "spec.json")
 		require.NoError(t, writeOpenAPICommand(writeOpenAPIContext(t, []string{path, "--api-version", "v2alpha1", "-o", out})))
-		raw, err := os.ReadFile(out)
+		raw, err := os.ReadFile(out) // #nosec G304 -- fixed filename inside t.TempDir().
 		require.NoError(t, err)
 		var document map[string]any
 		require.NoError(t, json.Unmarshal(raw, &document))
@@ -187,7 +187,7 @@ func TestWriteOpenAPICommand(t *testing.T) {
 	t.Run("no served versions", func(t *testing.T) {
 		unserved := strings.ReplaceAll(string(raw), `"served":true`, `"served":false`)
 		path := filepath.Join(t.TempDir(), "unserved.json")
-		require.NoError(t, os.WriteFile(path, []byte(unserved), 0600))
+		require.NoError(t, os.WriteFile(path, []byte(unserved), 0600)) // #nosec G703 -- fixed filename inside t.TempDir().
 		out := filepath.Join(t.TempDir(), "specs")
 		require.ErrorContains(t, writeOpenAPICommand(writeOpenAPIContext(t, []string{path, "-o", out})), "no served versions")
 		_, err := os.Stat(out)

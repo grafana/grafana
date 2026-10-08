@@ -534,7 +534,6 @@ func TestPluginLoaderPreparesMultipleManifests(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, updated[0].Key(), changed[0].Key())
 	require.NotEqual(t, updated[1].Key(), changed[1].Key())
-
 }
 
 func TestPluginLoaderIsolatesFingerprintFailure(t *testing.T) {
