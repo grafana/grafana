@@ -255,14 +255,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.readmes",
-			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
-		},
-		{
 			Name:        "provisioning.userAttribution",
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
