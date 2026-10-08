@@ -80,11 +80,11 @@ func TestIntegrationBlobStreamingMissingBlob(t *testing.T) {
 	key := env.newResource(t, "default")
 	for _, reader := range env.stores() {
 		t.Run(reader.name, func(t *testing.T) {
-			err := reader.store.(resource.StreamingBlobSupport).GetResourceBlobStream(env.ctx, key, &utils.BlobInfo{UID: "missing"}, func(string) (io.Writer, error) {
+			err := reader.store.(resource.StreamingBlobSupport).GetResourceBlobStream(env.ctx, key, &utils.BlobInfo{UID: newBlobKey(key).UID}, func(string) (io.Writer, error) {
 				t.Fatal("opened missing blob")
 				return nil, nil
 			})
-			require.Equal(t, codes.NotFound, status.Code(err))
+			require.Equal(t, codes.NotFound, status.Code(err), "unexpected error: %v", err)
 		})
 	}
 }
