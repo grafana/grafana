@@ -3473,6 +3473,14 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:        "datasources.jsonQueryDataFormat",
+			Description: "Requests the JSON data frame wire format from backend plugins for unary QueryData",
+			Stage:       FeatureStagePublicPreview,
+			Owner:       grafanaDataSourcesPlugins,
+			Expression:  "true",
+			Generate:    Generate{Go: true},
+		},
 
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
