@@ -157,7 +157,15 @@ describe('ResultItem', () => {
       });
     });
 
-    it('passes an empty tag array to the plugin component when the dashboard has no tags', () => {
+    it.each([
+      { desc: 'an empty tag array to the plugin component when the dashboard has no tags', tags: [], expected: [] },
+      // Hybrid search results carry no tag data at all
+      {
+        desc: 'no tags to the plugin component when the search source does not provide them',
+        tags: undefined,
+        expected: undefined,
+      },
+    ])('passes $desc', ({ tags, expected }) => {
       const received: ResultItemContext[] = [];
       setPluginComponentsHook(() => ({
         components: [
@@ -170,14 +178,11 @@ describe('ResultItem', () => {
       }));
 
       render(
-        <ResultItem
-          action={createActionImpl({ ...dashboardAction, tags: undefined })}
-          active={false}
-          currentRootActionId=""
-        />
+        <ResultItem action={createActionImpl({ ...dashboardAction, tags })} active={false} currentRootActionId="" />
       );
 
-      expect(received.at(-1)?.tags).toEqual([]);
+      expect(received.at(-1)?.uid).toBe('abc');
+      expect(received.at(-1)?.tags).toEqual(expected);
     });
 
     it('renders plugin content on recent dashboard rows', () => {

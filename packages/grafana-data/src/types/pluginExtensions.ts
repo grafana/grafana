@@ -352,15 +352,21 @@ export type PluginExtensionCommandPaletteContext = {};
 /**
  * The extension is rendered inline in a dashboard row of the command palette (search results and
  * recent dashboards), so it should stay visually compact and fit on a single line. The dashboard's
- * tags are included so plugins can show them without fetching the dashboard. A component that has
- * nothing to contribute for the given dashboard is expected to render `null`.
+ * tags are included when the search source provides them, so plugins can show them without fetching
+ * the dashboard. A component that has nothing to contribute for the given dashboard is expected to
+ * render `null`.
  */
 export type PluginExtensionCommandPaletteResultItemV1Context = {
   kind: 'dashboard';
   uid: string;
   title: string;
   url: string;
-  tags: string[];
+  /**
+   * The dashboard's tags. `undefined` when the search source doesn't provide them (e.g. the
+   * experimental hybrid search); plugins that need them can look them up by `uid`. An empty array
+   * means the dashboard has no tags.
+   */
+  tags?: string[];
   /** Title of the folder the dashboard lives in, if known. */
   folderTitle?: string;
 };

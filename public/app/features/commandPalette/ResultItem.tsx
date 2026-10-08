@@ -89,7 +89,7 @@ export const ResultItem = React.forwardRef(
                 uid,
                 title: action.name,
                 url,
-                tags: tags ?? [],
+                tags,
                 folderTitle: action.subtitle,
               }}
             />
