@@ -14,7 +14,6 @@ import {
   getDataSourceSrv as getDataSourceService,
   getTemplateSrv,
   type RuntimeDataSourceRegistration,
-  type RuntimeDataSource,
   type TemplateSrv,
   isExpressionReference,
 } from '@grafana/runtime';
@@ -22,12 +21,14 @@ import {
   ExpressionDatasourceRef,
   getPluginIdFromDatasourceInstanceType,
   getDatasourcePluginMeta,
+  getRuntimePlugin,
   logPluginMetaError,
   logPluginMetaWarning,
   refetchDatasourcePluginMetas,
   syncDataSourceInstanceSettings,
   UserStorage,
 } from '@grafana/runtime/internal';
+import { registerRuntimeDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery, type DataSourceJsonData } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
 import config from 'app/core/config';
@@ -44,7 +45,6 @@ export class DatasourceSrv implements DataSourceService {
   private settingsMapByName: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapByUid: Record<string, DataSourceInstanceSettings> = {};
   private settingsMapById: Record<string, DataSourceInstanceSettings> = {};
-  private runtimeDataSources: Record<string, RuntimeDataSource> = {}; //
   private defaultName = ''; // actually UID
 
   constructor(private templateSrv: TemplateSrv = getTemplateSrv()) {}
@@ -66,11 +66,6 @@ export class DatasourceSrv implements DataSourceService {
       }
     }
 
-    for (const ds of Object.values(this.runtimeDataSources)) {
-      this.datasources[ds.uid] = ds;
-      this.settingsMapByUid[ds.uid] = ds.instanceSettings;
-    }
-
     // Preload expressions
     this.datasources[ExpressionDatasourceRef.type] = expressionDatasource as DataSourceApi<
       DataQuery,
@@ -86,21 +81,17 @@ export class DatasourceSrv implements DataSourceService {
     this.settingsMapByUid[ExpressionDatasourceUID] = expressionInstanceSettings;
   }
 
+  // Checked here as well because this service always has the boot data; the async cache may not be filled yet.
   registerRuntimeDataSource(entry: RuntimeDataSourceRegistration): void {
-    if (this.runtimeDataSources[entry.dataSource.uid]) {
-      throw new Error(`A runtime data source with uid ${entry.dataSource.uid} has already been registered`);
-    }
     if (this.settingsMapByUid[entry.dataSource.uid]) {
       throw new Error(`A data source with uid ${entry.dataSource.uid} has already been registered`);
     }
 
-    this.runtimeDataSources[entry.dataSource.uid] = entry.dataSource;
-    this.datasources[entry.dataSource.uid] = entry.dataSource;
-    this.settingsMapByUid[entry.dataSource.uid] = entry.dataSource.instanceSettings;
+    registerRuntimeDataSourceInstance(entry);
   }
 
   getDataSourceSettingsByUid(uid: string): DataSourceInstanceSettings | undefined {
-    return this.settingsMapByUid[uid];
+    return getRuntimePlugin(uid)?.instanceSettings ?? this.settingsMapByUid[uid];
   }
 
   getInstanceSettings(
@@ -138,7 +129,7 @@ export class DatasourceSrv implements DataSourceService {
       if (interpolatedName === 'default') {
         dsSettings = this.settingsMapByName[this.defaultName];
       } else {
-        dsSettings = this.settingsMapByUid[interpolatedName] ?? this.settingsMapByName[interpolatedName];
+        dsSettings = this.getDataSourceSettingsByUid(interpolatedName) ?? this.settingsMapByName[interpolatedName];
       }
 
       if (!dsSettings) {
@@ -155,7 +146,9 @@ export class DatasourceSrv implements DataSourceService {
       };
     }
 
-    return this.settingsMapByUid[nameOrUid] ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid];
+    return (
+      this.getDataSourceSettingsByUid(nameOrUid) ?? this.settingsMapByName[nameOrUid] ?? this.settingsMapById[nameOrUid]
+    );
   }
 
   get(ref?: string | DataSourceRef | null, scopedVars?: ScopedVars): Promise<DataSourceApi> {
@@ -183,8 +176,9 @@ export class DatasourceSrv implements DataSourceService {
     }
 
     // This check is duplicated below, this is here mainly as performance optimization to skip interpolation
-    if (this.datasources[nameOrUid]) {
-      return Promise.resolve(this.datasources[nameOrUid]);
+    const cached = this.getCachedInstance(nameOrUid);
+    if (cached) {
+      return Promise.resolve(cached);
     }
 
     // Interpolation here is to support template variable in data source selection
@@ -194,11 +188,16 @@ export class DatasourceSrv implements DataSourceService {
       return this.get(this.defaultName);
     }
 
-    if (this.datasources[nameOrUid]) {
-      return Promise.resolve(this.datasources[nameOrUid]);
+    const interpolatedCached = this.getCachedInstance(nameOrUid);
+    if (interpolatedCached) {
+      return Promise.resolve(interpolatedCached);
     }
 
     return this.loadDatasource(nameOrUid);
+  }
+
+  private getCachedInstance(uid: string): DataSourceApi | undefined {
+    return getRuntimePlugin(uid) ?? this.datasources[uid];
   }
 
   /**
@@ -214,8 +213,9 @@ export class DatasourceSrv implements DataSourceService {
   }
 
   async loadDatasource(key: string): Promise<DataSourceApi> {
-    if (this.datasources[key]) {
-      return Promise.resolve(this.datasources[key]);
+    const cached = this.getCachedInstance(key);
+    if (cached) {
+      return Promise.resolve(cached);
     }
 
     // find the metadata

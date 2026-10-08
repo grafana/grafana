@@ -23,7 +23,7 @@ import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } 
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilters';
 import { describeRef, logDataSourceWarning } from './logging';
-import { clearPluginCache } from './pluginCache';
+import { clearPluginCache, _resetForTests as resetPluginCache } from './pluginCache';
 import { resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
 import { BootDataSource, createBootDataSnapshot } from './sources/bootDataSource';
 import { createDataSourceCacheSource } from './sources/selectSource';
@@ -272,6 +272,7 @@ export function _resetForTests(): void {
     throw new Error('_resetForTests must only be called from tests');
   }
   resetCache();
+  resetPluginCache();
   resetResolveRef();
   resetExpressionDs();
 }
