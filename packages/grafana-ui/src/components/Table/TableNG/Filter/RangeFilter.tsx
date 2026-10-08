@@ -55,7 +55,7 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
   const theme = useTheme2();
   const styles = useStyles2(getStyles);
   const id = useId();
-  const containerRef = useRef<HTMLDivElement>(null);
+  const calendarAnchor = useRef<HTMLElement | null>(null);
   const minimumRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     // The closing column menu restores its trigger focus before this popup takes over.
@@ -98,7 +98,9 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
 
   return (
     <div
-      ref={containerRef}
+      ref={(element) => {
+        calendarAnchor.current = element?.parentElement ?? null;
+      }}
       className={styles.container}
       role="group"
       aria-label={t('grafana-ui.table.range.label', 'Filter {{field}}', { field: getDisplayName(field) })}
@@ -186,24 +188,23 @@ export function RangeFilter({ field, rows, range, timeZone = 'browser', onApply,
       {isTime ? (
         <div>
           <TimeRangeFields
-            fromLabel={minimumLabel}
-            toLabel={maximumLabel}
-            fromInput={{
-              width: 26,
-              ref: minimumRef,
+            inputWidth={36}
+            calendarAnchor={calendarAnchor}
+            from={{
+              label: minimumLabel,
+              inputRef: minimumRef,
               value: lower,
               placeholder: t('grafana-ui.table.range.unbounded', 'No limit'),
-              'data-testid': rangeSelectors.minimumInput,
-              onChange: (event) => setLower(event.currentTarget.value),
+              testId: rangeSelectors.minimumInput,
+              onChange: setLower,
             }}
-            toInput={{
-              width: 26,
+            to={{
+              label: maximumLabel,
               value: upper,
               placeholder: t('grafana-ui.table.range.unbounded', 'No limit'),
-              'data-testid': rangeSelectors.maximumInput,
-              onChange: (event) => setUpper(event.currentTarget.value),
+              testId: rangeSelectors.maximumInput,
+              onChange: setUpper,
             }}
-            getCalendarAnchor={() => containerRef.current?.parentElement ?? null}
             calendar={{
               isFullscreen: true,
               from: dateTimeParse(min ?? (Number.isFinite(histogram.min) ? histogram.min : Date.now()), { timeZone }),

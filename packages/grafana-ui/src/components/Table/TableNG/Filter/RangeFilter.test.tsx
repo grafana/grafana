@@ -77,3 +77,12 @@ it('selects whole days with the dashboard calendar and applies only on confirmat
   await user.click(screen.getByRole('button', { name: 'Apply' }));
   expect(onApply).toHaveBeenCalledWith({ min: 1789617600000, max: 1789790399999, includeMissing: false });
 });
+
+it('keeps millisecond precision with an unbounded end date', async () => {
+  const { user, onApply } = setup(FieldType.time, [1789660800122, 1789660800123, 1789660800124]);
+  await user.type(screen.getByLabelText('Start'), '2026-09-17 12:00:00.123');
+  expect(screen.getByLabelText('End')).toHaveValue('');
+  expect(screen.getByRole('status')).toHaveTextContent('2 of 3 rows match');
+  await user.click(screen.getByRole('button', { name: 'Apply' }));
+  expect(onApply).toHaveBeenCalledWith({ min: 1789660800123, max: undefined, includeMissing: false });
+});
