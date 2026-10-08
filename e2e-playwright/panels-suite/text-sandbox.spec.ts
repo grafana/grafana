@@ -11,11 +11,20 @@ declare global {
     disposeSandbox?: () => void;
     sandboxSession: ReturnType<typeof Sandbox.renderSandbox>;
     sandboxHeights: number[];
+    mermaidRequests: number;
   }
 }
 
 const runtimeSource = buildSync({
   entryPoints: [path.resolve(__dirname, '../../public/app/plugins/panel/text/v2/sandboxRuntime.ts')],
+  bundle: true,
+  write: false,
+  format: 'iife',
+  minify: true,
+}).outputFiles[0].text;
+
+const mermaidSource = buildSync({
+  entryPoints: [path.resolve(__dirname, '../../public/app/plugins/panel/text/v2/sandboxMermaid.ts')],
   bundle: true,
   write: false,
   format: 'iife',
@@ -34,12 +43,12 @@ const scriptPromise = build({
     {
       name: 'text-panel-runtime',
       setup(build) {
-        build.onResolve({ filter: /\\?text-panel-runtime$/ }, () => ({
-          path: 'runtime',
+        build.onResolve({ filter: /\\?text-panel-runtime$/ }, (args) => ({
+          path: args.path,
           namespace: 'text-panel-runtime',
         }));
-        build.onLoad({ filter: /.*/, namespace: 'text-panel-runtime' }, () => ({
-          contents: `export default ${JSON.stringify(runtimeSource)};`,
+        build.onLoad({ filter: /.*/, namespace: 'text-panel-runtime' }, (args) => ({
+          contents: `export default ${JSON.stringify(args.path.includes('sandboxMermaid') ? mermaidSource : runtimeSource)};`,
           loader: 'js',
         }));
       },
@@ -54,6 +63,48 @@ test.describe('Text sandbox network boundary', () => {
     );
     await page.goto('https://grafana.test/');
     await page.addScriptTag({ content: await scriptPromise });
+    await page.evaluate(() => {
+      window.mermaidRequests = 0;
+      window.addEventListener('message', (event) => {
+        if (event.data?.type === 'mermaid-needed') {
+          window.mermaidRequests++;
+        }
+      });
+    });
+  });
+
+  test('loads Mermaid only for enabled diagram blocks, including after a data refresh', async ({ page }) => {
+    expect(Buffer.byteLength(runtimeSource)).toBeLessThan(10000);
+    await page.evaluate(() => {
+      window.sandboxStates = [];
+      window.sandboxSession = window.textSandbox.renderSandbox(document.getElementById('host')!, {
+        html: '<p>Plain content</p>',
+        globalCss: '',
+        policy: window.textSandbox.textSandboxPolicy([], '/public/fonts/'),
+        mermaid: window.textSandbox.mermaidConfig(),
+        title: 'Text panel content',
+        onState: (state) => window.sandboxStates.push(state),
+        onHeight: () => {},
+      });
+    });
+    const content = page.frameLocator('iframe');
+    await expect(content.getByText('Plain content')).toBeVisible();
+    expect(await page.evaluate(() => window.mermaidRequests)).toBe(0);
+    await page.evaluate(() =>
+      window.sandboxSession.update({
+        html: '<pre class="mermaid">flowchart LR\nA[checkout] --> B[healthy]</pre>',
+        mermaid: undefined,
+      })
+    );
+    await expect(content.locator('pre.mermaid')).toBeVisible();
+    expect(await page.evaluate(() => window.mermaidRequests)).toBe(0);
+    await page.evaluate(() => window.sandboxSession.update({ mermaid: window.textSandbox.mermaidConfig() }));
+    await expect(content.getByText('healthy', { exact: true })).toBeVisible();
+    await expect(content.locator('.mermaid-diagram svg')).toHaveCount(1);
+    expect(await page.evaluate(() => window.mermaidRequests)).toBe(1);
+    await page.evaluate(() => window.sandboxSession.update({ html: '<p>Plain again</p>' }));
+    await expect(content.getByText('Plain again')).toBeVisible();
+    expect(await page.evaluate(() => window.mermaidRequests)).toBe(1);
   });
 
   test('finishes initialization when a panel is outside the viewport', async ({ page }) => {
@@ -381,15 +432,17 @@ test.describe('Text sandbox network boundary', () => {
     await page.evaluate(() => {
       window.sandboxStates = [];
       window.textSandbox.renderSandbox(document.getElementById('host')!, {
-        html: '<p>Inherited CSP works</p>',
+        html: '<p>Inherited CSP works</p><pre class="mermaid">flowchart LR\nA[checkout] --> B[healthy]</pre>',
         globalCss: '',
         title: 'Text panel content',
         policy: window.textSandbox.textSandboxPolicy([], '/public/fonts/'),
+        mermaid: window.textSandbox.mermaidConfig(),
         onState: (state) => window.sandboxStates.push(state),
         onHeight: () => {},
       });
     });
     await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('ready');
     await expect(page.frameLocator('iframe').getByText('Inherited CSP works')).toBeVisible();
+    await expect(page.frameLocator('iframe').getByText('healthy', { exact: true })).toBeVisible();
   });
 });

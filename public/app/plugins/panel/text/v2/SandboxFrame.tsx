@@ -3,9 +3,9 @@ import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { textUtil } from '@grafana/data';
 
-import { loadSandboxRuntime } from './loadSandboxRuntime';
+import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { resourceOrigin, type TextSandboxState } from './sandboxPolicy';
-import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand } from './sandboxProtocol';
+import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand, type MermaidCommand } from './sandboxProtocol';
 
 export interface SandboxFrameProps {
   /** Sanitized when protected; legacy HTML respects the administrator's sanitizer setting. */
@@ -97,6 +97,8 @@ function FrameDocument({
     }
     let sent = false;
     let blocked = false;
+    let disposed = false;
+    let mermaidRequested = false;
     const watchdog = window.setTimeout(() => setState({ status: 'error' }), 15000);
     const onMessage = (event: MessageEvent) => {
       const message = event.data;
@@ -110,6 +112,32 @@ function FrameDocument({
         return;
       }
       switch (message.type) {
+        case 'mermaid-needed': {
+          if (!sent || blocked || !mermaid || mermaidRequested) {
+            return;
+          }
+          mermaidRequested = true;
+          const target = frame.current.contentWindow;
+          void loadSandboxMermaid()
+            .then((source) => {
+              if (disposed || blocked || !target || frame.current?.contentWindow !== target) {
+                return;
+              }
+              const command: MermaidCommand = {
+                protocol: TEXT_FRAME_PROTOCOL,
+                channel,
+                type: 'mermaid-source',
+                source,
+              };
+              target.postMessage(command, protectedFrame ? '*' : window.location.origin);
+            })
+            .catch(() => {
+              if (!disposed && !blocked) {
+                setState({ status: 'error' });
+              }
+            });
+          break;
+        }
         case 'ready': {
           if (sent) {
             return;
@@ -165,6 +193,7 @@ function FrameDocument({
     };
     window.addEventListener('message', onMessage);
     return () => {
+      disposed = true;
       clearTimeout(watchdog);
       window.removeEventListener('message', onMessage);
     };

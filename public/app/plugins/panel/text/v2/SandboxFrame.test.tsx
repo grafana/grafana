@@ -2,12 +2,13 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
 
 import { SandboxFrame, type SandboxFrameProps } from './SandboxFrame';
-import { loadSandboxRuntime } from './loadSandboxRuntime';
+import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
 
 jest.mock('./loadSandboxRuntime', () => ({
   loadSandboxRuntime: jest.fn(() => Promise.resolve('/* trusted runtime */')),
+  loadSandboxMermaid: jest.fn(() => Promise.resolve('/* trusted Mermaid */')),
 }));
 
 function props(overrides: Partial<SandboxFrameProps> = {}): SandboxFrameProps {
@@ -41,7 +42,10 @@ function notify(frame: HTMLIFrameElement, type: string, extra = {}, envelope = {
   );
 }
 
-beforeEach(() => jest.useFakeTimers());
+beforeEach(() => {
+  jest.useFakeTimers();
+  jest.mocked(loadSandboxMermaid).mockClear();
+});
 afterEach(() => jest.useRealTimers());
 
 it('sends data only after the current runtime is ready and reveals only after rendering', async () => {
@@ -181,4 +185,71 @@ it('ignores runtime loading after unmount and clears the watchdog', async () => 
   await act(async () => resolve('late runtime'));
   act(() => jest.runAllTimers());
   expect(options.onState).not.toHaveBeenCalled();
+});
+
+it('loads Mermaid once only after a verified frame requests it', async () => {
+  render(<SandboxFrame {...props({ mermaid: { securityLevel: 'strict' } })} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'mermaid-needed');
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed', {}, { source: window });
+  notify(element, 'mermaid-needed', {}, { origin: 'https://other.test' });
+  notify(element, 'mermaid-needed', { channel: 'wrong' });
+  expect(loadSandboxMermaid).not.toHaveBeenCalled();
+  notify(element, 'mermaid-needed');
+  notify(element, 'mermaid-needed');
+  await act(async () => {});
+  expect(loadSandboxMermaid).toHaveBeenCalledTimes(1);
+  expect(postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({ type: 'mermaid-source', source: '/* trusted Mermaid */' }),
+    '*'
+  );
+  expect(element.style.visibility).toBe('hidden');
+  notify(element, 'rendered');
+  expect(element.style.visibility).toBe('visible');
+});
+
+it('ignores Mermaid requests when diagrams are disabled', async () => {
+  render(<SandboxFrame {...props()} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  notify(element, 'rendered');
+  expect(element.style.visibility).toBe('visible');
+  expect(loadSandboxMermaid).not.toHaveBeenCalled();
+});
+
+it.each(['refresh', 'unmount', 'violation'] as const)('discards Mermaid loading after %s', async (action) => {
+  let resolve!: (source: string) => void;
+  jest.mocked(loadSandboxMermaid).mockReturnValueOnce(new Promise((done) => (resolve = done)));
+  const options = props({ mermaid: { securityLevel: 'strict' } });
+  const { rerender, unmount } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  expect(loadSandboxMermaid).toHaveBeenCalledTimes(1);
+  postMessage.mockClear();
+  if (action === 'refresh') {
+    rerender(<SandboxFrame {...options} html="<p>Refreshed</p>" />);
+  } else if (action === 'unmount') {
+    unmount();
+  } else {
+    notify(element, 'hide');
+  }
+  await act(async () => resolve('late Mermaid source'));
+  expect(postMessage).not.toHaveBeenCalled();
+});
+
+it('fails closed when the requested Mermaid bundle cannot load', async () => {
+  jest.mocked(loadSandboxMermaid).mockRejectedValueOnce(new Error('Chunk unavailable'));
+  const options = props({ mermaid: { securityLevel: 'strict' } });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  await act(async () => {});
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error' });
+  expect(element).not.toBeInTheDocument();
 });

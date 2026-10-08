@@ -14,12 +14,17 @@ sending panel content. The protected runtime first verifies CSP violation delive
 using a fixed, non-sensitive blocked image. Only then does the parent send content.
 The frame must be connected to load; a detached iframe cannot perform this check.
 
-The child runtime renders content and Mermaid inside its own document. A nonce
-permits only the bundled, trusted bootstrap script, not panel scripts. Mermaid is
-bundled into that script because opaque frames cannot share the parent module
-runtime or fetch application chunks. Both webpack and Rspack use the same loader.
-The runtime is lazy-loaded; its current minified size is approximately 3.5 MB before
-transfer compression.
+The child runtime renders content inside its own document. When Mermaid is enabled
+and diagram blocks exist, it requests the separate Mermaid runtime from the parent.
+The parent lazy-loads and caches that fixed application bundle, then sends its source
+only to the requesting document generation. The child executes it with the bootstrap
+nonce and renders diagrams in its own realm. Panel scripts remain blocked; no script
+origin, connection permission, or eval exception is added to CSP.
+
+Both webpack and Rspack use the same loader for the two self-contained bundles.
+The base runtime is approximately 3.5 KB minified. The Mermaid runtime is approximately
+3.45 MB before transfer compression, downloaded once per application session and
+executed only in frames that need diagrams. Plain text panels never request it.
 
 One cancellable task lets queued violations arrive before initial visibility.
 Animation frames cannot be used here: hidden/offscreen cross-origin documents can
@@ -31,7 +36,9 @@ fresh document; an applied CSP cannot be relaxed in place.
 
 Messages are checked against the current WindowProxy, expected origin, protocol,
 and per-generation channel. The child accepts one render command from its parent.
-A watchdog fails closed if initialization stalls. Cleanup removes listeners,
+A watchdog fails closed if initialization or diagram loading stalls. Failed bundle
+loads can be retried by later generations; late responses cannot reach replaced or
+blocked frames. Cleanup removes listeners,
 observers and timers. React StrictMode and stale generations
 are covered by tests.
 
@@ -74,8 +81,7 @@ inherited even when custom CSP is omitted.
 - Grants last only for the mounted component. Persistent grants, revocation UX,
   and dashboard-scoped lifetime belong to the consent integration.
 - The self-contained Mermaid bundle is relatively large and is instantiated per
-  frame. Bundle splitting or a separately hosted trusted runtime needs further
-  design without weakening the protected document's policy.
+  diagram-bearing frame. Plain HTML/Markdown frames do not incur this cost.
 
 ## Verification
 

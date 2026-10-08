@@ -15,8 +15,15 @@ export interface RenderCommand {
   diagramError: string;
 }
 
+export interface MermaidCommand {
+  protocol: typeof TEXT_FRAME_PROTOCOL;
+  channel: string;
+  type: 'mermaid-source';
+  source: string;
+}
+
 export type FrameNotification =
-  | { type: 'ready' | 'rendered' | 'hide' | 'error' }
+  | { type: 'ready' | 'rendered' | 'hide' | 'error' | 'mermaid-needed' }
   | { type: 'resize'; height: number; contentHeight: number }
   | { type: 'blocked'; resources: BlockedResource[] };
 
@@ -39,6 +46,7 @@ export function isFrameNotification(
     case 'rendered':
     case 'hide':
     case 'error':
+    case 'mermaid-needed':
       return true;
     case 'resize':
       return (

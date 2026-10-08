@@ -1,8 +1,12 @@
-import DOMPurify from 'dompurify';
-import mermaid from 'mermaid';
-
+import type { RenderDiagrams } from './sandboxMermaid';
 import { RESOURCE_DIRECTIVES, resourceOrigin, type BlockedResource } from './sandboxPolicy';
-import { CSP_CHECK_URL, TEXT_FRAME_PROTOCOL, type FrameNotification, type RenderCommand } from './sandboxProtocol';
+import {
+  CSP_CHECK_URL,
+  TEXT_FRAME_PROTOCOL,
+  type FrameNotification,
+  type RenderCommand,
+  type MermaidCommand,
+} from './sandboxProtocol';
 
 const bootstrap = document.currentScript;
 if (!(bootstrap instanceof HTMLScriptElement)) {
@@ -11,6 +15,7 @@ if (!(bootstrap instanceof HTMLScriptElement)) {
 const channel = bootstrap.dataset.channel!;
 const parentOrigin = bootstrap.dataset.parentOrigin!;
 const policy = bootstrap.dataset.policy;
+const nonce = bootstrap.nonce;
 bootstrap.remove();
 
 let disposed = false;
@@ -22,6 +27,7 @@ let verificationTimer = 0;
 let readyTimer = 0;
 let observer: ResizeObserver | undefined;
 let content: HTMLDivElement | undefined;
+let receiveMermaid: ((source: string) => void) | undefined;
 const resources: BlockedResource[] = [];
 const check = document.createElement('img');
 
@@ -48,6 +54,8 @@ function onViolation(event: SecurityPolicyViolationEvent) {
     return;
   }
   blocked = true;
+  receiveMermaid?.('');
+  receiveMermaid = undefined;
   // Hide in the same task as the violation; parent React receives the message asynchronously.
   document.documentElement.style.setProperty('display', 'none', 'important');
   observer?.disconnect();
@@ -81,53 +89,30 @@ function measure() {
 }
 
 async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
-  if (!command.mermaid) {
+  if (!command.mermaid || !container.querySelector('code.language-mermaid, pre.mermaid') || blocked || disposed) {
     return;
   }
-  mermaid.initialize({
-    ...command.mermaid,
-    securityLevel: 'strict',
-    startOnLoad: false,
-    htmlLabels: false,
-    flowchart: { ...command.mermaid.flowchart, htmlLabels: false },
-    secure: [
-      'secure',
-      'securityLevel',
-      'startOnLoad',
-      'maxTextSize',
-      'maxEdges',
-      'suppressErrorRendering',
-      'htmlLabels',
-      'flowchart',
-    ],
-    suppressErrorRendering: true,
+  const source = await new Promise<string>((resolve) => {
+    receiveMermaid = resolve;
+    send({ type: 'mermaid-needed' });
   });
-  let id = 0;
-  for (const block of container.querySelectorAll('code.language-mermaid, pre.mermaid')) {
-    if (blocked || disposed) {
-      return;
-    }
-    const target = block.tagName === 'CODE' ? block.parentElement! : block;
-    try {
-      const result = await mermaid.render(`text-mermaid-${++id}`, target.textContent ?? '');
-      if (blocked || disposed) {
-        return;
-      }
-      const diagram = document.createElement('div');
-      diagram.className = 'mermaid-diagram';
-      diagram.innerHTML = DOMPurify.sanitize(result.svg, { USE_PROFILES: { svg: true, svgFilters: true } });
-      target.replaceWith(diagram);
-    } catch {
-      // CSP failures can reject Mermaid's image decoding too. The violation handler owns consent.
-      if (!blocked && !disposed) {
-        const error = document.createElement('div');
-        error.className = 'mermaid-diagram-error';
-        error.setAttribute('role', 'status');
-        error.textContent = command.diagramError;
-        target.before(error);
-      }
-    }
+  if (blocked || disposed) {
+    return;
   }
+  let render: RenderDiagrams | undefined;
+  const script = Object.assign(document.createElement('script'), {
+    nonce,
+    textContent: source,
+    registerMermaid: (renderer: RenderDiagrams) => {
+      render = renderer;
+    },
+  });
+  document.head.append(script);
+  script.remove();
+  if (!render) {
+    throw new Error('Text diagram runtime did not initialize');
+  }
+  await render(command, container, () => blocked || disposed);
 }
 
 async function render(command: RenderCommand) {
@@ -162,7 +147,7 @@ async function render(command: RenderCommand) {
   }, 0);
 }
 
-function onMessage(event: MessageEvent<RenderCommand>) {
+function onMessage(event: MessageEvent<RenderCommand | MermaidCommand>) {
   const command = event.data;
   if (
     event.source !== window.parent ||
@@ -170,8 +155,19 @@ function onMessage(event: MessageEvent<RenderCommand>) {
     !command ||
     command.protocol !== TEXT_FRAME_PROTOCOL ||
     command.channel !== channel ||
-    command.type !== 'render' ||
     !verified ||
+    blocked ||
+    disposed
+  ) {
+    return;
+  }
+  if (command.type === 'mermaid-source' && typeof command.source === 'string') {
+    receiveMermaid?.(command.source);
+    receiveMermaid = undefined;
+    return;
+  }
+  if (
+    command.type !== 'render' ||
     started ||
     typeof command.html !== 'string' ||
     typeof command.globalCss !== 'string'
@@ -184,6 +180,8 @@ function onMessage(event: MessageEvent<RenderCommand>) {
 
 function dispose() {
   disposed = true;
+  receiveMermaid?.('');
+  receiveMermaid = undefined;
   observer?.disconnect();
   clearTimeout(removalTimer);
   clearTimeout(readyTimer);
