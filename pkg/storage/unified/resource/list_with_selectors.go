@@ -266,24 +266,25 @@ func (s *server) consumeSearchRows(
 				Message: "empty resource read response",
 			}}
 		}
-		// The index can return a row storage no longer has, deleted or pruned before
-		// the index caught up. The store scan would not list it either, so it is left
-		// out rather than failing the list. It needs no authorization: storage has
-		// nothing to reveal and no folder to check.
-		if val.Error.GetCode() == http.StatusNotFound {
-			s.log.Warn("Search returned an object storage does not have, skipping it",
-				"group", row.key.GetGroup(),
-				"resource", row.key.GetResource(),
-				"namespace", row.key.GetNamespace(),
-				"name", row.key.GetName(),
-				"resourceVersion", row.resourceVersion,
-			)
-			continue
-		}
 		// The storage reads do no authorization, so authorize each row before
 		// surfacing a row-scoped error. An unauthorized row must not reveal details.
+		// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
+		// read) without authorizing, like server.read.
 		if row.key != nil {
 			if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
+				// The index can return a row storage no longer has, deleted or pruned
+				// before the index caught up. The store scan would not list it either,
+				// so it is left out rather than failing the list.
+				if errRes.Code == http.StatusNotFound {
+					s.log.Warn("Search returned an object storage does not have, skipping it",
+						"group", row.key.Group,
+						"resource", row.key.Resource,
+						"namespace", row.key.Namespace,
+						"name", row.key.Name,
+						"resourceVersion", row.resourceVersion,
+					)
+					continue
+				}
 				if errRes.Code == http.StatusForbidden {
 					if val.Error != nil {
 						s.log.Error("Failed to read unauthorized search result",
