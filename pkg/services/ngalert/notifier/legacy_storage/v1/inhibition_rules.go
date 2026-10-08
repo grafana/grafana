@@ -58,7 +58,7 @@ func (ir *InhibitionRule) Validate() error {
 	}
 
 	// imported inhibition rules have purposefully long names to ensure no conflict with non-imported ones
-	if ir.Provenance != models.ProvenanceConvertedPrometheus && len(uid) > ualert.UIDMaxLength {
+	if ir.Provenance() != models.ProvenanceConvertedPrometheus && len(uid) > ualert.UIDMaxLength {
 		return fmt.Errorf("inhibition rule uid is too long (exceeds %d characters)", ualert.UIDMaxLength)
 	}
 
@@ -86,9 +86,8 @@ func NewInhibitionRule(
 ) InhibitionRule {
 	ir := InhibitionRule{
 		ResourceMetadata: ResourceMetadata{
-			UID:        ResourceUID(uid),
-			Provenance: provenance,
-			Manager:    models.ProvenanceToManagerProperties(provenance),
+			UID:     ResourceUID(uid),
+			Manager: models.ProvenanceToManagerProperties(provenance),
 		},
 		SourceMatchers: sourceMatchers,
 		TargetMatchers: targetMatchers,

@@ -244,10 +244,10 @@ func InhibitionRuleToModel(in store.InhibitionRuleDB) InhibitionRule {
 	// Rules stored before the manager fields existed only carry a provenance, from which
 	// NewInhibitionRule derives the manager.
 	if in.ManagerKind != "" {
-		ir.SetManager(utils.ManagerProperties{
+		ir.Manager = utils.ManagerProperties{
 			Kind:     utils.ParseManagerKindString(in.ManagerKind),
 			Identity: in.ManagerIdentity,
-		})
+		}
 	}
 	return ir
 }
@@ -473,11 +473,11 @@ func InhibitionRuleToDB(in InhibitionRule) (*store.InhibitionRuleDB, error) {
 		SourceMatchers: sourceMatchers,
 		TargetMatchers: targetMatchers,
 		Equal:          slices.Clone(in.Equal),
-		Provenance:     string(in.Provenance),
+		Provenance:     string(in.Provenance()),
 	}
 	// Only store the manager when the provenance cannot express it, so that rules managed through
 	// provenance alone keep their existing stored form.
-	if in.Manager.Kind != utils.ManagerKindUnknown && in.Manager != models.ProvenanceToManagerProperties(in.Provenance) {
+	if in.Manager.Kind != utils.ManagerKindUnknown && in.Manager != models.ProvenanceToManagerProperties(in.Provenance()) {
 		out.ManagerKind = string(in.Manager.Kind)
 		out.ManagerIdentity = in.Manager.Identity
 	}

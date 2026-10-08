@@ -139,15 +139,13 @@ func (svc *MuteTimingService) GetMuteTimingByName(ctx context.Context, name stri
 }
 
 // CreateMuteTiming adds a new mute timing within the specified org. The created mute timing is returned.
-// The mute timing's Manager is persisted; when it is unknown, it is derived from its Provenance.
+// The mute timing's Manager is persisted.
 func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
 
-	mt.NormalizeManager()
-
-	if err := svc.validator(ctx, models.ProvenanceNone, mt.Provenance); err != nil {
+	if err := svc.validator(ctx, models.ProvenanceNone, mt.Provenance()); err != nil {
 		return v1.TimeInterval{}, err
 	}
 
@@ -176,13 +174,11 @@ func (svc *MuteTimingService) CreateMuteTiming(ctx context.Context, mt v1.TimeIn
 }
 
 // UpdateMuteTiming replaces an existing mute timing within the specified org. The replaced mute timing is returned. If the mute timing does not exist, ErrMuteTimingsNotFound is returned.
-// The mute timing's Manager is persisted; when it is unknown, it is derived from its Provenance.
+// The mute timing's Manager is persisted.
 func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeInterval, orgID int64) (v1.TimeInterval, error) {
 	if err := mt.Validate(); err != nil {
 		return v1.TimeInterval{}, MakeErrTimeIntervalInvalid(err)
 	}
-
-	mt.NormalizeManager()
 
 	revision, err := svc.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -211,17 +207,17 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		}
 	}
 
-	if existing.Provenance == models.ProvenanceConvertedPrometheus {
+	if existing.Provenance() == models.ProvenanceConvertedPrometheus {
 		return v1.TimeInterval{}, makeErrMuteTimeIntervalOrigin(existing, "update")
 	}
 
 	// check that provenance is not changed in an invalid way
-	if err := svc.validator(ctx, existing.Provenance, mt.Provenance); err != nil {
+	if err := svc.validator(ctx, existing.Provenance(), mt.Provenance()); err != nil {
 		return v1.TimeInterval{}, err
 	}
 
 	// check optimistic concurrency
-	if err = svc.checkOptimisticConcurrency(existing, mt.Provenance, mt.Version, "update"); err != nil {
+	if err = svc.checkOptimisticConcurrency(existing, mt.Provenance(), mt.Version, "update"); err != nil {
 		return v1.TimeInterval{}, err
 	}
 
@@ -233,7 +229,7 @@ func (svc *MuteTimingService) UpdateMuteTiming(ctx context.Context, mt v1.TimeIn
 		if existing.Title != updated.Title {
 			revision.DeleteTimeInterval(existing.UID)
 
-			err = svc.renameTimeIntervalInDependentResources(ctx, orgID, revision, existing.Title, updated.Title, updated.Provenance)
+			err = svc.renameTimeIntervalInDependentResources(ctx, orgID, revision, existing.Title, updated.Title, updated.Provenance())
 			if err != nil {
 				return err
 			}
@@ -276,11 +272,11 @@ func (svc *MuteTimingService) DeleteMuteTiming(ctx context.Context, nameOrUID st
 	}
 
 	// Block deletes of imported intervals
-	if existing.Provenance == models.ProvenanceConvertedPrometheus {
+	if existing.Provenance() == models.ProvenanceConvertedPrometheus {
 		return makeErrMuteTimeIntervalOrigin(existing, "delete")
 	}
 
-	if err := svc.validator(ctx, existing.Provenance, provenance); err != nil {
+	if err := svc.validator(ctx, existing.Provenance(), provenance); err != nil {
 		return err
 	}
 
@@ -354,21 +350,13 @@ func (svc *MuteTimingService) assignTimeIntervalProvenance(ctx context.Context, 
 		return nil
 	}
 
-	provenances, err := svc.provenanceStore.GetProvenances(ctx, orgID, (&v1.TimeInterval{}).ResourceType())
-	if err != nil {
-		return err
-	}
 	managers, err := svc.provenanceStore.GetAllManagerProperties(ctx, orgID, (&v1.TimeInterval{}).ResourceType())
 	if err != nil {
 		return err
 	}
 
 	for uid, interval := range rev.Config.TimeIntervals {
-		prov, ok := provenances[interval.ResourceID()]
-		if !ok {
-			prov = models.ProvenanceNone
-		}
-		interval.AssignManager(prov, managers[interval.ResourceID()])
+		interval.Manager = managers[interval.ResourceID()]
 		rev.Config.TimeIntervals[uid] = interval
 	}
 	return nil

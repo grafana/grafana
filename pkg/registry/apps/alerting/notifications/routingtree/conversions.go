@@ -82,7 +82,7 @@ func ConvertToK8sResource(orgID int64, r *v1.ManagedRoute, name string, namespac
 			}
 		}
 	}
-	provenance.SetAnnotations(result, r.Provenance, r.Manager)
+	provenance.SetAnnotations(result, r.Manager)
 	result.UID = gapiutil.CalculateClusterWideUID(result)
 	return result, nil
 }
