@@ -220,6 +220,24 @@ func TestBlobStreamLocalClient(t *testing.T) {
 	require.False(t, unary.getReached)
 }
 
+func TestBlobStreamLocalClientInterceptorWithErrorConversion(t *testing.T) {
+	srv, _, _ := newBlobAuthzTestServer(t, nil)
+	srv.grpcErrorResultToStatus = true
+	client := NewLocalResourceClient(srv)
+
+	// The in-process token authenticates as the service in namespace "*".
+	releaseFirst, err := srv.acquireBlobTransfer("*")
+	require.NoError(t, err)
+	defer releaseFirst()
+	releaseSecond, err := srv.acquireBlobTransfer("*")
+	require.NoError(t, err)
+	defer releaseSecond()
+
+	// The interceptor must reject this before the handler can inspect the invalid request.
+	_, err = client.GetBlob(ctxWithUserInNs("default"), &resourcepb.GetBlobRequest{MustProxyBytes: true})
+	require.Equal(t, codes.ResourceExhausted, status.Code(err))
+}
+
 func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 	srv, ac, _ := newBlobAuthzTestServer(t, nil)
 	srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
