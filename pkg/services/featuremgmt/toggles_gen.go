@@ -1014,10 +1014,6 @@ const (
 	// Nest app plugin navigation items in the mega menu based on their URL path hierarchy
 	FlagGrafanaPluginPathNesting = "grafana.pluginPathNesting"
 
-	// FlagGrafanaRspackBuild
-	// Switches the backend to load frontend assets built with rspack instead of webpack
-	FlagGrafanaRspackBuild = "grafana.rspackBuild"
-
 	// FlagPluginsForceTls13
 	// Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client
 	FlagPluginsForceTls13 = "pluginsForceTls13"
