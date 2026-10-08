@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Kapcsolattartási pont",
-          "notification-policy": "Értesítési házirend",
-          "select-contact-point": "Kapcsolattartási pont kiválasztása",
-          "use-notification-policy": "Értesítési házirend használata"
+          "notification-policy": "Értesítési házirend"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Szerző: {{author}}",
       "card-selected": "{{title}} (kiválasztva)",
       "card-updated": "Frissítve: {{when}}",
-      "create-description": "Leírás",
-      "create-description-help": "Opcionális kontextus a közreműködők számára",
-      "create-description-placeholder": "Mit vizsgál?",
       "create-name": "Jegyzetfüzet neve",
       "create-name-required": "A jegyzetfüzet nevének megadása kötelező",
       "create-name-taken": "Ilyen nevű jegyzetfüzet már létezik",
-      "create-tags": "Címkék",
-      "create-tags-help": "Opcionális – kereséshez és szűréshez használható",
-      "create-tags-placeholder": "Címke hozzáadása",
       "created-by-me": "Általam létrehozott",
       "error-conflict": "Ez a jegyzetfüzet megváltozott, miközben Ön elemeket adott hozzá. Próbálja meg újra hozzáadni a panelt a legújabb verzióhoz.",
       "error-generic": "Nem sikerült hozzáadni a panelt a jegyzetfüzethez",
@@ -13183,6 +13175,8 @@
       "list-none": "Még nincsenek jegyzetfüzetei. Hozzon létre inkább egyet.",
       "list-none-read-only": "Még nincsenek jegyzetfüzetei, és nincs engedélye létrehozni egyet.",
       "list-truncated": "Nem minden jegyzetfüzet jelenik meg. Szűkítse a keresést, hogy megtalálja a többit.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Keresés cím szerint",
       "sort-alphabetical": "Betűrendben (A–Z)",
       "sort-label": "Jegyzetfüzetek rendezése",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Névtelen",
       "count_one": "{{count}} jegyzetfüzet",
-      "count_other": "{{count}} jegyzetfüzet",
-      "count-truncated_one": "Az első {{count}} jegyzetfüzet betöltve",
-      "count-truncated_other": "Az első {{count}} jegyzetfüzet betöltve"
+      "count_other": "{{count}} jegyzetfüzet"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "A Git Syncet a Grafana Cloudban is használhatja"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Kód másolása vágólapra"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Előfordulhat, hogy az áttelepítés után manuálisan kell eltávolítani vagy kezelni az eredeti mappákat.",
       "alert-point-folder-structure": "A meglévő irányítópultok áttelepítésekor a mappaszerkezet replikálódik az adattárban. Az eredeti mappákból eltűnnek az irányítópultok, de továbbra is tartalmazhatnak riasztásokat vagy könyvtárpaneleket.",
       "alert-point-instance-alerts": "A meglévő riasztások és könyvtárpanelek elvesznek, és az áttelepítés után nem lesznek használhatók.",
-      "alert-point-permissions": "A részletes engedélyek nem támogatottak. Az alapértelmezett engedélyek érvényesek: a rendszergazdai, a szerkesztői és a megtekintői szerepkörök a normál hozzáférési szintjükkel maradnak meg.",
       "alert-point-unsupported": "A riasztások és a könyvtárpanelek nem támogatottak a kiépített mappákban.",
       "alert-title": "Fontos: A folytatás előtt tekintse át a Git-szinkronizálás korlátozásait",
       "app-mode-label": "Alkalmazás konfigurálása",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Leírás"
     },
-    "generate-columns": {
-      "score": "Pontszám"
-    },
     "results-table": {
       "datasource-header": "Adatforrás",
       "deleted-by-header": "Törölte:",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Hiba történt a preferenciák frissítésekor"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Kezdőlap irányítópultja",
       "home-dashboard-placeholder": "Alapértelmezett irányítópult",
       "language-preference-label": "Nyelv",
