@@ -2,7 +2,14 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { Profiler, useCallback, useLayoutEffect, useRef, useState } from 'react';
 
-import { type DataQuery, getDefaultTimeRange, LoadingState, type PanelData, toDataFrame } from '@grafana/data';
+import {
+  createTheme,
+  type DataQuery,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
@@ -641,6 +648,132 @@ describe('QueryCoauthoring', () => {
     });
     return tabs;
   }
+
+  async function resizeProposal(user: ReturnType<typeof userEvent.setup>, width: number) {
+    const bounds = screen.getByRole('dialog').getBoundingClientRect();
+    await user.pointer({
+      keys: '[MouseLeft>]',
+      target: screen.getByRole('separator', { name: 'Resize proposal from right' }),
+      coords: { x: bounds.right, y: bounds.top + 40 },
+    });
+    await user.pointer({ target: document.body, coords: { x: bounds.left + width, y: bounds.top + 140 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+  }
+
+  it('matches compact proposal chrome and spacing while keeping the full-width view and width-only handles', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    const tabs = mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const explanation = tabs.parentElement!;
+    const actions = screen.getByRole('button', { name: 'Accept' }).parentElement!.parentElement!;
+    const proposal = explanation.parentElement!;
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    expect(screen.getByText('Previewing query')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
+    expect(screen.getByText('Suggestion updated')).toBeVisible();
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    await resizeProposal(user, 419);
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveTextContent('Cancel');
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toHaveTextContent('Open in Chat');
+    expect(screen.getByText('Previewing query')).not.toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    expect(screen.getByText('Suggestion updated')).not.toBeVisible();
+    expect(explanation).toHaveStyle({ padding: '12px' });
+    expect(actions).toHaveStyle({ padding: '12px' });
+    for (const chip of screen.getAllByRole('tab')) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    await resizeProposal(user, 279);
+    expect(explanation).toHaveStyle({ padding: '4px' });
+    expect(tabs).toHaveStyle({ justifyContent: 'center', gap: '8px', padding: '8px' });
+    const trio = [
+      screen.getByRole('button', { name: 'Previous option' }),
+      screen.getByRole('tab', { selected: true }),
+      screen.getByRole('button', { name: 'Next option' }),
+    ];
+    for (const chip of trio) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
+    expect(trio[0]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
+    expect(trio[2]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
+    expect(actions).toHaveStyle({ alignSelf: 'flex-end', width: 'fit-content', minHeight: '0', padding: '4px 12px' });
+    expect(screen.getByRole('button', { name: 'Accept' }).parentElement).toHaveStyle({ gap: '12px' });
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    expect(screen.getAllByRole('separator')).toHaveLength(2);
+    for (const handle of screen.getAllByRole('separator')) {
+      expect(handle).toHaveStyle({ width: '8px', top: '0', bottom: '0', cursor: 'ew-resize' });
+    }
+    expect(dialog.style.height).toBe('');
+    expect(details).toHaveStyle({ overflowY: 'auto' });
+    await resizeProposal(user, 420);
+    expect(screen.getByText('Previewing query')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
+    expect(screen.getByText('Suggestion updated')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toHaveTextContent('Accept');
+    expect(proposal).toHaveStyle({ gap: '8px' });
+  });
+
+  it.each([
+    {
+      kind: 'error',
+      title: 'Preview error',
+      body: 'Vector matching requires unique labels',
+      role: 'alert',
+      icon: 'exclamation-circle',
+    },
+    {
+      kind: 'no-data',
+      title: 'No data',
+      body: 'Try another option or widen the time range.',
+      role: 'alert',
+      icon: 'exclamation-triangle',
+    },
+    {
+      kind: 'no-signal',
+      title: 'No signal',
+      body: 'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.',
+      role: 'status',
+      icon: 'info-circle',
+    },
+    { kind: 'ok', title: '', body: 'Results were truncated', role: 'status', icon: 'info-circle' },
+  ])(
+    'keeps the full $kind callout at narrow width and only its icon and title at tiny width',
+    async ({ kind, title, body, role, icon }) => {
+      const { user, previewRequests, panelResult } = await setupPeek();
+      const dialog = screen.getByRole('dialog');
+      mockProposalGeometry(dialog);
+      fireEvent.animationEnd(dialog);
+      const result = panelResult(kind === 'no-signal' ? 0 : 11);
+      if (kind === 'error') {
+        result.state = LoadingState.Error;
+        result.errors = [{ refId: 'A', message: body }];
+      } else if (kind === 'no-data') {
+        result.series = [];
+      } else if (kind === 'ok') {
+        result.series[0].meta = { notices: [{ severity: 'warning', text: body }] };
+      }
+      act(() => previewRequests[0].setState({ data: result }));
+      await resizeProposal(user, 419);
+      const slot = screen.getByRole('region', { name: 'Preview result' });
+      expect(within(slot).getByText(body)).toBeVisible();
+      expect(within(slot).getByRole(role)).toHaveTextContent(body);
+      await resizeProposal(user, 279);
+      expect(screen.getByRole('tab', { selected: true })).toHaveTextContent('Option 1');
+      if (kind === 'ok') {
+        expect(screen.queryByText(body)).not.toBeInTheDocument();
+      } else {
+        const compact = within(slot).getByRole(role);
+        expect(compact).toHaveTextContent(title);
+        expect(compact).not.toHaveTextContent(body);
+        expect(within(compact).getByTestId(`icon-${icon}`)).toBeVisible();
+        expect(compact).toHaveStyle({ whiteSpace: 'nowrap' });
+      }
+      await resizeProposal(user, 420);
+      expect(within(slot).getByText(body)).toBeVisible();
+    }
+  );
 
   it('freezes the group and chip row screen top after entrance across different option heights and Original', async () => {
     const { user, anchorElement } = await setupPeek();
