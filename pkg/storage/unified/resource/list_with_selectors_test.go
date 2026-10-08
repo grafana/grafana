@@ -504,7 +504,7 @@ func TestListWithSelectors(t *testing.T) {
 		// The search backend prefixes label keys itself, so they are passed through.
 		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
 		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
-		require.Equal(t, []string{SEARCH_FIELD_RV}, searchClient.last.Fields)
+		require.Equal(t, []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER}, searchClient.last.Fields)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
 	})
 
@@ -1148,7 +1148,7 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	require.Len(t, resp.Items, 3)
 	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
 	require.Equal(t, 1, backend.batchCalls)
-	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+	require.Equal(t, readChunkSize, backend.batchReqs)
 	require.Equal(t, []string{"item-0", "item-1", "item-2"}, backend.pulledNames)
 }
 
@@ -1350,32 +1350,26 @@ func TestListWithSelectorsSurfacesKVRuntimeFailuresBeforeAuthorization(t *testin
 }
 
 func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
-	var kvWrapper *failSecondBatchGetKV
+	var kvWrapper *failDataBatchGetsKV
 	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
-		kvWrapper = &failSecondBatchGetKV{KV: opts.KvStore, err: errors.New("transient storage failure")}
+		kvWrapper = &failDataBatchGetsKV{KV: opts.KvStore, err: errors.New("transient storage failure"), failFrom: 2}
 		opts.KvStore = kvWrapper
 	})
 
-	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize+1)
-	denied := make(map[string]struct{}, searchReadChunkSize)
+	rows := make([]*resourcepb.ResourceSearchRow, 0, readChunkSize+1)
+	denied := make(map[string]struct{}, readChunkSize)
 	var listRV int64
-	for i := range searchReadChunkSize + 1 {
+	for i := range readChunkSize + 1 {
 		name := fmt.Sprintf("cross-batch-%02d", i)
-		listRV = seedResource(t, backend, t.Context(), name, fmt.Sprintf("folder-%02d", i))
-		rows = append(rows, &resourcepb.ResourceTableRow{
-			Key:             appsKey(name),
-			ResourceVersion: listRV,
-			SortFields:      []string{name},
-		})
-		if i < searchReadChunkSize {
+		folder := fmt.Sprintf("folder-%02d", i)
+		listRV = seedResource(t, backend, t.Context(), name, folder)
+		rows = append(rows, folderSearchRow(appsKey(name), listRV, folder, name))
+		if i < readChunkSize {
 			denied[name] = struct{}{}
 		}
 	}
 
-	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-		ResourceVersion: listRV,
-		Results:         &resourcepb.ResourceTable{Rows: rows},
-	}}, 1024)
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(listRV, rows)}, 1024)
 	s.backend = backend
 	s.access = denyByNameAccess{deny: denied}
 	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
@@ -1390,7 +1384,58 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 	require.Empty(t, resp.Items)
 	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
 	require.Equal(t, "transient storage failure", resp.Error.Message)
+	// The first chunk is read by exact key; the second chunk's exact read fails and
+	// ends the list without another read.
 	require.Equal(t, 2, kvWrapper.dataCalls)
+}
+
+// A body that cannot be read fails its own row only. When an earlier row already
+// fills the page, the list stops before it and pages forward instead of failing.
+func TestListWithSelectorsStopsBeforeAnUnreadableBodyPastAFullPage(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.KvStore = &unreadableValueKV{KV: opts.KvStore, nameMatch: "second-unreadable", err: errors.New("value is corrupt")}
+	})
+	names := []string{"first", "second-unreadable"}
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
+	var listRV int64
+	for _, name := range names {
+		listRV = seedResource(t, backend, t.Context(), name, "folder-1")
+		rows = append(rows, folderSearchRow(appsKey(name), listRV, "folder-1", name))
+	}
+
+	// One byte is enough for the first body to fill the page.
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(listRV, rows)}, 1)
+	s.backend = backend
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.NotEmpty(t, resp.NextPageToken)
+}
+
+// folderSearchResponse is a field-values search response whose rows carry a folder.
+func folderSearchResponse(rv int64, rows []*resourcepb.ResourceSearchRow) *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		ResourceVersion: rv,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:          []*resourcepb.ResourceSearchField{{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING}},
+		Rows:            rows,
+	}
+}
+
+func folderSearchRow(key *resourcepb.ResourceKey, rv int64, folder string, sortFields ...string) *resourcepb.ResourceSearchRow {
+	return &resourcepb.ResourceSearchRow{
+		Key:             key,
+		ResourceVersion: rv,
+		SortFields:      sortFields,
+		Values:          []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{folder}}},
+	}
 }
 
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
@@ -1492,7 +1537,7 @@ func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	return b.fakeBackend.ReadResource(ctx, req)
 }
 
-func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []BatchReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	b.batchReqs += len(requests)
 	return func(yield func(*BackendReadResponse) bool) {
@@ -1525,4 +1570,32 @@ func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*reso
 			}
 		}
 	}, nil
+}
+
+func TestDecodeListSearchRowsReadsTheFolderHint(t *testing.T) {
+	key := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: name}
+	}
+	rows, err := decodeListSearchRows(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{Key: key("in-folder"), ResourceVersion: 1, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"title"}},
+				{FieldIndex: 1, StringValues: []string{"folder-1"}},
+			}},
+			// A root-level object has no folder value at all.
+			{Key: key("at-root"), ResourceVersion: 2, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"title"}},
+			}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, rows, 2)
+	require.Equal(t, "folder-1", rows[0].folder)
+	require.Equal(t, "", rows[1].folder)
 }

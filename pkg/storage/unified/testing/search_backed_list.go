@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
@@ -36,6 +37,47 @@ type SearchBackedListOptions struct {
 	// ExpectBatchReads asserts the read used BatchReadResource (KV backends)
 	// rather than the per-resource fallback.
 	ExpectBatchReads bool
+	// DataKeyScans, when set, reports how many data key scans storage has made.
+	// Search-backed reads must make none: search gives the exact version and
+	// folder of every row, so no storage key has to be resolved.
+	DataKeyScans func() int64
+}
+
+// DataKeyScanCounter counts key scans of the data section, which is what
+// resolving a storage key costs.
+type DataKeyScanCounter struct {
+	resource.KV
+	scans atomic.Int64
+}
+
+// Wrap makes the counter observe store; pass it to NewTestSqlKvBackendWithKV.
+func (c *DataKeyScanCounter) Wrap(store resource.KV) resource.KV {
+	c.KV = store
+	return c
+}
+
+func (c *DataKeyScanCounter) Keys(ctx context.Context, section string, opt resource.ListOptions) iter.Seq2[string, error] {
+	if section == kv.DataSection {
+		c.scans.Add(1)
+	}
+	return c.KV.Keys(ctx, section, opt)
+}
+
+// Scans reports the data key scans seen so far.
+func (c *DataKeyScanCounter) Scans() int64 {
+	return c.scans.Load()
+}
+
+// assertNoKeyScans fails if read made a data key scan.
+func assertNoKeyScans(t *testing.T, opts SearchBackedListOptions, read func()) {
+	t.Helper()
+	if opts.DataKeyScans == nil {
+		read()
+		return
+	}
+	before := opts.DataKeyScans()
+	read()
+	require.Equal(t, before, opts.DataKeyScans(), "search-backed reads should read rows by exact key, without resolving storage keys")
 }
 
 // labelFolderBuilder indexes the fields this test selects and authorizes on:
@@ -87,7 +129,7 @@ type countingBackend struct {
 	reads           atomic.Int64
 }
 
-func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*resource.BackendReadResponse], error) {
+func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []resource.BatchReadRequest, includeDeleted bool) (iter.Seq[*resource.BackendReadResponse], error) {
 	if includeDeleted {
 		c.trashBatchReads.Add(1)
 	} else {
@@ -135,14 +177,6 @@ func (a denyFolderAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req c
 // without a batched read returns ErrBatchReadUnsupported and takes the
 // per-resource fallback, which this still checks for correctness.
 func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts SearchBackedListOptions) {
-	ctx = claims.WithAuthInfo(ctx, &identity.StaticRequester{
-		Type:           claims.TypeUser,
-		UserID:         1,
-		UserUID:        "u1",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
-	})
-
 	const (
 		ns           = "search-list-ns"
 		okFolder     = "folder-ok"
@@ -153,6 +187,15 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		unauthorized = 5
 		otherLabel   = 3
 	)
+
+	ctx = claims.WithAuthInfo(ctx, &identity.StaticRequester{
+		Type:           claims.TypeUser,
+		UserID:         1,
+		UserUID:        "u1",
+		Namespace:      ns,
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	})
 
 	counting := &countingBackend{StorageBackend: backend}
 
@@ -260,33 +303,35 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		var token string
 		var listRV int64
 		pages := 0
-		for {
-			resp, err := server.List(ctx, newReq(pageSize, token))
-			require.NoError(t, err)
-			require.Nil(t, resp.Error)
-			require.Greater(t, resp.ResourceVersion, int64(0))
-			if listRV == 0 {
-				listRV = resp.ResourceVersion
-			}
-			require.Equal(t, listRV, resp.ResourceVersion, "list resource version must be stable across pages")
+		assertNoKeyScans(t, opts, func() {
+			for {
+				resp, err := server.List(ctx, newReq(pageSize, token))
+				require.NoError(t, err)
+				require.Nil(t, resp.Error)
+				require.Greater(t, resp.ResourceVersion, int64(0))
+				if listRV == 0 {
+					listRV = resp.ResourceVersion
+				}
+				require.Equal(t, listRV, resp.ResourceVersion, "list resource version must be stable across pages")
 
-			for _, item := range resp.Items {
-				obj := &unstructured.Unstructured{}
-				require.NoError(t, obj.UnmarshalJSON(item.Value))
-				name := obj.GetName()
-				_, dup := got[name]
-				require.False(t, dup, "duplicate across pages: %s", name)
-				title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
-				got[name] = want{title: title, rv: item.ResourceVersion}
-			}
+				for _, item := range resp.Items {
+					obj := &unstructured.Unstructured{}
+					require.NoError(t, obj.UnmarshalJSON(item.Value))
+					name := obj.GetName()
+					_, dup := got[name]
+					require.False(t, dup, "duplicate across pages: %s", name)
+					title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+					got[name] = want{title: title, rv: item.ResourceVersion}
+				}
 
-			pages++
-			require.LessOrEqual(t, pages, authorized, "pagination did not terminate")
-			token = resp.NextPageToken
-			if token == "" {
-				break
+				pages++
+				require.LessOrEqual(t, pages, authorized, "pagination did not terminate")
+				token = resp.NextPageToken
+				if token == "" {
+					break
+				}
 			}
-		}
+		})
 
 		require.Equal(t, 2, pages, "expected two pages")
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
@@ -300,7 +345,9 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		counting.batchReads.Store(0)
 		counting.reads.Store(0)
 
-		resp, err := server.List(ctx, newReq(1000, ""))
+		var resp *resourcepb.ListResponse
+		var err error
+		assertNoKeyScans(t, opts, func() { resp, err = server.List(ctx, newReq(1000, "")) })
 		require.NoError(t, err)
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.NextPageToken, "the whole set fits on one page")
@@ -456,7 +503,8 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		}
 	}
 
-	searchItems := collect(t, searchServer, opts.ExpectBatchReads)
+	var searchItems map[string]int64
+	assertNoKeyScans(t, opts, func() { searchItems = collect(t, searchServer, opts.ExpectBatchReads) })
 	storeItems := collect(t, storeServer, false)
 	require.Equal(t, wantRV, searchItems)
 	require.Equal(t, storeItems, searchItems)
@@ -498,7 +546,9 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		}
 
 		storeNames, storePages := collectNotOlderThan(t, storeServer)
-		searchNames, searchPages := collectNotOlderThan(t, searchServer)
+		var searchNames []string
+		var searchPages int
+		assertNoKeyScans(t, opts, func() { searchNames, searchPages = collectNotOlderThan(t, searchServer) })
 		require.Equal(t, []string{"own", "admin"}, storeNames)
 		require.Equal(t, storeNames, searchNames)
 		require.Greater(t, storePages, 1)

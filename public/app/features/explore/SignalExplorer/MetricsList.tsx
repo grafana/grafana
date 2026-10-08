@@ -4,7 +4,7 @@ import { useDebounce } from 'react-use';
 
 import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
 
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
@@ -116,7 +116,8 @@ export const MetricsList = memo(function MetricsList({
   const reportedTermRef = useRef<string | null>(null);
 
   // `FilterInput` fires per keystroke, so a term only becomes an event once the user stops typing.
-  // Filtering is synchronous, so `metrics` already matches `searchTerm` by the time this runs.
+  // `loading` also covers a search still waiting on the datasource, so once it drops `metrics`
+  // matches `searchTerm`.
   useDebounce(
     () => {
       if (!searchTerm) {
@@ -171,6 +172,9 @@ export const MetricsList = memo(function MetricsList({
   // the datasource and the range. An offset into the old list means nothing in the new one.
   const { visibleCount, showMore } = useVisibleBatch(`${dsKey(dsRef)}|${rangeKey(timeRange)}|${searchTerm}`);
   const visible = metrics.slice(0, visibleCount);
+  // While rows are showing, a line of text above them would push the list down and back on every
+  // keystroke of a server-side search, so the input carries the signal instead.
+  const refreshing = loading && metrics.length > 0;
 
   return (
     <div className={styles.wrapper}>
@@ -179,8 +183,9 @@ export const MetricsList = memo(function MetricsList({
         onChange={setSearchTerm}
         escapeRegex={false}
         placeholder={t('explore.metrics-list.search-placeholder', 'Search metrics')}
+        suffix={refreshing ? <Spinner inline /> : undefined}
       />
-      {loading && (
+      {loading && !refreshing && (
         <Text color="secondary" variant="bodySmall">
           {t('explore.metrics-list.loading', 'Loading metrics…')}
         </Text>

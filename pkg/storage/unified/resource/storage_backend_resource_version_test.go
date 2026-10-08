@@ -308,7 +308,7 @@ func TestKvStorageBackend_ReadResourceVersionsUseEventHead(t *testing.T) {
 	response := backend.ReadResource(t.Context(), req)
 	require.NotNil(t, response.Error)
 	require.EqualValues(t, 400, response.Error.Code)
-	responses, err := backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req}, false)
+	responses, err := backend.BatchReadResource(t.Context(), asBatchReads([]*resourcepb.ReadRequest{req}), false)
 	require.NoError(t, err)
 	for response := range responses {
 		require.NotNil(t, response.Error)
@@ -316,7 +316,7 @@ func TestKvStorageBackend_ReadResourceVersionsUseEventHead(t *testing.T) {
 	}
 	req.ResourceVersion = head
 	require.Nil(t, backend.ReadResource(t.Context(), req).Error)
-	responses, err = backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req}, false)
+	responses, err = backend.BatchReadResource(t.Context(), asBatchReads([]*resourcepb.ReadRequest{req}), false)
 	require.NoError(t, err)
 	for response := range responses {
 		require.Nil(t, response.Error)
@@ -345,7 +345,7 @@ func TestKvStorageBackend_EmptyStoreResourceVersion(t *testing.T) {
 	require.Error(t, err)
 	req := &resourcepb.ReadRequest{Key: appsKey("resource"), ResourceVersion: listRV}
 	require.NotNil(t, backend.ReadResource(t.Context(), req).Error)
-	_, err = backend.BatchReadResource(t.Context(), []*resourcepb.ReadRequest{req}, false)
+	_, err = backend.BatchReadResource(t.Context(), asBatchReads([]*resourcepb.ReadRequest{req}), false)
 	require.Error(t, err)
 	_, err = backend.eventStore.LastEventKey(t.Context())
 	require.ErrorIs(t, err, ErrNotFound)

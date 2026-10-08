@@ -2,8 +2,12 @@ package router
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
+	"gopkg.in/ini.v1"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func TestCompileGroupPatterns(t *testing.T) {
@@ -57,64 +61,148 @@ func TestCompileGroupPatterns_NoPatternFailsToCompile(t *testing.T) {
 	require.False(t, matchesAnyPattern("u", patterns))
 }
 
-func TestParseAggregateTargets(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"baas_apiserver.url":                    "https://baas.example.invalid",
-		"baas_apiserver.group_regex":            "*.grafana.app, *.grafana.com",
-		"baas_apiserver.audience":               "baas",
-		"cloud_app_platform_apiserver.url":      "https://cap.example.invalid",
-		"cloud_app_platform_apiserver.audience": "cloud-app-platform",
-	})
-	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
-
-	targets, err := parseAggregateTargets(section)
+func addAggregateSection(t *testing.T, cfg *setting.Cfg, name string, values map[string]string) {
+	t.Helper()
+	section, err := cfg.Raw.NewSection(aggregateSectionPrefix + name)
 	require.NoError(t, err)
-	require.Len(t, targets, 2)
-
-	byName := map[string]aggregateTargetConfig{}
-	for _, target := range targets {
-		byName[target.Name] = target
+	for key, value := range values {
+		_, err := section.NewKey(key, value)
+		require.NoError(t, err)
 	}
-
-	require.Equal(t, "https://baas.example.invalid", byName["baas_apiserver"].URL)
-	require.Equal(t, "baas", byName["baas_apiserver"].Audience)
-	require.Equal(t, []string{"*.grafana.app", "*.grafana.com"}, byName["baas_apiserver"].GroupPatterns)
-
-	require.Equal(t, "https://cap.example.invalid", byName["cloud_app_platform_apiserver"].URL)
-	require.Empty(t, byName["cloud_app_platform_apiserver"].GroupPatterns)
 }
 
-func TestParseAggregateTargets_TLSSettingsArePerTarget(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"baas_apiserver.url":                    "https://baas.example.invalid",
-		"baas_apiserver.audience":               "baas",
-		"baas_apiserver.ca_file":                "/etc/certs/baas-ca.crt",
-		"cloud_app_platform_apiserver.url":      "https://cap.example.invalid",
-		"cloud_app_platform_apiserver.audience": "cloud-app-platform",
-		"cloud_app_platform_apiserver.insecure": "true",
-	})
-	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
-
-	targets, err := parseAggregateTargets(section)
+func TestParseAggregateTargets(t *testing.T) {
+	cfg := setting.NewCfg()
+	var err error
+	cfg.Raw, err = ini.Load([]byte(`
+[router]
+[router.aggregate.z_first]
+url = https://first.invalid
+audience = first
+poll_interval = 10m
+group_regex = '*.ext.grafana.app, *.grafana.com'
+ca_file = /etc/certs/first.crt
+[unrelated]
+url = https://ignored.invalid
+[router.aggregate.a_second]
+url = https://second.invalid
+audience = second
+insecure = true
+[router.aggregate.disabled]
+audience = disabled
+`))
 	require.NoError(t, err)
+	targets, err := parseAggregateTargets(cfg)
+	require.NoError(t, err)
+	require.Equal(t, []aggregateTargetConfig{
+		{Name: "z_first", URL: "https://first.invalid", Audience: "first", PollInterval: 10 * time.Minute, GroupPatterns: []string{"*.ext.grafana.app", "*.grafana.com"}, CAFile: "/etc/certs/first.crt"},
+		{Name: "a_second", URL: "https://second.invalid", Audience: "second", PollInterval: defaultAggregatePollInterval, InsecureSkipVerify: true},
+	}, targets)
+	target, err := newAggregateTarget(targets[0], nil, nil)
+	require.NoError(t, err)
+	now := time.Now()
+	target.cooldown.OnSuccess(now)
+	require.Equal(t, 10*time.Minute, target.cooldown.Until(now))
+}
 
-	byName := map[string]aggregateTargetConfig{}
-	for _, target := range targets {
-		byName[target.Name] = target
+func TestParseAggregateTargets_EnvOverrides(t *testing.T) {
+	cfg := setting.NewCfg()
+	addAggregateSection(t, cfg, "custom", map[string]string{"audience": "configured-audience"})
+	t.Setenv("GF_ROUTER_AGGREGATE_CUSTOM_URL", "https://env.invalid")
+	t.Setenv("GF_ROUTER_AGGREGATE_CUSTOM_AUDIENCE", "env-audience")
+	t.Setenv("GF_ROUTER_AGGREGATE_CUSTOM_POLL_INTERVAL", "2m")
+	t.Setenv("GF_ROUTER_AGGREGATE_CUSTOM_INSECURE", "true")
+	targets, err := parseAggregateTargets(cfg)
+	require.NoError(t, err)
+	require.Equal(t, []aggregateTargetConfig{{Name: "custom", URL: "https://env.invalid", Audience: "env-audience", PollInterval: 2 * time.Minute, InsecureSkipVerify: true}}, targets)
+}
+
+func TestParseAggregateTargets_Auth(t *testing.T) {
+	cfg := setting.NewCfg()
+	addAggregateSection(t, cfg, "open", map[string]string{"url": "https://open.invalid", "discovery_auth": "none"})
+	addAggregateSection(t, cfg, "signed", map[string]string{"url": "https://signed.invalid", "discovery_auth": "cap_token", "audience": "signed"})
+	targets, err := parseAggregateTargets(cfg)
+	require.NoError(t, err)
+	require.Equal(t, []aggregateTargetConfig{
+		{Name: "open", URL: "https://open.invalid", DiscoveryAuth: discoveryAuthNone, PollInterval: defaultAggregatePollInterval},
+		{Name: "signed", URL: "https://signed.invalid", Audience: "signed", DiscoveryAuth: discoveryAuthCAPToken, PollInterval: defaultAggregatePollInterval},
+	}, targets)
+}
+
+func TestParseAggregateTargets_InvalidAuth(t *testing.T) {
+	for name, values := range map[string]map[string]string{
+		"unknown value":      {"url": "https://example.invalid", "discovery_auth": "basic"},
+		"none with audience": {"url": "https://example.invalid", "discovery_auth": "none", "audience": "x"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			addAggregateSection(t, cfg, "custom", values)
+			_, err := parseAggregateTargets(cfg)
+			require.ErrorContains(t, err, "router.aggregate.custom: ")
+			require.ErrorContains(t, err, "discovery_auth")
+		})
 	}
+}
 
-	require.Equal(t, "/etc/certs/baas-ca.crt", byName["baas_apiserver"].CAFile)
-	require.False(t, byName["baas_apiserver"].InsecureSkipVerify)
-
-	require.Empty(t, byName["cloud_app_platform_apiserver"].CAFile)
-	require.True(t, byName["cloud_app_platform_apiserver"].InsecureSkipVerify)
+func TestParseAggregateTargets_InvalidPollInterval(t *testing.T) {
+	for _, value := range []string{"invalid", "0s", "-1m"} {
+		t.Run(value, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			addAggregateSection(t, cfg, "custom", map[string]string{"url": "https://example.invalid", "poll_interval": value})
+			_, err := parseAggregateTargets(cfg)
+			require.ErrorContains(t, err, "router.aggregate.custom: poll_interval must be a positive duration")
+		})
+	}
 }
 
 func TestParseAggregateTargets_NoneConfigured(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{})
-	section := cfg.SectionWithEnvOverrides(cloudRouterSection)
-
-	targets, err := parseAggregateTargets(section)
+	targets, err := parseAggregateTargets(setting.NewCfg())
 	require.NoError(t, err)
 	require.Empty(t, targets)
+}
+
+func TestParseAggregateTargets_EmptyName(t *testing.T) {
+	cfg := setting.NewCfg()
+	addAggregateSection(t, cfg, "", map[string]string{"url": "https://example.invalid"})
+	_, err := parseAggregateTargets(cfg)
+	require.ErrorContains(t, err, "target name is required")
+}
+
+func TestParseAggregateTargets_LegacyAndNewSections(t *testing.T) {
+	for _, mode := range []string{"legacy only", "new target", "replace legacy", "disable legacy"} {
+		t.Run(mode, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{
+				"baas_apiserver.url":                    "https://baas.invalid",
+				"baas_apiserver.audience":               "baas",
+				"baas_apiserver.ca_file":                "/etc/baas.crt",
+				"baas_apiserver.group_regex":            "*.grafana.app, *.grafana.com",
+				"cloud_app_platform_apiserver.url":      "https://cap.invalid",
+				"cloud_app_platform_apiserver.audience": "cap",
+				"cloud_app_platform_apiserver.insecure": "true",
+			})
+			capTarget := aggregateTargetConfig{Name: "cloud_app_platform_apiserver", URL: "https://cap.invalid", Audience: "cap", InsecureSkipVerify: true, PollInterval: defaultAggregatePollInterval}
+			baasTarget := aggregateTargetConfig{Name: "baas_apiserver", URL: "https://baas.invalid", Audience: "baas", CAFile: "/etc/baas.crt", GroupPatterns: []string{"*.grafana.app", "*.grafana.com"}, PollInterval: defaultAggregatePollInterval}
+			want := []aggregateTargetConfig{capTarget, baasTarget}
+			switch mode {
+			case "new target", "replace legacy":
+				name := "custom"
+				if mode == "replace legacy" {
+					name = "baas_apiserver"
+				}
+				addAggregateSection(t, cfg, name, map[string]string{"url": "https://new.invalid", "audience": "new", "poll_interval": "1m"})
+				newTarget := aggregateTargetConfig{Name: name, URL: "https://new.invalid", Audience: "new", PollInterval: time.Minute}
+				if mode == "replace legacy" {
+					want = []aggregateTargetConfig{newTarget, capTarget}
+				} else {
+					want = []aggregateTargetConfig{newTarget, capTarget, baasTarget}
+				}
+			case "disable legacy":
+				addAggregateSection(t, cfg, "baas_apiserver", map[string]string{"audience": "disabled"})
+				want = []aggregateTargetConfig{capTarget}
+			}
+			targets, err := parseAggregateTargets(cfg)
+			require.NoError(t, err)
+			require.Equal(t, want, targets)
+		})
+	}
 }

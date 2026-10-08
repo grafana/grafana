@@ -51,8 +51,8 @@ describe('CloudRules — Mimir AM auto-sync', () => {
     ]);
   });
 
-  describe('with alertingMigrationUI and alerting.syncExternalAlertmanager enabled', () => {
-    testWithFeatureToggles({ enable: ['alertingMigrationUI', 'alerting.syncExternalAlertmanager'] });
+  describe('with alerting.syncExternalAlertmanager enabled', () => {
+    testWithFeatureToggles({ enable: ['alerting.syncExternalAlertmanager'] });
 
     // Auto-sync mirrors only the Alertmanager configuration, and the rule convert endpoints have no
     // sync check, so this rules-only button must not consult the sync state at all. Asserting the

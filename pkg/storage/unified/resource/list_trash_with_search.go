@@ -24,7 +24,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 	srq := &resourcepb.ResourceSearchRequest{
 		Options:      req.Options,
 		Limit:        req.Limit,
-		Fields:       []string{SEARCH_FIELD_RV},
+		Fields:       []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER},
 		SortBy:       []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV, Desc: true}},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		IsDeleted:    true,
@@ -66,12 +66,8 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		value *BackendReadResponse
 		obj   utils.GrafanaMetaAccessor
 	}
-	for chunk := range slices.Chunk(page.rows, searchReadChunkSize) {
-		requests := make([]*resourcepb.ReadRequest, len(chunk))
-		for i, row := range chunk {
-			requests[i] = &resourcepb.ReadRequest{Key: row.key, ResourceVersion: row.resourceVersion}
-		}
-		values, err := s.backend.BatchReadResource(ctx, requests, true)
+	for chunk := range slices.Chunk(page.rows, readChunkSize) {
+		values, err := s.backend.BatchReadResource(ctx, searchRowReads(chunk), true)
 		if errors.Is(err, ErrBatchReadUnsupported) {
 			if req.NextPageToken == "" {
 				return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, err)
@@ -111,10 +107,16 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		if count != len(chunk) {
 			return nil, fmt.Errorf("batch trash reader returned %d responses for %d requests", count, len(chunk))
 		}
-		authorizer.Prepare(ctx, items)
+		if err := authorizer.Prepare(ctx, items); err != nil {
+			return nil, err
+		}
 
 		for _, item := range parsed {
-			if !authorizer.Allowed(ctx, item.obj.GetFolder(), item.obj.GetUpdatedBy()) {
+			allowed, err := authorizer.Allowed(ctx, item.obj.GetFolder(), item.obj.GetUpdatedBy())
+			if err != nil {
+				return nil, err
+			}
+			if !allowed {
 				continue
 			}
 			pageBytes += len(item.value.Value)

@@ -34,6 +34,9 @@ type fakeSyncerStore struct {
 	// folderUIDs is what GetAllFoldersWithRules returns, i.e. the folders holding rules.
 	folderUIDs    map[string]struct{}
 	folderUIDsErr error
+	// gotCtx is the ctx GetAllFoldersWithRules was last called with, so a test can check it
+	// already carries the per-org identity a context-dependent database provider would need.
+	gotCtx context.Context
 
 	orgs    []int64
 	orgsErr error
@@ -51,7 +54,8 @@ func (f *fakeSyncerStore) CountInFolders(_ context.Context, _ int64, folderUIDs 
 	return total, nil
 }
 
-func (f *fakeSyncerStore) GetAllFoldersWithRules(_ context.Context, _ int64) (map[string]struct{}, error) {
+func (f *fakeSyncerStore) GetAllFoldersWithRules(ctx context.Context, _ int64) (map[string]struct{}, error) {
+	f.gotCtx = ctx
 	if f.folderUIDsErr != nil {
 		return nil, f.folderUIDsErr
 	}
