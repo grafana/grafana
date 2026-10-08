@@ -429,7 +429,7 @@ class DataSourceWithBackend<
       'datasources.apiserver.useNewAPIsForDatasourceResources',
       false
     );
-    if (enabledRedirect) {
+    if (enabledRedirect && this.supportsDatasourceApi('resources')) {
       // example:
       // /apis/prometheus.datasource.grafana.app/v0alpha1/namespaces/stacks-1/datasources/local-prometheus/resources/api/v1/labels
       const apiVersion = 'v0alpha1';
@@ -438,14 +438,27 @@ class DataSourceWithBackend<
     return `/api/datasources/uid/${this.uid}/resources/${path}`;
   }
 
+  private supportsDatasourceApi(endpoint: 'resources' | 'health'): boolean {
+    // The rollout flags do not guarantee an HTTP route exists for every plugin.
+    // @ts-expect-error featuremgmt/registry.go does not support object feature flags yet
+    const allowedTypes = getFeatureFlagClient().getObjectValue('datasources.apiserver.fe-allowed-types', {
+      resources: [],
+      health: [],
+    });
+    if (!allowedTypes || typeof allowedTypes !== 'object' || Array.isArray(allowedTypes)) {
+      return false;
+    }
+    const pluginIds = allowedTypes[endpoint];
+    return Array.isArray(pluginIds) && pluginIds.includes(this.meta?.id ?? this.type);
+  }
+
   /**
    * Run the datasource healthcheck
    */
   async callHealthCheck(): Promise<HealthCheckResult> {
-    const useNewApi = getFeatureFlagClient().getBooleanValue(
-      FlagKeys.DatasourcesApiServerEnableHealthEndpointFrontend,
-      false
-    );
+    const useNewApi =
+      getFeatureFlagClient().getBooleanValue(FlagKeys.DatasourcesApiServerEnableHealthEndpointFrontend, false) &&
+      this.supportsDatasourceApi('health');
     const healthCheckURL = useNewApi
       ? `/apis/${this.meta?.id ?? this.type}.datasource.grafana.app/v0alpha1/namespaces/${config.namespace}/datasources/${this.uid}/health`
       : `/api/datasources/uid/${this.uid}/health`;
