@@ -215,7 +215,7 @@ To connect with an OAuth App, select **Connect with OAuth App** as the authentic
      - Bitbucket: **Client ID**, **Workspace**, and **Client secret**. Use the key of the OAuth consumer as the client ID.
      - Pure Git: **Client ID**, **Client secret**, **Authorization URL**, **Token URL**, and **Scopes**.
   1. Click **Create and authorize**. Grafana opens the consent page of your provider in a new tab.
-  1. Approve the access. When the tab shows **Authorization complete**, close it and return to the wizard.
+  1. Approve the access.
 
 For Pure Git, also enter the **Username** that your provider expects with OAuth tokens, for example `oauth2` for GitLab or `x-token-auth` for Bitbucket, and the **Repository URL**.
 
