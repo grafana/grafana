@@ -255,6 +255,15 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.maxPerRow).toBe(4);
     });
 
+    it('keeps the grid item width for a horizontal repeat', async () => {
+      config.featureToggles.dashboardNewLayouts = false;
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.width).toBe(10);
+    });
+
     it('skips the migration when dashboardNewLayouts is enabled', async () => {
       setTestFlags({ dashboardNewLayouts: true });
 
@@ -345,6 +354,16 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.variableName).toBe('server');
       expect(gridItem.state.repeatDirection).toBe('h');
       expect(gridItem.state.maxPerRow).toBe(4);
+    });
+
+    it('keeps the grid item width for a horizontal repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.width).toBe(10);
     });
 
     it('preserves instance repeat options when library panel repeats are unresolved', async () => {
@@ -447,6 +466,57 @@ describe('LibraryPanelBehavior', () => {
       expect(gridItem.state.variableName).toBeUndefined();
     });
   });
+
+  describe('horizontal repeat width with dashboards.libraryPanelHorizontalRepeatFullWidth enabled', () => {
+    beforeEach(() => {
+      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ [FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth]: true });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
+    it('expands a migrated horizontal repeat to the full grid width', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      expect(gridItem.state.repeatDirection).toBe('h');
+      expect(gridItem.state.width).toBe(24);
+    });
+
+    it('keeps the grid item width for a migrated vertical repeat', async () => {
+      const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server', repeatDirection: 'v' });
+
+      expect(gridItem.state.repeatDirection).toBe('v');
+      expect(gridItem.state.width).toBe(10);
+    });
+
+    it('re-renders the grid after expanding a migrated horizontal repeat', async () => {
+      const forceRender = jest.spyOn(SceneGridLayout.prototype, 'forceRender');
+
+      await buildTestSceneWithLibraryPanel({ repeat: 'server' });
+
+      // A single clone keeps the grid item's height, so performRepeat does not re-render the grid
+      // and the new width would never be laid out.
+      expect(forceRender).toHaveBeenCalledTimes(1);
+      forceRender.mockRestore();
+    });
+
+    it('expands a horizontal repeat migrated under server resolution', async () => {
+      setTestFlags({
+        [FlagKeys.DashboardsLibraryPanelHorizontalRepeatFullWidth]: true,
+        [FlagKeys.DashboardsLibraryPanelRepeatFromServerResolution]: true,
+      });
+
+      const { gridItem } = await buildTestSceneWithLibraryPanel({
+        repeat: 'server',
+        meta: { libraryPanelRepeatUnresolved: true },
+      });
+
+      expect(gridItem.state.variableName).toBe('server');
+      expect(gridItem.state.width).toBe(24);
+    });
+  });
 });
 
 interface BuildTestSceneOptions {
@@ -455,6 +525,8 @@ interface BuildTestSceneOptions {
   timeFrom?: string;
   /** Set on the library panel model, to exercise the repeat migration onto the grid item. */
   repeat?: string;
+  /** Set on the library panel model together with `repeat`. Defaults to 'h'. */
+  repeatDirection?: 'h' | 'v';
   /** Merged into the dashboard meta, for the public/scripted migration exceptions. */
   meta?: { publicDashboardEnabled?: boolean; fromScript?: boolean; libraryPanelRepeatUnresolved?: boolean };
   /**
@@ -470,6 +542,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
     libPanelModelTitle = 'LibraryPanel A title',
     timeFrom,
     repeat,
+    repeatDirection = 'h',
     meta,
     resolvedRepeat,
   } = options;
@@ -496,7 +569,7 @@ async function buildTestSceneWithLibraryPanel(options: BuildTestSceneOptions = {
       datasource: { uid: 'abcdef' },
       targets: [{ refId: 'A' }],
       ...(timeFrom ? { timeFrom } : {}),
-      ...(repeat ? { repeat, repeatDirection: 'h', maxPerRow: 4 } : {}),
+      ...(repeat ? { repeat, repeatDirection, maxPerRow: 4 } : {}),
     },
     version: 1,
   };

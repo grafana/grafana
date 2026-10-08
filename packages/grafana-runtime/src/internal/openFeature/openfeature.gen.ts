@@ -56,6 +56,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
+  /** Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out */
+  DashboardsLibraryPanelHorizontalRepeatFullWidth: "dashboards.libraryPanelHorizontalRepeatFullWidth",
   /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
   DashboardsLibraryPanelRepeatFromServerResolution: "dashboards.libraryPanelRepeatFromServerResolution",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
@@ -489,6 +491,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
+ * Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out
+ *
+ * **Details:**
+ * - flag key: `dashboards.libraryPanelHorizontalRepeatFullWidth`
+ * - default value: `false`
+ */
+export const useFlagDashboardsLibraryPanelHorizontalRepeatFullWidth = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.libraryPanelHorizontalRepeatFullWidth", false, options).value;
 };
 
 /**

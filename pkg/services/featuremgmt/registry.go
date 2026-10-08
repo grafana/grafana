@@ -653,6 +653,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboards.libraryPanelHorizontalRepeatFullWidth",
+			Description: "Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
