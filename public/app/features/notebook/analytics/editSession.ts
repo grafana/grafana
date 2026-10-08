@@ -20,8 +20,9 @@ export interface NotebookEditSessionTotals {
  * Totals for one edit session, from entering edit mode to leaving it.
  *
  * Counted here rather than read off NotebookEditHistory, which cannot answer this: its undo stack
- * drops the oldest action once it holds 100, and swapping the notebook's body clears both stacks, so
- * its length is a count of what can still be undone rather than of what somebody did.
+ * drops the oldest action once it holds 100, and a body swap that isn't itself being undone/redone
+ * clears both stacks (NotebookScene.tsx), so its length is a count of what can still be undone
+ * rather than of what somebody did.
  *
  * Counting here also means no call site has to report anything. Every mutation already goes through
  * the history, and the history only records an action the first time it runs, so a redo cannot count

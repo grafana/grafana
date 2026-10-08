@@ -5,6 +5,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { notebookResourceFor, updateNotebook } from '../../api/notebookResource';
+import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
 import { transformNotebookToScene } from '../../serialization/transformNotebookToScene';
 import { NotebookMutationClient } from '../NotebookMutationClient';
@@ -368,6 +369,106 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     expect(updateNotebook).toHaveBeenCalledTimes(1);
     const [, sent] = jest.mocked(updateNotebook).mock.calls[0];
     expect(sent.layout.spec.cells.map((cell) => cell.spec.element.name)).toEqual(['summary']);
+  });
+
+  describe('undo/redo', () => {
+    it('undoes an assistant write back to the document that was there before it', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const before = cellNamesOf(scene);
+      const beforeTitle = scene.state.title;
+      expect(scene.editHistory.state.canUndo).toBe(false);
+
+      const result = await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: {
+          spec: notebookSpec({ title: 'Renamed', elements: { only: markdownCell('## After') }, cells: ['only'] }),
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(scene.editHistory.state.canUndo).toBe(true);
+
+      scene.editHistory.undo();
+
+      expect(scene.state.title).toBe(beforeTitle);
+      expect(cellNamesOf(scene)).toEqual(before);
+      // Undoing the content doesn't flip the toggle back to View: entering edit mode isn't part of
+      // what this undo step is undoing.
+      expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('records the write under NOTEBOOK_EDIT_KIND.EDIT', async () => {
+      const scene = notebookScene();
+      const executeSpy = jest.spyOn(scene.editHistory, 'execute');
+      const client = new NotebookMutationClient(scene);
+
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+      });
+
+      expect(executeSpy).toHaveBeenCalledWith(expect.objectContaining({ kind: NOTEBOOK_EDIT_KIND.EDIT }));
+    });
+
+    it('redoes an undone assistant write', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+      });
+      const afterApply = cellNamesOf(scene);
+
+      scene.editHistory.undo();
+      expect(scene.editHistory.state.canRedo).toBe(true);
+
+      scene.editHistory.redo();
+
+      expect(cellNamesOf(scene)).toEqual(afterApply);
+      expect(scene.editHistory.state.canRedo).toBe(false);
+    });
+
+    // A body swap normally clears both stacks (NotebookScene.tsx), since older per-cell steps hold
+    // closures over the body it just discarded. But replaying THIS write's own undo/redo is itself a
+    // body swap, and must not trip that same guard — otherwise undoing back past an assistant write
+    // would wipe out a manual edit recorded after it, losing its redo entry for good.
+    it('replaying the assistant write on undo does not discard a later manual edit’s redo entry', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+
+      // A manual edit from before the write: stale once the body is replaced, so the write correctly
+      // clears it (this is the ordinary, documented clearing behavior, not what's under test here).
+      scene.onEnterEditMode();
+      scene.onTagsChange([...(scene.state.tags ?? []), 'before']);
+
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+      });
+      const afterApply = cellNamesOf(scene);
+
+      // A manual edit after the write, recorded on top of it.
+      scene.onTagsChange([...(scene.state.tags ?? []), 'after']);
+      const afterManualEdit = scene.state.tags;
+
+      scene.editHistory.undo(); // undoes the manual tag edit
+      expect(scene.editHistory.state.canRedo).toBe(true);
+
+      scene.editHistory.undo(); // undoes the assistant write — swaps the body back
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+      expect(scene.editHistory.state.canRedo).toBe(true);
+
+      scene.editHistory.redo(); // redoes the assistant write first (LIFO order)
+      expect(cellNamesOf(scene)).toEqual(afterApply);
+      expect(scene.editHistory.state.canRedo).toBe(true);
+
+      scene.editHistory.redo(); // then the manual tag edit
+      expect(scene.state.tags).toEqual(afterManualEdit);
+      expect(scene.editHistory.state.canRedo).toBe(false);
+    });
   });
 
   // The scene already shows the new document, but nothing durable happened. A caller told this succeeded

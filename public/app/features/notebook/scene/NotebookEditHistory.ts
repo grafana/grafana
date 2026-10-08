@@ -57,6 +57,15 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
   private undoStack: NotebookEditAction[] = [];
   private redoStack: NotebookEditAction[] = [];
   private redoStackBeforeRecord = new WeakMap<NotebookEditAction, NotebookEditAction[]>();
+  /**
+   * True while `undo`/`redo` is running a recorded action's own `undo`/`perform`. An action that
+   * swaps the notebook's body (APPLY_NOTEBOOK_SPEC) triggers the same body-changed signal whether it
+   * is being applied for the first time or replayed here — but only the first time is something
+   * actually going away: a replay is this history putting back a body it already knows how to get to
+   * again. `NotebookScene` reads this to skip clearing the stacks out from under the action that is
+   * itself in the middle of being undone or redone.
+   */
+  public isReplaying = false;
 
   public constructor(private readonly observer?: NotebookEditHistoryObserver) {
     super({ canUndo: false, canRedo: false });
@@ -96,7 +105,12 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
       return false;
     }
 
-    action.undo();
+    this.isReplaying = true;
+    try {
+      action.undo();
+    } finally {
+      this.isReplaying = false;
+    }
     this.undoStack.pop();
     this.redoStack.push(action);
     this.observer?.onUndo();
@@ -110,7 +124,12 @@ export class NotebookEditHistory extends StateManagerBase<NotebookEditHistorySta
       return false;
     }
 
-    action.perform();
+    this.isReplaying = true;
+    try {
+      action.perform();
+    } finally {
+      this.isReplaying = false;
+    }
     this.redoStack.pop();
     this.undoStack.push(action);
     this.observer?.onRedo();
