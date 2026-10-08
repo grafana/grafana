@@ -263,15 +263,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:            "provisioning.gitConventions",
-			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-			Stage:           FeatureStagePublicPreview,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true", // enabled by default
-			Generate:        Generate{Go: true, React: true},
-		},
-		{
 			Name:        "provisioning.userAttribution",
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
@@ -660,6 +651,14 @@ var (
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
+			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "disableScriptedDashboards",
@@ -2190,15 +2189,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "kubernetesAlertingHistorian",
-			Description:     "Adds support for Kubernetes alerting historian APIs",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "plugins.useMTPlugins",
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,
@@ -2307,6 +2297,15 @@ var (
 		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "kubernetesUsersReadApi",
+			Description:  "Enables read-only user APIs in the app platform",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2476,38 +2475,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryRuleViewer",
-			Description: "Enables the notification history tab in the rule viewer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryGlobal",
-			Description: "Enables the notification history global menu item viewer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryTriage",
-			Description: "Enables the notification history timeline in the triage instance details drawer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryDetail",
-			Description: "Enables the notification history detail page",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "dashboard.recentlyDeletedViaTrash",
