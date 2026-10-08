@@ -18,18 +18,8 @@ type searchAuthObservation struct {
 	checks  atomic.Int64
 }
 
-func newSearchAuthObservation(metrics *resource.BleveIndexMetrics) *searchAuthObservation {
-	if metrics == nil {
-		return nil
-	}
-	return &searchAuthObservation{metrics: metrics}
-}
-
 func withSearchAuthObservation(access authlib.AccessClient, metrics *resource.BleveIndexMetrics) (authlib.AccessClient, *searchAuthObservation) {
-	observation := newSearchAuthObservation(metrics)
-	if observation == nil {
-		return access, nil
-	}
+	observation := &searchAuthObservation{metrics: metrics}
 	if access != nil {
 		access = &observedSearchAccessClient{AccessClient: access, observation: observation}
 	}
@@ -37,9 +27,6 @@ func withSearchAuthObservation(access authlib.AccessClient, metrics *resource.Bl
 }
 
 func (o *searchAuthObservation) start(req *resourcepb.ResourceSearchRequest, access authlib.AccessClient, postRank, cursorFallback bool) func(*resourcepb.ResourceSearchResponse, error) {
-	if o == nil {
-		return func(*resourcepb.ResourceSearchResponse, error) {}
-	}
 	mode := "pre_rank"
 	if access == nil {
 		mode = "none"

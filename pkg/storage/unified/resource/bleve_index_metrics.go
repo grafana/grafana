@@ -99,7 +99,7 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		SearchAuthChecks:   histogram("grafana_index_server_search_auth_checks", "Check items submitted through Check and BatchCheck per executed search, including failed calls. Excludes Compile and is not a network RPC count.", "mode", "query_type"),
 		SearchAuthEvents: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_auth_events_total",
-			Help: "Search auth events: cursor_fallback selects PreRank instead of PostRank; candidate_budget and facet_budget stop a PostRank scan with unseen matches.",
+			Help: "Search auth events: cursor_fallback selects PreRank instead of PostRank; candidate_budget and facet_budget indicate a PostRank scan stopped at its scan limit, without guaranteeing that more matches remain.",
 		}, []string{"reason"}),
 		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_index_server_index_size_bytes",
