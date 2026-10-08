@@ -325,7 +325,7 @@ function DashboardControlActions({
 
   const showShareButton = hasUid && !isSnapshot && !isEmbedded && !isPlaying && !editPanel;
   const modesEnabled = dashboardModesEnabled();
-  const hasChanges = dashboard.state.isDirty;
+  const hasChanges = dashboard.state.isDirty || dashboard.hasPendingCodeChanges();
   const showSaveButton =
     isEditing &&
     (canSave || canSaveAs) &&

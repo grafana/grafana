@@ -56,6 +56,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       scene.setState({
         ...newState,
         mode: scene.state.mode,
+        codeSession: scene.state.codeSession,
         editPanel: undefined,
         isDirty: true,
       });
@@ -76,7 +77,7 @@ export function applyDashboardSpec({ scene, spec, description }: ApplyDashboardS
       }
     },
     undo: () => {
-      scene.setState({ ...previousState, mode: scene.state.mode });
+      scene.setState({ ...previousState, mode: scene.state.mode, codeSession: scene.state.codeSession });
       scene.applyEditPresentation();
       scene.state.sidebar.refreshAfterRebuild();
       scene.forEachChild((child) => scene.publishEvent(new NewSceneObjectAddedEvent(child), true));

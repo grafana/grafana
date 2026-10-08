@@ -168,6 +168,7 @@ it.each(['label', 'caret'])('opens the mode picker from the %s and switches the 
   expect(screen.getAllByRole('menuitemradio').map((item) => item.textContent)).toEqual([
     'ViewingView and explore the dashboard.',
     'EditingManually edit panels, layout, and settings.',
+    'CodeEdit the dashboard as JSON or YAML.',
   ]);
   expect(screen.getByText('View and explore the dashboard.')).toBeInTheDocument();
   await user.click(screen.getByRole('menuitemradio', { name: /Manually edit panels/ }));

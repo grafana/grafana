@@ -40,6 +40,12 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
       description: t('dashboard.modes.edit-description', 'Manually edit panels, layout, and settings.'),
       icon: 'pen',
     },
+    {
+      value: 'code',
+      label: t('dashboard.modes.code.label', 'Code'),
+      description: t('dashboard.modes.code-description', 'Edit the dashboard as JSON or YAML.'),
+      icon: 'brackets-curly',
+    },
   ];
   const current = options.find((option) => option.value === mode)!;
 
