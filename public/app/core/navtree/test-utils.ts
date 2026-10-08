@@ -1,6 +1,7 @@
-import type { NavModelItem, OrgRole } from '@grafana/data';
+import type { AppPluginConfig, NavModelItem, OrgRole } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
+import { setAppPluginMetas } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
@@ -68,6 +69,15 @@ export function setupNavTestState({
     featureToggles,
     ...configOverrides,
   });
+}
+
+/**
+ * Primes the app plugin metas cache so getAppPluginMetasSync — and with it the
+ * plugin merge inside getInitialNavTree — sees these apps. Pass no apps to
+ * clear it. Only the fields the nav builder reads need supplying.
+ */
+export function setupNavTestApps(apps: Array<Partial<AppPluginConfig> & { id: string }> = []) {
+  setAppPluginMetas(Object.fromEntries(apps.map((app) => [app.id, app as AppPluginConfig])));
 }
 
 export const navIds = (nodes: NavModelItem[]) => nodes.map((node) => node.id);

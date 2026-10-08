@@ -2,8 +2,10 @@ import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { getAppPluginMetasSync } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
+import { mergePluginNavIntoTree } from './buildPluginNav';
 import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
@@ -17,6 +19,7 @@ import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEnt
 import {
   appendIntoSection,
   applyAppSubUrl,
+  arePluginNavItemsEnabled,
   buildEntries,
   isClientNavTreeEnabled,
   type NavEntryBuilder,
@@ -25,8 +28,13 @@ import {
 } from './utils';
 
 /**
- * The entry point used by the redux slices: returns the client-built static
- * tree when the flag is on, or the server-provided tree otherwise.
+ * The entry point used by the redux slices: returns the client-built tree when
+ * the flag is on, or the server-provided tree otherwise.
+ *
+ * This runs during configureStore, which app.ts calls only after it has awaited
+ * both the app plugin metas and the user's permissions — the plugin merge needs
+ * the first, and its access checks need the second. That is why the metas can be
+ * read synchronously here.
  */
 export function getInitialNavTree(): NavModelItem[] {
   if (!isClientNavTreeEnabled()) {
@@ -36,11 +44,13 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  // Pruned here as well as at the end of the plugin merge. The merge is gated
-  // on plugins.useMTPlugins on top of the client-build flag, so with that off it
-  // never runs and these shells would be the tree the user gets. The merge is
-  // unaffected: useNavTree hands it a freshly built tree, not this one.
-  return pruneEmptyNavSections(applyAppSubUrl(buildStaticNavTree()));
+  if (!arePluginNavItemsEnabled()) {
+    return pruneEmptyNavSections(applyAppSubUrl(buildStaticNavTree()));
+  }
+
+  // mergePluginNavIntoTree prunes and sorts, so the shells it attaches to
+  // survive until it has had its chance to fill them
+  return applyAppSubUrl(mergePluginNavIntoTree(getAppPluginMetasSync(), buildStaticNavTree()));
 }
 
 /**

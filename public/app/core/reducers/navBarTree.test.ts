@@ -1,6 +1,7 @@
-import { type NavModelItem } from '@grafana/data';
+import { type NavModelItem, PluginIncludeType } from '@grafana/data';
 
-import { pluginNavLoaded } from '../navtree/state';
+import { NavID } from '../navtree/constants';
+import { navIds, setupNavTestApps, setupNavTestState } from '../navtree/test-utils';
 
 import { ID_PREFIX, navTreeReducer, setStarred, setStarredItems, updateDashboardName } from './navBarTree';
 
@@ -223,83 +224,56 @@ describe('navBarTree reducer', () => {
     });
   });
 
-  describe('pluginNavLoaded', () => {
-    it('replaces the tree with the merged payload', () => {
-      const state = buildState();
-      const merged: NavModelItem[] = [
-        { id: 'home', text: 'Home', url: '/' },
-        { id: 'starred', text: 'Starred', children: [] },
-        { id: 'apps', text: 'More apps', children: [{ id: 'plugin-page-some-app', text: 'Some app' }] },
-      ];
+  // The slice's initial state runs the plugin merge, so the "More apps" ordering
+  // these cover is a property of the initial state rather than of any action.
+  describe('initial state', () => {
+    const initialTree = () => navTreeReducer(undefined, { type: '@@test/init' });
 
-      const next = navTreeReducer(state, pluginNavLoaded({ tree: merged }));
+    const app = (id: string, name: string, pageName: string) => ({
+      id,
+      name,
+      includes: [{ type: PluginIncludeType.page, name: pageName, path: `/a/${id}`, addToNav: true }],
+    });
 
-      expect(next.map((n) => n.id)).toEqual(['home', 'starred', 'apps']);
+    const moreAppsText = (tree: NavModelItem[]) =>
+      tree.find((node) => node.id === NavID.apps)?.children?.map((child) => child.text);
+
+    beforeEach(() => {
+      setupNavTestState({
+        permissions: ['plugins.app:access'],
+        orgRole: 'Admin',
+        openFeatureFlags: { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true },
+      });
+    });
+
+    afterEach(() => {
+      setupNavTestApps();
     });
 
     it('orders the More apps children alphabetically', () => {
-      const merged: NavModelItem[] = [
-        {
-          id: 'apps',
-          text: 'More apps',
-          children: [
-            { id: 'plugin-page-c-app', text: 'Charlie' },
-            { id: 'plugin-page-a-app', text: 'Alpha' },
-            { id: 'plugin-page-b-app', text: 'Bravo' },
-          ],
-        },
-      ];
+      setupNavTestApps([app('c-app', 'Charlie', 'Page'), app('a-app', 'Alpha', 'Page'), app('b-app', 'Bravo', 'Page')]);
 
-      const next = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
-
-      const apps = next.find((n) => n.id === 'apps');
-      expect(apps?.children?.map((c) => c.text)).toEqual(['Alpha', 'Bravo', 'Charlie']);
+      expect(moreAppsText(initialTree())).toEqual(['Alpha', 'Bravo', 'Charlie']);
     });
 
-    // The point of sorting in the reducer rather than in the merge: these two ids
-    // are translated by nav id, and the translated order is the reverse of the raw one
+    // The point of sorting after translateNav rather than in the merge: these two
+    // ids are translated by nav id, and the translated order reverses the raw one
     it('orders on the translated text, not the text the merge produced', () => {
-      const merged: NavModelItem[] = [
-        {
-          id: 'apps',
-          text: 'More apps',
-          children: [
-            { id: 'plugin-page-grafana-k8s-app', text: 'zzz raw name' },
-            { id: 'plugin-page-grafana-slo-app', text: 'aaa raw name' },
-          ],
-        },
-      ];
+      setupNavTestApps([
+        app('grafana-k8s-app', 'zzz raw name', 'Page'),
+        app('grafana-slo-app', 'aaa raw name', 'Page'),
+      ]);
 
-      const next = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
-
-      const apps = next.find((n) => n.id === 'apps');
-      expect(apps?.children?.map((c) => c.text)).toEqual(['Kubernetes', 'SLO']);
+      expect(moreAppsText(initialTree())).toEqual(['Kubernetes', 'SLO']);
     });
 
-    it('leaves other sections in the order the merge produced', () => {
-      const merged: NavModelItem[] = [
-        {
-          id: 'observability',
-          text: 'Observability',
-          children: [
-            { id: 'plugin-page-z-app', text: 'Zulu', sortWeight: 1 },
-            { id: 'plugin-page-a-app', text: 'Alpha', sortWeight: 2 },
-          ],
-        },
-      ];
+    it('leaves the other sections in the order the merge produced', () => {
+      setupNavTestApps([app('a-app', 'Alpha', 'Page')]);
 
-      const next = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
-
-      const section = next.find((n) => n.id === 'observability');
-      expect(section?.children?.map((c) => c.text)).toEqual(['Zulu', 'Alpha']);
-    });
-
-    it('is idempotent when the same payload is dispatched twice (refetch)', () => {
-      const merged: NavModelItem[] = [{ id: 'home', text: 'Home', url: '/' }];
-      const once = navTreeReducer(buildState(), pluginNavLoaded({ tree: merged }));
-      const twice = navTreeReducer(once, pluginNavLoaded({ tree: merged }));
-
-      expect(twice).toEqual(once);
+      // Sections are ordered by sort weight; alphabetical order would put
+      // "More apps" ahead of Home
+      const roots = navIds(initialTree());
+      expect(roots.indexOf(NavID.home)).toBeLessThan(roots.indexOf(NavID.apps));
     });
   });
 });

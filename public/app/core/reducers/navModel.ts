@@ -1,10 +1,8 @@
 import { type AnyAction, createAction } from '@reduxjs/toolkit';
-import { cloneDeep } from 'lodash';
 
 import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
 
 import { getInitialNavTree } from '../navtree/buildStaticNavTree';
-import { pluginNavLoaded } from '../navtree/state';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 export const HOME_NAV_ID = 'home';
@@ -71,10 +69,6 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
 const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
-// Rebuilds the index from the current permissions. The frontend service loads
-// permissions asynchronously after the store is configured, so the index built
-// at store-init sees an empty permission set and must be rebuilt once they land.
-export const navIndexInitialized = createAction('navIndex/navIndexInitialized');
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
@@ -95,9 +89,7 @@ const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelI
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const navIndexReducer = (state: NavIndex = initialState, action: AnyAction): NavIndex => {
-  if (navIndexInitialized.match(action)) {
-    return buildInitialState();
-  } else if (updateNavIndex.match(action)) {
+  if (updateNavIndex.match(action)) {
     const newPages: NavIndex = {};
     const payload = action.payload;
 
@@ -136,22 +128,6 @@ export const navIndexReducer = (state: NavIndex = initialState, action: AnyActio
     return next;
   } else if (removeNavIndex.match(action)) {
     delete state[action.payload];
-  } else if (pluginNavLoaded.match(action)) {
-    // getAppPluginRoutes builds the app plugin routes from this index, so the
-    // merged apps have to reach it or their pages 404.
-    //
-    // Laid over the existing state rather than replacing it, so entries a page
-    // registered via updateNavIndex survive. The new object also busts
-    // getNavModel's memoization.
-    const rootNodes = cloneDeep(action.payload.tree);
-    const homeNav = rootNodes.find((node) => node.id === HOME_NAV_ID);
-    const otherRootNodes = rootNodes.filter((node) => node.id !== HOME_NAV_ID);
-    const mergedIndex: NavIndex = {};
-    if (homeNav) {
-      buildNavIndex(mergedIndex, [homeNav]);
-    }
-    buildNavIndex(mergedIndex, otherRootNodes, mergedIndex[HOME_NAV_ID] ?? state[HOME_NAV_ID]);
-    return { ...state, ...mergedIndex };
   }
 
   return state;

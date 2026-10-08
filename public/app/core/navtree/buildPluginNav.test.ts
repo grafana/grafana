@@ -1,4 +1,3 @@
-import { type NavModelItem } from '@grafana/data';
 import { getAppPluginMetas, invalidateCachedPromisesCache, setAppPluginMetas } from '@grafana/runtime/internal';
 import { setupMockServer } from '@grafana/test-utils/server';
 import {
@@ -8,7 +7,7 @@ import {
   type MockPluginMetaInclude,
 } from '@grafana/test-utils/unstable';
 
-import { carryOverRuntimeChildren, mergePluginNavIntoTree } from './buildPluginNav';
+import { mergePluginNavIntoTree } from './buildPluginNav';
 import { buildStaticNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
 import { navIds as ids, setupNavTestState, type NavTestState } from './test-utils';
@@ -56,17 +55,6 @@ describe('mergePluginNavIntoTree', () => {
     setup();
   });
 
-  it('does not mutate the current tree when carrying runtime children over', async () => {
-    const currentTree: NavModelItem[] = [
-      { id: NavID.starred, text: 'Starred', children: [{ id: 'starred/abc', text: 'My dash', url: '/d/abc' }] },
-    ];
-    const snapshot = JSON.parse(JSON.stringify(currentTree));
-
-    carryOverRuntimeChildren(await mergeFromMetas([]), currentTree);
-
-    expect(currentTree).toEqual(snapshot);
-  });
-
   it('places unknown apps in a More apps section', async () => {
     const merged = await mergeFromMetas([appMeta('some-app', 'Some app', [page('Page', '/a/some-app/page')])]);
 
@@ -83,19 +71,6 @@ describe('mergePluginNavIntoTree', () => {
 
     expect(twice).toEqual(once);
     expect(ids(findById(twice, NavID.apps)?.children ?? [])).toEqual(['plugin-page-some-app']);
-  });
-
-  it('carries runtime-populated starred and bookmark children over from the current tree', async () => {
-    setup({ permissions: ['dashboards:read'] });
-    const currentTree: NavModelItem[] = [
-      { id: NavID.starred, text: 'Starred', children: [{ id: 'starred/abc', text: 'My dash', url: '/d/abc' }] },
-      { id: NavID.bookmarks, text: 'Bookmarks', children: [{ id: 'bm', text: 'Bookmarked', url: '/x' }] },
-    ];
-
-    const merged = carryOverRuntimeChildren(await mergeFromMetas([]), currentTree);
-
-    expect(ids(findById(merged, NavID.starred)?.children ?? [])).toEqual(['starred/abc']);
-    expect(ids(findById(merged, NavID.bookmarks)?.children ?? [])).toEqual(['bm']);
   });
 
   it('drops apps with no nav children', async () => {

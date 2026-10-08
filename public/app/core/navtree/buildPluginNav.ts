@@ -1,5 +1,3 @@
-import { cloneDeep } from 'lodash';
-
 import {
   type AppPluginConfig,
   isIconName,
@@ -131,22 +129,6 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildre
 function placeInMoreApps(tree: NavModelItem[], appLink: NavModelItem): NavModelItem[] {
   const placed = appendIntoSection(tree, NavID.apps, [appLink]);
   return placed ?? [...tree, { ...MORE_APPS_SHELL, children: [appLink] }];
-}
-
-/**
- * The starred and bookmarks containers are filled at runtime, so a freshly
- * built tree has them empty; their children are copied over from the tree in
- * the store. Applied by the dispatcher (useNavTree), which keeps
- * mergePluginNavIntoTree a pure function of the plugin metas.
- */
-export function carryOverRuntimeChildren(tree: NavModelItem[], currentTree: NavModelItem[]): NavModelItem[] {
-  return [NavID.starred, NavID.bookmarks].reduce((acc, id) => {
-    const current = currentTree.find((node) => node.id === id);
-    if (!current?.children?.length) {
-      return acc;
-    }
-    return acc.map((node) => (node.id === id ? { ...node, children: cloneDeep(current.children) } : node));
-  }, tree);
 }
 
 // Whether the user may see one of an app's pages. An include declaring an RBAC
