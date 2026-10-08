@@ -16,6 +16,7 @@ import { type ToolbarActionProps } from '../types';
 export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const { meta, uid, editview, isEditing } = dashboard.state;
   const isDirty = dashboard.state.isDirty;
+  const hasPendingCodeChanges = dashboard.hasPendingCodeChanges();
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
   const isPreviewModeEnabled = useFlagGrafanaDashboardPreviewMode();
@@ -36,7 +37,10 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
         <ConfirmModal
           isOpen={confirmDiscard}
           title={t('dashboard.modes.discard-title', 'Discard dashboard changes?')}
-          body={t('dashboard.modes.discard-body', 'This restores the last saved dashboard.')}
+          body={t(
+            'dashboard.modes.discard-body',
+            'This restores the last saved dashboard and discards pending code edits.'
+          )}
           confirmText={t('dashboard.modes.discard', 'Discard changes')}
           onConfirm={() => {
             dashboard.discardChangesAndKeepEditing();
@@ -58,7 +62,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                     onClick={() => dashboard.openChanges()}
                   />
                 )}
-                {dashboardModesEnabled() && isDirty && (
+                {dashboardModesEnabled() && (isDirty || hasPendingCodeChanges) && (
                   <Menu.Item
                     label={t('dashboard.modes.discard', 'Discard changes')}
                     icon="trash-alt"

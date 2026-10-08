@@ -83,6 +83,7 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
       scene.setState({
         ...newState,
         mode: scene.state.mode,
+        codeSession: scene.state.codeSession,
         editPanel: undefined,
         isDirty: true,
       });
@@ -104,7 +105,7 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     },
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
-      scene.setState({ ...previousState, mode: scene.state.mode });
+      scene.setState({ ...previousState, mode: scene.state.mode, codeSession: scene.state.codeSession });
       scene.applyEditPresentation();
       scene.state.sidebar.refreshAfterRebuild();
       // The restored tree is the one the apply replaced, so its spec state can be read from it now.

@@ -69,7 +69,7 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
       getDashboardMode(this.scene.state) === 'view' &&
       callerPluginId !== 'grafana-assistant-app' &&
       !PLANNING_ALLOWED_COMMANDS.has(type)
-        ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'
+        ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing or Code to edit manually.'
         : undefined;
     const execute = () => super.executeChecked(mutation, checkWrite);
     return callerPluginId === 'grafana-assistant-app' ? this.scene.withAssistantWrite(execute) : execute();

@@ -3,6 +3,7 @@ import { type DashboardLink } from '@grafana/schema';
 import { type ScopeMeta } from 'app/features/dashboard/state/DashboardModel';
 import { type DashboardMeta } from 'app/types/dashboard';
 
+import { type DashboardCodeSession } from '../../code/DashboardCodeSession';
 import { type PanelEditor } from '../../panel-edit/PanelEditor';
 import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
@@ -68,6 +69,7 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   actions?: SceneObject[];
   /** Fixed row at the top of the canvas with for example variables and time range controls */
   controls?: DashboardControls;
+  codeSession?: DashboardCodeSession;
   /** True when user made a change */
   isDirty?: boolean;
   /** meta flags */

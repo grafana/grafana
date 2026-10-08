@@ -115,11 +115,13 @@ describe('DashboardCodePane', () => {
     setup();
 
     expect(screen.queryByRole('radio', { name: 'Inline' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('switch', { name: 'Show diff' }));
 
     expect(screen.getByRole('radio', { name: 'Inline' })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'Side by side' })).toBeChecked();
+    expect(screen.getByRole('status', { name: '1 lines added, 1 lines removed' })).toHaveTextContent('+1-1');
   });
 
   it('disables the diff switch while the editor content is not valid JSON', () => {

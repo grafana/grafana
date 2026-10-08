@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { lazy, Suspense, useEffect, useLayoutEffect, useRef } from 'react';
 import { useMedia } from 'react-use';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -33,6 +33,8 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardSidebarRenderer } from './DashboardSidebarRenderer';
 import { type DashboardSidebarPane } from './types';
+
+const DashboardCodeView = lazy(() => import(/* webpackChunkName: "dashboard-code-mode" */ '../code/DashboardCodeView'));
 
 interface Props {
   dashboard: DashboardScene;
@@ -130,13 +132,14 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   };
 
   function renderBody() {
+    const isCodeMode = dashboardModesEnabled() && getDashboardMode(dashboard.state) === 'code';
     const renderWithoutSidebar =
       isPlaying ||
       kioskMode === KioskMode.Full ||
       (dashboardModesEnabled() && getDashboardMode(dashboard.state) !== 'edit' && !dashboard.state.viewPanel);
 
-    // Full-page views use document scrolling.
-    if (renderWithoutSidebar) {
+    // Code mode must scroll inside its bounded pane; full-page views use document scrolling.
+    if (renderWithoutSidebar && !isCodeMode) {
       return (
         <div
           className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk, isPlanning && styles.planningCanvas)}
@@ -189,7 +192,13 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
       >
         <ElementSelectionContext.Provider value={selectionContext}>
           <DashboardControlsChrome onPointerDown={onClearSelection}>{controls}</DashboardControlsChrome>
-          {renderBody()}
+          {dashboardModesEnabled() && getDashboardMode(dashboard.state) === 'code' ? (
+            <Suspense fallback={renderBody()}>
+              <DashboardCodeView dashboard={dashboard}>{renderBody()}</DashboardCodeView>
+            </Suspense>
+          ) : (
+            renderBody()
+          )}
         </ElementSelectionContext.Provider>
       </EditActionsLayoutProvider>
     </div>

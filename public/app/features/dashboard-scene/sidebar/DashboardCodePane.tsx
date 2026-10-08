@@ -10,7 +10,6 @@ import {
   ClipboardButton,
   EmptyState,
   IconButton,
-  InlineSwitch,
   Modal,
   Sidebar,
   Stack,
@@ -18,9 +17,10 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
-import { InlineDiffToggle, useInlineDiffPreference } from 'app/core/components/MonacoDiffEditor/inlineDiffPreference';
+import { useInlineDiffPreference } from 'app/core/components/MonacoDiffEditor/inlineDiffPreference';
 
 import { getDashboardSceneFor } from '../utils/utils';
+import { DashboardCodeDiffControls } from '../v2schema/DashboardCodeDiffControls';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
 import { applyJsonToDashboard, getDashboardDiffTexts, getDashboardResourceText } from './codePaneUtils';
@@ -107,24 +107,6 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
     </ClipboardButton>
   );
 
-  const diffToggle = (
-    <Tooltip
-      content={t('dashboard.sidebar.edit-schema.diff-disabled-tooltip', 'Fix syntax errors to view the diff')}
-      placement="top"
-      show={canShowDiff ? false : undefined}
-    >
-      <div>
-        <InlineSwitch
-          label={t('dashboard.sidebar.edit-schema.diff-toggle', 'Show diff')}
-          showLabel
-          value={showDiff}
-          disabled={!canShowDiff}
-          onChange={(e) => model.setState({ showDiff: e.currentTarget.checked })}
-        />
-      </div>
-    </Tooltip>
-  );
-
   const applyTooltip =
     editorFormat === 'yaml'
       ? t(
@@ -165,10 +147,15 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
     onFormatChange: (editorFormat: SchemaEditorFormat) => model.setState({ editorFormat }),
     showFormatToggle: true,
     headerLeftActions: (
-      <>
-        {diffToggle}
-        {showDiff && <InlineDiffToggle value={inlineDiff} onChange={setInlineDiff} />}
-      </>
+      <DashboardCodeDiffControls
+        showDiff={showDiff}
+        onShowDiffChange={(showDiff) => model.setState({ showDiff })}
+        canShowDiff={canShowDiff}
+        inlineDiff={inlineDiff}
+        onInlineDiffChange={setInlineDiff}
+        original={diffTexts?.original}
+        modified={diffTexts?.current}
+      />
     ),
   };
 

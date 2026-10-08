@@ -68,6 +68,7 @@ import {
 } from '../../apiserver/types';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
+import { DashboardCodeSession } from '../code/DashboardCodeSession';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -584,6 +585,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (previous === mode) {
       return true;
     }
+    if (previous === 'code' && !this.state.codeSession?.apply(this)) {
+      return false;
+    }
     if (!this.state.isEditing && mode !== 'view') {
       this.onEnterEditMode();
     }
@@ -599,8 +603,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (mode === 'edit') {
       this.restoreSidebarAfterPreview();
     }
+    if (mode === 'code') {
+      if (!this.state.codeSession) {
+        this.setState({ codeSession: new DashboardCodeSession() });
+      }
+      this.state.codeSession?.reset(this);
+    }
     reportInteraction('dashboards_mode_changed', { mode });
     return true;
+  }
+
+  public hasPendingCodeChanges() {
+    return dashboardModesEnabled() && Boolean(this.state.codeSession?.hasChanges());
   }
 
   private restoreSidebarAfterPreview() {
@@ -843,7 +857,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
-    const { editPresentation, mode } = this.state;
+    const { editPresentation, mode, codeSession } = this.state;
     const { isOverlayLoading, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
       isDirty: false,
     });
@@ -855,6 +869,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...restoredState,
       editPresentation,
       mode,
+      codeSession,
       isEditing: true,
       editable: true,
       isDirty: false,
@@ -863,6 +878,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: undefined,
     });
 
+    this.state.codeSession?.reset(this);
     this.applyEditPresentation();
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.

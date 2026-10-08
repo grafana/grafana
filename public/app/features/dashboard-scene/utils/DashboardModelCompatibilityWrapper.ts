@@ -175,7 +175,7 @@ export class DashboardModelCompatibilityWrapper {
   }
 
   public hasUnsavedChanges() {
-    return this._scene.state.isDirty;
+    return this._scene.state.isDirty || this._scene.hasPendingCodeChanges();
   }
 }
 

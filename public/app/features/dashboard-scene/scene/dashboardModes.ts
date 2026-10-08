@@ -3,7 +3,7 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type DashboardSceneState } from './types/dashboard';
 
-export type DashboardMode = 'view' | 'edit';
+export type DashboardMode = 'view' | 'edit' | 'code';
 
 export function dashboardModesEnabled(): boolean {
   return Boolean(

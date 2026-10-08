@@ -37,6 +37,9 @@ export interface DashboardSchemaEditorProps {
   onParseErrorChange?: (hasParseError: boolean) => void;
   readOnly?: boolean;
   containerStyles?: string;
+  contentStyles?: string;
+  /** Customize the toolbar while reusing the format selector and its syntax guards. */
+  renderHeader?: (formatToggle: ReactNode) => ReactNode;
   showFormatToggle?: boolean;
   initialFormat?: SchemaEditorFormat;
   onFormatChange?: (format: SchemaEditorFormat) => void;
@@ -55,6 +58,8 @@ export function DashboardSchemaEditor({
   onParseErrorChange,
   readOnly = false,
   containerStyles,
+  contentStyles,
+  renderHeader,
   showFormatToggle = false,
   initialFormat = 'json',
   onFormatChange,
@@ -70,6 +75,7 @@ export function DashboardSchemaEditor({
   const [yamlParseError, setYamlParseError] = useState<string | null>(null);
   const [localYamlContent, setLocalYamlContent] = useState<string | null>(null);
 
+  const lastEmittedJson = useRef(value);
   const monacoRef = useRef<Monaco | null>(null);
   const editorRef = useRef<MonacoEditor | null>(null);
   const schemaRef = useRef<JSONSchema | null>(null);
@@ -99,6 +105,12 @@ export function DashboardSchemaEditor({
       return value;
     }
   }, [value, format, localYamlContent]);
+
+  useEffect(() => {
+    if (!yamlParseError && value !== lastEmittedJson.current) {
+      setLocalYamlContent(null);
+    }
+  }, [value, yamlParseError]);
 
   const handleFormatChange = useCallback(
     (newFormat: SchemaEditorFormat) => {
@@ -225,7 +237,9 @@ export function DashboardSchemaEditor({
       setLocalYamlContent(newValue);
       try {
         setYamlParseError(null);
-        onChange?.(JSON.stringify(yaml.load(newValue), null, 2));
+        const json = JSON.stringify(yaml.load(newValue), null, 2) ?? 'null';
+        lastEmittedJson.current = json;
+        onChange?.(json);
       } catch (e) {
         setYamlParseError(e instanceof Error ? e.message : 'Invalid YAML');
         onValidationChange?.(true);
@@ -235,6 +249,27 @@ export function DashboardSchemaEditor({
   );
 
   const wrapperClassName = containerStyles ? `${styles.wrapper} ${containerStyles}` : styles.wrapper;
+
+  const formatToggle = showFormatToggle ? (
+    <Tooltip
+      content={
+        yamlParseError
+          ? t('dashboard-schema-editor.json-disabled-tooltip', 'Fix YAML syntax errors to switch to JSON')
+          : t('dashboard-schema-editor.yaml-disabled-tooltip', 'Fix JSON syntax errors to switch to YAML')
+      }
+      show={disabledFormats ? undefined : false}
+      placement="top"
+    >
+      <div>
+        <RadioButtonGroup
+          options={formatOptions}
+          value={format}
+          onChange={handleFormatChange}
+          disabledOptions={disabledFormats}
+        />
+      </div>
+    </Tooltip>
+  ) : null;
 
   if (isSchemaLoading) {
     return (
@@ -248,37 +283,20 @@ export function DashboardSchemaEditor({
 
   return (
     <div className={wrapperClassName}>
-      {(showFormatToggle || headerLeftActions || headerActions) && (
-        <div className={styles.formatToggleContainer}>
-          {(showFormatToggle || headerLeftActions) && (
-            <Stack direction="row" gap={1} alignItems="center">
-              {showFormatToggle && (
-                <Tooltip
-                  content={
-                    yamlParseError
-                      ? t('dashboard-schema-editor.json-disabled-tooltip', 'Fix YAML syntax errors to switch to JSON')
-                      : t('dashboard-schema-editor.yaml-disabled-tooltip', 'Fix JSON syntax errors to switch to YAML')
-                  }
-                  show={disabledFormats ? undefined : false}
-                  placement="top"
-                >
-                  <div>
-                    <RadioButtonGroup
-                      options={formatOptions}
-                      value={format}
-                      onChange={handleFormatChange}
-                      disabledOptions={disabledFormats}
-                    />
-                  </div>
-                </Tooltip>
+      {renderHeader
+        ? renderHeader(formatToggle)
+        : (showFormatToggle || headerLeftActions || headerActions) && (
+            <div className={styles.formatToggleContainer}>
+              {(showFormatToggle || headerLeftActions) && (
+                <Stack direction="row" gap={1} alignItems="center">
+                  {formatToggle}
+                  {headerLeftActions}
+                </Stack>
               )}
-              {headerLeftActions}
-            </Stack>
+              {headerActions && <div className={styles.headerActions}>{headerActions}</div>}
+            </div>
           )}
-          {headerActions && <div className={styles.headerActions}>{headerActions}</div>}
-        </div>
-      )}
-      <div className={styles.editorContainer}>
+      <div className={contentStyles ? `${styles.editorContainer} ${contentStyles}` : styles.editorContainer}>
         {contentOverride ?? (
           <CodeEditor
             key={format}
