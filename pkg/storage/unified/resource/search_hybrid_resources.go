@@ -59,7 +59,7 @@ func (s *searchServer) HybridSearchResources(ctx context.Context, req *resourcep
 		if req.SemanticQuery != "" {
 			query = req.SemanticQuery
 		}
-		results, err = s.rerankHybridResults(ctx, query, results, hybridRerankText(candidates), req.MinRelevance)
+		results, err = s.rerankHybridResults(ctx, query, results, req.MinRelevance)
 		if err != nil {
 			return nil, err
 		}
@@ -84,7 +84,7 @@ func (s *searchServer) HybridSearchResources(ctx context.Context, req *resourcep
 					matching = append(matching, result)
 				}
 			}
-			s.resolveManagedBy(metadataCtx, candidate.key, lexicalUIDSet(candidate.lex), matching)
+			s.resolveManagedBy(metadataCtx, candidate.key, candidate.lexUIDs, matching)
 			return nil
 		})
 	}

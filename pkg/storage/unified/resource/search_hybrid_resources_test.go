@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	authlib "github.com/grafana/authlib/types"
@@ -80,7 +81,7 @@ func TestHybridSearchResources_ReranksCombinedResults(t *testing.T) {
 	req.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "in", Values: []string{"same-name"}}}
 	responses := make(map[schema.GroupResource]*resourcepb.ResourceSearchResponse)
 	titles := []string{"Operations", "Production", "Infrastructure"}
-	descriptions := []string{"Database dashboard details", "Database folder details", "Database other app details"}
+	descriptions := []string{"Dashboard context", "Folder context", "Other app context"}
 	for i, resource := range req.Resources {
 		response := lexFieldValueResponse([3]string{"same-name", titles[i], ""})
 		response.Fields = append(response.Fields, &resourcepb.ResourceSearchField{
@@ -101,15 +102,22 @@ func TestHybridSearchResources_ReranksCombinedResults(t *testing.T) {
 	assert.Equal(t, 1, scorer.calls)
 	assert.Equal(t, req.SemanticQuery, scorer.gotQ)
 	assert.Equal(t, []string{
-		"Operations\nDatabase dashboard details",
-		"Production\nDatabase folder details",
-		"Infrastructure\nDatabase other app details",
+		"Operations\nDashboard context",
+		"Production\nFolder context",
+		"Infrastructure\nOther app context",
 	}, scorer.gotTexts)
 	assert.Equal(t, "folder.grafana.app", response.Results[0].Key.Group)
 	assert.Equal(t, "other.grafana.app", response.Results[1].Key.Group)
-	for _, result := range response.Results {
+	for i, result := range response.Results {
 		assert.Equal(t, "ns", result.Key.Namespace)
 		assert.Equal(t, "same-name", result.Key.Name)
+		lexical, err := structpb.NewStruct(map[string]any{
+			SEARCH_FIELD_TITLE:       titles[i+1],
+			SEARCH_FIELD_FOLDER:      "",
+			SEARCH_FIELD_DESCRIPTION: descriptions[i+1],
+		})
+		require.NoError(t, err)
+		assert.Equal(t, lexical.Fields, result.Lexical)
 		require.Len(t, result.Chunks, 1)
 		assert.Equal(t, result.Title, result.Chunks[0].Content)
 	}
