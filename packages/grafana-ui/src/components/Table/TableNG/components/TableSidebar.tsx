@@ -8,6 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Checkbox } from '../../../Forms/Checkbox';
 import { IconButton } from '../../../IconButton/IconButton';
+import { Stack } from '../../../Layout/Stack/Stack';
 import { TABLE } from '../constants';
 import { getGridBackgroundColor } from '../styles';
 
@@ -18,7 +19,7 @@ export interface SidebarColumn {
   hideable: boolean;
 }
 
-interface ColumnVisibilitySidePanelProps {
+interface TableSidebarProps {
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
   hiddenColumns: ReadonlySet<string>;
@@ -30,7 +31,7 @@ interface ColumnVisibilitySidePanelProps {
   willCloseOnRelease?: boolean;
 }
 
-export function ColumnVisibilitySidePanel({
+export function TableSidebar({
   columns,
   hiddenColumns,
   onToggleColumn,
@@ -38,7 +39,7 @@ export function ColumnVisibilitySidePanel({
   headerHeight = TABLE.HEADER_HEIGHT,
   transparent,
   willCloseOnRelease = false,
-}: ColumnVisibilitySidePanelProps) {
+}: TableSidebarProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
   const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
 
@@ -51,16 +52,18 @@ export function ColumnVisibilitySidePanel({
       data-testid={sidebarSelectors.container}
     >
       <div className={styles.header}>
-        <span className={styles.heading}>
-          <Trans i18nKey="grafana-ui.table.columns">Columns</Trans>
-        </span>
-        <IconButton
-          name="times"
-          size="sm"
-          aria-label={t('grafana-ui.table.close-column-visibility', 'Close column visibility panel')}
-          onClick={onClose}
-          data-testid={sidebarSelectors.closeButton}
-        />
+        <Stack direction="row" alignItems="center" justifyContent="space-between" gap={0} height="100%">
+          <span className={styles.heading}>
+            <Trans i18nKey="grafana-ui.table.columns">Columns</Trans>
+          </span>
+          <IconButton
+            name="times"
+            size="sm"
+            aria-label={t('grafana-ui.table.close-column-visibility', 'Close column visibility panel')}
+            onClick={onClose}
+            data-testid={sidebarSelectors.closeButton}
+          />
+        </Stack>
       </div>
       <div className={styles.columnList}>
         {columns.map(({ name: displayName, hideable }) => {
@@ -69,21 +72,23 @@ export function ColumnVisibilitySidePanel({
 
           return (
             <div key={displayName} className={styles.row} data-testid={sidebarSelectors.row(displayName)}>
-              {hideable ? (
-                <Checkbox
-                  value={isVisible}
-                  disabled={isLastVisible}
-                  aria-label={
-                    isVisible
-                      ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', { columnName: displayName })
-                      : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', { columnName: displayName })
-                  }
-                  onChange={(ev) => onToggleColumn(displayName, ev.currentTarget.checked)}
-                />
-              ) : (
-                <span className={styles.visibilityTogglePlaceholder} aria-hidden="true" />
-              )}
-              <span className={styles.columnName}>{displayName}</span>
+              <Stack direction="row" alignItems="center" gap={1}>
+                {hideable ? (
+                  <Checkbox
+                    value={isVisible}
+                    disabled={isLastVisible}
+                    aria-label={
+                      isVisible
+                        ? t('grafana-ui.table.hide-column-label', 'Hide {{columnName}}', { columnName: displayName })
+                        : t('grafana-ui.table.show-column-label', 'Show {{columnName}}', { columnName: displayName })
+                    }
+                    onChange={(ev) => onToggleColumn(displayName, ev.currentTarget.checked)}
+                  />
+                ) : (
+                  <span className={styles.visibilityTogglePlaceholder} aria-hidden="true" />
+                )}
+                <span className={styles.columnName}>{displayName}</span>
+              </Stack>
             </div>
           );
         })}
@@ -117,9 +122,6 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     },
   }),
   header: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     boxSizing: 'border-box',
     height: headerHeight,
     flexShrink: 0,
@@ -142,9 +144,6 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     flex: 1,
   }),
   row: css({
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(1),
     padding: theme.spacing(0.75, 1, 0.75, 1.5),
     '&:hover': {
       backgroundColor: theme.components.table.rowHoverBackground,
