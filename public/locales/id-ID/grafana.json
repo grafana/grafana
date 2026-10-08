@@ -2077,9 +2077,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Titik kontak",
-          "notification-policy": "Kebijakan notifikasi",
-          "select-contact-point": "Pilih titik kontak",
-          "use-notification-policy": "Gunakan kebijakan notifikasi"
+          "notification-policy": "Kebijakan notifikasi"
         }
       }
     },
@@ -13068,15 +13066,9 @@
       "card-author": "Oleh {{author}}",
       "card-selected": "{{title}} (dipilih)",
       "card-updated": "Diperbarui {{when}}",
-      "create-description": "Deskripsi",
-      "create-description-help": "Konteks opsional untuk kolaborator",
-      "create-description-placeholder": "Apa yang sedang Anda selidiki?",
       "create-name": "Nama notebook",
       "create-name-required": "Nama notebook wajib diisi",
       "create-name-taken": "Notebook dengan nama ini sudah ada",
-      "create-tags": "Tag",
-      "create-tags-help": "Opsional — digunakan untuk pencarian dan pemfilteran",
-      "create-tags-placeholder": "Tambahkan tag",
       "created-by-me": "Dibuat oleh saya",
       "error-conflict": "Notebook ini berubah saat Anda menambahkan isinya. Coba lagi untuk menambahkan panel ke versi terbaru.",
       "error-generic": "Gagal menambahkan panel ke notebook",
@@ -13086,6 +13078,8 @@
       "list-none": "Anda belum memiliki notebook. Buat satu notebook.",
       "list-none-read-only": "Anda belum memiliki notebook, dan tidak memiliki izin untuk membuatnya.",
       "list-truncated": "Tidak semua notebook ditampilkan. Persempit pencarian untuk menemukan yang lain.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Cari berdasarkan Judul",
       "sort-alphabetical": "Sesuai abjad (A–Z)",
       "sort-label": "Urutkan notebook",
@@ -13185,8 +13179,7 @@
       },
       "tag-filter-placeholder": "",
       "unknown-author": "Anonim",
-      "count_other": "{{count}} notebook",
-      "count-truncated_other": "{{count}} notebook pertama dimuat"
+      "count_other": "{{count}} notebook"
     },
     "new": {
       "default-title-with-date": ""
@@ -14028,6 +14021,7 @@
       "title": "Anda juga dapat menggunakan Sinkronisasi Git di Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Salin kode ke papan klip"
     },
     "commit-message": {
@@ -14953,7 +14947,6 @@
       "alert-point-folder-cleanup": "Anda mungkin perlu menghapus atau mengelola folder asli secara manual setelah migrasi.",
       "alert-point-folder-structure": "Saat memigrasikan dasbor yang ada, struktur folder akan direplikasi di repositori. Folder asli akan dikosongkan dari dasbor tetapi mungkin masih berisi peringatan atau panel pustaka.",
       "alert-point-instance-alerts": "Peringatan dan panel pustaka yang ada akan hilang dan tidak akan dapat digunakan setelah migrasi.",
-      "alert-point-permissions": "Izin yang terperinci tidak didukung. Izin default berlaku: Peran Admin, Editor, dan Pemirsa dipertahankan dengan tingkat akses standar mereka.",
       "alert-point-unsupported": "Peringatan dan panel pustaka tidak didukung di folder yang disediakan.",
       "alert-title": "Penting: Tinjau batasan Sinkronisasi Git sebelum melanjutkan",
       "app-mode-label": "Konfigurasi aplikasi",
@@ -15664,9 +15657,6 @@
     "description-tooltip": {
       "label": "Deskripsi"
     },
-    "generate-columns": {
-      "score": "Skor"
-    },
     "results-table": {
       "datasource-header": "Sumber data",
       "deleted-by-header": "Dihapus oleh",
@@ -16009,6 +15999,7 @@
       "update-preferences": "Terjadi kesalahan saat memperbarui preferensi"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Dasbor Beranda",
       "home-dashboard-placeholder": "Dasbor default",
       "language-preference-label": "Bahasa",

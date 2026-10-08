@@ -2934,6 +2934,8 @@ Whether image rendering is allowed for dashboard previews. Requires the image re
 
 Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
 
+It also allows `http://` authorization and token endpoints on `gitOAuth` connections, which sends the OAuth client secret and tokens in cleartext.
+
 #### `allowed_git_urls`
 
 While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
@@ -2956,7 +2958,7 @@ Supported types: `local`, `git`, `github`. Grafana Enterprise additionally suppo
 
 List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
 
-Supported types: `github` and `githubOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
+Supported types: `github`, `githubOAuth`, and `gitOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
 
 #### `max_repositories`
 

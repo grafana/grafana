@@ -126,7 +126,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 	// The apiserver skips a version with no storage, which would take its custom
 	// routes out of discovery and OpenAPI.
 	t.Run("a routes-only version gets placeholder storage", func(t *testing.T) {
-		routesOnly := func(routes app.ManifestVersionRoutes) *manifestBuilder {
+		routesOnly := func(routes app.ManifestVersionRoutes) *manifestBuilder { //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 			b := testBuilder(t, &app.ManifestData{
 				Group: "example.ext.grafana.app",
 				Versions: []app.ManifestVersion{{
@@ -139,7 +139,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		}
 		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}
 
-		b := routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{"ping": ping}})
+		b := routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{"ping": ping}}) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 		info, opts := testAPIGroupOptions(t, b)
 		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
 		require.Equal(t, map[string]rest.Storage{routesOnlyStorageKey: &routesOnlyStorage{}},
@@ -147,7 +147,7 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 
 		// A route that is dropped at mount time serves nothing, so the version
 		// has nothing to install.
-		b = routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{
+		b = routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 			"ping": {Head: ping.Get},
 		}})
 		info, opts = testAPIGroupOptions(t, b)

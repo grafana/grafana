@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Contactpunt",
-          "notification-policy": "Meldingsbeleid",
-          "select-contact-point": "Contactpunt selecteren",
-          "use-notification-policy": "Meldingsbeleid gebruiken"
+          "notification-policy": "Meldingsbeleid"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Door {{author}}",
       "card-selected": "{{title}} (geselecteerd)",
       "card-updated": "Bijgewerkte {{when}}",
-      "create-description": "Beschrijving",
-      "create-description-help": "Optionele context voor bijdragers",
-      "create-description-placeholder": "Wat onderzoek je?",
       "create-name": "Notitieboeknaam",
       "create-name-required": "Een notitieboeknaam is vereist",
       "create-name-taken": "Er bestaat al een notitieboek met deze naam",
-      "create-tags": "Labels",
-      "create-tags-help": "Optioneel — gebruikt voor zoeken en filteren",
-      "create-tags-placeholder": "Een label toevoegen",
       "created-by-me": "Aangemaakt door mij",
       "error-conflict": "Dit notitieboek is gewijzigd terwijl je er iets aan toevoegde. Probeer het paneel opnieuw toe te voegen aan de nieuwste versie.",
       "error-generic": "Kan het paneel niet toevoegen aan het notitieboek",
@@ -13183,6 +13175,8 @@
       "list-none": "Je hebt nog geen notitieboeken. Maak er in plaats daarvan een aan.",
       "list-none-read-only": "Je hebt nog geen notitieboeken en geen toestemming om er een te maken.",
       "list-truncated": "Niet elk notitieboek wordt weergegeven. Verfijn de zoekopdracht om andere te vinden.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Zoeken op titel",
       "sort-alphabetical": "Alfabetisch (a-z)",
       "sort-label": "Notitieboeken sorteren",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anoniem",
       "count_one": "{{count}} notitieboek",
-      "count_other": "{{count}} notitieboeken",
-      "count-truncated_one": "Eerste {{count}} notitieboek geladen",
-      "count-truncated_other": "Eerste {{count}} notitieboeken geladen"
+      "count_other": "{{count}} notitieboeken"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Je kunt Git-synchronisatie ook op Grafana Cloud gebruiken"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Code naar klembord kopiëren"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Mogelijk moet je originele mappen na de migratie handmatig verwijderen of beheren.",
       "alert-point-folder-structure": "Bij het migreren van bestaande dashboards wordt de mappenstructuur gerepliceerd in de repository. Oorspronkelijke mappen worden geleegd van dashboards, maar kunnen nog steeds waarschuwingen of bibliotheekpanelen bevatten.",
       "alert-point-instance-alerts": "Bestaande waarschuwingen en bibliotheekpanelen gaan verloren en zijn na migratie niet meer bruikbaar.",
-      "alert-point-permissions": "Gedetailleerde rechten worden niet ondersteund. De standaardmachtigingen zijn van toepassing: de rollen Admin, Editor en Viewer behouden hun standaardtoegangsniveaus.",
       "alert-point-unsupported": "Waarschuwingen en bibliotheekpanelen worden niet ondersteund in geprovisioneerde mappen.",
       "alert-title": "Belangrijk: bekijk de beperkingen van Git-synchronisatie voordat je doorgaat",
       "app-mode-label": "Appconfiguratie",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Beschrijving"
     },
-    "generate-columns": {
-      "score": "Score"
-    },
     "results-table": {
       "datasource-header": "Gegevensbron",
       "deleted-by-header": "Verwijderd door",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Er is een fout opgetreden bij het bijwerken van de voorkeuren"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Startpagina dashboard",
       "home-dashboard-placeholder": "Standaard dashboard",
       "language-preference-label": "Taal",

@@ -135,6 +135,8 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 		newURL       string
 		newServerURL string
 		oldServerURL string
+		newGitOAuth  *provisioning.GitOAuthConnectionConfig
+		oldGitOAuth  *provisioning.GitOAuthConnectionConfig
 		newOAuth     *provisioning.ConnectionOAuthConfig
 		newSecure    provisioning.ConnectionSecure
 		oldOAuth     *provisioning.ConnectionOAuthConfig
@@ -169,6 +171,30 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 			newOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			oldOAuth:     &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
 			wantToken:    common.InlineSecureValue{},
+		},
+		{
+			name:        "removes token when git oauth token URL is changed",
+			newGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://new.example.com/oauth/token"},
+			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://old.example.com/oauth/token"},
+			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken:   common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:        "removes token when git oauth scopes are changed",
+			newGitOAuth: &provisioning.GitOAuthConnectionConfig{Scopes: []string{"read_repository", "write_repository"}},
+			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{Scopes: []string{"read_repository"}},
+			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken:   common.InlineSecureValue{Remove: true},
+		},
+		{
+			name:        "keeps token when git oauth settings are unchanged",
+			newGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://git.example.com/oauth/token", Scopes: []string{"read_repository"}},
+			oldGitOAuth: &provisioning.GitOAuthConnectionConfig{TokenURL: "https://git.example.com/oauth/token", Scopes: []string{"read_repository"}},
+			newOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			oldOAuth:    &provisioning.ConnectionOAuthConfig{ClientID: "same-client"},
+			wantToken:   common.InlineSecureValue{},
 		},
 		{
 			name:      "keeps token when oauth credentials are unchanged",
@@ -237,6 +263,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 					URL:                   tt.newURL,
 					OAuth:                 tt.newOAuth,
 					GitHubEnterpriseOAuth: githubEnterpriseConfig(tt.newServerURL),
+					GitOAuth:              tt.newGitOAuth,
 				},
 				Secure: tt.newSecure,
 			}
@@ -246,6 +273,7 @@ func TestAdmissionMutator_MutateUpdateOAuthToken(t *testing.T) {
 					Type:                  provisioning.GithubConnectionType,
 					OAuth:                 tt.oldOAuth,
 					GitHubEnterpriseOAuth: githubEnterpriseConfig(tt.oldServerURL),
+					GitOAuth:              tt.oldGitOAuth,
 				},
 				Secure: provisioning.ConnectionSecure{
 					Token:        common.InlineSecureValue{Name: "old-token"},
