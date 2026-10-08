@@ -9,7 +9,7 @@ cut series cost. Keep `specs/2026-09-26-router-metrics.md` in sync with each cha
 
 ## Required
 
-- [ ] **M1. Add a request counter and drop `status_code` from the duration histogram.**
+- [x] **M1. Add a request counter and drop `status_code` from the duration histogram.**
   - Add `grafana_router_http_requests_total{group,verb,route,status_code}`, counting every request,
     watches included, when it finishes.
   - Drop `status_code` from `grafana_router_http_request_duration_seconds`, or reduce it to a class

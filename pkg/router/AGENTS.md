@@ -74,7 +74,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - A watch runs through `serveWatch`: it ends when its group's backend is replaced or removed, and
     when the service stops (`closeWatches`), so clients re-watch and shutdown never waits on it.
   - Watches are long-running requests, identified with the apiserver's `RequestInfoFactory`: they
-    count in `grafana_router_longrunning_requests`, not in the duration histogram or in-flight gauge.
+    count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
+    the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
     deprecated `/watch/` path form is not supported either.
 
