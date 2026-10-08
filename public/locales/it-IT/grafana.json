@@ -1746,9 +1746,6 @@
         "will-import-rules-count_one": "Importazione di {{count}} regola",
         "will-import-rules-count_other": "Importazione di {{count}} regole"
       },
-      "routing-tree": {
-        "default-policy": "Criterio predefinito"
-      },
       "source": {
         "datasource": "Regole gestite dall'origine dati esistente",
         "datasource-description": "Importa regole da origini dati esistenti",
@@ -2093,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Punto di contatto",
-          "notification-policy": "Criterio di notifica",
-          "select-contact-point": "Seleziona punto di contatto",
-          "use-notification-policy": "Usa criterio di notifica"
+          "notification-policy": "Criterio di notifica"
         }
       }
     },
@@ -2609,15 +2604,11 @@
       "aria-label": "Seleziona criterio di notifica",
       "change": "Modifica",
       "change-aria": "Modifica criterio di notifica",
-      "custom-policy-desc": "Instrada gli avvisi tramite la struttura dei criteri {{name}}",
       "default-badge": "Criterio predefinito",
       "default-info": "Le istanze di avviso vengono instradate utilizzando la struttura dei criteri di notifica predefinita.",
-      "default-policy": "Criterio predefinito",
-      "default-policy-desc": "Instrada gli avvisi utilizzando la struttura dei criteri di notifica predefinita",
       "description": "Seleziona quale struttura dei criteri di notifica deve gestire l'instradamento per questa regola di avviso.",
+      "missing-policy": "",
       "placeholder": "Seleziona un criterio...",
-      "reset": "Ripristina impostazioni predefinite",
-      "reset-aria": "Ripristina criterio predefinito",
       "view-policies": "Visualizza criteri",
       "view-policies-aria": "Visualizza criteri di notifica"
     },
@@ -5799,6 +5790,7 @@
       "paste-panel": "Incolla pannello",
       "remove": "Rimuovi {{typeName}}",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6303,16 +6295,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "Annotazioni",
@@ -6352,7 +6341,8 @@
         "copy-tooltip": "Copia",
         "delete": "Elimina",
         "duplicate": "Duplica",
-        "paste": "Incolla"
+        "paste": "Incolla",
+        "remove": ""
       },
       "elements": {
         "annotation": "Annotazione",
@@ -6385,7 +6375,9 @@
       "feedback-title": "Lascia un feedback sulla nuova esperienza di modifica della dashboard",
       "filters": {
         "add-filter": "Aggiungi filtro",
+        "global-or-folder-title": "",
         "reorder-description": "Riordina l'elenco dei filtri",
+        "select-type": "",
         "title": "Filtri",
         "title-above-dashboard": "Sopra la dashboard",
         "title-controls-menu": "Menu comandi",
@@ -6451,6 +6443,10 @@
           "type": "Tipo",
           "type-placeholder": "Scegli un tipo di origine dei dati"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "Descrizione",
         "description-placeholder": "Testo descrittivo",
         "display": "Visualizza",
@@ -6472,6 +6468,7 @@
           "old-modal-title": "Query variabile",
           "preview": "Anteprima"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "Consenti valori personalizzati",
           "allow-custom-values-description": "Consente agli utenti di inserire valori",
@@ -6487,6 +6484,8 @@
       "variables": {
         "add-variable": "Aggiungi variabile",
         "change-type": "Modifica il tipo di variabile",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "Riordina l'elenco delle variabili",
         "select-type": "Scegli il tipo di variabile",
         "select-type-card-tooltip": "Fai clic per selezionare il tipo",
@@ -6992,7 +6991,9 @@
       "delete-tooltip-disabled": "I pannelli ripetuti non possono essere eliminati singolarmente",
       "duplicate-tooltip": "Duplica",
       "duplicate-tooltip-disabled": "I pannelli ripetuti non possono essere duplicati singolarmente",
-      "settings": "Impostazioni"
+      "remove-tooltip": "",
+      "settings": "Impostazioni",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "Mostra/nascondi regole non funzionerà",
@@ -7849,7 +7850,10 @@
     "variable-editable-element": {
       "delete-confirm": "Elimina variabile",
       "delete-text": "Vuoi davvero eliminare: {{name}}?",
-      "delete-title": "Elimina variabile"
+      "delete-title": "Elimina variabile",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Modulo di modifica delle variabili",
@@ -9001,7 +9005,6 @@
       "attribute-category": {
         "other": "Altro"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9148,7 +9151,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "Questa traccia è stata originariamente eliminata da Tracce adattive ed è stata ripristinata. Una traccia ripristinata non è inclusa nelle query TraceQL e può essere interrogata solo tramite ID traccia. Consulta la <2>documentazione</2> per ulteriori dettagli.",
+        "body": "",
         "title": "Traccia ripristinata da Tracce adattive"
       },
       "application-observability-promo": {
@@ -10743,6 +10746,7 @@
       "placeholder": "Scegli"
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "Filtra per valore",
       "cell-filter-out": "Escludi valore",
@@ -11389,6 +11393,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11402,7 +11407,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11473,6 +11477,20 @@
         "create-check": "Crea un controllo",
         "description": "Monitora il tempo di attività e le prestazioni dei tuoi endpoint tramite sonde dislocate in tutto il mondo.",
         "failing-worst": "{{check}} al {{percent}}%",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "crea un controllo",
         "stats": "{{percent}}% di successo · 24 ore",
         "success-trend": "Tasso di successo · ultime 24 ore",
@@ -13145,15 +13163,9 @@
       "card-author": "Da {{author}}",
       "card-selected": "{{title}} (selezionato)",
       "card-updated": "Aggiornato il {{when}}",
-      "create-description": "Descrizione",
-      "create-description-help": "Contesto facoltativo per i collaboratori",
-      "create-description-placeholder": "Cosa stai analizzando?",
       "create-name": "Nome blocco appunti",
       "create-name-required": "Il nome del blocco appunti è obbligatorio",
       "create-name-taken": "Esiste già un blocco appunti con questo nome",
-      "create-tags": "Tag",
-      "create-tags-help": "Facoltativo: utilizzato per la ricerca e il filtro",
-      "create-tags-placeholder": "Aggiungi un tag",
       "created-by-me": "Creato da me",
       "error-conflict": "Questo blocco appunti è stato modificato mentre stavi effettuando un'aggiunta. Riprova ad aggiungere il pannello alla versione più recente.",
       "error-generic": "Impossibile aggiungere il pannello al blocco appunti",
@@ -13163,6 +13175,8 @@
       "list-none": "Non hai ancora blocchi appunti. Creane uno invece.",
       "list-none-read-only": "Non hai ancora nessun blocco appunti e non hai l'autorizzazione per crearne uno.",
       "list-truncated": "Non vengono mostrati tutti i blocchi appunti. Restringi la ricerca per trovarne altri.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Cerca per titolo",
       "sort-alphabetical": "In ordine alfabetico (A-Z)",
       "sort-label": "Ordina blocchi appunti",
@@ -13263,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anonimo",
       "count_one": "{{count}} blocco appunti",
-      "count_other": "{{count}} blocchi appunti",
-      "count-truncated_one": "Primo {{count}} blocco appunti caricato",
-      "count-truncated_other": "Primi {{count}} blocchi appunti caricati"
+      "count_other": "{{count}} blocchi appunti"
     },
     "new": {
       "default-title-with-date": ""
@@ -14028,11 +14040,13 @@
     "preview-banner": {
       "behind-branch-text": "Questa risorsa è dietro il ramo in {{repoType}}.",
       "branch-targets": "obiettivi",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora questa risorsa fino a quando questo ramo non verrà unito",
       "move-from-branch": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora la versione corrente fino a quando questo ramo non verrà integrato",
       "not-saved": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora la versione corrente salvata nel ramo predefinito configurato fino a quando questo ramo non verrà unito",
       "open-in-repo-button": "Apri in {{repoType}}",
       "open-pull-request-in-repo": "Apri richiesta pull in {{repoType}}",
+      "open-repository": "",
       "update-from-branch": "Il resto degli utenti Grafana nella tua organizzazione vedrà ancora la versione corrente fino a quando questo ramo non verrà unito",
       "view-in-repo-button": "Visualizzala in {{repoType}} per vedere le ultime modifiche.",
       "view-pull-request-in-repo": "Visualizza richiesta pull in {{repoType}}",
@@ -14107,6 +14121,7 @@
       "title": "Puoi anche utilizzare la sincronizzazione Git su Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Copia codice negli appunti"
     },
     "commit-message": {
@@ -15048,7 +15063,6 @@
       "alert-point-folder-cleanup": "Potrebbe essere necessario rimuovere o gestire manualmente le cartelle originali dopo la migrazione.",
       "alert-point-folder-structure": "Quando si effettua la migrazione di dashboard esistenti, la struttura delle cartelle viene replicata nel repository. Le cartelle originali verranno svuotate dalle dashboard, ma potrebbero contenere ancora avvisi o pannelli della libreria.",
       "alert-point-instance-alerts": "Gli avvisi e i pannelli della libreria esistenti andranno persi e non saranno utilizzabili dopo la migrazione.",
-      "alert-point-permissions": "Le autorizzazioni dettagliate non sono supportate. Si applicano le autorizzazioni predefinite: i ruoli Amministratore, Editor e Visualizzatore vengono mantenuti con i loro livelli di accesso standard.",
       "alert-point-unsupported": "Gli avvisi e i pannelli della libreria non sono supportati nelle cartelle sottoposte a provisioning.",
       "alert-title": "Importante: prima di procedere, esamina le limitazioni della sincronizzazione Git",
       "app-mode-label": "Configurazione dell'app",
@@ -15713,12 +15727,12 @@
       "collapse": "Riduci",
       "exchange": "Modifica l'ambito radice in {{scope}}",
       "expand": "Espandi",
+      "filter": "",
       "loading": "Caricamento dashboard",
       "noResultsForFilter": "Nessun risultato trovato per la ricerca",
       "noResultsForFilterClear": "Azzera ricerca",
       "noResultsForScopes": "Nessuna dashboard o collegamento trovato per gli ambiti selezionati",
       "noResultsNoScopes": "Nessun ambito selezionato",
-      "search": "Cerca",
       "toggle": {
         "collapse": "Riduci l'elenco dei dashboard suggeriti",
         "disabled": "L'elenco dei dashboard suggeriti è disabilitato a causa della modalità di sola lettura",
@@ -15768,9 +15782,6 @@
     },
     "description-tooltip": {
       "label": "Descrizione"
-    },
-    "generate-columns": {
-      "score": "Punteggio"
     },
     "results-table": {
       "datasource-header": "Sorgente dati",
@@ -16115,6 +16126,7 @@
       "update-preferences": "Errore nell'aggiornamento delle preferenze"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Pannello di controllo principale",
       "home-dashboard-placeholder": "Dashboard predefinito",
       "language-preference-label": "Lingua",
@@ -17020,6 +17032,8 @@
       "placeholder-value-or-variable": "Valore o variabile"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "Operazione",
       "placeholder-field-or-number": "Campo o numero",
       "placeholder-fields-or-number": "Campo/i o numero"

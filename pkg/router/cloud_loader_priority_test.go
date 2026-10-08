@@ -81,10 +81,10 @@ func TestCloudLoaderSourcePriority(t *testing.T) {
 	loader.pluginsTarget = nil
 	require.IsType(t, &forwardBackend{}, loadShared())
 	loader.routeBackendClient = nil
-	require.Equal(t, "second-aggregate", loadShared().Key())
-	loader.aggregateTargets = loader.aggregateTargets[:1]
 	require.Equal(t, "first-aggregate", loadShared().Key())
 	loader.aggregateTargets[0] = priorityAggregate(priorityBackend("a-aggregate-only", "aggregate"))
+	require.Equal(t, "second-aggregate", loadShared().Key())
+	loader.aggregateTargets = loader.aggregateTargets[:1]
 	require.IsType(t, &fallbackBackend{}, loadShared())
 }
 

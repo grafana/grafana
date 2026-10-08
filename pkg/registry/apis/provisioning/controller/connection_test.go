@@ -1525,6 +1525,21 @@ func TestConnectionController_shouldGenerateToken_BackfillsExpiredFromLiveExpiry
 	assert.Equal(t, 1.0, counterValue(t, reg, "grafana_provisioning_connection_tokens_expired_total"))
 }
 
+func TestConnectionController_shouldGenerateToken_SkipsUnauthorizedOAuthConnections(t *testing.T) {
+	cc := &ConnectionController{
+		tokenMetrics:   registerConnectionTokenMetrics(prometheus.NewPedanticRegistry()),
+		resyncInterval: 5 * time.Minute,
+	}
+	unauthorized := &provisioning.Connection{}
+	oauthConn := struct {
+		*connection.MockTokenConnection
+		*connection.MockOAuthConnection
+	}{connection.NewMockTokenConnection(t), connection.NewMockOAuthConnection(t)}
+
+	assert.False(t, cc.shouldGenerateToken(context.Background(), unauthorized, oauthConn), "an OAuth connection waiting for authorization has no token to generate")
+	assert.True(t, cc.shouldGenerateToken(context.Background(), unauthorized, connection.NewMockTokenConnection(t)), "other token connections generate a missing token")
+}
+
 func newConnectionControllerForQueueTest(t *testing.T) (*ConnectionController, *prometheus.Registry) {
 	t.Helper()
 	reg := prometheus.NewPedanticRegistry()

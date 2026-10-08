@@ -26,6 +26,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -107,6 +108,7 @@ func ProvideService(
 	userService user.Service,
 	orgService org.Service,
 	clientGenerator resource.ClientGenerator,
+	cfgProvider configprovider.ConfigProvider,
 ) (*AlertNG, error) {
 	ng := &AlertNG{
 		Cfg:                       cfg,
@@ -144,6 +146,7 @@ func ProvideService(
 		FolderResourcePermissions: folderResourcePermissions,
 		userService:               userService,
 		orgService:                orgService,
+		cfgProvider:               cfgProvider,
 	}
 
 	if ng.IsDisabled() {
@@ -203,6 +206,7 @@ type AlertNG struct {
 	provenanceStore           *provenance.ProvenanceStore
 	userService               user.Service
 	orgService                org.Service
+	cfgProvider               configprovider.ConfigProvider
 
 	bus             bus.Bus
 	pluginsStore    pluginstore.Store
@@ -264,17 +268,6 @@ func (ng *AlertNG) init() error {
 	remoteSecondaryWithRemoteState := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondaryWithRemoteState)
 	if remotePrimary || remoteSecondary || remoteSecondaryWithRemoteState {
 		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
-		smtpCfg := remoteClient.SmtpConfig{
-			FromAddress:    ng.Cfg.Smtp.FromAddress,
-			FromName:       ng.Cfg.Smtp.FromName,
-			Host:           ng.Cfg.Smtp.Host,
-			User:           ng.Cfg.Smtp.User,
-			Password:       ng.Cfg.Smtp.Password,
-			EhloIdentity:   ng.Cfg.Smtp.EhloIdentity,
-			StartTLSPolicy: ng.Cfg.Smtp.StartTLSPolicy,
-			SkipVerify:     ng.Cfg.Smtp.SkipVerify,
-			StaticHeaders:  ng.Cfg.Smtp.StaticHeaders,
-		}
 		runtimeConfig := remoteClient.RuntimeConfig{
 			DispatchTimer: notifier.GetDispatchTimer(ng.FeatureToggles).String(),
 		}
@@ -285,7 +278,7 @@ func (ng *AlertNG) init() error {
 			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 			ExternalURL:       ng.Cfg.AppURL,
-			SmtpConfig:        smtpCfg,
+			SmtpConfig:        remote.LiveSmtpConfig(ng.cfgProvider, ng.Cfg),
 			Timeout:           ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Timeout,
 			RuntimeConfig:     runtimeConfig,
 		}

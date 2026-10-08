@@ -125,8 +125,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
   const instanceState = useInstanceAlertState(ruleUID, instanceLabels);
 
-  const showInstanceTimeline =
-    config.featureToggles.alertingNotificationHistoryTriage && config.featureToggles.kubernetesAlertingHistorian;
+  const showInstanceTimeline = config.unifiedAlerting.notificationHistoryEnabled;
 
   const showDrawerTimeRangeBanner = useMemo(() => {
     if (!rule?.grafana_alert) {

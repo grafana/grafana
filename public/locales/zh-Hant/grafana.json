@@ -1738,9 +1738,6 @@
         "will-import-rules": "將匯入規則",
         "will-import-rules-count_other": "將匯入 {{count}} 個規則"
       },
-      "routing-tree": {
-        "default-policy": "預設政策"
-      },
       "source": {
         "datasource": "現有的資料來源管理規則",
         "datasource-description": "從現有資料來源匯入規則",
@@ -2080,9 +2077,7 @@
       "routing-options": {
         "label": {
           "contact-point": "聯絡點",
-          "notification-policy": "通知政策",
-          "select-contact-point": "選擇聯絡點",
-          "use-notification-policy": "使用通知政策"
+          "notification-policy": "通知政策"
         }
       }
     },
@@ -2588,15 +2583,11 @@
       "aria-label": "選取通知政策",
       "change": "變更",
       "change-aria": "變更通知政策",
-      "custom-policy-desc": "透過 {{name}} 政策樹傳送警示",
       "default-badge": "預設政策",
       "default-info": "警示執行個體使用預設通知政策樹進行傳送。",
-      "default-policy": "預設政策",
-      "default-policy-desc": "使用預設通知政策樹傳送警示",
       "description": "選擇應該處理此警示規則傳送的通知政策樹。",
+      "missing-policy": "",
       "placeholder": "選取政策…",
-      "reset": "重設為預設值",
-      "reset-aria": "重設為預設政策",
       "view-policies": "檢視政策",
       "view-policies-aria": "檢視通知政策"
     },
@@ -5752,6 +5743,7 @@
       "paste-panel": "貼上面板",
       "remove": "移除 {{typeName}}",
       "remove-multiple": "",
+      "replace-panel": "",
       "row-fill-screen-disable": "",
       "row-fill-screen-enable": "",
       "row-hide-header": "",
@@ -6255,16 +6247,13 @@
       },
       "cross-dashboard-variables": {
         "description": "",
-        "empty-folder": "",
-        "empty-global": "",
+        "filters-description": "",
         "folder-section": "",
         "global-section": "",
         "load-error": "",
         "pane-header": "",
         "select-all-folder": "",
-        "select-all-global": "",
-        "title": "",
-        "tooltip": ""
+        "select-all-global": ""
       },
       "dashboard-options": {
         "annotations": "註解",
@@ -6304,7 +6293,8 @@
         "copy-tooltip": "複製",
         "delete": "刪除",
         "duplicate": "重複",
-        "paste": "貼上"
+        "paste": "貼上",
+        "remove": ""
       },
       "elements": {
         "annotation": "註解",
@@ -6337,7 +6327,9 @@
       "feedback-title": "提供有關新儀表板編輯體驗的意見回饋",
       "filters": {
         "add-filter": "新增篩選條件",
+        "global-or-folder-title": "",
         "reorder-description": "重新排序篩選條件清單",
+        "select-type": "",
         "title": "篩選條件",
         "title-above-dashboard": "儀表板上方",
         "title-controls-menu": "控制選單",
@@ -6403,6 +6395,10 @@
           "type": "類型",
           "type-placeholder": "選擇資料來源類型"
         },
+        "defined-globally": "",
+        "defined-on-folder": "",
+        "defined-on-folder-level": "",
+        "defined-on-global-level": "",
         "description": "描述",
         "description-placeholder": "描述性文字",
         "display": "顯示",
@@ -6424,6 +6420,7 @@
           "old-modal-title": "查詢變數",
           "preview": "預覽"
         },
+        "remove": "",
         "selection-options": {
           "allow-custom-values": "允許自訂值",
           "allow-custom-values-description": "允許使用者輸入數值",
@@ -6439,6 +6436,8 @@
       "variables": {
         "add-variable": "新增變數",
         "change-type": "變更變數類型",
+        "global-or-folder-description": "",
+        "global-or-folder-title": "",
         "reorder-description": "重新排序變數清單",
         "select-type": "選擇變數類型",
         "select-type-card-tooltip": "按一下以選取類型",
@@ -6942,7 +6941,9 @@
       "delete-tooltip-disabled": "無法個別刪除重複的面板",
       "duplicate-tooltip": "複製",
       "duplicate-tooltip-disabled": "無法個別複製重複的面板",
-      "settings": "設定"
+      "remove-tooltip": "",
+      "settings": "設定",
+      "view": ""
     },
     "conversion-warning-banner": {
       "detail-conditional": "顯示／隱藏規則將無法運作",
@@ -7797,7 +7798,10 @@
     "variable-editable-element": {
       "delete-confirm": "刪除變數",
       "delete-text": "確定要刪除 {{name}} 嗎？",
-      "delete-title": "刪除變數"
+      "delete-title": "刪除變數",
+      "remove-confirm": "",
+      "remove-text": "",
+      "remove-title": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "變數編輯器表單",
@@ -8944,7 +8948,6 @@
       "attribute-category": {
         "other": "其他"
       },
-      "error-indicator": "",
       "exception-message": "",
       "exception-stacktrace": "",
       "exception-title": "",
@@ -9090,7 +9093,7 @@
     },
     "trace-view": {
       "adaptive-traces-restored": {
-        "body": "此追蹤最初由 Adaptive Traces 刪除，並已復原。已還原的追蹤不包含在 TraceQL 查詢中，只能透過追蹤 ID 進行查詢。請查看<2>文件</2>，了解更多詳細資訊。",
+        "body": "",
         "title": "由 Adaptive Traces 還原的追蹤"
       },
       "application-observability-promo": {
@@ -10675,6 +10678,7 @@
       "placeholder": "選擇"
     },
     "table": {
+      "add-to-assistant": "",
       "cell-actions": "",
       "cell-filter-on": "篩選值",
       "cell-filter-out": "篩選出值",
@@ -11319,6 +11323,7 @@
         "clear": "",
         "edit": "",
         "ignored-tooltip": "",
+        "no-match-hint": "",
         "save": "",
         "save-failed": ""
       },
@@ -11332,7 +11337,6 @@
           "cluster": "",
           "namespaces": "",
           "no-match": "",
-          "no-match-hint": "",
           "nodes": "",
           "open": "",
           "summary-cluster": "",
@@ -11392,6 +11396,20 @@
         "create-check": "建立檢查",
         "description": "透過世界各地的探測器監控端點的運作時間和效能。",
         "failing-worst": "{{check}} 為 {{percent}}%",
+        "filter": {
+          "instances": "",
+          "jobs": "",
+          "no-instances": "",
+          "no-jobs": "",
+          "no-match": "",
+          "no-probes": "",
+          "open": "",
+          "probes": "",
+          "summary-instances": "",
+          "summary-jobs": "",
+          "summary-probes": "",
+          "title": ""
+        },
         "setup-hint": "建立檢查",
         "stats": "{{percent}}% 成功 · 24 小時",
         "success-trend": "成功率 · 過去 24 小時",
@@ -13048,15 +13066,9 @@
       "card-author": "由{{author}}執行",
       "card-selected": "{{title}}（已選取）",
       "card-updated": "{{when}} 已更新",
-      "create-description": "描述",
-      "create-description-help": "提供給協作者的選用內容",
-      "create-description-placeholder": "您正在調查什麼？",
       "create-name": "筆記本名稱",
       "create-name-required": "必須輸入筆記本名稱",
       "create-name-taken": "已有同名的筆記本",
-      "create-tags": "標籤",
-      "create-tags-help": "選用 — 用於搜尋和篩選",
-      "create-tags-placeholder": "新增標籤",
       "created-by-me": "由我建立",
       "error-conflict": "您新增內容時，此筆記本已發生變更。請再試一次，將面板新增至最新版本。",
       "error-generic": "無法將面板新增至筆記本",
@@ -13066,6 +13078,8 @@
       "list-none": "您目前沒有筆記本。請建立新的筆記本。",
       "list-none-read-only": "您目前沒有筆記本，也沒有建立筆記本的權限。",
       "list-truncated": "並非所有筆記本都會顯示。請縮小搜尋範圍以尋找其他筆記本。",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "依標題搜尋",
       "sort-alphabetical": "依字母順序 (A–Z)",
       "sort-label": "排序筆記本",
@@ -13165,8 +13179,7 @@
       },
       "tag-filter-placeholder": "",
       "unknown-author": "匿名",
-      "count_other": "{{count}} 個筆記本",
-      "count-truncated_other": "已載入前 {{count}} 個筆記本"
+      "count_other": "{{count}} 個筆記本"
     },
     "new": {
       "default-title-with-date": ""
@@ -13929,11 +13942,13 @@
     "preview-banner": {
       "behind-branch-text": "此資源位於 {{repoType}} 的分支後方。",
       "branch-targets": "目標",
+      "create-pull-request-in-repository": "",
       "delete-from-branch": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到此資源",
       "move-from-branch": "在此分支合併之前，您組織中的其他 Grafana 使用者仍會看到目前版本",
       "not-saved": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到儲存到已設定預設分支的目前版本",
       "open-in-repo-button": "在 {{repoType}} 中開啟",
       "open-pull-request-in-repo": "在 {{repoType}} 中開啟拉取請求",
+      "open-repository": "",
       "update-from-branch": "在合併此分支之前，您組織中的其他 Grafana 使用者仍會看到目前版本",
       "view-in-repo-button": "在 {{repoType}} 中檢視，以查看最新變更。",
       "view-pull-request-in-repo": "在 {{repoType}} 中檢視拉取請求",
@@ -14006,6 +14021,7 @@
       "title": "您也可以在 Grafana Cloud 上使用 Git 同步"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "複製程式碼至剪貼簿"
     },
     "commit-message": {
@@ -14931,7 +14947,6 @@
       "alert-point-folder-cleanup": "移轉後，您可能需要手動移除或管理原始資料夾。",
       "alert-point-folder-structure": "移轉現有儀表板時，資料夾結構將在儲存庫中複製。原始資料夾將清空儀表板，但可能仍包含警示或資料庫面板。",
       "alert-point-instance-alerts": "現有的警示和資料庫面板將會遺失，移轉後將無法使用。",
-      "alert-point-permissions": "不支援微調權限。套用預設權限：管理員、編輯者和檢視者角色將保留其標準存取權限等級。",
       "alert-point-unsupported": "佈建的資料夾不支援警示和資料庫面板。",
       "alert-title": "重要提示：在繼續之前，請先檢閱 Git 同步限制",
       "app-mode-label": "應用程式設定",
@@ -15586,12 +15601,12 @@
       "collapse": "收闔",
       "exchange": "將根範圍變更為{{scope}}",
       "expand": "展開",
+      "filter": "",
       "loading": "正在載入儀表板",
       "noResultsForFilter": "未找到您的查詢結果",
       "noResultsForFilterClear": "清除搜尋",
       "noResultsForScopes": "未找到所選範圍的儀表板或連結",
       "noResultsNoScopes": "未選取範圍",
-      "search": "搜尋",
       "toggle": {
         "collapse": "收闔建議的儀表板清單",
         "disabled": "由於處於唯讀模式，建議的儀表板清單已停用",
@@ -15641,9 +15656,6 @@
     },
     "description-tooltip": {
       "label": "描述"
-    },
-    "generate-columns": {
-      "score": "分數"
     },
     "results-table": {
       "datasource-header": "資料來源",
@@ -15987,6 +15999,7 @@
       "update-preferences": "更新偏好設定時發生錯誤"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "首頁儀表板",
       "home-dashboard-placeholder": "預設儀表板",
       "language-preference-label": "語言",
@@ -16891,6 +16904,8 @@
       "placeholder-value-or-variable": "值或變數"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "",
+      "aria-label-right-operand": "",
       "label-operation": "操作",
       "placeholder-field-or-number": "欄位或數字",
       "placeholder-fields-or-number": "欄位或數字"
