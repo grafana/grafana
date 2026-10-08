@@ -63,7 +63,7 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 		alertInstanceTable = dbHelper.Table("alert_instance")
 		alertRuleStateTable = dbHelper.Table("alert_rule_state")
 		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
-		ctx = withoutAmbientSession(ctx)
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	return conn.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
@@ -156,7 +156,7 @@ func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int6
 		}
 		conn = dbHelper.DB
 		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
-		ctx = withoutAmbientSession(ctx)
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	var result []alertRuleVersion
@@ -464,7 +464,7 @@ func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (re
 		}
 		conn = dbHelper.DB
 		alertRuleTable = dbHelper.Table("alert_rule")
-		ctx = withoutAmbientSession(ctx)
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	err = conn.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -861,7 +861,7 @@ func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs 
 		}
 		conn = dbHelper.DB
 		alertRuleTable = dbHelper.Table("alert_rule")
-		ctx = withoutAmbientSession(ctx)
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	var count int64
@@ -1851,7 +1851,7 @@ func (st RuleStore) ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, 
 		}
 		conn = dbHelper.DB
 		alertRuleTable = dbHelper.Table("alert_rule")
-		ctx = withoutAmbientSession(ctx)
+		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	var uids []string

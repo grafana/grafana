@@ -40,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 	tutil "github.com/grafana/grafana/pkg/util/testutil"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 func toInsertRules(rules []models.AlertRule) []models.InsertRule {
@@ -947,6 +948,15 @@ type dbSpy struct {
 	withDbSessionCalled              bool
 	withTransactionalDbSessionCalled bool
 	lastSession                      *db.Session
+	// engine, when set, makes the spy look like a different database than the one it wraps.
+	engine *xorm.Engine
+}
+
+func (s *dbSpy) GetEngine() *xorm.Engine {
+	if s.engine != nil {
+		return s.engine
+	}
+	return s.DB.GetEngine()
 }
 
 func (s *dbSpy) WithDbSession(ctx context.Context, callback sqlstore.DBTransactionFunc) error {
@@ -979,7 +989,7 @@ func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
 
-	spy := &dbSpy{DB: sqlStore}
+	spy := &dbSpy{DB: sqlStore, engine: new(xorm.Engine)}
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
 			DB:    spy,
@@ -1053,7 +1063,7 @@ func TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession(t *testing
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
 
-	spy := &dbSpy{DB: sqlStore}
+	spy := &dbSpy{DB: sqlStore, engine: new(xorm.Engine)}
 	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
 		return &legacysql.LegacyDatabaseHelper{
 			DB:    spy,
@@ -1078,6 +1088,51 @@ func TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession(t *testing
 	require.NotNil(t, ambientSess)
 	require.NotNil(t, spy.lastSession)
 	assert.NotSame(t, ambientSess, spy.lastSession, "routed delete should not reuse the ambient session from st.SQLStore's transaction")
+}
+
+// TestIntegration_DeleteAlertRulesByUID_RoutedToCallersDatabaseJoinsAmbientTransaction covers a
+// routed provider resolving to the caller's own database: the delete must join the caller's
+// transaction and roll back with it.
+func TestIntegration_DeleteAlertRulesByUID_RoutedToCallersDatabaseJoinsAmbientTransaction(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB:    spy,
+			Table: func(n string) string { return n },
+		}, nil
+	}
+
+	rule := createRule(t, store, models.RuleGen)
+
+	laterFailure := errors.New("a later step in the caller's transaction failed")
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		if err := store.DeleteAlertRulesByUID(ctx, rule.OrgID, &models.AlertingUserUID, false, rule.UID); err != nil {
+			return err
+		}
+		return laterFailure
+	})
+	require.ErrorIs(t, err, laterFailure)
+
+	require.NotNil(t, ambientSess)
+	assert.Same(t, ambientSess, spy.lastSession, "routed delete on the caller's database should join its transaction")
+
+	_, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{OrgID: rule.OrgID, UID: rule.UID})
+	require.NoError(t, err, "the delete must roll back with the caller's transaction")
 }
 
 // TestIntegration_DeleteAlertRulesByUID_DefaultPathJoinsAmbientSession is the mirror of the test
