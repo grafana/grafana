@@ -144,6 +144,15 @@ describe('transformSaveModelToScene', () => {
       expect((cursorSync as behaviors.CursorSync).state.sync).toEqual(DashboardCursorSync.Crosshair);
     });
 
+    it('marks the scene as needing the library panel repeat migration', () => {
+      const dash = { ...defaultDashboard, title: 'Test dashboard', uid: 'test-uid' };
+      const oldModel = new DashboardModel(dash);
+
+      const scene = createDashboardSceneFromDashboardModel(oldModel, dash);
+
+      expect(scene.state.meta.libraryPanelRepeatUnresolved).toBe(true);
+    });
+
     it('should apply live now timer behavior', () => {
       const dash = {
         ...defaultDashboard,
@@ -863,12 +872,9 @@ describe('transformSaveModelToScene', () => {
 
   describe('Convert to new rows', () => {
     beforeEach(() => {
-      // set feature flag to true
-      config.featureToggles.dashboardNewLayouts = true;
-      setTestFlags({ 'grafana.dashboardAutoGridDefault': false });
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardAutoGridDefault': false });
     });
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
       setTestFlags({});
     });
 

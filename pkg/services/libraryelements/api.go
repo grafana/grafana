@@ -1278,7 +1278,7 @@ func (lk8s *libraryElementsK8sHandler) unstructuredToLegacyLibraryPanelDTO(c *co
 		return nil, err
 	}
 	id = meta.GetDeprecatedInternalID() // nolint:staticcheck
-	folderUID = meta.GetFolder()
+	folderUID = foldermodel.ToLegacyFolderUID(meta.GetFolder())
 
 	// rebuild the legacy model blob, then re-attach the identifiers the legacy API inlines
 	modelJSON, err := LibraryPanelToLegacyModel(panel)

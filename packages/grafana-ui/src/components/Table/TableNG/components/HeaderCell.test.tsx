@@ -301,6 +301,12 @@ describe('HeaderCell', () => {
       expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
     });
 
+    it('keeps the Assistant action out of the classic header', () => {
+      render(<HeaderCell {...baseProps} field={makeField()} onAddToAssistant={jest.fn()} />);
+      expect(screen.getByText('Field1')).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
+    });
+
     it('gives the header cell root a stable class the menu scopes its hover reveal to', () => {
       // Regression guard: the column menu's hover/focus-reveal CSS matches this class rather than
       // the bare `.rdg-cell` react-data-grid puts on every header cell. In a nested table, a

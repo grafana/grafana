@@ -236,6 +236,24 @@ spec:
                 - Evaluated
                 - KeepLast
                 type: string
+              totals:
+                description: |-
+                  Count of alert instances per state. error also counts instances whose evaluation
+                  errored but were mapped to another state via execErrState, so it can overlap.
+                properties:
+                  error:
+                    type: integer
+                  firing:
+                    type: integer
+                  healthy:
+                    type: integer
+                  nodata:
+                    type: integer
+                  pending:
+                    type: integer
+                  recovering:
+                    type: integer
+                type: object
             type: object
         required:
         - spec
