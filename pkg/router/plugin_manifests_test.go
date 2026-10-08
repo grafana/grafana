@@ -25,24 +25,18 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-// pluginManifestsFixture is a minimal instance of the response shape a real
-// plugin-manifests operator emits at GET /plugins -- the
-// {"key","plugins":[{"definition":{"jsonData","manifest"},"host"}]} envelope
-// definition.PluginDeployments describes, confirmed against a live
-// deployment (an earlier check against a stale pinned image wrongly found a
-// bare-array mismatch; a fresher image returns exactly this shape).
 const pluginManifestsFixture = `{
 	"key": "2026-09-16T01:31:44Z",
 	"plugins": [
 		{
 			"definition": {
 				"jsonData": {"id": "grafana-appsdktest-app", "type": "app", "name": "Test App"},
-				"manifest": {
+				"manifests": [{
 					"appName": "grafana-appsdktest-app",
 					"group": "appsdktest.ext.grafana.app",
 					"versions": [{"name": "v1alpha1", "served": true}],
 					"preferredVersion": "v1alpha1"
-				}
+				}]
 			},
 			"host": "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051"
 		},
@@ -67,13 +61,13 @@ func TestFetchPluginManifests_DecodesDeploymentsEnvelope(t *testing.T) {
 
 	first := deployment.Plugins[0]
 	require.Equal(t, "grafana-appsdktest-app", first.Definition.JSONData.ID)
-	require.NotNil(t, first.Definition.Manifest)
-	require.Equal(t, "appsdktest.ext.grafana.app", first.Definition.Manifest.Group)
+	require.Len(t, first.Definition.Manifests, 1)
+	require.Equal(t, "appsdktest.ext.grafana.app", first.Definition.Manifests[0].Group)
 	require.Equal(t, "grafana-appsdktest-app-operator.grafana-router-plugins.svc.cluster.local.:50051", first.Host)
 
 	second := deployment.Plugins[1]
 	require.Equal(t, "no-manifest-plugin", second.Definition.JSONData.ID)
-	require.Nil(t, second.Definition.Manifest)
+	require.Empty(t, second.Definition.Manifests)
 }
 
 func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *testing.T) {
@@ -222,7 +216,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		target.poll(t.Context(), make(chan struct{}, 1))
 		require.Len(t, target.Backends(), 1)
 		plugin := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
-		legacy, client, err := plugin.client(t.Context(), plugin.plugin.JSONData.ID)
+		legacy, client, err := plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.NotNil(t, legacy)
 		require.NotNil(t, client)
@@ -230,11 +224,11 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 		defer cancel()
 		health, err := legacy.CheckHealth(ctx, &sdkbackend.CheckHealthRequest{
-			PluginContext: sdkbackend.PluginContext{PluginID: plugin.plugin.JSONData.ID},
+			PluginContext: sdkbackend.PluginContext{PluginID: plugin.pluginID},
 		})
 		require.NoError(t, err)
 		require.Equal(t, sdkbackend.HealthStatusOk, health.Status)
-		require.Equal(t, plugin.plugin.JSONData.ID, health.Message)
+		require.Equal(t, plugin.pluginID, health.Message)
 		var responses []*sdkbackend.CallResourceResponse
 		err = legacy.CallResource(ctx, &sdkbackend.CallResourceRequest{
 			Path: "test-resource",
@@ -266,7 +260,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		conn := target.connections[host]
 		target.poll(t.Context(), make(chan struct{}, 1))
 		plugin = target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
-		_, _, err = plugin.client(t.Context(), plugin.plugin.JSONData.ID)
+		_, _, err = plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.Same(t, conn, target.connections[host])
 	}
@@ -336,7 +330,7 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 	entry := &deployment.Plugins[0]
 	entry.Host = ""
 	folderScoped := false
-	entry.Definition.Manifest.Versions[0].Kinds = []app.ManifestVersionKind{{
+	entry.Definition.Manifests[0].Versions[0].Kinds = []app.ManifestVersionKind{{
 		Kind: "Thing", Plural: "things", Scope: "Namespaced", FolderScoped: &folderScoped,
 	}}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -388,7 +382,7 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 		{"validation", &app.AdmissionCapabilities{Validation: &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationCreate}}}},
 	} {
 		t.Run(tc.name+" requires a backend client", func(t *testing.T) {
-			entry.Definition.Manifest.Versions[0].Kinds[0].Admission = tc.capabilities
+			entry.Definition.Manifests[0].Versions[0].Kinds[0].Admission = tc.capabilities
 			target.poll(t.Context(), make(chan struct{}, 1))
 			require.Len(t, target.Backends(), 1)
 			_, err := target.Backends()[0].Load(t.Context())
@@ -409,4 +403,89 @@ func (c *manifestKindResourceClient) Create(_ context.Context, req *resourcepb.C
 
 func (c *manifestKindResourceClient) Read(_ context.Context, _ *resourcepb.ReadRequest, _ ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
 	return &resourcepb.ReadResponse{ResourceVersion: 1, Value: c.created.Value}, nil
+}
+
+func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
+	var deployment definition.PluginDeployments
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &deployment))
+	first := deployment.Plugins[0].Definition.Manifests[0]
+	second := *first
+	second.Group = "second.ext.grafana.app"
+	deployment.Plugins[0].Definition.Manifests = []*app.ManifestData{
+		first, nil, {Group: "dashboard.grafana.app"}, &second,
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(deployment))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+	dirty := make(chan struct{}, 1)
+	target.poll(t.Context(), dirty)
+	backends := target.Backends()
+	require.Len(t, backends, 2)
+	require.Equal(t, first.Group, backends[0].Group().Name)
+	require.Equal(t, second.Group, backends[1].Group().Name)
+	require.NotEqual(t, backends[0].Key(), backends[1].Key())
+	require.Len(t, dirty, 1)
+	<-dirty
+	target.poll(t.Context(), dirty)
+	require.Empty(t, dirty)
+	second.Versions = append(append([]app.ManifestVersion(nil), second.Versions...), app.ManifestVersion{Name: "v2", Served: true})
+	target.poll(t.Context(), dirty)
+	updated := target.Backends()
+	require.Equal(t, backends[0].Key(), updated[0].Key(), "a sibling change must preserve this group's handler and watches")
+	require.NotEqual(t, backends[1].Key(), updated[1].Key())
+
+	deployment.Plugins[0].Definition.JSONData.Info.Version = "2"
+	target.poll(t.Context(), dirty)
+	for i, backend := range target.Backends() {
+		require.NotEqual(t, updated[i].Key(), backend.Key(), "shared metadata changes affect every group")
+		require.Equal(t, "2", backend.(*pluginDeploymentBackend).Backend.(*PluginBackend).info.Version)
+	}
+}
+
+func TestFetchPluginManifestsMigratesSingularManifest(t *testing.T) {
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
+	plugin := payload["plugins"].([]any)[0].(map[string]any)["definition"].(map[string]any)
+	plugin["manifest"] = plugin["manifests"].([]any)[0]
+	delete(plugin, "manifests")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(payload))
+	}))
+	defer srv.Close()
+	deployment, err := fetchPluginManifests(t.Context(), srv.Client(), srv.URL)
+	require.NoError(t, err)
+	require.Len(t, deployment.Plugins[0].Definition.Manifests, 1)
+	require.Equal(t, "appsdktest.ext.grafana.app", deployment.Plugins[0].Definition.Manifests[0].Group)
+	require.Nil(t, deployment.Plugins[0].Definition.Manifest) //nolint:staticcheck
+
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Len(t, target.Backends(), 1)
+}
+
+func TestFetchPluginManifestsPrefersPluralEntry(t *testing.T) {
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
+	plugin := payload["plugins"].([]any)[0].(map[string]any)["definition"].(map[string]any)
+	current := plugin["manifests"].([]any)[0].(map[string]any)
+	legacy := map[string]any{}
+	for key, value := range current {
+		legacy[key] = value
+	}
+	legacy["versions"] = []any{map[string]any{"name": "v0alpha1", "served": true}}
+	plugin["manifest"] = legacy
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(payload))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+	target.poll(t.Context(), make(chan struct{}, 1))
+	backends := target.Backends()
+	require.Len(t, backends, 1)
+	require.Equal(t, "v1alpha1", backends[0].Group().Versions[0].Version)
 }
