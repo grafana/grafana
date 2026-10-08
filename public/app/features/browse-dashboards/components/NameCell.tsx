@@ -123,7 +123,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
           <ReadOnlyBadge
             tooltip={t(
               'browse-dashboards.name-cell.read-only-folder-tooltip',
-              "You don't have permission to edit this folder"
+              "You don't have permissions to edit this folder"
             )}
           />
         )}

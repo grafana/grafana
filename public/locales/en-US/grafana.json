@@ -4623,7 +4623,7 @@
     "my-team-folders": "My team folders",
     "name-cell": {
       "no-items": "No items",
-      "read-only-folder-tooltip": "You don't have permission to edit this folder"
+      "read-only-folder-tooltip": "You don't have permissions to edit this folder"
     },
     "new-folder": {
       "read-only-message": "To create this folder, please add the resource in your repository directly."
