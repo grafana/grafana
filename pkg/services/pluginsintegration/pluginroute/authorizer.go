@@ -56,16 +56,16 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 					customRoutes:  map[string]bool{},
 				}
 			}
-			for path := range kind.Routes {
-				// Only the first segment can be a subresource, and manifestRoutes
-				// drops the ones that shadow a reserved subresource.
-				route, _, _ := strings.Cut(strings.TrimPrefix(path, "/"), "/")
-				if route == "" || reservedSubresources[route] {
-					continue
-				}
-				policy.customRoutes[route] = true
-			}
 			policies[resource] = policy
+		}
+
+		// Only the first segment can be a subresource.
+		for _, route := range parseManifestRoutes(version, func(string, string) {}) {
+			if route.kind == nil {
+				continue
+			}
+			sub, _, _ := strings.Cut(route.subresource, "/")
+			policies[strings.ToLower(route.kind.Plural)].customRoutes[sub] = true
 		}
 	}
 	return policies

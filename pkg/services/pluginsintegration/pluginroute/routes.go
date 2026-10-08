@@ -3,6 +3,7 @@ package pluginroute
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -82,34 +83,44 @@ func (b *manifestBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 // the group version, and kind routes as subresources of a single object.
 func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.ManifestVersion) *builder.APIRoutes {
 	routes := &builder.APIRoutes{}
-	reserved := reservedResourceNames(version)
 
-	addVersionRoute := func(dst *[]builder.APIRouteHandler, path string, props spec3.PathProps, params ...*spec3.Parameter) {
-		path = strings.TrimPrefix(path, "/")
-		if root, _, _ := strings.Cut(path, "/"); reserved[root] {
-			logging.DefaultLogger.Warn("skipping manifest route that shadows a resource path",
-				"group", gv.Group, "version", gv.Version, "path", path)
-			return
-		}
-		props, served := dropUnservableMethods(props, func(method string) {
+	parsed := parseManifestRoutes(version, func(path, reason string) {
+		logging.DefaultLogger.Warn("skipping manifest route",
+			"group", gv.Group, "version", gv.Version, "path", path, "reason", reason)
+	})
+
+	add := func(route manifestRoute) {
+		props, served := dropUnservableMethods(route.props, func(method string) {
 			logging.DefaultLogger.Warn("skipping manifest route method the apiserver cannot serve",
-				"group", gv.Group, "version", gv.Version, "path", path, "method", method)
+				"group", gv.Group, "version", gv.Version, "path", route.path, "method", method)
 		})
 		if !served {
 			return
 		}
-		*dst = append(*dst, builder.APIRouteHandler{
-			Path:    path,
+
+		dst := &routes.Root
+		var params []*spec3.Parameter
+		if route.namespaced {
+			dst = &routes.Namespace
+			params = append(params, namespacePathParameter())
+		}
+		handler := builder.APIRouteHandler{
+			Path:    route.path,
 			Spec:    withPathParameters(props, nil, params...),
-			Schemas: version.Routes.Schemas, //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
-			Handler: b.routeHandler(gv, "", path),
-		})
+			Handler: b.routeHandler(gv, "", route.path),
+		}
+		if route.kind != nil {
+			plural := strings.ToLower(route.kind.Plural)
+			handler.Spec = withPathParameters(props, []string{route.kind.Kind}, append(params, namePathParameter())...)
+			handler.Handler = b.routeHandler(gv, plural, route.subresource)
+		}
+		*dst = append(*dst, handler)
 	}
-	for path, props := range version.Routes.Cluster { //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
-		addVersionRoute(&routes.Root, path, props)
-	}
-	for path, props := range version.Routes.Namespaced { //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
-		addVersionRoute(&routes.Namespace, path, props, namespacePathParameter())
+
+	for _, route := range parsed {
+		if route.kind == nil {
+			add(route)
+		}
 	}
 
 	// A manifest whose search declarations cannot be read cannot be searched, but
@@ -126,40 +137,116 @@ func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.Man
 		routes.Namespace = append(routes.Namespace, keys.Namespace...)
 	}
 
-	for _, kind := range version.Kinds {
-		plural := strings.ToLower(kind.Plural)
-
-		// Cluster kinds have no namespace segment to mount under.
-		dst := &routes.Namespace
-		params := []*spec3.Parameter{namespacePathParameter(), namePathParameter()}
-		if kind.Scope == kindstore.ClusterScope {
-			dst = &routes.Root
-			params = []*spec3.Parameter{namePathParameter()}
-		}
-
-		for path, props := range kind.Routes {
-			path = strings.TrimPrefix(path, "/")
-			if path == "" || reservedSubresources[path] {
-				logging.DefaultLogger.Warn("skipping manifest kind route that shadows a subresource",
-					"group", gv.Group, "version", gv.Version, "kind", kind.Kind, "path", path)
-				continue
-			}
-			props, served := dropUnservableMethods(props, func(method string) {
-				logging.DefaultLogger.Warn("skipping manifest kind route method the apiserver cannot serve",
-					"group", gv.Group, "version", gv.Version, "kind", kind.Kind, "path", path, "method", method)
-			})
-			if !served {
-				continue
-			}
-			*dst = append(*dst, builder.APIRouteHandler{
-				Path:    plural + "/{" + nameParameter + "}/" + path,
-				Spec:    withPathParameters(props, []string{kind.Kind}, params...),
-				Schemas: version.Routes.Schemas, //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
-				Handler: b.routeHandler(gv, plural, path),
-			})
+	for _, route := range parsed {
+		if route.kind != nil {
+			add(route)
 		}
 	}
 
+	return routes
+}
+
+// manifestRoute is one path of a version's OpenAPI, resolved to where it mounts.
+type manifestRoute struct {
+	// path is relative to the mount point: the group version root, or
+	// namespaces/{namespace} when namespaced.
+	path       string
+	namespaced bool
+	props      spec3.PathProps
+
+	// kind is set for a subresource route of a single object, with subresource
+	// the part of the path below {name}.
+	kind        *app.ManifestVersionKind
+	subresource string
+}
+
+// versionOpenAPI returns the custom routes a version declares. Manifests built
+// before app-sdk published routes as OpenAPI paths only carry the deprecated
+// Routes, so those are converted to paths the way app-sdk codegen does.
+func versionOpenAPI(version app.ManifestVersion) app.ManifestVersionOpenAPI {
+	out := version.OpenAPI
+	if len(out.Paths) > 0 {
+		return out
+	}
+
+	legacy := version.Routes //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
+	paths := map[string]spec3.PathProps{}
+	add := func(prefix string, routes map[string]spec3.PathProps) {
+		for path, props := range routes {
+			paths[prefix+"/"+strings.TrimPrefix(path, "/")] = props
+		}
+	}
+	add("", legacy.Cluster)
+	add("/"+namespacedPrefix, legacy.Namespaced)
+	for _, kind := range version.Kinds {
+		prefix := "/" + strings.ToLower(kind.Plural) + "/{" + nameParameter + "}"
+		if kind.Scope != kindstore.ClusterScope {
+			prefix = "/" + namespacedPrefix + prefix
+		}
+		add(prefix, kind.Routes)
+	}
+	out.Paths = paths
+
+	if len(legacy.Schemas) > 0 {
+		schemas := maps.Clone(legacy.Schemas)
+		// Schemas declared in the OpenAPI section win over the legacy copies.
+		maps.Copy(schemas, out.Components.Schemas)
+		out.Components.Schemas = schemas
+	}
+	return out
+}
+
+// namespacedPrefix is the version-relative path namespaced routes mount under.
+const namespacedPrefix = "namespaces/{" + namespaceParameter + "}"
+
+// parseManifestRoutes resolves each OpenAPI path of a version to a version
+// route or a kind subresource route, sorted by path. Paths that would shadow
+// resource storage are reported to skip and left out.
+func parseManifestRoutes(version app.ManifestVersion, skip func(path, reason string)) []manifestRoute {
+	reserved := reservedResourceNames(version)
+	kinds := map[string]*app.ManifestVersionKind{}
+	for i := range version.Kinds {
+		if plural := strings.ToLower(version.Kinds[i].Plural); plural != "" {
+			kinds[plural] = &version.Kinds[i]
+		}
+	}
+
+	declared := versionOpenAPI(version).Paths
+	routes := make([]manifestRoute, 0, len(declared))
+	for _, full := range slices.Sorted(maps.Keys(declared)) {
+		route := manifestRoute{
+			path:  strings.TrimPrefix(full, "/"),
+			props: declared[full],
+		}
+		if rest, ok := strings.CutPrefix(route.path, namespacedPrefix+"/"); ok {
+			route.path = rest
+			route.namespaced = true
+		}
+
+		root, below, _ := strings.Cut(route.path, "/")
+		if kind := kinds[root]; kind != nil {
+			sub, ok := strings.CutPrefix(below, "{"+nameParameter+"}/")
+			first, _, _ := strings.Cut(sub, "/")
+			switch {
+			case !ok:
+				skip(full, "shadows a resource path")
+			case route.namespaced == (kind.Scope == kindstore.ClusterScope):
+				skip(full, "does not match the kind scope")
+			case first == "" || reservedSubresources[first]:
+				skip(full, "shadows a subresource")
+			default:
+				route.kind = kind
+				route.subresource = sub
+				routes = append(routes, route)
+			}
+			continue
+		}
+		if root == "" || reserved[root] || (!route.namespaced && root == "namespaces") {
+			skip(full, "shadows a resource path")
+			continue
+		}
+		routes = append(routes, route)
+	}
 	return routes
 }
 

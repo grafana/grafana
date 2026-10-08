@@ -399,3 +399,32 @@ func TestDropUnstructuredModels(t *testing.T) {
 		require.Contains(t, def.Schema.Extensions, "x-kubernetes-group-version-kind")
 	})
 }
+
+// The components a version's routes reference come from its OpenAPI section,
+// or from the deprecated route schemas when a manifest has no OpenAPI paths,
+// and win over anything already published under the same name.
+func TestAddRouteComponents(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions[1].OpenAPI = app.ManifestVersionOpenAPI{
+		Paths: map[string]spec3.PathProps{"/x": {Get: &spec3.Operation{}}},
+		Components: app.ManifestVersionOpenAPIComponents{
+			Schemas:   map[string]spec.Schema{"Result": *spec.StringProperty(), "Existing": *spec.BoolProperty()},
+			Responses: map[string]*spec3.Response{"NotFound": {ResponseProps: spec3.ResponseProps{Description: "missing"}}},
+			Examples:  map[string]*spec3.Example{"Sample": {ExampleProps: spec3.ExampleProps{Value: "x"}}},
+		},
+	}
+	manifest.Versions[2].Routes.Schemas = map[string]spec.Schema{"Legacy": *spec.StringProperty()} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest}
+
+	existing := spec.Int64Property()
+	oas := &spec3.OpenAPI{Components: &spec3.Components{Schemas: map[string]*spec.Schema{"Existing": existing}}}
+	b.addRouteComponents(oas, "v1alpha1")
+	require.Equal(t, spec.StringProperty(), oas.Components.Schemas["Result"])
+	require.Equal(t, spec.BoolProperty(), oas.Components.Schemas["Existing"], "the manifest replaces a schema already in the spec")
+	require.Equal(t, "missing", oas.Components.Responses["NotFound"].Description)
+	require.Equal(t, "x", oas.Components.Examples["Sample"].Value)
+
+	legacy := &spec3.OpenAPI{}
+	b.addRouteComponents(legacy, "v2alpha1")
+	require.Equal(t, spec.StringProperty(), legacy.Components.Schemas["Legacy"])
+}

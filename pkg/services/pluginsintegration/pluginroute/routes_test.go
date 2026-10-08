@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -687,4 +688,84 @@ func TestSearchRouteGates(t *testing.T) {
 		b.search = nil
 		require.Empty(t, searchPaths(b))
 	})
+}
+
+// A manifest that declares its routes as OpenAPI paths mounts the same routes
+// as one using the deprecated per-scope Routes, and the deprecated fields are
+// ignored once OpenAPI paths exist.
+func TestGetAPIRoutesFromOpenAPIPaths(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
+	mounted := func(m *app.ManifestData) map[string]*spec3.PathProps {
+		b := &manifestBuilder{group: m.Group, manifest: m, pluginID: "example-app"}
+		routes := b.GetAPIRoutes(gv)
+		require.NotNil(t, routes)
+		out := map[string]*spec3.PathProps{}
+		for _, h := range routes.Root {
+			out[h.Path] = h.Spec
+		}
+		for _, h := range routes.Namespace {
+			out["namespaces/{namespace}/"+h.Path] = h.Spec
+		}
+		return out
+	}
+
+	legacy := testManifest(t)
+	expected := mounted(legacy)
+	require.Equal(t, []string{
+		"foobar",
+		"namespaces/{namespace}/foobar",
+		"namespaces/{namespace}/testkinds/{name}/reload",
+	}, slices.Sorted(maps.Keys(expected)))
+
+	manifest := testManifest(t)
+	version := &manifest.Versions[1]
+	version.OpenAPI = versionOpenAPI(*version)
+	// Left over from an older manifest; OpenAPI paths are authoritative.
+	version.Routes.Cluster = map[string]spec3.PathProps{"/stale": {Get: &spec3.Operation{}}} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	version.Routes.Namespaced = nil                                                          //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	version.Kinds[0].Routes = map[string]spec3.PathProps{"/stale": {Get: &spec3.Operation{}}}
+	require.Equal(t, expected, mounted(manifest))
+
+	// The kind route keeps the kind's tag and documents both path parameters.
+	reload := expected["namespaces/{namespace}/testkinds/{name}/reload"].Post
+	require.Equal(t, []string{"TestKind"}, reload.Tags)
+	params := []string{}
+	for _, p := range reload.Parameters {
+		params = append(params, p.In+":"+p.Name)
+	}
+	require.ElementsMatch(t, []string{"path:namespace", "path:name"}, params)
+}
+
+// OpenAPI paths that would shadow resource storage, or that mount a kind's
+// subresource at the wrong scope, are dropped.
+func TestGetAPIRoutesFromOpenAPIPathsSkipsShadowing(t *testing.T) {
+	op := spec3.PathProps{Get: &spec3.Operation{}}
+	manifest := testManifest(t)
+	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
+		"/namespaces/{namespace}/ok": op,
+		"/ok":                        op,
+		"/namespaces/{namespace}/testkinds/{name}/sub":      op,
+		"/namespaces/{namespace}/testkinds/{name}/status":   op, // reserved subresource
+		"/namespaces/{namespace}/testkinds/{name}/status/x": op, // below a reserved subresource
+		"/namespaces/{namespace}/testkinds/search":          op, // shadows the resource
+		"/testkinds/{name}/sub":                             op, // namespaced kind at cluster scope
+		"/namespaces/{other}/x":                             op, // not the namespace mount point
+		"/namespaces/{namespace}/app":                       op, // settings resource
+	}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app"}
+	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
+	require.NotNil(t, routes)
+
+	paths := func(handlers []builder.APIRouteHandler) []string {
+		out := []string{}
+		for _, h := range handlers {
+			out = append(out, h.Path)
+		}
+		return out
+	}
+	require.Equal(t, []string{"ok"}, paths(routes.Root))
+	require.Equal(t, []string{"ok", "testkinds/{name}/sub"}, paths(routes.Namespace))
+
+	// The authorizer allows exactly the subresources that are mounted.
+	require.Equal(t, map[string]bool{"sub": true}, kindPolicies(manifest)["testkinds"].customRoutes)
 }

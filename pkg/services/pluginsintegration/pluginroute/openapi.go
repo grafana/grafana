@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"reflect"
 	"strings"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,6 +16,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
@@ -78,6 +80,7 @@ func (b *manifestBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 	oas.Info.AddExtension("x-grafana-plugin", info)
 	b.postProcessManifestKinds(oas, root, version)
 	b.dropUnstructuredModels(oas, version)
+	b.addRouteComponents(oas, version)
 	return oas, nil
 }
 
@@ -89,6 +92,56 @@ func (b *manifestBuilder) specVersion(oas *spec3.OpenAPI) string {
 		}
 	}
 	return apppluginV0.VERSION
+}
+
+// addRouteComponents publishes the components the version's custom routes
+// reference. The manifest's OpenAPI section is authoritative, so it runs last
+// and replaces any component already published under the same name.
+func (b *manifestBuilder) addRouteComponents(oas *spec3.OpenAPI, version string) {
+	if b.manifest == nil {
+		return
+	}
+	for _, v := range b.manifest.Versions {
+		if v.Name != version || !v.Served {
+			continue
+		}
+		components := versionOpenAPI(v).Components
+		if components.IsZero() {
+			return
+		}
+		if oas.Components == nil {
+			oas.Components = &spec3.Components{}
+		}
+		schemas := make(map[string]*spec.Schema, len(components.Schemas))
+		for name, s := range components.Schemas {
+			schemas[name] = &s
+		}
+		replaced := func(kind, name string) {
+			logging.DefaultLogger.Info("manifest openapi component replaces the generated one",
+				"group", b.group, "version", version, "component", kind, "name", name)
+		}
+		replaceComponents(&oas.Components.Schemas, schemas, func(name string) { replaced("schema", name) })
+		replaceComponents(&oas.Components.Responses, components.Responses, func(name string) { replaced("response", name) })
+		replaceComponents(&oas.Components.Examples, components.Examples, func(name string) { replaced("example", name) })
+		return
+	}
+}
+
+// replaceComponents copies src over dst, reporting each name whose existing
+// value differs from the one replacing it.
+func replaceComponents[T any](dst *map[string]T, src map[string]T, replaced func(name string)) {
+	if len(src) == 0 {
+		return
+	}
+	if *dst == nil {
+		*dst = make(map[string]T, len(src))
+	}
+	for name, v := range src {
+		if existing, ok := (*dst)[name]; ok && !reflect.DeepEqual(existing, v) {
+			replaced(name)
+		}
+		(*dst)[name] = v
+	}
 }
 
 // postProcessManifestKinds replaces generic route schemas with manifest schemas.
