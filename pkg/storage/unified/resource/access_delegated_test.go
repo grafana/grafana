@@ -357,14 +357,14 @@ func TestSearchServicePermissionExemptions(t *testing.T) {
 					req.Federated = []*resourcepb.ResourceKey{{Group: "folder.grafana.app", Resource: "folders"}}
 				}
 				wantErr := tc.wantErr
-				if mode == "delegated" && wantErr == ErrServicePermissionMissing {
+				if mode == "delegated" && errors.Is(wantErr, ErrServicePermissionMissing) {
 					wantErr = ErrServiceCannotDelegate
 				}
 				err := s.checkSearchServicePermissions(authlib.WithAuthInfo(t.Context(), id), req)
 				require.ErrorIs(t, err, wantErr)
 				require.Equal(t, tc.wantExempt, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionExemptions.WithLabelValues(group, resource, mode)))
 				wantFailures := 0
-				if wantErr != nil && wantErr != authlib.ErrNamespaceMismatch {
+				if wantErr != nil && !errors.Is(wantErr, authlib.ErrNamespaceMismatch) {
 					wantFailures = 1
 				}
 				require.Equal(t, float64(wantFailures), testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode)))
