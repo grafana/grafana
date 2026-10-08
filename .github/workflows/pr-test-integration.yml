@@ -244,7 +244,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
           CGO_ENABLED: 0
-          EXCLUDED: '/pkg/(saml|registry/provisioning/gitlab|apps/queries/pkg/apis/manifestdata)$'
+          EXCLUDED: '/pkg/(saml)$'
         run: |
           set -euo pipefail
 
@@ -323,7 +323,7 @@ jobs:
       - name: Run enterprise module tests
         env:
           SHARD: ${{ matrix.shard }}
-          EXCLUDED: '/pkg/(saml|registry/provisioning/gitlab|apps/queries/pkg/apis/manifestdata)$'
+          EXCLUDED: '/pkg/(saml)$'
         run: |
           set -euo pipefail
 
