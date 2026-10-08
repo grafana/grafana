@@ -82,6 +82,25 @@ func (m *routerMetrics) discoveryResult(group, result string) {
 	m.discoveryResults.WithLabelValues(group, result).Inc()
 }
 
+// newPluginGRPCRequestDuration returns the histogram of gRPC calls to plugin
+// deployments, registered with reg unless it is nil. Local plugins are
+// measured by the plugin client's grafana_plugin_request_* metrics instead.
+func newPluginGRPCRequestDuration(reg prometheus.Registerer) *prometheus.HistogramVec {
+	h := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace:                       "grafana",
+		Subsystem:                       "router",
+		Name:                            "plugin_grpc_request_duration_seconds",
+		Help:                            "Latency of gRPC calls to plugin deployments, by plugin, gRPC method and status code.",
+		NativeHistogramBucketFactor:     1.1,
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+	}, []string{"plugin_id", "method", "status_code"})
+	if reg != nil {
+		reg.MustRegister(h)
+	}
+	return h
+}
+
 // requestGroup returns the group a request is for: the group of an
 // /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
 // document, which is served by the same backend.

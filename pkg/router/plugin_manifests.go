@@ -13,6 +13,9 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/dskit/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
@@ -39,9 +42,20 @@ type pluginManifestsTarget struct {
 	snapshot atomic.Pointer[[]Backend]
 	lastKeys atomic.Pointer[map[string]struct{}]
 
+	// requestDuration records every gRPC call to a plugin deployment, by
+	// plugin, method and status code.
+	requestDuration *prometheus.HistogramVec
+
 	connectionsMu sync.Mutex
-	connections   map[string]*grpc.ClientConn
+	connections   map[pluginConnectionKey]*grpc.ClientConn
 	closed        bool
+}
+
+// pluginConnectionKey identifies a connection by plugin as well as host,
+// because each connection records its calls under one plugin ID.
+type pluginConnectionKey struct {
+	host     string
+	pluginID string
 }
 
 func newPluginManifestsTarget(
@@ -60,11 +74,12 @@ func newPluginManifestsTarget(
 	}
 
 	t := &pluginManifestsTarget{
-		deps:     deps,
-		url:      rawURL,
-		client:   client,
-		patterns: patterns,
-		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+		deps:            deps,
+		url:             rawURL,
+		client:          client,
+		patterns:        patterns,
+		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)
@@ -123,7 +138,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			}
 
 			clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
-				return t.pluginClients(entry.Host)
+				return t.pluginClients(entry.Host, entry.Definition.JSONData.ID)
 			}
 
 			// Remove any dependencies that may try to load settings
@@ -168,7 +183,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	}
 }
 
-func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, appclientv3.Client, error) {
+func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Client, appclientv3.Client, error) {
 	if host == "" {
 		return nil, nil, nil // no client exists
 	}
@@ -177,18 +192,25 @@ func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, appc
 	if t.closed {
 		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
 	}
-	conn := t.connections[host]
+	key := pluginConnectionKey{host: host, pluginID: pluginID}
+	conn := t.connections[key]
 	if conn == nil {
-		// Plugin deployments expose plaintext gRPC on the internal cluster network.
+		requestDuration := t.requestDuration.MustCurryWith(prometheus.Labels{"plugin_id": pluginID}).(*prometheus.HistogramVec)
 		var err error
-		conn, err = grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err = grpc.NewClient(host,
+			// Plugin deployments expose plaintext gRPC on the internal cluster network.
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithChainUnaryInterceptor(middleware.UnaryClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
+			grpc.WithChainStreamInterceptor(middleware.StreamClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
+		)
 		if err != nil {
 			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
 		}
 		if t.connections == nil {
-			t.connections = make(map[string]*grpc.ClientConn)
+			t.connections = make(map[pluginConnectionKey]*grpc.ClientConn)
 		}
-		t.connections[host] = conn
+		t.connections[key] = conn
 	}
 	// Caller authentication is added by PluginBackend.Load.
 	clientV3, err := grpcplugin.NewClientV3FromConn(conn, grpcplugin.ClientV3Options{})
