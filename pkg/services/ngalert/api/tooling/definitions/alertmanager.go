@@ -9,6 +9,7 @@ import (
 	"github.com/go-openapi/strfmt"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"go.yaml.in/yaml/v3"
 
 	"github.com/grafana/alerting/definition"
@@ -247,12 +248,12 @@ type (
 	ObjectMatchers            = definition.ObjectMatchers
 	PostableApiReceiver       = definition.PostableApiReceiver
 	PostableGrafanaReceivers  = definition.PostableGrafanaReceivers
-	Regexp                    = config.Regexp
-	Matchers                  = config.Matchers
-	MatchRegexps              = config.MatchRegexps
+	Regexp                    = common.Regexp
+	Matchers                  = common.Matchers
+	MatchRegexps              = common.MatchRegexps
 	AmMuteTimeInterval        = config.MuteTimeInterval
 	TimeInterval              = config.TimeInterval
-	InhibitRule               = config.InhibitRule
+	InhibitRule               = common.InhibitRule
 )
 
 var (

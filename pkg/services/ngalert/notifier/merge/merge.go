@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/grafana/alerting/utils/hash"
-	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -183,28 +183,28 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 	}
 
 	return v1.AMConfigV1{
-		ExtraConfigs: cfg.ExtraConfigs[1:],
-		Templates:    templates,
-		Receivers:    mergedReceivers,
-		AlertmanagerConfig: v1.PostableApiAlertingConfig{
-			Config: v1.Config{
-				Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
-				Route:        cfg.AlertmanagerConfig.Route,
-				InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
-				Templates:    nil, // Grafana does not use this.
+			ExtraConfigs: cfg.ExtraConfigs[1:],
+			Templates:    templates,
+			Receivers:    mergedReceivers,
+			AlertmanagerConfig: v1.PostableApiAlertingConfig{
+				Config: v1.Config{
+					Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
+					Route:        cfg.AlertmanagerConfig.Route,
+					InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
+					Templates:    nil, // Grafana does not use this.
+				},
 			},
-		},
-		ManagedRoutes:   managedRoutes,
-		InhibitionRules: managedInhibitionRules,
-		TimeIntervals:   mergedTimeIntervals,
-	}, MergeResult{
-		RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
-		AddedRoute:           mimirCfg.Identifier,
-		AddedReceivers:       addedReceivers,
-		AddedTimeIntervals:   addedTimeIntervals,
-		AddedTemplates:       addedTemplates,
-		AddedInhibitionRules: addedInhibitionRules,
-	}, nil
+			ManagedRoutes:   managedRoutes,
+			InhibitionRules: managedInhibitionRules,
+			TimeIntervals:   mergedTimeIntervals,
+		}, MergeResult{
+			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
+			AddedRoute:           mimirCfg.Identifier,
+			AddedReceivers:       addedReceivers,
+			AddedTimeIntervals:   addedTimeIntervals,
+			AddedTemplates:       addedTemplates,
+			AddedInhibitionRules: addedInhibitionRules,
+		}, nil
 }
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
@@ -337,7 +337,7 @@ func createIndexReceivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, in
 // and all deprecated match/match_re fields are folded into the modern matchers slice.
 // UIDs are derived from a stable hash of (rule, index, identifier); collisions fall back to a short random UID.
 // Returns the merged map (existing + incoming) and the UIDs of the newly added rules.
-func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incoming []config.InhibitRule, identifier string) (result map[v1.ResourceUID]v1.InhibitionRule, added []string, err error) {
+func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incoming []common.InhibitRule, identifier string) (result map[v1.ResourceUID]v1.InhibitionRule, added []string, err error) {
 	added = make([]string, 0, len(incoming))
 	result = make(map[v1.ResourceUID]v1.InhibitionRule, len(incoming)+len(existing))
 	maps.Copy(result, existing)
@@ -411,7 +411,7 @@ func MergeTemplates(existing map[v1.ResourceUID]v1.TemplateGroup, incoming map[s
 	return templates, renames, added, nil
 }
 
-func foldMatchers(match map[string]string, matchRE config.MatchRegexps, matchers config.Matchers) []v1.Matcher {
+func foldMatchers(match map[string]string, matchRE common.MatchRegexps, matchers common.Matchers) []v1.Matcher {
 	out := make([]v1.Matcher, 0, len(match)+len(matchRE)+len(matchers))
 	out = append(out, v1.MatchersToModel(matchers)...)
 	for _, ln := range slices.Sorted(maps.Keys(match)) {

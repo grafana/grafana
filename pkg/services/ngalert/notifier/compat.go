@@ -12,6 +12,7 @@ import (
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/templates"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -146,12 +147,12 @@ func ModelToTemplateDefinitions(ts []v1.TemplateGroup) []templates.TemplateDefin
 }
 
 // ModelToInhibitionRules Converts inhibition rules to a consistently ordered slice of upstream inhibit rules.
-func ModelToInhibitionRules(inhibitionRules map[v1.ResourceUID]v1.InhibitionRule) ([]config.InhibitRule, error) {
+func ModelToInhibitionRules(inhibitionRules map[v1.ResourceUID]v1.InhibitionRule) ([]common.InhibitRule, error) {
 	if len(inhibitionRules) == 0 {
-		return make([]config.InhibitRule, 0), nil
+		return make([]common.InhibitRule, 0), nil
 	}
 
-	res := make([]config.InhibitRule, 0, len(inhibitionRules))
+	res := make([]common.InhibitRule, 0, len(inhibitionRules))
 	for _, ir := range slices.SortedFunc(maps.Values(inhibitionRules), func(a v1.InhibitionRule, b v1.InhibitionRule) int {
 		return strings.Compare(string(a.UID), string(b.UID))
 	}) {
