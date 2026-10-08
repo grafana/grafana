@@ -26,16 +26,17 @@ import { type QueryExplanation, workingContextSummary, workingFocusSummary } fro
 import { useQueryCoauthoringChipPeek } from './useQueryCoauthoringChipPeek';
 
 interface HeaderProps {
+  className?: string;
   children?: ReactNode;
   onClose?: () => void;
   onStop?: () => void;
   pulse?: boolean;
 }
 
-export function QueryCoauthoringHeader({ children, onClose, onStop, pulse = false }: HeaderProps) {
+export function QueryCoauthoringHeader({ className, children, onClose, onStop, pulse = false }: HeaderProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
-    <div className={styles.header}>
+    <div className={cx(styles.header, className)}>
       <div className={cx(styles.headerContent, pulse && styles.pulsingStatus)}>{children}</div>
       {onStop ? (
         <IconButton
@@ -489,6 +490,10 @@ export function QueryCoauthoringProposal({
   const styles = useStyles2(getQueryCoauthoringStyles);
   const narrow = width !== undefined && width < 420;
   const tiny = width !== undefined && width < 280;
+  const hasPreviewCallout =
+    previewOutcome &&
+    previewOutcome.kind !== 'loading' &&
+    (previewOutcome.kind !== 'ok' || (!tiny && previewOutcome.notices.length > 0));
   const tablistRef = useRef<HTMLDivElement>(null);
   const focusSelected = useRef(false);
   useLayoutEffect(() => {
@@ -505,13 +510,19 @@ export function QueryCoauthoringProposal({
   );
   return (
     <div className={styles.proposal}>
-      <div className={styles.explanationCard}>
+      <div
+        className={cx(
+          styles.explanationCard,
+          narrow && styles.narrowExplanationCard,
+          tiny && styles.tinyExplanationCard
+        )}
+      >
         <div
           ref={tablistRef}
           role="tablist"
           tabIndex={-1}
           aria-label={t('query-editor-coauthoring.options', 'Query options')}
-          className={styles.optionTabs}
+          className={cx(styles.optionTabs, narrow && styles.narrowOptionTabs, tiny && styles.tinyOptionTabs)}
           onKeyDown={(event) => {
             let next: number;
             switch (event.key) {
@@ -536,9 +547,10 @@ export function QueryCoauthoringProposal({
           }}
         >
           <Button
+            className={tiny ? styles.compactOptionPill : undefined}
             size="sm"
             variant="secondary"
-            icon="angle-left"
+            icon="arrow-left"
             aria-label={t('query-editor-coauthoring.previous-option', 'Previous option')}
             style={tiny ? undefined : { display: 'none' }}
             onClick={() => onSelect(selectedIndex === -1 ? optionCount - 1 : selectedIndex - 1)}
@@ -546,6 +558,7 @@ export function QueryCoauthoringProposal({
           {Array.from({ length: optionCount + 1 }, (_, rank) => (
             <Button
               key={rank}
+              className={narrow ? styles.compactOptionPill : undefined}
               style={tiny && selectedIndex !== rank - 1 ? { display: 'none' } : undefined}
               size="sm"
               variant="secondary"
@@ -567,15 +580,20 @@ export function QueryCoauthoringProposal({
             </Button>
           ))}
           <Button
+            className={tiny ? styles.compactOptionPill : undefined}
             size="sm"
             variant="secondary"
-            icon="angle-right"
+            icon="arrow-right"
             aria-label={t('query-editor-coauthoring.next-option', 'Next option')}
             style={tiny ? undefined : { display: 'none' }}
             onClick={() => onSelect(selectedIndex === optionCount - 1 ? -1 : selectedIndex + 1)}
           />
         </div>
-        <QueryCoauthoringHeader onClose={onClose} pulse={isPreviewRunning}>
+        <QueryCoauthoringHeader
+          className={narrow ? styles.hidden : undefined}
+          onClose={onClose}
+          pulse={isPreviewRunning}
+        >
           <QueryCoauthoringLiveStatus>
             {isPreviewRunning ? (
               <>
@@ -591,12 +609,13 @@ export function QueryCoauthoringProposal({
         </QueryCoauthoringHeader>
         <div
           className={styles.scrollBody}
+          style={narrow && !hasPreviewCallout && !unconfirmedValues?.length ? { display: 'none' } : undefined}
           data-testid={selectors.components.QueryEditorCoauthoring.container}
           role="region"
           aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
         >
-          <div className={styles.proposalBody}>
-            <Text variant="body" color="secondary">
+          <div className={cx(styles.proposalBody, narrow && styles.compactProposalBody)}>
+            <Text variant="body" color="secondary" hidden={narrow}>
               {selectedIndex < 0
                 ? t('query-editor-coauthoring.original-query', 'Original query')
                 : t('query-editor-coauthoring.suggestion-updated', 'Suggestion updated')}
@@ -605,7 +624,7 @@ export function QueryCoauthoringProposal({
               {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
             </div>
             <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
-              <QueryCoauthoringPreviewResult outcome={previewOutcome} />
+              <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
             </div>
             <div style={narrow ? { display: 'none' } : undefined}>
               {why.map((reason, index) => (
@@ -626,12 +645,13 @@ export function QueryCoauthoringProposal({
           </div>
         </div>
       </div>
-      <div className={cx(styles.footer, styles.actionsCard)}>
+      <div className={cx(styles.footer, styles.actionsCard, tiny && styles.tinyActionsCard)}>
         <div className={styles.footerActions} style={narrow ? { display: 'none' } : undefined}>
           <FeedbackButtons outcome="proposal" onFeedback={onFeedback} />
         </div>
-        <div className={styles.footerActions}>
+        <div className={cx(styles.footerActions, tiny && styles.tinyActionsRow)}>
           <Button
+            className={tiny ? styles.tinyIconAction : undefined}
             size="sm"
             fill="text"
             variant="secondary"
@@ -644,7 +664,7 @@ export function QueryCoauthoringProposal({
             </span>
           </Button>
           <Button
-            className={styles.compactButton}
+            className={cx(styles.compactButton, tiny && styles.tinyIconAction)}
             size="sm"
             fill="text"
             icon="ai-sparkle"
@@ -668,9 +688,41 @@ export function QueryCoauthoringProposal({
   );
 }
 
-function QueryCoauthoringPreviewResult({ outcome }: { outcome?: QueryPreviewOutcome }) {
+function QueryCoauthoringPreviewResult({ outcome, tiny }: { outcome?: QueryPreviewOutcome; tiny: boolean }) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
   if (!outcome || outcome.kind === 'loading') {
     return null;
+  }
+  if (tiny) {
+    if (outcome.kind === 'ok') {
+      return null;
+    }
+    const title =
+      outcome.kind === 'error'
+        ? t('query-editor-coauthoring.preview-error-title', 'Preview error')
+        : outcome.kind === 'no-data'
+          ? t('query-editor-coauthoring.preview-no-data', 'No data')
+          : t('query-editor-coauthoring.preview-no-signal-title', 'No signal');
+    return (
+      <div
+        role={outcome.kind === 'no-signal' ? 'status' : 'alert'}
+        data-kind={outcome.kind}
+        className={styles.compactPreviewResult}
+      >
+        <Icon
+          name={
+            outcome.kind === 'error'
+              ? 'exclamation-circle'
+              : outcome.kind === 'no-data'
+                ? 'exclamation-triangle'
+                : 'info-circle'
+          }
+          size="sm"
+          aria-hidden
+        />
+        <Text variant="bodySmall">{title}</Text>
+      </div>
+    );
   }
   if (outcome.kind === 'error') {
     return (
