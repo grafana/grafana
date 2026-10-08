@@ -308,9 +308,10 @@ describe('HeaderCell', () => {
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
     });
 
-    it('shows the menu when the sidebar is available', () => {
+    it('does not render an empty menu when column action callbacks are missing', () => {
       render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled hasColumnSidebar />);
-      expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
     });
 
     it('opens the sidebar from Manage columns', async () => {

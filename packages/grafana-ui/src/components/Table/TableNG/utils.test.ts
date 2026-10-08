@@ -68,7 +68,6 @@ import {
   makeStripedRowClass,
   markEdgeColumns,
   filterFieldsByHiddenColumns,
-  isColumnMenuVisible,
   migrateTableDisplayModeToCellOptions,
   parseStyleJson,
   predicateByName,
@@ -79,6 +78,22 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
+  it.each([true, false])('uses supplied menu availability for width (hasColumnOptions=%s)', (hasColumnOptions) => {
+    const field: Field = {
+      name: 'A',
+      type: FieldType.string,
+      values: [],
+      config: { custom: { sortable: false, filterable: true, hideable: true } },
+    };
+    expect(
+      getHeaderAffordanceWidth(field, {
+        showTypeIcons: false,
+        tableRefreshEnabled: true,
+        isFiltered: false,
+        hasColumnOptions,
+      })
+    ).toBe(hasColumnOptions ? 22 : 0);
+  });
   it.each([
     [true, false, 22],
     [true, true, 22],
@@ -94,7 +109,7 @@ describe('TableNG utils', () => {
         showTypeIcons: false,
         tableRefreshEnabled,
         isFiltered: false,
-        hasAssistantAction: true,
+        hasColumnOptions: true,
       })
     ).toBe(expected);
   });
@@ -1928,31 +1943,6 @@ describe('TableNG utils', () => {
           COLUMN.DEFAULT_WIDTH
         )
       ).toEqual([COLUMN.DEFAULT_WIDTH, COLUMN.DEFAULT_WIDTH]);
-    });
-  });
-
-  describe('isColumnMenuVisible', () => {
-    const fieldWith = (custom: Record<string, boolean>): Field => ({
-      name: 'A',
-      type: FieldType.string,
-      values: [],
-      config: { custom },
-    });
-
-    it('is visible when the column is filterable, with nothing else', () => {
-      expect(isColumnMenuVisible(fieldWith({ filterable: true }), false)).toBe(true);
-    });
-
-    it('is visible when the column is hideable, even if it cannot be filtered', () => {
-      expect(isColumnMenuVisible(fieldWith({ hideable: true }), false)).toBe(true);
-    });
-
-    it('is visible when the table has a sidebar, even on a column that can do nothing itself', () => {
-      expect(isColumnMenuVisible(fieldWith({}), true)).toBe(true);
-    });
-
-    it('is hidden for a column that can do nothing, on a table with no sidebar', () => {
-      expect(isColumnMenuVisible(fieldWith({}), false)).toBe(false);
     });
   });
 

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { Fragment, memo } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
@@ -7,6 +7,7 @@ import { Dropdown } from '../../../Dropdown/Dropdown';
 import { IconButton } from '../../../IconButton/IconButton';
 import { Menu } from '../../../Menu/Menu';
 import { useOpenLayersContext } from '../../geo';
+import { getCellMenuOptions } from '../menuOptions';
 import { FILTER_FOR_OPERATOR, FILTER_OUT_OPERATOR, type TableCellActionsProps } from '../types';
 import { buildInspectValue } from '../utils';
 
@@ -21,11 +22,12 @@ export const TableCellActions = memo(
     showFilters,
     tableRefreshEnabled,
     onAddToAssistant,
+    groups = getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: Boolean(onAddToAssistant) }),
   }: TableCellActionsProps) => {
     const { formatGeometry } = useOpenLayersContext();
 
     if (tableRefreshEnabled) {
-      if (!cellInspect && !showFilters && !onAddToAssistant) {
+      if (groups.length === 0) {
         return null;
       }
       const menuLabel = t('grafana-ui.table.cell-actions', 'Cell actions');
@@ -37,56 +39,69 @@ export const TableCellActions = memo(
             placement="bottom-end"
             overlay={
               <Menu ariaLabel={menuLabel}>
-                {cellInspect && (
-                  <Menu.Item
-                    label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
-                    icon="eye"
-                    testId={selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton}
-                    onClick={() => {
-                      const [inspectValue, mode] = buildInspectValue(value, field, formatGeometry);
-                      setInspectCell({ value: inspectValue, mode });
-                    }}
-                  />
-                )}
-                {cellInspect && showFilters && <Menu.Divider />}
-                {showFilters && (
-                  <>
-                    <Menu.Item
-                      label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
-                      icon="filter-plus"
-                      testId={selectors.components.Panels.Visualization.TableNG.cellActions.filterForButton}
-                      onClick={() =>
-                        onCellFilterAdded?.({
-                          key: field.name,
-                          operator: FILTER_FOR_OPERATOR,
-                          value: String(value ?? ''),
-                        })
+                {groups.map((group, index) => (
+                  <Fragment key={group[0]}>
+                    {index > 0 && <Menu.Divider />}
+                    {group.map((option) => {
+                      switch (option) {
+                        case 'inspect':
+                          return (
+                            <Menu.Item
+                              key={option}
+                              label={t('grafana-ui.table.cell-inspect-tooltip', 'Inspect value')}
+                              icon="eye"
+                              testId={selectors.components.Panels.Visualization.TableNG.cellActions.inspectButton}
+                              onClick={() => {
+                                const [inspectValue, mode] = buildInspectValue(value, field, formatGeometry);
+                                setInspectCell({ value: inspectValue, mode });
+                              }}
+                            />
+                          );
+                        case 'filterFor':
+                          return (
+                            <Menu.Item
+                              key={option}
+                              label={t('grafana-ui.table.cell-filter-on', 'Filter for value')}
+                              icon="filter-plus"
+                              testId={selectors.components.Panels.Visualization.TableNG.cellActions.filterForButton}
+                              onClick={() =>
+                                onCellFilterAdded?.({
+                                  key: field.name,
+                                  operator: FILTER_FOR_OPERATOR,
+                                  value: String(value ?? ''),
+                                })
+                              }
+                            />
+                          );
+                        case 'filterOut':
+                          return (
+                            <Menu.Item
+                              key={option}
+                              label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
+                              icon="filter-minus"
+                              testId={selectors.components.Panels.Visualization.TableNG.cellActions.filterOutButton}
+                              onClick={() =>
+                                onCellFilterAdded?.({
+                                  key: field.name,
+                                  operator: FILTER_OUT_OPERATOR,
+                                  value: String(value ?? ''),
+                                })
+                              }
+                            />
+                          );
+                        case 'assistant':
+                          return (
+                            <Menu.Item
+                              key={option}
+                              label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
+                              icon="ai-sparkle"
+                              onClick={onAddToAssistant}
+                            />
+                          );
                       }
-                    />
-                    <Menu.Item
-                      label={t('grafana-ui.table.cell-filter-out', 'Filter out value')}
-                      icon="filter-minus"
-                      testId={selectors.components.Panels.Visualization.TableNG.cellActions.filterOutButton}
-                      onClick={() =>
-                        onCellFilterAdded?.({
-                          key: field.name,
-                          operator: FILTER_OUT_OPERATOR,
-                          value: String(value ?? ''),
-                        })
-                      }
-                    />
-                  </>
-                )}
-                {onAddToAssistant && (
-                  <>
-                    {(cellInspect || showFilters) && <Menu.Divider />}
-                    <Menu.Item
-                      label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
-                      icon="ai-sparkle"
-                      onClick={onAddToAssistant}
-                    />
-                  </>
-                )}
+                    })}
+                  </Fragment>
+                ))}
               </Menu>
             }
           >

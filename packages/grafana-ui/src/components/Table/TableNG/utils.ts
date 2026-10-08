@@ -49,6 +49,7 @@ import {
   STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import type { TextAlign } from './styles';
 import type {
   TableRow,
@@ -1453,11 +1454,6 @@ export function isFieldHideable(field: Field): boolean {
   return field.config.custom?.hideable ?? false;
 }
 
-/** Whether the column menu has an action to show. @internal */
-export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): boolean {
-  return isFieldFilterable(field) || isFieldHideable(field) || hasColumnSidebar;
-}
-
 /**
  * Width the header label needs, including its filter/sort/type-icon affordances.
  *
@@ -1471,12 +1467,11 @@ export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): bo
  * that shifts every other column's share of the leftover space).
  */
 export interface HeaderAffordanceOptions {
-  hasAssistantAction?: boolean;
+  hasColumnOptions?: boolean;
   showTypeIcons: boolean;
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
-  hasColumnSidebar?: boolean;
 }
 
 /**
@@ -1488,13 +1483,7 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  {
-    showTypeIcons,
-    tableRefreshEnabled,
-    isFiltered,
-    hasColumnSidebar = false,
-    hasAssistantAction,
-  }: HeaderAffordanceOptions
+  { showTypeIcons, tableRefreshEnabled, isFiltered, hasColumnOptions = false }: HeaderAffordanceOptions
 ): number {
   const isFilterable = isFieldFilterable(field);
   let width = 0;
@@ -1506,7 +1495,7 @@ export function getHeaderAffordanceWidth(
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
-    width += isColumnMenuVisible(field, hasColumnSidebar) || hasAssistantAction ? HEADER_MENU_SPACE : 0;
+    width += hasColumnOptions ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
@@ -1861,8 +1850,13 @@ export function computeContentAwareColWidths(
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
-          hasColumnSidebar,
-          hasAssistantAction,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: isFieldFilterable(field),
+              hideable: isFieldHideable(field),
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         })
       : 0;
 
