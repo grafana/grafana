@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 
-import { t } from '@grafana/i18n';
+import { useFlagDashboardNotebooks } from '@grafana/runtime/internal';
 
 import { type Props } from './AddToNotebookForm';
 
@@ -17,10 +17,11 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  *
  * Consumers should import it using the exposed component ID and pass only the
  * supported props. The host owns the modal; this is the form inside it, same as
- * grafana/add-to-dashboard-form/v1. The default buildPanel creates a time series
- * panel; callers can supply a custom builder via "buildPanel".
+ * grafana/add-to-dashboard-form/v1. Callers pass "buildPanel" for the panel to
+ * store and "capturedTimeRange" for the window it was showing. The form offers
+ * to lock the panel to that window.
  *
- * Render it only when the `dashboard.notebooks` feature flag is on.
+ * Requires the `dashboard.notebooks` feature flag.
  *
  * Usage from a plugin:
  * ```tsx
@@ -34,6 +35,7 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * <Modal title="Add panel to notebook" isOpen onDismiss={onClose}>
  *   <AddToNotebookForm
  *     onClose={onClose}
+ *     capturedTimeRange={{ from: '2026-10-05T08:00:00.000Z', to: '2026-10-05T09:30:00.000Z' }}
  *     buildPanel={() => ({
  *       type: 'timeseries',
  *       title: 'Error rate',
@@ -44,18 +46,20 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * </Modal>
  * ```
  */
-export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => (
-  <Suspense fallback={null}>
-    <AddToNotebookFormLazy
-      onClose={props.onClose ?? (() => {})}
-      buildPanel={
-        props.buildPanel ??
-        (() => ({
-          type: 'timeseries',
-          title: t('notebooks.add-to-notebook-form.title.new-panel', 'New panel'),
-          targets: [],
-        }))
-      }
-    />
-  </Suspense>
-);
+export const AddToNotebookFormExposedComponent = (props: Props) => {
+  const enabled = useFlagDashboardNotebooks();
+  if (!enabled) {
+    console.error(`[AddToNotebookFormExposedComponent] The required feature flag dashboard.notebooks is not enabled.`);
+    return null;
+  }
+
+  return (
+    <Suspense fallback={null}>
+      <AddToNotebookFormLazy
+        onClose={props.onClose}
+        buildPanel={props.buildPanel}
+        capturedTimeRange={props.capturedTimeRange}
+      />
+    </Suspense>
+  );
+};
