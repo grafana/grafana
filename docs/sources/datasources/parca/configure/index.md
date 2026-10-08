@@ -28,24 +28,24 @@ This plugin is deprecated and will only receive critical security updates. Suppo
 
 This document explains how to install and configure the Parca data source in Grafana.
 
-To use the Parca data source plugin, you must build it from source and install it into your local Grafana plugin directory. After the plugin is installed, you can configure the data source using the Grafana UI, a YAML provisioning file, or Terraform.
+To use the Parca data source, you must build it from source and install it into your local Grafana plugin directory. After it's installed, you can configure the data source using the Grafana UI, a YAML provisioning file, or Terraform.
 If you make any changes in the UI, select **Save & test** to preserve those changes.
 
 ## Before you begin
 
-Before you install the plugin, ensure you have:
+Before you install the Parca data source, ensure you have:
 
-- **Grafana:** A self-managed Grafana instance, version 13.2 or later. The plugin isn't available in Grafana Cloud.
+- **Grafana:** A self-managed Grafana instance, version 13.2 or later. The Parca data source isn't available in Grafana Cloud.
 - **Server access:** Shell access to the host running Grafana, with permission to write to the plugin directory and restart Grafana.
 - **Grafana permissions:** `Organization administrator` role to add and configure the data source.
 - **Parca instance:** A running Parca instance (v0.19 or later) accessible from your Grafana server.
-- **Build tools:** Node.js 24 or later, npm 11.12.1 or later, and Go 1.26.5 or later. These are the versions the plugin repository currently requires. Refer to `.nvmrc`, the `engines` field in `package.json`, and `go.mod` in the [plugin repository](https://github.com/grafana/grafana-parca-datasource) for the authoritative versions.
+- **Build tools:** Node.js 24 or later, npm 11.12.1 or later, and Go 1.26.5 or later. These are the versions the repository currently requires. Refer to `.nvmrc`, the `engines` field in `package.json`, and `go.mod` in the [data source repository](https://github.com/grafana/grafana-parca-datasource) for the authoritative versions.
 
-## Install the plugin
+## Install the data source
 
-The Parca plugin has both a frontend and a Go backend, so you must build both and then copy the result into your Grafana plugin directory.
+The Parca data source has both a frontend and a Go backend, so you must build both and then copy the result into your Grafana plugin directory.
 
-### Build the plugin from source
+### Build the data source from source
 
 Clone the repository and build the frontend and backend:
 
@@ -57,11 +57,11 @@ npm run build
 go run github.com/magefile/mage -v buildAll
 ```
 
-Both build commands are required. `npm run build` produces the frontend assets, and the `mage buildAll` target compiles the backend executables for each supported platform. Running only `npm run build` produces a plugin that Grafana loads but can't query, because the backend executable is missing.
+Both build commands are required. `npm run build` produces the frontend assets, and the `mage buildAll` target compiles the backend executables for each supported platform. Running only `npm run build` produces a data source that Grafana loads but can't query, because the backend executable is missing.
 
 Both commands write their output to the `dist/` directory.
 
-### Deploy the plugin to Grafana
+### Deploy the data source to Grafana
 
 Copy the contents of `dist/` into a `parca` directory inside your Grafana plugin directory. On a package-based Linux installation, the plugin directory is `/var/lib/grafana/plugins`:
 
@@ -87,14 +87,14 @@ The plugin directory path is set by the `plugins` configuration option. If you'v
 
 ### Allow the unsigned plugin
 
-A plugin you build yourself isn't signed, and Grafana refuses to load unsigned plugins by default. Add the plugin ID to the `allow_loading_unsigned_plugins` option in your Grafana configuration file, typically `/etc/grafana/grafana.ini`:
+A data source you build yourself isn't signed, and Grafana refuses to load unsigned plugins by default. Add the `parca` plugin ID to the `allow_loading_unsigned_plugins` option in your Grafana configuration file, typically `/etc/grafana/grafana.ini`:
 
 ```ini
 [plugins]
 allow_loading_unsigned_plugins = parca
 ```
 
-Restart Grafana to load the plugin:
+Restart Grafana to load the data source:
 
 ```sh
 sudo systemctl restart grafana-server
@@ -108,29 +108,29 @@ WARN[...] Permitting unsigned plugin. This is not recommended   pluginId=parca
 
 For more information, refer to [Plugin signatures](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/plugin-sign/) and the [`allow_loading_unsigned_plugins` option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_loading_unsigned_plugins).
 
-### Verify the plugin loaded
+### Verify the data source loaded
 
-To confirm Grafana loaded the plugin:
+To confirm Grafana loaded the Parca data source:
 
 1. Click **Connections** in the left-side menu.
 1. Click **Add new connection**.
 1. Type `Parca` in the search bar.
 
-If **Parca** doesn't appear, check the Grafana server log for plugin loading errors. Refer to [Troubleshoot Parca data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/troubleshooting/#plugin-installation-issues).
+If **Parca** doesn't appear, check the Grafana server log for plugin loading errors. Refer to [Troubleshoot Parca data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/troubleshooting/#installation-issues).
 
-### Migrate from the bundled plugin
+### Migrate from the bundled data source
 
-Grafana 13.1 and earlier bundled the Parca plugin. If you're upgrading from one of those versions and you already have Parca data sources configured, install the plugin as described in the preceding sections before you upgrade Grafana. The plugin ID is still `parca`, so your existing data sources continue to work once Grafana can load the plugin.
+Grafana 13.1 and earlier bundled the Parca data source. If you're upgrading from one of those versions and you already have Parca data sources configured, install it as described in the preceding sections before you upgrade Grafana. The plugin ID is still `parca`, so your existing data sources continue to work once Grafana can load it.
 
 {{< admonition type="caution" >}}
 Don't delete and recreate your existing Parca data sources. Dashboards and alert rules reference data sources by UID, so a new UID breaks those references. Keep the existing data source and its UID.
 {{< /admonition >}}
 
-If you upgrade Grafana before you install the plugin, your Parca data sources and any panels that query them report the `parca` plugin isn't found. Installing the plugin and restarting Grafana resolves this without any change to your data sources.
+If you upgrade Grafana before you install the data source, your existing Parca data sources and any panels that query them report the `parca` plugin isn't found. Installing it and restarting Grafana resolves this without any change to your data sources.
 
 ## Add the data source
 
-After the plugin is installed, add the Parca data source:
+After the data source is installed, add it in Grafana:
 
 1. Click **Connections** in the left-side menu.
 1. Click **Add new connection**.
@@ -219,7 +219,7 @@ If the test fails, verify that the URL is correct and that your Parca instance i
 You can define the data source in YAML files as part of the Grafana provisioning system.
 For more information, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
-Provisioning doesn't install the plugin. Install the plugin first, as described in [Install the plugin](#install-the-plugin), or Grafana fails to provision the data source because the `parca` plugin type isn't registered.
+Provisioning doesn't install the data source. Install it first, as described in [Install the data source](#install-the-data-source), or Grafana fails to provision it because the `parca` plugin ID isn't registered.
 
 ### YAML provisioning example
 
