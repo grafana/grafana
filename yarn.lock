@@ -19723,7 +19723,6 @@ __metadata:
     redux: "npm:5.0.1"
     redux-mock-store: "npm:1.5.5"
     redux-thunk: "npm:3.1.0"
-    regenerator-runtime: "npm:0.14.1"
     reselect: "npm:5.3.0"
     rimraf: "npm:6.0.1"
     rollup-plugin-esbuild: "npm:6.2.1"
@@ -19737,7 +19736,6 @@ __metadata:
     slate-plain-serializer: "npm:0.7.13"
     slate-react: "npm:0.22.10"
     swagger-ui-react: "npm:5.33.0"
-    symbol-observable: "npm:4.0.0"
     systemjs: "npm:6.15.1"
     testing-library-selector: "npm:0.3.1"
     tinycolor2: "npm:1.6.0"
@@ -28708,13 +28706,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"regenerator-runtime@npm:0.14.1":
-  version: 0.14.1
-  resolution: "regenerator-runtime@npm:0.14.1"
-  checksum: 10/5db3161abb311eef8c45bcf6565f4f378f785900ed3945acf740a9888c792f75b98ecb77f0775f3bf95502ff423529d23e94f41d80c8256e8fa05ed4b07cf471
-  languageName: node
-  linkType: hard
-
 "regenerator-runtime@npm:^0.13.4":
   version: 0.13.11
   resolution: "regenerator-runtime@npm:0.13.11"
@@ -31299,13 +31290,6 @@ __metadata:
     "@swc/core": ^1.2.147
     webpack: ">=2"
   checksum: 10/fe90948c02a51bb8ffcff1ce3590e01dc12860b0bb7c9e22052b14fa846ed437781ae265614a5e14344bea22001108780f00a6e350e28c0b3499bc4cd11335fb
-  languageName: node
-  linkType: hard
-
-"symbol-observable@npm:4.0.0":
-  version: 4.0.0
-  resolution: "symbol-observable@npm:4.0.0"
-  checksum: 10/983aef3912ad080fc834b9ad115d44bc2994074c57cea4fb008e9f7ab9bb4118b908c63d9edc861f51257bc0595025510bdf7263bb09d8953a6929f240165c24
   languageName: node
   linkType: hard
 
