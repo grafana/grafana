@@ -24,7 +24,7 @@ refs:
       destination: /docs/grafana-cloud/account-management/authentication-and-permissions/cloud-roles/
 title: Introduction to Git Sync
 menuTitle: Git Sync
-weight: 300
+weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/
 aliases:
   - ../../observability-as-code/provision-resources/intro-git-sync/

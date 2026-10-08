@@ -6,7 +6,7 @@ keywords:
   - Ansible
 menuTitle: Ansible
 title: Grafana Ansible collection
-weight: 510
+weight: 500
 canonical: https://grafana.com/docs/grafana/latest/as-code/ansible/
 aliases:
   - ../infrastructure-as-code/ansible/ansible-grafana-agent-linux
@@ -19,7 +19,7 @@ labels:
 
 # Grafana Ansible collection
 
-The [Grafana Ansible collection](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/) provides configuration management resources for Grafana. You can use it to manage:
+The [Grafana Ansible collection](https://docs.ansible.com/ansible/latest/collections/grafana/grafana/) provides configuration management resources for Grafana Cloud. You can use it to manage:
 
 - Grafana Cloud stacks
 - Dashboards
@@ -29,7 +29,7 @@ The [Grafana Ansible collection](https://docs.ansible.com/ansible/latest/collect
 - Notification policies
 - API keys
 
-If your resources aren't currently available in the Grafana Ansible collection, you can manage them on Grafana Cloud programmatically by writing Ansible playbooks that use the [Ansible's built-in URI module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html) to call the [HTTP APIs](/docs/grafana/latest/developer-resources/api-reference/http-api/) to manage resources for the Grafana Cloud portal, as well as those within a stack.
+If your resources aren't currently available in the Grafana Ansible collection, you can manage them on Grafana Cloud programmatically by writing Ansible playbooks that use the [Ansible's built-in URI module](https://docs.ansible.com/ansible/latest/collections/ansible/builtin/uri_module.html) to call the [HTTP APIs](https://grafana.com/docs/latest/developer-resources/api-reference/http-api/) to manage resources for the Grafana Cloud portal, as well as those within a stack.
 
 ## Learn more
 

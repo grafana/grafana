@@ -19,7 +19,7 @@ cards:
     - description: Overview of the Grafana CLI `gcx`, compatible with AI agents
       height: 24
       href: ./gcx
-      title: gcx CLI (recommended)
+      title: gcx 
     - description: Learn how to install, set up and use the Grafana CLI `grafanactl`
       height: 24
       href: ./grafanactl
@@ -33,9 +33,9 @@ aliases:
   - ../../as-code/observability-as-code/grafana-cli/
 ---
 
-# Introduction to the Grafana CLI
+# Introduction to the Grafana CLI tools
 
-Grafana command-line tools are designed to simplify interaction with Grafana instances. You can authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, the Grafana CLI tool provides a flexible and efficient way to manage your Grafana setup as code.
+Grafana command-line tools are designed to simplify interaction with Grafana instances. You can authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, the Grafana CLIs provide a flexible and efficient way to manage your Grafana setup as code.
 
 `gcx` works across all environments for Grafana OSS, Enterprise, and Cloud. **Use `gcx` to work with AI agents**.
 

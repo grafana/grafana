@@ -10,7 +10,7 @@ labels:
     - oss
 title: Provision resources on-prem
 menuTitle: On-prem file provisioning
-weight: 400
+weight: 200
 canonical: https://grafana.com/docs/grafana/latest/as-code/provision-resources/
 aliases:
   - ../observability-as-code/provision-resources/
