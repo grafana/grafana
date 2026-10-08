@@ -7,10 +7,13 @@ export {
 
 export type {
   ListReceiverApiArg,
+  ListTimeIntervalApiArg,
+  ListTimeIntervalApiResponse,
   Receiver,
   RoutingTree,
   RoutingTreeMatcher,
   RoutingTreeRoute,
+  TimeInterval,
 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 
 export * from './v1beta1/types';

@@ -51,6 +51,11 @@
       "custom-policy-desc": "Route alerts through the {{name}} policy tree",
       "default-policy": "Default policy",
       "default-policy-desc": "Routes alerts using the default notification policy tree"
+    },
+    "time-intervals-select": {
+      "error": "Could not load time intervals",
+      "imported-not-usable": "Imported from an external Alertmanager — promote it to use it here",
+      "placeholder": "Select time intervals..."
     }
   }
 }
