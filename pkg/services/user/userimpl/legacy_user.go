@@ -187,6 +187,9 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		return nil, fmt.Errorf("get legacy DB: %w", err)
 	}
 
+	// The IAM User resource is a user's membership of an org, so a user created
+	// without one is announced once a membership is added (see orgimpl.AddOrgUser).
+	addsOrgUser := !cmd.SkipOrgSetup && !usr.IsProvisioned
 	err = dbHelper.DB.InTransaction(ctx, func(ctx context.Context) error {
 		_, err = s.store.Insert(ctx, usr)
 		if err != nil {
@@ -194,7 +197,7 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		}
 
 		// create org user link
-		if !cmd.SkipOrgSetup && !usr.IsProvisioned {
+		if addsOrgUser {
 			orgUser := org.OrgUser{
 				OrgID:   orgID,
 				UserID:  usr.ID,
@@ -215,8 +218,8 @@ func (s *LegacyService) Create(ctx context.Context, cmd *user.CreateUserCommand)
 		}
 		return nil
 	})
-	if err == nil && !usr.IsServiceAccount {
-		s.watch.Publish(ctx, legacywatch.Added, userResource, usr.OrgID, usr.UID, usr.Updated.UnixMilli())
+	if err == nil && addsOrgUser && !usr.IsServiceAccount {
+		s.watch.Publish(ctx, legacywatch.Added, userResource, orgID, usr.UID, usr.Updated.UnixMilli())
 	}
 	return usr, err
 }

@@ -313,4 +313,49 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 		expect(t, resourcepb.WatchNotification_DELETED, gvrTeamBindings, binding)
 		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, teamUID)
 	})
+
+	// Completing an invite creates the user without an org (SkipOrgSetup) and then
+	// adds the membership, so the user must be announced once, in the org it joins.
+	t.Run("legacy API invite completion", func(t *testing.T) {
+		invited := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   "/api/org/invites",
+			Body:   []byte(`{"loginOrEmail": "watch-invitee@example.com", "name": "Watch Invitee", "role": "Viewer", "sendEmail": false}`),
+		}, &struct{}{})
+		require.Equal(t, http.StatusOK, invited.Response.StatusCode, "body: %s", string(invited.Body))
+
+		pending := apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin,
+			Path: "/api/org/invites",
+		}, &[]struct {
+			Email string `json:"email"`
+			Code  string `json:"code"`
+		}{})
+		require.Equal(t, http.StatusOK, pending.Response.StatusCode, "body: %s", string(pending.Body))
+		var code string
+		for _, invite := range *pending.Result {
+			if invite.Email == "watch-invitee@example.com" {
+				code = invite.Code
+			}
+		}
+		require.NotEmpty(t, code)
+
+		completed := apis.DoRequest(helper, apis.RequestParams{
+			Method: http.MethodPost,
+			Path:   "/api/user/invite/complete",
+			Body: []byte(fmt.Sprintf(`{"inviteCode": %q, "email": "watch-invitee@example.com", "name": "Watch Invitee",
+				"username": "watch-invitee", "password": "password123", "confirmPassword": "password123"}`, code)),
+		}, &struct{}{})
+		require.Equal(t, http.StatusOK, completed.Response.StatusCode, "body: %s", string(completed.Body))
+
+		found := apis.DoRequest(helper, apis.RequestParams{
+			User: helper.Org1.Admin,
+			Path: "/api/users/lookup?loginOrEmail=watch-invitee",
+		}, &struct {
+			UID string `json:"uid"`
+		}{})
+		require.Equal(t, http.StatusOK, found.Response.StatusCode, "body: %s", string(found.Body))
+		expect(t, resourcepb.WatchNotification_ADDED, gvrUsers, found.Result.UID)
+	})
 }

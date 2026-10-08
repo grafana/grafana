@@ -138,7 +138,7 @@ func (s *notifyingStore) bindingTeamUID(ctx context.Context, ns claims.Namespace
 	if !s.publisher.Enabled() {
 		return ""
 	}
-	res, err := s.LegacyIdentityStore.ListTeamBindings(ctx, ns, ListTeamBindingsQuery{
+	res, err := s.ListTeamBindings(ctx, ns, ListTeamBindingsQuery{
 		UID:        uid,
 		OrgID:      ns.OrgID,
 		Pagination: common.Pagination{Limit: 1},

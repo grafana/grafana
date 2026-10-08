@@ -2891,13 +2891,17 @@
     {
       "metadata": {
         "name": "grafana.publishLegacySQLEvents",
-        "resourceVersion": "1791383719895",
-        "creationTimestamp": "2026-10-07T14:35:19Z"
+        "resourceVersion": "1791422331913",
+        "creationTimestamp": "2026-10-07T14:35:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-08 01:18:51.913916 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Publish watch events when values are saved to legacy SQL tables",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
         "hideFromDocs": true,
         "expression": "false"
       }

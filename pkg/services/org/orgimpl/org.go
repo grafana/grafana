@@ -6,11 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -18,9 +21,18 @@ type Service struct {
 	store store
 	cfg   *setting.Cfg
 	log   log.Logger
+	sql   legacysql.LegacyDatabaseProvider
+	watch *legacywatch.Publisher
 }
 
 func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quotaService quota.Service) (org.Service, error) {
+	return ProvideServiceWithWatch(sql, cfg, quotaService, nil)
+}
+
+// ProvideServiceWithWatch is ProvideService that also announces the users that
+// AddOrgUser makes visible on the legacy watch subjects. It is separate so wire
+// sets without the NATS bus, such as the CLI's, can keep using ProvideService.
+func ProvideServiceWithWatch(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quotaService quota.Service, watch *legacywatch.Publisher) (org.Service, error) {
 	log := log.New("org service")
 	s := &Service{
 		store: &sqlStore{
@@ -28,8 +40,10 @@ func ProvideService(sql legacysql.LegacyDatabaseProvider, cfg *setting.Cfg, quot
 			log: log,
 			cfg: cfg,
 		},
-		cfg: cfg,
-		log: log,
+		cfg:   cfg,
+		log:   log,
+		sql:   sql,
+		watch: watch,
 	}
 
 	defaultLimits, err := readQuotaConfig(cfg)
@@ -172,8 +186,44 @@ func (s *Service) GetOrCreate(ctx context.Context, orgName string) (int64, error
 }
 
 // TODO: refactor service to call store CRUD method
+// AddOrgUser announces the user as added to the org's namespace: the IAM User
+// resource is a membership. This is how users created without an org (invite
+// completion, login sync with org roles) first become visible.
 func (s *Service) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) error {
-	return s.store.AddOrgUser(ctx, cmd)
+	if err := s.store.AddOrgUser(ctx, cmd); err != nil {
+		return err
+	}
+	if uid := s.watchedUserUID(ctx, cmd.UserID); uid != "" {
+		s.watch.Publish(ctx, legacywatch.Added, iamv0alpha1.UserResourceInfo.GroupResource(), cmd.OrgID, uid, 0)
+	}
+	return nil
+}
+
+// watchedUserUID returns the UID that names the user's User resource, or "" when
+// nothing should be announced: no publisher, a service account (a different
+// resource), or a failed lookup.
+func (s *Service) watchedUserUID(ctx context.Context, userID int64) string {
+	if !s.watch.Enabled() {
+		return ""
+	}
+	dbHelper, err := s.sql(ctx)
+	if err != nil {
+		s.log.Warn("failed to get legacy DB for legacy watch notification", "userID", userID, "error", err)
+		return ""
+	}
+	var uid string
+	err = dbHelper.DB.WithDbSession(ctx, func(sess *db.Session) error {
+		usr, exists, err := getUserByID(dbHelper, sess, userID, true)
+		if exists {
+			uid = usr.UID
+		}
+		return err
+	})
+	if err != nil {
+		s.log.Warn("failed to look up user for legacy watch notification", "userID", userID, "error", err)
+		return ""
+	}
+	return uid
 }
 
 // TODO: refactor service to call store CRUD method

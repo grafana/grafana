@@ -255,7 +255,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
 2025-11-27,kubernetesAlertingHistorian,GA,@grafana/alerting-squad,false,true,false
-2026-10-07,grafana.publishLegacySQLEvents,experimental,@grafana/grafana-app-platform-squad,false,false,false
+2026-10-07,grafana.publishLegacySQLEvents,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-16,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-09-16,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-09-16,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
