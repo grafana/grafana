@@ -114,7 +114,7 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 
 func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 	const (
-		group    = "loki.datasource.grafana.app"
+		group    = "datasource.grafana.app"
 		resource = "datasources"
 		name     = "ds-1"
 	)
@@ -144,7 +144,7 @@ func TestTranslateDatasourceResourcePermissionToTuples(t *testing.T) {
 		for _, level := range levels {
 			t.Run(subject.name+"/"+level.name, func(t *testing.T) {
 				rp := &iamv0.ResourcePermission{
-					ObjectMeta: metav1.ObjectMeta{Name: "loki.datasource.grafana.app-datasources-ds-1"},
+					ObjectMeta: metav1.ObjectMeta{Name: "datasource.grafana.app-datasources-ds-1"},
 					Spec: iamv0.ResourcePermissionSpec{
 						Resource: iamv0.ResourcePermissionspecResource{
 							ApiGroup: group,
@@ -920,7 +920,7 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 						ObjectMeta: metav1.ObjectMeta{Name: "rp-datasource-schema-test"},
 						Spec: iamv0.ResourcePermissionSpec{
 							Resource: iamv0.ResourcePermissionspecResource{
-								ApiGroup: "loki.datasource.grafana.app",
+								ApiGroup: "datasource.grafana.app",
 								Resource: "datasources",
 								Name:     "ds-1",
 							},

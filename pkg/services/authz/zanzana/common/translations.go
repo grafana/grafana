@@ -81,6 +81,22 @@ var (
 )
 
 var resourceTranslations = map[string]resourceTranslation{
+	"datasources": {
+		typ:      TypeResource,
+		group:    "datasource.grafana.app",
+		resource: "datasources",
+		mapping: map[string]actionMapping{
+			"datasources:create":            newUnscopedMapping(RelationCreate),
+			"datasources:read":              newMapping(RelationGet, ""),
+			"datasources:write":             newMapping(RelationUpdate, ""),
+			"datasources:delete":            newMapping(RelationDelete, ""),
+			"datasources:query":             newMapping(RelationCreate, "query"),
+			"datasources.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"datasources.permissions:write": newMapping(RelationSetPermissions, ""),
+			"datasources.caching:read":      newMapping(RelationGet, "caching"),
+			"datasources.caching:write":     newMapping(RelationUpdate, "caching"),
+		},
+	},
 	KindFolders: {
 		typ:      TypeFolder,
 		group:    folderGroup,
@@ -201,11 +217,12 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 	}
 
 	req := &authlib.CheckRequest{
-		Namespace: namespace,
-		Verb:      verb,
-		Group:     translation.group,
-		Resource:  translation.resource,
-		Name:      name,
+		Namespace:   namespace,
+		Verb:        verb,
+		Group:       translation.group,
+		Resource:    translation.resource,
+		Name:        name,
+		Subresource: m.subresource,
 	}
 
 	return req, true
@@ -244,7 +261,7 @@ func IsBasicRole(name string) bool {
 	return slices.Contains(basicRolesUIDs, name)
 }
 
-func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, verb string, ok bool) {
+func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, subresource, verb string, ok bool) {
 	group = translation.group
 	resource = translation.resource
 	if m.group != "" && m.resource != "" {
@@ -252,17 +269,18 @@ func actionListParams(translation resourceTranslation, m actionMapping) (group, 
 		resource = m.resource
 	}
 
+	subresource = m.subresource
 	verb, ok = RelationToVerbMapping[m.relation]
 	if !ok {
-		return "", "", "", false
+		return "", "", "", "", false
 	}
 
-	return group, resource, verb, true
+	return group, resource, subresource, verb, true
 }
 
-// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, verb).
+// TranslateActionToListParams translates an RBAC action to Zanzana List request parameters (group, resource, subresource, verb).
 // Returns empty strings if the action cannot be translated.
-func TranslateActionToListParams(action string) (group, resource, verb string) {
+func TranslateActionToListParams(action string) (group, resource, subresource, verb string) {
 	translationTypes := make([]string, 0, len(resourceTranslations))
 	for typ := range resourceTranslations {
 		translationTypes = append(translationTypes, typ)
@@ -272,23 +290,24 @@ func TranslateActionToListParams(action string) (group, resource, verb string) {
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
 		if m, ok := translation.mapping[action]; ok {
-			group, resource, verb, ok := actionListParams(translation, m)
+			group, resource, subresource, verb, ok := actionListParams(translation, m)
 			if !ok {
-				return "", "", ""
+				return "", "", "", ""
 			}
-			return group, resource, verb
+			return group, resource, subresource, verb
 		}
 	}
-	return "", "", ""
+	return "", "", "", ""
 }
 
 // ActionListEntry describes an action that Zanzana supports, along with
 // its List request parameters.
 type ActionListEntry struct {
-	Action   string
-	Group    string
-	Resource string
-	Verb     string
+	Action      string
+	Group       string
+	Resource    string
+	Subresource string
+	Verb        string
 }
 
 // supportedActions is the memoized result of building the action list from
@@ -317,17 +336,18 @@ var supportedActions = func() []ActionListEntry {
 			if _, ok := seen[action]; ok {
 				continue
 			}
-			group, resource, verb, ok := actionListParams(translation, m)
+			group, resource, subresource, verb, ok := actionListParams(translation, m)
 			if !ok {
 				continue
 			}
 
 			seen[action] = struct{}{}
 			out = append(out, ActionListEntry{
-				Action:   action,
-				Group:    group,
-				Resource: resource,
-				Verb:     verb,
+				Action:      action,
+				Group:       group,
+				Resource:    resource,
+				Subresource: subresource,
+				Verb:        verb,
 			})
 		}
 	}

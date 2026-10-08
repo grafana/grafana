@@ -422,12 +422,12 @@ func TestIntegrationServerCheckGenericDatasourceCreate(t *testing.T) {
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("denies another group", func(t *testing.T) {
+	t.Run("authorizes the same UID through another datasource API alias", func(t *testing.T) {
 		res, err := server.Check(newContextWithNamespace(), newReq(
 			utils.VerbCreate, "prometheus.datasource.grafana.app", datasourceResource, datasourceQuerySubresource, "ds-1",
 		))
 		require.NoError(t, err)
-		assert.False(t, res.GetAllowed())
+		assert.True(t, res.GetAllowed())
 	})
 
 	t.Run("denies another resource", func(t *testing.T) {

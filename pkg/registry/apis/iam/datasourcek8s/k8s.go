@@ -2,14 +2,9 @@ package datasourcek8s
 
 import (
 	"strings"
-
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
 
-// K8sDatasourceAPIGroup returns the k8s API group for a Grafana datasource type
-func K8sDatasourceAPIGroup(dsType string) string {
-	return dsType + K8sDatasourceAPIGroupSuffix
-}
+const K8sDatasourceAPIGroupSuffix = ".datasource.grafana.app"
 
 // DSTypeFromDatasourceAPIGroup returns the plugin type from a concrete datasource API group
 // (e.g. "loki.datasource.grafana.app" → "loki"), or "" for non-datasource groups, wildcard groups,
@@ -22,81 +17,22 @@ func DSTypeFromDatasourceAPIGroup(group string) string {
 	return typ
 }
 
-// LegacyUIDScopeToK8s builds a k8s-style datasource resource scope from the suffix of
-// legacy scope "datasources:uid:<uid>". Wildcard ("*") stays as "datasources:*";
-// concrete UIDs use the "datasources:uid:<uid>" form.
-func LegacyUIDScopeToK8s(dsType, uid string) string {
-	if uid == "*" {
-		return K8sDatasourceAPIGroup(dsType) + "/datasources:*"
+// AuthorizationGroup resolves datasource API aliases after the client token check.
+// API routing and token grants must continue to use the original group.
+func AuthorizationGroup(group, resource string) string {
+	if resource == "datasources" && DSTypeFromDatasourceAPIGroup(group) != "" {
+		return Group
 	}
-	return K8sDatasourceAPIGroup(dsType) + "/datasources:uid:" + uid
+	return group
 }
 
-// LegacyVerbToK8sAction maps the substring after legacy prefix "datasources:" to a Kubernetes API action.
-// For unknown verbs, returns "datasources:" + legacyVerb unchanged.
-func LegacyVerbToK8sAction(dsType, legacyVerb string) string {
-	switch legacyVerb {
-	case "query":
-		return "query.grafana.app/query:create"
-	case "read":
-		return K8sDatasourceAPIGroup(dsType) + "/datasources:get"
-	case "write":
-		return K8sDatasourceAPIGroup(dsType) + "/datasources:update"
-	case "delete":
-		return K8sDatasourceAPIGroup(dsType) + "/datasources:delete"
-	default:
-		return "datasources:" + legacyVerb
-	}
-}
+// Group identifies datasource resources in IAM, independent of their plugin type.
+const Group = "datasource.grafana.app"
 
-// legacyActionToK8s converts a legacy datasource action to its k8s form.
-// It handles the resource-permissions actions (datasources.permissions:read/write)
-// and the plain datasource verbs (datasources:read/write/…). Returns the converted
-// action and whether a conversion was applied.
-func legacyActionToK8s(dsType, action string) (string, bool) {
-	if permVerb, ok := strings.CutPrefix(action, "datasources.permissions:"); ok {
-		switch permVerb {
-		case "read":
-			return K8sDatasourceAPIGroup(dsType) + "/datasources:get_permissions", true
-		case "write":
-			return K8sDatasourceAPIGroup(dsType) + "/datasources:set_permissions", true
-		default:
-			return action, false
-		}
+// AuthorizationResource resolves query API aliases to the datasource query subresource.
+func AuthorizationResource(group, resource, subresource string) (string, string, string) {
+	if (group == Group || group == "query.grafana.app") && resource == "query" && subresource == "" {
+		return Group, "datasources", "query"
 	}
-	legacyVerb, ok := strings.CutPrefix(action, "datasources:")
-	if !ok || strings.Contains(legacyVerb, ":") {
-		return action, false
-	}
-	convertedAction := LegacyVerbToK8sAction(dsType, legacyVerb)
-	return convertedAction, convertedAction != action
-}
-
-// LegacyDatasourceAction replaces a legacy ds action string with its k8s form
-func LegacyDatasourceAction(dsType string, action *string) {
-	if converted, ok := legacyActionToK8s(dsType, *action); ok {
-		*action = converted
-	}
-}
-
-// LegacyDatasourceScopeAndActionToK8s converts legacy datasource scope and action to k8s form
-func LegacyDatasourceScopeAndActionToK8s(datasourceType, scope, action string) (string, string) {
-	kind, _, uid := accesscontrol.SplitScope(scope)
-	if kind != "datasources" {
-		return scope, action
-	}
-	if uid == "*" {
-		// datasource type is not set for wildcard scopes, we use "*" instead
-		datasourceType = "*"
-	} else if datasourceType == "" {
-		// TODO: datasource type is not set, this should be an error
-		return scope, action
-	}
-
-	convertedAction, ok := legacyActionToK8s(datasourceType, action)
-	if !ok {
-		return scope, action
-	}
-
-	return LegacyUIDScopeToK8s(datasourceType, uid), convertedAction
+	return AuthorizationGroup(group, resource), resource, subresource
 }

@@ -5,10 +5,12 @@ import (
 
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 func TestTupleStringWithoutCondition(t *testing.T) {
@@ -40,7 +42,7 @@ func TestTupleStringWithoutCondition(t *testing.T) {
 }
 
 func TestResourcePermissionWriteTuples(t *testing.T) {
-	const group = "loki.datasource.grafana.app"
+	const group = "datasource.grafana.app"
 	const resource = "datasources"
 	const uid = "ds-1"
 
@@ -92,7 +94,7 @@ func TestResourcePermissionWriteTuples(t *testing.T) {
 }
 
 func TestResourcePermissionDeleteTuples(t *testing.T) {
-	const group = "loki.datasource.grafana.app"
+	const group = "datasource.grafana.app"
 	const resource = "datasources"
 
 	target := &authzextv1.Resource{Group: group, Resource: resource, Name: "ds-1"}
@@ -676,4 +678,111 @@ func tupleKeyStrings(tuples []*openfgav1.TupleKey) []string {
 		out[i] = t.String()
 	}
 	return out
+}
+
+func TestSharedDatasourceRolePermissions(t *testing.T) {
+	for _, tc := range []struct{ action, relation, sub string }{
+		{"datasources:read", "get", ""},
+		{"datasources:write", "update", ""},
+		{"datasources.permissions:write", "set_permissions", ""},
+		{"datasources:query", "create", "query"},
+		{"datasources.caching:read", "get", "caching"},
+		{"datasources.caching:write", "update", "caching"},
+	} {
+		for _, uid := range []string{"ds1", "*"} {
+			tuples, err := ConvertRolePermissionsToTuples("role1", []RolePermission{{Action: tc.action, Kind: "datasources", Identifier: uid}})
+			require.NoError(t, err)
+			require.Len(t, tuples, 1)
+			expected := common.NewResourceTuple("role:role1#assignee", tc.relation, "datasource.grafana.app", "datasources", tc.sub, uid)
+			if uid == "*" {
+				expected = NewGroupResourceTuple("role:role1#assignee", tc.relation, "datasource.grafana.app", "datasources", tc.sub)
+			}
+			require.True(t, proto.Equal(expected, tuples[0]), "expected %v, got %v", expected, tuples[0])
+		}
+	}
+}
+
+func TestLegacyDatasourceCachingGrantUsesSharedIdentity(t *testing.T) {
+	tuples, err := ConvertRolePermissionsToTuples("r1", []RolePermission{{Action: "datasources.caching:read", Kind: "datasources", Identifier: "ds1"}})
+	require.NoError(t, err)
+	require.Len(t, tuples, 1)
+	require.Equal(t, "resource:datasource.grafana.app/datasources/caching/ds1", tuples[0].Object)
+	require.Equal(t, "get", tuples[0].Relation)
+}
+
+func TestDatasourceRoleSQLAndIAMGrantsMatch(t *testing.T) {
+	for _, action := range []string{"datasources:read", "datasources:write", "datasources:delete", "datasources:query", "datasources.permissions:read", "datasources.permissions:write", "datasources.caching:read", "datasources.caching:write"} {
+		for _, uid := range []string{"ds1", "*"} {
+			sql, err := ConvertRolePermissionsToTuples("r1", []RolePermission{{Action: action, Kind: "datasources", Identifier: uid}})
+			require.NoError(t, err)
+			require.NotEmpty(t, sql)
+			scope := "datasources:uid:" + uid
+			if uid == "*" {
+				scope = "datasources:*"
+			}
+			iam, err := RoleToTuples("r1", []*authzextv1.RolePermission{{Action: action, Scope: scope}})
+			require.NoError(t, err)
+			require.Len(t, iam, len(sql))
+			require.True(t, proto.Equal(sql[0], iam[0]))
+		}
+	}
+}
+
+// Permission data uses its supplied identity; API aliases are only resolved for checks.
+func TestResourcePermissionTuplesPreservePluginGroup(t *testing.T) {
+	for _, verb := range []string{"Get", "Edit", "Admin"} {
+		t.Run(verb, func(t *testing.T) {
+			resource := &authzextv1.Resource{Group: "loki.datasource.grafana.app", Resource: "datasources", Name: "ds1"}
+			permission := &authzextv1.Permission{Kind: "User", Name: "u1", Verb: verb}
+			writes, err := GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{Resource: resource, Permission: permission})
+			require.NoError(t, err)
+			require.Len(t, writes, 1)
+			require.Equal(t, "resource:loki.datasource.grafana.app/datasources/ds1", writes[0].Object)
+			requireGroupFilter(t, writes[0], "loki.datasource.grafana.app/datasources")
+			deletes, err := GetResourcePermissionDeleteTuples(&authzextv1.DeletePermissionOperation{Resource: resource, Permission: permission})
+			require.NoError(t, err)
+			require.Len(t, deletes, 1)
+			require.Equal(t, writes[0].Object, deletes[0].Object)
+			require.Equal(t, writes[0].Relation, deletes[0].Relation)
+		})
+	}
+}
+
+func TestStoredDatasourceRolePermissionsRemainAuthorized(t *testing.T) {
+	for _, tc := range []struct{ action, scope, legacyAction, legacyScope string }{
+		{"loki.datasource.grafana.app/datasources:get", "loki.datasource.grafana.app/datasources:uid:ds1", "datasources:read", "datasources:uid:ds1"},
+		{"query.grafana.app/query:create", "loki.datasource.grafana.app/datasources:uid:ds1", "datasources:query", "datasources:uid:ds1"},
+		{"*.datasource.grafana.app/datasources:update", "*.datasource.grafana.app/datasources:*", "datasources:write", "datasources:*"},
+	} {
+		t.Run(tc.action, func(t *testing.T) {
+			stored := &authzextv1.RolePermission{Action: tc.action, Scope: tc.scope}
+			original := proto.Clone(stored)
+			got, err := RoleToTuples("role1", []*authzextv1.RolePermission{stored})
+			require.NoError(t, err)
+			want, err := RoleToTuples("role1", []*authzextv1.RolePermission{{Action: tc.legacyAction, Scope: tc.legacyScope}})
+			require.NoError(t, err)
+			require.NotEmpty(t, want)
+			require.Len(t, got, len(want))
+			for i := range want {
+				require.True(t, proto.Equal(want[i], got[i]))
+			}
+			require.True(t, proto.Equal(original, stored))
+		})
+	}
+}
+
+func TestDatasourceCreatePermissionWithEmptyScope(t *testing.T) {
+	for _, action := range []string{
+		"datasources:create",
+		"datasource.grafana.app/datasources:create",
+		"*.datasource.grafana.app/datasources:create",
+	} {
+		t.Run(action, func(t *testing.T) {
+			tuples, err := RoleToTuples("r1", []*authzextv1.RolePermission{{Action: action}})
+			require.NoError(t, err)
+			require.Len(t, tuples, 1)
+			expected := NewGroupResourceTuple("role:r1#assignee", "create", "datasource.grafana.app", "datasources", "")
+			require.True(t, proto.Equal(expected, tuples[0]), "expected %v, got %v", expected, tuples[0])
+		})
+	}
 }

@@ -232,3 +232,29 @@ func TestRootScopedResourcesPreserveFolderPermissionTarget(t *testing.T) {
 		}
 	}
 }
+
+func TestDatasourceAuthorizationUsesSharedIdentity(t *testing.T) {
+	for _, sub := range []string{"", "query", "caching"} {
+		req := &authzv1.CheckRequest{Group: "loki.datasource.grafana.app", Resource: "datasources", Name: "ds1", Subresource: sub}
+		info := NewResourceInfoFromCheck(req)
+		expected := "datasource.grafana.app/datasources"
+		if sub != "" {
+			expected += "/" + sub
+		}
+		assert.Equal(t, expected, info.GroupResource())
+		assert.Equal(t, "resource:"+expected+"/ds1", info.ResourceIdent())
+		assert.Equal(t, "loki.datasource.grafana.app", req.Group)
+		assert.Equal(t, expected, NewResourceInfoFromList(&authzv1.ListRequest{Group: req.Group, Resource: req.Resource, Subresource: sub}).GroupResource())
+		assert.Equal(t, info.ResourceIdent(), NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{Group: req.Group, Resource: req.Resource, Subresource: sub, Name: req.Name}).ResourceIdent())
+	}
+}
+
+func TestDatasourceQueryAliases(t *testing.T) {
+	for _, group := range []string{"query.grafana.app", "datasource.grafana.app"} {
+		req := &authzv1.CheckRequest{Group: group, Resource: "query", Verb: "create", Name: "ds1"}
+		info := NewResourceInfoFromCheck(req)
+		assert.Equal(t, "resource:datasource.grafana.app/datasources/query/ds1", info.ResourceIdent())
+		assert.Equal(t, "datasource.grafana.app/datasources/query", NewResourceInfoFromList(&authzv1.ListRequest{Group: group, Resource: "query", Verb: "create"}).GroupResource())
+		assert.Equal(t, info.ResourceIdent(), NewResourceInfoFromBatchCheckItem(&authzv1.BatchCheckItem{Group: group, Resource: "query", Verb: "create", Name: "ds1"}).ResourceIdent())
+	}
+}

@@ -11,6 +11,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
 
@@ -247,9 +248,10 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 	rolePerms := make([]RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
 		// Split the scope to get kind, attribute, identifier
-		kind, _, identifier := splitScope(perm.Scope)
+		action, scope := datasourcek8s.LegacyPermission(perm.Action, perm.Scope)
+		kind, _, identifier := splitScope(scope)
 		rolePerms = append(rolePerms, RolePermission{
-			Action:     perm.Action,
+			Action:     action,
 			Kind:       kind,
 			Identifier: identifier,
 		})
@@ -527,7 +529,7 @@ func datasourcePermissionToTuples(subject, relation string, resource *authzextv1
 }
 
 func isDatasourcePermission(resource *authzextv1.Resource) bool {
-	return resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), ".datasource.grafana.app")
+	return resource.GetResource() == "datasources" && resource.GetGroup() == datasourcek8s.Group
 }
 
 func toZanzanaType(apiGroup string) string {
@@ -538,7 +540,8 @@ func toZanzanaType(apiGroup string) string {
 }
 
 func newResourcePermissionTuple(subject, relation string, resource *authzextv1.Resource, subresource string) *openfgav1.TupleKey {
-	typ := toZanzanaType(resource.GetGroup())
+	group := resource.GetGroup()
+	typ := toZanzanaType(group)
 
 	key := &openfgav1.TupleKey{
 		// e.g. "user:{uid}", "service-account:{uid}", "team:{uid}", "role:basic_{viewer|editor|admin}#assignee"
@@ -549,7 +552,7 @@ func newResourcePermissionTuple(subject, relation string, resource *authzextv1.R
 		// e.g. "resource:{apiGroup}/{resource}/{subresource}/{name}"
 		Object: NewObjectEntry(
 			typ,
-			resource.GetGroup(),
+			group,
 			resource.GetResource(),
 			subresource,
 			resource.GetName(),
@@ -558,7 +561,7 @@ func newResourcePermissionTuple(subject, relation string, resource *authzextv1.R
 
 	// For generic resources we add a condition to filter by apiGroup/resource[/subresource]
 	// e.g "group_filter": {"group_resource": "dashboard.grafana.app/dashboards"}
-	// e.g "group_filter": {"group_resource": "loki.datasource.grafana.app/datasources/query"}
+	// e.g "group_filter": {"group_resource": "datasource.grafana.app/datasources/query"}
 	if typ == TypeResource {
 		groupResource := resource.GetResource()
 		if subresource != "" {
@@ -569,7 +572,7 @@ func newResourcePermissionTuple(subject, relation string, resource *authzextv1.R
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resource": structpb.NewStringValue(
-						resource.GetGroup() + "/" + groupResource,
+						group + "/" + groupResource,
 					),
 				},
 			},

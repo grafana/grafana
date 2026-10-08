@@ -75,3 +75,30 @@ func TestResolveEffective(t *testing.T) {
 		assert.Equal(t, 2, calls)
 	})
 }
+
+func TestDatasourceOmissionsMatchAcrossStoredFormats(t *testing.T) {
+	old := iamv0.RolespecPermission{Action: "loki.datasource.grafana.app/datasources:get", Scope: "loki.datasource.grafana.app/datasources:uid:ds1"}
+	migrated := iamv0.RolespecPermission{Action: "datasources:read", Scope: "datasources:uid:ds1"}
+	for _, tc := range []struct{ base, omitted iamv0.RolespecPermission }{{old, migrated}, {migrated, old}} {
+		role := &iamv0.Role{Spec: iamv0.RoleSpec{RoleRefs: []iamv0.RolespecRoleRef{{Kind: "GlobalRole", Name: "basic_editor"}}, PermissionsOmitted: []iamv0.RolespecPermission{tc.omitted}}}
+		original := role.DeepCopy()
+		effective, hasRefs, err := ResolveEffective(role, func(iamv0.RolespecRoleRef) ([]ActionScope, error) {
+			return []ActionScope{{Action: tc.base.Action, Scope: tc.base.Scope}}, nil
+		})
+		require.NoError(t, err)
+		require.True(t, hasRefs)
+		require.Empty(t, effective)
+		require.Equal(t, original, role)
+	}
+}
+
+func TestDatasourceRoleDiffMatchesStoredFormat(t *testing.T) {
+	base := []iamv0.RolespecPermission{{Action: "loki.datasource.grafana.app/datasources:get", Scope: "loki.datasource.grafana.app/datasources:uid:ds1"}}
+	desired := []iamv0.RolespecPermission{{Action: "datasources:read", Scope: "datasources:uid:ds1"}}
+	added, omitted := DiffRolespecPermissions(base, desired)
+	require.Empty(t, added)
+	require.Empty(t, omitted)
+	_, omitted = DiffRolespecPermissions(base, nil)
+	require.Equal(t, desired, omitted)
+	require.Equal(t, "loki.datasource.grafana.app/datasources:get", base[0].Action)
+}

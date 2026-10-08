@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
 )
@@ -857,6 +858,7 @@ func newPermissionsDelegationTranslation(action string) Mapping {
 }
 
 func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
+	group = datasourcek8s.AuthorizationGroup(group, resource)
 	// Delegation checks name the RBAC action being delegated as the subresource
 	// of the permissions pseudo-resource. The actions are open-ended, so the
 	// translation is built from the request instead of the static table. Only
