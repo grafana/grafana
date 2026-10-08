@@ -30,3 +30,8 @@ export const shouldUseBackendFilters = () => config.featureToggles.alertingUIUse
 
 export const shouldUseFullyCompatibleBackendFilters = () =>
   config.featureToggles.alertingUIUseFullyCompatBackendFilters ?? false;
+
+// Backends older than the notificationHistoryEnabled setting don't send it. Treat a missing value as
+// enabled, which matches the default of the feature toggles this setting replaced, so the UI doesn't
+// disappear while the frontend is deployed ahead of the backend.
+export const isNotificationHistoryEnabled = (cfg = config) => cfg.unifiedAlerting.notificationHistoryEnabled ?? true;

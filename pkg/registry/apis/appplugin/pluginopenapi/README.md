@@ -19,31 +19,25 @@ built plugin looks like — it is loaded too. Without it, the manifest's `appNam
 for the plugin ID and the plugin version is absent from `info.x-grafana-plugin`. The APIs
 are served under the group declared by the manifest either way.
 
-**An installed plugin's id**, optionally with a version:
+To select one version from the manifest:
 
 ```sh
-grafana cli --config conf/custom.ini --homepath "$PWD" \
-  write-openapi grafana-app-sdk-test-app/v1alpha1 -o spec.json
+grafana cli write-openapi ./dist/app-sdk-manifest.json --api-version v1alpha1 -o spec.json
 ```
 
-The plugin is found the way the server finds it — the plugin paths in the config file, plus
-the CLI's `--pluginsDir` — so point `--config` at the config the server uses.
-
-The command target is the plugin ID. The HTTP endpoint is keyed by API group, which is the
-group declared in the manifest when one is present and may differ from the plugin ID.
+Installed plugin IDs are not command targets.
 
 ## Where it writes
 
-Naming a single version writes a single spec, to `-o <file>` or to stdout. Otherwise every
+Selecting a single version with `--api-version` writes a single spec, to `-o <file>` or to stdout. Otherwise every
 served version is written into the `-o <directory>`, which is created if it doesn't exist.
-Legacy plugins include the `v0alpha1` settings API. Manifest-backed plugins omit settings
-unless `appplugins.loadAppManifestAndKeepSettings` is enabled.
+Only served versions from the named manifest are rendered; settings APIs are excluded.
 
 ## How the spec is built
 
 `Build` in [spec.go](spec.go) assembles the same pipeline the server does, and nothing else:
 
-1. `pluginroute.NewAPI` over the loaded plugin definition, with the plugin
+1. `pluginroute.NewAPI` over the plugin ID and selected manifest, with the plugin
    client, the plugin context, the decrypter and access control stubbed — none of them
    contribute to the spec.
 2. `builder.SetupConfig`, which installs the OpenAPI definitions and, more importantly, the
@@ -57,7 +51,7 @@ unless `appplugins.loadAppManifestAndKeepSettings` is enabled.
 
 ## Deliberate rendering choices
 
-The generated contract always enables search, trash and hybrid route registration. Hybrid registration is independent of the `enable_hybrid_api` setting of the Grafana installation used to locate a plugin. The usual per-kind eligibility rules still apply: trash is limited to dashboards, and hybrid requires `search.hybrid: true` on a namespaced kind in a served version.
+The generated contract always enables search, trash and hybrid route registration. No Grafana configuration is loaded. The usual per-kind eligibility rules still apply: trash is limited to dashboards, and hybrid requires `search.hybrid: true` on a namespaced kind in a served version.
 
 Step 3 also describes the API as unified storage serves it. On a deployment where the
 settings resource still uses legacy storage, the generated `v0alpha1` spec carries two
@@ -67,12 +61,12 @@ storage cannot watch. No path refers to them in either spec.
 ## Keeping it honest
 
 The value of this command is that it agrees with the server, and the only way to be sure is
-to compare. With a plugin installed and `appplugins.registerAPIServer` on:
+to compare. With the plugin manifest API served by the router:
 
 ```sh
 curl -s -u admin:admin \
   http://localhost:3000/openapi/v3/apis/<group>/<version> | python3 -m json.tool --indent 2 > server.json
-grafana cli --config conf/custom.ini --homepath "$PWD" write-openapi <pluginID>/<version> -o cli.json
+grafana cli write-openapi ./dist/app-sdk-manifest.json --api-version <version> -o cli.json
 diff <(python3 -m json.tool --indent 2 cli.json) server.json
 ```
 

@@ -24,6 +24,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	d := dashboards.FakeDashboardService{}
 	r := rendering.NewMockService(c)
 	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory = false
 	s := NewHeadlessScreenshotService(cfg, &d, r, prometheus.NewRegistry())
 
 	// a non-existent dashboard should return error
@@ -47,7 +48,7 @@ func TestHeadlessScreenshotService(t *testing.T) {
 			TimeoutOpts: rendering.TimeoutOpts{
 				Timeout: DefaultTimeout,
 			},
-			Path:            "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h",
+			Path:            "d-solo/foo/bar?disableAlertHistory=true&from=now-6h&orgId=2&panelId=4&to=now-2h",
 			ConcurrentLimit: cfg.RendererConcurrentRequestLimit,
 		},
 		ErrorOpts: rendering.ErrorOpts{
@@ -77,6 +78,15 @@ func TestHeadlessScreenshotService(t *testing.T) {
 	screenshot, err = s.Take(ctx, opts)
 	assert.EqualError(t, err, fmt.Sprintf("failed to take screenshot: %s", rendering.ErrTimeout))
 	assert.Nil(t, screenshot)
+
+	cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory = true
+	renderOpts.Path = "d-solo/foo/bar?from=now-6h&orgId=2&panelId=4&to=now-2h"
+	r.EXPECT().
+		Render(ctx, rendering.RenderPNG, renderOpts).
+		Return(&rendering.RenderResult{FilePath: "panel.png"}, nil)
+	screenshot, err = s.Take(ctx, opts)
+	require.NoError(t, err)
+	assert.Equal(t, Screenshot{Path: "panel.png"}, *screenshot)
 }
 
 func TestNoOpScreenshotService(t *testing.T) {

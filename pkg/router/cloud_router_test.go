@@ -204,6 +204,27 @@ func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *test
 	require.ErrorContains(t, err, "router.aggregate.baas_apiserver: audience is required")
 }
 
+func TestProvideCloudRoutesLoaderFactory_AnonymousDiscoveryAggregateNeedsNoCapToken(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	addAggregateSection(t, cfg, "open", map[string]string{
+		"url":            "https://open.invalid",
+		"discovery_auth": "none",
+	})
+
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	require.NotNil(t, loader)
+}
+
+func TestProvideCloudRoutesLoaderFactory_AnonymousDiscoveryAggregateDoesNotExemptSignedTarget(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	addAggregateSection(t, cfg, "open", map[string]string{"url": "https://open.invalid", "discovery_auth": "none"})
+	addAggregateSection(t, cfg, "signed", map[string]string{"url": "https://signed.invalid", "audience": "signed"})
+
+	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
+}
+
 // TestNewAggregateBaseTransport_IsPerCallClone pins the property that keeps
 // aggregate targets off the process-global http.DefaultTransport: each call
 // yields its own transport, so no two targets share a connection pool and

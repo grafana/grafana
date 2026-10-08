@@ -2077,9 +2077,7 @@
       "routing-options": {
         "label": {
           "contact-point": "연락처",
-          "notification-policy": "알림 정책",
-          "select-contact-point": "연락처 선택",
-          "use-notification-policy": "알림 정책 사용"
+          "notification-policy": "알림 정책"
         }
       }
     },
@@ -13068,15 +13066,9 @@
       "card-author": "{{author}} 작성",
       "card-selected": "{{title}}(선택됨)",
       "card-updated": "{{when}}에 업데이트됨",
-      "create-description": "설명",
-      "create-description-help": "공동 작업자를 위한 선택적 컨텍스트",
-      "create-description-placeholder": "무엇을 조사하시나요?",
       "create-name": "노트북 이름",
       "create-name-required": "노트북 이름은 필수 입력 항목입니다",
       "create-name-taken": "이 이름의 노트북이 이미 존재합니다",
-      "create-tags": "태그",
-      "create-tags-help": "선택 사항 — 검색 및 필터링에 사용됩니다",
-      "create-tags-placeholder": "태그 추가",
       "created-by-me": "내가 작성함",
       "error-conflict": "추가하는 동안 이 노트북이 변경되었습니다. 패널을 최신 버전에 추가하려면 다시 시도하세요.",
       "error-generic": "패널을 노트북에 추가하지 못함",
@@ -13086,6 +13078,8 @@
       "list-none": "아직 노트북이 없습니다. 대신 생성하세요.",
       "list-none-read-only": "아직 노트북이 없으며, 노트북을 생성할 권한이 없습니다.",
       "list-truncated": "모든 노트북이 표시되는 것은 아닙니다. 검색 범위를 좁혀 다른 항목을 찾습니다.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "제목으로 검색",
       "sort-alphabetical": "알파벳순(A–Z)",
       "sort-label": "노트북 정렬",
@@ -13185,8 +13179,7 @@
       },
       "tag-filter-placeholder": "",
       "unknown-author": "익명",
-      "count_other": "{{count}}개의 노트북",
-      "count-truncated_other": "처음 {{count}}개 노트북이 로드됨"
+      "count_other": "{{count}}개의 노트북"
     },
     "new": {
       "default-title-with-date": ""
@@ -14028,6 +14021,7 @@
       "title": "Grafana Cloud에서 Git 동기화를 사용할 수도 있습니다."
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "클립보드에 코드 복사"
     },
     "commit-message": {
@@ -14953,7 +14947,6 @@
       "alert-point-folder-cleanup": "마이그레이션 후 원본 폴더를 수동으로 제거하거나 관리해야 할 수 있습니다.",
       "alert-point-folder-structure": "기존 대시보드를 마이그레이션하면 폴더 구조가 리포지토리에 복제됩니다. 기존 폴더의 대시보드는 비워지지만, 알림 또는 라이브러리 패널은 남아 있을 수 있습니다.",
       "alert-point-instance-alerts": "기존 알림 및 라이브러리 패널은 마이그레이션 후 사라져 사용할 수 없게 됩니다.",
-      "alert-point-permissions": "세분화된 권한 설정은 지원되지 않습니다. 기본 권한 적용: 관리자, 편집자 및 뷰어 역할은 기본 접근 수준으로 유지됩니다.",
       "alert-point-unsupported": "프로비저닝된 폴더에서는 알림 및 라이브러리 패널이 지원되지 않습니다.",
       "alert-title": "중요: 계속하기 전에 Git 동기화 제한 사항을 검토하세요.",
       "app-mode-label": "앱 구성",
@@ -15664,9 +15657,6 @@
     "description-tooltip": {
       "label": "설명"
     },
-    "generate-columns": {
-      "score": "점수"
-    },
     "results-table": {
       "datasource-header": "데이터 소스",
       "deleted-by-header": "삭제자",
@@ -16009,6 +15999,7 @@
       "update-preferences": "기본 설정 업데이트 중 오류 발생"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "홈 대시보드",
       "home-dashboard-placeholder": "기본 대시보드",
       "language-preference-label": "언어",
