@@ -34,26 +34,33 @@ export function useAutoOpenMegaMenuForScopedContent(
   // loading:true synchronously, but leaves the *previous* scope's dashboards/scopeNavigations in
   // place until the fetch resolves. Without this, that stale leftover data reads as "the new scope
   // has content" and can force-open the menu before we actually know whether it does.
+  //
+  // Identified by the scope names rather than a plain boolean, so a disable/re-enable cycle for the
+  // *same* scope (e.g. navigating to a non-scoped page and back - scopesEnabled debounces the brief
+  // `enabled` flap, but a real disable still resolves eventually) doesn't look like new content and
+  // force the menu open again, overwriting a preference the user already set by closing it. The old
+  // docked drawer this replaces had the same property for free: `drawerOpened` is untouched by the
+  // scope selection itself, only by explicit user action or the edit-mode effect.
+  const scopeContentKey =
+    scopesEnabled && dashboardsState && !dashboardsState.loading && dashboardsState.forScopeNames.length > 0
+      ? JSON.stringify(dashboardsState.forScopeNames)
+      : null;
   const hasScopedDashboardsContent = Boolean(
-    scopesEnabled &&
+    scopeContentKey &&
       dashboardsState &&
-      !dashboardsState.loading &&
-      dashboardsState.forScopeNames.length > 0 &&
       (dashboardsState.dashboards.length > 0 || dashboardsState.scopeNavigations.length > 0)
   );
 
-  const hadScopedDashboardsContentRef = useRef(false);
+  const lastOpenedForKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    // Only track "have we already reacted to this content" while we're actually allowed to open
-    // the menu. Otherwise, content arriving while chromeless/the flag is off would get marked as
-    // "seen" without ever opening anything, and the real transition would be missed once we become
-    // eligible again (e.g. chromeless resolving to false right after mount).
+    // Only act - and only remember we acted - while we're actually allowed to open the menu.
+    // Otherwise content arriving while chromeless/the flag is off would get marked "seen" without
+    // ever opening anything, and the real transition would be missed once we become eligible again
+    // (e.g. chromeless resolving to false right after mount).
     const canAutoOpen = !chromeless && scopesMegaMenuEnabled;
-    if (canAutoOpen && hasScopedDashboardsContent && !hadScopedDashboardsContentRef.current) {
+    if (canAutoOpen && hasScopedDashboardsContent && scopeContentKey !== lastOpenedForKeyRef.current) {
       chrome.setMegaMenuOpen(true, true);
+      lastOpenedForKeyRef.current = scopeContentKey;
     }
-    if (canAutoOpen) {
-      hadScopedDashboardsContentRef.current = hasScopedDashboardsContent;
-    }
-  }, [chromeless, scopesMegaMenuEnabled, hasScopedDashboardsContent, chrome]);
+  }, [chromeless, scopesMegaMenuEnabled, hasScopedDashboardsContent, scopeContentKey, chrome]);
 }

@@ -322,6 +322,74 @@ describe('AppChrome', () => {
       expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
     });
 
+    it('does not re-open the mega menu when returning to the same scope after a real disable/enable cycle', async () => {
+      // Regression test: a *real* disable (not just the transient enabled-flap debounce) used to
+      // reset the "seen" tracking, so returning to the same scope re-opened a menu the user had
+      // just closed. The old docked drawer this replaces never had this problem: drawerOpened is
+      // untouched by the scope selection itself.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // Scopes become genuinely disabled (e.g. navigated to a non-scoped page) - wait past the
+      // 100ms debounce so this is a real disable, not just a transient flap.
+      mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
+
+      // Same scope re-enables (e.g. navigated back) - must NOT force the menu open again.
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('still opens for a genuinely different scope after the previous one was closed and disabled', async () => {
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-a'] }));
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+
+      mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
+
+      // A different scope's content arrives this time - this is genuinely new, so it must open.
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-b'] }));
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+    });
+
     it('does not re-open the mega menu on unrelated re-renders once content has already been seen', async () => {
       // DashboardSceneRenderer's edit-mode effect flips drawerOpened via toggleDrawer() on
       // entering/exiting edit mode - that re-render must never be mistaken for new scoped content

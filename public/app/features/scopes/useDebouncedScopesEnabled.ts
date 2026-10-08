@@ -25,5 +25,8 @@ export function useDebouncedScopesEnabled(enabled: boolean): boolean {
     return () => clearTimeout(id);
   }, [enabled]);
 
-  return debouncedEnabled;
+  // `enabled` itself takes priority so a false->true transition is reflected on this very render,
+  // rather than lagging a render behind until the effect above commits `setDebouncedEnabled(true)`.
+  // `debouncedEnabled` only matters for the false edge, while its pending timeout hasn't fired yet.
+  return enabled || debouncedEnabled;
 }

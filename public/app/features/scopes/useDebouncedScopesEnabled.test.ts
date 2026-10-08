@@ -49,4 +49,17 @@ describe('useDebouncedScopesEnabled', () => {
     });
     expect(result.current).toBe(true);
   });
+
+  it('propagates a later false->true transition immediately, not one render late', () => {
+    const { result, rerender } = renderHook(({ enabled }) => useDebouncedScopesEnabled(enabled), {
+      initialProps: { enabled: false },
+    });
+    expect(result.current).toBe(false);
+
+    rerender({ enabled: true });
+
+    // Must already be true on this same render - not stuck at the stale `false` until the
+    // effect above commits `setDebouncedEnabled(true)` on a subsequent render.
+    expect(result.current).toBe(true);
+  });
 });
