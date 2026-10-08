@@ -1,4 +1,4 @@
-package apistore_test
+package restoptions_test
 
 import (
 	"encoding/json"

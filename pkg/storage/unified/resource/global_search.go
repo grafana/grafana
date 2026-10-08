@@ -299,13 +299,28 @@ func (s *searchServer) syncTypes(ctx context.Context, key NamespacedResource, on
 
 // queueReconcile queues a reconcile of one global index, whatever its slot.
 func (s *searchServer) queueReconcile(key NamespacedResource) {
-	s.rebuildQueue.Add(rebuildRequest{NamespacedResource: key, reconcile: true})
-	s.indexMetrics.RebuildQueueLength.Set(float64(s.rebuildQueue.Len()))
+	s.reconcileQueue.Add(rebuildRequest{NamespacedResource: key, reconcile: true})
+	s.indexMetrics.ReconcileQueueLength.Set(float64(s.reconcileQueue.Len()))
+}
+
+// runGlobalIndexReconciler runs queued reconciles. It goes through rebuildIndex,
+// so a reconcile never overlaps a rebuild of the same index: one that arrives
+// while the index is being rebuilt or reconciled is set aside without blocking
+// the worker, and queued again once that finishes.
+func (s *searchServer) runGlobalIndexReconciler(ctx context.Context) {
+	for {
+		req, err := s.reconcileQueue.Next(ctx)
+		if err != nil {
+			return
+		}
+		s.indexMetrics.ReconcileQueueLength.Set(float64(s.reconcileQueue.Len()))
+		s.rebuildIndex(ctx, req)
+	}
 }
 
 // queueDueReconciles queues a reconcile of each global index among keys that
 // this instance owns and that has not been compared with storage since its last
-// slot. The rebuild workers run them, so they are bounded and never overlap a
+// slot. The reconcile workers run them, so they are bounded and never overlap a
 // rebuild of the same index.
 func (s *searchServer) queueDueReconciles(keys []NamespacedResource, now time.Time) {
 	for _, key := range keys {
@@ -677,11 +692,11 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 	// Requests are built a chunk at a time, so only the comparison scales with
 	// the size of the type.
 	for chunk := range slices.Chunk(names, readChunkSize) {
-		requests := make([]*resourcepb.ReadRequest, 0, len(chunk))
+		requests := make([]BatchReadRequest, 0, len(chunk))
 		for _, name := range chunk {
-			requests = append(requests, &resourcepb.ReadRequest{
+			requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 				Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-			})
+			}})
 		}
 
 		for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
@@ -920,11 +935,11 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 	}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
-	requests := make([]*resourcepb.ReadRequest, 0, len(names))
+	requests := make([]BatchReadRequest, 0, len(names))
 	for _, name := range names {
-		requests = append(requests, &resourcepb.ReadRequest{
+		requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-		})
+		}})
 	}
 
 	items := make([]*BulkIndexItem, 0, len(names))

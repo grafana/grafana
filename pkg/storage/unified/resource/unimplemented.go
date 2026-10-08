@@ -47,7 +47,7 @@ func (UnimplementedStorageBackend) ReadResource(_ context.Context, req *resource
 	}
 }
 
-func (UnimplementedStorageBackend) BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error) {
+func (UnimplementedStorageBackend) BatchReadResource(context.Context, []BatchReadRequest, bool) (iter.Seq[*BackendReadResponse], error) {
 	return nil, ErrBatchReadUnsupported
 }
 

@@ -10,7 +10,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
@@ -27,7 +26,7 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 	)
 
 	b := &manifestBuilder{
-		pluginJSON:    plugins.JSONData{ID: "test-app"},
+		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(manifest),
 		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
 	}
@@ -104,7 +103,7 @@ func TestGetAuthorizerManifestKinds(t *testing.T) {
 // cannot reach the plugin never reaches its kinds either.
 func TestGetAuthorizerAppAccessGatesKinds(t *testing.T) {
 	b := &manifestBuilder{
-		pluginJSON:    plugins.JSONData{ID: "test-app"},
+		pluginID:      "test-app",
 		kindPolicies:  kindPolicies(testManifest(t)),
 		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: false}),
 	}

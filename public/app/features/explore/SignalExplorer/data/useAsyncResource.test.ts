@@ -19,6 +19,26 @@ describe('useAsyncResource', () => {
     expect(result.current.data).toEqual([]);
   });
 
+  it('fetches nothing for a null key and reports the empty value as settled, not loading', () => {
+    const fetch = jest.fn().mockResolvedValue(['unused']);
+    const { result } = renderHook(() => useAsyncResource(null, fetch, EMPTY));
+
+    expect(result.current).toEqual({ data: [], loading: false, error: undefined });
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('drops the previous data when the key goes back to null', async () => {
+    const fetch = jest.fn().mockResolvedValue(['loaded']);
+    const { result, rerender } = renderHook(({ requestKey }) => useAsyncResource(requestKey, fetch, EMPTY), {
+      initialProps: { requestKey: 'k1' as string | null },
+    });
+    await waitFor(() => expect(result.current.data).toEqual(['loaded']));
+
+    rerender({ requestKey: null });
+
+    expect(result.current).toEqual({ data: [], loading: false, error: undefined });
+  });
+
   it('does not set state after unmount, so a late response cannot warn or leak', async () => {
     let resolve: (value: string[]) => void = () => {};
     const fetch = jest.fn().mockReturnValue(

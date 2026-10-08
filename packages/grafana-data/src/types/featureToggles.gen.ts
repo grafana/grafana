@@ -326,7 +326,7 @@ export interface FeatureToggles {
   canvasPanelPanZoom?: boolean;
   /**
   * Enables time comparison option in supported panels
-  * @default false
+  * @default true
   */
   timeComparison?: boolean;
   /**
@@ -656,11 +656,6 @@ export interface FeatureToggles {
   */
   crashDetection?: boolean;
   /**
-  * Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query
-  * @default true
-  */
-  alertingUIOptimizeReducer?: boolean;
-  /**
   * Enables user auth for Azure Monitor datasource only
   * @default true
   */
@@ -705,11 +700,6 @@ export interface FeatureToggles {
   * @default false
   */
   ['alerting.ruleQuality']?: boolean;
-  /**
-  * Enables simplified step mode in the notifications section
-  * @default true
-  */
-  alertingNotificationsStepMode?: boolean;
   /**
   * Defaults to using the Loki `/labels` API instead of `/series`
   * @default true
@@ -781,11 +771,6 @@ export interface FeatureToggles {
   */
   scopeSearchAllLevels?: boolean;
   /**
-  * Enables the alert rule version history restore feature
-  * @default true
-  */
-  alertingRuleVersionHistoryRestore?: boolean;
-  /**
   * Enables the report creation drawer in a dashboard
   * @default false
   */
@@ -801,11 +786,6 @@ export interface FeatureToggles {
   */
   infinityRunQueriesInParallel?: boolean;
   /**
-  * Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules
-  * @default true
-  */
-  alertingMigrationUI?: boolean;
-  /**
   * Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting
   * @default false
   */
@@ -820,11 +800,6 @@ export interface FeatureToggles {
   * @default true
   */
   ['datasources.azureMonitorBatchAPI']?: boolean;
-  /**
-  * Enables UI functionality to permanently delete alert rules
-  * @default true
-  */
-  alertingRulePermanentlyDelete?: boolean;
   /**
   * Enables the UI functionality to recover and view deleted alert rules
   * @default true
@@ -865,11 +840,6 @@ export interface FeatureToggles {
   * @default false
   */
   alertingListViewV2PreviewToggle?: boolean;
-  /**
-  * Enables the alerting bulk actions in the UI
-  * @default true
-  */
-  alertingBulkActionsInUI?: boolean;
   /**
   * Redirects the traffic from the legacy resource permissions endpoints to the new K8s AuthZ endpoints
   * @default false
@@ -1093,7 +1063,7 @@ export interface FeatureToggles {
   pluginInsights?: boolean;
   /**
   * Enables a new panel time settings drawer
-  * @default false
+  * @default true
   */
   panelTimeSettings?: boolean;
   /**
@@ -1161,6 +1131,11 @@ export interface FeatureToggles {
   * @default false
   */
   kubernetesUsersApi?: boolean;
+  /**
+  * Enables read-only user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersReadApi?: boolean;
   /**
   * Enables service account APIs in the app platform
   * @default false

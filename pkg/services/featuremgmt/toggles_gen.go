@@ -770,6 +770,10 @@ const (
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
 
+	// FlagKubernetesUsersReadApi
+	// Enables read-only user APIs in the app platform
+	FlagKubernetesUsersReadApi = "kubernetesUsersReadApi"
+
 	// FlagKubernetesServiceAccountsApi
 	// Enables service account APIs in the app platform
 	FlagKubernetesServiceAccountsApi = "kubernetesServiceAccountsApi"
@@ -1061,4 +1065,8 @@ const (
 	// FlagUnifiedStorageClientOnBehalfOf
 	// Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service
 	FlagUnifiedStorageClientOnBehalfOf = "unifiedStorageClient.onBehalfOf"
+
+	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
+	// Connect to hosted grafana databases from datasource API servers
+	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"
 )
