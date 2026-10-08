@@ -1801,14 +1801,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:        "recentlyViewedDashboards",
-			Description: "Enables recently viewed dashboards section in the browsing dashboard page",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendNavigation,
-			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
-			Expression:  "false",
-		},
-		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,

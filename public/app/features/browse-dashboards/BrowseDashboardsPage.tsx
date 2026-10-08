@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer, { type Size } from 'react-virtualized-auto-sizer';
@@ -56,9 +55,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     repository,
     folder: folderResource,
   } = useGetResourceRepositoryView({ folderName: folderUID });
-  const isRecentlyViewedEnabledValue = useBooleanFlagValue('recentlyViewedDashboards', false);
   const { isAvailable: isTemplateDashboardsAvailable } = useTemplateDashboardsAvailability();
-  const isRecentlyViewedEnabled = !folderUID && isRecentlyViewedEnabledValue;
+  const showRecentlyViewed = !folderUID;
 
   // CUJ-only signal: silent so it doesn't create analytics noise
   useEffect(() => {
@@ -97,13 +95,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
   const hasReportedListViewed = useRef(false);
 
   useEffect(() => {
-    if (!isRecentlyViewedEnabled || hasReportedListViewed.current) {
+    if (!showRecentlyViewed || hasReportedListViewed.current) {
       return;
     }
 
     hasReportedListViewed.current = true;
     reportInteraction('dashboards_browse_list_viewed');
-  }, [isRecentlyViewedEnabled]);
+  }, [showRecentlyViewed]);
 
   const { data: folderDTO } = useGetFolderQueryFacade(folderUID);
   const navModel = useNavModel(folderDTO, 'dashboards');
@@ -184,8 +182,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
           <OrphanedResourceBanner repositoryName={orphanedRepoName} />
         )}
         <QuotaLimitBanner />
-        {/* only show recently viewed dashboards when in root and flag is enabled */}
-        {isRecentlyViewedEnabled && <RecentlyViewedDashboards />}
+        {/* only show recently viewed dashboards when in root */}
+        {showRecentlyViewed && <RecentlyViewedDashboards />}
         <div>
           <FilterInput
             data-testid={selectors.pages.BrowseDashboards.searchInput}
