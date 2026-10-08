@@ -2116,9 +2116,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Точка контакта",
-          "notification-policy": "Политика уведомлений",
-          "select-contact-point": "Выбрать точку контакта",
-          "use-notification-policy": "Использовать политику уведомления"
+          "notification-policy": "Политика уведомлений"
         }
       }
     },
@@ -13359,15 +13357,9 @@
       "card-author": "Автор: {{author}}",
       "card-selected": "{{title}} (выбрано)",
       "card-updated": "Время изменения: {{when}}",
-      "create-description": "Описание",
-      "create-description-help": "Дополнительный контекст для соавторов",
-      "create-description-placeholder": "Что вы расследуете?",
       "create-name": "Имя блокнота",
       "create-name-required": "Укажите имя блокнота",
       "create-name-taken": "Блокнот с таким именем уже существует",
-      "create-tags": "Метки",
-      "create-tags-help": "Необязательно (используется для поиска и фильтрации)",
-      "create-tags-placeholder": "Добавить метку",
       "created-by-me": "Создано мной",
       "error-conflict": "Пока вы добавляли данные в этот блокнот, он был изменен. Попробуйте еще раз добавить панель в последнюю версию.",
       "error-generic": "Не удалось добавить панель в блокнот",
@@ -13377,6 +13369,8 @@
       "list-none": "У вас пока нет блокнотов. Создайте первый.",
       "list-none-read-only": "У вас нет блокнотов и прав на их создание.",
       "list-truncated": "Отображаются не все блокноты. Уточните поисковый запрос, чтобы найти остальные.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Поиск по заголовку",
       "sort-alphabetical": "В алфавитном порядке (А–Я)",
       "sort-label": "Сортировать блокноты",
@@ -13479,11 +13473,7 @@
       "count_one": "{{count}} блокнот",
       "count_few": "{{count}} блокнота",
       "count_many": "{{count}} блокнотов",
-      "count_other": "{{count}} блокнота",
-      "count-truncated_one": "{{count}} блокнот загружен",
-      "count-truncated_few": "{{count}} первых блокнота загружены",
-      "count-truncated_many": "{{count}} первых блокнотов загружены",
-      "count-truncated_other": "{{count}} первого блокнота загружено"
+      "count_other": "{{count}} блокнота"
     },
     "new": {
       "default-title-with-date": ""
@@ -14331,6 +14321,7 @@
       "title": "Вы также можете использовать Git Sync в Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Копировать в буфер обмена"
     },
     "commit-message": {
@@ -15304,7 +15295,6 @@
       "alert-point-folder-cleanup": "После переноса может потребоваться вручную удалить или настроить исходные папки.",
       "alert-point-folder-structure": "При переносе имеющихся дашбордов структура папок воспроизводится в репозитории. В исходных папках удаляются дашборды, но могут сохраняться оповещения или панели библиотеки.",
       "alert-point-instance-alerts": "Имеющиеся оповещения и панели библиотеки не сохраняются и не будут использоваться после переноса.",
-      "alert-point-permissions": "Детальные разрешения не поддерживаются. Действуют разрешения по умолчанию: администраторы, а также пользователи с правами редактирования и с правами просмотра сохраняют стандартные уровни доступа.",
       "alert-point-unsupported": "Оповещения и панели библиотеки не поддерживаются в подготовленных папках.",
       "alert-title": "Важно: прежде чем продолжить, ознакомьтесь с ограничениями Git Sync",
       "app-mode-label": "Настройки приложения",
@@ -16045,9 +16035,6 @@
     "description-tooltip": {
       "label": "Описание"
     },
-    "generate-columns": {
-      "score": "Оценка"
-    },
     "results-table": {
       "datasource-header": "Источник данных",
       "deleted-by-header": "Кто удалил:",
@@ -16393,6 +16380,7 @@
       "update-preferences": "Ошибка при изменении настроек"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Главный дашборд",
       "home-dashboard-placeholder": "Дашборд по умолчанию",
       "language-preference-label": "Язык",

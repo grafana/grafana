@@ -68,7 +68,7 @@ func TestBuildManifestVersion(t *testing.T) {
 func TestBuildManifestHybridRoute(t *testing.T) {
 	plugin := testPlugin(t)
 	hybrid, endpoint := true, false
-	plugin.Manifest.Versions[0].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &endpoint, Hybrid: &hybrid}
+	plugin.Manifests[0].Versions[0].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &endpoint, Hybrid: &hybrid}
 	oas, err := Build(plugin, "v1alpha1", Options{})
 	require.NoError(t, err)
 
@@ -89,7 +89,7 @@ func TestBuildManifestHybridRoute(t *testing.T) {
 func TestBuildSettingsVersion(t *testing.T) {
 	keepManifestSettings(t)
 	plugin := testPlugin(t)
-	plugin.Manifest = nil
+	plugin.Manifests = nil
 	oas, err := Build(plugin, "v0alpha1", Options{BuildVersion: "12.3.4"})
 	require.NoError(t, err)
 
@@ -117,7 +117,7 @@ func TestBuildVersionSelection(t *testing.T) {
 
 	t.Run("a plugin without a manifest still serves settings", func(t *testing.T) {
 		plugin := testPlugin(t)
-		plugin.Manifest = nil
+		plugin.Manifests = nil
 		oas, err := Build(plugin, "", Options{})
 		require.NoError(t, err)
 		require.Equal(t, "example-app/v0alpha1", oas.Info.Title)
@@ -128,7 +128,7 @@ func TestBuildVersionSelection(t *testing.T) {
 func TestBuildProxyRoute(t *testing.T) {
 	keepManifestSettings(t)
 	plugin := testPlugin(t)
-	plugin.Manifest = nil
+	plugin.Manifests = nil
 	proxy := "/apis/example-app/v0alpha1/namespaces/{namespace}/app/instance/proxy"
 
 	oas, err := Build(plugin, "v0alpha1", Options{})
@@ -184,7 +184,7 @@ func testPlugin(t *testing.T) definition.PluginDefinition {
 			// A route makes the plugin proxy available.
 			Routes: []*plugins.Route{{Path: "example", URL: "http://example.com"}},
 		},
-		Manifest: &app.ManifestData{
+		Manifests: []*app.ManifestData{{
 			AppName:          "example",
 			Group:            "example.ext.grafana.app",
 			PreferredVersion: "v1alpha1",
@@ -211,7 +211,7 @@ func testPlugin(t *testing.T) definition.PluginDefinition {
 					},
 				}},
 			}},
-		},
+		}},
 	}
 }
 
@@ -226,7 +226,7 @@ func keepManifestSettings(t *testing.T) {
 
 func TestBuildWithoutServedVersions(t *testing.T) {
 	plugin := testPlugin(t)
-	plugin.Manifest.Versions[0].Served = false
+	plugin.Manifests[0].Versions[0].Served = false
 	for _, version := range []string{"", "v1alpha1"} {
 		_, err := Build(plugin, version, Options{})
 		require.ErrorContains(t, err, "no served versions")
@@ -235,7 +235,7 @@ func TestBuildWithoutServedVersions(t *testing.T) {
 
 func TestBuildLegacySettings(t *testing.T) {
 	plugin := testPlugin(t)
-	plugin.Manifest = nil
+	plugin.Manifests = nil
 	oas, err := Build(plugin, "", Options{RegisterProxy: true})
 	require.NoError(t, err)
 	for _, suffix := range []string{"", "/health", "/resources", "/proxy"} {

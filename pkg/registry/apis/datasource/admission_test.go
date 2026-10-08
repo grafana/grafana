@@ -104,3 +104,56 @@ func TestDataSourceCreateAdmissionFlagDisabled(t *testing.T) {
 	)
 	require.NoError(t, admissionPlugin.Validate(context.Background(), attrs, nil))
 }
+
+type countingCreateDatasourceProvider struct {
+	PluginDatasourceProvider
+	creates int
+}
+
+func (p *countingCreateDatasourceProvider) CreateDataSource(_ context.Context, ds *datasourceV0.DataSource) (*datasourceV0.DataSource, error) {
+	p.creates++
+	return ds, nil
+}
+
+func TestLegacyStorageCreateGuardBeforeWrite(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+	provider := &countingCreateDatasourceProvider{}
+	store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
+
+	blocked := &datasourceV0.DataSource{
+		ObjectMeta: metav1.ObjectMeta{Name: "blocked", Namespace: "default"},
+		Spec: datasourceV0.UnstructuredSpec{Object: map[string]any{
+			"jsonData": map[string]any{"teamHttpHeaders": []any{}},
+		}},
+	}
+	_, err := store.Create(context.Background(), blocked, nil, &metav1.CreateOptions{})
+	require.True(t, apierrors.IsInvalid(err), "expected an invalid-object response: %v", err)
+	require.Zero(t, provider.creates)
+
+	allowed := &datasourceV0.DataSource{
+		ObjectMeta: metav1.ObjectMeta{Name: "allowed", Namespace: "default"},
+		Spec: datasourceV0.UnstructuredSpec{Object: map[string]any{
+			"jsonData": map[string]any{"httpMethod": "POST"},
+		}},
+	}
+	_, err = store.Create(context.Background(), allowed, nil, &metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, provider.creates)
+}
+
+func TestLegacyStorageCreateGuardFlagDisabled(t *testing.T) {
+	featuremgmt.WithDisabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+	provider := &countingCreateDatasourceProvider{}
+	store := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
+	ds := &datasourceV0.DataSource{
+		ObjectMeta: metav1.ObjectMeta{Name: "example", Namespace: "default"},
+		Spec: datasourceV0.UnstructuredSpec{Object: map[string]any{
+			"jsonData": map[string]any{"teamHttpHeaders": []any{}},
+		}},
+	}
+	_, err := store.Create(context.Background(), ds, nil, &metav1.CreateOptions{})
+	require.NoError(t, err)
+	require.Equal(t, 1, provider.creates)
+}

@@ -18,8 +18,6 @@ declare module "@openfeature/core" {
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
     | "provisioningExport"
-    | "provisioning.readmes"
-    | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
@@ -29,6 +27,7 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "dashboardNewLayouts"
+    | "dashboards.libraryPanelRepeatFromServerResolution"
     | "dashboard.notebooks"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
@@ -130,7 +129,8 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
-    | "grafana.logDetailsDisplayedFieldControls";
+    | "grafana.logDetailsDisplayedFieldControls"
+    | "grafana.globalHomePreference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

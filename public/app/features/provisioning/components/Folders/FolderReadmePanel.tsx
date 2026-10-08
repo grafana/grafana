@@ -1,5 +1,4 @@
 import { css, cx } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { useIntersection } from 'react-use';
@@ -41,14 +40,9 @@ interface Props {
  * Switching folders remounts the content so per-folder state (analytics, tab
  * selection) never carries across.
  *
- * Returns null when the `provisioning.readmes` toggle is off or a loaded folder
- * isn't provisioned; shows a spinner while loading.
+ * Returns null when a loaded folder isn't provisioned; shows a spinner while loading.
  */
 export function FolderReadmePanel({ folderUID }: Props) {
-  const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
-  if (!provisioningReadmesEnabled) {
-    return null;
-  }
   return <FolderReadmePanelContent key={folderUID} folderUID={folderUID} />;
 }
 

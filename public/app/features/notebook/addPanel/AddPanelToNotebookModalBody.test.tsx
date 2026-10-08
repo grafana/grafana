@@ -13,6 +13,7 @@ import { defaultPanelKind, type PanelKind } from '../types';
 
 import { AddPanelToNotebookModalBody } from './AddPanelToNotebookModalBody';
 import { addPanelToExistingNotebook, createNotebookWithPanel } from './addPanelToNotebook';
+import { type CapturedTimeRange } from './capturedTimeRange';
 import { useNotebookPicker } from './useNotebookPicker';
 
 jest.mock('./useNotebookPicker', () => ({
@@ -28,7 +29,7 @@ jest.mock('./addPanelToNotebook', () => ({
 
 jest.mock('app/core/services/context_srv');
 
-// The create fields now offer the library's existing tags, which reads a facet off this module. It
+// The existing route's tag filter offers the library's tags, which reads a facet off this module. It
 // calls injectEndpoints on the real client as it loads, which nothing here provides.
 jest.mock('../list/notebookSearchApi', () => ({
   useLazyNotebookFieldFacetQuery: jest.fn(() => [
@@ -105,7 +106,21 @@ async function chooseExisting(user: ReturnType<typeof render>['user']) {
   await user.click(screen.getByRole('radio', { name: 'Existing notebook' }));
 }
 
-function renderModal(buildPanel = jest.fn(async (): Promise<PanelKind> => panel()), isLibraryPanel = false) {
+/** A relative window, so the lock starts off and the panel reaches the write exactly as built. */
+const RELATIVE_CAPTURE: CapturedTimeRange = { from: 'now-6h', to: 'now', timeZone: 'utc' };
+
+/** What a zoom leaves behind, which is the capture the lock defaults on for. */
+const ABSOLUTE_CAPTURE: CapturedTimeRange = {
+  from: '2026-10-05T08:00:00.000Z',
+  to: '2026-10-05T09:30:00.000Z',
+  timeZone: 'utc',
+};
+
+function renderModal(
+  buildPanel = jest.fn(async (): Promise<PanelKind> => panel()),
+  isLibraryPanel = false,
+  capturedTimeRange = RELATIVE_CAPTURE
+) {
   const onDismiss = jest.fn();
   const result = render(
     <AddPanelToNotebookModalBody
@@ -113,9 +128,18 @@ function renderModal(buildPanel = jest.fn(async (): Promise<PanelKind> => panel(
       onDismiss={onDismiss}
       entryPoint="dashboard_panel"
       isLibraryPanel={isLibraryPanel}
+      capturedTimeRange={capturedTimeRange}
     />
   );
   return { ...result, buildPanel, onDismiss };
+}
+
+/**
+ * Named by its own label plus its description, which grafana-ui's Checkbox puts inside the same
+ * label element — so the name is matched from the start rather than in full.
+ */
+function lockCheckbox(range = '') {
+  return screen.getByRole('checkbox', { name: new RegExp(`^Lock to ${range}`) });
 }
 
 describe('AddPanelToNotebookModalBody', () => {
@@ -260,6 +284,7 @@ describe('AddPanelToNotebookModalBody', () => {
           onDismiss={jest.fn()}
           entryPoint="dashboard_panel"
           isLibraryPanel={false}
+          capturedTimeRange={RELATIVE_CAPTURE}
         />
       );
 
@@ -407,36 +432,120 @@ describe('AddPanelToNotebookModalBody', () => {
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
-        expect(createWithPanel).toHaveBeenCalledWith(
-          { title: 'New investigation', description: '', tags: [] },
-          panel(),
-          'dashboard_panel',
-          true
-        )
+        expect(createWithPanel).toHaveBeenCalledWith({ title: 'New investigation' }, panel(), 'dashboard_panel', true)
       );
     });
 
-    it('creates the notebook with the panel, description and tags', async () => {
+    it('creates the notebook with the panel under the trimmed name', async () => {
       const { user, onDismiss } = renderModal();
 
       await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), '  Checkout latency  ');
-      await user.type(screen.getByRole('textbox', { name: /Description/ }), 'Why is checkout slow?');
-      // The create form's only tag field, by TagFilter's own label.
-      await user.type(screen.getByLabelText('Tag filter'), 'latency');
-      const tagOptions = await screen.findByRole('listbox');
-      await user.click(await within(tagOptions).findByText('latency'));
       await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
 
       await waitFor(() =>
         expect(createWithPanel).toHaveBeenCalledWith(
           // Trimmed, so a stray space doesn't become part of the notebook's name.
-          { title: 'Checkout latency', description: 'Why is checkout slow?', tags: ['latency'] },
+          { title: 'Checkout latency' },
           panel(),
           'dashboard_panel',
           false
         )
       );
       expect(onDismiss).toHaveBeenCalled();
+    });
+
+    // The modal is about capturing the panel. Tags are edited from the notebook's own header once it
+    // is open, and a description has nowhere in the notebook to be read back.
+    it('asks for a name only, not a description or tags', () => {
+      renderModal();
+
+      expect(screen.getByRole('textbox', { name: /Notebook name/ })).toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: /Description/ })).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Tag filter')).not.toBeInTheDocument();
+    });
+  });
+
+  /**
+   * Zooming into an interval is usually the reason a panel gets captured at all, so an absolute
+   * window is kept by default rather than being replaced by the notebook's own range on arrival.
+   */
+  describe('the captured time range', () => {
+    function lockedPanel(): PanelKind {
+      const base = panel();
+      return {
+        ...base,
+        spec: {
+          ...base.spec,
+          data: {
+            ...base.spec.data,
+            spec: {
+              ...base.spec.data.spec,
+              queryOptions: {
+                ...base.spec.data.spec.queryOptions,
+                timeFrom: '2026-10-05T08:00:00.000Z',
+                timeTo: '2026-10-05T09:30:00.000Z',
+              },
+            },
+          },
+        },
+      };
+    }
+
+    it('starts locked for an absolute capture, naming the window it will keep', () => {
+      renderModal(undefined, false, ABSOLUTE_CAPTURE);
+
+      expect(lockCheckbox('2026-10-05 08:00:00 to 2026-10-05 09:30:00')).toBeChecked();
+    });
+
+    it('starts unlocked for a relative capture, so the panel follows the notebook range', () => {
+      renderModal(undefined, false, RELATIVE_CAPTURE);
+
+      expect(lockCheckbox('Last 6 hours')).not.toBeChecked();
+    });
+
+    it('locks the added panel to the captured window', async () => {
+      const { user } = renderModal(undefined, false, ABSOLUTE_CAPTURE);
+      await chooseExisting(user);
+
+      await user.click(selectNotebook('Checkout error spike'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', lockedPanel(), 'dashboard_panel', false));
+    });
+
+    it('adds the panel unlocked when the user turns the default off', async () => {
+      const { user } = renderModal(undefined, false, ABSOLUTE_CAPTURE);
+      await user.click(lockCheckbox());
+      await chooseExisting(user);
+
+      await user.click(selectNotebook('Checkout error spike'));
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(addToExisting).toHaveBeenCalledWith('nb2', panel(), 'dashboard_panel', false));
+    });
+
+    // The relative raw is stored rather than resolved, so the cell keeps re-evaluating it - the same
+    // as a relative range locked from the cell's own control.
+    it('locks a relative capture to its raw window when the user turns the lock on', async () => {
+      const { user } = renderModal(undefined, false, RELATIVE_CAPTURE);
+      await user.click(lockCheckbox());
+
+      await user.type(screen.getByRole('textbox', { name: /Notebook name/ }), 'New investigation');
+      await user.click(screen.getByRole('button', { name: 'Add to notebook' }));
+
+      await waitFor(() => expect(createWithPanel).toHaveBeenCalled());
+      const [, created] = createWithPanel.mock.calls[0];
+      expect((created as PanelKind).spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
+    });
+
+    // The choice belongs to the capture, not to the destination, so switching routes must not throw
+    // away an override the user has already made.
+    it('keeps the user override when the destination route changes', async () => {
+      const { user } = renderModal(undefined, false, ABSOLUTE_CAPTURE);
+      await user.click(lockCheckbox());
+      await chooseExisting(user);
+
+      expect(lockCheckbox()).not.toBeChecked();
     });
   });
 

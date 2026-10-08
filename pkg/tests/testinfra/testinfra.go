@@ -180,12 +180,14 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		eDB, err := sql.ProvideResourceDB(env.Cfg, env.SQLStore)
 		require.NoError(t, err)
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil, nil)
+		kvStore, err := sql.ProvideKV(env.Cfg, eDB)
+		require.NoError(t, err)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, kvStore, nil)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
-		backendService := storageBackend.(services.Service)
-		require.NotNil(t, backendService)
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		if backendService, ok := storageBackend.(services.Service); ok {
+			require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		}
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
 			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, nil, grpcService)
@@ -545,6 +547,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
+	if opts.UnsafeGRPCServerAuthentication {
+		_, err = grpcServerAuth.NewKey("unsafe", "true")
+		require.NoError(t, err)
+	}
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
 		section, err := cfg.GetSection(name)
@@ -1232,6 +1238,9 @@ type GrafanaOpts struct {
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Accept local test-exchanger tokens without an external signing-key service.
+	UnsafeGRPCServerAuthentication bool
 
 	// Remote alertmanager configuration
 	RemoteAlertmanagerURL string
