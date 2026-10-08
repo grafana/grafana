@@ -220,6 +220,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
             {activeTab === RECENT_TAB_ID && (
               <RecentActivityTab
                 items={recent.items}
+                counts={recent.counts}
                 loading={recent.loading}
                 error={recent.error}
                 retry={recent.retry}

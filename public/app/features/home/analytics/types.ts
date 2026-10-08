@@ -28,6 +28,25 @@ export interface ClearHistoryClicked extends EventProperty {
   page_count: number;
 }
 
+/** Counts cover the whole history, not the rows left after the kind filter. */
+export interface RecentActivityShown extends EventProperty {
+  /** Pages of any kind in history when the tab was displayed. */
+  page_count: number;
+  /** Dashboards in history. */
+  dashboard_count: number;
+  /** Explore sessions in history. */
+  explore_count: number;
+  /** Alerting pages in history. */
+  alerting_count: number;
+  /** App plugin pages in history. */
+  app_count: number;
+}
+
+export interface RecentActivityFilterChanged extends EventProperty {
+  /** Kind the user chose to show, or `all`. */
+  filter: PageHistoryKind | 'all';
+}
+
 export interface SolutionFilterChanged extends EventProperty {
   /** Stable id of the solution whose card scope changed. */
   solution: string;
@@ -105,6 +124,8 @@ export type CtaClicked = EventVariants<
           placement: 'list';
           /** Kind of page the row restores. Never the page itself: hrefs carry customer data. */
           page_kind: PageHistoryKind;
+          /** 0-based row index as displayed, so clicks on the top row can be told from deeper ones. */
+          position: number;
         }
       | {
           action: 'create_dashboard' | 'browse_dashboards';

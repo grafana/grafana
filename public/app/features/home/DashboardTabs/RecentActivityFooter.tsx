@@ -3,7 +3,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { FooterAction, FooterActions } from '../FooterActions';
-import { clearHistoryClicked } from '../analytics/main';
+import { clearHistoryClicked, recentActivityFilterChanged } from '../analytics/main';
 
 import { PAGE_KINDS, type PageKindCounts, getPageKindMeta } from './pageKinds';
 import { type RecentActivityFilter } from './useRecentActivity';
@@ -26,6 +26,11 @@ export function RecentActivityFooter({ counts, total, filter, onFilterChange, on
   const handleClear = () => {
     clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
     onClear();
+  };
+
+  const handleFilterChange = (filter: RecentActivityFilter) => {
+    recentActivityFilterChanged({ filter: filter || 'all' });
+    onFilterChange(filter);
   };
 
   const clear = (
@@ -57,7 +62,7 @@ export function RecentActivityFooter({ counts, total, filter, onFilterChange, on
           aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
           options={options}
           value={filter}
-          onChange={onFilterChange}
+          onChange={handleFilterChange}
         />
         {clear}
       </Stack>

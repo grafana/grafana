@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useEffect, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
@@ -11,14 +12,16 @@ import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 import { TimeAgoCell } from '../TimeAgoCell';
-import { ctaClicked } from '../analytics/main';
+import { ctaClicked, recentActivityShown } from '../analytics/main';
 
 import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
-import { type RecentActivityItem, getPageKindMeta, toRow } from './pageKinds';
+import { type PageKindCounts, type RecentActivityItem, getPageKindMeta, toRow } from './pageKinds';
 
 interface Props {
   items: RecentActivityItem[];
+  /** Over the whole history, so what was shown is reported independently of the kind filter. */
+  counts: PageKindCounts;
   loading: boolean;
   error: Error | undefined;
   retry: () => void;
@@ -55,9 +58,25 @@ function EmptyStateCta() {
   );
 }
 
-export function RecentActivityTab({ items, loading, error, retry, foldersByUid, density }: Props) {
+export function RecentActivityTab({ items, counts, loading, error, retry, foldersByUid, density }: Props) {
   const styles = useStyles2(getStyles, density === 'compact');
   const navTree = useSelector((state) => state.navBarTree);
+
+  // Once per display: the tab mounts when it becomes active and unmounts when the user leaves it.
+  const shown = useRef(false);
+  useEffect(() => {
+    if (shown.current || loading || error) {
+      return;
+    }
+    shown.current = true;
+    recentActivityShown({
+      page_count: counts.dashboard + counts.explore + counts.alerting + counts.app,
+      dashboard_count: counts.dashboard,
+      explore_count: counts.explore,
+      alerting_count: counts.alerting,
+      app_count: counts.app,
+    });
+  }, [loading, error, counts]);
 
   if (loading) {
     return <PageLoader text={t('home.recent-activity-tab.loading', 'Loading your recent activity...')} />;
@@ -85,7 +104,7 @@ export function RecentActivityTab({ items, loading, error, retry, foldersByUid, 
 
   return (
     <ul className={styles.list}>
-      {items.map((item) => {
+      {items.map((item, position) => {
         const href = item.pathname + item.search;
         const { title, subtitle } = toRow(item, navTree, foldersByUid);
         const { badge, color } = getPageKindMeta(item.kind);
@@ -102,6 +121,7 @@ export function RecentActivityTab({ items, loading, error, retry, foldersByUid, 
                   action: 'open_page',
                   placement: 'list',
                   page_kind: item.kind,
+                  position,
                 })
               }
               trailing={

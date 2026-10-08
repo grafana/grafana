@@ -16,7 +16,13 @@ import { type PageHistoryEntry } from 'app/core/services/pageHistory/types';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { clearHistoryClicked, ctaClicked, tabChanged } from '../analytics/main';
+import {
+  clearHistoryClicked,
+  ctaClicked,
+  recentActivityFilterChanged,
+  recentActivityShown,
+  tabChanged,
+} from '../analytics/main';
 
 import { DashboardTabs } from './DashboardTabs';
 import { type HomepageTabExtensionProps } from './types';
@@ -29,6 +35,8 @@ jest.mock('../analytics/main', () => ({
   ctaClicked: jest.fn(),
   tabChanged: jest.fn(),
   clearHistoryClicked: jest.fn(),
+  recentActivityShown: jest.fn(),
+  recentActivityFilterChanged: jest.fn(),
   homepageViewed: jest.fn(),
 }));
 jest.mock('app/core/services/pageHistory/pageHistorySrv', () => ({
@@ -176,7 +184,7 @@ describe('DashboardTabs', () => {
       document.removeEventListener('click', interceptLinkClicks);
     });
 
-    it('offers to create a dashboard when the user may and has no clear action', async () => {
+    it('offers to create a dashboard when the user may, reports the empty display and has no clear action', async () => {
       jest
         .spyOn(contextSrv, 'hasPermission')
         .mockImplementation((action: string) => action === AccessControlAction.DashboardsCreate);
@@ -185,6 +193,14 @@ describe('DashboardTabs', () => {
 
       expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
+      expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith({
+        page_count: 0,
+        dashboard_count: 0,
+        explore_count: 0,
+        alerting_count: 0,
+        app_count: 0,
+      });
 
       const create = screen.getByRole('link', { name: /create your first dashboard/i });
       expect(create).toHaveAttribute('href', '/dashboard/new');
@@ -459,6 +475,16 @@ describe('DashboardTabs', () => {
         expect(radios[i]).toHaveAccessibleName(name)
       );
       expect(filter.getByRole('radio', { name: 'All' })).toBeChecked();
+
+      // One exposure per display, counting the whole history.
+      expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(recentActivityShown)).toHaveBeenCalledWith({
+        page_count: 4,
+        dashboard_count: 1,
+        explore_count: 1,
+        alerting_count: 1,
+        app_count: 1,
+      });
     });
 
     it('filters by kind without refetching, remembers the choice and offers only kinds with pages', async () => {
@@ -477,6 +503,7 @@ describe('DashboardTabs', () => {
       expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(1);
       expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('explore');
+      expect(jest.mocked(recentActivityFilterChanged)).toHaveBeenCalledWith({ filter: 'explore' });
       expect(jest.mocked(pageHistorySrv.getEntries)).toHaveBeenCalledTimes(1);
       // The counter and the options follow the whole history, not the filtered rows.
       expect(screen.getByRole('tab', { name: /recent activity.*2/i })).toBeInTheDocument();
@@ -513,8 +540,11 @@ describe('DashboardTabs', () => {
       const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
       await user.click(await screen.findByRole('tab', { name: /starred/i }));
+      expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(1);
       await user.click(screen.getByRole('tab', { name: /^recent/i }));
       expect(jest.mocked(tabChanged)).toHaveBeenLastCalledWith({ tab: 'recent' });
+      // Shown again: the user came back to it.
+      expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(2);
 
       await user.click(screen.getByRole('link', { name: /^Explore/ }));
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
@@ -522,6 +552,7 @@ describe('DashboardTabs', () => {
         action: 'open_page',
         placement: 'list',
         page_kind: 'explore',
+        position: 0,
       });
     });
 
