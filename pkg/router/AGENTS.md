@@ -194,7 +194,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `appmanifest_apiserver_url` | Remote apiserver serving the RouteBackend and AppManifest CRs. Unset disables the CR source. The legacy `apiserver_url` is a hard error. |
 | `apiserver_ca_file`, `apiserver_insecure` | TLS settings for `appmanifest_apiserver_url` only. |
-| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target is set. The CAP token is exchanged per request. |
+| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
@@ -212,7 +212,8 @@ Legacy targets keep their previous relative priority: cloud app platform before 
 | Key | Meaning |
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
-| `audience` | Required when `url` is set. |
+| `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
 | `ca_file`, `insecure` | Per-target TLS settings. |
