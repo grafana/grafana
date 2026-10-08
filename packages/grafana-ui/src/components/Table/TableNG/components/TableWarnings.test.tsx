@@ -3,18 +3,42 @@ import userEvent from '@testing-library/user-event';
 
 import { createTheme, ThemeContext } from '@grafana/data';
 
-import { TableWarnings } from './TableWarnings';
+import { TableWarningContent, TableWarnings } from './TableWarnings';
 
-it.each(['light', 'dark'] as const)('uses the warning color and offsets from existing tooltips in %s mode', (mode) => {
+it.each(['light', 'dark'] as const)('groups warnings in a compact warning surface in %s mode', (mode) => {
+  const theme = createTheme({ colors: { mode } });
+  const { container } = render(
+    <ThemeContext.Provider value={theme}>
+      <TableWarningContent
+        warnings={[
+          { id: 'size', message: 'Content is too long.' },
+          { id: 'other', message: 'Another warning.' },
+        ]}
+      />
+    </ThemeContext.Provider>
+  );
+  expect(container.firstElementChild).toHaveStyle({
+    backgroundColor: theme.colors.warning.subtleBackground,
+    color: theme.colors.text.primary,
+    padding: theme.spacing(1),
+  });
+  expect(screen.getByTestId('icon-exclamation-triangle')).toHaveStyle({ color: theme.colors.warning.text });
+  expect(screen.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
+    'Content is too long.',
+    'Another warning.',
+  ]);
+});
+
+it.each(['light', 'dark'] as const)('uses the warning color in the header corner in %s mode', (mode) => {
   const theme = createTheme({ colors: { mode } });
   render(
     <ThemeContext.Provider value={theme}>
-      <TableWarnings scope="cell" alignRight offset warnings={[{ id: 'size', message: 'Content is too long.' }]} />
+      <TableWarnings scope="field" alignRight warnings={[{ id: 'size', message: 'Content is too long.' }]} />
     </ThemeContext.Provider>
   );
-  expect(screen.getByRole('button', { name: 'Cell warnings' })).toHaveStyle({
+  expect(screen.getByRole('button', { name: 'Field warnings' })).toHaveStyle({
     background: `linear-gradient(to top right, transparent 62.5%, ${theme.colors.warning.main} 50%)`,
-    right: theme.spacing(2.25),
+    right: theme.spacing(0.25),
   });
 });
 

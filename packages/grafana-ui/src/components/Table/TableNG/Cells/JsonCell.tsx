@@ -18,6 +18,7 @@ export function JsonCell({
   cellOptions,
   theme,
   jsonSyntaxHighlightingEnabled,
+  tableRefreshEnabled,
 }: TableCellRendererProps) {
   const text = formattedValueToString(field.display!(value));
   const enabled =
@@ -37,7 +38,7 @@ export function JsonCell({
   }, [enabled, text]);
 
   return (
-    <TextCellContents field={field} rowIdx={rowIdx}>
+    <TextCellContents field={field} rowIdx={rowIdx} tableRefreshEnabled={tableRefreshEnabled}>
       {highlight ? (
         <span>
           <Suspense fallback={text}>

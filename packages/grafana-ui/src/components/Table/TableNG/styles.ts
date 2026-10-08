@@ -53,6 +53,7 @@ export const isTableCellStylesKeyEqual = (cacheKey: Key, key: RawKey): boolean =
   cacheKey[1].hoverOverflow === key[1].hoverOverflow &&
   cacheKey[1].maxHeight === key[1].maxHeight &&
   cacheKey[1].textAlign === key[1].textAlign &&
+  cacheKey[1].tableRefreshEnabled === key[1].tableRefreshEnabled &&
   cacheKey[1].textWrap === key[1].textWrap;
 
 // Geometry shared by the two header corner masks (see their use in `getGridStyles`). react-data-grid
@@ -584,6 +585,13 @@ export const getTooltipStyles = memoize((theme: GrafanaTheme2, textAlign: TextAl
     width: theme.spacing(1.75),
     height: theme.spacing(1.75),
     background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.border.strong),
+    '&[data-warning=true]': {
+      background: caretTriangle(textAlign === 'right' ? 'right' : 'left', theme.colors.warning.main),
+    },
+    '&:focus-visible': {
+      outline: `2px solid ${theme.colors.primary.main}`,
+      outlineOffset: 1,
+    },
   }),
 }));
 

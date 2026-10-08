@@ -46,7 +46,6 @@ import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
-import { TableWarnings } from './components/TableWarnings';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS, TABLE } from './constants';
 import {
   getCellActionStyles,
@@ -390,6 +389,7 @@ function buildColumnsFromFields(
     const fieldAppliesToRow =
       cellOptions.type === TableCellDisplayMode.ColorBackground && cellOptions.applyToRow === true;
     const cellStyleOptions: TableCellStyleOptions = {
+      tableRefreshEnabled,
       textAlign,
       textWrap,
       shouldOverflow,
@@ -471,7 +471,13 @@ function buildColumnsFromFields(
 
     result.cellRootRenderers[displayName] = renderCellRoot;
 
-    const renderBasicCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
+    let wrapCellContent: (
+      props: RenderCellProps<TableRow, TableSummaryRow>,
+      content: JSX.Element,
+      warnings: TableWarning[]
+    ) => JSX.Element = (_props, content) => content;
+
+    const renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
       const rowIdx = props.row.__index;
       const value = props.row[props.column.key];
       // Only rendered text cells need this check; fixed-height tables still avoid scanning values.
@@ -514,16 +520,9 @@ function buildColumnsFromFields(
             getActions={getCellActions}
             disableSanitizeHtml={disableSanitizeHtml}
             jsonSyntaxHighlightingEnabled={jsonSyntaxHighlightingEnabled}
+            tableRefreshEnabled={tableRefreshEnabled}
             getTextColorForBackground={getTextColorForBackground}
           />
-          {cellWarnings.length > 0 && (
-            <TableWarnings
-              warnings={cellWarnings}
-              scope="cell"
-              alignRight={textAlign === 'right'}
-              offset={Boolean(field.config.custom?.tooltip?.field)}
-            />
-          )}
           {(inspect || showFilters || showAssistant) && (
             <TableCellActions
               tableRefreshEnabled={tableRefreshEnabled}
@@ -545,92 +544,94 @@ function buildColumnsFromFields(
         cellResult = <div className={clsx(maxHeightClassName, cellSpecificStyles)}>{cellResult}</div>;
       }
 
-      return cellResult;
+      return wrapCellContent(props, cellResult, cellWarnings);
     };
 
-    // renderCellContent fires second.
-    let renderCellContent = renderBasicCellContent;
-
     const tooltipFieldName = field.config.custom?.tooltip?.field;
-    if (tooltipFieldName) {
+    if (tooltipFieldName || (isTextCell && hoverOverflow && shouldOverflow)) {
       // The tooltip field is usually hidden, so it's not part of `preparedFields`. Run it through the
       // same preparation so the tooltip formats its value exactly like a rendered cell would.
-      const rawTooltipField = frame.fields.find(predicateByName(tooltipFieldName));
-      const tooltipField = rawTooltipField ? prepareFieldsForDisplay([rawTooltipField], theme)[0] : undefined;
-      if (tooltipField) {
-        const tooltipDisplayName = getDisplayName(tooltipField);
-        const tooltipCellOptions = getCellOptions(tooltipField);
-        const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
+      const rawTooltipField = tooltipFieldName ? frame.fields.find(predicateByName(tooltipFieldName)) : undefined;
+      const tooltipField = rawTooltipField ? prepareFieldsForDisplay([rawTooltipField], theme)[0] : field;
+      const tooltipDisplayName = getDisplayName(tooltipField);
+      const tooltipCellOptions = getCellOptions(tooltipField);
+      const tooltipFieldRenderer = getCellRenderer(tooltipField, tooltipCellOptions);
 
-        const tooltipCellStyleOptions = {
-          textAlign: getAlignment(tooltipField),
-          // tooltips are free-floating overlays that should reveal the full value, so we
-          // always wrap their content and never inherit the per-row cell-height clamp
-          // (which would line-clamp/cut off the content).
-          textWrap: true,
-          shouldOverflow: false,
-          hoverOverflow: true,
-        } satisfies TableCellStyleOptions;
-        const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
-        const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
-        const tooltipSpecificStyles = getCellSpecificStyles(
-          tooltipCellOptions.type,
-          tooltipField,
-          theme,
-          tooltipCellStyleOptions
-        );
-        const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
-        const tooltipClasses = getTooltipStyles(theme, textAlign);
+      const tooltipCellStyleOptions = {
+        tableRefreshEnabled,
+        textAlign: getAlignment(tooltipField),
+        // tooltips are free-floating overlays that should reveal the full value, so we
+        // always wrap their content and never inherit the per-row cell-height clamp
+        // (which would line-clamp/cut off the content).
+        textWrap: true,
+        shouldOverflow: false,
+        hoverOverflow: true,
+      } satisfies TableCellStyleOptions;
+      const tooltipCanBeColorized = canFieldBeColorized(tooltipCellOptions.type, applyToRowBgFn);
+      const tooltipDefaultStyles = getDefaultCellStyles(theme, tooltipCellStyleOptions);
+      const tooltipSpecificStyles = getCellSpecificStyles(
+        tooltipCellOptions.type,
+        tooltipField,
+        theme,
+        tooltipCellStyleOptions
+      );
+      const tooltipLinkStyles = getLinkStyles(theme, tooltipCanBeColorized);
+      const tooltipClasses = getTooltipStyles(theme, textAlign);
 
-        const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
-        const tooltipWidth =
-          placement === TableCellTooltipPlacement.Left || placement === TableCellTooltipPlacement.Right
-            ? tooltipField.config.custom?.width
-            : width;
+      const placement = field.config.custom?.tooltip?.placement ?? TableCellTooltipPlacement.Auto;
+      const tooltipWidth =
+        placement === TableCellTooltipPlacement.Left || placement === TableCellTooltipPlacement.Right
+          ? tooltipField.config.custom?.width
+          : width;
 
-        const tooltipProps = {
-          cellOptions: tooltipCellOptions,
-          classes: tooltipClasses,
-          className: clsx(
-            tooltipClasses.tooltipContent,
-            tooltipDefaultStyles,
-            tooltipSpecificStyles,
-            tooltipLinkStyles
-          ),
-          data: frame,
-          disableSanitizeHtml,
-          jsonSyntaxHighlightingEnabled,
-          field: tooltipField,
-          getActions: getCellActions,
-          getTextColorForBackground,
-          gridRef,
-          placement,
-          renderer: tooltipFieldRenderer,
-          theme,
-          width: tooltipWidth,
-        } satisfies Partial<React.ComponentProps<typeof TableCellTooltip>>;
+      const tooltipProps = {
+        showFieldContent: Boolean(rawTooltipField),
+        cellOptions: tooltipCellOptions,
+        classes: tooltipClasses,
+        className: clsx(tooltipClasses.tooltipContent, tooltipDefaultStyles, tooltipSpecificStyles, tooltipLinkStyles),
+        data: frame,
+        disableSanitizeHtml,
+        jsonSyntaxHighlightingEnabled,
+        tableRefreshEnabled,
+        field: tooltipField,
+        getActions: getCellActions,
+        getTextColorForBackground,
+        gridRef,
+        placement,
+        renderer: tooltipFieldRenderer,
+        theme,
+        width: tooltipWidth,
+      } satisfies Partial<React.ComponentProps<typeof TableCellTooltip>>;
 
-        renderCellContent = (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-          // cached so we don't care about multiple calls.
-          const tooltipHeight = rowHeightFn(props.row);
-          let tooltipStyle: CSSProperties = { ...rowCellStyle };
-          if (tooltipCanBeColorized) {
-            const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]);
-            const tooltipCellColorStyles = getCellColorInlineStyles(
-              tooltipCellOptions,
-              tooltipDisplayValue,
-              applyToRowBgFn != null
-            );
-            Object.assign(tooltipStyle, tooltipCellColorStyles);
-          }
-
-          return (
-            <TableCellTooltip {...tooltipProps} height={tooltipHeight} rowIdx={props.row.__index} style={tooltipStyle}>
-              {renderBasicCellContent(props)}
-            </TableCellTooltip>
+      wrapCellContent = (props, content, warnings): JSX.Element => {
+        if (!rawTooltipField && warnings.length === 0) {
+          return content;
+        }
+        // cached so we don't care about multiple calls.
+        const tooltipHeight = rowHeightFn(props.row);
+        let tooltipStyle: CSSProperties = { ...rowCellStyle };
+        if (tooltipCanBeColorized) {
+          const tooltipDisplayValue = tooltipField.display!(props.row[tooltipDisplayName]);
+          const tooltipCellColorStyles = getCellColorInlineStyles(
+            tooltipCellOptions,
+            tooltipDisplayValue,
+            applyToRowBgFn != null
           );
-        };
-      }
+          Object.assign(tooltipStyle, tooltipCellColorStyles);
+        }
+
+        return (
+          <TableCellTooltip
+            {...tooltipProps}
+            warnings={warnings}
+            height={tooltipHeight}
+            rowIdx={props.row.__index}
+            style={tooltipStyle}
+          >
+            {content}
+          </TableCellTooltip>
+        );
+      };
     }
 
     result.columns.push({

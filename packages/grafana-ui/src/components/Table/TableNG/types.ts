@@ -188,6 +188,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
@@ -269,6 +270,7 @@ export interface GeoCellProps {
 }
 
 export interface AutoCellProps {
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   rowIdx: number;
@@ -299,6 +301,7 @@ export interface TableWarning {
 }
 
 export interface TableCellStyleOptions {
+  tableRefreshEnabled?: boolean;
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;

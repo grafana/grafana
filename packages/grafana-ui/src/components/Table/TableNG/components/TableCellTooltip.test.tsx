@@ -1,5 +1,5 @@
 /* eslint-disable testing-library/prefer-user-event */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type RefObject } from 'react';
 
@@ -9,6 +9,7 @@ import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { JsonCell } from '../Cells/JsonCell';
+import { getTooltipStyles } from '../styles';
 import { type TableCellRenderer } from '../types';
 
 import { TableCellTooltip, type TableCellTooltipProps } from './TableCellTooltip';
@@ -64,6 +65,92 @@ function renderInRdgCell(overrides: Record<string, unknown> = {}) {
 const CARET_LABEL = 'Toggle tooltip';
 
 describe('TableCellTooltip', () => {
+  it('shows warnings before field content with one warning-colored indicator', async () => {
+    renderInRdgCell({
+      classes: getTooltipStyles(theme, 'left'),
+      warnings: [
+        { id: 'size', message: 'Content is too long.' },
+        { id: 'other', message: 'Another warning.' },
+      ],
+    });
+    const trigger = screen.getByRole('button', { name: 'Cell warnings' });
+    expect(screen.getAllByRole('button')).toHaveLength(1);
+    expect(trigger).toHaveStyle({
+      background: `linear-gradient(to top left, transparent 62.5%, ${theme.colors.warning.main} 50%)`,
+    });
+    await userEvent.hover(trigger);
+    const tooltip = screen.getByRole('tooltip');
+    expect(
+      within(tooltip)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent)
+    ).toEqual(['Content is too long.', 'Another warning.']);
+    expect(within(tooltip).getByRole('separator')).toBeInTheDocument();
+    expect(tooltip).toHaveTextContent(/^Content is too long.Another warning.hello$/);
+    await userEvent.click(trigger);
+    await userEvent.click(within(tooltip).getByText('hello'));
+    expect(trigger).toHaveAttribute('aria-pressed', 'true');
+    expect(tooltip).toBeInTheDocument();
+  });
+
+  it.each([null, undefined, ''])('keeps warnings without an empty field section for %s', async (value) => {
+    renderInRdgCell({ field: makeField([value]), warnings: [{ id: 'size', message: 'Content is too long.' }] });
+    await userEvent.click(screen.getByRole('button', { name: 'Cell warnings' }));
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Content is too long.');
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('tooltip-content')).not.toBeInTheDocument();
+  });
+
+  it('pins and dismisses warning-only content with Escape while focused', async () => {
+    const user = userEvent.setup();
+    renderInRdgCell({ showFieldContent: false, warnings: [{ id: 'size', message: 'Content is too long.' }] });
+    await user.tab();
+    const trigger = screen.getByRole('button', { name: 'Cell warnings' });
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Content is too long.');
+    expect(trigger).toHaveAccessibleDescription('Content is too long.');
+    expect(screen.queryByTestId('tooltip-content')).not.toBeInTheDocument();
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+    await user.keyboard('{Enter}');
+    expect(trigger).toHaveAttribute('aria-pressed', 'true');
+    await user.keyboard('{Escape}');
+    expect(trigger).toHaveFocus();
+    expect(trigger).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('keeps the gray indicator for field-only content', async () => {
+    renderInRdgCell({ classes: getTooltipStyles(theme, 'left') });
+    const trigger = screen.getByRole('button', { name: CARET_LABEL });
+    expect(trigger).toHaveStyle({
+      background: `linear-gradient(to top left, transparent 62.5%, ${theme.colors.border.strong} 50%)`,
+    });
+    await userEvent.click(trigger);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('hello');
+    expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+  });
+
+  it('keeps the preview open while moving from the indicator to its content', async () => {
+    const user = userEvent.setup();
+    renderInRdgCell({ warnings: [{ id: 'size', message: 'Content is too long.' }] });
+    await user.hover(screen.getByRole('button', { name: 'Cell warnings' }));
+    await user.hover(screen.getByRole('tooltip'));
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Content is too long.');
+    await user.unhover(screen.getByRole('tooltip'));
+    await waitFor(() => expect(screen.queryByRole('tooltip')).not.toBeInTheDocument());
+  });
+
+  it('closes a pinned popover when another cell indicator is clicked', async () => {
+    const user = userEvent.setup();
+    renderInRdgCell({ warnings: [{ id: 'first', message: 'First warning.' }] });
+    renderInRdgCell();
+    const first = screen.getByRole('button', { name: 'Cell warnings' });
+    await user.click(first);
+    expect(first).toHaveAttribute('aria-pressed', 'true');
+    await user.click(screen.getByRole('button', { name: CARET_LABEL }));
+    expect(first).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+  });
+
   it('passes JSON highlighting through to tooltip content', async () => {
     const field = makeField(['{"active":true}']);
     field.display = () => ({ text: '{"active":true}', numeric: NaN });
@@ -219,7 +306,7 @@ describe('TableCellTooltip', () => {
       const caret = screen.getByRole('button', { name: CARET_LABEL });
       await user.hover(caret);
       await user.unhover(caret);
-      expect(screen.queryByTestId('tooltip-content')).not.toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByTestId('tooltip-content')).not.toBeInTheDocument());
     });
 
     it('focusing the caret shows the Popover content', () => {

@@ -2569,22 +2569,30 @@ describe('TableNG', () => {
       expect(screen.getByRole('dialog')).toHaveTextContent('x'.repeat(10_000));
     });
 
-    it('keeps JSON cell warnings and configured tooltips independently accessible', async () => {
+    it('combines JSON cell warnings and field content behind one indicator', async () => {
       const data = createJsonDataFrame(false);
       data.fields[1].values = [{ content: 'x'.repeat(10_000) }];
+      data.fields[0].values = ['Field context'];
       data.fields[1].config.custom.tooltip = { field: data.fields[0].name };
       render(<TableNG data={data} width={800} height={600} />);
       const warning = screen.getByRole('button', { name: 'Cell warnings' });
       const cell = within(warning.closest('[role="gridcell"]') as HTMLElement);
-      expect(cell.getByRole('button', { name: 'Toggle tooltip' })).toBeInTheDocument();
+      expect(cell.queryByRole('button', { name: 'Toggle tooltip' })).not.toBeInTheDocument();
       await user.hover(warning);
-      expect(await screen.findByRole('tooltip')).toHaveTextContent('Content is too long to expand on hover.');
-      await user.unhover(warning);
-      await user.click(cell.getByRole('button', { name: 'Toggle tooltip' }));
-      expect(cell.getByRole('button', { name: 'Toggle tooltip' })).toHaveAttribute('aria-pressed', 'true');
+      const tooltip = await screen.findByTestId(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper);
+      expect(tooltip).toHaveTextContent('Content is too long to expand on hover.');
+      expect(within(tooltip).getByRole('separator')).toBeInTheDocument();
+      expect(tooltip).toHaveTextContent('Field context');
+      await user.click(warning);
+      expect(warning).toHaveAttribute('aria-pressed', 'true');
     });
 
-    it('gives clipped text an ellipsis container without changing its value', () => {
+    it.each([
+      [false, TableCellDisplayMode.Auto],
+      [true, TableCellDisplayMode.Auto],
+      [false, TableCellDisplayMode.JSONView],
+      [true, TableCellDisplayMode.JSONView],
+    ])('gates the ellipsis container with table.refresh=%s for %s cells', (tableRefreshEnabled, type) => {
       const data = withFieldOverrides(
         toDataFrame({
           fields: [
@@ -2592,23 +2600,38 @@ describe('TableNG', () => {
               name: 'message',
               type: FieldType.string,
               values: ['clipped message'],
-              config: { custom: { wrapText: false, width: 100 } },
+              config: { custom: { wrapText: false, width: 100, cellOptions: { type } } },
             },
           ],
         })
       );
-      render(<TableNG data={data} width={800} height={600} />);
-      expect(screen.getByText('clipped message')).toHaveStyle({
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        minWidth: 0,
-      });
+      render(<TableNG data={data} width={800} height={600} tableRefreshEnabled={tableRefreshEnabled} />);
+      const text = screen.getByText('clipped message');
+      if (tableRefreshEnabled) {
+        expect(text.parentElement).toHaveAttribute('role', 'gridcell');
+        expect(text).toHaveStyle({ overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 });
+      } else {
+        expect(text).toHaveAttribute('role', 'gridcell');
+        expect(text.firstChild?.nodeType).toBe(Node.TEXT_NODE);
+      }
     });
 
-    it('clamps the text container when wrapped rows have a maximum height', () => {
-      render(<TableNG data={wrappedFrame(['wrapped message'])} width={800} height={600} maxRowHeight={100} />);
+    it.each([false, true])('clamps wrapped rows with table.refresh=%s', (tableRefreshEnabled) => {
+      render(
+        <TableNG
+          data={wrappedFrame(['wrapped message'])}
+          width={800}
+          height={600}
+          maxRowHeight={100}
+          tableRefreshEnabled={tableRefreshEnabled}
+        />
+      );
       const text = screen.getByText('wrapped message');
-      expect(text).toHaveStyle({ display: '-webkit-box' });
+      if (tableRefreshEnabled) {
+        expect(text).toHaveStyle({ display: '-webkit-box' });
+      } else {
+        expect(text.parentElement).toHaveAttribute('role', 'gridcell');
+      }
       // jsdom omits vendor-prefixed properties from computed styles.
       const clamp = Array.from(document.styleSheets)
         .flatMap((sheet) => Array.from(sheet.cssRules))
@@ -2619,6 +2642,7 @@ describe('TableNG', () => {
             text.matches(rule.selectorText)
         );
       expect(clamp?.style.getPropertyValue('-webkit-box-orient')).toBe('vertical');
+      expect(clamp?.style.getPropertyValue('display')).toBe('-webkit-box');
     });
 
     function wrappedFrame(values: string[]) {

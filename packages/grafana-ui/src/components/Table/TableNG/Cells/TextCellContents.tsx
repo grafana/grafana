@@ -11,13 +11,22 @@ export const textCellClassName = css({
   textOverflow: 'ellipsis',
 });
 
-export function TextCellContents({ field, rowIdx, children }: { field: Field; rowIdx: number; children: ReactNode }) {
-  // A flex cell's anonymous text item cannot show ellipsis. Keep links inside the clipping box.
-  return (
-    <div className={textCellClassName}>
-      <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
-        {children}
-      </MaybeWrapWithLink>
-    </div>
+export function TextCellContents({
+  field,
+  rowIdx,
+  children,
+  tableRefreshEnabled,
+}: {
+  field: Field;
+  rowIdx: number;
+  children: ReactNode;
+  tableRefreshEnabled?: boolean;
+}) {
+  const contents = (
+    <MaybeWrapWithLink field={field} rowIdx={rowIdx}>
+      {children}
+    </MaybeWrapWithLink>
   );
+  // A flex cell's anonymous text item cannot show ellipsis. Keep links inside the clipping box.
+  return tableRefreshEnabled ? <div className={textCellClassName}>{contents}</div> : contents;
 }
