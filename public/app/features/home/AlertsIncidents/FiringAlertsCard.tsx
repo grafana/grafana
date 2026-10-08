@@ -6,10 +6,11 @@ import { type SeverityLevel } from 'app/features/alerting/unified/triage/scene/f
 import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
+import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { SummaryCard, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
 import { type TeamSelection, resolveTeamScope } from './teamFilter';
 import { type FiringAlertsData } from './useFiringAlerts';
@@ -154,7 +155,7 @@ export function FiringAlertsCard({
                 </SummaryCardPrefix>
               )
             }
-            trailing={<SummaryCardAge date={startedAt} />}
+            trailing={<TimeAgoCell date={startedAt} />}
             href={detailHref}
             onClick={() => ctaClicked({ surface: 'alerts_card', action: 'alert_detail', placement: 'list' })}
           />

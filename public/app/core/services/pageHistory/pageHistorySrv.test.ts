@@ -7,7 +7,7 @@ import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { PAGE_HISTORY_MAX_BYTES, PageHistorySrv } from './pageHistorySrv';
+import { PAGE_HISTORY_MAX_CHARS, PageHistorySrv } from './pageHistorySrv';
 import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry } from './types';
 
 /** UserStorage's localStorage fallback key for the anonymous user in org 1. */
@@ -195,7 +195,7 @@ describe('PageHistorySrv', () => {
     expect(await srv.getEntries()).toEqual([]);
   });
 
-  it('keeps the newest pages per kind and a byte budget, evicting the oldest first', async () => {
+  it('keeps the newest pages per kind and a length budget, evicting the oldest first', async () => {
     const srv = startAt('/alerting/list');
     await srv.getEntries();
 
@@ -210,18 +210,18 @@ describe('PageHistorySrv', () => {
       '/alerting/list',
     ]);
 
-    const bigQuery = `?q=${'x'.repeat(Math.ceil(PAGE_HISTORY_MAX_BYTES / 3))}`;
+    const bigQuery = `?q=${'x'.repeat(Math.ceil(PAGE_HISTORY_MAX_CHARS / 3))}`;
     for (let i = 0; i < PAGE_HISTORY_MAX_PER_KIND; i++) {
       locationService.push(`/d/big-${i}${bigQuery}`);
     }
     await jest.advanceTimersByTimeAsync(1000);
 
-    const byBytes = (await srv.getEntries()).filter((e) => e.kind === 'dashboard');
-    expect(byBytes.length).toBeLessThan(PAGE_HISTORY_MAX_PER_KIND);
-    expect(window.localStorage.getItem(STORAGE_KEY)!.length).toBeLessThanOrEqual(PAGE_HISTORY_MAX_BYTES);
+    const byLength = (await srv.getEntries()).filter((e) => e.kind === 'dashboard');
+    expect(byLength.length).toBeLessThan(PAGE_HISTORY_MAX_PER_KIND);
+    expect(window.localStorage.getItem(STORAGE_KEY)!.length).toBeLessThanOrEqual(PAGE_HISTORY_MAX_CHARS);
     // Every surviving row is one of the newest pushes, contiguous from the top.
-    expect(byBytes.map((e) => e.kind === 'dashboard' && e.uid)).toEqual(
-      Array.from({ length: byBytes.length }, (_, i) => `big-${PAGE_HISTORY_MAX_PER_KIND - 1 - i}`)
+    expect(byLength.map((e) => e.kind === 'dashboard' && e.uid)).toEqual(
+      Array.from({ length: byLength.length }, (_, i) => `big-${PAGE_HISTORY_MAX_PER_KIND - 1 - i}`)
     );
   });
 

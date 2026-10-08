@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Badge, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
@@ -8,20 +8,12 @@ import { type LocationInfo } from 'app/features/search/service/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 import { useSelector } from 'app/types/store';
 
-import { SummaryCardAge } from '../AlertsIncidents/SummaryCard';
+import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
-import {
-  SEPARATOR,
-  describeAppState,
-  describeDashboardState,
-  describeExploreState,
-  getNavTitle,
-} from './describePageState';
-import { getPageKindMeta } from './pageKinds';
-import { type RecentActivityItem } from './useRecentActivity';
+import { type RecentActivityItem, getPageKindMeta, toRow } from './pageKinds';
 
 interface Props {
   items: RecentActivityItem[];
@@ -30,46 +22,6 @@ interface Props {
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
   density?: 'default' | 'compact';
-}
-
-interface Row {
-  title: string;
-  /** What the link restores (folder and time range, datasource and query, filters); blanks are dropped. */
-  details: Array<string | undefined>;
-}
-
-const AREA_PREFIX = { alerting: /^\/alerting\/?/, app: /^\/a\/?/ };
-
-/** Everything a row shows for one kind of page, in one place. */
-function toRow(item: RecentActivityItem, navTree: NavModelItem[], foldersByUid: Record<string, LocationInfo>): Row {
-  switch (item.kind) {
-    case 'dashboard':
-      return {
-        title: item.dashboard.name,
-        details: [foldersByUid[item.dashboard.location]?.name, describeDashboardState(item.search)],
-      };
-    case 'explore':
-      return {
-        title: t('home.recent-activity-tab.kind-explore', 'Explore'),
-        details: [describeExploreState(item.panes)],
-      };
-    case 'alerting':
-    case 'app': {
-      // Pages in the nav tree use their nav label. Deep links use the title the page set, which
-      // often is just the section's ("Incidents" for every incident), so the path tells them apart.
-      const navTitle = getNavTitle(navTree, item.pathname);
-      const title = navTitle ?? item.title ?? item.pathname;
-      const showPath = !navTitle && title !== item.pathname;
-      return {
-        title,
-        // The badge already names the area, so the path drops its `/alerting` or `/a` prefix.
-        details: [
-          showPath ? item.pathname.replace(AREA_PREFIX[item.kind], '') : undefined,
-          describeAppState(item.search),
-        ],
-      };
-    }
-  }
 }
 
 export function RecentActivityTab({ items, loading, error, retry, foldersByUid, density }: Props) {
@@ -103,14 +55,14 @@ export function RecentActivityTab({ items, loading, error, retry, foldersByUid, 
     <ul className={styles.list}>
       {items.map((item) => {
         const href = item.pathname + item.search;
-        const row = toRow(item, navTree, foldersByUid);
+        const { title, subtitle } = toRow(item, navTree, foldersByUid);
         const { badge, color } = getPageKindMeta(item.kind);
         return (
           <li key={href}>
             <ListRow
               isCompact={density === 'compact'}
-              title={row.title}
-              subtitle={row.details.filter(Boolean).join(SEPARATOR) || undefined}
+              title={title}
+              subtitle={subtitle}
               href={href}
               onClick={() =>
                 ctaClicked({
@@ -125,7 +77,7 @@ export function RecentActivityTab({ items, loading, error, retry, foldersByUid, 
                   <span className={styles.kind}>
                     <Badge text={badge} color={color} />
                   </span>
-                  <SummaryCardAge date={item.lastVisited} />
+                  <TimeAgoCell date={item.lastVisited} />
                 </Stack>
               }
             />

@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
-import { type GrafanaTheme2, dateTimeFormatTimeAgoShort } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
 import { Alert, Badge, Button, Stack, Text, useStyles2 } from '@grafana/ui';
@@ -129,18 +129,6 @@ export function SummaryCardPrefix({ children }: { children: ReactNode }) {
   return <span className={styles.prefix}>{children}</span>;
 }
 
-/** Right-aligned fixed-width relative-time cell (`11m ago`) so times line up across rows. */
-export function SummaryCardAge({ date }: { date: Date | number }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <span className={styles.age}>
-      <Text color="secondary" variant="bodySmall">
-        {dateTimeFormatTimeAgoShort(date)}
-      </Text>
-    </span>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
@@ -159,14 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   rowPadding: css({
     gap: theme.spacing(1),
     padding: theme.spacing(0.5, 0),
-  }),
-  age: css({
-    marginLeft: 'auto',
-    flexShrink: 0,
-    // Just fits "11mo ago"; a fixed width keeps the neighbouring column from jumping between rows.
-    minWidth: theme.spacing(6.5),
-    display: 'inline-flex',
-    justifyContent: 'flex-end',
   }),
   prefix: css({
     display: 'inline-flex',

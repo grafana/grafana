@@ -4,7 +4,7 @@ import * as z from 'zod';
 
 import { locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
-import { type AppChromeService, type AppChromeState } from 'app/core/components/AppChrome/AppChromeService';
+import { type AppChromeService, getPageTitle } from 'app/core/components/AppChrome/AppChromeService';
 import { isPageNavigation } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
@@ -14,8 +14,8 @@ import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry, type PageHistoryKind 
 
 const STORAGE_SERVICE = 'grafana-page-history';
 const PERSIST_MS = 1000;
-/** Serialized JSON length. An Explore search can be several KB, so the count cap alone does not bound bytes. */
-export const PAGE_HISTORY_MAX_BYTES = 200_000;
+/** `JSON.stringify(rows).length`. An Explore search can be several KB, so the count cap alone does not bound size. */
+export const PAGE_HISTORY_MAX_CHARS = 200_000;
 /** JS `Date` range; larger values are not instants. */
 const MAX_EPOCH_MS = 8.64e15;
 
@@ -36,15 +36,6 @@ function toStored({ pathname, search, lastVisited, title }: PageHistoryEntry): S
   return { pathname, search, lastVisited, title };
 }
 
-/** The nav title the page set, so a rule page reads as its rule; `undefined` until the page sets its nav after a route change. */
-function pageTitle({ pageNav, sectionNav }: AppChromeState): string | undefined {
-  if (pageNav?.text) {
-    return pageNav.text;
-  }
-  // The route-change placeholder has an empty main section.
-  return sectionNav.main.text ? sectionNav.node.text : undefined;
-}
-
 /** Per page, keeps the entry with the larger `lastVisited`; `current` wins ties. Result is newest first. */
 function mergeByPage(current: PageHistoryEntry[], stored: PageHistoryEntry[]): PageHistoryEntry[] {
   const byKey = new Map<string, PageHistoryEntry>();
@@ -58,19 +49,19 @@ function mergeByPage(current: PageHistoryEntry[], stored: PageHistoryEntry[]): P
   return [...byKey.values()].sort((a, b) => b.lastVisited - a.lastVisited);
 }
 
-/** Newest N per kind, then a byte budget on the stored form; always evicts the oldest (last) entries first. */
+/** Newest N per kind, then a length budget on the stored form; always evicts the oldest (last) entries first. */
 function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
   const kept = new Map<PageHistoryKind, number>();
   const capped: PageHistoryEntry[] = [];
   // `[` and `]`, then one `,` per additional row: exactly JSON.stringify(rows).length.
-  let bytes = 2;
+  let length = 2;
   for (const entry of entries) {
     const count = kept.get(entry.kind) ?? 0;
     if (count >= PAGE_HISTORY_MAX_PER_KIND) {
       continue;
     }
-    bytes += JSON.stringify(toStored(entry)).length + (capped.length > 0 ? 1 : 0);
-    if (bytes > PAGE_HISTORY_MAX_BYTES) {
+    length += JSON.stringify(toStored(entry)).length + (capped.length > 0 ? 1 : 0);
+    if (length > PAGE_HISTORY_MAX_CHARS) {
       break;
     }
     kept.set(entry.kind, count + 1);
@@ -127,7 +118,7 @@ export class PageHistorySrv {
       this.apply(location, isNavigation);
     });
     // Pages set their nav after they render, so the title arrives after the navigation was recorded.
-    const chromeSubscription = chrome.state.subscribe((state) => this.setTitle(pageTitle(state)));
+    const chromeSubscription = chrome.state.subscribe((state) => this.setTitle(getPageTitle(state)));
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') {
         this.persist.flush();

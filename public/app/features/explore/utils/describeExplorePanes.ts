@@ -6,9 +6,10 @@ import { parseURL } from '../hooks/useStateSync/parseURL';
 
 /**
  * Datasource-specific query text fields, most common first (Prometheus/Loki, Elastic/Tempo, SQL, Graphite,
- * CloudWatch). Datasources define their own text via `getQueryDisplayText`, but that needs the plugin module
- * loaded; reading the field keeps callers like the homepage from loading plugins for a subtitle. Queries
- * that keep their text elsewhere (nested shapes such as Azure's) get no text, not a wrong one.
+ * CloudWatch). This is a hint for a subtitle, not `createQueryText`: that needs the datasource plugin loaded
+ * for `getQueryDisplayText`, and its no-plugin fallback is the whole query model as JSON, which must stay
+ * faithful for copying but is noise here. Queries that keep their text elsewhere (nested shapes such as
+ * Azure's) get no text, not a wrong one.
  */
 const QUERY_TEXT_FIELDS = ['expr', 'query', 'rawSql', 'target', 'expression'] as const;
 

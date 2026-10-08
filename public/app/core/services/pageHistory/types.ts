@@ -20,7 +20,7 @@ export type PageHistoryEntry = PageIdentity & {
   /** Epoch ms of the last visit or in-page URL update. */
   lastVisited: number;
   /**
-   * What the page last put in the chrome (the browser-tab title); absent until the page sets its nav.
+   * The title the page gave the chrome (its `pageNav` text, else its section's); absent until the page sets its nav.
    * Only alerting and app deep links show it, so a rule or incident page reads as its name instead of its path.
    */
   title?: string;

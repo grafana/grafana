@@ -252,6 +252,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
           {activeTab === RECENT_TAB_ID && hasRecent && !recent.error && (
             <RecentActivityFooter
               counts={recent.counts}
+              total={recent.total}
               filter={recent.filter}
               onFilterChange={recent.setFilter}
               onClear={recent.clear}

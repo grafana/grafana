@@ -1,6 +1,6 @@
 import { type NavModelItem } from '@grafana/data';
 
-import { describeAppState, describeDashboardState, describeExploreState, getNavTitle } from './describePageState';
+import { describeAppState, describeDashboardState, describeExploreState, getNavTitle } from './pageKinds';
 
 describe('describeDashboardState', () => {
   it('shows the time range and variables only', () => {

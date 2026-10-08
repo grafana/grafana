@@ -7,10 +7,11 @@ import { SeverityBars } from 'app/features/alerting/unified/triage/scene/filters
 import { canonicalSeverity } from 'app/features/alerting/unified/triage/scene/filters/severity';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
+import { TimeAgoCell } from '../TimeAgoCell';
 import { ctaClicked } from '../analytics/main';
 
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
-import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { SummaryCard, SummaryCardPrefix } from './SummaryCard';
 import { severityLevelColor } from './severity';
 import { type IncidentsData } from './useIncidents';
 
@@ -74,7 +75,7 @@ export function IncidentsCard({
             )
           }
           title={incident.title}
-          trailing={<SummaryCardAge date={new Date(incident.createdTime)} />}
+          trailing={<TimeAgoCell date={new Date(incident.createdTime)} />}
           href={canAccess ? createBridgeURL(pluginId, `/incidents/${incident.incidentID}`) : undefined}
           onClick={() => ctaClicked({ surface: 'incidents_card', action: 'incident_detail', placement: 'list' })}
           showDivider={redesignEnabled}

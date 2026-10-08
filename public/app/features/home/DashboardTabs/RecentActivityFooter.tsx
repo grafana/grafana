@@ -10,6 +10,7 @@ import { type RecentActivityFilter } from './useRecentActivity';
 
 interface Props {
   counts: PageKindCounts;
+  total: number;
   filter: RecentActivityFilter;
   onFilterChange: (filter: RecentActivityFilter) => void;
   onClear: () => void;
@@ -19,11 +20,10 @@ interface Props {
  * The clear action on the right and, when the history holds more than one kind of page, a filter over
  * those kinds on the left; wraps when the card is too narrow for both.
  */
-export function RecentActivityFooter({ counts, filter, onFilterChange, onClear }: Props) {
+export function RecentActivityFooter({ counts, total, filter, onFilterChange, onClear }: Props) {
   const kinds = PAGE_KINDS.filter((kind) => counts[kind] > 0);
 
   const handleClear = () => {
-    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
     clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
     onClear();
   };

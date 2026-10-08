@@ -2,27 +2,14 @@ import { useAsyncRetry } from 'react-use';
 
 import { useStoredString } from 'app/core/hooks/useStored';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
-import { type PageHistoryEntry, type PageHistoryKind } from 'app/core/services/pageHistory/types';
+import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
 import { searchDashboardsByUid } from 'app/features/browse-dashboards/api/searchDashboardsByUid';
-import { describeExplorePanes, type ExplorePaneDescription } from 'app/features/explore/utils/describeExplorePanes';
-import { type DashboardQueryResult } from 'app/features/search/service/types';
+import { describeExplorePanes } from 'app/features/explore/utils/describeExplorePanes';
 
-import { countByKind, PAGE_KINDS } from './pageKinds';
+import { countByKind, PAGE_KINDS, type RecentActivityItem } from './pageKinds';
 
 /** Last chosen kind filter; remembered per browser. */
 const FILTER_KEY = 'grafana.home.recentActivity.filter';
-
-type EntryOf<K extends PageHistoryKind> = Extract<PageHistoryEntry, { kind: K }>;
-
-/**
- * A history entry plus what needs an async lookup to show it: the search hit that proved the user can
- * still see a dashboard (title, folder), or the datasource names and query text of an Explore page.
- * Formatting happens at render time.
- */
-export type RecentActivityItem =
-  | (EntryOf<'dashboard'> & { dashboard: DashboardQueryResult })
-  | (EntryOf<'explore'> & { panes: ExplorePaneDescription[] })
-  | EntryOf<'alerting' | 'app'>;
 
 /** `''` shows every kind. */
 export type RecentActivityFilter = PageHistoryKind | '';
@@ -62,7 +49,6 @@ export function useRecentActivity() {
   // localStorage is untrusted and a filter can outlive its rows (history cleared elsewhere, dashboards
   // deleted); anything but a kind that has rows shows every kind.
   const filter: RecentActivityFilter = PAGE_KINDS.find((kind) => kind === storedFilter && counts[kind] > 0) ?? '';
-  const setFilter: (filter: RecentActivityFilter) => void = setStoredFilter;
 
   return {
     /** Rows after the kind filter, newest first. */
@@ -71,7 +57,7 @@ export function useRecentActivity() {
     counts,
     total: all.length,
     filter,
-    setFilter,
+    setFilter: setStoredFilter,
     loading,
     error,
     retry,
