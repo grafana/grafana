@@ -15,18 +15,39 @@ interface Props {
   onClear: () => void;
 }
 
-/** Kind filter on the left, the clear action on the right; wraps when the card is too narrow for both. */
+/**
+ * The clear action on the right and, when the history holds more than one kind of page, a filter over
+ * those kinds on the left; wraps when the card is too narrow for both.
+ */
 export function RecentActivityFooter({ counts, filter, onFilterChange, onClear }: Props) {
-  const options: Array<SelectableValue<RecentActivityFilter>> = [
-    { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
-    ...PAGE_KINDS.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
-  ];
+  const kinds = PAGE_KINDS.filter((kind) => counts[kind] > 0);
 
   const handleClear = () => {
     const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
     clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
     onClear();
   };
+
+  const clear = (
+    <FooterActions>
+      <FooterAction onClick={handleClear}>
+        <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
+      </FooterAction>
+    </FooterActions>
+  );
+
+  if (kinds.length < 2) {
+    return (
+      <Box padding={1} paddingTop={1.5}>
+        {clear}
+      </Box>
+    );
+  }
+
+  const options: Array<SelectableValue<RecentActivityFilter>> = [
+    { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
+    ...kinds.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
+  ];
 
   return (
     <Box padding={1} paddingTop={1.5}>
@@ -35,15 +56,10 @@ export function RecentActivityFooter({ counts, filter, onFilterChange, onClear }
           size="sm"
           aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
           options={options}
-          disabledOptions={PAGE_KINDS.filter((kind) => counts[kind] === 0)}
           value={filter}
           onChange={onFilterChange}
         />
-        <FooterActions>
-          <FooterAction onClick={handleClear}>
-            <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
-          </FooterAction>
-        </FooterActions>
+        {clear}
       </Stack>
     </Box>
   );

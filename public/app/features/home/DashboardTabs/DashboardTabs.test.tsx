@@ -415,15 +415,16 @@ describe('DashboardTabs', () => {
       expect(filter.getByRole('radio', { name: 'All' })).toBeChecked();
     });
 
-    it('filters by kind without refetching, remembers the choice and disables kinds with no pages', async () => {
+    it('filters by kind without refetching, remembers the choice and offers only kinds with pages', async () => {
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, recentDashboardEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
       const { user } = render(<DashboardTabs extensionComponents={[]} />);
 
       const filter = within(await screen.findByRole('radiogroup', { name: /show only/i }));
-      expect(filter.getByRole('radio', { name: 'Alerting' })).toBeDisabled();
-      expect(filter.getByRole('radio', { name: 'Apps' })).toBeDisabled();
+      expect(filter.getAllByRole('radio')).toHaveLength(3);
+      expect(filter.queryByRole('radio', { name: 'Alerting' })).not.toBeInTheDocument();
+      expect(filter.queryByRole('radio', { name: 'Apps' })).not.toBeInTheDocument();
 
       await user.click(filter.getByRole('radio', { name: 'Explore' }));
 
@@ -431,9 +432,19 @@ describe('DashboardTabs', () => {
       expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('explore');
       expect(jest.mocked(pageHistorySrv.getEntries)).toHaveBeenCalledTimes(1);
-      // The counter and the disabled state follow the whole history, not the filtered rows.
+      // The counter and the options follow the whole history, not the filtered rows.
       expect(screen.getByRole('tab', { name: /recent activity.*2/i })).toBeInTheDocument();
-      expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeEnabled();
+      expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeInTheDocument();
+    });
+
+    it('hides the filter when every page is of one kind but keeps the clear action', async () => {
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([recentDashboardEntry, dashboardEntry('recent-2')]);
+      server.use(getCustomSearchHandler(recentHits));
+
+      render(<DashboardTabs extensionComponents={[]} />);
+
+      expect(await screen.findByRole('button', { name: /clear recent activity/i })).toBeInTheDocument();
+      expect(screen.queryByRole('radiogroup', { name: /show only/i })).not.toBeInTheDocument();
     });
 
     it('drops dashboards the user can no longer see', async () => {
@@ -490,14 +501,15 @@ describe('DashboardTabs', () => {
 
     it('ignores a stored filter that no longer matches any page', async () => {
       window.localStorage.setItem(FILTER_KEY, 'explore');
-      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([recentDashboardEntry]);
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([recentDashboardEntry, alertingEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
-      render(<DashboardTabs extensionComponents={[]} />);
+      render(<DashboardTabs extensionComponents={[]} />, { preloadedState: { navBarTree } });
 
       expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /Alert rules/ })).toBeInTheDocument();
       expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
-      expect(screen.getByRole('radio', { name: 'Explore' })).toBeDisabled();
+      expect(screen.queryByRole('radio', { name: 'Explore' })).not.toBeInTheDocument();
     });
 
     it('shows a retryable error when the dashboard lookup fails', async () => {
