@@ -297,6 +297,18 @@ describe('getTraceToLogsQuery Splunk custom query', () => {
     expect(query).toEqual({ query: customQueryText, refId: '' });
   });
 
+  it('uses custom query when customQuery is a truthy non-boolean value', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      // JSON written by API clients can carry the flag as a string.
+      { customQuery: 'true', query: customQueryText, filterByTraceID: true } as unknown as TraceToLogsOptionsV2,
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
+  });
+
   it('uses the V2 custom query when jsonData also has a legacy tracesToLogs key', () => {
     const options = getTraceToLogsOptions({
       tracesToLogsV2: {
