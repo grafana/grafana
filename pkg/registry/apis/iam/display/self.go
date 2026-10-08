@@ -97,6 +97,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 
 			if req, ok := authInfo.(identity.Requester); ok {
 				item.Role = string(req.GetOrgRole())
+				item.AuthenticatedBy = req.GetAuthenticatedBy()
 			}
 
 			w.Header().Set("Content-Type", "application/json")

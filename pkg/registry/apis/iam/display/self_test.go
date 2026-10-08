@@ -70,12 +70,13 @@ func TestDisplayHandlersPreserveErrorStatus(t *testing.T) {
 
 func TestDisplayHandler_handleSelf(t *testing.T) {
 	caller := &identity.StaticRequester{
-		Type:      authlib.TypeUser,
-		UserUID:   "u1",
-		UserID:    1,
-		OrgID:     1,
-		OrgRole:   identity.RoleEditor,
-		Namespace: "default",
+		Type:            authlib.TypeUser,
+		UserUID:         "u1",
+		UserID:          1,
+		OrgID:           1,
+		OrgRole:         identity.RoleEditor,
+		AuthenticatedBy: "oauth_github",
+		Namespace:       "default",
 	}
 
 	t.Run("missing auth info returns 401", func(t *testing.T) {
@@ -89,9 +90,10 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 
 	t.Run("caller display is resolved from context and returned", func(t *testing.T) {
 		want := iam.Display{
-			Identity:    iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
-			DisplayName: "Alice",
-			InternalID:  1,
+			Identity:        iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
+			DisplayName:     "Alice",
+			InternalID:      1,
+			AuthenticatedBy: "oauth_github",
 		}
 		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want}}}
 		h := NewDisplayHandler(resolver)

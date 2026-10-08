@@ -5838,6 +5838,10 @@
           "displayName"
         ],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -6006,6 +6010,10 @@
           "displayName"
         ],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -6568,6 +6576,10 @@
           "displayName"
         ],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"

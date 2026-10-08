@@ -939,6 +939,8 @@ export type IdentityRef = {
   type: string;
 };
 export type Display = {
+  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") endpoint. */
+  authenticatedBy?: string;
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
   /** Display name for identity. */
@@ -1177,6 +1179,8 @@ export type TeamList = {
   metadata: ListMeta;
 };
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
+  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") endpoint. */
+  authenticatedBy?: string;
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
   /** Display name for identity. */

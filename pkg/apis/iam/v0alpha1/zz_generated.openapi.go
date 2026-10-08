@@ -73,6 +73,13 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 							Format:      "",
 						},
 					},
+					"authenticatedBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"identity", "displayName"},
 			},
@@ -357,6 +364,13 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 					"role": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"authenticatedBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
