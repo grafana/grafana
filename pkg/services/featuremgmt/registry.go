@@ -653,6 +653,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboards.publicDashboardBadgeFromApi",
+			Description: "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
