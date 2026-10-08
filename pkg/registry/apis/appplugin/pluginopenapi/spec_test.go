@@ -85,14 +85,16 @@ func TestBuildManifestHybridRoute(t *testing.T) {
 	require.NoError(t, err, "hybrid request and response schemas must resolve")
 }
 
-// The compatibility flag preserves the legacy settings version.
+// Settings are rendered only under the plugin ID, without a manifest.
 func TestBuildSettingsVersion(t *testing.T) {
 	keepManifestSettings(t)
-	oas, err := Build(testPlugin(t), "v0alpha1", Options{BuildVersion: "12.3.4"})
+	plugin := testPlugin(t)
+	plugin.Manifests = nil
+	oas, err := Build(plugin, "v0alpha1", Options{BuildVersion: "12.3.4"})
 	require.NoError(t, err)
 
-	require.Equal(t, "example.ext.grafana.app/v0alpha1", oas.Info.Title)
-	root := "/apis/example.ext.grafana.app/v0alpha1/"
+	require.Equal(t, "example-app/v0alpha1", oas.Info.Title)
+	root := "/apis/example-app/v0alpha1/"
 	require.Equal(t, []string{
 		root,
 		root + "namespaces/{namespace}/app/instance",
@@ -125,15 +127,34 @@ func TestBuildVersionSelection(t *testing.T) {
 // The proxy subresource is only served when the toggle for it is on.
 func TestBuildProxyRoute(t *testing.T) {
 	keepManifestSettings(t)
-	proxy := "/apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/app/instance/proxy"
+	plugin := testPlugin(t)
+	plugin.Manifests = nil
+	proxy := "/apis/example-app/v0alpha1/namespaces/{namespace}/app/instance/proxy"
 
-	oas, err := Build(testPlugin(t), "v1alpha1", Options{})
+	oas, err := Build(plugin, "v0alpha1", Options{})
 	require.NoError(t, err)
 	require.NotContains(t, oas.Paths.Paths, proxy)
 
-	oas, err = Build(testPlugin(t), "v1alpha1", Options{RegisterProxy: true})
+	oas, err = Build(plugin, "v0alpha1", Options{RegisterProxy: true})
 	require.NoError(t, err)
 	require.Contains(t, oas.Paths.Paths, proxy)
+}
+
+func TestBuildManifestExcludesSettingsWithCompatibilityFlag(t *testing.T) {
+	keepManifestSettings(t)
+	plugin := testPlugin(t)
+	opts := Options{RegisterProxy: true}
+	versions, err := Versions(plugin, opts)
+	require.NoError(t, err)
+	require.Equal(t, []string{"v1alpha1"}, versions)
+	_, err = Build(plugin, "v0alpha1", opts)
+	require.ErrorContains(t, err, `does not serve version "v0alpha1"`)
+	oas, err := Build(plugin, "v1alpha1", opts)
+	require.NoError(t, err)
+	root := "/apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/app/instance"
+	for _, suffix := range []string{"", "/health", "/resources", "/proxy"} {
+		require.NotContains(t, oas.Paths.Paths, root+suffix)
+	}
 }
 
 // responseRef returns the schema an operation's 200 response refers to.

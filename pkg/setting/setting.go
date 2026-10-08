@@ -773,6 +773,7 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	SearchClientForwardAuthEnabled             bool
 	// SearchEnforceSortCapability rejects a sort on a field that does not declare
 	// sorting. Off by default: violations are counted first, so they can be fixed
 	// before requests start failing.

@@ -744,10 +744,10 @@ var (
 		{
 			Name:        "timeComparison",
 			Description: "Enables time comparison option in supported panels",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "tableSharedCrosshair",
@@ -1361,14 +1361,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alertingUIOptimizeReducer",
-			Description: "Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query",
-			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "azureMonitorEnableUserAuth",
 			Description: "Enables user auth for Azure Monitor datasource only",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1465,14 +1457,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{Go: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:        "alertingNotificationsStepMode",
-			Description: "Enables simplified step mode in the notifications section",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyFrontend: true},
-			Expression:  "true",
 		},
 		{
 			// Remove this flag once Loki v4 is released and the min supported version is v3.0+,
@@ -1621,15 +1605,6 @@ var (
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
-			Name:         "alertingRuleVersionHistoryRestore",
-			Description:  "Enables the alert rule version history restore feature",
-			Generate:     Generate{LegacyFrontend: true},
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "true", // enabled by default
-		},
-		{
 			Name:         "newShareReportDrawer",
 			Description:  "Enables the report creation drawer in a dashboard",
 			Stage:        FeatureStagePublicPreview,
@@ -1655,14 +1630,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "alertingMigrationUI",
-			Description: "Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules",
-			Generate:    Generate{LegacyFrontend: true},
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-		},
-		{
 			Name:        "alertingMigrationWizardUI",
 			Description: "Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting",
 			Generate:    Generate{LegacyFrontend: true},
@@ -1685,15 +1652,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true", // enabled by default
-		},
-		{
-			Name:         "alertingRulePermanentlyDelete",
-			Description:  "Enables UI functionality to permanently delete alert rules",
-			Generate:     Generate{LegacyFrontend: true},
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "alertingRuleRecoverDeleted",
@@ -1760,15 +1718,6 @@ var (
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
-		},
-		{
-			Name:         "alertingBulkActionsInUI",
-			Description:  "Enables the alerting bulk actions in the UI",
-			Generate:     Generate{LegacyFrontend: true},
-			Stage:        FeatureStageGeneralAvailability,
-			Owner:        grafanaAlertingSquad,
-			HideFromDocs: true,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "kubernetesAuthZResourcePermissionsRedirect",
@@ -2202,11 +2151,11 @@ var (
 			Name:            "panelTimeSettings",
 			Description:     "Enables a new panel time settings drawer",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			HideFromDocs:    false,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:        "awsDatasourcesHttpProxy",
@@ -2439,6 +2388,15 @@ var (
 		{
 			Name:         "kubernetesUsersRedirectNoFallback",
 			Description:  "Disables legacy fallback for the user service k8s redirect; failures surface as errors instead of falling back",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "kubernetesUsersDeterministicUID",
+			Description:  "Derives a new k8s user UID from a hash of its namespace, email, and login instead of a random value",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2904,6 +2862,15 @@ var (
 			Generate:     Generate{React: true},
 		},
 		{
+			Name:         "grafana.scopesDashboardsMegaMenu",
+			Description:  "Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaOperatorExperienceSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
 			Name:         "grafana.logLevelInference",
 			Description:  "Enables log level inference from log line contents when level is not defined as a field or a label",
 			Stage:        FeatureStageDeprecated,
@@ -2963,6 +2930,14 @@ var (
 			Owner:       grafanaSearchAndStorageSquad,
 			Expression:  "false",
 			Generate:    Generate{Go: true, React: true},
+		},
+		{
+			Name:        "alerting.hybridSearch",
+			Description: "Enables hybrid (lexical and semantic) search for alert rules in unified storage",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaSearchAndStorageSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
 		},
 		{
 			Name:        "grafana.vectorSearchCmdk",
@@ -3438,6 +3413,25 @@ var (
 			Expression:   "{}",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:         "grafana.globalHomePreference",
+			Description:  "Offers the reserved Grafana home option in the home dashboard preference",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaFrontendNavigation,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{React: true},
+		},
+		{
+			Name:         "datasources.apiServerConnectToHostedGrafanaDatabases",
+			Description:  "Connect to hosted grafana databases from datasource API servers",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

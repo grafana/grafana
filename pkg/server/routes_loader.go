@@ -24,11 +24,18 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating router unified storage client: %w", err)
 	}
-	return InitializeRoutesLoader(s.cfg, router.RoutesLoaderClients{
+	clients := router.RoutesLoaderClients{
 		Resource:           client,
 		RESTConfigProvider: router.NewLoopbackRestConfigProvider(s.httpServerRouter),
 		Access:             accessClient,
-	})
+	}
+
+	// Only the local plugin loader needs the SQL database, which
+	// InitializeRoutesLoader opens and migrates.
+	if cloud, err := router.ProvideCloudRoutesLoader(s.cfg, clients, s.tracer, s.features, s.registerer); err != nil || cloud != nil {
+		return cloud, err
+	}
+	return InitializeRoutesLoader(s.cfg, clients)
 }
 
 func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (resource.ResourceClient, error) {

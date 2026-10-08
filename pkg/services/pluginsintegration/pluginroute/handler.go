@@ -25,6 +25,7 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -51,19 +52,21 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
-	Storage         StorageProvider
-	PluginClient    appplugin.PluginClient
-	ClientV3        appclientv3.Client
-	ContextProvider appplugin.PluginContextWrapper
-	Decrypter       decrypt.DecryptService
-	AccessChecker   appplugin.PluginAccessChecker
-	Search          resourcepb.ResourceIndexClient
-	Store           resourcepb.ResourceStoreClient
-	Runner          appplugin.AppPluginRunnerOptions
-	Tracer          tracing.Tracer
-	Features        featuremgmt.FeatureToggles
-	BuildVersion    string
-	MetricsRegister prometheus.Registerer
+	Storage          StorageProvider
+	PluginClient     appplugin.PluginClient
+	ClientV3         appclientv3.Client
+	ContextProvider  appplugin.PluginContextWrapper
+	Decrypter        decrypt.DecryptService
+	AccessChecker    appplugin.PluginAccessChecker
+	HybridAPIEnabled bool
+	KeysAPIEnabled   bool
+	Search           resourcepb.ResourceIndexClient
+	Store            resourcepb.ResourceStoreClient
+	Runner           appplugin.AppPluginRunnerOptions
+	Tracer           tracing.Tracer
+	Features         featuremgmt.FeatureToggles
+	BuildVersion     string
+	MetricsRegister  prometheus.Registerer
 
 	// Legacy settings use the same migration policy as the embedded API server.
 	DualWrite      dualwrite.Service
@@ -84,7 +87,7 @@ func (h *Handler) Destroy() {
 
 // APIGroup describes the versions actually served, including the settings API.
 func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup, error) {
-	b, err := newBuilder(plugin, opts)
+	b, err := NewAPI(plugin, opts)
 	if err != nil {
 		return metav1.APIGroup{}, err
 	}
@@ -106,7 +109,7 @@ func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
 func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
-	b, err := newBuilder(plugin, opts)
+	b, err := NewAPI(plugin, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -203,12 +206,28 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	return &Handler{Handler: server.Handler, destroy: server.Destroy}, nil
 }
 
-func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
-	if len(plugin.Manifests) > 0 && plugin.Manifests[0] != nil {
-		if plugin.Manifests[0].IsEmpty() {
+// PluginAPI supplies the schema and storage installation for a routed plugin.
+type PluginAPI interface {
+	builder.APIGroupBuilder
+	builder.APIGroupVersionsProvider
+	GetAuthorizer() authorizer.Authorizer
+}
+
+// NewAPI selects settings for legacy plugins and manifest APIs for SDK plugins.
+// It is also used by offline OpenAPI generation so discovery matches the router.
+func NewAPI(plugin definition.PluginDefinition, opts Options) (PluginAPI, error) {
+	if len(plugin.Manifests) > 1 {
+		return nil, fmt.Errorf("plugin %q: multiple app manifests are not supported yet", plugin.JSONData.ID)
+	}
+	var manifest *app.ManifestData
+	if len(plugin.Manifests) == 1 {
+		manifest = plugin.Manifests[0]
+	}
+	if manifest != nil {
+		if manifest.IsEmpty() {
 			return nil, fmt.Errorf("plugin %q has an empty app manifest", plugin.JSONData.ID)
 		}
-		group := plugin.Manifests[0].Group
+		group := manifest.Group
 		if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
 			return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", plugin.JSONData.ID, group)
 		}
@@ -224,9 +243,23 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 	if opts.Features == nil {
 		opts.Features = featuremgmt.WithFeatures()
 	}
-	return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient, opts.ClientV3,
-		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search, opts.Store,
-		opts.Runner, opts.Tracer, opts.Features)
+	if manifest == nil {
+		return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient,
+			opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Runner, opts.Tracer, opts.Features)
+	}
+	return &manifestBuilder{
+		group:         manifest.Group,
+		manifest:      manifest,
+		pluginJSON:    plugin.JSONData,
+		clientV3:      opts.ClientV3,
+		decrypter:     newSecureValueLookup(opts.Decrypter),
+		accessChecker: opts.AccessChecker,
+		search:        opts.Search,
+		store:         opts.Store,
+		tracer:        opts.Tracer,
+		opts:          opts,
+		kindPolicies:  kindPolicies(manifest),
+	}, nil
 }
 
 func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport, configProvider apistore.RestConfigProvider) StorageProvider {

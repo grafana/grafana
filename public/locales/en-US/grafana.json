@@ -1750,9 +1750,6 @@
         "will-import-rules-count_one": "Will import {{count}} rules",
         "will-import-rules-count_other": "Will import {{count}} rules"
       },
-      "routing-tree": {
-        "default-policy": "Default Policy"
-      },
       "source": {
         "datasource": "Existing data source-managed rules",
         "datasource-description": "Import rules from existing data sources",
@@ -2093,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Contact point",
-          "notification-policy": "Notification policy",
-          "select-contact-point": "Select contact point",
-          "use-notification-policy": "Use notification policy"
+          "notification-policy": "Notification policy"
         }
       }
     },
@@ -2609,15 +2604,11 @@
       "aria-label": "Select notification policy",
       "change": "Change",
       "change-aria": "Change notification policy",
-      "custom-policy-desc": "Route alerts through the {{name}} policy tree",
       "default-badge": "Default policy",
       "default-info": "Alert instances are routed using the default notification policy tree.",
-      "default-policy": "Default policy",
-      "default-policy-desc": "Routes alerts using the default notification policy tree",
       "description": "Select which notification policy tree should handle routing for this alert rule.",
+      "missing-policy": "This policy tree is not in your list. It may have been deleted, or you may not have permission to view it. It stays assigned to this rule unless you pick a different one.",
       "placeholder": "Select a policy...",
-      "reset": "Reset to default",
-      "reset-aria": "Reset to default policy",
       "view-policies": "View policies",
       "view-policies-aria": "View notification policies"
     },
@@ -5799,6 +5790,7 @@
       "paste-panel": "Paste panel",
       "remove": "Remove {{typeName}}",
       "remove-multiple": "Remove {{typeName}} ({{num}})",
+      "replace-panel": "Replace panel",
       "row-fill-screen-disable": "Disable row fill screen",
       "row-fill-screen-enable": "Enable row fill screen",
       "row-hide-header": "Hide row header",
@@ -6303,16 +6295,13 @@
       },
       "cross-dashboard-variables": {
         "description": "Choose which global and folder-scoped variables this dashboard receives.",
-        "empty-folder": "No folder variables in this folder.",
-        "empty-global": "No global variables in this organization.",
+        "filters-description": "Choose which global and folder-scoped filters this dashboard receives.",
         "folder-section": "Folder",
         "global-section": "Global",
         "load-error": "Could not load global and folder variables.",
-        "pane-header": "Cross-dashboard variables",
+        "pane-header": "Global or folder variable",
         "select-all-folder": "All folder",
-        "select-all-global": "All global",
-        "title": "Cross-dashboard",
-        "tooltip": "Choose global and folder variables"
+        "select-all-global": "All global"
       },
       "dashboard-options": {
         "annotations": "Annotations",
@@ -6352,7 +6341,8 @@
         "copy-tooltip": "Copy",
         "delete": "Delete",
         "duplicate": "Duplicate",
-        "paste": "Paste"
+        "paste": "Paste",
+        "remove": "Remove"
       },
       "elements": {
         "annotation": "Annotation",
@@ -6385,7 +6375,9 @@
       "feedback-title": "Give feedback on the new dashboard editing experience",
       "filters": {
         "add-filter": "Add filter",
+        "global-or-folder-title": "Global or folder filter variable",
         "reorder-description": "Reorder filters list",
+        "select-type": "Choose filter type",
         "title": "Filters",
         "title-above-dashboard": "Above dashboard",
         "title-controls-menu": "Controls menu",
@@ -6451,6 +6443,10 @@
           "type": "Type",
           "type-placeholder": "Choose data source type"
         },
+        "defined-globally": "This variable is defined globally",
+        "defined-on-folder": "This variable is defined on this folder",
+        "defined-on-folder-level": "This variable is defined on the folder level",
+        "defined-on-global-level": "This variable is defined on the global level",
         "description": "Description",
         "description-placeholder": "Descriptive text",
         "display": "Display",
@@ -6472,6 +6468,7 @@
           "old-modal-title": "Query Variable",
           "preview": "Preview"
         },
+        "remove": "Remove",
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -6487,6 +6484,8 @@
       "variables": {
         "add-variable": "Add variable",
         "change-type": "Change variable type",
+        "global-or-folder-description": "Use a variable defined for the organization or this folder",
+        "global-or-folder-title": "Global or folder variable",
         "reorder-description": "Reorder variables list",
         "select-type": "Choose variable type",
         "select-type-card-tooltip": "Click to select type",
@@ -6992,7 +6991,9 @@
       "delete-tooltip-disabled": "Repeated panels can't be deleted individually",
       "duplicate-tooltip": "Duplicate",
       "duplicate-tooltip-disabled": "Repeated panels can't be duplicated individually",
-      "settings": "Settings"
+      "remove-tooltip": "Remove",
+      "settings": "Settings",
+      "view": "View"
     },
     "conversion-warning-banner": {
       "detail-conditional": "Show/hide rules will not work",
@@ -7849,7 +7850,10 @@
     "variable-editable-element": {
       "delete-confirm": "Delete variable",
       "delete-text": "Are you sure you want to delete: {{name}}?",
-      "delete-title": "Delete variable"
+      "delete-title": "Delete variable",
+      "remove-confirm": "Remove",
+      "remove-text": "Are you sure you want to remove: {{name}}?",
+      "remove-title": "Remove variable"
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
@@ -10742,6 +10746,7 @@
       "placeholder": "Choose"
     },
     "table": {
+      "add-to-assistant": "Add to Assistant",
       "cell-actions": "Cell actions",
       "cell-filter-on": "Filter for value",
       "cell-filter-out": "Filter out value",
@@ -11388,6 +11393,7 @@
         "clear": "Clear filters",
         "edit": "Edit filters ({{summary}})",
         "ignored-tooltip": "Saved for {{saved}}. This card reads {{current}}, so it shows the whole fleet.",
+        "no-match-hint": "Adjust the filters",
         "save": "Save",
         "save-failed": "Could not save to browser storage. Try again."
       },
@@ -11405,7 +11411,6 @@
           "cluster": "Cluster",
           "namespaces": "Namespaces",
           "no-match": "No matching data",
-          "no-match-hint": "Adjust the filters",
           "nodes": "Nodes",
           "open": "Filter by cluster, namespace, or node",
           "summary-cluster": "Cluster: {{cluster}}",
@@ -11476,6 +11481,20 @@
         "failing_one": "{{count}} check failing",
         "failing_other": "{{count}} checks failing",
         "failing-worst": "{{check}} at {{percent}}%",
+        "filter": {
+          "instances": "Ignore targets",
+          "jobs": "Ignore checks",
+          "no-instances": "No targets ignored",
+          "no-jobs": "No checks ignored",
+          "no-match": "All checks ignored",
+          "no-probes": "No probes ignored",
+          "open": "Ignore checks, targets, or probes",
+          "probes": "Ignore probes",
+          "summary-instances": "Ignoring targets: {{instances}}",
+          "summary-jobs": "Ignoring checks: {{jobs}}",
+          "summary-probes": "Ignoring probes: {{probes}}",
+          "title": "Customize Synthetic Monitoring"
+        },
         "setup-hint": "create a check",
         "stats": "{{percent}}% success · 24h",
         "success-trend": "Success rate · last 24h",
@@ -12686,7 +12705,7 @@
     },
     "global-variables": {
       "subtitle": "Template variables shared across dashboards, globally or per folder",
-      "title": "Cross-dashboard variables"
+      "title": "Variables"
     },
     "grafana-quaderno": {
       "title": "Grafana Quaderno"
@@ -13144,15 +13163,9 @@
       "card-author": "By {{author}}",
       "card-selected": "{{title}} (selected)",
       "card-updated": "Updated {{when}}",
-      "create-description": "Description",
-      "create-description-help": "Optional context for collaborators",
-      "create-description-placeholder": "What are you investigating?",
       "create-name": "Notebook name",
       "create-name-required": "A notebook name is required",
       "create-name-taken": "A notebook with this name already exists",
-      "create-tags": "Tags",
-      "create-tags-help": "Optional — used for search and filtering",
-      "create-tags-placeholder": "Add a tag",
       "created-by-me": "Created by me",
       "error-conflict": "This notebook changed while you were adding to it. Try again to add the panel to the latest version.",
       "error-generic": "Failed to add the panel to the notebook",
@@ -13162,6 +13175,8 @@
       "list-none": "You have no notebooks yet. Create one instead.",
       "list-none-read-only": "You have no notebooks yet, and no permission to create one.",
       "list-truncated": "Not every notebook is shown. Narrow the search to find others.",
+      "lock-time-range": "Lock to {{range}}",
+      "lock-time-range-description": "Keep this visualization on the window it was captured in. Unlocked, it follows the notebook time range.",
       "search-placeholder": "Search by title",
       "sort-alphabetical": "Alphabetically (A–Z)",
       "sort-label": "Sort notebooks",
@@ -13238,8 +13253,6 @@
       "count-loading": "Loading {{shown}} of {{total}}...",
       "count-of-total": "Showing {{shown}} of {{total}}",
       "count-of-total-approx": "Showing {{shown}} of up to {{total}}",
-      "count-truncated_one": "First {{count}} notebook loaded",
-      "count-truncated_other": "First {{count}} notebooks loaded",
       "created-by-me": "Created by me",
       "empty-body": "Notebooks capture an investigation as a document: narrative text and code alongside live visualizations from your dashboards, alerts, and incidents.",
       "empty-title": "You haven't created any notebooks yet",
@@ -14108,6 +14121,7 @@
       "title": "You can also use Git Sync on Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "Code example",
       "aria-label-copy": "Copy code to clipboard"
     },
     "commit-message": {
@@ -15049,7 +15063,6 @@
       "alert-point-folder-cleanup": "You may need to manually remove or manage original folders after migration.",
       "alert-point-folder-structure": "When migrating existing dashboards, the folder structure will be replicated in the repository. Original folders will be emptied of dashboards but may still contain alerts or library panels.",
       "alert-point-instance-alerts": "Existing alerts and library panels will be lost and will not be usable after migration.",
-      "alert-point-permissions": "Fine-grained permissions are not supported. Default permissions apply: Admin, Editor, and Viewer roles are preserved with their standard access levels.",
       "alert-point-unsupported": "Alerts and library panels are not supported in provisioned folders.",
       "alert-title": "Important: Review Git Sync limitations before proceeding",
       "app-mode-label": "App configuration",
@@ -15714,12 +15727,12 @@
       "collapse": "Collapse",
       "exchange": "Change root scope to {{scope}}",
       "expand": "Expand",
+      "filter": "Filter...",
       "loading": "Loading dashboards",
       "noResultsForFilter": "No results found for your query",
       "noResultsForFilterClear": "Clear search",
       "noResultsForScopes": "No dashboards or links found for the selected scopes",
       "noResultsNoScopes": "No scopes selected",
-      "search": "Search",
       "toggle": {
         "collapse": "Collapse suggested dashboards list",
         "disabled": "Suggested dashboards list is disabled due to read only mode",
@@ -15769,9 +15782,6 @@
     },
     "description-tooltip": {
       "label": "Description"
-    },
-    "generate-columns": {
-      "score": "Score"
     },
     "results-table": {
       "datasource-header": "Data source",
@@ -16116,6 +16126,7 @@
       "update-preferences": "Error updating preferences"
     },
     "fields": {
+      "home-dashboard-global-home": "Grafana home",
       "home-dashboard-label": "Home Dashboard",
       "home-dashboard-placeholder": "Default dashboard",
       "language-preference-label": "Language",
@@ -17021,6 +17032,8 @@
       "placeholder-value-or-variable": "Value or variable"
     },
     "binary-operation-options-editor": {
+      "aria-label-left-operand": "Left operand",
+      "aria-label-right-operand": "Right operand",
       "label-operation": "Operation",
       "placeholder-field-or-number": "Field or number",
       "placeholder-fields-or-number": "Field(s) or number"
