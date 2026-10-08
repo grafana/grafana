@@ -48,6 +48,8 @@ export function RecentActivityFooter({ counts, filter, onFilterChange, retry }: 
   const handleClear = async () => {
     clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
     await pageHistorySrv.clear();
+    // The stored filter would otherwise outlive the history and hide the next pages visited.
+    onFilterChange(undefined);
     retry();
   };
 

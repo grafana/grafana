@@ -110,6 +110,8 @@ export function DashboardTabs({ extensionComponents }: Props) {
   );
 
   const hasRecent = !!recentActivity?.items.length;
+  // A stored filter can outlive the history (cleared in another browser); an empty history is then just empty.
+  const historyEmpty = !!recentActivity && PAGE_HISTORY_KINDS.every((kind) => recentActivity.counts[kind] === 0);
   const hasMostUsed = mostUsedAvailable && !!mostUsedDashboards?.length;
   const hasStarred = !!starredDashboards?.length;
   const initialLoading = recentActivityLoading || starredLoading || (mostUsedAvailable && mostUsedLoading);
@@ -232,7 +234,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
             {activeTab === RECENT_TAB_ID && (
               <RecentActivityTab
                 items={recentActivity?.items ?? []}
-                filtered={!!activityFilter}
+                filtered={!!activityFilter && !historyEmpty}
                 // Switching the filter refetches; keep the old rows rather than flashing the loader.
                 loading={recentActivityLoading && !recentActivity}
                 error={recentActivityError}

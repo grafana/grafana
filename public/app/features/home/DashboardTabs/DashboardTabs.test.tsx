@@ -466,20 +466,33 @@ describe('DashboardTabs', () => {
       });
     });
 
-    it('clears the history, reports what was cleared and reloads the tab', async () => {
+    it('clears the history, reports what was cleared, resets the filter and reloads the tab', async () => {
+      window.localStorage.setItem(FILTER_KEY, 'explore');
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, recentDashboardEntry, alertingEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
       const { user } = render(<DashboardTabs extensionComponents={[]} />);
+      expect(await screen.findByRole('radio', { name: 'Explore' })).toBeChecked();
 
       jest.mocked(pageHistorySrv.clear).mockImplementation(async () => {
         jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([]);
       });
-      await user.click(await screen.findByRole('button', { name: /clear recent activity/i }));
+      await user.click(screen.getByRole('button', { name: /clear recent activity/i }));
 
+      // Counts cover the whole history, not the filtered rows.
       expect(jest.mocked(clearHistoryClicked)).toHaveBeenCalledWith({ dashboard_count: 1, page_count: 3 });
       expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
+      expect(window.localStorage.getItem(FILTER_KEY)).toBe('');
+    });
+
+    it('treats an empty history as empty even when a stored filter is left over', async () => {
+      window.localStorage.setItem(FILTER_KEY, 'explore');
+
+      render(<DashboardTabs extensionComponents={[]} />);
+
+      expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
+      expect(screen.queryByText('No recent pages of this type.')).not.toBeInTheDocument();
     });
 
     it('shows a retryable error when the dashboard lookup fails', async () => {
