@@ -2208,7 +2208,7 @@ describe('UnifiedDashboardScenePageStateManager', () => {
     });
 
     it('clears the previous dashboard when a later load fails', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       setupV1FailureV2Success();
 
       const manager = new UnifiedDashboardScenePageStateManager({});
