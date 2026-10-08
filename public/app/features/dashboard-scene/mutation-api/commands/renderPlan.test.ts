@@ -321,22 +321,17 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('the rendered grid cannot actually be dragged or resized', () => {
-    beforeEach(() => {
-      // With the flag on, editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
-      // The deferred case is covered separately below.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged (an
     // edit-mode transition) ever sets them false. Assert behaviour, not the raw flag, so a
     // future change that re-enables dragging some other way still fails this.
+    // With new layouts, that correction lands inside a 10ms timeout.
     function getGrid(scene: DashboardScene) {
       const rows = (scene.state.body as RowsLayoutManager).state.rows;
       return (rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+    }
+
+    async function waitForDragCorrection() {
+      await new Promise((resolve) => setTimeout(resolve, 20));
     }
 
     it('on the marker path, where the scene never entered edit mode at all', async () => {
@@ -344,6 +339,7 @@ describe('RENDER_PLAN', () => {
       expect(scene.state.isEditing).toBeFalsy();
 
       await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      await waitForDragCorrection();
 
       const grid = getGrid(scene);
       expect(grid.isDraggable()).toBe(false);
@@ -356,6 +352,7 @@ describe('RENDER_PLAN', () => {
       scene.onEnterEditMode();
 
       await client.execute({ type: 'RENDER_PLAN', payload: plan });
+      await waitForDragCorrection();
 
       const grid = getGrid(scene);
       expect(grid.isDraggable()).toBe(false);

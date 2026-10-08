@@ -7,7 +7,6 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { findVizPanelByKey } from '../../utils/findVizPanel';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
@@ -41,15 +40,6 @@ describe('DefaultGridLayoutManager', () => {
   });
 
   describe('addPanel', () => {
-    beforeEach(() => {
-      // addPanel parents the panel through the edit-action bus when new layouts are on, and these tests never activate the sidebar.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('Should add a new panel', () => {
       const { manager } = setup();
 
@@ -159,15 +149,6 @@ describe('DefaultGridLayoutManager', () => {
   });
 
   describe('removePanel', () => {
-    beforeEach(() => {
-      // removePanel goes through the edit-action bus when new layouts are on, and these tests never activate the sidebar.
-      setTestFlags({ dashboardNewLayouts: false });
-    });
-
-    afterEach(() => {
-      setTestFlags({});
-    });
-
     it('Should remove grid item', () => {
       const { manager } = setup();
       const panel = findVizPanelByKey(manager, 'panel-1')!;
@@ -377,9 +358,11 @@ function setup(options?: TestOptions) {
   const grid = new SceneGridLayout({ children: gridItems });
   const manager = new DefaultGridLayoutManager({ grid: grid });
 
-  new DashboardScene({ body: manager });
+  const scene = new DashboardScene({ body: manager });
+  // add/remove/duplicate publish edit actions that the sidebar performs.
+  scene.activateSidebar();
 
-  return { manager, grid };
+  return { manager, grid, scene };
 }
 
 const panelOptions = { legend: { displayMode: 'list', placement: 'bottom' } };

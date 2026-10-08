@@ -1,4 +1,4 @@
-import { act, screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
+import { screen, waitFor, waitForElementToBeRemoved } from '@testing-library/react';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { render } from 'test/test-utils';
@@ -6,17 +6,19 @@ import { render } from 'test/test-utils';
 import { getDefaultTimeRange, LoadingState, type PanelData, type PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { config, setPluginImportUtils, setPluginLinksHook, setRunRequest } from '@grafana/runtime';
 import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { type Dashboard } from '@grafana/schema';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
-import { DashboardRoutes } from 'app/types/dashboard';
+import { backendSrv } from 'app/core/services/backend_srv';
+import { type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
 import { setupLoadDashboardMock, setupLoadDashboardMockReject } from '../utils/test-utils';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 import { PublicDashboardScenePage, type Props as PublicDashboardSceneProps } from './PublicDashboardScenePage';
+
+setPluginLinksHook(() => ({ links: [], isLoading: false }));
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -94,17 +96,28 @@ const panelPlugin = getPanelPlugin(
   CustomVizPanel
 );
 
+let publicDashboardSpy: jest.SpyInstance;
+
+function mockPublicDashboard(dashboard: Dashboard) {
+  publicDashboardSpy?.mockRestore();
+  publicDashboardSpy = jest
+    .spyOn(backendSrv, 'getPublicDashboardByUid')
+    .mockResolvedValue({ dashboard, meta: {} } as DashboardDTO);
+}
+
+function mockPublicDashboardReject(error: unknown) {
+  publicDashboardSpy?.mockRestore();
+  publicDashboardSpy = jest.spyOn(backendSrv, 'getPublicDashboardByUid').mockRejectedValue(error);
+}
+
 beforeEach(() => {
-  // setupLoadDashboardMock replaces the v1 loader. New layouts construct a v2 loader that ignores it.
-  setTestFlags({ dashboardNewLayouts: false });
   setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
+  mockPublicDashboard(simpleDashboard);
 });
 
 afterEach(() => {
   setPanelPluginMetas({});
-  act(() => {
-    setTestFlags({});
-  });
+  publicDashboardSpy?.mockRestore();
 });
 
 setPluginImportUtils({
@@ -194,10 +207,12 @@ describe('PublicDashboardScenePage', () => {
   it('does not show time controls when it is hidden', async () => {
     const accessToken = 'hidden-time-picker-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
+    const hiddenTimeDashboard = { ...simpleDashboard, timepicker: { hidden: true } };
     setupLoadDashboardMock({
-      dashboard: { ...simpleDashboard, timepicker: { hidden: true } },
+      dashboard: hiddenTimeDashboard,
       meta: {},
     });
+    mockPublicDashboard(hiddenTimeDashboard);
     setup(accessToken);
 
     await waitForDashboardGridToRender();
@@ -213,7 +228,7 @@ describe('given unavailable public dashboard', () => {
     const accessToken = 'paused-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
 
-    setupLoadDashboardMockReject({
+    const pausedError = {
       status: 403,
       statusText: 'Forbidden',
       data: {
@@ -231,7 +246,9 @@ describe('given unavailable public dashboard', () => {
         },
         hideFromInspector: true,
       },
-    });
+    };
+    setupLoadDashboardMockReject(pausedError);
+    mockPublicDashboardReject(pausedError);
 
     setup(accessToken);
 
@@ -246,7 +263,7 @@ describe('given unavailable public dashboard', () => {
     const accessToken = 'deleted-pubdash-access-token';
     config.publicDashboardAccessToken = accessToken;
 
-    setupLoadDashboardMockReject({
+    const deletedError = {
       status: 404,
       statusText: 'Not Found',
       data: {
@@ -263,7 +280,9 @@ describe('given unavailable public dashboard', () => {
           'X-Grafana-Device-Id': 'da48fad0e58ba327fd7d1e6bd17e9c63',
         },
       },
-    });
+    };
+    setupLoadDashboardMockReject(deletedError);
+    mockPublicDashboardReject(deletedError);
 
     setup(accessToken);
 

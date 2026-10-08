@@ -80,9 +80,6 @@ function setup(options?: Partial<Props>) {
 
 beforeEach(() => {
   jest.clearAllMocks();
-  // The legacy empty-dashboard clicks expect isDynamicDashboard: false. The new-layouts
-  // describe below sets the flag true after this.
-  setTestFlags({ dashboardNewLayouts: false });
   // Reset the mock to default state
   mockUseGetResourceRepositoryView.mockReturnValue({
     isReadOnlyRepo: false,
@@ -126,7 +123,7 @@ it('creates new visualization when clicked Add visualization', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'add_visualization',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).toHaveBeenCalled();
   expect(locationService.partial).toHaveBeenCalledWith({ editPanel: undefined, firstPanel: true });
@@ -142,7 +139,7 @@ it('open import dashboard when clicked Import dashboard', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_dashboard',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(onImportDashboard).toHaveBeenCalled();
 });
@@ -156,7 +153,7 @@ it('adds a library panel when clicked Add library panel', () => {
 
   expect(reportInteraction).toHaveBeenCalledWith('dashboards_emptydashboard_clicked', {
     item: 'import_from_library',
-    isDynamicDashboard: false,
+    isDynamicDashboard: true,
   });
   expect(locationService.partial).not.toHaveBeenCalled();
   expect(onAddLibraryPanel).toHaveBeenCalled();
