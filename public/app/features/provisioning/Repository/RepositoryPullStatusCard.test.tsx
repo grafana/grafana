@@ -44,6 +44,7 @@ describe('RepositoryPullStatusCard', () => {
       const status: RepositoryStatus = {
         health: { healthy: true },
         observedGeneration: 1,
+        webhook: {},
         sync: {
           state: 'warning',
           message: ['Some resources could not be synced'],
@@ -85,6 +86,7 @@ describe('RepositoryPullStatusCard', () => {
         status: {
           health: { healthy: true },
           observedGeneration: 1,
+          webhook: {},
           sync: { state: 'success', message: [], finished: Date.UTC(2026, 9, 8, 10), lastChecked },
         },
       });
@@ -105,6 +107,7 @@ describe('RepositoryPullStatusCard', () => {
       const status: RepositoryStatus = {
         health: { healthy: true },
         observedGeneration: 1,
+        webhook: {},
         sync: { state: 'success', message: [] },
       };
       const { rerender } = render(<RepositoryPullStatusCard repo={createMockRepository({ status })} />);
@@ -130,6 +133,7 @@ describe('RepositoryPullStatusCard', () => {
           status: {
             health: { healthy: true },
             observedGeneration: 1,
+            webhook: {},
             sync: { state, message: [], lastChecked: Date.UTC(2026, 9, 8, 11) },
           },
         });
