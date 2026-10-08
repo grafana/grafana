@@ -88,37 +88,33 @@ async function createBuildFixture(t) {
 
 async function writeRspackFixture(buildDirectory) {
   await Promise.all([
-    writeAsset(buildDirectory, 'rspack/runtime.js', 'RSPACK-RUNTIME'),
-    writeAsset(buildDirectory, 'rspack/shared/vendor.js', 'RSPACK-VENDOR'),
-    writeAsset(buildDirectory, 'rspack/app.js', 'RSPACK-APP-CODE'),
-    writeAsset(buildDirectory, 'rspack/admin.js', 'RSPACK-ADMIN-CODE'),
-    writeAsset(buildDirectory, 'rspack/shared/theme.css', 'RSPACK-THEME'),
-    writeAsset(buildDirectory, 'rspack/admin.css', 'RSPACK-ADMIN-CSS'),
+    writeAsset(buildDirectory, 'runtime.js', 'RSPACK-RUNTIME'),
+    writeAsset(buildDirectory, 'shared/vendor.js', 'RSPACK-VENDOR'),
+    writeAsset(buildDirectory, 'app.js', 'RSPACK-APP-CODE'),
+    writeAsset(buildDirectory, 'admin.js', 'RSPACK-ADMIN-CODE'),
+    writeAsset(buildDirectory, 'shared/theme.css', 'RSPACK-THEME'),
+    writeAsset(buildDirectory, 'admin.css', 'RSPACK-ADMIN-CSS'),
   ]);
   await writeFile(
-    join(buildDirectory, 'rspack', 'assets-manifest.json'),
+    join(buildDirectory, 'assets-manifest.json'),
     JSON.stringify({
       entrypoints: {
         esModule: true,
         app: {
           assets: {
             js: [
-              'public/build/rspack/runtime.js',
-              'public/build/rspack/shared/vendor.js',
-              'public/build/rspack/app.js',
-              'public/build/rspack/shared/vendor.js',
+              'public/build/runtime.js',
+              'public/build/shared/vendor.js',
+              'public/build/app.js',
+              'public/build/shared/vendor.js',
             ],
-            css: ['public/build/rspack/shared/theme.css'],
+            css: ['public/build/shared/theme.css'],
           },
         },
         admin: {
           assets: {
-            js: [
-              'public/build/rspack/runtime.js',
-              'public/build/rspack/shared/vendor.js',
-              'public/build/rspack/admin.js',
-            ],
-            css: ['public/build/rspack/shared/theme.css', 'public/build/rspack/admin.css'],
+            js: ['public/build/runtime.js', 'public/build/shared/vendor.js', 'public/build/admin.js'],
+            css: ['public/build/shared/theme.css', 'public/build/admin.css'],
           },
         },
       },
@@ -250,7 +246,7 @@ describe('reportBundleMetrics', () => {
 
   it('rejects missing or malformed manifests and referenced assets that are missing', async (t) => {
     const buildDirectory = await createBuildFixture(t);
-    const manifestPath = join(buildDirectory, 'rspack', 'assets-manifest.json');
+    const manifestPath = join(buildDirectory, 'assets-manifest.json');
 
     await rm(manifestPath);
     await assert.rejects(readBundleSizes(buildDirectory), /Run 'yarn build' first/);
@@ -262,13 +258,12 @@ describe('reportBundleMetrics', () => {
     await assert.rejects(readBundleSizes(buildDirectory));
 
     await writeRspackFixture(buildDirectory);
-    await rm(join(buildDirectory, 'rspack', 'app.js'));
+    await rm(join(buildDirectory, 'app.js'));
     await assert.rejects(readBundleSizes(buildDirectory));
   });
 
   it('reports size metrics without a profile and reports profile metrics independently', async (t) => {
     const buildDirectory = await createBuildFixture(t);
-    await writeReport(join(buildDirectory, '.rsdoctor'), rsdoctorReport());
 
     let result = spawnSync(process.execPath, [cliPath, buildDirectory], {
       cwd: buildDirectory,
@@ -278,7 +273,7 @@ describe('reportBundleMetrics', () => {
     assert.equal(result.stdout, bundleSizeOutput);
     assert.equal(result.stderr, '');
 
-    await writeReport(join(buildDirectory, 'rspack', '.rsdoctor'), rsdoctorReport());
+    await writeReport(join(buildDirectory, '.rsdoctor'), rsdoctorReport());
 
     result = spawnSync(process.execPath, [cliPath, buildDirectory], {
       cwd: buildDirectory,
@@ -297,7 +292,7 @@ describe('reportBundleMetrics', () => {
 
   it('emits size rows with a positional build directory despite a corrupt profile', async (t) => {
     const buildDirectory = await createBuildFixture(t);
-    const profileDirectory = join(buildDirectory, 'rspack', '.rsdoctor');
+    const profileDirectory = join(buildDirectory, '.rsdoctor');
     await mkdir(profileDirectory, { recursive: true });
     await writeFile(join(profileDirectory, 'manifest.json'), '{not JSON', 'utf8');
 
