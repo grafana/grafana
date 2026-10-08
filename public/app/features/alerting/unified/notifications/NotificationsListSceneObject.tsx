@@ -213,7 +213,7 @@ function ListHeader() {
           <Trans i18nKey="alerting.notifications-scene.header.contact-point">Contact point</Trans>
         </Text>
       </div>
-      {config.featureToggles.alertingNotificationHistoryDetail && (
+      {config.unifiedAlerting.notificationHistoryEnabled && (
         <div className={styles.viewCol}>{/* View link column */}</div>
       )}
     </div>
@@ -287,7 +287,7 @@ function NotificationRow({ record, onLabelClick }: NotificationRowProps) {
             </Stack>
           </Tooltip>
         </div>
-        {config.featureToggles.alertingNotificationHistoryDetail && (
+        {config.unifiedAlerting.notificationHistoryEnabled && (
           <div className={styles.viewCol}>
             <LinkButton
               href={createRelativeUrl(

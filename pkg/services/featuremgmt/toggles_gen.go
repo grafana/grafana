@@ -91,10 +91,6 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
-	// FlagProvisioningGitConventions
-	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
-	FlagProvisioningGitConventions = "provisioning.gitConventions"
-
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
@@ -845,22 +841,6 @@ const (
 	// FlagAlertingIgnorePendingForNoDataAndError
 	// Makes NoData and Error alerts fire immediately, without 'pending' stage
 	FlagAlertingIgnorePendingForNoDataAndError = "alertingIgnorePendingForNoDataAndError"
-
-	// FlagAlertingNotificationHistoryRuleViewer
-	// Enables the notification history tab in the rule viewer
-	FlagAlertingNotificationHistoryRuleViewer = "alertingNotificationHistoryRuleViewer"
-
-	// FlagAlertingNotificationHistoryGlobal
-	// Enables the notification history global menu item viewer
-	FlagAlertingNotificationHistoryGlobal = "alertingNotificationHistoryGlobal"
-
-	// FlagAlertingNotificationHistoryTriage
-	// Enables the notification history timeline in the triage instance details drawer
-	FlagAlertingNotificationHistoryTriage = "alertingNotificationHistoryTriage"
-
-	// FlagAlertingNotificationHistoryDetail
-	// Enables the notification history detail page
-	FlagAlertingNotificationHistoryDetail = "alertingNotificationHistoryDetail"
 
 	// FlagDeletedFolderResourceCleanup
 	// Periodically deletes resources (alert rules, library panels) whose folder no longer exists in the folder API server. Library panel cleanup additionally requires libraryElementFolderUIDRepair

@@ -28,7 +28,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-23,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-02-23,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-08,provisioning.readmes,preview,@grafana/grafana-app-platform-squad,false,false,true
-2026-06-09,provisioning.gitConventions,preview,@grafana/grafana-app-platform-squad,false,true,false
 2026-07-10,provisioning.userAttribution,preview,@grafana/grafana-app-platform-squad,false,false,false
 2026-09-16,grafana.frontendLegacyFeatureToggleHandling,experimental,@grafana/grafana-frontend-platform,false,false,false
 2026-07-16,provisioning.performance,experimental,@grafana/grafana-app-platform-squad,false,false,false
@@ -74,6 +73,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-30,alertmanagerRemotePrimary,experimental,@grafana/alerting-squad,false,false,false
 2023-10-31,annotationPermissionUpdate,GA,@grafana/identity-access-team,false,false,false
 2024-10-23,dashboardNewLayouts,GA,@grafana/dashboards-squad,false,false,true
+2026-10-06,dashboards.libraryPanelRepeatFromServerResolution,experimental,@grafana/dashboards-squad,false,false,true
 2026-08-05,disableScriptedDashboards,deprecated,@grafana/dashboards-squad,false,false,true
 2026-07-09,dashboard.notebooks,experimental,@grafana/sharing-squad,false,false,false
 2025-08-29,dashboardUndoRedo,experimental,@grafana/dashboards-squad,false,false,true
@@ -288,10 +288,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-06,appplugins.registerAPIServer,experimental,@grafana/grafana-catalog,false,true,false
 2026-05-06,appplugins.handleProxyRequests,experimental,@grafana/grafana-catalog,false,true,false
 2026-02-12,alertingIgnorePendingForNoDataAndError,experimental,@grafana/alerting-squad,false,false,false
-2026-02-13,alertingNotificationHistoryRuleViewer,GA,@grafana/alerting-squad,false,false,false
-2026-02-13,alertingNotificationHistoryGlobal,GA,@grafana/alerting-squad,false,false,false
-2026-03-05,alertingNotificationHistoryTriage,GA,@grafana/alerting-squad,false,false,false
-2026-03-17,alertingNotificationHistoryDetail,GA,@grafana/alerting-squad,false,false,false
 2026-08-26,dashboard.recentlyDeletedViaTrash,GA,@grafana/search-and-storage,false,false,true
 2026-07-14,deletedFolderResourceCleanup,experimental,@grafana/search-and-storage,false,true,false
 2026-08-13,libraryElementFolderUIDRepair,experimental,@grafana/search-and-storage,false,true,false
