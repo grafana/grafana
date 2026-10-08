@@ -137,8 +137,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
         layoutElement.performRepeat();
 
         if (expandToGridWidth) {
-          // The grid reads item widths only when it re-renders, and performRepeat re-renders it
-          // only when the height changes.
+          // The grid reads item widths only when it re-renders.
           sceneGraph.getLayout(layoutElement)?.forceRender();
         }
       }
