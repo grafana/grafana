@@ -69,7 +69,7 @@ export type SearchAPIResponse = {
 const folderViewSort = 'name_sort';
 
 export class UnifiedSearcher implements GrafanaSearcher {
-  private locationInfo?: Promise<Record<string, LocationInfo>>;
+  private locationInfo = loadLocationInfo();
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
@@ -112,12 +112,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   getLocationInfo() {
-    this.locationInfo ??= loadLocationInfo();
     return this.locationInfo;
   }
 
-  invalidateLocationInfo() {
-    this.locationInfo = undefined;
+  reloadLocationInfo() {
+    this.locationInfo = loadLocationInfo();
+    return this.locationInfo;
   }
 
   // TODO: Implement this correctly
@@ -165,7 +165,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       locationInfo: customMeta?.locationInfo ?? {},
       sortBy: customMeta?.sortBy,
     };
-    meta.locationInfo = await this.getLocationInfo();
+    meta.locationInfo = await this.locationInfo;
 
     // Update the DataFrame meta to point to the typed meta object
     if (first.meta) {
@@ -255,14 +255,14 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return rsp;
     }
     // sync the location info (folders)
-    this.invalidateLocationInfo();
+    this.reloadLocationInfo();
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
     if (!hasMissing) {
       return rsp;
     }
 
-    const locationInfo = await this.getLocationInfo();
+    const locationInfo = await this.locationInfo;
     const hits = rsp.hits.map((hit) => {
       // Root-parented hits arrive with "" or "general" — neither lives in
       // locationInfo, since the root folder is synthetic. Collapse to
@@ -284,7 +284,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
   }
 
   async isFolderCacheStale(hits: SearchHit[]): Promise<boolean> {
-    const locationInfo = await this.getLocationInfo();
+    const locationInfo = await this.locationInfo;
     return hits.some((hit) => {
       // Root-parented hits ("" or "general") never appear in locationInfo —
       // skip them so we don't reload the cache and remap them to "Shared with me".

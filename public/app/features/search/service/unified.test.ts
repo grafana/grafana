@@ -21,7 +21,7 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 describe('Unified Storage Searcher', () => {
-  it('shares a folder lookup between concurrent readers until it is invalidated', async () => {
+  it('shares a folder lookup between concurrent readers until it is reloaded', async () => {
     let folderTitle = 'Original folder';
     const folderRequest = jest.fn();
     server.use(
@@ -40,7 +40,7 @@ describe('Unified Storage Searcher', () => {
     expect(folderRequest).toHaveBeenCalledTimes(1);
 
     folderTitle = 'Renamed folder';
-    searcher.invalidateLocationInfo();
+    searcher.reloadLocationInfo();
     const refreshed = await Promise.all([searcher.getLocationInfo(), searcher.getLocationInfo()]);
     expect(refreshed.map((info) => info.folder1.name)).toEqual(['Renamed folder', 'Renamed folder']);
     expect(folderRequest).toHaveBeenCalledTimes(2);

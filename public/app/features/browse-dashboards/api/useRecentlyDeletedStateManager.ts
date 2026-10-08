@@ -22,8 +22,9 @@ export class TrashStateManager extends SearchStateManager {
   // Clear stale results so the skeleton shows while fresh data loads on navigation
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     this.setState({ result: undefined });
-    // Folder locations may still link to folders deleted since the previous search.
-    getGrafanaSearcher().invalidateLocationInfo();
+    // Folder locations may still link to folders deleted since the previous visit.
+    // Reloading here lets the lookup overlap the trash fetch that the search below starts.
+    getGrafanaSearcher().reloadLocationInfo();
     super.initStateFromUrl(folderUid, doInitialSearch);
   }
 
