@@ -1584,11 +1584,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/actions/layout/duplicateDefaultGridPanel.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard-scene/addToDashboard/AddToDashboardForm.tsx": {
     "@grafana/require-no-margin": {
       "count": 2
@@ -1970,14 +1965,6 @@
   },
   "public/app/features/dashboard/components/TransformationsEditor/TransformationPickerNg.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/dashboard/components/TransformationsEditor/TransformationsEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 2
-    },
-    "react-prefer-function-component/react-prefer-function-component": {
       "count": 1
     }
   },
