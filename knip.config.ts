@@ -52,9 +52,6 @@ const config: KnipConfig = {
     // vendored temporarily
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
-    // TODO: Remove once Rspack replaces Webpack.
-    'public/app/core/utils/CorsWorker.rspack.ts',
-    'public/app/core/utils/CorsSharedWorker.rspack.ts',
   ],
   // nx and webpack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
   ignoreBinaries: ['jq', 'make', 'nx', 'shellcheck', 'webpack'],
