@@ -5,6 +5,7 @@ import { type DashboardScene } from '../../scene/DashboardScene';
 import { makeEditAction } from '../utils/makeEditAction';
 
 export const changeDescription = makeEditAction<DashboardScene, 'description'>({
+  actionId: 'dashboard.changeDescription',
   description: t('dashboard.edit-actions.dashboard-description', 'Change dashboard description'),
   prop: 'description',
 });

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"fmt"
 	"slices"
 	"strconv"
 
@@ -33,7 +34,6 @@ type TrashAuthorizer struct {
 	// permission change would never take effect.
 	folderAdmin map[string]bool
 
-	// The failure is swallowed, so report it or it is invisible.
 	onCheckError func(err error)
 }
 
@@ -53,6 +53,13 @@ func NewTrashAuthorizer(
 	}
 }
 
+func (s *server) newTrashAuthorizer(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey) *TrashAuthorizer {
+	return NewTrashAuthorizer(s.access, user, key, func(err error) {
+		s.log.FromContext(ctx).Error("Trash folder admin check failed", "error", err,
+			"namespace", key.Namespace, "group", key.Group, "resource", key.Resource)
+	})
+}
+
 // k6FolderUID is hidden from anyone but a service account. The single check in
 // authlib denies it outright, and BatchCheck has no such rule, so batching a
 // decision for it would answer differently from every other path.
@@ -70,8 +77,8 @@ type TrashItem struct {
 // Prepare resolves the folder checks items will need in one call per batch, so the
 // Allowed calls that follow read the cache instead of waiting for a round trip each.
 //
-// Only a hint: a folder left undecided is checked on its own by FolderAdmin.
-func (a *TrashAuthorizer) Prepare(ctx context.Context, items []TrashItem) {
+// A folder excluded from batching is checked on its own by FolderAdmin.
+func (a *TrashAuthorizer) Prepare(ctx context.Context, items []TrashItem) error {
 	var pending []string
 	seen := make(map[string]bool, len(items))
 	for _, item := range items {
@@ -86,11 +93,14 @@ func (a *TrashAuthorizer) Prepare(ctx context.Context, items []TrashItem) {
 	}
 
 	for batch := range slices.Chunk(pending, claims.MaxBatchCheckItems) {
-		a.prepareBatch(ctx, batch)
+		if err := a.prepareBatch(ctx, batch); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
-func (a *TrashAuthorizer) prepareBatch(ctx context.Context, folders []string) {
+func (a *TrashAuthorizer) prepareBatch(ctx context.Context, folders []string) error {
 	checks := make([]claims.BatchCheckItem, 0, len(folders))
 	for i, folder := range folders {
 		checks = append(checks, claims.BatchCheckItem{
@@ -110,19 +120,20 @@ func (a *TrashAuthorizer) prepareBatch(ctx context.Context, folders []string) {
 		if a.onCheckError != nil {
 			a.onCheckError(err)
 		}
-		return
+		return err
 	}
 
 	for i, folder := range folders {
-		// A folder left undecided here is checked on its own by FolderAdmin, which
-		// reports its own failure. Reporting again here would double every log line
-		// of an authz outage, once per item.
 		result, ok := resp.Results[strconv.Itoa(i)]
-		if !ok || result.Error != nil {
-			continue
+		if !ok {
+			return fmt.Errorf("missing folder admin authorization result for %s", folder)
+		}
+		if result.Error != nil {
+			return result.Error
 		}
 		a.folderAdmin[folder] = result.Allowed
 	}
+	return nil
 }
 
 // Allowed reports whether the caller may see an object in folder deleted by
@@ -130,9 +141,9 @@ func (a *TrashAuthorizer) prepareBatch(ctx context.Context, folders []string) {
 //
 // deletedBy is compared first because it needs no authorization call. The two
 // conditions are ORed, so the order affects only cost, not the answer.
-func (a *TrashAuthorizer) Allowed(ctx context.Context, folder, deletedBy string) bool {
+func (a *TrashAuthorizer) Allowed(ctx context.Context, folder, deletedBy string) (bool, error) {
 	if a.deletedByCaller(deletedBy) {
-		return true
+		return true, nil
 	}
 	return a.FolderAdmin(ctx, folder)
 }
@@ -145,9 +156,9 @@ func (a *TrashAuthorizer) deletedByCaller(deletedBy string) bool {
 //
 // A kind with no folder is checked against the namespace instead, which is what
 // listFromTrash has always done.
-func (a *TrashAuthorizer) FolderAdmin(ctx context.Context, folder string) bool {
+func (a *TrashAuthorizer) FolderAdmin(ctx context.Context, folder string) (bool, error) {
 	if isAdmin, ok := a.folderAdmin[folder]; ok {
-		return isAdmin
+		return isAdmin, nil
 	}
 	resp, err := a.access.Check(ctx, a.user, claims.CheckRequest{
 		Verb:      utils.VerbSetPermissions,
@@ -155,10 +166,12 @@ func (a *TrashAuthorizer) FolderAdmin(ctx context.Context, folder string) bool {
 		Resource:  a.key.Resource,
 		Namespace: a.key.Namespace,
 	}, folder)
-	if err != nil && a.onCheckError != nil {
-		a.onCheckError(err)
+	if err != nil {
+		if a.onCheckError != nil {
+			a.onCheckError(err)
+		}
+		return false, err
 	}
-	isAdmin := err == nil && resp.Allowed
-	a.folderAdmin[folder] = isAdmin
-	return isAdmin
+	a.folderAdmin[folder] = resp.Allowed
+	return resp.Allowed, nil
 }

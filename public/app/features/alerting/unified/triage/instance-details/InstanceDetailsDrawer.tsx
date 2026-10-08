@@ -112,8 +112,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
   } = useGetRuleHistoryQuery({
     ruleUid: ruleUID,
     matchers: labelsToMatchersParam(instanceLabels),
-    from: timeRange.from.unix(),
-    to: timeRange.to.unix(),
+    timeRange: { from: timeRange.from, to: timeRange.to },
   });
 
   // Convert state history to LogRecords and filter by instance labels
@@ -126,8 +125,7 @@ export function InstanceDetailsDrawer({ ruleUID, instanceLabels, commonLabels, o
 
   const instanceState = useInstanceAlertState(ruleUID, instanceLabels);
 
-  const showInstanceTimeline =
-    config.featureToggles.alertingNotificationHistoryTriage && config.featureToggles.kubernetesAlertingHistorian;
+  const showInstanceTimeline = config.unifiedAlerting.notificationHistoryEnabled;
 
   const showDrawerTimeRangeBanner = useMemo(() => {
     if (!rule?.grafana_alert) {

@@ -124,7 +124,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     this.updateIndex();
   }
 
-  variableInitialized(variable: any) {
+  variableInitialized(variable: { name: string }) {
     this.index[variable.name] = variable;
   }
 
@@ -255,7 +255,7 @@ export class TemplateSrv implements BaseTemplateSrv {
     return scopedVar.value;
   }
 
-  private getVariableText(scopedVar: ScopedVar, value: any) {
+  private getVariableText(scopedVar: ScopedVar, value: unknown) {
     if (scopedVar.value === value || typeof value !== 'string') {
       return scopedVar.text;
     }

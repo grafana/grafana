@@ -14,6 +14,8 @@ import { resolveBackendInstance } from './probeUtils';
 import { runInstantQueries, runRangeQuery } from './promQuery';
 import { lokiHasRecentLabels } from './solutionDataProbes';
 import {
+  diskPressureQuery,
+  diskRatioExpr,
   fetchLogsActivity,
   fetchMetricsActivity,
   fetchMetricsDiskHoursToFull,
@@ -457,7 +459,7 @@ describe('metrics telemetry', () => {
     ]);
     mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12)]);
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.hosts).toBe(12);
@@ -484,7 +486,7 @@ describe('metrics telemetry', () => {
       scalarFrame('diskWorst', 0.96, { instance: 'web-03:9100', mountpoint: '/data' }),
     ]);
 
-    await expect(fetchMetricsDiskPressure(prom)).resolves.toEqual({
+    await expect(fetchMetricsDiskPressure(prom, null)).resolves.toEqual({
       hostsAbove: 3,
       worstInstance: 'web-03:9100',
       worstMount: '/data',
@@ -500,13 +502,61 @@ describe('metrics telemetry', () => {
     );
   });
 
-  it('reads the ETA for the filesystem selected by disk pressure', async () => {
-    mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', 6.4)]);
+  describe('disk scope', () => {
+    const scope = {
+      excludes: [
+        { label: 'instance', regex: 'cache-.*' },
+        { label: 'mountpoint', regex: '/scratch' },
+      ],
+    };
+    const fsExclude = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
+    const selector = `{${fsExclude},instance!~"cache-.*",mountpoint!~"/scratch"}`;
+    const ratio = `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
 
-    await expect(fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom)).resolves.toBe(6.4);
+    it('appends the exclusions to both sides of the fill ratio as quoted matchers', () => {
+      expect(diskRatioExpr(null)).toBe(
+        `(1 - node_filesystem_avail_bytes{${fsExclude}} / node_filesystem_size_bytes{${fsExclude}})`
+      );
+      expect(diskRatioExpr(scope)).toBe(ratio);
+      expect(diskRatioExpr({ excludes: [{ label: 'device', regex: 'a"b\\c' }] })).toContain('device!~"a\\"b\\\\c"');
+      expect(diskPressureQuery(scope)).toBe(`max by (instance) (${ratio}) > 0.9`);
+    });
+
+    it('narrows the disk pressure queries and the host count to the scope', async () => {
+      await fetchMetricsDiskPressure(prom, scope);
+
+      expect(mockRunInstantQueries).toHaveBeenCalledWith(
+        { diskHosts: `count(max by (instance) (${ratio}) > 0.9)`, diskWorst: `topk(1, ${ratio})` },
+        prom,
+        { timeoutMs: 30_000, partial: true }
+      );
+
+      // The `{}` resource stub also walks the null arms of the series-count and name-count readers.
+      mockResolveBackendInstance.mockResolvedValue(backendInstance(jest.fn(async () => ({}))));
+      await fetchMetricsActivity(prom, scope);
+
+      // Hosts keep the one-series-per-host metric; the same matchers apply to it.
+      expect(mockRunInstantQueries).toHaveBeenLastCalledWith(
+        expect.objectContaining({ hosts: 'count(node_uname_info{instance!~"cache-.*",mountpoint!~"/scratch"})' }),
+        prom,
+        { partial: true }
+      );
+    });
+  });
+
+  it('reads the ETA for the filesystem selected by disk pressure, inside the scope', async () => {
+    mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', 6.4)]);
+    // Instance labels repeat across clusters, so an excluded cluster must not supply the ETA.
+    const scope = { excludes: [{ label: 'cluster', regex: 'prod-eu-.*' }] };
+
+    await expect(fetchMetricsDiskHoursToFull('web-03:9100', '/data', prom, scope)).resolves.toBe(6.4);
 
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
-      { eta: expect.stringContaining('instance="web-03:9100",mountpoint="/data"') },
+      {
+        eta: expect.stringContaining(
+          'instance="web-03:9100",mountpoint="/data",fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs",cluster!~"prod-eu-.*"'
+        ),
+      },
       prom,
       { timeoutMs: 30_000 }
     );
@@ -524,7 +574,7 @@ describe('metrics telemetry', () => {
     });
     mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.seriesSparkline).toBeNull();
@@ -560,7 +610,7 @@ describe('metrics telemetry', () => {
       }),
     ]);
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       {
@@ -610,7 +660,7 @@ describe('metrics telemetry', () => {
         : []
     );
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(activity.seriesSparkline?.y.values).toEqual([10, 20]);
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
@@ -637,7 +687,7 @@ describe('metrics telemetry', () => {
     const getResource = jest.fn(async () => ({ data: ['up'] }));
     mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(activity.seriesSparkline).toBeNull();
     expect(mockRunRangeQuery).toHaveBeenCalledTimes(1);
@@ -657,7 +707,7 @@ describe('metrics telemetry', () => {
     mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12)]);
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(mockGetDataSourceInstanceSettings).not.toHaveBeenCalledWith('grafanacloud-usage');
     expect(mockRunInstantQueries).toHaveBeenCalledTimes(1);
@@ -672,7 +722,7 @@ describe('metrics telemetry', () => {
     mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     mockRunInstantQueries.mockResolvedValue([scalarFrame('hosts', 12), scalarFrame('dpm', 250_000)]);
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(mockRunInstantQueries).toHaveBeenCalledWith(
       expect.objectContaining({ dpm: '60 * sum(rate(prometheus_tsdb_head_samples_appended_total[5m]))' }),
@@ -692,7 +742,7 @@ describe('metrics telemetry', () => {
     });
     mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(mockRunRangeQuery).toHaveBeenCalledWith(
@@ -729,7 +779,7 @@ describe('metrics telemetry', () => {
     });
     mockRunRangeQuery.mockRejectedValue(new Error('usage unavailable'));
 
-    const activity = await fetchMetricsActivity(prom);
+    const activity = await fetchMetricsActivity(prom, null);
 
     expect(activity.count).toEqual({ kind: 'series', value: 4_200_000 });
     expect(activity.dataPointsPerMinute).toBeNull();
@@ -749,7 +799,7 @@ describe('metrics telemetry', () => {
     });
     mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
 
-    await expect(fetchMetricsActivity(prom)).resolves.toMatchObject({ count: { kind: 'series', value: 987 } });
+    await expect(fetchMetricsActivity(prom, null)).resolves.toMatchObject({ count: { kind: 'series', value: 987 } });
     expect(getResource).not.toHaveBeenCalledWith('api/v1/label/__name__/values', expect.anything(), expect.anything());
   });
 
@@ -763,7 +813,7 @@ describe('metrics telemetry', () => {
     mockResolveBackendInstance.mockResolvedValue(backendInstance(getResource));
     const end = Math.floor(Date.now() / 1000);
 
-    const promise = fetchMetricsActivity(prom);
+    const promise = fetchMetricsActivity(prom, null);
     await jest.advanceTimersByTimeAsync(10_000);
 
     await expect(promise).resolves.toMatchObject({ count: { kind: 'names', value: 2 } });
@@ -785,7 +835,7 @@ describe('metrics telemetry', () => {
     mockRunRangeQuery.mockReturnValue(new Promise(() => {}));
     let settled = false;
 
-    void fetchMetricsActivity(prom).finally(() => {
+    void fetchMetricsActivity(prom, null).finally(() => {
       settled = true;
     });
     await jest.advanceTimersByTimeAsync(0);
@@ -798,7 +848,7 @@ describe('metrics telemetry', () => {
     // count() over an empty vector returns an empty result, not zero: no diskHosts frame.
     mockRunInstantQueries.mockResolvedValue([]);
 
-    const promise = fetchMetricsDiskPressure(prom);
+    const promise = fetchMetricsDiskPressure(prom, null);
     const disk = await promise;
 
     expect(disk).toBeNull();
@@ -811,7 +861,7 @@ describe('metrics telemetry', () => {
       scalarFrame('diskWorst', 0.93, { instance: 'db-01:9100' }),
     ]);
 
-    const promise = fetchMetricsDiskPressure(prom);
+    const promise = fetchMetricsDiskPressure(prom, null);
     const disk = await promise;
 
     expect(disk).toEqual({ hostsAbove: 1, worstInstance: 'db-01:9100', worstMount: null, worstRatio: 0.93 });
@@ -821,13 +871,13 @@ describe('metrics telemetry', () => {
   it.each([90, 0])('drops a meaningless linear ETA (%s h)', async (eta) => {
     mockRunInstantQueries.mockResolvedValue([scalarFrame('eta', eta)]);
 
-    await expect(fetchMetricsDiskHoursToFull('db-01:9100', '/srv', prom)).resolves.toBeNull();
+    await expect(fetchMetricsDiskHoursToFull('db-01:9100', '/srv', prom, null)).resolves.toBeNull();
   });
 
   it('resolves all-null without querying when the datasource has no backend instance', async () => {
     mockResolveBackendInstance.mockResolvedValue(null);
 
-    await expect(fetchMetricsActivity(prom)).resolves.toEqual({
+    await expect(fetchMetricsActivity(prom, null)).resolves.toEqual({
       count: null,
       dataPointsPerMinute: null,
       hosts: null,

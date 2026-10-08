@@ -97,8 +97,8 @@ func loadInfo(rootfs fs.FS, jsondata plugins.JSONData, opts Options) (PluginDefi
 			// this runs during server startup via DI, so serve the plugin
 			// without its manifest kinds instead of failing the whole load.
 			backend.Logger.Error("Skipping invalid app-sdk manifest", "pluginId", jsondata.ID, "error", err)
-		} else {
-			info.Manifest = m
+		} else if m != nil {
+			info.Manifests = append(info.Manifests, m)
 		}
 	}
 

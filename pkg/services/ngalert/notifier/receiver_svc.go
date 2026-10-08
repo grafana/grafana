@@ -23,6 +23,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning/validation"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/secrets"
 )
 
@@ -51,9 +52,11 @@ type routeService interface {
 	RenameReceiverInRoutes(ctx context.Context, rev *legacy_storage.ConfigRevision, oldName, newName string) map[*v1.Route]int
 }
 
+// alertRuleNotificationSettingsStore is the rule-store surface the receiver service needs: it
+// looks up which rules route to a receiver before renaming or deleting it.
 type alertRuleNotificationSettingsStore interface {
-	RenameReceiverInNotificationSettings(ctx context.Context, orgID int64, oldReceiver, newReceiver string, validateProvenance func(models.Provenance) bool, dryRun bool) ([]models.AlertRuleKey, []models.AlertRuleKey, error)
-	ListContactPointRoutings(ctx context.Context, q models.ListContactPointRoutingsQuery) (map[models.AlertRuleKey]models.ContactPointRouting, error)
+	rulestore.ReceiverRenamer
+	rulestore.ContactPointRoutingReader
 }
 
 type secretService interface {
@@ -71,7 +74,7 @@ type amReceiverStatusFetcher interface {
 // ReceiverService instances that never need to serve AM-derived receiver status, e.g. file-based provisioning.
 type NoopReceiverStatusFetcher struct{}
 
-var _ amReceiverStatusFetcher = &NoopReceiverStatusFetcher{}
+var _ amReceiverStatusFetcher = (*NoopReceiverStatusFetcher)(nil)
 
 func (NoopReceiverStatusFetcher) GetReceiverStatuses(_ context.Context, _ int64) ([]alertingModels.ReceiverStatus, error) {
 	return nil, nil

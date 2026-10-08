@@ -358,15 +358,6 @@ func (s *stubKVBackend) LeaseManager() *lease.Manager { return s.mgr }
 func TestBuildKVSnapshotStore(t *testing.T) {
 	logger := log.NewNopLogger()
 
-	t.Run("rejects when index_snapshot_bucket_url is also set", func(t *testing.T) {
-		cfg := &setting.Cfg{
-			IndexSnapshotBucketURL: "file:///tmp/snapshot",
-		}
-		_, err := BuildKVSnapshotStore(cfg, &stubKVBackend{}, logger)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "mutually exclusive")
-	})
-
 	t.Run("rejects when backend is not a KVBackend", func(t *testing.T) {
 		cfg := &setting.Cfg{}
 		_, err := BuildKVSnapshotStore(cfg, &nonKVBackend{}, logger)

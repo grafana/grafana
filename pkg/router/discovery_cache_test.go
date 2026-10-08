@@ -59,7 +59,7 @@ func (b *countingDiscoveryBackend) ServeHTTP(w http.ResponseWriter, req *http.Re
 
 func aggregatedDiscovery(t *testing.T, router *GrafanaRouter) map[string]apidiscoveryv2.APIGroupDiscovery {
 	t.Helper()
-	req := httptest.NewRequest(http.MethodGet, "/apis", nil)
+	req := newAuthenticatedRequest(http.MethodGet, "/apis", nil)
 	req.Header.Set("Accept", aggregatedDiscoveryJSON)
 	recorder := httptest.NewRecorder()
 	router.HandleFunc(recorder, req, http.NotFoundHandler())
@@ -96,7 +96,7 @@ func TestAggregatedDiscoveryUsesProviderWithoutRequests(t *testing.T) {
 		fakeBackend: fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: handler},
 		discovery:   thingsDiscovery(cachedGroup),
 	}
-	router := NewGrafanaRouter(staticLoader{backends: []Backend{backend}})
+	router := NewGrafanaRouter(staticLoader{backends: []Backend{backend}}, nil)
 	require.NoError(t, router.reconcile(t.Context()))
 
 	for range 3 {
@@ -184,7 +184,7 @@ func TestAggregatedDiscoveryDoesNotWaitForSlowBackends(t *testing.T) {
 		router := NewGrafanaRouter(staticLoader{backends: []Backend{
 			&fakeBackend{group: metav1.APIGroup{Name: cachedGroup, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: cachedGroup + "/v1", Version: "v1"}}}, key: "1", handler: fast},
 			&fakeBackend{group: metav1.APIGroup{Name: slowGroup, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: slowGroup + "/v1", Version: "v1"}}}, key: "1", handler: slow},
-		}})
+		}}, nil)
 		require.NoError(t, router.reconcile(t.Context()))
 
 		start := time.Now()
@@ -254,7 +254,7 @@ func TestAggregatedDiscoveryDoesNotCacheFailedFetchWithoutVersions(t *testing.T)
 	handler.refuse.Store(true)
 	router := NewGrafanaRouter(staticLoader{backends: []Backend{
 		&fakeBackend{group: metav1.APIGroup{Name: cachedGroup}, key: "1", handler: handler},
-	}})
+	}}, nil)
 	require.NoError(t, router.reconcile(t.Context()))
 
 	aggregatedDiscovery(t, router)
@@ -279,7 +279,7 @@ func TestAggregatedDiscoveryMixesProvidersAndFetchesSafely(t *testing.T) {
 		fetched := fmt.Sprintf("fetched%d.ext.grafana.app", i)
 		backends = append(backends, &fakeBackend{group: metav1.APIGroup{Name: fetched}, key: "1", handler: &countingDiscoveryBackend{group: fetched}})
 	}
-	router := NewGrafanaRouter(staticLoader{backends: backends})
+	router := NewGrafanaRouter(staticLoader{backends: backends}, nil)
 	require.NoError(t, router.reconcile(t.Context()))
 
 	// Warm the cache so later fetches return at once, while provider entries
@@ -288,4 +288,38 @@ func TestAggregatedDiscoveryMixesProvidersAndFetchesSafely(t *testing.T) {
 	for range 20 {
 		require.Len(t, aggregatedDiscovery(t, router), 40)
 	}
+}
+
+func TestAggregatedDiscoveryDoesNotWaitForAHungBackend(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const hungGroup = "hung.ext.grafana.app"
+		release := make(chan struct{})
+		// Blocks without ever looking at its request context.
+		hung := http.HandlerFunc(func(http.ResponseWriter, *http.Request) { <-release })
+		router := NewGrafanaRouter(staticLoader{backends: []Backend{
+			&fakeBackend{group: metav1.APIGroup{Name: hungGroup, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: hungGroup + "/v1", Version: "v1"}}}, key: "1", handler: hung},
+			&fakeBackend{group: metav1.APIGroup{Name: cachedGroup, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: cachedGroup + "/v1", Version: "v1"}}}, key: "1", handler: &countingDiscoveryBackend{group: cachedGroup}},
+		}}, nil)
+		require.NoError(t, router.reconcile(t.Context()))
+
+		start := time.Now()
+		groups := aggregatedDiscovery(t, router)
+		require.Equal(t, discoveryFetchTimeout, time.Since(start))
+		requireFreshness(t, groups[hungGroup], apidiscoveryv2.DiscoveryFreshnessStale)
+		requireFreshness(t, groups[cachedGroup], apidiscoveryv2.DiscoveryFreshnessCurrent)
+
+		// The fetch is still stuck and past its deadline. Later requests neither
+		// wait on it nor join it, so they don't pile up on the stuck call.
+		_, overdue := router.discoveryCache.fetchDeadline(hungGroup + "\x00" + "1")
+		require.True(t, overdue)
+		start = time.Now()
+		for range 100 {
+			groups = aggregatedDiscovery(t, router)
+			requireFreshness(t, groups[hungGroup], apidiscoveryv2.DiscoveryFreshnessStale)
+		}
+		require.Zero(t, time.Since(start))
+
+		close(release)
+		synctest.Wait()
+	})
 }

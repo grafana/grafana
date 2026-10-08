@@ -85,6 +85,21 @@ func (GitHubEnterpriseOAuthConnectionConfig) OpenAPIModelName() string {
 	return OpenAPIPrefix + "GitHubEnterpriseOAuthConnectionConfig"
 }
 
+// GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to
+// authenticate pure git repositories.
+type GitOAuthConnectionConfig struct {
+	// The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).
+	AuthURL string `json:"authURL"`
+	// The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).
+	TokenURL string `json:"tokenURL"`
+	// The OAuth scopes to request, granting git read and write access.
+	Scopes []string `json:"scopes,omitempty"`
+}
+
+func (GitOAuthConnectionConfig) OpenAPIModelName() string {
+	return OpenAPIPrefix + "GitOAuthConnectionConfig"
+}
+
 type BitbucketConnectionConfig struct {
 	// The workspace the OAuth consumer belongs to
 	Workspace string `json:"workspace"`
@@ -130,6 +145,7 @@ const (
 	GithubEnterpriseOAuthConnectionType ConnectionType = "githubEnterpriseOAuth"
 	GitlabOAuthConnectionType           ConnectionType = "gitlabOAuth"
 	BitbucketOAuthConnectionType        ConnectionType = "bitbucketOAuth"
+	GitOAuthConnectionType              ConnectionType = "gitOAuth"
 )
 
 type ConnectionSpec struct {
@@ -154,6 +170,9 @@ type ConnectionSpec struct {
 	// Bitbucket connection configuration
 	// Only applicable when provider is "bitbucketOAuth"
 	Bitbucket *BitbucketConnectionConfig `json:"bitbucket,omitempty"`
+	// Generic git OAuth app connection configuration
+	// Only applicable when provider is "gitOAuth"
+	GitOAuth *GitOAuthConnectionConfig `json:"gitOAuth,omitempty"`
 
 	// OAuth app configuration shared by all OAuth app providers
 	OAuth *ConnectionOAuthConfig `json:"oauth,omitempty"`

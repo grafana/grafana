@@ -8,6 +8,7 @@ import (
 	"crypto/x509/pkix"
 	"encoding/json"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/time/rate"
+	"gopkg.in/ini.v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -179,9 +181,10 @@ func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
 }
 
 func TestProvideCloudRoutesLoaderFactory_AggregateOnlyRequiresCapToken(t *testing.T) {
-	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"baas_apiserver.url":      "https://baas.invalid",
-		"baas_apiserver.audience": "baas",
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      "https://baas.invalid",
+		"audience": "baas",
 	})
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
@@ -192,11 +195,34 @@ func TestProvideCloudRoutesLoaderFactory_AggregateTargetRequiresAudience(t *test
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
 		"cap_token":          "tok",
 		"token_exchange_url": "https://exchange.invalid",
-		"baas_apiserver.url": "https://baas.invalid",
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url": "https://baas.invalid",
 	})
 
 	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-	require.ErrorContains(t, err, "baas_apiserver.audience is required")
+	require.ErrorContains(t, err, "router.aggregate.baas_apiserver: audience is required")
+}
+
+func TestProvideCloudRoutesLoaderFactory_AnonymousDiscoveryAggregateNeedsNoCapToken(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	addAggregateSection(t, cfg, "open", map[string]string{
+		"url":            "https://open.invalid",
+		"discovery_auth": "none",
+	})
+
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	require.NotNil(t, loader)
+}
+
+func TestProvideCloudRoutesLoaderFactory_AnonymousDiscoveryAggregateDoesNotExemptSignedTarget(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{})
+	addAggregateSection(t, cfg, "open", map[string]string{"url": "https://open.invalid", "discovery_auth": "none"})
+	addAggregateSection(t, cfg, "signed", map[string]string{"url": "https://signed.invalid", "audience": "signed"})
+
+	_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.ErrorContains(t, err, "cap_token and token_exchange_url are required")
 }
 
 // TestNewAggregateBaseTransport_IsPerCallClone pins the property that keeps
@@ -323,12 +349,16 @@ func TestAggregateTokenWrapper_HeaderPerTarget(t *testing.T) {
 // clients rather than one shared one.
 func TestProvideCloudRoutesLoaderFactory_TargetsGetOwnHTTPClients(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"cap_token":                             "tok",
-		"token_exchange_url":                    "https://exchange.invalid",
-		"baas_apiserver.url":                    "https://baas.invalid",
-		"baas_apiserver.audience":               "baas",
-		"cloud_app_platform_apiserver.url":      "https://cap.invalid",
-		"cloud_app_platform_apiserver.audience": "cap",
+		"cap_token":          "tok",
+		"token_exchange_url": "https://exchange.invalid",
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      "https://baas.invalid",
+		"audience": "baas",
+	})
+	addAggregateSection(t, cfg, "cloud_app_platform_apiserver", map[string]string{
+		"url":      "https://cap.invalid",
+		"audience": "cap",
 	})
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
@@ -406,11 +436,13 @@ func TestCloudLoader_AllThreeSourcesCombineInLoad(t *testing.T) {
 	defer tokenExchange.Close()
 
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"cap_token":               "tok",
-		"token_exchange_url":      tokenExchange.URL,
-		"baas_apiserver.url":      aggregateUpstream.URL,
-		"baas_apiserver.audience": "baas",
-		"plugins_url":             pluginsUpstream.URL,
+		"cap_token":          "tok",
+		"token_exchange_url": tokenExchange.URL,
+		"plugins_url":        pluginsUpstream.URL,
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      aggregateUpstream.URL,
+		"audience": "baas",
 	})
 	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
 	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
@@ -462,10 +494,12 @@ func TestCloudLoader_AggregateOnlyNoAppManifest(t *testing.T) {
 	defer tokenExchange.Close()
 
 	cfg := cfgWithCloudRouterSection(t, map[string]string{
-		"cap_token":               "tok",
-		"token_exchange_url":      tokenExchange.URL,
-		"baas_apiserver.url":      upstream.URL,
-		"baas_apiserver.audience": "baas",
+		"cap_token":          "tok",
+		"token_exchange_url": tokenExchange.URL,
+	})
+	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{
+		"url":      upstream.URL,
+		"audience": "baas",
 	})
 
 	loaderIface, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
@@ -595,22 +629,136 @@ func TestCloudLoaderFallbackOnlyLifecycle(t *testing.T) {
 	})
 }
 
-func TestProvideCloudRoutesLoaderFactory_PluginsRequireTokenVerificationConfig(t *testing.T) {
+func TestProvideCloudRoutesLoaderFactory_PluginsWithoutTokenVerificationConfig(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
+	loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	require.NotNil(t, loader)
+}
+
+func TestAPIGroupPreferredVersion(t *testing.T) {
+	served, unserved := true, false
+	ptr := func(s string) *string { return &s }
 	for _, tc := range []struct {
 		name      string
-		jwksURL   string
-		wantError string
+		versions  []v1alpha2.AppManifestManifestVersion
+		preferred *string
+		want      string
 	}{
-		{name: "missing JWKS URL", wantError: "missing cfg.ExtJWTAuth.JWKSUrl"},
-		{name: "missing audiences", jwksURL: "https://jwks.invalid/keys", wantError: "missing cfg.ExtJWTAuth.Audiences"},
+		{name: "an unserved last version is not preferred",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2", Served: &unserved}}, want: "v1"},
+		{name: "an unserved explicit preference falls back to a served version",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2", Served: &unserved}}, preferred: ptr("v2"), want: "v1"},
+		{name: "a served explicit preference is kept",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2"}}, preferred: ptr("v1"), want: "v1"},
+		{name: "GA over alpha, whatever the order",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}, {Name: "v2alpha1"}}, want: "v1"},
+		{name: "beta over alpha",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1beta1"}, {Name: "v1alpha1", Served: &served}}, want: "v1beta1"},
+		{name: "the highest GA version",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v2"}, {Name: "v1"}, {Name: "v10"}}, want: "v10"},
+		{name: "nothing served, nothing preferred",
+			versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1", Served: &unserved}}, want: ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			cfg := cfgWithCloudRouterSection(t, map[string]string{"plugins_url": "https://plugins.invalid/plugins"})
-			cfg.ExtJWTAuth.JWKSUrl = tc.jwksURL
-			cfg.ExtJWTAuth.Audiences = nil
-			loader, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
-			require.ErrorContains(t, err, cloudRouterSection+": "+tc.wantError)
-			require.Nil(t, loader)
+			group := apiGroupFromManifestSpec(v1alpha2.AppManifestSpec{Group: "example.grafana.app", Versions: tc.versions, PreferredVersion: tc.preferred})
+			require.Equal(t, tc.want, group.PreferredVersion.Version)
 		})
 	}
+
+	t.Run("embedded manifests follow the same rule", func(t *testing.T) {
+		group := apiGroupFromManifestData(app.ManifestData{
+			Group: "example.grafana.app", PreferredVersion: "v2",
+			Versions: []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: false}},
+		})
+		require.Equal(t, "v1", group.PreferredVersion.Version)
+	})
+}
+
+func TestProvideCloudRoutesLoaderFactory_LegacyAggregateSettings(t *testing.T) {
+	for _, name := range []string{"baas_apiserver", "cloud_app_platform_apiserver"} {
+		for _, fromEnv := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/env=%t", name, fromEnv), func(t *testing.T) {
+				cfg := cfgWithCloudRouterSection(t, map[string]string{
+					"cap_token":          "token",
+					"token_exchange_url": "https://exchange.invalid",
+				})
+				values := map[string]string{"url": "https://old.invalid", "audience": "legacy", "group_regex": "*.ext.grafana.app", "insecure": "true"}
+				for key, value := range values {
+					if fromEnv {
+						t.Setenv(setting.EnvKey(cloudRouterSection, name+"."+key), value)
+					} else {
+						cfg.Raw.Section(cloudRouterSection).Key(name + "." + key).SetValue(value)
+					}
+				}
+				result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+				require.NoError(t, err)
+				loader := result.(*cloudLoader)
+				require.Len(t, loader.aggregateTargets, 1)
+				target := loader.aggregateTargets[0]
+				require.Equal(t, name, target.name)
+				require.Equal(t, "https://old.invalid", target.base.String())
+				require.True(t, matchesAnyPattern("test.ext.grafana.app", target.patterns))
+				require.False(t, matchesAnyPattern("other.grafana.app", target.patterns))
+				require.True(t, target.proxyTransport.(*http.Transport).TLSClientConfig.InsecureSkipVerify)
+			})
+		}
+	}
+}
+
+func TestCloudLoaderAggregateSectionPriority(t *testing.T) {
+	newUpstream := func(version string) *httptest.Server {
+		upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			require.Equal(t, "/apis", r.URL.Path)
+			require.Equal(t, "Bearer fake-token", r.Header.Get("X-Access-Token"))
+			_ = json.NewEncoder(w).Encode(metav1.APIGroupList{Groups: []metav1.APIGroup{{
+				Name:     "shared.ext.grafana.app",
+				Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}},
+			}}})
+		}))
+		t.Cleanup(upstream.Close)
+		return upstream
+	}
+	first, second := newUpstream("v1"), newUpstream("v2")
+	exchange := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"status":"ok","data":{"token":"fake-token"}}`))
+	}))
+	t.Cleanup(exchange.Close)
+	cfg := setting.NewCfg()
+	var err error
+	cfg.Raw, err = ini.Load([]byte(fmt.Sprintf(`
+[cloud_router]
+cap_token = token
+token_exchange_url = %s
+[router.aggregate.z_first]
+url = %s
+audience = first
+[router.aggregate.a_second]
+url = %s
+audience = second
+`, exchange.URL, first.URL, second.URL)))
+	require.NoError(t, err)
+	result, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+	require.NoError(t, err)
+	loader := result.(*cloudLoader)
+	require.Len(t, loader.aggregateTargets, 2)
+	dirty := make(chan struct{}, 1)
+	assertWinner := func(name, version string) {
+		t.Helper()
+		backends, err := loader.Load(t.Context())
+		require.NoError(t, err)
+		require.Len(t, backends, 1)
+		require.Equal(t, "aggregate:"+name, backends[0].Source())
+		require.Equal(t, []metav1.GroupVersionForDiscovery{{GroupVersion: "shared.ext.grafana.app/" + version, Version: version}}, backends[0].Group().Versions)
+	}
+	// Poll completion order must not determine priority or merge group versions.
+	loader.aggregateTargets[1].poll(t.Context(), dirty)
+	assertWinner("a_second", "v2")
+	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	assertWinner("z_first", "v1")
+	require.Equal(t, []shadowedGroup{{Group: "shared.ext.grafana.app", Source: "aggregate:a_second", By: "aggregate:z_first"}}, loader.shadowedGroups())
+	first.Close()
+	loader.aggregateTargets[0].poll(t.Context(), dirty)
+	assertWinner("z_first", "v1")
 }

@@ -11,25 +11,27 @@ import (
 	"net/url"
 	"os"
 	"slices"
+	"sync/atomic"
+	"time"
 
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/transport"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/operator"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana/pkg/clientauth"
-	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/setting"
 	unifiedresource "github.com/grafana/grafana/pkg/storage/unified/resource"
-
-	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // cloudRouterSection is the remote control-plane apiserver this loader reads
@@ -39,7 +41,7 @@ import (
 const cloudRouterSection = "cloud_router"
 
 // ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
-// [cloud_router] section. It returns (nil, nil) when no source is configured
+// [cloud_router] and [router.aggregate.<name>] sections. It returns (nil, nil) when no source is configured
 // (appmanifest_apiserver_url, an aggregate target url, plugins_url or
 // st_discovery_url), and the caller falls back to another loader.
 //
@@ -56,9 +58,9 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, fmt.Errorf("%s: apiserver_url was renamed to appmanifest_apiserver_url -- update your config", cloudRouterSection)
 	}
 
-	aggregateTargetConfigs, err := parseAggregateTargets(section)
+	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		return nil, err
 	}
 
 	// plugins_url needs no CAP token (it is an unauthenticated in-cluster
@@ -69,12 +71,8 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
-		auth, err := authn.NewGrafanaTokenAuthenticator(cfg)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
 		pluginsTarget, err = newPluginManifestsTarget(pluginsURL,
-			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps, auth)
+			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
 		if err != nil {
 			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
@@ -86,14 +84,18 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	}
 
 	// cap_token/token_exchange_url are only needed for the appmanifest
-	// apiserver and the two CAP-token-authenticated aggregate targets --
-	// pluginsTarget alone must be able to activate without them.
+	// apiserver and CAP-token-authenticated aggregate targets --
+	// pluginsTarget and discovery_auth = none targets must be able to activate without them.
+	needsTokenExchange := appManifestApiserverURL != ""
+	for _, targetCfg := range aggregateTargetConfigs {
+		needsTokenExchange = needsTokenExchange || !targetCfg.anonymousDiscovery()
+	}
 	var tokenExchanger *authnlib.TokenExchangeClient
-	if appManifestApiserverURL != "" || len(aggregateTargetConfigs) > 0 {
+	if needsTokenExchange {
 		capToken := section.Key("cap_token").MustString("")
 		tokenExchangeURL := section.Key("token_exchange_url").MustString("")
 		if capToken == "" || tokenExchangeURL == "" {
-			return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url, baas_apiserver.url, or cloud_app_platform_apiserver.url is set", cloudRouterSection)
+			return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url or an aggregate target url without discovery_auth = none is set", cloudRouterSection)
 		}
 
 		tokenExchanger, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -107,8 +109,8 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 
 	var aggregateTargets []*aggregateTarget
 	for _, targetCfg := range aggregateTargetConfigs {
-		if targetCfg.Audience == "" {
-			return nil, fmt.Errorf("%s: %s.audience is required when %s.url is set", cloudRouterSection, targetCfg.Name, targetCfg.Name)
+		if targetCfg.Audience == "" && !targetCfg.anonymousDiscovery() {
+			return nil, fmt.Errorf("%s%s: audience is required when url is set", aggregateSectionPrefix, targetCfg.Name)
 		}
 		tlsCfg, err := buildAggregateTLSConfig(targetCfg.CAFile, targetCfg.InsecureSkipVerify)
 		if err != nil {
@@ -123,9 +125,11 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 			// WrapTransport still applies the CAP token exchange on top of it.
 			// TLS is set on the transport because client-go rejects a custom
 			// Transport combined with TLSClientConfig.
-			Transport:     newAggregateBaseTransport(tlsCfg),
-			WrapTransport: aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience),
-			Timeout:       defaultAggregateDiscoveryTimeout,
+			Transport: newAggregateBaseTransport(tlsCfg),
+			Timeout:   defaultAggregateDiscoveryTimeout,
+		}
+		if !targetCfg.anonymousDiscovery() {
+			restCfg.WrapTransport = aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience)
 		}
 		httpClient, err := rest.HTTPClientFor(restCfg)
 		if err != nil {
@@ -215,6 +219,9 @@ type cloudLoader struct {
 
 	// Until all requests are moved to MT, we can fallback to ST instances
 	singleTenantFallback *singleTenantFallback
+
+	routeBackendStatus pollStatus
+	shadowed           atomic.Pointer[[]shadowedGroup]
 }
 
 type tlsCacheKey struct {
@@ -262,6 +269,17 @@ func newCloudLoader(clients *k8s.ClientRegistry, aggregateTargets []*aggregateTa
 		l.amInformer, err = newInformer(v1alpha2.AppManifestKind(), clients, watcher)
 		if err != nil {
 			return nil, fmt.Errorf("app manifest informer: %w", err)
+		}
+		// Once synced, Load reads the caches, so the source's health comes from
+		// the informers themselves: their list and watch errors, and (in
+		// Watcher) the events they receive.
+		for _, inf := range []*operator.KubernetesBasedInformer{l.rbInformer, l.amInformer} {
+			if err := inf.SharedIndexInformer.SetWatchErrorHandlerWithContext(func(ctx context.Context, r *cache.Reflector, err error) {
+				l.routeBackendStatus.recordFailure()
+				cache.DefaultWatchErrorHandler(ctx, r, err)
+			}); err != nil {
+				return nil, fmt.Errorf("informer watch error handler: %w", err)
+			}
 		}
 	}
 
@@ -337,48 +355,48 @@ func getAPIGroupsForCoreGroupsWithoutManifests() map[string]metav1.APIGroup {
 }
 
 func apiGroupFromManifestData(manifest app.ManifestData) metav1.APIGroup {
-	group := metav1.APIGroup{Name: manifest.Group}
+	var served []string
 	for _, version := range manifest.Versions {
-		if !version.Served {
-			continue
-		}
-		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
-			GroupVersion: manifest.Group + "/" + version.Name,
-			Version:      version.Name,
-		})
-	}
-	if manifest.PreferredVersion != "" {
-		group.PreferredVersion = metav1.GroupVersionForDiscovery{
-			GroupVersion: manifest.Group + "/" + manifest.PreferredVersion,
-			Version:      manifest.PreferredVersion,
+		if version.Served {
+			served = append(served, version.Name)
 		}
 	}
-	return group
+	return apiGroupForVersions(manifest.Group, served, manifest.PreferredVersion)
 }
 
 func apiGroupFromManifestSpec(spec v1alpha2.AppManifestSpec) metav1.APIGroup {
-	group := metav1.APIGroup{Name: spec.Group}
+	var served []string
 	for _, version := range spec.Versions {
-		if version.Served != nil && !*version.Served {
-			continue
+		if version.Served == nil || *version.Served {
+			served = append(served, version.Name)
 		}
-		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
-			GroupVersion: spec.Group + "/" + version.Name,
-			Version:      version.Name,
-		})
 	}
-
-	preferredVersion := ""
+	preferred := ""
 	if spec.PreferredVersion != nil {
-		preferredVersion = *spec.PreferredVersion
-	} else if len(spec.Versions) > 0 {
-		preferredVersion = spec.Versions[len(spec.Versions)-1].Name
+		preferred = *spec.PreferredVersion
 	}
-	if preferredVersion != "" {
-		group.PreferredVersion = metav1.GroupVersionForDiscovery{
-			GroupVersion: spec.Group + "/" + preferredVersion,
-			Version:      preferredVersion,
+	return apiGroupForVersions(spec.Group, served, preferred)
+}
+
+// apiGroupForVersions describes a group serving the given versions, in order.
+// Its preferred version is preferred when that is served, and otherwise the
+// served version Kubernetes ranks highest: GA over beta over alpha, then the
+// highest number. An unserved version is never preferred.
+func apiGroupForVersions(name string, served []string, preferred string) metav1.APIGroup {
+	group := metav1.APIGroup{Name: name}
+	for _, v := range served {
+		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{GroupVersion: name + "/" + v, Version: v})
+	}
+	if !slices.Contains(served, preferred) {
+		preferred = ""
+		for _, v := range served {
+			if preferred == "" || version.CompareKubeAwareVersionStrings(v, preferred) > 0 {
+				preferred = v
+			}
 		}
+	}
+	if preferred != "" {
+		group.PreferredVersion = metav1.GroupVersionForDiscovery{GroupVersion: name + "/" + preferred, Version: preferred}
 	}
 	return group
 }
@@ -387,6 +405,8 @@ func (l *cloudLoader) Watcher() operator.ResourceWatcher {
 	// The event carries no data we use: reconcile re-reads full state via Load.
 	// So push is a pure edge, coalesced against the buffered-1 dirty channel.
 	push := func() {
+		// An event means data arrived from the remote apiserver.
+		l.routeBackendStatus.recordSuccess(time.Now())
 		select {
 		case l.dirty <- struct{}{}:
 		default: // a wake is already pending; drop this redundant signal
@@ -407,6 +427,15 @@ func (l *cloudLoader) Notify(ctx context.Context) (<-chan struct{}, error) {
 func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	lookup := make(map[string]Backend)
 	var discoveryErr error
+	var shadowed []shadowedGroup
+	// put adds b, recording any backend for the same group it overrides.
+	put := func(b Backend) {
+		group := b.Group().Name
+		if previous, ok := lookup[group]; ok {
+			shadowed = append(shadowed, shadowedGroup{Group: group, Source: previous.Source(), By: b.Source()})
+		}
+		lookup[group] = b
+	}
 
 	// Lowest priority first -- the MT backends will replace the ST flavors
 	if l.singleTenantFallback != nil {
@@ -415,14 +444,14 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 			discoveryErr = fmt.Errorf("single-tenant discovery: %w", err)
 		}
 		for _, b := range backends {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
-	// Aggregate targets override ST; later targets override earlier targets.
-	for _, target := range l.aggregateTargets {
+	// Aggregate targets override ST; reverse order makes the first target win.
+	for _, target := range slices.Backward(l.aggregateTargets) {
 		for _, b := range target.Backends() {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
@@ -433,16 +462,17 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 			return nil, err
 		}
 		for _, b := range l.combineByName(ctx, manifests, backends) {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
 
 	// Managed plugins
 	if l.pluginsTarget != nil {
 		for _, b := range l.pluginsTarget.Backends() {
-			lookup[b.Group().Name] = b
+			put(b)
 		}
 	}
+	l.recordShadowed(ctx, shadowed)
 
 	if len(lookup) == 0 && discoveryErr != nil {
 		return nil, discoveryErr
@@ -454,6 +484,50 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 	})
 
 	return backends, nil
+}
+
+// recordShadowed stores the groups shadowed in the latest load, and logs
+// when that set changes so a new conflict is visible without flooding the log.
+func (l *cloudLoader) recordShadowed(ctx context.Context, shadowed []shadowedGroup) {
+	slices.SortFunc(shadowed, func(a, b shadowedGroup) int {
+		return cmp.Or(cmp.Compare(a.Group, b.Group), cmp.Compare(a.Source, b.Source))
+	})
+	if previous := l.shadowed.Swap(&shadowed); previous == nil || !slices.Equal(*previous, shadowed) {
+		for _, s := range shadowed {
+			logging.FromContext(ctx).Warn("router: group offered by more than one source", "group", s.Group, "source", s.Source, "servedBy", s.By)
+		}
+	}
+}
+
+func (l *cloudLoader) shadowedGroups() []shadowedGroup {
+	if shadowed := l.shadowed.Load(); shadowed != nil {
+		return *shadowed
+	}
+	return nil
+}
+
+func (l *cloudLoader) stackLookups() map[string]uint64 {
+	if l.singleTenantFallback == nil {
+		return nil
+	}
+	return l.singleTenantFallback.lookupsBy.byResult()
+}
+
+func (l *cloudLoader) sourceStatuses() []sourceStatus {
+	var statuses []sourceStatus
+	if l.singleTenantFallback != nil {
+		statuses = append(statuses, l.singleTenantFallback.status.status(sourceSingleTenant))
+	}
+	for _, target := range l.aggregateTargets {
+		statuses = append(statuses, target.status.status(aggregateSource(target.name)))
+	}
+	if l.routeBackendClient != nil {
+		statuses = append(statuses, l.routeBackendStatus.status(sourceRouteBackend))
+	}
+	if l.pluginsTarget != nil {
+		statuses = append(statuses, l.pluginsTarget.status.status(sourcePluginsURL))
+	}
+	return statuses
 }
 
 // routeResources returns the AppManifests and RouteBackends from the informer
@@ -473,14 +547,19 @@ func (l *cloudLoader) routeResources(ctx context.Context) ([]v1alpha2.AppManifes
 		return manifests, backends, nil
 	}
 
+	// Only a direct list counts toward the source's status; cache reads say
+	// nothing about the remote apiserver.
 	backends, err := l.routeBackendClient.ListAll(ctx, "", resource.ListOptions{})
 	if err != nil {
+		l.routeBackendStatus.recordFailure()
 		return nil, nil, err
 	}
 	manifests, err := l.appManifestClient.ListAll(ctx, "", resource.ListOptions{})
 	if err != nil {
+		l.routeBackendStatus.recordFailure()
 		return nil, nil, err
 	}
+	l.routeBackendStatus.recordSuccess(time.Now())
 	return manifests.Items, backends.Items, nil
 }
 
@@ -608,7 +687,7 @@ func buildAggregateTLSConfig(caFile string, insecure bool) (*tls.Config, error) 
 	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
 	switch {
 	case insecure:
-		// Operator-gated via <name>.insecure, same trust model as
+		// Operator-gated via router.aggregate.<name> insecure, same trust model as
 		// apiserver_insecure for the appmanifest apiserver: only enable for a
 		// target reached over a link that's actually trusted, since this
 		// disables both CA and hostname verification (MITM exposure).
