@@ -1,4 +1,7 @@
 import { locationService, reportInteraction } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { AppChromeService } from './AppChromeService';
 
@@ -10,6 +13,26 @@ jest.mock('@grafana/runtime', () => ({
 const reportInteractionMock = jest.mocked(reportInteraction);
 
 describe('AppChromeService', () => {
+  it('does not read the location when login tab title preservation is disabled', () => {
+    const originalSignedIn = contextSrv.user.isSignedIn;
+    setTestFlags({ [FlagKeys.GrafanaPreserveLoginTabTitle]: false });
+    contextSrv.user.isSignedIn = true;
+    const readLocation = jest.spyOn(locationService, 'getLocation').mockImplementation(() => {
+      throw new Error('Location is unavailable');
+    });
+    try {
+      const chrome = new AppChromeService();
+      const node = { id: 'explore', text: 'Explore' };
+      chrome.update({ sectionNav: { node, main: node } });
+      expect(chrome.state.getValue().sectionNav.node.id).toBe('explore');
+      expect(readLocation).not.toHaveBeenCalled();
+    } finally {
+      readLocation.mockRestore();
+      contextSrv.user.isSignedIn = originalSignedIn;
+      setTestFlags({});
+    }
+  });
+
   it('Ignore state updates when sectionNav and pageNav have new instance but same text, url or active child', () => {
     const chromeService = new AppChromeService();
     let stateChanges = 0;

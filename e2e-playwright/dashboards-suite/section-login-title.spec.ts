@@ -1,0 +1,119 @@
+import { test, expect } from '@grafana/plugin-e2e';
+
+const suffix = Date.now().toString(36);
+const dashboards = [{ uid: `login-title-a-${suffix}`, title: `API Latency ${suffix}` }];
+
+test.use({
+  httpCredentials: undefined,
+  featureToggles: { useSessionStorageForRedirection: true },
+  openFeature: { flags: { 'grafana.preserveLoginTabTitle': true } },
+});
+
+test.describe('Section titles after session expiry', { tag: ['@dashboards'] }, () => {
+  // Context routes also apply to tabs created with context.newPage().
+  test.beforeEach(async ({ context }) => {
+    await context.route('**/ofrep/v1/evaluate/flags', async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.flags = body.flags.filter((flag: { key: string }) => flag.key !== 'grafana.preserveLoginTabTitle');
+      body.flags.push({ key: 'grafana.preserveLoginTabTitle', value: true, reason: 'STATIC' });
+      await route.fulfill({ response, json: body });
+    });
+  });
+
+  test.beforeAll(async ({ request }) => {
+    for (const dashboard of dashboards) {
+      const response = await request.post('/api/dashboards/import', {
+        data: {
+          dashboard: { ...dashboard, schemaVersion: 41, panels: [] },
+          folderUid: '',
+          overwrite: false,
+          inputs: [],
+        },
+      });
+      expect(response.ok()).toBe(true);
+    }
+  });
+
+  test.afterAll(async ({ request }) => {
+    for (const dashboard of dashboards) {
+      await request.delete(`/api/dashboards/uid/${dashboard.uid}`);
+    }
+  });
+
+  test('keeps the dashboard section title after a slugless URL is rewritten', async ({ page, context, selectors }) => {
+    const dashboard = dashboards[0];
+    await page.goto(`/d/${dashboard.uid}`);
+    await expect(page).toHaveURL(new RegExp(`/d/${dashboard.uid}/api-latency-${suffix}(?:\\?|$)`));
+    await expect(page.getByTestId(selectors.components.NavToolbar.markAsFavorite)).toBeVisible();
+    await expect(page).toHaveTitle(new RegExp(dashboard.title));
+
+    await context.clearCookies({ name: 'grafana_session' });
+    await page.reload();
+    await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
+    await expect(page).toHaveTitle('Dashboards - Sign in - Grafana');
+  });
+
+  test('uses the latest section after navigating in the same tab', async ({ page, context, selectors }) => {
+    await page.goto(`/d/${dashboards[0].uid}`);
+    await expect(page).toHaveTitle(new RegExp(dashboards[0].title));
+    await expect(page.getByTestId(selectors.components.NavToolbar.markAsFavorite)).toBeVisible();
+
+    // Use Grafana's shortcut to navigate without reloading the application.
+    await page.keyboard.type('ge');
+    await expect(page.getByTestId(selectors.pages.Explore.General.container)).toBeVisible();
+    await expect(page).toHaveURL(/\/explore/);
+    await expect(page).toHaveTitle(/Explore/);
+
+    await context.clearCookies({ name: 'grafana_session' });
+    await page.reload();
+    await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
+    await expect(page).toHaveTitle('Explore - Sign in - Grafana');
+
+    await page.reload();
+    await expect(page).toHaveTitle('Explore - Sign in - Grafana');
+  });
+
+  test('keeps section labels through expiry, reload, and login', async ({
+    page,
+    context,
+    selectors,
+    grafanaAPICredentials,
+  }) => {
+    const secondTab = await context.newPage();
+    const tabs = [page, secondTab];
+    for (const [index, tab] of tabs.entries()) {
+      await tab.goto(index === 0 ? `/d/${dashboards[0].uid}` : '/explore');
+      await expect(tab).toHaveTitle(index === 0 ? new RegExp(dashboards[0].title) : /Explore/);
+    }
+
+    // Removing the session cookie makes the next request follow the expired-session path.
+    await context.clearCookies({ name: 'grafana_session' });
+    await page.getByTestId(selectors.components.NavToolbar.markAsFavorite).click();
+    await secondTab.reload();
+    for (const [index, tab] of tabs.entries()) {
+      await expect(tab.getByTestId(selectors.pages.Login.username)).toBeVisible();
+      await expect(tab).toHaveTitle(`${index === 0 ? 'Dashboards' : 'Explore'} - Sign in - Grafana`);
+    }
+
+    await page.reload();
+    await expect(page).toHaveTitle('Dashboards - Sign in - Grafana');
+    await page.getByTestId(selectors.pages.Login.username).fill(grafanaAPICredentials.user);
+    await page.getByTestId(selectors.pages.Login.password).fill(grafanaAPICredentials.password);
+    await page.getByTestId(selectors.pages.Login.submit).click();
+    if (grafanaAPICredentials.password === 'admin') {
+      await page.getByTestId(selectors.pages.Login.skip).click();
+    }
+    await expect(page).toHaveURL(new RegExp(`/d/${dashboards[0].uid}/`));
+    await expect(page).toHaveTitle(new RegExp(dashboards[0].title));
+
+    await secondTab.reload();
+    await expect(secondTab).toHaveURL(/\/explore/);
+    await expect(secondTab).toHaveTitle(/Explore/);
+
+    await page.getByRole('button', { name: /profile/i }).click();
+    await page.getByRole('menuitem', { name: /sign out/i }).click();
+    await expect(page.getByTestId(selectors.pages.Login.username)).toBeVisible();
+    await expect(page).toHaveTitle('Grafana');
+  });
+});

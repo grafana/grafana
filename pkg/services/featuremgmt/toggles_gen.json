@@ -2890,6 +2890,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.preserveLoginTabTitle",
+        "resourceVersion": "1791187415500",
+        "creationTimestamp": "2026-10-05T08:03:35Z"
+      },
+      "spec": {
+        "description": "Preserves the navigation section label in the browser tab title after session expiry",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-navigation",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
