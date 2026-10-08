@@ -1599,10 +1599,10 @@ github.com/grafana/grafana-api-golang-client v0.27.0 h1:zIwMXcbCB4n588i3O2N6HfNc
 github.com/grafana/grafana-api-golang-client v0.27.0/go.mod h1:uNLZEmgKtTjHBtCQMwNn3qsx2mpMb8zU+7T4Xv3NR9Y=
 github.com/grafana/grafana-app-sdk v0.60.12 h1:gNT+3CrBY6FFn3jHfUqDgA8DhMubyLXYywcsKJFuTIM=
 github.com/grafana/grafana-app-sdk v0.60.12/go.mod h1:C/VaFP7016As1GXxG80KS3siwE12iQh2K2PDYYc/QLk=
-github.com/grafana/grafana-app-sdk/logging v0.60.8 h1:KyTOPKM2UKqtUyMMyaI6e+xWqZXaSmO1YQYOrX9s04g=
-github.com/grafana/grafana-app-sdk/logging v0.60.8/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
-github.com/grafana/grafana-app-sdk/plugin v0.60.8 h1:E/uelgpr0q4ZT9Y8W5qbFkOuFspvEXDvoSe5XabmlCs=
-github.com/grafana/grafana-app-sdk/plugin v0.60.8/go.mod h1:GIIZiYQlAaZGYSg/SbqcaKvO77A+sRy4ckjh+XWgTnU=
+github.com/grafana/grafana-app-sdk/logging v0.60.12 h1:NuRlgxB4yceFN6cKpzCCZXTlDqKu87Zy8XTLFufD+KQ=
+github.com/grafana/grafana-app-sdk/logging v0.60.12/go.mod h1:AvOi0e4Vh1J6wUAhGRI+4y5bv+vHcrVhWOwQjZ6vIJ0=
+github.com/grafana/grafana-app-sdk/plugin v0.60.12 h1:KWzqKV+PfjOf8VdQiKK8qIa6MHcw3VJYCH6MkNLSq0E=
+github.com/grafana/grafana-app-sdk/plugin v0.60.12/go.mod h1:etNhnxv420vN1vu2liloOx4DXHNW3CrBHZmdhfFFBoo=
 github.com/grafana/grafana-aws-sdk v1.5.5 h1:wtmRoQmG0DAEfeWFI1kjDY3HK13kcc15xG/8AeaR164=
 github.com/grafana/grafana-aws-sdk v1.5.5/go.mod h1:KQ4I5Y3mECh4RxTf1fe68YWEry1djBam9mcq6mvrzK4=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 h1:moFDZEb2kTIrUo5u3Bekg1weABQQjy1EK1biP4I6L+0=

@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/grafana/grafana-app-sdk v0.60.12
-	github.com/grafana/grafana-app-sdk/logging v0.60.8
+	github.com/grafana/grafana-app-sdk/logging v0.60.12
 	k8s.io/apimachinery v0.37.1
 	k8s.io/apiserver v0.37.1
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098

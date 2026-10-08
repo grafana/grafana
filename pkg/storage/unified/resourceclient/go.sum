@@ -34,8 +34,8 @@ github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815 h1:jKXYY/6zw
 github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815/go.mod h1:L+zFm3lz5Y61gLgMMfKgHZ+863BwVfkLpJLqB/BZvlk=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+nvAwPbyUsJM4oDUtiXpX5YPrOA=
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
-github.com/grafana/grafana-app-sdk/logging v0.60.8 h1:KyTOPKM2UKqtUyMMyaI6e+xWqZXaSmO1YQYOrX9s04g=
-github.com/grafana/grafana-app-sdk/logging v0.60.8/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
+github.com/grafana/grafana-app-sdk/logging v0.60.12 h1:NuRlgxB4yceFN6cKpzCCZXTlDqKu87Zy8XTLFufD+KQ=
+github.com/grafana/grafana-app-sdk/logging v0.60.12/go.mod h1:AvOi0e4Vh1J6wUAhGRI+4y5bv+vHcrVhWOwQjZ6vIJ0=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123 h1:KxBHO/6r6J0QF10PdP9b/mKsN0wDy4EFovyknU4CcRQ=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123/go.mod h1:2L3E8xEvJSJNKGQGWaJb3Dgd6QPRdjTZLQqKPlEgTQ0=
 github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123 h1:N/PDC5wt8hSfBI0ywlAAxCbOC76TUdLDWc3wFLHcxrs=

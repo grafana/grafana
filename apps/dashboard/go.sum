@@ -117,8 +117,8 @@ github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 h1:rwDtKOQ5KHVRRenS+
 github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600/go.mod h1:yrs6e5IkcA0luNJDbqWTc26jO+4egqd0avrB40dvOE0=
 github.com/grafana/grafana-app-sdk v0.60.12 h1:gNT+3CrBY6FFn3jHfUqDgA8DhMubyLXYywcsKJFuTIM=
 github.com/grafana/grafana-app-sdk v0.60.12/go.mod h1:C/VaFP7016As1GXxG80KS3siwE12iQh2K2PDYYc/QLk=
-github.com/grafana/grafana-app-sdk/logging v0.60.8 h1:KyTOPKM2UKqtUyMMyaI6e+xWqZXaSmO1YQYOrX9s04g=
-github.com/grafana/grafana-app-sdk/logging v0.60.8/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
+github.com/grafana/grafana-app-sdk/logging v0.60.12 h1:NuRlgxB4yceFN6cKpzCCZXTlDqKu87Zy8XTLFufD+KQ=
+github.com/grafana/grafana-app-sdk/logging v0.60.12/go.mod h1:AvOi0e4Vh1J6wUAhGRI+4y5bv+vHcrVhWOwQjZ6vIJ0=
 github.com/grafana/grafana-plugin-sdk-go v0.296.5 h1:86zOFJV6mSSYMPvcug6X4TlrrPm77q+PQH2VYGVV5ME=
 github.com/grafana/grafana-plugin-sdk-go v0.296.5/go.mod h1:E2WBpInzUESFrzNow91khsHYJPVEKTV0O05XLDMMKus=
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260118065639-60cb766a97d6 h1:Meoq0neEejGlmclgCInZM7EXl3Dw27zlGGwvEmJwvaY=
