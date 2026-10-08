@@ -308,9 +308,7 @@ describe('setupKeyboardShortcuts', () => {
   });
 
   it.each([true, false])('panel edit shortcut enters Edit from View only when editable=%s', async (editable) => {
-    const previousLayouts = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = true;
-    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     try {
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
       mockScene.setState({
@@ -329,7 +327,6 @@ describe('setupKeyboardShortcuts', () => {
       expect(mockScene.state.mode).toBe(editable ? 'edit' : 'view');
       expect(locationService.getSearchObject().editPanel).toBe(editable ? '1' : undefined);
     } finally {
-      config.featureToggles.dashboardNewLayouts = previousLayouts;
       setTestFlags({});
     }
   });

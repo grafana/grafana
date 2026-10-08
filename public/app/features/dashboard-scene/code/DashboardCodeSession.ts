@@ -186,6 +186,7 @@ export class DashboardCodeSession extends SceneObjectBase<CodeSessionState> {
         scene: dashboard,
         spec,
         description: t('dashboard.modes.code.undo', 'Edit dashboard code'),
+        scope: 'code-mode',
       });
       this.reset(dashboard);
       return true;

@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import { TestProvider } from 'test/helpers/TestProvider';
 import { render as renderApp } from 'test/test-utils';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { setDashboardMutationClientForTests } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
@@ -76,12 +76,10 @@ jest.mock('../v2schema/dashboardSchemaFetcher', () => ({
   fetchDashboardSchema: jest.fn().mockResolvedValue({}),
 }));
 
-const originalLayouts = config.featureToggles.dashboardNewLayouts;
 let deactivate = () => {};
 
 beforeEach(() => {
-  config.featureToggles.dashboardNewLayouts = true;
-  setTestFlags({ 'grafana.dashboardPreviewMode': true });
+  setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
   locationService.replace('/d/modes-test');
 });
 
@@ -90,7 +88,6 @@ afterEach(() => {
   setDashboardMutationClientForTests(null);
   deactivate();
   deactivate = () => {};
-  config.featureToggles.dashboardNewLayouts = originalLayouts;
   setTestFlags({});
 });
 

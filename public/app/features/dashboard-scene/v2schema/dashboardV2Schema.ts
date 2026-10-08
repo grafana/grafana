@@ -444,6 +444,7 @@ const transformationKindSchema = z.object({
 
 const queryOptionsSpecSchema = z.object({
   timeFrom: z.string().optional(),
+  timeTo: z.string().optional(),
   maxDataPoints: z.number().optional(),
   timeShift: z.string().optional(),
   queryCachingTTL: z.number().optional(),

@@ -27,6 +27,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -334,12 +335,17 @@ func NewAPIService(
 				}
 
 				if a.GetResource() == legacyiamv0.SSOSettingResourceInfo.GetName() {
-					// Interim parity with the in-process authorizer: allow any
-					// authenticated identity (real settings RBAC is a follow-up).
-					if user.GetIdentityType() == types.TypeAnonymous {
-						return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+					// Standalone serves this kind read-only to service identities; scope to
+					// access policies and read verbs. Per-provider settings RBAC is a follow-up.
+					if user.GetIdentityType() != types.TypeAccessPolicy {
+						return authorizer.DecisionDeny, "only access policy identities have access for now", nil
 					}
-					return authorizer.DecisionAllow, "", nil
+					switch a.GetVerb() {
+					case "get", "list", "watch":
+						return authorizer.DecisionAllow, "", nil
+					default:
+						return authorizer.DecisionDeny, "ssosettings is read-only in this apiserver", nil
+					}
 				}
 
 				return authorizer.DecisionDeny, "access denied", nil
@@ -480,6 +486,13 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 	// SSO settings apis
 	if enableSsoSettingsApi && b.ssoLegacyStore != nil {
 		ssoResource := legacyiamv0.SSOSettingResourceInfo
+		// The standalone apiserver (b.sso == nil) defers per-provider settings RBAC to
+		// its access-policy authorizer, so it must not run the redacting store's
+		// per-provider List filter — otherwise List would filter while Get does not.
+		listAccessClient := b.accessClient
+		if b.sso == nil {
+			listAccessClient = nil
+		}
 		// With an MT-Settings client the SSOSetting kind rides the dual-writer (mode-gated
 		// reads/writes); without it (on-prem) the legacy store serves alone.
 		if b.ssoSettingsClient != nil && opts.DualWriteBuilder != nil {
@@ -491,7 +504,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 			}
 			// The legacy adapter returns the raw secret on Create so the dual-writer
 			// forwards it to MT-Settings; redact it back out of the client response.
-			redacted, err := sso.NewRedactingStore(dw)
+			redacted, err := sso.NewRedactingStore(dw, listAccessClient)
 			if err != nil {
 				return err
 			}
@@ -499,7 +512,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		} else {
 			// Legacy serves alone, but its Create still returns the raw input, so
 			// redact the response here too.
-			redacted, err := sso.NewRedactingStore(b.ssoLegacyStore)
+			redacted, err := sso.NewRedactingStore(b.ssoLegacyStore, listAccessClient)
 			if err != nil {
 				return err
 			}
@@ -600,6 +613,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateTeamLBACRulesAPIGroup(
 		teamGetter,
 		teamLister,
 		b.tracing,
+		b.reg,
 	)
 	return nil
 }
@@ -731,7 +745,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		return err
 	}
 
-	if enableZanzanaSync {
+	readOnly := b.features.UsersAPIReadOnly
+
+	if enableZanzanaSync && !readOnly {
 		b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
 		userUniStore.AfterCreate = b.AfterUserCreate
 		userUniStore.BeginUpdate = b.BeginUserUpdate
@@ -754,26 +770,34 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
-	storage[userResource.StoragePath()] = storewrapper.New(
+	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
 		iamv0.UserResourceInfo.GroupResource(),
 		user.NewStoreWrapper(b.cfgProvider, b.settingService),
 		storewrapper.WithPreserveIdentity(),
 		storewrapper.WithObserver(storageObserver{}),
 	)
+	if readOnly {
+		b.logger.Info("Registering the User API as read-only")
+		userAPIStore = readonly.Wrap(userAPIStore)
+	}
+	storage[userResource.StoragePath()] = userAPIStore
 
 	if b.dual != nil && b.unified != nil {
-		statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
-		storage[userResource.StoragePath("status")] = statusStore
+		// status only supports updates, so it is left out of the read-only API.
+		if !readOnly {
+			statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
+			storage[userResource.StoragePath("status")] = statusStore
 
-		if b.userLegacyStore != nil && b.useStatusDualWriter(userResource) {
-			storage[userResource.StoragePath("status")] = user.NewStatusDualWriter(
-				userResource.GroupVersion(),
-				b.tracing,
-				statusStore,
-				b.userLegacyStore,
-				b.store,
-			)
+			if b.userLegacyStore != nil && b.useStatusDualWriter(userResource) {
+				storage[userResource.StoragePath("status")] = user.NewStatusDualWriter(
+					userResource.GroupVersion(),
+					b.tracing,
+					statusStore,
+					b.userLegacyStore,
+					b.store,
+				)
+			}
 		}
 		if enableTeamsAPI {
 			backends := dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),

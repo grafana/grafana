@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
-import { config, locationService } from '@grafana/runtime';
+import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   createDashboardMutationApi,
@@ -25,13 +25,10 @@ jest.mock('../saving/createDetectChangesWorker', () => ({
   createWorker: () => ({ postMessage: jest.fn(), terminate: jest.fn(), onmessage: null }),
 }));
 
-const originalLayouts = config.featureToggles.dashboardNewLayouts;
-
 let deactivate = () => {};
 
 beforeEach(() => {
-  config.featureToggles.dashboardNewLayouts = true;
-  setTestFlags({ 'grafana.dashboardPreviewMode': true });
+  setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
   locationService.replace('/d/modes-test');
 });
 
@@ -40,7 +37,6 @@ afterEach(() => {
   setDashboardMutationClientForTests(null);
   deactivate();
   deactivate = () => {};
-  config.featureToggles.dashboardNewLayouts = originalLayouts;
   setTestFlags({});
 });
 
@@ -89,8 +85,7 @@ it.each([
   [true, false, false],
   [true, true, true],
 ])('gates modes with layouts=%s and preview=%s', (layouts, preview, expected) => {
-  config.featureToggles.dashboardNewLayouts = layouts;
-  setTestFlags({ 'grafana.dashboardPreviewMode': preview });
+  setTestFlags({ dashboardNewLayouts: layouts, 'grafana.dashboardPreviewMode': preview });
   expect(dashboardModesEnabled()).toBe(expected);
 });
 
@@ -100,7 +95,7 @@ it('keeps the draft and history when switching modes without additional edits', 
   scene.setDashboardMode('edit');
   const resource = JSON.parse(getDashboardResourceText(scene));
   resource.spec.title = 'Visual edit';
-  applyDashboardSpec({ scene, spec: resource.spec, description: 'Change title' });
+  applyDashboardSpec({ scene, spec: resource.spec, description: 'Change title', scope: 'dashboard' });
   expect(scene.state.title).toBe('Visual edit');
   expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
   const baseline = scene.getInitialState()?.title;
@@ -147,7 +142,7 @@ it('blocks direct edit actions and settings from View', () => {
   scene.onEnterEditMode('assistant');
   const spec = JSON.parse(getDashboardResourceText(scene)).spec;
   spec.title = 'Hidden action';
-  applyDashboardSpec({ scene, spec, description: 'Manual change' });
+  applyDashboardSpec({ scene, spec, description: 'Manual change', scope: 'dashboard' });
   scene.onOpenSettings();
   expect(scene.state.title).toBe('Original title');
   expect(scene.state.sidebar.state.undoStack).toHaveLength(0);

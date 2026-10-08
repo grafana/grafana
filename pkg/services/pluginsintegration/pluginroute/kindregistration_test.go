@@ -1,0 +1,321 @@
+package pluginroute
+
+import (
+	"context"
+	"testing"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/generic"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
+	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/kube-openapi/pkg/spec3"
+
+	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
+)
+
+// testBuilder is a builder over the manifest, served under the group
+// NewmanifestBuilder would pick for it.
+func testBuilder(t *testing.T, manifest *app.ManifestData) *manifestBuilder {
+	t.Helper()
+
+	plugin := definition.PluginDefinition{
+		JSONData:  plugins.JSONData{ID: "example-app"},
+		Manifests: []*app.ManifestData{manifest},
+	}
+	group := plugin.JSONData.ID
+	if manifest != nil {
+		group = manifest.Group
+	}
+	return &manifestBuilder{
+		group:    group,
+		manifest: manifest,
+		pluginID: plugin.JSONData.ID,
+		clientV3: &fakeRouteClient{},
+	}
+}
+
+// testAPIGroupOptions builds what server startup hands UpdateAPIGroupInfo. The
+// storage it registers is never read: only the shape of the resource map matters.
+func testAPIGroupOptions(t *testing.T, b *manifestBuilder) (*genericapiserver.APIGroupInfo, builder.APIGroupOptions) {
+	t.Helper()
+
+	scheme := runtime.NewScheme()
+	require.NoError(t, b.InstallSchema(scheme))
+
+	codecs := builder.ProvideCodecFactory(scheme)
+	info := genericapiserver.NewDefaultAPIGroupInfo(b.group, scheme, metav1.ParameterCodec, codecs)
+	return &info, builder.APIGroupOptions{
+		Scheme:          scheme,
+		OptsGetter:      apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
+		MetricsRegister: prometheus.NewRegistry(),
+	}
+}
+
+// InstallSchema has to leave every served version usable by the scheme: the
+// settings kind in all of them, and each manifest kind (plus its list, plus the
+// internal version server-side apply tracks managed fields against).
+func TestInstallSchema(t *testing.T) {
+	b := testBuilder(t, testManifest(t))
+	scheme := runtime.NewScheme()
+	require.NoError(t, b.InstallSchema(scheme))
+
+	for _, version := range []string{"v0alpha1", "v1alpha1", "v2alpha1"} {
+		gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: version}
+		_, err := scheme.New(gv.WithKind("Settings"))
+		require.NoError(t, err, "settings are served in every version")
+	}
+
+	// v2alpha1 declares no kinds, so only the two versions that do are registered.
+	for _, version := range []string{"v0alpha1", "v1alpha1", runtime.APIVersionInternal} {
+		gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: version}
+		obj, err := scheme.New(gv.WithKind("TestKind"))
+		require.NoError(t, err, "version %s", version)
+		require.IsType(t, &unstructured.Unstructured{}, obj)
+
+		list, err := scheme.New(gv.WithKind("TestKindList"))
+		require.NoError(t, err, "version %s", version)
+		require.IsType(t, &unstructured.UnstructuredList{}, list)
+	}
+
+	// The preferred version has to come first, or discovery points clients at
+	// the wrong one.
+	require.Equal(t, "v1alpha1", scheme.PrioritizedVersionsForGroup("example.ext.grafana.app")[0].Version)
+}
+
+func TestUpdateAPIGroupInfo(t *testing.T) {
+	t.Run("every served version gets storage", func(t *testing.T) {
+		b := testBuilder(t, testManifest(t))
+		info, opts := testAPIGroupOptions(t, b)
+		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+
+		for _, storage := range info.VersionedResourcesStorageMap {
+			require.NotContains(t, storage, "app")
+			require.NotContains(t, storage, "app/health")
+			require.NotContains(t, storage, "app/resources")
+		}
+		// The plural names the path, lower-cased.
+		require.Contains(t, info.VersionedResourcesStorageMap["v0alpha1"], "testkinds")
+		require.Contains(t, info.VersionedResourcesStorageMap["v1alpha1"], "testkinds")
+		require.NotContains(t, info.VersionedResourcesStorageMap["v2alpha1"], "testkinds",
+			"v2alpha1 declares no kinds")
+
+		// Only the version whose schema declares status gets the subresource.
+		require.Contains(t, info.VersionedResourcesStorageMap["v1alpha1"], "testkinds/status")
+		require.NotContains(t, info.VersionedResourcesStorageMap["v0alpha1"], "testkinds/status")
+
+		// Admission dispatch resolves the kind through this map, so a missing
+		// entry silently skips every hook the kind declared.
+		require.Contains(t, b.kinds, schema.GroupVersionResource{
+			Group: "example.ext.grafana.app", Version: "v1alpha1", Resource: "testkinds",
+		})
+		require.NotContains(t, b.kinds, schema.GroupVersionResource{
+			Group: "example.ext.grafana.app", Version: "v2alpha1", Resource: "testkinds",
+		})
+	})
+
+	// The apiserver skips a version with no storage, which would take its custom
+	// routes out of discovery and OpenAPI.
+	t.Run("a routes-only version gets placeholder storage", func(t *testing.T) {
+		routesOnly := func(routes app.ManifestVersionRoutes) *manifestBuilder { //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+			b := testBuilder(t, &app.ManifestData{
+				Group: "example.ext.grafana.app",
+				Versions: []app.ManifestVersion{{
+					Name:   "v1",
+					Served: true,
+					Routes: routes,
+				}},
+			})
+			return b
+		}
+		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}
+
+		b := routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{"ping": ping}}) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+		info, opts := testAPIGroupOptions(t, b)
+		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+		require.Equal(t, map[string]rest.Storage{routesOnlyStorageKey: &routesOnlyStorage{}},
+			info.VersionedResourcesStorageMap["v1"])
+
+		// A route that is dropped at mount time serves nothing, so the version
+		// has nothing to install.
+		b = routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+			"ping": {Head: ping.Get},
+		}})
+		info, opts = testAPIGroupOptions(t, b)
+		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+		require.Empty(t, info.VersionedResourcesStorageMap)
+	})
+
+	// A kind whose plural collides would silently replace the resource already in
+	// the map, so the API would serve one kind under another kind's path.
+	t.Run("a kind claiming a taken resource is an error", func(t *testing.T) {
+		for _, plural := range []string{"things"} {
+			b := testBuilder(t, &app.ManifestData{
+				Group: "example.ext.grafana.app",
+				Versions: []app.ManifestVersion{{
+					Name:   "v1",
+					Served: true,
+					Kinds: []app.ManifestVersionKind{
+						{Kind: "Thing", Plural: "things", Scope: "Namespaced"},
+						{Kind: "Other", Plural: plural, Scope: "Namespaced"},
+					},
+				}},
+			})
+			info, opts := testAPIGroupOptions(t, b)
+			err := b.UpdateAPIGroupInfo(info, opts)
+			require.ErrorContains(t, err, "claims the already registered resource")
+			require.ErrorContains(t, err, plural)
+		}
+	})
+
+	t.Run("storage opts are required", func(t *testing.T) {
+		b := testBuilder(t, testManifest(t))
+		info, opts := testAPIGroupOptions(t, b)
+		opts.OptsGetter = nil
+		require.ErrorContains(t, b.UpdateAPIGroupInfo(info, opts), "apps require a storage options getter")
+	})
+
+	// Custom routes read their parent object through the getter, which is only
+	// wired here -- an unwired one turns every kind route into a 500.
+	t.Run("the getter reaches the registered kinds", func(t *testing.T) {
+		b := testBuilder(t, testManifest(t))
+		info, opts := testAPIGroupOptions(t, b)
+		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+		require.NotNil(t, b.getter)
+
+		_, err := b.getter(context.Background(), schema.GroupVersionResource{
+			Group: "example.ext.grafana.app", Version: "v1alpha1", Resource: "nope",
+		}, "x")
+		require.ErrorContains(t, err, "no storage registered for")
+	})
+}
+
+// The settings kind and the metav1 types are registered in every served
+// version, and the scheme panics on a double registration -- so a kind that
+// collides with one of them must be reported, not crash the whole server.
+func TestInstallSchemaRejectsReservedKindNames(t *testing.T) {
+	for _, kind := range []string{"Settings", "Status", "WatchEvent", "ListOptions", "HealthCheckResult"} {
+		t.Run(kind, func(t *testing.T) {
+			manifest := &app.ManifestData{
+				AppName:          "example",
+				Group:            "example.ext.grafana.app",
+				PreferredVersion: "v1alpha1",
+				Versions: []app.ManifestVersion{{
+					Name:   "v1alpha1",
+					Served: true,
+					Kinds: []app.ManifestVersionKind{{
+						Kind: kind, Plural: kind + "s", Scope: "Namespaced",
+					}},
+				}},
+			}
+			b := testBuilder(t, manifest)
+
+			require.NotPanics(t, func() {
+				err := b.InstallSchema(runtime.NewScheme())
+				require.ErrorContains(t, err, "reserved kind name")
+			})
+		})
+	}
+}
+
+// The list types are registered too, so a kind named after one is refused on
+// the same grounds.
+func TestInstallSchemaRejectsReservedListName(t *testing.T) {
+	manifest := &app.ManifestData{
+		AppName:          "example",
+		Group:            "example.ext.grafana.app",
+		PreferredVersion: "v1alpha1",
+		Versions: []app.ManifestVersion{{
+			Name:   "v1alpha1",
+			Served: true,
+			Kinds:  []app.ManifestVersionKind{{Kind: "SettingsList", Plural: "SettingsLists", Scope: "Namespaced"}},
+		}},
+	}
+	b := testBuilder(t, manifest)
+
+	require.NotPanics(t, func() {
+		err := b.InstallSchema(runtime.NewScheme())
+		require.ErrorContains(t, err, "reserved kind name")
+	})
+}
+
+// Storage options are scoped to the group+version+resource being installed, not
+// registered against the shared GroupResource, so two served versions of a kind
+// no longer have to agree on their folder scope.
+func TestUpdateAPIGroupInfoFolderScopeIsPerVersion(t *testing.T) {
+	falseValue := false
+
+	manifest := &app.ManifestData{
+		AppName:          "example",
+		Group:            "example.ext.grafana.app",
+		PreferredVersion: "v1alpha1",
+		Versions: []app.ManifestVersion{
+			{Name: "v1alpha1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced"}, // folder scoped by default
+			}},
+			{Name: "v2alpha1", Served: true, Kinds: []app.ManifestVersionKind{
+				{Kind: "Thing", Plural: "Things", Scope: "Namespaced", FolderScoped: &falseValue},
+			}},
+		},
+	}
+
+	b := testBuilder(t, manifest)
+	info, opts := testAPIGroupOptions(t, b)
+
+	recorder := &recordingOptsGetter{
+		parent:   apistore.NewRESTOptionsGetterForClient(nil, nil, storagebackend.Config{}, nil, nil),
+		recorded: map[schema.GroupResource][]apistore.StorageOptions{},
+	}
+	opts.OptsGetter = recorder
+	require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
+
+	gr := schema.GroupResource{Group: "example.ext.grafana.app", Resource: "things"}
+	require.Len(t, recorder.recorded[gr], 2, "both versions complete a store for the shared resource")
+
+	scopes := make([]bool, 0, 2)
+	versions := make([]string, 0, 2)
+	for _, so := range recorder.recorded[gr] {
+		require.Equal(t, so.EnableFolderSupport, so.RequireFolder,
+			"manifest kinds require a folder exactly when they support one")
+		require.Equal(t, "Thing", so.GVK.Kind)
+		scopes = append(scopes, so.RequireFolder)
+		versions = append(versions, so.GVK.Version)
+	}
+	require.ElementsMatch(t, []bool{true, false}, scopes,
+		"each version keeps the folder scope it declared")
+	require.ElementsMatch(t, []string{"v1alpha1", "v2alpha1"}, versions,
+		"each store is identified by the version it serves")
+
+	require.NotContains(t, recorder.recorded, schema.GroupResource{Group: "example.ext.grafana.app", Resource: "app"})
+}
+
+// recordingOptsGetter captures the storage options each store is completed with.
+// They no longer pass through a registration hook, so the getter the store
+// resolves through is the only place to observe them.
+type recordingOptsGetter struct {
+	parent   *apistore.RESTOptionsGetter
+	recorded map[schema.GroupResource][]apistore.StorageOptions
+	scoped   *apistore.StorageOptions
+}
+
+func (r *recordingOptsGetter) WithStorageOptions(opts apistore.StorageOptions) generic.RESTOptionsGetter {
+	// Shares recorded with the parent, so every scoped child reports back.
+	return &recordingOptsGetter{parent: r.parent, recorded: r.recorded, scoped: &opts}
+}
+
+func (r *recordingOptsGetter) GetRESTOptions(gr schema.GroupResource, obj runtime.Object) (generic.RESTOptions, error) {
+	if r.scoped == nil {
+		return r.parent.GetRESTOptions(gr, obj)
+	}
+	r.recorded[gr] = append(r.recorded[gr], *r.scoped)
+	return r.parent.WithStorageOptions(*r.scoped).GetRESTOptions(gr, obj)
+}

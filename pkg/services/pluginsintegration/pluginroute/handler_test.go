@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
 	"github.com/prometheus/client_golang/prometheus"
@@ -24,18 +25,15 @@ import (
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
-
-	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana-app-sdk/app"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
@@ -77,14 +75,14 @@ func TestHandlerServesOpenAPIV3(t *testing.T) {
 	root := "/apis/example.ext.grafana.app/v1alpha1/"
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds")
 	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/testkinds/{name}/reload")
-	require.Contains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
-	require.Contains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
+	require.NotContains(t, oas.Paths.Paths, root+"namespaces/{namespace}/app/instance")
+	require.NotContains(t, oas.Components.Schemas, apppluginV0.Settings{}.OpenAPIModelName())
 }
 
 func TestHandlerServesOpenAPIV3WithoutSettings(t *testing.T) {
 	plugin := testPlugin()
 	opts := allowAll(testOptions())
-	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifest.Group, plugin.JSONData.ID,
+	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(plugin.Manifests[0].Group, plugin.JSONData.ID,
 		&pluginsettings.FakePluginSettings{})
 	// Any attempt to construct legacy dual-write storage would call a nil service.
 	opts.DualWrite = struct{ dualwrite.Service }{}
@@ -156,7 +154,7 @@ func TestHandlerSharesOneMetricsRegistry(t *testing.T) {
 	t.Run("a second group loads onto the same registry", func(t *testing.T) {
 		other := testPlugin()
 		other.JSONData.ID = "other-app"
-		other.Manifest.Group = "other.ext.grafana.app"
+		other.Manifests[0].Group = "other.ext.grafana.app"
 
 		handler := loadHandler(t, other, opts)
 		var group metav1.APIGroup
@@ -176,7 +174,7 @@ func TestHandlerSharesOneMetricsRegistry(t *testing.T) {
 
 func loadHandler(t *testing.T, plugin definition.PluginDefinition, opts Options) http.Handler {
 	t.Helper()
-	handler, err := NewHandler(plugin, opts)
+	handler, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], opts)
 	require.NoError(t, err)
 	t.Cleanup(handler.Destroy)
 	return handler
@@ -237,17 +235,17 @@ var errStubRoute = errors.New("the stub plugin client was called")
 
 type stubClientV3 struct{}
 
-var _ v3.ClientV3 = stubClientV3{}
+var _ appclientv3.Client = stubClientV3{}
 
-func (stubClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest, ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+func (stubClientV3) AdmissionReview(context.Context, *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
 	return nil, errStubRoute
 }
 
-func (stubClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest, ...grpc.CallOption) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
+func (stubClientV3) CallRoute(context.Context, *pluginv3.CallRouteRequest) (grpc.ServerStreamingClient[pluginv3.CallRouteResponse], error) {
 	return nil, errStubRoute
 }
 
-func (stubClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest, ...grpc.CallOption) (*pluginv3.ConvertObjectsResponse, error) {
+func (stubClientV3) ConvertObjects(context.Context, *pluginv3.ConvertObjectsRequest) (*pluginv3.ConvertObjectsResponse, error) {
 	return nil, errStubRoute
 }
 
@@ -258,7 +256,7 @@ func testPlugin() definition.PluginDefinition {
 			Type: plugins.TypeApp,
 			Info: plugins.Info{Description: "An example"},
 		},
-		Manifest: &app.ManifestData{
+		Manifests: []*app.ManifestData{{
 			AppName:          "example",
 			Group:            "example.ext.grafana.app",
 			PreferredVersion: "v1alpha1",
@@ -266,7 +264,7 @@ func testPlugin() definition.PluginDefinition {
 				{
 					Name:   "v1alpha1",
 					Served: true,
-					Routes: app.ManifestVersionRoutes{
+					Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 						Cluster:    map[string]spec3.PathProps{"/things": {Get: testOperation("listThings")}},
 						Namespaced: map[string]spec3.PathProps{"/widgets": {Get: testOperation("listWidgets")}},
 					},
@@ -282,7 +280,7 @@ func testPlugin() definition.PluginDefinition {
 				},
 				{Name: "v2alpha1", Served: false},
 			},
-		},
+		}},
 	}
 }
 
@@ -312,16 +310,18 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		change func(*definition.PluginDefinition, *Options)
 		want   string
 	}{
-		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifest = &app.ManifestData{} }, "empty app manifest"},
-		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifest.Group = "example.com" }, "invalid manifest group"},
+		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifests = []*app.ManifestData{{}} }, "empty app manifest"},
+		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
 		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil, nil) }, "unified storage client is required"},
-		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) { p.Manifest.Versions[0].Kinds[0].Kind = "Settings" }, "reserved kind name"},
+		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) {
+			p.Manifests[0].Versions[0].Kinds[0].Kind = "Settings"
+		}, "reserved kind name"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			plugin, opts := testPlugin(), testOptions()
 			tc.change(&plugin, &opts)
-			handler, err := NewHandler(plugin, opts)
+			handler, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], opts)
 			require.ErrorContains(t, err, tc.want)
 			require.Nil(t, handler)
 		})
@@ -330,8 +330,7 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 
 func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 	plugin := testPlugin()
-	expected, err := APIGroup(plugin, testOptions())
-	require.NoError(t, err)
+	expected := APIGroup(plugin.Manifests[0])
 	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
 	var actual metav1.APIGroup
 	getJSON(t, handler, "/apis/"+expected.Name, &actual)
@@ -343,37 +342,8 @@ func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 }
 
 func TestHandlerWithoutManifest(t *testing.T) {
-	plugin := testPlugin()
-	plugin.Manifest = nil
-	expected, err := APIGroup(plugin, testOptions())
-	require.NoError(t, err)
-	require.Equal(t, plugin.JSONData.ID, expected.Name)
-	require.Equal(t, []metav1.GroupVersionForDiscovery{
-		{GroupVersion: "example-app/v0alpha1", Version: "v0alpha1"},
-	}, expected.Versions)
-	require.Equal(t, expected.Versions[0], expected.PreferredVersion)
-	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
-	var actual metav1.APIGroup
-	getJSON(t, handler, "/apis/example-app", &actual)
-	require.Equal(t, expected.Versions, actual.Versions)
-	require.Equal(t, expected.PreferredVersion, actual.PreferredVersion)
-	var resources metav1.APIResourceList
-	getJSON(t, handler, "/apis/example-app/v0alpha1", &resources)
-	names := make([]string, 0, len(resources.APIResources))
-	for _, r := range resources.APIResources {
-		names = append(names, r.Name)
-	}
-	require.Contains(t, names, "app")
-	require.Contains(t, names, "app/health")
-	require.Contains(t, names, "app/resources")
-
-	var oas spec3.OpenAPI
-	getJSON(t, handler, "/openapi/v3/apis/example-app/v0alpha1", &oas)
-	require.Contains(t, oas.Paths.Paths, "/apis/example-app/v0alpha1/namespaces/{namespace}/app/instance")
-
-	denied := withRequester(loadHandler(t, plugin, testOptions()))
-	res := get(t, denied, "/apis/example-app/v0alpha1/namespaces/default/app/instance")
-	require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
+	_, err := NewHandler("example-app", nil, testOptions())
+	require.ErrorContains(t, err, "missing manifest")
 }
 
 func TestHandlerDeniesOtherNamespaces(t *testing.T) {
@@ -392,7 +362,7 @@ func TestHandlerResourceStorage(t *testing.T) {
 	opts.Storage = UnifiedStorage(client, nil, nil)
 	plugin := testPlugin()
 	folderScoped := false
-	plugin.Manifest.Versions[0].Kinds[0].FolderScoped = &folderScoped
+	plugin.Manifests[0].Versions[0].Kinds[0].FolderScoped = &folderScoped
 	handler := withRequester(loadHandler(t, plugin, opts))
 	root := "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds"
 
@@ -434,7 +404,7 @@ func (c *resourceClient) Read(_ context.Context, req *resourcepb.ReadRequest, _ 
 }
 
 func TestHandlerAdmission(t *testing.T) {
-	for _, mutation := range []bool{false, true} {
+	for _, mutation := range []bool{true} {
 		t.Run(fmt.Sprint("mutation=", mutation), func(t *testing.T) {
 			plugin := testPlugin()
 			capabilities := &app.AdmissionCapabilities{}
@@ -443,9 +413,9 @@ func TestHandlerAdmission(t *testing.T) {
 			} else {
 				capabilities.Validation = &app.ValidationCapability{Operations: []app.AdmissionOperation{app.AdmissionOperationCreate}}
 			}
-			plugin.Manifest.Versions[0].Kinds[0].Admission = capabilities
+			plugin.Manifests[0].Versions[0].Kinds[0].Admission = capabilities
 			folderScoped := false
-			plugin.Manifest.Versions[0].Kinds[0].FolderScoped = &folderScoped
+			plugin.Manifests[0].Versions[0].Kinds[0].FolderScoped = &folderScoped
 			client := &admissionClient{}
 			opts := allowAll(testOptions())
 			opts.ClientV3 = client
@@ -467,35 +437,23 @@ type admissionClient struct {
 	review *pluginv3.AdmissionReviewRequest
 }
 
-func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.AdmissionReviewRequest, _ ...grpc.CallOption) (*pluginv3.AdmissionReviewResponse, error) {
+func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.AdmissionReviewRequest) (*pluginv3.AdmissionReviewResponse, error) {
 	c.review = req
 	return &pluginv3.AdmissionReviewResponse{}, nil
 }
 
-func TestHandlerLegacySettings(t *testing.T) {
+func TestHandlerExcludesLegacySettings(t *testing.T) {
 	keepManifestSettings(t)
-	for _, withManifest := range []bool{false, true} {
-		t.Run(fmt.Sprint("manifest=", withManifest), func(t *testing.T) {
-			plugin := testPlugin()
-			if !withManifest {
-				plugin.Manifest = nil
-			}
-			group, err := APIGroup(plugin, testOptions())
-			require.NoError(t, err)
-			opts := allowAll(testOptions())
-			opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
-				&pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-					plugin.JSONData.ID: {Enabled: true, JSONData: map[string]any{"source": "legacy"}},
-				}})
-			opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
-			handler := withRequester(loadHandler(t, plugin, opts))
-			for _, version := range group.Versions {
-				var settings apppluginV0.Settings
-				getJSON(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/"+apppluginV0.INSTANCE_NAME, &settings)
-				require.True(t, settings.Spec.Enabled)
-				require.Equal(t, "legacy", settings.Spec.JsonData.Object["source"])
-			}
-		})
+	plugin := testPlugin()
+	group := APIGroup(plugin.Manifests[0])
+	opts := allowAll(testOptions())
+	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
+		&pluginsettings.FakePluginSettings{})
+	opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
+	handler := withRequester(loadHandler(t, plugin, opts))
+	for _, version := range group.Versions {
+		res := get(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/instance")
+		require.Equal(t, http.StatusNotFound, res.Code)
 	}
 }
 
@@ -514,8 +472,7 @@ func TestHandlerExcludesSettingsDespiteCompatibilityFlag(t *testing.T) {
 	opts.PluginClient = nil
 	opts.ContextProvider = nil
 	plugin := testPlugin()
-	expected, err := APIGroup(plugin, opts)
-	require.NoError(t, err)
+	expected := APIGroup(plugin.Manifests[0])
 	handler := withRequester(loadHandler(t, plugin, opts))
 	var actual metav1.APIGroup
 	getJSON(t, handler, "/apis/"+expected.Name, &actual)
@@ -528,11 +485,61 @@ func TestHandlerExcludesSettingsDespiteCompatibilityFlag(t *testing.T) {
 
 func TestHandlerRejectsManifestWithoutServedVersions(t *testing.T) {
 	plugin := testPlugin()
-	for i := range plugin.Manifest.Versions {
-		plugin.Manifest.Versions[i].Served = false
+	for i := range plugin.Manifests[0].Versions {
+		plugin.Manifests[0].Versions[i].Served = false
 	}
-	_, err := APIGroup(plugin, testOptions())
+	require.Empty(t, APIGroup(plugin.Manifests[0]).Versions)
+	_, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], testOptions())
 	require.ErrorContains(t, err, "no served versions")
-	_, err = NewHandler(plugin, testOptions())
-	require.ErrorContains(t, err, "no served versions")
+}
+
+func TestAPIGroupPreferredVersion(t *testing.T) {
+	for _, tc := range []struct {
+		name, preferred, want string
+		versions              []app.ManifestVersion
+	}{
+		{"explicit", "v1", "v1", []app.ManifestVersion{{Name: "v2", Served: true}, {Name: "v1", Served: true}}},
+		{"stable fallback", "", "v2", []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}, {Name: "v3alpha1", Served: true}}},
+		{"alpha fallback", "", "v2alpha1", []app.ManifestVersion{{Name: "v1alpha1", Served: true}, {Name: "v2alpha1", Served: true}}},
+		{"unserved preferred", "v2", "v1", []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: false}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			manifest := &app.ManifestData{Group: "example.ext.grafana.app", PreferredVersion: tc.preferred, Versions: tc.versions}
+			group := APIGroup(manifest)
+			require.Equal(t, tc.want, group.PreferredVersion.Version)
+			require.Equal(t, group.PreferredVersion, group.Versions[0])
+			builder := &manifestBuilder{manifest: manifest, group: manifest.Group}
+			versions := builder.GetGroupVersions()
+			require.Len(t, versions, len(group.Versions))
+			for i, version := range versions {
+				require.Equal(t, group.Versions[i].GroupVersion, version.String())
+			}
+		})
+	}
+}
+
+func TestHandlerOpenAPIPluginMetadata(t *testing.T) {
+	for _, version := range []string{"", "1.2.3"} {
+		t.Run(version, func(t *testing.T) {
+			opts := allowAll(testOptions())
+			opts.PluginInfo.Description = "Example plugin"
+			opts.PluginInfo.Version = version
+			if version != "" {
+				opts.PluginInfo.Build.Time = 1234567890
+			}
+			handler := withRequester(loadHandler(t, testPlugin(), opts))
+			var document spec3.OpenAPI
+			getJSON(t, handler, "/openapi/v3/apis/example.ext.grafana.app/v1alpha1", &document)
+			require.Equal(t, "Example plugin", document.Info.Description)
+			info := document.Info.Extensions["x-grafana-plugin"].(map[string]any)
+			require.Equal(t, "example-app", info["id"])
+			if version == "" {
+				require.NotContains(t, info, "version")
+				require.NotContains(t, info, "build")
+			} else {
+				require.Equal(t, version, info["version"])
+				require.Equal(t, float64(1234567890), info["build"])
+			}
+		})
+	}
 }

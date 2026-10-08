@@ -81,7 +81,7 @@ describe('DashboardMutationClient', () => {
     { type: 'UPDATE_DASHBOARD_SETTINGS', payload: { title: 'Assistant title' } },
   ])('$type presentation', (command) => {
     beforeEach(() => {
-      setTestFlags({ 'grafana.dashboardPreviewMode': true });
+      setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': true });
     });
 
     it('enables Preview when the user already entered Edit without choosing a presentation', async () => {

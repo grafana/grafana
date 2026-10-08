@@ -13,10 +13,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/apiserver/pkg/storage"
-	"k8s.io/klog/v2"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -59,13 +59,14 @@ func (d *streamDecoder) toObject(w *resourcepb.WatchEvent_Resource) (runtime.Obj
 func (d *streamDecoder) Decode() (action watch.EventType, object runtime.Object, err error) {
 	d.done.Add(1)
 	defer d.done.Done()
+	logger := logging.FromContext(d.client.Context())
 decode:
 	for {
 		// Read the terminal status even if the stream context is already canceled.
 		evt, err := d.client.Recv()
 
 		switch {
-		case resource.IsResourceVersionExpired(err):
+		case resourceutil.IsResourceVersionExpired(err):
 			// Surface a 410/Expired status object (instead of an error) so clients
 			// such as reflectors re-list from scratch rather than retrying the
 			// watch from a resource version the server can no longer serve.
@@ -73,8 +74,8 @@ decode:
 				return watch.Error, nil, io.EOF
 			}
 			d.expiredSent = true
-			klog.V(2).Infof("client: watch resource version expired: %s", err)
-			status := resource.AsErrorResult(err)
+			logger.Debug("client: watch resource version expired", "error", err)
+			status := resourceutil.AsErrorResult(err)
 			return watch.Error, &metav1.Status{
 				Status:  metav1.StatusFailure,
 				Code:    status.Code,
@@ -92,19 +93,19 @@ decode:
 		case grpcStatus.Code(err) == grpcCodes.Canceled:
 			return watch.Error, nil, err
 		case err != nil:
-			klog.Errorf("client: error receiving result: %s", err)
+			logger.Error("client: error receiving result", "error", err)
 			return watch.Error, nil, err
 		}
 
 		// Error event
 		if evt.Type == resourcepb.WatchEvent_ERROR {
 			err = fmt.Errorf("stream error")
-			klog.Errorf("client: error receiving result: %s", err)
+			logger.Error("client: error receiving result", "error", err)
 			return watch.Error, nil, err
 		}
 
 		if evt.Resource == nil {
-			klog.Errorf("client: received nil \n")
+			logger.Error("client: received nil resource")
 			continue decode
 		}
 
@@ -113,7 +114,7 @@ decode:
 
 			accessor, err := utils.MetaAccessor(obj)
 			if err != nil {
-				klog.Errorf("error getting object accessor: %s", err)
+				logger.Error("error getting object accessor", "error", err)
 				return watch.Error, nil, err
 			}
 
@@ -131,8 +132,11 @@ decode:
 			decodeSource = evt.Previous
 		}
 		obj, err := d.toObject(decodeSource)
+		if errors.Is(err, errSharedMismatch) {
+			continue decode
+		}
 		if err != nil {
-			klog.Errorf("error decoding entity: %s", err)
+			logger.Error("error decoding entity", "error", err)
 			return watch.Error, nil, err
 		}
 
@@ -142,7 +146,7 @@ decode:
 			// apply any predicates not handled in storage
 			matches, err := d.predicate.Matches(obj)
 			if err != nil {
-				klog.Errorf("error matching object: %s", err)
+				logger.Error("error matching object", "error", err)
 				return watch.Error, nil, err
 			}
 			if !matches {
@@ -156,7 +160,7 @@ decode:
 			// apply any predicates not handled in storage
 			matches, err := d.predicate.Matches(obj)
 			if err != nil {
-				klog.Errorf("error matching object: %s", err)
+				logger.Error("error matching object", "error", err)
 				return watch.Error, nil, err
 			}
 
@@ -165,15 +169,18 @@ decode:
 			var prevObj runtime.Object
 			if evt.Previous != nil {
 				prevObj, err = d.toObject(evt.Previous)
+				if errors.Is(err, errSharedMismatch) {
+					continue decode
+				}
 				if err != nil {
-					klog.Errorf("error decoding entity: %s", err)
+					logger.Error("error decoding entity", "error", err)
 					return watch.Error, nil, err
 				}
 
 				// apply any predicates not handled in storage
 				prevMatches, err = d.predicate.Matches(prevObj)
 				if err != nil {
-					klog.Errorf("error matching object: %s", err)
+					logger.Error("error matching object", "error", err)
 					return watch.Error, nil, err
 				}
 			}
@@ -191,7 +198,7 @@ decode:
 
 				accessor, err := utils.MetaAccessor(obj)
 				if err != nil {
-					klog.Errorf("error getting object accessor: %s", err)
+					logger.Error("error getting object accessor", "error", err)
 					return watch.Error, nil, err
 				}
 
@@ -207,7 +214,7 @@ decode:
 				// Watch clients must resume from the deletion's version, not the previous object's.
 				accessor, err := utils.MetaAccessor(obj)
 				if err != nil {
-					klog.Errorf("error getting object accessor: %s", err)
+					logger.Error("error getting object accessor", "error", err)
 					return watch.Error, nil, err
 				}
 				accessor.SetResourceVersionInt64(evt.Resource.Version)
@@ -216,7 +223,7 @@ decode:
 			// apply any predicates not handled in storage
 			matches, err := d.predicate.Matches(obj)
 			if err != nil {
-				klog.Errorf("error matching object: %s", err)
+				logger.Error("error matching object", "error", err)
 				return watch.Error, nil, err
 			}
 			if !matches {
@@ -234,7 +241,7 @@ func (d *streamDecoder) Close() {
 	// Close the send stream
 	err := d.client.CloseSend()
 	if err != nil {
-		klog.Errorf("error closing watch stream: %s", err)
+		logging.FromContext(d.client.Context()).Error("error closing watch stream", "error", err)
 	}
 	// Cancel the send context
 	d.cancelWatch()

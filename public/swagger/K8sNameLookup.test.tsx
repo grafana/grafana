@@ -2,7 +2,7 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { K8sNameLookup } from './K8sNameLookup';
-import { NamespaceContext, ResourceContext } from './plugins';
+import { NamespaceContext, ResourceContext } from './contexts';
 
 function Lookup({ namespace, namespaced = true }: { namespace?: string; namespaced?: boolean }) {
   return (
