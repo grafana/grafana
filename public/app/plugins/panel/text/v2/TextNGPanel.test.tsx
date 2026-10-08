@@ -14,7 +14,6 @@ import { FlagKeys } from '@grafana/runtime/internal';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
-import { themeMacro } from 'app/features/templating/themeMacro';
 
 import { CodeLanguage, RenderMode, TextMode } from '../panelcfg.gen';
 
@@ -886,8 +885,7 @@ describe('TextNGPanel', () => {
 
       it('re-renders the content with the new theme tokens when the theme changes', () => {
         const props = createProps(
-          (target) =>
-            target.replace('${__theme.colors.text.primary}', (match) => themeMacro(match, 'colors.text.primary')),
+          (target) => target.replace('${__theme.colors.text.primary}', () => config.theme2.colors.text.primary),
           {
             options: { content: '<span style="color: ${__theme.colors.text.primary}">hi</span>', mode: TextMode.HTML },
           }
