@@ -1,6 +1,7 @@
 import { createMemoryHistory } from 'history';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { HistoryWrapper, config, locationService, setLocationService } from '@grafana/runtime';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { useDeleteNotebookMutation } from 'app/api/clients/dashboard/v2beta1';
@@ -9,7 +10,13 @@ import { contextSrv } from 'app/core/services/context_srv';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { duplicateNotebook } from '../api/notebookResource';
-import { notebookIncidents, stubAttachForm, stubDeclareForm } from '../incidents/testHelpers';
+import {
+  STUB_ATTACH_TESTID,
+  STUB_DECLARE_TESTID,
+  notebookIncidents,
+  stubAttachForm,
+  stubDeclareForm,
+} from '../incidents/testHelpers';
 import { useNotebookIncidents } from '../incidents/useNotebookIncidents';
 import { getNotebookPageStateManager } from '../pages/NotebookPageStateManager';
 import { NotebookEmbeddedHost } from '../scene/NotebookEmbeddedContext';
@@ -31,13 +38,14 @@ jest.mock('../api/notebookResource', () => ({
 // injectEndpoints on the real client as it loads - and the mock above does not provide one. The list
 // page and the row menu stub it for the same reason.
 jest.mock('../list/notebookSearchApi', () => ({}));
-// Partial mock: this spies on exported and linkCopied only. Every other real call the scene makes
+// Partial mock: this spies on exported, linkCopied and incidentActionClicked only. Every other real call the scene makes
 // (editSessionStarted on entering edit mode, deleted on confirming one) keeps working.
 jest.mock('../analytics/main', () => ({
   NotebookAnalytics: {
     ...jest.requireActual('../analytics/main').NotebookAnalytics,
     exported: jest.fn(),
     linkCopied: jest.fn(),
+    incidentActionClicked: jest.fn(),
   },
 }));
 
@@ -52,6 +60,7 @@ const mockUseDeleteNotebookMutation = jest.mocked(useDeleteNotebookMutation);
 const mockUseNotebookIncidents = jest.mocked(useNotebookIncidents);
 const mockLinkCopied = jest.mocked(NotebookAnalytics.linkCopied);
 const mockExported = jest.mocked(NotebookAnalytics.exported);
+const mockIncidentActionClicked = jest.mocked(NotebookAnalytics.incidentActionClicked);
 
 /** Whether IRM's exposed incident components are there for the toolbar to render. */
 function setIrmAvailable(available: boolean) {
@@ -150,16 +159,16 @@ describe('NotebookToolbar', () => {
   it('duplicates the latest saved notebook and opens the copy for editing', async () => {
     const hasPermission = jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     const { user, scene, history } = setup();
-    const flushAndWait = jest.spyOn(scene.autosave, 'flushAndWait');
+    const awaitPendingSave = jest.spyOn(scene.autosave, 'awaitPendingSave');
 
     await user.click(screen.getByRole('button', { name: 'More actions' }));
     await user.click(await screen.findByRole('menuitem', { name: 'Duplicate notebook' }));
 
     await waitFor(() => expect(history.getLocation().pathname).toBe('/notebooks/nb-copy'));
     expect(history.getLocation().search).toBe('?edit=true&orgId=3');
-    expect(flushAndWait).toHaveBeenCalledTimes(1);
+    expect(awaitPendingSave).toHaveBeenCalledTimes(1);
     expect(duplicateNotebook).toHaveBeenCalledWith('nb1');
-    expect(flushAndWait.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(awaitPendingSave.mock.invocationCallOrder[0]).toBeLessThan(
       jest.mocked(duplicateNotebook).mock.invocationCallOrder[0]
     );
     hasPermission.mockRestore();
@@ -491,6 +500,55 @@ describe('NotebookToolbar', () => {
       expect(await screen.findByRole('menuitem', { name: 'Copy as Markdown' })).toBeInTheDocument();
       expect(screen.queryByRole('menuitem', { name: /^IRM/ })).not.toBeInTheDocument();
       expect(screen.queryByRole('menuitem', { name: 'Delete' })).not.toBeInTheDocument();
+    });
+    describe('analytics', () => {
+      /**
+       * Opens the IRM submenu and returns its item. Clicked with fireEvent: a pointer click leaves
+       * the group on the way and unmounts the submenu in jsdom, see IrmMenuItem.test.
+       */
+      async function openIrmItem(user: ReturnType<typeof setup>['user'], name: string) {
+        await user.click(screen.getByRole('button', { name: 'More actions' }));
+        await screen.findByRole('menuitem', { name: /^IRM/ });
+        // Focused rather than clicked: a click on the group would close the dropdown it sits in.
+        act(() => screen.getByRole('menuitem', { name: /^IRM/ }).focus());
+        await user.keyboard('{ArrowRight}');
+        const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+        return submenu.getByRole('menuitem', { name });
+      }
+
+      beforeEach(() => {
+        setIrmAvailable(true);
+        mockIncidentActionClicked.mockClear();
+      });
+
+      it('reports picking declare', async () => {
+        const { user } = setup();
+
+        fireEvent.click(await openIrmItem(user, 'Declare incident'));
+
+        expect(await screen.findByTestId(STUB_DECLARE_TESTID)).toBeInTheDocument();
+        expect(mockIncidentActionClicked).toHaveBeenCalledTimes(1);
+        expect(mockIncidentActionClicked).toHaveBeenCalledWith('nb1', 'declare');
+      });
+
+      it('reports picking attach', async () => {
+        const { user } = setup();
+
+        fireEvent.click(await openIrmItem(user, 'Attach to incident'));
+
+        expect(await screen.findByTestId(STUB_ATTACH_TESTID)).toBeInTheDocument();
+        expect(mockIncidentActionClicked).toHaveBeenCalledTimes(1);
+        expect(mockIncidentActionClicked).toHaveBeenCalledWith('nb1', 'attach');
+      });
+
+      // Opening the menu or the submenu is browsing, not picking an action.
+      it('reports nothing for opening the menu alone', async () => {
+        const { user } = setup();
+
+        await openIrmItem(user, 'Declare incident');
+
+        expect(mockIncidentActionClicked).not.toHaveBeenCalled();
+      });
     });
   });
 

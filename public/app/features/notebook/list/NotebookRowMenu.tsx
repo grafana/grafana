@@ -1,3 +1,4 @@
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { copyTextToClipboard, Menu } from '@grafana/ui';
 import { useLazyGetNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
@@ -52,7 +53,12 @@ export function NotebookRowMenu({
 
   return (
     <Menu>
-      <Menu.Item label={t('notebooks.list.table.copy-link', 'Copy link')} icon="link" onClick={onCopyLink} />
+      <Menu.Item
+        label={t('notebooks.list.table.copy-link', 'Copy link')}
+        icon="link"
+        onClick={onCopyLink}
+        testId={selectors.pages.Notebooks.List.RowMenu.copyLink}
+      />
       {onDuplicate && canCreateNotebooks() && (
         <Menu.Item
           label={t('notebooks.duplicate.action', 'Duplicate notebook')}
@@ -74,7 +80,13 @@ export function NotebookRowMenu({
       {canDeleteNotebooks() && (
         <>
           <Menu.Divider />
-          <Menu.Item destructive label={t('notebooks.delete.confirm', 'Delete')} icon="trash-alt" onClick={onDelete} />
+          <Menu.Item
+            destructive
+            label={t('notebooks.delete.confirm', 'Delete')}
+            icon="trash-alt"
+            onClick={onDelete}
+            testId={selectors.pages.Notebooks.List.RowMenu.delete}
+          />
         </>
       )}
     </Menu>

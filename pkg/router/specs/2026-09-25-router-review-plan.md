@@ -1,6 +1,6 @@
 # Router: Pre-rollout review and improvement plan
 
-Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in progress; P7 partly addressed; W items not started)
+Status: in progress (C1–C4 in #133537, P4 in #133547, A3 in #133551, O3 in #133558, P3 and P11 in #133578, P5 in #133588, P1 and P2 in #133627, W items in #133630, O1 in #133638, O2 not pursued; P6–P10 in progress)
 Package: `pkg/router`
 
 ## Context
@@ -104,49 +104,58 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
   - **Fix:** check that the namespace matches the caller's token before the lookup, raise the cache
     size (and make it configurable) or add a lookup rate limit, and size the breaker cache separately.
 
-- [ ] **P5. Aggregated discovery fans out to every backend on every request.**
+- [x] **P5. Aggregated discovery fans out to every backend on every request.**
   - **Problem:**
     - `serveAggregatedDiscovery` (`discovery_handler.go`) calls every served group's backend in
       sequence, on every request, and falls back to one call per version.
     - kubectl and client-go request this on nearly every command.
     - A target that serves K groups returns the same `/apis` document K times per request.
     - A single slow backend stalls discovery for everyone.
-  - [ ] **P5a. Build discovery locally where the router already has the data.** Plugin backends and
+  - [x] **P5a. Build discovery locally where the router already has the data.** Plugin backends and
     manifest-backed forward backends already hold their manifest, which lists the kinds. Add an
     optional interface on `Backend`, such as `Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)`,
     and build those entries without any network call. This adds a new interface to `types.go` and
     removes none, which is consistent with that file's rule on interfaces.
-  - [ ] **P5b. Cache discovery for the backends that still need a fetch** (the aggregate and ST
+  - [x] **P5b. Cache discovery for the backends that still need a fetch** (the aggregate and ST
     targets). Fetch with the router's own identity and cache by backend key, as kube-aggregator's
     discovery controller does. This means revisiting the current decision, recorded in AGENTS.md,
     not to cache discovery across callers. k8s discovery is not filtered per caller.
   - **Fallback if per-caller fetches must stay:** at least run them in parallel with timeouts per
     backend, and deduplicate backends that share one upstream target.
 
-- [ ] **P6. The preferred version can be an unserved version.** When no preferred version is set,
+- [x] **P6. The preferred version can be an unserved version.** When no preferred version is set,
   `apiGroupFromManifestSpec` (`cloud_router.go`) picks the last entry in `spec.Versions`, even if
   that version isn't served. Pick the highest served version by kube version ordering
   (`version.CompareKubeAwareVersionStrings`).
 
-- [ ] **P7. Managed plugins can override core groups.**
+- [x] **P7. Managed plugins can override core groups.**
   - **Problem:** in `cloudLoader.Load`, the managed-plugins source (`plugins_url`) is applied last,
     so it overrides every other source. A plugin manifest can claim a core group such as
     `dashboard.grafana.app`. `plugins_group_regex` defaults to allowing every group.
   - **Fix:** protect reserved groups, or give plugins a mandatory default group pattern. Log (and
     later, count via O1) whenever one source overrides another for the same group.
+  - **Done:** managed plugins are built by `NewPluginBackend`, which rejects any group that isn't
+    plugin-shaped (`isPluginAPIGroup`, #133578), so a plugin can't claim a core group. The cloud
+    loader logs when one source shadows another, and `grafana_router_shadowed_groups` counts it
+    (#133638).
 
-- [ ] **P8. Confirm remote plugin authorization before rollout.** `pluginManifestAccessControl`
+- [x] **P8. Confirm remote plugin authorization before rollout.** `pluginManifestAccessControl`
   (`plugin_manifests_ac.go`) grants app access to every requester, and `authenticatingWrapper` only
   checks that the token is valid. Confirm that the storage layer (via the OBO token exchange)
   enforces the token's namespace. If it doesn't, add a check in the router that the namespace in the
   path matches the token.
+  - **Confirmed:** the plugin's API server runs Grafana's namespace authorizer
+    (`pluginroute.NewHandler`), which refuses a requester whose namespace doesn't match the path.
+    `TestIntegrationPluginsOverRouter` ("rejects another namespace") shows a managed plugin answering
+    `Forbidden` for another stack's namespace. Unified storage also always enforces RBAC on
+    `*.ext.grafana.app` groups, the groups manifest plugins must use.
 
-- [ ] **P9. The router needs its own retry after a failed reconcile.** The code comments say "a later
+- [x] **P9. The router needs its own retry after a failed reconcile.** The code comments say "a later
   wake retries", but nothing guarantees a wake. For example, if the initial `ListAll` fails and the
   informers don't replay existing objects, `Ready` stays failing indefinitely. `Run` should schedule a
   retry with backoff whenever `reconcile` returns an error.
 
-- [ ] **P10. The OpenAPI document cache never drops removed groups.** Entries in `openapiDocs`
+- [x] **P10. The OpenAPI document cache never drops removed groups.** Entries in `openapiDocs`
   (`router.go`) for groups that are no longer served stay in memory forever. Prune them in `publish`.
 
 - [x] **P11. One bad plugin blocks every local plugin.** `PluginLoader.Load` (`plugin.go`) returns an
@@ -202,7 +211,7 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
 
 Found by checking each part of the proxy path against a watch that streams for 30+ minutes.
 
-- [ ] **W1. The circuit breaker holds a watch for its whole lifetime.**
+- [x] **W1. The circuit breaker holds a watch for its whole lifetime.**
   - **Problem:** `serveThroughBreaker` (`breaker.go`) runs the entire request inside
     `cb.Execute`, and the outcome is recorded only when the handler returns.
     - When the breaker is half-open, gobreaker allows one trial request. A watch that starts as the
@@ -218,7 +227,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
   - **Test:** with the breaker half-open, an open watch must not block other requests, and a watch
     that starts with a 200 closes the breaker immediately.
 
-- [ ] **W2. Metrics and the in-flight gauge count a watch as one long request.**
+- [x] **W2. Metrics and the in-flight gauge count a watch as one long request.**
   - **Problem:** `routerMetrics.instrument` (`metrics.go`) observes every request in the duration
     histogram and the in-flight gauge. One watch lasting 30 minutes skews latency percentiles, and
     idle watches look like load. Kubernetes separates long-running requests: they are excluded from
@@ -229,7 +238,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
     gauge, count them in a `grafana_router_longrunning_requests{group}` gauge, and add a `verb`
     label to the duration histogram. The access log still records each watch when it ends.
 
-- [ ] **W3. Watches outlive route changes, and they can block shutdown.**
+- [x] **W3. Watches outlive route changes, and they can block shutdown.**
   - **Shutdown:** the standalone module server stops its listener with
     `httpServ.Shutdown(context.Background())` (`pkg/server/instrumentation_service.go`).
     `Shutdown` waits for active connections to go idle, which a watch never does, so stopping the
@@ -246,7 +255,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
       entry, and derive watch requests from it, so they end and clients reconnect to the new backend.
       Ordinary requests finish normally.
 
-- [ ] **W4. Streaming depends on a proxy heuristic.** `httputil.ReverseProxy` flushes after every
+- [x] **W4. Streaming depends on a proxy heuristic.** `httputil.ReverseProxy` flushes after every
   write only when the response has no `Content-Length`, which is true of watch responses today.
   - **Fix:** set `FlushInterval: -1` explicitly on the forward, aggregate and ST proxies, so events
     are never buffered whatever the backend sends. Keep `captureWriter`, which buffers, out of any
@@ -257,7 +266,8 @@ Found by checking each part of the proxy path against a watch that streams for 3
 - ~~**W5. The ST fallback doesn't recognise the deprecated watch path.**~~ Dropped: the deprecated
   `/apis/<g>/<v>/watch/...` path form is out of scope.
 
-- [ ] **W6. Watch over WebSocket isn't supported yet.**
+- [x] **W6. Watch over WebSocket isn't supported yet.** Decided: not supported. Upgrade requests to
+  routed groups and the ST fallback are rejected with a 400 that says so (`rejectUpgrade`).
   - **Problem:** Kubernetes serves watch over WebSocket (`Upgrade: websocket`), and kube-aggregator
     proxies it with its upgrade-aware handler. AGENTS.md currently says "No upgrades".
     - `httputil.ReverseProxy` can proxy an upgrade, but only if the writer it gets can hijack the
@@ -271,7 +281,7 @@ Found by checking each part of the proxy path against a watch that streams for 3
     If support is deliberately left out instead, reject upgrades with a clear error and document
     the gap; it must not fail silently.
 
-- [ ] **W7. Watch acceptance tests.** One table-driven test across every backend type (forward,
+- [x] **W7. Watch acceptance tests.** One table-driven test across every backend type (forward,
   aggregate, ST, in-process plugin) and both modes (standalone, middleware), checking:
   - `?watch=1` and `?watch=true`;
   - watch-list with `sendInitialEvents=true`, including the initial-events-end bookmark;
@@ -289,17 +299,24 @@ Found by checking each part of the proxy path against a watch that streams for 3
 
 ## O: Operability
 
-- [ ] **O1. Metrics for route state, not just requests.** kube-aggregator's main operational
+- [x] **O1. Metrics for route state, not just requests.** kube-aggregator's main operational
   advantage is `APIService` status, which shows who serves each group and whether it is available.
   Minimum set:
   - gauge: groups served, labeled by source;
   - gauge: breaker state per group;
   - counters: reconcile runs and reconcile errors;
-  - counter: source conflicts (one source overriding another for the same group);
+  - counter: source conflicts (one source overriding another for the same group). Implemented as a
+    gauge of groups currently shadowed, since a lasting conflict would bump a counter on every
+    reconcile;
   - timestamp: last successful poll, per source.
+  - The metrics audit added readiness, last-reconcile time, per-state breaker series and
+    transitions, backend failure reasons, discovery results, poll attempts and stack lookups, plus a
+    `route` label on request metrics. See `specs/2026-09-26-router-metrics.md`.
 
-- [ ] **O2. Read-only debug endpoint.** A JSON view of the current snapshot showing, for each group:
+- ~~**O2. Read-only debug endpoint.**~~ A JSON view of the current snapshot showing, for each group:
   source, key, target host and breaker state.
+  - Not pursued: the same information is available from the OpenAPI discovery index (each group's
+    key identifies its backend) and the O1 metrics. A draft implementation was #133639.
 
 - [x] **O3. One logger.** The package mixes global `slog`, Grafana's `infra/log`
   (`obo_exchanger.go`) and the app-sdk logger (`plugin.go`). Inject a single

@@ -9,7 +9,7 @@ import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { codeCell, markdownCell, notebookSpec, panelCell } from '../mutation-api/test-utils';
 import { type Spec as NotebookSpec } from '../types';
 
-import { createNotebook, duplicateNotebook, updateNotebook } from './notebookResource';
+import { createNotebook, duplicateNotebook, NotebookConflictError, updateNotebook } from './notebookResource';
 
 // The write dispatches through the app store; route that dispatch to a test store carrying the dashboard
 // v2beta1 API so the real RTK mutation, and the real base query that decides the patch content type, both
@@ -82,11 +82,19 @@ describe('updateNotebook', () => {
     expect(request.headers['Content-Type']).toBe('application/json-patch+json');
   });
 
-  it("returns the resource's new generation, so a caller can update what it cached", async () => {
+  it("returns the resource's new generation and resourceVersion, so a caller can update what it cached", async () => {
     const spec = notebookSpec();
     fetchOf(savedNotebook(spec, 7));
 
-    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 7 });
+    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 7, resourceVersion: '1755' });
+  });
+
+  it('leaves resourceVersion unset when the response carries none', async () => {
+    const spec = notebookSpec();
+    const saved = savedNotebook(spec);
+    fetchOf({ ...saved, metadata: { ...saved.metadata, resourceVersion: undefined } });
+
+    await expect(updateNotebook('nb-1', spec)).resolves.toEqual({ generation: 2 });
   });
 
   it('sends only the remaining elements once a cell is deleted', async () => {
@@ -103,6 +111,29 @@ describe('updateNotebook', () => {
     const sentSpec = fetch.mock.calls[0][0].data[0].value;
     expect(Object.keys(sentSpec.elements)).toEqual(['intro']);
     expect(sentSpec.layout.spec.cells).toHaveLength(1);
+  });
+
+  it('sends a resourceVersion precondition op when the caller knows the last saved one', async () => {
+    const spec = notebookSpec();
+    const fetch = fetchOf(savedNotebook(spec));
+
+    await updateNotebook('nb-1', spec, '1700');
+
+    const request = fetch.mock.calls[0][0];
+    expect(request.data).toEqual([
+      { op: 'replace', path: '/spec', value: spec },
+      { op: 'replace', path: '/metadata/resourceVersion', value: '1700' },
+    ]);
+  });
+
+  it('throws NotebookConflictError, not a generic error, when the precondition is stale', async () => {
+    setBackendSrv({
+      fetch: jest
+        .fn()
+        .mockReturnValue(throwError(() => ({ status: 409, data: { message: 'the object has been modified' } }))),
+    } as unknown as BackendSrv);
+
+    await expect(updateNotebook('nb-1', notebookSpec(), '1700')).rejects.toBeInstanceOf(NotebookConflictError);
   });
 
   it("throws the apiserver's own rejection message", async () => {
@@ -137,7 +168,7 @@ describe('createNotebook', () => {
     jest.restoreAllMocks();
   });
 
-  it('posts the notebook and returns the uid, url and generation the server assigned', async () => {
+  it('posts the notebook and returns the uid, url, generation and resourceVersion the server assigned', async () => {
     const spec = notebookSpec();
     const fetch = fetchOf(savedNotebook(spec, 1));
 
@@ -146,8 +177,18 @@ describe('createNotebook', () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch.mock.calls[0][0].method).toBe('POST');
     // The generation is what lets a notebook created by autosave be reopened without its scene being
-    // rebuilt from a fetch, so it has to come back rather than being dropped here.
-    expect(created).toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1 });
+    // rebuilt from a fetch, so it has to come back rather than being dropped here. The resourceVersion
+    // lets a caller that just created the notebook through a live scene (e.g. the mutation-api commands)
+    // report its revision without a second read.
+    expect(created).toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1, resourceVersion: '1755' });
+  });
+
+  it('leaves resourceVersion unset when the response carries none', async () => {
+    const spec = notebookSpec();
+    const saved = savedNotebook(spec, 1);
+    fetchOf({ ...saved, metadata: { ...saved.metadata, resourceVersion: undefined } });
+
+    await expect(createNotebook(spec)).resolves.toEqual({ uid: 'nb-1', url: '/notebooks/nb-1', generation: 1 });
   });
 
   it('leaves the generation unset when the response carries none', async () => {
@@ -156,7 +197,11 @@ describe('createNotebook', () => {
     // The field is optional on the wire even though the helper always fills it in.
     fetchOf({ ...saved, metadata: { ...saved.metadata, generation: undefined } });
 
-    await expect(createNotebook(spec)).resolves.toEqual({ uid: 'nb-1', url: '/notebooks/nb-1' });
+    await expect(createNotebook(spec)).resolves.toEqual({
+      uid: 'nb-1',
+      url: '/notebooks/nb-1',
+      resourceVersion: '1755',
+    });
   });
 });
 
@@ -197,6 +242,7 @@ describe('duplicateNotebook', () => {
       uid: 'nb-copy',
       url: '/notebooks/nb-copy',
       generation: 1,
+      resourceVersion: '1',
     });
 
     expect(fetch).toHaveBeenCalledTimes(2);

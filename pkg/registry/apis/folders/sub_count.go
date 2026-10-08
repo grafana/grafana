@@ -36,8 +36,8 @@ type subCountREST struct {
 }
 
 var (
-	_ = rest.Connecter(&subCountREST{})
-	_ = rest.StorageMetadata(&subCountREST{})
+	_ rest.Connecter       = (*subCountREST)(nil)
+	_ rest.StorageMetadata = (*subCountREST)(nil)
 )
 
 func (r *subCountREST) New() runtime.Object {

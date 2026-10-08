@@ -23,7 +23,7 @@ type forwardBackend struct {
 	proxy *httputil.ReverseProxy
 }
 
-var _ Backend = &forwardBackend{}
+var _ Backend = (*forwardBackend)(nil)
 
 func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackendSpec, key string, transport *http.Transport) (Backend, error) {
 	if routeBackend.Mode != v1alpha2.RouteBackendSpecModeForward {
@@ -53,6 +53,7 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 			Transport:      newBackendTransport(transport),
 			ModifyResponse: rejectBackendRedirects,
 			ErrorHandler:   proxyErrorHandler,
+			FlushInterval:  streamingFlushInterval,
 		},
 	}, nil
 }
@@ -60,6 +61,8 @@ func NewForwardBackend(group metav1.APIGroup, routeBackend v1alpha2.RouteBackend
 func (b *forwardBackend) Group() metav1.APIGroup {
 	return b.group
 }
+
+func (b *forwardBackend) Source() string { return sourceRouteBackend }
 
 func (b *forwardBackend) Key() string {
 	return b.key
