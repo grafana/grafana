@@ -61,11 +61,11 @@ To access the JSON representation of a dashboard:
 
 1. Navigate to the dashboard.
 1. Click **Edit** in the top-right corner.
-1. In the toolbar, click the **Edit as code** icon.
-1. In the sidebar, update the JSON.
-1. Click **Apply changes**.
-1. Click **Save** to save the dashboard.
-1. Click **Exit edit**.
+1. In the toolbar, click the **Dashboard options** icon.
+1. In the sidebar, click **View all settings**.
+1. Go to the **JSON Model** tab.
+1. When you've finished updating the JSON, click **Save changes** at the bottom of the tab.
+1. Click **Back** and **Exit edit**.
 
 ## V2 Resource model
 
