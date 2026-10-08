@@ -187,6 +187,37 @@ func TestInMemory_RetainedBuilds(t *testing.T) {
 		require.False(t, ok)
 	})
 
+	t.Run("Capacity eviction never removes the active build registered AddBuild-then-Add", func(t *testing.T) {
+		i := NewInMemory()
+
+		// Real registration order (PluginRegistration.Initialize): the build is
+		// retained (AddBuild) BEFORE the plugin is published (Add), to close the
+		// 410 window. At AddBuild time the plugin is not yet in store, so the
+		// active-build pin must be set by Add. Without it the active build (lowest
+		// seq) is the first eviction victim once enough seeds load, and a
+		// build-addressed request for the live build 410s while it is still active.
+		active := &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID, Info: plugins.Info{Version: v2}}}
+		require.NoError(t, i.AddBuild(ctx, "active000", active))
+		require.NoError(t, i.Add(ctx, active))
+
+		// Seed enough other builds to push the plugin over the default cap.
+		for _, h := range []string{"seed0001", "seed0002", "seed0003"} {
+			seed := &plugins.Plugin{JSONData: plugins.JSONData{ID: pluginID}}
+			require.NoError(t, i.AddBuild(ctx, h, seed))
+		}
+
+		require.Len(t, i.Builds(ctx, pluginID), defaultMaxRetainedBuilds)
+
+		// The active build survives and still resolves.
+		got, ok := i.Build(ctx, pluginID, "active000")
+		require.True(t, ok)
+		require.Same(t, active, got)
+
+		// The oldest seeded build was evicted in its place.
+		_, ok = i.Build(ctx, pluginID, "seed0001")
+		require.False(t, ok)
+	})
+
 	t.Run("Removing (uninstalling) a plugin drops all its retained builds", func(t *testing.T) {
 		i := NewInMemory()
 

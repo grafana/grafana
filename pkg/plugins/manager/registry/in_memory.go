@@ -64,6 +64,17 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 	for _, a := range p.AliasIDs {
 		i.alias[a] = p
 	}
+	// Pin the active build's hash now that the plugin is live. AddBuild retains
+	// this build before Add runs (to close the registration 410 window), so at
+	// AddBuild time the plugin is not yet in store and AddBuild's own pin cannot
+	// fire. Pin here by matching the retained build that carries this exact
+	// plugin pointer, so capacity eviction never drops the live build.
+	for hash, rb := range i.builds[p.ID] {
+		if rb.plugin == p {
+			i.activeHash[p.ID] = hash
+			break
+		}
+	}
 	i.mu.Unlock()
 
 	return nil
