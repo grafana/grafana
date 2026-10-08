@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -57,10 +57,14 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 		notification *resourcepb.WatchNotification
 	}
 	events := make(chan received, 100)
+	// Membership changes are announced as a modified team, never as a TeamBinding.
+	var bindingEvents atomic.Int32
 	sub, err := nc.Subscribe(resourcewatch.SubjectAllLegacyResources, func(msg *natsclient.Msg) {
 		n := &resourcepb.WatchNotification{}
 		if err := proto.Unmarshal(msg.Data, n); err != nil {
 			n = nil // reported by expect
+		} else if n.Resource == "teambindings" {
+			bindingEvents.Add(1)
 		}
 		events <- received{subject: msg.Subject, notification: n}
 	})
@@ -210,23 +214,9 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 		expect(t, resourcepb.WatchNotification_DELETED, gvrUsers, uid)
 	})
 
-	gvrTeamBindings := schema.GroupVersionResource{Group: "iam.grafana.app", Version: "v0alpha1", Resource: "teambindings"}
 	viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
 	viewerID, err := helper.Org1.Viewer.Identity.GetInternalID()
 	require.NoError(t, err)
-
-	// bindingUID returns the name of the TeamBinding for the viewer's membership
-	// of a team: the team_member row's UID, which neither API returns.
-	bindingUID := func(t *testing.T, teamUID string) string {
-		t.Helper()
-		var uid string
-		require.NoError(t, helper.GetEnv().SQLStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-			_, err := sess.SQL("SELECT tm.uid FROM team_member tm INNER JOIN team t ON t.id = tm.team_id WHERE t.uid = ? AND tm.user_id = ?", teamUID, viewerID).Get(&uid)
-			return err
-		}))
-		require.NotEmpty(t, uid)
-		return uid
-	}
 
 	t.Run("k8s API team membership", func(t *testing.T) {
 		ctx := context.Background()
@@ -253,16 +243,12 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 
 		setMembers(t, viewer("member"))
 		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, team.GetName())
-		binding := bindingUID(t, team.GetName())
-		expect(t, resourcepb.WatchNotification_ADDED, gvrTeamBindings, binding)
 
 		setMembers(t, viewer("admin"))
 		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, team.GetName())
-		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeamBindings, binding)
 
 		setMembers(t)
 		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, team.GetName())
-		expect(t, resourcepb.WatchNotification_DELETED, gvrTeamBindings, binding)
 
 		require.NoError(t, teams.Resource.Delete(ctx, team.GetName(), metav1.DeleteOptions{}))
 		expect(t, resourcepb.WatchNotification_DELETED, gvrTeams, team.GetName())
@@ -282,6 +268,8 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 		require.Equal(t, http.StatusOK, created.Response.StatusCode, "body: %s", string(created.Body))
 		teamID, teamUID := created.Result.TeamID, created.Result.UID
 		expect(t, resourcepb.WatchNotification_ADDED, gvrTeams, teamUID)
+		// Creating a team through the legacy API adds its creator as an admin member.
+		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, teamUID)
 
 		added := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -290,9 +278,6 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 			Body:   []byte(fmt.Sprintf(`{"userId": %d}`, viewerID)),
 		}, &struct{}{})
 		require.Equal(t, http.StatusOK, added.Response.StatusCode, "body: %s", string(added.Body))
-
-		binding := bindingUID(t, teamUID)
-		expect(t, resourcepb.WatchNotification_ADDED, gvrTeamBindings, binding)
 		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, teamUID)
 
 		updated := apis.DoRequest(helper, apis.RequestParams{
@@ -302,7 +287,7 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 			Body:   []byte(`{"permission": 4}`),
 		}, &struct{}{})
 		require.Equal(t, http.StatusOK, updated.Response.StatusCode, "body: %s", string(updated.Body))
-		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeamBindings, binding)
+		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, teamUID)
 
 		removed := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
@@ -310,9 +295,10 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 			Path:   fmt.Sprintf("/api/teams/%d/members/%d", teamID, viewerID),
 		}, &struct{}{})
 		require.Equal(t, http.StatusOK, removed.Response.StatusCode, "body: %s", string(removed.Body))
-		expect(t, resourcepb.WatchNotification_DELETED, gvrTeamBindings, binding)
 		expect(t, resourcepb.WatchNotification_MODIFIED, gvrTeams, teamUID)
 	})
+
+	require.Zero(t, bindingEvents.Load(), "team membership must not be announced as TeamBinding notifications")
 
 	// Completing an invite creates the user without an org (SkipOrgSetup) and then
 	// adds the membership, so the user must be announced once, in the org it joins.

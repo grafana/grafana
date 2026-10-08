@@ -7,9 +7,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
-// TeamMemberRef names a membership the way the IAM API does: the team's UID,
-// and the team_member UID, which is the name of its TeamBinding. UID is empty
-// when the user is not a member.
+// TeamMemberRef identifies a membership: the team's UID, and the team_member
+// UID, which is empty when the user is not a member.
 type TeamMemberRef struct {
 	TeamUID string
 	UID     string
@@ -29,24 +28,12 @@ func GetTeamMemberRef(dbHelper *legacysql.LegacyDatabaseHelper, sess *db.Session
 }
 
 // QueueTeamMemberNotifications announces, once sess commits, a membership that
-// changed from before to after: the TeamBinding is added, modified or deleted,
-// and the Team is modified, since its members are part of its spec.
+// changed from before to after as a modified Team, since its members are part
+// of its spec.
 func QueueTeamMemberNotifications(sess *db.Session, orgID int64, before, after TeamMemberRef) {
-	typ, binding := legacywatch.Modified, after.UID
-	switch {
-	case before.UID == "" && after.UID == "":
+	if before.UID == "" && after.UID == "" {
 		return
-	case before.UID == "":
-		typ = legacywatch.Added
-	case after.UID == "":
-		typ, binding = legacywatch.Deleted, before.UID
 	}
-	sess.PublishAfterCommit(&legacywatch.LegacyWatchNotification{
-		Type:     typ,
-		Resource: iamv0alpha1.TeamBindingResourceInfo.GroupResource(),
-		OrgID:    orgID,
-		Name:     binding,
-	})
 	sess.PublishAfterCommit(&legacywatch.LegacyWatchNotification{
 		Type:     legacywatch.Modified,
 		Resource: iamv0alpha1.TeamResourceInfo.GroupResource(),

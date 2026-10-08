@@ -49,6 +49,8 @@ func (bindingStore) ListTeamBindings(_ context.Context, _ claims.NamespaceInfo, 
 	return &ListTeamBindingsResult{Bindings: []TeamMember{{UID: query.UID, TeamUID: "team-1"}}}, nil
 }
 
+// Team binding writes are announced as a modified team only: members are part
+// of the team's spec.
 func TestNotifyingStoreTeamBindings(t *testing.T) {
 	ctx := context.Background()
 	ns := claims.NamespaceInfo{OrgID: 1, Value: "default"}
@@ -77,7 +79,6 @@ func TestNotifyingStoreTeamBindings(t *testing.T) {
 			return err
 		})
 		require.Equal(t, []change{
-			{resourcepb.WatchNotification_ADDED, "teambindings", "binding-1"},
 			{resourcepb.WatchNotification_MODIFIED, "teams", "team-1"},
 		}, got)
 	})
@@ -88,7 +89,6 @@ func TestNotifyingStoreTeamBindings(t *testing.T) {
 			return err
 		})
 		require.Equal(t, []change{
-			{resourcepb.WatchNotification_MODIFIED, "teambindings", "binding-1"},
 			{resourcepb.WatchNotification_MODIFIED, "teams", "team-1"},
 		}, got)
 	})
@@ -98,7 +98,6 @@ func TestNotifyingStoreTeamBindings(t *testing.T) {
 			return s.DeleteTeamMember(ctx, ns, DeleteTeamMemberCommand{UID: "binding-1"})
 		})
 		require.Equal(t, []change{
-			{resourcepb.WatchNotification_DELETED, "teambindings", "binding-1"},
 			{resourcepb.WatchNotification_MODIFIED, "teams", "team-1"},
 		}, got)
 	})
