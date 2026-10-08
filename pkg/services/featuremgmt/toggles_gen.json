@@ -1600,6 +1600,20 @@
     },
     {
       "metadata": {
+        "name": "dashboards.libraryPanelHorizontalRepeatFullWidth",
+        "resourceVersion": "1791472020296",
+        "creationTimestamp": "2026-10-08T15:07:00Z"
+      },
+      "spec": {
+        "description": "Expands a horizontal repeat copied from a library panel definition to the full grid width, matching how horizontal repeats on dashboard panels are laid out",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "dashboards.libraryPanelRepeatFromServerResolution",
         "resourceVersion": "1791320467097",
         "creationTimestamp": "2026-10-06T21:01:07Z"

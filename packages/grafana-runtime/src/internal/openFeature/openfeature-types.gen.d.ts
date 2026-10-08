@@ -28,6 +28,7 @@ declare module "@openfeature/core" {
     | "useKubernetesShortURLsAPI"
     | "dashboardNewLayouts"
     | "dashboards.libraryPanelRepeatFromServerResolution"
+    | "dashboards.libraryPanelHorizontalRepeatFullWidth"
     | "dashboard.notebooks"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
