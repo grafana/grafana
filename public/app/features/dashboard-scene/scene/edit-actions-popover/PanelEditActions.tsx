@@ -87,7 +87,7 @@ export function PanelEditActionsSingle({ panel }: { panel: VizPanel }) {
     const panelId = getPanelIdForVizPanel(panel);
     DashboardInteractions.panelActionClicked('delete', panelId, 'edit_popover');
     // Same element type name the sidebar reports, so removals stay comparable across both surfaces.
-    DashboardInteractions.trackDeleteDashboardElement(t('dashboard.sidebar.elements.panel', 'Panel'), 'edit_popover');
+    DashboardInteractions.trackDeleteDashboardElement('panel', 'edit_popover');
     getLayoutManagerFor(panel).removePanel?.(panel);
   };
 

@@ -263,7 +263,7 @@ describe('<PanelEditActionsSingle />', () => {
     const [event] = mockPublishAppEvent.mock.calls[0];
     event.payload.onConfirm();
 
-    expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Panel', 'edit_popover');
+    expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('panel', 'edit_popover');
   });
 
   describe('Copy to clipboard', () => {
