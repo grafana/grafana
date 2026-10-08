@@ -93,7 +93,7 @@ export function ScopeFiltersEditBanner({ dashboard }: { dashboard: DashboardScen
 
   return (
     <Alert
-      severity="warning"
+      severity="info"
       title={t(
         'dashboard-scene.scope-filters-edit-banner.title',
         'You are editing this dashboard with a Scope selected'
