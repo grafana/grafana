@@ -77,7 +77,7 @@ function createLinkModel(overrides: Partial<LinkModel> = {}): LinkModel {
 function createProbingLinkModel(query: DataQuery, overrides: Partial<LinkModel> = {}): LinkModel {
   return createLinkModel({
     ...overrides,
-    interpolatedParams: { query, alternativeQueries: [query], ...overrides.interpolatedParams },
+    interpolatedParams: { query, ...overrides.interpolatedParams },
   });
 }
 
@@ -151,21 +151,6 @@ describe('LogsLinkButton', () => {
   it('does not query the datasource when the link has no query', () => {
     render(<LogsLinkButton linkModel={createLinkModel()} traceDatasourceUid={TRACE_DATASOURCE_UID} />);
 
-    expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
-  });
-
-  it('keeps tag-only Loki links enabled without probing for matching logs', async () => {
-    mockDatasourceReturningFrames([emptyFrame], 'loki');
-    const query = { expr: '{service_name="api"}', refId: '', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
-
-    render(
-      <LogsLinkButton
-        linkModel={createLinkModel({ interpolatedParams: { query } })}
-        traceDatasourceUid={TRACE_DATASOURCE_UID}
-      />
-    );
-
-    await waitFor(() => expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'false'));
     expect(getDataSourceInstanceMock).not.toHaveBeenCalled();
   });
 
@@ -690,7 +675,7 @@ describe('LogsLinkButton', () => {
       datasource: { uid: 'logs-ds-uid', type: 'loki' },
       expr: '{job="api"} |= "trace1"',
     };
-    const interpolatedParams = { query: interpolatedQuery, alternativeQueries: [interpolatedQuery] };
+    const interpolatedParams = { query: interpolatedQuery };
 
     render(
       <LogsLinkButton

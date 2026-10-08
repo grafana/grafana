@@ -175,14 +175,8 @@ function useHasLogs(
   const { isLoading: isLoadingDsList, items: dsList } = useDataSourceInstanceList({ type: 'loki' });
 
   useEffect(() => {
-    if (
-      !query ||
-      !queryKey ||
-      !dynamicTraceToLogsEnabled ||
-      (query.datasource?.type === 'loki' && !alternativeQueries)
-    ) {
+    if (!query || !queryKey || !dynamicTraceToLogsEnabled) {
       setPresence('present');
-      setMatch(undefined);
       return;
     }
 
