@@ -16757,6 +16757,10 @@
     "render-mode": {
       "once": "Once",
       "per-row": "Per row"
+    },
+    "sandbox": {
+      "diagram-error": "Diagram could not be rendered",
+      "title": "Text panel content"
     }
   },
   "theme-playground": {
