@@ -16,6 +16,7 @@ import { transformFrames } from '../src/transform';
 
 interface GoResult {
   name: string;
+  format: string;
   requestBytes: number;
   responseBytes: number;
   nativeLabel?: string;
@@ -112,20 +113,26 @@ const mb = (bytes: number) => `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
 function report(goResults: GoResult[], browser: Map<string, BrowserResult>): string {
   const lines: string[] = [];
+  const names = [...new Set(goResults.map((g) => g.name))];
+  const find = (name: string, format: string) => goResults.find((g) => g.name === name && g.format === format);
 
   lines.push(
     '### Where the time goes (median ms)',
     '',
-    '| Workload | Browser today: parse + decode + transform | Server with sidecar: full pipeline | Browser with sidecar: parse + decode result | Native Go expression |',
-    '| --- | --- | --- | --- | --- |'
+    '| Workload | Browser today: parse + decode + transform | Sidecar pipeline, JSON | Sidecar pipeline, Arrow | Browser with sidecar: parse + decode result | Native Go expression |',
+    '| --- | --- | --- | --- | --- | --- |'
   );
-  for (const g of goResults) {
-    const b = browser.get(g.name);
+  for (const name of names) {
+    const b = browser.get(name);
+    const json = find(name, 'json');
+    const arrow = find(name, 'arrow');
     const today = b
       ? `${ms(b.parseMs + b.decodeMs + b.transformMs)} (${ms(b.parseMs)} + ${ms(b.decodeMs)} + ${ms(b.transformMs)})`
       : '—';
-    const native = g.median.nativeMs ? `${ms(g.median.nativeMs)} (${g.nativeLabel})` : '—';
-    lines.push(`| ${g.name} | ${today} | ${ms(g.median.pipelineMs)} | ${ms(b?.outputParseDecodeMs)} | ${native} |`);
+    const native = json?.median.nativeMs ? `${ms(json.median.nativeMs)} (${json.nativeLabel})` : '—';
+    lines.push(
+      `| ${name} | ${today} | ${ms(json?.median.pipelineMs)} | ${ms(arrow?.median.pipelineMs)} | ${ms(b?.outputParseDecodeMs)} | ${native} |`
+    );
   }
 
   const stages = ['read', 'queue', 'parse', 'decode', 'transform', 'encode', 'stringify'];
@@ -133,13 +140,13 @@ function report(goResults: GoResult[], browser: Map<string, BrowserResult>): str
     '',
     '### Sidecar call breakdown (median ms)',
     '',
-    `| Workload | Go encode | ${stages.join(' | ')} | HTTP total | Go decode |`,
-    `| --- | --- | ${stages.map(() => '---').join(' | ')} | --- | --- |`
+    `| Workload | Format | Go encode | ${stages.join(' | ')} | HTTP total | Go decode |`,
+    `| --- | --- | --- | ${stages.map(() => '---').join(' | ')} | --- | --- |`
   );
   for (const g of goResults) {
     const s = g.median.sidecarStagesMs;
     lines.push(
-      `| ${g.name} | ${ms(g.median.goEncodeMs)} | ${stages.map((st) => ms(s[st])).join(' | ')} | ${ms(g.median.sidecarHttpMs)} | ${ms(g.median.goDecodeMs)} |`
+      `| ${g.name} | ${g.format} | ${ms(g.median.goEncodeMs)} | ${stages.map((st) => ms(s[st])).join(' | ')} | ${ms(g.median.sidecarHttpMs)} | ${ms(g.median.goDecodeMs)} |`
     );
   }
 
@@ -147,13 +154,13 @@ function report(goResults: GoResult[], browser: Map<string, BrowserResult>): str
     '',
     '### Payload and load',
     '',
-    '| Workload | Request | Response | 10 parallel × 3: p50 ms | p99 ms | failed | Peak sidecar RSS |',
-    '| --- | --- | --- | --- | --- | --- | --- |'
+    '| Workload | Format | Request | Response | 10 parallel × 3: p50 ms | p99 ms | failed | Peak sidecar RSS |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |'
   );
   for (const g of goResults) {
     const c = g.concurrency;
     lines.push(
-      `| ${g.name} | ${mb(g.requestBytes)} | ${mb(g.responseBytes)} | ${ms(c.p50Ms)} | ${ms(c.p99Ms)} | ${c.errorsOrBusy} | ${mb(c.maxRssBytes)} |`
+      `| ${g.name} | ${g.format} | ${mb(g.requestBytes)} | ${mb(g.responseBytes)} | ${ms(c.p50Ms)} | ${ms(c.p99Ms)} | ${c.errorsOrBusy} | ${mb(c.maxRssBytes)} |`
     );
   }
   return lines.join('\n') + '\n';

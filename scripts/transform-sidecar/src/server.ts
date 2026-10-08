@@ -2,9 +2,10 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 
+import { ARROW_CONTENT_TYPE } from './arrow';
 import { PoolBusyError, PoolTimeoutError, WorkerPool } from './pool';
 import { supportedTransformations } from './transform';
-import { type WorkerResult } from './worker';
+import { type WorkerPayload, type WorkerResult } from './worker';
 
 function envInt(name: string, fallback: number): number {
   const raw = process.env[name];
@@ -33,7 +34,7 @@ function log(level: 'info' | 'error', msg: string, fields: Record<string, unknow
 
 class BodyTooLargeError extends Error {}
 
-function readBody(req: IncomingMessage, limit: number): Promise<string> {
+function readBody(req: IncomingMessage, limit: number): Promise<Uint8Array<ArrayBuffer>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     let size = 0;
@@ -48,12 +49,31 @@ function readBody(req: IncomingMessage, limit: number): Promise<string> {
       }
       chunks.push(chunk);
     });
-    req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
+    req.on('end', () => {
+      // Copy into a buffer of its own, not Node's shared pool, so it can be transferred to a worker.
+      const body = new Uint8Array(new ArrayBuffer(size));
+      let pos = 0;
+      for (const chunk of chunks) {
+        body.set(chunk, pos);
+        pos += chunk.length;
+      }
+      resolve(body);
+    });
     req.on('error', reject);
   });
 }
 
-function send(res: ServerResponse, status: number, body: string | object, headers: Record<string, string> = {}) {
+function send(
+  res: ServerResponse,
+  status: number,
+  body: string | Uint8Array | object,
+  headers: Record<string, string> = {}
+) {
+  if (body instanceof Uint8Array) {
+    res.writeHead(status, { 'content-type': ARROW_CONTENT_TYPE, 'content-length': body.byteLength, ...headers });
+    res.end(body);
+    return;
+  }
   const text = typeof body === 'string' ? body : JSON.stringify(body);
   res.writeHead(status, { 'content-type': 'application/json', 'content-length': Buffer.byteLength(text), ...headers });
   res.end(text);
@@ -65,7 +85,7 @@ function serverTiming(timings: Record<string, number>): string {
     .join(', ');
 }
 
-const pool = new WorkerPool<string, WorkerResult>(join(__dirname, 'worker.cjs'), {
+const pool = new WorkerPool<WorkerPayload, WorkerResult>(join(__dirname, 'worker.cjs'), {
   size: config.workers,
   queueLimit: config.queueLimit,
   timeoutMs: config.timeoutMs,
@@ -74,13 +94,14 @@ const pool = new WorkerPool<string, WorkerResult>(join(__dirname, 'worker.cjs'),
 async function handleTransform(req: IncomingMessage, res: ServerResponse) {
   const start = performance.now();
   let status: number;
-  let body: string | object;
+  let body: string | Uint8Array | object;
   const headers: Record<string, string> = {};
 
   try {
-    const payload = await readBody(req, config.maxBodyBytes);
+    const bytes = await readBody(req, config.maxBodyBytes);
     const read = performance.now() - start;
-    const result = await pool.run(payload);
+    const format = req.headers['content-type'] === ARROW_CONTENT_TYPE ? 'arrow' : 'json';
+    const result = await pool.run({ format, bytes }, [bytes.buffer]);
     if (result.ok) {
       status = 200;
       body = result.body;

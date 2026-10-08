@@ -4,7 +4,9 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "moduleResolution": "bundler",
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    // apache-arrow brings its own, newer @types/node; use the repo's.
+    "typeRoots": ["../../node_modules/@types"]
   },
   "include": [
     "./src/**/*.ts",

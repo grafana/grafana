@@ -2,6 +2,7 @@
 # Runs the benchmark end to end: builds the sidecar, starts it on a scratch port, measures the Go
 # side, then measures the browser baseline and prints the combined report.
 # Usage: scripts/transform-sidecar/bench/run.sh [output dir] [iterations]
+# Set TRANSFORM_BENCH_FORMATS=json or =arrow to measure one wire format (default: both).
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
@@ -19,7 +20,7 @@ until curl -sf "http://127.0.0.1:$port/health" >/dev/null; do sleep 0.2; done
 
 mkdir -p "$out"
 rm -f "$out"/*.json "$out"/report.md
-(cd "$root" && TRANSFORM_SIDECAR_URL="http://127.0.0.1:$port" TRANSFORM_BENCH_OUT="$out" TRANSFORM_BENCH_ITERATIONS="$iterations" \
+(cd "$root" && TRANSFORM_SIDECAR_URL="http://127.0.0.1:$port" TRANSFORM_BENCH_OUT="$out" TRANSFORM_BENCH_ITERATIONS="$iterations" TRANSFORM_BENCH_FORMATS="${TRANSFORM_BENCH_FORMATS:-}" \
   go test ./pkg/expr -run TestTransformSidecarBenchmark -count=1 -timeout 30m >/dev/null)
 
 node "$sidecar/dist/bench-browser.cjs" "$out" "$iterations"

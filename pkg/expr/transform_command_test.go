@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -58,6 +59,13 @@ func fakeSidecar(t *testing.T, handle func(call sidecarCall) (int, any)) (*httpt
 	return srv, &calls
 }
 
+func mustMarshal(t *testing.T, v any) string {
+	t.Helper()
+	b, err := json.Marshal(v)
+	require.NoError(t, err)
+	return string(b)
+}
+
 func TestTransformCommand(t *testing.T) {
 	labeled := func(pod string, value float64) *data.Frame {
 		return data.NewFrame("",
@@ -101,6 +109,63 @@ func TestTransformCommand(t *testing.T) {
 		require.Len(t, rsp.Responses["T"].Frames, 1)
 		require.Equal(t, "total", rsp.Responses["T"].Frames[0].Fields[0].Name)
 		require.Equal(t, "T", rsp.Responses["T"].Frames[0].RefID)
+	})
+
+	t.Run("sends and reads frames as Arrow when configured", func(t *testing.T) {
+		out := data.NewFrame("", data.NewField("total", data.Labels{"pod": "a"}, []*float64{new(6.0)}))
+		var gotContentType string
+		var gotHeader map[string]any
+		var gotFrames []*data.Frame
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			gotContentType = r.Header.Get("Content-Type")
+			raw, err := io.ReadAll(r.Body)
+			require.NoError(t, err)
+			parts, err := readArrowEnvelope(raw)
+			require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(parts[0], &gotHeader))
+			for _, part := range parts[1:] {
+				frame, err := data.UnmarshalArrowFrame(part)
+				require.NoError(t, err)
+				gotFrames = append(gotFrames, frame)
+			}
+
+			body, err := out.MarshalArrow()
+			require.NoError(t, err)
+			w.Header().Set("Content-Type", transformArrowContentType)
+			_, _ = w.Write(writeArrowEnvelope([][]byte{[]byte("{}"), body}))
+		}))
+		t.Cleanup(srv.Close)
+
+		s, req := newMockQueryService(responses, transformTestQueries(t, []string{"A", "B"},
+			`{"type": "transform", "inputs": ["A", "B"], "transformations": [{"id": "merge"}]}`))
+		s.cfg.TransformSidecarURL = srv.URL
+		s.cfg.TransformSidecarFormat = TransformWireFormatArrow
+
+		pl, err := s.BuildPipeline(t.Context(), req)
+		require.NoError(t, err)
+		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+		require.NoError(t, err)
+
+		require.NoError(t, rsp.Responses["T"].Error)
+		require.Equal(t, transformArrowContentType, gotContentType)
+		require.Equal(t, []any{}, gotHeader["frames"], "frames travel as Arrow, not in the JSON header")
+		require.JSONEq(t, `[{"id": "merge"}]`, mustMarshal(t, gotHeader["transformations"]))
+		require.Len(t, gotFrames, 3)
+		require.Equal(t, "a", gotFrames[0].Fields[1].Labels["pod"])
+
+		require.Len(t, rsp.Responses["T"].Frames, 1)
+		require.Equal(t, data.Labels{"pod": "a"}, rsp.Responses["T"].Frames[0].Fields[0].Labels)
+	})
+
+	t.Run("rejects an unknown wire format", func(t *testing.T) {
+		s, req := newMockQueryService(responses, transformTestQueries(t, []string{"A"},
+			`{"type": "transform", "inputs": ["A"], "transformations": [{"id": "merge"}]}`))
+		s.cfg.TransformSidecarURL = "http://127.0.0.1:1"
+		s.cfg.TransformSidecarFormat = "protobuf"
+
+		_, err := s.BuildPipeline(t.Context(), req)
+
+		require.ErrorContains(t, err, "transform_sidecar_format")
 	})
 
 	t.Run("returns the sidecar error message", func(t *testing.T) {
@@ -214,39 +279,44 @@ func TestTransformCommandWithSidecar(t *testing.T) {
 		t.Skip("TRANSFORM_SIDECAR_URL is not set")
 	}
 
-	responses := map[string]backend.DataResponse{
-		"A": {Frames: data.Frames{data.NewFrame("",
-			data.NewField("service", nil, []string{"api", "api", "worker", "idle"}),
-			data.NewField("latency", nil, []*float64{new(100.0), new(260.0), new(40.0), nil}),
-		)}},
+	for _, wireFormat := range []string{TransformWireFormatJSON, TransformWireFormatArrow} {
+		t.Run(wireFormat, func(t *testing.T) {
+			responses := map[string]backend.DataResponse{
+				"A": {Frames: data.Frames{data.NewFrame("",
+					data.NewField("service", nil, []string{"api", "api", "worker", "idle"}),
+					data.NewField("latency", nil, []*float64{new(100.0), new(260.0), new(40.0), nil}),
+				)}},
+			}
+			s, req := newMockQueryService(responses, transformTestQueries(t, []string{"A"}, `{
+				"type": "transform",
+				"inputs": ["A"],
+				"transformations": [{"id": "groupBy", "options": {"fields": {
+					"service": {"operation": "groupby", "aggregations": []},
+					"latency": {"operation": "aggregate", "aggregations": ["mean"]}
+				}}}]
+			}`))
+			s.cfg.TransformSidecarURL = url
+			s.cfg.TransformSidecarFormat = wireFormat
+
+			pl, err := s.BuildPipeline(t.Context(), req)
+			require.NoError(t, err)
+			rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+			require.NoError(t, err)
+			require.NoError(t, rsp.Responses["T"].Error)
+
+			require.Len(t, rsp.Responses["T"].Frames, 1)
+			frame := rsp.Responses["T"].Frames[0]
+			require.Equal(t, "latency (mean)", frame.Fields[1].Name)
+
+			means := map[string]*float64{}
+			for i := 0; i < frame.Rows(); i++ {
+				svc, _ := frame.Fields[0].ConcreteAt(i)
+				v, _ := frame.Fields[1].NullableFloatAt(i)
+				means[svc.(string)] = v
+			}
+			require.Equal(t, 180.0, *means["api"])
+			require.Equal(t, 40.0, *means["worker"])
+			require.Contains(t, means, "idle")
+		})
 	}
-	s, req := newMockQueryService(responses, transformTestQueries(t, []string{"A"}, `{
-		"type": "transform",
-		"inputs": ["A"],
-		"transformations": [{"id": "groupBy", "options": {"fields": {
-			"service": {"operation": "groupby", "aggregations": []},
-			"latency": {"operation": "aggregate", "aggregations": ["mean"]}
-		}}}]
-	}`))
-	s.cfg.TransformSidecarURL = url
-
-	pl, err := s.BuildPipeline(t.Context(), req)
-	require.NoError(t, err)
-	rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
-	require.NoError(t, err)
-	require.NoError(t, rsp.Responses["T"].Error)
-
-	require.Len(t, rsp.Responses["T"].Frames, 1)
-	frame := rsp.Responses["T"].Frames[0]
-	require.Equal(t, "latency (mean)", frame.Fields[1].Name)
-
-	means := map[string]*float64{}
-	for i := 0; i < frame.Rows(); i++ {
-		svc, _ := frame.Fields[0].ConcreteAt(i)
-		v, _ := frame.Fields[1].NullableFloatAt(i)
-		means[svc.(string)] = v
-	}
-	require.Equal(t, 180.0, *means["api"])
-	require.Equal(t, 40.0, *means["worker"])
-	require.Contains(t, means, "idle")
 }

@@ -1,7 +1,6 @@
 import { lastValueFrom } from 'rxjs';
 
 import {
-  dataFrameFromJSON,
   dataFrameToJSON,
   type DataFrameJSON,
   type FieldValueEntityLookup,
@@ -126,26 +125,6 @@ export async function transformFrames(
 /** Milliseconds spent in each stage of a request, reported in the Server-Timing header. */
 export type StageTimings = Record<string, number>;
 
-export async function runTransformRequest(
-  req: TransformRequest,
-  timings: StageTimings = {}
-): Promise<TransformResponse> {
-  let mark = performance.now();
-  const lap = (stage: string) => {
-    const now = performance.now();
-    timings[stage] = now - mark;
-    mark = now;
-  };
-
-  const frames = req.frames.map((frame) => dataFrameFromJSON(frame));
-  lap('decode');
-  const output = await transformFrames(frames, req.transformations, req);
-  lap('transform');
-  const response = { frames: output.map(toGoFrameJSON) };
-  lap('encode');
-  return response;
-}
-
 interface GoFieldType {
   goType: string;
   matches: (value: unknown) => boolean;
@@ -172,7 +151,7 @@ const GO_FIELD_TYPES: Partial<Record<FieldType, GoFieldType>> = {
  * - NaN and ±Inf are written as entities. dataFrameToJSON drops them, and JSON.stringify turns them
  *   into null. undefined is not written: Go has no value for it and would read null either way.
  */
-function toGoFrameJSON(frame: DataFrame): DataFrameJSON {
+export function toGoFrameJSON(frame: DataFrame): DataFrameJSON {
   const json = dataFrameToJSON(frame);
   if (!json.schema) {
     return json;

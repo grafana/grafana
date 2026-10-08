@@ -1,4 +1,4 @@
-import { Worker } from 'node:worker_threads';
+import { type TransferListItem, Worker } from 'node:worker_threads';
 
 export class PoolBusyError extends Error {}
 export class PoolTimeoutError extends Error {}
@@ -7,6 +7,7 @@ export class WorkerCrashError extends Error {}
 interface Job<TPayload, TResult> {
   id: number;
   payload: TPayload;
+  transfer: TransferListItem[];
   resolve: (value: TResult) => void;
   reject: (err: Error) => void;
 }
@@ -43,7 +44,8 @@ export class WorkerPool<TPayload, TResult> {
     }
   }
 
-  run(payload: TPayload): Promise<TResult> {
+  /** transfer lists buffers in payload to move to the worker instead of copying. */
+  run(payload: TPayload, transfer: TransferListItem[] = []): Promise<TResult> {
     if (this.closed) {
       return Promise.reject(new Error('pool is closed'));
     }
@@ -52,7 +54,7 @@ export class WorkerPool<TPayload, TResult> {
     }
 
     return new Promise((resolve, reject) => {
-      this.queue.push({ id: this.nextId++, payload, resolve, reject });
+      this.queue.push({ id: this.nextId++, payload, transfer, resolve, reject });
       this.dispatch();
     });
   }
@@ -104,7 +106,7 @@ export class WorkerPool<TPayload, TResult> {
       slot.timer = setTimeout(() => {
         this.replace(slot, new PoolTimeoutError(`transform exceeded ${this.options.timeoutMs}ms`));
       }, this.options.timeoutMs);
-      slot.worker.postMessage({ id: job.id, payload: job.payload });
+      slot.worker.postMessage({ id: job.id, payload: job.payload }, job.transfer);
     }
   }
 

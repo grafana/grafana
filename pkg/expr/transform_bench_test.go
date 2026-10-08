@@ -136,6 +136,7 @@ type benchStages struct {
 
 type benchResult struct {
 	Name          string      `json:"name"`
+	Format        string      `json:"format"`
 	RequestBytes  int         `json:"requestBytes"`
 	ResponseBytes int         `json:"responseBytes"`
 	Median        benchStages `json:"median"`
@@ -180,8 +181,8 @@ func parseServerTiming(header string) map[string]float64 {
 	return out
 }
 
-func postSidecar(url string, payload []byte) (*http.Response, []byte, error) {
-	resp, err := http.Post(url+"/transform", "application/json", bytes.NewReader(payload))
+func postSidecar(url, contentType string, payload []byte) (*http.Response, []byte, error) {
+	resp, err := http.Post(url+"/transform", contentType, bytes.NewReader(payload))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -205,6 +206,10 @@ func TestTransformSidecarBenchmark(t *testing.T) {
 		iterations = v
 	}
 	require.NoError(t, os.MkdirAll(outDir, 0o750))
+	formats := []string{TransformWireFormatJSON, TransformWireFormatArrow}
+	if v := os.Getenv("TRANSFORM_BENCH_FORMATS"); v != "" {
+		formats = strings.Split(v, ",")
+	}
 
 	results := []benchResult{}
 	for _, w := range benchWorkloads() {
@@ -212,23 +217,20 @@ func TestTransformSidecarBenchmark(t *testing.T) {
 		for _, f := range frames {
 			f.RefID = "A"
 		}
-		result := benchResult{Name: w.name, NativeLabel: w.nativeLabel}
 
 		var transformations []json.RawMessage
 		require.NoError(t, json.Unmarshal([]byte(w.transformations), &transformations))
-		payload, err := json.Marshal(transformRequest{Frames: frames, Transformations: transformations})
-		require.NoError(t, err)
-		result.RequestBytes = len(payload)
 
 		inputJSON, err := json.Marshal(frames)
 		require.NoError(t, err)
 		require.NoError(t, os.WriteFile(filepath.Join(outDir, w.name+".input.json"),
 			[]byte(fmt.Sprintf(`{"transformations": %s, "input": %s}`, w.transformations, inputJSON)), 0o600))
 
-		runPipeline := func(expression string, sql bool) (*backend.QueryDataResponse, float64) {
+		runPipeline := func(expression, wireFormat string, sql bool) (*backend.QueryDataResponse, float64) {
 			s, req := newMockQueryService(map[string]backend.DataResponse{"A": {Frames: frames}}, transformTestQueries(t, []string{"A"}, expression))
 			s.cfg.TransformSidecarURL = url
 			s.cfg.TransformSidecarTimeout = time.Minute
+			s.cfg.TransformSidecarFormat = wireFormat
 			s.cfg.SQLExpressionCellLimit = 0
 			s.cfg.SQLExpressionOutputCellLimit = 0
 			s.cfg.SQLExpressionTimeout = time.Minute
@@ -245,68 +247,78 @@ func TestTransformSidecarBenchmark(t *testing.T) {
 		}
 		transformExpression := fmt.Sprintf(`{"type": "transform", "inputs": ["A"], "transformations": %s}`, w.transformations)
 
-		var stages []benchStages
-		for i := range iterations + 1 {
-			var st benchStages
-
-			start := time.Now()
-			body, err := json.Marshal(transformRequest{Frames: frames, Transformations: transformations})
+		for _, wireFormat := range formats {
+			result := benchResult{Name: w.name, Format: wireFormat, NativeLabel: w.nativeLabel}
+			tc := &TransformCommand{transformations: transformations, wireFormat: wireFormat}
+			payload, contentType, err := tc.encodeRequest(frames)
 			require.NoError(t, err)
-			st.GoEncodeMs = msSince(start)
+			result.RequestBytes = len(payload)
+			// For iterating on the sidecar's decoders without Go in the loop (bench/decode.ts).
+			require.NoError(t, os.WriteFile(filepath.Join(outDir, w.name+".request."+wireFormat), payload, 0o600))
 
-			start = time.Now()
-			resp, raw, err := postSidecar(url, body)
-			require.NoError(t, err)
-			require.Equal(t, http.StatusOK, resp.StatusCode, string(raw))
-			st.SidecarHTTPMs = msSince(start)
-			st.SidecarMs = parseServerTiming(resp.Header.Get("Server-Timing"))
-			result.ResponseBytes = len(raw)
+			var stages []benchStages
+			for i := range iterations + 1 {
+				var st benchStages
 
-			start = time.Now()
-			_, err = decodeTransformResponse(raw)
-			require.NoError(t, err)
-			st.GoDecodeMs = msSince(start)
-
-			rsp, pipelineMs := runPipeline(transformExpression, false)
-			st.PipelineMs = pipelineMs
-			if i == 0 {
-				outputJSON, err := json.Marshal(rsp.Responses["T"].Frames)
+				start := time.Now()
+				body, _, err := tc.encodeRequest(frames)
 				require.NoError(t, err)
-				require.NoError(t, os.WriteFile(filepath.Join(outDir, w.name+".output.json"), outputJSON, 0o600))
+				st.GoEncodeMs = msSince(start)
+
+				start = time.Now()
+				resp, raw, err := postSidecar(url, contentType, body)
+				require.NoError(t, err)
+				require.Equal(t, http.StatusOK, resp.StatusCode, string(raw))
+				st.SidecarHTTPMs = msSince(start)
+				st.SidecarMs = parseServerTiming(resp.Header.Get("Server-Timing"))
+				result.ResponseBytes = len(raw)
+
+				start = time.Now()
+				_, err = decodeSidecarResponse(resp.Header.Get("Content-Type"), raw)
+				require.NoError(t, err)
+				st.GoDecodeMs = msSince(start)
+
+				rsp, pipelineMs := runPipeline(transformExpression, wireFormat, false)
+				st.PipelineMs = pipelineMs
+				if i == 0 && wireFormat == formats[0] {
+					outputJSON, err := json.Marshal(rsp.Responses["T"].Frames)
+					require.NoError(t, err)
+					require.NoError(t, os.WriteFile(filepath.Join(outDir, w.name+".output.json"), outputJSON, 0o600))
+				}
+
+				if w.native != "" {
+					_, st.NativeMs = runPipeline(w.native, wireFormat, w.nativeLabel == "SQL expression")
+				}
+				if i > 0 { // the first run warms up both sides
+					stages = append(stages, st)
+				}
 			}
 
-			if w.native != "" {
-				_, st.NativeMs = runPipeline(w.native, w.nativeLabel == "SQL expression")
+			pick := func(get func(benchStages) float64) float64 {
+				values := make([]float64, len(stages))
+				for i, st := range stages {
+					values[i] = get(st)
+				}
+				return median(values)
 			}
-			if i > 0 { // the first run warms up both sides
-				stages = append(stages, st)
+			result.Median = benchStages{
+				GoEncodeMs:    pick(func(s benchStages) float64 { return s.GoEncodeMs }),
+				SidecarHTTPMs: pick(func(s benchStages) float64 { return s.SidecarHTTPMs }),
+				GoDecodeMs:    pick(func(s benchStages) float64 { return s.GoDecodeMs }),
+				PipelineMs:    pick(func(s benchStages) float64 { return s.PipelineMs }),
+				NativeMs:      pick(func(s benchStages) float64 { return s.NativeMs }),
+				SidecarMs:     map[string]float64{},
 			}
-		}
-
-		pick := func(get func(benchStages) float64) float64 {
-			values := make([]float64, len(stages))
-			for i, st := range stages {
-				values[i] = get(st)
+			for stage := range stages[0].SidecarMs {
+				result.Median.SidecarMs[stage] = pick(func(s benchStages) float64 { return s.SidecarMs[stage] })
 			}
-			return median(values)
-		}
-		result.Median = benchStages{
-			GoEncodeMs:    pick(func(s benchStages) float64 { return s.GoEncodeMs }),
-			SidecarHTTPMs: pick(func(s benchStages) float64 { return s.SidecarHTTPMs }),
-			GoDecodeMs:    pick(func(s benchStages) float64 { return s.GoDecodeMs }),
-			PipelineMs:    pick(func(s benchStages) float64 { return s.PipelineMs }),
-			NativeMs:      pick(func(s benchStages) float64 { return s.NativeMs }),
-			SidecarMs:     map[string]float64{},
-		}
-		for stage := range stages[0].SidecarMs {
-			result.Median.SidecarMs[stage] = pick(func(s benchStages) float64 { return s.SidecarMs[stage] })
-		}
 
-		result.Concurrency.Requests, result.Concurrency.P50Ms, result.Concurrency.P99Ms, result.Concurrency.MaxRSSBytes, result.Concurrency.ErrorsOrBusy =
-			benchConcurrency(url, payload, 10, 3)
+			result.Concurrency.Requests, result.Concurrency.P50Ms, result.Concurrency.P99Ms, result.Concurrency.MaxRSSBytes, result.Concurrency.ErrorsOrBusy =
+				benchConcurrency(url, contentType, payload, 10, 3)
 
-		t.Logf("%s: %+v", w.name, result)
-		results = append(results, result)
+			t.Logf("%s (%s): %+v", w.name, wireFormat, result)
+			results = append(results, result)
+		}
 	}
 
 	raw, err := json.MarshalIndent(results, "", "  ")
@@ -315,7 +327,7 @@ func TestTransformSidecarBenchmark(t *testing.T) {
 }
 
 // benchConcurrency sends rounds of parallel requests and samples the sidecar's memory meanwhile.
-func benchConcurrency(url string, payload []byte, parallel, rounds int) (requests int, p50, p99, maxRSS float64, failed int) {
+func benchConcurrency(url, contentType string, payload []byte, parallel, rounds int) (requests int, p50, p99, maxRSS float64, failed int) {
 	stop := make(chan struct{})
 	rssDone := make(chan float64)
 	go func() {
@@ -349,7 +361,7 @@ func benchConcurrency(url string, payload []byte, parallel, rounds int) (request
 		for range parallel {
 			wg.Go(func() {
 				start := time.Now()
-				resp, _, err := postSidecar(url, payload)
+				resp, _, err := postSidecar(url, contentType, payload)
 				mu.Lock()
 				defer mu.Unlock()
 				if err != nil || resp.StatusCode != http.StatusOK {

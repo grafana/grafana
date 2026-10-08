@@ -3,6 +3,7 @@ package expr
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -24,6 +25,14 @@ import (
 // maxTransformResponseBytes bounds how much of a sidecar response is read into memory.
 const maxTransformResponseBytes = 256 << 20
 
+// Wire formats between Grafana and the transform sidecar.
+const (
+	TransformWireFormatJSON  = "json"
+	TransformWireFormatArrow = "arrow"
+
+	transformArrowContentType = "application/vnd.grafana.transform+arrow"
+)
+
 // TransformCommand runs frontend data transformations over its inputs by calling the
 // transform sidecar (scripts/transform-sidecar), which executes the same @grafana/data
 // code the browser uses.
@@ -36,9 +45,10 @@ type TransformCommand struct {
 	// can feed threshold and math expressions in an alert rule.
 	format string
 
-	url     string
-	timeout time.Duration
-	client  *http.Client
+	url        string
+	timeout    time.Duration
+	wireFormat string
+	client     *http.Client
 }
 
 type transformCommandModel struct {
@@ -52,6 +62,13 @@ type transformCommandModel struct {
 func UnmarshalTransformCommand(rn *rawNode, cfg *setting.Cfg) (*TransformCommand, error) {
 	if cfg.TransformSidecarURL == "" {
 		return nil, errors.New("transform expressions are disabled: [expressions] transform_sidecar_url is not set")
+	}
+	wireFormat := cfg.TransformSidecarFormat
+	if wireFormat == "" {
+		wireFormat = TransformWireFormatJSON
+	}
+	if wireFormat != TransformWireFormatJSON && wireFormat != TransformWireFormatArrow {
+		return nil, fmt.Errorf("[expressions] transform_sidecar_format must be %q or %q, got %q", TransformWireFormatJSON, TransformWireFormatArrow, wireFormat)
 	}
 
 	var model transformCommandModel
@@ -76,6 +93,7 @@ func UnmarshalTransformCommand(rn *rawNode, cfg *setting.Cfg) (*TransformCommand
 		format:          model.Format,
 		url:             strings.TrimSuffix(cfg.TransformSidecarURL, "/") + "/transform",
 		timeout:         cfg.TransformSidecarTimeout,
+		wireFormat:      wireFormat,
 		client:          http.DefaultClient,
 	}, nil
 }
@@ -117,11 +135,7 @@ func (tc *TransformCommand) Execute(ctx context.Context, _ time.Time, vars mathe
 		frames = append(frames, vars[refID].Values.AsDataFrames(refID)...)
 	}
 
-	out, err := tc.callSidecar(ctx, transformRequest{
-		Frames:          frames,
-		Transformations: tc.transformations,
-		Timezone:        tc.timezone,
-	})
+	out, err := tc.callSidecar(ctx, frames)
 	if err != nil {
 		span.SetStatus(codes.Error, err.Error())
 		return mathexp.Results{}, fmt.Errorf("transform expression %s: %w", tc.refID, err)
@@ -153,8 +167,8 @@ func (tc *TransformCommand) Execute(ctx context.Context, _ time.Time, vars mathe
 	return mathexp.Results{Values: values}, nil
 }
 
-func (tc *TransformCommand) callSidecar(ctx context.Context, body transformRequest) ([]*data.Frame, error) {
-	payload, err := json.Marshal(body)
+func (tc *TransformCommand) callSidecar(ctx context.Context, frames []*data.Frame) ([]*data.Frame, error) {
+	payload, contentType, err := tc.encodeRequest(frames)
 	if err != nil {
 		return nil, fmt.Errorf("encoding request: %w", err)
 	}
@@ -169,7 +183,7 @@ func (tc *TransformCommand) callSidecar(ctx context.Context, body transformReque
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", contentType)
 
 	resp, err := tc.client.Do(req)
 	if err != nil {
@@ -185,14 +199,99 @@ func (tc *TransformCommand) callSidecar(ctx context.Context, body transformReque
 		return nil, fmt.Errorf("transform sidecar response exceeds %d bytes", maxTransformResponseBytes)
 	}
 
-	parsed, err := decodeTransformResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("decoding transform sidecar response (status %d): %w", resp.StatusCode, err)
-	}
 	if resp.StatusCode != http.StatusOK {
+		var parsed transformResponse
+		if err := json.Unmarshal(raw, &parsed); err != nil {
+			return nil, fmt.Errorf("transform sidecar returned %d", resp.StatusCode)
+		}
 		return nil, fmt.Errorf("transform sidecar returned %d: %s", resp.StatusCode, parsed.Error)
 	}
-	return parsed.Frames, nil
+
+	out, err := decodeSidecarResponse(resp.Header.Get("Content-Type"), raw)
+	if err != nil {
+		return nil, fmt.Errorf("decoding transform sidecar response: %w", err)
+	}
+	return out, nil
+}
+
+// encodeRequest writes the request in the configured wire format. For Arrow, the JSON header
+// carries an empty frames list and each frame follows in the Arrow IPC file format.
+func (tc *TransformCommand) encodeRequest(frames []*data.Frame) ([]byte, string, error) {
+	if tc.wireFormat != TransformWireFormatArrow {
+		body, err := json.Marshal(transformRequest{Frames: frames, Transformations: tc.transformations, Timezone: tc.timezone})
+		return body, "application/json", err
+	}
+
+	header, err := json.Marshal(transformRequest{Frames: []*data.Frame{}, Transformations: tc.transformations, Timezone: tc.timezone})
+	if err != nil {
+		return nil, "", err
+	}
+	parts := make([][]byte, 0, len(frames)+1)
+	parts = append(parts, header)
+	for _, frame := range frames {
+		b, err := frame.MarshalArrow()
+		if err != nil {
+			return nil, "", err
+		}
+		parts = append(parts, b)
+	}
+	return writeArrowEnvelope(parts), transformArrowContentType, nil
+}
+
+func decodeSidecarResponse(contentType string, raw []byte) ([]*data.Frame, error) {
+	if contentType != transformArrowContentType {
+		parsed, err := decodeTransformResponse(raw)
+		return parsed.Frames, err
+	}
+
+	parts, err := readArrowEnvelope(raw)
+	if err != nil {
+		return nil, err
+	}
+	frames := make([]*data.Frame, 0, len(parts))
+	for _, part := range parts[1:] { // parts[0] is the JSON header
+		frame, err := data.UnmarshalArrowFrame(part)
+		if err != nil {
+			return nil, err
+		}
+		frames = append(frames, frame)
+	}
+	return frames, nil
+}
+
+// The Arrow envelope is a sequence of parts, each a big-endian uint32 length followed by that many
+// bytes. The first part is a JSON header; the rest are frames.
+func writeArrowEnvelope(parts [][]byte) []byte {
+	size := 0
+	for _, p := range parts {
+		size += 4 + len(p)
+	}
+	out := make([]byte, 0, size)
+	for _, p := range parts {
+		out = binary.BigEndian.AppendUint32(out, uint32(len(p))) //nolint:gosec // frames are bounded by the request size limit
+		out = append(out, p...)
+	}
+	return out
+}
+
+func readArrowEnvelope(raw []byte) ([][]byte, error) {
+	parts := [][]byte{}
+	for len(raw) > 0 {
+		if len(raw) < 4 {
+			return nil, errors.New("truncated arrow envelope")
+		}
+		n := binary.BigEndian.Uint32(raw)
+		raw = raw[4:]
+		if uint64(len(raw)) < uint64(n) {
+			return nil, errors.New("truncated arrow envelope")
+		}
+		parts = append(parts, raw[:n])
+		raw = raw[n:]
+	}
+	if len(parts) == 0 {
+		return nil, errors.New("empty arrow envelope")
+	}
+	return parts, nil
 }
 
 func decodeTransformResponse(raw []byte) (parsed transformResponse, err error) {

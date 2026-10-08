@@ -2,6 +2,7 @@
 # Runs the parity comparison end to end: builds the sidecar, starts it on a scratch port, writes
 # fixture results from Go, and prints the comparison table.
 # Usage: scripts/transform-sidecar/parity/run.sh [output dir]
+# Set TRANSFORM_SIDECAR_FORMAT=arrow to compare over the Arrow wire format.
 set -euo pipefail
 
 root="$(git rev-parse --show-toplevel)"
@@ -16,7 +17,7 @@ trap 'kill "$pid" 2>/dev/null || true' EXIT
 until curl -sf "http://127.0.0.1:$port/health" >/dev/null; do sleep 0.2; done
 
 rm -f "$out"/*.json
-(cd "$root" && TRANSFORM_SIDECAR_URL="http://127.0.0.1:$port" TRANSFORM_PARITY_OUT="$out" \
+(cd "$root" && TRANSFORM_SIDECAR_URL="http://127.0.0.1:$port" TRANSFORM_PARITY_OUT="$out" TRANSFORM_SIDECAR_FORMAT="${TRANSFORM_SIDECAR_FORMAT:-json}" \
   go test ./pkg/expr -run TestTransformParityFixtures -count=1 >/dev/null)
 
 node "$sidecar/dist/parity-compare.cjs" "$out"

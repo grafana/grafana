@@ -226,6 +226,48 @@ Under load, 10 parallel requests × 3 rounds each: p50 36–283 ms and p99 58–
 3. **Native Go is faster where it exists.** SSE reduce takes 23 ms versus 161 ms through the sidecar. For `groupBy`, SQL expressions and the sidecar cost about the same (24 vs 27 ms). For logs, SQL is faster (22 vs 48 ms).
 4. **Memory is the production risk.** Peak RSS of 2–2.5 GB came from 10 concurrent 18 MB requests across 4 workers. Each worker holds the payload string, the parsed objects, and the output. Any production setup would need per-request size limits well below the 64 MB default, and memory-based admission control.
 
+## Arrow wire format
+
+Set `[expressions] transform_sidecar_format = arrow` to send frames as Arrow instead of JSON. Errors still come back as JSON.
+
+- **Protocol.** The body is a sequence of parts, each a big-endian `uint32` length and that many bytes. The first part is the JSON header (the JSON request with `"frames": []`). Each later part is one frame in the Arrow IPC file format, exactly as the Go SDK's `Frame.MarshalArrow` writes it. Content type: `application/vnd.grafana.transform+arrow`.
+- **Implementation.** Go uses the SDK's `MarshalArrow` and `UnmarshalArrowFrame`. The sidecar uses `apache-arrow@21.2.0`, installed only in `scripts/transform-sidecar` (not the repo's `yarn.lock`). `src/arrow.ts` converts between Arrow and Grafana DataFrames in both directions.
+- **Parity.** `TRANSFORM_SIDECAR_FORMAT=arrow parity/run.sh` gives the same result as JSON: 34 match, plus the same 4 known differences. NaN and ±Inf are carried natively, with no entities needed.
+
+### Results (median ms, same setup as below)
+
+| Workload                        | Browser today | Sidecar pipeline, JSON | Sidecar pipeline, Arrow | Native Go       |
+| ------------------------------- | ------------- | ---------------------- | ----------------------- | --------------- |
+| 1k × 1k `reduce`                | 38            | 153                    | **53**                  | 23 (SSE reduce) |
+| 1k × 1k `joinByField` (aligned) | 34            | 224                    | **67**                  | —               |
+| 1k misaligned `joinByField`     | 63            | 258                    | **89**                  | —               |
+| 50k logs filter + sort          | 14            | 44                     | **21**                  | 20 (SQL)        |
+| 100k `groupBy`                  | 14            | 25                     | **19**                  | 24 (SQL)        |
+
+Where Arrow saves time, for 1k × 1k `reduce`:
+
+| Stage                             | JSON | Arrow |
+| --------------------------------- | ---- | ----- |
+| Go encode                         | 106  | 17    |
+| Node parse + decode               | 34   | 17    |
+| Go decode of a 4.6 MB join result | 34   | 9     |
+
+Under 10 parallel requests, p50 drops for the large Prometheus workloads: 128 → 106 ms (reduce), 187 → 105 ms (join), 254 → 148 ms (misaligned join). It rises slightly for the small logs and table workloads: 46 → 56 ms and 33 → 36 ms.
+
+### Things the Arrow experiment found
+
+1. **Loading `apache-arrow` made Grafana's `reduce` transformation 8× slower.**
+   - **Cause:** at load time, `apache-arrow` sets `Symbol.isConcatSpreadable` on its `Vector`, `Table`, and `RecordBatch` prototypes. Any such assignment permanently turns off V8's fast path for `Array.prototype.concat` in that thread. The reduce transformation's `mergeResults` concatenates one row per series in a loop.
+   - **Effect:** 7 ms became 65 ms.
+   - **How it showed up:** V8's `%IsConcatSpreadableProtector()` was `false` in the worker. Probes didn't reproduce it at first, because esbuild tree-shook an unused `apache-arrow` import.
+   - **Fix:** `build.mjs` strips the three assignments at bundle time. The build fails if the source changes, so a library upgrade can't silently reintroduce it.
+   - **Wider relevance:** this matters to any Grafana page or worker that loads `apache-arrow` next to transformations.
+2. **arrow-js merges the metadata of fields with the same name.** `Schema.assign`, which `RecordBatch` always calls, matches fields by name. Every `value` field of a join therefore got the labels of the last one. The sidecar reads through `RecordBatchReader` and takes columns by index, and writes with `new Table(schema, [batch])`, whose schema the writer uses. The parity run caught this.
+3. **The Go SDK reads only the Arrow file format** (with footer), not the stream format.
+4. **Decoding and encoding must avoid `Array.from` and `push`.** Preallocated arrays written by index are 2–3× faster for million-value columns; `Array.from(typedArray)` was the slowest option measured. This took Arrow decode from 37 to 17 ms and Arrow encode of the join result from 47–56 to about 10 ms.
+5. **Arrow responses are bigger for shape-preserving transforms:** 7.8 MB versus 4.6 MB of JSON for the join, because float64 takes 8 bytes per value. Over a real network the Grafana → browser leg is still JSON, so this only affects the localhost Grafana ↔ sidecar hop.
+6. **Remaining costs for 1k × 1k `reduce` over Arrow:** Go encode 17 ms, reading the body 8 ms, Node decode 17 ms (about half of it arrow-js per-frame overhead for 1000 small frames), transform 8 ms.
+
 ## Configuration
 
 | Variable                           | Default                        |

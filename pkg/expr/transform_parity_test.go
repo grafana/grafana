@@ -170,6 +170,7 @@ func TestTransformParityFixtures(t *testing.T) {
 
 			s, req := newMockQueryService(responses, transformTestQueries(t, refIDs, expression))
 			s.cfg.TransformSidecarURL = url
+			s.cfg.TransformSidecarFormat = os.Getenv("TRANSFORM_SIDECAR_FORMAT") // json when empty
 
 			record := map[string]any{
 				"name":            fx.name,
