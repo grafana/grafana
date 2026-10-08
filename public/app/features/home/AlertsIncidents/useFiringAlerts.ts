@@ -158,6 +158,7 @@ export function useFiringAlerts(selectedFilter: FilterSelection = '') {
     highCount,
     hasAlerts,
     hasTeams,
+    teamsLoading: enabled && teamsLoading,
     // Echoed back so the card can scope its empty message to the picked label.
     filterScope,
     enabled,

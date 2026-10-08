@@ -84,6 +84,27 @@ describe('AlertIncidentTabs filters', () => {
       expect(requests).toHaveLength(1);
     });
 
+    it("waits for the user's teams before showing the dropdown, so a team member's default reads 'Your teams'", async () => {
+      let releaseTeams!: () => void;
+      const teamsGate = new Promise<void>((resolve) => (releaseTeams = resolve));
+      server.use(
+        http.get('/api/user/teams', async () => {
+          await teamsGate;
+          return HttpResponse.json([{ id: 1, uid: 'team-0', orgId: 1, name: 'Team A', memberCount: 1 }]);
+        })
+      );
+
+      render(<AlertIncidentTabsWithData />);
+
+      // Before teams load, "All alerts" would be the wrong default for a team member.
+      expect(await screen.findByRole('tab', { name: /firing alerts/i })).toBeInTheDocument();
+      expect(screen.queryByRole('combobox', { name: /filter alerts by label/i })).not.toBeInTheDocument();
+
+      releaseTeams();
+
+      expect(await screen.findByRole('combobox', { name: /filter alerts by label/i })).toHaveDisplayValue('Your teams');
+    });
+
     it('puts each tab filter inside the panel named after that tab', async () => {
       mockTeamLabelValues(['Team A']);
       mockAlerts([makeAlert({ labels: { alertname: 'CPU Critical', severity: 'critical' } })]);

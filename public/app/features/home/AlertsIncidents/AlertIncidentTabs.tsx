@@ -55,7 +55,7 @@ export function AlertIncidentTabs({
 
   // Default to alerts tab if alerts are available, otherwise default to incidents tab
   const [activeTab, setActiveTab] = useState<TabId>(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
-  const { count, hasAlerts, hasTeams, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
+  const { count, hasAlerts, hasTeams, teamsLoading, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
     error: incidentsError,
@@ -66,7 +66,8 @@ export function AlertIncidentTabs({
     canAccess: incidentsCanAccess,
   } = incidentsData;
   // Kept here rather than in the dropdown, which only renders for the active tab.
-  const loadAlertOptions = useAlertFilterOptions(canViewAlerts);
+  // The alerts dropdown waits for teams: until then it's unknown whether its default is "Your teams".
+  const loadAlertOptions = useAlertFilterOptions(canViewAlerts && !teamsLoading);
   const loadIncidentOptions = useIncidentFilterOptions(canViewIncidents);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
