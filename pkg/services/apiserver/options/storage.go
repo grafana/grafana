@@ -65,13 +65,14 @@ type StorageOptions struct {
 	GrpcClientKeepaliveTime                  time.Duration
 
 	// Secrets Manager Configuration for InlineSecureValueSupport
-	SecretsManagerGrpcClientEnable        bool
-	SecretsManagerGrpcClientLoadBalancing bool
-	SecretsManagerGrpcServerAddress       string
-	SecretsManagerGrpcServerUseTLS        bool
-	SecretsManagerGrpcServerTLSSkipVerify bool
-	SecretsManagerGrpcServerTLSServerName string
-	SecretsManagerGrpcServerTLSCAFile     string
+	SecretsManagerGrpcClientEnable               bool
+	SecretsManagerGrpcClientLoadBalancing        bool
+	SecretsManagerGrpcServerAddress              string
+	SecretsManagerGrpcServerUseTLS               bool
+	SecretsManagerGrpcServerTLSSkipVerify        bool
+	SecretsManagerGrpcServerTLSServerName        string
+	SecretsManagerGrpcServerTLSCAFile            string
+	SecretsManagerGrpcTokenExchangerNamespaceAll bool
 
 	// For file storage, this is the requested path
 	DataPath string
@@ -201,6 +202,7 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSServerName, "grafana.secrets-manager.grpc-server-tls-server-name", "", "Server name for TLS verification")
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSCAFile, "grafana.secrets-manager.grpc-server-tls-ca-file", "", "CA file for TLS verification")
 	fs.BoolVar(&o.SecretsManagerGrpcClientLoadBalancing, "grafana.secrets-manager.grpc-client-load-balancing", false, "Enable client-side load balancing for gRPC client")
+	fs.BoolVar(&o.SecretsManagerGrpcTokenExchangerNamespaceAll, "grafana.secrets-manager.grpc-token-exchanger-namespace-all", false, "Whether to override the token exchanger namespace to *")
 }
 
 func (o *StorageOptions) Validate() []error {
@@ -300,6 +302,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 			tlsCfg,
 			tracer,
 			o.SecretsManagerGrpcClientLoadBalancing,
+			o.SecretsManagerGrpcTokenExchangerNamespaceAll,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create inline secure value service: %w", err)
@@ -319,11 +322,12 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 // - Retry interceptor for transient connection issues
 // - Keepalive for long-lived connections
 func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
-	// Retry interceptor for transient connection issues (codes.Unavailable includes connection refused)
+	// Retry transient failures (codes.Unavailable includes connection refused), but leave
+	// resource-version conflicts to callers that can re-read.
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 
 	opts := []grpc.DialOption{

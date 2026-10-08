@@ -172,6 +172,7 @@ export class AutoGridLayoutManager
     const newGridItem = new AutoGridItem({ body: vizPanel });
 
     addElement({
+      meta: { actionId: 'panel.add', scope: 'auto-grid' },
       addedObject: vizPanel,
       source: this,
       perform: () => {
@@ -200,6 +201,7 @@ export class AutoGridLayoutManager
 
     if (config.featureToggles.dashboardNewLayouts) {
       edit({
+        meta: { actionId: 'panel.paste', scope: 'auto-grid' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: panel.state.body,
         source: this,
@@ -231,6 +233,7 @@ export class AutoGridLayoutManager
     const adjacentPanel = findAdjacentVizPanel(gridItem, siblings, (sibling) => sibling.state.body);
 
     removeElement({
+      meta: { actionId: 'panel.remove', scope: 'auto-grid' },
       removedObject: panel,
       source: this,
       perform: () => {

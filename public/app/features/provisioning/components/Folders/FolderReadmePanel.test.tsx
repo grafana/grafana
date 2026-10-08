@@ -6,7 +6,6 @@ import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
@@ -97,7 +96,6 @@ function setup(folderUID = 'test-folder') {
 describe('FolderReadmePanel', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setTestFlags({ 'provisioning.readmes': true });
     // locationUtil keeps module-level config, so reset it between tests
     locationUtil.initialize({
       config: { appSubUrl: '' } as GrafanaConfig,
@@ -107,12 +105,6 @@ describe('FolderReadmePanel', () => {
     setDocs();
     setReadmeResult();
     mockMermaidRender.mockResolvedValue({ svg: '<svg data-testid="mermaid-svg"></svg>', diagramType: 'flowchart' });
-  });
-
-  afterEach(() => {
-    act(() => {
-      setTestFlags({});
-    });
   });
 
   it('renders the README markdown inside a panel with an anchor id and a README tab', () => {
@@ -509,20 +501,6 @@ describe('FolderReadmePanel', () => {
       setup();
       expect(screen.queryByRole('link', { name: /Add README/i })).not.toBeInTheDocument();
     });
-  });
-
-  it('renders nothing when the feature toggle is off', () => {
-    setTestFlags({ 'provisioning.readmes': false });
-
-    const { container } = setup();
-    expect(container).toBeEmptyDOMElement();
-  });
-
-  it('does not invoke the data hooks when the feature toggle is off', () => {
-    setTestFlags({ 'provisioning.readmes': false });
-    setup();
-    expect(mockUseFolderDocs).not.toHaveBeenCalled();
-    expect(mockUseFolderReadme).not.toHaveBeenCalled();
   });
 
   it('renders nothing when the folder is not provisioned', () => {

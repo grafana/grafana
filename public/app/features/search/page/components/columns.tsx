@@ -14,10 +14,8 @@ import { config } from '@grafana/runtime';
 import { type PanelPluginMetas } from '@grafana/runtime/internal';
 import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Checkbox, Icon, type IconName, TagList, Text, Tooltip } from '@grafana/ui';
-import { appEvents } from 'app/core/app_events';
 import { formatDate } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
-import { ShowModalReactEvent } from 'app/types/events';
 
 import { DescriptionTooltip } from '../../components/DescriptionTooltip';
 import { type QueryResponse, type SearchResultMeta } from '../../service/types';
@@ -29,7 +27,6 @@ import {
 } from '../../service/utils';
 import { type SelectionChecker, type SelectionToggle } from '../selection';
 
-import { ExplainScorePopup } from './ExplainScorePopup';
 import { type TableColumn } from './SearchResultsTable';
 
 const TYPE_COLUMN_WIDTH = 175;
@@ -61,10 +58,6 @@ export const generateColumns = (
       sortFieldWith += 25;
     }
     availableWidth -= sortFieldWith; // pre-allocate the space for the last column
-  }
-
-  if (access.explain && access.score) {
-    availableWidth -= 100; // pre-allocate the space for the last column
   }
 
   let width = 50;
@@ -310,49 +303,6 @@ export const generateColumns = (
       id: `column-sort-field`,
       field: sortField,
       width: sortFieldWith,
-    });
-  }
-
-  if (access.explain && access.score) {
-    const vals = access.score.values;
-    const showExplainPopup = (row: number) => {
-      appEvents.publish(
-        new ShowModalReactEvent({
-          component: ExplainScorePopup,
-          props: {
-            name: access.name.values[row],
-            explain: access.explain.values[row],
-            frame: response.view.dataFrame,
-            row: row,
-          },
-        })
-      );
-    };
-
-    columns.push({
-      Header: () => (
-        <div className={styles.sortedHeader}>
-          <Trans i18nKey="search.generate-columns.score">Score</Trans>
-        </div>
-      ),
-      Cell: (p) => {
-        const { key, ...cellProps } = p.cellProps;
-        return (
-          // TODO: fix keyboard a11y
-          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-          <div
-            key={key}
-            {...cellProps}
-            className={cx(styles.cell, styles.explainItem)}
-            onClick={() => showExplainPopup(p.row.index)}
-          >
-            {vals[p.row.index]}
-          </div>
-        );
-      },
-      id: `column-score-field`,
-      field: access.score,
-      width: 100,
     });
   }
 

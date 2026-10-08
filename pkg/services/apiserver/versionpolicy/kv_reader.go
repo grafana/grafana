@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 )
 
@@ -67,7 +68,7 @@ func validatePolicy(p VersionPolicy) error {
 		if v == "" {
 			continue
 		}
-		if _, ok := capRank(v); !ok {
+		if !versionpolicy.IsRankableVersion(v) {
 			return fmt.Errorf("unparseable version %q", v)
 		}
 	}

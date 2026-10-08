@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/appinstaller"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute"
 )
 
 // Options are the parts of a running server's configuration that are visible in
@@ -47,7 +48,8 @@ type Options struct {
 }
 
 // Versions returns the versions the plugin serves, preferred version first.
-// Settings are included for legacy plugins and when the compatibility flag is enabled.
+// Definitions with a manifest expose only manifest versions; definitions without
+// one expose the settings version under the plugin ID.
 func Versions(plugin definition.PluginDefinition, opts Options) ([]string, error) {
 	b, err := newBuilder(plugin, opts)
 	if err != nil {
@@ -58,31 +60,28 @@ func Versions(plugin definition.PluginDefinition, opts Options) ([]string, error
 
 // newBuilder uses offline substitutes for dependencies that are required to
 // register routes but are only called while serving requests.
-func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
+func newBuilder(plugin definition.PluginDefinition, opts Options) (pluginroute.PluginAPI, error) {
 	if plugin.JSONData.ID == "" {
 		return nil, fmt.Errorf("plugin is missing an id")
 	}
-	return appplugin.NewAppPluginAPIBuilder(
-		plugin,
-		offlinePluginClient{},
-		offlineClientV3{},
-		offlinePluginContext{},
-		nil, // no decrypter: reading secrets is a request time concern
-		appplugin.NewPluginAccessChecker(nil),
-		offlineSearchClient{},
-		offlineStoreClient{},
-		appplugin.AppPluginRunnerOptions{
+	if len(plugin.Manifests) > 1 {
+		return nil, fmt.Errorf("multiple app manifests require selecting a manifest")
+	}
+	if len(plugin.Manifests) == 0 || plugin.Manifests[0] == nil {
+		return appplugin.NewAppPluginAPIBuilder(plugin, offlinePluginClient{}, offlinePluginContext{}, nil,
+			appplugin.NewPluginAccessChecker(nil), appplugin.AppPluginRunnerOptions{RegisterProxy: opts.RegisterProxy},
+			tracing.NewNoopTracerService(), featuremgmt.WithFeatures())
+	}
+	return pluginroute.NewAPI(plugin.JSONData.ID, plugin.Manifests[0], pluginroute.Options{
+		PluginInfo:   plugin.JSONData.Info,
+		PluginClient: offlinePluginClient{}, ClientV3: offlineClientV3{}, ContextProvider: offlinePluginContext{},
+		AccessChecker: appplugin.NewPluginAccessChecker(nil), Search: offlineSearchClient{}, Store: offlineStoreClient{},
+		HybridAPIEnabled: true, KeysAPIEnabled: true,
+		Runner: appplugin.AppPluginRunnerOptions{
 			RegisterProxy: opts.RegisterProxy,
-			// Generated specs always enable search, trash and hybrid route registration.
-			// searchroutes still applies its per-kind eligibility rules.
-			SearchAPIEnabled: true,
-			TrashAPIEnabled:  true,
-			HybridAPIEnabled: true,
-			KeysAPIEnabled:   true,
 		},
-		tracing.NewNoopTracerService(),
-		featuremgmt.WithFeatures(),
-	)
+		Tracer: tracing.NewNoopTracerService(), Features: featuremgmt.WithFeatures(),
+	})
 }
 
 // Build returns the OpenAPI v3 spec for one app plugin group version.
@@ -92,8 +91,7 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 		return nil, err
 	}
 
-	// All served versions share the plugin's API group. A manifest can override
-	// the default group derived from the plugin ID.
+	// Manifest versions use the manifest group; settings use the plugin ID.
 	gvs := b.GetGroupVersions()
 	if len(gvs) == 0 {
 		return nil, fmt.Errorf("plugin %s has no served versions", plugin.JSONData.ID)
