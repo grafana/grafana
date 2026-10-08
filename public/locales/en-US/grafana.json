@@ -11156,7 +11156,7 @@
     "incidents-card": {
       "declare": "Declare an incident",
       "empty": "No active incidents.",
-      "empty-selected-label": "No active incidents with {{label}}.",
+      "empty-selected-team": "No active incidents for {{team}}.",
       "error-title": "Could not load active incidents",
       "title": "Active incidents",
       "view-all": "View all incidents"

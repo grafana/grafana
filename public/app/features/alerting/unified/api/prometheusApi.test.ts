@@ -72,7 +72,7 @@ describe('getGrafanaRuleLabels', () => {
     ]);
   });
 
-  it('asks again after a rule save, so a new label shows up despite the long cache', async () => {
+  it('refetches when alert rule tags are invalidated, despite the long cache', async () => {
     const requests: URLSearchParams[] = [];
     server.use(
       http.get(GRAFANA_RULES_URL, ({ request }) => {
@@ -95,7 +95,7 @@ describe('getGrafanaRuleLabels', () => {
     await waitFor(() => expect(requests).toHaveLength(2));
   });
 
-  it('fails without an error toast, since callers treat the labels as optional', async () => {
+  it('turns off the error toast for its request, since callers treat the labels as optional', async () => {
     const fetch = jest.spyOn(backendSrv, 'fetch');
     server.use(http.get(GRAFANA_RULES_URL, () => HttpResponse.json({ message: 'Rules unavailable' }, { status: 500 })));
 

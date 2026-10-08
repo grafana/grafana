@@ -17,8 +17,7 @@ import { AlertIncidentTabs, type AlertIncidentSwitchHandle } from './AlertsIncid
 import { FiringAlertsCard } from './AlertsIncidents/FiringAlertsCard';
 import { IncidentsCard } from './AlertsIncidents/IncidentsCard';
 import { NewsCard } from './AlertsIncidents/NewsCard';
-import { ALERTS_FILTER_STORAGE_KEY } from './AlertsIncidents/alertFilter';
-import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
+import { ALERTS_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/filterSelection';
 import { useFiringAlerts } from './AlertsIncidents/useFiringAlerts';
 import { useIncidents } from './AlertsIncidents/useIncidents';
 import { DashboardTabs } from './DashboardTabs/DashboardTabs';

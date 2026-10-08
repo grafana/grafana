@@ -10,8 +10,8 @@ import { ctaClicked } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { SummaryCard, SummaryCardAge, SummaryCardPrefix } from './SummaryCard';
+import { type FilterScope, formatFilterLabel } from './filterSelection';
 import { severityLevelColor } from './severity';
-import { type FilterScope, formatFilterLabel } from './teamFilter';
 import { type FiringAlertsData } from './useFiringAlerts';
 
 /** Extract the path (with query string) from an absolute generatorURL, falling back to the raw value. */

@@ -14,10 +14,9 @@ import { type AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/type
 import { AccessControlAction } from 'app/types/accessControl';
 import { type Team } from 'app/types/teams';
 
-import { type AlertFilterSelection } from './alertFilter';
 import { HOME_CARD_MAX_ITEMS } from './constants';
+import { type FilterScope, type FilterSelection, resolveFilterScope } from './filterSelection';
 import { severityLevelRank } from './severity';
-import { type FilterScope, resolveFilterScope } from './teamFilter';
 
 /** Canonical severity level for an alert, tolerant of a missing severity label so the card never crashes. */
 function alertSeverityLevel(alert: AlertmanagerAlert) {
@@ -82,7 +81,7 @@ export type FiringAlertsData = ReturnType<typeof useFiringAlerts>;
  * When `selectedFilter` names a label (from the filter dropdown) it overrides the default
  * filter of the user's own teams.
  */
-export function useFiringAlerts(selectedFilter: AlertFilterSelection = '') {
+export function useFiringAlerts(selectedFilter: FilterSelection = '') {
   // The hook gates its own fetching so it's safe to call unconditionally,
   // e.g. from the tabs component when only incidents are available.
   const enabled = canViewFiringAlerts();

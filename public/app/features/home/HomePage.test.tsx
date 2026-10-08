@@ -16,8 +16,7 @@ import { createComponentWithMeta } from 'app/features/plugins/extensions/usePlug
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { ALERTS_FILTER_STORAGE_KEY } from './AlertsIncidents/alertFilter';
-import { INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/incidentFilter';
+import { ALERTS_FILTER_STORAGE_KEY, INCIDENTS_FILTER_STORAGE_KEY } from './AlertsIncidents/filterSelection';
 import { ACTIVE_INCIDENTS_QUERY, mockIncidents } from './AlertsIncidents/mockIncidentsApi';
 import { type HomepageTabExtensionProps } from './DashboardTabs/types';
 import HomePage from './HomePage';

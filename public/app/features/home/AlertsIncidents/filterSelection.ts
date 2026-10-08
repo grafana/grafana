@@ -1,7 +1,16 @@
 import { ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 
+export const ALERTS_FILTER_STORAGE_KEY = 'grafana.home.alerts.filter';
+export const INCIDENTS_FILTER_STORAGE_KEY = 'grafana.home.incidents.filter';
+
+/**
+ * A homepage filter selection, read with resolveFilterScope. A plain string so localStorage
+ * and the Combobox can hold it as-is.
+ */
+export type FilterSelection = string;
+
 /** Sentinel for an explicit "All" pick; never a real option value. */
-export const ALL_TEAMS = ALL_VARIABLE_VALUE;
+export const ALL_SCOPE = ALL_VARIABLE_VALUE;
 
 /** One label value a homepage filter can pick, e.g. `team` = `platform`. */
 interface FilterLabel {
@@ -34,11 +43,12 @@ export function formatFilterLabel({ key, value }: FilterLabel): string {
 
 /**
  * The scope a homepage filter selection names: '' is the default ("your teams" for team members,
- * everything otherwise), ALL_TEAMS an explicit org-wide pick, and `key:value` one picked label.
+ * everything otherwise), ALL_SCOPE an explicit org-wide pick, and `key:value` one picked label
+ * (e.g. `team:platform`, `severity:critical`).
  * A stored value that names no label, e.g. one edited by hand, falls back to the default.
  */
-export function resolveFilterScope(selection: string): FilterScope {
-  if (selection === ALL_TEAMS) {
+export function resolveFilterScope(selection: FilterSelection): FilterScope {
+  if (selection === ALL_SCOPE) {
     return { kind: 'all' };
   }
   const separatorIndex = selection.indexOf(FILTER_SEPARATOR);

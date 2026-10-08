@@ -12,9 +12,8 @@ import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
-import { TeamFilterCombobox } from './TeamFilterCombobox';
-import { type AlertFilterSelection } from './alertFilter';
-import { type IncidentFilterSelection } from './incidentFilter';
+import { LabelFilterCombobox } from './LabelFilterCombobox';
+import { type FilterSelection } from './filterSelection';
 import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { useIncidentFilterOptions } from './useIncidentFilterOptions';
@@ -45,10 +44,10 @@ export function AlertIncidentTabs({
 }: {
   alertsData: FiringAlertsData;
   incidentsData: IncidentsData;
-  alertsFilter: AlertFilterSelection;
-  onAlertsFilterChange: (filter: AlertFilterSelection) => void;
-  incidentsFilter: IncidentFilterSelection;
-  onIncidentsFilterChange: (filter: IncidentFilterSelection) => void;
+  alertsFilter: FilterSelection;
+  onAlertsFilterChange: (filter: FilterSelection) => void;
+  incidentsFilter: FilterSelection;
+  onIncidentsFilterChange: (filter: FilterSelection) => void;
   switchRef?: Ref<AlertIncidentSwitchHandle>;
 }) {
   const canViewIncidents = !!incidentsData.enabled;
@@ -66,9 +65,9 @@ export function AlertIncidentTabs({
     canDeclare: incidentsCanDeclare,
     canAccess: incidentsCanAccess,
   } = incidentsData;
-  // Fetched here rather than in the dropdown so the options survive tab switches.
-  const alertOptions = useAlertFilterOptions(canViewAlerts);
-  const incidentOptions = useIncidentFilterOptions(canViewIncidents);
+  // Kept here rather than in the dropdown, which only renders for the active tab.
+  const loadAlertOptions = useAlertFilterOptions(canViewAlerts);
+  const loadIncidentOptions = useIncidentFilterOptions(canViewIncidents);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -110,8 +109,8 @@ export function AlertIncidentTabs({
             label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
             // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
             counter: loading ? undefined : count,
-            filter: {
-              options: alertOptions,
+            filter: loadAlertOptions && {
+              loadOptions: loadAlertOptions,
               selected: alertsFilter,
               onChange: onAlertsFilterChange,
               offersYourTeams: hasTeams,
@@ -131,8 +130,8 @@ export function AlertIncidentTabs({
             // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
             counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
             counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
-            filter: {
-              options: incidentOptions,
+            filter: loadIncidentOptions && {
+              loadOptions: loadIncidentOptions,
               selected: incidentsFilter,
               onChange: onIncidentsFilterChange,
               // Incidents have no "your teams" scope: the unfiltered default is every active incident.
@@ -175,9 +174,9 @@ export function AlertIncidentTabs({
         <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab)}>
           {/* Fixed height so the section doesn't jump between tabs; the list fills whatever the filter row leaves. */}
           <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
-            {filter && filter.options.length > 0 && (
+            {filter && (
               <Box paddingTop={2}>
-                <TeamFilterCombobox {...filter} />
+                <LabelFilterCombobox {...filter} />
               </Box>
             )}
             <ScrollContainer showScrollIndicators>

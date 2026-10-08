@@ -3,7 +3,13 @@ import { useCallback, useMemo } from 'react';
 import { t } from '@grafana/i18n';
 import { Combobox, type ComboboxOption } from '@grafana/ui';
 
-import { ALL_TEAMS, resolveFilterScope } from './teamFilter';
+import { ALL_SCOPE, type FilterSelection, resolveFilterScope } from './filterSelection';
+
+/**
+ * Loads the label options a filter offers, each valued with encodeFilterLabel and with `group`
+ * set to render a header above the options sharing it.
+ */
+export type LoadFilterOptions = () => Promise<Array<ComboboxOption<string>>>;
 
 const collator = new Intl.Collator();
 
@@ -28,14 +34,11 @@ function sortOptions(options: Array<ComboboxOption<string>>): Array<ComboboxOpti
 }
 
 interface Props {
-  /**
-   * Options to offer, each valued with encodeFilterLabel and with `group` set to render a header
-   * above the options sharing it. The caller hides the dropdown when there are none.
-   */
-  options: Array<ComboboxOption<string>>;
-  /** '' is the default scope, ALL_TEAMS the org-wide pick, anything else an option value. */
-  selected: string;
-  onChange: (selection: string) => void;
+  /** Called each time the dropdown opens and as the user types. */
+  loadOptions: LoadFilterOptions;
+  /** '' is the default scope, ALL_SCOPE the org-wide pick, anything else an option value. */
+  selected: FilterSelection;
+  onChange: (selection: FilterSelection) => void;
   /**
    * Whether the default scope is the user's own teams (alerts, for team members). Adds a
    * "Your teams" default plus an explicit escape hatch to everything; otherwise the default
@@ -48,15 +51,20 @@ interface Props {
 }
 
 /**
- * Dropdown to filter a homepage view. Presentational: the caller supplies the options
- * (alert rule label values or incident label values) and owns the selection.
+ * Dropdown to filter a homepage view by one label value. Presentational: the caller supplies
+ * the options and owns the selection.
  */
-export function TeamFilterCombobox({ options, selected, onChange, offersYourTeams, allOptionLabel, ariaLabel }: Props) {
-  const sortedOptions = useMemo(() => sortOptions(options), [options]);
-
+export function LabelFilterCombobox({
+  loadOptions,
+  selected,
+  onChange,
+  offersYourTeams,
+  allOptionLabel,
+  ariaLabel,
+}: Props) {
   // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
   const allOption = useMemo(
-    () => getAllOption(allOptionLabel, offersYourTeams ? ALL_TEAMS : ''),
+    () => getAllOption(allOptionLabel, offersYourTeams ? ALL_SCOPE : ''),
     [allOptionLabel, offersYourTeams]
   );
 
@@ -77,24 +85,25 @@ export function TeamFilterCombobox({ options, selected, onChange, offersYourTeam
     }
   }, [selected, offersYourTeams, allOption]);
 
-  const loadOptions = useCallback(
+  const searchOptions = useCallback(
     async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+      const options = sortOptions(await loadOptions());
       const query = inputValue.toLowerCase();
       // Typing a field name (the group header) lists everything under it.
-      const matching = sortedOptions.filter(
+      const matching = options.filter(
         (option) => option.label?.toLowerCase().includes(query) || option.group?.toLowerCase().includes(query)
       );
       // The scope options only belong on the unfiltered default list.
       const scopeOptions = offersYourTeams ? [getYourTeamsOption(), allOption] : [allOption];
       return inputValue ? matching : [...scopeOptions, ...matching];
     },
-    [sortedOptions, offersYourTeams, allOption]
+    [loadOptions, offersYourTeams, allOption]
   );
 
   return (
     <Combobox
-      prefixIcon="users-alt"
-      options={loadOptions}
+      prefixIcon="filter"
+      options={searchOptions}
       value={valueOption}
       onChange={(option) => {
         // Re-selecting the current value is a no-op so the parent doesn't re-render.

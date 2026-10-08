@@ -1,6 +1,6 @@
 import { isEqual } from 'lodash';
 
-import { ALL_TEAMS, canEncodeFilterLabel, encodeFilterLabel, resolveFilterScope } from './teamFilter';
+import { ALL_SCOPE, canEncodeFilterLabel, encodeFilterLabel, resolveFilterScope } from './filterSelection';
 
 describe('filter selection', () => {
   it.each([
@@ -14,7 +14,7 @@ describe('filter selection', () => {
 
   it.each([
     { selection: '', expected: { kind: 'default' } },
-    { selection: ALL_TEAMS, expected: { kind: 'all' } },
+    { selection: ALL_SCOPE, expected: { kind: 'all' } },
     // Names no label, e.g. a hand-edited stored value, so it's read as no pick.
     { selection: 'platform', expected: { kind: 'default' } },
   ])('resolves "$selection" to the $expected.kind scope', ({ selection, expected }) => {
