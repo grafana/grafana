@@ -2077,9 +2077,7 @@
       "routing-options": {
         "label": {
           "contact-point": "コンタクトポイント",
-          "notification-policy": "通知ポリシー",
-          "select-contact-point": "コンタクトポイントを選択",
-          "use-notification-policy": "通知ポリシーを使用"
+          "notification-policy": "通知ポリシー"
         }
       }
     },
@@ -13068,15 +13066,9 @@
       "card-author": "{{author}}による",
       "card-selected": "{{title}}（選択済み）",
       "card-updated": "{{when}}に更新",
-      "create-description": "説明文",
-      "create-description-help": "コラボレーター向けのオプションのコンテキスト",
-      "create-description-placeholder": "何を調査していますか？",
       "create-name": "ノートブック名",
       "create-name-required": "ノートブック名は必須です",
       "create-name-taken": "この名前のノートブックはすでに存在します",
-      "create-tags": "タグ",
-      "create-tags-help": "オプション — 検索とフィルタリングに使用",
-      "create-tags-placeholder": "タグを追加",
       "created-by-me": "自分が作成したもの",
       "error-conflict": "追加中にこのノートブックが変更されました。パネルを最新バージョンに追加して、もう一度お試しください。",
       "error-generic": "パネルをノートブックに追加できませんでした",
@@ -13086,6 +13078,8 @@
       "list-none": "まだノートブックがありません。代わりにノートブックを作成してください。",
       "list-none-read-only": "まだノートブックがなく、作成する権限もありません。",
       "list-truncated": "すべてのノートブックが表示されているわけではありません。検索を絞り込んで他のノートブックを見つけてください。",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "タイトルで検索",
       "sort-alphabetical": "アルファベット順（A-Z）",
       "sort-label": "ノートブックを並べ替え",
@@ -13185,8 +13179,7 @@
       },
       "tag-filter-placeholder": "",
       "unknown-author": "匿名",
-      "count_other": "{{count}}冊のノートブック",
-      "count-truncated_other": "最初の{{count}}冊のノートブックが読み込まれました"
+      "count_other": "{{count}}冊のノートブック"
     },
     "new": {
       "default-title-with-date": ""
@@ -14028,6 +14021,7 @@
       "title": "Grafana CloudでGit Syncを使用することもできます"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "コードをクリップボードにコピー"
     },
     "commit-message": {
@@ -14953,7 +14947,6 @@
       "alert-point-folder-cleanup": "移行後に元のフォルダの手動での削除または管理が必要となる場合があります。",
       "alert-point-folder-structure": "既存のダッシュボードを移行すると、フォルダ構造がリポジトリに複製されます。元のフォルダからダッシュボードが削除されますが、アラートまたはライブラリパネルが含まれている場合があります。",
       "alert-point-instance-alerts": "移行後は既存のアラートとライブラリパネルは失われ、使用できなくなります。",
-      "alert-point-permissions": "きめ細かい権限設定はサポートされていません。デフォルトの権限設定が適用されます。管理者、編集者、および閲覧者のロールは、標準のアクセスレベルで保持されます。",
       "alert-point-unsupported": "プロビジョニングされたフォルダでは、アラートとライブラリパネルはサポートされていません。",
       "alert-title": "重要：続行する前にGit Syncの制限事項を確認してください",
       "app-mode-label": "アプリの設定",
@@ -15664,9 +15657,6 @@
     "description-tooltip": {
       "label": "説明文"
     },
-    "generate-columns": {
-      "score": "スコア"
-    },
     "results-table": {
       "datasource-header": "データソース",
       "deleted-by-header": "削除者",
@@ -16009,6 +15999,7 @@
       "update-preferences": "設定の更新エラー"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "ホームのダッシュボード",
       "home-dashboard-placeholder": "デフォルトのダッシュボード",
       "language-preference-label": "言語",

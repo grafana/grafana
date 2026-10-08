@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Ponto de contacto",
-          "notification-policy": "Política de notificação",
-          "select-contact-point": "Selecionar ponto de contacto",
-          "use-notification-policy": "Utilização da política de notificação"
+          "notification-policy": "Política de notificação"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Por {{author}}",
       "card-selected": "{{title}} (selecionados)",
       "card-updated": "Atualizado a {{when}}",
-      "create-description": "Descrição",
-      "create-description-help": "Contexto opcional para colaboradores",
-      "create-description-placeholder": "O que está a investigar?",
       "create-name": "Nome do bloco de notas",
       "create-name-required": "O nome do bloco de notas é obrigatório",
       "create-name-taken": "Já existe um bloco de notas com este nome",
-      "create-tags": "Etiquetas",
-      "create-tags-help": "Opcional — utilizado para pesquisa e filtragem",
-      "create-tags-placeholder": "Adicionar uma etiqueta",
       "created-by-me": "Criado por mim",
       "error-conflict": "Este bloco de notas foi alterado enquanto estava a adicionar-lhe algo. Tente novamente adicionar o painel à versão mais recente.",
       "error-generic": "Falha ao adicionar o painel ao bloco de notas",
@@ -13183,6 +13175,8 @@
       "list-none": "Ainda não tem blocos de notas. Em vez disso, crie um.",
       "list-none-read-only": "Ainda não tem blocos de notas e não tem permissão para criar um.",
       "list-truncated": "Nem todos os blocos de notas são mostrados. Restrinja a pesquisa para encontrar outros.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Pesquisar por título",
       "sort-alphabetical": "Por ordem alfabética (A–Z)",
       "sort-label": "Ordenar blocos de notas",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anónimo",
       "count_one": "{{count}} bloco de notas",
-      "count_other": "{{count}} blocos de notas",
-      "count-truncated_one": "Primeiro {{count}} bloco de notas carregado",
-      "count-truncated_other": "Primeiros {{count}} blocos de notas carregados"
+      "count_other": "{{count}} blocos de notas"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Também pode utilizar o Git Sync na Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Copiar o código para a área de transferência"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Pode ser necessário remover ou gerir manualmente as pastas originais após a migração.",
       "alert-point-folder-structure": "Ao migrar painéis de controlo existentes, a estrutura de pastas será replicada no repositório. As pastas originais serão esvaziadas de painéis, mas ainda podem conter alertas ou painéis de biblioteca.",
       "alert-point-instance-alerts": "Os alertas e painéis de biblioteca existentes serão perdidos e não poderão ser utilizados após a migração.",
-      "alert-point-permissions": "As permissões refinadas não são suportadas. Aplicam-se as permissões padrão: as funções de Administrador, Editor e Visualizador são preservadas com os seus níveis de acesso padrão.",
       "alert-point-unsupported": "Os alertas e os painéis de biblioteca não são suportados em pastas provisionadas.",
       "alert-title": "Importante: reveja as limitações do Git Sync antes de prosseguir",
       "app-mode-label": "Configuração da aplicação",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Descrição"
     },
-    "generate-columns": {
-      "score": "Pontuação "
-    },
     "results-table": {
       "datasource-header": "Origem dos dados",
       "deleted-by-header": "Eliminado por",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Erro ao atualizar as preferências"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Painel de controlo inicial",
       "home-dashboard-placeholder": "Painel de controlo predefinido",
       "language-preference-label": "Idioma",
