@@ -182,6 +182,12 @@ You can now proceed to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFA
 
 An OAuth App lets Grafana act on your behalf in your Git provider. You create the app in your provider, then authorize it once from Grafana. Grafana stores the access token and refreshes it when the provider supports refresh tokens.
 
+{{< admonition type="caution" >}}
+An OAuth App connection acts as the user who authorized it. Every repository that uses the connection, and every user who can run its sync jobs, uses that user's access token. The token can reach every repository that user can access, not only the ones connected to Grafana. Removing the user from Grafana doesn't revoke the token. Revoke it in your Git provider.
+
+To limit access, authorize the app with a dedicated account that can only access the repositories you sync. For GitHub, consider a GitHub App, which is scoped to the repositories where it's installed.
+{{< /admonition >}}
+
 If you chose to authenticate with an OAuth App, you need the following parameters:
 
 - The client ID of the app.
