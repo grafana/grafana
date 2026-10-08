@@ -203,6 +203,10 @@ func latestVersionOfRulesByUID(sess *db.Session, logger log.Logger, orgID int64,
 		}
 		result = append(result, *rule)
 	}
+	// rows.Err() always reports sql.ErrNoRows here; Close() surfaces a real mid-stream failure.
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
 	return result, nil
 }
 
