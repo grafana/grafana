@@ -16,6 +16,9 @@ type RootCommandPaletteAction = Omit<Action, 'parent'> & {
   target?: React.HTMLAttributeAnchorTarget;
   url?: string | URLCallback;
   managedBy?: ManagerKind;
+  tags?: string[];
+  /** UID of the dashboard or folder the action points to, so plugin extensions can identify it. */
+  uid?: string;
   /** Stable, language-agnostic section id for analytics (see SECTION_* in values.ts). */
   sectionId?: string;
 };

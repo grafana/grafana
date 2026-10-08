@@ -8,6 +8,10 @@ import { useStyles2 } from '@grafana/ui';
 import { type ManagerKind } from 'app/features/apiserver/types';
 import { ManagedBadge } from 'app/features/provisioning/components/ManagedBadge';
 
+import { ResultItemExtensions } from './ResultItemExtensions';
+import { getActionSectionId } from './types';
+import { SECTION_DASHBOARDS, SECTION_RECENT_DASHBOARDS } from './values';
+
 export const ResultItem = React.forwardRef(
   (
     {
@@ -42,6 +46,12 @@ export const ResultItem = React.forwardRef(
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
     const managedBy = (action as ActionImpl & { managedBy?: ManagerKind }).managedBy;
     const showProvisionedBadge = config.provisioningEnabled && Boolean(managedBy);
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const tags = (action as ActionImpl & { tags?: string[] }).tags;
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const { uid, url } = action as ActionImpl & { uid?: string; url?: unknown };
+    const sectionId = getActionSectionId(action);
+    const isDashboard = sectionId === SECTION_DASHBOARDS || sectionId === SECTION_RECENT_DASHBOARDS;
 
     let name = action.name;
 
@@ -72,6 +82,18 @@ export const ResultItem = React.forwardRef(
             <span>{name}</span>
           </div>
           {action.subtitle && <span className={styles.subtitleText}>{action.subtitle}</span>}
+          {isDashboard && uid && typeof url === 'string' && (
+            <ResultItemExtensions
+              context={{
+                kind: 'dashboard',
+                uid,
+                title: action.name,
+                url,
+                tags: tags ?? [],
+                folderTitle: action.subtitle,
+              }}
+            />
+          )}
           {showProvisionedBadge && <ManagedBadge managerKind={managedBy} />}
         </div>
       </div>
