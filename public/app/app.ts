@@ -86,6 +86,7 @@ import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { handleRedirectTo } from './core/navigation/handleRedirectTo';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
+import { arePluginNavItemsEnabled } from './core/navtree/utils';
 import { CorrelationsService } from './core/services/CorrelationsService';
 import { NewFrontendAssetsChecker } from './core/services/NewFrontendAssetsChecker';
 import { backendSrv } from './core/services/backend_srv';
@@ -244,19 +245,23 @@ export class GrafanaApp {
       // We must wait for translations to load because some preloaded store state requires translating
       await initI18nPromise;
 
-      // configureStore builds the nav tree, and the client-built tree needs both
-      // the app plugin metas for its plugin items and the permissions its sections
-      // and plugin access checks are gated on, so both have to land before the
-      // store. The multi-tenant frontend service ships a reduced boot with no
-      // permissions, so there they are fetched; everywhere else bootdata already
-      // carries them. In parallel, because neither depends on the other.
-      const needsPermissionsFetch =
+      // configureStore builds the nav tree, so whatever that build reads has to
+      // land first. Fetched in parallel, because neither depends on the other, and
+      // each only when it is actually needed: the metas feed the plugin items, and
+      // the permissions its sections and plugin access checks are gated on — which
+      // bootdata already carries everywhere except the multi-tenant frontend
+      // service, whose reduced boot ships none.
+      const bootTasks: Array<Promise<unknown>> = [];
+      if (arePluginNavItemsEnabled()) {
+        bootTasks.push(getAppPluginMetas());
+      }
+      if (
         isFrontendService() &&
-        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false);
-      await Promise.all([
-        getAppPluginMetas(),
-        needsPermissionsFetch ? contextSrv.fetchUserPermissions() : Promise.resolve(),
-      ]);
+        getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaMultiTenantUserPermissions, false)
+      ) {
+        bootTasks.push(contextSrv.fetchUserPermissions());
+      }
+      await Promise.all(bootTasks);
 
       // Important that extension reducers are initialized before store
       addExtensionReducers();

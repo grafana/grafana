@@ -11,13 +11,18 @@ import { getPluginMetasUrl, initPluginMetas } from './plugins';
 import type { AppPluginMetas, PluginMetasResponse } from './types';
 
 let apps: AppPluginMetas = {};
+// Tracked separately from whether `apps` holds anything: an instance with no app
+// plugins is a legitimately empty cache, and deriving this from the cache size
+// would both re-fetch on every read and make getAppPluginMetasSync() throw.
+let didInit = false;
 
 function initialized(): boolean {
-  return Boolean(Object.keys(apps).length);
+  return didInit;
 }
 
 function setApps(input: AppPluginMetas) {
   apps = input;
+  didInit = true;
 }
 
 function setMetas(metas: PluginMetasResponse | null) {
@@ -104,4 +109,7 @@ export function setAppPluginMetas(override: AppPluginMetas): void {
   }
 
   setApps(structuredClone(override));
+  // Tests clear the cache with {} to make the next getAppPluginMetas() fetch again,
+  // so an empty override has to read back as "never initialised"
+  didInit = Object.keys(apps).length > 0;
 }
