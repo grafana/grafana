@@ -857,9 +857,11 @@ func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs 
 		return 0, nil
 	}
 
-	// A context-dependent LegacyDatabaseProvider resolves the target database from the
-	// requester on ctx, which this interface allows callers to pass separately instead.
-	ctx = identity.WithRequester(ctx, user)
+	if st.LegacyDatabaseProvider != nil {
+		// A context-dependent LegacyDatabaseProvider resolves the target database from the
+		// requester on ctx, which this interface allows callers to pass separately instead.
+		ctx = identity.WithRequester(ctx, user)
+	}
 	dbHelper, err := st.legacyDatabaseProvider(ctx)
 	if err != nil {
 		return 0, err
