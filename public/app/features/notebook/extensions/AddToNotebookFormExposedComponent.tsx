@@ -46,10 +46,15 @@ const AddToNotebookFormLazy = lazy(() => import(/* webpackChunkName: "AddToNoteb
  * </Modal>
  * ```
  */
-export const AddToNotebookFormExposedComponent = (props: Props) => {
+export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
   const enabled = useFlagDashboardNotebooks();
   if (!enabled) {
     console.error(`[AddToNotebookFormExposedComponent] The required feature flag dashboard.notebooks is not enabled.`);
+    return null;
+  }
+
+  if (!props.onClose || !props.buildPanel || !props.capturedTimeRange) {
+    console.error(`[AddToNotebookFormExposedComponent] Missing required props: onClose, buildPanel, capturedTimeRange.`);
     return null;
   }
 
