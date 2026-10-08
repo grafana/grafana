@@ -62,7 +62,12 @@ type GitHubEnterpriseConnectionFormData = ConnectionFormDataBase &
 type OAuthConnectionFormData = ConnectionFormDataBase &
   Partial<GitHubConnectionConfig> & { type: OAuthConnectionType; serverUrl?: string };
 
-export type OAuthConnectionType = 'githubOAuth' | 'githubEnterpriseOAuth' | 'gitlabOAuth' | 'bitbucketOAuth';
+export type OAuthConnectionType =
+  | 'githubOAuth'
+  | 'githubEnterpriseOAuth'
+  | 'gitlabOAuth'
+  | 'bitbucketOAuth'
+  | 'gitOAuth';
 
 export type ConnectionFormData =
   | GitHubConnectionFormData

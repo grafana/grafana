@@ -79,7 +79,7 @@ func testManifest(t *testing.T) *app.ManifestData {
 						"Baz":{"type":"object","additionalProperties":false,"properties":{"value":{"type":"integer"}},"required":["value"]}
 					}`),
 				}},
-				Routes: app.ManifestVersionRoutes{
+				Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 					Namespaced: map[string]spec3.PathProps{
 						"/foobar": {Get: operation("getFoobar")},
 					},
@@ -92,7 +92,7 @@ func testManifest(t *testing.T) *app.ManifestData {
 			{
 				Name:   "v2alpha1",
 				Served: true,
-				Routes: app.ManifestVersionRoutes{
+				Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 					Namespaced: map[string]spec3.PathProps{
 						"/example": {Get: operation("getExample")},
 					},

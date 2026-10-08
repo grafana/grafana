@@ -4529,6 +4529,9 @@
             "description": "The connection description",
             "type": "string"
           },
+          "gitOAuth": {
+            "description": "Generic git OAuth app connection configuration Only applicable when provider is \"gitOAuth\""
+          },
           "github": {
             "description": "GitHub connection configuration Only applicable when provider is \"github\""
           },
@@ -4547,11 +4550,12 @@
             "default": ""
           },
           "type": {
-            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
+            "description": "The connection provider type\n\nPossible enum values:\n - `\"bitbucketOAuth\"`\n - `\"gitOAuth\"`\n - `\"github\"`\n - `\"githubEnterprise\"`\n - `\"githubEnterpriseOAuth\"`\n - `\"githubOAuth\"`\n - `\"gitlabOAuth\"`",
             "type": "string",
             "default": "",
             "enum": [
               "bitbucketOAuth",
+              "gitOAuth",
               "github",
               "githubEnterprise",
               "githubEnterpriseOAuth",
@@ -4966,6 +4970,33 @@
           "url": {
             "description": "The repository URL (e.g. `https://gitlab.com/example/test`).",
             "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.provisioning.pkg.apis.provisioning.v1beta1.GitOAuthConnectionConfig": {
+        "description": "GitOAuthConnectionConfig describes a provider-agnostic OAuth 2.0 app used to authenticate pure git repositories.",
+        "type": "object",
+        "required": [
+          "authURL",
+          "tokenURL"
+        ],
+        "properties": {
+          "authURL": {
+            "description": "The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`).",
+            "type": "string",
+            "default": ""
+          },
+          "scopes": {
+            "description": "The OAuth scopes to request, granting git read and write access.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tokenURL": {
+            "description": "The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`).",
+            "type": "string",
+            "default": ""
           }
         }
       },
@@ -5922,6 +5953,7 @@
               "type": "string",
               "enum": [
                 "bitbucketOAuth",
+                "gitOAuth",
                 "github",
                 "githubEnterprise",
                 "githubEnterpriseOAuth",

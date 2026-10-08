@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "İletişim noktası",
-          "notification-policy": "Bildirim politikası",
-          "select-contact-point": "İletişim noktası seçin",
-          "use-notification-policy": "Bildirim politikası kullanın"
+          "notification-policy": "Bildirim politikası"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Yazar: {{author}}",
       "card-selected": "{{title}} (seçildi)",
       "card-updated": "Güncelleme tarihi: {{when}}",
-      "create-description": "Açıklama",
-      "create-description-help": "Ortak çalışanlar için isteğe bağlı bağlam",
-      "create-description-placeholder": "Neyi inceliyorsunuz?",
       "create-name": "Not defteri adı",
       "create-name-required": "Not defteri adı gereklidir",
       "create-name-taken": "Bu ada sahip bir not defteri zaten var",
-      "create-tags": "Etiketler",
-      "create-tags-help": "İsteğe bağlı: Arama ve filtreleme için kullanılır",
-      "create-tags-placeholder": "Etiket ekle",
       "created-by-me": "Benim oluşturduklarım",
       "error-conflict": "Siz ekleme yaparken bu not defteri değişti. Paneli en son sürüme eklemek için tekrar deneyin.",
       "error-generic": "Panel not defterine eklenemedi",
@@ -13183,6 +13175,8 @@
       "list-none": "Henüz not defteriniz yok. Bunun yerine bir tane oluşturun.",
       "list-none-read-only": "Henüz hiç not defteriniz yok ve yeni bir tane oluşturma izniniz bulunmuyor.",
       "list-truncated": "Tüm not defterleri gösterilmiyor. Diğerlerini bulmak için aramayı daraltın.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Başlığa göre ara",
       "sort-alphabetical": "Alfabetik (A-Z)",
       "sort-label": "Not defterlerini sırala",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anonim",
       "count_one": "{{count}} not defteri",
-      "count_other": "{{count}} not defteri",
-      "count-truncated_one": "İlk {{count}} not defteri yüklendi",
-      "count-truncated_other": "İlk {{count}} not defteri yüklendi"
+      "count_other": "{{count}} not defteri"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Git Senkronizasyonunu Grafana Cloud üzerinde de kullanabilirsiniz"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Kodu panoya kopyala"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Taşıma işleminden sonra orijinal klasörleri manuel olarak kaldırmanız veya yönetmeniz gerekebilir.",
       "alert-point-folder-structure": "Mevcut panolar taşınırken klasör yapısı depoda çoğaltılacaktır. Orijinal klasörler panolardan arındırılacak ancak yine de uyarı veya kitaplık panoları içerebilir.",
       "alert-point-instance-alerts": "Mevcut uyarılar ve kitaplık panoları silinecek ve taşıma sonrasında kullanılamayacaktır.",
-      "alert-point-permissions": "Ayrıntılı izinler desteklenmez. Varsayılan izinler geçerlidir: Yönetici, Düzenleyici ve Görüntüleyici rolleri standart erişim düzeyleriyle korunur.",
       "alert-point-unsupported": "Sağlanan klasörlerde uyarılar ve kitaplık panoları desteklenmez.",
       "alert-title": "Önemli: Devam etmeden önce Git Senkronizasyonu sınırlamalarını gözden geçirin",
       "app-mode-label": "Uygulama yapılandırması",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Açıklama"
     },
-    "generate-columns": {
-      "score": "Puan"
-    },
     "results-table": {
       "datasource-header": "Veri kaynağı",
       "deleted-by-header": "Silen",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Tercihler güncellenirken hata oluştu"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Ana Pano",
       "home-dashboard-placeholder": "Varsayılan pano",
       "language-preference-label": "Dil",

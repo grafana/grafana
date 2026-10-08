@@ -29,9 +29,7 @@ export interface SearchQuery {
   uid?: string[];
 
   facet?: FacetField[];
-  explain?: boolean;
   panelTitleSearch?: boolean;
-  withAllowedActions?: boolean;
   accessInfo?: boolean;
   limit?: number;
   // Used for pagination. See also offset param.
@@ -57,9 +55,6 @@ export interface DashboardQueryResult {
   // When the object was deleted, as an ISO timestamp. Only deleted results carry it.
   deletionTimestamp?: string;
 
-  // debugging fields
-  score: number;
-  explain: {};
   /**
    * Who manages this resource (e.g. provisioning). From unified search this is
    * the full object { kind, id }; from legacy or other paths it may be just the
