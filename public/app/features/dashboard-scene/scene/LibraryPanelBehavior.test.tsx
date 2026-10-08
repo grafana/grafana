@@ -242,11 +242,11 @@ describe('LibraryPanelBehavior', () => {
   // skipped — except for public and scripted dashboards, whose migrations still run in the frontend.
   describe('repeat migration', () => {
     afterEach(() => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({});
     });
 
     it('migrates repeat onto the grid item for legacy dashboards', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
 
@@ -265,7 +265,7 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('skips the migration when dashboardNewLayouts is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({ repeat: 'server' });
 
@@ -273,7 +273,7 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('still migrates for a public dashboard when dashboardNewLayouts is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
@@ -284,7 +284,7 @@ describe('LibraryPanelBehavior', () => {
     });
 
     it('still migrates for a scripted dashboard when dashboardNewLayouts is enabled', async () => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
 
       const { gridItem } = await buildTestSceneWithLibraryPanel({
         repeat: 'server',
