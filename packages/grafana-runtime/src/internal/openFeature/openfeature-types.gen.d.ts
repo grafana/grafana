@@ -58,7 +58,6 @@ declare module "@openfeature/core" {
     | "datasources.azureMonitorBatchAPI"
     | "alertingRuleRecoverDeleted"
     | "recentlyViewedDashboards"
-    | "experimentRecentlyViewedDashboards"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
