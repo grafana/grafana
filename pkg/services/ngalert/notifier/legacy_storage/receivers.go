@@ -209,16 +209,8 @@ func validateAndSetIntegrationUIDs(receiver *models.Receiver) error {
 	return nil
 }
 
-func (rev *ConfigRevision) AssignReceiverProvenances(provenances map[string]models.Provenance) {
-	for uid, r := range rev.Config.Receivers {
-		r.Provenance = GetReceiverProvenance(provenances, &r, models.ResourceOriginGrafana)
-		rev.Config.Receivers[uid] = r
-	}
-}
-
 // AssignReceiverManagers assigns each receiver's manager from the managers of its integrations,
-// keyed by integration UID. It must run after AssignReceiverProvenances: receivers without a known
-// manager get one derived from their provenance.
+// keyed by integration UID.
 func (rev *ConfigRevision) AssignReceiverManagers(integrationManagers map[string]utils.ManagerProperties) {
 	for uid, r := range rev.Config.Receivers {
 		r.Manager = GetReceiverManager(integrationManagers, &r, models.ResourceOriginGrafana)

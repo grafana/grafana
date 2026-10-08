@@ -76,7 +76,7 @@ func buildTimeInterval(orgID int64, interval v1.TimeInterval, spec model.TimeInt
 		},
 		Spec: spec,
 	}
-	prov := provenance.SetAnnotations(&i, interval.Provenance, interval.Manager)
+	prov := provenance.SetAnnotations(&i, interval.Manager)
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
 	i.SetCanUse(prov != ngmodels.ProvenanceConvertedPrometheus)
@@ -90,17 +90,16 @@ func convertToDomainModel(interval *model.TimeInterval) (v1.TimeInterval, error)
 		return v1.TimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 
-	prov, manager, err := provenance.FromAnnotations(interval)
+	manager, err := provenance.FromAnnotations(interval)
 	if err != nil {
 		return v1.TimeInterval{}, provisioning.MakeErrTimeIntervalInvalid(err)
 	}
 
 	return v1.TimeInterval{
 		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(interval.Name),
-			Version:    interval.ResourceVersion,
-			Provenance: prov,
-			Manager:    manager,
+			UID:     v1.ResourceUID(interval.Name),
+			Version: interval.ResourceVersion,
+			Manager: manager,
 		},
 		Title:         interval.Spec.Name,
 		TimeIntervals: timeIntervals,

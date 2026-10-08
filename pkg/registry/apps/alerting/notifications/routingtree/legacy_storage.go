@@ -141,7 +141,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	_, manager, err := provenance.FromAnnotations(p)
+	manager, err := provenance.FromAnnotations(p)
 	if err != nil {
 		return nil, errors.NewBadRequest(err.Error())
 	}
@@ -202,7 +202,7 @@ func (s *legacyStorage) Update(
 	if err != nil {
 		return nil, false, err
 	}
-	_, manager, err := provenance.FromAnnotations(p)
+	manager, err := provenance.FromAnnotations(p)
 	if err != nil {
 		return nil, false, errors.NewBadRequest(err.Error())
 	}

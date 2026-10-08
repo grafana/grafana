@@ -21,7 +21,7 @@ func (mt *MuteTimeV1) mapToModel() MuteTime {
 		OrgID: orgID,
 		MuteTime: v1.TimeInterval{
 			ResourceMetadata: v1.ResourceMetadata{
-				Provenance: models.ProvenanceFile,
+				Manager: models.ProvenanceToManagerProperties(models.ProvenanceFile),
 			},
 			Title:         mt.MuteTime.Name,
 			TimeIntervals: mt.MuteTime.TimeIntervals,
