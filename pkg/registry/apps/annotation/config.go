@@ -29,6 +29,9 @@ type Config struct {
 
 	// General lifecycle configuration
 	RetentionTTL time.Duration
+	// MaxAge bounds how far in the past an annotation's time may be on write.
+	// If unset, the retention TTL is used as the maximum age (if one is set).
+	MaxAge time.Duration
 
 	// gRPC store configuration
 	GRPCAddress       string
@@ -70,6 +73,7 @@ func (c *Config) AddFlags(flags *pflag.FlagSet) {
 
 	// General lifecycle flags
 	flags.DurationVar(&c.RetentionTTL, "annotation.retention-ttl", defaultRetentionTTL, "Retention TTL for annotations (old data will be cleaned up)")
+	flags.DurationVar(&c.MaxAge, "annotation.max-age", 0, "Maximum age of an annotation's time on write (0 falls back to the retention TTL)")
 
 	flags.IntVar(&c.MaxScopeCount, "annotation.max-scope-count", defaultMaxScopeCount, "Maximum number of scopes that can be attached to a single annotation")
 
@@ -95,6 +99,7 @@ func newConfigFromSettings(cfg *setting.Cfg) Config {
 	return Config{
 		StoreBackend:   cfg.AnnotationAppPlatform.StoreBackend,
 		RetentionTTL:   cfg.AnnotationAppPlatform.RetentionTTL,
+		MaxAge:         cfg.AnnotationAppPlatform.MaxAge,
 		EnableLegacyID: cfg.AnnotationAppPlatform.EnableLegacyID,
 		MaxScopeCount:  cfg.AnnotationAppPlatform.MaxScopeCount,
 

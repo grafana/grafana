@@ -28,7 +28,6 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -52,11 +51,11 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	hybrid := true
 	manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
-		search:     stubIndexClient{},
-		opts:       Options{SearchAPIEnabled: true, HybridAPIEnabled: true},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
+		search:   stubIndexClient{},
+		opts:     Options{HybridAPIEnabled: true},
 	}
 
 	container := restful.NewContainer()
@@ -85,23 +84,22 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	require.Contains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/search")
 	require.Contains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/search/hybrid")
 	require.NotContains(t, registered, "POST /apis/example.ext.grafana.app/v1alpha1/namespaces/{namespace}/testkinds/trash",
-		"trash is not wired up to search yet")
+		"plugin kinds are not allowed to serve trash")
 }
 
 // A manifest route mounted on a resource path would shadow the resource and its
 // generic subresources (/search, /trash), so those routes are dropped.
 func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 	manifest := testManifest(t)
-	operation := manifest.Versions[1].Routes.Namespaced["/foobar"]
-	manifest.Versions[1].Routes.Namespaced["/testkinds/search"] = operation
-	manifest.Versions[1].Routes.Namespaced["/app"] = operation
-	manifest.Versions[1].Routes.Cluster["/testkinds"] = operation
+	operation := manifest.Versions[1].Routes.Namespaced["/foobar"]          //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Namespaced["/testkinds/search"] = operation //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Namespaced["/app"] = operation              //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Cluster["/testkinds"] = operation           //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
-		opts:       Options{SearchAPIEnabled: true},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
@@ -133,14 +131,14 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
 	manifest := testManifest(t)
 	op := &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "unservable"}}
-	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}
-	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op}
+	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}                  //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 	manifest.Versions[1].Kinds[0].Routes["/kindhead"] = spec3.PathProps{Head: op}
 
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
 	routes := b.GetAPIRoutes(gv)
@@ -173,12 +171,12 @@ func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
 
 	// The loaded manifest is shared with the rest of the server, so dropping a
 	// method must not edit it.
-	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Options)
+	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Options) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 }
 
 // A plugin without a manifest has no custom routes at all.
 func TestGetAPIRoutesWithoutManifest(t *testing.T) {
-	b := &manifestBuilder{group: "example-app", pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &manifestBuilder{group: "example-app", pluginID: "example-app"}
 	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v0alpha1"}))
 }
 
@@ -209,9 +207,9 @@ func TestGetAPIRoutesSkipsUnservedVersions(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[2].Served = false
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 
 	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v2alpha1"}))
@@ -238,9 +236,9 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 	manifest.Versions[1].Kinds[0].Routes["/status"] = manifest.Versions[1].Kinds[0].Routes["/reload"]
 
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
@@ -304,11 +302,10 @@ func TestWithPathParametersIsIdempotent(t *testing.T) {
 func TestVersionRouteNamespaceParameter(t *testing.T) {
 	manifest := testManifest(t)
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
-		search:     stubIndexClient{},
-		opts:       Options{SearchAPIEnabled: true},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
+		search:   stubIndexClient{},
 	}
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
@@ -346,10 +343,10 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
 	newBuilder := func(client appclientv3.Client, get getter) *manifestBuilder {
 		return &manifestBuilder{
-			group:      "example.ext.grafana.app",
-			pluginJSON: plugins.JSONData{ID: "example-app"},
-			clientV3:   client,
-			getter:     get,
+			group:    "example.ext.grafana.app",
+			pluginID: "example-app",
+			clientV3: client,
+			getter:   get,
 		}
 	}
 
@@ -600,11 +597,11 @@ func TestSearchRouteGates(t *testing.T) {
 	newBuilder := func(opts Options) *manifestBuilder {
 		manifest := testManifest(t)
 		return &manifestBuilder{
-			group:      manifest.Group,
-			manifest:   manifest,
-			pluginJSON: plugins.JSONData{ID: "example-app"},
-			search:     stubIndexClient{},
-			opts:       opts,
+			group:    manifest.Group,
+			manifest: manifest,
+			pluginID: "example-app",
+			search:   stubIndexClient{},
+			opts:     opts,
 		}
 	}
 
@@ -619,17 +616,12 @@ func TestSearchRouteGates(t *testing.T) {
 		return out
 	}
 
-	t.Run("enabled, the kind is served", func(t *testing.T) {
-		require.Equal(t, []string{"testkinds/search"},
-			searchPaths(newBuilder(Options{SearchAPIEnabled: true})))
-	})
-
-	t.Run("the config toggle turns it off", func(t *testing.T) {
-		require.Empty(t, searchPaths(newBuilder(Options{})))
+	t.Run("search is always enabled for eligible kinds", func(t *testing.T) {
+		require.Equal(t, []string{"testkinds/search"}, searchPaths(newBuilder(Options{})))
 	})
 
 	t.Run("hybrid requires manifest opt-in", func(t *testing.T) {
-		b := newBuilder(Options{SearchAPIEnabled: true, HybridAPIEnabled: true})
+		b := newBuilder(Options{HybridAPIEnabled: true})
 		require.Equal(t, []string{"testkinds/search"}, searchPaths(b))
 
 		hybrid := true
@@ -637,7 +629,7 @@ func TestSearchRouteGates(t *testing.T) {
 		require.Equal(t, []string{"testkinds/search", "testkinds/search/hybrid"}, searchPaths(b))
 	})
 
-	t.Run("hybrid serves with lexical search and trash disabled", func(t *testing.T) {
+	t.Run("hybrid serves when the kind opts out of lexical search", func(t *testing.T) {
 		b := newBuilder(Options{HybridAPIEnabled: true})
 		hybrid, endpoint := true, false
 		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &endpoint, Hybrid: &hybrid}
@@ -652,7 +644,7 @@ func TestSearchRouteGates(t *testing.T) {
 		hybrid := true
 		b.manifest.Group = "other.ext.grafana.app"
 		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
-		require.Equal(t, []string{"testkinds/search/hybrid"}, searchPaths(b))
+		require.Equal(t, []string{"testkinds/search", "testkinds/search/hybrid"}, searchPaths(b))
 	})
 
 	t.Run("hybrid is not served for cluster scoped kinds", func(t *testing.T) {
@@ -666,20 +658,20 @@ func TestSearchRouteGates(t *testing.T) {
 	// Search over the fields every resource has works without declared fields,
 	// so declaring none is not a reason to withhold the endpoint.
 	t.Run("a kind declaring no search fields is still served", func(t *testing.T) {
-		b := newBuilder(Options{SearchAPIEnabled: true})
+		b := newBuilder(Options{})
 		b.manifest.Versions[1].Kinds[0].SearchFields = nil
 		require.Equal(t, []string{"testkinds/search"}, searchPaths(b))
 	})
 
 	t.Run("a kind can opt out of the endpoint it declared fields for", func(t *testing.T) {
-		b := newBuilder(Options{SearchAPIEnabled: true})
+		b := newBuilder(Options{})
 		off := false
 		b.manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Endpoint: &off}
 		require.Empty(t, searchPaths(b))
 	})
 
 	t.Run("a cluster scoped kind has no namespace to search", func(t *testing.T) {
-		b := newBuilder(Options{SearchAPIEnabled: true})
+		b := newBuilder(Options{})
 		b.manifest.Versions[1].Kinds[0].Scope = kindstore.ClusterScope
 		require.Empty(t, searchPaths(b))
 	})
@@ -687,12 +679,11 @@ func TestSearchRouteGates(t *testing.T) {
 	// Trash grants access to whoever deleted the object, so searchroutes holds
 	// an allowlist that no plugin kind is on.
 	t.Run("trash is not served for a plugin kind", func(t *testing.T) {
-		require.Equal(t, []string{"testkinds/search"}, searchPaths(newBuilder(
-			Options{SearchAPIEnabled: true, TrashAPIEnabled: true})))
+		require.Equal(t, []string{"testkinds/search"}, searchPaths(newBuilder(Options{})))
 	})
 
 	t.Run("no index client, nothing to serve", func(t *testing.T) {
-		b := newBuilder(Options{SearchAPIEnabled: true})
+		b := newBuilder(Options{})
 		b.search = nil
 		require.Empty(t, searchPaths(b))
 	})

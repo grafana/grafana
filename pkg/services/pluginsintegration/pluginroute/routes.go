@@ -101,14 +101,14 @@ func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.Man
 		*dst = append(*dst, builder.APIRouteHandler{
 			Path:    path,
 			Spec:    withPathParameters(props, nil, params...),
-			Schemas: version.Routes.Schemas,
+			Schemas: version.Routes.Schemas, //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
 			Handler: b.routeHandler(gv, "", path),
 		})
 	}
-	for path, props := range version.Routes.Cluster {
+	for path, props := range version.Routes.Cluster { //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
 		addVersionRoute(&routes.Root, path, props)
 	}
-	for path, props := range version.Routes.Namespaced {
+	for path, props := range version.Routes.Namespaced { //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
 		addVersionRoute(&routes.Namespace, path, props, namespacePathParameter())
 	}
 
@@ -154,7 +154,7 @@ func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.Man
 			*dst = append(*dst, builder.APIRouteHandler{
 				Path:    plural + "/{" + nameParameter + "}/" + path,
 				Spec:    withPathParameters(props, []string{kind.Kind}, params...),
-				Schemas: version.Routes.Schemas,
+				Schemas: version.Routes.Schemas, //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
 				Handler: b.routeHandler(gv, plural, path),
 			})
 		}
@@ -170,8 +170,7 @@ func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.Man
 // kinds get these endpoints is not a decision this builder should be making on
 // its own: the same manifest served as a custom resource definition goes through
 // the same package, and a kind that is searchable one way must be searchable the
-// other. That is where the config toggles, the enrolment rule and each kind's
-// own opt-out are applied.
+// other. That is where the eligibility rules and each kind's opt-out are applied.
 func (b *manifestBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.APIRouteHandler, error) {
 	if b.search == nil {
 		return nil, nil
@@ -182,8 +181,8 @@ func (b *manifestBuilder) searchRoutes(gv schema.GroupVersion) ([]builder.APIRou
 	built, err := searchroutes.BuildForServedGroupVersions(
 		[]*app.ManifestData{&manifest},
 		map[schema.GroupVersion]bool{gv: true},
-		b.opts.SearchAPIEnabled,
-		b.opts.TrashAPIEnabled,
+		true,
+		true,
 		b.tracer,
 		b.search,
 		searchroutes.Options{HybridEnabled: b.opts.HybridAPIEnabled},

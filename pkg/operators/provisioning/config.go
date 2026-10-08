@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -706,9 +707,14 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 	}
 	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registry()))
 
+	// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
+	// since the client secret and tokens would otherwise travel in cleartext.
+	allowInsecure := c.Settings.Env == setting.Dev || c.Settings.SectionWithEnvOverrides("provisioning").Key("allow_insecure").MustBool(false)
+
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
 		githuboauth.Extra(decrypter, githubrepo.ProvideFactory()),
+		gitoauth.Extra(decrypter, allowInsecure),
 	}
 
 	c.connectionExtras = extras
