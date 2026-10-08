@@ -1784,6 +1784,11 @@ func (k *kvStorageBackend) ListKeys(ctx context.Context, req *resourcepb.ListReq
 }
 
 func (k *kvStorageBackend) listResourceKeys(ctx context.Context, req *resourcepb.ListRequest) (int64, iter.Seq2[DataKey, error], error) {
+	// Opt in only for KV-backed body lists; other backends cannot provide the
+	// datastore accounting and must not report misleading zero observations.
+	if stats := listBodyStatsFromContext(ctx); stats != nil {
+		stats.supported = !req.KeysOnly
+	}
 	req.ResourceVersion = ToSnowflakeRV(req.ResourceVersion)
 	listOptions := ListRequestOptions{
 		Key: ListRequestKey{
