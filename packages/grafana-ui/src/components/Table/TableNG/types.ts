@@ -119,6 +119,8 @@ interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
+  /** Whether all columns can be reordered from the header or sidebar. */
+  reorderable?: boolean;
   sortBy?: TableSortByFieldState[];
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;

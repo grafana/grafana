@@ -17,13 +17,13 @@ const sidebarSelectors = selectors.components.Panels.Visualization.TableNG.colum
 
 export interface SidebarColumn {
   name: string;
-  reorderable: boolean;
   hideable: boolean;
 }
 
 interface ColumnVisibilitySidePanelProps {
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
+  reorderable?: boolean;
   hiddenColumns: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
   onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
@@ -36,6 +36,7 @@ interface ColumnVisibilitySidePanelProps {
 
 export function ColumnVisibilitySidePanel({
   columns,
+  reorderable = false,
   hiddenColumns,
   onToggleColumn,
   onColumnsReorder,
@@ -71,7 +72,7 @@ export function ColumnVisibilitySidePanel({
         />
       </div>
       <div className={styles.columnList}>
-        {columns.map(({ name: displayName, reorderable, hideable }) => {
+        {columns.map(({ name: displayName, hideable }) => {
           const isVisible = !hiddenColumns.has(displayName);
           const isLastVisible = isVisible && visibleCount <= 1;
 
@@ -96,7 +97,7 @@ export function ColumnVisibilitySidePanel({
                 }
               }}
             >
-              {reorderable ? (
+              {reorderable && (
                 <button
                   type="button"
                   className={styles.dragHandle}
@@ -115,7 +116,7 @@ export function ColumnVisibilitySidePanel({
                     ev.preventDefault();
                     const index = columns.findIndex((column) => column.name === displayName);
                     const target = columns[index + (ev.key === 'ArrowUp' ? -1 : 1)];
-                    if (target?.reorderable) {
+                    if (target) {
                       onColumnsReorder(displayName, target.name);
                     }
                   }}
@@ -126,8 +127,6 @@ export function ColumnVisibilitySidePanel({
                 >
                   <Icon name="draggabledots" aria-hidden="true" />
                 </button>
-              ) : (
-                <span className={styles.dragHandlePlaceholder} aria-hidden="true" />
               )}
               {hideable ? (
                 <Checkbox
@@ -228,10 +227,6 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     },
   }),
   // Keep column names aligned when a capability is unavailable.
-  dragHandlePlaceholder: css({
-    display: 'flex',
-    width: theme.spacing(2),
-  }),
   visibilityTogglePlaceholder: css({
     display: 'flex',
     width: theme.spacing(2),

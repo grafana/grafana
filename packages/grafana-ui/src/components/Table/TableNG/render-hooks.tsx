@@ -88,7 +88,6 @@ import {
   rendersAsJson,
   shouldTextOverflow,
   shouldTextWrap,
-  isFieldReorderable,
 } from './utils';
 
 // -----------------------------------------------------------------------------
@@ -159,6 +158,7 @@ export interface ColumnBuildConfig {
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -284,6 +284,7 @@ function buildColumnsFromFields(
     hoverOverflow = true,
     disableSanitizeHtml,
     hasColumnSidebar,
+    reorderable = false,
     settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
@@ -617,7 +618,7 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
-      draggable: isFieldReorderable(field),
+      draggable: reorderable,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

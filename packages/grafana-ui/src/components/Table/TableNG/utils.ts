@@ -1363,6 +1363,7 @@ export interface ContentAwareColWidthsOptions {
    */
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /**
@@ -1471,18 +1472,13 @@ export function isFieldFilterable(field: Field): boolean {
 }
 
 /** @internal */
-export function isFieldReorderable(field: Field): boolean {
-  return field.config.custom?.reorderable ?? false;
-}
-
-/** @internal */
 export function isFieldHideable(field: Field): boolean {
   return field.config.custom?.hideable ?? false;
 }
 
-/** Whether any field can be managed by the column sidebar. @internal */
-export function canManageColumns(fields: Field[]): boolean {
-  return fields.some((field) => isFieldReorderable(field) || isFieldHideable(field));
+/** Whether the sidebar can reorder columns or hide any field. @internal */
+export function canManageColumns(fields: Field[], reorderable = false): boolean {
+  return reorderable || fields.some(isFieldHideable);
 }
 
 /** Whether the column menu has an action to show. @internal */
@@ -1509,6 +1505,7 @@ export interface HeaderAffordanceOptions {
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
 }
 
 /**
@@ -1525,6 +1522,7 @@ export function getHeaderAffordanceWidth(
     tableRefreshEnabled,
     isFiltered,
     hasColumnSidebar = false,
+    reorderable = false,
     hasAssistantAction,
   }: HeaderAffordanceOptions
 ): number {
@@ -1537,7 +1535,7 @@ export function getHeaderAffordanceWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
-  width += isFieldReorderable(field) ? HEADER_DRAG_HANDLE_SPACE : 0;
+  width += reorderable ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
     width += isColumnMenuVisible(field, hasColumnSidebar) || hasAssistantAction ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
@@ -1846,6 +1844,7 @@ export function computeContentAwareColWidths(
     filter,
     sampleSize,
     hasColumnSidebar = false,
+    reorderable = false,
     noPanelPadding = false,
     preventHorizontalOverflow = false,
   }: ContentAwareColWidthsOptions
@@ -1895,6 +1894,7 @@ export function computeContentAwareColWidths(
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
           hasColumnSidebar,
+          reorderable,
           hasAssistantAction,
         })
       : 0;

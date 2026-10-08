@@ -100,6 +100,7 @@ export function TablePanel(props: Props) {
     <TableNG
       {...commonTableProps}
       {...adHocColumns}
+      reorderable={Boolean(adHocColumns)}
       showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}

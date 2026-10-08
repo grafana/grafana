@@ -437,6 +437,7 @@ interface UseHeaderHeightOptions {
   /** Active filters, so a column marked with the refreshed header's filter icon reserves its space. */
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
 }
 
 export function useHeaderHeight({
@@ -450,6 +451,7 @@ export function useHeaderHeight({
   filter,
   lastColumnExtraPadding = 0,
   hasColumnSidebar = false,
+  reorderable = false,
   hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
@@ -475,6 +477,7 @@ export function useHeaderHeight({
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
           hasColumnSidebar,
+          reorderable,
           hasAssistantAction,
         });
         return Math.floor(width);
@@ -488,6 +491,7 @@ export function useHeaderHeight({
       filteredKeys,
       lastColumnExtraPadding,
       hasColumnSidebar,
+      reorderable,
       hasAssistantAction,
     ]
   );
@@ -981,6 +985,7 @@ export interface ContentAwareWidths {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1032,6 +1037,7 @@ interface UseContentAwareWidthsOptions {
   tableRefreshEnabled?: boolean;
   filter?: FilterType;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   noPanelPadding?: boolean;
   preventHorizontalOverflow?: boolean;
 }
@@ -1050,6 +1056,7 @@ export function useContentAwareWidths({
   tableRefreshEnabled = false,
   filter,
   hasColumnSidebar = false,
+  reorderable = false,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
   hasAssistantAction = false,
@@ -1070,6 +1077,7 @@ export function useContentAwareWidths({
             tableRefreshEnabled,
             filter,
             hasColumnSidebar,
+            reorderable,
             noPanelPadding,
             preventHorizontalOverflow,
           }
@@ -1086,6 +1094,7 @@ export function useContentAwareWidths({
       tableRefreshEnabled,
       theme,
       hasColumnSidebar,
+      reorderable,
       noPanelPadding,
       preventHorizontalOverflow,
     ]

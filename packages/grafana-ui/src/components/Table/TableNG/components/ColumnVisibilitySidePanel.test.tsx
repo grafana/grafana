@@ -15,15 +15,17 @@ function createDataTransfer() {
 }
 
 const columns = [
-  { name: 'Column A', reorderable: true, hideable: true },
-  { name: 'Column B', reorderable: true, hideable: true },
+  { name: 'Column A', hideable: true },
+  { name: 'Column B', hideable: true },
 ];
 
 function Harness({
   initialHidden = new Set<string>(),
+  reorderable = true,
   onColumnsReorder = jest.fn(),
 }: {
   initialHidden?: Set<string>;
+  reorderable?: boolean;
   onColumnsReorder?: (source: string, target: string) => void;
 }) {
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(initialHidden);
@@ -31,6 +33,7 @@ function Harness({
   return (
     <ColumnVisibilitySidePanel
       columns={columns}
+      reorderable={reorderable}
       hiddenColumns={hiddenColumns}
       onToggleColumn={(displayName, visible) => {
         setHiddenColumns((current) => {
@@ -50,6 +53,16 @@ function Harness({
 }
 
 describe('ColumnVisibilitySidePanel', () => {
+  it('removes all reorder controls when reordering is disabled', () => {
+    const { rerender } = render(<Harness />);
+    expect(screen.getByRole('button', { name: 'Reorder Column A' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Reorder Column B' })).toBeVisible();
+
+    rerender(<Harness reorderable={false} />);
+    expect(screen.getByRole('checkbox', { name: 'Hide Column A' })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /^Reorder / })).not.toBeInTheDocument();
+  });
+
   it('prevents hiding the last visible column', async () => {
     render(<Harness initialHidden={new Set(['Column B'])} />);
 

@@ -9,7 +9,15 @@ import { TableNG } from './TableNG';
 
 beforeAll(() => mockClientSize({ width: 800, height: 600 }));
 
-function Harness({ revision = 0 }: { revision?: number }) {
+function Harness({
+  revision = 0,
+  reorderable = true,
+  hideable = true,
+}: {
+  revision?: number;
+  reorderable?: boolean;
+  hideable?: boolean;
+}) {
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(new Set());
   const [columnOrder, setColumnOrder] = useState<string[]>();
   const source = createDataFrame({
@@ -17,7 +25,7 @@ function Harness({ revision = 0 }: { revision?: number }) {
       name,
       type: FieldType.string,
       values: [`${name}${revision}`],
-      config: { custom: { hideable: true, reorderable: true } },
+      config: { custom: { hideable } },
     })),
   });
   const data = applyFieldOverrides({
@@ -33,6 +41,7 @@ function Harness({ revision = 0 }: { revision?: number }) {
       width={800}
       height={400}
       tableRefreshEnabled
+      reorderable={reorderable}
       showColumnsSidebar
       hiddenColumns={hiddenColumns}
       columnOrder={columnOrder}
@@ -63,6 +72,27 @@ it('restores hidden source columns after refresh and protects the last visible c
   await user.click(screen.getByRole('button', { name: 'Column options for A' }));
   await user.click(await screen.findByText('Manage columns'));
   expect(within(screen.getByRole('group', { name: 'Column visibility' })).getByText('B')).toBeVisible();
+});
+
+it('toggles reordering for the whole table without changing column visibility controls', () => {
+  const { rerender } = render(<Harness />);
+  expect(screen.getAllByRole('columnheader').map((header) => header.draggable)).toEqual([true, true, true]);
+  expect(screen.getAllByRole('button', { name: /^Reorder / })).toHaveLength(3);
+
+  rerender(<Harness reorderable={false} />);
+  expect(screen.getAllByRole('columnheader').map((header) => header.draggable)).toEqual([false, false, false]);
+  expect(screen.queryByRole('button', { name: /^Reorder / })).not.toBeInTheDocument();
+  expect(screen.getByRole('checkbox', { name: 'Hide A' })).toBeEnabled();
+});
+
+it('allows reordering when no columns can be hidden', async () => {
+  const user = userEvent.setup();
+  render(<Harness hideable={false} />);
+  await user.click(screen.getByRole('button', { name: 'Reorder B' }));
+  await user.keyboard('{ArrowUp}');
+
+  expect(screen.getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['B', 'A', 'C']);
+  expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
 });
 
 it('keeps reordered hidden columns in position when restored after refresh', async () => {

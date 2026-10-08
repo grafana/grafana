@@ -11,11 +11,12 @@ const frame = () =>
   });
 
 describe('withRefreshedTableCapabilities', () => {
-  it('opts every column into reordering and hiding', () => {
+  it('opts every column into hiding', () => {
     const withCapabilities = withRefreshedTableCapabilities(frame());
 
     for (const field of withCapabilities.fields) {
-      expect(field.config.custom).toMatchObject({ reorderable: true, hideable: true });
+      expect(field.config.custom).toMatchObject({ hideable: true });
+      expect(field.config.custom).not.toHaveProperty('reorderable');
     }
   });
 
@@ -58,7 +59,7 @@ describe('withRefreshedTableCapabilities', () => {
     expect(supportsColumnManagement(nested)).toBe(false);
 
     for (const field of withRefreshedTableCapabilities(nested).fields) {
-      expect(field.config.custom).toMatchObject({ reorderable: false, hideable: false });
+      expect(field.config.custom).toMatchObject({ hideable: false });
     }
   });
 });

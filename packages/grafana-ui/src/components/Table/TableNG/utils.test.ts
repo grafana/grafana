@@ -1952,7 +1952,7 @@ describe('TableNG utils', () => {
     });
 
     it('is hidden for a column that can do nothing, on a table with no sidebar', () => {
-      expect(isColumnMenuVisible(fieldWith({ reorderable: true }), false)).toBe(false);
+      expect(isColumnMenuVisible(fieldWith({}), false)).toBe(false);
     });
   });
 
@@ -2652,11 +2652,10 @@ describe('TableNG utils', () => {
     });
 
     it('reserves header space for the drag handle on a reorderable column', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
-      ];
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       // 32px label + 22px sort + 20px drag handle + 13px chrome.
       const widths = computeContentAwareColWidths(fields, 80, {
+        reorderable: true,
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });
@@ -2759,14 +2758,13 @@ describe('TableNG utils', () => {
     });
 
     it('reserves both the drag handle and the menu on a reorderable column with a sidebar', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
-      ];
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       expect(
         computeContentAwareColWidths(fields, 100, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
+          reorderable: true,
           hasColumnSidebar: true,
         })
       ).toEqual([109]);

@@ -60,7 +60,6 @@ import {
   markEdgeColumns,
   orderFieldsByDisplayNames,
   canManageColumns,
-  isFieldReorderable,
   isFieldHideable,
 } from './utils';
 
@@ -116,6 +115,7 @@ export function TableFlat(props: TableNGProps) {
     preventHorizontalOverflow = false,
     zebraStriping = false,
     showColumnsSidebar = false,
+    reorderable = false,
     columnOrder: columnOrderProp,
     onColumnOrderChange,
     hiddenColumns: hiddenColumnsProp,
@@ -197,8 +197,7 @@ export function TableFlat(props: TableNGProps) {
   const orderedVisibleFields = orderFieldsByDisplayNames(preparedFields, columnOrder);
 
   // Use the pre-hide fields so the sidebar remains available after hiding a column.
-  const hasColumnSidebar = canManageColumns(orderedVisibleFields);
-  const hasReorderableColumn = orderedVisibleFields.some(isFieldReorderable);
+  const hasColumnSidebar = canManageColumns(orderedVisibleFields, reorderable);
 
   const resizeHandler = useColumnResize(onColumnResize);
 
@@ -252,20 +251,17 @@ export function TableFlat(props: TableNGProps) {
   // Also filter controlled data during the render before its transformed frame arrives.
   const displayedFields = filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns);
 
-  // Catalog-only columns were necessarily hideable; infer reorderability from the remaining fields.
+  // Catalog-only columns were necessarily hideable.
   const sidebarColumns: SidebarColumn[] = useMemo(() => {
     const capabilities = new Map(
-      orderedVisibleFields.map((field) => [
-        getDisplayName(field),
-        { reorderable: isFieldReorderable(field), hideable: isFieldHideable(field) },
-      ])
+      orderedVisibleFields.map((field) => [getDisplayName(field), { hideable: isFieldHideable(field) }])
     );
 
     return (columnCatalog ?? Array.from(capabilities.keys())).map((name) => ({
       name,
-      ...(capabilities.get(name) ?? { reorderable: hasReorderableColumn, hideable: true }),
+      ...(capabilities.get(name) ?? { hideable: true }),
     }));
-  }, [columnCatalog, orderedVisibleFields, hasReorderableColumn]);
+  }, [columnCatalog, orderedVisibleFields]);
 
   const [isColumnVisibilityPanelOpen, setIsColumnVisibilityPanelOpen] = useState(showColumnsSidebar);
   // Follow option changes without overriding local open/close actions on every render.
@@ -367,6 +363,7 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
     filter,
     hasColumnSidebar,
+    reorderable,
     noPanelPadding,
     preventHorizontalOverflow,
   });
@@ -390,6 +387,7 @@ export function TableFlat(props: TableNGProps) {
     tableRefreshEnabled,
     filter,
     hasColumnSidebar,
+    reorderable,
   });
   const maxRowHeight = _maxRowHeight != null ? Math.max(TABLE.LINE_HEIGHT, _maxRowHeight) : undefined;
 
@@ -478,6 +476,7 @@ export function TableFlat(props: TableNGProps) {
       tableRefreshEnabled,
       typographyCtx,
       hasColumnSidebar,
+      reorderable,
       settlingColumnKeys,
       onHideColumn: handleHideColumn,
       // Pinning needs both column order and the frozen-column panel option.
@@ -510,6 +509,7 @@ export function TableFlat(props: TableNGProps) {
       tableRefreshEnabled,
       typographyCtx,
       hasColumnSidebar,
+      reorderable,
       settlingColumnKeys,
       handleHideColumn,
       noPanelPadding,
@@ -550,7 +550,7 @@ export function TableFlat(props: TableNGProps) {
       columnWidths={resetColumnWidths}
       onColumnWidthsChange={resetColumnWidths != null ? () => {} : undefined}
       onColumnResize={resizeHandler}
-      onColumnsReorder={hasReorderableColumn ? handleColumnsReorder : undefined}
+      onColumnsReorder={reorderable ? handleColumnsReorder : undefined}
       onCellClick={onCellClick}
       className={noPanelPadding ? styles.firstColumnInset : undefined}
       onCellKeyDown={({ column, row }, event) => {
@@ -615,6 +615,7 @@ export function TableFlat(props: TableNGProps) {
       >
         <ColumnVisibilitySidePanel
           columns={sidebarColumns}
+          reorderable={reorderable}
           hiddenColumns={hiddenColumns}
           onToggleColumn={handleToggleColumnVisibility}
           onColumnsReorder={handleColumnsReorder}
