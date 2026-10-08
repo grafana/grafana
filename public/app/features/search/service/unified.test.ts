@@ -21,6 +21,31 @@ setBackendSrv(backendSrv);
 setupMockServer();
 
 describe('Unified Storage Searcher', () => {
+  it('shares a folder lookup between concurrent readers until it is invalidated', async () => {
+    let folderTitle = 'Original folder';
+    const folderRequest = jest.fn();
+    server.use(
+      http.get(searchRoute, () => {
+        folderRequest();
+        return HttpResponse.json({
+          totalHits: 1,
+          hits: [{ name: 'folder1', title: folderTitle, resource: 'folders' }],
+        });
+      })
+    );
+
+    const searcher = new UnifiedSearcher();
+    const locations = await Promise.all([searcher.getLocationInfo(), searcher.getLocationInfo()]);
+    expect(locations.map((info) => info.folder1.name)).toEqual(['Original folder', 'Original folder']);
+    expect(folderRequest).toHaveBeenCalledTimes(1);
+
+    folderTitle = 'Renamed folder';
+    searcher.invalidateLocationInfo();
+    const refreshed = await Promise.all([searcher.getLocationInfo(), searcher.getLocationInfo()]);
+    expect(refreshed.map((info) => info.folder1.name)).toEqual(['Renamed folder', 'Renamed folder']);
+    expect(folderRequest).toHaveBeenCalledTimes(2);
+  });
+
   it('should perform search with basic query', async () => {
     const query: SearchQuery = {
       query: '*',

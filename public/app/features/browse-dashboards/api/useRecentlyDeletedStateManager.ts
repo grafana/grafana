@@ -9,6 +9,7 @@ import {
 import { type SearchState } from 'app/features/search/types';
 
 import { deletedDashboardsCache } from '../../search/service/deletedDashboardsCache';
+import { getGrafanaSearcher } from '../../search/service/searcher';
 import { initialState, SearchStateManager } from '../../search/state/SearchStateManager';
 
 // Subclass SearchStateManager to customize the setStateAndDoSearch behavior.
@@ -21,6 +22,8 @@ export class TrashStateManager extends SearchStateManager {
   // Clear stale results so the skeleton shows while fresh data loads on navigation
   initStateFromUrl(folderUid?: string, doInitialSearch = true) {
     this.setState({ result: undefined });
+    // Folder locations may still link to folders deleted since the previous search.
+    getGrafanaSearcher().invalidateLocationInfo();
     super.initStateFromUrl(folderUid, doInitialSearch);
   }
 

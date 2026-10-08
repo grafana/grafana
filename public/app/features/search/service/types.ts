@@ -105,6 +105,7 @@ export interface GrafanaSearcher {
   getSortOptions: () => Promise<SelectableValue[]>;
   sortPlaceholder?: string;
   getLocationInfo: () => Promise<Record<string, LocationInfo>>;
+  invalidateLocationInfo: () => void;
 
   /** Gets the default sort used for the Folder view */
   getFolderViewSort: () => string;

@@ -94,6 +94,7 @@ function setupSearchMock(items: Array<{ uid: string; name: string; url: string; 
     tags: jest.fn(),
     getSortOptions: jest.fn(),
     getLocationInfo: jest.fn(),
+    invalidateLocationInfo: jest.fn(),
     getFolderViewSort: jest.fn().mockReturnValue('name_sort'),
   };
   mockedGetGrafanaSearcher.mockReturnValue(mockSearcher);
