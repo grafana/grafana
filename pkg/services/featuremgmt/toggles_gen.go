@@ -726,10 +726,6 @@ const (
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
 
-	// FlagKubernetesAlertingHistorian
-	// Adds support for Kubernetes alerting historian APIs
-	FlagKubernetesAlertingHistorian = "kubernetesAlertingHistorian"
-
 	// FlagGrafanaPublishLegacySQLEvents
 	// Publish watch events when values are saved to legacy SQL tables
 	FlagGrafanaPublishLegacySQLEvents = "grafana.publishLegacySQLEvents"

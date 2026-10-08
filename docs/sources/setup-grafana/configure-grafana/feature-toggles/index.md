@@ -64,7 +64,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
 | `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            | Yes                |
-| `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                 | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |

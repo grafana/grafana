@@ -1087,11 +1087,6 @@ export interface FeatureToggles {
   */
   lokiQueryLimitsContext?: boolean;
   /**
-  * Adds support for Kubernetes alerting historian APIs
-  * @default true
-  */
-  kubernetesAlertingHistorian?: boolean;
-  /**
   * Enables the ASAP smoothing transformation for time series data
   * @default false
   */

@@ -3392,7 +3392,8 @@
       "metadata": {
         "name": "kubernetesAlertingHistorian",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-11-27T16:14:16Z"
+        "creationTimestamp": "2025-11-27T16:14:16Z",
+        "deletionTimestamp": "2026-10-08T14:06:18Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes alerting historian APIs",

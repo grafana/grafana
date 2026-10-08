@@ -2189,15 +2189,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "kubernetesAlertingHistorian",
-			Description:     "Adds support for Kubernetes alerting historian APIs",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:            "grafana.publishLegacySQLEvents",
 			Description:     "Publish watch events when values are saved to legacy SQL tables",
 			Stage:           FeatureStageExperimental,
