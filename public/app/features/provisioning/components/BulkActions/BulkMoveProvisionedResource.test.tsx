@@ -5,10 +5,14 @@ import { render } from 'test/test-utils';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { AnnoKeySourcePath } from 'app/features/apiserver/types';
+import { fullyLoadedViewItemCollection } from 'app/features/browse-dashboards/fixtures/state.fixtures';
+import { type BrowseDashboardsState } from 'app/features/browse-dashboards/types';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
 import * as currentUser from '../../utils/currentUser';
+import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 
 import { BulkMoveProvisionedResource } from './BulkMoveProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
@@ -74,6 +78,7 @@ const mockUseBulkActionJob = jest.mocked(require('./useBulkActionJob').useBulkAc
 const mockGetAppEvents = jest.mocked(require('@grafana/runtime').getAppEvents);
 const mockUseGetFolderQuery = jest.mocked(require('app/api/clients/folder/v1beta1').useGetFolderQuery);
 const mockJobStatus = jest.mocked(JobStatus);
+const mockFolderPicker = jest.mocked(ProvisioningAwareFolderPicker);
 
 // jest.clearAllMocks() clears call history but not a custom mockImplementation, so a per-test
 // override of JobStatus would leak; restore the default in beforeEach.
@@ -83,6 +88,27 @@ function resetJobStatusMock() {
       Job Status - {jobType} - {watch?.status?.state || 'pending'}
     </div>
   ));
+}
+
+// Same leak concern as JobStatus: tests that pick a different target override this implementation.
+function resetFolderPickerMock(targetUID = 'target-folder-uid') {
+  mockFolderPicker.mockImplementation(({ onChange, value }) => (
+    <button type="button" data-testid="folder-picker" onClick={() => onChange?.(targetUID, undefined)}>
+      {value || 'Select folder'}
+    </button>
+  ));
+}
+
+function browseDashboardsState(
+  rootItems: DashboardViewItem[],
+  childrenByParentUID: BrowseDashboardsState['childrenByParentUID']
+): BrowseDashboardsState {
+  return {
+    rootItems: fullyLoadedViewItemCollection(rootItems),
+    childrenByParentUID,
+    openFolders: {},
+    selectedItems: { $all: false, folder: {}, dashboard: {}, panel: {} },
+  };
 }
 
 function setup(
@@ -147,6 +173,7 @@ describe('BulkMoveProvisionedResource', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     resetJobStatusMock();
+    resetFolderPickerMock();
 
     mockUseSelectionRepoValidation.mockReturnValue({
       selectedItemsRepoUID: 'test-folder',
@@ -314,22 +341,17 @@ describe('BulkMoveProvisionedResource', () => {
     );
   });
 
-  it('shows error when target folder path is the same as source', async () => {
+  it('shows error when every selected item is already in the target folder', async () => {
+    const repository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['branch', 'write'],
+    };
     mockUseGetResourceRepositoryView.mockReturnValue({
-      repository: {
-        name: 'test-folder',
-        type: 'github',
-        title: 'Test Repository',
-        target: 'folder',
-        workflows: ['branch', 'write'],
-      },
-      folder: {
-        metadata: {
-          annotations: {
-            [AnnoKeySourcePath]: 'target-path',
-          },
-        },
-      },
+      repository,
+      folder: null,
       isInstanceManaged: false,
       isReadOnlyRepo: false,
       isMissingRepo: false,
@@ -339,11 +361,28 @@ describe('BulkMoveProvisionedResource', () => {
       success: true,
       job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
     });
+    mockUseBulkActionJob.mockReturnValue({ createBulkJob: mockCreateBulkJob, isLoading: false });
 
-    mockUseBulkActionJob.mockReturnValue({
-      createBulkJob: mockCreateBulkJob,
-      isLoading: false,
-    });
+    // Both selected items live directly under the folder the picker returns ('target-folder-uid').
+    const repoRoot: DashboardViewItem = { kind: 'folder', uid: 'test-folder', title: 'Repo root' };
+    const targetFolder: DashboardViewItem = {
+      kind: 'folder',
+      uid: 'target-folder-uid',
+      title: 'Target',
+      parentUID: 'test-folder',
+    };
+    const folder1: DashboardViewItem = {
+      kind: 'folder',
+      uid: 'folder-1',
+      title: 'Folder 1',
+      parentUID: 'target-folder-uid',
+    };
+    const dashboard1: DashboardViewItem = {
+      kind: 'dashboard',
+      uid: 'dashboard-1',
+      title: 'Dashboard 1',
+      parentUID: 'target-folder-uid',
+    };
 
     const selectedItems = {
       folder: { 'folder-1': true },
@@ -351,14 +390,96 @@ describe('BulkMoveProvisionedResource', () => {
     };
 
     const { user } = render(
-      <BulkMoveProvisionedResource folderUid="test-folder" selectedItems={selectedItems} onDismiss={jest.fn()} />
+      <BulkMoveProvisionedResource folderUid="target-folder-uid" selectedItems={selectedItems} onDismiss={jest.fn()} />,
+      {
+        preloadedState: {
+          browseDashboards: browseDashboardsState([repoRoot], {
+            'test-folder': fullyLoadedViewItemCollection([targetFolder]),
+            'target-folder-uid': fullyLoadedViewItemCollection([folder1, dashboard1]),
+          }),
+        },
+      }
     );
 
     await user.click(screen.getByTestId('folder-picker'));
     await user.click(screen.getByRole('button', { name: /Move/i }));
 
-    expect(mockCreateBulkJob).not.toHaveBeenCalled();
     expect(await screen.findByText(/Selected resources are already in the target folder/)).toBeInTheDocument();
+    expect(mockCreateBulkJob).not.toHaveBeenCalled();
+  });
+
+  it('moves a nested folder to the repository root from the root browse page', async () => {
+    const repository: RepositoryView = {
+      name: 'test-folder',
+      type: 'github',
+      title: 'Test Repository',
+      target: 'folder',
+      workflows: ['branch', 'write'],
+    };
+    mockUseGetResourceRepositoryView.mockReturnValue({
+      repository,
+      folder: null,
+      isInstanceManaged: false,
+      isReadOnlyRepo: false,
+      isMissingRepo: false,
+    });
+
+    const mockCreateBulkJob = jest.fn().mockResolvedValue({
+      success: true,
+      job: { metadata: { name: 'test-job' }, status: { state: 'success' } },
+    });
+    mockUseBulkActionJob.mockReturnValue({ createBulkJob: mockCreateBulkJob, isLoading: false });
+
+    // Picking the repo root folder: its k8s name equals the repository name, which resolves to the '/' path.
+    resetFolderPickerMock('test-folder');
+    mockUseGetFolderQuery.mockReturnValue({
+      data: { metadata: { name: 'test-folder' } },
+      isLoading: false,
+    });
+
+    // Tree: repo root 'test-folder' > 'parent-folder' > 'nested-folder'; the user expanded it on the root page.
+    const repoRoot: DashboardViewItem = { kind: 'folder', uid: 'test-folder', title: 'Repo root' };
+    const parentFolder: DashboardViewItem = {
+      kind: 'folder',
+      uid: 'parent-folder',
+      title: 'Parent',
+      parentUID: 'test-folder',
+    };
+    const nestedFolder: DashboardViewItem = {
+      kind: 'folder',
+      uid: 'nested-folder',
+      title: 'Nested',
+      parentUID: 'parent-folder',
+    };
+
+    const selectedItems = { folder: { 'nested-folder': true }, dashboard: {} };
+
+    const { user } = render(
+      <BulkMoveProvisionedResource folderUid={undefined} selectedItems={selectedItems} onDismiss={jest.fn()} />,
+      {
+        preloadedState: {
+          browseDashboards: browseDashboardsState([repoRoot], {
+            'test-folder': fullyLoadedViewItemCollection([parentFolder]),
+            'parent-folder': fullyLoadedViewItemCollection([nestedFolder]),
+          }),
+        },
+      }
+    );
+
+    await user.click(screen.getByTestId('folder-picker'));
+    await user.click(screen.getByRole('button', { name: /Move/i }));
+
+    expect(mockCreateBulkJob).toHaveBeenCalledWith(
+      repository,
+      expect.objectContaining({
+        action: 'move',
+        move: expect.objectContaining({
+          targetPath: '/',
+          resources: [expect.objectContaining({ name: 'nested-folder', kind: 'Folder' })],
+        }),
+      })
+    );
+    expect(screen.queryByText(/Selected resources are already in the target folder/)).not.toBeInTheDocument();
   });
 
   it('shows RepoInvalidStateBanner when repository is not found', () => {
