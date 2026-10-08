@@ -43,3 +43,15 @@ export const markStPodGaveUp = (): void => {
   status = 'gaveUp';
   pending?.resolve();
 };
+
+export interface StPodTimeoutError extends Error {
+  stPodTimeout: true;
+}
+
+export const createStPodTimeoutError = (): StPodTimeoutError =>
+  Object.assign(new Error('The single-tenant pod did not become ready in time'), {
+    stPodTimeout: true as const,
+  });
+
+export const isStPodTimeoutError = (error: unknown): error is StPodTimeoutError =>
+  error instanceof Error && 'stPodTimeout' in error;
