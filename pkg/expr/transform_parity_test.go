@@ -75,6 +75,10 @@ func parityFixtures() []parityFixture {
 		data.NewField("svc", nil, []*string{new("api"), nil, new("api"), nil}),
 		data.NewField("v", nil, []float64{1, 2, 3, 4}),
 	)
+	unicode := data.NewFrame("",
+		data.NewField("name", nil, []*string{new("café"), new("日本語"), nil, new("🚀 launch"), new("plain")}),
+		data.NewField("v", nil, []float64{3, 1, 5, 2, 4}),
+	)
 	withMeta := paritySeries("a", []int{0, 1}, []float64{1, 2})
 	withMeta.Meta.ExecutedQueryString = "up{job=\"app\"}"
 	withMeta.Meta.PreferredVisualization = data.VisTypeGraph
@@ -128,6 +132,8 @@ func parityFixtures() []parityFixture {
 		{name: "sortBy-big-int64", inputs: []data.Frames{{bigInts}}, transformations: `[{"id":"sortBy","options":{"sort":[{"field":"id"}]}}]`},
 		{name: "transpose", inputs: table(), transformations: `[{"id":"transpose","options":{}}]`},
 		{name: "roundtrip-frame-meta", inputs: []data.Frames{{withMeta}}, transformations: `[{"id":"limit","options":{"limitField":1}}]`},
+		{name: "roundtrip-unicode-strings", inputs: []data.Frames{{unicode}}, transformations: `[{"id":"sortBy","options":{"sort":[{"field":"v"}]}}]`},
+		{name: "roundtrip-unicode-nested-json", inputs: []data.Frames{{unicode}}, transformations: `[{"id":"groupToNestedTable","options":{"fields":{"name":{"operation":"groupby","aggregations":[]}}}}]`},
 		{name: "roundtrip-field-config", inputs: []data.Frames{{withConfig}}, transformations: `[{"id":"sortBy","options":{"sort":[{"field":"Latency"}]}}]`},
 	}
 }

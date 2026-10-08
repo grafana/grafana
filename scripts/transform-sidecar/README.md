@@ -153,15 +153,15 @@ scripts/transform-sidecar/parity/run.sh [output dir]
 - **Comparison.** The comparer (`parity/compare.ts`) dumps frames losslessly: `undefined`, NaN, and ±Inf are tagged, not turned into `null`. It ignores frame refIds, because the expression's refId replaces them by design. It also treats Go's default `typeVersion` [0, 0] as no version.
 - **Caveat.** The browser path runs in Node, not a real browser. It's the same `@grafana/data` code, minus the browser timezone.
 
-### Results: 38 fixtures, all 29 transformations
+### Results: 40 fixtures, all 29 transformations
 
-34 fixtures match. The 4 differences:
+35 fixtures match. The 5 differences have 3 causes:
 
-| Fixture                                         | Difference                                                             | Cause                                                                                                                                                | Fix                                                                                                                                                                                                 |
-| ----------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `joinByField-outer-misaligned`, `ensureColumns` | Missing points are `undefined` in the browser, `null` from the sidecar | Go has no `undefined`. The JS wire format has an `Undef` entity, but the Go SDK ignores it                                                           | **Contract change:** SDK support for `Undef`. This affects panels, because the time series panel connects across `undefined` but breaks at `null` unless `spanNulls` is set. Alerting is unaffected |
-| `groupToNestedTable`                            | Nested-frames field type becomes `other` (values match)                | Go has no nested-frames field type. It stores the field as `json.RawMessage`, which encodes as `other`                                               | **Contract change:** an SDK field type for nested frames, or carrying the JS type through. As it stands, the table panel would not render the nested rows                                           |
-| `groupingToMatrix`                              | 3 number fields become `other` (values match)                          | The transform fills empty cells of number fields with `""`. The sidecar sends mixed-type fields as raw JSON, because Go can't decode them as numbers | **Fixable in the transform:** default empty cells to `null`. Before the fallback, this crashed Go decoding                                                                                          |
+| Fixture                                               | Difference                                                             | Cause                                                                                                                                                | Fix                                                                                                                                                                                                 |
+| ----------------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `joinByField-outer-misaligned`, `ensureColumns`       | Missing points are `undefined` in the browser, `null` from the sidecar | Go has no `undefined`. The JS wire format has an `Undef` entity, but the Go SDK ignores it                                                           | **Contract change:** SDK support for `Undef`. This affects panels, because the time series panel connects across `undefined` but breaks at `null` unless `spanNulls` is set. Alerting is unaffected |
+| `groupToNestedTable`, `roundtrip-unicode-nested-json` | Nested-frames field type becomes `other` (values match)                | Go has no nested-frames field type. It stores the field as `json.RawMessage`, which encodes as `other`                                               | **Contract change:** an SDK field type for nested frames, or carrying the JS type through. As it stands, the table panel would not render the nested rows                                           |
+| `groupingToMatrix`                                    | 3 number fields become `other` (values match)                          | The transform fills empty cells of number fields with `""`. The sidecar sends mixed-type fields as raw JSON, because Go can't decode them as numbers | **Fixable in the transform:** default empty cells to `null`. Before the fallback, this crashed Go decoding                                                                                          |
 
 ### Found and fixed by the parity run
 
@@ -232,7 +232,7 @@ Set `[expressions] transform_sidecar_format = arrow` to send frames as Arrow ins
 
 - **Protocol.** The body is a sequence of parts, each a big-endian `uint32` length and that many bytes. The first part is the JSON header (the JSON request with `"frames": []`). Each later part is one frame in the Arrow IPC file format, exactly as the Go SDK's `Frame.MarshalArrow` writes it. Content type: `application/vnd.grafana.transform+arrow`.
 - **Implementation.** Go uses the SDK's `MarshalArrow` and `UnmarshalArrowFrame`. The sidecar uses `apache-arrow@21.2.0`, installed only in `scripts/transform-sidecar` (not the repo's `yarn.lock`). `src/arrow.ts` converts between Arrow and Grafana DataFrames in both directions.
-- **Parity.** `TRANSFORM_SIDECAR_FORMAT=arrow parity/run.sh` gives the same result as JSON: 34 match, plus the same 4 known differences. NaN and ±Inf are carried natively, with no entities needed.
+- **Parity.** `TRANSFORM_SIDECAR_FORMAT=arrow parity/run.sh` gives the same result as JSON: 35 match, plus the same 5 known differences. NaN and ±Inf are carried natively, with no entities needed.
 
 ### Results (median ms, same setup as below)
 
@@ -241,7 +241,7 @@ Set `[expressions] transform_sidecar_format = arrow` to send frames as Arrow ins
 | 1k × 1k `reduce`                | 38            | 153                    | **53**                  | 23 (SSE reduce) |
 | 1k × 1k `joinByField` (aligned) | 34            | 224                    | **67**                  | —               |
 | 1k misaligned `joinByField`     | 63            | 258                    | **89**                  | —               |
-| 50k logs filter + sort          | 14            | 44                     | **21**                  | 20 (SQL)        |
+| 50k logs filter + sort          | 14            | 44                     | **17**                  | 20 (SQL)        |
 | 100k `groupBy`                  | 14            | 25                     | **19**                  | 24 (SQL)        |
 
 Where Arrow saves time, for 1k × 1k `reduce`:
@@ -252,7 +252,7 @@ Where Arrow saves time, for 1k × 1k `reduce`:
 | Node parse + decode               | 34   | 17    |
 | Go decode of a 4.6 MB join result | 34   | 9     |
 
-Under 10 parallel requests, p50 drops for the large Prometheus workloads: 128 → 106 ms (reduce), 187 → 105 ms (join), 254 → 148 ms (misaligned join). It rises slightly for the small logs and table workloads: 46 → 56 ms and 33 → 36 ms.
+Under 10 parallel requests, p50 drops for the large Prometheus workloads: 128 → 106 ms (reduce), 187 → 105 ms (join), 254 → 148 ms (misaligned join). For logs it drops from 50 to 38 ms, after the string encoder below. For the small table workload it rises slightly, from 34 to 38 ms.
 
 ### Things the Arrow experiment found
 
@@ -267,6 +267,11 @@ Under 10 parallel requests, p50 drops for the large Prometheus workloads: 128 �
 4. **Decoding and encoding must avoid `Array.from` and `push`.** Preallocated arrays written by index are 2–3× faster for million-value columns; `Array.from(typedArray)` was the slowest option measured. This took Arrow decode from 37 to 17 ms and Arrow encode of the join result from 47–56 to about 10 ms.
 5. **Arrow responses are bigger for shape-preserving transforms:** 7.8 MB versus 4.6 MB of JSON for the join, because float64 takes 8 bytes per value. Over a real network the Grafana → browser leg is still JSON, so this only affects the localhost Grafana ↔ sidecar hop.
 6. **Remaining costs for 1k × 1k `reduce` over Arrow:** Go encode 17 ms, reading the body 8 ms, Node decode 17 ms (about half of it arrow-js per-frame overhead for 1000 small frames), transform 8 ms.
+7. **String columns are encoded in one pass.** arrow-js's Utf8 builder encodes value by value, which made logs encode 6.6 ms against 2.0 ms for JSON. `encodeStrings` joins the strings, calls `TextEncoder` once, and uses character offsets as byte offsets when the text is ASCII. It only counts UTF-8 bytes per value when it isn't. Logs encode is now 1.3–1.6 ms with the same output size. JSON (Binary) columns use the same path. The `roundtrip-unicode-*` parity fixtures cover non-ASCII text (accents, CJK, emoji) and nulls.
+8. **Decoded strings are slower map keys than `JSON.parse`'s, and that was left alone.** On 100k-row `groupBy`, the transform runs 10.5 ms on JSON-decoded frames and 13.5 ms on Arrow-decoded ones.
+   - **Cause:** `JSON.parse` internalizes short strings, so equal keys are the same object and compare by pointer. Flat (non-sliced) strings don't help: `TextDecoder` per value gave 14.1 ms and `fromCharCode` 13.1 ms.
+   - **Interning fixes the transform but costs as much as it saves.** Mapping each decoded string to one shared instance brings the transform to 11.1 ms but costs 2.7 ms to decode, against 0.5 ms. With 50k unique log lines it costs 8.7 ms, so it's a net loss.
+   - **Decision:** decoding stays as one decode plus slicing.
 
 ## Configuration
 

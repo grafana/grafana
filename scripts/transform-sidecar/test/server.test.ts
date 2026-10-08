@@ -1,3 +1,4 @@
+import { Table, tableFromIPC, tableToIPC, Utf8, vectorFromArray } from 'apache-arrow';
 import assert from 'node:assert/strict';
 import { type ChildProcess, spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
@@ -218,6 +219,59 @@ describe('transform sidecar', () => {
 
     assert.ok(transformations.includes('joinByField'));
     assert.ok(!transformations.includes('seriesToColumns'));
+  });
+
+  // Big-endian uint32 length-prefixed parts: a JSON header, then Arrow IPC files (see src/arrow.ts).
+  const writeEnvelope = (parts: Uint8Array[]) => {
+    const out = new Uint8Array(parts.reduce((n, p) => n + 4 + p.byteLength, 0));
+    const view = new DataView(out.buffer);
+    let pos = 0;
+    for (const part of parts) {
+      view.setUint32(pos, part.byteLength);
+      out.set(part, pos + 4);
+      pos += 4 + part.byteLength;
+    }
+    return out;
+  };
+  const readEnvelope = (bytes: Uint8Array) => {
+    const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+    const parts: Uint8Array[] = [];
+    for (let pos = 0; pos < bytes.byteLength; ) {
+      const length = view.getUint32(pos);
+      parts.push(bytes.subarray(pos + 4, pos + 4 + length));
+      pos += 4 + length;
+    }
+    return parts;
+  };
+
+  it('keeps string offsets intact after values with lone surrogates', async () => {
+    // Substrings that cut the emoji's surrogate pair leave a lone high half at the end of a value
+    // (head) or a lone low half at the start (tail). TextEncoder writes each lone half as U+FFFD
+    // (3 bytes); if the byte count disagreed, every later value in the column would shift.
+    const values = ['🚀 launch', 'after', 'é ok', 'plain'];
+    const frame = tableToIPC(
+      new Table({ head: vectorFromArray(values, new Utf8()), tail: vectorFromArray(values, new Utf8()) }),
+      'file'
+    );
+    const substring = (field: string, start: number, end: number) => ({
+      id: 'formatString',
+      options: { stringField: field, outputFormat: 'Substring', substringStart: start, substringEnd: end },
+    });
+    const header = new TextEncoder().encode(
+      JSON.stringify({ frames: [], transformations: [substring('head', 0, 1), substring('tail', 1, 3)] })
+    );
+
+    const res = await fetch(`${server.baseUrl}/transform`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/vnd.grafana.transform+arrow' },
+      body: writeEnvelope([header, frame]),
+    });
+
+    assert.equal(res.status, 200, await res.clone().text());
+    const [, out] = readEnvelope(new Uint8Array(await res.arrayBuffer()));
+    const table = tableFromIPC(out);
+    assert.deepEqual(table.getChild('head')?.toArray(), ['\uFFFD', 'a', 'é', 'p']);
+    assert.deepEqual(table.getChild('tail')?.toArray(), ['\uFFFD ', 'ft', ' o', 'la']);
   });
 
   it('returns 413 when the body exceeds the size limit', async () => {
