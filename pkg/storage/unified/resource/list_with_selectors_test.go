@@ -11,8 +11,11 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -308,6 +311,21 @@ func TestShouldUseSearchForList(t *testing.T) {
 	}
 }
 
+func TestSearchBackedListConfigAllowed(t *testing.T) {
+	config := SearchBackedListConfig{AllowedResources: map[string]bool{
+		"dashboard.grafana.app/dashboards": true,
+		"*.ext.grafana.app":                true,
+		"disabled.ext.grafana.app":         false,
+		"[invalid":                         true,
+	}}
+
+	require.True(t, config.Allowed("dashboard.grafana.app", "dashboards"))
+	require.False(t, config.Allowed("dashboard.grafana.app", "folders"))
+	require.True(t, config.Allowed("exampletodoapp.ext.grafana.app", "todos"))
+	require.False(t, config.Allowed("disabled.ext.grafana.app", "todos"))
+	require.False(t, config.Allowed("exampletodoapp.grafana.app", "todos"))
+}
+
 func TestFilterSelectors(t *testing.T) {
 	tests := map[string]struct {
 		req           *resourcepb.ListRequest
@@ -486,7 +504,7 @@ func TestListWithSelectors(t *testing.T) {
 		// The search backend prefixes label keys itself, so they are passed through.
 		require.Equal(t, "alerting.grafana.app/has-rules", searchClient.last.Options.Labels[0].Key)
 		require.Equal(t, SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.foo", searchClient.last.Options.Fields[0].Key)
-		require.Equal(t, []string{SEARCH_FIELD_RV}, searchClient.last.Fields)
+		require.Equal(t, []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER}, searchClient.last.Fields)
 		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, searchClient.last.ResultFormat)
 	})
 
@@ -551,21 +569,63 @@ func TestListWithSelectors(t *testing.T) {
 		require.True(t, IsSelectableFieldNotIndexed(resp.Error))
 	})
 
+	for _, continued := range []bool{false, true} {
+		t.Run(fmt.Sprintf("structured missing-field transport error with continuation=%t", continued), func(t *testing.T) {
+			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+			searchErr := selectableFieldNotIndexedGRPCError(t)
+			s := createTestServer(&stubSearchClient{err: searchErr}, 1024)
+			req := &resourcepb.ListRequest{
+				Limit: 10,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+				},
+			}
+			if continued {
+				req.NextPageToken = ContinueToken{SearchAfter: []string{"s1"}, ResourceVersion: searchServerRv}.String()
+			}
+
+			resp, err := s.listWithSelectors(ctx, req)
+			require.Nil(t, resp)
+			require.ErrorIs(t, err, searchErr)
+			if continued {
+				require.Same(t, searchErr, err)
+				require.NotErrorIs(t, err, errSearchCannotAnswerList)
+			} else {
+				require.ErrorIs(t, err, errSearchCannotAnswerList)
+			}
+		})
+	}
+
 	t.Run("returns transport errors directly", func(t *testing.T) {
 		ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-		searchErr := errors.New("search unavailable")
-		s := createTestServer(&stubSearchClient{err: searchErr}, 1024)
-		req := &resourcepb.ListRequest{
-			Limit: 10,
-			Options: &resourcepb.ListOptions{
-				Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
-				Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
-			},
-		}
+		result := NewBadRequestError("invalid selector")
+		st, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+		require.NoError(t, err)
+		for _, searchErr := range []error{
+			st.Err(),
+			errors.New("search unavailable"),
+			status.Error(codes.InvalidArgument, "invalid selector"),
+			status.Error(codes.Unavailable, "search unavailable"),
+			status.Error(codes.Canceled, "search canceled"),
+			status.Error(codes.DeadlineExceeded, "search timed out"),
+			context.Canceled,
+			context.DeadlineExceeded,
+		} {
+			s := createTestServer(&stubSearchClient{err: searchErr}, 1024)
+			req := &resourcepb.ListRequest{
+				Limit: 10,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			}
 
-		resp, err := s.listWithSelectors(ctx, req)
-		require.ErrorIs(t, err, searchErr)
-		require.Nil(t, resp)
+			resp, err := s.listWithSelectors(ctx, req)
+			require.Equal(t, searchErr, err)
+			require.NotErrorIs(t, err, errSearchCannotAnswerList)
+			require.Nil(t, resp)
+		}
 	})
 
 	t.Run("rejects a continue token from the store path", func(t *testing.T) {
@@ -963,25 +1023,44 @@ func (b *countingListBackend) ListIterator(context.Context, *resourcepb.ListRequ
 	return 1, nil
 }
 
-func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
-	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	backend := &countingListBackend{fakeBackend: &fakeBackend{}}
-	s := createTestServer(&stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
-		Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
-	}}, 1024)
-	s.backend = backend
-
-	resp, err := s.List(ctx, &resourcepb.ListRequest{
-		Source: resourcepb.ListRequest_STORE,
-		Limit:  10,
-		Options: &resourcepb.ListOptions{
-			Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
-			Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
-		},
-	})
+func selectableFieldNotIndexedGRPCError(t *testing.T) error {
+	t.Helper()
+	result := NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"})
+	st, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
 	require.NoError(t, err)
-	require.Nil(t, resp.Error)
-	require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
+	return st.Err()
+}
+
+func TestListFallsBackToStoreWhenIndexLacksField(t *testing.T) {
+	for name, searchClient := range map[string]*stubSearchClient{
+		"embedded error": {resp: &resourcepb.ResourceSearchResponse{
+			Error: NewSelectableFieldNotIndexedError([]string{SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.foo"}),
+		}},
+		"gRPC error": {err: selectableFieldNotIndexedGRPCError(t)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+			backend := &countingListBackend{fakeBackend: &fakeBackend{}}
+			s := createTestServer(searchClient, 1024)
+			s.backend = backend
+			s.manifestSearchFields = NewSearchFieldsRegistry(map[LowerGroupResource][]string{
+				NewLowerGroupResource("advisor.grafana.app", "advisors"): {"spec.foo"},
+			}, nil, nil)
+
+			resp, err := s.List(ctx, &resourcepb.ListRequest{
+				Source: resourcepb.ListRequest_STORE,
+				Limit:  10,
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "nsx", Group: "advisor.grafana.app", Resource: "advisors"},
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo", Operator: "=", Values: []string{"bar"}}},
+				},
+			})
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			require.NotNil(t, searchClient.last, "search must be attempted before falling back to the store")
+			require.Equal(t, 1, backend.listCalls, "the store scan must serve the request the index refused")
+		})
+	}
 }
 
 func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
@@ -993,8 +1072,8 @@ func TestListWithSelectorsUsesBatchReadsAndAuthorization(t *testing.T) {
 			{Key: &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "b"}, ResourceVersion: 2},
 		}},
 	}}
-	backend := &batchFakeBackend{fakeBackend: &fakeBackend{forbidden: map[string]struct{}{"b": {}}}}
-	access := claims.FixedAccessClient(true)
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
+	access := denyByNameAccess{deny: map[string]struct{}{"b": {}}}
 	s := createTestServer(searchClient, 1024)
 	s.backend = backend
 	s.access = access
@@ -1040,8 +1119,7 @@ func TestListUsesSearchForAnAllowlistedResourceWithoutSelectors(t *testing.T) {
 func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
 
-	// A full search page of hits, far more than one read chunk.
-	rows := make([]*resourcepb.ResourceTableRow, 0, searchReadChunkSize*3)
+	rows := make([]*resourcepb.ResourceTableRow, 0, 30)
 	for i := 0; i < cap(rows); i++ {
 		rows = append(rows, &resourcepb.ResourceTableRow{
 			Key:        &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: fmt.Sprintf("item-%d", i)},
@@ -1054,9 +1132,8 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	}}
 	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
 
-	// maxPageSizeBytes = 1 forces the byte cutoff after the first item, well
-	// before the item-count limit.
-	s := createTestServer(searchClient, 1)
+	// Each response is five bytes, so the byte cutoff is crossed by the third item.
+	s := createTestServer(searchClient, 11)
 	s.backend = backend
 
 	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
@@ -1068,11 +1145,11 @@ func TestListWithSelectorsStopsReadingAtPageCutoff(t *testing.T) {
 	})
 
 	require.NoError(t, err)
-	require.Len(t, resp.Items, 1)
+	require.Len(t, resp.Items, 3)
 	require.NotEmpty(t, resp.NextPageToken, "a cut-off page must still page forward")
-	// Only the first chunk is read; the rest of the page is never fetched.
 	require.Equal(t, 1, backend.batchCalls)
-	require.Equal(t, searchReadChunkSize, backend.batchReqs)
+	require.Equal(t, readChunkSize, backend.batchReqs)
+	require.Equal(t, []string{"item-0", "item-1", "item-2"}, backend.pulledNames)
 }
 
 // denyByNameAccess allows everything except names in deny.
@@ -1143,15 +1220,20 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		}
 	}
 
-	t.Run("unauthorized errored row is skipped, not surfaced", func(t *testing.T) {
+	t.Run("runtime error on unauthorized row is logged and redacted", func(t *testing.T) {
+		logger := &logtest.Fake{}
 		s := createTestServer(newSearch(), 1024)
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, errored: map[string]struct{}{"b": {}}}
 		s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+		s.log = logger
 
 		resp, err := s.listWithSelectors(ctx, req())
 		require.NoError(t, err)
-		require.Nil(t, resp.Error)
-		require.Len(t, resp.Items, 1) // only "a"; "b" errored but is unauthorized, so hidden
+		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		require.Equal(t, "failed to read resource", resp.Error.Message)
+		require.Empty(t, resp.Items)
+		require.Equal(t, 1, logger.ErrorLogs.Calls)
+		require.Equal(t, "Failed to read unauthorized search result", logger.ErrorLogs.Message)
 	})
 
 	t.Run("authorized errored row aborts the list", func(t *testing.T) {
@@ -1163,6 +1245,32 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, resp.Error)
 		require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+	})
+
+	t.Run("bad request aborts the list without returning partial items", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{
+			fakeBackend: &fakeBackend{},
+			errors:      map[string]*resourcepb.ErrorResult{"b": NewBadRequestError("invalid request")},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusBadRequest), resp.Error.Code)
+		require.Empty(t, resp.Items)
+	})
+
+	t.Run("unrecognized error aborts the list without returning partial items", func(t *testing.T) {
+		s := createTestServer(newSearch(), 1024)
+		s.backend = &batchFakeBackend{
+			fakeBackend: &fakeBackend{},
+			errors:      map[string]*resourcepb.ErrorResult{"b": {Code: http.StatusConflict, Message: "conflict"}},
+		}
+
+		resp, err := s.listWithSelectors(ctx, req())
+		require.NoError(t, err)
+		require.Equal(t, int32(http.StatusConflict), resp.Error.Code)
+		require.Empty(t, resp.Items)
 	})
 
 	t.Run("not-found row surfaces without authorizing (not dropped on empty folder)", func(t *testing.T) {
@@ -1178,6 +1286,158 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 	})
 }
 
+func TestListWithSelectorsSurfacesKVRuntimeFailuresBeforeAuthorization(t *testing.T) {
+	tests := []struct {
+		name string
+		wrap func(KV) KV
+	}{
+		{
+			name: "batch get",
+			wrap: func(store KV) KV {
+				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
+			},
+		},
+		{
+			name: "body read",
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failed", err: errors.New("value is corrupt")}
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+				opts.KvStore = tc.wrap(opts.KvStore)
+			})
+			rv := seedResource(t, backend, t.Context(), "failed", "folder-a")
+			newServer := func() *server {
+				search := &stubSearchClient{resp: &resourcepb.ResourceSearchResponse{
+					ResourceVersion: rv,
+					Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{{
+						Key:             appsKey("failed"),
+						ResourceVersion: rv,
+						SortFields:      []string{"failed"},
+					}}},
+				}}
+				s := createTestServer(search, 1024)
+				s.backend = backend
+				return s
+			}
+			req := &resourcepb.ListRequest{
+				Limit: 1,
+				Options: &resourcepb.ListOptions{
+					Key:    appsKey(""),
+					Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+				},
+			}
+			ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+
+			unauthorized := newServer()
+			unauthorized.access = denyByNameAccess{deny: map[string]struct{}{"failed": {}}}
+			resp, err := unauthorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+			require.Equal(t, "failed to read resource", resp.Error.Message)
+			require.Empty(t, resp.Items)
+
+			authorized := newServer()
+			resp, err = authorized.listWithSelectors(ctx, req)
+			require.NoError(t, err)
+			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+		})
+	}
+}
+
+func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
+	var kvWrapper *failDataBatchGetsKV
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		kvWrapper = &failDataBatchGetsKV{KV: opts.KvStore, err: errors.New("transient storage failure"), failFrom: 2}
+		opts.KvStore = kvWrapper
+	})
+
+	rows := make([]*resourcepb.ResourceSearchRow, 0, readChunkSize+1)
+	denied := make(map[string]struct{}, readChunkSize)
+	var listRV int64
+	for i := range readChunkSize + 1 {
+		name := fmt.Sprintf("cross-batch-%02d", i)
+		folder := fmt.Sprintf("folder-%02d", i)
+		listRV = seedResource(t, backend, t.Context(), name, folder)
+		rows = append(rows, folderSearchRow(appsKey(name), listRV, folder, name))
+		if i < readChunkSize {
+			denied[name] = struct{}{}
+		}
+	}
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(listRV, rows)}, 1024)
+	s.backend = backend
+	s.access = denyByNameAccess{deny: denied}
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Limit: 1,
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Empty(t, resp.Items)
+	require.Equal(t, int32(http.StatusInternalServerError), resp.Error.Code)
+	require.Equal(t, "transient storage failure", resp.Error.Message)
+	// The first chunk is read by exact key; the second chunk's exact read fails and
+	// ends the list without another read.
+	require.Equal(t, 2, kvWrapper.dataCalls)
+}
+
+// A body that cannot be read fails its own row only. When an earlier row already
+// fills the page, the list stops before it and pages forward instead of failing.
+func TestListWithSelectorsStopsBeforeAnUnreadableBodyPastAFullPage(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.KvStore = &unreadableValueKV{KV: opts.KvStore, nameMatch: "second-unreadable", err: errors.New("value is corrupt")}
+	})
+	names := []string{"first", "second-unreadable"}
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
+	var listRV int64
+	for _, name := range names {
+		listRV = seedResource(t, backend, t.Context(), name, "folder-1")
+		rows = append(rows, folderSearchRow(appsKey(name), listRV, "folder-1", name))
+	}
+
+	// One byte is enough for the first body to fill the page.
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(listRV, rows)}, 1)
+	s.backend = backend
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.NotEmpty(t, resp.NextPageToken)
+}
+
+// folderSearchResponse is a field-values search response whose rows carry a folder.
+func folderSearchResponse(rv int64, rows []*resourcepb.ResourceSearchRow) *resourcepb.ResourceSearchResponse {
+	return &resourcepb.ResourceSearchResponse{
+		ResourceVersion: rv,
+		ResultFormat:    resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields:          []*resourcepb.ResourceSearchField{{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING}},
+		Rows:            rows,
+	}
+}
+
+func folderSearchRow(key *resourcepb.ResourceKey, rv int64, folder string, sortFields ...string) *resourcepb.ResourceSearchRow {
+	return &resourcepb.ResourceSearchRow{
+		Key:             key,
+		ResourceVersion: rv,
+		SortFields:      sortFields,
+		Values:          []*resourcepb.ResourceSearchValue{{FieldIndex: 0, StringValues: []string{folder}}},
+	}
+}
+
 func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBytes int) *server {
 	return &server{
 		searchClient:     searchClient,
@@ -1187,6 +1447,7 @@ func createTestServer(searchClient resourcepb.ResourceIndexClient, maxPageSizeBy
 		queueConfig:      QueueConfig{Timeout: time.Second, MinBackoff: time.Millisecond, MaxBackoff: time.Millisecond, MaxRetries: 1},
 		maxPageSizeBytes: maxPageSizeBytes,
 		log:              log.NewNopLogger(),
+		storageMetrics:   ProvideStorageMetrics(nil),
 	}
 }
 
@@ -1262,11 +1523,13 @@ func (*fakeBackend) GetResourceLastImportTime(context.Context, NamespacedResourc
 
 type batchFakeBackend struct {
 	*fakeBackend
-	errored    map[string]struct{}
-	notFound   map[string]struct{}
-	batchCalls int
-	batchReqs  int
-	readCalls  int
+	errored     map[string]struct{}
+	errors      map[string]*resourcepb.ErrorResult
+	notFound    map[string]struct{}
+	batchCalls  int
+	batchReqs   int
+	readCalls   int
+	pulledNames []string
 }
 
 func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *BackendReadResponse {
@@ -1274,34 +1537,65 @@ func (b *batchFakeBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 	return b.fakeBackend.ReadResource(ctx, req)
 }
 
-func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest) ([]*BackendReadResponse, error) {
+func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []BatchReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	b.batchReqs += len(requests)
-	responses := make([]*BackendReadResponse, len(requests))
-	for i, req := range requests {
-		if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+	return func(yield func(*BackendReadResponse) bool) {
+		for _, req := range requests {
+			b.pulledNames = append(b.pulledNames, req.Key.Name)
+			var response *BackendReadResponse
+			if _, forbidden := b.forbidden[req.Key.Name]; forbidden {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusForbidden},
+				}
+			} else if errRes, exists := b.errors[req.Key.Name]; exists {
+				response = &BackendReadResponse{Key: req.Key, Error: errRes}
+			} else if _, errored := b.errored[req.Key.Name]; errored {
+				response = &BackendReadResponse{
+					Key:   req.Key,
+					Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+				}
+			} else if _, nf := b.notFound[req.Key.Name]; nf {
+				response = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
+			} else {
+				response = &BackendReadResponse{
+					Key:             req.Key,
+					ResourceVersion: req.ResourceVersion,
+					Value:           []byte("value"),
+				}
 			}
-			continue
-		}
-		if _, errored := b.errored[req.Key.Name]; errored {
-			responses[i] = &BackendReadResponse{
-				Key:   req.Key,
-				Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
+			if !yield(response) {
+				return
 			}
-			continue
 		}
-		if _, nf := b.notFound[req.Key.Name]; nf {
-			responses[i] = &BackendReadResponse{Key: req.Key, Error: NewNotFoundError(req.Key)}
-			continue
-		}
-		responses[i] = &BackendReadResponse{
-			Key:             req.Key,
-			ResourceVersion: req.ResourceVersion,
-			Value:           []byte("value"),
-		}
+	}, nil
+}
+
+func TestDecodeListSearchRowsReadsTheFolderHint(t *testing.T) {
+	key := func(name string) *resourcepb.ResourceKey {
+		return &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: name}
 	}
-	return responses, nil
+	rows, err := decodeListSearchRows(&resourcepb.ResourceSearchResponse{
+		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
+		Fields: []*resourcepb.ResourceSearchField{
+			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: SEARCH_FIELD_FOLDER, Type: resourcepb.ResourceSearchField_STRING},
+		},
+		Rows: []*resourcepb.ResourceSearchRow{
+			{Key: key("in-folder"), ResourceVersion: 1, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"title"}},
+				{FieldIndex: 1, StringValues: []string{"folder-1"}},
+			}},
+			// A root-level object has no folder value at all.
+			{Key: key("at-root"), ResourceVersion: 2, Values: []*resourcepb.ResourceSearchValue{
+				{FieldIndex: 0, StringValues: []string{"title"}},
+			}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Len(t, rows, 2)
+	require.Equal(t, "folder-1", rows[0].folder)
+	require.Equal(t, "", rows[1].folder)
 }

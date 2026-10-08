@@ -5,7 +5,6 @@ import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -19,7 +18,7 @@ import {
   type WhereNode,
   useSearchNotebooksInfiniteQuery,
 } from '../list/notebookSearchApi';
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
+import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
@@ -31,7 +30,6 @@ jest.mock('app/api/clients/iam/v0alpha1', () => ({
 }));
 
 jest.mock('app/api/clients/dashboard/v2beta1', () => ({
-  useListNotebookQuery: jest.fn(() => ({ data: undefined, isLoading: false, error: undefined })),
   // The row menu fetches a spec on demand for export; nothing here exercises the fetch itself.
   useLazyGetNotebookQuery: () => [jest.fn()],
   // The table mounts the delete hook for every row menu; deleting is covered in NotebooksTable's own tests.
@@ -52,7 +50,6 @@ jest.mock('../analytics/main', () => ({
 
 const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
 const mockUseLazyNotebookFieldFacetQuery = jest.mocked(useLazyNotebookFieldFacetQuery);
-const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
 const mockListFiltered = jest.mocked(NotebookAnalytics.listFiltered);
 
@@ -69,26 +66,6 @@ function leavesOf(where: WhereNode | undefined): WhereNode[] {
     return [];
   }
   return where.and ?? [where];
-}
-
-/** A notebook as LIST returns it, for the cases that exercise the fallback path. */
-function makeNotebook(name: string, title: string): Notebook {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
-  return {
-    metadata: { name, creationTimestamp: '2026-01-01T00:00:00Z', annotations: { 'grafana.app/createdBy': 'user:abc' } },
-    spec: { title, tags: [] },
-  } as unknown as Notebook;
-}
-
-function setListNotebooks(items: Notebook[], extra: { continueToken?: string } = {}) {
-  const data = { items, metadata: { continue: extra.continueToken } };
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
-  mockUseListNotebookQuery.mockReturnValue({
-    data,
-    currentData: data,
-    isLoading: false,
-    error: undefined,
-  } as unknown as ReturnType<typeof useListNotebookQuery>);
 }
 
 /** A page the server filled to the limit, which is what truncation looks like on the wire. */
@@ -206,7 +183,6 @@ function setTags(tags: string[]) {
 describe('NotebooksListPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    __resetSearchAvailabilityForTests();
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
     mockUseGetDisplayMappingQuery.mockReturnValue({
@@ -233,6 +209,17 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText('Page not found')).toBeInTheDocument();
+  });
+
+  it('marks the page as a preview feature', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    setNotebooks([makeHit('nb1', 'Checkout error spike')]);
+
+    render(<NotebooksListPage />);
+
+    // The badge, not the heading: the nav index is not seeded here, so the title string the
+    // header renders is the fallback one rather than "Notebooks".
+    expect(await screen.findByText('Preview')).toBeInTheDocument();
   });
 
   it('renders a row per notebook, linking the title to the notebook', async () => {
@@ -293,6 +280,7 @@ describe('NotebooksListPage', () => {
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
@@ -314,6 +302,7 @@ describe('NotebooksListPage', () => {
 
       await userEvent.click(await screen.findByLabelText('Created by me'));
 
+      await screen.findByText('Mine');
       await waitFor(() => {
         expect(screen.queryByText('Theirs')).not.toBeInTheDocument();
       });
@@ -339,6 +328,7 @@ describe('NotebooksListPage', () => {
     await within(await screen.findByRole('listbox')).findByText('latency');
     await selectOptionInTest(screen.getByLabelText('Tag filter'), /^latency/);
 
+    await screen.findByText('Q2 latency regression');
     await waitFor(() => {
       expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
     });
@@ -370,28 +360,6 @@ describe('NotebooksListPage', () => {
     );
   });
 
-  // With no facet the picker had nothing to offer and no way to type into it, which on a deployment
-  // that does not serve the search route left the filter unusable. The rows carry their own tags.
-  it("offers the loaded notebooks' tags when the facet cannot answer", async () => {
-    setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setTags([]);
-    setNotebooks([
-      makeHit('nb1', 'Checkout error spike', ['errors']),
-      makeHit('nb2', 'Q2 latency regression', ['latency']),
-    ]);
-
-    render(<NotebooksListPage />);
-
-    await userEvent.click(await screen.findByLabelText('Tag filter'));
-    const listbox = await screen.findByRole('listbox');
-    await userEvent.click(await within(listbox).findByText('latency'));
-
-    await waitFor(() => {
-      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
-    });
-    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
-  });
-
   // The tags are only known once the picker is opened, so the control is offered either way — an
   // untagged library just has nothing in its dropdown.
   it('offers the tag filter before any tags are known', async () => {
@@ -409,6 +377,8 @@ describe('NotebooksListPage', () => {
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
+
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'zzz');
 
@@ -500,6 +470,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of 870`)).toBeInTheDocument();
   });
 
@@ -514,7 +485,7 @@ describe('NotebooksListPage', () => {
 
     expect(await screen.findByText(`${NOTEBOOKS_PAGE_LIMIT} notebooks`)).toBeInTheDocument();
     // One header row plus a page of notebooks.
-    expect(screen.getAllByRole('row')).toHaveLength(ROWS_PER_PAGE + 1);
+    expect(await screen.findAllByRole('row')).toHaveLength(ROWS_PER_PAGE + 1);
   });
 
   // Filtering replaces the table's data. A page index kept across that change lands past the end of
@@ -522,7 +493,7 @@ describe('NotebooksListPage', () => {
   // corner would say one thing and the rows another.
   it('returns to the first page when a filter narrows the set', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    // Three pages, with the only match for "needle" outside the last one.
+    // Three pages, with only one match for "needle".
     setNotebooks(
       Array.from({ length: ROWS_PER_PAGE * 3 }, (_, i) => makeHit(`nb${i}`, i === 0 ? 'needle' : `Filler ${i}`))
     );
@@ -530,7 +501,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText(`${ROWS_PER_PAGE * 3} notebooks`)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: '3' }));
+    await userEvent.click(await screen.findByRole('button', { name: '3' }));
 
     await userEvent.type(screen.getByPlaceholderText('Search notebooks by title...'), 'needle');
 
@@ -551,6 +522,7 @@ describe('NotebooksListPage', () => {
 
     const { rerender } = render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`${ROWS_PER_PAGE * 2} notebooks`)).toBeInTheDocument();
     const firstPage = titlesOnScreen();
     await userEvent.click(screen.getByRole('button', { name: '2' }));
@@ -580,7 +552,7 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     expect(await screen.findByText('Some notebooks could not be loaded')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
     // The filters stay usable, and the fatal alert does not appear.
     expect(screen.getByPlaceholderText('Search notebooks by title...')).toBeInTheDocument();
     expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
@@ -612,6 +584,7 @@ describe('NotebooksListPage', () => {
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     const { rerender } = render(<NotebooksListPage />);
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
     expect(await screen.findByText('1 notebook')).toBeInTheDocument();
 
     setNotebooks([makeHit('nb1', 'Checkout error spike')], { isReloading: true });
@@ -636,25 +609,6 @@ describe('NotebooksListPage', () => {
     expect(screen.queryByRole('link', { name: 'Checkout error spike' })).not.toBeInTheDocument();
   });
 
-  // On the fallback path the loaded window and the matches within it are different facts, and LIST
-  // reports no total at all — so folding them into "showing 1 of 2" would claim the library holds
-  // two matching notebooks when all that is known is that two were fetched.
-  it('keeps the loaded count and the match count apart when serving from LIST', async () => {
-    setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setNotebooks([], { error: { status: 404, data: { message: 'not found' }, config: { url: '' } } });
-    setListNotebooks([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')], {
-      continueToken: 'next-page',
-    });
-
-    render(<NotebooksListPage />);
-
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
-
-    // The debounce has to elapse before the client-side filter narrows anything.
-    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
-    expect(screen.getByText('First 2 notebooks loaded')).toBeInTheDocument();
-  });
-
   // An inexact total is an upper bound, counted before per-item authorization — so the label has to
   // read as a ceiling. "of 870+" would promise more than exists.
   it('phrases an inexact total as a ceiling', async () => {
@@ -663,6 +617,7 @@ describe('NotebooksListPage', () => {
 
     render(<NotebooksListPage />);
 
+    expect(await screen.findByRole('table')).toBeInTheDocument();
     expect(await screen.findByText(`Showing ${NOTEBOOKS_PAGE_LIMIT} of up to 870`)).toBeInTheDocument();
   });
 
@@ -673,6 +628,8 @@ describe('NotebooksListPage', () => {
     render(<NotebooksListPage />);
 
     await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
+
+    expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
 
     // The server counts the filtered set, so there is one number rather than two.
     await waitFor(() => {
@@ -700,6 +657,8 @@ describe('NotebooksListPage', () => {
     setNotebooks([makeHit('nb1', 'Checkout error spike')]);
 
     render(<NotebooksListPage />);
+
+    expect(await screen.findByRole('link', { name: 'Checkout error spike' })).toBeInTheDocument();
 
     await userEvent.click(await screen.findByRole('button', { name: 'New notebook' }));
 

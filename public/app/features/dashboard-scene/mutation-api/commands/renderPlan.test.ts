@@ -1,17 +1,20 @@
+import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { config, setPluginImportUtils } from '@grafana/runtime';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from '../../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
+import * as planningSampleData from '../../scene/planningSampleData';
 import { type DashboardSceneState } from '../../scene/types/dashboard';
 import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
-import { renderPlanContractFixture } from './renderPlanContractFixture';
+import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
@@ -55,7 +58,7 @@ describe('RENDER_PLAN', () => {
     const rows = (scene.state.body as RowsLayoutManager).state.rows;
     expect(rows.map((r) => r.state.title)).toEqual(['Throughput', 'Errors']);
     expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(['Requests', 'Error rate']);
-    expect(scene.state.planning).toMatchObject({ planId: 'plan-1', planTitle: 'Kafka overview', panelCount: 2 });
+    expect(scene.state.planning).toMatchObject({ planId: 'plan-1', planTitle: 'Kafka overview' });
   });
 
   it('builds query-less placeholder panels with sample data, not a live query runner', async () => {
@@ -66,6 +69,71 @@ describe('RENDER_PLAN', () => {
     const panel = scene.state.body.getVizPanels()[0];
     expect(getQueryRunnerFor(panel)).toBeUndefined();
     expect(sceneGraph.getData(panel).state.data?.series[0]).toBeDefined();
+  });
+
+  it('generates sample data once per placeholder, with preview settings and no live query runner', async () => {
+    const { scene, client } = setup();
+    const generateSample = jest.spyOn(planningSampleData, 'getPlanningPanelData');
+
+    try {
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: plan });
+
+      expect(result.success).toBe(true);
+      expect(generateSample.mock.calls).toEqual([
+        ['Requests', 'timeseries'],
+        ['Error rate', 'timeseries'],
+      ]);
+      const panels = scene.state.body.getVizPanels();
+      expect(panels.map((panel) => panel.state.fieldConfig.defaults.unit)).toEqual(['reqps', 'short']);
+      for (const panel of panels) {
+        const data = sceneGraph.getData(panel).state.data;
+        expect(data?.state).toBe(LoadingState.Done);
+        expect(data?.series).toHaveLength(1);
+        expect(data?.series[0].length).toBe(60);
+        expect(data?.series[0].fields.map(({ name, type }) => ({ name, type }))).toEqual([
+          { name: 'time', type: FieldType.time },
+          { name: 'pod-a1b2', type: FieldType.number },
+          { name: 'pod-c3d4', type: FieldType.number },
+          { name: 'pod-e5f6', type: FieldType.number },
+        ]);
+        expect(panel.state.options).toEqual({ legend: { showLegend: false }, tooltip: { mode: 'none' } });
+        expect(panel.state.fieldConfig.defaults.custom).toEqual({
+          drawStyle: 'line',
+          lineWidth: 1,
+          fillOpacity: 12,
+          showPoints: 'never',
+          spanNulls: true,
+        });
+        const titleItems = panel.state.titleItems;
+        if (!Array.isArray(titleItems)) {
+          throw new Error('Expected panel title items to be an array');
+        }
+        expect(titleItems.filter((item) => item instanceof PlanPlaceholderBadge)).toHaveLength(1);
+        expect(getQueryRunnerFor(panel)).toBeUndefined();
+      }
+    } finally {
+      generateSample.mockRestore();
+    }
+  });
+
+  it('uses sample markdown for text placeholders without generating a data series', async () => {
+    const { scene, client } = setup();
+
+    const result = await client.execute({
+      type: 'RENDER_PLAN',
+      payload: {
+        ...plan,
+        sections: [{ title: 'Notes', panels: [{ title: 'p99 latency', vizType: 'text' }] }],
+      },
+    });
+
+    expect(result.success).toBe(true);
+    const panel = scene.state.body.getVizPanels()[0];
+    expect(panel.state.options).toEqual({ mode: 'markdown', content: '_Notes for this section._' });
+    expect(panel.state.fieldConfig.defaults.unit).toBe('ms');
+    expect(sceneGraph.getData(panel).state.data).toMatchObject({ state: LoadingState.Done, series: [] });
+    expect(getQueryRunnerFor(panel)).toBeUndefined();
+    expect(panel.state.menu).toBeUndefined();
   });
 
   it('builds panels with no dropdown menu at all -- View is not read-only in practice', async () => {
@@ -90,6 +158,79 @@ describe('RENDER_PLAN', () => {
       'Throughput',
       'Errors',
     ]);
+  });
+
+  describe('rows nested inside a tab', () => {
+    const nestedPlan = {
+      ...plan,
+      layout: 'tabs' as const,
+      sections: [
+        {
+          title: 'Overview',
+          panels: [],
+          sections: [
+            { title: 'Service health', panels: [{ title: 'Request rate', vizType: 'timeseries' }] },
+            { title: 'Order flow', panels: [{ title: 'Revenue', vizType: 'timeseries' }] },
+          ],
+        },
+        { title: 'Details', panels: [{ title: 'Orders by country', vizType: 'barchart' }] },
+      ],
+    };
+
+    it('renders the nested rows and their panels instead of an empty tab', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
+
+      expect(result.success).toBe(true);
+      const [overview, details] = (scene.state.body as TabsLayoutManager).state.tabs;
+      const overviewLayout = overview.getLayout();
+      expect(overviewLayout).toBeInstanceOf(RowsLayoutManager);
+      expect((overviewLayout as RowsLayoutManager).state.rows.map((r) => r.state.title)).toEqual([
+        'Service health',
+        'Order flow',
+      ]);
+      expect(overviewLayout.getVizPanels().map((p) => p.state.title)).toEqual(['Request rate', 'Revenue']);
+      expect(details.getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(scene.state.body.getVizPanels().map((p) => p.state.key)).toEqual(['panel-1', 'panel-2', 'panel-3']);
+    });
+
+    it('cannot drag or resize the grids inside nested rows', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
+
+      const overview = (scene.state.body as TabsLayoutManager).state.tabs[0].getLayout() as RowsLayoutManager;
+      const grid = (overview.state.rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+      expect(grid.isDraggable()).toBe(false);
+      expect(grid.state.isResizable).toBe(false);
+    });
+
+    it('refuses nested rows when the plan layout is rows, and leaves the scene untouched', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: { ...nestedPlan, layout: 'rows' } });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.title).toBe('hello');
+      expect(scene.state.planning).toBeUndefined();
+    });
+
+    it('refuses a tab that has both its own panels and nested rows', async () => {
+      const { scene, client } = setup();
+      const [overview, details] = nestedPlan.sections;
+
+      const result = await client.execute({
+        type: 'RENDER_PLAN',
+        payload: {
+          ...nestedPlan,
+          sections: [{ ...overview, panels: [{ title: 'Stray panel', vizType: 'stat' }] }, details],
+        },
+      });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.planning).toBeUndefined();
+    });
   });
 
   it('renders stand-in variables alongside the plan, with generated sample values', async () => {
@@ -319,6 +460,23 @@ describe('RENDER_PLAN', () => {
     );
     expect(scene.state.$variables?.state.variables.map((v) => v.state.name)).toEqual(
       renderPlanContractFixture.variables
+    );
+  });
+
+  it('CONTRACT: accepts and renders the nested-tabs fixture payload', async () => {
+    const { scene, client } = setup();
+
+    const result = await client.execute({ type: 'RENDER_PLAN', payload: renderPlanNestedTabsContractFixture });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
+    expect((scene.state.body as TabsLayoutManager).state.tabs.map((t) => t.state.title)).toEqual(
+      renderPlanNestedTabsContractFixture.sections.map((s) => s.title)
+    );
+    expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(
+      renderPlanNestedTabsContractFixture.sections.flatMap((s) =>
+        (s.sections ?? [s]).flatMap((row) => row.panels.map((p) => p.title))
+      )
     );
   });
 });

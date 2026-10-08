@@ -430,7 +430,7 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
         <Text variant="bodySmall" color="secondary">
           {formatPrometheusDuration(Math.floor(notification.duration / 1_000_000))}
         </Text>
-        {config.featureToggles.alertingNotificationHistoryDetail && (
+        {config.unifiedAlerting.notificationHistoryEnabled && (
           <Tooltip content={t('alerting.instance-details.view-notification-tooltip', 'View full notification details')}>
             <LinkButton
               variant="secondary"

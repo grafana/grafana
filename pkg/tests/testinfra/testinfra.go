@@ -180,12 +180,14 @@ func StartGrafanaEnvWithManualCleanup(t *testing.T, grafDir, cfgPath string) (st
 		env.Cfg.DisablePruner = db.IsTestDbSQLite()
 		eDB, err := sql.ProvideResourceDB(env.Cfg, env.SQLStore)
 		require.NoError(t, err)
-		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, nil, nil)
+		kvStore, err := sql.ProvideKV(env.Cfg, eDB)
+		require.NoError(t, err)
+		storageBackend, err := sql.NewStorageBackend(env.Cfg, eDB, registerer, storageMetrics, false, kvStore, nil)
 		require.NoError(t, err)
 		require.NotNil(t, storageBackend)
-		backendService := storageBackend.(services.Service)
-		require.NotNil(t, backendService)
-		require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		if backendService, ok := storageBackend.(services.Service); ok {
+			require.NoError(t, services.StartAndAwaitRunning(context.Background(), backendService))
+		}
 
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles,
 			env.Cfg.Logger, registerer, nil, nil, nil, nil, nil, kv.Config{}, nil, storageBackend, nil, nil, nil, nil, grpcService)
@@ -545,6 +547,10 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 	_, err = grpcServerAuth.NewKey("allowed_audiences", "org:1")
 	require.NoError(t, err)
+	if opts.UnsafeGRPCServerAuthentication {
+		_, err = grpcServerAuth.NewKey("unsafe", "true")
+		require.NoError(t, err)
+	}
 
 	getOrCreateSection := func(name string) (*ini.Section, error) {
 		section, err := cfg.GetSection(name)
@@ -668,6 +674,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
 		require.NoError(t, err)
 		_, err = unifiedAlertingSection.NewKey("limit_email_to_org_members", "true")
+		require.NoError(t, err)
+	}
+	if opts.UnifiedAlertingDisableExecuteAlerts {
+		unifiedAlertingSection, err := getOrCreateSection("unified_alerting")
+		require.NoError(t, err)
+		_, err = unifiedAlertingSection.NewKey("execute_alerts", "false")
 		require.NoError(t, err)
 	}
 	if !opts.EnableLog {
@@ -905,6 +917,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		_, err = provisioningSect.NewKey("max_resources_per_repository", fmt.Sprintf("%d", opts.ProvisioningMaxResourcesPerRepository))
 		require.NoError(t, err)
 	}
+	if opts.ProvisioningKeysOnlyReList {
+		provisioningSect, err := getOrCreateSection("provisioning")
+		require.NoError(t, err)
+		_, err = provisioningSect.NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+	}
 	// Write max_repositories if explicitly set.
 	// Write when value != 10 (the default). Tests that want default (10) should explicitly set ProvisioningMaxRepositories = 10.
 	if opts.ProvisioningMaxRepositories != 10 {
@@ -960,13 +978,6 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 		apiserverSection, err := getOrCreateSection("grafana-apiserver")
 		require.NoError(t, err)
 		_, err = apiserverSection.NewKey("disable_controllers", "true")
-		require.NoError(t, err)
-	}
-
-	if opts.EnableSearchAPI {
-		apiserverSection, err := getOrCreateSection("grafana-apiserver")
-		require.NoError(t, err)
-		_, err = apiserverSection.NewKey("enable_search_api", "true")
 		require.NoError(t, err)
 	}
 
@@ -1131,6 +1142,7 @@ type GrafanaOpts struct {
 	UnifiedAlertingDisabledOrgs           []int64
 	UnifiedAlertingAllowedIntegrations    []string
 	UnifiedAlertingEmailsToOrgOnly        bool
+	UnifiedAlertingDisableExecuteAlerts   bool
 	EnableLog                             bool
 	GRPCServerAddress                     string
 	QueryRetries                          int
@@ -1188,12 +1200,14 @@ type GrafanaOpts struct {
 	MigrationParquetBuffer      bool
 	MigrationChunkMaxBytes      int64
 	EnableSQLKVBackend          bool
+	// ProvisioningKeysOnlyReList sets [provisioning] keys_only_relist, making the
+	// connection informer's periodic re-list ask storage for keys instead of whole
+	// objects. Off by default, matching the shipped default.
+	ProvisioningKeysOnlyReList bool
+
 	// EnableKeysAPI turns on the per-resource list-keys endpoints, off by default.
 	EnableKeysAPI bool
 
-	// EnableSearchAPI turns on the per-resource /search endpoints, which are off
-	// by default.
-	EnableSearchAPI bool
 	// NATSEnabled starts an embedded Core NATS bus ([nats] enabled=true,
 	// mode=embedded). Provisioning controllers then consume resource-change
 	// notifications through the NATS-backed informer instead of the apiserver
@@ -1224,6 +1238,9 @@ type GrafanaOpts struct {
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType
+
+	// Accept local test-exchanger tokens without an external signing-key service.
+	UnsafeGRPCServerAuthentication bool
 
 	// Remote alertmanager configuration
 	RemoteAlertmanagerURL string

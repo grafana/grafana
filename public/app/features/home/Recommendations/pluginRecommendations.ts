@@ -65,7 +65,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       telemetryType: 'metrics',
       id: 'connect-metrics',
       icon: 'chart-line',
-      color: (theme) => theme.visualization.getColorByName('purple'),
+      color: 'purple',
       title: t('home.recommendations.connect-metrics.title', 'Start with metrics'),
       context: t('home.recommendations.connect-metrics.context', 'The foundation of your observability stack'),
       description: t(
@@ -82,7 +82,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       pluginId: HOSTED_TRACES_APP_ID,
       appPath: '',
       icon: 'gf-traces',
-      color: (theme) => theme.visualization.getColorByName('orange'),
+      color: 'orange',
       title: t('home.recommendations.hosted-traces.title', 'Trace requests across services'),
       context: t('home.recommendations.hosted-traces.context', 'Complete the picture with distributed tracing'),
       description: t(
@@ -97,7 +97,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       pluginId: APP_OBSERVABILITY_APP_ID,
       appPath: '',
       icon: 'application-observability',
-      color: (theme) => theme.visualization.getColorByName('green'),
+      color: 'green',
       title: t('home.recommendations.application-observability.title', 'Explore your service map'),
       context: t('home.recommendations.application-observability.context', 'Built automatically from your telemetry'),
       description: t(
@@ -112,7 +112,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       pluginId: KUBERNETES_APP_ID,
       appPath: '',
       icon: 'kubernetes',
-      color: (theme) => theme.visualization.getColorByName('blue'),
+      color: 'blue',
       title: t('home.recommendations.kubernetes-monitoring.title', 'Monitor your Kubernetes fleet'),
       context: t(
         'home.recommendations.kubernetes-monitoring.context',
@@ -131,7 +131,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       telemetryType: 'logs',
       id: 'enable-logs',
       icon: 'gf-logs',
-      color: (theme) => theme.visualization.getColorByName('green'),
+      color: 'green',
       title: t('home.recommendations.enable-logs.title', 'See the story behind your metrics'),
       context: t('home.recommendations.enable-logs.context', 'Correlate spikes with the logs that explain them'),
       description: t(
@@ -146,7 +146,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       kind: 'connection',
       id: 'enable-logs-k8s',
       icon: 'gf-logs',
-      color: (theme) => theme.visualization.getColorByName('green'),
+      color: 'green',
       title: t('home.recommendations.enable-logs-k8s.title', 'Turn on logs for your clusters'),
       context: t(
         'home.recommendations.enable-logs-k8s.context',
@@ -165,7 +165,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       pluginId: SYNTHETIC_MONITORING_APP_ID,
       appPath: '/checks/choose-type',
       icon: 'globe',
-      color: (theme) => theme.visualization.getColorByName('blue'),
+      color: 'blue',
       title: t('home.recommendations.synthetic-monitoring.title', 'Monitor uptime from the outside'),
       context: t(
         'home.recommendations.synthetic-monitoring.context',
@@ -185,7 +185,7 @@ export function getRecommendationCards(): Record<RecommendedCardId, Recommendati
       pluginId: SupportedPlugin.Irm,
       appPath: '',
       icon: 'bell',
-      color: (theme) => theme.visualization.getColorByName('red'),
+      color: 'red',
       title: t('home.recommendations.irm.title', 'Get paged when it matters'),
       context: t('home.recommendations.irm.context', 'Route alerts to on-call schedules and incidents'),
       description: t(

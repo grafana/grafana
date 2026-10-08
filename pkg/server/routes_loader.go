@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -25,21 +24,30 @@ func (s *ModuleServer) provideRoutesLoader() (router.RoutesLoader, error) {
 	if err != nil {
 		return nil, fmt.Errorf("creating router unified storage client: %w", err)
 	}
-	return InitializeRoutesLoader(s.cfg, router.RoutesLoaderClients{
-		Resource: client,
-		Access:   accessClient,
-	})
+	clients := router.RoutesLoaderClients{
+		Resource:           client,
+		RESTConfigProvider: router.NewLoopbackRestConfigProvider(s.httpServerRouter),
+		Access:             accessClient,
+	}
+
+	// Only the local plugin loader needs the SQL database, which
+	// InitializeRoutesLoader opens and migrates.
+	if cloud, err := router.ProvideCloudRoutesLoader(s.cfg, clients, s.tracer, s.features, s.registerer); err != nil || cloud != nil {
+		return cloud, err
+	}
+	return InitializeRoutesLoader(s.cfg, clients)
 }
 
 func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (resource.ResourceClient, error) {
 	if !routerUsesLocalStorage(s.cfg) {
-		return unified.NewRemoteResourceClientFromConfig(s.cfg, s.features, s.tracer, s.registerer)
+		return router.NewRemoteResourceClient(s.cfg, s.tracer, s.registerer)
 	}
 
 	// A local ResourceServer exposes the write APIs and initializes a write-event
 	// watcher, so its backend must not have storage services disabled.
 	resourceServer, err := sql.NewResourceServer(sql.ServerOptions{
 		Backend:        s.storageBackend,
+		WatchExpiry:    s.watchExpiry,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
 		Reranker:       s.reranker,

@@ -241,7 +241,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
         {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
-        {config.featureToggles.alertingNotificationHistoryGlobal && (
+        {config.unifiedAlerting.notificationHistoryEnabled && (
           <LinkButton
             variant="secondary"
             size="sm"

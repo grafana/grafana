@@ -15,7 +15,7 @@ import {
 } from 'app/features/apiserver/types';
 
 import { dashboardAPIVersionResolver } from './DashboardAPIVersionResolver';
-import { type DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from './types';
 import { K8sDashboardV2API } from './v2';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardV2Spec> = {
@@ -129,6 +129,16 @@ describe('v2 dashboard API', () => {
     expect(result.metadata.annotations![AnnoKeyFolderTitle]).toBe('New Folder');
     expect(result.metadata.annotations![AnnoKeyFolderUrl]).toBe('/folder/url');
     expect(result.metadata.annotations![AnnoKeyFolder]).toBe('new-folder');
+  });
+
+  // The apiserver resolves library panel repeats while converting for v2 spec so libraryPanelRepeatUnresolved is unset.
+  it('leaves the response unmarked, so LibraryPanelBehavior treats its repeats as resolved', async () => {
+    mockGet.mockResolvedValueOnce(mockDashboardDto);
+
+    const api = new K8sDashboardV2API();
+    const result = (await api.getDashboardDTO('test')) as DashboardWithLoadInfo<DashboardV2Spec>;
+
+    expect(result.libraryPanelRepeatUnresolved).toBe(undefined);
   });
 
   it('throws an error if folder service returns an error other than 403', async () => {
@@ -258,6 +268,22 @@ describe('v2 dashboard API', () => {
         },
         { params: undefined }
       );
+    });
+
+    it('should suppress the global error toast when the caller sets showErrorAlert false', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ ...defaultSaveCommand, showErrorAlert: false });
+
+      expect(mockPut.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
+    });
+
+    it('should suppress the global error toast on create when the caller sets showErrorAlert false', async () => {
+      const api = new K8sDashboardV2API();
+
+      await api.saveDashboard({ ...defaultSaveCommand, k8s: undefined, showErrorAlert: false });
+
+      expect(mockPost.mock.calls[0][2]).toEqual({ params: undefined, showErrorAlert: false });
     });
 
     it('should handle empty string folderUid for root folder', async () => {

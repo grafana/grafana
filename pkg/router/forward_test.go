@@ -4,8 +4,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 )
 
 func forwardSpec(url string) v1alpha2.RouteBackendSpec {

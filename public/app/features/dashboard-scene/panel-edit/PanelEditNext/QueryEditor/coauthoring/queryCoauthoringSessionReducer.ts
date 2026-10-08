@@ -1,0 +1,307 @@
+import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
+import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
+import { type QueryCoauthoringRequestError, type QueryCoauthoringRequestOutcome } from './queryCoauthoringRequest';
+import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession';
+
+type SessionAction =
+  | 'accept'
+  | 'continueHere'
+  | 'continueInAssistant'
+  | 'retry'
+  | 'setFeedback'
+  | 'setIntent'
+  | 'stop'
+  | 'submit'
+  | 'promptUserGestureRef';
+
+type SessionSnapshot<T = QueryCoauthoringSessionState> = T extends QueryCoauthoringSessionState
+  ? Omit<T, SessionAction> &
+      (T['kind'] extends 'assistant-loading' | 'assistant-unavailable' | 'working' | 'context-error' | 'error'
+        ? { resume: SessionSnapshot }
+        : {})
+  : never;
+type PromptSnapshot = Extract<SessionSnapshot, { kind: 'prompt' }>;
+
+interface SessionData {
+  prompt: PromptSnapshot;
+  feedback?: QueryCoauthoringFeedbackState;
+  submittedIntents: string[];
+  iterationNudgeDismissed: boolean;
+  requestId: number;
+  isPreviewRunning: boolean;
+  activeRequestId?: number;
+}
+
+export type QueryCoauthoringReducerState = SessionSnapshot & { data: SessionData };
+export type QueryCoauthoringSessionEvent =
+  | { type: 'assistant-loading' }
+  | { type: 'assistant-unavailable' }
+  | { type: 'assistant-ready' }
+  | { type: 'invocation-cleared' }
+  | { type: 'request-invalidated' }
+  | { type: 'intent-changed'; intent: string }
+  | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
+  | {
+      type: 'invocation-updated';
+      context?: QueryEditorCoauthoringContextV1;
+      isIdentifying: boolean;
+      selectionExplanation?: string;
+    }
+  | { type: 'context-failed' }
+  | { type: 'context-retried' }
+  | { type: 'submission-started' }
+  | { type: 'submission-ready'; requestId: number; intent: string }
+  | { type: 'generation-started' }
+  | { type: 'generation-settled' }
+  | { type: 'generation-stopped' }
+  | {
+      type: 'request-completed';
+      requestId: number;
+      context: QueryEditorCoauthoringContextV1;
+      outcome: QueryCoauthoringRequestOutcome;
+    }
+  | { type: 'preview-failed'; error: QueryCoauthoringRequestError }
+  | { type: 'accept-failed'; error: QueryCoauthoringRequestError }
+  | { type: 'error-retried' }
+  | { type: 'iteration-continued' }
+  | { type: 'preview-running-changed'; isPreviewRunning: boolean };
+
+type QueryCoauthoringAssistantStatus = 'loading' | 'unavailable' | 'ready';
+
+export function createQueryCoauthoringSessionState(
+  assistantStatus: QueryCoauthoringAssistantStatus = 'ready'
+): QueryCoauthoringReducerState {
+  const prompt: PromptSnapshot = { kind: 'prompt', intent: '', isIdentifying: false, submittedIterationCount: 0 };
+  const state = {
+    ...prompt,
+    data: { prompt, submittedIntents: [], iterationNudgeDismissed: false, requestId: 0, isPreviewRunning: false },
+  };
+  return assistantStatus === 'ready'
+    ? state
+    : transition(state, { kind: `assistant-${assistantStatus}`, resume: prompt });
+}
+
+function transition(state: QueryCoauthoringReducerState, view: SessionSnapshot): QueryCoauthoringReducerState {
+  return { ...view, data: state.data };
+}
+
+// Temporary views retain the session they cover, so settling generation or retrying
+// a failed Accept restores the same proposal rather than reconstructing it from flags.
+function updateSession(
+  view: SessionSnapshot,
+  update: (view: SessionSnapshot) => SessionSnapshot,
+  through: 'assistant' | 'working' | 'context-error' | 'error' = 'context-error'
+): SessionSnapshot {
+  switch (view.kind) {
+    case 'error':
+      if (through !== 'error') {
+        return update(view);
+      }
+      break;
+    case 'context-error':
+      if (through === 'assistant' || through === 'working') {
+        return update(view);
+      }
+      break;
+    case 'working':
+      if (through === 'assistant') {
+        return update(view);
+      }
+      break;
+    case 'assistant-loading':
+    case 'assistant-unavailable':
+      break;
+    default:
+      return update(view);
+  }
+  return { ...view, resume: updateSession(view.resume, update, through) };
+}
+
+export function isCurrentQueryCoauthoringRequest(state: QueryCoauthoringReducerState, requestId: number): boolean {
+  return state.data.activeRequestId === requestId;
+}
+
+export function queryCoauthoringSessionReducer(
+  state: QueryCoauthoringReducerState,
+  event: QueryCoauthoringSessionEvent
+): QueryCoauthoringReducerState {
+  const { data: _data, ...current } = state;
+  switch (event.type) {
+    case 'assistant-loading':
+    case 'assistant-unavailable': {
+      const resume =
+        state.kind === 'assistant-loading' || state.kind === 'assistant-unavailable' ? state.resume : current;
+      return transition(state, { kind: event.type, resume });
+    }
+    case 'assistant-ready':
+      return state.kind === 'assistant-loading' || state.kind === 'assistant-unavailable'
+        ? transition(state, state.resume)
+        : state;
+    case 'invocation-cleared': {
+      const next = createQueryCoauthoringSessionState();
+      next.data.requestId = state.data.requestId + 1;
+      return transition(
+        next,
+        updateSession(current, () => next.data.prompt, 'working')
+      );
+    }
+    case 'request-invalidated':
+      return { ...state, data: { ...state.data, requestId: state.data.requestId + 1, activeRequestId: undefined } };
+    case 'intent-changed': {
+      const prompt = { ...state.data.prompt, intent: event.intent };
+      const next = { ...state, data: { ...state.data, prompt } };
+      return transition(
+        next,
+        updateSession(current, (view) => (view.kind === 'prompt' ? prompt : view))
+      );
+    }
+    case 'feedback-changed':
+      return { ...state, data: { ...state.data, feedback: event.feedback } };
+    case 'invocation-updated': {
+      const prompt = {
+        ...state.data.prompt,
+        context: event.context,
+        isIdentifying: event.isIdentifying,
+        selectionExplanation: event.selectionExplanation,
+      };
+      const next = { ...state, data: { ...state.data, prompt } };
+      return transition(
+        next,
+        updateSession(current, (view) => (view.kind === 'prompt' ? prompt : view))
+      );
+    }
+    case 'context-failed':
+      return transition(
+        state,
+        updateSession(
+          current,
+          (view) => (view.kind === 'context-error' ? view : { kind: 'context-error', resume: view }),
+          'working'
+        )
+      );
+    case 'context-retried':
+      return transition(
+        state,
+        updateSession(current, (view) => (view.kind === 'context-error' ? view.resume : view), 'working')
+      );
+    case 'submission-started': {
+      const requestId = state.data.requestId + 1;
+      return { ...state, data: { ...state.data, requestId, activeRequestId: requestId } };
+    }
+    case 'submission-ready': {
+      if (!isCurrentQueryCoauthoringRequest(state, event.requestId)) {
+        return state;
+      }
+      const prompt = {
+        ...state.data.prompt,
+        clarification: undefined,
+        submittedIterationCount: state.data.prompt.submittedIterationCount + 1,
+      };
+      const next = {
+        ...state,
+        data: { ...state.data, prompt, submittedIntents: [...state.data.submittedIntents, event.intent] },
+      };
+      return transition(
+        next,
+        updateSession(current, () => prompt)
+      );
+    }
+    case 'generation-started':
+      return transition(
+        state,
+        updateSession(
+          current,
+          (view) =>
+            view.kind === 'working' ? view : { kind: 'working', context: state.data.prompt.context, resume: view },
+          'assistant'
+        )
+      );
+    case 'generation-settled':
+      return transition(
+        state,
+        updateSession(current, (view) => (view.kind === 'working' ? view.resume : view), 'assistant')
+      );
+    case 'generation-stopped': {
+      const next = {
+        ...state,
+        data: {
+          ...state.data,
+          requestId: state.data.requestId + 1,
+          activeRequestId: undefined,
+          prompt: { ...state.data.prompt, clarification: undefined },
+        },
+      };
+      return transition(
+        next,
+        updateSession(current, () => next.data.prompt)
+      );
+    }
+    case 'request-completed': {
+      if (!isCurrentQueryCoauthoringRequest(state, event.requestId) || event.outcome.status === 'ignored') {
+        return state;
+      }
+      const next = { ...state, data: { ...state.data, activeRequestId: undefined } };
+      let view: SessionSnapshot;
+      switch (event.outcome.status) {
+        case 'clarification': {
+          const prompt = { ...state.data.prompt, intent: '', clarification: { message: event.outcome.message } };
+          next.data.prompt = prompt;
+          view =
+            prompt.submittedIterationCount >= 3 && !state.data.iterationNudgeDismissed && prompt.context
+              ? { kind: 'iteration-nudge' }
+              : prompt;
+          break;
+        }
+        case 'fallback':
+          view = { kind: 'fallback', fallback: { ...event.outcome.fallback, context: event.context } };
+          break;
+        case 'error':
+          view = { kind: 'error', error: event.outcome.error, resume: state.data.prompt };
+          break;
+        case 'proposal':
+          view = {
+            kind: 'proposal',
+            isPreviewRunning: state.data.isPreviewRunning,
+            proposal: { ...event.outcome.proposal, prepared: event.outcome.prepared, context: event.context },
+          };
+      }
+      return transition(
+        next,
+        updateSession(current, () => view)
+      );
+    }
+    case 'preview-failed':
+      return transition(
+        state,
+        updateSession(current, () => ({ kind: 'error', error: event.error, resume: state.data.prompt }))
+      );
+    case 'accept-failed':
+      return transition(
+        state,
+        updateSession(current, (view) => ({ kind: 'error', error: event.error, resume: view }))
+      );
+    case 'error-retried':
+      return transition(
+        state,
+        updateSession(current, (view) => (view.kind === 'error' ? view.resume : view))
+      );
+    case 'iteration-continued': {
+      const next = { ...state, data: { ...state.data, iterationNudgeDismissed: true } };
+      return transition(
+        next,
+        updateSession(current, () => state.data.prompt)
+      );
+    }
+    case 'preview-running-changed': {
+      const next = { ...state, data: { ...state.data, isPreviewRunning: event.isPreviewRunning } };
+      return transition(
+        next,
+        updateSession(
+          current,
+          (view) => (view.kind === 'proposal' ? { ...view, isPreviewRunning: event.isPreviewRunning } : view),
+          'error'
+        )
+      );
+    }
+  }
+}

@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"strconv"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -28,8 +30,8 @@ type subChildrenREST struct {
 	searcher resourcepb.ResourceIndexClient
 }
 
-var _ = rest.Connecter(&subChildrenREST{})
-var _ = rest.StorageMetadata(&subChildrenREST{})
+var _ rest.Connecter = (*subChildrenREST)(nil)
+var _ rest.StorageMetadata = (*subChildrenREST)(nil)
 
 func (r *subChildrenREST) New() runtime.Object {
 	return &folders.FolderList{}
@@ -96,12 +98,9 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err != nil {
+		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+			logging.FromContext(ctx).Error("Failed to search child folders", "namespace", ns.Value, "folder", name, "error", err)
 			responder.Error(err)
-			return
-		}
-		if resp.Error != nil {
-			responder.Error(resource.GetError(resp.Error))
 			return
 		}
 
@@ -149,7 +148,7 @@ func parseChildrenPaging(req *http.Request) (int64, int64, error) {
 	if v := q.Get("limit"); v != "" {
 		parsed, err := strconv.ParseInt(v, 10, 64)
 		if err != nil || parsed < 0 {
-			return 0, 0, fmt.Errorf("invalid limit: %q", v)
+			return 0, 0, apierrors.NewBadRequest(fmt.Sprintf("invalid limit: %q", v))
 		}
 		if parsed > 0 {
 			limit = parsed
@@ -163,7 +162,7 @@ func parseChildrenPaging(req *http.Request) (int64, int64, error) {
 	if v := q.Get("continue"); v != "" {
 		parsed, err := strconv.ParseInt(v, 10, 64)
 		if err != nil || parsed < 0 {
-			return 0, 0, fmt.Errorf("invalid continue token: %q", v)
+			return 0, 0, apierrors.NewBadRequest(fmt.Sprintf("invalid continue token: %q", v))
 		}
 		offset = parsed
 	}

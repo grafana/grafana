@@ -212,6 +212,8 @@ export const defaultTransformationKind = (): TransformationKind => ({
  * use the output of one transformation as the input to another transformation, etc.
  */
 export interface TransformationSpec {
+	// Unique identifier of the instance of the transformer
+	refId?: string;
 	// Disabled transformations are skipped
 	disabled?: boolean;
 	// Optional frame matcher. When missing it will be applied to all results
@@ -845,6 +847,7 @@ export interface RowsLayoutRowSpec {
 	repeat?: RowRepeatOptions;
 	layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind;
 	variables?: VariableKind[];
+	annotations?: AnnotationQueryKind[];
 }
 
 export const defaultRowsLayoutRowSpec = (): RowsLayoutRowSpec => ({
@@ -1042,6 +1045,7 @@ export interface TabsLayoutTabSpec {
 	conditionalRendering?: ConditionalRenderingGroupKind;
 	repeat?: TabRepeatOptions;
 	variables?: VariableKind[];
+	annotations?: AnnotationQueryKind[];
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({

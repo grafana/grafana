@@ -99,7 +99,7 @@ The following table describes the options you can set for a row or tab:
 | Hide row header | Toggle the switch on to hide row headers in view mode. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Rows only. |
 | Filters       | Add filters that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring the **Filter and Group by** feature, refer to the [documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-filters-and-group-by-controls). |
 | Variables       | Add variables that apply to only the panels in the grouping. For more information, refer to [Section-level variables and filters](#grouping-level-variables-and-filters). For information on configuring variables, refer to [Add variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/dashboard-controls/#add-variables). |
-| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto grid**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
+| Layout          | Select the layout. If the grouping contains another grouping, choose from **Rows** or **Tabs**. If the grouping contains panels, choose from **Custom** or **Auto**. For more information, refer to [Panel layouts](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#panel-layouts) or [Grouping layouts](#grouping-layouts). |
 | Repeat options > [Repeat by variable](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-repeat-options) | Configure the dashboard to dynamically add panels, rows, or tabs based on the value of a variable. |
 | Show / hide rules > [Panel/Row/Tab visibility](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/create-dashboard/#configure-showhide-rules) | Control whether or not panels, rows, or tabs are displayed based on variable values, a time range, or query results (panels only). |
 
@@ -237,7 +237,7 @@ To remove groupings, follow these steps:
 1. Click **Edit**.
 1. (Optional) Click the **Content outline** icon to quickly navigate to the grouping you want to remove.
 1. Hover your mouse over the relevant area to show the **Ungroup rows** or **Ungroup tabs** button, then click it.
-1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto grid** or **Convert to Custom**.
+1. If you've ungrouped panels that were previously in different panel layouts, you'll be prompted to select a common layout type for all the panels; click **Convert to Auto** or **Convert to Custom**.
 1. If the ungrouped groupings contain a mix of nested rows and tabs, you'll be prompted to select how to convert them; click **Convert to rows** or **Convert to tabs**.
 1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.

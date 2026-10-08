@@ -822,6 +822,10 @@ Set to `false` to disable the X-Content-Type-Options response header. The X-Cont
 
 #### `x_xss_protection`
 
+{{< admonition type="warning" >}}
+This setting will be removed in a future major version. Support for it has been removed by browsers. Consider disabling it in the meantime and using `content_security_policy` instead.
+{{< /admonition >}}
+
 Set to `false` to disable the X-XSS-Protection header, which tells browsers to stop pages from loading when they detect reflected cross-site scripting (XSS) attacks. The default value is `true`.
 
 #### `content_security_policy`
@@ -1147,9 +1151,13 @@ A custom error message for when users are unauthorized. Default is a key for an 
 
 Minimum wait time in milliseconds for the server lock retry mechanism. Default is `1000` (milliseconds). The server lock retry mechanism is used to prevent multiple Grafana instances from simultaneously refreshing OAuth tokens. This mechanism waits at least this amount of time before retrying to acquire the server lock.
 
-There are five retries in total, so with the default value, the total wait time (for acquiring the lock) is at least 5 seconds (the wait time between retries is calculated as random(n, n + 500)), which means that the maximum token refresh duration must be less than 5-6 seconds.
+The wait time between retries is calculated as `random(n, n * 1.5)`. Values below `100` are treated as `100`. Retries stop once [`oauth_refresh_token_server_lock_wait_budget_ms`](#oauth_refresh_token_server_lock_wait_budget_ms) is spent. A lower value lets a request continue sooner after another instance finishes refreshing the token, at the cost of more lock checks while it waits.
 
-If you experience issues with the OAuth token refresh mechanism, you can increase this value to allow more time for the token refresh to complete.
+#### `oauth_refresh_token_server_lock_wait_budget_ms`
+
+Maximum total time in milliseconds that a request waits to acquire the OAuth token refresh server lock. Default is `5000` (milliseconds). If the lock is still held by another instance when the budget is spent, the request fails.
+
+If you experience issues with the OAuth token refresh mechanism, for example because your identity provider is slow to refresh tokens, you can increase this value to allow more time for the token refresh to complete.
 
 #### `oauth_skip_org_role_update_sync`
 
@@ -2115,6 +2123,11 @@ For more information, refer to [`[rendering]`](#rendering).
 The timeout for capturing screenshots. If a screenshot cannot be captured within the timeout then the notification is sent without a screenshot.
 The maximum duration is 30 seconds. This timeout should be less than the minimum Interval of all Evaluation Groups to avoid back pressure on alert rule evaluation.
 
+#### `include_alert_history`
+
+Include alert state-history annotations in screenshots. The default is `true`.
+Set this option to `false` to skip fetching alert state-history annotations. Manual annotations remain included.
+
 #### `max_concurrent_screenshots`
 
 The maximum number of screenshots that can be taken at the same time. This option is different from `concurrent_render_request_limit` as `max_concurrent_screenshots` sets the number of concurrent screenshots that can be taken at the same time for all firing alerts where as `concurrent_render_request_limit` sets the total number of concurrent screenshots across all Grafana services.
@@ -2926,6 +2939,8 @@ Whether image rendering is allowed for dashboard previews. Requires the image re
 
 Whether to allow `http://` repository URLs together with a configured token. Because this sends the token in cleartext on every Git operation, it's rejected by default. Intended for local and development use only. It's also implicitly allowed when `app_mode = development`. Default is `false`.
 
+It also allows `http://` authorization and token endpoints on `gitOAuth` connections, which sends the OAuth client secret and tokens in cleartext.
+
 #### `allowed_git_urls`
 
 While public addresses are always allowed, to prevent server-side request forgery (SSRF), repository URLs that resolve to loopback, private (RFC 1918), link-local, or unspecified addresses are rejected by default.
@@ -2948,7 +2963,7 @@ Supported types: `local`, `git`, `github`. Grafana Enterprise additionally suppo
 
 List of enabled connection types, separated by `|`. When empty, defaults are applied by each subsystem.
 
-Supported types: `github` and `githubOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
+Supported types: `github`, `githubOAuth`, and `gitOAuth`. Grafana Enterprise additionally supports `githubEnterprise`, `githubEnterpriseOAuth`, `bitbucketOAuth`, and `gitlabOAuth`.
 
 #### `max_repositories`
 

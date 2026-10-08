@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -657,7 +657,7 @@ func (s *secureValueMetadataStorage) LeaseInactiveSecureValues(ctx context.Conte
 		s.metrics.SecureValueDeleteDuration.WithLabelValues(strconv.FormatBool(success)).Observe(time.Since(start).Seconds())
 	}()
 
-	leaseToken := uuid.NewString()
+	leaseToken := uuid.NewV4().String()
 	if err := s.acquireLeases(ctx, leaseToken, maxBatchSize); err != nil {
 		return nil, fmt.Errorf("acquiring leases for inactive secure values: %w", err)
 	}
