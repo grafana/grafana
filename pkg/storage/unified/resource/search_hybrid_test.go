@@ -1500,10 +1500,7 @@ func TestHybridSearch_RerankCallerCancellationPropagates(t *testing.T) {
 	assert.Equal(t, codes.Canceled, status.Code(err))
 }
 
-func TestHybridSearch_RerankPoolTruncatedToMaxCandidates(t *testing.T) {
-	// 200 lexical + 150 disjoint semantic hits fuse into 350 candidates —
-	// past the Vertex 200-record cap — so the scorer must only ever see
-	// maxRerankCandidates texts.
+func TestHybridSearch_ReranksFusedPoolBeforeResultLimit(t *testing.T) {
 	rows := make([][3]string, 200)
 	for i := range 200 {
 		rows[i] = [3]string{fmt.Sprintf("lex-%03d", i), fmt.Sprintf("Lex %03d", i), "f"}
@@ -1527,8 +1524,8 @@ func TestHybridSearch_RerankPoolTruncatedToMaxCandidates(t *testing.T) {
 		Key: validKey(), Query: "q", Limit: 200,
 	})
 	require.NoError(t, err)
-	assert.Len(t, scorer.gotTexts, maxRerankCandidates)
-	assert.Len(t, resp.Results, maxRerankCandidates)
+	assert.Len(t, scorer.gotTexts, len(rows)+len(sem))
+	assert.Len(t, resp.Results, 200)
 }
 
 func TestHybridSearch_RerankFallbackThenLimitTruncates(t *testing.T) {
