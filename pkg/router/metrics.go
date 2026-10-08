@@ -193,6 +193,7 @@ type routerCollector struct {
 	groups          *prometheus.Desc
 	breaker         *prometheus.Desc
 	shadowed        *prometheus.Desc
+	skipped         *prometheus.Desc
 	lastSuccess     *prometheus.Desc
 	polls           *prometheus.Desc
 	stackLookups    *prometheus.Desc
@@ -216,6 +217,8 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 			"Circuit breaker state of each group: 1 for its current state (closed, half-open or open), 0 for the others.", []string{"group", "state"}, nil),
 		shadowed: prometheus.NewDesc(name("shadowed_groups"),
 			"Number of API groups a source offered that a higher-priority source serves instead, in the latest load.", []string{"source"}, nil),
+		skipped: prometheus.NewDesc(name("skipped_backends"),
+			"Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.", []string{"source"}, nil),
 		lastSuccess: prometheus.NewDesc(name("source_last_success_timestamp_seconds"),
 			"When each route source last loaded successfully, in seconds since the Unix epoch.", []string{"source"}, nil),
 		polls: prometheus.NewDesc(name("source_polls_total"),
@@ -228,7 +231,7 @@ func newRouterCollector(router *GrafanaRouter) *routerCollector {
 func (c *routerCollector) Describe(ch chan<- *prometheus.Desc) {
 	for _, d := range []*prometheus.Desc{
 		c.ready, c.lastReconcile, c.reconciles, c.reconcileErrors, c.groups, c.breaker,
-		c.shadowed, c.lastSuccess, c.polls, c.stackLookups,
+		c.shadowed, c.skipped, c.lastSuccess, c.polls, c.stackLookups,
 	} {
 		ch <- d
 	}
@@ -285,6 +288,7 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 		}
 		ch <- prometheus.MustNewConstMetric(c.polls, prometheus.CounterValue, float64(s.Successes), s.Source, "success")
 		ch <- prometheus.MustNewConstMetric(c.polls, prometheus.CounterValue, float64(s.Failures), s.Source, "failure")
+		ch <- prometheus.MustNewConstMetric(c.skipped, prometheus.GaugeValue, float64(s.Skipped), s.Source)
 	}
 	for result, n := range status.stackLookups() {
 		ch <- prometheus.MustNewConstMetric(c.stackLookups, prometheus.CounterValue, float64(n), result)
