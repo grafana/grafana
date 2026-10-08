@@ -94,6 +94,11 @@ export interface FeatureToggles {
   */
   faroSessionReplay?: boolean;
   /**
+  * Disables creating new recorded queries while preserving access to existing queries
+  * @default false
+  */
+  recordedQueriesDisableCreate?: boolean;
+  /**
   * Support temporary security credentials in AWS plugins for Grafana Cloud customers
   * @default true
   */

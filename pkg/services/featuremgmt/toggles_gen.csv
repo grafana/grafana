@@ -20,6 +20,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-10,faroSessionReplay,experimental,@grafana/session-replay,false,false,true
 2026-05-29,queryHistory.localOnly,experimental,@grafana/datapro,false,false,true
 2026-05-29,queryHistory.recentQueriesUI,experimental,@grafana/datapro,false,false,true
+2026-10-08,recordedQueriesDisableCreate,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2023-07-06,awsDatasourcesTempCredentials,GA,@grafana/data-sources-plugins,false,false,false
 2026-07-15,awsAssumeRolePerDatasourceExternalId,experimental,@grafana/data-sources-plugins,false,false,false
 2023-07-13,mlExpressions,experimental,@grafana/alerting-squad,false,false,false

@@ -194,6 +194,15 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:         "recordedQueriesDisableCreate",
+			Description:  "Disables creating new recorded queries while preserving access to existing queries",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyFrontend: true},
+		},
+		{
 			Name:        "awsDatasourcesTempCredentials",
 			Description: "Support temporary security credentials in AWS plugins for Grafana Cloud customers",
 			Stage:       FeatureStageGeneralAvailability,
