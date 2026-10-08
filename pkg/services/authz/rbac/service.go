@@ -1029,7 +1029,7 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 
 	if t.SkipScope(req.Verb) {
 		// Resource doesn't require scope on this verb, so allow if the user has the action
-		return scopeMap[""], nil
+		return scopeMap[""] || scopeMap["*"], nil
 	}
 
 	// Create maps empty parent to general for every folder-capable resource

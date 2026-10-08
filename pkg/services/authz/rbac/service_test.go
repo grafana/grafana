@@ -2149,6 +2149,50 @@ func TestService_Check(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "should allow playlists create with wildcard-scoped playlists:write (skipped scope accepts wildcard)",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "create",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:write", Scope: "playlists:*", Kind: "playlists", Attribute: "*"},
+			},
+			expected: true,
+		},
+		{
+			name: "should allow named playlists update with unscoped playlists:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "update",
+				Name:      "pl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:write", Scope: ""},
+			},
+			expected: true,
+		},
+		{
+			name: "should deny named playlists update without playlists:write",
+			req: &authzv1.CheckRequest{
+				Namespace: "org-12",
+				Subject:   "user:test-uid",
+				Group:     "playlist.grafana.app",
+				Resource:  "playlists",
+				Verb:      "update",
+				Name:      "pl1",
+			},
+			permissions: []accesscontrol.Permission{
+				{Action: "playlists:read", Scope: ""},
+			},
+			expected: false,
+		},
+		{
 			name: "should allow datasources update via datasources:edit action set scoped to uid",
 			req: &authzv1.CheckRequest{
 				Namespace: "org-12",
