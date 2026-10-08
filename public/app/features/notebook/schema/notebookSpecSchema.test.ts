@@ -118,10 +118,6 @@ describe('validateNotebookSpec', () => {
     expect(parsed.spec.data.spec.transformations[0].spec.refId).toBe('T1');
   });
 
-  // A cell's own time-range lock serializes as queryOptions.timeFrom/.timeTo (see
-  // scene/layout-notebook/cellTimeRange.ts). queryOptionsSpecSchema once listed timeFrom but not
-  // timeTo, so Zod's default "strip unknown keys" behavior silently dropped timeTo on every
-  // APPLY_NOTEBOOK_SPEC call with validate: true, one-sidedly undoing the cell's lock.
   it("keeps both ends of a cell's own time range on a panel element", () => {
     const result = validateNotebookSpec({
       ...spec(),
