@@ -191,7 +191,7 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         {
           resourceQuery: /text-panel-runtime/,
           type: 'javascript/auto',
-          use: path.resolve(grafanaRoot, 'scripts/webpack/loaders/textPanelRuntime.cjs'),
+          use: path.resolve(grafanaRoot, 'scripts/rspack/loaders/textPanelRuntime.cjs'),
         },
         createSwcRule({ reactRefresh: hmr }),
         cssRule,
