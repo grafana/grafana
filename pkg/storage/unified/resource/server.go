@@ -1755,6 +1755,7 @@ func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *reso
 //nolint:gocyclo // Temporary list-path instrumentation
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
+	ctx, bodyStats := withListBodyStats(ctx)
 	path := listPathUnknown
 	selectorType := listSelectorType(req)
 	requestedLimit := int64(0)
@@ -1765,6 +1766,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	defer func() {
 		setListRequestPath(ctx, path)
 		annotateListRequest(span, path, selectorType, requestedLimit, req, rsp)
+		s.recordListBodyStats(span, bodyStats, path, rsp, err)
 		span.End()
 	}()
 
@@ -1998,6 +2000,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 			// If the page is already full, this extra authorized item confirms
 			// there are more results. Set the continue token and stop.
 			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+				setListStopReason(ctx, s.listLimitStopReason(req, rsp, pageBytes))
 				nextToken = lastContinueToken
 				break
 			}
@@ -2176,6 +2179,9 @@ func (s *server) listAuthorizedValuesPage(
 				if err := keyIter.Error(); err != nil {
 					return "", err
 				}
+				if nextToken != "" {
+					setListStopReason(ctx, s.listLimitStopReason(req, rsp, pageBytes))
+				}
 				return nextToken, nil
 			}
 		}
@@ -2235,7 +2241,17 @@ func continueTokenAfterFetchedValue(
 }
 
 func (s *server) listPageFull(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) bool {
-	return (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes
+	return s.listLimitStopReason(req, rsp, pageBytes) != ""
+}
+
+func (s *server) listLimitStopReason(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) string {
+	if pageBytes >= s.maxPageSizeBytes {
+		return listStopByteLimit
+	}
+	if req.Limit > 0 && len(rsp.Items) >= int(req.Limit) {
+		return listStopCountLimit
+	}
+	return ""
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
