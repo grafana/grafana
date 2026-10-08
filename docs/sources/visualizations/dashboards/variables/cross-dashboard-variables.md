@@ -26,8 +26,7 @@ You can scope cross-dashboard variables in two ways:
 The **Dashboards > Variables** page lists cross-dashboard variables, showing which ones are available globally or by folder.
 In the following image, there are variables in "Core metrics" and "Grafana Cloud" folders and then a number of variables that aren't in any folders; these ones are global:
 
-![Cross-dashboard variables page](/media/docs/grafana/dashboards/screenshot-x-dash-variables-v13.3.png)
-<!--TODO: Update screenshot -->
+![Cross-dashboard variables page](/media/docs/grafana/dashboards/screenshot-cross-dash-variables-v13.3.png)
 
 When you add cross-dashboard variables to a dashboard, only the ones that share the same scope as your dashboard are available for you to select.
 
@@ -35,8 +34,7 @@ For example, in the preceding image, there was a variable in the "Core metrics" 
 The following image shows a dashboard in the "Core metrics" folder.
 As a result, the variable in the "Core metrics" folder is available to that dashboard, as well as all the global variables:
 
-![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-x-dash-variables-sidebar-v13.3.png)
-<!--TODO: Update screenshot -->
+![Available cross-dashboard variables in dashboard sidebar](/media/docs/grafana/dashboards/screenshot-cross-dash-variables-sidebar-v13.3.png)
 
 Variables in other folders aren't available to that dashboard.
 
@@ -86,8 +84,7 @@ To add cross-dashboard variables to a dashboard, follow these steps:
 1. Click **Global or folder variable**.
 1. Select the variables you want to add to the dashboard:
 
-   ![Cross-dashboard variable selected and added above dashboard](/media/docs/grafana/dashboards/screenshot-x-dash-variable-selected-v13.3.png)
-   <!--TODO: Update screenshot -->
+   ![Cross-dashboard variable selected and added above dashboard](/media/docs/grafana/dashboards/screenshot-cross-dash-variable-selected-v13.3.png)
 
    To add every global variable available, select **All global** and to add every folder variable available, select **All folder**.
 
