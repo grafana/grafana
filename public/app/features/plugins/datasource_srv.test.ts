@@ -10,7 +10,15 @@ import {
   DataSourcePlugin,
   type ScopedVars,
 } from '@grafana/data';
-import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import {
+  type DataSourceSrv,
+  type GetDataSourceListFilters,
+  type MonitoringLogger,
+  RuntimeDataSource,
+  setDataSourceSrv,
+  setTemplateSrv,
+  type TemplateSrv,
+} from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
   setDataSourceInstanceSettings,
@@ -18,9 +26,13 @@ import {
 } from '@grafana/runtime/internal';
 import {
   type GetDataSourceInstanceListFilters,
+  getDataSourceInstance,
   getDataSourceInstanceList,
+  getDataSourceInstanceListItem,
   getDataSourceInstanceSettings,
+  registerRuntimeDataSourceInstance,
 } from '@grafana/runtime/unstable';
+import { mockLogger } from '@grafana/test-utils/unstable';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 
@@ -709,6 +721,141 @@ describe('datasource_srv', () => {
           })
         ).toThrow();
       });
+    });
+  });
+
+  describe('runtime data sources shared with the async APIs', () => {
+    const regularSettings = {
+      Regular: { type: 'test-db', name: 'Regular', uid: 'uid-regular', meta: { id: 'test-db', metrics: true } },
+    };
+    const bootData = () => structuredClone(regularSettings) as unknown as Record<string, DataSourceInstanceSettings>;
+
+    type Register = (srv: DatasourceSrv, dataSource: RuntimeDataSource) => void;
+    const viaLegacy: Register = (srv, dataSource) => srv.registerRuntimeDataSource({ dataSource });
+    const viaAsync: Register = (_srv, dataSource) => registerRuntimeDataSourceInstance({ dataSource });
+
+    let srv: DatasourceSrv;
+    let logger: MonitoringLogger;
+
+    beforeEach(() => {
+      importDataSourceMock.mockClear();
+      setDataSourceInstanceSettings(bootData(), 'Regular');
+      srv = new DatasourceSrv(templateSrv);
+      srv.init(bootData(), 'Regular');
+      // Without a legacy service the fallbacks are inert, so the no-warning assertions would prove nothing.
+      setDataSourceSrv(srv);
+      logger = mockLogger('grafana/runtime.plugins.datasource');
+    });
+
+    afterEach(() => {
+      setDataSourceSrv(undefined as unknown as DataSourceSrv);
+    });
+
+    function expectNoFallbacksOrErrors() {
+      expect(logger.logWarning).not.toHaveBeenCalled();
+      expect(logger.logError).not.toHaveBeenCalled();
+    }
+
+    it('resolves a legacy registration to the same instance through getDataSourceInstance', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      srv.registerRuntimeDataSource({ dataSource: runtime });
+
+      expect(await getDataSourceInstance(runtime.uid)).toBe(runtime);
+      expectNoFallbacksOrErrors();
+    });
+
+    it('resolves a legacy registration through the async settings and list-item lookups', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      srv.registerRuntimeDataSource({ dataSource: runtime });
+
+      expect(await getDataSourceInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(await getDataSourceInstanceListItem(runtime.uid)).toMatchObject({
+        uid: 'uid-runtime',
+        type: 'grafana-runtime-datasource',
+      });
+      expectNoFallbacksOrErrors();
+    });
+
+    it('resolves an async registration to the same instance through the legacy service', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
+
+      expect(await srv.get(runtime.uid)).toBe(runtime);
+      expect(await srv.get(runtime.getRef())).toBe(runtime);
+      expect(srv.getInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(srv.getDataSourceSettingsByUid(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(importDataSourceMock).not.toHaveBeenCalled();
+    });
+
+    it('resolves a template variable that interpolates to an async-registered uid', async () => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      registerRuntimeDataSourceInstance({ dataSource: runtime });
+      const scopedVars = { datasource: { text: 'Runtime', value: 'uid-runtime' } };
+
+      expect(srv.getInstanceSettings('${datasource}', scopedVars)?.rawRef).toEqual(runtime.getRef());
+      expect(await srv.get('${datasource}', scopedVars)).toBe(runtime);
+    });
+
+    it('leaves runtime data sources out of both list APIs', async () => {
+      srv.registerRuntimeDataSource({
+        dataSource: new TestRuntimeDataSource('grafana-runtime-datasource', 'via-legacy'),
+      });
+      registerRuntimeDataSourceInstance({
+        dataSource: new TestRuntimeDataSource('grafana-runtime-datasource', 'via-async'),
+      });
+
+      const legacyUids = srv.getList({ all: true }).map((ds) => ds.uid);
+      const asyncUids = (await getDataSourceInstanceList({ all: true })).map((ds) => ds.uid);
+
+      expect(legacyUids).toContain('uid-regular');
+      expect(asyncUids).toContain('uid-regular');
+      for (const uids of [legacyUids, asyncUids]) {
+        expect(uids).not.toContain('via-legacy');
+        expect(uids).not.toContain('via-async');
+      }
+    });
+
+    it.each([
+      ['legacy', viaLegacy],
+      ['async', viaAsync],
+    ])('keeps a %s registration visible to both APIs across reload and init', async (_api, register) => {
+      const runtime = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      register(srv, runtime);
+      getBackendSrvGetMock.mockResolvedValueOnce({ datasources: bootData(), defaultDatasource: 'Regular' });
+
+      await srv.reload();
+      srv.init(bootData(), 'Regular');
+
+      expect(await srv.get(runtime.uid)).toBe(runtime);
+      expect(srv.getInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expect(await getDataSourceInstance(runtime.uid)).toBe(runtime);
+      expect(await getDataSourceInstanceSettings(runtime.uid)).toBe(runtime.instanceSettings);
+      expectNoFallbacksOrErrors();
+    });
+
+    it.each([
+      ['legacy', 'legacy', viaLegacy, viaLegacy],
+      ['legacy', 'async', viaLegacy, viaAsync],
+      ['async', 'legacy', viaAsync, viaLegacy],
+      ['async', 'async', viaAsync, viaAsync],
+    ])('throws on a duplicate uid registered via %s then %s', (_first, _second, registerFirst, registerSecond) => {
+      const first = new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime');
+      registerFirst(srv, first);
+
+      expect(() => registerSecond(srv, new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-runtime'))).toThrow(
+        /already been registered/
+      );
+      expect(srv.getInstanceSettings('uid-runtime')).toBe(first.instanceSettings);
+    });
+
+    it.each([
+      ['legacy', viaLegacy],
+      ['async', viaAsync],
+    ])('throws when a %s registration reuses the uid of a regular data source', (_api, register) => {
+      expect(() => register(srv, new TestRuntimeDataSource('grafana-runtime-datasource', 'uid-regular'))).toThrow(
+        /already been registered/
+      );
+      expect(srv.getInstanceSettings('uid-regular')?.name).toBe('Regular');
     });
   });
 
