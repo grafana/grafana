@@ -92,10 +92,10 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 // generic subresources (/search, /trash), so those routes are dropped.
 func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 	manifest := testManifest(t)
-	operation := manifest.Versions[1].Routes.Namespaced["/foobar"]
-	manifest.Versions[1].Routes.Namespaced["/testkinds/search"] = operation
-	manifest.Versions[1].Routes.Namespaced["/app"] = operation
-	manifest.Versions[1].Routes.Cluster["/testkinds"] = operation
+	operation := manifest.Versions[1].Routes.Namespaced["/foobar"]          //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Namespaced["/testkinds/search"] = operation //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Namespaced["/app"] = operation              //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Cluster["/testkinds"] = operation           //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 
 	b := &manifestBuilder{
 		group:      manifest.Group,
@@ -132,8 +132,8 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
 	manifest := testManifest(t)
 	op := &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "unservable"}}
-	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}
-	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op}
+	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}                  //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 	manifest.Versions[1].Kinds[0].Routes["/kindhead"] = spec3.PathProps{Head: op}
 
 	b := &manifestBuilder{
@@ -172,7 +172,7 @@ func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
 
 	// The loaded manifest is shared with the rest of the server, so dropping a
 	// method must not edit it.
-	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Options)
+	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Options) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 }
 
 // A plugin without a manifest has no custom routes at all.
