@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -698,7 +699,7 @@ func TestRepositoryController_process_UnhealthyRepositoryStatusUpdate(t *testing
 			rc := &RepositoryController{}
 
 			// Determine sync status ops (this is a pure function, no mocks needed)
-			syncOps := rc.determineSyncStatusOps(tc.repo, nil, tc.healthStatus)
+			syncOps := rc.determineSyncStatusOps(tc.repo, nil, tc.healthStatus, false)
 
 			// Verify expectations
 			hasUnhealthyOp := false
@@ -917,6 +918,372 @@ func TestRepositoryController_shouldResync_StaleSyncStatus(t *testing.T) {
 
 			// Verify
 			assert.Equal(t, tc.expectedResync, result, tc.description)
+		})
+	}
+}
+
+type intervalRepository struct {
+	repository.Repository
+	*repository.MockVersioned
+}
+
+var _ repository.Versioned = (*intervalRepository)(nil)
+
+func newIntervalController(t *testing.T, state provisioning.JobState) (*RepositoryController, *provisioning.Repository, *intervalRepository, cache.Indexer, *capturePatcher) {
+	t.Helper()
+	obj := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "repo", Namespace: "default", Generation: 1},
+		Spec: provisioning.RepositorySpec{
+			Type: provisioning.GitRepositoryType,
+			Sync: provisioning.SyncOptions{Enabled: true, IntervalSeconds: 300},
+		},
+		Status: provisioning.RepositoryStatus{
+			ObservedGeneration: 1,
+			Health:             provisioning.HealthStatus{Healthy: true, Checked: time.Now().UnixMilli()},
+			Sync: provisioning.SyncStatus{
+				State: state, JobID: "previous-job", LastRef: "same-ref",
+				Started:  time.Now().Add(-11 * time.Minute).UnixMilli(),
+				Finished: time.Now().Add(-10 * time.Minute).UnixMilli(),
+			},
+		},
+	}
+	if state == provisioning.JobStateWarning {
+		obj.Status.Sync.Message = []string{"dashboard is managed by another repository"}
+	}
+	indexer := cache.NewIndexer(cache.MetaNamespaceKeyFunc, cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc})
+	require.NoError(t, indexer.Add(obj))
+	getter := informer.NewCachedRepositoryGetter(listers.NewRepositoryLister(indexer))
+	patcher := &capturePatcher{}
+	baseRepo := repository.NewMockRepository(t)
+	baseRepo.On("Config").Return(obj)
+	baseRepo.On("Test", mock.Anything).Return(&provisioning.TestResults{Success: true, Code: http.StatusOK}, nil)
+	repo := &intervalRepository{baseRepo, repository.NewMockVersioned(t)}
+	factory := repository.NewMockFactory(t)
+	factory.On("Build", mock.Anything, mock.Anything).Return(repo, nil)
+	healthMetrics := NewMockHealthMetricsRecorder(t)
+	healthMetrics.On("RecordHealthCheck", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return()
+	rc := &RepositoryController{
+		repos:             getter,
+		quotaGetter:       quotas.NewFixedQuotaGetter(provisioning.QuotaStatus{}),
+		quotaChecker:      NewRepositoryQuotaChecker(getter),
+		healthChecker:     NewRepositoryHealthChecker(patcher, repository.NewTester(), healthMetrics),
+		statusPatcher:     patcher,
+		repoFactory:       factory,
+		jobs:              &mockJobsQueueStore{MockQueue: jobs.NewMockQueue(t), MockStore: jobs.NewMockStore(t)},
+		logger:            logging.DefaultLogger,
+		tracer:            tracing.InitializeTracerForTest(),
+		incrementalPolicy: repository.NewIncrementalSyncPolicy(false, 1000),
+	}
+	return rc, obj, repo, indexer, patcher
+}
+
+func TestRepositoryController_process_IntervalNoop(t *testing.T) {
+	for _, state := range []provisioning.JobState{provisioning.JobStateSuccess, provisioning.JobStateWarning} {
+		t.Run(string(state), func(t *testing.T) {
+			rc, obj, repo, indexer, patcher := newIntervalController(t, state)
+			original := obj.DeepCopy()
+			repo.MockVersioned.On("LatestRef", mock.Anything).Return(obj.Status.Sync.LastRef, nil).Once()
+			before := time.Now().UnixMilli()
+
+			err := rc.process("default/repo")
+			require.NoError(t, err)
+			op, found := patcher.findPatchOp("/status/sync/lastChecked")
+			require.True(t, found, "an unchanged ref must reset the sync interval")
+			require.Equal(t, "add", op["op"])
+			lastChecked, ok := op["value"].(int64)
+			require.True(t, ok)
+			assert.GreaterOrEqual(t, lastChecked, before)
+			assert.LessOrEqual(t, lastChecked, time.Now().UnixMilli())
+			for _, op := range patcher.ops {
+				if strings.HasPrefix(op["path"].(string), "/status/sync") {
+					assert.Equal(t, "/status/sync/lastChecked", op["path"], "preserve the previous job's status and warnings")
+				}
+			}
+			assert.Equal(t, original, obj, "the cached repository must not be mutated")
+
+			updated := obj.DeepCopy()
+			updated.Status.Sync.LastChecked = lastChecked
+			require.NoError(t, indexer.Update(updated))
+			assert.False(t, rc.shouldResync(context.Background(), updated))
+			patcher.ops = nil
+			err = rc.process("default/repo")
+			require.NoError(t, err)
+			assert.Empty(t, patcher.ops)
+			repo.AssertNumberOfCalls(t, "LatestRef", 1)
+
+			updated = updated.DeepCopy()
+			updated.Status.Sync.LastChecked = time.Now().Add(-10 * time.Minute).UnixMilli()
+			require.NoError(t, indexer.Update(updated))
+			assert.True(t, rc.shouldResync(context.Background(), updated))
+			repo.MockVersioned.On("LatestRef", mock.Anything).Return(obj.Status.Sync.LastRef, nil).Once()
+			err = rc.process("default/repo")
+			require.NoError(t, err)
+			repo.AssertNumberOfCalls(t, "LatestRef", 2)
+			_, found = patcher.findPatchOp("/status/sync/lastChecked")
+			assert.True(t, found)
+		})
+	}
+}
+
+func TestRepositoryController_shouldResync_LastChecked(t *testing.T) {
+	old := time.Now().Add(-10 * time.Minute).UnixMilli()
+	recent := time.Now().Add(-time.Minute).UnixMilli()
+	for _, tt := range []struct {
+		name        string
+		sync        provisioning.SyncStatus
+		disabled    bool
+		minInterval time.Duration
+		want        bool
+	}{
+		{
+			name: "missing lastChecked uses finished",
+			sync: provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: old},
+			want: true,
+		},
+		{
+			name: "recent finished without lastChecked",
+			sync: provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: recent},
+		},
+		{
+			name: "recent unchanged ref check",
+			sync: provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: recent},
+		},
+		{
+			name: "sync completed after the last check",
+			sync: provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: recent, LastChecked: old},
+		},
+		{
+			name: "interval expired since both timestamps",
+			sync: provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: old},
+			want: true,
+		},
+		{
+			name: "warning uses the same interval",
+			sync: provisioning.SyncStatus{State: provisioning.JobStateWarning, Finished: old, LastChecked: recent},
+		},
+		{
+			name:        "system minimum interval still applies",
+			sync:        provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: old},
+			minInterval: time.Hour,
+		},
+		{
+			name:     "disabled sync stays disabled",
+			sync:     provisioning.SyncStatus{State: provisioning.JobStateSuccess, Finished: old, LastChecked: old},
+			disabled: true,
+		},
+		{
+			name: "working job prevents resync",
+			sync: provisioning.SyncStatus{State: provisioning.JobStateWorking, Finished: old, LastChecked: old},
+		},
+		{
+			name: "long pending job prevents resync",
+			sync: provisioning.SyncStatus{State: provisioning.JobStatePending, Finished: old, LastChecked: old},
+		},
+		{
+			name: "lastChecked does not replace an initial sync",
+			sync: provisioning.SyncStatus{LastChecked: old},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			rc := &RepositoryController{minSyncInterval: tt.minInterval}
+			obj := &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{Sync: provisioning.SyncOptions{
+					Enabled: !tt.disabled, IntervalSeconds: 300,
+				}},
+				Status: provisioning.RepositoryStatus{Sync: tt.sync},
+			}
+			assert.Equal(t, tt.want, rc.shouldResync(context.Background(), obj))
+		})
+	}
+}
+
+func TestRepositoryController_shouldResync_MissingJobUsesFinished(t *testing.T) {
+	for _, state := range []provisioning.JobState{provisioning.JobStatePending, provisioning.JobStateWorking} {
+		t.Run(string(state), func(t *testing.T) {
+			store := jobs.NewMockStore(t)
+			store.On("Get", mock.Anything, "default", "missing-job").
+				Return(nil, apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, "missing-job")).Twice()
+			rc := &RepositoryController{jobs: &mockJobsQueueStore{MockStore: store}}
+			obj := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Namespace: "default"},
+				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: true, IntervalSeconds: 300}},
+				Status: provisioning.RepositoryStatus{Sync: provisioning.SyncStatus{
+					State: state, JobID: "missing-job",
+					Finished:    time.Now().Add(-time.Hour).UnixMilli(),
+					LastChecked: time.Now().UnixMilli(),
+				}},
+			}
+
+			assert.True(t, rc.shouldResync(context.Background(), obj), "a recent interval check must not delay missing-job recovery")
+			obj.Status.Sync.Finished = time.Now().UnixMilli()
+			assert.False(t, rc.shouldResync(context.Background(), obj), "missing-job recovery must respect the interval since the last completed sync")
+		})
+	}
+}
+
+func TestRepositoryController_process_IntervalSyncJob(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		latestErr   error
+		compareErr  error
+		incremental bool
+	}{
+		{name: "changed ref", incremental: true},
+		{name: "latest ref unavailable", latestErr: assert.AnError, incremental: true},
+		{name: "comparison unavailable", compareErr: assert.AnError},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			rc, obj, repo, _, patcher := newIntervalController(t, provisioning.JobStateSuccess)
+			repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", tt.latestErr).Once()
+			if tt.latestErr == nil {
+				repo.MockVersioned.On("CompareFiles", mock.Anything, obj.Status.Sync.LastRef, "new-ref").
+					Return([]repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "dashboard.json"}}, tt.compareErr).Once()
+			}
+			rc.jobs.(*mockJobsQueueStore).MockQueue.On("Insert", mock.Anything, obj.Namespace, provisioning.JobSpec{
+				Repository: obj.Name,
+				Action:     provisioning.JobActionPull,
+				Pull:       &provisioning.SyncJobOptions{Incremental: tt.incremental},
+			}).Return(&provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "new-job"}}, nil).Once()
+
+			err := rc.process("default/repo")
+			require.NoError(t, err)
+			checkOp, found := patcher.findPatchOp("/status/sync/lastChecked")
+			require.True(t, found, "every eligible interval check must refresh the timestamp, including failed ref lookups")
+			assert.Equal(t, "add", checkOp["op"])
+			assert.Greater(t, checkOp["value"].(int64), obj.Status.Sync.Finished)
+			op, found := patcher.findPatchOp("/status/sync/state")
+			require.True(t, found)
+			assert.Equal(t, provisioning.JobStatePending, op["value"])
+		})
+	}
+}
+
+func TestRepositoryController_process_IntervalSyncJobCreationFailure(t *testing.T) {
+	rc, obj, repo, indexer, patcher := newIntervalController(t, provisioning.JobStateSuccess)
+	repo.MockVersioned.On("LatestRef", mock.Anything).Return("new-ref", nil).Twice()
+	repo.MockVersioned.On("CompareFiles", mock.Anything, obj.Status.Sync.LastRef, "new-ref").
+		Return([]repository.VersionedFileChange{{Action: repository.FileActionUpdated, Path: "dashboard.json"}}, nil).Twice()
+	jobStore := rc.jobs.(*mockJobsQueueStore)
+	jobSpec := provisioning.JobSpec{
+		Repository: obj.Name,
+		Action:     provisioning.JobActionPull,
+		Pull:       &provisioning.SyncJobOptions{Incremental: true},
+	}
+	jobStore.MockQueue.On("Insert", mock.Anything, obj.Namespace, jobSpec).
+		Return(nil, assert.AnError).Once()
+	jobStore.MockQueue.On("Insert", mock.Anything, obj.Namespace, jobSpec).
+		Return(&provisioning.Job{ObjectMeta: metav1.ObjectMeta{Name: "new-job"}}, nil).Once()
+	jobStore.MockStore.On("Get", mock.Anything, obj.Namespace, obj.Status.Sync.JobID).
+		Return(nil, apierrors.NewNotFound(schema.GroupResource{Resource: "jobs"}, obj.Status.Sync.JobID)).Once()
+
+	err := rc.process("default/repo")
+	require.ErrorIs(t, err, assert.AnError)
+	checkOp, found := patcher.findPatchOp("/status/sync/lastChecked")
+	require.True(t, found, "the interval check attempt is recorded even if job creation fails")
+	stateOp, found := patcher.findPatchOp("/status/sync/state")
+	require.True(t, found)
+	startedOp, found := patcher.findPatchOp("/status/sync/started")
+	require.True(t, found)
+
+	updated := obj.DeepCopy()
+	updated.Status.Sync.LastChecked = checkOp["value"].(int64)
+	updated.Status.Sync.State = stateOp["value"].(provisioning.JobState)
+	updated.Status.Sync.Started = startedOp["value"].(int64)
+	require.NoError(t, indexer.Update(updated))
+	patcher.ops = nil
+
+	err = rc.process("default/repo")
+	require.NoError(t, err)
+	repo.AssertNumberOfCalls(t, "LatestRef", 2)
+	jobStore.MockQueue.AssertNumberOfCalls(t, "Insert", 2)
+}
+
+func TestRepositoryController_FullSyncLastChecked(t *testing.T) {
+	for _, tt := range []struct {
+		name        string
+		initial     bool
+		specChanged bool
+		recovered   bool
+		unversioned bool
+		interval    bool
+	}{
+		{name: "initial sync", initial: true},
+		{name: "spec changed during interval", specChanged: true, interval: true},
+		{name: "health recovered during interval", recovered: true, interval: true},
+		{name: "unversioned repository on interval", unversioned: true, interval: true},
+		{name: "spec changed before interval", specChanged: true},
+		{name: "health recovered before interval", recovered: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: true}},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health:             provisioning.HealthStatus{Healthy: !tt.recovered},
+				},
+			}
+			if tt.initial {
+				obj.Status.ObservedGeneration = 0
+			}
+			if tt.specChanged {
+				obj.Generation++
+			}
+			var repo repository.Repository = repository.NewMockRepository(t)
+			if !tt.unversioned {
+				repo = &intervalRepository{repo, repository.NewMockVersioned(t)}
+			}
+			rc := &RepositoryController{tracer: tracing.InitializeTracerForTest()}
+			health := provisioning.HealthStatus{Healthy: true}
+			before := time.Now().UnixMilli()
+
+			opts := rc.determineSyncStrategy(context.Background(), obj, repo, tt.interval, false, health)
+			require.Equal(t, &provisioning.SyncJobOptions{}, opts)
+			patcher := &capturePatcher{ops: rc.determineSyncStatusOps(obj, opts, health, tt.interval)}
+			op, found := patcher.findPatchOp("/status/sync/lastChecked")
+			require.True(t, found, "every controller sync-job attempt should advance the timestamp")
+			assert.GreaterOrEqual(t, op["value"].(int64), before)
+			assert.LessOrEqual(t, op["value"].(int64), time.Now().UnixMilli())
+		})
+	}
+}
+
+func TestRepositoryController_determineSyncStrategy_SkippedInterval(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		enabled  bool
+		blocked  bool
+		healthy  bool
+		interval bool
+	}{
+		{name: "disabled", healthy: true, interval: true},
+		{name: "blocked", enabled: true, blocked: true, healthy: true, interval: true},
+		{name: "unhealthy", enabled: true, interval: true},
+		{name: "interval not due", enabled: true, healthy: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{Generation: 1},
+				Spec:       provisioning.RepositorySpec{Sync: provisioning.SyncOptions{Enabled: tt.enabled}},
+				Status: provisioning.RepositoryStatus{
+					ObservedGeneration: 1,
+					Health:             provisioning.HealthStatus{Healthy: tt.healthy},
+				},
+			}
+			repo := &intervalRepository{repository.NewMockRepository(t), repository.NewMockVersioned(t)}
+			rc := &RepositoryController{tracer: tracing.InitializeTracerForTest()}
+			shouldResync := tt.interval && tt.enabled
+			health := obj.Status.Health
+			if tt.blocked {
+				health.Healthy = false
+			}
+
+			opts := rc.determineSyncStrategy(context.Background(), obj, repo, shouldResync, tt.blocked, health)
+			assert.Nil(t, opts)
+			ops := rc.determineSyncStatusOps(obj, opts, health, shouldResync)
+			for _, op := range ops {
+				assert.NotEqual(t, "/status/sync/lastChecked", op["path"], "skipping a check must not reset the sync interval")
+			}
 		})
 	}
 }
