@@ -45,6 +45,12 @@ func perKindFilterLeaf(field, op string, values ...string) searchv0.WhereNode {
 	}
 }
 
+func perKindRegexLeaf(field, pattern string, negate bool) searchv0.WhereNode {
+	return searchv0.WhereNode{
+		Regex: &searchv0.RegexPredicate{Field: field, Pattern: pattern, Negate: negate},
+	}
+}
+
 func perKindTextLeaf(value string) searchv0.WhereNode {
 	return searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: value}}
 }
@@ -179,6 +185,55 @@ func TestPerKindValidateQuery_futureWhereNodes(t *testing.T) {
 		node := &searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: "cpu", Boost: &boost}}
 		assert.Equal(t, []string{"where.text.boost"}, validate(t, whereQuery(node)))
 	})
+}
+
+func TestPerKindValidateQuery_regexLeaf(t *testing.T) {
+	t.Run("accepts a labels regex at the top level and inside and", func(t *testing.T) {
+		regex := perKindRegexLeaf(fieldLabels, "team=a|b", false)
+		assert.Empty(t, validate(t, whereQuery(&regex)))
+		assert.Empty(t, validate(t, whereQuery(perKindAndNode(
+			perKindTextLeaf("cpu"),
+			perKindFilterLeaf(fieldLabels, perKindFilterOperatorIn, "env=prod"),
+			regex,
+			perKindRegexLeaf(fieldLabels, "severity=crit.*", true),
+		))))
+	})
+
+	t.Run("accepts a labels regex on recording rules", func(t *testing.T) {
+		regex := perKindRegexLeaf(fieldLabels, "team=a", false)
+		assert.Empty(t, validateFor(t, recordingRuleKind(t), whereQuery(&regex)))
+	})
+
+	t.Run("rejects a node that also sets a filter", func(t *testing.T) {
+		// Counting only the filter would answer the query without its regex.
+		node := perKindFilterLeaf(fieldLabels, perKindFilterOperatorIn, "team=a")
+		node.Regex = &searchv0.RegexPredicate{Field: fieldLabels, Pattern: "env=.*"}
+		assert.Equal(t, []string{"where"}, validate(t, whereQuery(&node)))
+	})
+
+	for name, tc := range map[string]struct {
+		field   string
+		pattern string
+		path    string
+	}{
+		"missing field":                {"", "team=a", "where.regex.field"},
+		"unknown field":                {"nope", "team=a", "where.regex.field"},
+		"field not filterable":         {fieldAnnotations, "team=a", "where.regex.field"},
+		"filterable field not labels":  {fieldReceiver, "a.*", "where.regex.field"},
+		"lowercased title":             {fieldTitle, "CPU.*", "where.regex.field"},
+		"missing pattern":              {fieldLabels, "", "where.regex.pattern"},
+		"no literal key":               {fieldLabels, "team", "where.regex.pattern"},
+		"empty key":                    {fieldLabels, "=a", "where.regex.pattern"},
+		"lazy quantifier":              {fieldLabels, "team=crit.*?", "where.regex.pattern"},
+		"word boundary":                {fieldLabels, `team=\bcrit`, "where.regex.pattern"},
+		"case folding after the start": {fieldLabels, "team=a(?i)b", "where.regex.pattern"},
+		"invalid syntax":               {fieldLabels, "team=(a", "where.regex.pattern"},
+	} {
+		t.Run("rejects "+name, func(t *testing.T) {
+			regex := perKindRegexLeaf(tc.field, tc.pattern, false)
+			assert.Equal(t, []string{tc.path}, validate(t, whereQuery(&regex)))
+		})
+	}
 }
 
 func TestPerKindValidateQuery_textLeaf(t *testing.T) {

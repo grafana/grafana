@@ -2116,9 +2116,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Kontaktní bod",
-          "notification-policy": "Zásada oznamování",
-          "select-contact-point": "Vybrat kontaktní bod",
-          "use-notification-policy": "Použít zásadu oznamování"
+          "notification-policy": "Zásada oznamování"
         }
       }
     },
@@ -13359,15 +13357,9 @@
       "card-author": "Autor: {{author}}",
       "card-selected": "{{title}} (vybráno)",
       "card-updated": "Aktualizováno {{when}}",
-      "create-description": "Popis",
-      "create-description-help": "Volitelný kontext pro spolupracovníky",
-      "create-description-placeholder": "Co zkoumáte?",
       "create-name": "Název zápisníku",
       "create-name-required": "Název zápisníku je povinný",
       "create-name-taken": "Zápisník s tímto názvem již existuje",
-      "create-tags": "Štítky",
-      "create-tags-help": "Volitelné – používá se pro vyhledávání a filtrování",
-      "create-tags-placeholder": "Přidat štítek",
       "created-by-me": "Vytvořené mnou",
       "error-conflict": "Tento zápisník se změnil, zatímco jste do něj přidávali obsah. Zkuste znovu přidat panel do nejnovější verze.",
       "error-generic": "Nepodařilo se přidat panel do zápisníku",
@@ -13377,6 +13369,8 @@
       "list-none": "Zatím nemáte žádné zápisníky. Vytvořte zápisník.",
       "list-none-read-only": "Zatím nemáte žádné zápisníky a nemáte oprávnění k jejich vytváření.",
       "list-truncated": "Ne každý zápisník je zobrazen. Zužte vyhledávání, abyste našli další.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Hledat podle názvu",
       "sort-alphabetical": "Abecedně (A–Z)",
       "sort-label": "Seřadit zápisníky",
@@ -13479,11 +13473,7 @@
       "count_one": "{{count}} zápisník",
       "count_few": "{{count}} zápisníky",
       "count_many": "{{count}} zápisníků",
-      "count_other": "{{count}} zápisníků",
-      "count-truncated_one": "První {{count}} zápisník načten",
-      "count-truncated_few": "První {{count}} zápisníky načteny",
-      "count-truncated_many": "Prvních {{count}} zápisníků načteno",
-      "count-truncated_other": "Prvních {{count}} zápisníků načteno"
+      "count_other": "{{count}} zápisníků"
     },
     "new": {
       "default-title-with-date": ""
@@ -14331,6 +14321,7 @@
       "title": "Synchronizaci Git můžete používat také na Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Zkopírovat kód do schránky"
     },
     "commit-message": {
@@ -15304,7 +15295,6 @@
       "alert-point-folder-cleanup": "Po migraci možná budete muset ručně odebrat nebo spravovat původní složky.",
       "alert-point-folder-structure": "Při migraci stávajících nástěnek bude struktura složek replikována v úložišti. Původní složky budou vyprázdněny z nástěnek, ale mohou stále obsahovat upozornění nebo panely knihovny.",
       "alert-point-instance-alerts": "Stávající výstrahy a panely knihovny budou ztraceny a po migraci nebudou použitelné.",
-      "alert-point-permissions": "Jemně odstupňovaná oprávnění nejsou podporována. Platí výchozí oprávnění: Role správce, editora a prohlížeče jsou zachovány se standardními úrovněmi přístupu.",
       "alert-point-unsupported": "Upozornění a panely knihovny nejsou v zřízených složkách podporovány.",
       "alert-title": "Důležité: Před pokračováním si přečtěte omezení synchronizace Git",
       "app-mode-label": "Konfigurace aplikace",
@@ -16045,9 +16035,6 @@
     "description-tooltip": {
       "label": "Popis"
     },
-    "generate-columns": {
-      "score": "Skóre"
-    },
     "results-table": {
       "datasource-header": "Zdroj dat",
       "deleted-by-header": "Odstraněno uživatelem",
@@ -16393,6 +16380,7 @@
       "update-preferences": "Chyba při aktualizaci předvoleb"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Domácí nástěnka",
       "home-dashboard-placeholder": "Výchozí nástěnka",
       "language-preference-label": "Jazyk",

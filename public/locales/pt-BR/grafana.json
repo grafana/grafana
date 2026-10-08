@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Ponto de contato",
-          "notification-policy": "Política de notificação",
-          "select-contact-point": "Selecionar ponto de contato",
-          "use-notification-policy": "Usar política de notificação"
+          "notification-policy": "Política de notificação"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Por {{author}}",
       "card-selected": "{{title}} (selecionado)",
       "card-updated": "Atualizado {{when}}",
-      "create-description": "Descrição",
-      "create-description-help": "Contexto opcional para colaboradores",
-      "create-description-placeholder": "O que você está investigando?",
       "create-name": "Nome do bloco de anotações",
       "create-name-required": "O nome do bloco de anotações é obrigatório",
       "create-name-taken": "Já existe um bloco de anotações com este nome",
-      "create-tags": "Tags",
-      "create-tags-help": "Opcional: usado para fazer buscas e usar filtros",
-      "create-tags-placeholder": "Adicionar uma tag",
       "created-by-me": "Criado por mim",
       "error-conflict": "Este bloco de anotações foi alterado enquanto você estava adicionando algo a ele. Tente novamente adicionar o painel à versão mais recente.",
       "error-generic": "Erro ao adicionar o painel ao bloco de anotações",
@@ -13183,6 +13175,8 @@
       "list-none": "Você ainda não tem blocos de anotações. Em vez disso, crie um.",
       "list-none-read-only": "Você ainda não tem blocos de anotações e não tem permissão para criar um.",
       "list-truncated": "Nem todos os blocos de anotações são exibidos. Restrinja a busca para encontrar outros.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Pesquisar por título",
       "sort-alphabetical": "Em ordem alfabética (A-Z)",
       "sort-label": "Ordenar blocos de anotações",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anônimo",
       "count_one": "{{count}} bloco de anotações",
-      "count_other": "{{count}} blocos de anotações",
-      "count-truncated_one": "Primeiro {{count}} bloco de anotações carregado",
-      "count-truncated_other": "Primeiros {{count}} blocos de anotações carregados"
+      "count_other": "{{count}} blocos de anotações"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Você também pode usar o Git Sync no Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Copiar código para a área de transferência"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Pode ser necessário remover ou gerenciar manualmente as pastas originais após a migração.",
       "alert-point-folder-structure": "Ao migrar painéis existentes, a estrutura de pastas será replicada no repositório. Os painéis serão removidos das pastas originais, mas elas ainda podem conter alertas ou painéis da biblioteca.",
       "alert-point-instance-alerts": "Os alertas e painéis de biblioteca existentes serão perdidos e não poderão ser usados após a migração.",
-      "alert-point-permissions": "As permissões refinadas não são compatíveis. As permissões padrão se aplicam: as funções de administrador, editor e visualizador são preservadas com seus níveis de acesso padrão.",
       "alert-point-unsupported": "Não há suporte a alertas e painéis de biblioteca em pastas provisionadas.",
       "alert-title": "Importante: revise as limitações do Git Sync antes de prosseguir",
       "app-mode-label": "Configuração do aplicativo",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Descrição"
     },
-    "generate-columns": {
-      "score": "Pontuação"
-    },
     "results-table": {
       "datasource-header": "Fonte de dados",
       "deleted-by-header": "Excluído por",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Erro ao atualizar as preferências"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Painel de controle inicial",
       "home-dashboard-placeholder": "Painel de controle padrão",
       "language-preference-label": "Idioma",

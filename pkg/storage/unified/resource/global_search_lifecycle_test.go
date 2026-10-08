@@ -1263,15 +1263,15 @@ func TestWatchReconcilesOwnedIndexesWhenReadyAndOnReconnect(t *testing.T) {
 		defer close(done)
 		server.runGlobalIndexWatch(ctx)
 	}()
-	require.Eventually(t, func() bool { return server.rebuildQueue.Len() == 1 }, 5*time.Second, 10*time.Millisecond, "queued once ready")
+	require.Eventually(t, func() bool { return server.reconcileQueue.Len() == 1 }, 5*time.Second, 10*time.Millisecond, "queued once ready")
 	assert.Equal(t, GlobalSearchResourceTypes(), storage.watchedTypes())
-	req, err := server.rebuildQueue.Next(ctx)
+	req, err := server.reconcileQueue.Next(ctx)
 	require.NoError(t, err)
 	assert.Equal(t, GlobalSearchKey("ns"), req.NamespacedResource)
 	assert.True(t, req.reconcile)
 
 	storage.reconnect()
-	require.Eventually(t, func() bool { return server.rebuildQueue.Len() == 1 }, 5*time.Second, 10*time.Millisecond, "queued again after a reconnect")
+	require.Eventually(t, func() bool { return server.reconcileQueue.Len() == 1 }, 5*time.Second, 10*time.Millisecond, "queued again after a reconnect")
 	cancel()
 	<-done
 }
@@ -1364,7 +1364,7 @@ func TestReopenedGlobalIndexIsReconciledAtOnce(t *testing.T) {
 	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
 	require.NoError(t, err)
 
-	queued := server.rebuildQueue.Elements()
+	queued := server.reconcileQueue.Elements()
 	require.Len(t, queued, 1)
 	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
 	assert.True(t, queued[0].reconcile)
@@ -1378,7 +1378,7 @@ func TestFreshGlobalIndexIsReconciled(t *testing.T) {
 	_, err := server.getOrCreateIndex(t.Context(), nil, GlobalSearchKey("ns"), "test")
 	require.NoError(t, err)
 
-	queued := server.rebuildQueue.Elements()
+	queued := server.reconcileQueue.Elements()
 	require.Len(t, queued, 1)
 	assert.True(t, queued[0].reconcile)
 }
@@ -1573,7 +1573,7 @@ func TestRebuildRequestsCombineReconcile(t *testing.T) {
 	assert.Equal(t, []schema.GroupResource{dashboardsGroupResource}, c.staleTypes)
 }
 
-// A reconcile runs in the rebuild workers, so it never overlaps a rebuild of
+// A reconcile runs through rebuildIndex, so it never overlaps a rebuild of
 // the same index, and repairs every covered type.
 func TestRebuildWorkerReconcilesTheGlobalIndex(t *testing.T) {
 	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
@@ -1612,7 +1612,7 @@ func TestReconcileQueuesOnlyOwnedGlobalIndexes(t *testing.T) {
 
 	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns"), GlobalSearchKey("elsewhere"), dashboardType("ns")}, time.Now())
 
-	queued := server.rebuildQueue.Elements()
+	queued := server.reconcileQueue.Elements()
 	require.Len(t, queued, 1)
 	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
 	assert.True(t, queued[0].reconcile)
@@ -1625,10 +1625,10 @@ func TestReconcileComesDueAtTheIndexSlot(t *testing.T) {
 
 	idx.reconciledAt = slot.Add(time.Second)
 	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns")}, slot.Add(globalIndexReconcileInterval-time.Second))
-	assert.Zero(t, server.rebuildQueue.Len(), "compared since its slot, and the next is not here yet")
+	assert.Zero(t, server.reconcileQueue.Len(), "compared since its slot, and the next is not here yet")
 
 	server.queueDueReconciles([]NamespacedResource{GlobalSearchKey("ns")}, slot.Add(globalIndexReconcileInterval+time.Second))
-	assert.Equal(t, 1, server.rebuildQueue.Len(), "its next slot has passed")
+	assert.Equal(t, 1, server.reconcileQueue.Len(), "its next slot has passed")
 }
 
 // Slots repeat every interval, at an offset taken from the key.
@@ -1742,10 +1742,114 @@ func TestLostKeysReconcileTheirNamespace(t *testing.T) {
 
 	server.queueReconcileAfterLostKeys("ns")
 	server.queueReconcileAfterLostKeys("not-open")
-	queued := server.rebuildQueue.Elements()
+	queued := server.reconcileQueue.Elements()
 	require.Len(t, queued, 1)
 	assert.Equal(t, GlobalSearchKey("ns"), queued[0].NamespacedResource)
 
 	server.queueReconcileAfterLostKeys("")
-	assert.Equal(t, 2, server.rebuildQueue.Len(), "every open global index, merged with the one already queued")
+	assert.Equal(t, 2, server.reconcileQueue.Len(), "every open global index, merged with the one already queued")
+}
+
+// Reconciles have their own queue and workers, so a burst of them, as after a
+// restart, does not hold up rebuilds.
+func TestReconcilesDoNotQueueAheadOfRebuilds(t *testing.T) {
+	server, _ := repairServer(t, &reconcileStorage{}, nil)
+	for i := range 100 {
+		server.queueReconcile(GlobalSearchKey(fmt.Sprintf("ns-%d", i)))
+	}
+	assert.Equal(t, 100, server.reconcileQueue.Len())
+	assert.Zero(t, server.rebuildQueue.Len())
+}
+
+// The reconcile workers run queued reconciles, and stop with the server.
+func TestReconcileWorkerRunsQueuedReconciles(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 50},
+	}}
+	server, idx := repairServer(t, storage, nil)
+	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		server.runGlobalIndexReconciler(ctx)
+	}()
+
+	server.queueReconcile(GlobalSearchKey("ns"))
+	require.Eventually(t, func() bool {
+		at, err := idx.ReconciledAt()
+		return err == nil && !at.IsZero()
+	}, 5*time.Second, 10*time.Millisecond)
+	assert.Equal(t, map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}}, indexedNames(t, idx))
+	cancel()
+	<-done
+}
+
+// A reconcile that arrives while the index is being rebuilt is set aside, and
+// goes back to the reconcile queue, not the rebuild queue, once that finishes.
+func TestReconcileDeferredBehindARebuildReturnsToTheReconcileQueue(t *testing.T) {
+	storage := &reconcileStorage{}
+	server, idx := repairServer(t, storage, nil)
+	idx.buildInfo = IndexBuildInfo{BuildTime: time.Now(), Features: CurrentIndexFeatures(), SearchFieldsHash: GlobalSearchFieldsHash()}
+	state := &rebuildState{}
+	server.inFlightRebuilds[GlobalSearchKey("ns")] = state
+
+	server.rebuildIndex(t.Context(), rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true})
+	require.NotNil(t, state.deferred, "set aside while the rebuild runs")
+	assert.Zero(t, server.reconcileQueue.Len()+server.rebuildQueue.Len())
+
+	server.finishRebuild(GlobalSearchKey("ns"), state)
+
+	assert.Equal(t, 1, server.reconcileQueue.Len())
+	assert.Zero(t, server.rebuildQueue.Len())
+}
+
+func TestOnlyReconcile(t *testing.T) {
+	assert.True(t, rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true}.onlyReconcile())
+	assert.False(t, rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true, staleTypes: []schema.GroupResource{dashboardsGroupResource}}.onlyReconcile())
+	assert.False(t, rebuildRequest{NamespacedResource: GlobalSearchKey("ns"), reconcile: true, minBuildTime: time.Now()}.onlyReconcile())
+	assert.False(t, rebuildRequest{NamespacedResource: GlobalSearchKey("ns")}.onlyReconcile())
+}
+
+// The other order: a rebuild that arrives while the index is being reconciled is
+// set aside, goes back to the rebuild queue, not the reconcile queue, and reports
+// completion only once it has run.
+func TestRebuildDeferredBehindAReconcileReturnsToTheRebuildQueue(t *testing.T) {
+	server, _ := repairServer(t, &reconcileStorage{}, nil)
+	state := &rebuildState{}
+	server.inFlightRebuilds[GlobalSearchKey("ns")] = state // a reconcile is running
+
+	done := make(chan struct{})
+	server.rebuildIndex(t.Context(), rebuildRequest{
+		NamespacedResource: GlobalSearchKey("ns"),
+		// Built before this, so a full rebuild is due.
+		minBuildTime:     time.Now().Add(time.Hour),
+		completeChannels: []chan<- struct{}{done},
+	})
+	require.NotNil(t, state.deferred, "set aside while the reconcile runs")
+	requireOpen(t, done, "not complete while set aside")
+
+	server.finishRebuild(GlobalSearchKey("ns"), state)
+	assert.Zero(t, server.reconcileQueue.Len())
+	require.Equal(t, 1, server.rebuildQueue.Len())
+	requireOpen(t, done, "not complete until the follow-up runs")
+
+	req, err := server.rebuildQueue.Next(t.Context())
+	require.NoError(t, err)
+	server.rebuildIndex(t.Context(), req)
+	select {
+	case <-done:
+	default:
+		t.Fatal("not complete after the follow-up ran")
+	}
+}
+
+func requireOpen(t *testing.T, ch <-chan struct{}, msg string) {
+	t.Helper()
+	select {
+	case <-ch:
+		t.Fatal(msg)
+	default:
+	}
 }

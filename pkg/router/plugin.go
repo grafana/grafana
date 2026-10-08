@@ -90,14 +90,6 @@ func ProvidePluginLoaderDependencies(
 	builderMetrics *builder.BuilderMetrics,
 	restConfigProvider restcfg.RestConfigProvider,
 ) PluginLoaderDependencies {
-	// A missing exchange configuration leaves requests unauthenticated: the
-	// caller's identity is not propagated, and plugins that authenticate reject
-	// them. An invalid one fails each request with the configuration error.
-	exchanger, err := appplugin.NewClientV3TokenExchanger(cfg)
-	if err != nil {
-		exchanger = appplugin.InvalidClientV3TokenExchanger(err)
-	}
-
 	return PluginLoaderDependencies{
 		ClientV3Loader: clientV3Loader,
 		PluginSources:  pluginSources,
@@ -118,9 +110,20 @@ func ProvidePluginLoaderDependencies(
 			Tracer:             tracer,
 			Features:           features,
 			Cfg:                cfg,
-			TokenExchanger:     exchanger,
+			TokenExchanger:     newClientV3TokenExchanger(cfg),
 		},
 	}
+}
+
+func newClientV3TokenExchanger(cfg *setting.Cfg) authn.TokenExchanger {
+	// A missing exchange configuration leaves requests unauthenticated: the
+	// caller's identity is not propagated, and plugins that authenticate reject
+	// them. An invalid one fails each request with the configuration error.
+	exchanger, err := appplugin.NewClientV3TokenExchanger(cfg)
+	if err != nil {
+		return appplugin.InvalidClientV3TokenExchanger(err)
+	}
+	return exchanger
 }
 
 // The router module supplies these clients so its Wire graph does not construct

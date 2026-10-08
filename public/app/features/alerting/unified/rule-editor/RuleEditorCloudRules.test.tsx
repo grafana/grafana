@@ -78,7 +78,7 @@ describe('RuleEditor cloud', () => {
     await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons).toHaveLength(2);
+    expect(removeExpressionsButtons).toHaveLength(1);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled
     expect(await screen.findByText('Data source-managed')).toBeInTheDocument();
@@ -123,7 +123,7 @@ describe('RuleEditor cloud', () => {
     await user.click(ui.inputs.switchModeBasic(GrafanaRuleFormStep.Query).get());
 
     const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
-    expect(removeExpressionsButtons).toHaveLength(2);
+    expect(removeExpressionsButtons).toHaveLength(1);
 
     // Needs to wait for feature discovery API call to finish - Check if ruler enabled
     expect(await screen.findByText('Data source-managed')).toBeInTheDocument();

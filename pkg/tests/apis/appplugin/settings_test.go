@@ -11,16 +11,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	grafanafs "github.com/grafana/grafana/pkg/infra/fs"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -251,6 +255,31 @@ func testIntegrationAppPluginSettings(t *testing.T, manifestFile string, feature
 					// Legacy storage uses a deterministic hash prefix.
 					require.Contains(t, name, "lps-sv-", "name should use the legacy plugin secure value prefix")
 				}
+			})
+
+			t.Run("stores settings under the plugin ID in the shared group", func(t *testing.T) {
+				if mode == rest.Mode0 {
+					t.Skip("legacy-only storage")
+				}
+				served := writeSettings(t)
+				require.Equal(t, instanceName, served.GetName())
+				require.Equal(t, testAppID+"/v0alpha1", served.GetAPIVersion())
+				svcCtx, _ := identity.WithServiceIdentity(ctx, helper.Org1.OrgID)
+				require.EventuallyWithT(t, func(c *assert.CollectT) {
+					rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
+						Namespace: client.Args.Namespace,
+						Group:     apppluginV0.GROUP,
+						Resource:  apppluginV0.APP_RESOURCE_NAME,
+						Name:      testAppID,
+					}})
+					require.NoError(c, err)
+					require.Nil(c, rsp.Error)
+					stored := &unstructured.Unstructured{}
+					require.NoError(c, stored.UnmarshalJSON(rsp.Value))
+					require.Equal(c, testAppID, stored.GetName())
+					require.Equal(c, apppluginV0.GROUP+"/v0alpha1", stored.GetAPIVersion())
+					require.Equal(c, served.Object["spec"], stored.Object["spec"])
+				}, 5*time.Second, 50*time.Millisecond)
 			})
 
 			t.Run("list returns the settings resource after write", func(t *testing.T) {

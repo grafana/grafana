@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Punto de contacto",
-          "notification-policy": "Política de notificación",
-          "select-contact-point": "Seleccionar punto de contacto",
-          "use-notification-policy": "Utilizar política de notificación"
+          "notification-policy": "Política de notificación"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Por {{author}}",
       "card-selected": "{{title}} (seleccionado)",
       "card-updated": "Actualizado {{when}}",
-      "create-description": "Descripción",
-      "create-description-help": "Contexto opcional para colaboradores",
-      "create-description-placeholder": "¿Qué estás investigando?",
       "create-name": "Nombre del cuaderno",
       "create-name-required": "El nombre del cuaderno es necesario",
       "create-name-taken": "Ya existe un cuaderno con este nombre",
-      "create-tags": "Etiquetas",
-      "create-tags-help": "Opcional: se utiliza para la búsqueda y el filtrado",
-      "create-tags-placeholder": "Añadir una etiqueta",
       "created-by-me": "Creado por mí",
       "error-conflict": "Este cuaderno ha cambiado mientras estabas añadiendo contenido. Intenta de nuevo añadir el panel a la última versión.",
       "error-generic": "No se ha podido añadir el panel al cuaderno",
@@ -13183,6 +13175,8 @@
       "list-none": "Aún no tienes ningún cuaderno. Crea uno.",
       "list-none-read-only": "Todavía no tienes ningún cuaderno y no tienes permiso para crear uno.",
       "list-truncated": "No se muestran todos los cuadernos. Acota la búsqueda para encontrar otros.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Buscar por título",
       "sort-alphabetical": "Alfabéticamente (A-Z)",
       "sort-label": "Ordenar cuadernos",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anónimo",
       "count_one": "{{count}} cuaderno",
-      "count_other": "{{count}} cuadernos",
-      "count-truncated_one": "Primer cuaderno cargado ({{count}})",
-      "count-truncated_other": "{{count}} primeros cuadernos cargados"
+      "count_other": "{{count}} cuadernos"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "También puedes utilizar Git Sync en Grafana Cloud."
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Copiar código al portapapeles"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Es posible que debas eliminar o gestionar manualmente las carpetas originales después de la migración.",
       "alert-point-folder-structure": "Al migrar los dashboards existentes, la estructura de carpetas se replicará en el repositorio. Las carpetas originales se vaciarán de los dashboards, pero aún pueden contener alertas o paneles de librerías.",
       "alert-point-instance-alerts": "Las alertas y los paneles de librerías existentes se perderán y no se podrán utilizar después de la migración.",
-      "alert-point-permissions": "Los permisos detallados no son compatibles. Se aplican los permisos predeterminados: los roles de administrador, editor y visor se conservan con sus niveles de acceso estándar.",
       "alert-point-unsupported": "Las alertas y los paneles de librerías no son compatibles con las carpetas aprovisionadas.",
       "alert-title": "Importante: Revisa las limitaciones de Git Sync antes de continuar",
       "app-mode-label": "Configuración de la aplicación",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Descripción"
     },
-    "generate-columns": {
-      "score": "Puntuación"
-    },
     "results-table": {
       "datasource-header": "Fuente de datos",
       "deleted-by-header": "Eliminado por",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Error al actualizar las preferencias"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Panel de control de inicio",
       "home-dashboard-placeholder": "Panel de control por defecto",
       "language-preference-label": "Idioma",

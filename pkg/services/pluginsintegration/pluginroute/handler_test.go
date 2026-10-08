@@ -264,7 +264,7 @@ func testPlugin() definition.PluginDefinition {
 				{
 					Name:   "v1alpha1",
 					Served: true,
-					Routes: app.ManifestVersionRoutes{
+					Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 						Cluster:    map[string]spec3.PathProps{"/things": {Get: testOperation("listThings")}},
 						Namespaced: map[string]spec3.PathProps{"/widgets": {Get: testOperation("listWidgets")}},
 					},
