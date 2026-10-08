@@ -4,7 +4,7 @@ import { type DataFrame } from '@grafana/data';
 
 import { RenderMode, type TextMode } from '../panelcfg.gen';
 
-import { MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
+import { countRows, MAX_RENDERED_ROWS, type RowWindow } from './renderContent';
 
 const PAGINATION_ROW_THRESHOLD = 100;
 const PAGINATION_HEIGHT = 38;
@@ -14,10 +14,6 @@ const ESTIMATED_ROW_HEIGHT = 24;
 export const CONTENT_PADDING = 16;
 // Marks the element the row blocks render into, since wrappers sit between it and the box.
 export const BLOCKS_ATTR = 'data-text-blocks';
-
-export function countRows(series: DataFrame[]): number {
-  return series.reduce((total, frame) => total + (frame.fields.length > 0 ? frame.length : 0), 0);
-}
 
 export function clampPageSize(pageSize: number): number {
   return Math.max(1, Math.min(Math.floor(pageSize), MAX_RENDERED_ROWS));

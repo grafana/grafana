@@ -39,6 +39,7 @@ import {
 import { TextNGCodeView } from './TextNGCodeView';
 import { TextNGFooter } from './TextNGFooter';
 import { TextNGHtmlView } from './TextNGHtmlView';
+import { TextNGTruncationNotice } from './TextNGTruncationNotice';
 import { type TextNGEditorChange } from './editor/TextNGEditor';
 import { getEditorLayoutStyles } from './editor/editorLayout';
 import { DEFAULT_VIEW_MODE, type ViewMode } from './editor/viewMode';
@@ -160,7 +161,12 @@ export function TextNGPanel(props: Props) {
         return;
       }
       const next = renderPanelContent(options, renderMode, series, replaceVariables, rowWindow);
-      if (next.content !== processed.content || next.mode !== processed.mode || next.error !== processed.error) {
+      if (
+        next.content !== processed.content ||
+        next.mode !== processed.mode ||
+        next.error !== processed.error ||
+        next.truncated !== processed.truncated
+      ) {
         setProcessed(next);
       }
     },
@@ -195,6 +201,9 @@ export function TextNGPanel(props: Props) {
         onChange={(val) => onOptionsChange({ ...options, frameIndex: val.value ?? 0 })}
       />
     ) : null;
+
+  // Not in the editor, where the preview's own footer carries it.
+  const truncationNotice = !isEditing && processed.truncated ? <TextNGTruncationNotice /> : null;
 
   const paginationBar = active ? (
     <Stack direction="row" gap={1} alignItems="center" justifyContent="center">
@@ -254,8 +263,8 @@ export function TextNGPanel(props: Props) {
 
   // While editing, the footer belongs to the editor, below its panes.
   const panelFooter =
-    !isEditing && (frameSelector || paginationBar) ? (
-      <TextNGFooter left={frameSelector} center={paginationBar} />
+    !isEditing && (frameSelector || paginationBar || truncationNotice) ? (
+      <TextNGFooter left={frameSelector} center={paginationBar} right={truncationNotice} />
     ) : null;
 
   if (!panelFooter) {
