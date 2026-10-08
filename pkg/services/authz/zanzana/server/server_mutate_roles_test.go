@@ -3,10 +3,12 @@ package server
 import (
 	"testing"
 
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -78,4 +80,48 @@ func TestIntegrationServerMutateRoles(t *testing.T) {
 		require.Equal(t, "group_resource:dashboard.grafana.app/dashboards", res.Tuples[0].Key.Object)
 		require.Equal(t, "edit", res.Tuples[0].Key.Relation)
 	})
+}
+
+func TestIntegrationDatasourceRoleActionSets(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, action := range []string{"datasources:query", "datasources:edit", "datasources:admin"} {
+		for _, scope := range []string{"datasources:uid:ds1", "datasources:*"} {
+			t.Run(action+"/"+scope, func(t *testing.T) {
+				srv := setupOpenFGAServer(t)
+				tuples, err := zanzana.RoleToTuples("datasource-role", []*v1.RolePermission{{Action: action, Scope: scope}})
+				require.NoError(t, err)
+				tuples = append(tuples, common.NewTuple("user:datasource-user", "assignee", "role:datasource-role"))
+				setupOpenFGADatabase(t, srv, tuples)
+				for _, tc := range []struct {
+					verb, subresource string
+					allowed           bool
+				}{
+					{"get", "", true},
+					{"list", "", true},
+					{"create", "query", true},
+					{"create", "", false},
+					{"update", "", action != "datasources:query"},
+					{"delete", "", action != "datasources:query"},
+					{"get_permissions", "", action == "datasources:admin"},
+					{"set_permissions", "", action == "datasources:admin"},
+					{"get", "caching", action == "datasources:admin"},
+					{"update", "caching", action == "datasources:admin"},
+					{"create", "caching", action == "datasources:admin"},
+					{"delete", "caching", action == "datasources:admin"},
+				} {
+					for _, uid := range []string{"ds1", "ds2"} {
+						t.Run(tc.verb+"/"+tc.subresource+"/"+uid, func(t *testing.T) {
+							result, err := srv.Check(newContextWithNamespace(), &authzv1.CheckRequest{
+								Namespace: namespace, Subject: "user:datasource-user",
+								Group: "datasource.grafana.app", Resource: "datasources",
+								Verb: tc.verb, Subresource: tc.subresource, Name: uid,
+							})
+							require.NoError(t, err)
+							require.Equal(t, tc.allowed && (uid == "ds1" || scope == "datasources:*"), result.GetAllowed())
+						})
+					}
+				}
+			})
+		}
+	}
 }

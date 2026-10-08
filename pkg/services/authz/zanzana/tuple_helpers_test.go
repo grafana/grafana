@@ -692,12 +692,19 @@ func TestSharedDatasourceRolePermissions(t *testing.T) {
 		for _, uid := range []string{"ds1", "*"} {
 			tuples, err := ConvertRolePermissionsToTuples("role1", []RolePermission{{Action: tc.action, Kind: "datasources", Identifier: uid}})
 			require.NoError(t, err)
-			require.Len(t, tuples, 1)
 			expected := common.NewResourceTuple("role:role1#assignee", tc.relation, "datasource.grafana.app", "datasources", tc.sub, uid)
 			if uid == "*" {
 				expected = NewGroupResourceTuple("role:role1#assignee", tc.relation, "datasource.grafana.app", "datasources", tc.sub)
 			}
-			require.True(t, proto.Equal(expected, tuples[0]), "expected %v, got %v", expected, tuples[0])
+			expectedTuples := []*openfgav1.TupleKey{expected}
+			if tc.action == "datasources:query" {
+				read := common.NewResourceTuple("role:role1#assignee", "get", "datasource.grafana.app", "datasources", "", uid)
+				if uid == "*" {
+					read = NewGroupResourceTuple("role:role1#assignee", "get", "datasource.grafana.app", "datasources", "")
+				}
+				expectedTuples = append(expectedTuples, read)
+			}
+			require.ElementsMatch(t, tupleKeyStrings(expectedTuples), tupleKeyStrings(tuples))
 		}
 	}
 }
@@ -711,7 +718,18 @@ func TestLegacyDatasourceCachingGrantUsesSharedIdentity(t *testing.T) {
 }
 
 func TestDatasourceRoleSQLAndIAMGrantsMatch(t *testing.T) {
-	for _, action := range []string{"datasources:read", "datasources:write", "datasources:delete", "datasources:query", "datasources.permissions:read", "datasources.permissions:write", "datasources.caching:read", "datasources.caching:write"} {
+	for _, action := range []string{
+		"datasources:read",
+		"datasources:write",
+		"datasources:delete",
+		"datasources:query",
+		"datasources:edit",
+		"datasources:admin",
+		"datasources.permissions:read",
+		"datasources.permissions:write",
+		"datasources.caching:read",
+		"datasources.caching:write",
+	} {
 		for _, uid := range []string{"ds1", "*"} {
 			sql, err := ConvertRolePermissionsToTuples("r1", []RolePermission{{Action: action, Kind: "datasources", Identifier: uid}})
 			require.NoError(t, err)
@@ -723,7 +741,7 @@ func TestDatasourceRoleSQLAndIAMGrantsMatch(t *testing.T) {
 			iam, err := RoleToTuples("r1", []*authzextv1.RolePermission{{Action: action, Scope: scope}})
 			require.NoError(t, err)
 			require.Len(t, iam, len(sql))
-			require.True(t, proto.Equal(sql[0], iam[0]))
+			require.ElementsMatch(t, tupleKeyStrings(sql), tupleKeyStrings(iam))
 		}
 	}
 }
@@ -763,9 +781,7 @@ func TestStoredDatasourceRolePermissionsRemainAuthorized(t *testing.T) {
 			require.NoError(t, err)
 			require.NotEmpty(t, want)
 			require.Len(t, got, len(want))
-			for i := range want {
-				require.True(t, proto.Equal(want[i], got[i]))
-			}
+			require.ElementsMatch(t, tupleKeyStrings(want), tupleKeyStrings(got))
 			require.True(t, proto.Equal(original, stored))
 		})
 	}

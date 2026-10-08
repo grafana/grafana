@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 var (
@@ -204,6 +205,13 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
+		if tuples := datasourceRoleActionSetTuples(subject, perm); len(tuples) > 0 {
+			for _, tuple := range tuples {
+				tupleMap[tuple.String()] = tuple
+			}
+			continue
+		}
+
 		// Convert RBAC action/kind to Zanzana tuple
 		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
@@ -239,6 +247,42 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	}
 
 	return tuples, nil
+}
+
+// Datasource action sets need both base-resource and query-subresource grants.
+// Use granular relations: generic edit/admin also grants datasource creation.
+func datasourceRoleActionSetTuples(subject string, perm RolePermission) []*openfgav1.TupleKey {
+	if perm.Kind != "datasources" || perm.Identifier == "" {
+		return nil
+	}
+	var relations []string
+	switch perm.Action {
+	case "datasources:query":
+		relations = []string{RelationGet}
+	case "datasources:edit":
+		relations = []string{RelationGet, RelationUpdate, RelationDelete}
+	case "datasources:admin":
+		relations = []string{RelationGet, RelationUpdate, RelationDelete, RelationGetPermissions, RelationSetPermissions}
+	default:
+		return nil
+	}
+	newTuple := func(relation, subresource string) *openfgav1.TupleKey {
+		if perm.Identifier == "*" {
+			return NewGroupResourceTuple(subject, relation, "datasource.grafana.app", "datasources", subresource)
+		}
+		return common.NewResourceTuple(subject, relation, "datasource.grafana.app", "datasources", subresource, perm.Identifier)
+	}
+	tuples := make([]*openfgav1.TupleKey, 0, len(relations)+1)
+	for _, relation := range relations {
+		tuples = append(tuples, newTuple(relation, ""))
+	}
+	tuples = append(tuples, newTuple(RelationCreate, "query"))
+	if perm.Action == "datasources:admin" {
+		for _, relation := range []string{RelationGet, RelationCreate, RelationUpdate, RelationDelete} {
+			tuples = append(tuples, newTuple(relation, "caching"))
+		}
+	}
+	return tuples
 }
 
 // RoleToTuples converts role and its permissions (action/scope) to v1 TupleKey format
