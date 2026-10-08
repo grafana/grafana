@@ -1,10 +1,10 @@
 import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
 
-import { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { mockComboboxRect } from '@grafana/test-utils';
 import { setupMockServer } from '@grafana/test-utils/server';
 
 import { act, render, screen } from '../../../../../tests/test-utils';
+import { notificationsAPI } from '../../../api/notifications';
 import { DEFAULT_ROUTING_TREE_NAME_ALIAS, USER_DEFINED_TREE_NAME } from '../../routingTree.utils';
 
 import { RoutingTreeSelector } from './RoutingTreeSelector';
@@ -241,7 +241,7 @@ describe('a refetch that fails after a successful load', () => {
     // Now the endpoint starts failing, and something refetches the entry we're subscribed to.
     server.use(...routingTreeWithErrorScenario);
     await act(async () => {
-      await dispatch(notificationsAPIv1beta1.endpoints.listRoutingTree.initiate({}, { forceRefetch: true }));
+      await dispatch(notificationsAPI.endpoints.listRoutingTree.initiate({}, { forceRefetch: true }));
     });
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();

@@ -1,5 +1,4 @@
-import { type RoutingTreeRoute } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
-
+import { type RoutingTreeRoute } from '../api/notifications';
 import { type LabelMatcher } from '../matchers/types';
 
 // Keep recursive children outside mapped types so inherited route fields remain visible to TypeScript.
