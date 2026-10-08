@@ -273,6 +273,64 @@ Under 10 parallel requests, p50 drops for the large Prometheus workloads: 128 �
    - **Interning fixes the transform but costs as much as it saves.** Mapping each decoded string to one shared instance brings the transform to 11.1 ms but costs 2.7 ms to decode, against 0.5 ms. With 50k unique log lines it costs 8.7 ms, so it's a net loss.
    - **Decision:** decoding stays as one decode plus slicing.
 
+## Transformation coverage
+
+The sidecar runs the 29 transformations in `@grafana/data` (`GET /transformations` lists them). Grafana's frontend registers 12 more in `public/app/features/transformers`, which the sidecar doesn't have yet. Panels that use any of them keep browser transformations when the dashboard flag is on, and transform expressions that name them fail with `unsupported transformations: …`.
+
+| Transformation      | Module                                       | Non-`@grafana/data` imports                                                | Effort to add                                                                                                     |
+| ------------------- | -------------------------------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `rowsToFields`      | `rowsToFields/rowsToFields`                  | `@grafana/i18n`                                                            | Easy                                                                                                              |
+| `configFromData`    | `configFromQuery/configFromQuery`            | `@grafana/i18n`                                                            | Easy                                                                                                              |
+| `joinByLabels`      | `joinByLabels/joinByLabels`                  | `@grafana/i18n`                                                            | Easy                                                                                                              |
+| `smoothing`         | `smoothing/smoothing`                        | `@grafana/i18n`                                                            | Easy                                                                                                              |
+| `timeSeriesTable`   | `timeSeriesTable/timeSeriesTableTransformer` | `@grafana/i18n`                                                            | Easy                                                                                                              |
+| `heatmap`           | `calculateHeatmap/heatmap`                   | `@grafana/i18n`, `@grafana/data/internal`                                  | Easy                                                                                                              |
+| `partitionByValues` | `partitionByValues/partitionByValues`        | `@grafana/i18n`, `@grafana/data/internal`                                  | Easy                                                                                                              |
+| `prepareTimeSeries` | `prepareTimeSeries/prepareTimeSeries`        | `@grafana/i18n`, `app/types/unified-alerting-dto` (types and enums)        | Easy–medium                                                                                                       |
+| `regression`        | `regression/regression`                      | `@grafana/i18n`, `ml-regression-polynomial`, `ml-regression-simple-linear` | Medium (pure-JS npm libraries)                                                                                    |
+| `extractFields`     | `extractFields/extractFields`                | `app/features/dimensions/utils`                                            | Medium (check that the dimensions utils are DOM-free)                                                             |
+| `spatial`           | `spatial/spatialTransformer`                 | `app/features/geo/format/utils`, `app/features/geo/utils/location`         | Hard (geo code built on OpenLayers)                                                                               |
+| `fieldLookup`       | `lookupGazetteer/fieldLookup`                | `app/features/geo/gazetteer/gazetteer`                                     | Hard (fetches gazetteer files over HTTP; the sidecar would read them from `public/gazetteer` or a configured URL) |
+
+Also not covered:
+
+- **The deprecated aliases** `seriesToColumns` (for `joinByField`) and `append` (for `noop`). The sidecar registers each transformation once under its canonical id, so a saved panel that still uses an alias falls back to the browser. Mapping aliases to their canonical id in the sidecar would fix it.
+- **Transformations contributed by plugins, and system transformations from panel plugins.** These are registered in the browser at runtime and have no server-side equivalent.
+
+**How to add the frontend-registered ones:**
+
+1. **Registry.** Add a sidecar entry module that imports the transformation modules above directly, without the editors, and registers them next to `standardTransformers`. They are already lazy-loaded, editor-free modules.
+2. **i18n.** Check that `@grafana/i18n` returns usable default strings when it isn't initialized in Node; the sidecar only uses names and descriptions for error messages.
+3. **Build.** Add `public/app` to esbuild's resolution (the `app/*` path alias), and fail the build if a module drags in React or DOM code.
+4. **Parity.** Add one parity fixture per new transformation before turning it on for dashboards (`SIDECAR_TRANSFORMATIONS` in `TransformSidecarDataTransformer.ts` reads the same `standardTransformers` list, so it needs the new ids too).
+
+The eight easy and easy–medium transformations are likely a day's work, including parity fixtures. `spatial` and `fieldLookup` need a decision on geo dependencies first.
+
+## Dashboard transformations (feature flag)
+
+With `grafana.dashboardTransformationsSidecar` on, dashboard panels run their own transformations (the Transform tab) in the sidecar instead of the browser. You can turn it on per page with `?__feature.grafana.dashboardTransformationsSidecar=true`, or in `custom.ini` under `[feature_toggles]`. It needs the `[expressions] transform_sidecar_url` setting and a running sidecar.
+
+`TransformSidecarDataTransformer` (`public/app/features/dashboard-scene/utils/`) replaces `SceneDataTransformer` wherever dashboards build panel data. On each query it:
+
+- adds one `transform` expression (refId `__transformSidecar`) whose inputs are the panel's visible queries, and hides those queries so only the transformed frames come back
+- skips the browser transformations for that response
+
+Scene state is not touched, so dashboards save exactly as before, and turning the flag off takes effect on the next query.
+
+Panels keep browser transformations when the sidecar can't produce the same result:
+
+- a transformation the sidecar doesn't have, or one with an annotations topic
+- a panel that already has expressions
+- mixed or frontend-only data sources
+- extra queries, such as time comparison
+- system transformations that must run before the user's
+
+**Limitations of the PoC:**
+
+- **Access to private members.** It reaches `@grafana/scenes` private members (`prepareRequests`, `transform`, `_withSystemTransformations`) through element access. A real implementation would add a hook to scenes.
+- **RefIds change.** Output frames carry the expression's refId (`__transformSidecar`), so field overrides that match by frame refId stop matching.
+- **Dashboard datasource sees transformed data.** Panels that read this panel through the `-- Dashboard --` datasource with "use transformed data" off get the transformed frames, because the query runner's result is now already transformed.
+
 ## Configuration
 
 | Variable                           | Default                        |

@@ -18,7 +18,6 @@ import { config, getDataSourceSrv, locationService, RefreshEvent, reportInteract
 import { FlagKeys, getFeatureFlagClient, getPanelPluginMeta } from '@grafana/runtime/internal';
 import {
   type CancelActivationHandler,
-  SceneDataTransformer,
   sceneGraph,
   type SceneObject,
   SceneObjectBase,
@@ -89,6 +88,7 @@ import { normalizeTransformation } from '../serialization/transformationCompat';
 import { getDashboardTemplateExtension } from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { DashboardModelCompatibilityWrapper } from '../utils/DashboardModelCompatibilityWrapper';
+import { TransformSidecarDataTransformer } from '../utils/TransformSidecarDataTransformer';
 import { isRepeatCloneOrChildOf } from '../utils/clone';
 import {
   mayInjectAnyPredefinedVariables,
@@ -1157,7 +1157,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!skipDataQuery && !panel.state.$data) {
       const defaultDs = getDataSourceSrv().getInstanceSettings(null);
       panel.setState({
-        $data: new SceneDataTransformer({
+        $data: new TransformSidecarDataTransformer({
           $data: new SceneQueryRunner({
             // The query editor needs the datasource type, which config.defaultDatasource does not provide.
             datasource: defaultDs ? { uid: defaultDs.uid, type: defaultDs.type } : undefined,

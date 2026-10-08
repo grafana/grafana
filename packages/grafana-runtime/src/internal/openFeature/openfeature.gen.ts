@@ -102,6 +102,8 @@ export const FlagKeys = {
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
+  /** Experimental PoC: run dashboard panel transformations in the transform sidecar, as a server-side transform expression, instead of in the browser */
+  GrafanaDashboardTransformationsSidecar: "grafana.dashboardTransformationsSidecar",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
   /** Check for the existence of logs when linking from the Trace View */
@@ -740,6 +742,17 @@ export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaDashboardSettingsRedesign = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardSettingsRedesign", true, options).value;
+};
+
+/**
+ * Experimental PoC: run dashboard panel transformations in the transform sidecar, as a server-side transform expression, instead of in the browser
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardTransformationsSidecar`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardTransformationsSidecar = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardTransformationsSidecar", false, options).value;
 };
 
 /**

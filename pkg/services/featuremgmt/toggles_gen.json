@@ -2506,6 +2506,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardTransformationsSidecar",
+        "resourceVersion": "1791483147709",
+        "creationTimestamp": "2026-10-08T18:12:27Z"
+      },
+      "spec": {
+        "description": "Experimental PoC: run dashboard panel transformations in the transform sidecar, as a server-side transform expression, instead of in the browser",
+        "stage": "experimental",
+        "codeowner": "@grafana/datapro",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardsAutoHeightPanels",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"

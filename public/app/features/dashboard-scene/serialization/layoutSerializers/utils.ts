@@ -4,7 +4,6 @@ import { getPanelPluginMetasMapSync, type PanelPluginMetas } from '@grafana/runt
 import {
   type SceneDataProvider,
   type SceneDataQuery,
-  SceneDataTransformer,
   type SceneObject,
   SceneQueryRunner,
   VizPanel,
@@ -43,6 +42,7 @@ import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../../scene/setDashboardPanelContext';
 import { pluginTransformationsEnabled } from '../../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../../scene/types/DashboardLayoutManager';
+import { TransformSidecarDataTransformer } from '../../utils/TransformSidecarDataTransformer';
 import { isNewPanelQueryErrorsUIEnabled } from '../../utils/utils';
 import { getVizPanelKeyForPanelId } from '../../utils/utils-panels';
 import { getV2AngularMigrationHandler, isAngularMigrationData } from '../angularMigration';
@@ -276,7 +276,7 @@ function createPanelDataProvider(
   });
 
   // Wrap inner data provider in a data transformer
-  return new SceneDataTransformer({
+  return new TransformSidecarDataTransformer({
     $data: dataProvider,
     transformations: panel.data.spec.transformations.map((t) => {
       const normalized = normalizeTransformation(t);

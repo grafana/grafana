@@ -8,7 +8,6 @@ import {
   type CustomVariable,
   LocalValueVariable,
   type MultiValueVariable,
-  SceneDataTransformer,
   sceneGraph,
   type SceneObject,
   SceneObjectBase,
@@ -42,6 +41,7 @@ import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
+import { TransformSidecarDataTransformer } from './TransformSidecarDataTransformer';
 import { findVizPanelByKey } from './findVizPanel';
 
 export const NEW_PANEL_HEIGHT = 8;
@@ -233,7 +233,7 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
       hideGroupByAction: !config.featureToggles.dashboardUnifiedDrilldownControls,
     }),
     $data: datasourceSettings
-      ? new SceneDataTransformer({
+      ? new TransformSidecarDataTransformer({
           $data: new SceneQueryRunner({
             queries: [{ refId: 'A' }],
             datasource: getDataSourceRef(datasourceSettings),
