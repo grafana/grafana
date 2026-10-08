@@ -1173,6 +1173,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "authz.useLegacyCheck",
+			Description:  "Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "zanzana",
 			Description:  "Use openFGA as authorization engine.",
 			Stage:        FeatureStageExperimental,
