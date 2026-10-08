@@ -1049,6 +1049,7 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	assert.Contains(t, requestedTables, "alert_rule_state")
 	assert.Contains(t, requestedTables, "alert_rule_version")
 	assert.True(t, spy.withTransactionalDbSessionCalled, "the whole delete should run on dbHelper.DB, not st.SQLStore directly")
+	assert.False(t, spy.withDbSessionCalled, "the version snapshot should reuse the delete's transaction instead of opening a second session")
 }
 
 // TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession is a regression test:
@@ -1191,6 +1192,42 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderRequired(t *tes
 
 	err := store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, true, rule.UID)
 	require.ErrorContains(t, err, "provider unavailable")
+}
+
+// TestIntegration_DeleteAlertRulesByUID_SingleConnectionPool is a stress test, not a production
+// expectation: a single-connection pool proves the version snapshot never needs a second
+// connection at the same time as the delete's own. Before the savepoint fix, this would hang
+// waiting for a connection the delete's own transaction was already holding.
+func TestIntegration_DeleteAlertRulesByUID_SingleConnectionPool(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	sqlStore.GetEngine().SetMaxOpenConns(1)
+	cfg := setting.NewCfg()
+	cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{}, featuremgmt.FlagAlertRuleRestore)
+	store.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+		return &legacysql.LegacyDatabaseHelper{
+			DB:    sqlStore,
+			Table: func(n string) string { return n },
+		}, nil
+	}
+
+	rule := createRule(t, store, models.RuleGen)
+
+	done := make(chan error, 1)
+	go func() {
+		done <- store.DeleteAlertRulesByUID(context.Background(), rule.OrgID, &models.AlertingUserUID, false, rule.UID)
+	}()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("delete did not complete: likely blocked waiting for a second connection from a single-connection pool")
+	}
 }
 
 func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
