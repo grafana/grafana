@@ -978,8 +978,6 @@ func TestReadFrontendDevSettings(t *testing.T) {
 	// cannot blank it. Its enforced CSP is what keeps it on the built assets instead of a dev
 	// server a contributor happens to have running. Guard that, because the CSP is the whole
 	// mechanism: turning it off here would silently hand the suite a contributor's bundles.
-	// (The harness also never enables grafana.rspackBuild, so the dev server branch is
-	// unreachable either way - but that is a second line of defence, not this one.)
 	t.Run("the e2e harness never uses the dev server", func(t *testing.T) {
 		cfg := NewCfg()
 		require.NoError(t, cfg.Load(CommandLineArgs{
