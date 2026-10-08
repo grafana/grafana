@@ -14,7 +14,7 @@ require (
 	github.com/grafana/grafana/apps/provisioning v0.0.0-20260930143952-2d0116f02123
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123
 	github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123
-	github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0
+	github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0-20261007194028-8f91f8f99048
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123
 	github.com/stretchr/testify v1.12.1
 	go.opentelemetry.io/otel v1.47.0
@@ -177,6 +177,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
-
-// Pin resourceclient to a pseudo-version so apistore can be fetched from outside this repo.
-replace github.com/grafana/grafana/pkg/storage/unified/resourceclient => ../resourceclient
