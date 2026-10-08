@@ -13,6 +13,7 @@ import { type StoreState } from 'app/types/store';
 import { type UserFilter } from 'app/types/user';
 
 import { EnterpriseAuthFeaturesCard } from './EnterpriseAuthFeaturesCard';
+import { ExportUsersButton } from './Users/ExportUsersButton';
 import { UsersTable } from './Users/UsersTable';
 import { changeFilter, changePage, changeQuery, changeSort, fetchUsers } from './state/actions';
 
@@ -43,6 +44,7 @@ const mapStateToProps = (state: StoreState) => ({
   totalPages: state.userListAdmin.totalPages,
   page: state.userListAdmin.page,
   filters: state.userListAdmin.filters,
+  sort: state.userListAdmin.sort,
   isLoading: state.userListAdmin.isLoading,
 });
 
@@ -60,6 +62,7 @@ const UserListAdminPageUnConnected = ({
   showPaging,
   changeFilter,
   filters,
+  sort,
   totalPages,
   page,
   changePage,
@@ -101,6 +104,7 @@ const UserListAdminPageUnConnected = ({
           {extraFilters.map((FilterComponent, index) => (
             <FilterComponent key={index} filters={filters} onChange={changeFilter} className={styles.filter} />
           ))}
+          <ExportUsersButton scope="all" query={query} filters={filters} sort={sort} className={styles.exportButton} />
           {contextSrv.hasPermission(AccessControlAction.UsersCreate) && (
             <LinkButton href="admin/users/create" variant="primary">
               <Trans i18nKey="admin.users-list.create-button">New user</Trans>
@@ -134,6 +138,10 @@ const getStyles = (theme: GrafanaTheme2) => {
       [theme.breakpoints.down('sm')]: {
         margin: 0,
       },
+    }),
+    exportButton: css({
+      marginRight: theme.spacing(1),
+      [theme.breakpoints.down('sm')]: { marginRight: 0 },
     }),
     actionBar: css({
       marginBottom: theme.spacing(2),
