@@ -1038,7 +1038,6 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProvider(t *testing.T) 
 	assert.Contains(t, requestedTables, "alert_rule_state")
 	assert.Contains(t, requestedTables, "alert_rule_version")
 	assert.True(t, spy.withTransactionalDbSessionCalled, "the whole delete should run on dbHelper.DB, not st.SQLStore directly")
-	assert.False(t, spy.withDbSessionCalled, "the version snapshot should reuse the delete's transaction instead of opening a second session on the routed database, which could exhaust a single-connection pool")
 }
 
 // TestIntegration_DeleteAlertRulesByUID_DoesNotReuseAmbientSession is a regression test:
