@@ -404,7 +404,7 @@ jobs:
       - name: Run enterprise module tests
         env:
           SHARD: ${{ matrix.shard }}
-          EXCLUDED: '/pkg/(saml|registry/provisioning/gitlab|apps/queries/pkg/apis/manifestdata)$'
+          EXCLUDED: '/pkg/(saml)$'
         run: |
           set -euo pipefail
 
