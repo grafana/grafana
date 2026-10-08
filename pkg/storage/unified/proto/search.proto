@@ -4,6 +4,7 @@ package resource;
 option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
 
 import "resource.proto";
+import "google/protobuf/struct.proto";
 
 
 // Unlike the ResourceStore, this service can be exposed to clients directly
@@ -430,7 +431,7 @@ message HybridSearchResult {
   // One entry with subresource "" for resources embedded whole. For
   // lexical-only hits the server synthesizes a single chunk with
   // content = title and no metadata so rerankers always have text.
-  // Only the best chunk influences score.
+  // Reranking uses the best chunk alongside returned lexical text.
   repeated HybridSearchChunk chunks = 5;
 
   // Manager kind. Empty when unmanaged, for external collections, or when
@@ -440,6 +441,11 @@ message HybridSearchResult {
 
   // Manager identity, alongside managed_by_kind.
   string managed_by_id = 8;
+
+  // Field names and values returned by the lexical search, including metadata.
+  // Values are strings or arrays of strings.
+  // Absent for semantic-only hits, external collections, and legacy table responses.
+  map<string, google.protobuf.Value> lexical = 9;
 }
 
 message HybridSearchChunk {

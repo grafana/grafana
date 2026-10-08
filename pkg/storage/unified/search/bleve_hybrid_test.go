@@ -71,7 +71,7 @@ func TestHybridSearchBleveTextFields(t *testing.T) {
 			}
 			searchFields := fields
 			wantNames := []string{"description", "panel"}
-			wantTexts := []string{"Overview\nInvestigating DATABASE connection failures", "Operations\nDatabase connections"}
+			wantTexts := []string{"Overview\nInvestigating DATABASE connection failures", "Operations\nCPU usage\nDatabase connections"}
 			if tc.noManifest {
 				searchFields = nil
 				wantNames = wantNames[:1]

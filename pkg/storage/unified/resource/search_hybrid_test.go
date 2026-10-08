@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	authlib "github.com/grafana/authlib/types"
 
@@ -254,11 +255,18 @@ func TestLexicalHitsFromResponse(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			hits, err := lexicalHitsFromResponse(test.response, nil, "")
+			hits, err := lexicalHitsFromResponse(test.response)
 			require.NoError(t, err)
 			require.Len(t, hits, 2)
-			assert.Equal(t, lexicalHit{uid: "u1", title: "Title One", folder: "f1"}, hits[0])
-			assert.Equal(t, lexicalHit{uid: "u2", title: "Title Two", folder: "f2"}, hits[1])
+			for i, want := range []lexicalHit{{uid: "u1", title: "Title One", folder: "f1"}, {uid: "u2", title: "Title Two", folder: "f2"}} {
+				if test.response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+					want.lexical = map[string]*structpb.Value{
+						SEARCH_FIELD_TITLE:  structpb.NewStringValue(want.title),
+						SEARCH_FIELD_FOLDER: structpb.NewStringValue(want.folder),
+					}
+				}
+				assert.Equal(t, want, hits[i])
+			}
 		})
 	}
 }
@@ -303,10 +311,18 @@ func TestLexicalHitsFromResponse_ManagerColumns(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			hits, err := lexicalHitsFromResponse(test.response, nil, "")
+			hits, err := lexicalHitsFromResponse(test.response)
 			require.NoError(t, err)
 			require.Len(t, hits, 1)
-			assert.Equal(t, lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}, hits[0])
+			want := lexicalHit{uid: "u1", title: "Title", managerKind: "repo", managerID: "m1"}
+			if test.response.ResultFormat == resourcepb.ResourceSearchRequest_FIELD_VALUES {
+				want.lexical = map[string]*structpb.Value{
+					SEARCH_FIELD_TITLE:        structpb.NewStringValue("Title"),
+					SEARCH_FIELD_MANAGER_KIND: structpb.NewStringValue("repo"),
+					SEARCH_FIELD_MANAGER_ID:   structpb.NewStringValue("m1"),
+				}
+			}
+			assert.Equal(t, want, hits[0])
 		})
 	}
 }
@@ -319,7 +335,7 @@ func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
 			Rows: []*resourcepb.ResourceTableRow{{Key: &resourcepb.ResourceKey{Name: "u1"}}},
 		}},
 	} {
-		hits, err := lexicalHitsFromResponse(response, nil, "")
+		hits, err := lexicalHitsFromResponse(response)
 		require.NoError(t, err)
 		if response != nil && response.Results != nil {
 			require.Len(t, hits, 1)
@@ -331,7 +347,7 @@ func TestLexicalHitsFromResponse_MissingColumnsAndNil(t *testing.T) {
 }
 
 func TestLexicalHitsFromResponseRejectsMalformedFieldValues(t *testing.T) {
-	_, err := lexicalHitsFromResponse(malformedFieldValueResponse(), nil, "")
+	_, err := lexicalHitsFromResponse(malformedFieldValueResponse())
 	require.ErrorContains(t, err, `field "title": scalar has 2 values`)
 }
 
