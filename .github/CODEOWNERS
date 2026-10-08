@@ -1193,7 +1193,6 @@ scripts/verify-pkg-stig.sh @grafana/grafana-backend-services-squad
 /jest.config.codeowner.js @grafana/dataviz-squad
 
 /scripts/**/generate-transformations* @grafana/datapro
-/scripts/webpack/ @grafana/grafana-frontend-platform
 /scripts/rspack/ @grafana/grafana-frontend-platform
 /scripts/test-aliases.py @grafana/docs-tooling @jtvdez
 eslint-suppressions.json @grafanabot
