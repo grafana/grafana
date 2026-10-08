@@ -2042,6 +2042,7 @@ The retry mechanism:
 
 - Adds jitter to retry delays to prevent thundering herd problems when multiple rules fail simultaneously.
 - Stops when either `max_attempts` is reached or the rule’s evaluation interval is exceeded.
+- Doesn't retry errors that repeat on every attempt, such as an oversized data source response or a result set over the [`alerting_rule_evaluation_results`](#alerting_rule_evaluation_results) limit.
 
 You can customize retry behaviour with `initial_retry_delay`, `max_retry_delay`, and `randomization_factor`.
 

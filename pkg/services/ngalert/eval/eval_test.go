@@ -1394,6 +1394,7 @@ func TestEvaluateRawLimit(t *testing.T) {
 				if tc.error != "" {
 					require.Error(t, err)
 					require.EqualError(t, err, tc.error)
+					require.ErrorIs(t, err, ErrEvaluationResultLimit)
 				} else {
 					require.NoError(t, err)
 					require.NotNil(t, result)
@@ -1471,6 +1472,16 @@ func TestResults_HasNonRetryableErrors(t *testing.T) {
 			expected: true,
 		},
 		{
+			name: "with plugin resource exhausted error",
+			eval: Results{
+				{
+					State: Error,
+					Error: expr.MakeQueryError("A", "uid", plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("rpc error: code = ResourceExhausted desc = grpc: received message larger than max")),
+				},
+			},
+			expected: true,
+		},
+		{
 			name: "with retryable errors",
 			eval: Results{
 				{
@@ -1515,6 +1526,36 @@ func TestIsNonRetryableError(t *testing.T) {
 		{
 			name:     "other query error stays retryable",
 			err:      expr.MakeQueryError("A", "uid", errors.New("connection refused")),
+			expected: false,
+		},
+		{
+			name:     "prometheus series cap is non-retryable (through query wrap)",
+			err:      expr.MakeQueryError("A", "uid", errors.New("query returned more than 10000 series (err-prometheus-max-series-per-query)")),
+			expected: true,
+		},
+		{
+			name:     "plugin resource exhausted is non-retryable (through query and pipeline wrap)",
+			err:      fmt.Errorf("server side expressions pipeline returned an error: %w", expr.MakeQueryError("A", "uid", plugins.ErrPluginGrpcResourceExhaustedBase.Errorf("rpc error: code = ResourceExhausted desc = grpc: received message larger than max"))),
+			expected: true,
+		},
+		{
+			name:     "plugin resource exhausted rebuilt from its message is non-retryable",
+			err:      expr.MakeQueryError("A", "uid", errors.New("[plugin.resourceExhausted] rpc error: code = ResourceExhausted desc = grpc: received message larger than max (123 vs. 100)")),
+			expected: true,
+		},
+		{
+			name:     "evaluation result limit is non-retryable",
+			err:      fmt.Errorf("%w: 2 (limit: 1)", ErrEvaluationResultLimit),
+			expected: true,
+		},
+		{
+			name:     "plugin unavailable stays retryable",
+			err:      expr.MakeQueryError("A", "uid", plugins.ErrPluginUnavailable),
+			expected: false,
+		},
+		{
+			name:     "plugin connection unavailable stays retryable",
+			err:      expr.MakeQueryError("A", "uid", plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("rpc error: code = Unavailable desc = transport is closing")),
 			expected: false,
 		},
 		{
