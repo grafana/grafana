@@ -12,7 +12,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -69,9 +71,13 @@ func TestStorageErrorResponseCompatibility(t *testing.T) {
 					}
 					st, err := status.New(codes.Unknown, "transport message").WithDetails(result)
 					require.NoError(t, err)
+					message := "storage failure"
+					if name == "Folder" && tc.code == http.StatusConflict {
+						message = "the folder operation conflicted with another request; please retry"
+					}
 					for encoding, input := range map[string]error{"embedded": resource.StatusError(result), "grpc": st.Err()} {
 						t.Run(encoding, func(t *testing.T) {
-							assertLegacyHTTPResponse(t, convert, tc.wrap(input), expectedErrorResponse(tc.code, "storage failure"))
+							assertLegacyHTTPResponse(t, convert, tc.wrap(input), expectedErrorResponse(tc.code, message))
 						})
 					}
 				})
@@ -155,18 +161,96 @@ func assertLegacyHTTPResponse(t *testing.T, convert func(error) response.Respons
 	}
 }
 
+func TestIsFolderAlreadyExists(t *testing.T) {
+	alreadyExists := k8sErrors.NewAlreadyExists(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "foobar")
+	conflict := k8sErrors.NewConflict(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "foobar", errors.New("write contention"))
+	reasonlessConflict := &k8sErrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusConflict}}
+	wrappedAlreadyExists := folder.ErrInternal.Errorf("create: %w", alreadyExists)
+
+	for _, tc := range []struct {
+		name      string
+		err       error
+		statusErr *k8sErrors.StatusError
+		want      bool
+	}{
+		{"nil errors", nil, nil, false},
+		{"legacy sentinel", folder.ErrSameUIDExists, nil, true},
+		{"wrapped sentinel", fmt.Errorf("create: %w", folder.ErrSameUIDExists), nil, true},
+		{"kubernetes already exists", alreadyExists, nil, true},
+		{"wrapped kubernetes already exists", fmt.Errorf("create: %w", alreadyExists), nil, true},
+		{"errutil wrapper without normalization", wrappedAlreadyExists, nil, false},
+		{"normalized errutil wrapper", wrappedAlreadyExists, alreadyExists, true},
+		{"normalized already exists", status.Error(codes.AlreadyExists, "exists"), alreadyExists, true},
+		{"bare grpc already exists is unconfirmed", status.Error(codes.AlreadyExists, "exists"), nil, false},
+		{"version mismatch", folder.ErrVersionMismatch, nil, false},
+		{"kubernetes conflict", conflict, nil, false},
+		{"normalized conflict", status.Error(codes.Aborted, "write contention"), conflict, false},
+		{"reason-less 409", status.Error(codes.Aborted, "write contention"), reasonlessConflict, false},
+		{"unrelated error", errors.New("connection refused"), nil, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.Equal(t, tc.want, isFolderAlreadyExists(tc.err, tc.statusErr))
+		})
+	}
+}
+
 func TestFolderStorageAlreadyExistsResponse(t *testing.T) {
-	result := &resourcepb.ErrorResult{Code: http.StatusConflict, Reason: string(metav1.StatusReasonAlreadyExists)}
-	st, err := status.New(codes.AlreadyExists, "exists").WithDetails(result)
+	result := &resourcepb.ErrorResult{
+		Code:    http.StatusConflict,
+		Reason:  string(metav1.StatusReasonAlreadyExists),
+		Message: "private storage details",
+	}
+	st, err := status.New(codes.AlreadyExists, "private transport details").WithDetails(result)
 	require.NoError(t, err)
-	for _, input := range []error{resource.StatusError(result), st.Err()} {
-		for _, wrapped := range []error{input, fmt.Errorf("search: %w", input), folder.ErrInternal.Errorf("operation failed: %w", input)} {
-			assertLegacyHTTPResponse(t, ToFolderErrorResponse, wrapped, func(error) response.Response {
-				return response.JSON(http.StatusPreconditionFailed, map[string]any{
-					"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error(),
-				})
-			})
-		}
+	kubernetesErr := k8sErrors.NewAlreadyExists(schema.GroupResource{
+		Group: "folder.grafana.app", Resource: "folders",
+	}, "foobar")
+	for name, input := range map[string]error{
+		"wrapped sentinel":   fmt.Errorf("save folder: %w", folder.ErrSameUIDExists),
+		"wrapped kubernetes": folder.ErrInternal.Errorf("operation failed: %w", kubernetesErr),
+		"embedded":           resource.StatusError(result),
+		"wrapped grpc":       folder.ErrInternal.Errorf("operation failed: %w", st.Err()),
+	} {
+		t.Run(name, func(t *testing.T) {
+			want := expectedErrorResponse(http.StatusConflict, "a folder with the same UID already exists")
+			assertLegacyHTTPResponse(t, ToFolderErrorResponse, input, want)
+			require.Equal(t, input, ToFolderErrorResponse(input).(*response.NormalResponse).Err())
+			mapped := ToFolderStatusError(input)
+			require.True(t, k8sErrors.IsAlreadyExists(&mapped))
+			assertLegacyHTTPResponse(t, ToFolderErrorResponse, &mapped, want)
+		})
+	}
+}
+
+func TestFolderStorageConflictResponse(t *testing.T) {
+	legacyErr := status.Error(codes.Aborted, `failed to write data: transactional operation: failed to apply backwards compatible updates: Operation cannot be fulfilled on folders.folder.grafana.app "FOOBAR": concurrent create attempts detected`)
+	result := &resourcepb.ErrorResult{
+		Code:    http.StatusConflict,
+		Reason:  string(metav1.StatusReasonConflict),
+		Message: "private storage details",
+	}
+	st, err := status.New(codes.Aborted, "private transport details").WithDetails(result)
+	require.NoError(t, err)
+	kubernetesErr := k8sErrors.NewConflict(schema.GroupResource{
+		Group: "folder.grafana.app", Resource: "folders",
+	}, "FOOBAR", legacyErr)
+	for name, input := range map[string]error{
+		"legacy grpc aborted":      legacyErr,
+		"kubernetes after retries": folder.ErrInternal.Errorf("operation failed: %w", kubernetesErr),
+		"wrapped grpc":             fmt.Errorf("save folder: %w", st.Err()),
+		"reason-only": resource.StatusError(&resourcepb.ErrorResult{
+			Reason: string(metav1.StatusReasonConflict), Message: "private storage details",
+		}),
+		"unconfirmed grpc already exists": status.Error(codes.AlreadyExists, "private storage details"),
+	} {
+		t.Run(name, func(t *testing.T) {
+			want := expectedErrorResponse(http.StatusConflict, "the folder operation conflicted with another request; please retry")
+			assertLegacyHTTPResponse(t, ToFolderErrorResponse, input, want)
+			require.Equal(t, input, ToFolderErrorResponse(input).(*response.NormalResponse).Err())
+			mapped := ToFolderStatusError(input)
+			require.True(t, k8sErrors.IsConflict(&mapped))
+			assertLegacyHTTPResponse(t, ToFolderErrorResponse, &mapped, want)
+		})
 	}
 }
 

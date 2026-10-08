@@ -9,7 +9,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// Callers still need the original error to preserve existing dashboard and folder responses.
+// storageStatusError normalizes wrapped Kubernetes and gRPC errors for HTTP status and reason checks.
+// Callers retain the original error for legacy sentinel matching and logging.
 func storageStatusError(err error) *apierrors.StatusError {
 	if statusErr, ok := errors.AsType[*apierrors.StatusError](err); ok {
 		return statusErr
