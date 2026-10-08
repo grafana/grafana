@@ -46,7 +46,7 @@ To set up Git Sync as code with `gcx`, follow these steps:
 
 If you're connecting with any of the [supported Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-git-providers) using a Personal Access Token, you need to create a repository resource to define the connection between your repositories and your Grafana instance.
 
-If you're connecting to Git Sync with GitHub App, in addition to the repository resource you need to create a connection resource as well.
+If you're connecting to Git Sync with GitHub App or an OAuth App, in addition to the repository resource you need to create a connection resource as well.
 
 ### Create the connection resource
 
@@ -79,6 +79,55 @@ Replace the placeholders with your values:
 - _`<GITHUB_INSTALL_ID>`_: GitHub App installation id
 - _`<GITHUB_PRIVATE_KEY>`_: GitHub Private Key
 
+### Create an OAuth App connection resource
+
+If you're connecting Git Sync with an [OAuth App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-an-oauth-app), create a `connection.yaml` file with the client ID and secret of the app, and the fields for your provider:
+
+```yaml
+apiVersion: provisioning.grafana.app/v0alpha1
+kind: Connection
+metadata:
+  name: '<OAUTH_CONNECTION_NAME>'
+  namespace: default
+spec:
+  title: '<CONNECTION_TITLE>'
+  type: '<CONNECTION_TYPE>' # githubOAuth, githubEnterpriseOAuth, gitlabOAuth, bitbucketOAuth, or gitOAuth
+  oauth:
+    clientID: '<CLIENT_ID>'
+  # GitHub Enterprise only:
+  githubEnterpriseOAuth:
+    serverUrl: '<GITHUB_ENTERPRISE_SERVER_URL>'
+  # Bitbucket only:
+  bitbucket:
+    workspace: '<BITBUCKET_WORKSPACE>'
+  # Pure Git only:
+  gitOAuth:
+    authURL: '<AUTHORIZATION_URL>'
+    tokenURL: '<TOKEN_URL>'
+    scopes:
+      - '<SCOPE>'
+secure:
+  clientSecret:
+    create: '<CLIENT_SECRET>'
+```
+
+Replace the placeholders with your values:
+
+- _`<OAUTH_CONNECTION_NAME>`_: The name of your OAuth App connection
+- _`<CONNECTION_TITLE>`_: Human-readable name displayed in Grafana UI
+- _`<CONNECTION_TYPE>`_: The OAuth connection type for your provider
+- _`<CLIENT_ID>`_: The client ID of the OAuth App. For GitLab, the application ID. For Bitbucket, the key of the OAuth consumer.
+- _`<CLIENT_SECRET>`_: The client secret of the OAuth App
+- _`<GITHUB_ENTERPRISE_SERVER_URL>`_: The URL of your GitHub Enterprise instance
+- _`<BITBUCKET_WORKSPACE>`_: The workspace that the OAuth consumer belongs to
+- _`<AUTHORIZATION_URL>`_, _`<TOKEN_URL>`_, _`<SCOPE>`_: The OAuth endpoints of your Git provider, and the scopes that grant read and write access to your repositories
+
+An OAuth App connection needs a user to approve access in the browser. After you push the connection, it shows as **Disconnected** until you authorize it:
+
+1. Select **Administration > General > Provisioning** and go to the **Connections** tab.
+1. Select the connection and click **Reauthorize**.
+1. Approve the access in the provider tab that opens.
+
 ### Create the repository resource
 
 Next, create a `repository.yaml` file defining your Git Sync configuration. Depending on your Git provider and authentication method, add your Personal Access Token information or the connection name.
@@ -105,7 +154,7 @@ spec:
     url: '<GIT_REPO_URL>'
     branch: '<BRANCH>'
     path: grafana/
-  # GitHub App connection only:
+  # GitHub App or OAuth App connection only:
   connection:
     name: '<GITHUB_CONNECTION_NAME>'
 # GitHub Personal Access Token only:
@@ -156,6 +205,8 @@ spec:
 secure:
   token: { create: 'GIT_PAT' }
 ```
+
+To use an OAuth App connection, add `spec.connection.name` with the name of the connection, and remove `secure.token`. This works for the `github`, `githubEnterprise`, `gitlab`, `bitbucket`, and `git` repository types. For `git`, set `tokenUser` to the username that your provider expects with OAuth tokens, for example `oauth2` for GitLab or `x-token-auth` for Bitbucket.
 
 Replace the placeholders with your values:
 
