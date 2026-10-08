@@ -301,6 +301,7 @@ export function PanelChrome({
             variant={visualRefreshEnabled ? 'base' : 'h6'}
             truncate
             title={typeof title === 'string' ? title : undefined}
+            weight="medium"
             id={panelTitleId}
           >
             {title}
