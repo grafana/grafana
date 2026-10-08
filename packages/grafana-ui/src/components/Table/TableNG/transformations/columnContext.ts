@@ -9,10 +9,10 @@ export function getSourceFrameIndex(
   frames: readonly DataFrame[],
   frameIndex: number,
   sourceSeries: readonly DataFrame[]
-): number | undefined {
+): number {
   const frame = frames[frameIndex];
   if (!frame) {
-    return undefined;
+    return -1;
   }
 
   if (frames.length === 1 && sourceSeries.length === 1 && frame.refId === sourceSeries[0].refId) {
@@ -24,9 +24,9 @@ export function getSourceFrameIndex(
   if (
     !refId ||
     frames.filter((frame) => frame.refId === refId).length !== 1 ||
-    sourceSeries.filter((frame) => frame.refId === refId).length !== 1
+    sourceSeries.filter((frame) => frame.refId === refId).length > 1
   ) {
-    return undefined;
+    return -1;
   }
 
   return sourceSeries.findIndex((frame) => frame.refId === refId);
@@ -36,11 +36,15 @@ export function getSourceFrameIndex(
  * Keeps the selected query's scope stable when other queries appear or disappear.
  * Returns no filter when the selected frame has no refId.
  */
-export function frameFilterFor(frames: readonly DataFrame[], frameIndex: number): MatcherConfig | undefined {
+export function getFrameFilter(frames: readonly DataFrame[], frameIndex: number): MatcherConfig | undefined {
   const refId = frames[frameIndex]?.refId;
 
   // An unresolvable frame matcher is dropped, which would apply the transform to every frame.
-  return refId ? { id: FrameMatcherID.byRefId, options: refId } : undefined;
+  if (!refId) {
+    return;
+  }
+
+  return { id: FrameMatcherID.byRefId, options: refId };
 }
 
 export function prepareColumnContext(
@@ -58,7 +62,7 @@ export function prepareColumnContext(
 
   // Display names identify columns; duplicates cannot be managed independently.
   if (new Set(catalog).size !== catalog.length) {
-    return undefined;
+    return;
   }
-  return { catalog, frameFilter: frameFilterFor(sourceSeries, sourceIndex) };
+  return { catalog, frameFilter: getFrameFilter(sourceSeries, sourceIndex) };
 }

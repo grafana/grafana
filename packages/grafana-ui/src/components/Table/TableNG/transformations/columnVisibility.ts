@@ -1,6 +1,6 @@
 import { type DataFrame, type DataTransformerConfig, type MatcherConfig } from '@grafana/data';
 
-import { frameFilterFor, getSourceFrameIndex, prepareColumnContext } from './columnContext';
+import { getFrameFilter, getSourceFrameIndex, prepareColumnContext } from './columnContext';
 import { EMPTY_OPTIONS, findColumnsEntry, writeColumnsEntry } from './organizeFields';
 import { type ColumnContext, type TableTransformation } from './types';
 
@@ -35,10 +35,10 @@ export function ensureVisibleColumnPerFrame(
   sourceSeries: readonly DataFrame[]
 ): readonly DataTransformerConfig[] {
   return sourceSeries.reduce((current, _frame, index) => {
-    if (getSourceFrameIndex(sourceSeries, index, sourceSeries) === undefined) {
+    if (getSourceFrameIndex(sourceSeries, index, sourceSeries) < 0) {
       return current;
     }
-    const { hiddenColumns } = readColumnVisibility(current, frameFilterFor(sourceSeries, index));
+    const { hiddenColumns } = readColumnVisibility(current, getFrameFilter(sourceSeries, index));
     if (hiddenColumns.size === 0) {
       return current;
     }

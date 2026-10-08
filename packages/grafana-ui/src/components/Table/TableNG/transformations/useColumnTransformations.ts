@@ -9,10 +9,10 @@ import { columnTransformations } from './registry';
 import { useTableTransformations } from './useTableTransformations';
 
 export function useColumnTransformations(
-  sourceIndex: number | undefined,
+  sourceIndex: number,
   api: PanelRuntimeTransformations | undefined,
   owner: string,
-  enabled = sourceIndex !== undefined
+  enabled = sourceIndex >= 0
 ) {
   const { transformations, sourceSeries, update } = useTableTransformations(api, owner);
   useEffect(() => {
@@ -20,12 +20,10 @@ export function useColumnTransformations(
       update((current) => ensureVisibleColumnPerFrame(current, sourceSeries));
     }
   }, [enabled, sourceSeries, transformations, update]);
-  const sourceFrame = enabled && sourceIndex !== undefined ? sourceSeries?.[sourceIndex] : undefined;
+  const sourceFrame = enabled && sourceIndex >= 0 ? sourceSeries?.[sourceIndex] : undefined;
   const context = useMemo(
     () =>
-      sourceFrame && sourceSeries && sourceIndex !== undefined
-        ? prepareColumnContext(sourceSeries, sourceIndex)
-        : undefined,
+      sourceFrame && sourceSeries && sourceIndex >= 0 ? prepareColumnContext(sourceSeries, sourceIndex) : undefined,
     [sourceFrame, sourceSeries, sourceIndex]
   );
   const onHiddenColumnsChange = useCallback(

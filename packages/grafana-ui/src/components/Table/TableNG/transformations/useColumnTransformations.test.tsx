@@ -86,7 +86,7 @@ it.each([false, true])('recovers a missing output frame only when enabled=%s', (
     subscribe: () => () => {},
   };
 
-  renderHook(() => useColumnTransformations(undefined, api, 'table', enabled));
+  renderHook(() => useColumnTransformations(-1, api, 'table', enabled));
 
   if (enabled) {
     expect(api.set).toHaveBeenCalledWith('table', [configs[1]]);

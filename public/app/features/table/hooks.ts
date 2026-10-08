@@ -155,18 +155,18 @@ function getEligibleColumnSourceIndex(
   frameIndex: number,
   sourceSeries: readonly DataFrame[] | undefined,
   enabled: boolean
-): number | undefined {
+): number {
   if (!enabled) {
-    return undefined;
+    return -1;
   }
 
-  let sourceIndex: number | undefined;
+  let sourceIndex = -1;
   if (sourceSeries && supportsColumnManagement(frames[frameIndex])) {
     sourceIndex = getSourceFrameIndex(frames, frameIndex, sourceSeries);
   }
 
-  if (sourceIndex !== undefined && !supportsColumnManagement(sourceSeries?.[sourceIndex])) {
-    return undefined;
+  if (sourceIndex >= 0 && !supportsColumnManagement(sourceSeries?.[sourceIndex])) {
+    return -1;
   }
 
   return sourceIndex;
