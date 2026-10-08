@@ -7,6 +7,7 @@ replace github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/s
 require (
 	github.com/grafana/grafana-app-sdk v0.60.12
 	github.com/grafana/grafana-app-sdk/logging v0.60.12
+	github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0-20261008094357-6ccebd1d4c59
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0
 	github.com/stretchr/testify v1.12.1
 	google.golang.org/grpc v1.84.0
@@ -17,6 +18,7 @@ require (
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bradfitz/gomemcache v0.0.0-20260422231931-4d751bb6e37c // indirect
+	github.com/bwmarrin/snowflake v0.3.0 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect

@@ -11,9 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+	"google.golang.org/grpc/metadata"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -193,14 +199,40 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	reg := prometheus.NewRegistry()
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{MetricsRegister: reg})
 	require.NoError(t, err)
 	t.Cleanup(target.closeConnections)
 
-	for range 2 {
+	// Grafana's tracing service sets the global propagator that otelgrpc uses.
+	previousPropagator := otel.GetTextMapPropagator()
+	otel.SetTextMapPropagator(propagation.TraceContext{})
+	t.Cleanup(func() { otel.SetTextMapPropagator(previousPropagator) })
+	traceID := trace.TraceID{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}
+	callerSpan := trace.NewSpanContext(trace.SpanContextConfig{
+		TraceID:    traceID,
+		SpanID:     trace.SpanID{1, 2, 3, 4, 5, 6, 7, 8},
+		TraceFlags: trace.FlagsSampled,
+	})
+
+	for i := range 2 {
 		listener, err := net.Listen("tcp", "127.0.0.1:0")
 		require.NoError(t, err)
-		server := grpc.NewServer()
+		traceparents := make(chan string, 10)
+		recordTraceparent := func(ctx context.Context) {
+			md, _ := metadata.FromIncomingContext(ctx)
+			traceparents <- strings.Join(md.Get("traceparent"), ",")
+		}
+		server := grpc.NewServer(
+			grpc.ChainUnaryInterceptor(func(ctx context.Context, req any, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
+				recordTraceparent(ctx)
+				return handler(ctx, req)
+			}),
+			grpc.ChainStreamInterceptor(func(srv any, ss grpc.ServerStream, _ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+				recordTraceparent(ss.Context())
+				return handler(srv, ss)
+			}),
+		)
 		backend := &manifestTestPluginServer{calls: make(chan string, 3)}
 		pluginv3.RegisterAdmissionServiceServer(server, backend)
 		pluginv3.RegisterConversionServiceServer(server, backend)
@@ -221,7 +253,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		require.NotNil(t, legacy)
 		require.NotNil(t, client)
 
-		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(trace.ContextWithSpanContext(t.Context(), callerSpan), 5*time.Second)
 		defer cancel()
 		health, err := legacy.CheckHealth(ctx, &sdkbackend.CheckHealthRequest{
 			PluginContext: sdkbackend.PluginContext{PluginID: plugin.pluginID},
@@ -257,26 +289,44 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		require.Equal(t, "conversion", <-backend.calls)
 		require.Equal(t, "route", <-backend.calls)
 
-		conn := target.connections[host]
+		calls := i + 1
+		for _, method := range []string{
+			"/pluginv2.Diagnostics/CheckHealth",
+			"/pluginv2.Resource/CallResource",
+			"/grafana.plugin.v3.AdmissionService/AdmissionReview",
+			"/grafana.plugin.v3.ConversionService/ConvertObjects",
+			"/grafana.plugin.v3.RouteService/CallRoute",
+		} {
+			require.Equal(t, uint64(calls), histogramCount(t, target.requestDuration.WithLabelValues(plugin.pluginID, method, "OK")), method)
+		}
+		require.Len(t, traceparents, 5)
+		for range 5 {
+			require.Contains(t, <-traceparents, traceID.String(), "the plugin call continues the caller's trace")
+		}
+
+		key := pluginConnectionKey{host: host, pluginID: plugin.pluginID}
+		conn := target.connections[key]
+		require.NotNil(t, conn)
 		target.poll(t.Context(), make(chan struct{}, 1))
 		plugin = target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
 		_, _, err = plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
-		require.Same(t, conn, target.connections[host])
+		require.Same(t, conn, target.connections[key])
 	}
+	require.Equal(t, 5, testutil.CollectAndCount(reg, "grafana_router_plugin_grpc_request_duration_seconds"))
 
 	connections := target.connections
 	target.closeConnections()
 	for _, conn := range connections {
 		require.Equal(t, connectivity.Shutdown, conn.GetState())
 	}
-	_, _, err = target.pluginClients("localhost:50051")
+	_, _, err = target.pluginClients("localhost:50051", "grafana-appsdktest-app")
 	require.ErrorContains(t, err, "closed")
 }
 
 func TestPluginManifestsTargetWithoutBackendClient(t *testing.T) {
 	target := &pluginManifestsTarget{}
-	clientV2, clientV3, err := target.pluginClients("")
+	clientV2, clientV3, err := target.pluginClients("", "grafana-appsdktest-app")
 	require.NoError(t, err)
 	require.Nil(t, clientV2)
 	require.Nil(t, clientV3)

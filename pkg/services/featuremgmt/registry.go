@@ -255,23 +255,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.readmes",
-			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
-		},
-		{
-			Name:            "provisioning.gitConventions",
-			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-			Stage:           FeatureStagePublicPreview,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true", // enabled by default
-			Generate:        Generate{Go: true, React: true},
-		},
-		{
 			Name:        "provisioning.userAttribution",
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
@@ -657,9 +640,17 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
+			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "disableScriptedDashboards",
@@ -3072,6 +3063,15 @@ var (
 		{
 			Name:            "reporting.legacyServiceUsesK8SClient",
 			Description:     "Redirect legacy report service to use the Kubernetes client wrapper",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "reporting.legacySettingServiceUsesK8SClient",
+			Description:     "Redirect legacy report setting service to use the Kubernetes client wrapper",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaOperatorExperienceSquad,
 			Expression:      "false",
