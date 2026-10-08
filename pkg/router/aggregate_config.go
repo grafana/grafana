@@ -4,43 +4,105 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // aggregateTargetConfig is a named upstream apiserver whose API groups the
-// router discovers by polling. Name is one of aggregateTargetNames.
+// router discovers by polling.
 type aggregateTargetConfig struct {
-	Name               string
-	URL                string
-	Audience           string
+	Name         string
+	PollInterval time.Duration
+	URL          string
+	Audience     string
+	// DiscoveryAuth is how the router authenticates its own discovery polls:
+	// discoveryAuthCAPToken (also the empty default) or discoveryAuthNone.
+	// Proxied requests always carry the caller's credentials regardless.
+	DiscoveryAuth      string
 	GroupPatterns      []string
 	CAFile             string
 	InsecureSkipVerify bool
 }
 
-// aggregateTargetNames are the fixed upstream apiservers the router aggregates.
-// See specs/2026-09-11-router-aggregate-discovery-design.md for why this is
-// not a configurable list.
-var aggregateTargetNames = []string{"baas_apiserver", "cloud_app_platform_apiserver"}
+const aggregateSectionPrefix = "router.aggregate."
 
-// parseAggregateTargets reads the <name>.url, .audience, .group_regex,
-// .ca_file and .insecure keys for each fixed target. Targets without a url
-// are skipped; an empty group_regex matches every group.
-func parseAggregateTargets(section *setting.DynamicSection) ([]aggregateTargetConfig, error) {
+// Values of a target's discovery_auth key. Unset means discoveryAuthCAPToken.
+const (
+	discoveryAuthCAPToken = "cap_token"
+	discoveryAuthNone     = "none"
+)
+
+// Section order determines priority when targets discover the same group.
+func parseAggregateTargets(cfg *setting.Cfg) ([]aggregateTargetConfig, error) {
 	var targets []aggregateTargetConfig
-	for _, name := range aggregateTargetNames {
-		url := section.Key(name + ".url").MustString("")
+	configured := make(map[string]bool)
+	for _, raw := range cfg.Raw.Sections() {
+		name, ok := strings.CutPrefix(raw.Name(), aggregateSectionPrefix)
+		if !ok {
+			continue
+		}
+		if name == "" {
+			return nil, fmt.Errorf("%s: target name is required", raw.Name())
+		}
+		configured[name] = true
+		section := cfg.SectionWithEnvOverrides(raw.Name())
+		url := section.Key("url").MustString("")
+		if url == "" {
+			continue
+		}
+		interval := defaultAggregatePollInterval
+		if value := section.Key("poll_interval").String(); value != "" {
+			var err error
+			interval, err = time.ParseDuration(value)
+			if err != nil || interval <= 0 {
+				return nil, fmt.Errorf("%s: poll_interval must be a positive duration, got %q", raw.Name(), value)
+			}
+		}
+		audience := section.Key("audience").MustString("")
+		discoveryAuth := section.Key("discovery_auth").MustString("")
+		switch discoveryAuth {
+		case "", discoveryAuthCAPToken:
+		case discoveryAuthNone:
+			if audience != "" {
+				return nil, fmt.Errorf("%s: audience must not be set when discovery_auth is %q", raw.Name(), discoveryAuthNone)
+			}
+		default:
+			return nil, fmt.Errorf("%s: discovery_auth must be %q or %q, got %q", raw.Name(), discoveryAuthCAPToken, discoveryAuthNone, discoveryAuth)
+		}
+		targets = append(targets, aggregateTargetConfig{
+			Name:               name,
+			URL:                url,
+			PollInterval:       interval,
+			Audience:           audience,
+			DiscoveryAuth:      discoveryAuth,
+			GroupPatterns:      splitGroupPatterns(section.Key("group_regex").MustString("")),
+			CAFile:             section.Key("ca_file").MustString(""),
+			InsecureSkipVerify: section.Key("insecure").MustBool(false),
+		})
+	}
+
+	// REMOVE THIS SECTION AFTER IT HAS BEEN DEPLOYED AND CONFIGS UPDATED
+	// Keep legacy targets during rollout, but let an explicit section replace
+	// the entire target, including disabling it with an empty URL.
+	legacy := cfg.SectionWithEnvOverrides(cloudRouterSection)
+	// The old loader gave cloud_app_platform_apiserver priority over baas_apiserver.
+	for _, name := range []string{"cloud_app_platform_apiserver", "baas_apiserver"} {
+		if configured[name] {
+			continue
+		}
+		url := legacy.Key(name + ".url").MustString("")
 		if url == "" {
 			continue
 		}
 		targets = append(targets, aggregateTargetConfig{
 			Name:               name,
 			URL:                url,
-			Audience:           section.Key(name + ".audience").MustString(""),
-			GroupPatterns:      splitGroupPatterns(section.Key(name + ".group_regex").MustString("")),
-			CAFile:             section.Key(name + ".ca_file").MustString(""),
-			InsecureSkipVerify: section.Key(name + ".insecure").MustBool(false),
+			PollInterval:       defaultAggregatePollInterval,
+			Audience:           legacy.Key(name + ".audience").MustString(""),
+			GroupPatterns:      splitGroupPatterns(legacy.Key(name + ".group_regex").MustString("")),
+			CAFile:             legacy.Key(name + ".ca_file").MustString(""),
+			InsecureSkipVerify: legacy.Key(name + ".insecure").MustBool(false),
 		})
 	}
 	return targets, nil
@@ -99,4 +161,10 @@ func matchesAnyPattern(groupName string, patterns []*regexp.Regexp) bool {
 		}
 	}
 	return false
+}
+
+// anonymousDiscovery reports whether the target's discovery polls go out
+// without a CAP token.
+func (c aggregateTargetConfig) anonymousDiscovery() bool {
+	return c.DiscoveryAuth == discoveryAuthNone
 }

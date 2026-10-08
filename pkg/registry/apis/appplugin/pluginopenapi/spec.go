@@ -64,7 +64,16 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (pluginroute.P
 	if plugin.JSONData.ID == "" {
 		return nil, fmt.Errorf("plugin is missing an id")
 	}
-	return pluginroute.NewAPI(plugin, pluginroute.Options{
+	if len(plugin.Manifests) > 1 {
+		return nil, fmt.Errorf("multiple app manifests require selecting a manifest")
+	}
+	if len(plugin.Manifests) == 0 || plugin.Manifests[0] == nil {
+		return appplugin.NewAppPluginAPIBuilder(plugin, offlinePluginClient{}, offlinePluginContext{}, nil,
+			appplugin.NewPluginAccessChecker(nil), appplugin.AppPluginRunnerOptions{RegisterProxy: opts.RegisterProxy},
+			tracing.NewNoopTracerService(), featuremgmt.WithFeatures())
+	}
+	return pluginroute.NewAPI(plugin.JSONData.ID, plugin.Manifests[0], pluginroute.Options{
+		PluginInfo:   plugin.JSONData.Info,
 		PluginClient: offlinePluginClient{}, ClientV3: offlineClientV3{}, ContextProvider: offlinePluginContext{},
 		AccessChecker: appplugin.NewPluginAccessChecker(nil), Search: offlineSearchClient{}, Store: offlineStoreClient{},
 		HybridAPIEnabled: true, KeysAPIEnabled: true,

@@ -67,7 +67,9 @@ export function useMetricCatalog(
     }
   }, [searchInFlight, settledSource]);
 
-  const source = searchInFlight ? lastSettled : settledSource;
+  // With nothing settled to keep, as on the first search after the catalog (re)loads, the truncated
+  // catalog's own matches are the best interim answer.
+  const source = searchInFlight ? (lastSettled.length > 0 ? lastSettled : catalog.data.metrics) : settledSource;
 
   // Filtered by the live term even when the datasource already did the matching, so results keep
   // narrowing as the user types rather than waiting out the debounce.
@@ -85,6 +87,7 @@ export function useMetricCatalog(
     // A settled datasource search answers from the whole datasource, not the cut-short catalog.
     truncated: catalog.data.truncated && !serverSearch,
     loading: catalog.loading || search.loading || pending,
-    error: catalog.error ?? search.error,
+    // A failed search belongs to the term it was for, not to the one being typed now.
+    error: catalog.error ?? (pending ? undefined : search.error),
   };
 }

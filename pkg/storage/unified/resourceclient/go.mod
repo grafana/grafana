@@ -8,14 +8,14 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.5
 	github.com/grafana/authlib v0.0.0-20260930185708-1712fc9b273a
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
-	github.com/grafana/grafana-app-sdk/logging v0.60.8
+	github.com/grafana/grafana-app-sdk/logging v0.60.12
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0
 	github.com/open-feature/go-sdk v1.17.2
 	github.com/prometheus/client_golang v1.24.1
 	github.com/stretchr/testify v1.12.1
-	go.opentelemetry.io/otel/trace v1.46.0
+	go.opentelemetry.io/otel/trace v1.47.0
 	google.golang.org/grpc v1.84.0
 	k8s.io/apimachinery v0.37.1
 )
@@ -40,8 +40,9 @@ require (
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.46.0 // indirect
-	go.opentelemetry.io/otel/metric v1.46.0 // indirect
+	go.opentelemetry.io/otel v1.47.0 // indirect
+	go.opentelemetry.io/otel/log v1.47.0 // indirect
+	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
@@ -49,8 +50,8 @@ require (
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260911204522-f61a6ca850bd // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260911204522-f61a6ca850bd // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260928230214-8a89bd6388cc // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260928230214-8a89bd6388cc // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/apiserver v0.37.1 // indirect

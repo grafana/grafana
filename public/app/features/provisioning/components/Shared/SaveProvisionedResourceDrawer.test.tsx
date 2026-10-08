@@ -1,9 +1,8 @@
 import { HttpResponse, http } from 'msw';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Playlist } from 'app/api/clients/playlist/v1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
@@ -339,15 +338,6 @@ describe('SaveProvisionedResourceDrawer', () => {
   });
 
   describe('enforced branch name template', () => {
-    beforeEach(() => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-    });
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
     // A write-first repo (workflows: ['write', 'branch']) that enforces a branch template must still
     // send the templated branch as `ref`: the drawer switches to the branch workflow and the
     // read-only branch field must not be dropped from the submitted ref.

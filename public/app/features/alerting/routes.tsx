@@ -271,7 +271,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications-history/view/:uuid',
-      component: cfg.featureToggles.alertingNotificationHistoryDetail
+      component: cfg.unifiedAlerting.notificationHistoryEnabled
         ? importAlertingComponent(
             () =>
               import(
@@ -298,14 +298,12 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
         AccessControlAction.AlertingRuleCreate,
         AccessControlAction.AlertingProvisioningSetStatus,
       ]),
-      component: config.featureToggles.alertingMigrationUI
-        ? importAlertingComponent(
-            () =>
-              import(
-                /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
-              )
+      component: importAlertingComponent(
+        () =>
+          import(
+            /* webpackChunkName: "AlertingImportFromDSRules"*/ 'app/features/alerting/unified/components/import-to-gma/ImportToGMARules'
           )
-        : () => <Navigate replace to="/alerting/list" />,
+      ),
     },
     {
       path: '/alerting/import-to-gma',

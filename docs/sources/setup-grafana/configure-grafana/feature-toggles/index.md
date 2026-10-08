@@ -38,6 +38,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `cloudWatchBatchQueries`                     | Runs CloudWatch metrics queries as separate batches                                                                                 |                    |
 | `annotationPermissionUpdate`                 | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                       | Yes                |
+| `timeComparison`                             | Enables time comparison option in supported panels                                                                                  | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
 | `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
 | `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
@@ -55,21 +56,14 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `pluginsSriChecks`                           | Enables SRI checks for plugin assets                                                                                                |                    |
 | `azureMonitorDisableLogLimit`                | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                    |                    |
 | `enableSCIM`                                 | Enables SCIM support for user and group management                                                                                  | Yes                |
-| `alertingUIOptimizeReducer`                  | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                            | Yes                |
 | `azureMonitorEnableUserAuth`                 | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
-| `alertingNotificationsStepMode`              | Enables simplified step mode in the notifications section                                                                           | Yes                |
 | `lokiLabelNamesQueryApi`                     | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
-| `alertingMigrationUI`                        | Enables the alerting migration UI, to migrate data source-managed rules to Grafana-managed rules                                    | Yes                |
 | `unifiedNavbars`                             | Enables unified navbars                                                                                                             |                    |
 | `grafanaAssistantInProfilesDrilldown`        | Enables integration with Grafana Assistant in Profiles Drilldown                                                                    | Yes                |
 | `alertingNotificationHistory`                | Enables the notification history feature                                                                                            | Yes                |
 | `newClickhouseConfigPageDesign`              | Enables new design for the Clickhouse data source configuration page                                                                | Yes                |
 | `azureResourcePickerUpdates`                 | Enables the updated Azure Monitor resource picker                                                                                   | Yes                |
-| `kubernetesAlertingHistorian`                | Adds support for Kubernetes alerting historian APIs                                                                                 | Yes                |
-| `alertingNotificationHistoryRuleViewer`      | Enables the notification history tab in the rule viewer                                                                             | Yes                |
-| `alertingNotificationHistoryGlobal`          | Enables the notification history global menu item viewer                                                                            | Yes                |
-| `alertingNotificationHistoryTriage`          | Enables the notification history timeline in the triage instance details drawer                                                     | Yes                |
-| `alertingNotificationHistoryDetail`          | Enables the notification history detail page                                                                                        | Yes                |
+| `panelTimeSettings`                          | Enables a new panel time settings drawer                                                                                            | Yes                |
 | `datasources.useNewStackInfoToSettingsCache` | Use the new cache for datasource.StackInfoToSettings, backend flag                                                                  |                    |
 | `grafana.queryVarEditorRedesign`             | Enables a redesigned query variable editor with split-pane preview and a spreadsheet for managing static options                    | Yes                |
 | `grafana.dashboardSettingsRedesign`          | Redesigns dashboard settings page into Advanced Settings in a modal window                                                          | Yes                |
@@ -86,13 +80,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
 | `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
 | `provisioning.readmes`             | Render the README.md of a Git Sync provisioned folder inline below its dashboards list                                         |
-| `provisioning.gitConventions`      | Enable configurable commit message, branch name, and pull request title conventions for Git Sync                               |
 | `provisioning.userAttribution`     | Author Git Sync commits as the acting Grafana user                                                                             |
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
 | `canvasPanelPanZoom`               | Allow pan and zoom in canvas panel                                                                                             |
-| `timeComparison`                   | Enables time comparison option in supported panels                                                                             |
 | `secretsManagementAppPlatformUI`   | Enable the secrets management app platform UI                                                                                  |
 | `secretsKeeperUI`                  | Enable the Secrets Keeper management UI for configuring external secret storage                                                |
 | `grafana.secretsReferenceValueUI`  | Enable referencing an existing secret in an active keeper when creating a secure value                                         |
@@ -104,7 +96,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `alertingListViewV2PreviewToggle`  | Enables the alerting list view v2 preview toggle                                                                               |
 | `alertingImportAlertmanagerAPI`    | Enables the API to import Alertmanager configuration                                                                           |
 | `interactiveLearning`              | Enables the interactive learning app                                                                                           |
-| `panelTimeSettings`                | Enables a new panel time settings drawer                                                                                       |
 | `transformationsEmptyPlaceholder`  | Show transformation quick-start cards in empty transformations state                                                           |
 | `pyroscopeUTF8LabelNames`          | Enables support for UTF-8 label names in Pyroscope label selectors                                                             |
 | `queryEditorNext`                  | Enables next generation query editor experience                                                                                |

@@ -25,6 +25,12 @@ const (
 	fieldEvaluationDuration  = "evaluationDuration"
 	fieldState               = "state"
 	fieldStateReason         = "stateReason"
+	fieldTotalsHealthy       = "totalsHealthy"
+	fieldTotalsFiring        = "totalsFiring"
+	fieldTotalsPending       = "totalsPending"
+	fieldTotalsRecovering    = "totalsRecovering"
+	fieldTotalsNoData        = "totalsNoData"
+	fieldTotalsError         = "totalsError"
 )
 
 var resultColumns = []string{
@@ -33,4 +39,5 @@ var resultColumns = []string{
 	fieldDashboardUID, fieldPanelID, fieldReceiver, fieldNotificationType, fieldRoutingTree,
 	fieldMetric, fieldTargetDatasourceUID,
 	fieldHealth, fieldLastEvaluationTime, fieldLastError, fieldEvaluationDuration, fieldState, fieldStateReason,
+	fieldTotalsHealthy, fieldTotalsFiring, fieldTotalsPending, fieldTotalsRecovering, fieldTotalsNoData, fieldTotalsError,
 }

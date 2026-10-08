@@ -521,7 +521,7 @@ function usePageNav(rule: CombinedRule) {
           setActiveTab(ActiveTab.Notifications);
         },
         // notification history is only available for Grafana managed alert rules and requires feature toggles
-        hideFromTabs: !isGrafanaAlertRule || !config.featureToggles.alertingNotificationHistoryRuleViewer,
+        hideFromTabs: !isGrafanaAlertRule || !config.unifiedAlerting.notificationHistoryEnabled,
       },
       // Enterprise extensions (e.g. Alert enrichment) should appear after routing
       ...useRuleViewExtensionsNav(activeTab, setActiveTabFromString),

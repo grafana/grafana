@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Point de contact",
-          "notification-policy": "Politique de notification",
-          "select-contact-point": "Sélectionner le point de contact",
-          "use-notification-policy": "Utiliser la politique de notification"
+          "notification-policy": "Politique de notification"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "De {{author}}",
       "card-selected": "{{title}} (sélectionné)",
       "card-updated": "Mis à jour {{when}}",
-      "create-description": "Description",
-      "create-description-help": "Contexte facultatif pour vos collaborateurs",
-      "create-description-placeholder": "Sur quoi porte votre investigation ?",
       "create-name": "Nom du notebook",
       "create-name-required": "Le nom du notebook est obligatoire",
       "create-name-taken": "Un notebook portant ce nom existe déjà",
-      "create-tags": "Balises",
-      "create-tags-help": "Facultatif – utilisé pour la recherche et le filtrage",
-      "create-tags-placeholder": "Ajouter une balise",
       "created-by-me": "Créés par moi",
       "error-conflict": "Ce notebook a été modifié pendant que vous y ajoutiez des éléments. Réessayez d’ajouter le panneau à la version la plus récente.",
       "error-generic": "Échec de l’ajout du panneau au notebook",
@@ -13183,6 +13175,8 @@
       "list-none": "Vous n’avez pas encore de notebooks. Créez-en un.",
       "list-none-read-only": "Vous n’avez pas encore de notebooks et vous n’avez pas l’autorisation d’en créer un.",
       "list-truncated": "Les notebooks ne sont pas tous affichés. Affinez la recherche pour trouver les autres.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Rechercher par titre",
       "sort-alphabetical": "Par ordre alphabétique (A-Z)",
       "sort-label": "Trier les notebooks",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anonyme",
       "count_one": "{{count}} notebook",
-      "count_other": "{{count}} notebooks",
-      "count-truncated_one": "{{count}} premier notebook chargé",
-      "count-truncated_other": "{{count}} premiers notebooks chargés"
+      "count_other": "{{count}} notebooks"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Vous pouvez également utiliser Git Sync sur Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Copier le code dans le presse-papiers"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Il peut être nécessaire de supprimer ou de gérer manuellement les dossiers d’origine après la migration.",
       "alert-point-folder-structure": "Lors de la migration des tableaux de bord existants, la structure des dossiers sera reproduite dans le référentiel. Les dossiers d’origine seront vidés de leurs tableaux de bord, mais pourront encore contenir des alertes ou des panneaux de bibliothèque.",
       "alert-point-instance-alerts": "Les alertes et les panneaux de bibliothèque existants seront perdus et ne seront plus utilisables après la migration.",
-      "alert-point-permissions": "Les autorisations fines ne sont pas prises en charge. Les autorisations par défaut s’appliquent : les rôles Administrateur, Éditeur et Lecteur sont conservés avec leurs niveaux d’accès standard.",
       "alert-point-unsupported": "Les alertes et les panneaux de bibliothèque ne sont pas pris en charge dans les dossiers provisionnés.",
       "alert-title": "Important : consultez les limitations de Git Sync avant de continuer",
       "app-mode-label": "Configuration de l’application",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Description"
     },
-    "generate-columns": {
-      "score": "Note"
-    },
     "results-table": {
       "datasource-header": "Source de données",
       "deleted-by-header": "Supprimé par",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Erreur lors de la mise à jour des préférences"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Tableau de bord d'accueil",
       "home-dashboard-placeholder": "Tableau de bord par défaut",
       "language-preference-label": "Langue",
