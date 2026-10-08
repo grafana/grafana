@@ -35,9 +35,10 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations      *prometheus.CounterVec
-	SearchResultFormats             *prometheus.CounterVec
-	SearchServicePermissionFailures *prometheus.CounterVec
+	SearchCapabilityViolations        *prometheus.CounterVec
+	SearchResultFormats               *prometheus.CounterVec
+	SearchServicePermissionFailures   *prometheus.CounterVec
+	SearchServicePermissionExemptions *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
 	BuildDocuments    *prometheus.CounterVec
@@ -222,6 +223,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_search_service_permission_failures_total",
 			Help: "Search requests rejected before scanning because the service token lacks a required direct or delegated permission.",
 		}, []string{"mode"}),
+		SearchServicePermissionExemptions: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_service_permission_exemptions_total",
+			Help: "Service token permission failures ignored before scanning because the resource is exempt from RBAC.",
+		}, []string{"group", "resource", "mode"}),
 		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_result_format_total",
 			Help: "Number of search responses by result format.",
