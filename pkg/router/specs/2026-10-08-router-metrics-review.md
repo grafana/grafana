@@ -7,6 +7,9 @@ Changes from a review of request coverage, async failure modes and cardinality. 
 user, namespace, stack ID or slug, so nothing here is unbounded; the items close coverage gaps and
 cut series cost. Keep `specs/2026-09-26-router-metrics.md` in sync with each change.
 
+Scope is the standalone router, which gets its plugins from `plugins_url`. Local plugins, which
+only the middleware mode serves, are out of scope.
+
 ## Required
 
 - [x] **M1. Add a request counter and drop `status_code` from the duration histogram.**
@@ -20,27 +23,30 @@ cut series cost. Keep `specs/2026-09-26-router-metrics.md` in sync with each cha
     100k series per replica at 100 groups. Kubernetes keeps `code` off its duration histogram for
     this reason.
 
-- [ ] **M2. Record why plugin backend calls fail.** #134486 added the `auth` reason, and calls to
-  managed plugins now show in `grafana_router_plugin_grpc_request_duration_seconds`. Still missing:
-  when `pluginClientOutcome` (`plugin_breaker.go`) reports a failure, set a reason on the request
-  outcome as well, such as `plugin_unavailable` or `timeout`, so `backend_failures_total` shows it
-  for every plugin backend before the breaker opens.
+- ~~**M2. Record why plugin backend calls fail.**~~ Not pursued: #134486 covers managed plugins.
+  Calls that reach the plugin, unreachable ones included, are in
+  `grafana_router_plugin_grpc_request_duration_seconds{status_code}`, and calls rejected by the
+  breaker or a failed token exchange are in `backend_failures_total` as `breaker_open` and `auth`.
+  - Out of scope: local plugins' v3 calls (`CallRoute`, `AdmissionReview`, `ConvertObjects`) have no
+    metric. The router gets the plugin process's raw v3 client (`v3.NewLazyClient`), which bypasses
+    Grafana's plugin client middleware.
 
 - [ ] **M3. Count backends dropped during a load.** Add a gauge
   `grafana_router_rejected_backends{source,reason}`, rebuilt on each load like `shadowed_groups`,
   with a fixed set of reasons. These drops are logged but appear in no metric:
   - `cloud_router.go` `combineByName`: no forward block, transport or CA error, invalid URL,
     missing manifest;
-  - `plugin_manifests.go` and `plugin.go`: invalid or unfingerprintable plugin manifests;
+  - `plugin_manifests.go`: invalid or unfingerprintable `plugins_url` entries;
   - `aggregate_poller.go`: unfingerprintable discovered groups;
-  - `router.go` `reconcile`: groups not allowed in this mode, and per-group `Backend.Load` failures,
-    which today show only as an unattributed `reconcile_errors_total`.
+  - `router.go` `reconcile`: per-group `Backend.Load` failures, which today show only as an
+    unattributed `reconcile_errors_total`. These happen in the router, not a loader, so the router
+    must track them itself.
 
 ## Recommended
 
-- [x] **M4. Instrument managed plugin gRPC connections.** Done in #134486. `pluginClients` (`plugin_manifests.go`)
-  creates connections without interceptors or a stats handler, so outbound calls to managed plugins
-  have no client metrics or spans.
+- [x] **M4. Instrument managed plugin gRPC connections.** Done in #134486. `pluginClients`
+  (`plugin_manifests.go`) created connections without interceptors or a stats handler, so outbound
+  calls to managed plugins had no client metrics or spans.
 - [ ] **M5. Export breaker transitions for the ST fallback's per-destination breakers.**
   `breakerForDestination` (`st_fallback.go`) creates breakers without an observer. Add a counter
   without a group label, since ST groups can be unregistered, and count evictions from the host
@@ -54,8 +60,8 @@ cut series cost. Keep `specs/2026-09-26-router-metrics.md` in sync with each cha
 
 ## Low priority
 
-- [ ] **M8.** Have `PluginLoader` implement `loaderStatus`, so `local-plugin` appears in
-  `source_polls_total`.
+- ~~**M8.** Have `PluginLoader` implement `loaderStatus`, so `local-plugin` appears in
+  `source_polls_total`.~~ Not pursued: local plugins are out of scope.
 - [ ] **M9.** Count watches the router ends itself, on route change or shutdown, by reason.
 - [ ] **M10.** Add duration histograms for reconciles and source polls.
 - [ ] **M11.** Delete series for groups that are no longer served from the label-based metrics
