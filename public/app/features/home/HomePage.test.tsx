@@ -171,7 +171,7 @@ describe('HomePage', () => {
   it('renders dashboard tabs and auto-switches to starred', async () => {
     render(<HomePage />);
 
-    // Default mocks have starred dashboards but no recent impressions, so DashboardTabs
+    // Default mocks have starred dashboards but no recent activity, so DashboardTabs
     // auto-switches to the Starred tab once its fetches settle.
     expect(await screen.findByRole('tab', { name: /starred/i, selected: true })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /recent/i })).toBeInTheDocument();

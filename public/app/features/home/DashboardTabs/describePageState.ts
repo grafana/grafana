@@ -1,6 +1,6 @@
 import { dateTime, locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
 import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
-import { describeExplorePanes } from 'app/features/explore/utils/describeExplorePanes';
+import { type ExplorePaneDescription } from 'app/features/explore/utils/describeExplorePanes';
 import { VARIABLE_PREFIX } from 'app/features/variables/constants';
 
 export const SEPARATOR = ' · ';
@@ -56,8 +56,7 @@ export function describeAppState(search: string): string {
 }
 
 /** Datasource and queries per pane, panes separated by ` | `, e.g. `Ops Logs · {service_name="api"}`. */
-export async function describeExploreState(search: string): Promise<string> {
-  const panes = await describeExplorePanes(search);
+export function describeExploreState(panes: ExplorePaneDescription[]): string {
   return panes
     .map(({ datasource, queries }) => [datasource, queries.join('; ')].filter(Boolean).join(SEPARATOR))
     .filter(Boolean)

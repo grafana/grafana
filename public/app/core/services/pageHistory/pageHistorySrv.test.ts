@@ -18,7 +18,7 @@ const T1 = T0 + 60_000;
 const T2 = T0 + 120_000;
 const T3 = T0 + 180_000;
 
-let srv: PageHistorySrv | undefined;
+let stop: (() => void) | undefined;
 const originalUser = { ...config.bootData.user };
 const originalOrgId = contextSrv.user.orgId;
 
@@ -27,8 +27,8 @@ let chrome: AppChromeService;
 function startAt(path: string) {
   setLocationService(new HistoryWrapper(createMemoryHistory({ initialEntries: [path] })));
   chrome = new AppChromeService();
-  srv = new PageHistorySrv();
-  srv.start(chrome);
+  const srv = new PageHistorySrv();
+  stop = srv.start(chrome);
   return srv;
 }
 
@@ -41,7 +41,7 @@ function renderPage(section: string, main: string, pageNav?: string) {
 }
 
 function stored(entries: PageHistoryEntry[]) {
-  return entries.map(({ href, lastVisited }) => ({ href, lastVisited }));
+  return entries.map(({ pathname, search, lastVisited }) => ({ pathname, search, lastVisited }));
 }
 
 function createDeferred<T>() {
@@ -50,6 +50,11 @@ function createDeferred<T>() {
     resolve = res;
   });
   return { promise, resolve };
+}
+
+function hideTab() {
+  Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+  document.dispatchEvent(new Event('visibilitychange'));
 }
 
 beforeEach(() => {
@@ -63,8 +68,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  srv?.stop();
-  srv = undefined;
+  stop?.();
+  stop = undefined;
   jest.useRealTimers();
   jest.restoreAllMocks();
   Object.assign(config.bootData.user, originalUser);
@@ -77,11 +82,11 @@ describe('PageHistorySrv', () => {
     const srv = startAt('/d/abc?from=now-1h&to=now');
 
     expect(await srv.getEntries()).toEqual([
-      { kind: 'dashboard', uid: 'abc', href: '/d/abc?from=now-1h&to=now', lastVisited: T0 },
+      { kind: 'dashboard', uid: 'abc', pathname: '/d/abc', search: '?from=now-1h&to=now', lastVisited: T0 },
     ]);
   });
 
-  it('refreshes the href on query churn instead of adding a row', async () => {
+  it('refreshes the search on query churn instead of adding a row', async () => {
     const srv = startAt('/d/abc?from=now-1h&to=now');
     await srv.getEntries();
 
@@ -89,7 +94,7 @@ describe('PageHistorySrv', () => {
     locationService.partial({ from: 'now-6h' });
 
     expect(await srv.getEntries()).toEqual([
-      { kind: 'dashboard', uid: 'abc', href: '/d/abc?from=now-6h&to=now', lastVisited: T1 },
+      { kind: 'dashboard', uid: 'abc', pathname: '/d/abc', search: '?from=now-6h&to=now', lastVisited: T1 },
     ]);
   });
 
@@ -100,7 +105,7 @@ describe('PageHistorySrv', () => {
     locationService.replace(markAsUrlRewrite({ pathname: '/d/abc/slug', search: '?from=now-6h&to=now' }));
 
     expect(await srv.getEntries()).toEqual([
-      expect.objectContaining({ uid: 'abc', href: '/d/abc/slug?from=now-6h&to=now' }),
+      expect.objectContaining({ uid: 'abc', pathname: '/d/abc/slug', search: '?from=now-6h&to=now' }),
     ]);
   });
 
@@ -110,7 +115,7 @@ describe('PageHistorySrv', () => {
 
     locationService.replace('/d/xyz');
 
-    expect((await srv.getEntries()).map((e) => e.href)).toEqual(['/d/xyz', '/d/abc']);
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/d/xyz', '/d/abc']);
   });
 
   it('moves revisited pages to the top, including on POP', async () => {
@@ -125,7 +130,7 @@ describe('PageHistorySrv', () => {
     locationService.getHistory().goBack();
 
     expect(await srv.getEntries()).toEqual([
-      expect.objectContaining({ kind: 'explore', href: '/explore?schemaVersion=1&panes=%7B%7D' }),
+      expect.objectContaining({ kind: 'explore', search: '?schemaVersion=1&panes=%7B%7D' }),
       expect.objectContaining({ kind: 'dashboard', uid: 'abc' }),
     ]);
   });
@@ -137,7 +142,7 @@ describe('PageHistorySrv', () => {
     locationService.push('/alerting/list');
     locationService.push('/alerting/silences');
 
-    expect((await srv.getEntries()).map((e) => e.href)).toEqual(['/alerting/silences', '/alerting/list']);
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/alerting/silences', '/alerting/list']);
   });
 
   it('classifies pages and ignores unlisted ones', async () => {
@@ -150,19 +155,9 @@ describe('PageHistorySrv', () => {
     locationService.push('/dashboards');
 
     expect(await srv.getEntries()).toEqual([
-      { kind: 'alerting', pathname: '/alerting/list', href: '/alerting/list?search=x', lastVisited: T0 },
-      {
-        kind: 'app',
-        pathname: '/a/grafana-irm-app/incidents',
-        href: '/a/grafana-irm-app/incidents',
-        lastVisited: T0,
-      },
-      {
-        kind: 'app',
-        pathname: '/a/grafana-irm-app/incidents/5987',
-        href: '/a/grafana-irm-app/incidents/5987?x=1',
-        lastVisited: T0,
-      },
+      { kind: 'alerting', pathname: '/alerting/list', search: '?search=x', lastVisited: T0 },
+      { kind: 'app', pathname: '/a/grafana-irm-app/incidents', search: '', lastVisited: T0 },
+      { kind: 'app', pathname: '/a/grafana-irm-app/incidents/5987', search: '?x=1', lastVisited: T0 },
     ]);
   });
 
@@ -180,14 +175,14 @@ describe('PageHistorySrv', () => {
     renderPage('Dashboards', 'Dashboards');
 
     expect(await srv.getEntries()).toEqual([
-      expect.objectContaining({ href: '/alerting/grafana/abc/view', title: 'High CPU' }),
-      expect.objectContaining({ href: '/alerting/list', title: 'Alert rules' }),
+      expect.objectContaining({ pathname: '/alerting/grafana/abc/view', title: 'High CPU' }),
+      expect.objectContaining({ pathname: '/alerting/list', title: 'Alert rules' }),
     ]);
 
     await jest.advanceTimersByTimeAsync(1000);
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual([
-      { href: '/alerting/grafana/abc/view', lastVisited: T0, title: 'High CPU' },
-      { href: '/alerting/list', lastVisited: T0, title: 'Alert rules' },
+      { pathname: '/alerting/grafana/abc/view', search: '', lastVisited: T0, title: 'High CPU' },
+      { pathname: '/alerting/list', search: '', lastVisited: T0, title: 'Alert rules' },
     ]);
   });
 
@@ -209,7 +204,7 @@ describe('PageHistorySrv', () => {
     }
 
     const byKind = await srv.getEntries();
-    expect(byKind.map((e) => e.href)).toEqual([
+    expect(byKind.map((e) => e.pathname)).toEqual([
       ...Array.from({ length: PAGE_HISTORY_MAX_PER_KIND }, (_, i) => `/d/${PAGE_HISTORY_MAX_PER_KIND - i}`),
       // A burst of dashboards never pushes out another kind.
       '/alerting/list',
@@ -230,7 +225,7 @@ describe('PageHistorySrv', () => {
     );
   });
 
-  it('persists href and time once per debounce window', async () => {
+  it('persists once per debounce window', async () => {
     const setSpy = jest.spyOn(store, 'set');
     const srv = startAt('/d/abc');
     await srv.getEntries();
@@ -253,37 +248,38 @@ describe('PageHistorySrv', () => {
     locationService.push('/d/def');
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
 
-    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
-    document.dispatchEvent(new Event('visibilitychange'));
+    hideTab();
     await jest.advanceTimersByTimeAsync(0);
 
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(await srv.getEntries()));
   });
 
-  it('loads the stored copy, deriving each page from its href and dropping bad rows', async () => {
+  it('loads the stored copy, deriving each page from its pathname and dropping bad rows', async () => {
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify([
-        { href: '/d/old', lastVisited: 100 },
-        { href: '/explore?a=1', lastVisited: 300 },
+        // A trailing slash is normalized away on load.
+        { pathname: '/d/old/', search: '', lastVisited: 100 },
+        { pathname: '/explore', search: '?a=1', lastVisited: 300 },
         // Same page twice: the newer visit wins.
-        { href: '/explore?a=2', lastVisited: 200 },
+        { pathname: '/explore', search: '?a=2', lastVisited: 200 },
         // Rows written by an earlier format still load; extra fields are ignored.
-        { key: 'dashboard:legacy', kind: 'dashboard', href: '/d/legacy', lastVisited: 150, visits: 3 },
-        { href: '/d/x' },
-        { href: 'https://evil.example/d/x', lastVisited: 400 },
-        // Valid URL that is not a page worth resuming.
-        { href: '/dashboards?query=x', lastVisited: 400 },
+        { key: 'dashboard:legacy', kind: 'dashboard', pathname: '/d/legacy', search: '', lastVisited: 150, visits: 3 },
+        { pathname: '/d/x', search: '' },
+        { pathname: '//evil.example/d/x', search: '', lastVisited: 400 },
+        { pathname: '/d/y', search: 'from=now-1h', lastVisited: 400 },
+        // Valid row that is not a page worth resuming.
+        { pathname: '/dashboards', search: '?query=x', lastVisited: 400 },
       ])
     );
 
     const srv = startAt('/alerting/list');
 
     expect(await srv.getEntries()).toEqual([
-      { kind: 'alerting', pathname: '/alerting/list', href: '/alerting/list', lastVisited: T0 },
-      { kind: 'explore', href: '/explore?a=1', lastVisited: 300 },
-      { kind: 'dashboard', uid: 'legacy', href: '/d/legacy', lastVisited: 150 },
-      { kind: 'dashboard', uid: 'old', href: '/d/old', lastVisited: 100 },
+      { kind: 'alerting', pathname: '/alerting/list', search: '', lastVisited: T0 },
+      { kind: 'explore', pathname: '/explore', search: '?a=1', lastVisited: 300 },
+      { kind: 'dashboard', uid: 'legacy', pathname: '/d/legacy', search: '', lastVisited: 150 },
+      { kind: 'dashboard', uid: 'old', pathname: '/d/old', search: '', lastVisited: 100 },
     ]);
   });
 
@@ -304,37 +300,34 @@ describe('PageHistorySrv', () => {
     jest.setSystemTime(T3);
     deferred.resolve(
       JSON.stringify([
-        { href: '/d/a?from=now-7d', lastVisited: T0 },
-        { href: '/d/c', lastVisited: T0 },
+        { pathname: '/d/a', search: '?from=now-7d', lastVisited: T0 },
+        { pathname: '/d/c', search: '', lastVisited: T0 },
       ])
     );
 
     const entries = await srv.getEntries();
     expect(entries).toEqual([
-      { kind: 'dashboard', uid: 'b', href: '/d/b', lastVisited: T2 },
-      { kind: 'dashboard', uid: 'a', href: '/d/a', lastVisited: T1 },
-      { kind: 'dashboard', uid: 'c', href: '/d/c', lastVisited: T0 },
+      { kind: 'dashboard', uid: 'b', pathname: '/d/b', search: '', lastVisited: T2 },
+      { kind: 'dashboard', uid: 'a', pathname: '/d/a', search: '', lastVisited: T1 },
+      { kind: 'dashboard', uid: 'c', pathname: '/d/c', search: '', lastVisited: T0 },
     ]);
     await jest.advanceTimersByTimeAsync(0);
     expect(setSpy).toHaveBeenCalledWith('org-1', JSON.stringify(stored(entries)));
   });
 
-  it('writes nothing after stop() and returns nothing when never started', async () => {
+  it('stops recording and drops the pending write when stopped; returns nothing when never started', async () => {
     const setSpy = jest.spyOn(store, 'set');
-    const deferred = createDeferred<string | null>();
-    jest.spyOn(UserStorage.prototype, 'getItem').mockReturnValue(deferred.promise);
-
     const srv = startAt('/d/abc');
-    srv.stop();
-
-    locationService.push('/d/def');
-    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    deferred.resolve(null);
     await srv.getEntries();
+    locationService.push('/d/def');
+
+    stop?.();
+    locationService.push('/d/ghi');
+    hideTab();
     await jest.advanceTimersByTimeAsync(2000);
 
-    expect(setSpy).not.toHaveBeenCalled();
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/d/def', '/d/abc']);
+    expect(setSpy.mock.calls.filter(([key]) => key === STORAGE_KEY)).toHaveLength(0);
     expect(await new PageHistorySrv().getEntries()).toEqual([]);
   });
 });

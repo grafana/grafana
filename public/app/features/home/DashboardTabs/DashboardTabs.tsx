@@ -5,10 +5,8 @@ import { useAsyncRetry } from 'react-use';
 import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
+import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
-import { useStoredString } from 'app/core/hooks/useStored';
-import { PAGE_HISTORY_KINDS } from 'app/core/services/pageHistory/types';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
@@ -21,7 +19,6 @@ import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
 import { RecentActivityFooter } from './RecentActivityFooter';
 import { RecentActivityTab } from './RecentActivityTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
-import { getRecentActivity } from './getRecentActivity';
 import {
   type HomepageTabExtensionProps,
   type HomepageTab,
@@ -29,14 +26,13 @@ import {
   DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN,
   DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT,
 } from './types';
+import { useRecentActivity } from './useRecentActivity';
 
 const RECENT_TAB_ID = 'recent';
 const MOST_USED_TAB_ID = 'most-used';
 const STARRED_TAB_ID = 'starred';
 const MAX_MOST_USED = 20;
 const MAX_STARRED = 30;
-/** Last chosen Recent activity kind filter; remembered per browser. */
-const ACTIVITY_FILTER_KEY = 'grafana.home.recentActivity.filter';
 const DEFAULT_TAB_IDS = [RECENT_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID];
 
 function DashboardExtensionTab({
@@ -79,15 +75,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  const [storedActivityFilter, setStoredActivityFilter] = useStoredString(ACTIVITY_FILTER_KEY, '');
-  // localStorage is untrusted; anything but a known kind means "all".
-  const activityFilter = PAGE_HISTORY_KINDS.find((kind) => kind === storedActivityFilter);
-  const {
-    value: recentActivity,
-    loading: recentActivityLoading,
-    error: recentActivityError,
-    retry: recentActivityRetry,
-  } = useAsyncRetry(() => getRecentActivity(activityFilter), [activityFilter]);
+  const recent = useRecentActivity();
 
   const {
     value: starredDashboards,
@@ -109,15 +97,13 @@ export function DashboardTabs({ extensionComponents }: Props) {
     [mostUsedAvailable]
   );
 
-  const hasRecent = !!recentActivity?.items.length;
-  // A stored filter can outlive the history (cleared in another browser); an empty history is then just empty.
-  const historyEmpty = !!recentActivity && PAGE_HISTORY_KINDS.every((kind) => recentActivity.counts[kind] === 0);
+  const hasRecent = recent.total > 0;
   const hasMostUsed = mostUsedAvailable && !!mostUsedDashboards?.length;
   const hasStarred = !!starredDashboards?.length;
-  const initialLoading = recentActivityLoading || starredLoading || (mostUsedAvailable && mostUsedLoading);
+  const initialLoading = recent.loading || starredLoading || (mostUsedAvailable && mostUsedLoading);
 
   // Folder names are only needed when some row shows a dashboard.
-  const hasDashboards = hasMostUsed || hasStarred || !!recentActivity?.items.some((item) => item.kind === 'dashboard');
+  const hasDashboards = hasMostUsed || hasStarred || recent.counts.dashboard > 0;
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const registerTab = useCallback((tab: HomepageTab) => {
@@ -174,7 +160,7 @@ export function DashboardTabs({ extensionComponents }: Props) {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
       activeLabel: t('home.dashboard-tabs.recent-activity-active', 'Recent activity'),
-      counter: recentActivity?.items.length,
+      counter: recent.total,
     },
     ...(mostUsedAvailable
       ? [
@@ -233,12 +219,10 @@ export function DashboardTabs({ extensionComponents }: Props) {
           >
             {activeTab === RECENT_TAB_ID && (
               <RecentActivityTab
-                items={recentActivity?.items ?? []}
-                filtered={!!activityFilter && !historyEmpty}
-                // Switching the filter refetches; keep the old rows rather than flashing the loader.
-                loading={recentActivityLoading && !recentActivity}
-                error={recentActivityError}
-                retry={recentActivityRetry}
+                items={recent.items}
+                loading={recent.loading}
+                error={recent.error}
+                retry={recent.retry}
                 foldersByUid={foldersByUid}
                 density={listDensity}
               />
@@ -265,15 +249,13 @@ export function DashboardTabs({ extensionComponents }: Props) {
             )}
           </ScrollContainer>
           {/* Pinned below the scroll area so it stays visible however long the list is. */}
-          {activeTab === RECENT_TAB_ID && recentActivity && !recentActivityError && (
-            <Box padding={1} paddingTop={1.5}>
-              <RecentActivityFooter
-                counts={recentActivity.counts}
-                filter={activityFilter}
-                onFilterChange={(filter) => setStoredActivityFilter(filter ?? '')}
-                retry={recentActivityRetry}
-              />
-            </Box>
+          {activeTab === RECENT_TAB_ID && hasRecent && !recent.error && (
+            <RecentActivityFooter
+              counts={recent.counts}
+              filter={recent.filter}
+              onFilterChange={recent.setFilter}
+              onClear={recent.clear}
+            />
           )}
         </TabContent>
       )}

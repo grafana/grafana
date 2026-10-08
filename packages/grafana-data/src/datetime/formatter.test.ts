@@ -118,6 +118,10 @@ describe('dateTimeFormatTimeAgoShort', () => {
     [400, '0s ago'],
     [5_000, '5s ago'],
     [11 * 60_000, '11m ago'],
+    // Half a unit stays in the smaller unit instead of rounding up to one of the next.
+    [30 * 60_000, '30m ago'],
+    [15 * 86_400_000, '15d ago'],
+    [183 * 86_400_000, '6mo ago'],
     // Rounds before picking the unit, so 59.6 minutes is an hour, not 60m.
     [59.6 * 60_000, '1h ago'],
     [2 * 3_600_000, '2h ago'],

@@ -64,7 +64,7 @@ const mostUsedHits: DashboardHit[] = [
 ];
 
 function dashboardEntry(uid: string, search = ''): PageHistoryEntry {
-  return { kind: 'dashboard', uid, href: `/d/${uid}/x${search}`, lastVisited: Date.now() - 60_000 };
+  return { kind: 'dashboard', uid, pathname: `/d/${uid}/x`, search, lastVisited: Date.now() - 60_000 };
 }
 
 /** Visited dashboards in page history, newest first. */
@@ -337,7 +337,7 @@ describe('DashboardTabs', () => {
   });
 
   describe('Recent activity', () => {
-    const exploreHref = `/explore?schemaVersion=1&panes=${encodeURIComponent(
+    const exploreSearch = `?schemaVersion=1&panes=${encodeURIComponent(
       JSON.stringify({
         abc: {
           datasource: 'loki-uid',
@@ -348,21 +348,22 @@ describe('DashboardTabs', () => {
     )}`;
     const exploreEntry: PageHistoryEntry = {
       kind: 'explore',
-      href: exploreHref,
+      pathname: '/explore',
+      search: exploreSearch,
       lastVisited: Date.now() - 2 * 60 * 60 * 1000,
     };
     const recentDashboardEntry = dashboardEntry('recent-1', '?from=now-90d&to=now&var-Plugin=finnhub');
     const alertingEntry: PageHistoryEntry = {
       kind: 'alerting',
       pathname: '/alerting/list',
-      href: '/alerting/list?search=firing',
+      search: '?search=firing',
       lastVisited: Date.now() - 30_000,
     };
     // A detail page whose chrome title is just the section's; the path has to tell it apart.
     const appEntry: PageHistoryEntry = {
       kind: 'app',
       pathname: '/a/grafana-irm-app/incidents/5987',
-      href: '/a/grafana-irm-app/incidents/5987?tab=timeline',
+      search: '?tab=timeline',
       lastVisited: Date.now() - 10_000,
       title: 'Incidents',
     };
@@ -383,7 +384,7 @@ describe('DashboardTabs', () => {
       const links = within(screen.getByRole('list')).getAllByRole('link');
       expect(links.map((link) => link.getAttribute('href'))).toEqual([
         '/a/grafana-irm-app/incidents/5987?tab=timeline',
-        exploreHref,
+        `/explore${exploreSearch}`,
         '/d/recent-1/x?from=now-90d&to=now&var-Plugin=finnhub',
         '/alerting/list?search=firing',
       ]);
@@ -414,7 +415,7 @@ describe('DashboardTabs', () => {
       expect(filter.getByRole('radio', { name: 'All' })).toBeChecked();
     });
 
-    it('filters by kind, remembers the choice and disables kinds with no pages', async () => {
+    it('filters by kind without refetching, remembers the choice and disables kinds with no pages', async () => {
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([exploreEntry, recentDashboardEntry]);
       server.use(getCustomSearchHandler(recentHits));
 
@@ -426,11 +427,12 @@ describe('DashboardTabs', () => {
 
       await user.click(filter.getByRole('radio', { name: 'Explore' }));
 
-      expect(await screen.findByRole('tab', { name: /recent activity.*1/i })).toBeInTheDocument();
       expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(1);
       expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('explore');
-      // The disabled state follows the whole history, not the filtered rows.
+      expect(jest.mocked(pageHistorySrv.getEntries)).toHaveBeenCalledTimes(1);
+      // The counter and the disabled state follow the whole history, not the filtered rows.
+      expect(screen.getByRole('tab', { name: /recent activity.*2/i })).toBeInTheDocument();
       expect(filter.getByRole('radio', { name: 'Dashboards' })).toBeEnabled();
     });
 
@@ -486,13 +488,16 @@ describe('DashboardTabs', () => {
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('');
     });
 
-    it('treats an empty history as empty even when a stored filter is left over', async () => {
+    it('ignores a stored filter that no longer matches any page', async () => {
       window.localStorage.setItem(FILTER_KEY, 'explore');
+      jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([recentDashboardEntry]);
+      server.use(getCustomSearchHandler(recentHits));
 
       render(<DashboardTabs extensionComponents={[]} />);
 
-      expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
-      expect(screen.queryByText('No recent pages of this type.')).not.toBeInTheDocument();
+      expect(await screen.findByRole('link', { name: /Recent Dashboard 1/ })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: 'All' })).toBeChecked();
+      expect(screen.getByRole('radio', { name: 'Explore' })).toBeDisabled();
     });
 
     it('shows a retryable error when the dashboard lookup fails', async () => {

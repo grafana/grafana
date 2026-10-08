@@ -20,7 +20,15 @@ export function isUrlRewrite(state: unknown): boolean {
   return typeof state === 'object' && state !== null && 'urlRewrite' in state && state.urlRewrite === true;
 }
 
-/** True for a history event that corrects the current URL in place; every other event is a navigation. */
-export function isUrlRewriteEvent(location: H.Location, action: H.Action): boolean {
-  return action === 'REPLACE' && isUrlRewrite(location.state);
+/**
+ * True when a history event moves the user to another page: the pathname changed and the event is not
+ * a flagged in-place rewrite. Query-only churn (time range, variables) and rewrites are not navigations.
+ */
+export function isPageNavigation(
+  location: H.Location,
+  action: H.Action,
+  previousPathname: string | undefined
+): boolean {
+  const isRewrite = action === 'REPLACE' && isUrlRewrite(location.state);
+  return !isRewrite && location.pathname !== previousPathname;
 }

@@ -2,13 +2,6 @@ import { type NavModelItem } from '@grafana/data';
 
 import { describeAppState, describeDashboardState, describeExploreState, getNavTitle } from './describePageState';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceSettings: async (ref: string) => (ref === 'loki-uid' ? { name: 'Ops Logs' } : undefined),
-}));
-
-const explorePanes = (panes: unknown) => `?schemaVersion=1&panes=${encodeURIComponent(JSON.stringify(panes))}`;
-
 describe('describeDashboardState', () => {
   it('shows the time range and variables only', () => {
     expect(describeDashboardState('?orgId=1&from=now-90d&to=now&timezone=browser&var-Plugin=finnhub')).toBe(
@@ -49,27 +42,22 @@ describe('describeAppState', () => {
 });
 
 describe('describeExploreState', () => {
-  it('joins datasource and queries within a pane and panes with a bar', async () => {
-    const search = explorePanes({
-      abc: {
-        datasource: 'loki-uid',
-        queries: [{ expr: 'up' }, { expr: 'down' }],
-        range: { from: 'now-1h', to: 'now' },
-      },
-      def: { datasource: 'unknown-uid', queries: [{ rawSql: 'select 1' }], range: { from: 'now-1h', to: 'now' } },
-    });
-    expect(await describeExploreState(search)).toBe('Ops Logs · up; down | unknown-uid · select 1');
+  it('joins datasource and queries within a pane and panes with a bar', () => {
+    expect(
+      describeExploreState([
+        { datasource: 'Ops Logs', queries: ['up', 'down'] },
+        { datasource: 'unknown-uid', queries: ['select 1'] },
+      ])
+    ).toBe('Ops Logs · up; down | unknown-uid · select 1');
   });
 
-  it('drops the separator when a pane has no query text', async () => {
-    const search = explorePanes({
-      abc: { datasource: 'loki-uid', queries: [null], range: { from: 'now-1h', to: 'now' } },
-    });
-    expect(await describeExploreState(search)).toBe('Ops Logs');
+  it('drops the separator when a pane has no query text or no datasource', () => {
+    expect(describeExploreState([{ datasource: 'Ops Logs', queries: [] }])).toBe('Ops Logs');
+    expect(describeExploreState([{ datasource: undefined, queries: ['up'] }])).toBe('up');
   });
 
-  it('returns an empty string for an unreadable URL', async () => {
-    expect(await describeExploreState('?schemaVersion=1&panes=%7Bnot-json')).toBe('');
+  it('returns an empty string without panes', () => {
+    expect(describeExploreState([])).toBe('');
   });
 });
 

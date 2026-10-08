@@ -29,14 +29,17 @@ export interface DateTimeOptionsWithTimeAgo extends DateTimeOptions {
 
 type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc: DateTimeInput, options?: T) => string;
 
-/** Largest first; the first unit whose rounded count reaches 1 wins, so 59.6 minutes reads as 1h. */
-const TIME_AGO_UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
-  ['year', 365 * 24 * 60 * 60 * 1000],
-  ['month', 30 * 24 * 60 * 60 * 1000],
-  ['day', 24 * 60 * 60 * 1000],
-  ['hour', 60 * 60 * 1000],
-  ['minute', 60 * 1000],
-  ['second', 1000],
+const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+/**
+ * Smallest first, each with the rounded count at which the next unit takes over, so 30 minutes reads
+ * as 30m while 59.6 minutes rounds to 60 and rolls over to 1h. Years have no next unit.
+ */
+const TIME_AGO_UNITS: Array<[Intl.RelativeTimeFormatUnit, number, number]> = [
+  ['second', 1000, 60],
+  ['minute', 60 * 1000, 60],
+  ['hour', 60 * 60 * 1000, 24],
+  ['day', 24 * 60 * 60 * 1000, 30],
+  ['month', 30 * 24 * 60 * 60 * 1000, 12],
 ];
 
 // NOTE:
@@ -103,15 +106,19 @@ export function dateTimeFormatTimeAgoShort(dateInUtc: DateTimeInput, options?: {
 
   const now = options?.now == null ? Date.now() : moment.utc(toMomentInput(options.now)).valueOf();
   const diff = date.valueOf() - now;
-  for (const [unit, size] of TIME_AGO_UNITS) {
-    // Round the magnitude: Math.round(-1.5) is -1, which would make 45 days "1mo ago".
-    const count = Math.sign(diff) * Math.round(Math.abs(diff) / size);
-    if (Math.abs(count) >= 1) {
-      return formatRelativeTime(count, unit, { style: 'narrow', numeric: 'always' });
+  // Rounds the magnitude (Math.round(-1.5) is -1, which would make 45 days "1mo ago"); `|| -0` keeps
+  // the past-tense form for a zero count ("0s ago", not "in 0s").
+  const countIn = (size: number) => Math.sign(diff) * Math.round(Math.abs(diff) / size) || -0;
+  const format = (count: number, unit: Intl.RelativeTimeFormatUnit) =>
+    formatRelativeTime(count, unit, { style: 'narrow', numeric: 'always' });
+
+  for (const [unit, size, limit] of TIME_AGO_UNITS) {
+    const count = countIn(size);
+    if (Math.abs(count) < limit) {
+      return format(count, unit);
     }
   }
-  // Under half a second either way; -0 keeps the past-tense form ("0s ago", not "in 0s").
-  return formatRelativeTime(-0, 'second', { style: 'narrow', numeric: 'always' });
+  return format(countIn(YEAR_MS), 'year');
 }
 
 /**

@@ -11294,7 +11294,6 @@
     "recent-activity-tab": {
       "clear": "Clear recent activity",
       "empty": "No recent activity yet. Pages you visit will show up here.",
-      "empty-filtered": "No recent pages of this type.",
       "error-title": "Could not load your recent activity",
       "filter-alerting": "Alerting",
       "filter-all": "All",

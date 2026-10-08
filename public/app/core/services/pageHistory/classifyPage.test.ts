@@ -2,11 +2,11 @@ import { classifyPage, pageKey } from './classifyPage';
 
 describe('classifyPage', () => {
   it.each([
-    ['/d/abc', { kind: 'dashboard', uid: 'abc' }],
-    ['/d/abc/some-slug', { kind: 'dashboard', uid: 'abc' }],
-    ['/d/abc/', { kind: 'dashboard', uid: 'abc' }],
-    ['/explore', { kind: 'explore' }],
-    ['/explore/', { kind: 'explore' }],
+    ['/d/abc', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
+    ['/d/abc/some-slug', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc/some-slug' }],
+    ['/d/abc/', { kind: 'dashboard', uid: 'abc', pathname: '/d/abc' }],
+    ['/explore', { kind: 'explore', pathname: '/explore' }],
+    ['/explore/', { kind: 'explore', pathname: '/explore' }],
     ['/a/grafana-irm-app/incidents', { kind: 'app', pathname: '/a/grafana-irm-app/incidents' }],
     ['/a/grafana-irm-app/incidents/5987', { kind: 'app', pathname: '/a/grafana-irm-app/incidents/5987' }],
     [

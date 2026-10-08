@@ -1,73 +1,50 @@
 import { type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { RadioButtonGroup, Stack } from '@grafana/ui';
-import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
-import { PAGE_HISTORY_KINDS, type PageHistoryKind } from 'app/core/services/pageHistory/types';
+import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { FooterAction, FooterActions } from '../FooterActions';
 import { clearHistoryClicked } from '../analytics/main';
 
-import { type RecentActivity } from './getRecentActivity';
-
-/** `''` is the "All" option: RadioButtonGroup needs a value for it. */
-type FilterValue = PageHistoryKind | '';
+import { PAGE_KINDS, type PageKindCounts, getPageKindMeta } from './pageKinds';
+import { type RecentActivityFilter } from './useRecentActivity';
 
 interface Props {
-  counts: RecentActivity['counts'];
-  filter: PageHistoryKind | undefined;
-  onFilterChange: (filter: PageHistoryKind | undefined) => void;
-  retry: () => void;
-}
-
-function filterLabel(kind: PageHistoryKind): string {
-  switch (kind) {
-    case 'dashboard':
-      return t('home.recent-activity-tab.filter-dashboards', 'Dashboards');
-    case 'explore':
-      return t('home.recent-activity-tab.filter-explore', 'Explore');
-    case 'alerting':
-      return t('home.recent-activity-tab.filter-alerting', 'Alerting');
-    case 'app':
-      return t('home.recent-activity-tab.filter-apps', 'Apps');
-  }
+  counts: PageKindCounts;
+  filter: RecentActivityFilter;
+  onFilterChange: (filter: RecentActivityFilter) => void;
+  onClear: () => void;
 }
 
 /** Kind filter on the left, the clear action on the right; wraps when the card is too narrow for both. */
-export function RecentActivityFooter({ counts, filter, onFilterChange, retry }: Props) {
-  const total = PAGE_HISTORY_KINDS.reduce((sum, kind) => sum + counts[kind], 0);
-
-  if (total === 0) {
-    return null;
-  }
-
-  const options: Array<SelectableValue<FilterValue>> = [
+export function RecentActivityFooter({ counts, filter, onFilterChange, onClear }: Props) {
+  const options: Array<SelectableValue<RecentActivityFilter>> = [
     { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
-    ...PAGE_HISTORY_KINDS.map((kind) => ({ value: kind, label: filterLabel(kind) })),
+    ...PAGE_KINDS.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
   ];
 
-  const handleClear = async () => {
+  const handleClear = () => {
+    const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
     clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
-    await pageHistorySrv.clear();
-    // The stored filter would otherwise outlive the history and hide the next pages visited.
-    onFilterChange(undefined);
-    retry();
+    onClear();
   };
 
   return (
-    <Stack direction="row" wrap="wrap" alignItems="center" justifyContent="space-between" gap={1}>
-      <RadioButtonGroup<FilterValue>
-        size="sm"
-        aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
-        options={options}
-        disabledOptions={PAGE_HISTORY_KINDS.filter((kind) => counts[kind] === 0)}
-        value={filter ?? ''}
-        onChange={(value) => onFilterChange(value || undefined)}
-      />
-      <FooterActions>
-        <FooterAction onClick={handleClear}>
-          <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
-        </FooterAction>
-      </FooterActions>
-    </Stack>
+    <Box padding={1} paddingTop={1.5}>
+      <Stack direction="row" wrap="wrap" alignItems="center" justifyContent="space-between" gap={1}>
+        <RadioButtonGroup<RecentActivityFilter>
+          size="sm"
+          aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
+          options={options}
+          disabledOptions={PAGE_KINDS.filter((kind) => counts[kind] === 0)}
+          value={filter}
+          onChange={onFilterChange}
+        />
+        <FooterActions>
+          <FooterAction onClick={handleClear}>
+            <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
+          </FooterAction>
+        </FooterActions>
+      </Stack>
+    </Box>
   );
 }

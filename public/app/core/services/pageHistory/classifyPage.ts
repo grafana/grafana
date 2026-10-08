@@ -9,11 +9,11 @@ export function classifyPage(pathname: string): PageIdentity | null {
   const [, first, second] = normalized.split('/');
 
   if (first === 'd' && second) {
-    return { kind: 'dashboard', uid: second };
+    return { kind: 'dashboard', uid: second, pathname: normalized };
   }
 
   if (normalized === '/explore') {
-    return { kind: 'explore' };
+    return { kind: 'explore', pathname: normalized };
   }
 
   if (first === 'a' && second) {
