@@ -35,9 +35,13 @@ func instrumented(svc *Service, target string) int {
 	return recorder.Code
 }
 
-func requestCount(t *testing.T, svc *Service, labels ...string) uint64 {
+// requestCount reads grafana_router_http_requests_total, and checks that the
+// duration histogram, which has no status code, observed at least as many.
+func requestCount(t *testing.T, svc *Service, group, verb, route, status string) uint64 {
 	t.Helper()
-	return histogramCount(t, svc.metrics.duration.WithLabelValues(labels...))
+	count := uint64(testutil.ToFloat64(svc.metrics.requests.WithLabelValues(group, verb, route, status)))
+	require.GreaterOrEqual(t, histogramCount(t, svc.metrics.duration.WithLabelValues(group, verb, route)), count)
+	return count
 }
 
 func TestRequestMetricsRouteLabel(t *testing.T) {
@@ -101,7 +105,8 @@ func TestMiddlewareCountsOnlyRequestsTheRouterOwns(t *testing.T) {
 
 	require.Equal(t, http.StatusTeapot, serve("/apis/dashboard.grafana.app/v1/namespaces/ns/dashboards"))
 	require.Equal(t, http.StatusTeapot, serve("/livez"))
-	require.Zero(t, testutil.CollectAndCount(svc.metrics.duration), "the embedded API server's requests are not the router's")
+	require.Zero(t, testutil.CollectAndCount(svc.metrics.requests), "the embedded API server's requests are not the router's")
+	require.Zero(t, testutil.CollectAndCount(svc.metrics.duration))
 
 	require.Equal(t, http.StatusNoContent, serve("/apis/test-app/v1/namespaces/ns/things"))
 	require.Equal(t, uint64(1), requestCount(t, svc, "test-app", "list", routeBackend, "204"))
@@ -261,7 +266,8 @@ func TestRequestMetricsVerbLabelIsBounded(t *testing.T) {
 			svc.metrics.instrument(svc.router, httptest.NewRecorder(), req, http.NotFoundHandler())
 		}
 	}
-	require.Equal(t, 2, testutil.CollectAndCount(svc.metrics.duration), "arbitrary methods must not create new series")
+	require.Equal(t, 2, testutil.CollectAndCount(svc.metrics.requests), "arbitrary methods must not create new series")
+	require.Equal(t, 2, testutil.CollectAndCount(svc.metrics.duration))
 	require.Equal(t, uint64(20), requestCount(t, svc, "", "other", routeDiscovery, "200"))
 	require.Equal(t, uint64(20), requestCount(t, svc, "test-app", "other", routeBackend, "204"))
 
@@ -299,4 +305,27 @@ func TestRequestMetricsAuthenticationFailures(t *testing.T) {
 	require.Equal(t, uint64(1), requestCount(t, svc, "", "get", routeUnauthenticated, "401"))
 	require.Equal(t, uint64(1), requestCount(t, svc, unknownGroupLabel, "list", routeUnauthenticated, "401"))
 	require.Zero(t, requestCount(t, svc, "test-app", "list", routeNext, "401"))
+}
+
+func TestRejectedWatchesAreCounted(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }))
+	t.Cleanup(upstream.Close)
+	svc := metricsService(t, "test-app", upstream.URL)
+	svc.router.authn = tokenAuthenticatorFunc(func(context.Context, string) (identity.Requester, error) {
+		return nil, apierrors.NewUnauthorized("invalid token")
+	})
+	target := "/apis/test-app/v1/namespaces/ns/things?watch=true"
+
+	unauthenticated := httptest.NewRequest(http.MethodGet, target, nil)
+	svc.metrics.instrument(svc.router, httptest.NewRecorder(), unauthenticated, http.NotFoundHandler())
+
+	upgrade := newAuthenticatedRequest(http.MethodGet, target, nil)
+	upgrade.Header.Set("Connection", "Upgrade")
+	upgrade.Header.Set("Upgrade", "websocket")
+	svc.metrics.instrument(svc.router, httptest.NewRecorder(), upgrade, http.NotFoundHandler())
+
+	requests := svc.metrics.requests
+	require.Equal(t, 1.0, testutil.ToFloat64(requests.WithLabelValues("test-app", "watch", routeUnauthenticated, "401")))
+	require.Equal(t, 1.0, testutil.ToFloat64(requests.WithLabelValues("test-app", "watch", routeBackend, "400")))
+	require.Zero(t, testutil.CollectAndCount(svc.metrics.duration), "rejected watches are still watches")
 }

@@ -20,8 +20,11 @@ Every label has a bounded set of values, so no request can create new series:
 - `status_code` is the response's HTTP status code, so it is limited to the three-digit codes.
 - In middleware mode, requests for groups the router doesn't serve belong to the embedded API
   server, and are not counted here. The API server's own `apiserver_request_*` metrics cover them.
-- Watches are long-running requests. They are counted in `grafana_router_longrunning_requests`,
-  never in the duration histogram or the in-flight gauge.
+- Watches are long-running requests. They are counted in `grafana_router_http_requests_total`
+  when they end and in `grafana_router_longrunning_requests` while they run, never in the duration
+  histogram or the in-flight gauge.
+- The duration histogram has no `status_code`, as in Kubernetes: it would multiply the histogram's
+  series. Use `grafana_router_http_requests_total` for status codes.
 
 ## Health
 
@@ -67,7 +70,8 @@ Groups on the single-tenant fallback keep one breaker per stack, so they have no
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_http_request_duration_seconds` | histogram (classic and native) | `group`, `verb`, `route`, `status_code` | Latency of requests other than watches |
+| `grafana_router_http_requests_total` | counter | `group`, `verb`, `route`, `status_code` | Requests, watches included, counted when they end |
+| `grafana_router_http_request_duration_seconds` | histogram (classic and native) | `group`, `verb`, `route` | Latency of requests other than watches |
 | `grafana_router_http_requests_in_flight` | gauge | | Requests other than watches in progress |
 | `grafana_router_longrunning_requests` | gauge | `group` | Watches in progress |
 
@@ -81,8 +85,8 @@ Groups on the single-tenant fallback keep one breaker per stack, so they have no
 - `other`, for any other method. Go's server accepts any token as a method, so an unrecognized one
   must not become a label value.
 
-`watch` never appears in the histogram, since watches are counted only in
-`grafana_router_longrunning_requests`.
+`watch` never appears in the histogram. It does appear in `grafana_router_http_requests_total`,
+including watches the router rejects (for example with a 401, or a 400 for a WebSocket upgrade).
 
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
@@ -106,7 +110,7 @@ observed when its stream ends.
   client, whose `grafana_plugin_request_*` metrics cover them.
 - Only the gRPC status is recorded. A plugin that answers a route with an HTTP 5xx, or rejects an
   admission review in its response, still records `OK`; the router's own
-  `grafana_router_http_request_duration_seconds{status_code}` shows those responses.
+  `grafana_router_http_requests_total{status_code}` shows those responses.
 - A call the breaker rejects, or whose token exchange fails, never reaches the connection. Those
   count in `grafana_router_backend_failures_total` as `breaker_open` and `auth`.
 
@@ -143,13 +147,14 @@ sum by (plugin_id) (
 | Open breakers | `grafana_router_breaker_state{state!="closed"} == 1` |
 | Breaker flapping | `sum by (group) (increase(grafana_router_breaker_transitions_total{state="open"}[1h]))` |
 | Backend failures by reason | `sum by (group, reason) (rate(grafana_router_backend_failures_total[5m]))` |
-| Request rate by group | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend"}[5m]))` |
-| Error ratio by group | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend",status_code=~"5.."}[5m])) / sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend"}[5m]))` |
+| Request rate by group | `sum by (group) (rate(grafana_router_http_requests_total{route="backend"}[5m]))` |
+| Error ratio by group | `sum by (group) (rate(grafana_router_http_requests_total{route="backend",status_code=~"5.."}[5m])) / sum by (group) (rate(grafana_router_http_requests_total{route="backend"}[5m]))` |
+| Watch errors by group | `sum by (group, status_code) (rate(grafana_router_http_requests_total{verb="watch",status_code!="200"}[5m]))` |
 | p99 latency by group | `histogram_quantile(0.99, sum by (group, le) (rate(grafana_router_http_request_duration_seconds_bucket{route="backend"}[5m])))` |
 | Plugin gRPC calls by status | `sum by (plugin_id, status_code) (rate(grafana_router_plugin_grpc_request_duration_seconds_count[5m]))` |
 | p99 plugin gRPC latency | `histogram_quantile(0.99, sum by (plugin_id, method) (rate(grafana_router_plugin_grpc_request_duration_seconds[5m])))` |
 | Watches by group | `sum by (group) (grafana_router_longrunning_requests)` |
-| Unrecognized methods | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{verb="other"}[5m]))` |
+| Unrecognized methods | `sum by (group) (rate(grafana_router_http_requests_total{verb="other"}[5m]))` |
 | Discovery served stale | `sum by (group) (rate(grafana_router_discovery_results_total{result=~"stale|unavailable"}[5m]))` |
 | Stack lookup cache hit ratio | `rate(grafana_router_stack_lookups_total{result="cache_hit"}[5m]) / sum(rate(grafana_router_stack_lookups_total[5m]))` |
 | Throttled stack lookups | `rate(grafana_router_stack_lookups_total{result="throttled"}[5m])` |
