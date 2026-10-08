@@ -17,9 +17,8 @@ export default (env: Env = {}) => {
     plugins: [new RsdoctorRspackPlugin()],
   };
 
-  // Only the grafana config takes part. Found by name rather than by position: picking up the
-  // wrong config yields a plausible-looking report of the wrong bundle, which nobody would
-  // question.
+  // Found by name, not position: the wrong config would give a plausible report of the wrong
+  // bundle.
   const grafanaConfig = prodConfig(env).find((prodEntry) => prodEntry.name === 'grafana');
   if (!grafanaConfig) {
     throw new Error('rspack.prod.ts no longer exports a config named "grafana"');
