@@ -118,6 +118,50 @@ describe('validateNotebookSpec', () => {
     expect(parsed.spec.data.spec.transformations[0].spec.refId).toBe('T1');
   });
 
+  // A cell's own time-range lock serializes as queryOptions.timeFrom/.timeTo (see
+  // scene/layout-notebook/cellTimeRange.ts). queryOptionsSpecSchema once listed timeFrom but not
+  // timeTo, so Zod's default "strip unknown keys" behavior silently dropped timeTo on every
+  // APPLY_NOTEBOOK_SPEC call with validate: true, one-sidedly undoing the cell's lock.
+  it("keeps both ends of a cell's own time range on a panel element", () => {
+    const result = validateNotebookSpec({
+      ...spec(),
+      elements: {
+        panel: {
+          ...PANEL,
+          spec: {
+            ...PANEL.spec,
+            data: {
+              kind: 'QueryGroup',
+              spec: {
+                queries: [],
+                transformations: [],
+                queryOptions: { timeFrom: 'now-6h', timeTo: 'now' },
+              },
+            },
+          },
+        },
+      },
+      layout: {
+        kind: 'NotebookLayout',
+        spec: {
+          cells: [
+            {
+              kind: 'NotebookLayoutItem',
+              spec: { element: { kind: 'ElementReference', name: 'panel' }, source: 'user' },
+            },
+          ],
+        },
+      },
+    });
+
+    expect(result.success).toBe(true);
+    const parsed = result.data?.elements.panel;
+    if (parsed?.kind !== 'Panel') {
+      throw new Error('expected a Panel element');
+    }
+    expect(parsed.spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
+  });
+
   it('rejects the retired v2beta1 transformation shape', () => {
     // `{ kind: <id>, spec: { id: <id> } }` is what a notebook carried before its panel chain was
     // reparented onto the dashboard v2 shape. Written as a plain object because it is deliberately not a

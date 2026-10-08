@@ -115,6 +115,48 @@ describe('dashboardV2SpecSchema', () => {
     expect(panel.spec.vizConfig.spec.fieldConfig.defaults).toEqual({ custom: { x: 1 } });
   });
 
+  // queryOptionsSpecSchema once listed timeFrom but not timeTo, so Zod's default "strip unknown
+  // keys" behavior silently dropped timeTo on every parse — a notebook cell's own time-range lock
+  // (see notebook/scene/layout-notebook/cellTimeRange.ts, which serializes as this same pair) came
+  // back one-sided from APPLY_NOTEBOOK_SPEC's validate: true path. This schema is shared with the
+  // dashboard side (APPLY_SPEC), so the same loss would hit a dashboard panel's own queryOptions too.
+  it('keeps both ends of a panel queryOptions time override (timeFrom and timeTo)', () => {
+    const spec = minimalSpec({
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'P',
+            links: [],
+            data: {
+              kind: 'QueryGroup',
+              spec: { queries: [], transformations: [], queryOptions: { timeFrom: 'now-6h', timeTo: 'now' } },
+            },
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        },
+      },
+    });
+
+    const result = dashboardV2SpecSchema.safeParse(spec);
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const panel = result.data.elements['panel-1'];
+    expect(panel.kind).toBe('Panel');
+    if (panel.kind !== 'Panel') {
+      return;
+    }
+    expect(panel.spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
+  });
+
   it('validates a deeply nested recursive layout (rows -> tabs -> grid)', () => {
     const spec = minimalSpec({
       layout: {
