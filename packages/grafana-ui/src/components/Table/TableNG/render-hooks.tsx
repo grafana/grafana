@@ -48,7 +48,6 @@ import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
 import {
   getCellActionStyles,
-  getColumnSettleStyles,
   getDefaultCellStyles,
   getHeaderCellStyles,
   getLinkStyles,
@@ -184,7 +183,6 @@ export interface ColumnBuildConfig {
   rowHeightFn: (row: TableRow) => number;
   setFilter: Dispatch<SetStateAction<FilterType>>;
   setInspectCell: Dispatch<SetStateAction<InspectCellProps | null>>;
-  settlingColumnKeys?: ReadonlySet<string>;
   showTypeIcons?: boolean;
   tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
@@ -283,7 +281,6 @@ function buildColumnsFromFields(
     hoverOverflow = true,
     disableSanitizeHtml,
     hasColumnSidebar,
-    settlingColumnKeys,
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
@@ -357,10 +354,7 @@ function buildColumnsFromFields(
     const textAlign = getAlignment(field);
     const justifyContent = getJustifyContent(textAlign);
     const displayName = getDisplayName(field);
-    const headerCellClass = clsx(
-      getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent),
-      settlingColumnKeys?.has(displayName) && getColumnSettleStyles(theme, tableRefreshEnabled)
-    );
+    const headerCellClass = getHeaderCellStyles(theme, tableRefreshEnabled ? 'flex-start' : justifyContent);
     const CellType = getCellRenderer(field, cellOptions);
 
     const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
@@ -616,7 +610,6 @@ function buildColumnsFromFields(
       frozen: Math.min(frozenColumns, numFrozenColsFullyInView) > i,
       resizable: field.config.custom?.resizable,
       sortable: isSortableField(field),
-      draggable: false,
       renderCell: renderCellContent,
       renderHeaderCell: ({ column, sortDirection }) => (
         <HeaderCell

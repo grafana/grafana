@@ -1354,7 +1354,6 @@ interface ColumnViewStateOptions {
 interface ColumnViewState {
   hiddenColumns: ReadonlySet<string>;
   setHiddenColumns: (hiddenColumns: ReadonlySet<string>) => void;
-  isControlled: boolean;
 }
 
 const NO_HIDDEN_COLUMNS: ReadonlySet<string> = new Set();
@@ -1365,8 +1364,6 @@ export function useColumnViewState({
   onHiddenColumnsChange,
   structureRev,
 }: ColumnViewStateOptions): ColumnViewState {
-  const isControlled = onHiddenColumnsChange != null;
-
   const [localHiddenColumns, setLocalHiddenColumns] = useState<ReadonlySet<string>>(NO_HIDDEN_COLUMNS);
 
   useEffect(() => {
@@ -1384,6 +1381,5 @@ export function useColumnViewState({
   return {
     hiddenColumns: (onHiddenColumnsChange ? hiddenColumns : localHiddenColumns) ?? NO_HIDDEN_COLUMNS,
     setHiddenColumns,
-    isControlled,
   };
 }

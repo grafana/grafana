@@ -102,9 +102,6 @@ export const PAGINATION_MARGIN = 8;
 export const getPaginationChromeHeight = (noPanelPadding = false): number =>
   PAGINATION_ROW_HEIGHT + PAGINATION_MARGIN * (noPanelPadding ? 2 : 1);
 
-// Duration of the post-reorder highlight.
-export const COLUMN_SETTLE_MS = 280;
-
 // Space a single header affordance icon (filter / sort / type) reserves next to the label. Sized to
 // the widest of them — the sort arrow, rendered at Icon size "lg" (18px) — plus the flex gap, so a
 // filterable or sorted column doesn't ellipsize its title once its icon appears.
@@ -132,5 +129,3 @@ export const HEADER_TOOLTIP_SPACE = HEADER_ICON_BUTTON_SPACE;
 // (see useScrollShadows). Sub-pixel scroll heights are common — fractional row heights, zoom levels
 // — and at 0 they left a shadow permanently half-lit on a table that doesn't actually scroll.
 export const SCROLL_SHADOW_THRESHOLD = 1;
-// Reserve the hover-only drag handle so the label does not shift when it appears.
-export const HEADER_DRAG_HANDLE_WIDTH = 16;

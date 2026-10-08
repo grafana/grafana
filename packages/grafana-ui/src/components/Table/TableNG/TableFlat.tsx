@@ -154,8 +154,6 @@ export function TableFlat(props: TableNGProps) {
     structureRev,
   });
 
-  const orderedVisibleFields = preparedFields;
-
   const resizeHandler = useColumnResize(onColumnResize);
 
   const frameToRecords = useRowCompiler(data);
@@ -172,7 +170,7 @@ export function TableFlat(props: TableNGProps) {
   useNotifyDisplayedRowIndices(sortedRows, onDisplayedRowIndicesChange);
 
   const canHideAnotherColumn =
-    (columnCatalog ?? orderedVisibleFields.map(getDisplayName)).filter((name) => !hiddenColumns.has(name)).length > 1;
+    (columnCatalog ?? preparedFields.map(getDisplayName)).filter((name) => !hiddenColumns.has(name)).length > 1;
 
   const handleHideColumn = useCallback(
     (displayName: string) => {
@@ -208,8 +206,8 @@ export function TableFlat(props: TableNGProps) {
 
   // Also filter controlled data during the render before its transformed frame arrives.
   const displayedFields = useMemo(
-    () => filterFieldsByHiddenColumns(orderedVisibleFields, hiddenColumns),
-    [orderedVisibleFields, hiddenColumns]
+    () => filterFieldsByHiddenColumns(preparedFields, hiddenColumns),
+    [preparedFields, hiddenColumns]
   );
   const displayedRawFields = useMemo(
     () => filterFieldsByHiddenColumns(visibleFields, hiddenColumns),
@@ -219,14 +217,14 @@ export function TableFlat(props: TableNGProps) {
   // Catalog-only columns were necessarily hideable.
   const sidebarColumns: SidebarColumn[] = useMemo(() => {
     const capabilities = new Map(
-      orderedVisibleFields.map((field) => [getDisplayName(field), { hideable: isFieldHideable(field) }])
+      preparedFields.map((field) => [getDisplayName(field), { hideable: isFieldHideable(field) }])
     );
 
     return (columnCatalog ?? Array.from(capabilities.keys())).map((name) => ({
       name,
       ...(capabilities.get(name) ?? { hideable: true }),
     }));
-  }, [columnCatalog, orderedVisibleFields]);
+  }, [columnCatalog, preparedFields]);
   // The catalog includes restored columns before they return in the transformed data.
   const hasColumnSidebar = sidebarColumns.some((column) => column.hideable);
 
@@ -487,7 +485,6 @@ export function TableFlat(props: TableNGProps) {
       typographyCtx,
       hasColumnSidebar,
       onHideColumn: handleHideColumn,
-      // Pinning needs both column order and the frozen-column panel option.
       onOpenColumnPanel: hasColumnSidebar ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
@@ -527,7 +524,8 @@ export function TableFlat(props: TableNGProps) {
   const { columns, cellRootRenderers } = useMemo(() => {
     // The column builder prepares display processors itself; wrapping JSON processors twice repeats units.
     const result = fromFields(displayedRawFields, widths, data, rows, sortedRows);
-    return { ...result, columns: markEdgeColumns(result.columns) };
+    markEdgeColumns(result);
+    return result;
   }, [fromFields, displayedRawFields, widths, data, rows, sortedRows]);
 
   // invalidate columns on every structureRev change to support width editing in fieldConfig.

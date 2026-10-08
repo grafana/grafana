@@ -25,6 +25,7 @@ import { COLUMN, FIRST_COLUMN_CLASS, LAST_COLUMN_CLASS, NESTED_ROW_CLASS, STRIPE
 import { getJustifyContent } from './styles';
 import {
   type FilterType,
+  type FromFieldsResult,
   type GetActionsFunctionLocal,
   type MeasureCellHeightEntry,
   type TableColumn,
@@ -2835,29 +2836,6 @@ describe('TableNG utils', () => {
       expect(widths).toEqual([73, 83]);
     });
 
-    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
-      // Fractional header widths must round independently when the columns already overflow.
-      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
-      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
-      jest
-        .spyOn(typographyCtx.ctx, 'measureText')
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        .mockImplementation(((text: string) => ({
-          width: headerWidths[String(text)],
-        })) as typeof typographyCtx.ctx.measureText);
-
-      const fields: Field[] = [
-        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
-        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
-      ];
-      const widths = computeContentAwareColWidths(fields, 110, {
-        typographyCtx: makeTypographyCtx(),
-        headerTypographyCtx: typographyCtx,
-      });
-
-      expect(widths).toEqual([73, 83]);
-    });
-
     it('samples a bounded number of rows (spread across the field) rather than scanning every value', () => {
       const display = jest.fn((v) => ({ text: String(v), numeric: Number(v) }));
       const fields: Field[] = [
@@ -3022,8 +3000,14 @@ describe('TableNG utils', () => {
         ...overrides,
       }) as TableColumn;
 
+    // markEdgeColumns mutates the passed-in FromFieldsResult's columns in place rather than
+    // returning a new list, so tests build one of these and read back `.columns` after the call.
+    const withColumns = (columns: TableColumn[]): FromFieldsResult => ({ columns, cellRootRenderers: {} });
+
     it('tags the first and last columns on every cell variant', () => {
-      const [first, middle, last] = markEdgeColumns([col('a'), col('b'), col('c')]);
+      const result = withColumns([col('a'), col('b'), col('c')]);
+      markEdgeColumns(result);
+      const [first, middle, last] = result.columns;
 
       expect(first.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(first.cellClass).toContain(FIRST_COLUMN_CLASS);
@@ -3035,15 +3019,20 @@ describe('TableNG utils', () => {
     });
 
     it('tags a single column as both edges', () => {
-      const [only] = markEdgeColumns([col('a')]);
+      const result = withColumns([col('a')]);
+      markEdgeColumns(result);
+      const [only] = result.columns;
+
       expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
     });
 
     it('keeps existing classes, including ones computed per row', () => {
-      const [first] = markEdgeColumns([
+      const result = withColumns([
         col('a', { headerCellClass: 'existing-header', cellClass: (row) => `row-${row.__index}` }),
       ]);
+      markEdgeColumns(result);
+      const [first] = result.columns;
 
       expect(first.headerCellClass).toBe(`existing-header ${FIRST_COLUMN_CLASS} ${LAST_COLUMN_CLASS}`);
       expect(typeof first.cellClass === 'function' && first.cellClass({ __index: 3, __depth: 0 })).toBe(
@@ -3051,8 +3040,10 @@ describe('TableNG utils', () => {
       );
     });
 
-    it('returns the list unchanged when there are no columns', () => {
-      expect(markEdgeColumns([])).toEqual([]);
+    it('leaves the list unchanged when there are no columns', () => {
+      const result = withColumns([]);
+      markEdgeColumns(result);
+      expect(result.columns).toEqual([]);
     });
   });
 

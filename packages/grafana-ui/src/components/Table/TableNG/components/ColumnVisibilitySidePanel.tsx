@@ -164,16 +164,4 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     whiteSpace: 'nowrap',
     userSelect: 'none',
   }),
-  pinButton: css({
-    display: 'flex',
-    alignItems: 'center',
-    background: 'transparent',
-    border: 'none',
-    padding: 0,
-    cursor: 'pointer',
-    color: theme.colors.text.secondary,
-    '&[aria-pressed="true"]': {
-      color: theme.colors.warning.text,
-    },
-  }),
 }));
