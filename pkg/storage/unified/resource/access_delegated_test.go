@@ -314,6 +314,66 @@ func TestSearchServicePermissions(t *testing.T) {
 	}
 }
 
+func TestSearchServicePermissionExemptions(t *testing.T) {
+	const group, resource = "playlist.grafana.app", "playlists"
+	for mode, id := range map[string]authlib.AuthInfo{
+		"direct":    serviceWithPermissions(),
+		"delegated": tokenWithoutDelegation(),
+	} {
+		for _, tc := range []struct {
+			name            string
+			opts            AuthzOptions
+			requestGroup    string
+			requestResource string
+			federated       bool
+			namespace       string
+			wantErr         error
+			wantExempt      float64
+		}{
+			{name: "exempt", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, wantExempt: 1},
+			{name: "legacy bypass", wantExempt: 1},
+			{name: "not exempt", opts: AuthzOptions{ExemptionEnabled: true}, wantErr: ErrServicePermissionMissing},
+			{name: "sibling resource", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/other"}}, wantErr: ErrServicePermissionMissing},
+			{name: "always enforced", requestGroup: "dashboard.grafana.app", requestResource: "dashboards", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, wantErr: ErrServicePermissionMissing},
+			{name: "federated enforced resource", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, federated: true, wantExempt: 1, wantErr: ErrServicePermissionMissing},
+			{name: "namespace mismatch", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, namespace: "stacks-2", wantErr: authlib.ErrNamespaceMismatch},
+		} {
+			t.Run(mode+"/"+tc.name, func(t *testing.T) {
+				requestGroup, requestResource := tc.requestGroup, tc.requestResource
+				if requestGroup == "" {
+					requestGroup, requestResource = group, resource
+				}
+				namespace := tc.namespace
+				if namespace == "" {
+					namespace = "stacks-1"
+				}
+				logger := &permissionTestLogger{}
+				s := newPermissionTestSearchServer(NewAuthzLimitedClient(authlib.FixedAccessClient(false), tc.opts))
+				s.log = logger
+				req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+					Namespace: namespace, Group: requestGroup, Resource: requestResource,
+				}}}
+				if tc.federated {
+					req.Federated = []*resourcepb.ResourceKey{{Group: "folder.grafana.app", Resource: "folders"}}
+				}
+				wantErr := tc.wantErr
+				if mode == "delegated" && wantErr == ErrServicePermissionMissing {
+					wantErr = ErrServiceCannotDelegate
+				}
+				err := s.checkSearchServicePermissions(authlib.WithAuthInfo(t.Context(), id), req)
+				require.ErrorIs(t, err, wantErr)
+				require.Equal(t, tc.wantExempt, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionExemptions.WithLabelValues(group, resource, mode)))
+				wantFailures := 0
+				if wantErr != nil && wantErr != authlib.ErrNamespaceMismatch {
+					wantFailures = 1
+				}
+				require.Equal(t, float64(wantFailures), testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode)))
+				require.Equal(t, wantFailures, logger.ErrorLogs.Calls)
+			})
+		}
+	}
+}
+
 func TestAuthzLimitedClient_UserDenialRemainsDenial(t *testing.T) {
 	c := NewAuthzLimitedClient(authlib.FixedAccessClient(false), AuthzOptions{})
 	id := userWithDelegatedPermissions("dashboard.grafana.app:get")
