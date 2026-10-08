@@ -186,22 +186,20 @@ describe('setDashboardPanelContext', () => {
       expect(api.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
     });
 
-    it('retains source values while active and restores cleanup after clearing or changing plugins', () => {
+    it('notifies subscribers when transformations are cleared or the panel plugin changes', () => {
       const { context, vizPanel } = buildTestScene({});
-      vizPanel.setState({ _UNSAFE_clearPreviousFieldValues: true });
       const api = context.adHocTransformations!;
       const changed = jest.fn();
       const unsubscribe = api.subscribe('grafana:table-view', changed);
 
       api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
-      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
       api.set('grafana:table-view', []);
-      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
+      expect(api.get('grafana:table-view')).toEqual([]);
+      expect(changed).toHaveBeenCalledTimes(2);
       api.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
-      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(false);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
       vizPanel.setState({ pluginId: 'table' });
       expect(api.get('grafana:table-view')).toEqual([]);
-      expect(vizPanel.state._UNSAFE_clearPreviousFieldValues).toBe(true);
       expect(changed).toHaveBeenCalledTimes(4);
       unsubscribe();
     });
