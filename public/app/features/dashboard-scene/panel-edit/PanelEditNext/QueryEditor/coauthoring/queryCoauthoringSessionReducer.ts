@@ -1,16 +1,27 @@
+import { type PanelData } from '@grafana/data';
+
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
 import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
+import {
+  reduceQueryCoauthoringGroup,
+  type QueryCoauthoringGroupEvent,
+  type QueryCoauthoringGroupState,
+} from './queryCoauthoringGroupLayout';
 import {
   findQueryCoauthoringMention,
   queryCoauthoringMentionOptions,
   type QueryCoauthoringMention,
 } from './queryCoauthoringMentions';
+import { classifyQueryPreview } from './queryCoauthoringPreviewOutcome';
 import { type QueryExplanation } from './queryCoauthoringPrompts';
 import { type QueryCoauthoringRequestError, type QueryCoauthoringRequestOutcome } from './queryCoauthoringRequest';
 import { type QueryCoauthoringSessionState } from './useQueryCoauthoringSession';
 
 type SessionAction =
   | 'accept'
+  | 'selectOption'
+  | 'peek'
+  | 'stopPeek'
   | 'continueHere'
   | 'continueInAssistant'
   | 'retry'
@@ -32,7 +43,7 @@ type SessionSnapshot<T = QueryCoauthoringSessionState> = T extends QueryCoauthor
   : never;
 type PromptSnapshot = Extract<SessionSnapshot, { kind: 'prompt' }>;
 
-interface SessionData {
+interface SessionData extends QueryCoauthoringGroupState {
   engaged: boolean;
   prompt: PromptSnapshot;
   feedback?: QueryCoauthoringFeedbackState;
@@ -50,6 +61,7 @@ interface SessionData {
 
 export type QueryCoauthoringReducerState = SessionSnapshot & { data: SessionData };
 export type QueryCoauthoringSessionEvent =
+  | QueryCoauthoringGroupEvent
   | { type: 'assistant-loading' }
   | { type: 'assistant-unavailable' }
   | { type: 'assistant-ready' }
@@ -61,6 +73,10 @@ export type QueryCoauthoringSessionEvent =
   | { type: 'mention-selected'; index?: number }
   | { type: 'mention-closed' }
   | { type: 'feedback-changed'; feedback?: QueryCoauthoringFeedbackState }
+  | { type: 'option-selected'; index: number; previewData?: PanelData }
+  | { type: 'preview-data-changed'; previewData?: PanelData }
+  | { type: 'peek-started'; index: number }
+  | { type: 'peek-stopped'; previewData?: PanelData }
   | {
       type: 'invocation-updated';
       context?: QueryEditorCoauthoringContextV1;
@@ -160,6 +176,16 @@ export function queryCoauthoringSessionReducer(
 ): QueryCoauthoringReducerState {
   const { data: _data, ...current } = state;
   switch (event.type) {
+    case 'group-layout-frozen':
+    case 'group-pointer-started':
+    case 'group-pointer-moved':
+    case 'group-pointer-ended':
+    case 'group-viewport-changed':
+    case 'group-adjustment-reported': {
+      const data = reduceQueryCoauthoringGroup(state.data, event);
+      return data === state.data ? state : { ...state, data };
+    }
+
     case 'assistant-loading':
     case 'assistant-unavailable': {
       const resume =
@@ -484,8 +510,9 @@ export function queryCoauthoringSessionReducer(
         case 'proposal':
           view = {
             kind: 'proposal',
+            previewOutcome: { kind: 'loading' },
             isPreviewRunning: state.data.isPreviewRunning,
-            proposal: { ...event.outcome.proposal, prepared: event.outcome.prepared, context: event.context },
+            proposal: { options: event.outcome.options, selectedIndex: 0, context: event.context },
           };
       }
       return transition(
@@ -493,6 +520,60 @@ export function queryCoauthoringSessionReducer(
         updateSession(current, () => view, state.data.requestMode === 'explain' ? 'request' : 'context-error')
       );
     }
+    case 'option-selected':
+      return transition(
+        state,
+        updateSession(current, (view) =>
+          view.kind === 'proposal' && event.index >= -1 && event.index < view.proposal.options.length
+            ? {
+                ...view,
+                peekIndex: undefined,
+                previewOutcome: classifyQueryPreview(event.previewData, view.proposal.options[0].prepared.query.refId),
+                proposal: { ...view.proposal, selectedIndex: event.index },
+              }
+            : view
+        )
+      );
+    case 'peek-started':
+      return transition(
+        state,
+        updateSession(current, (view) =>
+          view.kind === 'proposal' && event.index >= -1 && event.index < view.proposal.options.length
+            ? { ...view, peekIndex: event.index }
+            : view
+        )
+      );
+    case 'peek-stopped':
+      return transition(
+        state,
+        updateSession(current, (view) =>
+          view.kind === 'proposal' && view.peekIndex !== undefined
+            ? {
+                ...view,
+                peekIndex: undefined,
+                previewOutcome: classifyQueryPreview(event.previewData, view.proposal.options[0].prepared.query.refId),
+              }
+            : view
+        )
+      );
+    case 'preview-data-changed':
+      return transition(
+        state,
+        updateSession(
+          current,
+          (view) =>
+            view.kind === 'proposal' && view.peekIndex === undefined
+              ? {
+                  ...view,
+                  previewOutcome: classifyQueryPreview(
+                    event.previewData,
+                    view.proposal.options[0].prepared.query.refId
+                  ),
+                }
+              : view,
+          'error'
+        )
+      );
     case 'preview-failed':
       return transition(
         state,

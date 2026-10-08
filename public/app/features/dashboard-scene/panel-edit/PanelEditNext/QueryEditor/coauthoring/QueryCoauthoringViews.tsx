@@ -5,6 +5,7 @@ import {
   type KeyboardEvent,
   type MutableRefObject,
   type ReactNode,
+  Fragment,
   useEffect,
   useId,
   useLayoutEffect,
@@ -13,28 +14,29 @@ import {
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Icon, IconButton, Portal, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { Alert, Badge, Button, Icon, IconButton, Portal, Text, TextArea, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
-import {
-  type QueryEditorCoauthoringChangeV1,
-  type QueryEditorCoauthoringContextV1,
-} from './internalCoauthoringContract';
+import { type QueryEditorCoauthoringContextV1 } from './internalCoauthoringContract';
+import { type QueryCoauthoringDiffHunk } from './queryCoauthoringDiff';
 import { type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
+import { type QueryPreviewOutcome } from './queryCoauthoringPreviewOutcome';
 import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
+import { useQueryCoauthoringChipPeek } from './useQueryCoauthoringChipPeek';
 
 interface HeaderProps {
+  className?: string;
   children?: ReactNode;
   onClose?: () => void;
   onStop?: () => void;
   pulse?: boolean;
 }
 
-export function QueryCoauthoringHeader({ children, onClose, onStop, pulse = false }: HeaderProps) {
+export function QueryCoauthoringHeader({ className, children, onClose, onStop, pulse = false }: HeaderProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
-    <div className={styles.header}>
+    <div className={cx(styles.header, className)}>
       <div className={cx(styles.headerContent, pulse && styles.pulsingStatus)}>{children}</div>
       {onStop ? (
         <IconButton
@@ -449,9 +451,18 @@ export function QueryCoauthoringFallback({ reason, onClose, onFeedback, onContin
 }
 
 interface ProposalProps {
+  width?: number;
   why: string[];
-  changes: QueryEditorCoauthoringChangeV1[];
+  baseline: string;
+  diff: QueryCoauthoringDiffHunk[];
+  unconfirmedValues?: string[];
+  optionCount: number;
+  selectedIndex: number;
+  onSelect: (index: number, source?: 'keyboard') => void;
+  onPeek?: (index: number) => void;
+  onStopPeek?: () => void;
   isPreviewRunning: boolean;
+  previewOutcome?: QueryPreviewOutcome;
   onFeedback: (feedback: QueryCoauthoringFeedbackState) => void;
   onClose: () => void;
   onContinue: () => void;
@@ -459,96 +470,330 @@ interface ProposalProps {
 }
 
 export function QueryCoauthoringProposal({
+  width,
   why,
-  changes,
+  baseline,
+  diff,
+  unconfirmedValues,
+  optionCount,
+  selectedIndex,
+  onSelect,
+  onPeek,
+  onStopPeek,
   isPreviewRunning,
+  previewOutcome,
   onFeedback,
   onClose,
   onContinue,
   onAccept,
 }: ProposalProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
+  const narrow = width !== undefined && width < 420;
+  const tiny = width !== undefined && width < 280;
+  const hasPreviewCallout =
+    previewOutcome &&
+    previewOutcome.kind !== 'loading' &&
+    (previewOutcome.kind !== 'ok' || (!tiny && previewOutcome.notices.length > 0));
+  const tablistRef = useRef<HTMLDivElement>(null);
+  const focusSelected = useRef(false);
+  useLayoutEffect(() => {
+    if (focusSelected.current) {
+      focusSelected.current = false;
+      tablistRef.current?.querySelector<HTMLButtonElement>('[aria-selected="true"]')?.focus();
+    }
+  }, [selectedIndex]);
+  const chipPeek = useQueryCoauthoringChipPeek(onPeek, onStopPeek);
+  const acceptButton = (
+    <Button className={styles.compactButton} size="sm" icon="check" onClick={onAccept} disabled={selectedIndex < 0}>
+      <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
+    </Button>
+  );
   return (
     <div className={styles.proposal}>
-      <QueryCoauthoringHeader onClose={onClose} pulse={isPreviewRunning}>
-        <QueryCoauthoringLiveStatus>
-          {isPreviewRunning ? (
-            <>
-              <Icon name="ai-sparkle" size="sm" />
-              <Text variant="bodySmall" color="secondary">
-                <Trans i18nKey="query-editor-coauthoring.running-updated-query">Running updated query...</Trans>
-              </Text>
-            </>
-          ) : (
-            <Badge color="blue" text={t('query-editor-coauthoring.previewing-query', 'Previewing query')} />
-          )}
-        </QueryCoauthoringLiveStatus>
-      </QueryCoauthoringHeader>
       <div
-        className={styles.scrollBody}
-        data-testid={selectors.components.QueryEditorCoauthoring.container}
-        role="region"
-        aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
+        className={cx(
+          styles.explanationCard,
+          narrow && styles.narrowExplanationCard,
+          tiny && styles.tinyExplanationCard
+        )}
       >
-        <div className={styles.proposalBody}>
-          <Text variant="body" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.suggestion-updated">Suggestion updated</Trans>
-          </Text>
-          {why.map((reason, index) => (
-            <Text variant="body" key={index}>
-              {reason}
-            </Text>
+        <div
+          ref={tablistRef}
+          role="tablist"
+          tabIndex={-1}
+          aria-label={t('query-editor-coauthoring.options', 'Query options')}
+          className={cx(styles.optionTabs, narrow && styles.narrowOptionTabs, tiny && styles.tinyOptionTabs)}
+          onKeyDown={(event) => {
+            let next: number;
+            switch (event.key) {
+              case 'ArrowRight':
+                next = selectedIndex === optionCount - 1 ? -1 : selectedIndex + 1;
+                break;
+              case 'ArrowLeft':
+                next = selectedIndex === -1 ? optionCount - 1 : selectedIndex - 1;
+                break;
+              case 'Home':
+                next = -1;
+                break;
+              case 'End':
+                next = optionCount - 1;
+                break;
+              default:
+                return;
+            }
+            event.preventDefault();
+            focusSelected.current = true;
+            onSelect(next, 'keyboard');
+          }}
+        >
+          <Button
+            className={tiny ? styles.compactOptionPill : undefined}
+            size="sm"
+            variant="secondary"
+            icon="arrow-left"
+            aria-label={t('query-editor-coauthoring.previous-option', 'Previous option')}
+            style={tiny ? undefined : { display: 'none' }}
+            onClick={() => onSelect(selectedIndex === -1 ? optionCount - 1 : selectedIndex - 1)}
+          />
+          {Array.from({ length: optionCount + 1 }, (_, rank) => (
+            <Button
+              key={rank}
+              className={narrow ? styles.compactOptionPill : undefined}
+              style={tiny && selectedIndex !== rank - 1 ? { display: 'none' } : undefined}
+              size="sm"
+              variant="secondary"
+              role="tab"
+              data-option-index={rank - 1}
+              aria-selected={selectedIndex === rank - 1}
+              tabIndex={selectedIndex === rank - 1 ? 0 : -1}
+              onPointerDown={(event) => chipPeek.start(event, rank - 1)}
+              onLostPointerCapture={chipPeek.stop}
+              onClick={(event) => {
+                if (!chipPeek.consumeClick(event)) {
+                  onSelect(rank - 1);
+                }
+              }}
+            >
+              {rank === 0
+                ? t('query-editor-coauthoring.original', 'Original')
+                : t('query-editor-coauthoring.option', 'Option {{rank}}', { rank })}
+            </Button>
           ))}
+          <Button
+            className={tiny ? styles.compactOptionPill : undefined}
+            size="sm"
+            variant="secondary"
+            icon="arrow-right"
+            aria-label={t('query-editor-coauthoring.next-option', 'Next option')}
+            style={tiny ? undefined : { display: 'none' }}
+            onClick={() => onSelect(selectedIndex === optionCount - 1 ? -1 : selectedIndex + 1)}
+          />
         </div>
-        {changes.length > 0 && (
-          <div className={styles.changes}>
-            {changes.slice(0, 4).map((change) => (
-              <div className={styles.changePair} key={change.id}>
-                <div
-                  className={styles.change}
-                  aria-label={t('query-editor-coauthoring.original-change', 'Original {{kind}}', {
-                    kind: change.kind ?? 'change',
-                  })}
-                >
-                  <Text variant="bodySmall" color="secondary">
-                    {(change.kind ?? 'change').toUpperCase()}
-                  </Text>
-                  <code>{change.original || 'added'}</code>
-                </div>
-                <Icon className={styles.flowArrow} name="arrow-right" />
-                <div
-                  className={cx(styles.change, styles.proposedChange)}
-                  aria-label={t('query-editor-coauthoring.proposed-change', 'Proposed {{kind}}', {
-                    kind: change.kind ?? 'change',
-                  })}
-                >
-                  <Text variant="bodySmall" color="secondary">
-                    {(change.kind ?? 'change').toUpperCase()}
-                  </Text>
-                  <code>{change.proposed || 'removed'}</code>
-                </div>
+        <QueryCoauthoringHeader
+          className={narrow ? styles.hidden : undefined}
+          onClose={onClose}
+          pulse={isPreviewRunning}
+        >
+          <QueryCoauthoringLiveStatus>
+            {isPreviewRunning ? (
+              <>
+                <Icon name="ai-sparkle" size="sm" />
+                <Text variant="bodySmall" color="secondary">
+                  <Trans i18nKey="query-editor-coauthoring.running-updated-query">Running updated query...</Trans>
+                </Text>
+              </>
+            ) : (
+              <Badge color="blue" text={t('query-editor-coauthoring.previewing-query', 'Previewing query')} />
+            )}
+          </QueryCoauthoringLiveStatus>
+        </QueryCoauthoringHeader>
+        <div
+          className={styles.scrollBody}
+          style={narrow && !hasPreviewCallout && !unconfirmedValues?.length ? { display: 'none' } : undefined}
+          data-testid={selectors.components.QueryEditorCoauthoring.container}
+          role="region"
+          aria-label={t('query-editor-coauthoring.proposal-details', 'Query proposal details')}
+        >
+          <div className={cx(styles.proposalBody, narrow && styles.compactProposalBody)}>
+            <Text variant="body" color="secondary" hidden={narrow}>
+              {selectedIndex < 0
+                ? t('query-editor-coauthoring.original-query', 'Original query')
+                : t('query-editor-coauthoring.suggestion-updated', 'Suggestion updated')}
+            </Text>
+            <div style={narrow ? { display: 'none' } : undefined}>
+              {diff.length > 0 && <QueryCoauthoringInlineDiff baseline={baseline} hunks={diff} />}
+            </div>
+            <div role="region" aria-label={t('query-editor-coauthoring.preview-result', 'Preview result')}>
+              <QueryCoauthoringPreviewResult outcome={previewOutcome} tiny={tiny} />
+            </div>
+            <div style={narrow ? { display: 'none' } : undefined}>
+              {why.map((reason, index) => (
+                <Text variant="body" key={index}>
+                  {reason}
+                </Text>
+              ))}
+            </div>
+            {unconfirmedValues?.map((value, index) => (
+              <div key={index} className={styles.unconfirmedValue}>
+                <Icon name="exclamation-triangle" size="sm" aria-hidden />{' '}
+                <Text variant="bodySmall" color="secondary">
+                  {t('query-editor-coauthoring.unconfirmed-prefix', 'Unconfirmed:')}
+                </Text>{' '}
+                <Text variant="body">{value}</Text>
               </div>
             ))}
           </div>
-        )}
+        </div>
       </div>
-      <div className={styles.footer}>
-        <div className={styles.footerActions}>
+      <div className={cx(styles.footer, styles.actionsCard, tiny && styles.tinyActionsCard)}>
+        <div className={styles.footerActions} style={narrow ? { display: 'none' } : undefined}>
           <FeedbackButtons outcome="proposal" onFeedback={onFeedback} />
         </div>
-        <div className={styles.footerActions}>
-          <Button size="sm" fill="text" variant="secondary" onClick={onClose}>
-            <Trans i18nKey="query-editor-coauthoring.cancel">Cancel</Trans>
+        <div className={cx(styles.footerActions, tiny && styles.tinyActionsRow)}>
+          <Button
+            className={tiny ? styles.tinyIconAction : undefined}
+            size="sm"
+            fill="text"
+            variant="secondary"
+            onClick={onClose}
+            icon={tiny ? 'times' : undefined}
+            aria-label={t('query-editor-coauthoring.cancel', 'Cancel')}
+          >
+            <span className={tiny ? styles.hidden : undefined}>
+              <Trans i18nKey="query-editor-coauthoring.cancel">Cancel</Trans>
+            </span>
           </Button>
-          <Button className={styles.compactButton} size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
-            <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in chat</Trans>
+          <Button
+            className={cx(styles.compactButton, tiny && styles.tinyIconAction)}
+            size="sm"
+            fill="text"
+            icon="ai-sparkle"
+            onClick={onContinue}
+            aria-label={t('query-editor-coauthoring.open-in-chat', 'Open in Chat')}
+          >
+            <span className={tiny ? styles.hidden : undefined}>
+              <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in Chat</Trans>
+            </span>
           </Button>
-          <Button className={styles.compactButton} size="sm" icon="check" onClick={onAccept}>
-            <Trans i18nKey="query-editor-coauthoring.accept">Accept</Trans>
-          </Button>
+          {selectedIndex < 0 ? (
+            <Tooltip content={t('query-editor-coauthoring.select-to-accept', 'Select an option to accept')}>
+              <span>{acceptButton}</span>
+            </Tooltip>
+          ) : (
+            acceptButton
+          )}
         </div>
       </div>
     </div>
+  );
+}
+
+function QueryCoauthoringPreviewResult({ outcome, tiny }: { outcome?: QueryPreviewOutcome; tiny: boolean }) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  if (!outcome || outcome.kind === 'loading') {
+    return null;
+  }
+  if (tiny) {
+    if (outcome.kind === 'ok') {
+      return null;
+    }
+    const title =
+      outcome.kind === 'error'
+        ? t('query-editor-coauthoring.preview-error-title', 'Preview error')
+        : outcome.kind === 'no-data'
+          ? t('query-editor-coauthoring.preview-no-data', 'No data')
+          : t('query-editor-coauthoring.preview-no-signal-title', 'No signal');
+    return (
+      <div
+        role={outcome.kind === 'no-signal' ? 'status' : 'alert'}
+        data-kind={outcome.kind}
+        className={styles.compactPreviewResult}
+      >
+        <Icon
+          name={
+            outcome.kind === 'error'
+              ? 'exclamation-circle'
+              : outcome.kind === 'no-data'
+                ? 'exclamation-triangle'
+                : 'info-circle'
+          }
+          size="sm"
+          aria-hidden
+        />
+        <Text variant="bodySmall">{title}</Text>
+      </div>
+    );
+  }
+  if (outcome.kind === 'error') {
+    return (
+      <Alert
+        severity="error"
+        title={outcome.message ?? t('query-editor-coauthoring.preview-error', 'The query preview failed.')}
+      />
+    );
+  }
+  if (outcome.kind === 'no-data') {
+    return (
+      <Alert severity="warning" title={t('query-editor-coauthoring.preview-no-data', 'No data')}>
+        <Trans i18nKey="query-editor-coauthoring.preview-no-data-suggestion">
+          Try another option or widen the time range.
+        </Trans>
+      </Alert>
+    );
+  }
+  const messages =
+    outcome.kind === 'no-signal'
+      ? [
+          t(
+            'query-editor-coauthoring.preview-no-signal',
+            'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.'
+          ),
+        ]
+      : outcome.notices;
+  return messages.length > 0 ? (
+    <div role="status">
+      <Icon name="info-circle" size="sm" aria-hidden />{' '}
+      {messages.map((message) => (
+        <Text key={message} variant="bodySmall" color="secondary">
+          {message}
+        </Text>
+      ))}
+    </div>
+  ) : null;
+}
+
+function QueryCoauthoringInlineDiff({ baseline, hunks }: { baseline: string; hunks: QueryCoauthoringDiffHunk[] }) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  let cursor = 0;
+  const fragments = hunks.map((hunk, index) => {
+    const unchanged = baseline.slice(cursor, hunk.from);
+    cursor = hunk.to;
+    const label =
+      hunk.focus === 'outside'
+        ? t('query-editor-coauthoring.change-outside-focus', 'Change outside Focus')
+        : t('query-editor-coauthoring.change-inside-focus', 'Change inside Focus');
+    return (
+      <Fragment key={index}>
+        {unchanged}
+        <span
+          role="group"
+          aria-label={label}
+          title={label}
+          className={hunk.focus === 'outside' ? styles.outsideFocus : undefined}
+        >
+          {hunk.original && <del className={styles.diffRemoved}>{hunk.original}</del>}
+          {hunk.proposed && <ins className={styles.diffAdded}>{hunk.proposed}</ins>}
+        </span>
+      </Fragment>
+    );
+  });
+  return (
+    <pre className={styles.inlineDiff} aria-label={t('query-editor-coauthoring.query-diff', 'Query diff')}>
+      <code>
+        {fragments}
+        {baseline.slice(cursor)}
+      </code>
+    </pre>
   );
 }
 

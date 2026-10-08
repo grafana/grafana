@@ -216,7 +216,9 @@ describe('useQueryCoauthoringSession', () => {
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
-      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      await request.tools[0].invoke({
+        options: [{ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] }],
+      });
       request.onComplete('');
     });
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
@@ -243,7 +245,9 @@ describe('useQueryCoauthoringSession', () => {
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
-      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      await request.tools[0].invoke({
+        options: [{ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] }],
+      });
       request.onComplete('');
     });
     mockAssistantAvailable = false;
@@ -276,7 +280,9 @@ describe('useQueryCoauthoringSession', () => {
     await user.click(screen.getByRole('button', { name: 'Retry' }));
     expect(await screen.findByRole('textbox', { name: 'Describe a query change' })).toHaveValue('Use increase');
     await act(async () => {
-      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Late proposal.'] });
+      await request.tools[0].invoke({
+        options: [{ proposedQuery: 'increase(http_requests_total[5m])', why: ['Late proposal.'] }],
+      });
       request.onComplete('');
     });
     expect(stagePreview).not.toHaveBeenCalled();
@@ -546,8 +552,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -559,8 +569,11 @@ describe('useQueryCoauthoringSession', () => {
     expect(screen.getByText('Returns the increase over the selected range.')).toBeInTheDocument();
     expect(screen.getByText('increase')).toBeInTheDocument();
     const proposalDetails = screen.getByRole('region', { name: 'Query proposal details' });
-    const original = within(proposalDetails).getByLabelText('Original function');
-    const proposed = within(proposalDetails).getByLabelText('Proposed function');
+    const diff = within(proposalDetails).getByLabelText('Query diff');
+    const original = within(diff).getByText('rate');
+    const proposed = within(diff).getByText('increase');
+    expect(original.tagName).toBe('DEL');
+    expect(proposed.tagName).toBe('INS');
     expect(original).toHaveTextContent('rate');
     expect(proposed).toHaveTextContent('increase');
     expect(original.compareDocumentPosition(proposed) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -586,8 +599,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -607,8 +624,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -637,8 +658,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -659,8 +684,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -685,8 +714,12 @@ describe('useQueryCoauthoringSession', () => {
 
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -703,8 +736,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
     });
     act(() => request.onError(new Error('request failed')));
@@ -721,8 +758,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -743,8 +784,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -777,8 +822,12 @@ describe('useQueryCoauthoringSession', () => {
 
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -796,8 +845,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -820,8 +873,12 @@ describe('useQueryCoauthoringSession', () => {
 
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -878,8 +935,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       })
     ).resolves.toBe('The query proposal is no longer current.');
 
@@ -902,8 +963,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'rate(http_requests_total[5m])',
-        why: ['Keeps the existing request rate.'],
+        options: [
+          {
+            proposedQuery: 'rate(http_requests_total[5m])',
+            why: ['Keeps the existing request rate.'],
+          },
+        ],
       })
     ).resolves.toBe('The query proposal does not change the current query.');
 
@@ -935,15 +1000,23 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
-        why: ['Breaks the result down by handler.'],
+        options: [
+          {
+            proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
+            why: ['Breaks the result down by handler.'],
+          },
+        ],
       })
     ).rejects.toThrow(/invalid PromQL/i);
 
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
-        why: ['Breaks the request rate down by handler.'],
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: ['Breaks the request rate down by handler.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -962,8 +1035,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
-        why: ['Breaks the result down by handler.'],
+        options: [
+          {
+            proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
+            why: ['Breaks the result down by handler.'],
+          },
+        ],
       })
     ).rejects.toThrow(/invalid PromQL/i);
     act(() => request.onComplete('Should I group by handler, route, or both?'));
@@ -982,8 +1059,12 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
-        why: ['Breaks the result down by handler.'],
+        options: [
+          {
+            proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
+            why: ['Breaks the result down by handler.'],
+          },
+        ],
       })
     ).rejects.toThrow(/invalid PromQL/i);
     act(() => request.onComplete(''));
@@ -1001,20 +1082,32 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
-        why: ['Breaks the result down by handler.'],
+        options: [
+          {
+            proposedQuery: 'rate(http_requests_total[5m]) by (handler)',
+            why: ['Breaks the result down by handler.'],
+          },
+        ],
       })
     ).rejects.toThrow(/invalid PromQL/i);
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'sum by (handler) rate(http_requests_total[5m])',
-        why: ['Retries the requested handler breakdown.'],
+        options: [
+          {
+            proposedQuery: 'sum by (handler) rate(http_requests_total[5m])',
+            why: ['Retries the requested handler breakdown.'],
+          },
+        ],
       })
     ).resolves.toMatch(/no further repair attempts/i);
     await expect(
       request.tools[0].invoke({
-        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
-        why: ['Attempts another repair.'],
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: ['Attempts another repair.'],
+          },
+        ],
       })
     ).resolves.toMatch(/no further repair attempts/i);
     act(() => request.onComplete('Sorry, I could not repair the query.'));
@@ -1248,13 +1341,17 @@ describe('useQueryCoauthoringSession', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
 
-    await user.click(screen.getByRole('button', { name: 'Open in chat' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
 
     const handoff = mockOpenAssistant.mock.calls[0][0];
     expect(handoff).toEqual(
@@ -1299,10 +1396,13 @@ describe('useQueryCoauthoringSession', () => {
           ],
           datasourcePluginType: 'prometheus',
           panelTimeRangeUtcMs: { from: 1_000, to: 2_000 },
-          inlineProposal: {
-            query: 'increase(http_requests_total[5m])',
-            explanation: ['Returns the increase over the selected range.'],
-          },
+          inlineProposals: [
+            {
+              query: 'increase(http_requests_total[5m])',
+              explanation: ['Returns the increase over the selected range.'],
+            },
+          ],
+          selectedOption: 1,
         },
       },
       {

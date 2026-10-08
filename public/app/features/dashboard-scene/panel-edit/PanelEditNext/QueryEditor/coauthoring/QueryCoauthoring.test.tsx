@@ -1,9 +1,17 @@
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { Profiler, useCallback, useLayoutEffect, useRef, useState } from 'react';
 
-import { type DataQuery } from '@grafana/data';
+import {
+  createTheme,
+  type DataQuery,
+  getDefaultTimeRange,
+  LoadingState,
+  type PanelData,
+  toDataFrame,
+} from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { SceneQueryRunner, VizPanel } from '@grafana/scenes';
 
 import { QueryCoauthoring } from './QueryCoauthoring';
 import { QueryCoauthoringSurface } from './QueryCoauthoringSurface';
@@ -12,6 +20,8 @@ import {
   type QueryEditorCoauthoringContextV1,
   type QueryEditorCoauthoringSnapshotV1,
 } from './internalCoauthoringContract';
+import { startQueryPreview } from './queryPreview';
+import { useQueryProposalTransaction } from './useQueryProposalTransaction';
 
 const mockGenerate = jest.fn().mockImplementation(() => new Promise<void>(() => undefined));
 const mockCancel = jest.fn();
@@ -64,6 +74,39 @@ jest.mock('@grafana/runtime', () => ({
   reportInteraction: (...args: unknown[]) => mockReportInteraction(...args),
 }));
 
+function QueryEditorFixture({
+  query,
+  adapter,
+  onChange,
+}: {
+  query: DataQuery;
+  adapter: QueryEditorCoauthoringAdapterV1;
+  onChange: (query: DataQuery) => void;
+}) {
+  const source = 'expr' in query && typeof query.expr === 'string' ? query.expr : '';
+  const latest = useRef({ source, query, onChange });
+  latest.current = { source, query, onChange };
+  const handleContentChange = useCallback(
+    (value: string) => {
+      if (value === latest.current.source) {
+        return;
+      }
+      adapter.dismiss();
+      const updated: DataQuery & { expr: string } = { ...latest.current.query, expr: value };
+      latest.current.onChange(updated);
+    },
+    [adapter]
+  );
+  useLayoutEffect(() => handleContentChange(source), [handleContentChange, source]);
+  return (
+    <textarea
+      aria-label="Query editor"
+      value={source}
+      onChange={(event) => handleContentChange(event.currentTarget.value)}
+    />
+  );
+}
+
 async function setup(
   anchorTop = 0,
   waitForPrompt = true,
@@ -87,7 +130,13 @@ async function setup(
       },
     ],
   },
-  props: { isPreviewRunning?: boolean; entry?: boolean } = {}
+  props: {
+    isPreviewRunning?: boolean;
+    entry?: boolean;
+    transaction?: boolean;
+    realPreview?: boolean;
+    onCommit?: VoidFunction;
+  } = {}
 ) {
   const stagePreview = jest.fn(
     (_invocationId: string, source: string): ReturnType<QueryEditorCoauthoringAdapterV1['prepareProposal']> => ({
@@ -105,12 +154,32 @@ async function setup(
     })
   );
   const dismissInvocation = jest.fn();
-  const onAccept = jest.fn(() => true);
+  const onAccept = jest.fn((_query: DataQuery, _originalRefId?: string) => true);
   const onPreview = jest.fn(() => true);
   const onRevertPreview = jest.fn();
   const onBaseline = jest.fn(() => true);
   const anchorElement = document.createElement('div');
   const baseline = { refId: 'A', expr: context.query } as DataQuery;
+  const panelResult = (value: number): PanelData => ({
+    state: LoadingState.Done,
+    series: [toDataFrame({ refId: 'A', fields: [{ name: 'value', values: [value] }] })],
+    timeRange: getDefaultTimeRange(),
+  });
+  const baselineData = panelResult(10);
+  const queryRunner = new SceneQueryRunner({ queries: [baseline], data: baselineData });
+  const panel = new VizPanel({ key: 'panel-1', $data: queryRunner });
+  const previewRequests: SceneQueryRunner[] = [];
+  if (props.realPreview) {
+    jest.spyOn(SceneQueryRunner.prototype, 'cancelQuery').mockImplementation();
+    jest.spyOn(SceneQueryRunner.prototype, 'runQueries').mockImplementation(function (this: SceneQueryRunner) {
+      previewRequests.push(this);
+      this.setState({ data: { state: LoadingState.Loading, series: [], timeRange: getDefaultTimeRange() } });
+    });
+    onAccept.mockImplementation((query: DataQuery) => {
+      queryRunner.setState({ queries: [query] });
+      return true;
+    });
+  }
   const readInvocation = jest.fn().mockResolvedValue({ baseline, context });
   let snapshot: QueryEditorCoauthoringSnapshotV1 = props.entry
     ? { mode: 'selection', portalTarget: anchorElement }
@@ -130,6 +199,12 @@ async function setup(
     prepareProposal: stagePreview,
     dismiss: dismissInvocation,
   };
+  if (props.transaction) {
+    dismissInvocation.mockImplementation(() => {
+      snapshot = { mode: 'hidden' };
+      listeners.forEach((listener) => listener());
+    });
+  }
   jest.spyOn(anchorElement, 'getBoundingClientRect').mockReturnValue({
     top: anchorTop,
     bottom: anchorTop,
@@ -154,21 +229,76 @@ async function setup(
     onRevertPreview,
     timeRange: { from: 1_000, to: 2_000 },
   };
+  function TransactionHarness() {
+    const { data } = queryRunner.useState();
+    const transaction = useQueryProposalTransaction({
+      query: baseline,
+      queries: [baseline],
+      queryKey: 'prometheus:A',
+      adapter,
+      updateQuery: onAccept,
+      runQueries: jest.fn(),
+      startQueryPreview: props.realPreview
+        ? (refId, query) => startQueryPreview(panel, refId, query)
+        : () => ({
+            dispose: () => undefined,
+            select: () => true,
+            peek: () => true,
+            stopPeek: () => undefined,
+            subscribeToState: () => () => undefined,
+            subscribeToData: () => () => undefined,
+          }),
+    });
+    return (
+      <>
+        {transaction.editorQuery && (
+          <QueryEditorFixture query={transaction.editorQuery} adapter={adapter} onChange={transaction.onChange} />
+        )}
+        <QueryCoauthoringSurface
+          adapter={adapter}
+          onBaseline={transaction.synchronizeBaseline}
+          host={{
+            datasourceType: 'prometheus',
+            timeRange: data?.timeRange
+              ? { from: data.timeRange.from.valueOf(), to: data.timeRange.to.valueOf() }
+              : undefined,
+            previewPhase: transaction.previewPhase,
+            previewData: transaction.previewData,
+            readPreviewData: transaction.readPreviewData,
+            preview: transaction.preview,
+            peek: transaction.peek,
+            stopPeek: transaction.stopPeek,
+            accept: transaction.accept,
+            revert: transaction.revert,
+          }}
+        />
+      </>
+    );
+  }
+  const surface = props.transaction ? (
+    <TransactionHarness />
+  ) : props.entry ? (
+    <QueryCoauthoringSurface
+      adapter={adapter}
+      onBaseline={onBaseline}
+      host={{
+        datasourceType: 'prometheus',
+        previewPhase: 'idle',
+        preview: onPreview,
+        accept: onAccept,
+        revert: onRevertPreview,
+      }}
+    />
+  ) : (
+    <QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning={props.isPreviewRunning} />
+  );
   const result = render(
-    props.entry ? (
-      <QueryCoauthoringSurface
-        adapter={adapter}
-        onBaseline={onBaseline}
-        host={{
-          datasourceType: 'prometheus',
-          previewPhase: 'idle',
-          preview: onPreview,
-          accept: onAccept,
-          revert: onRevertPreview,
-        }}
-      />
+    props.onCommit ? (
+      <Profiler id="query-coauthoring" onRender={props.onCommit}>
+        {surface}
+      </Profiler>
     ) : (
-      <QueryCoauthoring {...queryCoauthoringProps} isPreviewRunning={props.isPreviewRunning} />
+      surface
     )
   );
   await act(async () => {
@@ -192,12 +322,843 @@ async function setup(
     queryCoauthoringProps,
     readInvocation,
     stagePreview,
+    baselineData,
+    queryRunner,
+    panelResult,
+    previewRequests,
     user: userEvent.setup(),
     ...result,
   };
 }
 
 describe('QueryCoauthoring', () => {
+  it('shows the selected token diff above why, using Core Focus ranges rather than adapter annotations', async () => {
+    const { user, stagePreview } = await setup();
+    stagePreview.mockImplementation((_id, source) => {
+      const query: DataQuery & { expr: string } = { refId: 'A', expr: source };
+      return {
+        status: 'ready',
+        query,
+        changes: [
+          {
+            id: 'misleading',
+            original: 'wrong-original',
+            proposed: 'wrong-proposed',
+            focus: 'inside',
+            kind: 'expression',
+          },
+        ],
+      };
+    });
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          {
+            proposedQuery: 'sum(rate(http_requests_total[5m]))',
+            why: ['Aggregate the rate.'],
+            unconfirmedValues: ['code="999"'],
+          },
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Count the requests.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const diff = screen.getByLabelText('Query diff');
+    expect(within(diff).getAllByLabelText('Change outside Focus')).toHaveLength(2);
+    expect(
+      diff.compareDocumentPosition(screen.getByText('Aggregate the rate.')) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
+    expect(screen.queryByText('wrong-original')).not.toBeInTheDocument();
+    expect(screen.getByText('Unconfirmed:')).toBeVisible();
+    expect(screen.getByTestId('icon-exclamation-triangle')).toHaveAttribute('aria-hidden', 'true');
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByLabelText('Query diff')).toHaveTextContent('increase');
+    expect(
+      within(screen.getByLabelText('Query diff')).queryByLabelText('Change outside Focus')
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.queryByLabelText('Query diff')).not.toBeInTheDocument();
+  });
+
+  it('keeps the editor and selected card together through rapid option and Original switches', async () => {
+    const { user, dismissInvocation, onAccept } = await setup(0, true, undefined, { transaction: true });
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('sum(increase(http_requests_total[5m]))');
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('rate(http_requests_total[5m])');
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    act(() => {
+      fireEvent.click(screen.getByRole('tab', { name: 'Option 2' }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Original' }));
+      fireEvent.click(screen.getByRole('tab', { name: 'Option 1' }));
+    });
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    expect(onAccept).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Query editor' }), {
+      target: { value: 'sum(http_requests_total)' },
+    });
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: 'sum(http_requests_total)' }, 'A');
+    expect(screen.queryByRole('dialog', { name: 'Query coauthor' })).not.toBeInTheDocument();
+    expect(dismissInvocation).toHaveBeenCalled();
+  });
+
+  it('keeps the real preview transaction alive on Original, reuses cached data, and accepts the selected query', async () => {
+    const { user, baseline, baselineData, queryRunner, panelResult, previewRequests } = await setup(
+      0,
+      true,
+      undefined,
+      {
+        transaction: true,
+        realPreview: true,
+      }
+    );
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getByText('Running updated query...')).toBeVisible();
+    expect(queryRunner.state.data).toBe(baselineData);
+    const first = panelResult(11);
+    act(() => previewRequests[0].setState({ data: first }));
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByText('Total.')).toBeVisible();
+    expect(queryRunner.state.data).toBe(first);
+    const second = panelResult(12);
+    act(() => previewRequests[1].setState({ data: second }));
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('rate(http_requests_total[5m])');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    expect(queryRunner.state.data).toBe(baselineData);
+    expect(queryRunner.state.queries).toEqual([baseline]);
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('sum(increase(http_requests_total[5m]))');
+    expect(screen.getByText('Previewing query')).toBeVisible();
+    expect(queryRunner.state.data).toBe(second);
+    expect(previewRequests).toHaveLength(2);
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(queryRunner.state.queries).toEqual([{ refId: 'A', expr: 'sum(increase(http_requests_total[5m]))' }]);
+    expect(screen.queryByRole('dialog', { name: 'Query coauthor' })).not.toBeInTheDocument();
+  });
+
+  it('keeps long, short and Original card content current in every commit through uncached, cached and rapid chip clicks', async () => {
+    const firstReasons = [
+      'Counts selected requests.',
+      'Computes the increase across the entire five-minute window.',
+      'Preserves the existing labels for each individual request series.',
+      'Accounts for counter resets without combining unrelated series.',
+      'Compare the window count with the original per-second request rate.',
+    ];
+    const secondReasons = ['Totals request rates by code, handler, method and status.'];
+    const first = {
+      tab: 'Option 1',
+      reasons: firstReasons,
+      forbidden: secondReasons,
+      diff: 'rateincrease(http_requests_total[5m])',
+      source: 'increase(http_requests_total[5m])',
+    };
+    const second = {
+      tab: 'Option 2',
+      reasons: secondReasons,
+      forbidden: firstReasons,
+      diff: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+      source: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+    };
+    const original = {
+      tab: 'Original',
+      reasons: ['Original query'],
+      forbidden: [...firstReasons, ...secondReasons],
+      diff: '',
+      source: 'rate(http_requests_total[5m])',
+    };
+    let expectedSelection = first;
+    let recording = false;
+    const commits: Array<{ text: string; diff: string; selection: typeof first }> = [];
+    const onCommit = () => {
+      if (recording) {
+        commits.push({
+          text: screen.queryByRole('region', { name: 'Query proposal details' })?.textContent ?? '',
+          diff: screen.queryByLabelText('Query diff')?.textContent ?? '',
+          selection: expectedSelection,
+        });
+      }
+    };
+    const { user, previewRequests, panelResult, readInvocation } = await setup(0, true, undefined, {
+      transaction: true,
+      realPreview: true,
+      onCommit,
+    });
+    await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: firstReasons },
+          {
+            proposedQuery: 'sum by (code, handler, method, status) (rate(http_requests_total[5m]))',
+            why: secondReasons,
+          },
+        ],
+      });
+      request.onComplete('');
+      previewRequests[0].setState({ data: panelResult(11) });
+    });
+    const expectCommittedContent = () => {
+      expect(commits.length).toBeGreaterThan(0);
+      for (const commit of commits) {
+        for (const reason of commit.selection.reasons) {
+          expect(commit.text).toContain(reason);
+        }
+        for (const reason of commit.selection.forbidden) {
+          expect(commit.text).not.toContain(reason);
+        }
+        expect(commit.diff).toBe(commit.selection.diff);
+      }
+    };
+    for (const selection of [second, first, original, second, original, first]) {
+      const tab = screen.getByRole('tab', { name: selection.tab });
+      tab.addEventListener(
+        'click',
+        () => {
+          commits.length = 0;
+          recording = true;
+          expectedSelection = selection;
+        },
+        { capture: true, once: true }
+      );
+      await user.click(tab);
+      if (
+        selection.tab === 'Option 2' &&
+        previewRequests.length === 2 &&
+        previewRequests[1].state.data?.state === LoadingState.Loading
+      ) {
+        act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      }
+      expectCommittedContent();
+      recording = false;
+      expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue(selection.source);
+    }
+    commits.length = 0;
+    recording = true;
+    act(() => {
+      for (const selection of [second, original, first, original, second]) {
+        expectedSelection = selection;
+        fireEvent.click(screen.getByRole('tab', { name: selection.tab }));
+      }
+    });
+    expectCommittedContent();
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue(
+      'sum by (code, handler, method, status) (rate(http_requests_total[5m]))'
+    );
+    expect(readInvocation).toHaveBeenCalledTimes(1);
+    expect(previewRequests).toHaveLength(2);
+  });
+
+  it('shows a retryable error when an option cannot be previewed instead of leaving a selected card over Baseline', async () => {
+    const { user, onPreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    onPreview.mockReturnValue(false);
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(screen.getByText('The query proposal could not be previewed. Try again.')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument();
+  });
+
+  async function setupPeek() {
+    const fixture = await setup(0, true, undefined, { transaction: true, realPreview: true });
+    await fixture.user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+    await fixture.user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts selected requests.'] },
+          { proposedQuery: 'irate(http_requests_total[5m])', why: ['Uses the latest two samples.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const selected = fixture.panelResult(11);
+    act(() => fixture.previewRequests[0].setState({ data: selected }));
+    return { ...fixture, selected };
+  }
+
+  function mockProposalGeometry(dialog: HTMLElement) {
+    const rect = () => {
+      const selected = screen.getByRole('tab', { selected: true }).textContent;
+      const height = selected === 'Original' ? 176 : selected?.includes('2') ? 310 : 336;
+      const width = Number.parseFloat(dialog.style.width) || 440;
+      const left = dialog.style.position === 'fixed' ? Number.parseFloat(dialog.style.left) : 200;
+      const top = dialog.style.position === 'fixed' ? Number.parseFloat(dialog.style.top) : 642 - height;
+      return {
+        left,
+        top,
+        width,
+        height,
+        bottom: top + height,
+        right: left + width,
+        x: left,
+        y: top,
+        toJSON: () => undefined,
+      };
+    };
+    jest.spyOn(dialog, 'getBoundingClientRect').mockImplementation(rect);
+    const tabs = screen.getByRole('tablist');
+    jest.spyOn(tabs, 'getBoundingClientRect').mockImplementation(() => {
+      const bounds = rect();
+      return { ...bounds, top: bounds.top + 12, y: bounds.top + 12 };
+    });
+    return tabs;
+  }
+
+  async function resizeProposal(user: ReturnType<typeof userEvent.setup>, width: number) {
+    const bounds = screen.getByRole('dialog').getBoundingClientRect();
+    await user.pointer({
+      keys: '[MouseLeft>]',
+      target: screen.getByRole('separator', { name: 'Resize proposal from right' }),
+      coords: { x: bounds.right, y: bounds.top + 40 },
+    });
+    await user.pointer({ target: document.body, coords: { x: bounds.left + width, y: bounds.top + 140 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+  }
+
+  it('matches compact proposal chrome and spacing while keeping the full-width view and width-only handles', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    const tabs = mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const explanation = tabs.parentElement!;
+    const actions = screen.getByRole('button', { name: 'Accept' }).parentElement!.parentElement!;
+    const proposal = explanation.parentElement!;
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    expect(screen.getByText('Previewing query')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
+    expect(screen.getByText('Suggestion updated')).toBeVisible();
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    await resizeProposal(user, 419);
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveTextContent('Cancel');
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toHaveTextContent('Open in Chat');
+    expect(screen.getByText('Previewing query')).not.toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Close coauthoring' })).not.toBeInTheDocument();
+    expect(screen.getByText('Suggestion updated')).not.toBeVisible();
+    expect(explanation).toHaveStyle({ padding: '12px' });
+    expect(actions).toHaveStyle({ padding: '12px' });
+    for (const chip of screen.getAllByRole('tab')) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    await resizeProposal(user, 279);
+    expect(explanation).toHaveStyle({ padding: '4px' });
+    expect(tabs).toHaveStyle({ justifyContent: 'center', gap: '8px', padding: '8px' });
+    const trio = [
+      screen.getByRole('button', { name: 'Previous option' }),
+      screen.getByRole('tab', { selected: true }),
+      screen.getByRole('button', { name: 'Next option' }),
+    ];
+    for (const chip of trio) {
+      expect(chip).toHaveStyle({ height: '24px', borderRadius: '16px' });
+    }
+    expect(trio[0]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
+    expect(trio[2]).toHaveStyle({ backgroundColor: createTheme().colors.action.disabledBackground });
+    expect(actions).toHaveStyle({ alignSelf: 'flex-end', width: 'fit-content', minHeight: '0', padding: '4px 12px' });
+    expect(screen.getByRole('button', { name: 'Accept' }).parentElement).toHaveStyle({ gap: '12px' });
+    expect(proposal).toHaveStyle({ gap: '8px' });
+    expect(screen.getAllByRole('separator')).toHaveLength(2);
+    for (const handle of screen.getAllByRole('separator')) {
+      expect(handle).toHaveStyle({ width: '8px', top: '0', bottom: '0', cursor: 'ew-resize' });
+    }
+    expect(dialog.style.height).toBe('');
+    expect(details).toHaveStyle({ overflowY: 'auto' });
+    await resizeProposal(user, 420);
+    expect(screen.getByText('Previewing query')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Close coauthoring' })).toBeVisible();
+    expect(screen.getByText('Suggestion updated')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toHaveTextContent('Accept');
+    expect(proposal).toHaveStyle({ gap: '8px' });
+  });
+
+  it.each([
+    {
+      kind: 'error',
+      title: 'Preview error',
+      body: 'Vector matching requires unique labels',
+      role: 'alert',
+      icon: 'exclamation-circle',
+    },
+    {
+      kind: 'no-data',
+      title: 'No data',
+      body: 'Try another option or widen the time range.',
+      role: 'alert',
+      icon: 'exclamation-triangle',
+    },
+    {
+      kind: 'no-signal',
+      title: 'No signal',
+      body: 'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.',
+      role: 'status',
+      icon: 'info-circle',
+    },
+    { kind: 'ok', title: '', body: 'Results were truncated', role: 'status', icon: 'info-circle' },
+  ])(
+    'keeps the full $kind callout at narrow width and only its icon and title at tiny width',
+    async ({ kind, title, body, role, icon }) => {
+      const { user, previewRequests, panelResult } = await setupPeek();
+      const dialog = screen.getByRole('dialog');
+      mockProposalGeometry(dialog);
+      fireEvent.animationEnd(dialog);
+      const result = panelResult(kind === 'no-signal' ? 0 : 11);
+      if (kind === 'error') {
+        result.state = LoadingState.Error;
+        result.errors = [{ refId: 'A', message: body }];
+      } else if (kind === 'no-data') {
+        result.series = [];
+      } else if (kind === 'ok') {
+        result.series[0].meta = { notices: [{ severity: 'warning', text: body }] };
+      }
+      act(() => previewRequests[0].setState({ data: result }));
+      await resizeProposal(user, 419);
+      const slot = screen.getByRole('region', { name: 'Preview result' });
+      expect(within(slot).getByText(body)).toBeVisible();
+      expect(within(slot).getByRole(role)).toHaveTextContent(body);
+      await resizeProposal(user, 279);
+      expect(screen.getByRole('tab', { selected: true })).toHaveTextContent('Option 1');
+      if (kind === 'ok') {
+        expect(screen.queryByText(body)).not.toBeInTheDocument();
+      } else {
+        const compact = within(slot).getByRole(role);
+        expect(compact).toHaveTextContent(title);
+        expect(compact).not.toHaveTextContent(body);
+        expect(within(compact).getByTestId(`icon-${icon}`)).toBeVisible();
+        expect(compact).toHaveStyle({ whiteSpace: 'nowrap' });
+      }
+      await resizeProposal(user, 420);
+      expect(within(slot).getByText(body)).toBeVisible();
+    }
+  );
+
+  it('freezes the group and chip row screen top after entrance across different option heights and Original', async () => {
+    const { user, anchorElement } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    const tabs = mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const groupTop = dialog.getBoundingClientRect().top;
+    const chipTop = tabs.getBoundingClientRect().top;
+    expect(groupTop).toBe(306);
+    expect(chipTop).toBe(318);
+    const originalCard = screen.getByRole('region', { name: 'Query proposal details' });
+    const originalFooter = screen.getByRole('button', { name: 'Accept' }).parentElement?.parentElement;
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(tabs.getBoundingClientRect().top).toBe(chipTop);
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(tabs.getBoundingClientRect().top).toBe(chipTop);
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    expect(dialog.getBoundingClientRect().top).toBe(groupTop);
+    expect(screen.getByRole('region', { name: 'Query proposal details' })).toBe(originalCard);
+    expect(originalFooter?.contains(screen.getByRole('button', { name: 'Accept' }))).toBe(true);
+    expect(anchorElement.contains(dialog)).toBe(false);
+  });
+
+  it('drags card backgrounds as a group, dims during drag, ignores controls, and reports adjustment once', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    await user.pointer({ keys: '[MouseLeft>]', target: details, coords: { x: 250, y: 350 } });
+    expect(dialog).toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ target: document.body, coords: { x: 280, y: 370 } });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+    expect(dialog.getBoundingClientRect().top).toBe(326);
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+    const option = screen.getByRole('tab', { name: 'Option 2' });
+    await user.pointer({ keys: '[MouseLeft>]', target: option });
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ keys: '[/MouseLeft]', target: option });
+    expect(dialog.getBoundingClientRect().left).toBe(230);
+    const footer = screen.getByRole('button', { name: 'Accept' }).parentElement!;
+    await user.pointer({ keys: '[MouseLeft>]', target: footer, coords: { x: 250, y: 600 } });
+    await user.pointer({ target: document.body, coords: { x: 270, y: 610 } });
+    fireEvent.pointerCancel(document, { pointerId: 2 });
+    expect(dialog.getBoundingClientRect().left).toBe(250);
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+    const adjusted = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_proposal_group_adjusted'
+    );
+    expect(adjusted.map(([, properties]) => properties)).toEqual([{ dragged: true, resized: false }]);
+  });
+
+  it('resizes the same mounted surfaces through narrow and tiny reflow, retaining keyboard selection and labelled Accept', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const why = screen.getByText('Counts selected requests.');
+    const diff = screen.getByLabelText('Query diff');
+    const accept = screen.getByRole('button', { name: 'Accept' });
+    const right = screen.getByRole('separator', { name: 'Resize proposal from right' });
+    expect(why).toBeVisible();
+    expect(diff).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Helpful' })).toBeVisible();
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 640, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 590, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '390px' });
+    expect(why).not.toBeVisible();
+    expect(diff).not.toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Helpful' })).not.toBeInTheDocument();
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 590, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 450, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog).toHaveStyle({ width: '250px' });
+    expect(screen.getByText('Counts selected requests.')).toBe(why);
+    expect(screen.getByLabelText('Query diff')).toBe(diff);
+    expect(screen.getAllByRole('tab')).toHaveLength(1);
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Previous option' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Next option' })).toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Cancel' })).getByText('Cancel')).not.toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Cancel' })).getByTestId('icon-times')).toBeVisible();
+    expect(within(screen.getByRole('button', { name: 'Open in Chat' })).getByText('Open in Chat')).not.toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBe(accept);
+    expect(accept).toHaveTextContent('Accept');
+    await user.click(screen.getByRole('button', { name: 'Previous option' }));
+    expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeEnabled();
+    await user.click(screen.getByRole('button', { name: 'Next option' }));
+    expect(screen.getByRole('tab', { name: 'Original' })).toHaveAttribute('aria-selected', 'true');
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 450, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 640, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+    expect(screen.getByText('Counts selected requests.')).toBeVisible();
+    expect(screen.getByLabelText('Query diff')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeVisible();
+    const adjusted = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_proposal_group_adjusted'
+    );
+    expect(adjusted.map(([, properties]) => properties)).toEqual([{ dragged: false, resized: true }]);
+  });
+
+  it('resizes from the left with the right edge fixed and clamps dragging and width to the viewport', async () => {
+    const { user } = await setupPeek();
+    const dialog = screen.getByRole('dialog');
+    mockProposalGeometry(dialog);
+    fireEvent.animationEnd(dialog);
+    const left = screen.getByRole('separator', { name: 'Resize proposal from left' });
+    await user.pointer({ keys: '[MouseLeft>]', target: left, coords: { x: 200, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 300, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().left).toBe(300);
+    expect(dialog.getBoundingClientRect().right).toBe(640);
+    expect(dialog).toHaveStyle({ width: '340px' });
+    const right = screen.getByRole('separator', { name: 'Resize proposal from right' });
+    await user.pointer({ keys: '[MouseLeft>]', target: right, coords: { x: 640, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: 2000, y: 350 } });
+    await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+    expect(dialog.getBoundingClientRect().right).toBe(window.innerWidth - 8);
+    const details = screen.getByRole('region', { name: 'Query proposal details' });
+    await user.pointer({ keys: '[MouseLeft>]', target: details, coords: { x: 350, y: 350 } });
+    await user.pointer({ target: document.body, coords: { x: -1000, y: -1000 } });
+    expect(dialog.getBoundingClientRect().left).toBe(8);
+    expect(dialog.getBoundingClientRect().top).toBe(8);
+    fireEvent.blur(window);
+    expect(dialog).not.toHaveStyle({ opacity: 0.04 });
+  });
+
+  it('press-and-hold peeks without changing the editor or selection, and release restores the selected panel', async () => {
+    const { user, previewRequests, panelResult, queryRunner, baselineData, selected } = await setupPeek();
+    const second = screen.getByRole('tab', { name: 'Option 2' });
+    await user.pointer({ keys: '[MouseLeft>]', target: second });
+    await waitFor(() => expect(previewRequests).toHaveLength(2));
+    const peeked = panelResult(12);
+    act(() => previewRequests[1].setState({ data: peeked }));
+    expect(queryRunner.state.data).toBe(peeked);
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('increase(http_requests_total[5m])');
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByText('Counts selected requests.')).toBeVisible();
+    expect(screen.queryByText('Uses the latest two samples.')).not.toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toHaveStyle({ opacity: 0.04 });
+    await user.pointer({ keys: '[/MouseLeft]', target: second });
+    expect(queryRunner.state.data).toBe(selected);
+    expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+    const original = screen.getByRole('tab', { name: 'Original' });
+    await user.pointer({ keys: '[MouseLeft>]', target: original });
+    await waitFor(() => expect(queryRunner.state.data).toBe(baselineData));
+    await user.pointer({ keys: '[/MouseLeft]', target: original });
+    expect(queryRunner.state.data).toBe(selected);
+    await user.click(second);
+    expect(queryRunner.state.data).toBe(peeked);
+    expect(previewRequests).toHaveLength(2);
+    expect(screen.getByRole('textbox', { name: 'Query editor' })).toHaveValue('irate(http_requests_total[5m])');
+    const peeks = mockReportInteraction.mock.calls.filter(
+      ([name]) => name === 'grafana_query_coauthoring_option_peeked'
+    );
+    expect(peeks.map(([, properties]) => properties)).toEqual([{ rank: 2 }, { rank: 0 }]);
+  });
+
+  it.each(['accept', 'pointercancel', 'blur', 'lostpointercapture', 'outside-release', 'unmount', 'close'])(
+    'restores a press-and-hold peek on %s and Accept always commits the selected option',
+    async (ending) => {
+      const { user, previewRequests, panelResult, queryRunner, onAccept, selected, baselineData, unmount } =
+        await setupPeek();
+      const chip = screen.getByRole('tab', { name: 'Option 2' });
+      await user.pointer({ keys: '[MouseLeft>]', target: chip });
+      await waitFor(() => expect(previewRequests).toHaveLength(2));
+      act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      if (ending === 'accept') {
+        fireEvent.click(screen.getByRole('button', { name: 'Accept' }));
+        expect(onAccept).toHaveBeenLastCalledWith(
+          expect.objectContaining({ expr: 'increase(http_requests_total[5m])' }),
+          'A'
+        );
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      } else if (ending === 'unmount' || ending === 'close') {
+        if (ending === 'unmount') {
+          unmount();
+        } else {
+          fireEvent.click(screen.getByRole('button', { name: 'Close coauthoring' }));
+        }
+        expect(queryRunner.state.data).toBe(baselineData);
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      } else {
+        if (ending === 'outside-release') {
+          await user.pointer({ keys: '[/MouseLeft]', target: document.body });
+        } else if (ending === 'blur') {
+          fireEvent.blur(window);
+        } else if (ending === 'pointercancel') {
+          fireEvent.pointerCancel(chip);
+        } else {
+          fireEvent.lostPointerCapture(chip);
+        }
+        expect(queryRunner.state.data).toBe(selected);
+        expect(screen.getByRole('tab', { name: 'Option 1' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+        await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+        await user.keyboard('{ArrowRight}');
+        expect(screen.getByRole('tab', { name: 'Option 2' })).toHaveAttribute('aria-selected', 'true');
+        expect(screen.getByRole('dialog')).not.toHaveStyle({ opacity: 0.04 });
+      }
+    }
+  );
+
+  it.each([
+    {
+      kind: 'error',
+      text: 'Vector matching requires unique labels',
+      severity: 'error',
+      errorMessage: 'Vector matching requires unique labels',
+    },
+    { kind: 'error', text: 'The query preview failed.', severity: 'error', errorMessage: '' },
+    { kind: 'no-data', text: 'Try another option or widen the time range.', severity: 'warning' },
+    {
+      kind: 'no-signal',
+      text: 'Every value is 0. That can be correct (for example, no errors), so check it matches what you expect.',
+      severity: undefined,
+    },
+    { kind: 'ok', text: 'Results were truncated', severity: undefined },
+  ])(
+    'shows the $kind preview callout above why and reclassifies cached selections without logging returned text',
+    async ({ kind, text, severity, errorMessage }) => {
+      const { user, previewRequests, panelResult } = await setup(0, true, undefined, {
+        transaction: true,
+        realPreview: true,
+      });
+      await user.type(screen.getByRole('textbox', { name: 'Describe a query change' }), 'Compare request rates');
+      await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+      const request = mockGenerate.mock.calls[0][0];
+      await act(async () => {
+        await request.tools[0].invoke({
+          options: [
+            { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts selected requests.'] },
+            { proposedQuery: 'irate(http_requests_total[5m])', why: ['Uses the latest two samples.'] },
+          ],
+        });
+        request.onComplete('');
+      });
+      const result = panelResult(kind === 'no-signal' ? 0 : 11);
+      if (kind === 'error') {
+        result.state = LoadingState.Error;
+        result.errors = [{ refId: 'A', message: errorMessage }];
+      } else if (kind === 'no-data') {
+        result.series = [];
+      } else if (kind === 'ok') {
+        result.series[0].meta = { notices: [{ severity: 'warning', text }] };
+      }
+      act(() => previewRequests[0].setState({ data: result }));
+      const slot = await screen.findByRole('region', { name: 'Preview result' });
+      expect(within(slot).getByText(text)).toBeVisible();
+      if (severity) {
+        expect(within(slot).getByTestId(selectors.components.Alert.alertV2(severity))).toBeInTheDocument();
+      } else {
+        expect(within(slot).getByRole('status')).toHaveTextContent(text);
+      }
+      expect(
+        slot.compareDocumentPosition(screen.getByText('Counts selected requests.')) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+      await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+      expect(screen.getByText('Uses the latest two samples.')).toBeVisible();
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+      act(() => previewRequests[1].setState({ data: panelResult(12) }));
+      await user.click(screen.getByRole('tab', { name: 'Original' }));
+      expect(screen.getByText('Original query')).toBeVisible();
+      expect(screen.queryByText(text)).not.toBeInTheDocument();
+      await user.click(screen.getByRole('tab', { name: 'Option 1' }));
+      expect(within(screen.getByRole('region', { name: 'Preview result' })).getByText(text)).toBeVisible();
+      expect(previewRequests).toHaveLength(2);
+      const outcomes = mockReportInteraction.mock.calls.filter(
+        ([name]) => name === 'grafana_query_coauthoring_preview_outcome_shown'
+      );
+      expect(outcomes.map(([, properties]) => properties)).toContainEqual({ kind });
+      for (const [, properties] of outcomes) {
+        expect(Object.keys(properties)).toEqual(['kind']);
+      }
+      expect(JSON.stringify(outcomes)).not.toContain(text);
+    }
+  );
+
+  it('ranks surviving options, selects Original with the keyboard, and accepts the exact selected query', async () => {
+    const { user, stagePreview, onPreview, onAccept, baseline, dismissInvocation } = await setup();
+    stagePreview.mockImplementation((_id, source) => {
+      if (source === 'invalid(') {
+        return { status: 'rejected', reason: 'invalid' };
+      }
+      const query: DataQuery & { expr: string } = { refId: 'A', expr: source };
+      return { status: 'ready', query, changes: [] };
+    });
+    await user.type(screen.getByRole('textbox'), 'Show request counts');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    const second = 'sum( increase(http_requests_total[5m]) )';
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts per series.'] },
+          { proposedQuery: 'invalid(', why: ['Rejected syntax.'] },
+          { proposedQuery: second, why: ['Total counts.'], unconfirmedValues: ['handler="unknown"'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    const original = screen.getByRole('tab', { name: 'Original' });
+    const first = screen.getByRole('tab', { name: 'Option 1' });
+    expect(first).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('tab', { name: 'Option 3' })).not.toBeInTheDocument();
+    act(() => first.focus());
+    await user.keyboard('{ArrowLeft}');
+    expect(original).toHaveFocus();
+    expect(original).toHaveAttribute('aria-selected', 'true');
+    expect(onPreview).toHaveBeenLastCalledWith(baseline, { debounce: true });
+    expect(screen.getByRole('button', { name: 'Accept' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeEnabled();
+    await user.keyboard('{End}');
+    expect(screen.getByText('Total counts.')).toBeInTheDocument();
+    expect(screen.getByText('handler="unknown"')).toBeInTheDocument();
+    expect(onPreview).toHaveBeenLastCalledWith({ refId: 'A', expr: second }, { debounce: true });
+    expect(dismissInvocation).not.toHaveBeenCalled();
+    await user.click(screen.getByRole('button', { name: 'Accept' }));
+    expect(onAccept).toHaveBeenCalledWith({ refId: 'A', expr: second });
+  });
+
+  it('drops whitespace-only Baseline changes and duplicate options without requesting a repair', async () => {
+    const { user, stagePreview } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: ' rate(http_requests_total[5m]) ', why: ['Whitespace only.'] },
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['First ranked answer.'] },
+          { proposedQuery: ' increase(http_requests_total[5m]) ', why: ['Duplicate.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    expect(screen.getAllByRole('tab')).toHaveLength(2);
+    expect(screen.getByText('First ranked answer.')).toBeInTheDocument();
+    expect(stagePreview).toHaveBeenCalledTimes(1);
+  });
+
+  it('hands off all ranked options and Original selection and sends only rank and count with feedback', async () => {
+    const { user } = await setup();
+    await user.type(screen.getByRole('textbox'), 'Count requests');
+    await user.click(screen.getByRole('button', { name: 'Coauthor' }));
+    const request = mockGenerate.mock.calls[0][0];
+    await act(async () => {
+      await request.tools[0].invoke({
+        options: [
+          { proposedQuery: 'increase(http_requests_total[5m])', why: ['Counts.'] },
+          { proposedQuery: 'sum(increase(http_requests_total[5m]))', why: ['Total.'] },
+        ],
+      });
+      request.onComplete('');
+    });
+    await user.click(screen.getByRole('tab', { name: 'Option 2' }));
+    await user.click(screen.getByRole('button', { name: 'Helpful' }));
+    await user.click(screen.getByRole('button', { name: 'Send' }));
+    expect(mockPost.mock.calls[0][1].metadata).toEqual({ outcome: 'proposal', selectedOptionRank: 2, optionCount: 2 });
+    expect(mockReportInteraction).toHaveBeenCalledWith('grafana_query_coauthoring_option_selected', { rank: 2 });
+    await user.click(screen.getByRole('tab', { name: 'Original' }));
+    await user.click(screen.getByRole('button', { name: 'Open in Chat' }));
+    const handoff = mockOpenAssistant.mock.calls[0][0];
+    expect(handoff.context[0].node.data.data).toMatchObject({
+      currentQuery: 'rate(http_requests_total[5m])',
+      inlineProposals: [
+        { query: 'increase(http_requests_total[5m])', explanation: ['Counts.'] },
+        { query: 'sum(increase(http_requests_total[5m]))', explanation: ['Total.'] },
+      ],
+      selectedOption: 'original',
+    });
+    expect(JSON.stringify(handoff)).not.toContain('submit_query_proposal');
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
     mockPost.mockResolvedValue({ id: 'feedback-id' });
@@ -987,8 +1948,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[1][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
-        why: ['Group by handler.'],
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: ['Group by handler.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1039,7 +2004,9 @@ describe('QueryCoauthoring', () => {
     await user.click(screen.getByRole('button', { name: 'Coauthor' }));
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
-      await request.tools[0].invoke({ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] });
+      await request.tools[0].invoke({
+        options: [{ proposedQuery: 'increase(http_requests_total[5m])', why: ['Use an increase.'] }],
+      });
       request.onComplete('');
     });
     await user.click(document.body);
@@ -1054,7 +2021,7 @@ describe('QueryCoauthoring', () => {
     expect(dismissInvocation).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps long proposal messages and changes in a bounded body with actions outside it', async () => {
+  it('keeps long proposal messages and the inline diff in a bounded body with actions outside it', async () => {
     const { user, stagePreview } = await setup();
     stagePreview.mockReturnValue({
       status: 'ready',
@@ -1073,8 +2040,15 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
-        why: Array.from({ length: 5 }, (_, index) => `Detailed explanation ${index} for the proposed query change.`),
+        options: [
+          {
+            proposedQuery: 'sum by (handler) (rate(http_requests_total[5m]))',
+            why: Array.from(
+              { length: 5 },
+              (_, index) => `Detailed explanation ${index} for the proposed query change.`
+            ),
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1082,12 +2056,14 @@ describe('QueryCoauthoring', () => {
     const details = screen.getByRole('region', { name: 'Query proposal details' });
     expect(details).toBe(screen.getByTestId(selectors.components.QueryEditorCoauthoring.container));
     expect(details.children[0]).toHaveStyle({ flex: '0 0 auto' });
-    expect(details.children[1]).toHaveStyle({ flex: '0 0 auto' });
-    expect(within(details).getAllByLabelText(/^Original expression$/)).toHaveLength(4);
-    expect(within(details).getAllByLabelText(/^Proposed expression$/)).toHaveLength(4);
+    expect(within(details).getByLabelText('Query diff').textContent).toBe(
+      'sum by (handler) (rate(http_requests_total[5m]))'
+    );
+    expect(within(details).queryByLabelText(/^Original expression$/)).not.toBeInTheDocument();
+    expect(within(details).queryByLabelText(/^Proposed expression$/)).not.toBeInTheDocument();
     expect(within(details).queryByRole('button', { name: 'Accept' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Accept' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Open in chat' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Open in Chat' })).toBeInTheDocument();
   });
 
   it('keeps the captured query focus visible while building', async () => {
@@ -1293,8 +2269,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1322,8 +2302,12 @@ describe('QueryCoauthoring', () => {
 
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1461,8 +2445,12 @@ describe('QueryCoauthoring', () => {
       mockIsGenerating = false;
       await act(async () => {
         await request.tools[0].invoke({
-          proposedQuery: 'increase(http_requests_total[5m])',
-          why: ['Returns the increase over the selected range.'],
+          options: [
+            {
+              proposedQuery: 'increase(http_requests_total[5m])',
+              why: ['Returns the increase over the selected range.'],
+            },
+          ],
         });
         request.onComplete('');
       });
@@ -1582,8 +2570,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1600,7 +2592,7 @@ describe('QueryCoauthoring', () => {
       targetId: 'grafana.query.coauthor.v1',
       rating: 1,
       comment: 'The explanation was clear.',
-      metadata: { outcome: 'proposal' },
+      metadata: { outcome: 'proposal', selectedOptionRank: 1, optionCount: 1 },
     });
   });
 
@@ -1613,8 +2605,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1640,8 +2636,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1664,8 +2664,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1693,8 +2697,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
@@ -1730,8 +2738,12 @@ describe('QueryCoauthoring', () => {
     const request = mockGenerate.mock.calls[0][0];
     await act(async () => {
       await request.tools[0].invoke({
-        proposedQuery: 'increase(http_requests_total[5m])',
-        why: ['Returns the increase over the selected range.'],
+        options: [
+          {
+            proposedQuery: 'increase(http_requests_total[5m])',
+            why: ['Returns the increase over the selected range.'],
+          },
+        ],
       });
       request.onComplete('');
     });
