@@ -4,6 +4,7 @@ package resource;
 option go_package = "github.com/grafana/grafana/pkg/storage/unified/resourcepb";
 
 import "resource.proto";
+import "google/protobuf/struct.proto";
 
 
 // Unlike the ResourceStore, this service can be exposed to clients directly
@@ -25,6 +26,13 @@ service ResourceIndex {
   // Without a vector backend or embedding provider, searches only the regular
   // resource index using the lexical leg; reranking remains available.
   rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
+
+  // Search several resource types, then rerank their combined candidates once.
+  // Without reranking, interleave results in the requested resource order while
+  // preserving each resource type's ranking.
+  // A failure searching any requested resource fails the request; no partial
+  // results are returned.
+  rpc HybridSearchResources(HybridSearchResourcesRequest) returns (HybridSearchResponse);
 }
 
 // Get statistics across multiple resources
@@ -413,8 +421,9 @@ message HybridSearchResult {
   string folder_title = 6;
 
   // Relevance: higher = higher quality/score threshold. High thresholds may return far less results. `low` is a recommended starting point.
-  // With a reranker configured this is the calibrated cross-encoder relevance (roughly
-  // 0-1); otherwise it is the RRF fusion score.
+  // After successful reranking this is the calibrated cross-encoder relevance
+  // (roughly 0-1); otherwise HybridSearch returns the RRF fusion score and
+  // HybridSearchResources returns reciprocal rank in the combined ordering.
   // This is NOT comparable to VectorSearchResult.score (raw cosine distance).
   double score = 4;
 
@@ -422,7 +431,7 @@ message HybridSearchResult {
   // One entry with subresource "" for resources embedded whole. For
   // lexical-only hits the server synthesizes a single chunk with
   // content = title and no metadata so rerankers always have text.
-  // Only the best chunk influences score.
+  // Reranking uses the best chunk alongside returned lexical text.
   repeated HybridSearchChunk chunks = 5;
 
   // Manager kind. Empty when unmanaged, for external collections, or when
@@ -432,6 +441,11 @@ message HybridSearchResult {
 
   // Manager identity, alongside managed_by_kind.
   string managed_by_id = 8;
+
+  // Field names and values returned by the lexical search, including metadata.
+  // Values are strings or arrays of strings.
+  // Absent for semantic-only hits, external collections, and legacy table responses.
+  map<string, google.protobuf.Value> lexical = 9;
 }
 
 message HybridSearchChunk {
@@ -445,3 +459,39 @@ message HybridSearchChunk {
   bytes metadata = 3;
 }
 
+message HybridSearchResourcesRequest {
+  message Resource {
+    string group = 1;
+    string resource = 2;
+  }
+
+  // Required tenant namespace, shared by every requested resource type.
+  string namespace = 1;
+
+  // Between 1 and 10 unique group/resource pairs.
+  repeated Resource resources = 2;
+
+  // Required lexical query; also used for semantic search and reranking unless
+  // semantic_query is set. Max 1000 bytes.
+  string query = 3;
+
+  // Optional semantic search and reranking query. Max 1000 bytes.
+  string semantic_query = 4;
+
+  // Overall result limit across all resource types. Defaults to 50, capped at 200.
+  int64 limit = 5;
+
+  // Exact-match filters applied to every requested resource type. Only "uid"
+  // and "folder" are supported, with the same limits as HybridSearchRequest.
+  repeated Requirement filters = 6;
+
+  // Applied after combined reranking. Same levels and best-effort behavior as
+  // HybridSearchRequest.min_relevance.
+  string min_relevance = 7;
+
+  // Skip combined reranking, interleaving results in the requested resource
+  // order while preserving each resource type's ranking. This ordering also
+  // applies when no reranker is configured or reranking fails.
+  // Cannot be combined with min_relevance.
+  bool skip_rerank = 8;
+}

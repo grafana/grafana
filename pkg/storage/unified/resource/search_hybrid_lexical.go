@@ -3,8 +3,8 @@ package resource
 import (
 	"slices"
 	"strings"
-	"unicode"
 
+	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -36,34 +36,32 @@ func (s *searchServer) hybridLexicalFields(req *resourcepb.HybridSearchRequest) 
 	return queryFields, rerankFields
 }
 
-func lexicalRerankTerms(query string) []string {
-	return strings.FieldsFunc(strings.ToLower(query), func(r rune) bool {
-		return !unicode.IsLetter(r) && !unicode.IsNumber(r)
-	})
-}
-
-// This is a text-selection heuristic, not a reconstruction of Bleve's matches.
-func matchingLexicalText(values map[string]any, fields, terms []string) string {
-	if len(fields) == 0 || len(terms) == 0 {
-		return ""
+func lexicalRerankText(fields map[string]*structpb.Value) string {
+	// Keep title first and make truncation deterministic despite map iteration order.
+	names := make([]string, 1, len(fields)+1)
+	names[0] = SEARCH_FIELD_TITLE
+	for name := range fields {
+		if name != SEARCH_FIELD_TITLE {
+			names = append(names, name)
+		}
 	}
+	slices.Sort(names[1:])
 	var text strings.Builder
 	seen := make(map[string]struct{})
-	for _, field := range fields {
-		var candidates []string
-		switch value := values[field].(type) {
-		case string:
-			candidates = []string{value}
-		case []string:
-			candidates = value
+	for _, name := range names {
+		// The lexical request returns searchable text plus these metadata fields.
+		switch name {
+		case SEARCH_FIELD_FOLDER, SEARCH_FIELD_MANAGER_KIND, SEARCH_FIELD_MANAGER_ID:
+			continue
 		}
-		for _, value := range candidates {
-			value = strings.TrimSpace(value)
-			if _, ok := seen[value]; ok {
-				continue
-			}
-			lower := strings.ToLower(value)
-			if !slices.ContainsFunc(terms, func(term string) bool { return strings.Contains(lower, term) }) {
+		value := fields[name]
+		values := []*structpb.Value{value}
+		if list := value.GetListValue(); list != nil {
+			values = list.Values
+		}
+		for _, item := range values {
+			value := strings.TrimSpace(item.GetStringValue())
+			if _, ok := seen[value]; ok || value == "" {
 				continue
 			}
 			seen[value] = struct{}{}

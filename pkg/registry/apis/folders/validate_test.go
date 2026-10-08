@@ -1905,3 +1905,7 @@ func (m *mockSearchClient) VectorSearch(ctx context.Context, in *resourcepb.Vect
 func (m *mockSearchClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 	return nil, fmt.Errorf("not implemented")
 }
+
+func (m *mockSearchClient) HybridSearchResources(ctx context.Context, in *resourcepb.HybridSearchResourcesRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, fmt.Errorf("not implemented")
+}

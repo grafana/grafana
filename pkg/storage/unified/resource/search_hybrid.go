@@ -14,6 +14,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
@@ -81,6 +82,55 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		attribute.Int("limit", limit),
 	)
 
+	candidates, err := s.hybridSearchCandidates(ctx, req, depth)
+	if err != nil {
+		return nil, err
+	}
+	fused := candidates.results
+	coll := candidates.collection
+	embedText := req.Query
+	if req.SemanticQuery != "" {
+		embedText = req.SemanticQuery
+	}
+
+	if !req.SkipRerank {
+		var err error
+		fused, err = s.rerankHybridResults(ctx, embedText, fused, req.MinRelevance)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if len(fused) > limit {
+		fused = fused[:limit]
+	}
+
+	// Independent lookups over disjoint fields; run concurrently.
+	eg, egCtx := errgroup.WithContext(ctx)
+	eg.Go(func() error {
+		s.resolveFolderTitles(egCtx, req.Key.Namespace, fused)
+		return nil
+	})
+	// resolveManagedBy queries the kind's own bleve index; external kinds have none.
+	if !coll.IsExternal {
+		eg.Go(func() error {
+			s.resolveManagedBy(egCtx, req.Key, candidates.lexUIDs, fused)
+			return nil
+		})
+	}
+	_ = eg.Wait() // both are best-effort and never return an error
+
+	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+}
+
+type hybridCandidates struct {
+	key        *resourcepb.ResourceKey
+	results    []*resourcepb.HybridSearchResult
+	lexUIDs    map[string]struct{}
+	collection vector.Collection
+}
+
+// Both RPCs collect authorized candidates before deciding which pool to rerank.
+func (s *searchServer) hybridSearchCandidates(ctx context.Context, req *resourcepb.HybridSearchRequest, depth int) (*hybridCandidates, error) {
 	// Reject unauthenticated and cross-tenant requests before they consume
 	// a slot of the target namespace's rate budget or embed quota.
 	user, ok := types.AuthInfoFrom(ctx)
@@ -153,34 +203,9 @@ func (s *searchServer) HybridSearch(ctx context.Context, req *resourcepb.HybridS
 		return nil, s.grpcStatusError(ctx, "hybrid search", err)
 	}
 
-	fused := fuseRRF(req.Key, lex, sem)
-	if !req.SkipRerank {
-		var err error
-		fused, err = s.rerankHybridResults(ctx, embedText, fused, lex, req.MinRelevance)
-		if err != nil {
-			return nil, err
-		}
-	}
-	if len(fused) > limit {
-		fused = fused[:limit]
-	}
-
-	// Independent lookups over disjoint fields; run concurrently.
-	eg, egCtx := errgroup.WithContext(ctx)
-	eg.Go(func() error {
-		s.resolveFolderTitles(egCtx, req.Key.Namespace, fused)
-		return nil
-	})
-	// resolveManagedBy queries the kind's own bleve index; external kinds have none.
-	if !coll.IsExternal {
-		eg.Go(func() error {
-			s.resolveManagedBy(egCtx, req.Key, lexicalUIDSet(lex), fused)
-			return nil
-		})
-	}
-	_ = eg.Wait() // both are best-effort and never return an error
-
-	return &resourcepb.HybridSearchResponse{Results: fused}, nil
+	return &hybridCandidates{
+		key: req.Key, results: fuseRRF(req.Key, lex, sem), lexUIDs: lexicalUIDSet(lex), collection: coll,
+	}, nil
 }
 
 // hybridLexicalLeg runs the lexical retrieval: FTS over stored rows for
@@ -200,7 +225,7 @@ func (s *searchServer) hybridLexicalLeg(ctx context.Context, user types.AuthInfo
 		if err := searchCallError(lexResp, err); err != nil {
 			return nil, fmt.Errorf("lexical leg: %w", err)
 		}
-		hits, err := lexicalHitsFromResponse(lexResp, rerankFields, req.Query)
+		hits, err := lexicalHitsFromResponse(lexResp)
 		if err != nil {
 			return nil, fmt.Errorf("lexical leg: decode response: %w", err)
 		}
@@ -309,7 +334,7 @@ func (s *searchServer) resolveManagedBy(ctx context.Context, key *resourcepb.Res
 		return
 	}
 
-	hits, err := lexicalHitsFromResponse(resp, nil, "")
+	hits, err := lexicalHitsFromResponse(resp)
 	if err != nil {
 		s.log.Warn("hybrid search: managed-by response decoding failed", "err", err)
 		return
@@ -370,7 +395,7 @@ func (s *searchServer) resolveFolderTitles(ctx context.Context, namespace string
 		return
 	}
 
-	hits, err := lexicalHitsFromResponse(resp, nil, "")
+	hits, err := lexicalHitsFromResponse(resp)
 	if err != nil {
 		s.log.Warn("hybrid search: folder title response decoding failed", "err", err)
 		return
@@ -448,23 +473,19 @@ func searchCallError(resp *resourcepb.ResourceSearchResponse, err error) error {
 }
 
 // rerankHybridResults cross-encoder re-scores, re-sorts, and threshold-drops the fused candidates; fail-open on provider errors (only caller cancellation propagates).
-func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, lex []lexicalHit, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
+func (s *searchServer) rerankHybridResults(ctx context.Context, query string, results []*resourcepb.HybridSearchResult, minRelevance string) ([]*resourcepb.HybridSearchResult, error) {
 	if s.reranker == nil || len(results) == 0 {
 		return results, nil
 	}
 	if len(results) > maxRerankCandidates {
 		results = results[:maxRerankCandidates]
 	}
-	lexicalText := make(map[string]string, len(lex))
-	for _, hit := range lex {
-		lexicalText[hit.uid] = hit.rerankText
-	}
-	// Keep the best semantic chunk (or title), with matching lexical text as
+	// Keep the best semantic chunk (or title), with returned lexical text as
 	// additional context even when the resource was found by both legs.
 	texts := make([]string, len(results))
 	for i, r := range results {
 		texts[i] = r.Chunks[0].Content
-		if text := lexicalText[r.Key.Name]; text != "" && !strings.Contains(texts[i], text) {
+		if text := lexicalRerankText(r.Lexical); text != "" && !strings.Contains(texts[i], text) {
 			if strings.Contains(text, texts[i]) {
 				texts[i] = text
 			} else {
@@ -517,10 +538,10 @@ func (s *searchServer) rerankHybridResults(ctx context.Context, query string, re
 	return results, nil
 }
 
-// rerankFallback logs and returns the RRF-ordered input. Failed provider
+// rerankFallback logs and preserves the candidate order. Failed provider
 // calls are visible in the rerank duration histogram's error/timeout series.
 func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, msg string, err error) []*resourcepb.HybridSearchResult {
-	s.log.Warn(msg+"; returning RRF-ordered results", "err", err, "model", s.reranker.Model)
+	s.log.Warn(msg+"; preserving candidate order", "err", err, "model", s.reranker.Model)
 	return results
 }
 
@@ -528,13 +549,11 @@ func (s *searchServer) rerankFallback(results []*resourcepb.HybridSearchResult, 
 const rrfK = 60
 
 // maxChunksPerHybridResult bounds response size; only the best chunk
-// influences score, the rest are payload for RAG consumers.
+// is used for reranking alongside lexical text; the rest are payload for RAG consumers.
 const maxChunksPerHybridResult = 10
 
-// maxRerankCandidates caps the scored pool (the fused legs can reach 2x the
-// per-leg depth) so reranking is always a single provider call: it tracks
-// maxVectorSearchLimit but can never exceed Vertex's 200-records/call cap.
-const maxRerankCandidates = min(maxVectorSearchLimit, 200)
+// maxRerankCandidates bounds the combined candidate pool scored in one provider call.
+const maxRerankCandidates = 500
 
 type lexicalHit struct {
 	uid         string
@@ -542,7 +561,7 @@ type lexicalHit struct {
 	folder      string
 	managerKind string
 	managerID   string
-	rerankText  string
+	lexical     map[string]*structpb.Value
 
 	// Best chunk, only set by the external leg; bleve hits get a
 	// synthesized title chunk in fuseRRF instead.
@@ -586,6 +605,7 @@ func fuseRRF(reqKey *resourcepb.ResourceKey, lex []lexicalHit, sem []vector.Vect
 		r.Folder = h.folder
 		r.ManagedByKind = h.managerKind
 		r.ManagedById = h.managerID
+		r.Lexical = h.lexical
 		if h.chunkContent != "" {
 			if lexChunks == nil {
 				lexChunks = make(map[string]*resourcepb.HybridSearchChunk, len(lex))
@@ -677,7 +697,7 @@ func titleFromChunkMetadata(meta []byte, fallback string) string {
 
 // lexicalHitsFromResponse decodes search rows into rank-ordered hits. Missing
 // fields remain empty; uid always comes from the row key.
-func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse, rerankFields []string, query string) ([]lexicalHit, error) {
+func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse) ([]lexicalHit, error) {
 	if resp == nil {
 		return nil, nil
 	}
@@ -686,7 +706,7 @@ func lexicalHitsFromResponse(resp *resourcepb.ResourceSearchResponse, rerankFiel
 	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
 		return lexicalHitsFromTable(resp.GetResults()), nil
 	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		return lexicalHitsFromFieldValues(resp, rerankFields, query)
+		return lexicalHitsFromFieldValues(resp)
 	default:
 		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
 	}
@@ -732,9 +752,8 @@ func lexicalHitsFromTable(table *resourcepb.ResourceTable) []lexicalHit {
 	return hits
 }
 
-func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse, rerankFields []string, query string) ([]lexicalHit, error) {
+func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse) ([]lexicalHit, error) {
 	hits := make([]lexicalHit, 0, len(resp.GetRows()))
-	terms := lexicalRerankTerms(query)
 	for i, row := range resp.GetRows() {
 		if row == nil || row.GetKey() == nil {
 			continue
@@ -756,7 +775,19 @@ func lexicalHitsFromFieldValues(resp *resourcepb.ResourceSearchResponse, rerankF
 		if hit.managerID, err = searchStringValue(values, SEARCH_FIELD_MANAGER_ID); err != nil {
 			return nil, fmt.Errorf("row %d: %w", i, err)
 		}
-		hit.rerankText = matchingLexicalText(values, rerankFields, terms)
+		hit.lexical = make(map[string]*structpb.Value, len(values))
+		for name, value := range values {
+			switch value := value.(type) {
+			case string:
+				hit.lexical[name] = structpb.NewStringValue(value)
+			case []string:
+				items := make([]*structpb.Value, len(value))
+				for j, text := range value {
+					items[j] = structpb.NewStringValue(text)
+				}
+				hit.lexical[name] = structpb.NewListValue(&structpb.ListValue{Values: items})
+			}
+		}
 		hits = append(hits, hit)
 	}
 	return hits, nil
@@ -810,7 +841,7 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 	reqErr := func(msg string) error {
 		return status.Error(codes.InvalidArgument, msg)
 	}
-	if req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
+	if req == nil || req.Key == nil || req.Key.Namespace == "" || req.Key.Group == "" || req.Key.Resource == "" {
 		return reqErr("missing namespace, group or resource")
 	}
 	if strings.TrimSpace(req.Query) == "" {
@@ -840,7 +871,7 @@ func validateHybridSearchRequest(req *resourcepb.HybridSearchRequest) error {
 	seen := make(map[string]struct{}, len(req.Filters))
 	totalValues := 0
 	for _, f := range req.Filters {
-		if f.Key == "" {
+		if f == nil || f.Key == "" {
 			return reqErr("filter key must not be empty")
 		}
 		// Both legs evaluate every filter with IN semantics; accepting

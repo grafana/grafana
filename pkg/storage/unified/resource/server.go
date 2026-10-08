@@ -2704,6 +2704,13 @@ func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchR
 	return s.search.HybridSearch(ctx, req)
 }
 
+func (s *server) HybridSearchResources(ctx context.Context, req *resourcepb.HybridSearchResourcesRequest) (*resourcepb.HybridSearchResponse, error) {
+	if s.search == nil {
+		return nil, status.Error(codes.Unimplemented, "search index not configured")
+	}
+	return s.search.HybridSearchResources(ctx, req)
+}
+
 // StatsGetter provides resource statistics (via search index or backend).
 type StatsGetter interface {
 	GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error)

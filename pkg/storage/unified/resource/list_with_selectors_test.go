@@ -1433,6 +1433,10 @@ func (*stubSearchClient) HybridSearch(_ context.Context, _ *resourcepb.HybridSea
 	return nil, nil
 }
 
+func (*stubSearchClient) HybridSearchResources(_ context.Context, _ *resourcepb.HybridSearchResourcesRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, nil
+}
+
 type fakeBackend struct {
 	UnimplementedStorageBackend
 	forbidden map[string]struct{}

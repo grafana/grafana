@@ -41,6 +41,9 @@ func (c *capturingStatsClient) VectorSearch(ctx context.Context, in *resourcepb.
 func (c *capturingStatsClient) HybridSearch(ctx context.Context, in *resourcepb.HybridSearchRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
 	return nil, nil
 }
+func (c *capturingStatsClient) HybridSearchResources(ctx context.Context, in *resourcepb.HybridSearchResourcesRequest, opts ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+	return nil, nil
+}
 
 func TestSubCount_RequestIncludesRecordingRules(t *testing.T) {
 	getter := &stubGetter{obj: &folders.Folder{ObjectMeta: metav1.ObjectMeta{Name: "parent"}}}
