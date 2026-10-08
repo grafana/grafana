@@ -1,3 +1,4 @@
+import { isEqual } from 'lodash';
 import { type ReactNode, useEffect, useMemo, useRef } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -19,7 +20,7 @@ import { OAuthConnectionFields } from '../components/Shared/OAuthConnectionField
 import { WebhookDisabledField } from '../components/Shared/WebhookDisabledField';
 import { CONNECTIONS_TAB_URL } from '../constants';
 import { useSaveConnection } from '../hooks/useSaveConnection';
-import { type ConnectionFormData } from '../types';
+import { type ConnectionFormData, type OAuthConnectionType } from '../types';
 import { type ConnectionProvider, getConnectionFormDefaults, toConnectionType } from '../utils/connectionData';
 import { connectionProviderType, isOAuthConnectionType } from '../utils/connectionOAuth';
 import { isConnectionPending } from '../utils/connectionStatus';
@@ -44,6 +45,22 @@ const PROVIDER_OPTIONS: Array<{
   { value: 'git', label: 'Git', types: ['gitOAuth'] },
 ];
 /* eslint-enable @grafana/i18n/no-untranslated-strings */
+
+const OAUTH_IDENTITY_FIELDS: Record<OAuthConnectionType, Array<keyof ConnectionFormData>> = {
+  githubOAuth: ['clientID'],
+  githubEnterpriseOAuth: ['clientID', 'serverUrl'],
+  gitlabOAuth: ['clientID'],
+  bitbucketOAuth: ['clientID'],
+  gitOAuth: ['clientID', 'tokenURL'],
+};
+
+const OAUTH_AUTHORIZATION_FIELDS: Record<OAuthConnectionType, Array<keyof ConnectionFormData>> = {
+  githubOAuth: [],
+  githubEnterpriseOAuth: [],
+  gitlabOAuth: [],
+  bitbucketOAuth: ['workspace'],
+  gitOAuth: ['authURL', 'scopes'],
+};
 
 interface ConnectionFormProps {
   data?: Connection;
@@ -107,12 +124,13 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
   // The client secret belongs to the OAuth app itself; pointing the connection at
   // a different app (client ID, or GHES host) makes the stored secret invalid for
   // the code exchange, so the user must supply the new app's secret.
+  const fieldsChanged = (form: ConnectionFormData, fields: Array<keyof ConnectionFormData>) => {
+    const saved = getConnectionFormDefaults(form.type, data);
+    return fields.some((field) => !isEqual(form[field], saved[field]));
+  };
+
   const oauthIdentityChanged = (form: ConnectionFormData) =>
-    isEdit &&
-    isOAuthConnectionType(form.type) &&
-    (form.clientID !== data?.spec?.oauth?.clientID ||
-      (form.type === 'githubEnterpriseOAuth' && form.serverUrl !== data?.spec?.githubEnterpriseOAuth?.serverUrl) ||
-      (form.type === 'gitOAuth' && form.tokenURL !== data?.spec?.gitOAuth?.tokenURL));
+    isEdit && isOAuthConnectionType(form.type) && fieldsChanged(form, OAUTH_IDENTITY_FIELDS[form.type]);
 
   // OAuth app connections need the user to authorize the app before tokens can be issued
   const needsAuthorization = (form: ConnectionFormData) =>
@@ -120,10 +138,7 @@ export function ConnectionForm({ data, children }: ConnectionFormProps) {
     (!isEdit ||
       Boolean(form.clientSecret) ||
       oauthIdentityChanged(form) ||
-      (form.type === 'bitbucketOAuth' && (form.workspace ?? '') !== (data?.spec?.bitbucket?.workspace ?? '')) ||
-      (form.type === 'gitOAuth' &&
-        (form.authURL !== data?.spec?.gitOAuth?.authURL ||
-          (form.scopes ?? []).join(' ') !== (data?.spec?.gitOAuth?.scopes ?? []).join(' '))) ||
+      fieldsChanged(form, OAUTH_AUTHORIZATION_FIELDS[form.type]) ||
       reauthorizeRef.current);
 
   useEffect(() => {

@@ -4,7 +4,8 @@ import { t } from '@grafana/i18n';
 import { Checkbox, Field } from '@grafana/ui';
 
 import { type ConnectionFormData } from '../../types';
-import { isOAuthConnectionType } from '../../utils/connectionOAuth';
+import { connectionProviderType, isOAuthConnectionType } from '../../utils/connectionOAuth';
+import { supportsWebhooks } from '../../utils/repositoryTypes';
 
 interface Props {
   type: ConnectionFormData['type'];
@@ -14,7 +15,7 @@ interface Props {
 }
 
 export function WebhookDisabledField({ type, registration, invalid, error }: Props) {
-  if (type === 'gitOAuth') {
+  if (!supportsWebhooks(connectionProviderType(type))) {
     return null;
   }
 

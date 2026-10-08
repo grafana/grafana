@@ -9,7 +9,7 @@ import { type ConnectionSpec, useGetFrontendSettingsQuery } from 'app/api/client
 
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { toConnectionType } from '../utils/connectionData';
-import { isGitHubBased, supportsConnections } from '../utils/repositoryTypes';
+import { isGitHubBased, isGitProvider } from '../utils/repositoryTypes';
 
 import { AppConnectionFields } from './AppConnectionFields';
 import { RepositoryField } from './components/RepositoryField';
@@ -76,7 +76,7 @@ const getAuthTypeOptions = (
         },
       ];
 
-  const provider = supportsConnections(repoType) ? repoType : 'github';
+  const provider = isGitProvider(repoType) ? repoType : 'github';
   const appType = toConnectionType(provider, 'app');
   const oauthType = toConnectionType(provider, 'oauth');
 
@@ -105,7 +105,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
   );
   const selectedAuthTypeAvailable = authTypeOptions.some(({ id }) => id === githubAuthType);
   const shouldShowRepositories = githubAuthType === 'pat' || githubAppMode !== 'new';
-  const isConnectionSupportedRepo = supportsConnections(repoType);
+  const isConnectionSupportedRepo = isGitProvider(repoType);
 
   useEffect(() => {
     if (!settingsLoading && !selectedAuthTypeAvailable && authTypeOptions[0]) {
@@ -186,7 +186,7 @@ export function AuthTypeStep({ onGitHubAppSubmit }: AuthTypeStepProps) {
       )}
 
       {selectedAuthTypeAvailable &&
-        (supportsConnections(repoType) && githubAuthType !== 'pat' ? (
+        (isGitProvider(repoType) && githubAuthType !== 'pat' ? (
           <>
             <AppConnectionFields
               provider={repoType}

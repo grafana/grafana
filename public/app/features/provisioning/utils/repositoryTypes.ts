@@ -88,25 +88,17 @@ export const getRepositoryTypeConfig = (type: RepoType): RepositoryTypeConfig | 
   return getRepositoryTypeConfigs().find((config) => config.type === type);
 };
 
-const GIT_PROVIDER_TYPES = ['github', 'githubEnterprise', 'gitlab', 'bitbucket', 'git'];
+const GIT_PROVIDER_TYPES = new Set<string>(['github', 'githubEnterprise', 'gitlab', 'bitbucket', 'git']);
 
-export const isGitProvider = (type: RepoType) => {
-  return GIT_PROVIDER_TYPES.includes(type);
-};
+export const isGitProvider = (
+  type?: RepoType
+): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' =>
+  type !== undefined && GIT_PROVIDER_TYPES.has(type);
 
 // GitHub and GitHub Enterprise share the same auth flow (GitHub App or PAT),
 // connection handling, and deep-link URL structure.
 export const isGitHubBased = (type?: RepoType): type is 'github' | 'githubEnterprise' => {
   return type === 'github' || type === 'githubEnterprise';
-};
-
-// Providers that support app-based authentication through provisioning connections.
-export const supportsConnections = (
-  type?: RepoType
-): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' => {
-  return (
-    type === 'github' || type === 'githubEnterprise' || type === 'gitlab' || type === 'bitbucket' || type === 'git'
-  );
 };
 
 export const supportsWebhooks = (type?: RepoType): type is 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' => {
