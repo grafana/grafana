@@ -205,7 +205,7 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
-		if tuples := datasourceRoleActionSetTuples(subject, perm); len(tuples) > 0 {
+		if tuples := datasourceRolePermissionTuples(subject, perm); len(tuples) > 0 {
 			for _, tuple := range tuples {
 				tupleMap[tuple.String()] = tuple
 			}
@@ -249,14 +249,18 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	return tuples, nil
 }
 
-// Datasource action sets need both base-resource and query-subresource grants.
+// Datasource action sets and caching writes each grant multiple operations.
 // Use granular relations: generic edit/admin also grants datasource creation.
-func datasourceRoleActionSetTuples(subject string, perm RolePermission) []*openfgav1.TupleKey {
+func datasourceRolePermissionTuples(subject string, perm RolePermission) []*openfgav1.TupleKey {
 	if perm.Kind != "datasources" || perm.Identifier == "" {
 		return nil
 	}
 	var relations []string
+	var subresource string
 	switch perm.Action {
+	case "datasources.caching:write":
+		relations = []string{RelationCreate, RelationUpdate, RelationDelete}
+		subresource = "caching"
 	case "datasources:query":
 		relations = []string{RelationGet}
 	case "datasources:edit":
@@ -274,9 +278,11 @@ func datasourceRoleActionSetTuples(subject string, perm RolePermission) []*openf
 	}
 	tuples := make([]*openfgav1.TupleKey, 0, len(relations)+1)
 	for _, relation := range relations {
-		tuples = append(tuples, newTuple(relation, ""))
+		tuples = append(tuples, newTuple(relation, subresource))
 	}
-	tuples = append(tuples, newTuple(RelationCreate, "query"))
+	if subresource == "" {
+		tuples = append(tuples, newTuple(RelationCreate, "query"))
+	}
 	if perm.Action == "datasources:admin" {
 		for _, relation := range []string{RelationGet, RelationCreate, RelationUpdate, RelationDelete} {
 			tuples = append(tuples, newTuple(relation, "caching"))

@@ -82,9 +82,9 @@ func TestIntegrationServerMutateRoles(t *testing.T) {
 	})
 }
 
-func TestIntegrationDatasourceRoleActionSets(t *testing.T) {
+func TestIntegrationDatasourceRolePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
-	for _, action := range []string{"datasources:query", "datasources:edit", "datasources:admin"} {
+	for _, action := range []string{"datasources:query", "datasources:edit", "datasources:admin", "datasources.caching:write"} {
 		for _, scope := range []string{"datasources:uid:ds1", "datasources:*"} {
 			t.Run(action+"/"+scope, func(t *testing.T) {
 				srv := setupOpenFGAServer(t)
@@ -96,18 +96,20 @@ func TestIntegrationDatasourceRoleActionSets(t *testing.T) {
 					verb, subresource string
 					allowed           bool
 				}{
-					{"get", "", true},
-					{"list", "", true},
-					{"create", "query", true},
+					{"get", "", action != "datasources.caching:write"},
+					{"list", "", action != "datasources.caching:write"},
+					{"create", "query", action != "datasources.caching:write"},
 					{"create", "", false},
-					{"update", "", action != "datasources:query"},
-					{"delete", "", action != "datasources:query"},
+					{"update", "", action == "datasources:edit" || action == "datasources:admin"},
+					{"delete", "", action == "datasources:edit" || action == "datasources:admin"},
 					{"get_permissions", "", action == "datasources:admin"},
 					{"set_permissions", "", action == "datasources:admin"},
 					{"get", "caching", action == "datasources:admin"},
-					{"update", "caching", action == "datasources:admin"},
-					{"create", "caching", action == "datasources:admin"},
-					{"delete", "caching", action == "datasources:admin"},
+					{"update", "caching", action == "datasources:admin" || action == "datasources.caching:write"},
+					{"create", "caching", action == "datasources:admin" || action == "datasources.caching:write"},
+					{"delete", "caching", action == "datasources:admin" || action == "datasources.caching:write"},
+					{"patch", "caching", action == "datasources:admin" || action == "datasources.caching:write"},
+					{"deletecollection", "caching", action == "datasources:admin" || action == "datasources.caching:write"},
 				} {
 					for _, uid := range []string{"ds1", "ds2"} {
 						t.Run(tc.verb+"/"+tc.subresource+"/"+uid, func(t *testing.T) {

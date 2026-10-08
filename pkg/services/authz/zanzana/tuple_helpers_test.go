@@ -704,6 +704,15 @@ func TestSharedDatasourceRolePermissions(t *testing.T) {
 				}
 				expectedTuples = append(expectedTuples, read)
 			}
+			if tc.action == "datasources.caching:write" {
+				for _, relation := range []string{"create", "delete"} {
+					write := common.NewResourceTuple("role:role1#assignee", relation, "datasource.grafana.app", "datasources", "caching", uid)
+					if uid == "*" {
+						write = NewGroupResourceTuple("role:role1#assignee", relation, "datasource.grafana.app", "datasources", "caching")
+					}
+					expectedTuples = append(expectedTuples, write)
+				}
+			}
 			require.ElementsMatch(t, tupleKeyStrings(expectedTuples), tupleKeyStrings(tuples))
 		}
 	}
