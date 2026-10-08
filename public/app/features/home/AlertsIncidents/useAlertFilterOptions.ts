@@ -18,16 +18,12 @@ export function useAlertFilterOptions(enabled: boolean): LoadFilterOptions | und
   // Fetched on open rather than on mount: listing labels downloads every rule in the org,
   // and most homepage visits never open the filter.
   const loadOptions = useCallback(async () => {
-    try {
-      // Reopening the dropdown or switching tabs reuses the cached labels.
-      const labels = await fetchRuleLabels(undefined, true).unwrap();
-      return labels
-        .filter(canEncodeFilterLabel)
-        .map((label) => ({ label: label.value, value: encodeFilterLabel(label), group: label.key }));
-    } catch {
-      // The labels are optional: the dropdown still offers its scope options without them.
-      return [];
-    }
+    // Reopening the dropdown or switching tabs reuses the cached labels. The labels are optional:
+    // without them the dropdown still offers its scope options.
+    const { data } = await fetchRuleLabels(undefined, true);
+    return (data ?? [])
+      .filter(canEncodeFilterLabel)
+      .map((label) => ({ label: label.value, value: encodeFilterLabel(label), group: label.key }));
   }, [fetchRuleLabels]);
   return enabled && contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) ? loadOptions : undefined;
 }
