@@ -158,5 +158,4 @@ describe('AddToNotebookFormExposedComponent', () => {
       timeTo: '2026-10-05T09:30:00.000Z',
     });
   });
-
 });

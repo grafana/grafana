@@ -54,7 +54,9 @@ export const AddToNotebookFormExposedComponent = (props: Partial<Props>) => {
   }
 
   if (!props.onClose || !props.buildPanel || !props.capturedTimeRange) {
-    console.error(`[AddToNotebookFormExposedComponent] Missing required props: onClose, buildPanel, capturedTimeRange.`);
+    console.error(
+      `[AddToNotebookFormExposedComponent] Missing required props: onClose, buildPanel, capturedTimeRange.`
+    );
     return null;
   }
 
