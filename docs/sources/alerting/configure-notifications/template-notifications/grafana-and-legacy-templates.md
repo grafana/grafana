@@ -118,7 +118,7 @@ A successful test with one alert doesn't mean the definition accepts the whole n
 
 When you [import an Alertmanager configuration](ref:import-alertmanager-configuration), Grafana creates Legacy integrations and template groups (API kind `mimir`). A Grafana template with the same name doesn't replace an imported template.
 
-Legacy integrations are compatible with Mimir up to 3.0.x. Configurations from Mimir 3.1 or later can include integrations and fields that Legacy integrations don't support, such as incident.io, Mattermost, and Rocket.Chat.
+Legacy integrations are compatible with Mimir up to 3.0.x. Configurations from Mimir 3.1 or later can include integrations and fields that Legacy integrations don't support.
 
 If an import renames a conflicting template group, it doesn't rewrite the `define` names or template calls inside that group. Check definition names across imports, not only filenames or group titles.
 
