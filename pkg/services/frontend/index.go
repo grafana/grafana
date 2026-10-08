@@ -111,7 +111,7 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing, hooksServic
 
 	logger := logging.DefaultLogger.With("logger", "index-provider")
 
-	bootScriptPath := filepath.Join(cfg.StaticRootPath, webassets.RspackBuildDir, "boot.js")
+	bootScriptPath := filepath.Join(cfg.StaticRootPath, webassets.BuildDir, "boot.js")
 	//nolint:gosec
 	rawBootScript, err := os.ReadFile(bootScriptPath)
 	if err != nil {
@@ -245,7 +245,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (d
 	// The cookie only takes effect on stacks that have opted in.
 	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
 		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
-			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, webassets.RspackBuildDir)
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, webassets.BuildDir)
 			if err == nil {
 				p.log.Info("resolved preview assets", "folder", cookie.Value)
 				return assets, cookie.Value, nil
@@ -254,7 +254,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request) (d
 		}
 	}
 
-	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, webassets.RspackBuildDir)
+	assets, err := fswebassets.GetWebAssets(ctx, p.config, p.license, webassets.BuildDir)
 	return assets, "", err
 }
 

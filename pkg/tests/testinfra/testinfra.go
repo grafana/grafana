@@ -325,7 +325,7 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 	require.NoError(t, err)
 
 	// add a stub manifest to the build directory
-	buildDir := filepath.Join(publicDir, "build", "rspack")
+	buildDir := filepath.Join(publicDir, "build")
 	err = os.MkdirAll(buildDir, 0o750)
 	require.NoError(t, err)
 	mockAssets := `{

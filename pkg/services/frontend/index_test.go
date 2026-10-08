@@ -23,7 +23,7 @@ func setupTestWebAssets(tb testing.TB) string {
 	publicDir := tb.TempDir()
 	tb.Cleanup(func() { _ = os.RemoveAll(publicDir) })
 
-	writeTestWebAssets(tb, publicDir, "build/rspack")
+	writeTestWebAssets(tb, publicDir, "build")
 
 	return publicDir
 }
@@ -114,12 +114,12 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		// The response should contain references to the assets
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
-		assert.Contains(t, body, "src=\"public/build/rspack/app.js\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/app.js\"")
 		assert.Contains(t, body, "type=\"module\"")
-		assert.Contains(t, body, "// test boot stub for build/rspack")
+		assert.Contains(t, body, "// test boot stub for build")
 		// Static images are copied into the build directory, so they move with it.
-		assert.Contains(t, body, "href=\"public/build/rspack/img/fav32.png\"")
+		assert.Contains(t, body, "href=\"public/build/img/fav32.png\"")
 	})
 
 	t.Run("should serve the preview build when the preview cookie is set", func(t *testing.T) {
@@ -136,13 +136,13 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		body := recorder.Body.String()
 		assert.Contains(t, body, "window.__grafanaPreviewAssets = '"+folder+"'")
-		assert.Contains(t, body, previewURL+"public/build/rspack/runtime.preview.js")
-		assert.Contains(t, body, previewURL+"public/build/rspack/app.preview.js")
-		assert.Contains(t, body, previewURL+"public/build/rspack/grafana.app.preview.css")
+		assert.Contains(t, body, previewURL+"public/build/runtime.preview.js")
+		assert.Contains(t, body, previewURL+"public/build/app.preview.js")
+		assert.Contains(t, body, previewURL+"public/build/grafana.app.preview.css")
 		assert.Contains(t, body, `integrity="sha256-preview-runtime"`)
 		assert.Contains(t, body, `integrity="sha256-preview-app"`)
 		assert.Contains(t, body, `type="module"`)
-		assert.Contains(t, body, "// test boot stub for build/rspack")
+		assert.Contains(t, body, "// test boot stub for build")
 	})
 
 	t.Run("should fall back to default assets when the preview build cannot be loaded", func(t *testing.T) {
@@ -157,8 +157,8 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
-		assert.Contains(t, body, "href=\"public/build/rspack/img/fav32.png\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
+		assert.Contains(t, body, "href=\"public/build/img/fav32.png\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
@@ -175,7 +175,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 
@@ -200,7 +200,7 @@ func TestFrontendService_WebAssets(t *testing.T) {
 
 		assert.Equal(t, 200, recorder.Code)
 		body := recorder.Body.String()
-		assert.Contains(t, body, "src=\"public/build/rspack/runtime.js\"")
+		assert.Contains(t, body, "src=\"public/build/runtime.js\"")
 		assert.NotContains(t, body, "window.__grafanaPreviewAssets")
 	})
 

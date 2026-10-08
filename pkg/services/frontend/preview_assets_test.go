@@ -24,21 +24,21 @@ const previewTestManifest = `{
 		"esModule": true,
 		"app": {
 			"assets": {
-				"js": ["public/build/rspack/runtime.preview.js", "public/build/rspack/app.preview.js"],
-				"css": ["public/build/rspack/grafana.app.preview.css"]
+				"js": ["public/build/runtime.preview.js", "public/build/app.preview.js"],
+				"css": ["public/build/grafana.app.preview.css"]
 			}
 		},
-		"dark": { "assets": { "css": ["public/build/rspack/grafana.dark.preview.css"] } },
-		"light": { "assets": { "css": ["public/build/rspack/grafana.light.preview.css"] } }
+		"dark": { "assets": { "css": ["public/build/grafana.dark.preview.css"] } },
+		"light": { "assets": { "css": ["public/build/grafana.light.preview.css"] } }
 	},
-	"runtime.js": { "src": "public/build/rspack/runtime.preview.js", "integrity": "sha256-preview-runtime" },
-	"app.js": { "src": "public/build/rspack/app.preview.js", "integrity": "sha256-preview-app" }
+	"runtime.js": { "src": "public/build/runtime.preview.js", "integrity": "sha256-preview-runtime" },
+	"app.js": { "src": "public/build/app.preview.js", "integrity": "sha256-preview-app" }
 }`
 
 func newPreviewBucketServer(t *testing.T, folder string) *httptest.Server {
 	t.Helper()
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/"+folder+"/public/build/rspack/assets-manifest.json" {
+		if r.URL.Path != "/"+folder+"/public/build/assets-manifest.json" {
 			http.NotFound(w, r)
 			return
 		}
