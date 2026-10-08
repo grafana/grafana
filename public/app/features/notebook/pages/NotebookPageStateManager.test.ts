@@ -1,4 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { waitFor } from '@testing-library/react';
 import { HttpResponse, delay, http } from 'msw';
 import { type UnknownAction } from 'redux';
 
@@ -15,6 +16,16 @@ import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '.
 import { NotebookPageStateManager } from './NotebookPageStateManager';
 
 jest.mock('../analytics/main', () => ({ NotebookAnalytics: { loaded: jest.fn() } }));
+
+const mockGetPanelPluginMetasMap = jest.fn();
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    getPanelPluginMetasMap: (...args: unknown[]) =>
+      mockGetPanelPluginMetasMap(...args) ?? actual.getPanelPluginMetasMap(...args),
+  };
+});
 
 const NOTEBOOK_URL = '/apis/dashboard.grafana.app/v2beta1/namespaces/:namespace/notebooks/:name';
 
@@ -240,6 +251,25 @@ describe('NotebookPageStateManager', () => {
 
     await manager.loadNotebook('nb-1');
     expect(manager.state.scene?.state.key).toBe(first);
+  });
+
+  it('waits for the panel plugin metas before building the scene', async () => {
+    serveNotebooks();
+    let resolveMetas: () => void = () => {};
+    mockGetPanelPluginMetasMap.mockReturnValueOnce(new Promise<void>((resolve) => (resolveMetas = resolve)));
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    const loading = manager.loadNotebook('nb-1');
+    await waitFor(() => expect(mockGetPanelPluginMetasMap).toHaveBeenCalled());
+
+    expect(manager.state.scene).toBeUndefined();
+    expect(manager.state.isLoading).toBe(true);
+
+    resolveMetas();
+    await loading;
+
+    expect(manager.state.scene?.state.uid).toBe('nb-1');
+    expect(manager.state.isLoading).toBe(false);
   });
 
   // `await` does not cancel, so a load started for an earlier uid still resumes. If it wrote its

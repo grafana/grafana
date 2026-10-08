@@ -106,10 +106,16 @@ jest.mock('app/features/playlist/PlaylistSrv', () => ({
 }));
 
 const mockUserStorageGetItem = jest.fn();
-jest.mock('@grafana/runtime/internal', () => ({
-  ...jest.requireActual('@grafana/runtime/internal'),
-  UserStorage: jest.fn().mockImplementation(() => ({ getItem: mockUserStorageGetItem })),
-}));
+const mockGetPanelPluginMetasMap = jest.fn();
+jest.mock('@grafana/runtime/internal', () => {
+  const actual = jest.requireActual('@grafana/runtime/internal');
+  return {
+    ...actual,
+    UserStorage: jest.fn().mockImplementation(() => ({ getItem: mockUserStorageGetItem })),
+    getPanelPluginMetasMap: (...args: unknown[]) =>
+      mockGetPanelPluginMetasMap(...args) ?? actual.getPanelPluginMetasMap(...args),
+  };
+});
 
 const mockFetchPredefinedVariables = jest.fn();
 jest.mock('../utils/predefinedVariables', () => ({
@@ -434,6 +440,25 @@ describe('DashboardScenePageStateManager v1', () => {
         messageId: undefined,
         message: 'Dashboard not found',
       });
+    });
+
+    it('should wait for the panel plugin metas before loading the dashboard', async () => {
+      const loadDashboardMock = setupLoadDashboardMock({ dashboard: { uid: 'fake-dash' }, meta: {} });
+      let resolveMetas: () => void = () => {};
+      mockGetPanelPluginMetasMap.mockReturnValueOnce(new Promise<void>((resolve) => (resolveMetas = resolve)));
+
+      const loader = new DashboardScenePageStateManager({});
+      const loading = loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(loadDashboardMock).not.toHaveBeenCalled();
+      expect(loader.state.dashboard).toBeUndefined();
+
+      resolveMetas();
+      await loading;
+
+      expect(loadDashboardMock).toHaveBeenCalledWith('db', '', 'fake-dash');
+      expect(loader.state.dashboard?.state.uid).toBe('fake-dash');
     });
 
     it('should clear current dashboard while loading next', async () => {
