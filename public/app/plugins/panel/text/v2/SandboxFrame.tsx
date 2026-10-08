@@ -38,7 +38,7 @@ export function SandboxFrame(props: SandboxFrameProps) {
   ) {
     setGeneration({ html, globalCss, policy, mermaid, diagramError, id: generation.id + 1 });
   }
-  // Never relax a document that has already received datasource content.
+  // An applied CSP cannot be relaxed in place; policy changes need a fresh document.
   return <FrameDocument key={generation.id} {...props} />;
 }
 
@@ -140,6 +140,7 @@ function FrameDocument({
           break;
         }
         case 'ready': {
+          // Protected frames send ready only after verifying CSP violation delivery, before receiving panel data.
           if (sent || failed) {
             return;
           }

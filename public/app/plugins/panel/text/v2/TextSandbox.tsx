@@ -10,7 +10,7 @@ import { inlineSandboxFonts } from './sandboxFonts';
 import { getGlobalCss, textSandboxPolicy, type TextSandboxState } from './sandboxPolicy';
 import { isTextNewFeaturesEnabled } from './utils';
 
-export interface TextSandboxRemediation {
+interface TextSandboxRemediation {
   canAllow: boolean;
   allow: () => void;
 }
@@ -21,6 +21,7 @@ export interface TextSandboxReport extends TextSandboxRemediation {
 
 export interface TextSandboxProps {
   html: string;
+  /** Any dataframe, even with zero rows, enables protection; omit restrictions only for no-data legacy content. */
   hasData?: boolean;
   testId?: string;
   className?: string;
