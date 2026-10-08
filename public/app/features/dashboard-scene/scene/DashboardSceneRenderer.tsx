@@ -2,10 +2,10 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
@@ -114,9 +114,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
    */
   function renderControls() {
     if (planning) {
-      return config.featureToggles.dashboardNewLayouts ? (
-        <PlanningControls dashboard={model} planning={planning} />
-      ) : null;
+      return isDashboardNewLayoutsEnabled() ? <PlanningControls dashboard={model} planning={planning} /> : null;
     }
 
     return controls && <controls.Component model={controls} />;

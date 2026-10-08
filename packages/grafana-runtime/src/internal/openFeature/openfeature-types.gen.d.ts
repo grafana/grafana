@@ -18,8 +18,6 @@ declare module "@openfeature/core" {
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
     | "provisioningExport"
-    | "provisioning.readmes"
-    | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
@@ -29,6 +27,8 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "dashboardNewLayouts"
+    | "dashboards.libraryPanelRepeatFromServerResolution"
+    | "dashboards.publicDashboardBadgeFromApi"
     | "dashboard.notebooks"
     | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
@@ -60,7 +60,6 @@ declare module "@openfeature/core" {
     | "datasources.azureMonitorBatchAPI"
     | "alertingRuleRecoverDeleted"
     | "recentlyViewedDashboards"
-    | "experimentRecentlyViewedDashboards"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
@@ -93,6 +92,7 @@ declare module "@openfeature/core" {
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
+    | "grafana.scopesDashboardsMegaMenu"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "paneledit.buttonLabels"
@@ -109,6 +109,7 @@ declare module "@openfeature/core" {
     | "table.refreshNewFeatures"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
+    | "dataviz.tabularNums"
     | "grafana.customizableMegaMenu"
     | "grafana.dashboardSettingsRedesign"
     | "grafana.growthHomepage"
@@ -129,7 +130,8 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
-    | "grafana.logDetailsDisplayedFieldControls";
+    | "grafana.logDetailsDisplayedFieldControls"
+    | "grafana.globalHomePreference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

@@ -17,7 +17,7 @@ describe('PreviewModeControls', () => {
   let deactivate = () => {};
 
   beforeEach(() => {
-    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': true });
     locationService.push('/d/review-test');
   });
 
@@ -115,7 +115,7 @@ describe('PreviewModeControls', () => {
   });
 
   it('hides the toggle when the OpenFeature flag is disabled', () => {
-    setTestFlags({ 'grafana.dashboardPreviewMode': false });
+    setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': false });
     const { dashboard } = setup();
 
     expect(dashboard.state.isEditing).toBe(true);

@@ -42,7 +42,7 @@ import { sortedDeepCloneWithoutNulls } from 'app/core/utils/object';
 import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/DashboardAPIVersionResolver';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { isDashboardNewLayoutsEnabled, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
 import { type SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { getDashboardSceneProfiler } from 'app/features/dashboard/services/DashboardProfiler';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
@@ -66,6 +66,7 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -723,7 +724,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       const canSave = Boolean(this.state.meta.canSave);
 
       appEvents.publish(
@@ -1104,11 +1105,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
+    duplicatePanel(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       const gridItem = vizPanel.parent;
 
       if (gridItem instanceof AutoGridItem) {
@@ -1152,7 +1153,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       return;
     }
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       const layout = getLayoutForObject(this);
       if (layout) {
         layout.pastePanel();
@@ -1496,6 +1497,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       perform();
     } else {
       edit({
+        meta: { actionId: 'layout.switch', scope: 'dashboard' },
         description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
         source: this,
         perform,

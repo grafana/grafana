@@ -667,6 +667,9 @@ type SyncStatus struct {
 	// When the sync job finished
 	Finished int64 `json:"finished,omitempty"`
 
+	// When the controller last attempted a sync or an interval check (Unix milliseconds).
+	LastChecked int64 `json:"lastChecked,omitempty"`
+
 	// When the next sync check is scheduled
 	Scheduled int64 `json:"scheduled,omitempty"`
 
@@ -1121,6 +1124,21 @@ const (
 	DeletionStateBlocked DeletionState = "Blocked"
 )
 
+// DeletionCause classifies the error blocking repository deletion.
+// +enum
+type DeletionCause string
+
+func (DeletionCause) OpenAPIModelName() string {
+	return OpenAPIPrefix + "DeletionCause"
+}
+
+const (
+	// DeletionCauseUser indicates a failure that requires user intervention.
+	DeletionCauseUser DeletionCause = "user"
+	// DeletionCauseSystem indicates an infrastructure or unclassified failure.
+	DeletionCauseSystem DeletionCause = "system"
+)
+
 // DeletionStatus reports the progress of an in-progress deletion and the problem
 // blocking it. It is populated while the repository is Terminating and its
 // finalizers run, so a client can explain the holdup and force-remove the
@@ -1137,6 +1155,9 @@ type DeletionStatus struct {
 	// Message is a human-readable explanation of what went wrong, suitable for
 	// showing to users.
 	Message string `json:"message,omitempty"`
+
+	// Cause classifies the blocking error. It may be absent on older statuses.
+	Cause DeletionCause `json:"cause,omitempty"`
 }
 
 func (DeletionStatus) OpenAPIModelName() string {

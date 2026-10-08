@@ -14,11 +14,12 @@ jest.mock('../../dashboard/api/ResponseTransformers', () => ({
 }));
 
 jest.mock('../../dashboard/api/utils', () => ({
+  ...jest.requireActual('../../dashboard/api/utils'),
   isDashboardV2Spec: (obj: unknown) => typeof obj === 'object' && obj !== null && 'elements' in obj,
 }));
 
 jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
-  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {} })),
+  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {}, forEachChild: jest.fn() })),
 }));
 
 jest.mock('@grafana/scenes', () => {

@@ -8,6 +8,8 @@ interface AuthorizeParams {
   clientID: string;
   name: string;
   serverUrl?: string;
+  authURL?: string;
+  scopes?: string[];
 }
 
 // Runs the OAuth authorization round-trip in a separate tab so the current
@@ -55,8 +57,8 @@ export function useOAuthAuthorization(onComplete: (connectionName: string, error
   }, []);
 
   const authorize = useCallback(
-    ({ type, clientID, name, serverUrl }: AuthorizeParams): boolean => {
-      const url = buildOAuthAuthorizeUrl(type, clientID, name, serverUrl, { popup: true });
+    ({ type, clientID, name, serverUrl, authURL, scopes }: AuthorizeParams): boolean => {
+      const url = buildOAuthAuthorizeUrl(type, clientID, name, serverUrl, { popup: true, authURL, scopes });
       openTab();
       if (!tabRef.current) {
         return false;

@@ -14,6 +14,7 @@ import { useDispatch } from 'app/types/store';
 import { ProvisioningAlert } from '../../Shared/ProvisioningAlert';
 import { useBranchTemplate } from '../../hooks/useBranchTemplate';
 import { useCommitMessageTemplate } from '../../hooks/useCommitMessageTemplate';
+import { useGetResourceRepositoryView } from '../../hooks/useGetResourceRepositoryView';
 import { useProvisionedFolderFormData } from '../../hooks/useProvisionedFolderFormData';
 import { type ProvisionedOperationInfo, useProvisionedRequestHandler } from '../../hooks/useProvisionedRequestHandler';
 import { usePullRequestTitle } from '../../hooks/usePullRequestTitle';
@@ -216,9 +217,10 @@ function FormContent({ initialValues, folder, repository, canPushToConfiguredBra
 }
 
 export function RenameProvisionedFolderForm({ folder, onDismiss }: RenameProvisionedFolderFormProps) {
+  const view = useGetResourceRepositoryView({ folderName: folder.uid });
   const { repository, initialValues, isReadOnlyRepo, isMissingRepo, canPushToConfiguredBranch, isLoading } =
     useProvisionedFolderFormData({
-      folderUid: folder.uid,
+      view,
       title: folder.title,
       branchPrefix: 'folder-rename',
     });

@@ -28,6 +28,7 @@ import {
   DashboardBatchEditActionEndEvent,
   DashboardBatchEditActionStartEvent,
   DashboardEditActionEvent,
+  type DashboardActionMeta,
   type DashboardEditActionEventPayload,
   DashboardStateChangedEvent,
   NewObjectAddedToCanvasEvent,
@@ -37,6 +38,8 @@ import {
 } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarPane, type DashboardSidebarLike, type DashboardSidebarState } from './types';
+
+export const MAX_UNDO_ACTIONS = 100;
 
 export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> implements DashboardSidebarLike {
   public constructor(state?: Partial<DashboardSidebarState>) {
@@ -96,10 +99,13 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   /** Set while a batch of edit actions is being collected, see startBatchAction/endBatchAction. */
   private _activeBatch?: {
+    meta: DashboardActionMeta;
     source: SceneObject;
     description?: string;
     actions: DashboardEditActionEventPayload[];
   };
+
+  private _batchSizes = new WeakMap<DashboardEditActionEventPayload, number>();
 
   public setPanelEditAction(editAction: DashboardEditActionEvent) {
     this.panelEditAction = editAction;
@@ -203,12 +209,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     action.payload.source.publishEvent(action, true);
   }
 
-  private startBatchAction({ source, description }: DashboardBatchEditActionEventPayload) {
+  private startBatchAction({ source, description, meta }: DashboardBatchEditActionEventPayload) {
     if (this.state.redoStack.length > 0) {
       this.setState({ redoStack: [] });
     }
 
-    this._activeBatch = { source, description, actions: [] };
+    this._activeBatch = { source, description, meta, actions: [] };
   }
 
   private endBatchAction() {
@@ -221,6 +227,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     const action: DashboardEditActionEventPayload = {
       source: batch.source,
+      meta: batch.meta,
       description: batch.description,
       perform: () => {
         batch.actions.forEach((childAction) => this.performAction(childAction));
@@ -230,7 +237,8 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       },
     };
 
-    this.setState({ undoStack: [...this.state.undoStack, action] });
+    this._batchSizes.set(action, batch.actions.length);
+    this.setState({ undoStack: this.pushToUndoStack(action) });
   }
 
   /**
@@ -258,7 +266,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       this.performAction(action);
     }
 
-    this.setState({ undoStack: [...this.state.undoStack, action] });
+    this.setState({ undoStack: this.pushToUndoStack(action) });
   }
 
   /**
@@ -272,6 +280,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.handleEditAction(
       {
         source: payload.source,
+        meta: { actionId: 'panel.moveOrResize' },
         description: payload.description,
         perform: payload.replay,
         undo: payload.revert,
@@ -282,12 +291,34 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   /**
+   * Only the oldest entries are dropped, and a batch only as a whole: each entry's closures reference the
+   * objects left behind by the entries before it, so removing one from the middle would leave the later
+   * ones acting on detached objects. The newest entry is always kept, even a batch larger than the limit,
+   * so the change just made can be undone.
+   */
+  private pushToUndoStack(action: DashboardEditActionEventPayload): DashboardEditActionEventPayload[] {
+    const undoStack = [...this.state.undoStack, action];
+    const sizeOf = (entry: DashboardEditActionEventPayload) => this._batchSizes.get(entry) ?? 1;
+
+    let total = undoStack.reduce((sum, entry) => sum + sizeOf(entry), 0);
+    let start = 0;
+    while (total > MAX_UNDO_ACTIONS && start < undoStack.length - 1) {
+      total -= sizeOf(undoStack[start]);
+      start++;
+    }
+
+    return undoStack.slice(start);
+  }
+
+  /**
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
       return;
     }
+    // How far back the user has already stepped through history before this undo
+    const redoDepth = this.state.redoStack.length;
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
@@ -297,7 +328,11 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     this.undoSingleAction(action);
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
-    reportInteraction('grafana_dashboard_undo');
+    reportInteraction('grafana_dashboard_undo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
   }
 
   private undoSingleAction(action: DashboardEditActionEventPayload) {
@@ -348,6 +383,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
       return;
     }
+    const redoDepth = this.state.redoStack.length;
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {
@@ -356,8 +392,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
     this.performAction(action);
 
-    this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
-    reportInteraction('grafana_dashboard_redo');
+    this.setState({ redoStack, undoStack: this.pushToUndoStack(action) });
+    reportInteraction('grafana_dashboard_redo', {
+      actionId: action.meta.actionId,
+      scope: action.meta.scope,
+      redoDepth,
+    });
   }
 
   public enableSelection() {

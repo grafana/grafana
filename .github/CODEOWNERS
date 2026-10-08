@@ -492,6 +492,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/dashboards-suite/utils/makeDashboard.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/fixtures/prometheus-response.json @grafana/datapro
 /e2e-playwright/panels-suite/ @grafana/dataviz-squad
+/e2e-playwright/text-sandbox.config.ts @grafana/dataviz-squad
 /e2e-playwright/panels-suite/dashlist.spec.ts @grafana/grafana-frontend-navigation
 /e2e-playwright/panels-suite/frontend-sandbox-panel.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/panels-suite/panelEdit_base.spec.ts @grafana/dashboards-squad
@@ -505,6 +506,7 @@ i18next.config.ts @grafana/grafana-frontend-platform
 /e2e-playwright/start-server @grafana/grafana-frontend-platform
 /e2e-playwright/storybook/ @grafana/grafana-frontend-platform
 /e2e-playwright/test-plugins/ @grafana/grafana-frontend-platform
+/e2e-playwright/unauthenticated/login-perf.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/unauthenticated/login.spec.ts @grafana/grafana-frontend-platform
 /e2e-playwright/utils/ @grafana/grafana-frontend-platform
 /e2e-playwright/various-suite/advisor.spec.ts @grafana/grafana-catalog
@@ -1374,6 +1376,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check.yml @grafana/grafana-backend-services-squad
+/.github/workflows/pr-reembed-version-approval.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-resource-search-result-format.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration-pgvector.yml @grafana/grafana-search-and-storage
 /.github/workflows/pr-test-integration.yml @grafana/grafana-operator-experience-squad

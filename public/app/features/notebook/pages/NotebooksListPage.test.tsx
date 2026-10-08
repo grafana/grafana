@@ -5,7 +5,6 @@ import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { type Notebook, useListNotebookQuery } from 'app/api/clients/dashboard/v2beta1';
 import { useGetDisplayMappingQuery } from 'app/api/clients/iam/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -19,7 +18,7 @@ import {
   type WhereNode,
   useSearchNotebooksInfiniteQuery,
 } from '../list/notebookSearchApi';
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
+import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
@@ -31,7 +30,6 @@ jest.mock('app/api/clients/iam/v0alpha1', () => ({
 }));
 
 jest.mock('app/api/clients/dashboard/v2beta1', () => ({
-  useListNotebookQuery: jest.fn(() => ({ data: undefined, isLoading: false, error: undefined })),
   // The row menu fetches a spec on demand for export; nothing here exercises the fetch itself.
   useLazyGetNotebookQuery: () => [jest.fn()],
   // The table mounts the delete hook for every row menu; deleting is covered in NotebooksTable's own tests.
@@ -52,7 +50,6 @@ jest.mock('../analytics/main', () => ({
 
 const mockUseSearchNotebooksQuery = jest.mocked(useSearchNotebooksInfiniteQuery);
 const mockUseLazyNotebookFieldFacetQuery = jest.mocked(useLazyNotebookFieldFacetQuery);
-const mockUseListNotebookQuery = jest.mocked(useListNotebookQuery);
 const mockUseGetDisplayMappingQuery = jest.mocked(useGetDisplayMappingQuery);
 const mockListFiltered = jest.mocked(NotebookAnalytics.listFiltered);
 
@@ -69,26 +66,6 @@ function leavesOf(where: WhereNode | undefined): WhereNode[] {
     return [];
   }
   return where.and ?? [where];
-}
-
-/** A notebook as LIST returns it, for the cases that exercise the fallback path. */
-function makeNotebook(name: string, title: string): Notebook {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- minimal fixture standing in for a full k8s resource
-  return {
-    metadata: { name, creationTimestamp: '2026-01-01T00:00:00Z', annotations: { 'grafana.app/createdBy': 'user:abc' } },
-    spec: { title, tags: [] },
-  } as unknown as Notebook;
-}
-
-function setListNotebooks(items: Notebook[], extra: { continueToken?: string } = {}) {
-  const data = { items, metadata: { continue: extra.continueToken } };
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
-  mockUseListNotebookQuery.mockReturnValue({
-    data,
-    currentData: data,
-    isLoading: false,
-    error: undefined,
-  } as unknown as ReturnType<typeof useListNotebookQuery>);
 }
 
 /** A page the server filled to the limit, which is what truncation looks like on the wire. */
@@ -206,7 +183,6 @@ function setTags(tags: string[]) {
 describe('NotebooksListPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    __resetSearchAvailabilityForTests();
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- partial RTK Query result is all the page reads
     mockUseGetDisplayMappingQuery.mockReturnValue({
@@ -382,29 +358,6 @@ describe('NotebooksListPage', () => {
     expect(mockUseSearchNotebooksQuery).toHaveBeenLastCalledWith(
       expect.objectContaining({ where: { filter: { field: 'tags', operator: 'In', values: ['latency'] } } })
     );
-  });
-
-  // With no facet the picker had nothing to offer and no way to type into it, which on a deployment
-  // that does not serve the search route left the filter unusable. The rows carry their own tags.
-  it("offers the loaded notebooks' tags when the facet cannot answer", async () => {
-    setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setTags([]);
-    setNotebooks([
-      makeHit('nb1', 'Checkout error spike', ['errors']),
-      makeHit('nb2', 'Q2 latency regression', ['latency']),
-    ]);
-
-    render(<NotebooksListPage />);
-
-    await userEvent.click(await screen.findByLabelText('Tag filter'));
-    const listbox = await screen.findByRole('listbox');
-    await userEvent.click(await within(listbox).findByText('latency'));
-
-    await screen.findByText('Q2 latency regression');
-    await waitFor(() => {
-      expect(screen.queryByText('Checkout error spike')).not.toBeInTheDocument();
-    });
-    expect(screen.getByText('Q2 latency regression')).toBeInTheDocument();
   });
 
   // The tags are only known once the picker is opened, so the control is offered either way — an
@@ -654,27 +607,6 @@ describe('NotebooksListPage', () => {
 
     await screen.findByRole('status', { name: 'Loading notebooks' });
     expect(screen.queryByRole('link', { name: 'Checkout error spike' })).not.toBeInTheDocument();
-  });
-
-  // On the fallback path the loaded window and the matches within it are different facts, and LIST
-  // reports no total at all — so folding them into "showing 1 of 2" would claim the library holds
-  // two matching notebooks when all that is known is that two were fetched.
-  it('keeps the loaded count and the match count apart when serving from LIST', async () => {
-    setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    setNotebooks([], { error: { status: 404, data: { message: 'not found' }, config: { url: '' } } });
-    setListNotebooks([makeNotebook('nb1', 'Checkout error spike'), makeNotebook('nb2', 'Q2 latency regression')], {
-      continueToken: 'next-page',
-    });
-
-    render(<NotebooksListPage />);
-
-    await userEvent.type(await screen.findByPlaceholderText('Search notebooks by title...'), 'latency');
-
-    expect(await screen.findByRole('link', { name: 'Q2 latency regression' })).toBeInTheDocument();
-
-    // The debounce has to elapse before the client-side filter narrows anything.
-    expect(await screen.findByText('1 notebook')).toBeInTheDocument();
-    expect(screen.getByText('First 2 notebooks loaded')).toBeInTheDocument();
   });
 
   // An inexact total is an upper bound, counted before per-item authorization — so the label has to

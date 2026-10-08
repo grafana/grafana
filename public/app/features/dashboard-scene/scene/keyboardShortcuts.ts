@@ -15,6 +15,7 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
@@ -315,7 +316,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
         DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
         if (isFullDashboardEditing(scene.state)) {
-          scene.duplicatePanel(vizPanel);
+          duplicatePanel(vizPanel);
         }
       }),
     });

@@ -103,9 +103,7 @@ describe('panelMenuBehavior', () => {
   });
 
   it('opens panel editing from the View menu and enters Edit mode', async () => {
-    const previousLayouts = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = true;
-    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const { scene, panel, menu } = await buildTestScene({});
     let deactivateMenu = () => {};
     try {
@@ -120,7 +118,6 @@ describe('panelMenuBehavior', () => {
       expect(scene.state.mode).toBe('edit');
     } finally {
       deactivateMenu();
-      config.featureToggles.dashboardNewLayouts = previousLayouts;
       setTestFlags({});
     }
   });
