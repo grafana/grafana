@@ -119,7 +119,7 @@ const getStyles = (theme: GrafanaTheme2, size: IconSize, variant: IconButtonVari
   const hoverSize = getSvgSize(size) + theme.spacing.gridSize;
   const activeButtonStyle = getActiveButtonStyles(theme.colors.secondary, 'text', theme.flags.visualDesignRefresh);
 
-  let iconColor = theme.colors.accent.text;
+  let iconColor = theme.colors.primary.text;
   let hoverColor = theme.colors.action.hover;
 
   if (variant === 'secondary') {
