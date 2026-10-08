@@ -5,7 +5,6 @@ import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { setTestFlags } from '@grafana/test-utils/unstable';
-
 import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 
 import { DashboardSearchItemType } from '../../../../search/types';
