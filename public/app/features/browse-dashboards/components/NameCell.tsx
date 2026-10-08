@@ -6,6 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { Avatar, Icon, IconButton, Link, Spinner, Text, useStyles2 } from '@grafana/ui';
 import { getSvgSize } from '@grafana/ui/internal';
+import { ReadOnlyBadge } from 'app/features/provisioning/components/ReadOnlyBadge';
 import { DescriptionTooltip } from 'app/features/search/components/DescriptionTooltip';
 import { getIconForItem } from 'app/features/search/service/utils';
 
@@ -122,7 +123,17 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
           )}
         </Text>
 
-        {showRepoBadge && <FolderRepo folder={item} canEdit={canEditItem} />}
+        {isReadOnlyFolder && (
+          <ReadOnlyBadge
+            tooltip={t(
+              'browse-dashboards.name-cell.read-only-folder-tooltip',
+              "You don't have permission to edit this folder"
+            )}
+          />
+        )}
+
+        {/* The repository's own read-only badge is skipped when the permission one is already shown */}
+        {showRepoBadge && <FolderRepo folder={item} canEdit={canEditItem && !isReadOnlyFolder} />}
 
         <DescriptionTooltip description={item.description} />
 

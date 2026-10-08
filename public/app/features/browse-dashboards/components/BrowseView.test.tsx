@@ -1,4 +1,4 @@
-import { act, getByLabelText, render, screen, userEvent } from 'test/test-utils';
+import { act, getByLabelText, render, screen, userEvent, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setBackendSrv } from '@grafana/runtime';
@@ -170,6 +170,29 @@ describe('browse-dashboards BrowseView', () => {
     // leaf even though childrenByParentUID has an entry under its UID. Each row is labelled by its own title.
     expect(await screen.findByRole('row', { name: folder.title })).toBeInTheDocument();
     expect(screen.getByRole('row', { name: dashboard.title })).toBeInTheDocument();
+  });
+
+  it('shows a read only badge on folders the user cannot edit', async () => {
+    const editableFolder: DashboardViewItem = { kind: 'folder', uid: 'editable', title: 'Editable folder' };
+    const readOnlyFolder: DashboardViewItem = { kind: 'folder', uid: 'read-only', title: 'Read only folder' };
+
+    render(<BrowseView permissions={mockPermissions} folderUID={undefined} width={WIDTH} height={HEIGHT} />, {
+      preloadedState: {
+        browseDashboards: {
+          rootItems: fullyLoadedViewItemCollection([editableFolder, readOnlyFolder]),
+          childrenByParentUID: {},
+          openFolders: {},
+          folderEditAccess: { [editableFolder.uid]: true, [readOnlyFolder.uid]: false },
+          selectedItems: { $all: false, dashboard: {}, folder: {}, panel: {} },
+        },
+      },
+    });
+
+    const readOnlyRow = await screen.findByRole('row', { name: readOnlyFolder.title });
+    expect(within(readOnlyRow).getByText('Read only')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('row', { name: editableFolder.title })).queryByText('Read only')
+    ).not.toBeInTheDocument();
   });
 
   describe('when there is no item in the folder', () => {
