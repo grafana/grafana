@@ -72,19 +72,30 @@ export const QuickAdd = ({}: Props) => {
       }
     }
 
-    if (notebooksEnabled && canCreateNotebooks() && !groups.some((group) => group.parentId === 'notebooks')) {
-      const dashboardGroupIndex = groups.findIndex((group) => group.parentId === 'dashboards/browse');
-      groups.splice(dashboardGroupIndex + 1, 0, {
-        parentId: 'notebooks',
-        parentText: t('navigation.notebooks', 'Notebooks'),
-        items: [
-          {
-            id: 'notebooks/new',
-            text: t('navigation.quick-add.new-notebook-button', 'New notebook'),
-            url: notebookNewEditHref(NOTEBOOK_ENTRY_POINT.QUICK_ADD),
-          },
-        ],
-      });
+    if (notebooksEnabled && canCreateNotebooks()) {
+      let insertAt = groups.length;
+      for (const [index, group] of groups.entries()) {
+        if (group.parentId === 'notebooks') {
+          insertAt = -1;
+          break;
+        }
+        if (group.parentId === 'dashboards/browse') {
+          insertAt = index + 1;
+        }
+      }
+      if (insertAt !== -1) {
+        groups.splice(insertAt, 0, {
+          parentId: 'notebooks',
+          parentText: t('navigation.notebooks', 'Notebooks'),
+          items: [
+            {
+              id: 'notebooks/new',
+              text: t('navigation.quick-add.new-notebook-button', 'New notebook'),
+              url: notebookNewEditHref(NOTEBOOK_ENTRY_POINT.QUICK_ADD),
+            },
+          ],
+        });
+      }
     }
 
     return groups;

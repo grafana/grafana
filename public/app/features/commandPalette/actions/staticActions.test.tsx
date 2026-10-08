@@ -202,7 +202,13 @@ describe('useStaticActions - new notebook action', () => {
 
     const { result } = renderStaticActions();
     const action = result.current.find((action) => action.id === 'new-notebook');
-    expect(action).toEqual(expect.objectContaining({ name: 'New notebook', perform: expect.any(Function) }));
+    expect(action).toEqual(
+      expect.objectContaining({
+        name: 'New notebook',
+        url: expect.stringContaining('/notebooks/new?edit=true&notebookSource=command_palette'),
+      })
+    );
+    expect(action?.perform).toBeUndefined();
   });
 
   it('hides the action when notebooks are disabled', () => {

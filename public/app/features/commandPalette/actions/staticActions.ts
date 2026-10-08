@@ -227,7 +227,7 @@ export function useStaticActions(): CommandPaletteAction[] {
         section: t('command-palette.section.actions', 'Actions'),
         sectionId: SECTION_ACTIONS,
         priority: ACTIONS_PRIORITY,
-        perform: () => window.location.assign(notebookNewEditHref(NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE)),
+        url: notebookNewEditHref(NOTEBOOK_ENTRY_POINT.COMMAND_PALETTE),
       });
     }
 

@@ -197,6 +197,17 @@ describe('QuickAdd', () => {
     );
   });
 
+  it('places the Notebooks group after Dashboards', async () => {
+    setTestFlags({ 'dashboard.notebooks': true });
+    contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
+    setup();
+
+    await userEvent.click(screen.getByRole('button', { name: 'New' }));
+    const groups = screen.getAllByRole('group');
+    const dashboardGroup = screen.getByRole('group', { name: 'Dashboards' });
+    expect(groups[groups.indexOf(dashboardGroup) + 1]).toBe(screen.getByRole('group', { name: 'Notebooks' }));
+  });
+
   it('hides New notebook when the feature is disabled', async () => {
     contextSrv.user.permissions = { [AccessControlAction.NotebooksCreate]: true };
     setup();
