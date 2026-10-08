@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo } from 'react';
 
 import { type Folder } from 'app/api/clients/folder/v1beta1';
@@ -42,7 +41,6 @@ export function useProvisionedFolderFormData({
   branchPrefix = 'folder',
 }: UseProvisionedFolderFormDataProps): ProvisionedFolderFormDataResult {
   const { repository, folder, isLoading, isReadOnlyRepo, isMissingRepo } = view;
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
 
@@ -60,11 +58,9 @@ export function useProvisionedFolderFormData({
       ref: getDefaultRef(repository, branchPrefix),
       repo: repository.name || '',
       path: ensureFolderPathTrailingSlash(folder?.metadata?.annotations?.[AnnoKeySourcePath] || ''),
-      workflow: shouldEnforceBranchTemplate(repository, gitConventionsEnabled)
-        ? ('branch' as const)
-        : getDefaultWorkflow(repository),
+      workflow: shouldEnforceBranchTemplate(repository) ? ('branch' as const) : getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix, gitConventionsEnabled]);
+  }, [repository, isLoading, title, folder?.metadata?.annotations, branchPrefix]);
 
   return {
     repository,

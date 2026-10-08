@@ -1,5 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
-
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import {
@@ -39,18 +37,17 @@ export function useCommitMessageTemplate({
   setComment,
   fallbackMessage,
 }: UseCommitMessageTemplateArgs): { locked: boolean; message: string } {
-  const flagEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   const template = repository?.commit?.singleResourceMessageTemplate;
   const enforce = repository?.commit?.enforceTemplate ?? false;
 
   // Enforcement activates the field even without a template.
-  const active = flagEnabled && (Boolean(template?.trim()) || enforce);
-  const locked = flagEnabled && enforce;
+  const active = Boolean(template?.trim()) || enforce;
+  const locked = enforce;
   const rendered = active ? renderCommitMessage(template, vars, fallbackMessage) : '';
 
-  // Enforced repos commit the template, not the field, so drop the comment when locked. Computed
-  // unconditionally: callers commit this regardless of the flag. Bulk callers (those that pass a
-  // `fallbackMessage`) resolve via the bulk path so the no-template default stays multi-resource.
+  // Enforced repos commit the template, not the field, so drop the comment when locked. Bulk callers
+  // (those that pass a `fallbackMessage`) resolve via the bulk path so the no-template default stays
+  // multi-resource.
   const resolvedComment = locked ? '' : comment;
   const message =
     fallbackMessage === undefined

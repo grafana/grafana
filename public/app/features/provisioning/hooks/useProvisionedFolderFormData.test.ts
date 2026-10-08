@@ -1,13 +1,11 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type RepositoryViewData, RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
 
 import { useProvisionedFolderFormData } from './useProvisionedFolderFormData';
 
-// The hook reads a feature flag via OpenFeature, so it must render inside the provider wrapper.
 function renderFolderFormData(view: Partial<RepositoryViewData> = {}, title?: string) {
   return renderHook(() => useProvisionedFolderFormData({ view: repositoryViewData(view), title }), {
     wrapper: getWrapper({}),
@@ -100,14 +98,7 @@ describe('useProvisionedFolderFormData', () => {
   });
 
   describe('enforced branch name template', () => {
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('switches to the branch workflow when the template is enforced and the flag is on', async () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
+    it('switches to the branch workflow when the template is enforced', async () => {
       // write-first repo: without the override the default workflow would be `write`.
       const { result } = renderFolderFormData(
         {
@@ -123,7 +114,6 @@ describe('useProvisionedFolderFormData', () => {
     });
 
     it('keeps the default write workflow when enforcement has no usable template', async () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
       const { result } = renderFolderFormData(
         {
           repository: repoView({ workflows: ['write', 'branch'], branchOptions: { enforceTemplate: true } }),

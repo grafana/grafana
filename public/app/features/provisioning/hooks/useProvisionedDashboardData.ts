@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -158,7 +157,6 @@ export function useProvisionedDashboardData(
   const { repository, folder, status, error, isNewSave } = view;
   const [params] = useUrlParams();
   const loadedFromRef = params.get('ref') ?? undefined;
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   // Minted once per form: it feeds the fallback filename for a save with no title to slugify, and a
   // fresh one per recompute would rewrite that filename
   const [timestamp] = useState(generateTimestamp);
@@ -207,12 +205,10 @@ export function useProvisionedDashboardData(
     // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
     // useBranchTemplate then fills the `ref`; the generated name keeps the branch default from ever
     // pointing at the configured branch in the meantime.
-    return values &&
-      shouldEnforceBranchTemplate(resolvedRepository, gitConventionsEnabled) &&
-      values.workflow !== 'branch'
+    return values && shouldEnforceBranchTemplate(resolvedRepository) && values.workflow !== 'branch'
       ? { ...values, workflow: 'branch' as const, ref: generateNewBranchName('dashboard') }
       : values;
-  }, [defaultValuesResult, gitConventionsEnabled]);
+  }, [defaultValuesResult]);
 
   if (defaultValuesResult.status !== RepoViewStatus.Ready) {
     return {
