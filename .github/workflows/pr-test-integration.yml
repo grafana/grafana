@@ -236,6 +236,26 @@ jobs:
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N "$SHARD" -d -)"
           go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
+      # The enterprise module beside this checkout is a separate Go module, so shard.sh's
+      # `find . -name go.mod` never reaches it and its packages need their own run.
+      # EXCLUDED mirrors grafana-enterprise's own root-module job: those packages already fail
+      # on main. Keep the two lists in step.
+      - name: Run enterprise module tests
+        env:
+          SHARD: ${{ matrix.shard }}
+          CGO_ENABLED: 0
+          EXCLUDED: '/pkg/(saml|registry/provisioning/gitlab|apps/queries/pkg/apis/manifestdata)$'
+        run: |
+          set -euo pipefail
+
+          grafana_root="$PWD"
+          cd ../grafana-enterprise
+          readarray -t PACKAGES <<< "$("$grafana_root"/scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration -d ./pkg/... | "$grafana_root"/scripts/ci/backend-tests/shard.sh -N "$SHARD" -d - | grep -v -E "$EXCLUDED")"
+          if [ "${#PACKAGES[@]}" -eq 0 ] || [ -z "${PACKAGES[0]}" ]; then
+            echo "No enterprise packages in this shard"
+            exit 0
+          fi
+          go test -vet=off -tags=enterprise -timeout=16m -run '^TestIntegration' "${PACKAGES[@]}"
 
   mysql-enterprise:
     # Run this workflow for pushes to `main` or `release-*` on `grafana/grafana` (not mirrors) OR for internal PRs (PRs not from forks)
@@ -296,6 +316,28 @@ jobs:
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
           CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      # The enterprise module beside this checkout is a separate Go module, so shard.sh's
+      # `find . -name go.mod` never reaches it and its packages need their own run.
+      # EXCLUDED mirrors grafana-enterprise's own root-module job: those packages already fail
+      # on main. Keep the two lists in step.
+      - name: Run enterprise module tests
+        env:
+          SHARD: ${{ matrix.shard }}
+          EXCLUDED: '/pkg/(saml|registry/provisioning/gitlab|apps/queries/pkg/apis/manifestdata)$'
+        run: |
+          set -euo pipefail
+
+          grafana_root="$PWD"
+          cd ../grafana-enterprise
+          readarray -t PACKAGES <<< "$("$grafana_root"/scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration -d ./pkg/... | "$grafana_root"/scripts/ci/backend-tests/shard.sh -N"$SHARD" -d - | grep -v -E "$EXCLUDED")"
+          if [ "${#PACKAGES[@]}" -eq 0 ] || [ -z "${PACKAGES[0]}" ]; then
+            echo "No enterprise packages in this shard"
+            exit 0
+          fi
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
       - name: Cleanup MySQL
         if: always()
         run: make devenv-down sources=mysql_tests
@@ -351,6 +393,28 @@ jobs:
         run: |
           set -euo pipefail
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
+          echo "Precompiling, no tests will be run"
+          CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
+          echo "Running tests now"
+          CGO_ENABLED=0 go test -vet=off -p=1 -tags=enterprise -timeout=12m -run '^TestIntegration' "${PACKAGES[@]}"
+      # The enterprise module beside this checkout is a separate Go module, so shard.sh's
+      # `find . -name go.mod` never reaches it and its packages need their own run.
+      # EXCLUDED mirrors grafana-enterprise's own root-module job: those packages already fail
+      # on main. Keep the two lists in step.
+      - name: Run enterprise module tests
+        env:
+          SHARD: ${{ matrix.shard }}
+          EXCLUDED: '/pkg/(saml|registry/provisioning/gitlab|apps/queries/pkg/apis/manifestdata)$'
+        run: |
+          set -euo pipefail
+
+          grafana_root="$PWD"
+          cd ../grafana-enterprise
+          readarray -t PACKAGES <<< "$("$grafana_root"/scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration -d ./pkg/... | "$grafana_root"/scripts/ci/backend-tests/shard.sh -N"$SHARD" -d - | grep -v -E "$EXCLUDED")"
+          if [ "${#PACKAGES[@]}" -eq 0 ] || [ -z "${PACKAGES[0]}" ]; then
+            echo "No enterprise packages in this shard"
+            exit 0
+          fi
           echo "Precompiling, no tests will be run"
           CGO_ENABLED=0 go test -vet=off -tags=enterprise -run='^$' "${PACKAGES[@]}"
           echo "Running tests now"
