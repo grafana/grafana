@@ -35,8 +35,6 @@ const commonTestIgnores = [
 
 const generatedFiles = ['**/*.gen.ts', '**/*_gen.ts'];
 
-const enterpriseIgnores = ['public/app/extensions/**/*', 'e2e/extensions/**/*'];
-
 // [FIXME] add comment about this applying everywhere
 const baseImportConfig = {
   patterns: [
@@ -620,12 +618,7 @@ module.exports = [
   // Old betterer rules config:
   {
     files: [`**/${jsTsFiles}`],
-    ignores: [
-      // FIXME: Remove once all enterprise issues are fixed -
-      // we don't have a suppressions file/approach for enterprise code yet
-      ...enterpriseIgnores,
-      'packages/grafana-ui/src/components/Forms/Legacy/**',
-    ],
+    ignores: ['packages/grafana-ui/src/components/Forms/Legacy/**'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
@@ -633,12 +626,7 @@ module.exports = [
   },
   {
     files: [`**/${jsTsFiles}`],
-    ignores: [
-      ...commonTestIgnores,
-      // FIXME: Remove once all enterprise issues are fixed -
-      // we don't have a suppressions file/approach for enterprise code yet
-      ...enterpriseIgnores,
-    ],
+    ignores: [...commonTestIgnores],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
       '@grafana/no-direct-local-storage-access': 'error',
@@ -654,11 +642,6 @@ module.exports = [
   },
   {
     files: [...commonTestIgnores],
-    ignores: [
-      // FIXME: Remove once all enterprise issues are fixed -
-      // we don't have a suppressions file/approach for enterprise code yet
-      ...enterpriseIgnores,
-    ],
     rules: {
       '@grafana/no-config-apps': 'error',
       '@grafana/no-config-panels': 'error',
@@ -669,20 +652,9 @@ module.exports = [
     },
   },
   {
-    files: [...enterpriseIgnores],
-    rules: {
-      '@grafana/no-config-apps': 'error',
-      '@grafana/no-config-panels': 'error',
-      '@grafana/no-config-datasources': 'error',
-    },
-  },
-  {
     files: ['public/app/**/*.{ts,tsx}'],
     ignores: [
       ...commonTestIgnores,
-      // FIXME: Remove once all enterprise issues are fixed -
-      // we don't have a suppressions file/approach for enterprise code yet
-      ...enterpriseIgnores,
       // Ignore decoupled plugin webpack configs
       'public/app/**/webpack.config.ts',
     ],
