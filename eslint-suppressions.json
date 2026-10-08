@@ -2134,11 +2134,6 @@
       "count": 1
     }
   },
-  "public/app/features/explore/QueryLibrary/utils/identity.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/explore/RichHistory/RichHistoryQueriesTab.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 1
