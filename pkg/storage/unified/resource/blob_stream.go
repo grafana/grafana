@@ -10,6 +10,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -53,31 +55,45 @@ func (s *server) acquireBlobTransfer(tenant string) (func(), error) {
 }
 
 func (s *server) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
-	first, err := stream.Recv()
+	ctx, cancel := context.WithTimeout(stream.Context(), blobStreamTimeout)
+	defer cancel()
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok || user == nil {
+		return status.Error(codes.Unauthenticated, "no user found in context")
+	}
+	// Reserve a slot using the authenticated namespace while the destination is unknown.
+	release, err := s.acquireBlobTransfer(user.GetNamespace())
+	if err != nil {
+		return err
+	}
+	defer func() { release() }()
+	if !s.trackWrite() {
+		return errStopping
+	}
+	defer s.inflight.Done()
+
+	first, err := recvBlobChunk(ctx, stream.Recv)
 	if err != nil {
 		return err
 	}
 	if len(first.Value) != 0 || first.Method != resourcepb.PutBlobRequest_GRPC {
 		return status.Error(codes.InvalidArgument, "first message must contain blob metadata only")
 	}
-	if failure := s.authorizeBlobPut(stream.Context(), first); failure != nil {
+	if failure := s.authorizeBlobPut(ctx, first); failure != nil {
 		return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: failure})
 	}
 	backend, ok := s.blob.(StreamingBlobSupport)
 	if !ok {
 		return status.Error(codes.Unimplemented, "blob backend does not support streaming")
 	}
-	release, err := s.acquireBlobTransfer(first.Resource.Namespace)
-	if err != nil {
-		return err
+	if first.Resource.Namespace != user.GetNamespace() {
+		destinationRelease, err := s.acquireBlobTransfer(first.Resource.Namespace)
+		if err != nil {
+			return err
+		}
+		release()
+		release = destinationRelease
 	}
-	defer release()
-	if !s.trackWrite() {
-		return errStopping
-	}
-	defer s.inflight.Done()
-	ctx, cancel := context.WithTimeout(stream.Context(), blobStreamTimeout)
-	defer cancel()
 	reader := &blobStreamReader{ctx: ctx, recv: stream.Recv}
 	rsp, err := backend.PutResourceBlobStream(ctx, first, reader)
 	if err != nil {
@@ -110,6 +126,29 @@ func (s *server) GetBlobStream(req *resourcepb.GetBlobRequest, stream resourcepb
 	})
 }
 
+func recvBlobChunk(ctx context.Context, recv func() (*resourcepb.PutBlobRequest, error)) (*resourcepb.PutBlobRequest, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, status.FromContextError(err).Err()
+	}
+	// Recv cannot take a context; returning from the RPC closes the stream
+	// and unblocks this one pending receive when the transfer times out.
+	type result struct {
+		msg *resourcepb.PutBlobRequest
+		err error
+	}
+	ch := make(chan result, 1)
+	go func() { msg, err := recv(); ch <- result{msg, err} }()
+	select {
+	case received := <-ch:
+		if err := ctx.Err(); err != nil {
+			return nil, status.FromContextError(err).Err()
+		}
+		return received.msg, received.err
+	case <-ctx.Done():
+		return nil, status.FromContextError(ctx.Err()).Err()
+	}
+}
+
 type blobStreamReader struct {
 	ctx     context.Context
 	recv    func() (*resourcepb.PutBlobRequest, error)
@@ -125,27 +164,13 @@ func (r *blobStreamReader) Read(p []byte) (int, error) {
 		return 0, status.FromContextError(err).Err()
 	}
 	if len(r.pending) == 0 {
-		// Recv cannot take a context; returning from the RPC closes the stream
-		// and unblocks this one pending receive when the transfer times out.
-		type result struct {
-			msg *resourcepb.PutBlobRequest
-			err error
-		}
-		ch := make(chan result, 1)
-		go func() { msg, err := r.recv(); ch <- result{msg, err} }()
-		var received result
-		select {
-		case received = <-ch:
-		case <-r.ctx.Done():
-			return 0, status.FromContextError(r.ctx.Err()).Err()
-		}
-		if errors.Is(received.err, io.EOF) && r.total == 0 {
+		msg, err := recvBlobChunk(r.ctx, r.recv)
+		if errors.Is(err, io.EOF) && r.total == 0 {
 			return 0, status.Error(codes.InvalidArgument, "empty blob")
 		}
-		if received.err != nil {
-			return 0, received.err
+		if err != nil {
+			return 0, err
 		}
-		msg := received.msg
 		if msg.Resource != nil || msg.Folder != "" || msg.ContentType != "" || msg.Method != resourcepb.PutBlobRequest_GRPC || len(msg.Value) == 0 {
 			return 0, status.Error(codes.InvalidArgument, "chunk must contain only value")
 		}

@@ -40,6 +40,52 @@ func (b *testStreamingBlob) GetResourceBlobStream(_ context.Context, _ *resource
 	return err
 }
 
+type stalledPutBlobStream struct {
+	resourcepb.BlobStoreStreaming_PutBlobStreamServer
+	ctx     context.Context
+	started chan struct{}
+	unblock chan struct{}
+}
+
+func (s *stalledPutBlobStream) Context() context.Context { return s.ctx }
+func (s *stalledPutBlobStream) Recv() (*resourcepb.PutBlobRequest, error) {
+	close(s.started)
+	<-s.unblock
+	return nil, io.EOF
+}
+
+func TestPutBlobStreamDeadlineBeforeMetadata(t *testing.T) {
+	s := &server{blobTransfers: newBlobTransfers()}
+	ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Namespace: "default"}), 500*time.Millisecond)
+	defer cancel()
+	newStream := func(ctx context.Context) *stalledPutBlobStream {
+		stream := &stalledPutBlobStream{ctx: ctx, started: make(chan struct{}), unblock: make(chan struct{})}
+		t.Cleanup(func() { close(stream.unblock) })
+		return stream
+	}
+	first := newStream(ctx)
+	second := newStream(ctx)
+	firstResult := make(chan error, 1)
+	secondResult := make(chan error, 1)
+	go func() { firstResult <- s.PutBlobStream(first) }()
+	go func() { secondResult <- s.PutBlobStream(second) }()
+	<-first.started
+	<-second.started
+
+	third := newStream(ctx)
+	require.Equal(t, codes.ResourceExhausted, status.Code(s.PutBlobStream(third)))
+	select {
+	case <-third.started:
+		t.Fatal("received metadata without a transfer slot")
+	default:
+	}
+	require.Equal(t, codes.DeadlineExceeded, status.Code(<-firstResult))
+	require.Equal(t, codes.DeadlineExceeded, status.Code(<-secondResult))
+	release, err := s.acquireBlobTransfer("default")
+	require.NoError(t, err)
+	release()
+}
+
 type contextStream struct {
 	grpc.ServerStream
 	ctx context.Context
