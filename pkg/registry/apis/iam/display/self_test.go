@@ -76,6 +76,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		OrgID:           1,
 		OrgRole:         identity.RoleEditor,
 		AuthenticatedBy: "oauth_github",
+		Email:           "alice@example.com",
 		Namespace:       "default",
 	}
 
@@ -94,6 +95,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 			DisplayName:     "Alice",
 			InternalID:      1,
 			AuthenticatedBy: "oauth_github",
+			Email:           "alice@example.com",
 		}
 		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want}}}
 		h := NewDisplayHandler(resolver)

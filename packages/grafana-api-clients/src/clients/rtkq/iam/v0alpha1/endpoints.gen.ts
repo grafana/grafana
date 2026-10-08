@@ -945,6 +945,8 @@ export type Display = {
   avatarURL?: string;
   /** Display name for identity. */
   displayName: string;
+  /** Email is the email address for the current identity. Only populated for the current-user ("users/~") endpoint. */
+  email?: string;
   identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
@@ -1185,6 +1187,8 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   avatarURL?: string;
   /** Display name for identity. */
   displayName: string;
+  /** Email is the email address for the current identity. Only populated for the current-user ("users/~") endpoint. */
+  email?: string;
   /** External is set if member ship was synced from external IDP. */
   external?: boolean;
   identity: IdentityRef;

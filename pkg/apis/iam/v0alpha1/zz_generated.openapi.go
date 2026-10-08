@@ -80,6 +80,13 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 							Format:      "",
 						},
 					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"identity", "displayName"},
 			},
@@ -371,6 +378,13 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 					"authenticatedBy": {
 						SchemaProps: spec.SchemaProps{
 							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

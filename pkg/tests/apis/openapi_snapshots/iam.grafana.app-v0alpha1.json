@@ -5851,6 +5851,10 @@
             "type": "string",
             "default": ""
           },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "identity": {
             "allOf": [
               {
@@ -6022,6 +6026,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
@@ -6588,6 +6596,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
