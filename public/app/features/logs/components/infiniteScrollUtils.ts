@@ -188,9 +188,9 @@ export function withLokiInfiniteScrollBound<T extends DataQuery & { supportingQu
   range: InfiniteScrollTimeRange,
   datasourceType?: string
 ): T & { startNs?: string; endNs?: string } {
-  const configured = query.datasource;
+  const { datasource } = query; 
   const configuredType =
-    configured && typeof configured === 'object' && 'type' in configured ? configured.type : undefined;
+    datasource && typeof datasource === 'object' && 'type' in datasource ? datasource.type : undefined;
   if ((typeof configuredType === 'string' ? configuredType : datasourceType) !== 'loki') {
     return query;
   }
