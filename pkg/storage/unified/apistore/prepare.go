@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -234,7 +234,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 	rsp, err := s.opts.Index.Search(ctx, &resourcepb.ResourceSearchRequest{
 		Limit: 1, // we only need to know if any match exists
 		// An empty projection returns every field; name keeps this key-only.
-		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Fields:       []string{resourceutil.SEARCH_FIELD_NAME},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
@@ -250,7 +250,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resource.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)

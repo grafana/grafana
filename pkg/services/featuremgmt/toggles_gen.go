@@ -1065,4 +1065,8 @@ const (
 	// FlagUnifiedStorageClientOnBehalfOf
 	// Exchange unified storage calls on behalf of the calling user when the verified access token already carries them, instead of calling as the service
 	FlagUnifiedStorageClientOnBehalfOf = "unifiedStorageClient.onBehalfOf"
+
+	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
+	// Connect to hosted grafana databases from datasource API servers
+	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"
 )

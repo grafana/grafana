@@ -124,6 +124,7 @@ import (
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
+	_ "github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/connection/oauth"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	_ "github.com/grafana/grafana/apps/provisioning/pkg/repository"

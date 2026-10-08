@@ -1648,6 +1648,20 @@
     },
     {
       "metadata": {
+        "name": "datasources.apiServerConnectToHostedGrafanaDatabases",
+        "resourceVersion": "1791387177866",
+        "creationTimestamp": "2026-10-07T15:32:57Z"
+      },
+      "spec": {
+        "description": "Connect to hosted grafana databases from datasource API servers",
+        "stage": "experimental",
+        "codeowner": "@grafana/data-sources-plugins",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.apiserver.useNewAPIsForDatasourceResources",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-16T10:24:28Z"
