@@ -263,15 +263,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:            "provisioning.gitConventions",
-			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-			Stage:           FeatureStagePublicPreview,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true", // enabled by default
-			Generate:        Generate{Go: true, React: true},
-		},
-		{
 			Name:        "provisioning.userAttribution",
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,

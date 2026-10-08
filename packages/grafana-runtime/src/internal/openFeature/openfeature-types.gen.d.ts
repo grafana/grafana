@@ -19,7 +19,6 @@ declare module "@openfeature/core" {
     | "provisioningFolderMetadata"
     | "provisioningExport"
     | "provisioning.readmes"
-    | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
