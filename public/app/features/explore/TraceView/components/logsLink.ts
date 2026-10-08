@@ -110,8 +110,7 @@ export function getTraceToLogsQuery(
 ) {
   // Treat omitted customQuery + non-empty query as custom (provisioned V2); explicit false ignores leftover query text.
   const customQuery =
-    traceToLogsOptions.customQuery === true ||
-    (traceToLogsOptions.customQuery == null && Boolean(traceToLogsOptions.query))
+    traceToLogsOptions.customQuery || (traceToLogsOptions.customQuery == null && traceToLogsOptions.query)
       ? traceToLogsOptions.query
       : undefined;
   const tagsToUse =
