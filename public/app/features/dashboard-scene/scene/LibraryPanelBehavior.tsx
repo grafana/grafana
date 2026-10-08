@@ -12,6 +12,7 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Stack } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -148,7 +149,7 @@ export class LibraryPanelBehavior extends SceneObjectBase<LibraryPanelBehaviorSt
 
     const isPublicDashboard = dashboard.state.meta.publicDashboardEnabled === true;
     const isScriptedDashboard = dashboard.state.meta.fromScript === true;
-    return !(config.featureToggles.dashboardNewLayouts && !isPublicDashboard && !isScriptedDashboard);
+    return !(isDashboardNewLayoutsEnabled() && !isPublicDashboard && !isScriptedDashboard);
   }
 
   /**
