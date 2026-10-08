@@ -1132,6 +1132,11 @@ export interface FeatureToggles {
   */
   kubernetesUsersApi?: boolean;
   /**
+  * Enables read-only user APIs in the app platform
+  * @default false
+  */
+  kubernetesUsersReadApi?: boolean;
+  /**
   * Enables service account APIs in the app platform
   * @default false
   */

@@ -78,7 +78,7 @@ func (b *manifestBuilder) GetAuthorizer() authorizer.Authorizer {
 			if err != nil {
 				return authorizer.DecisionDeny, "valid user is required", err
 			}
-			decision, reason, err := b.accessChecker(ctx, user, b.pluginJSON.ID)
+			decision, reason, err := b.accessChecker(ctx, user, b.pluginID)
 			if decision != authorizer.DecisionAllow {
 				return decision, reason, err
 			}
