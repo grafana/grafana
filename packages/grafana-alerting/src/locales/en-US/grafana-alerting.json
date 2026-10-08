@@ -13,6 +13,15 @@
       "common-labels-count_one": "+{{count}} common labels",
       "common-labels-count_other": "+{{count}} common labels"
     },
+    "duration-field": {
+      "invalid": "Invalid duration format. Use a number followed by a time unit, for example 30s or 5m."
+    },
+    "group-by-field": {
+      "aria-label": "Group by",
+      "description": "Alerts are always grouped by grafana_folder and alertname, plus any additional labels you select. Select \"Disable (...)\" to send each alert as a separate notification.",
+      "disable-option": "Disable (...)",
+      "label": "Group by"
+    },
     "paused-badge": {
       "paused": "Paused"
     },

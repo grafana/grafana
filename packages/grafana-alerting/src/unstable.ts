@@ -37,6 +37,17 @@ export {
   isDefaultRoutingTree,
 } from './grafana/notificationPolicies/routingTree.utils';
 
+// Notification settings
+export { isValidPromDuration } from './grafana/notificationSettings/utils/promDuration';
+export {
+  DurationField,
+  type DurationFieldProps,
+} from './grafana/notificationSettings/components/DurationField/DurationField';
+export {
+  GroupByField,
+  type GroupByFieldProps,
+} from './grafana/notificationSettings/components/GroupByField/GroupByField';
+
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
 export { StateIcon } from './grafana/rules/components/state/StateIcon';
