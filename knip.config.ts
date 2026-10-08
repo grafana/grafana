@@ -53,8 +53,8 @@ const config: KnipConfig = {
     'packages/grafana-data/src/datetime/easytz.js',
     'packages/grafana-data/src/datetime/luxon_moment_compat/luxon.js',
   ],
-  // nx and webpack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
-  ignoreBinaries: ['jq', 'make', 'nx', 'shellcheck', 'webpack'],
+  // nx and rspack are devDependencies run by production scripts (e.g. `start`), so --production flags them as unlisted
+  ignoreBinaries: ['jq', 'make', 'nx', 'rspack', 'shellcheck'],
   tags: ['-lintignore'],
   workspaces: {
     '.': {
