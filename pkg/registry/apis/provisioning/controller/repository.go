@@ -842,6 +842,17 @@ func (rc *RepositoryController) determineSyncStatusOps(obj *provisioning.Reposit
 			"value": time.Now().UnixMilli(),
 		})
 	case healthStatus.Healthy:
+		if shouldResync &&
+			obj.Spec.Sync.Enabled &&
+			obj.Status.ObservedGeneration >= 1 &&
+			obj.Generation == obj.Status.ObservedGeneration &&
+			obj.Status.Sync.LastRef != "" {
+			patchOperations = append(patchOperations, map[string]interface{}{
+				"op":    "replace",
+				"path":  "/status/sync/finished",
+				"value": time.Now().UnixMilli(),
+			})
+		}
 		if hasUnhealthyMessage {
 			// FIXME: is this the clearest way to do this? Should we introduce another status or way of way of handling more
 			// specific errors?

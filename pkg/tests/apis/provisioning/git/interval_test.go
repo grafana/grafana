@@ -75,9 +75,10 @@ func TestIntegrationProvisioning_GitSyncIntervalNoop(t *testing.T) {
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	expected := original
-	expected.Finished = staleFinished
+	expected.Finished = refreshed.Finished
 	expected.LastChecked = refreshed.LastChecked
-	require.Equal(t, expected, refreshed, "a no-op check must preserve the previous sync job's status")
+	require.Greater(t, refreshed.Finished, staleFinished, "a no-op check must refresh status.sync.finished")
+	require.Equal(t, expected, refreshed, "a no-op check must preserve the previous sync job's status apart from refreshed timestamps")
 
 	helper.TriggerRepositoryReconciliation(t, repoName)
 	require.Never(t, func() bool {
