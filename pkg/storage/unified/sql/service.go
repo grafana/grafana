@@ -661,6 +661,9 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
 			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
 		}
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
+		}
 		srv.RegisterService(wrapped, handler)
 	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)

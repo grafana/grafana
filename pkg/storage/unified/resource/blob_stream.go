@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -102,6 +103,62 @@ func (s *server) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStrea
 	return stream.SendAndClose(rsp)
 }
 
+type blobDownloadTransferKey struct{}
+
+type blobDownloadTransfer struct {
+	tenant  string
+	release func()
+}
+
+// BlobStreamServerInterceptor bounds downloads before the generated handler receives the request.
+func BlobStreamServerInterceptor(resourceServer ResourceServer) grpc.StreamServerInterceptor {
+	s, ok := resourceServer.(*server)
+	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, next grpc.StreamHandler) error {
+		if !ok || info.FullMethod != resourcepb.BlobStoreStreaming_GetBlobStream_FullMethodName {
+			return next(srv, stream)
+		}
+		ctx, cancel := context.WithTimeout(stream.Context(), blobStreamTimeout)
+		defer cancel()
+		user, ok := claims.AuthInfoFrom(ctx)
+		if !ok || user == nil {
+			return status.Error(codes.Unauthenticated, "no user found in context")
+		}
+		release, err := s.acquireBlobTransfer(user.GetNamespace())
+		if err != nil {
+			return err
+		}
+		transfer := &blobDownloadTransfer{tenant: user.GetNamespace(), release: release}
+		defer func() { transfer.release() }()
+		ctx = context.WithValue(ctx, blobDownloadTransferKey{}, transfer)
+		return next(srv, &blobDownloadServerStream{ServerStream: stream, ctx: ctx})
+	}
+}
+
+type blobDownloadServerStream struct {
+	grpc.ServerStream
+	ctx context.Context
+}
+
+func (s *blobDownloadServerStream) Context() context.Context { return s.ctx }
+
+func (s *blobDownloadServerStream) RecvMsg(msg any) error {
+	if err := s.ctx.Err(); err != nil {
+		return status.FromContextError(err).Err()
+	}
+	// Returning from the RPC unblocks the pending receive on the underlying stream.
+	result := make(chan error, 1)
+	go func() { result <- s.ServerStream.RecvMsg(msg) }()
+	select {
+	case err := <-result:
+		if ctxErr := s.ctx.Err(); ctxErr != nil {
+			return status.FromContextError(ctxErr).Err()
+		}
+		return err
+	case <-s.ctx.Done():
+		return status.FromContextError(s.ctx.Err()).Err()
+	}
+}
+
 func (s *server) GetBlobStream(req *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
 	info, failure := s.resolveBlobGet(stream.Context(), req)
 	if failure != nil {
@@ -111,11 +168,19 @@ func (s *server) GetBlobStream(req *resourcepb.GetBlobRequest, stream resourcepb
 	if !ok {
 		return status.Error(codes.Unimplemented, "blob backend does not support streaming")
 	}
-	release, err := s.acquireBlobTransfer(req.Resource.Namespace)
-	if err != nil {
-		return err
+	transfer, intercepted := stream.Context().Value(blobDownloadTransferKey{}).(*blobDownloadTransfer)
+	if !intercepted || transfer.tenant != req.Resource.Namespace {
+		release, err := s.acquireBlobTransfer(req.Resource.Namespace)
+		if err != nil {
+			return err
+		}
+		if intercepted {
+			transfer.release()
+			transfer.tenant, transfer.release = req.Resource.Namespace, release
+		} else {
+			defer release()
+		}
 	}
-	defer release()
 	ctx, cancel := context.WithTimeout(stream.Context(), blobStreamTimeout)
 	defer cancel()
 	return backend.GetResourceBlobStream(ctx, req.Resource, info, func(contentType string) (io.Writer, error) {

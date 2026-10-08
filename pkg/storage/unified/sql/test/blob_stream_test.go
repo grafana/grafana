@@ -2,11 +2,15 @@ package test
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"errors"
 	"io"
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -30,6 +34,10 @@ func TestIntegrationBlobStreamingUsesExistingSQLTable(t *testing.T) {
 				}, bytes.NewReader(value))
 				require.NoError(t, err)
 				require.Equal(t, int64(len(value)), put.Size)
+				require.NotEmpty(t, put.Uid)
+				require.Equal(t, "application/octet-stream", put.MimeType)
+				hash := md5.Sum(value)
+				require.Equal(t, hex.EncodeToString(hash[:]), put.Hash)
 				defer func() {
 					require.NoError(t, env.kv.Delete(env.ctx, kv.BlobDataSection, blobKeyWithUID(key, put.Uid).String()))
 				}()
@@ -62,6 +70,21 @@ func TestIntegrationBlobStreamingRollsBackOnError(t *testing.T) {
 			_, err := writer.store.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{Resource: key}, &failingBlobReader{err: failure})
 			require.ErrorIs(t, err, failure)
 			require.Equal(t, before, env.keys(t, resourcePrefix(key)))
+		})
+	}
+}
+
+func TestIntegrationBlobStreamingMissingBlob(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	env := newKVBlobTestEnv(t)
+	key := env.newResource(t, "default")
+	for _, reader := range env.stores() {
+		t.Run(reader.name, func(t *testing.T) {
+			err := reader.store.(resource.StreamingBlobSupport).GetResourceBlobStream(env.ctx, key, &utils.BlobInfo{UID: "missing"}, func(string) (io.Writer, error) {
+				t.Fatal("opened missing blob")
+				return nil, nil
+			})
+			require.Equal(t, codes.NotFound, status.Code(err))
 		})
 	}
 }

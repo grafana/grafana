@@ -93,6 +93,83 @@ type contextStream struct {
 
 func (s contextStream) Context() context.Context { return s.ctx }
 
+type stalledGetBlobStream struct {
+	grpc.ServerStream
+	ctx     context.Context
+	started chan struct{}
+	unblock chan struct{}
+}
+
+func (s *stalledGetBlobStream) Context() context.Context { return s.ctx }
+func (s *stalledGetBlobStream) RecvMsg(any) error {
+	close(s.started)
+	<-s.unblock
+	return io.EOF
+}
+
+func TestGetBlobStreamDeadlineBeforeRequest(t *testing.T) {
+	s := &server{blobTransfers: newBlobTransfers()}
+	ctx, cancel := context.WithCancel(authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Namespace: "default"}))
+	defer cancel()
+	interceptor := BlobStreamServerInterceptor(s)
+	info := &grpc.StreamServerInfo{FullMethod: resourcepb.BlobStoreStreaming_GetBlobStream_FullMethodName}
+	handler := resourcepb.BlobStoreStreaming_ServiceDesc.Streams[1].Handler
+	newStream := func() *stalledGetBlobStream {
+		stream := &stalledGetBlobStream{ctx: ctx, started: make(chan struct{}), unblock: make(chan struct{})}
+		t.Cleanup(func() { close(stream.unblock) })
+		return stream
+	}
+	first, second := newStream(), newStream()
+	results := make(chan error, 2)
+	deadline := make(chan time.Time, 2)
+	run := func(stream *stalledGetBlobStream) {
+		results <- interceptor(s, stream, info, func(srv any, wrapped grpc.ServerStream) error {
+			d, ok := wrapped.Context().Deadline()
+			if !ok {
+				return status.Error(codes.Internal, "missing server deadline")
+			}
+			deadline <- d
+			return handler(srv, wrapped)
+		})
+	}
+	before := time.Now()
+	go run(first)
+	go run(second)
+	<-first.started
+	<-second.started
+	for range 2 {
+		d := <-deadline
+		require.WithinDuration(t, before.Add(blobStreamTimeout), d, time.Second)
+	}
+	third := newStream()
+	require.Equal(t, codes.ResourceExhausted, status.Code(interceptor(s, third, info, handler)))
+	select {
+	case <-third.started:
+		t.Fatal("received request without a transfer slot")
+	default:
+	}
+	cancel()
+	for range 2 {
+		require.Equal(t, codes.Canceled, status.Code(<-results))
+	}
+	s.blobTransfers.mu.Lock()
+	require.Empty(t, s.blobTransfers.active)
+	s.blobTransfers.mu.Unlock()
+}
+
+func TestGetBlobStreamInitialRequestTimeout(t *testing.T) {
+	s := &server{blobTransfers: newBlobTransfers()}
+	ctx, cancel := context.WithTimeout(authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{Namespace: "default"}), 100*time.Millisecond)
+	defer cancel()
+	stream := &stalledGetBlobStream{ctx: ctx, started: make(chan struct{}), unblock: make(chan struct{})}
+	defer close(stream.unblock)
+	err := BlobStreamServerInterceptor(s)(s, stream,
+		&grpc.StreamServerInfo{FullMethod: resourcepb.BlobStoreStreaming_GetBlobStream_FullMethodName},
+		resourcepb.BlobStoreStreaming_ServiceDesc.Streams[1].Handler)
+	require.Equal(t, codes.DeadlineExceeded, status.Code(err))
+	require.Empty(t, s.blobTransfers.active)
+}
+
 func TestBlobStreamLimits(t *testing.T) {
 	s := &server{blobTransfers: newBlobTransfers()}
 	release1, err := s.acquireBlobTransfer("tenant-a")
@@ -121,12 +198,12 @@ func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 	srv, ac, _ := newBlobAuthzTestServer(t, nil)
 	srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
 	listener := bufconn.Listen(1 << 20)
-	server := grpc.NewServer(grpc.StreamInterceptor(func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
+	server := grpc.NewServer(grpc.ChainStreamInterceptor(func(_ any, stream grpc.ServerStream, _ *grpc.StreamServerInfo, next grpc.StreamHandler) error {
 		ctx := authlib.WithAuthInfo(stream.Context(), &identity.StaticRequester{
 			Type: authlib.TypeUser, UserID: 1, UserUID: "u1", Namespace: "default",
 		})
 		return next(srv, contextStream{ServerStream: stream, ctx: ctx})
-	}))
+	}, BlobStreamServerInterceptor(srv)))
 	resourcepb.RegisterBlobStoreStreamingServer(server, srv)
 	go func() { _ = server.Serve(listener) }()
 	t.Cleanup(func() { server.Stop(); _ = listener.Close() })
@@ -172,6 +249,9 @@ func TestBlobStreamRemoteTransportAndAuthorization(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, created.Error)
 
+	release, err := srv.acquireBlobTransfer("default")
+	require.NoError(t, err)
+	defer release()
 	get, err := client.GetBlobStream(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: rsp.Uid})
 	require.NoError(t, err)
 	first, err := get.Recv()
