@@ -21,15 +21,17 @@ const (
 // SaveBlobStream commits each staging chunk before receiving more data. Only
 // publishing the complete legacy blob needs a write transaction, so old servers
 // can still read the result without knowing about the staging table.
+// SQL formatting uses only constant identifiers and dialect syntax; values stay bound.
 func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType string, value io.Reader) (size int64, digest string, err error) {
 	p, q := k.dialect.Placeholder, k.dialect.QuoteIdent
 	now := time.Now().UTC()
 	// Upload RPCs expire after two minutes; this also reclaims chunks left by a crashed process.
-	if _, err := k.db.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s WHERE %s < %s", q(blobUploadChunkTable), q("created"), p(1)), now.Add(-blobUploadOrphanAge)); err != nil {
+	deleteExpired := fmt.Sprintf("DELETE FROM %s WHERE %s < %s", q(blobUploadChunkTable), q("created"), p(1)) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
+	if _, err := k.db.ExecContext(ctx, deleteExpired, now.Add(-blobUploadOrphanAge)); err != nil {
 		return 0, "", err
 	}
 	uploadID := uuid.NewV4().String()
-	deleteChunks := fmt.Sprintf("DELETE FROM %s WHERE %s = %s", q(blobUploadChunkTable), q("upload_id"), p(1))
+	deleteChunks := fmt.Sprintf("DELETE FROM %s WHERE %s = %s", q(blobUploadChunkTable), q("upload_id"), p(1)) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
 	published := false
 	defer func() {
 		if published {
@@ -42,7 +44,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 			err = errors.Join(err, fmt.Errorf("clean up blob upload: %w", cleanupErr))
 		}
 	}()
-	insertChunk := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", q(blobUploadChunkTable),
+	insertChunk := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", q(blobUploadChunkTable), // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
 		joinQuoted(q, []string{"upload_id", "chunk_index", "created", "value"}), placeholders(p, 4))
 	buffer := make([]byte, 64<<10)
 	h := md5.New() // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
@@ -84,7 +86,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 	}
 	defer func() { _ = tx.Rollback() }()
 	cols := []string{"uuid", "created", "group", "resource", "namespace", "name", "value", "hash", "content_type"}
-	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", q(resourceBlobTable), joinQuoted(q, cols), placeholders(p, len(cols)))
+	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", q(resourceBlobTable), joinQuoted(q, cols), placeholders(p, len(cols))) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
 	if _, err := tx.ExecContext(ctx, query, key.UID, now, key.Group, key.Resource, key.Namespace, key.Name, body, digest, contentType); err != nil {
 		return 0, "", err
 	}
@@ -100,7 +102,8 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 
 func (k *SqlKV) assembleBlobUpload(ctx context.Context, uploadID string, size int64, chunks int) ([]byte, error) {
 	p, q := k.dialect.Placeholder, k.dialect.QuoteIdent
-	query := fmt.Sprintf("SELECT %s, %s FROM %s WHERE %s = %s ORDER BY %s", q("chunk_index"), q("value"), q(blobUploadChunkTable), q("upload_id"), p(1), q("chunk_index"))
+	// Only constant identifiers and dialect syntax are formatted; uploadID remains a bound value.
+	query := fmt.Sprintf("SELECT %s, %s FROM %s WHERE %s = %s ORDER BY %s", q("chunk_index"), q("value"), q(blobUploadChunkTable), q("upload_id"), p(1), q("chunk_index")) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
 	rows, err := k.db.QueryContext(ctx, query, uploadID)
 	if err != nil {
 		return nil, err
