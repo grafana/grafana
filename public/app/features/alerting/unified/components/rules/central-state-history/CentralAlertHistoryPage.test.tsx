@@ -74,6 +74,14 @@ describe('CentralAlertHistoryPage', () => {
   );
 
   describe('when notification history is disabled', () => {
+    beforeEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = false;
+    });
+
+    afterEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
+    });
+
     it('should not render tabs', () => {
       renderHistoryPage();
 
@@ -103,7 +111,7 @@ describe('CentralAlertHistoryPage', () => {
     });
 
     afterEach(() => {
-      config.unifiedAlerting.notificationHistoryEnabled = false;
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
     });
 
     it('keeps notifications accessible when alert event history is unavailable', async () => {
