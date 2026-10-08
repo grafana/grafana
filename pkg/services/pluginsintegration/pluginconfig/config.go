@@ -50,6 +50,10 @@ type PluginInstanceCfg struct {
 	Tracing config.Tracing
 
 	PluginSettings config.PluginSettings
+	// DefaultMemoryLimit is the GOMEMLIMIT of every plugin process without a memory_limit of its own.
+	DefaultMemoryLimit string
+	// ForwardGoRuntimeEnvVars passes GOMEMLIMIT and GOGC from the host process to every plugin process.
+	ForwardGoRuntimeEnvVars bool
 	// DevMode is set when Grafana runs with app_mode = development.
 	DevMode bool
 	// LocalPluginTokens is set when neither a plugin v3 token exchange nor real
@@ -121,6 +125,8 @@ func ProvidePluginInstanceConfig(cfg *setting.Cfg, settingProvider setting.Provi
 		Features:                            features,
 		Tracing:                             tracingCfg,
 		PluginSettings:                      extractPluginSettings(settingProvider),
+		DefaultMemoryLimit:                  cfg.PluginDefaultMemoryLimit,
+		ForwardGoRuntimeEnvVars:             cfg.ForwardGoRuntimeEnvVars,
 		DevMode:                             cfg.Env == setting.Dev,
 		LocalPluginTokens:                   pluginAuth.LocalTokens(),
 		LocalAPIURL:                         pluginAuth.LocalAPIURL(),

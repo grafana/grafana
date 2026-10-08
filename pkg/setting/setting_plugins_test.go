@@ -478,3 +478,74 @@ func Test_migrateInstallPluginsToPreinstallPluginsSync(t *testing.T) {
 		})
 	}
 }
+
+func Test_readPluginSettings_memoryLimits(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		ini          string
+		wantErr      string
+		wantDefault  string
+		wantForward  bool
+		wantSettings map[string]string
+	}{
+		{
+			name: "defaults to no limit and no forwarding",
+		},
+		{
+			name: "parses the plugins section",
+			ini: `
+[plugins]
+forward_go_runtime_env_vars = true
+default_memory_limit = 2GiB
+`,
+			wantDefault: "2GiB",
+			wantForward: true,
+		},
+		{
+			name: "keeps a valid plugin limit in the plugin settings",
+			ini: `
+[plugin.test]
+memory_limit = 512MiB
+`,
+			wantSettings: map[string]string{"memory_limit": "512MiB"},
+		},
+		{
+			name: "rejects a default limit the plugin process would not start with",
+			ini: `
+[plugins]
+default_memory_limit = 2GB
+`,
+			wantErr: `[plugins] default_memory_limit: invalid memory limit "2GB"`,
+		},
+		{
+			name: "rejects a plugin limit the plugin process would not start with",
+			ini: `
+[plugin.test]
+memory_limit = 0
+`,
+			wantErr: `[plugin.test] memory_limit: invalid memory limit "0"`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg, err := NewCfgFromBytes([]byte(tc.ini))
+			if tc.wantErr != "" {
+				require.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			require.Equal(t, tc.wantDefault, cfg.PluginDefaultMemoryLimit)
+			require.Equal(t, tc.wantForward, cfg.ForwardGoRuntimeEnvVars)
+			require.Equal(t, tc.wantSettings, cfg.PluginSettings["test"])
+		})
+	}
+}
+
+func Test_readPluginSettings_memoryLimitEnvironmentOverrides(t *testing.T) {
+	t.Setenv("GF_PLUGINS_DEFAULT_MEMORY_LIMIT", "2GiB")
+	t.Setenv("GF_PLUGINS_FORWARD_GO_RUNTIME_ENV_VARS", "true")
+
+	cfg := NewCfg()
+	require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../"}))
+	require.Equal(t, "2GiB", cfg.PluginDefaultMemoryLimit)
+	require.True(t, cfg.ForwardGoRuntimeEnvVars)
+}

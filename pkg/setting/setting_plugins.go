@@ -1,6 +1,7 @@
 package setting
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
@@ -155,6 +156,11 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginsAllowUnsigned = util.SplitString(pluginsSection.Key("allow_loading_unsigned_plugins").MustString(""))
 	cfg.DisablePlugins = util.SplitString(pluginsSection.Key("disable_plugins").MustString(""))
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
+	cfg.ForwardGoRuntimeEnvVars = pluginsSection.Key("forward_go_runtime_env_vars").MustBool(false)
+	cfg.PluginDefaultMemoryLimit = pluginsSection.Key("default_memory_limit").MustString("")
+	if err := validatePluginMemoryLimits(cfg.PluginDefaultMemoryLimit, cfg.PluginSettings); err != nil {
+		return err
+	}
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
 		rawInstallPluginsAsync := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
@@ -220,5 +226,23 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.PluginRestrictedAPIsAllowList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_allowlist")
 	cfg.PluginRestrictedAPIsBlockList = readPluginAPIRestrictionsSection(iniFile, "plugins.restricted_apis_blocklist")
 
+	return nil
+}
+
+func validatePluginMemoryLimits(defaultLimit string, pluginSettings config.PluginSettings) error {
+	if defaultLimit != "" {
+		if err := config.ValidateMemoryLimit(defaultLimit); err != nil {
+			return fmt.Errorf("[plugins] default_memory_limit: %w", err)
+		}
+	}
+	for pluginID := range pluginSettings {
+		limit := pluginSettings.MemoryLimit(pluginID)
+		if limit == "" {
+			continue
+		}
+		if err := config.ValidateMemoryLimit(limit); err != nil {
+			return fmt.Errorf("[plugin.%s] %s: %w", pluginID, config.MemoryLimitKey, err)
+		}
+	}
 	return nil
 }
