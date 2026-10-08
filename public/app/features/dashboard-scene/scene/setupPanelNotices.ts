@@ -1,21 +1,21 @@
 import {
-  getPanelDataDiagnostics,
-  PanelDiagnosticsStore,
+  getPanelDataStatusItems,
+  PanelStatusStore,
   type PanelData,
   type DataSourceApi,
-  type PanelDiagnosticActionResolver,
+  type PanelStatusActionResolver,
 } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { sceneGraph, type SceneDataProvider, type VizPanel } from '@grafana/scenes';
 import type { PanelContext } from '@grafana/ui';
 
 /** Attaches runtime state to the cached context, never to serialized panel state. */
-export function setupPanelDiagnostics(panel: VizPanel, context: PanelContext) {
-  const store = new PanelDiagnosticsStore();
-  context.diagnostics = store;
+export function setupPanelNotices(panel: VizPanel, context: PanelContext) {
+  const store = new PanelStatusStore();
+  context.notices = store;
   let users = 0;
   let disconnect: (() => void) | undefined;
-  context.activateDiagnostics = () => {
+  context.activateNotices = () => {
     if (users++ === 0) {
       disconnect = connect();
     }
@@ -46,14 +46,14 @@ export function setupPanelDiagnostics(panel: VizPanel, context: PanelContext) {
         datasources.clear();
         request = data?.request;
       }
-      const entries = getPanelDataDiagnostics(data, panel.state._pluginLoadError);
-      const resolver: PanelDiagnosticActionResolver = (entry) => {
+      const entries = getPanelDataStatusItems(data, panel.state._pluginLoadError);
+      const resolver: PanelStatusActionResolver = (entry) => {
         if (entry.datasourceUid && !datasources.has(entry.datasourceUid)) {
           // Do not briefly offer Assistant before the datasource's opt-out policy has loaded.
           return { assistant: 'hidden' };
         }
         const datasource = entry.datasourceUid ? datasources.get(entry.datasourceUid) : undefined;
-        return datasource?.getPanelDiagnosticActions?.(entry, {
+        return datasource?.getPanelStatusActions?.(entry, {
           data,
           query: data?.request?.targets.find((query) => query.refId === entry.refId),
         });

@@ -4,7 +4,7 @@ import { type CSSProperties, useMemo, useState, type ReactNode } from 'react';
 import { useInterval, useToggle } from 'react-use';
 import { action } from 'storybook/actions';
 
-import { EventBusSrv, LoadingState, PanelDiagnosticsStore, type PanelDiagnostic } from '@grafana/data';
+import { EventBusSrv, LoadingState, PanelStatusStore, type PanelNotice } from '@grafana/data';
 
 import { DashboardStoryCanvas } from '../../utils/storybook/DashboardStoryCanvas';
 import { Button } from '../Button/Button';
@@ -18,14 +18,14 @@ import { Menu } from '../Menu/Menu';
 import { type PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
 import { PanelContextProvider, usePanelContext } from './PanelContext';
-import { PanelDiagnosticActions } from './PanelDiagnosticActions';
-import { usePanelDiagnostics, usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
+import { PanelStatusActions } from './PanelStatusActions';
+import { usePanelNotices, usePanelStatusSnapshot } from './usePanelNotices';
 
 import { PanelChrome } from '.';
 
-function DiagnosticDemo() {
+function NoticeDemo() {
   const [resolved, setResolved] = useState(false);
-  const items = useMemo<PanelDiagnostic[]>(
+  const items = useMemo<PanelNotice[]>(
     () =>
       resolved
         ? []
@@ -42,40 +42,40 @@ function DiagnosticDemo() {
           ],
     [resolved]
   );
-  usePanelDiagnostics(items);
-  return <div>Open the panel status, then Inspect to see diagnostic actions.</div>;
+  usePanelNotices(items);
+  return <div>Open the panel status, then Inspect to see status actions.</div>;
 }
 
-function DiagnosticInspectorDemo() {
-  const { diagnostics } = usePanelContext();
-  const { items } = usePanelDiagnosticsSnapshot(diagnostics);
+function NoticeInspectorDemo() {
+  const { notices } = usePanelContext();
+  const { items } = usePanelStatusSnapshot(notices);
   return (
-    <section aria-label="Diagnostic inspector">
+    <section aria-label="Status inspector">
       {items.map((item) => (
         <div key={item.id}>
           <p>{item.text}</p>
-          <PanelDiagnosticActions diagnostic={item} />
+          <PanelStatusActions statusItem={item} />
         </div>
       ))}
     </section>
   );
 }
 
-export const RuntimeDiagnostics: StoryFn<typeof PanelChrome> = () => {
+export const PanelNotices: StoryFn<typeof PanelChrome> = () => {
   const [showInspector, setShowInspector] = useState(false);
   const [context] = useState(() => ({
-    diagnostics: new PanelDiagnosticsStore(),
+    notices: new PanelStatusStore(),
     eventBus: new EventBusSrv(),
     eventsScope: 'story',
-    onInvestigateDiagnostic: action('investigate-diagnostic'),
+    onInvestigateStatusItem: action('investigate-status-item'),
     onOpenInspector: () => setShowInspector(true),
   }));
   return (
     <PanelContextProvider value={context}>
-      <PanelChrome width={500} height={200} title="Diagnostics and actions">
-        {() => <DiagnosticDemo />}
+      <PanelChrome width={500} height={200} title="Notices and actions">
+        {() => <NoticeDemo />}
       </PanelChrome>
-      {showInspector && <DiagnosticInspectorDemo />}
+      {showInspector && <NoticeInspectorDemo />}
     </PanelContextProvider>
   );
 };

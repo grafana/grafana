@@ -14,7 +14,7 @@ import { Toggletip } from '../Toggletip/Toggletip';
 
 import { usePanelContext } from './PanelContext';
 import { type PanelStatusItem, type PanelStatusSeverity } from './types';
-import { usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
+import { usePanelStatusSnapshot } from './usePanelNotices';
 
 export interface Props {
   /** Single status message (legacy). Used when `items` is not provided. */
@@ -44,11 +44,11 @@ function getSeverityIcon(severity: PanelStatusSeverity): IconName {
 }
 
 export function PanelStatus({ message, items, onClick, ariaLabel = 'status' }: Props) {
-  const { onOpenInspector, diagnostics } = usePanelContext();
-  const snapshot = usePanelDiagnosticsSnapshot(diagnostics);
-  const diagnosticItems = diagnostics ? snapshot.items : undefined;
-  if (diagnosticItems) {
-    items = [...diagnosticItems];
+  const { onOpenInspector, notices } = usePanelContext();
+  const snapshot = usePanelStatusSnapshot(notices);
+  const panelStatusItems = notices ? snapshot.items : undefined;
+  if (panelStatusItems) {
+    items = [...panelStatusItems];
   }
   const canInspect = Boolean(onClick) || Boolean(onOpenInspector);
 

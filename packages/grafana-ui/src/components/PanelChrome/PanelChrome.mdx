@@ -17,21 +17,21 @@ import { ExampleFrame } from '../../utils/storybook/ExampleFrame';
 
 Component used for rendering content wrapped in the same style as Grafana panels.
 
-## Runtime diagnostics (alpha)
+## Panel notices (alpha)
 
-Panel plugins can publish errors, warnings, and informational notices with `usePanelDiagnostics`.
+Panel plugins can publish errors, warnings, and informational notices with `usePanelNotices`.
 The hook owns a source for the component's lifetime and removes its entries on unmount.
-Memoize the items and resolver to avoid republishing unchanged diagnostics.
-The hook returns `false` when the host does not support diagnostics; retain an inline fallback in that case.
+Memoize the items and resolver to avoid republishing unchanged notices.
+The hook returns `false` when the host does not support notices; retain an inline fallback in that case.
 In dashboards, this capability requires `grafana.newPanelQueryErrorsUI`.
 
 ```tsx
 import { useMemo } from 'react';
-import { type PanelDiagnostic } from '@grafana/data';
-import { usePanelDiagnostics } from '@grafana/ui';
+import { type PanelNotice } from '@grafana/data';
+import { usePanelNotices } from '@grafana/ui';
 
 function ConfigurationNotice({ valid, fix }: { valid: boolean; fix: () => void }) {
-  const diagnostics = useMemo<PanelDiagnostic[]>(
+  const notices = useMemo<PanelNotice[]>(
     () =>
       valid
         ? []
@@ -46,35 +46,38 @@ function ConfigurationNotice({ valid, fix }: { valid: boolean; fix: () => void }
           ],
     [valid, fix]
   );
-  const supported = usePanelDiagnostics(diagnostics);
+  const supported = usePanelNotices(notices);
   return !supported && !valid ? <div>Choose a numeric field.</div> : null;
 }
 ```
 
-For imperative producers, `usePanelContext().diagnostics?.createSource()` returns `set`,
+For imperative producers, `usePanelContext().notices?.createSource()` returns `set`,
 `setActionResolver`, and `dispose`. `set` replaces only that source's entries; `set([])` clears them.
 Dispose the source when its owner stops using the panel. IDs must be unique within a source.
 Sources and callbacks are runtime state and must never be saved into dashboard JSON.
+Panel-owned `PanelNotice` entries become `PanelStatusItem` entries with `origin: 'panel'`.
+The shared status snapshot also includes query errors, query notices, and plugin loading errors,
+with their original provenance preserved.
 
-Pass an optional second argument to `usePanelDiagnostics` to decorate incoming diagnostics, or
-use `source.setActionResolver`. Resolvers receive the normalized diagnostic, including origin,
+Pass an optional second argument to `usePanelNotices` to decorate incoming status items, or
+use `source.setActionResolver`. Resolvers receive the normalized status item, including origin,
 query `refId`, datasource UID, and original error/notice when available. They return actions and
-an optional Assistant policy. Datasources can implement `DataSourceApi.getPanelDiagnosticActions`
-to decorate their own query diagnostics; its second argument contains current panel data and query.
+an optional Assistant policy. Datasources can implement `DataSourceApi.getPanelStatusActions`
+to decorate their own query errors and notices; its second argument contains current panel data and query.
 Unattributed errors are still available to host/panel resolvers.
 
-Actions are combined in order: diagnostic, datasource, then registered resolvers. Action IDs are
-namespaced by contributor. Any `assistant: 'hidden'` suppresses that diagnostic's Assistant CTA;
+Actions are combined in order: status item, datasource, then registered resolvers. Action IDs are
+namespaced by contributor. Any `assistant: 'hidden'` suppresses that status item's Assistant CTA;
 custom actions otherwise coexist with Assistant. Actions appear only in the inspector, as secondary
-buttons; the status popover lists diagnostics and links to Inspect. Callbacks may return promises.
+buttons; the status popover lists errors and notices and links to Inspect. Callbacks may return promises.
 Pending state is shared between inspector views, duplicate execution is blocked, and failures appear inline.
 
-Standalone hosts can provide a `PanelDiagnosticsStore` through `PanelContextProvider` around
-`PanelChrome`. Use `setExternal(getPanelDataDiagnostics(data, pluginLoadError))` as data changes,
-outside rendering. Supply `onInvestigateDiagnostic(id)` and `onOpenInspector` if supported.
+Standalone hosts can provide a `PanelStatusStore` through `PanelContextProvider` around
+`PanelChrome`. Use `setExternal(getPanelDataStatusItems(data, pluginLoadError))` as data changes,
+outside rendering. Supply `onInvestigateStatusItem(id)` and `onOpenInspector` if supported.
 Call `clear()` when the panel is disposed or replaced. Stores must not be shared across panels.
 
-<Canvas of={PanelChromeStories.RuntimeDiagnostics} />
+<Canvas of={PanelChromeStories.PanelNotices} />
 
 ### Basic Usage: Title, Description and Content
 

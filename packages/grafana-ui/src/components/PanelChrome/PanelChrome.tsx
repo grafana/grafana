@@ -24,7 +24,7 @@ import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
 import { type PanelStatusItem } from './types';
-import { usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
+import { usePanelStatusSnapshot } from './usePanelNotices';
 
 /**
  * @internal
@@ -178,11 +178,11 @@ export function PanelChrome({
   subtitle,
   minHeight,
 }: PanelChromeProps) {
-  const { diagnostics, activateDiagnostics } = usePanelContext();
-  useEffect(() => activateDiagnostics?.(), [activateDiagnostics]);
-  const diagnosticSnapshot = usePanelDiagnosticsSnapshot(diagnostics);
-  if (diagnostics) {
-    statusItems = [...diagnosticSnapshot.items];
+  const { notices, activateNotices } = usePanelContext();
+  useEffect(() => activateNotices?.(), [activateNotices]);
+  const statusSnapshot = usePanelStatusSnapshot(notices);
+  if (notices) {
+    statusItems = [...statusSnapshot.items];
     statusMessage = undefined;
   }
   const theme = useTheme2();

@@ -5,13 +5,13 @@ import {
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
-  type PanelDiagnosticEntry,
+  type PanelStatusItem,
 } from '@grafana/data';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneDataNode, VizPanel } from '@grafana/scenes';
 import type { PanelContext } from '@grafana/ui';
 
-import { setupPanelDiagnostics } from './panelDiagnostics';
+import { setupPanelNotices } from './setupPanelNotices';
 
 jest.mock('@grafana/runtime/unstable', () => ({
   ...jest.requireActual('@grafana/runtime/unstable'),
@@ -41,8 +41,8 @@ function response(message: string): PanelData {
 class ActionDatasource extends DataSourceApi {
   query = jest.fn();
   testDatasource = jest.fn();
-  getPanelDiagnosticActions = jest.fn((diagnostic: Readonly<PanelDiagnosticEntry>) => ({
-    actions: [{ id: 'retry', label: `Retry ${diagnostic.text}`, onClick: jest.fn() }],
+  getPanelStatusActions = jest.fn((statusItem: Readonly<PanelStatusItem>) => ({
+    actions: [{ id: 'retry', label: `Retry ${statusItem.text}`, onClick: jest.fn() }],
   }));
 }
 
@@ -50,15 +50,15 @@ function setup() {
   const data = new SceneDataNode({ data: response('First error') });
   const panel = new VizPanel({ $data: data, pluginId: 'table' });
   const context: PanelContext = { eventsScope: 'panel', eventBus: new EventBusSrv() };
-  setupPanelDiagnostics(panel, context);
-  return { data, panel, context, store: context.diagnostics! };
+  setupPanelNotices(panel, context);
+  return { data, panel, context, store: context.notices! };
 }
 
-it('refreshes external diagnostics without deleting plugin notices and shares surface lifetimes', () => {
+it('refreshes external notices without deleting plugin notices and shares surface lifetimes', () => {
   jest.mocked(getDataSourceInstance).mockRejectedValue(new Error('Datasource unavailable'));
   const { data, panel, context, store } = setup();
-  const closePopover = context.activateDiagnostics!();
-  const closeInspector = context.activateDiagnostics!();
+  const closePopover = context.activateNotices!();
+  const closeInspector = context.activateNotices!();
   const source = store.createSource();
   source.set([{ id: 'field', severity: 'warning', text: 'Select field' }]);
   data.setState({ data: response('Second error') });
@@ -71,7 +71,7 @@ it('refreshes external diagnostics without deleting plugin notices and shares su
   source.set([{ id: 'field', severity: 'warning', text: 'Stale plugin' }]);
   closeInspector();
   expect(store.getSnapshot().items).toEqual([]);
-  const closeReopened = context.activateDiagnostics!();
+  const closeReopened = context.activateNotices!();
   expect(store.getSnapshot().items.map(({ text }) => text)).toEqual(['Third error']);
   closeReopened();
 });
@@ -102,7 +102,7 @@ it('ignores stale datasource loads and supplies current query context to action 
       })
     );
   const { data, context, store } = setup();
-  const close = context.activateDiagnostics!();
+  const close = context.activateNotices!();
   const current = response('Current error');
   data.setState({ data: current });
   resolveOld(datasource);
@@ -111,7 +111,7 @@ it('ignores stale datasource loads and supplies current query context to action 
   resolveCurrent(datasource);
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry Current error']);
-  expect(datasource.getPanelDiagnosticActions).toHaveBeenCalledWith(
+  expect(datasource.getPanelStatusActions).toHaveBeenCalledWith(
     expect.objectContaining({ text: 'Current error', datasourceUid: 'metrics', refId: 'A' }),
     { data: current, query: current.request!.targets[0] }
   );
@@ -129,27 +129,27 @@ it('ignores stale datasource loads and supplies current query context to action 
   close();
 });
 
-it('gives cloned panels fresh runtime diagnostic state', () => {
-  const panel = new VizPanel({ extendPanelContext: setupPanelDiagnostics });
+it('gives cloned panels fresh runtime status state', () => {
+  const panel = new VizPanel({ extendPanelContext: setupPanelNotices });
   panel
     .getPanelContext()
-    .diagnostics!.createSource()
+    .notices!.createSource()
     .set([{ id: 'a', severity: 'warning', text: 'Original panel' }]);
   const clone = panel.clone();
   clone
     .getPanelContext()
-    .diagnostics!.createSource()
+    .notices!.createSource()
     .set([{ id: 'a', severity: 'info', text: 'Cloned panel' }]);
   expect(
     panel
       .getPanelContext()
-      .diagnostics!.getSnapshot()
+      .notices!.getSnapshot()
       .items.map(({ text }) => text)
   ).toEqual(['Original panel']);
   expect(
     clone
       .getPanelContext()
-      .diagnostics!.getSnapshot()
+      .notices!.getSnapshot()
       .items.map(({ text }) => text)
   ).toEqual(['Cloned panel']);
 });

@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DataSourceApi, EventBusSrv, getDefaultTimeRange, LoadingState, PanelDiagnosticsStore } from '@grafana/data';
+import { DataSourceApi, EventBusSrv, getDefaultTimeRange, LoadingState, PanelStatusStore } from '@grafana/data';
 import { SceneDataNode, VizPanel } from '@grafana/scenes';
 import type { PanelContext } from '@grafana/ui';
 
@@ -13,8 +13,8 @@ class CustomDatasource extends DataSourceApi {
   components = { ErrorsAndNoticesInspector: () => <div>Datasource details</div> };
 }
 
-it('shows plugin-only diagnostics and callback actions alongside a custom inspector, then updates live', async () => {
-  const store = new PanelDiagnosticsStore();
+it('shows plugin-only notices and callback actions alongside a custom inspector, then updates live', async () => {
+  const store = new PanelStatusStore();
   const source = store.createSource();
   const onClick = jest.fn();
   source.set([
@@ -25,12 +25,12 @@ it('shows plugin-only diagnostics and callback actions alongside a custom inspec
       actions: [{ id: 'choose', label: 'Choose field', onClick }],
     },
   ]);
-  const onInvestigateDiagnostic = jest.fn();
+  const onInvestigateStatusItem = jest.fn();
   const context: PanelContext = {
-    diagnostics: store,
+    notices: store,
     eventsScope: 'panel',
     eventBus: new EventBusSrv(),
-    onInvestigateDiagnostic,
+    onInvestigateStatusItem,
   };
   const panel = new VizPanel({
     $data: new SceneDataNode({ data: { series: [], state: LoadingState.Done, timeRange: getDefaultTimeRange() } }),
@@ -53,11 +53,11 @@ it('shows plugin-only diagnostics and callback actions alongside a custom inspec
   await userEvent.click(screen.getByRole('button', { name: 'Choose field' }));
   expect(onClick).toHaveBeenCalledTimes(1);
   await userEvent.click(screen.getByRole('button', { name: 'Explain with Assistant' }));
-  expect(onInvestigateDiagnostic).toHaveBeenCalledWith(store.getSnapshot().items[0].id);
+  expect(onInvestigateStatusItem).toHaveBeenCalledWith(store.getSnapshot().items[0].id);
   act(() => source.set([{ id: 'field', severity: 'error', text: 'Field removed' }]));
   expect(screen.getByText('Field removed')).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Fix with Assistant' }));
-  expect(onInvestigateDiagnostic).toHaveBeenCalledTimes(2);
+  expect(onInvestigateStatusItem).toHaveBeenCalledTimes(2);
   expect(screen.queryByText('Choose a numeric field')).not.toBeInTheDocument();
   act(() => source.set([]));
   expect(screen.getByText('No errors or notices for this panel.')).toBeVisible();

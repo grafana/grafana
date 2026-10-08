@@ -10,7 +10,7 @@ import {
   type SceneObjectRef,
   type VizPanel,
 } from '@grafana/scenes';
-import { PanelContextProvider, usePanelDiagnosticsSnapshot } from '@grafana/ui';
+import { PanelContextProvider, usePanelStatusSnapshot } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { StandardErrorsAndNoticesInspector } from './StandardErrorsAndNoticesInspector';
@@ -38,17 +38,17 @@ function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<Inspe
   const { panelRef, dataSource } = model.useState();
   const panel = panelRef.resolve();
   const context = panel.getPanelContext();
-  const { activateDiagnostics } = context;
-  useEffect(() => activateDiagnostics?.(), [activateDiagnostics]);
-  const snapshot = usePanelDiagnosticsSnapshot(context.diagnostics);
+  const { activateNotices } = context;
+  useEffect(() => activateNotices?.(), [activateNotices]);
+  const snapshot = usePanelStatusSnapshot(context.notices);
   const { data: panelData } = sceneGraph.getData(panel).useState();
   const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
 
   const CustomInspector = dataSource?.components?.ErrorsAndNoticesInspector;
-  if (context.diagnostics) {
+  if (context.notices) {
     return (
       <PanelContextProvider value={context}>
-        <StandardErrorsAndNoticesInspector diagnostics={snapshot.items} />
+        <StandardErrorsAndNoticesInspector statusItems={snapshot.items} />
         {CustomInspector && <CustomInspector datasource={dataSource} data={panelData?.series ?? []} errors={errors} />}
       </PanelContextProvider>
     );

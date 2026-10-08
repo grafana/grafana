@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement } from 'react';
 
-import { EventBusSrv, PanelDiagnosticsStore } from '@grafana/data';
+import { EventBusSrv, PanelStatusStore } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { type PanelContext, PanelContextProvider } from './PanelContext';
@@ -172,9 +172,9 @@ describe('PanelStatus', () => {
       expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
     });
 
-    it('shows runtime diagnostics and Inspect navigation without custom or Assistant actions', async () => {
-      const diagnostics = new PanelDiagnosticsStore();
-      diagnostics.createSource().set([
+    it('shows runtime notices and Inspect navigation without custom or Assistant actions', async () => {
+      const notices = new PanelStatusStore();
+      notices.createSource().set([
         {
           id: 'error',
           severity: 'error',
@@ -185,9 +185,9 @@ describe('PanelStatus', () => {
       ]);
       const onOpenInspector = jest.fn();
       renderWithPanelContext(<PanelStatus />, {
-        diagnostics,
+        notices,
         onOpenInspector,
-        onInvestigateDiagnostic: jest.fn(),
+        onInvestigateStatusItem: jest.fn(),
         onInvestigateErrors: jest.fn(),
       });
 

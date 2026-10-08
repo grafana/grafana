@@ -2,23 +2,23 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 
-import { createTheme, EventBusSrv, PanelDiagnosticsStore, ThemeContext, type PanelDiagnostic } from '@grafana/data';
+import { createTheme, EventBusSrv, PanelStatusStore, ThemeContext, type PanelNotice } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelChrome } from './PanelChrome';
 import { PanelContextProvider } from './PanelContext';
-import { PanelDiagnosticActions } from './PanelDiagnosticActions';
-import { usePanelDiagnostics } from './usePanelDiagnostics';
+import { PanelStatusActions } from './PanelStatusActions';
+import { usePanelNotices } from './usePanelNotices';
 
-function Reporter({ items }: { items: readonly PanelDiagnostic[] }) {
-  usePanelDiagnostics(items);
+function Reporter({ items }: { items: readonly PanelNotice[] }) {
+  usePanelNotices(items);
   return <div>Visualization</div>;
 }
 
-it('renders custom and Assistant actions as solid secondary buttons', () => {
+it('renders normal-sized solid secondary actions separated from the status message', () => {
   const theme = createTheme();
-  const diagnostics = new PanelDiagnosticsStore();
-  diagnostics.createSource().set([
+  const notices = new PanelStatusStore();
+  notices.createSource().set([
     {
       id: 'field',
       severity: 'error',
@@ -26,26 +26,28 @@ it('renders custom and Assistant actions as solid secondary buttons', () => {
       actions: [{ id: 'choose', label: 'Choose field', onClick: jest.fn() }],
     },
   ]);
-  render(
+  const { container } = render(
     <ThemeContext.Provider value={theme}>
       <PanelContextProvider
-        value={{ diagnostics, eventBus: new EventBusSrv(), eventsScope: 'panel', onInvestigateDiagnostic: jest.fn() }}
+        value={{ notices, eventBus: new EventBusSrv(), eventsScope: 'panel', onInvestigateStatusItem: jest.fn() }}
       >
-        <PanelDiagnosticActions diagnostic={diagnostics.getSnapshot().items[0]} />
+        <PanelStatusActions statusItem={notices.getSnapshot().items[0]} />
       </PanelContextProvider>
     </ThemeContext.Provider>
   );
   for (const name of ['Choose field', 'Fix with Assistant']) {
     expect(screen.getByRole('button', { name })).toHaveStyle({
       border: `1px solid ${theme.colors.secondary.subtleBorder}`,
+      height: '32px',
     });
   }
+  expect(container.firstChild).toHaveStyle({ marginTop: '12px' });
 });
 
 it('publishes plugin-only warnings, updates them, and cleans up through Strict Mode', async () => {
-  const store = new PanelDiagnosticsStore();
-  const context = { diagnostics: store, eventBus: new EventBusSrv(), eventsScope: 'panel' };
-  const ui = (items: PanelDiagnostic[]) => (
+  const store = new PanelStatusStore();
+  const context = { notices: store, eventBus: new EventBusSrv(), eventsScope: 'panel' };
+  const ui = (items: PanelNotice[]) => (
     <StrictMode>
       <PanelContextProvider value={context}>
         <PanelChrome width={400} height={200} title="My panel">
@@ -68,7 +70,7 @@ it('publishes plugin-only warnings, updates them, and cleans up through Strict M
 });
 
 it('shares callback progress and failures across inspector views, and hides opted-out Assistant actions', async () => {
-  const store = new PanelDiagnosticsStore();
+  const store = new PanelStatusStore();
   let reject!: (error: Error) => void;
   const onClick = jest.fn(
     () =>
@@ -87,17 +89,17 @@ it('shares callback progress and failures across inspector views, and hides opte
     { id: 'b', severity: 'warning', text: 'Partial data' },
   ]);
   const [error, warning] = store.getSnapshot().items;
-  const onInvestigateDiagnostic = jest.fn();
+  const onInvestigateStatusItem = jest.fn();
   render(
     <PanelContextProvider
-      value={{ diagnostics: store, eventBus: new EventBusSrv(), eventsScope: 'panel', onInvestigateDiagnostic }}
+      value={{ notices: store, eventBus: new EventBusSrv(), eventsScope: 'panel', onInvestigateStatusItem }}
     >
       <section aria-label="First inspector">
-        <PanelDiagnosticActions diagnostic={error} />
-        <PanelDiagnosticActions diagnostic={warning} />
+        <PanelStatusActions statusItem={error} />
+        <PanelStatusActions statusItem={warning} />
       </section>
       <section aria-label="Second inspector">
-        <PanelDiagnosticActions diagnostic={error} />
+        <PanelStatusActions statusItem={error} />
       </section>
     </PanelContextProvider>
   );
@@ -112,7 +114,7 @@ it('shares callback progress and failures across inspector views, and hides opte
   }
   expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
   await userEvent.click(screen.getByRole('button', { name: 'Explain with Assistant' }));
-  expect(onInvestigateDiagnostic).toHaveBeenCalledWith(warning.id);
+  expect(onInvestigateStatusItem).toHaveBeenCalledWith(warning.id);
   await act(async () => {
     reject(new Error('Not allowed'));
   });

@@ -44,5 +44,5 @@ export {
 } from './PanelContext';
 
 export * from './types';
-export { usePanelDiagnostics, usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
-export { PanelDiagnosticActions } from './PanelDiagnosticActions';
+export { usePanelNotices, usePanelStatusSnapshot } from './usePanelNotices';
+export { PanelStatusActions } from './PanelStatusActions';

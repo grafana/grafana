@@ -77,13 +77,13 @@ export class PanelInspectDrawer extends SceneObjectBase<PanelInspectDrawerState>
           tabs.push(new InspectMetaDataTab({ panelRef, dataSource: dsWithInspector }));
         }
 
-        if (!panelRef.resolve().getPanelContext().diagnostics && hasErrorsOrNotices(data.state.data)) {
+        if (!panelRef.resolve().getPanelContext().notices && hasErrorsOrNotices(data.state.data)) {
           const dsWithErrorsAndNotices = await getDataSourceWithErrorsAndNoticesInspector(data.state.data);
           tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource: dsWithErrorsAndNotices }));
         }
       }
 
-      if (panelRef.resolve().getPanelContext().diagnostics) {
+      if (panelRef.resolve().getPanelContext().notices) {
         const panelData = sceneGraph.getData(panelRef.resolve()).state.data;
         const dataSource = await getDataSourceWithErrorsAndNoticesInspector(panelData);
         tabs.push(new InspectErrorsAndNoticesTab({ panelRef, dataSource }));

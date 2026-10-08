@@ -3,11 +3,11 @@ import { LoadingState } from '../types/data';
 import { type PanelData } from '../types/panel';
 import { getDefaultTimeRange } from '../types/time';
 
-import { getPanelDataDiagnostics, PanelDiagnosticsStore } from './PanelDiagnostics';
+import { getPanelDataStatusItems, PanelStatusStore } from './PanelNotices';
 
-describe('PanelDiagnosticsStore', () => {
+describe('PanelStatusStore', () => {
   it('blocks disabled callbacks and contains synchronous failures after enabling', async () => {
-    const store = new PanelDiagnosticsStore();
+    const store = new PanelStatusStore();
     const source = store.createSource();
     const onClick = jest.fn(() => {
       throw new Error('Cannot repair');
@@ -28,7 +28,7 @@ describe('PanelDiagnosticsStore', () => {
     expect(Object.values(store.getSnapshot().actions)).toEqual([{ error: 'Cannot repair' }]);
   });
   it('replaces only the owning source and invalidates disposed handles', () => {
-    const store = new PanelDiagnosticsStore();
+    const store = new PanelStatusStore();
     const first = store.createSource();
     const second = store.createSource();
     first.set([{ id: 'config', severity: 'warning', text: 'Choose a field' }]);
@@ -46,7 +46,7 @@ describe('PanelDiagnosticsStore', () => {
   });
 
   it('combines actions from all owners and never overrides an Assistant opt-out', async () => {
-    const store = new PanelDiagnosticsStore();
+    const store = new PanelStatusStore();
     const own = jest.fn();
     const datasource = jest.fn();
     const host = jest.fn();
@@ -78,7 +78,7 @@ describe('PanelDiagnosticsStore', () => {
   });
 
   it('shares pending state, blocks duplicate execution, and exposes callback failures', async () => {
-    const store = new PanelDiagnosticsStore();
+    const store = new PanelStatusStore();
     let reject!: (error: Error) => void;
     const onClick = jest.fn(
       () =>
@@ -102,7 +102,7 @@ describe('PanelDiagnosticsStore', () => {
   });
 
   it('discards completion after removal and cannot execute removed actions', async () => {
-    const store = new PanelDiagnosticsStore();
+    const store = new PanelStatusStore();
     const source = store.createSource();
     let finish!: () => void;
     const onClick = jest.fn(
@@ -123,21 +123,21 @@ describe('PanelDiagnosticsStore', () => {
     expect(store.getSnapshot()).toEqual({ generation: 0, items: [], actions: {} });
   });
 
-  it('preserves diagnostics when a resolver throws and continues other contributions', () => {
+  it('preserves notices when a resolver throws and continues other contributions', () => {
     const log = jest.spyOn(console, 'error').mockImplementation(() => {});
-    const store = new PanelDiagnosticsStore();
+    const store = new PanelStatusStore();
     store.createSource().setActionResolver(() => {
       throw new Error('Bad resolver');
     });
     store.createSource().setActionResolver(() => ({ assistant: 'hidden' }));
     store.createSource().set([{ id: 'a', severity: 'warning', text: 'Still visible' }]);
     expect(store.getSnapshot().items[0]).toMatchObject({ text: 'Still visible', assistant: 'hidden' });
-    expect(log).toHaveBeenCalledWith('Panel diagnostic action resolver failed', expect.any(Error));
+    expect(log).toHaveBeenCalledWith('Panel status action resolver failed', expect.any(Error));
     log.mockRestore();
   });
 });
 
-describe('getPanelDataDiagnostics', () => {
+describe('getPanelDataStatusItems', () => {
   it('deduplicates matching notices while preserving query provenance and links', () => {
     const frame = (refId: string, link: string) =>
       toDataFrame({ refId, fields: [], meta: { notices: [{ severity: 'warning', text: 'Partial results', link }] } });
@@ -146,7 +146,7 @@ describe('getPanelDataDiagnostics', () => {
       timeRange: getDefaultTimeRange(),
       series: [frame('A', '/a'), frame('A', '/a'), frame('B', '/a'), frame('A', '/b')],
     };
-    expect(getPanelDataDiagnostics(data).map(({ refId, link, text }) => ({ refId, link, text }))).toEqual([
+    expect(getPanelDataStatusItems(data).map(({ refId, link, text }) => ({ refId, link, text }))).toEqual([
       { refId: 'A', link: '/a', text: 'Partial results' },
       { refId: 'B', link: '/a', text: 'Partial results' },
       { refId: 'A', link: '/b', text: 'Partial results' },
