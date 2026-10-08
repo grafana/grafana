@@ -94,6 +94,8 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
   const textColorHover = theme.colors.text.primary;
   // remove the group inner padding (set on RadioButtonGroup)
   const labelHeight = height * theme.spacing.gridSize - 4 - 2;
+  // RadioButton md padding is not identical to Button padding
+  const finalPadding = size === 'md' ? 1 : padding;
 
   return {
     radioOption: css({
@@ -152,7 +154,7 @@ const getRadioButtonStyles = (theme: GrafanaTheme2, size: RadioButtonSize, fullW
         // Deduct border from line-height for perfect vertical centering on windows and linux
         lineHeight: `${labelHeight}px`,
         color: textColor,
-        padding: theme.spacing(0, padding),
+        padding: theme.spacing(0, finalPadding),
         borderRadius: getInternalRadius(theme, RADIO_GROUP_PADDING),
         cursor: 'pointer',
         userSelect: 'none',
