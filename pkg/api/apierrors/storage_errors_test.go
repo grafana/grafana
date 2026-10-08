@@ -161,39 +161,6 @@ func assertLegacyHTTPResponse(t *testing.T, convert func(error) response.Respons
 	}
 }
 
-func TestIsFolderAlreadyExists(t *testing.T) {
-	alreadyExists := k8sErrors.NewAlreadyExists(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "foobar")
-	conflict := k8sErrors.NewConflict(schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}, "foobar", errors.New("write contention"))
-	reasonlessConflict := &k8sErrors.StatusError{ErrStatus: metav1.Status{Code: http.StatusConflict}}
-	wrappedAlreadyExists := folder.ErrInternal.Errorf("create: %w", alreadyExists)
-
-	for _, tc := range []struct {
-		name      string
-		err       error
-		statusErr *k8sErrors.StatusError
-		want      bool
-	}{
-		{"nil errors", nil, nil, false},
-		{"legacy sentinel", folder.ErrSameUIDExists, nil, true},
-		{"wrapped sentinel", fmt.Errorf("create: %w", folder.ErrSameUIDExists), nil, true},
-		{"kubernetes already exists", alreadyExists, nil, true},
-		{"wrapped kubernetes already exists", fmt.Errorf("create: %w", alreadyExists), nil, true},
-		{"errutil wrapper without normalization", wrappedAlreadyExists, nil, false},
-		{"normalized errutil wrapper", wrappedAlreadyExists, alreadyExists, true},
-		{"normalized already exists", status.Error(codes.AlreadyExists, "exists"), alreadyExists, true},
-		{"bare grpc already exists is unconfirmed", status.Error(codes.AlreadyExists, "exists"), nil, false},
-		{"version mismatch", folder.ErrVersionMismatch, nil, false},
-		{"kubernetes conflict", conflict, nil, false},
-		{"normalized conflict", status.Error(codes.Aborted, "write contention"), conflict, false},
-		{"reason-less 409", status.Error(codes.Aborted, "write contention"), reasonlessConflict, false},
-		{"unrelated error", errors.New("connection refused"), nil, false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			require.Equal(t, tc.want, isFolderAlreadyExists(tc.err, tc.statusErr))
-		})
-	}
-}
-
 func TestFolderStorageAlreadyExistsResponse(t *testing.T) {
 	result := &resourcepb.ErrorResult{
 		Code:    http.StatusConflict,
@@ -206,10 +173,13 @@ func TestFolderStorageAlreadyExistsResponse(t *testing.T) {
 		Group: "folder.grafana.app", Resource: "folders",
 	}, "foobar")
 	for name, input := range map[string]error{
-		"wrapped sentinel":   fmt.Errorf("save folder: %w", folder.ErrSameUIDExists),
-		"wrapped kubernetes": folder.ErrInternal.Errorf("operation failed: %w", kubernetesErr),
-		"embedded":           resource.StatusError(result),
-		"wrapped grpc":       folder.ErrInternal.Errorf("operation failed: %w", st.Err()),
+		"wrapped sentinel":             fmt.Errorf("save folder: %w", folder.ErrSameUIDExists),
+		"kubernetes":                   kubernetesErr,
+		"wrapped kubernetes":           fmt.Errorf("save folder: %w", kubernetesErr),
+		"operation-wrapped kubernetes": folder.ErrInternal.Errorf("operation failed: %w", kubernetesErr),
+		"embedded":                     resource.StatusError(result),
+		"grpc":                         st.Err(),
+		"wrapped grpc":                 folder.ErrInternal.Errorf("operation failed: %w", st.Err()),
 	} {
 		t.Run(name, func(t *testing.T) {
 			want := expectedErrorResponse(http.StatusConflict, "a folder with the same UID already exists")
@@ -236,6 +206,7 @@ func TestFolderStorageConflictResponse(t *testing.T) {
 	}, "FOOBAR", legacyErr)
 	for name, input := range map[string]error{
 		"legacy grpc aborted":      legacyErr,
+		"kubernetes":               kubernetesErr,
 		"kubernetes after retries": folder.ErrInternal.Errorf("operation failed: %w", kubernetesErr),
 		"wrapped grpc":             fmt.Errorf("save folder: %w", st.Err()),
 		"reason-only": resource.StatusError(&resourcepb.ErrorResult{
