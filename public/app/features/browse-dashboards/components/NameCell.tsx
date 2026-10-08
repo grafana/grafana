@@ -1,4 +1,4 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import Skeleton from 'react-loading-skeleton';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -96,11 +96,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
       )}
 
       <div className={styles.iconNameContainer}>
-        {isLoading ? (
-          <Spinner size={ICON_SIZE} />
-        ) : (
-          <Icon size={ICON_SIZE} name={iconName} className={isReadOnlyFolder ? styles.readOnly : undefined} />
-        )}
+        {isLoading ? <Spinner size={ICON_SIZE} /> : <Icon size={ICON_SIZE} name={iconName} />}
 
         <Text variant="body" truncate id={treeID && makeRowID(treeID, item)}>
           {item.url ? (
@@ -114,7 +110,7 @@ export function NameCell({ row: { original: data }, onFolderClick, treeID, permi
                 });
               }}
               href={item.url}
-              className={cx(styles.link, isReadOnlyFolder && styles.readOnly)}
+              className={styles.link}
             >
               {item.title}
             </Link>
@@ -169,9 +165,6 @@ const getStyles = (theme: GrafanaTheme2) => {
       display: 'flex',
       gap: theme.spacing(1),
       overflow: 'hidden',
-    }),
-    readOnly: css({
-      color: theme.colors.text.secondary,
     }),
     link: css({
       '&:hover': {

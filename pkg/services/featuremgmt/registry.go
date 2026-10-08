@@ -3432,7 +3432,7 @@ var (
 		},
 		{
 			Name:         "grafana.browseDashboardsFolderEditAccess",
-			Description:  "Dims folders the user cannot edit in the browse dashboards view",
+			Description:  "Shows a read only badge on folders the user cannot edit in the browse dashboards view",
 			Stage:        FeatureStageExperimental,
 			Owner:        grafanaFrontendNavigation,
 			HideFromDocs: true,

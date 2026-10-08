@@ -2386,11 +2386,14 @@
     {
       "metadata": {
         "name": "grafana.browseDashboardsFolderEditAccess",
-        "resourceVersion": "1791205179578",
-        "creationTimestamp": "2026-10-05T12:59:39Z"
+        "resourceVersion": "1791462557455",
+        "creationTimestamp": "2026-10-05T12:59:39Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-08 12:29:17.455263 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Dims folders the user cannot edit in the browse dashboards view",
+        "description": "Shows a read only badge on folders the user cannot edit in the browse dashboards view",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
