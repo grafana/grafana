@@ -151,10 +151,6 @@ export function DashboardTabs({ extensionComponents }: Props) {
     }
   }, [initialLoading]);
 
-  if (!initialLoadDone) {
-    return <DashboardTabsSkeleton redesignEnabled={redesignEnabled} />;
-  }
-
   const builtInTabs: HomepageTab[] = [
     {
       id: RECENT_TAB_ID,
@@ -270,6 +266,8 @@ export function DashboardTabs({ extensionComponents }: Props) {
         ))}
     </>
   );
+  // The header and card frame don't depend on data; only the tabs wait, since which one to land on isn't known yet.
+  const content = initialLoadDone ? renderContent() : <DashboardTabsSkeleton redesignEnabled={redesignEnabled} />;
   return (
     <Stack direction="column" gap={redesignEnabled ? 1 : 2} minWidth={0}>
       {redesignEnabled ? (
@@ -284,11 +282,11 @@ export function DashboardTabs({ extensionComponents }: Props) {
           </Stack>
 
           <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
-            {renderContent()}
+            {content}
           </HomeSection>
         </>
       ) : (
-        <>{renderContent()}</>
+        content
       )}
     </Stack>
   );
