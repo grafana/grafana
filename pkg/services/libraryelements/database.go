@@ -803,7 +803,8 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		}
 		return err
 	}
-	return l.deleteLibraryElementsInFolderUIDUnchecked(c, signedInUser.GetOrgID(), folderUID)
+	// Attach the requester so a routed LegacyDatabaseProvider can resolve the target database.
+	return l.deleteLibraryElementsInFolderUIDUnchecked(identity.WithRequester(c, signedInUser), signedInUser.GetOrgID(), folderUID)
 }
 
 // deleteLibraryElementsInFolderUIDUnchecked deletes all Library Elements in a folder without

@@ -120,6 +120,28 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			require.True(t, spy.withTransactionalDbSessionCalled, "delete should run on dbHelper.DB, not l.SQLStore directly")
 		})
 
+	scenarioWithPanel(t, "the routed delete attaches the requester so a context-dependent provider can resolve the target database",
+		func(t *testing.T, sc scenarioContext) {
+			var gotCtx context.Context
+			sc.service.LegacyDatabaseProvider = func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
+				gotCtx = ctx
+				return &legacysql.LegacyDatabaseHelper{
+					DB:    sc.service.SQLStore,
+					Table: func(n string) string { return n },
+				}, nil
+			}
+
+			// A bare context, not sc.reqContext.Req.Context(): that one already has the requester
+			// attached by test setup, which would make this pass without the fix under test.
+			err := sc.service.DeleteLibraryElementsInFolder(context.Background(), sc.reqContext.SignedInUser, sc.folder.UID)
+			require.NoError(t, err)
+
+			require.NotNil(t, gotCtx, "provider should have been called")
+			got, err := identity.GetRequester(gotCtx)
+			require.NoError(t, err, "requester should be attached to ctx, not just passed as an argument")
+			require.Same(t, sc.reqContext.SignedInUser, got)
+		})
+
 	scenarioWithPanel(t, "the routed delete does not reuse an ambient session from a different db.DB",
 		func(t *testing.T, sc scenarioContext) {
 			// sqlstore.startSessionOrUseExisting reuses whatever session is already on ctx
@@ -165,12 +187,13 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 				}); err != nil {
 					return err
 				}
+				spy.lastSession = nil // setup call above also recorded a session; reset it first
 				return sc.service.DeleteLibraryElementsInFolder(ctx, sc.reqContext.SignedInUser, sc.folder.UID)
 			})
 			require.NoError(t, err)
 
 			require.NotNil(t, ambientSess)
-			require.NotNil(t, spy.lastSession)
+			require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
 			require.Same(t, ambientSess, spy.lastSession, "default delete should join the caller's ambient transaction")
 		})
 }
