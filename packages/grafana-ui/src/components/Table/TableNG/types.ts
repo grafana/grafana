@@ -119,6 +119,8 @@ interface BaseTableProps {
   noHeader?: boolean;
   showTypeIcons?: boolean;
   resizable?: boolean;
+  /** Whether all columns can be reordered from the header or sidebar. */
+  reorderable?: boolean;
   sortBy?: TableSortByFieldState[];
   sortByBehavior?: SortByBehavior;
   onColumnResize?: TableColumnResizeActionCallback;
@@ -182,6 +184,9 @@ interface BaseTableProps {
   zebraStriping?: boolean;
   /** Initial sidebar state. Later prop changes also update the sidebar. */
   showColumnsSidebar?: boolean;
+  /** Controlled column order, by display name. */
+  columnOrder?: string[];
+  onColumnOrderChange?: (columnOrder: string[]) => void;
   /** Controlled hidden columns, by display name. */
   hiddenColumns?: ReadonlySet<string>;
   onHiddenColumnsChange?: (hiddenColumns: ReadonlySet<string>) => void;

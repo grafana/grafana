@@ -29,7 +29,7 @@ import {
   useColumnBuilderFromFields,
   useDataGridRows,
 } from './render-hooks';
-import { getHeaderCellStyles } from './styles';
+import { getColumnSettleStyles, getHeaderCellStyles } from './styles';
 import {
   type FilterType,
   type NestedRowEntry,
@@ -445,6 +445,32 @@ describe('useColumnBuilderFromFields', () => {
     const result = callFromFields(hook, frame.fields, [150, 200], frame, rows, rows);
     expect(result.columns[0].width).toBe(150);
     expect(result.columns[1].width).toBe(200);
+  });
+
+  describe('table.refresh column reorder', () => {
+    it.each([
+      { reorderable: true, expected: [true, true] },
+      { reorderable: false, expected: [false, false] },
+      { reorderable: undefined, expected: [false, false] },
+    ])('sets dragging for every column when reorderable=$reorderable', ({ reorderable, expected }) => {
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ reorderable }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns.map((c) => c.draggable)).toEqual(expected);
+    });
+
+    it('adds the settle class to headerCellClass only for settling columns', () => {
+      const theme = createTheme();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ theme, settlingColumnKeys: new Set(['A']) }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+      expect(result.columns[0].headerCellClass).toContain(getColumnSettleStyles(theme));
+      expect(result.columns[1].headerCellClass).not.toContain(getColumnSettleStyles(theme));
+    });
   });
 
   describe('table.refresh column hide', () => {

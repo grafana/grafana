@@ -6,6 +6,7 @@ import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 
 import {
   COLUMN,
+  COLUMN_SETTLE_MS,
   FIRST_COLUMN_CLASS,
   FIRST_COLUMN_EXTRA_PADDING,
   LAST_COLUMN_CLASS,
@@ -68,12 +69,25 @@ const headerCornerMask = (radius: string) =>
     pointerEvents: 'none',
   }) as const;
 
+// Drag states derive from the header surface.
+const HEADER_DRAGGING_EMPHASIS = 0.1;
+const HEADER_DRAG_TARGET_EMPHASIS = 0.05;
+
 export const getGridBackgroundColor = (theme: GrafanaTheme2, transparent?: boolean): string => {
   return transparent
     ? theme.flags.visualDesignRefresh
       ? theme.colors.background.page
       : theme.colors.background.canvas
     : theme.components.panel.background;
+};
+
+const getHeaderBackgroundColor = (
+  theme: GrafanaTheme2,
+  transparent?: boolean,
+  tableRefreshEnabled?: boolean
+): string => {
+  const bgColor = getGridBackgroundColor(theme, transparent);
+  return tableRefreshEnabled ? theme.components.table.headerBackground : bgColor;
 };
 
 export const getGridStyles = memoize(
@@ -94,6 +108,12 @@ export const getGridStyles = memoize(
     const headerBorderColor = colorManipulator
       .onBackground(theme.colors.secondary.shade, headerBackgroundColor)
       .toHexString();
+
+    const headerCellDraggingBackgroundColor = theme.colors.emphasize(headerBackgroundColor, HEADER_DRAGGING_EMPHASIS);
+    const headerCellDragTargetBackgroundColor = theme.colors.emphasize(
+      headerBackgroundColor,
+      HEADER_DRAG_TARGET_EMPHASIS
+    );
 
     return {
       gridFrame: css({
@@ -315,6 +335,12 @@ export const getGridStyles = memoize(
             // rounded corners) doesn't clip this: it governs the cell's own content, not a
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
+            [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+              transition: theme.transitions.create('background-color', {
+                duration: COLUMN_SETTLE_MS,
+                easing: 'ease-out',
+              }),
+            },
           },
           // The `.rdg-cell.rdg-cell-frozen-start` rule above (for solid, occluding frozen body cells)
           // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
@@ -426,8 +452,15 @@ export const getGridStyles = memoize(
         '& .rdg-cell': { height: '100%', alignItems: 'flex-end' },
         ...(tableRefreshEnabled && {
           '--rdg-border-color': headerBorderColor,
-          '& .rdg-cell-dragging': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.1) },
-          '& .rdg-cell-drag-over': { backgroundColor: theme.colors.emphasize(headerBackgroundColor, 0.05) },
+          '& .rdg-cell-dragging': {
+            cursor: 'grabbing',
+            backgroundColor: headerCellDraggingBackgroundColor,
+            boxShadow: `inset 0 0 0 1px ${theme.colors.border.medium}`,
+          },
+          '& .rdg-cell-drag-over': {
+            backgroundColor: headerCellDragTargetBackgroundColor,
+            boxShadow: `inset 3px 0 0 0 ${theme.colors.primary.main}`,
+          },
         }),
       }),
       displayNone: css({ display: 'none' }),
@@ -463,6 +496,16 @@ export const getHeaderCellStyles = memoize((theme: GrafanaTheme2, justifyContent
     paddingBlockEnd: TABLE.CELL_PADDING,
     justifyContent,
     '&:last-child': { borderInlineEnd: 'none' },
+  })
+);
+
+// Match the drop target so the highlight reads as the drag settling.
+export const getColumnSettleStyles = memoize((theme: GrafanaTheme2, tableRefreshEnabled?: boolean) =>
+  css({
+    backgroundColor: theme.colors.emphasize(
+      getHeaderBackgroundColor(theme, false, tableRefreshEnabled),
+      HEADER_DRAG_TARGET_EMPHASIS
+    ),
   })
 );
 

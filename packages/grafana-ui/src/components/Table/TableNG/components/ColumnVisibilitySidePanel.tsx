@@ -1,5 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
+import { useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -7,6 +8,7 @@ import { Trans, t } from '@grafana/i18n';
 
 import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Checkbox } from '../../../Forms/Checkbox';
+import { Icon } from '../../../Icon/Icon';
 import { IconButton } from '../../../IconButton/IconButton';
 import { TABLE } from '../constants';
 import { getGridBackgroundColor } from '../styles';
@@ -21,8 +23,10 @@ export interface SidebarColumn {
 interface ColumnVisibilitySidePanelProps {
   /** All columns in display order, including hidden columns. */
   columns: SidebarColumn[];
+  reorderable?: boolean;
   hiddenColumns: ReadonlySet<string>;
   onToggleColumn: (displayName: string, visible: boolean) => void;
+  onColumnsReorder: (sourceColumnKey: string, targetColumnKey: string) => void;
   onClose: () => void;
   headerHeight?: number;
   transparent?: boolean;
@@ -32,8 +36,10 @@ interface ColumnVisibilitySidePanelProps {
 
 export function ColumnVisibilitySidePanel({
   columns,
+  reorderable = false,
   hiddenColumns,
   onToggleColumn,
+  onColumnsReorder,
   onClose,
   headerHeight = TABLE.HEADER_HEIGHT,
   transparent,
@@ -41,6 +47,9 @@ export function ColumnVisibilitySidePanel({
 }: ColumnVisibilitySidePanelProps) {
   const styles = useStyles2(getStyles, transparent, headerHeight);
   const visibleCount = columns.filter(({ name }) => !hiddenColumns.has(name)).length;
+
+  const [draggedColumn, setDraggedColumn] = useState<string | null>(null);
+  const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
 
   return (
     // A complementary landmark cannot be nested inside the page's main landmark.
@@ -68,7 +77,57 @@ export function ColumnVisibilitySidePanel({
           const isLastVisible = isVisible && visibleCount <= 1;
 
           return (
-            <div key={displayName} className={styles.row} data-testid={sidebarSelectors.row(displayName)}>
+            <div
+              key={displayName}
+              className={css(styles.row, dragOverColumn === displayName && styles.rowDragOver)}
+              data-testid={sidebarSelectors.row(displayName)}
+              onDragOver={(ev) => {
+                if (!reorderable || draggedColumn == null || draggedColumn === displayName) {
+                  return;
+                }
+                ev.preventDefault();
+                setDragOverColumn(displayName);
+              }}
+              onDragLeave={() => setDragOverColumn((current) => (current === displayName ? null : current))}
+              onDrop={(ev) => {
+                ev.preventDefault();
+                setDragOverColumn(null);
+                if (reorderable && draggedColumn != null && draggedColumn !== displayName) {
+                  onColumnsReorder(draggedColumn, displayName);
+                }
+              }}
+            >
+              {reorderable && (
+                <button
+                  type="button"
+                  className={styles.dragHandle}
+                  draggable
+                  aria-label={t('grafana-ui.table.reorder-column-label', 'Reorder {{columnName}}', {
+                    columnName: displayName,
+                  })}
+                  onDragStart={(ev) => {
+                    ev.dataTransfer.effectAllowed = 'move';
+                    setDraggedColumn(displayName);
+                  }}
+                  onKeyDown={(ev) => {
+                    if (ev.key !== 'ArrowUp' && ev.key !== 'ArrowDown') {
+                      return;
+                    }
+                    ev.preventDefault();
+                    const index = columns.findIndex((column) => column.name === displayName);
+                    const target = columns[index + (ev.key === 'ArrowUp' ? -1 : 1)];
+                    if (target) {
+                      onColumnsReorder(displayName, target.name);
+                    }
+                  }}
+                  onDragEnd={() => {
+                    setDraggedColumn(null);
+                    setDragOverColumn(null);
+                  }}
+                >
+                  <Icon name="draggabledots" aria-hidden="true" />
+                </button>
+              )}
               {hideable ? (
                 <Checkbox
                   value={isVisible}
@@ -146,8 +205,25 @@ const getStyles = memoize((theme: GrafanaTheme2, transparent: boolean | undefine
     alignItems: 'center',
     gap: theme.spacing(1),
     padding: theme.spacing(0.75, 1, 0.75, 1.5),
+    // Prevent text selection from stealing the native drag gesture.
+    userSelect: 'none',
     '&:hover': {
       backgroundColor: theme.components.table.rowHoverBackground,
+    },
+  }),
+  rowDragOver: css({
+    boxShadow: `inset 0 2px 0 0 ${theme.colors.primary.main}`,
+  }),
+  dragHandle: css({
+    display: 'flex',
+    alignItems: 'center',
+    background: 'transparent',
+    border: 'none',
+    padding: 0,
+    cursor: 'grab',
+    color: theme.colors.text.secondary,
+    '&:active': {
+      cursor: 'grabbing',
     },
   }),
   // Keep column names aligned when a capability is unavailable.

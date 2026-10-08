@@ -6,7 +6,7 @@ import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelCont
 
 import { useColumnTransformations } from './useColumnTransformations';
 
-it('reads visibility from the registered column transformations', () => {
+it('reads visibility and order from the registered column transformations', () => {
   const source = [
     createDataFrame({
       fields: ['A', 'B', 'C'].map((name) => ({ name, type: FieldType.number, values: [1] })),
@@ -17,6 +17,7 @@ it('reads visibility from the registered column transformations', () => {
       id: 'organize',
       options: {
         excludeByName: { B: true },
+        indexByName: { C: 0, A: 1, B: 2 },
       },
     },
   ];
@@ -30,7 +31,8 @@ it('reads visibility from the registered column transformations', () => {
   const { result } = renderHook(() => useColumnTransformations(0, api, 'table'));
 
   expect(result.current?.hiddenColumns).toEqual(new Set(['B']));
-  expect(result.current?.columnCatalog).toEqual(['A', 'B', 'C']);
+  expect(result.current?.columnOrder).toEqual(['C', 'A', 'B']);
+  expect(result.current?.columnCatalog).toEqual(['C', 'A', 'B']);
   expect(api.set).not.toHaveBeenCalled();
 });
 

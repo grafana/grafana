@@ -34,21 +34,29 @@ export function useColumnTransformations(
     },
     [context, update]
   );
+  const onColumnOrderChange = useCallback(
+    (order: string[]) => {
+      if (context) {
+        update((current) => columnTransformations.columnOrder.write(current, order, context));
+      }
+    },
+    [context, update]
+  );
 
   return useMemo(() => {
     if (!context) {
       return undefined;
     }
 
-    const columnProps = Object.values(columnTransformations).reduce<Pick<TableNGProps, 'hiddenColumns'>>(
-      (columnProps, transformation) => ({ ...columnProps, ...transformation.read(transformations, context) }),
-      {}
-    );
+    const columnProps = Object.values(columnTransformations).reduce<
+      Pick<TableNGProps, 'hiddenColumns' | 'columnOrder'>
+    >((columnProps, transformation) => ({ ...columnProps, ...transformation.read(transformations, context) }), {});
 
     return {
       ...columnProps,
-      columnCatalog: context.catalog,
+      columnCatalog: columnProps.columnOrder ?? context.catalog,
+      onColumnOrderChange,
       onHiddenColumnsChange,
     };
-  }, [context, transformations, onHiddenColumnsChange]);
+  }, [context, transformations, onHiddenColumnsChange, onColumnOrderChange]);
 }
