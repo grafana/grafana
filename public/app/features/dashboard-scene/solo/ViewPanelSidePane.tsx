@@ -17,7 +17,6 @@ import { Box, ScrollContainer, Sidebar, Text, RadioButtonDot, Button, Spinner } 
 import { OptionsPaneCategory } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategory';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
-import { DashboardScene } from '../scene/DashboardScene';
 import { canManuallyEditDashboard } from '../scene/dashboardModes';
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
@@ -60,7 +59,7 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
   const dashboard = getDashboardSceneLike(model);
   const state = dashboard.useState();
   const { viewPanel } = state;
-  const canEditOptions = !(dashboard instanceof DashboardScene) || canManuallyEditDashboard(dashboard.state);
+  const canEditOptions = canManuallyEditDashboard(state);
   const { panelRef } = model.useState();
   const panel = panelRef.resolve();
   //const { fieldConfig, options } = panel.useState();
