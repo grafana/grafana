@@ -64,7 +64,15 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (pluginroute.P
 	if plugin.JSONData.ID == "" {
 		return nil, fmt.Errorf("plugin is missing an id")
 	}
-	return pluginroute.NewAPI(plugin, pluginroute.Options{
+	if len(plugin.Manifests) > 1 {
+		return nil, fmt.Errorf("multiple app manifests require selecting a manifest")
+	}
+	if len(plugin.Manifests) == 0 || plugin.Manifests[0] == nil {
+		return appplugin.NewAppPluginAPIBuilder(plugin, offlinePluginClient{}, offlinePluginContext{}, nil,
+			appplugin.NewPluginAccessChecker(nil), appplugin.AppPluginRunnerOptions{RegisterProxy: opts.RegisterProxy},
+			tracing.NewNoopTracerService(), featuremgmt.WithFeatures())
+	}
+	return pluginroute.NewAPI(plugin.JSONData.ID, plugin.Manifests[0], pluginroute.Options{
 		PluginClient: offlinePluginClient{}, ClientV3: offlineClientV3{}, ContextProvider: offlinePluginContext{},
 		AccessChecker: appplugin.NewPluginAccessChecker(nil), Search: offlineSearchClient{}, Store: offlineStoreClient{},
 		HybridAPIEnabled: true, KeysAPIEnabled: true,
@@ -152,7 +160,20 @@ func Build(plugin definition.PluginDefinition, version string, opts Options) (*s
 		return nil, err
 	}
 
-	return buildSpec(server, serverConfig, gv)
+	oas, err := buildSpec(server, serverConfig, gv)
+	if err != nil {
+		return nil, err
+	}
+	oas.Info.Description = plugin.JSONData.Info.Description
+	info := map[string]any{"id": plugin.JSONData.ID}
+	if plugin.JSONData.Info.Version != "" {
+		info["version"] = plugin.JSONData.Info.Version
+	}
+	if plugin.JSONData.Info.Build.Time > 0 {
+		info["build"] = plugin.JSONData.Info.Build.Time
+	}
+	oas.Info.AddExtension("x-grafana-plugin", info)
+	return oas, nil
 }
 
 // buildSpec renders one group version using the registered web services, as the

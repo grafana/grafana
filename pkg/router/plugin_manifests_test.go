@@ -216,7 +216,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		target.poll(t.Context(), make(chan struct{}, 1))
 		require.Len(t, target.Backends(), 1)
 		plugin := target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
-		legacy, client, err := plugin.client(t.Context(), plugin.plugin.JSONData.ID)
+		legacy, client, err := plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.NotNil(t, legacy)
 		require.NotNil(t, client)
@@ -224,11 +224,11 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 		defer cancel()
 		health, err := legacy.CheckHealth(ctx, &sdkbackend.CheckHealthRequest{
-			PluginContext: sdkbackend.PluginContext{PluginID: plugin.plugin.JSONData.ID},
+			PluginContext: sdkbackend.PluginContext{PluginID: plugin.pluginID},
 		})
 		require.NoError(t, err)
 		require.Equal(t, sdkbackend.HealthStatusOk, health.Status)
-		require.Equal(t, plugin.plugin.JSONData.ID, health.Message)
+		require.Equal(t, plugin.pluginID, health.Message)
 		var responses []*sdkbackend.CallResourceResponse
 		err = legacy.CallResource(ctx, &sdkbackend.CallResourceRequest{
 			Path: "test-resource",
@@ -260,7 +260,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 		conn := target.connections[host]
 		target.poll(t.Context(), make(chan struct{}, 1))
 		plugin = target.Backends()[0].(*pluginDeploymentBackend).Backend.(*PluginBackend)
-		_, _, err = plugin.client(t.Context(), plugin.plugin.JSONData.ID)
+		_, _, err = plugin.client(t.Context(), plugin.pluginID)
 		require.NoError(t, err)
 		require.Same(t, conn, target.connections[host])
 	}
@@ -403,4 +403,32 @@ func (c *manifestKindResourceClient) Create(_ context.Context, req *resourcepb.C
 
 func (c *manifestKindResourceClient) Read(_ context.Context, _ *resourcepb.ReadRequest, _ ...grpc.CallOption) (*resourcepb.ReadResponse, error) {
 	return &resourcepb.ReadResponse{ResourceVersion: 1, Value: c.created.Value}, nil
+}
+
+func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
+	var deployment definition.PluginDeployments
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &deployment))
+	first := deployment.Plugins[0].Definition.Manifests[0]
+	second := *first
+	second.Group = "second.ext.grafana.app"
+	deployment.Plugins[0].Definition.Manifests = []*app.ManifestData{
+		first, nil, {Group: "dashboard.grafana.app"}, &second,
+	}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(deployment))
+	}))
+	defer srv.Close()
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+	dirty := make(chan struct{}, 1)
+	target.poll(t.Context(), dirty)
+	backends := target.Backends()
+	require.Len(t, backends, 2)
+	require.Equal(t, first.Group, backends[0].Group().Name)
+	require.Equal(t, second.Group, backends[1].Group().Name)
+	require.NotEqual(t, backends[0].Key(), backends[1].Key())
+	require.Len(t, dirty, 1)
+	<-dirty
+	target.poll(t.Context(), dirty)
+	require.Empty(t, dirty)
 }

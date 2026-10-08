@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -32,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
@@ -85,40 +85,51 @@ func (h *Handler) Destroy() {
 	h.once.Do(h.destroy)
 }
 
-// APIGroup describes the versions actually served, including the settings API.
-func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup, error) {
-	b, err := NewAPI(plugin, opts)
-	if err != nil {
-		return metav1.APIGroup{}, err
+func APIGroup(m *app.ManifestData) metav1.APIGroup {
+	g := metav1.APIGroup{Name: m.Group}
+	for _, v := range m.Versions {
+		if !v.Served {
+			continue
+		}
+		gv := metav1.GroupVersionForDiscovery{GroupVersion: fmt.Sprintf("%s/%s", g.Name, v.Name), Version: v.Name}
+		g.Versions = append(g.Versions, gv)
+		if v.Name == m.PreferredVersion {
+			g.PreferredVersion = gv
+		}
 	}
-	gvs := b.GetGroupVersions()
-	if len(gvs) == 0 {
-		return metav1.APIGroup{}, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+
+	// When the preferred version is not specified, pick the last non-alpha version
+	if g.PreferredVersion.Version == "" && len(g.Versions) > 0 {
+		for _, v := range slices.Backward(g.Versions) {
+			if !strings.Contains(v.Version, "alpha") {
+				g.PreferredVersion = v
+				break
+			}
+		}
+		if g.PreferredVersion.Version == "" {
+			g.PreferredVersion = g.Versions[len(g.Versions)-1]
+		}
 	}
-	group := metav1.APIGroup{Name: gvs[0].Group}
-	for _, gv := range gvs {
-		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
-			GroupVersion: gv.String(), Version: gv.Version,
-		})
+	if i := slices.Index(g.Versions, g.PreferredVersion); i > 0 {
+		g.Versions = append([]metav1.GroupVersionForDiscovery{g.PreferredVersion}, slices.Delete(g.Versions, i, i+1)...)
 	}
-	group.PreferredVersion = group.Versions[0]
-	return group, nil
+	return g
 }
 
 // NewHandler installs resources, admission, custom routes and OpenAPI without
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
-func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
-	b, err := NewAPI(plugin, opts)
+func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Handler, error) {
+	b, err := NewAPI(pluginID, manifest, opts)
 	if err != nil {
 		return nil, err
 	}
 	if opts.Storage == nil {
-		return nil, fmt.Errorf("plugin %q: a storage provider is required", plugin.JSONData.ID)
+		return nil, fmt.Errorf("plugin %q: a storage provider is required", pluginID)
 	}
 	gvs := b.GetGroupVersions()
 	if len(gvs) == 0 {
-		return nil, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
 	}
 	group := gvs[0].Group
 	scheme := builder.ProvideScheme()
@@ -213,25 +224,21 @@ type PluginAPI interface {
 	GetAuthorizer() authorizer.Authorizer
 }
 
-// NewAPI selects settings for legacy plugins and manifest APIs for SDK plugins.
+// NewAPI builds the API for one plugin manifest.
 // It is also used by offline OpenAPI generation so discovery matches the router.
-func NewAPI(plugin definition.PluginDefinition, opts Options) (PluginAPI, error) {
-	if len(plugin.Manifests) > 1 {
-		return nil, fmt.Errorf("plugin %q: multiple app manifests are not supported yet", plugin.JSONData.ID)
+func NewAPI(pluginID string, manifest *app.ManifestData, opts Options) (PluginAPI, error) {
+	if manifest == nil {
+		return nil, fmt.Errorf("missing manifest")
 	}
-	var manifest *app.ManifestData
-	if len(plugin.Manifests) == 1 {
-		manifest = plugin.Manifests[0]
+
+	if manifest.IsEmpty() {
+		return nil, fmt.Errorf("plugin %q has an empty app manifest", pluginID)
 	}
-	if manifest != nil {
-		if manifest.IsEmpty() {
-			return nil, fmt.Errorf("plugin %q has an empty app manifest", plugin.JSONData.ID)
-		}
-		group := manifest.Group
-		if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
-			return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", plugin.JSONData.ID, group)
-		}
+	group := manifest.Group
+	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
+		return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
 	}
+
 	if opts.AccessChecker == nil {
 		opts.AccessChecker = func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
 			return authorizer.DecisionDeny, "no plugin access checker is configured", nil
@@ -243,14 +250,10 @@ func NewAPI(plugin definition.PluginDefinition, opts Options) (PluginAPI, error)
 	if opts.Features == nil {
 		opts.Features = featuremgmt.WithFeatures()
 	}
-	if manifest == nil {
-		return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient,
-			opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Runner, opts.Tracer, opts.Features)
-	}
 	return &manifestBuilder{
 		group:         manifest.Group,
 		manifest:      manifest,
-		pluginJSON:    plugin.JSONData,
+		pluginID:      pluginID,
 		clientV3:      opts.ClientV3,
 		decrypter:     newSecureValueLookup(opts.Decrypter),
 		accessChecker: opts.AccessChecker,

@@ -98,7 +98,7 @@ func TestNewPluginBackendRejectsNonPluginGroups(t *testing.T) {
 			}
 			var backend *PluginBackend
 			var err error
-			require.NotPanics(t, func() { backend, err = NewPluginBackend(plugin, nil, PluginDependencies{}) })
+			require.NotPanics(t, func() { backend, err = testPluginBackend(t, plugin, nil, PluginDependencies{}) })
 			require.Error(t, err)
 			require.Nil(t, backend)
 		})

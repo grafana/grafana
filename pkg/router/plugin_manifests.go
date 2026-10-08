@@ -116,43 +116,41 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
 	for _, entry := range deployment.Plugins {
-		if len(entry.Definition.Manifests) == 0 || entry.Definition.Manifests[0] == nil {
-			continue
-		}
-		group := apiGroupFromManifestData(*entry.Definition.Manifests[0])
-		if !matchesAnyPattern(group.Name, t.patterns) {
-			continue
-		}
+		for _, manifest := range entry.Definition.Manifests {
+			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
+				continue
+			}
 
-		clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
-			return t.pluginClients(entry.Host)
+			clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
+				return t.pluginClients(entry.Host)
+			}
+
+			// Remove any dependencies that may try to load settings
+			// After the manifest CRUD works, we can explore getting these wired properly
+			deps := t.deps
+			deps.PluginClient = nil
+			deps.ContextProvider = nil
+			deps.PluginSettings = nil
+			deps.DualWrite = nil
+			deps.AccessControl = pluginManifestAccessControl{}
+
+			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, deps, nil)
+
+			if err != nil {
+				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				continue
+			}
+
+			// The host is outside PluginDefinition, but changing it must reload the backend.
+			key, keyErr := pluginDeploymentKey(entry)
+			if keyErr != nil {
+				logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
+				continue
+			}
+			deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key + ":" + manifest.Group}
+			backends = append(backends, deploymentBackend)
+			keys[deploymentBackend.Key()] = struct{}{}
 		}
-
-		// Remove any dependencies that may try to load settings
-		// After the manifest CRUD works, we can explore getting these wired properly
-		deps := t.deps
-		deps.PluginClient = nil
-		deps.ContextProvider = nil
-		deps.PluginSettings = nil
-		deps.DualWrite = nil
-		deps.AccessControl = pluginManifestAccessControl{}
-
-		backend, err := NewPluginBackend(entry.Definition, clients, deps)
-
-		if err != nil {
-			logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
-			continue
-		}
-
-		// The host is outside PluginDefinition, but changing it must reload the backend.
-		key, keyErr := pluginDeploymentKey(entry)
-		if keyErr != nil {
-			logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
-			continue
-		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
-		backends = append(backends, deploymentBackend)
-		keys[deploymentBackend.Key()] = struct{}{}
 	}
 
 	t.snapshot.Store(&backends)
@@ -239,6 +237,16 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 	if err := decodeLimitedJSON(resp.Body, maxPluginManifestsBytes, deployment); err != nil {
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
+
+	// Move any deprecated singular manifest properties to the multiple flavor
+	// nolint:staticcheck
+	for _, plugin := range deployment.Plugins {
+		if plugin.Definition.Manifest == nil {
+			continue // OK
+		}
+		plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
+	}
+
 	return deployment, nil
 }
 

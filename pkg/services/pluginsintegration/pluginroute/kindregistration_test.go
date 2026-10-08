@@ -37,10 +37,10 @@ func testBuilder(t *testing.T, manifest *app.ManifestData) *manifestBuilder {
 		group = manifest.Group
 	}
 	return &manifestBuilder{
-		group:      group,
-		manifest:   manifest,
-		pluginJSON: plugin.JSONData,
-		clientV3:   &fakeRouteClient{},
+		group:    group,
+		manifest: manifest,
+		pluginID: plugin.JSONData.ID,
+		clientV3: &fakeRouteClient{},
 	}
 }
 

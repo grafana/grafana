@@ -16,6 +16,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
@@ -179,16 +180,19 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 		if deps.Cfg != nil {
 			appplugin.ApplyDefaultSettingsStorageConfig(deps.Cfg.UnifiedStorage, plugin.JSONData.ID)
 		}
-		if len(plugin.Manifests) == 0 || plugin.Manifests[0] == nil {
-			continue
-		}
-		group := plugin.Manifests[0].Group
-		if !strings.HasSuffix(group, pluginManifestGroupSuffix) || len(validation.IsDNS1123Subdomain(group)) > 0 {
-			logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
-			continue
-		}
-		if err := declareManifestRoles(deps.ACService, group, plugin.JSONData.Name, plugin.Manifests[0]); err != nil {
-			return fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+
+		for _, manifest := range plugin.Manifests {
+			if manifest == nil {
+				continue
+			}
+			group := manifest.Group
+			if !strings.HasSuffix(group, pluginManifestGroupSuffix) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+				logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
+				continue
+			}
+			if err := declareManifestRoles(deps.ACService, group, plugin.JSONData.Name, manifest); err != nil {
+				return fmt.Errorf("error declaring roles for %s: %w", plugin.JSONData.ID, err)
+			}
 		}
 	}
 	return nil
@@ -226,27 +230,30 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 		return nil, err
 	}
 
-	// Settings retain the plugin ID even when the manifest declares another group.
-	for _, plugin := range pluginDefs {
-		if len(plugin.Manifests) > 0 && plugin.Manifests[0] != nil {
-			settings := plugin
-			settings.Manifests = nil
-			pluginDefs = append(pluginDefs, settings)
-		}
-	}
+	return pl.prepareBackends(ctx, pluginDefs)
+}
+
+func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
 	backends := make([]Backend, 0, len(pluginDefs))
 	for _, plugin := range pluginDefs {
-		backend, err := NewPluginBackend(plugin,
-			func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
-				return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, plugin.JSONData.ID), nil
-			}, pl.deps.PluginDependencies,
-		)
+		key, err := json.Marshal(plugin) // used to define the key
 		if err != nil {
-			// One bad plugin must not keep every other plugin from loading.
-			logging.FromContext(ctx).Warn("router: skipping app plugin", "pluginId", plugin.JSONData.ID, "err", err)
-			continue
+			return nil, err
 		}
-		backends = append(backends, backend)
+
+		client := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
+			return pl.deps.PluginClient, v3.NewLazyClient(pl.deps.ClientV3Loader, id), nil
+		}
+
+		for _, manifest := range plugin.Manifests {
+			backend, err := newPluginBackend(plugin.JSONData.ID, manifest, client, pl.deps.PluginDependencies, key)
+			if err != nil {
+				// One bad manifest must not keep its siblings or other plugins from loading.
+				logging.FromContext(ctx).Warn("router: skipping app plugin", "pluginId", plugin.JSONData.ID, "err", err)
+				continue
+			}
+			backends = append(backends, backend)
+		}
 	}
 	return backends, nil
 }
@@ -274,45 +281,50 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
-func NewPluginBackend(plugin definition.PluginDefinition, client PluginClientProvider, deps PluginDependencies) (_ *PluginBackend, err error) {
+func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (_ *PluginBackend, err error) {
 	// The plugin API builder panics on an invalid manifest. Plugins are loaded
 	// inside the reconcile loop, so a panic here would stop it for every group.
 	defer func() {
 		if p := recover(); p != nil {
-			err = fmt.Errorf("plugin %q: %v", plugin.JSONData.ID, p)
+			err = fmt.Errorf("plugin %q: %v", pluginID, p)
 		}
 	}()
-	group, err := pluginroute.APIGroup(plugin, pluginroute.Options{PluginClient: deps.PluginClient, ContextProvider: deps.ContextProvider})
-	if err != nil {
+
+	if manifest == nil {
+		return nil, fmt.Errorf("plugin %q: missing manifest", pluginID)
+	}
+	if !isPluginAPIGroup(manifest.Group) {
+		return nil, fmt.Errorf("plugin %q: API group %q is not a plugin group", pluginID, manifest.Group)
+	}
+	if _, err := pluginroute.NewAPI(pluginID, manifest, pluginroute.Options{}); err != nil {
 		return nil, err
 	}
-	if !isPluginAPIGroup(group.Name) {
-		return nil, fmt.Errorf("plugin %q: API group %q is not a plugin group", plugin.JSONData.ID, group.Name)
+	group := pluginroute.APIGroup(manifest)
+	if len(group.Versions) == 0 {
+		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
 	}
-
-	b, err := json.Marshal(plugin)
-	if err != nil {
-		return nil, err
-	}
-
-	sum := sha256.Sum256(b)
+	h := sha256.New()
+	_, _ = h.Write(key)
+	_, _ = h.Write([]byte(manifest.Group))
 
 	return &PluginBackend{
-		key:    "p:" + hex.EncodeToString(sum[:]),
-		group:  group,
-		plugin: plugin,
-		client: client,
-		deps:   deps,
+		key:      "p:" + hex.EncodeToString(h.Sum(nil)),
+		pluginID: pluginID,
+		group:    group,
+		manifest: manifest,
+		client:   client,
+		deps:     deps,
 	}, nil
 }
 
 type PluginBackend struct {
-	key   string
-	group metav1.APIGroup
+	key string
 
-	plugin definition.PluginDefinition
-	client PluginClientProvider
-	deps   PluginDependencies
+	pluginID string
+	group    metav1.APIGroup
+	manifest *app.ManifestData
+	client   PluginClientProvider
+	deps     PluginDependencies
 }
 
 func (b *PluginBackend) Group() metav1.APIGroup {
@@ -327,7 +339,7 @@ func (b *PluginBackend) Key() string {
 }
 
 func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
-	clientV2, clientV3, err := b.client(ctx, b.plugin.JSONData.ID)
+	clientV2, clientV3, err := b.client(ctx, b.pluginID)
 	if err != nil {
 		return nil, err
 	}
@@ -339,8 +351,8 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	}
 	// Keep authentication outside the breaker: token exchange failures do not
 	// indicate whether the plugin is reachable.
-	clientV3, err = v3.WithAuthentication(clientV3, b.plugin.JSONData.ID,
-		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.plugin.JSONData.ID, b.deps.TokenExchanger))
+	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID,
+		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger))
 	if err != nil {
 		return nil, err
 	}
@@ -379,11 +391,11 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		opts.AccessChecker = appplugin.NewPluginAccessChecker(b.deps.AccessControl)
 	}
 	if b.deps.PluginSettings != nil {
-		opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(b.group.Name, b.plugin.JSONData.ID, b.deps.PluginSettings)
+		opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(b.group.Name, b.pluginID, b.deps.PluginSettings)
 	}
-	handler, err := pluginroute.NewHandler(b.plugin, opts)
+	handler, err := pluginroute.NewHandler(b.pluginID, b.manifest, opts)
 	if err != nil {
 		return nil, err
 	}
-	return &tracedPluginHandler{Handler: handler, pluginID: b.plugin.JSONData.ID, group: b.group.Name}, nil
+	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name}, nil
 }

@@ -18,7 +18,6 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
@@ -29,8 +28,8 @@ type getter = func(ctx context.Context, gvr schema.GroupVersionResource, name st
 
 type manifestBuilder struct {
 	group         string
+	pluginID      string
 	manifest      *app.ManifestData
-	pluginJSON    plugins.JSONData
 	clientV3      appclientv3.Client
 	decrypter     *secureValueLookup
 	accessChecker appplugin.PluginAccessChecker
@@ -45,16 +44,11 @@ type manifestBuilder struct {
 
 // GetGroupVersions returns the served versions, preferred version first.
 func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
-	gvs := make([]schema.GroupVersion, 0, len(b.manifest.Versions))
-	for _, v := range b.manifest.Versions {
-		if !v.Served {
-			continue
-		}
-		gv := schema.GroupVersion{
-			Group:   b.group,
-			Version: v.Name,
-		}
-		if b.manifest.PreferredVersion == v.Name {
+	group := APIGroup(b.manifest)
+	gvs := make([]schema.GroupVersion, 0, len(group.Versions))
+	for _, v := range group.Versions {
+		gv := schema.GroupVersion{Group: group.Name, Version: v.Version}
+		if v.Version == group.PreferredVersion.Version {
 			gvs = slices.Insert(gvs, 0, gv)
 		} else {
 			gvs = append(gvs, gv)
@@ -66,7 +60,7 @@ func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
 func (b *manifestBuilder) InstallSchema(scheme *runtime.Scheme) error {
 	gvs := b.GetGroupVersions()
 	if len(gvs) == 0 {
-		return fmt.Errorf("plugin %s has no served versions", b.pluginJSON.ID)
+		return fmt.Errorf("plugin %s has no served versions", b.pluginID)
 	}
 	for _, gv := range gvs {
 		if err := apppluginV0.AddKnownTypes(scheme, gv); err != nil {

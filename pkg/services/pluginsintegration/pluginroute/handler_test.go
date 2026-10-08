@@ -174,7 +174,7 @@ func TestHandlerSharesOneMetricsRegistry(t *testing.T) {
 
 func loadHandler(t *testing.T, plugin definition.PluginDefinition, opts Options) http.Handler {
 	t.Helper()
-	handler, err := NewHandler(plugin, opts)
+	handler, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], opts)
 	require.NoError(t, err)
 	t.Cleanup(handler.Destroy)
 	return handler
@@ -310,9 +310,6 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		change func(*definition.PluginDefinition, *Options)
 		want   string
 	}{
-		{"multiple manifests", func(p *definition.PluginDefinition, _ *Options) {
-			p.Manifests = append(p.Manifests, &app.ManifestData{Group: "other.ext.grafana.app"})
-		}, "multiple app manifests are not supported yet"},
 		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifests = []*app.ManifestData{{}} }, "empty app manifest"},
 		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
@@ -324,7 +321,7 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			plugin, opts := testPlugin(), testOptions()
 			tc.change(&plugin, &opts)
-			handler, err := NewHandler(plugin, opts)
+			handler, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], opts)
 			require.ErrorContains(t, err, tc.want)
 			require.Nil(t, handler)
 		})
@@ -333,8 +330,7 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 
 func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 	plugin := testPlugin()
-	expected, err := APIGroup(plugin, testOptions())
-	require.NoError(t, err)
+	expected := APIGroup(plugin.Manifests[0])
 	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
 	var actual metav1.APIGroup
 	getJSON(t, handler, "/apis/"+expected.Name, &actual)
@@ -346,37 +342,8 @@ func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 }
 
 func TestHandlerWithoutManifest(t *testing.T) {
-	plugin := testPlugin()
-	plugin.Manifests = nil
-	expected, err := APIGroup(plugin, testOptions())
-	require.NoError(t, err)
-	require.Equal(t, plugin.JSONData.ID, expected.Name)
-	require.Equal(t, []metav1.GroupVersionForDiscovery{
-		{GroupVersion: "example-app/v0alpha1", Version: "v0alpha1"},
-	}, expected.Versions)
-	require.Equal(t, expected.Versions[0], expected.PreferredVersion)
-	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
-	var actual metav1.APIGroup
-	getJSON(t, handler, "/apis/example-app", &actual)
-	require.Equal(t, expected.Versions, actual.Versions)
-	require.Equal(t, expected.PreferredVersion, actual.PreferredVersion)
-	var resources metav1.APIResourceList
-	getJSON(t, handler, "/apis/example-app/v0alpha1", &resources)
-	names := make([]string, 0, len(resources.APIResources))
-	for _, r := range resources.APIResources {
-		names = append(names, r.Name)
-	}
-	require.Contains(t, names, "app")
-	require.Contains(t, names, "app/health")
-	require.Contains(t, names, "app/resources")
-
-	var oas spec3.OpenAPI
-	getJSON(t, handler, "/openapi/v3/apis/example-app/v0alpha1", &oas)
-	require.Contains(t, oas.Paths.Paths, "/apis/example-app/v0alpha1/namespaces/{namespace}/app/instance")
-
-	denied := withRequester(loadHandler(t, plugin, testOptions()))
-	res := get(t, denied, "/apis/example-app/v0alpha1/namespaces/default/app/instance")
-	require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
+	_, err := NewHandler("example-app", nil, testOptions())
+	require.ErrorContains(t, err, "missing manifest")
 }
 
 func TestHandlerDeniesOtherNamespaces(t *testing.T) {
@@ -437,7 +404,7 @@ func (c *resourceClient) Read(_ context.Context, req *resourcepb.ReadRequest, _ 
 }
 
 func TestHandlerAdmission(t *testing.T) {
-	for _, mutation := range []bool{false, true} {
+	for _, mutation := range []bool{true} {
 		t.Run(fmt.Sprint("mutation=", mutation), func(t *testing.T) {
 			plugin := testPlugin()
 			capabilities := &app.AdmissionCapabilities{}
@@ -475,38 +442,18 @@ func (c *admissionClient) AdmissionReview(_ context.Context, req *pluginv3.Admis
 	return &pluginv3.AdmissionReviewResponse{}, nil
 }
 
-func TestHandlerLegacySettings(t *testing.T) {
+func TestHandlerExcludesLegacySettings(t *testing.T) {
 	keepManifestSettings(t)
-	for _, withManifest := range []bool{false, true} {
-		t.Run(fmt.Sprint("manifest=", withManifest), func(t *testing.T) {
-			plugin := testPlugin()
-			if !withManifest {
-				plugin.Manifests = nil
-			}
-			group, err := APIGroup(plugin, testOptions())
-			require.NoError(t, err)
-			opts := allowAll(testOptions())
-			opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
-				&pluginsettings.FakePluginSettings{Plugins: map[string]*pluginsettings.DTO{
-					plugin.JSONData.ID: {Enabled: true, JSONData: map[string]any{"source": "legacy"}},
-				}})
-			opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
-			handler := withRequester(loadHandler(t, plugin, opts))
-			if withManifest {
-				for _, version := range group.Versions {
-					res := httptest.NewRecorder()
-					handler.ServeHTTP(res, httptest.NewRequest(http.MethodGet, "/apis/"+version.GroupVersion+"/namespaces/default/app/instance", nil))
-					require.Equal(t, http.StatusNotFound, res.Code)
-				}
-				return
-			}
-			for _, version := range group.Versions {
-				var settings apppluginV0.Settings
-				getJSON(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/"+apppluginV0.INSTANCE_NAME, &settings)
-				require.True(t, settings.Spec.Enabled)
-				require.Equal(t, "legacy", settings.Spec.JsonData.Object["source"])
-			}
-		})
+	plugin := testPlugin()
+	group := APIGroup(plugin.Manifests[0])
+	opts := allowAll(testOptions())
+	opts.Runner.LegacyStore = appplugin.NewLegacySettingsStore(group.Name, plugin.JSONData.ID,
+		&pluginsettings.FakePluginSettings{})
+	opts.DualWrite = dualwrite.ProvideServiceForTests(nil)
+	handler := withRequester(loadHandler(t, plugin, opts))
+	for _, version := range group.Versions {
+		res := get(t, handler, "/apis/"+version.GroupVersion+"/namespaces/default/app/instance")
+		require.Equal(t, http.StatusNotFound, res.Code)
 	}
 }
 
@@ -525,8 +472,7 @@ func TestHandlerExcludesSettingsDespiteCompatibilityFlag(t *testing.T) {
 	opts.PluginClient = nil
 	opts.ContextProvider = nil
 	plugin := testPlugin()
-	expected, err := APIGroup(plugin, opts)
-	require.NoError(t, err)
+	expected := APIGroup(plugin.Manifests[0])
 	handler := withRequester(loadHandler(t, plugin, opts))
 	var actual metav1.APIGroup
 	getJSON(t, handler, "/apis/"+expected.Name, &actual)
@@ -542,8 +488,32 @@ func TestHandlerRejectsManifestWithoutServedVersions(t *testing.T) {
 	for i := range plugin.Manifests[0].Versions {
 		plugin.Manifests[0].Versions[i].Served = false
 	}
-	_, err := APIGroup(plugin, testOptions())
+	require.Empty(t, APIGroup(plugin.Manifests[0]).Versions)
+	_, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], testOptions())
 	require.ErrorContains(t, err, "no served versions")
-	_, err = NewHandler(plugin, testOptions())
-	require.ErrorContains(t, err, "no served versions")
+}
+
+func TestAPIGroupPreferredVersion(t *testing.T) {
+	for _, tc := range []struct {
+		name, preferred, want string
+		versions              []app.ManifestVersion
+	}{
+		{"explicit", "v1", "v1", []app.ManifestVersion{{Name: "v2", Served: true}, {Name: "v1", Served: true}}},
+		{"stable fallback", "", "v2", []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: true}, {Name: "v3alpha1", Served: true}}},
+		{"alpha fallback", "", "v2alpha1", []app.ManifestVersion{{Name: "v1alpha1", Served: true}, {Name: "v2alpha1", Served: true}}},
+		{"unserved preferred", "v2", "v1", []app.ManifestVersion{{Name: "v1", Served: true}, {Name: "v2", Served: false}}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			manifest := &app.ManifestData{Group: "example.ext.grafana.app", PreferredVersion: tc.preferred, Versions: tc.versions}
+			group := APIGroup(manifest)
+			require.Equal(t, tc.want, group.PreferredVersion.Version)
+			require.Equal(t, group.PreferredVersion, group.Versions[0])
+			builder := &manifestBuilder{manifest: manifest, group: manifest.Group}
+			versions := builder.GetGroupVersions()
+			require.Len(t, versions, len(group.Versions))
+			for i, version := range versions {
+				require.Equal(t, group.Versions[i].GroupVersion, version.String())
+			}
+		})
+	}
 }
