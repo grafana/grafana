@@ -323,10 +323,10 @@ describe('AppChrome', () => {
     });
 
     it('does not re-open the mega menu when returning to the same scope after a real disable/enable cycle', async () => {
-      // Regression test: a *real* disable (not just the transient enabled-flap debounce) used to
-      // reset the "seen" tracking, so returning to the same scope re-opened a menu the user had
-      // just closed. The old docked drawer this replaces never had this problem: drawerOpened is
-      // untouched by the scope selection itself.
+      // Regression test for returning to a still-applied scope: forScopeNames/dashboards never
+      // actually change for this case (fetchDashboards only re-runs when the applied scopes
+      // change), so the "seen" key never moves either. Matches the old docked drawer this
+      // replaces: drawerOpened only gets recomputed when fetchDashboards actually re-runs.
       mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
       const { context } = setup(<Page navId="child1">Children</Page>);
 
@@ -381,6 +381,42 @@ describe('AppChrome', () => {
       // A different scope's content arrives this time - this is genuinely new, so it must open.
       mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
       mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-b'] }));
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+    });
+
+    it('re-opens when the same scope is cleared and then re-applied', async () => {
+      // Regression test: clearing the scope selection genuinely resets forScopeNames to [] (a real
+      // fetchDashboards([]) call, not just a transient flap), so re-applying the *same* scope
+      // afterwards must be treated as fresh content again, not blocked by the previously-seen key.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-a'] }));
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // Scope selection cleared - fetchDashboards([]) resets forScopeNames/dashboards for real.
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // The same scope is re-applied and genuinely re-fetched - must open again.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-a'] }));
       act(() => {
         context.chrome.update({ actions: [] });
       });

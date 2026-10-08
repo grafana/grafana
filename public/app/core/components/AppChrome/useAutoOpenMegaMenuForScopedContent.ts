@@ -2,9 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Observable } from 'rxjs';
 
 import { useObservable } from '@grafana/data/unstable';
-import { useScopes } from '@grafana/runtime';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
-import { useDebouncedScopesEnabled } from 'app/features/scopes/useDebouncedScopesEnabled';
 
 import { type AppChromeService } from './AppChromeService';
 
@@ -20,29 +18,21 @@ export function useAutoOpenMegaMenuForScopedContent(
   chromeless: boolean | undefined,
   scopesMegaMenuEnabled: boolean
 ) {
-  const scopes = useScopes();
   const scopeServices = useScopesServices();
   const dashboardsState = scopeServices?.scopesDashboardsService.state;
   useObservable(scopeServices?.scopesDashboardsService.stateObservable ?? new Observable(), dashboardsState);
-
-  // Debounced so a transient `enabled` flap during navigation (grafana/hyperion-planning#677)
-  // doesn't read as "scopes just got disabled" and later misread stale leftover dashboards state
-  // as new content, force-opening the menu on an unrelated, non-scoped page.
-  const scopesEnabled = useDebouncedScopesEnabled(scopes?.state.enabled ?? false);
 
   // `loading` must gate this too: fetchDashboards() writes the new scope's forScopeNames and
   // loading:true synchronously, but leaves the *previous* scope's dashboards/scopeNavigations in
   // place until the fetch resolves. Without this, that stale leftover data reads as "the new scope
   // has content" and can force-open the menu before we actually know whether it does.
   //
-  // Identified by the scope names rather than a plain boolean, so a disable/re-enable cycle for the
-  // *same* scope (e.g. navigating to a non-scoped page and back - scopesEnabled debounces the brief
-  // `enabled` flap, but a real disable still resolves eventually) doesn't look like new content and
-  // force the menu open again, overwriting a preference the user already set by closing it. The old
-  // docked drawer this replaces had the same property for free: `drawerOpened` is untouched by the
-  // scope selection itself, only by explicit user action or the edit-mode effect.
+  // Deliberately doesn't factor in whether scopes are currently enabled: ScopesSelectorService only
+  // ever calls fetchDashboards() as a result of an actual scope-apply action (ScopesSelectorService.ts,
+  // applyScopes), never as a side effect of the enabled flag itself flipping - so this data can't change
+  // during the transient `enabled` flap from navigating between pages (grafana/hyperion-planning#677).
   const scopeContentKey =
-    scopesEnabled && dashboardsState && !dashboardsState.loading && dashboardsState.forScopeNames.length > 0
+    dashboardsState && !dashboardsState.loading && dashboardsState.forScopeNames.length > 0
       ? JSON.stringify(dashboardsState.forScopeNames)
       : null;
   const hasScopedDashboardsContent = Boolean(
@@ -51,16 +41,22 @@ export function useAutoOpenMegaMenuForScopedContent(
       (dashboardsState.dashboards.length > 0 || dashboardsState.scopeNavigations.length > 0)
   );
 
-  const lastOpenedForKeyRef = useRef<string | null>(null);
+  // Tracks the key for the content we've last seen - null when there's currently none - so that
+  // clearing scopes and then re-applying the *same* one is treated as fresh content (the service
+  // really does clear and re-fetch for that), while simply returning to a still-applied scope isn't
+  // (fetchDashboards never re-runs for scopes that haven't changed, so this key never moves either).
+  const lastContentKeyRef = useRef<string | null>(null);
   useEffect(() => {
-    // Only act - and only remember we acted - while we're actually allowed to open the menu.
+    // Only act - and only remember what we've seen - while we're actually allowed to open the menu.
     // Otherwise content arriving while chromeless/the flag is off would get marked "seen" without
     // ever opening anything, and the real transition would be missed once we become eligible again
     // (e.g. chromeless resolving to false right after mount).
     const canAutoOpen = !chromeless && scopesMegaMenuEnabled;
-    if (canAutoOpen && hasScopedDashboardsContent && scopeContentKey !== lastOpenedForKeyRef.current) {
+    if (canAutoOpen && hasScopedDashboardsContent && scopeContentKey !== lastContentKeyRef.current) {
       chrome.setMegaMenuOpen(true, true);
-      lastOpenedForKeyRef.current = scopeContentKey;
+    }
+    if (canAutoOpen) {
+      lastContentKeyRef.current = scopeContentKey;
     }
   }, [chromeless, scopesMegaMenuEnabled, hasScopedDashboardsContent, scopeContentKey, chrome]);
 }
