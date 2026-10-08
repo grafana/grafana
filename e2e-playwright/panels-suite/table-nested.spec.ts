@@ -89,8 +89,8 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       .last()
       .click();
 
-    const firstNestedTable = page.locator('.rdg').nth(1);
-    const secondNestedTable = page.locator('.rdg').nth(2);
+    const firstNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(1);
+    const secondNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(2);
 
     // click the "Info" column header to sort it.
     const infoColumHeaderFirst = getCell(firstNestedTable, 0, 1);
@@ -125,7 +125,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     await waitForTableLoad(page);
 
-    const mainTable = page.locator('.rdg').nth(0);
+    const mainTable = page.locator('.rdg:not([aria-hidden="true"])').nth(0);
 
     await expect(mainTable.locator('>[role="row"]')).toHaveCount(3);
 
@@ -142,8 +142,8 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
 
     await expect(mainTable.locator('>[role="row"]')).toHaveCount(5);
 
-    const firstNestedTable = page.locator('.rdg').nth(1);
-    const secondNestedTable = page.locator('.rdg').nth(2);
+    const firstNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(1);
+    const secondNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(2);
 
     // grab the both of the nested table's row counts before filtering the first table.
     const firstTableRowCount = await firstNestedTable.locator('[role="row"]').count();
@@ -180,7 +180,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     // confirm that filtering the main table works as expected.
 
     await expect(mainTable.locator('>[role="row"]')).toHaveCount(5); // header, top-level row + row containing nested table x2
-    await expect(page.locator('.rdg')).toHaveCount(3); // main table + nested tables x2
+    await expect(page.locator('.rdg:not([aria-hidden="true"])')).toHaveCount(3); // main table + nested tables x2
 
     await mainTable
       .getByRole('columnheader')
@@ -193,7 +193,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
     await expect(filterContainer).not.toBeVisible();
 
     await expect(getCell(mainTable, 1, stateColumnIdx)).not.toHaveText(lastStateValue);
-    await expect(page.locator('.rdg')).toHaveCount(2);
+    await expect(page.locator('.rdg:not([aria-hidden="true"])')).toHaveCount(2);
   });
 
   test('cross-filter in nested table: second filter popup shows only values from filtered rows', async ({
@@ -224,8 +224,8 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       .last()
       .click();
 
-    const firstNestedTable = page.locator('.rdg').nth(1);
-    const secondNestedTable = page.locator('.rdg').nth(2);
+    const firstNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(1);
+    const secondNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(2);
 
     const infoColumnIdx = await getColumnIdx(firstNestedTable, 'Info');
     const minColumnIdx = await getColumnIdx(firstNestedTable, 'Min');
@@ -338,7 +338,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       .getByGrafanaSelector(selectors.components.Panels.Visualization.TableNG.RowExpander)
       .first()
       .click();
-    const firstNestedTable = page.locator('.rdg').nth(1);
+    const firstNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(1);
 
     const longTextColIdx = await getColumnIdx(firstNestedTable, 'Long Text');
 
@@ -402,7 +402,7 @@ test.describe('Panels test: Table - Nested', { tag: ['@panels', '@table'] }, () 
       .first()
       .click();
 
-    const firstNestedTable = page.locator('.rdg').nth(1);
+    const firstNestedTable = page.locator('.rdg:not([aria-hidden="true"])').nth(1);
     await expect(firstNestedTable.getByRole('columnheader', { name: 'Gauge' })).toBeVisible();
   });
 
