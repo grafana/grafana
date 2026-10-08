@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx"
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./test/**/*.ts",
+    "../../public/app/types/jquery/*.ts",
+    "../../public/app/types/*.d.ts",
+    "../../packages/grafana-ui/src/types/react-table-config.d.ts"
+  ]
+}
