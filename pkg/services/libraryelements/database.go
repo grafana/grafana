@@ -814,7 +814,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUIDUnchecked(c cont
 	libraryElementTable := "library_element"
 	ctx := c
 	if l.LegacyDatabaseProvider != nil {
-		dbHelper, err := l.legacyDatabaseProvider(c)
+		dbHelper, err := l.LegacyDatabaseProvider(c)
 		if err != nil {
 			return err
 		}

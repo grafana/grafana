@@ -202,28 +202,6 @@ func (s *dbSpy) WithTransactionalDbSession(ctx context.Context, callback sqlstor
 	})
 }
 
-func TestLibraryElementService_legacyDatabaseProvider(t *testing.T) {
-	t.Run("falls back to identity table names when LegacyDatabaseProvider is unset", func(t *testing.T) {
-		svc := &LibraryElementService{}
-		dbHelper, err := svc.legacyDatabaseProvider(context.Background())
-		require.NoError(t, err)
-		require.Equal(t, "library_element", dbHelper.Table("library_element"))
-	})
-
-	t.Run("delegates to the configured provider when set", func(t *testing.T) {
-		svc := &LibraryElementService{
-			LegacyDatabaseProvider: func(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
-				return &legacysql.LegacyDatabaseHelper{
-					Table: func(n string) string { return "hg_stack1." + n },
-				}, nil
-			},
-		}
-		dbHelper, err := svc.legacyDatabaseProvider(context.Background())
-		require.NoError(t, err)
-		require.Equal(t, "hg_stack1.library_element", dbHelper.Table("library_element"))
-	})
-}
-
 func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

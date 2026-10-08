@@ -75,15 +75,6 @@ type LibraryElementService struct {
 
 var _ Service = (*LibraryElementService)(nil)
 
-// legacyDatabaseProvider falls back to bare table names when LegacyDatabaseProvider is unset, so
-// a LibraryElementService built directly (as in tests) keeps working unchanged.
-func (l *LibraryElementService) legacyDatabaseProvider(ctx context.Context) (*legacysql.LegacyDatabaseHelper, error) {
-	if l.LegacyDatabaseProvider == nil {
-		return legacysql.NewDatabaseProvider(l.SQLStore)(ctx)
-	}
-	return l.LegacyDatabaseProvider(ctx)
-}
-
 // withoutAmbientSession forces a fresh session, since sqlstore reuses whatever's on ctx without
 // checking it came from the right db.DB.
 func withoutAmbientSession(ctx context.Context) context.Context {
