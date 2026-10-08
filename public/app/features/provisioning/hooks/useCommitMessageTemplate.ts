@@ -38,12 +38,7 @@ export function useCommitMessageTemplate({
   fallbackMessage,
 }: UseCommitMessageTemplateArgs): { locked: boolean; message: string } {
   const template = repository?.commit?.singleResourceMessageTemplate;
-  const enforce = repository?.commit?.enforceTemplate ?? false;
-
-  // Enforcement activates the field even without a template.
-  const active = Boolean(template?.trim()) || enforce;
-  const locked = enforce;
-  const rendered = active ? renderCommitMessage(template, vars, fallbackMessage) : '';
+  const locked = repository?.commit?.enforceTemplate ?? false;
 
   // Enforced repos commit the template, not the field, so drop the comment when locked. Bulk callers
   // (those that pass a `fallbackMessage`) resolve via the bulk path so the no-template default stays
@@ -54,12 +49,13 @@ export function useCommitMessageTemplate({
       ? getSingleResourceCommitMessage({ comment: resolvedComment, repository, ...vars })
       : getBulkResourceCommitMessage({ comment: resolvedComment, repository, fallbackMessage, ...vars });
 
-  // Pre-fill only the editable field; enforced repos render `message` read-only instead. The
-  // template tracks live `vars` and the repo usually resolves after the form mounts, so a static
-  // form default would be stale. `active && !locked` because enforced commits bypass the field.
+  // Pre-fill only the editable field; enforced repos render `message` read-only instead, so there is
+  // nothing to fill. The template tracks live `vars` and the repo usually resolves after the form
+  // mounts, so a static form default would be stale.
+  const prefill = !locked && Boolean(template?.trim());
   useTemplateAutofill({
-    active: active && !locked,
-    rendered,
+    active: prefill,
+    rendered: prefill ? renderCommitMessage(template, vars, fallbackMessage) : '',
     value: comment,
     isDirty: isCommentDirty,
     setValue: setComment,

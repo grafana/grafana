@@ -28,12 +28,7 @@ import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../u
 import { type ResourceBranchAction } from '../../utils/redirect';
 import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-  shouldEnforceBranchTemplate,
-} from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
@@ -377,9 +372,7 @@ function ResourceDrawerContent({
       ref: getDefaultRef(repository, prefix),
       repo: repository.name || '',
       path: sourcePath || '',
-      // When the branch name template is enforced, push through the branch workflow so the templated
-      // branch is created and sent as `ref`; useBranchTemplate then fills it.
-      workflow: shouldEnforceBranchTemplate(repository) ? ('branch' as const) : getDefaultWorkflow(repository),
+      workflow: getDefaultWorkflow(repository),
     };
   }, [repository, isLoading, title, sourcePath, prefix]);
 

@@ -8,12 +8,7 @@ import { RepoViewStatus, type RepositoryViewData } from 'app/features/provisioni
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-  shouldEnforceBranchTemplate,
-} from '../components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../components/defaults';
 import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath, slugifyForFilename } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
@@ -195,21 +190,6 @@ export function useProvisionedDashboardData(
     ]
   );
 
-  const defaultValues = useMemo(() => {
-    if (defaultValuesResult.status !== RepoViewStatus.Ready) {
-      return null;
-    }
-    const { values, repository: resolvedRepository } = defaultValuesResult;
-    // When the branch name template is enforced, dashboard pushes must go through the branch workflow
-    // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
-    // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
-    // useBranchTemplate then fills the `ref`; the generated name keeps the branch default from ever
-    // pointing at the configured branch in the meantime.
-    return values && shouldEnforceBranchTemplate(resolvedRepository) && values.workflow !== 'branch'
-      ? { ...values, workflow: 'branch' as const, ref: generateNewBranchName('dashboard') }
-      : values;
-  }, [defaultValuesResult]);
-
   if (defaultValuesResult.status !== RepoViewStatus.Ready) {
     return {
       canPushToConfiguredBranch: false,
@@ -223,9 +203,9 @@ export function useProvisionedDashboardData(
     };
   }
 
-  const { isNew, repository: resolvedRepository } = defaultValuesResult;
+  const { values, isNew, repository: resolvedRepository } = defaultValuesResult;
   return {
-    defaultValues,
+    defaultValues: values,
     repository: resolvedRepository,
     loadedFromRef,
     canPushToConfiguredBranch: getCanPushToConfiguredBranch(resolvedRepository),

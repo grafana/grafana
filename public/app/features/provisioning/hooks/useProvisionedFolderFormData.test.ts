@@ -1,5 +1,4 @@
 import { renderHook, waitFor } from '@testing-library/react';
-import { getWrapper } from 'test/test-utils';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { type RepositoryViewData, RepoViewStatus } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
@@ -7,9 +6,7 @@ import { type RepositoryViewData, RepoViewStatus } from 'app/features/provisioni
 import { useProvisionedFolderFormData } from './useProvisionedFolderFormData';
 
 function renderFolderFormData(view: Partial<RepositoryViewData> = {}, title?: string) {
-  return renderHook(() => useProvisionedFolderFormData({ view: repositoryViewData(view), title }), {
-    wrapper: getWrapper({}),
-  });
+  return renderHook(() => useProvisionedFolderFormData({ view: repositoryViewData(view), title }));
 }
 
 const repoView = (overrides: Partial<RepositoryView> = {}): RepositoryView => ({

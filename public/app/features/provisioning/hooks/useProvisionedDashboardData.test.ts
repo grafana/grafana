@@ -377,7 +377,7 @@ describe('useProvisionedDashboardData', () => {
   });
 
   describe('enforced branch name template', () => {
-    // write-first repo: without the enforced-template override the default workflow would be `write`.
+    // write-first repo: without the enforced template the default workflow would be `write`.
     const enforcedRepo: RepositoryView = {
       ...folderRepo,
       workflows: ['write', 'branch'],
@@ -394,23 +394,6 @@ describe('useProvisionedDashboardData', () => {
       expect(result.current.defaultValues?.workflow).toBe('branch');
       // The ref follows the workflow: a branch default must never point at the configured branch.
       expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
-    });
-
-    it('keeps the same defaultValues object across rerenders when the override applies', () => {
-      const dashboard = createDashboard();
-      const folderData = folder('dashboards');
-      const { result, rerender } = renderHook(
-        () => useProvisionedDashboardData(dashboard, readyView(enforcedRepo, folderData)),
-        { wrapper }
-      );
-
-      const initial = result.current.defaultValues;
-      expect(initial?.workflow).toBe('branch');
-
-      // The form resets to defaultValues whenever its identity changes, so a fresh object per render
-      // would reset the form on every unrelated rerender.
-      rerender();
-      expect(result.current.defaultValues).toBe(initial);
     });
 
     it('keeps the default write workflow when enforcement has no usable template', () => {
