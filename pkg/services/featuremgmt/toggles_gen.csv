@@ -393,3 +393,4 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,grafana.mtFallback,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-10-07,grafana.globalHomePreference,experimental,@grafana/grafana-frontend-navigation,false,false,true
 2026-10-07,datasources.apiServerConnectToHostedGrafanaDatabases,experimental,@grafana/data-sources-plugins,false,false,false
+2026-10-08,datasources.jsonQueryDataFormat,preview,@grafana/data-sources-plugins,false,false,false

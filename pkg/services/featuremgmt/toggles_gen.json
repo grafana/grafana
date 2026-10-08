@@ -1751,6 +1751,22 @@
     },
     {
       "metadata": {
+        "name": "datasources.jsonQueryDataFormat",
+        "resourceVersion": "1791494742449",
+        "creationTimestamp": "2026-10-08T21:03:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-08 21:25:42.449337 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Requests the JSON data frame wire format from backend plugins for unary QueryData",
+        "stage": "preview",
+        "codeowner": "@grafana/data-sources-plugins",
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasources.loadOpenAPI",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-13T18:34:04Z"

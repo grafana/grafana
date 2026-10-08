@@ -2850,6 +2850,15 @@ The default is `true`.
 
 To prevent automatic updates for specific plugins, pin them to a specific version using the format `plugin_id@version` in the `preinstall` setting.
 
+#### `arrow_query_data_plugins`
+
+Enter a comma-separated list of plugin identifiers that keep the Arrow data frame wire format for query responses.
+
+By default, Grafana asks backend plugins to encode query responses as JSON data frames.
+JSON uses less memory than Arrow for responses that hold many small frames.
+Grafana always asks plugins in this list for Arrow, which encodes string-heavy responses with fewer allocations.
+To use Arrow for every plugin, disable the `datasources.jsonQueryDataFormat` [feature toggle](#feature_toggles).
+
 <hr>
 
 ### `[plugins_marketplace]`

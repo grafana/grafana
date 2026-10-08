@@ -102,6 +102,7 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `splashScreen`                     | Enables the splash screen modal for introducing new Grafana features on first session                                          |
 | `dataviz.tabularNums`              | Enables tabular numerals for visualization legend values                                                                       |
 | `grafana.dynamicTraceToLogs`       | Check for the existence of logs when linking from the Trace View                                                               |
+| `datasources.jsonQueryDataFormat`  | Requests the JSON data frame wire format from backend plugins for unary QueryData                                              |
 
 ## Development feature toggles
 
