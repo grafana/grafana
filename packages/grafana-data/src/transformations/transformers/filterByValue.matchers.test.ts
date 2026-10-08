@@ -1,6 +1,8 @@
 import { lastValueFrom } from 'rxjs';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
+import { getDisplayProcessor } from '../../field/displayProcessor';
+import { createTheme } from '../../themes/createTheme';
 import { FieldType } from '../../types/dataFrame';
 import { MappingType } from '../../types/valueMapping';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
@@ -139,6 +141,39 @@ it('preserves timezone formatting in serialized display membership', async () =>
   const [output] = await lastValueFrom(transformDataFrame(JSON.parse(JSON.stringify([filter])), [data]));
   expect(output.fields[0].values).toEqual([Date.UTC(2026, 8, 18, 12)]);
 });
+
+it.each([
+  { existingDisplay: true, selected: '2026-09-18 12:00:00' },
+  { existingDisplay: false, selected: '2026-09-18 08:00:00' },
+])(
+  'uses field display when present ($existingDisplay), otherwise the matcher timezone',
+  ({ existingDisplay, selected }) => {
+    const data = toDataFrame({
+      fields: [
+        {
+          name: 'Time',
+          type: FieldType.time,
+          config: { unit: 'dateTimeAsIso' },
+          values: [Date.UTC(2026, 8, 18, 12), Date.UTC(2026, 8, 18, 16)],
+        },
+      ],
+    });
+    if (existingDisplay) {
+      data.fields[0].display = getDisplayProcessor({ field: data.fields[0], theme: createTheme(), timeZone: 'utc' });
+    }
+    const filter = config({
+      fieldName: 'Time',
+      config: {
+        id: 'inSet',
+        options: { mode: 'display', values: [selected], timeZone: 'America/New_York' },
+      },
+    });
+
+    const [output] = filterByValueTransformer.transformer(filter.options, { interpolate: (s) => s })([data]);
+
+    expect(output.fields[0].values).toEqual([Date.UTC(2026, 8, 18, 12)]);
+  }
+);
 
 it('keeps values and nanoseconds aligned after filtering', () => {
   const filter = range({ from: 3, includeMissing: false });
