@@ -62,6 +62,13 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
   }
 
   async execute(mutation: MutationRequest): Promise<MutationResult> {
+    return this.executeChecked(mutation);
+  }
+
+  protected async executeChecked(
+    mutation: MutationRequest,
+    checkWrite?: () => string | undefined
+  ): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
     const command = this.commands.get(type);
@@ -84,6 +91,11 @@ export class SceneMutationClient<TScene extends MutationTargetScene> implements 
         error: error instanceof Error ? error.message : String(error),
         changes: [],
       };
+    }
+
+    const writeError = !registration.readOnly ? checkWrite?.() : undefined;
+    if (writeError) {
+      return { success: false, error: writeError, changes: [] };
     }
 
     const permissionResult = registration.canExecute(this.scene);

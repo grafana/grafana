@@ -24,6 +24,7 @@ import { KioskMode } from 'app/types/dashboard';
 import { DashboardControlsChrome } from '../scene/DashboardControlsChrome';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { NavToolbarActions } from '../scene/NavToolbarActions';
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
@@ -128,9 +129,12 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   };
 
   function renderBody() {
-    const renderWithoutSidebar = isPlaying || kioskMode === KioskMode.Full;
+    const renderWithoutSidebar =
+      isPlaying ||
+      kioskMode === KioskMode.Full ||
+      (dashboardModesEnabled() && getDashboardMode(dashboard.state) !== 'edit' && !dashboard.state.viewPanel);
 
-    // In kiosk mode the full document body scrolls so we don't need to wrap in our own scrollbar
+    // Full-page views use document scrolling.
     if (renderWithoutSidebar) {
       return (
         <div
@@ -146,12 +150,12 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
       <div
         className={styles.bodyWrapper}
         data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
-        {...sidebarContext.outerWrapperProps}
+        {...(renderWithoutSidebar ? {} : sidebarContext.outerWrapperProps)}
       >
         <div
           className={cx(
             styles.scrollContainer,
-            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar,
+            (renderWithoutSidebar || sidebarContext.isHiddenPreference) && styles.scrollContainerNoSidebar,
             isPlanning && styles.planningCanvas
           )}
           ref={onBodyRef}
@@ -166,9 +170,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
           {body}
         </div>
 
-        <Sidebar contextValue={sidebarContext}>
-          <DashboardSidebarRenderer dashboard={dashboard} />
-        </Sidebar>
+        {!renderWithoutSidebar && (
+          <Sidebar contextValue={sidebarContext}>
+            <DashboardSidebarRenderer dashboard={dashboard} />
+          </Sidebar>
+        )}
       </div>
     );
   }

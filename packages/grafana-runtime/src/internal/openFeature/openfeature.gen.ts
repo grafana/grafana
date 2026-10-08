@@ -98,6 +98,8 @@ export const FlagKeys = {
   GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
+  /** Switch between editing and previewing a dashboard within the same edit session */
+  GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
   /** Enables the auto-height feature for dashboard panels */
@@ -716,6 +718,17 @@ export const useFlagGrafanaDashboardAutoGridDefault = (options?: ReactFlagEvalua
  */
 export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardGlobalVariables", false, options).value;
+};
+
+/**
+ * Switch between editing and previewing a dashboard within the same edit session
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardPreviewMode`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardPreviewMode = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardPreviewMode", false, options).value;
 };
 
 /**

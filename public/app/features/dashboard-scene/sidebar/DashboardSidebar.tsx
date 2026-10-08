@@ -12,7 +12,9 @@ import {
 } from '@grafana/scenes';
 import { type ElementSelectionContextItem, type ElementSelectionOnSelectOptions } from '@grafana/ui';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { dashboardViewChanged } from '../scene/dashboardViewRegistry';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { getRepeatCloneSourceKey } from '../utils/clone';
@@ -119,7 +121,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
       })
     );
 
-    if (dashboard.state.isEditing) {
+    if (isFullDashboardEditing(dashboard.state)) {
       this.enableSelection();
     }
 
@@ -236,6 +238,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Adds to undo history and selects new object
    */
   private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
+    if (!getDashboardSceneFor(this).canApplyEditAction()) {
+      return;
+    }
     if (this._activeBatch) {
       this._activeBatch.actions.push(action);
       if (!skipPerform) {
@@ -280,6 +285,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from undo stack and adds it to redo stack.
    */
   public undoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
     const undoStack = this.state.undoStack.slice();
     const action = undoStack.pop();
     if (!action) {
@@ -337,6 +345,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Removes last action from redo stack and adds it to undo stack.
    */
   public redoAction() {
+    if (dashboardModesEnabled() && getDashboardMode(getDashboardSceneFor(this).state) !== 'edit') {
+      return;
+    }
     const redoStack = this.state.redoStack.slice();
     const action = redoStack.pop();
     if (!action) {
@@ -350,6 +361,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   public enableSelection() {
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
     if (this.state.selectionContext.enabled) {
       return;
     }
@@ -390,6 +404,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   public selectObject(obj: SceneObject, { multi, force }: ElementSelectionOnSelectOptions = {}) {
     this.cancelPaneRequest();
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
     const id = obj.state.key!;
     const hasItem = this.state.selectionContext.selected.find((i) => i.id === id);
 
@@ -439,7 +456,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   public goBackToPrevious() {
     this.cancelPaneRequest();
-    if (!this.state.previousState) {
+    if (isDashboardReviewing(getDashboardSceneFor(this).state) || !this.state.previousState) {
       return;
     }
 
@@ -534,6 +551,12 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
 
   public openPane(openPane: DashboardSidebarPane) {
     this.cancelPaneRequest();
+    if (
+      isDashboardReviewing(getDashboardSceneFor(this).state) &&
+      ['add', 'element', 'code', 'cross-dashboard-variables'].includes(openPane.getId())
+    ) {
+      return;
+    }
     if (this.state.openPane?.getId() === openPane.getId()) {
       this.setState({ openPane: undefined });
       return;
@@ -595,6 +618,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
+    if (isDashboardReviewing(getDashboardSceneFor(this).state)) {
+      return;
+    }
     this.selectObject(obj, { force: true });
     this.setState({ isNewElement: true });
   }

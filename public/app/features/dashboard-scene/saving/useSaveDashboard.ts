@@ -16,8 +16,11 @@ import { DashboardSavedEvent } from 'app/types/events';
 
 import { updateDashboardUidLastUsedDatasource } from '../../dashboard/utils/dashboard';
 import { type DashboardScene } from '../scene/DashboardScene';
+import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
 import { DashboardInteractions } from '../utils/interactions';
 import { trackDashboardSceneCreatedOrSaved } from '../utils/tracking';
+
+import { setDashboardModeAfterSave, setEditPresentationAfterSave } from './editPresentationAfterSave';
 
 export function useSaveDashboard(isCopy = false) {
   const notifyApp = useAppNotification();
@@ -101,6 +104,11 @@ export function useSaveDashboard(isCopy = false) {
 
         if (newUrl !== currentLocation.pathname) {
           setTimeout(() => {
+            if (dashboardModesEnabled()) {
+              setDashboardModeAfterSave(resultData.uid, getDashboardMode(scene.state));
+            } else if (scene.state.isEditing && scene.state.editPresentation) {
+              setEditPresentationAfterSave(resultData.uid, scene.state.editPresentation);
+            }
             locationService.push({ pathname: newUrl, search: currentLocation.search });
           });
         }

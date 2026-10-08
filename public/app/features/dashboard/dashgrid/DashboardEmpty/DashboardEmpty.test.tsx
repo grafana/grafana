@@ -3,6 +3,7 @@ import { render } from 'test/test-utils';
 
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { defaultDashboard } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
@@ -182,6 +183,7 @@ describe('new layouts empty state', () => {
   const originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
 
   afterEach(() => {
+    setTestFlags({});
     config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
     mockUseDashboardGenerationAvailable.mockReturnValue({ isAvailable: false, isLoading: false });
   });
@@ -196,6 +198,15 @@ describe('new layouts empty state', () => {
     render(<DashboardEmpty dashboard={dashboard} canCreate />);
     return dashboard;
   }
+
+  it('hides manual layout controls and the add pane in View mode', () => {
+    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    const dashboard = setupScene({ mode: 'view' });
+    expect(screen.getByText('This dashboard has no panels.')).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
 
   it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', async () => {
     const dashboard = setupScene();

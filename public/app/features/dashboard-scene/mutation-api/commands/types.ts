@@ -113,13 +113,11 @@ export function requiresNewDashboardLayoutsReadOnly(_scene: DashboardScene): Per
 }
 
 /**
- * Enter edit mode if the dashboard is not already editing.
+ * Enter edit mode or apply the Assistant presentation to the current edit session.
  * Call this at the top of any command handler that modifies the dashboard.
  */
 export function enterEditModeIfNeeded(scene: DashboardScene): void {
-  if (!scene.state.isEditing) {
-    scene.onEnterEditMode('assistant');
-  }
+  scene.onEnterEditMode('assistant');
   // New-layout mutations only run while the sidebar is active, and it may not be mounted here.
   // Independent of edit mode: addElement-based undo/redo tracking needs this regardless.
   scene.activateSidebar();

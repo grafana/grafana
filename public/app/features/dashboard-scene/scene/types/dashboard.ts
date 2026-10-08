@@ -8,6 +8,7 @@ import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
+import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -21,6 +22,9 @@ export interface DashboardViewState {
   body: AnyDashboardLayoutManager;
   /** True when editing */
   isEditing?: boolean;
+  mode?: DashboardMode;
+  /** Omitted means default editing; explicit full editing opts out of automatic Assistant preview. */
+  editPresentation?: 'preview' | 'full';
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel key to view in fullscreen */
@@ -87,6 +91,23 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
    * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
    */
   planning?: DashboardPlanningState;
+}
+
+export function isFullDashboardEditing(
+  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
+): boolean {
+  return Boolean(
+    state.isEditing &&
+      (dashboardModesEnabled() ? getDashboardMode(state) === 'edit' : state.editPresentation !== 'preview')
+  );
+}
+
+export function isDashboardReviewing(
+  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
+): boolean {
+  return dashboardModesEnabled()
+    ? getDashboardMode(state) !== 'edit'
+    : Boolean(state.isEditing && state.editPresentation === 'preview');
 }
 
 export interface DashboardPlanningState {

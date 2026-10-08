@@ -9,6 +9,7 @@ import { notifyApp } from 'app/core/reducers/appNotification';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getLayoutType } from 'app/features/dashboard/utils/tracking';
+import { isFullDashboardEditing, isDashboardReviewing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { InspectTab } from 'app/features/inspector/types';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -25,6 +26,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
+import { canManuallyEditDashboard, dashboardModesEnabled, getDashboardMode } from './dashboardModes';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
@@ -224,6 +226,9 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'mod+o',
     onTrigger: () => {
+      if (!canManuallyEditDashboard(scene.state)) {
+        return;
+      }
       const cursorSync = scene.state.$behaviors?.find((b) => b instanceof behaviors.CursorSync);
       if (cursorSync instanceof behaviors.CursorSync) {
         const currentSync = cursorSync.state.sync;
@@ -236,10 +241,30 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   });
 
   if (canEdit) {
+    keybindings.addBinding({
+      key: 'd p',
+      onTrigger: () => {
+        if (dashboardModesEnabled()) {
+          scene.setDashboardMode(getDashboardMode(scene.state) === 'view' ? 'edit' : 'view');
+          return;
+        }
+        const { isEditing, editPanel, editview, viewPanel, overlay } = scene.state;
+        if (!isEditing || editPanel || editview || viewPanel || overlay) {
+          return;
+        }
+        scene.setEditPresentation(isDashboardReviewing(scene.state) ? 'full' : 'preview');
+      },
+    });
+
     // Panel edit
     keybindings.addBinding({
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
+        if (!canManuallyEditDashboard(scene.state)) {
+          if (getDashboardMode(scene.state) !== 'view' || !scene.setDashboardMode('edit')) {
+            return;
+          }
+        }
         const panelId = getPanelIdForVizPanel(vizPanel);
         DashboardInteractions.panelActionClicked('edit', panelId, 'keyboard', vizPanel.state.pluginId);
         const sceneRoot = vizPanel.getRoot();
@@ -276,7 +301,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p r',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-        if (scene.state.isEditing) {
+        if (isFullDashboardEditing(scene.state)) {
           const panelId = getPanelIdForVizPanel(vizPanel);
           DashboardInteractions.panelActionClicked('delete', panelId, 'keyboard');
           onRemovePanel(scene, vizPanel);
@@ -289,7 +314,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'p d',
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
         DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
-        if (scene.state.isEditing) {
+        if (isFullDashboardEditing(scene.state)) {
           scene.duplicatePanel(vizPanel);
         }
       }),
@@ -299,7 +324,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     keybindings.addBinding({
       key: 'p v',
       onTrigger: () => {
-        if (scene.state.isEditing && store.exists(LS_PANEL_COPY_KEY)) {
+        if (isFullDashboardEditing(scene.state) && store.exists(LS_PANEL_COPY_KEY)) {
           const sidebar = scene.state.sidebar;
           const selectedObj = sidebar.getSelectedObject();
           sidebar.pastePanel(selectedObj);

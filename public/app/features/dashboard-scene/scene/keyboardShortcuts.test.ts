@@ -1,7 +1,8 @@
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
@@ -14,6 +15,7 @@ import { findVizPanelByPathId } from '../utils/pathId';
 
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -305,6 +307,33 @@ describe('setupKeyboardShortcuts', () => {
     });
   });
 
+  it.each([true, false])('panel edit shortcut enters Edit from View only when editable=%s', async (editable) => {
+    const previousLayouts = config.featureToggles.dashboardNewLayouts;
+    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    try {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+      mockScene.setState({
+        mode: 'view',
+        isEditing: true,
+        editable,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+      locationService.replace('/d/test-uid');
+      setupKeyboardShortcuts(mockScene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+      const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'e')![0];
+      await binding.onTrigger();
+      expect(mockScene.state.mode).toBe(editable ? 'edit' : 'view');
+      expect(locationService.getSearchObject().editPanel).toBe(editable ? '1' : undefined);
+    } finally {
+      config.featureToggles.dashboardNewLayouts = previousLayouts;
+      setTestFlags({});
+    }
+  });
+
   describe('edit mode shortcuts', () => {
     beforeEach(() => {
       jest.spyOn(mockScene, 'canEditDashboard').mockReturnValue(true);
@@ -591,6 +620,19 @@ describe('setupKeyboardShortcuts', () => {
 
         expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
         expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard', 'dashboard', 'keyboard');
+      });
+
+      it('ignores paste in review and enables the same shortcut after returning to full editing', () => {
+        mockScene.setState({ isEditing: true, editPresentation: 'preview' });
+        localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+        setupKeyboardShortcuts(mockScene);
+
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).not.toHaveBeenCalled();
+
+        mockScene.setState({ editPresentation: 'full' });
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
       });
 
       it('does not paste when not editing', () => {

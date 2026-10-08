@@ -197,6 +197,7 @@ function buildSceneWithLayoutParent(
   };
 
   const mockLayoutParent = {
+    getRoot: () => scene,
     switchLayout: jest.fn((newLayout: unknown) => {
       state.body = newLayout;
     }),

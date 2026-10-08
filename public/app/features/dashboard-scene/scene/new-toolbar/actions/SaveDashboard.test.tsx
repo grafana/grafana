@@ -37,6 +37,7 @@ setPluginImportUtils({
 interface BuildSceneOpts {
   uid?: string;
   isEditing?: boolean;
+  editPresentation?: 'full' | 'preview';
   isDirty?: boolean;
   canSave?: boolean;
   canMakeEditable?: boolean;
@@ -47,6 +48,7 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
   const {
     uid = 'dash-1',
     isEditing = true,
+    editPresentation = 'full',
     isDirty = false,
     canSave = true,
     canMakeEditable = false,
@@ -57,6 +59,7 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
     title: 'Test',
     uid,
     isEditing,
+    editPresentation,
     isDirty,
     meta: {
       canSave,
@@ -232,6 +235,58 @@ describe('SaveDashboard (toolbar)', () => {
       expect(CustomDashboardTemplateInteractions.saveAsOpened).toHaveBeenCalledWith({
         dashboardUid: 'my-dash',
       });
+    });
+  });
+
+  describe('View changes menu item', () => {
+    beforeEach(async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.dashboardPreviewMode': true, 'grafana.customDashboardTemplates': true });
+      });
+    });
+
+    afterEach(async () => {
+      await act(async () => {
+        setTestFlags({});
+      });
+    });
+
+    it.each([
+      { name: 'editing', options: { editPresentation: 'full' as const } },
+      { name: 'previewing', options: { editPresentation: 'preview' as const } },
+      { name: 'a new dashboard', options: { uid: '' } },
+      { name: 'a dashboard that can only be copied', options: { canSave: false } },
+      { name: 'a dashboard template', options: { isDashboardTemplate: true } },
+    ])('opens the diff from the Save dropdown for $name', async ({ options }) => {
+      const scene = buildTestScene(options);
+      const { user } = render(<SaveDashboard dashboard={scene} />);
+
+      await user.click(await screen.findByRole('button', { name: 'More save options' }));
+      await user.click(await screen.findByRole('menuitem', { name: 'View changes' }));
+
+      expect(scene.openSaveDrawer).toHaveBeenCalledWith({ showDiff: true });
+      expect(screen.queryByRole('button', { name: 'View changes' })).not.toBeInTheDocument();
+    });
+
+    it('preserves the ordinary save menu when the preview feature is disabled', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.dashboardPreviewMode': false });
+      });
+      const scene = buildTestScene();
+      const { user } = render(<SaveDashboard dashboard={scene} />);
+
+      await user.click(await screen.findByRole('button', { name: 'More save options' }));
+      expect(await screen.findByRole('menuitem', { name: 'Save as copy' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'View changes' })).not.toBeInTheDocument();
+    });
+
+    it('does not offer session changes outside edit mode', async () => {
+      const scene = buildTestScene({ isEditing: false });
+      const { user } = render(<SaveDashboard dashboard={scene} />);
+
+      await user.click(await screen.findByRole('button', { name: 'More save options' }));
+      expect(await screen.findByRole('menuitem', { name: 'Save as copy' })).toBeInTheDocument();
+      expect(screen.queryByRole('menuitem', { name: 'View changes' })).not.toBeInTheDocument();
     });
   });
 
