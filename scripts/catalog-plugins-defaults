@@ -13,3 +13,4 @@ mysql
 influxdb
 grafana-postgresql-datasource
 grafana-pyroscope-datasource
+grafana-azure-monitor-datasource
