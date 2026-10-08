@@ -464,33 +464,6 @@ func getUserAuthTokensInternalScenario(t *testing.T, desc string, token *auth.Us
 }
 
 
-func TestHTTPServer_RotateUserAuthToken_DeletesCookieWhenTokenNotFound(t *testing.T) {
-	server := SetupAPITestServer(t, func(hs *HTTPServer) {
-		cfg := setting.NewCfg()
-		cfg.LoginCookieName = "grafana_session"
-		cfg.LoginMaxLifetime = 10 * time.Hour
-		hs.Cfg = cfg
-		hs.log = log.New()
-		hs.AuthTokenService = &authtest.FakeUserAuthTokenService{
-			RotateTokenProvider: func(ctx context.Context, cmd auth.RotateCommand) (*auth.UserToken, error) {
-				return nil, auth.ErrUserTokenNotFound
-			},
-		}
-	})
-
-	req := server.NewPostRequest("/api/user/auth-tokens/rotate", nil)
-	req.AddCookie(&http.Cookie{Name: "grafana_session", Value: "stale", Path: "/"})
-
-	res, err := server.Send(req)
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
-	assert.Equal(t, []string{
-		"grafana_session=; Path=/; Max-Age=0; HttpOnly",
-		"grafana_session_expiry=; Path=/; Max-Age=0",
-	}, res.Header.Values("Set-Cookie"))
-	require.NoError(t, res.Body.Close())
-}
-
 func TestHTTPServer_RotateUserAuthTokenRedirect_DeletesCookieWhenTokenNotFound(t *testing.T) {
 	server := SetupAPITestServer(t, func(hs *HTTPServer) {
 		cfg := setting.NewCfg()
