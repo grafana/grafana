@@ -22,7 +22,7 @@ enum ActiveTab {
 function HistoryPage() {
   const styles = useStyles2(getStyles);
   const [queryParams, setQueryParams] = useQueryParams();
-  const notificationsEnabled = config.featureToggles.alertingNotificationHistoryGlobal;
+  const notificationsEnabled = config.unifiedAlerting.notificationHistoryEnabled;
   const implementation = useStateHistoryImplementation();
   // only Loki can answer history queries that are not scoped to a single rule
   const alertHistoryEnabled = implementation === StateHistoryImplementation.Loki;
