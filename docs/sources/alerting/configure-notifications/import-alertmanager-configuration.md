@@ -45,7 +45,7 @@ Not every Alertmanager configuration can be imported as-is. Refer to [limitation
 
 ## How it works
 
-Grafana imports the configuration as it is and evaluates it the way your source Alertmanager does. Receivers keep their Alertmanager fields, and they notify with the same logic and message format, because Grafana runs them as Mimir-compatible integrations instead of rewriting them into native Grafana ones.
+Grafana imports the configuration as it is and evaluates it the way your source Alertmanager does, for configurations from [supported versions](#limitations). Receivers keep their Alertmanager fields, and they notify with the same logic and message format, because Grafana runs them as Mimir-compatible integrations instead of rewriting them into native Grafana ones.
 
 Mimir-compatible integrations don't offer what a native Grafana integration adds on top, such as [images in notifications](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/images-in-notifications/). To use those features, promote the import and then rebuild the contact point as a Grafana one.
 
