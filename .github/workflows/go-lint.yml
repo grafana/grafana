@@ -4,6 +4,7 @@ on:
     paths:
       - pkg/**
       - .github/workflows/go-lint.yml
+      - .golangci.yml
       - go.*
     branches:
       - main
@@ -26,6 +27,7 @@ jobs:
       contents: read
     outputs:
       changed: ${{ steps.detect-changes.outputs.backend }}
+      lint-changed: ${{ steps.detect-changes.outputs.backend == 'true' || steps.detect-changes.outputs.golangci-config == 'true' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -62,7 +64,7 @@ jobs:
 
   lint-go:
     needs: detect-changes
-    if: needs.detect-changes.outputs.changed == 'true'
+    if: needs.detect-changes.outputs.lint-changed == 'true'
     runs-on: ubuntu-x64-xlarge
     steps:
       - uses: actions/checkout@v5

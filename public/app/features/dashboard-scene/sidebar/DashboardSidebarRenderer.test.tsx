@@ -102,6 +102,16 @@ describe('DashboardSidebarRenderer', () => {
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
   });
 
+  it('does not render a cross-dashboard variables toolbar button', async () => {
+    const scene = buildTestScene();
+
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cross-dashboard' })).not.toBeInTheDocument();
+  });
+
   it('opens a cancellable loading pane and keeps it closed after the request settles', async () => {
     const scene = buildTestScene();
     const sidebar = scene.state.sidebar;

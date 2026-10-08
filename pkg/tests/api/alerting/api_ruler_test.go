@@ -33,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
+	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -4163,7 +4163,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, http.StatusAccepted, resp.StatusCode)
-			require.JSONEq(t, `{"message":"rules deleted"}`, string(b))
+			require.JSONEq(t, `{"deleted":1,"message":"rules deleted","skipped":0}`, string(b))
 		})
 	}
 }

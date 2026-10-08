@@ -504,6 +504,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       const messageId = getMessageIdFromError(err);
 
       this.setState({
+        // do not leave the previous dashboard mounted if fetch fails
+        dashboard: undefined,
         isLoading: false,
         loadError: {
           status,

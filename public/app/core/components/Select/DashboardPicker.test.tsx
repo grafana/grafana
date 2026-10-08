@@ -107,6 +107,38 @@ describe('DashboardPicker', () => {
 
       apiSpy.mockRestore();
     });
+
+    it('should render a static option for its value without fetching a dashboard', async () => {
+      const apiSpy = jest.spyOn(dashboardApi, 'getDashboardAPI');
+      const pinned = { value: { uid: 'pinned', name: 'Pinned' }, label: 'Pinned' };
+
+      render(<DashboardPicker value="pinned" staticOptions={[pinned]} />);
+
+      expect(await screen.findByText('Pinned')).toBeInTheDocument();
+      expect(apiSpy).not.toHaveBeenCalled();
+      apiSpy.mockRestore();
+    });
+
+    it('should list static options ahead of search results and filter them by input', async () => {
+      const pinned = { value: { uid: 'pinned', name: 'Pinned' }, label: 'Pinned' };
+      const { user } = render(<DashboardPicker staticOptions={[pinned]} />);
+
+      await user.click(screen.getByRole('combobox'));
+      const options = await screen.findAllByRole('option');
+      expect(options[0]).toHaveTextContent('Pinned');
+      expect(options.length).toBeGreaterThan(1);
+
+      const combobox = screen.getByRole('combobox');
+      await user.type(combobox, folderA_dashbdD.item.title);
+
+      await waitFor(() => expect(screen.queryByRole('option', { name: 'Pinned' })).not.toBeInTheDocument());
+      expect(screen.getByText(`${folderA.item.title}/${folderA_dashbdD.item.title}`)).toBeInTheDocument();
+
+      await user.clear(combobox);
+      await user.type(combobox, 'pinn');
+
+      expect(await screen.findByRole('option', { name: 'Pinned' })).toBeInTheDocument();
+    });
   });
 
   xdescribe('dashboard v2 (v2beta1 API)', () => {
