@@ -288,6 +288,9 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 				cfg := setting.NewCfg()
 				cfg.LoginCookieName = "grafana_session"
 				cfg.LoginMaxLifetime = 10 * time.Hour
+				cfg.AppSubURL = "/grafana"
+				cfg.CookieSecure = true
+				cfg.CookieSameSiteMode = http.SameSiteStrictMode
 				hs.Cfg = cfg
 				hs.log = log.New()
 				hs.Cfg.LoginCookieName = "grafana_session"
@@ -311,8 +314,8 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 				if tt.expectSessionDeleted {
 					cookies := res.Header.Values("Set-Cookie")
 					require.Len(t, cookies, 2)
-					assert.Equal(t, "grafana_session=; Path=/; Max-Age=0; HttpOnly", cookies[0])
-					assert.Equal(t, "grafana_session_expiry=; Path=/; Max-Age=0", cookies[1])
+					assert.Equal(t, "grafana_session=; Path=/grafana; Max-Age=0; HttpOnly; Secure; SameSite=Strict", cookies[0])
+					assert.Equal(t, "grafana_session_expiry=; Path=/grafana; Max-Age=0; Secure; SameSite=Strict", cookies[1])
 				} else {
 					assert.Empty(t, res.Header.Get("Set-Cookie"))
 				}
@@ -320,8 +323,8 @@ func TestHTTPServer_RotateUserAuthToken(t *testing.T) {
 				if tt.expectNewSession {
 					cookies := res.Header.Values("Set-Cookie")
 					require.Len(t, cookies, 2)
-					assert.Equal(t, "grafana_session=new; Path=/; Max-Age=36000; HttpOnly", cookies[0])
-					assert.Equal(t, "grafana_session_expiry=-5; Path=/; Max-Age=36000", cookies[1])
+					assert.Equal(t, "grafana_session=new; Path=/grafana; Max-Age=36000; HttpOnly; Secure; SameSite=Strict", cookies[0])
+					assert.Equal(t, "grafana_session_expiry=-5; Path=/grafana; Max-Age=36000; Secure; SameSite=Strict", cookies[1])
 				} else {
 					assert.Empty(t, res.Header.Get("Set-Cookie"))
 				}
