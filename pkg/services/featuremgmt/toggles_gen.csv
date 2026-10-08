@@ -308,7 +308,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-09-16,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
 2026-09-16,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
-2026-09-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
+2026-09-16,profilesHeatmap,GA,@grafana/observability-traces-and-profiling,false,false,false
 2026-09-16,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-09-16,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
 2026-09-16,cacheConfigUnifiedStorageMigration,experimental,@grafana/grafana-operator-experience-squad,false,true,false

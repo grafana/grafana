@@ -4489,14 +4489,17 @@
     {
       "metadata": {
         "name": "profilesHeatmap",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-09-16T10:24:28Z"
+        "resourceVersion": "1791297169293",
+        "creationTimestamp": "2026-09-16T10:24:28Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-06 14:32:49.293224 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables heatmap visualization support for Pyroscope profiles",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-traces-and-profiling",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
