@@ -108,7 +108,7 @@ Keep using `http://localhost:3000`. The dev server holds the bundles in memory a
 
 #### How the dev server affects the build on disk
 
-- Almost nothing is written to `public/build/rspack`. The one exception is `boot.js`, which every start command builds to disk first, because the backend reads it from there at startup. To serve the rest of the build from a static file server, as `make frontend-service` does, run `yarn start:noHmr` instead.
+- Almost nothing is written to `public/build`. The one exception is `boot.js`, which every start command builds to disk first, because the backend reads it from there at startup. To serve the rest of the build from a static file server, as `make frontend-service` does, run `yarn start:noHmr` instead.
 - If the dev server is not running, Grafana falls back to whatever the last build left on disk. A stale page usually means the dev server stopped.
 - Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy will not let the page load assets from another origin, so Grafana logs a line and serves the build on disk. That is what keeps the e2e suite off the dev server, since the suite also runs in development mode.
 - Blanking `server_url` in a config file does not turn the dev server off, and leaves the two halves disagreeing: `yarn start` refuses to start, while Grafana ignores empty values in `custom.ini` and still points the browser at the dev server. To build without one, run `yarn start:noHmr`. To stop Grafana looking for one, pass `cfg:frontend_dev.server_url=` on the command line.

@@ -14,9 +14,8 @@ port_goff     = base_port + 6   # +6  go feature flag
 # port_tilt   = base_port + 9   # +9  tilt UI (set in run.sh)
 
 # --- Build output
-build_dir = 'build/rspack'
-manifest_path = 'public/%s/assets-manifest.json' % build_dir
-boot_path = 'public/%s/boot.js' % build_dir
+manifest_path = 'public/build/assets-manifest.json'
+boot_path = 'public/build/boot.js'
 
 # A cold build (yarn install + serial plugin builds + main rspack compile) can take
 # longer than Tilt's default 5m readiness timeout, which fails `tilt ci` even though the
@@ -157,7 +156,6 @@ docker_build('grafana-fs-dev',
   # Set the docker context to the root of the repo
   context='../..',
   dockerfile='grafana-fs-dev.dockerfile',
-  build_args={'BUILD_DIR': build_dir},
 
   # Paths relative to the docker context (root of the repo)
   only=[
