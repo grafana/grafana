@@ -11,6 +11,7 @@ jest.mock('app/features/notebook/addPanel/quickAddPanelToNotebook', () => ({ qui
 jest.mock('app/store/store', () => ({ getState: jest.fn() }));
 
 const baseState = jest.requireActual<{ getState: () => StoreState }>('app/store/store').getState();
+const user = { timeZone: 'utc' };
 
 describe('quickAddFromExplore', () => {
   beforeEach(() => {
@@ -23,11 +24,13 @@ describe('quickAddFromExplore', () => {
       queries: [{ refId: 'A' }],
       queryResponse: { data: [] },
       panelsState: { logs: { id: 'log-row-1' } },
+      range: { raw: { from: 'now-6h', to: 'now' } },
     };
-    jest.mocked(getState).mockReturnValue(Object.assign({}, baseState, { explore: { panes: { left: pane } } }));
-    jest.mocked(buildPanelElementFromExplore).mockReturnValue(defaultPanelKind());
+    jest.mocked(getState).mockReturnValue(Object.assign({}, baseState, { user, explore: { panes: { left: pane } } }));
+    const panel = defaultPanelKind();
+    jest.mocked(buildPanelElementFromExplore).mockReturnValue(panel);
     jest.mocked(quickAddPanelToNotebook).mockImplementation(async (buildPanel) => {
-      await buildPanel();
+      expect(await buildPanel()).toBe(panel);
     });
     const openPicker = jest.fn();
 
@@ -41,6 +44,24 @@ describe('quickAddFromExplore', () => {
       panelState: pane.panelsState,
     });
     expect(openPicker).not.toHaveBeenCalled();
+  });
+
+  it('locks an absolute Explore window when adding directly', async () => {
+    const range = { from: '2026-10-05T08:00:00.000Z', to: '2026-10-05T09:30:00.000Z' };
+    const pane = { queries: [{ refId: 'A' }], queryResponse: { data: [] }, panelsState: {}, range: { raw: range } };
+    jest.mocked(getState).mockReturnValue(Object.assign({}, baseState, { user, explore: { panes: { left: pane } } }));
+    jest.mocked(buildPanelElementFromExplore).mockReturnValue(defaultPanelKind());
+    jest.mocked(quickAddPanelToNotebook).mockImplementation(async (buildPanel) => {
+      const built = await buildPanel();
+      expect(built.kind).toBe('Panel');
+      if (built.kind === 'Panel') {
+        expect(built.spec.data.spec.queryOptions).toMatchObject({ timeFrom: range.from, timeTo: range.to });
+      }
+    });
+
+    await quickAddFromExplore('left', jest.fn());
+
+    expect(quickAddPanelToNotebook).toHaveBeenCalledTimes(1);
   });
 
   it('opens the picker when the Explore pane is no longer available', async () => {
@@ -64,8 +85,13 @@ describe('quickAddFromExplore', () => {
   });
 
   it('builds the panel without a datasource while it is loading', async () => {
-    const pane = { queries: [{ refId: 'A' }], queryResponse: { data: [] }, panelsState: {} };
-    jest.mocked(getState).mockReturnValue(Object.assign({}, baseState, { explore: { panes: { left: pane } } }));
+    const pane = {
+      queries: [{ refId: 'A' }],
+      queryResponse: { data: [] },
+      panelsState: {},
+      range: { raw: { from: 'now-6h', to: 'now' } },
+    };
+    jest.mocked(getState).mockReturnValue(Object.assign({}, baseState, { user, explore: { panes: { left: pane } } }));
     jest.mocked(buildPanelElementFromExplore).mockReturnValue(defaultPanelKind());
     jest.mocked(quickAddPanelToNotebook).mockImplementation(async (buildPanel) => {
       await buildPanel();

@@ -28,8 +28,10 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { type GetExploreUrlArguments } from 'app/core/utils/explore';
 import { grantUserPermissions } from 'app/features/alerting/unified/mocks';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
+import { buildPanelElementFromDashboard } from 'app/features/notebook/addPanel/buildPanelElementFromDashboard';
 import { quickAddPanelToNotebook } from 'app/features/notebook/addPanel/quickAddPanelToNotebook';
 import { getRecentNotebook } from 'app/features/notebook/addPanel/recentNotebook';
+import { defaultPanelKind } from 'app/features/notebook/types';
 import * as storeModule from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
@@ -56,6 +58,7 @@ jest.mock('app/core/utils/explore', () => ({
 }));
 
 jest.mock('app/core/services/context_srv');
+jest.mock('app/features/notebook/addPanel/buildPanelElementFromDashboard');
 jest.mock('app/features/notebook/addPanel/quickAddPanelToNotebook', () => ({ quickAddPanelToNotebook: jest.fn() }));
 jest.mock('app/features/notebook/addPanel/recentNotebook', () => ({ getRecentNotebook: jest.fn() }));
 
@@ -1222,6 +1225,30 @@ describe('panelMenuBehavior', () => {
       );
     });
 
+    it.each([
+      { name: 'relative', from: 'now-5m', to: 'now', locked: false },
+      { name: 'absolute', from: '2026-10-05T08:00:00.000Z', to: '2026-10-05T09:30:00.000Z', locked: true },
+    ])('captures a $name dashboard range only when it should lock', async ({ from, to, locked }) => {
+      jest.mocked(getRecentNotebook).mockReturnValue({ uid: 'nb1', title: 'Investigation', at: 100 });
+      jest.mocked(buildPanelElementFromDashboard).mockResolvedValue(defaultPanelKind());
+      setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
+      mocks.contextSrv.hasPermission.mockReturnValue(true);
+
+      const { menu } = await buildTestScene({ timeRange: { from, to } });
+      menu.activate();
+      await new Promise((resolve) => setTimeout(resolve, 1));
+      await menu.state.items?.find((item) => item.text === 'Add to "Investigation"')?.onClick?.({} as never);
+
+      const buildPanel = jest.mocked(quickAddPanelToNotebook).mock.calls.at(-1)?.[0];
+      expect(buildPanel).toBeDefined();
+      const built = await buildPanel!();
+      expect(built.kind).toBe('Panel');
+      if (built.kind === 'Panel') {
+        expect(built.spec.data.spec.queryOptions.timeFrom).toBe(locked ? from : undefined);
+        expect(built.spec.data.spec.queryOptions.timeTo).toBe(locked ? to : undefined);
+      }
+    });
+
     it('sits in its own section immediately above Remove while editing', async () => {
       setTestFlags({ [FlagKeys.DashboardNotebooks]: true });
       mocks.contextSrv.hasPermission.mockReturnValue(true);
@@ -1241,6 +1268,7 @@ describe('panelMenuBehavior', () => {
 
 interface SceneOptions {
   isEmbedded?: boolean;
+  timeRange?: { from: string; to: string };
 }
 
 async function buildTestScene(options: SceneOptions) {
@@ -1268,8 +1296,8 @@ async function buildTestScene(options: SceneOptions) {
     uid: 'dash-1',
     tags: ['database', 'panel'],
     $timeRange: new SceneTimeRange({
-      from: 'now-5m',
-      to: 'now',
+      from: options.timeRange?.from ?? 'now-5m',
+      to: options.timeRange?.to ?? 'now',
       timeZone: 'Africa/Abidjan',
     }),
     meta: {

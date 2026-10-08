@@ -406,10 +406,19 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
           text: t('panel.header-menu.add-to-recent-notebook', 'Add to "{{title}}"', { title: recent.title }),
           iconClassName: 'book',
           onClick: async () => {
-            const { quickAddPanelToNotebook } = await import('app/features/notebook/addPanel/quickAddPanelToNotebook');
             const modal = new AddPanelToNotebookScene({ panelRef: panel.getRef() });
+            const capturedTimeRange = modal.getCapturedTimeRange();
+            const [{ quickAddPanelToNotebook }, { shouldLockCapturedTimeRange, withCapturedTimeRange }] =
+              await Promise.all([
+                import('app/features/notebook/addPanel/quickAddPanelToNotebook'),
+                import('app/features/notebook/addPanel/capturedTimeRange'),
+              ]);
+            const lockTimeRange = shouldLockCapturedTimeRange(capturedTimeRange);
             await quickAddPanelToNotebook(
-              modal.buildPanel,
+              async () => {
+                const built = await modal.buildPanel();
+                return lockTimeRange ? withCapturedTimeRange(built, capturedTimeRange) : built;
+              },
               NOTEBOOK_ENTRY_POINT.DASHBOARD_PANEL,
               modal.isLibraryPanel(),
               () => dashboard.showModal(modal),

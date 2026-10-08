@@ -1,7 +1,7 @@
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
-import { PluginExtensionPoints } from '@grafana/data';
+import { PluginExtensionPoints, type PluginExtensionEventHelpers } from '@grafana/data';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
