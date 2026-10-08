@@ -7,7 +7,7 @@ import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { PAGE_HISTORY_MAX_CHARS, PageHistorySrv } from './pageHistorySrv';
+import { PAGE_HISTORY_MAX_ENTRY_CHARS, PageHistorySrv } from './pageHistorySrv';
 import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry } from './types';
 
 /** UserStorage's localStorage fallback key for the anonymous user in org 1. */
@@ -42,6 +42,11 @@ function renderPage(section: string, main: string, pageNav?: string) {
 
 function stored(entries: PageHistoryEntry[]) {
   return entries.map(({ pathname, search, lastVisited }) => ({ pathname, search, lastVisited }));
+}
+
+/** Explore's v1 search for one session (the left pane's id), with any extra params appended. */
+function exploreSearch(session: string, extra = '') {
+  return `?schemaVersion=1&panes=${encodeURIComponent(JSON.stringify({ [session]: {} }))}${extra}`;
 }
 
 function createDeferred<T>() {
@@ -122,7 +127,7 @@ describe('PageHistorySrv', () => {
     const srv = startAt('/d/abc');
     await srv.getEntries();
 
-    locationService.push('/explore?schemaVersion=1&panes=%7B%7D');
+    locationService.push(`/explore${exploreSearch('abc')}`);
     locationService.push('/d/abc');
 
     expect((await srv.getEntries()).map((e) => e.kind)).toEqual(['dashboard', 'explore']);
@@ -130,8 +135,36 @@ describe('PageHistorySrv', () => {
     locationService.getHistory().goBack();
 
     expect(await srv.getEntries()).toEqual([
-      expect.objectContaining({ kind: 'explore', search: '?schemaVersion=1&panes=%7B%7D' }),
+      expect.objectContaining({ kind: 'explore', session: 'abc', search: exploreSearch('abc') }),
       expect.objectContaining({ kind: 'dashboard', uid: 'abc' }),
+    ]);
+  });
+
+  it('records each Explore session as its own row, keyed by the left pane', async () => {
+    const srv = startAt('/d/abc');
+    await srv.getEntries();
+
+    // Explore mounts with a bare URL, then writes its state with a plain REPLACE on the same pathname.
+    locationService.push('/explore');
+    expect((await srv.getEntries()).map((e) => e.kind)).toEqual(['dashboard']);
+    locationService.replace(`/explore${exploreSearch('abc')}`);
+    // Query edits and a split keep the row and refresh its state.
+    locationService.replace(`/explore${exploreSearch('abc', '&x=1')}`);
+
+    expect(await srv.getEntries()).toEqual([
+      expect.objectContaining({ kind: 'explore', session: 'abc', search: exploreSearch('abc', '&x=1') }),
+      expect.objectContaining({ kind: 'dashboard', uid: 'abc' }),
+    ]);
+
+    // Opening Explore again starts another session.
+    locationService.push('/d/abc');
+    locationService.push('/explore');
+    locationService.replace(`/explore${exploreSearch('xyz')}`);
+
+    expect((await srv.getEntries()).map((e) => (e.kind === 'explore' ? e.session : e.kind))).toEqual([
+      'xyz',
+      'dashboard',
+      'abc',
     ]);
   });
 
@@ -195,7 +228,7 @@ describe('PageHistorySrv', () => {
     expect(await srv.getEntries()).toEqual([]);
   });
 
-  it('keeps the newest pages per kind and a length budget, evicting the oldest first', async () => {
+  it('keeps the newest pages per kind', async () => {
     const srv = startAt('/alerting/list');
     await srv.getEntries();
 
@@ -203,26 +236,30 @@ describe('PageHistorySrv', () => {
       locationService.push(`/d/${i}`);
     }
 
-    const byKind = await srv.getEntries();
-    expect(byKind.map((e) => e.pathname)).toEqual([
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual([
       ...Array.from({ length: PAGE_HISTORY_MAX_PER_KIND }, (_, i) => `/d/${PAGE_HISTORY_MAX_PER_KIND - i}`),
       // A burst of dashboards never pushes out another kind.
       '/alerting/list',
     ]);
+  });
 
-    const bigQuery = `?q=${'x'.repeat(Math.ceil(PAGE_HISTORY_MAX_CHARS / 3))}`;
-    for (let i = 0; i < PAGE_HISTORY_MAX_PER_KIND; i++) {
-      locationService.push(`/d/big-${i}${bigQuery}`);
-    }
+  it('does not record a URL too large to store and leaves the rest of the history alone', async () => {
+    const srv = startAt('/alerting/list');
+    locationService.push('/d/abc?from=now-1h&to=now');
+    await jest.advanceTimersByTimeAsync(1000);
+    const before = await srv.getEntries();
+
+    const filler = `&q=${'x'.repeat(PAGE_HISTORY_MAX_ENTRY_CHARS)}`;
+    locationService.push(`/explore${exploreSearch('big', filler)}`);
+    // Oversized churn on a recorded page keeps its earlier state rather than dropping the row.
+    locationService.push(`/d/abc?${filler.slice(1)}`);
     await jest.advanceTimersByTimeAsync(1000);
 
-    const byLength = (await srv.getEntries()).filter((e) => e.kind === 'dashboard');
-    expect(byLength.length).toBeLessThan(PAGE_HISTORY_MAX_PER_KIND);
-    expect(window.localStorage.getItem(STORAGE_KEY)!.length).toBeLessThanOrEqual(PAGE_HISTORY_MAX_CHARS);
-    // Every surviving row is one of the newest pushes, contiguous from the top.
-    expect(byLength.map((e) => e.kind === 'dashboard' && e.uid)).toEqual(
-      Array.from({ length: byLength.length }, (_, i) => `big-${PAGE_HISTORY_MAX_PER_KIND - 1 - i}`)
-    );
+    expect(await srv.getEntries()).toEqual(before);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(before));
+
+    locationService.push(`/explore${exploreSearch('abc')}`);
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/explore', '/d/abc', '/alerting/list']);
   });
 
   it('persists once per debounce window', async () => {
@@ -260,9 +297,12 @@ describe('PageHistorySrv', () => {
       JSON.stringify([
         // A trailing slash is normalized away on load.
         { pathname: '/d/old/', search: '', lastVisited: 100 },
-        { pathname: '/explore', search: '?a=1', lastVisited: 300 },
-        // Same page twice: the newer visit wins.
-        { pathname: '/explore', search: '?a=2', lastVisited: 200 },
+        { pathname: '/explore', search: exploreSearch('abc', '&a=1'), lastVisited: 300 },
+        // Same Explore session twice: the newer visit wins. Another session is another row.
+        { pathname: '/explore', search: exploreSearch('abc', '&a=2'), lastVisited: 200 },
+        { pathname: '/explore', search: exploreSearch('xyz'), lastVisited: 250 },
+        // Explore before it wrote its state.
+        { pathname: '/explore', search: '', lastVisited: 400 },
         // Rows written by an earlier format still load; extra fields are ignored.
         { key: 'dashboard:legacy', kind: 'dashboard', pathname: '/d/legacy', search: '', lastVisited: 150, visits: 3 },
         { pathname: '/d/x', search: '' },
@@ -270,6 +310,12 @@ describe('PageHistorySrv', () => {
         { pathname: '/d/y', search: 'from=now-1h', lastVisited: 400 },
         // Valid row that is not a page worth resuming.
         { pathname: '/dashboards', search: '?query=x', lastVisited: 400 },
+        // Oversized rows written before the per-entry cap drop on load like any other bad row.
+        {
+          pathname: '/explore',
+          search: exploreSearch('big', `&q=${'x'.repeat(PAGE_HISTORY_MAX_ENTRY_CHARS)}`),
+          lastVisited: 500,
+        },
       ])
     );
 
@@ -277,7 +323,8 @@ describe('PageHistorySrv', () => {
 
     expect(await srv.getEntries()).toEqual([
       { kind: 'alerting', pathname: '/alerting/list', search: '', lastVisited: T0 },
-      { kind: 'explore', pathname: '/explore', search: '?a=1', lastVisited: 300 },
+      { kind: 'explore', session: 'abc', pathname: '/explore', search: exploreSearch('abc', '&a=1'), lastVisited: 300 },
+      { kind: 'explore', session: 'xyz', pathname: '/explore', search: exploreSearch('xyz'), lastVisited: 250 },
       { kind: 'dashboard', uid: 'legacy', pathname: '/d/legacy', search: '', lastVisited: 150 },
       { kind: 'dashboard', uid: 'old', pathname: '/d/old', search: '', lastVisited: 100 },
     ]);

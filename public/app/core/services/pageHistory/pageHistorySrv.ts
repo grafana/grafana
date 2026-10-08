@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { locationService } from '@grafana/runtime';
 import { UserStorage } from '@grafana/runtime/internal';
 import { type AppChromeService, getPageTitle } from 'app/core/components/AppChrome/AppChromeService';
-import { isPageNavigation } from 'app/core/navigation/urlRewrite';
+import { isUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 import { parseJsonWithSchema } from 'app/core/utils/parseJsonWithSchema';
 
@@ -14,8 +14,12 @@ import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry, type PageHistoryKind 
 
 const STORAGE_SERVICE = 'grafana-page-history';
 const PERSIST_MS = 1000;
-/** `JSON.stringify(rows).length`. An Explore search can be several KB, so the count cap alone does not bound size. */
-export const PAGE_HISTORY_MAX_CHARS = 200_000;
+/**
+ * `JSON.stringify(row).length` of one stored row. Heavy real URLs (a two-pane Explore session with long
+ * queries, a dashboard with hundreds of multi-value variable values) stay around 10k. With the per-kind count
+ * cap this bounds the whole list, and no one page can evict the others.
+ */
+export const PAGE_HISTORY_MAX_ENTRY_CHARS = 20_000;
 /** JS `Date` range; larger values are not instants. */
 const MAX_EPOCH_MS = 8.64e15;
 
@@ -49,36 +53,29 @@ function mergeByPage(current: PageHistoryEntry[], stored: PageHistoryEntry[]): P
   return [...byKey.values()].sort((a, b) => b.lastVisited - a.lastVisited);
 }
 
-/** Newest N per kind, then a length budget on the stored form; always evicts the oldest (last) entries first. */
-function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
-  const kept = new Map<PageHistoryKind, number>();
-  const capped: PageHistoryEntry[] = [];
-  // `[` and `]`, then one `,` per additional row: exactly JSON.stringify(rows).length.
-  let length = 2;
-  for (const entry of entries) {
-    const count = kept.get(entry.kind) ?? 0;
-    if (count >= PAGE_HISTORY_MAX_PER_KIND) {
-      continue;
-    }
-    length += JSON.stringify(toStored(entry)).length + (capped.length > 0 ? 1 : 0);
-    if (length > PAGE_HISTORY_MAX_CHARS) {
-      break;
-    }
-    kept.set(entry.kind, count + 1);
-    capped.push(entry);
-  }
-  return capped;
+function fitsEntryCap(stored: StoredEntry): boolean {
+  return JSON.stringify(stored).length <= PAGE_HISTORY_MAX_ENTRY_CHARS;
 }
 
-/** Validates the stored copy row by row so one bad entry drops only itself. Rows that no longer classify are dropped. */
+/** Newest N per kind, so a burst of one kind of page never evicts the others. */
+function capEntries(entries: PageHistoryEntry[]): PageHistoryEntry[] {
+  const kept = new Map<PageHistoryKind, number>();
+  return entries.filter((entry) => {
+    const count = kept.get(entry.kind) ?? 0;
+    kept.set(entry.kind, count + 1);
+    return count < PAGE_HISTORY_MAX_PER_KIND;
+  });
+}
+
+/** Validates the stored copy row by row so one bad or oversized entry drops only itself. Rows that no longer classify are dropped. */
 function parseEntries(raw: string | null): PageHistoryEntry[] {
   const entries: PageHistoryEntry[] = [];
   for (const row of parseJsonWithSchema(raw, z.array(z.unknown()), [])) {
     const result = StoredEntrySchema.safeParse(row);
-    if (!result.success) {
+    if (!result.success || !fitsEntryCap(result.data)) {
       continue;
     }
-    const page = classifyPage(result.data.pathname);
+    const page = classifyPage(result.data.pathname, result.data.search);
     if (page) {
       entries.push({ ...result.data, ...page });
     }
@@ -94,7 +91,8 @@ function parseEntries(raw: string | null): PageHistoryEntry[] {
 export class PageHistorySrv {
   /** Newest first by construction; `lastVisited` is only used for merging and display. */
   private entries: PageHistoryEntry[] = [];
-  private currentPathname: string | undefined;
+  /** Key of the page the user is on, listed or not, so a change of page is told apart from churn on it. */
+  private locationKey: string | null = null;
   /** Key of the recorded page the user is on; titles from the chrome are stamped onto it. */
   private currentKey: string | undefined;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
@@ -108,15 +106,12 @@ export class PageHistorySrv {
     this.ready = this.load();
 
     // `history.listen` never emits the landing page.
-    const location = locationService.getLocation();
-    this.currentPathname = location.pathname;
-    this.apply(location, true);
+    this.apply(locationService.getLocation(), false);
 
-    const unlisten = locationService.getHistory().listen((location, action) => {
-      const isNavigation = isPageNavigation(location, action, this.currentPathname);
-      this.currentPathname = location.pathname;
-      this.apply(location, isNavigation);
-    });
+    const unlisten = locationService.getHistory().listen((location, action) =>
+      // A flagged REPLACE corrects the current page's URL in place and is never a navigation.
+      this.apply(location, action === 'REPLACE' && isUrlRewrite(location.state))
+    );
     // Pages set their nav after they render, so the title arrives after the navigation was recorded.
     const chromeSubscription = chrome.state.subscribe((state) => this.setTitle(getPageTitle(state)));
     const onVisibilityChange = () => {
@@ -162,30 +157,37 @@ export class PageHistorySrv {
     this.entries = capEntries(mergeByPage(this.entries, stored));
   }
 
-  private apply(location: Location, isNavigation: boolean): void {
+  private apply(location: Location, isRewrite: boolean): void {
+    const page = classifyPage(location.pathname, location.search);
+    const key = page && pageKey(page);
+    // Query churn keeps the key, so only a key change is a navigation. Explore writes its state with a plain
+    // REPLACE on the same pathname, which is how its sessions come to exist.
+    const isNavigation = !isRewrite && key !== this.locationKey;
+    this.locationKey = key;
     this.currentKey = undefined;
-    const page = classifyPage(location.pathname);
-    if (!page) {
+    if (!page || !key) {
       return;
     }
 
-    const key = pageKey(page);
-    const index = this.entries.findIndex((entry) => pageKey(entry) === key);
+    const existing = this.entries.find((entry) => pageKey(entry) === key);
     // Churn or rewrite onto a page never navigated to (e.g. `/` → home dashboard rewrite).
-    if (index === -1 && !isNavigation) {
+    if (!existing && !isNavigation) {
       return;
     }
-    const [existing] = index === -1 ? [] : this.entries.splice(index, 1);
 
     // Hash deliberately ignored. Query churn refreshes the search and moves the row to the top.
-    this.entries.unshift({
+    const entry: PageHistoryEntry = {
       ...page,
       search: location.search,
       lastVisited: Date.now(),
       // Kept until the page sets its nav again, in case the user leaves before it does.
       title: existing?.title,
-    });
-    this.entries = capEntries(this.entries);
+    };
+    // A URL too large to store is not recorded; the page's earlier row, if any, stays as it was.
+    if (!fitsEntryCap(toStored(entry))) {
+      return;
+    }
+    this.entries = capEntries([entry, ...this.entries.filter((other) => other !== existing)]);
     this.currentKey = key;
     this.persist();
   }

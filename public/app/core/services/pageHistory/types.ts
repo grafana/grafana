@@ -3,11 +3,13 @@ export const PAGE_HISTORY_MAX_PER_KIND = 5;
 
 /**
  * What a visited URL resolves to, with the pathname it was derived from (base-url-less, no trailing slash);
- * one history row per identity. Derived again on every load, never stored, so a rule change reclassifies old rows.
+ * one history row per identity. Derived again on every load from the stored pathname and search, never
+ * stored, so a rule change reclassifies old rows.
  */
 export type PageIdentity = { pathname: string } & (
   | { kind: 'dashboard'; uid: string }
-  | { kind: 'explore' }
+  /** `session` is the left pane's id; Explore keeps it through query edits and splits, so it tells sessions apart. */
+  | { kind: 'explore'; session: string }
   | { kind: 'alerting' }
   | { kind: 'app' }
 );

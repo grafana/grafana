@@ -19,16 +19,3 @@ export function markAsUrlRewrite(location: H.Path | H.LocationDescriptorObject):
 export function isUrlRewrite(state: unknown): boolean {
   return typeof state === 'object' && state !== null && 'urlRewrite' in state && state.urlRewrite === true;
 }
-
-/**
- * True when a history event moves the user to another page: the pathname changed and the event is not
- * a flagged in-place rewrite. Query-only churn (time range, variables) and rewrites are not navigations.
- */
-export function isPageNavigation(
-  location: H.Location,
-  action: H.Action,
-  previousPathname: string | undefined
-): boolean {
-  const isRewrite = action === 'REPLACE' && isUrlRewrite(location.state);
-  return !isRewrite && location.pathname !== previousPathname;
-}

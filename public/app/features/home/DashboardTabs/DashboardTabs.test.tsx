@@ -348,6 +348,7 @@ describe('DashboardTabs', () => {
     )}`;
     const exploreEntry: PageHistoryEntry = {
       kind: 'explore',
+      session: 'abc',
       pathname: '/explore',
       search: exploreSearch,
       lastVisited: Date.now() - 2 * 60 * 60 * 1000,
