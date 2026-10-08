@@ -12,14 +12,10 @@ export function dashboardModesEnabled(): boolean {
   );
 }
 
-export function getDashboardMode(
-  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
-): DashboardMode {
-  return state.mode ?? (state.isEditing && state.editPresentation !== 'preview' ? 'edit' : 'view');
+export function getDashboardMode(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): DashboardMode {
+  return state.mode ?? (state.isEditing ? 'edit' : 'view');
 }
 
-export function canManuallyEditDashboard(
-  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
-): boolean {
+export function canManuallyEditDashboard(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
   return !dashboardModesEnabled() || getDashboardMode(state) === 'edit';
 }

@@ -37,7 +37,7 @@ setPluginImportUtils({
 interface BuildSceneOpts {
   uid?: string;
   isEditing?: boolean;
-  editPresentation?: 'full' | 'preview';
+  mode?: 'edit' | 'view';
   isDirty?: boolean;
   canSave?: boolean;
   canMakeEditable?: boolean;
@@ -48,7 +48,7 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
   const {
     uid = 'dash-1',
     isEditing = true,
-    editPresentation = 'full',
+    mode = 'edit',
     isDirty = false,
     canSave = true,
     canMakeEditable = false,
@@ -59,7 +59,7 @@ function buildTestScene(opts: BuildSceneOpts = {}) {
     title: 'Test',
     uid,
     isEditing,
-    editPresentation,
+    mode,
     isDirty,
     meta: {
       canSave,
@@ -241,7 +241,11 @@ describe('SaveDashboard (toolbar)', () => {
   describe('View changes menu item', () => {
     beforeEach(async () => {
       await act(async () => {
-        setTestFlags({ 'grafana.dashboardPreviewMode': true, 'grafana.customDashboardTemplates': true });
+        setTestFlags({
+          dashboardNewLayouts: true,
+          'grafana.dashboardPreviewMode': true,
+          'grafana.customDashboardTemplates': true,
+        });
       });
     });
 
@@ -252,8 +256,8 @@ describe('SaveDashboard (toolbar)', () => {
     });
 
     it.each([
-      { name: 'editing', options: { editPresentation: 'full' as const } },
-      { name: 'previewing', options: { editPresentation: 'preview' as const } },
+      { name: 'editing', options: { mode: 'edit' as const } },
+      { name: 'viewing', options: { mode: 'view' as const } },
       { name: 'a new dashboard', options: { uid: '' } },
       { name: 'a dashboard that can only be copied', options: { canSave: false } },
       { name: 'a dashboard template', options: { isDashboardTemplate: true } },

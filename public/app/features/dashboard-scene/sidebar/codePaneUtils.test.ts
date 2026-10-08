@@ -59,7 +59,7 @@ function buildApplyDashboard(uid?: string): DashboardScene {
     },
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),
-    applyEditPresentation: DashboardScene.prototype.applyEditPresentation,
+    applyDashboardMode: DashboardScene.prototype.applyDashboardMode,
     activateSidebar: jest.fn(),
     setState: jest.fn(),
     forEachChild: jest.fn(),

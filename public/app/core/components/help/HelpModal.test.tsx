@@ -23,7 +23,7 @@ describe('useShortcuts', () => {
     jest.clearAllMocks();
   });
 
-  it.each([true, false])('lists the Preview shortcut only when its feature is enabled (%s)', (enabled) => {
+  it.each([true, false])('does not advertise the obsolete Preview shortcut (feature enabled: %s)', (enabled) => {
     mockUseAssistant.mockReturnValue({
       isLoading: false,
       isAvailable: false,
@@ -39,11 +39,7 @@ describe('useShortcuts', () => {
         expect.arrayContaining([expect.objectContaining({ description: 'Save dashboard' })])
       );
       const preview = dashboard?.shortcuts.find(({ description }) => description === 'Toggle Preview while editing');
-      if (enabled) {
-        expect(preview?.keys).toEqual(['d', 'p']);
-      } else {
-        expect(preview).toBeUndefined();
-      }
+      expect(preview).toBeUndefined();
     } finally {
       cleanup();
       setTestFlags({});

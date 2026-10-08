@@ -5,7 +5,6 @@ import { type GrafanaTheme2, store } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagGrafanaDashboardPreviewMode } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, Dropdown, Icon, Menu, ToolbarButton, ToolbarButtonRow, useStyles2 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { NavToolbarSeparator } from 'app/core/components/AppChrome/NavToolbar/NavToolbarSeparator';
@@ -32,12 +31,10 @@ import { isLibraryPanel } from '../utils/utils';
 import { type DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from './ManagedDashboardNavBarBadge';
-import { PreviewModeControls } from './PreviewModeControls';
 import { Actions } from './new-toolbar/Actions';
 import { BreadcrumbActions } from './new-toolbar/BreadcrumbActions';
 import { PlanningBanner } from './new-toolbar/PlanningBanner';
 import { PublicDashboardBadge } from './new-toolbar/actions/PublicDashboardBadge';
-import { isFullDashboardEditing } from './types/dashboard';
 
 interface Props {
   dashboard: DashboardScene;
@@ -70,7 +67,6 @@ NavToolbarActions.displayName = 'NavToolbarActions';
  * This part is split into a separate component to help test this
  */
 export function ToolbarActions({ dashboard }: Props) {
-  const isPreviewModeEnabled = useFlagGrafanaDashboardPreviewMode();
   const {
     isEditing,
     viewPanel,
@@ -98,7 +94,7 @@ export function ToolbarActions({ dashboard }: Props) {
   const hasCopiedPanel = store.exists(LS_PANEL_COPY_KEY);
   // Means we are not in settings view, fullscreen panel or edit panel
   const isShowingDashboard = !editview && !isViewingPanel && !isEditingPanel;
-  const isEditingAndShowingDashboard = isFullDashboardEditing(dashboard.state) && isShowingDashboard;
+  const isEditingAndShowingDashboard = isEditing && isShowingDashboard;
   const folderRepo = useSelector((state) => selectFolderRepository()(state, folderUid));
   const isManaged = Boolean(dashboard.isManagedRepository() || folderRepo);
   // Get the repository for the dashboard's folder
@@ -388,7 +384,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'settings',
-    condition: isFullDashboardEditing(dashboard.state) && dashboard.canEditDashboard() && isShowingDashboard,
+    condition: isEditing && dashboard.canEditDashboard() && isShowingDashboard,
     render: () => (
       <Button
         onClick={() => {
@@ -408,44 +404,32 @@ export function ToolbarActions({ dashboard }: Props) {
 
   toolbarActions.push({
     group: 'main-buttons',
-    condition: isEditing && isShowingDashboard,
-    render: () => <PreviewModeControls key="preview-mode" dashboard={dashboard} />,
+    condition: isEditing && !isNew && isShowingDashboard,
+    render: () => (
+      <Button
+        onClick={() => {
+          DashboardInteractions.exitEditButtonClicked();
+          dashboard.exitEditMode({ skipConfirm: false });
+        }}
+        tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
+        size="sm"
+        key="discard"
+        fill="text"
+        variant="primary"
+        data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
+      >
+        <Trans i18nKey="dashboard.toolbar.exit-edit-mode.label">Exit edit</Trans>
+      </Button>
+    ),
   });
 
   toolbarActions.push({
     group: 'main-buttons',
     condition: isEditing && !isEditingLibraryPanel && (canSave || canSaveAs),
     render: () => {
-      const withChangesMenu = (button: ReactNode) =>
-        isPreviewModeEnabled ? (
-          <ButtonGroup key="save">
-            {button}
-            <Dropdown
-              overlay={
-                <Menu>
-                  <Menu.Item
-                    label={t('dashboard.preview.view-changes', 'View changes')}
-                    icon="code-branch"
-                    onClick={() => dashboard.openChanges()}
-                  />
-                </Menu>
-              }
-            >
-              <Button
-                aria-label={t('dashboard.toolbar.more-save-options', 'More save options')}
-                icon="angle-down"
-                size="sm"
-                variant={isDirty || isNew ? 'primary' : 'secondary'}
-              />
-            </Dropdown>
-          </ButtonGroup>
-        ) : (
-          button
-        );
-
       // if we  only can save
       if (isNew) {
-        return withChangesMenu(
+        return (
           <Button
             onClick={() => {
               dashboard.openSaveDrawer({});
@@ -464,7 +448,7 @@ export function ToolbarActions({ dashboard }: Props) {
 
       // If we only can save as copy
       if (canSaveAs && !canSave && !canMakeEditable && !isManaged) {
-        return withChangesMenu(
+        return (
           <Button
             onClick={() => {
               dashboard.openSaveDrawer({ saveAsCopy: true });
@@ -498,16 +482,6 @@ export function ToolbarActions({ dashboard }: Props) {
             }}
             testId={selectors.components.NavToolbar.editDashboard.saveAsCopyButton}
           />
-          {isPreviewModeEnabled && (
-            <>
-              <Menu.Divider />
-              <Menu.Item
-                label={t('dashboard.preview.view-changes', 'View changes')}
-                icon="code-branch"
-                onClick={() => dashboard.openChanges()}
-              />
-            </>
-          )}
         </Menu>
       );
 
@@ -536,27 +510,6 @@ export function ToolbarActions({ dashboard }: Props) {
         </ButtonGroup>
       );
     },
-  });
-
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditing && (!isNew || isPreviewModeEnabled) && isShowingDashboard,
-    render: () => (
-      <Button
-        onClick={() => {
-          DashboardInteractions.exitEditButtonClicked();
-          dashboard.exitEditMode({ skipConfirm: false });
-        }}
-        tooltip={t('dashboard.toolbar.exit-edit-mode.tooltip', 'Exits edit mode and discards unsaved changes')}
-        size="sm"
-        key="discard"
-        fill="text"
-        variant="primary"
-        data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
-      >
-        <Trans i18nKey="dashboard.toolbar.exit-edit-mode.label">Exit edit</Trans>
-      </Button>
-    ),
   });
 
   return <ToolbarButtonRow alignment="right">{renderActionElements(toolbarActions)}</ToolbarButtonRow>;

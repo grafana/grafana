@@ -102,7 +102,7 @@ export const FlagKeys = {
   GrafanaDashboardAutoGridDefault: "grafana.dashboardAutoGridDefault",
   /** Enables global and folder-scoped dashboard variables via dashboard.grafana.app */
   GrafanaDashboardGlobalVariables: "grafana.dashboardGlobalVariables",
-  /** Switch between editing and previewing a dashboard within the same edit session */
+  /** Enables Viewing and Editing modes for dynamic dashboards */
   GrafanaDashboardPreviewMode: "grafana.dashboardPreviewMode",
   /** Redesigns dashboard settings page into Advanced Settings in a modal window */
   GrafanaDashboardSettingsRedesign: "grafana.dashboardSettingsRedesign",
@@ -747,7 +747,7 @@ export const useFlagGrafanaDashboardGlobalVariables = (options?: ReactFlagEvalua
 };
 
 /**
- * Switch between editing and previewing a dashboard within the same edit session
+ * Enables Viewing and Editing modes for dynamic dashboards
  *
  * **Details:**
  * - flag key: `grafana.dashboardPreviewMode`

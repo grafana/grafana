@@ -57,6 +57,8 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
   return rowsLayoutManager;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('RowsLayoutManager', () => {
   describe('getSlug', () => {
     it('generates slugs based on row titles', () => {
@@ -105,8 +107,9 @@ describe('RowsLayoutManager', () => {
 
   describe('addNewRow', () => {
     it('disables interaction in the inner layout added during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
       const manager = new RowsLayoutManager({ rows: [] });
-      new DashboardScene({ body: manager, isEditing: true, editPresentation: 'preview' });
+      new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
       const layout = AutoGridLayoutManager.createEmpty();
       expect(layout.state.layout.state.isDraggable).toBe(true);
 

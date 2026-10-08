@@ -79,12 +79,12 @@ describe('DashboardMutationClient', () => {
   describe.each([
     { type: 'ENTER_EDIT_MODE', payload: {} },
     { type: 'UPDATE_DASHBOARD_SETTINGS', payload: { title: 'Assistant title' } },
-  ])('$type presentation', (command) => {
+  ])('$type mode', (command) => {
     beforeEach(() => {
-      setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': true });
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     });
 
-    it('enables Preview when the user already entered Edit without choosing a presentation', async () => {
+    it('retains Editing and the discard baseline when Assistant changes a manually edited dashboard', async () => {
       const scene = dashboardScene();
       scene.onEnterEditMode();
       scene.setState({ title: 'Manual edit' });
@@ -93,8 +93,8 @@ describe('DashboardMutationClient', () => {
         const result = await new DashboardMutationClient(scene).execute(command);
 
         expect(result.success).toBe(true);
-        expect(scene.state.editPresentation).toBe('preview');
-        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
+        expect(scene.state.mode).toBe('edit');
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
 
         scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
         expect(scene.state.title).toBe('Dash');
@@ -105,17 +105,17 @@ describe('DashboardMutationClient', () => {
       }
     });
 
-    it('preserves the user switching Preview off across repeated Assistant commands', async () => {
+    it('preserves Editing across repeated Assistant commands', async () => {
       const scene = dashboardScene();
       scene.onEnterEditMode();
-      scene.setEditPresentation('preview');
-      scene.setEditPresentation('full');
+      scene.setDashboardMode('view');
+      scene.setDashboardMode('edit');
 
       try {
         const client = new DashboardMutationClient(scene);
         expect((await client.execute(command)).success).toBe(true);
         expect((await client.execute(command)).success).toBe(true);
-        expect(scene.state.editPresentation).toBe('full');
+        expect(scene.state.mode).toBe('edit');
         expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
       } finally {
         scene.exitEditMode({ skipConfirm: true });

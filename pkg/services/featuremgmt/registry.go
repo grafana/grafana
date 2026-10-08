@@ -678,7 +678,7 @@ var (
 		},
 		{
 			Name:        "grafana.dashboardPreviewMode",
-			Description: "Switch between editing and previewing a dashboard within the same edit session",
+			Description: "Enables Viewing and Editing modes for dynamic dashboards",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,

@@ -219,7 +219,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   public canApplyEditAction() {
     return !dashboardModesEnabled() || getDashboardMode(this.state) !== 'view' || this._assistantWrites > 0;
   }
-  private _sidebarBeforePreview?: Pick<DashboardSidebarState, 'openPane' | 'selectionContext'>;
+  private _sidebarBeforeViewing?: Pick<DashboardSidebarState, 'openPane' | 'selectionContext'>;
   private _viewRequest?: AbortController;
 
   /**
@@ -328,7 +328,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         isDashboardReviewing(state) &&
         (state.body !== previousState.body || state.sidebar !== previousState.sidebar)
       ) {
-        this.applyEditPresentation();
+        this.applyDashboardMode();
       }
     });
 
@@ -494,7 +494,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const mode = this.state.mode ?? (source === 'assistant' ? 'view' : 'edit');
     if (!this.state.isEditing) {
       this._editSessionSource = source;
-      this._sidebarBeforePreview = undefined;
+      this._sidebarBeforeViewing = undefined;
 
       this.state.sidebar.setState({ undoStack: [], redoStack: [] });
 
@@ -505,7 +505,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.setState({
         isEditing: true,
         editable: true,
-        editPresentation: undefined,
         ...(dashboardModesEnabled() ? { mode } : {}),
       });
       this.state.body.editModeChanged?.(true);
@@ -515,54 +514,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (dashboardModesEnabled()) {
-      this.applyEditPresentation();
+      this.applyDashboardMode();
       return;
-    }
-
-    // Full is an explicit user choice; undefined is the default manual edit presentation.
-    if (source === 'assistant' && this.state.editPresentation !== 'full') {
-      this.setEditPresentation('preview');
     }
   };
-
-  public setEditPresentation(presentation: 'preview' | 'full') {
-    if (dashboardModesEnabled()) {
-      this.setDashboardMode(presentation === 'full' ? 'edit' : 'view');
-      return;
-    }
-    if (!this.state.isEditing || this.state.editPanel || this.state.editview) {
-      return;
-    }
-    // A drag may temporarily detach an item. Finish it before changing interaction policy.
-    if (this.state.layoutOrchestrator.isDragging()) {
-      return;
-    }
-    // Always allow returning to editing if the flag changes during a session.
-    if (
-      presentation === 'preview' &&
-      !getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaDashboardPreviewMode, false)
-    ) {
-      return;
-    }
-    if (this.state.editPresentation === presentation) {
-      return;
-    }
-
-    const sidebar = this.state.sidebar;
-    if (presentation === 'preview') {
-      this._sidebarBeforePreview = {
-        openPane: sidebar.state.openPane,
-        selectionContext: sidebar.state.selectionContext,
-      };
-    }
-    sidebar.closePane();
-    this.setState({ editPresentation: presentation });
-    this.applyEditPresentation();
-    if (presentation === 'full') {
-      this.restoreSidebarAfterPreview();
-    }
-    reportInteraction('dashboards_edit_presentation_changed', { presentation });
-  }
 
   public setDashboardMode(mode: DashboardMode): boolean {
     if (
@@ -588,30 +543,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.onEnterEditMode();
     }
     if (previous === 'edit') {
-      this._sidebarBeforePreview = {
+      this._sidebarBeforeViewing = {
         openPane: this.state.sidebar.state.openPane,
         selectionContext: this.state.sidebar.state.selectionContext,
       };
     }
     this.state.sidebar.closePane();
     this.setState({ mode });
-    this.applyEditPresentation();
+    this.applyDashboardMode();
     if (mode === 'edit') {
-      this.restoreSidebarAfterPreview();
+      this.restoreSidebarAfterViewing();
     }
     reportInteraction('dashboards_mode_changed', { mode });
     return true;
   }
 
-  private restoreSidebarAfterPreview() {
-    const saved = this._sidebarBeforePreview;
-    this._sidebarBeforePreview = undefined;
+  private restoreSidebarAfterViewing() {
+    const saved = this._sidebarBeforeViewing;
+    this._sidebarBeforeViewing = undefined;
     if (!saved?.openPane) {
       return;
     }
 
     const sidebar = this.state.sidebar;
-    // Assistant mutations may have removed or replaced selected items while Preview was open.
+    // Assistant mutations may have removed or replaced selected items while Viewing was active.
     const selected = saved.selectionContext.selected.filter(({ id }) => sidebar.getSelectedObject(id));
     if (saved.openPane.getId() === 'element' && selected.length === 0) {
       return;
@@ -626,10 +581,14 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (!this.state.isEditing) {
       this.onEnterEditMode();
     }
-    this.setEditPresentation('full');
+    if (dashboardModesEnabled()) {
+      this.setDashboardMode('edit');
+    } else {
+      this.applyDashboardMode();
+    }
   }
 
-  public applyEditPresentation() {
+  public applyDashboardMode() {
     const fullEditing = isFullDashboardEditing(this.state);
     this.state.body.editModeChanged?.(fullEditing);
     if (this.state.isEditing) {
@@ -643,7 +602,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public openChanges() {
-    reportInteraction('dashboards_changes_opened', { presentation: this.state.editPresentation ?? 'full' });
+    reportInteraction('dashboards_changes_opened', { mode: getDashboardMode(this.state) });
     return this.openSaveDrawer({ showDiff: true });
   }
 
@@ -773,7 +732,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {
-    this._sidebarBeforePreview = undefined;
+    this._sidebarBeforeViewing = undefined;
     // No need to listen to changes anymore
     this._changeTracker.stopTrackingChanges();
 
@@ -801,13 +760,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (restoreInitialState) {
       // Restore initial state and disable editing
       const { isOverlayLoading, ...initialState } = this._initialState ?? {};
-      this.setState({ ...initialState, isEditing: false, editPresentation: undefined });
+      this.setState({ ...initialState, isEditing: false, mode: undefined });
       this.restoreSerializerAnnotationsFromInitialState();
       appEvents.publish(new DashboardDiscardedEvent());
       DashboardInteractions.dashboardEditDiscarded();
     } else {
       // Do not restore
-      this.setState({ isEditing: false, editPresentation: undefined });
+      this.setState({ isEditing: false, mode: undefined });
     }
 
     // if we are in edit panel, we need to onDiscard()
@@ -843,7 +802,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const hadProgrammaticSidebar = this._sidebarActivation !== undefined;
     this.deactivateSidebar();
 
-    const { editPresentation, mode } = this.state;
+    const { mode } = this.state;
     const { isOverlayLoading, ...restoredState } = sceneUtils.cloneSceneObjectState(this._initialState!, {
       isDirty: false,
     });
@@ -853,7 +812,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     this.setState({
       ...restoredState,
-      editPresentation,
       mode,
       isEditing: true,
       editable: true,
@@ -863,7 +821,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       overlay: undefined,
     });
 
-    this.applyEditPresentation();
+    this.applyDashboardMode();
 
     // We stay in edit mode, so re-activate the swapped-in pane to keep programmatic mutations working.
     if (hadProgrammaticSidebar) {

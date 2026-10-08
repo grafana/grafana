@@ -88,7 +88,7 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
       });
       // Dashboard state is replaced in place losing all edit-only properties.
       // Calling editModeChange rehydrates the panel's edit state (for example isDraggable state)
-      scene.applyEditPresentation();
+      scene.applyDashboardMode();
 
       scene.state.sidebar.refreshAfterRebuild();
 
@@ -105,7 +105,7 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
       scene.setState({ ...previousState, mode: scene.state.mode });
-      scene.applyEditPresentation();
+      scene.applyDashboardMode();
       scene.state.sidebar.refreshAfterRebuild();
       // The restored tree is the one the apply replaced, so its spec state can be read from it now.
       const urlUpdates = urlUpdatesForSwap(scene, {

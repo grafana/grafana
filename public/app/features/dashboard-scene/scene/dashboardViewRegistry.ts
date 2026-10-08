@@ -13,7 +13,6 @@ const viewStateKeys = {
   body: true,
   isEditing: true,
   mode: true,
-  editPresentation: true,
   inspectPanelKey: true,
   viewPanel: true,
   editview: true,

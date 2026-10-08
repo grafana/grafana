@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -11,7 +11,8 @@ import {
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
-import { setDashboardModeAfterSave, consumeDashboardModeAfterSave } from '../saving/editPresentationAfterSave';
+import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
+import { setDashboardModeAfterSave, consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
@@ -19,6 +20,7 @@ import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardModePicker } from './DashboardModePicker';
 import { toggleVizPanelLegend } from './PanelMenuBehavior';
 import { dashboardModesEnabled, getDashboardMode, canManuallyEditDashboard } from './dashboardModes';
+import { SaveDashboard } from './new-toolbar/actions/SaveDashboard';
 import { isFullDashboardEditing } from './types/dashboard';
 
 jest.mock('../saving/createDetectChangesWorker', () => ({
@@ -217,4 +219,34 @@ it('discards changes while preserving Viewing mode', () => {
   expect(scene.state.title).toBe('Original title');
   expect(getDashboardMode(scene.state)).toBe('view');
   expect(scene.state.isDirty).toBe(false);
+});
+
+it('opens Changes in the existing save drawer without dropping save options', async () => {
+  const dashboard = setup();
+  dashboard.setDashboardMode('edit');
+  await act(() => dashboard.openSaveDrawer({ saveAsCopy: true }));
+  const drawer = dashboard.state.overlay;
+  if (!(drawer instanceof SaveDashboardDrawer)) {
+    throw new Error('Expected a save drawer');
+  }
+  act(() => dashboard.setDashboardMode('view'));
+  render(
+    <TestProvider>
+      <SaveDashboard dashboard={dashboard} />
+    </TestProvider>
+  );
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'More save options' }));
+  await user.click(screen.getByRole('menuitem', { name: 'View changes' }));
+  expect(dashboard.state.overlay === drawer).toBe(true);
+  expect(drawer.state.showDiff).toBe(true);
+  expect(drawer.state.saveAsCopy).toBe(true);
+});
+
+it.each([false, true])('keeps legacy dashboards in full editing for Assistant (preview flag: %s)', (enabled) => {
+  setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': enabled });
+  const dashboard = setup();
+  dashboard.onEnterEditMode('assistant');
+  expect(isFullDashboardEditing(dashboard.state)).toBe(true);
+  expect(dashboard.state.mode).toBeUndefined();
 });

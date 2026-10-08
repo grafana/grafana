@@ -103,7 +103,7 @@ function editorIsAttached(scene: DashboardScene) {
 
 describe('APPLY_SPEC during review', () => {
   beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': true });
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
   });
 
   afterEach(() => {
@@ -113,19 +113,21 @@ describe('APPLY_SPEC during review', () => {
   it('keeps the rebuilt grid non-draggable until the user returns to Edit', async () => {
     const scene = buildScene(makeSpec());
     scene.onEnterEditMode();
-    scene.setEditPresentation('preview');
+    scene.setDashboardMode('view');
 
     try {
-      const result = await applySpec(
-        scene,
-        makeSpec((spec) => {
-          spec.title = 'Replacement during review';
-        })
+      const result = await scene.withAssistantWrite(() =>
+        applySpec(
+          scene,
+          makeSpec((spec) => {
+            spec.title = 'Replacement during review';
+          })
+        )
       );
 
       expect(result.success).toBe(true);
       expect((await readSpec(scene)).title).toBe('Replacement during review');
-      expect(scene.state.editPresentation).toBe('preview');
+      expect(scene.state.mode).toBe('view');
       expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
       const layout = scene.state.body;
       if (!(layout instanceof DefaultGridLayoutManager)) {
@@ -135,7 +137,7 @@ describe('APPLY_SPEC during review', () => {
 
       scene.openFullEditor();
 
-      expect(layout.state.grid.state.isDraggable).toBe(true);
+      await waitFor(() => expect(layout.state.grid.state.isDraggable).toBe(true));
       expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
 
       scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });

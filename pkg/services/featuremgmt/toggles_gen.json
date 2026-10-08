@@ -2533,11 +2533,14 @@
     {
       "metadata": {
         "name": "grafana.dashboardPreviewMode",
-        "resourceVersion": "1790158863859",
-        "creationTimestamp": "2026-09-23T10:21:03Z"
+        "resourceVersion": "1791498226102",
+        "creationTimestamp": "2026-09-23T10:21:03Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-08 22:23:46.102172 +0000 UTC"
+        }
       },
       "spec": {
-        "description": "Switch between editing and previewing a dashboard within the same edit session",
+        "description": "Enables Viewing and Editing modes for dynamic dashboards",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,

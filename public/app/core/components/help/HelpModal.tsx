@@ -4,7 +4,6 @@ import { useMemo, type JSX } from 'react';
 import { useAssistant } from '@grafana/assistant';
 import { FeatureState, type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { useFlagGrafanaDashboardPreviewMode } from '@grafana/runtime/internal';
 import { Grid, Modal, useStyles2, Text, FeatureBadge } from '@grafana/ui';
 import { getModKey } from 'app/core/utils/browser';
 
@@ -68,7 +67,6 @@ export const HelpModal = ({ onDismiss }: HelpModalProps): JSX.Element => {
 };
 
 export const useShortcuts = () => {
-  const previewEnabled = useFlagGrafanaDashboardPreviewMode();
   const { isAvailable: assistantAvailable } = useAssistant();
   const modKey = useMemo(() => getModKey(), []);
 
@@ -163,17 +161,6 @@ export const useShortcuts = () => {
             keys: ['d', 's'],
             description: t('help-modal.shortcuts-description.dashboard-settings', 'Dashboard settings'),
           },
-          ...(previewEnabled
-            ? [
-                {
-                  keys: ['d', 'p'],
-                  description: t(
-                    'help-modal.shortcuts-description.toggle-dashboard-preview',
-                    'Toggle Preview while editing'
-                  ),
-                },
-              ]
-            : []),
           {
             keys: ['d', 'v'],
             description: t('help-modal.shortcuts-description.toggle-active-mode', 'Toggle in-active / view mode'),
@@ -253,7 +240,7 @@ export const useShortcuts = () => {
         ],
       },
     ];
-  }, [modKey, assistantAvailable, previewEnabled]);
+  }, [modKey, assistantAvailable]);
 };
 
 interface KeyProps {

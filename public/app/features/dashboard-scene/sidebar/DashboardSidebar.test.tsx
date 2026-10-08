@@ -209,14 +209,16 @@ describe('DashboardSidebar', () => {
     });
   });
 
-  describe('review presentation', () => {
+  describe('Viewing mode', () => {
+    afterEach(() => setTestFlags({}));
     it('keeps selection disabled when direct selection or previous-pane navigation is requested', () => {
       const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
       sidebar.selectObject(dashboard);
       sidebar.openPane(new AddNewPane({}));
       sidebar.closePane();
       sidebar.disableSelection();
-      dashboard.setState({ editPresentation: 'preview' });
+      dashboard.setState({ mode: 'view' });
 
       sidebar.enableSelection();
       sidebar.selectObject(dashboard, { force: true });
@@ -224,7 +226,7 @@ describe('DashboardSidebar', () => {
 
       expect(sidebar.state.selectionContext).toMatchObject({ enabled: false, selected: [] });
       expect(sidebar.state.openPane).toBeUndefined();
-      dashboard.setState({ editPresentation: 'full' });
+      dashboard.setState({ mode: 'edit' });
       sidebar.enableSelection();
       sidebar.selectObject(dashboard);
       expect(sidebar.getSelectedObject()).toBe(dashboard);
@@ -237,15 +239,16 @@ describe('DashboardSidebar', () => {
       ['cross-dashboard-variables', () => new DashboardCrossDashboardVariablesPane({})],
     ] as const)('refuses the %s pane during review', (_, createPane) => {
       const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
       sidebar.closePane();
-      dashboard.setState({ editPresentation: 'preview' });
+      dashboard.setState({ mode: 'view' });
       const pane = createPane();
 
       sidebar.openPane(pane);
       expect(dashboard.state.isEditing).toBe(true);
       expect(sidebar.state.openPane).toBeUndefined();
 
-      dashboard.setState({ editPresentation: 'full' });
+      dashboard.setState({ mode: 'edit' });
       sidebar.openPane(pane);
       expect(sidebar.state.openPane).toBe(pane);
     });

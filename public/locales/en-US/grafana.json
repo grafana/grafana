@@ -6038,6 +6038,7 @@
       "empty": "This dashboard has no panels.",
       "label": "Dashboard mode",
       "view": "Viewing",
+      "view-changes": "View changes",
       "view-description": "View and explore the dashboard."
     },
     "mutation-api": {
@@ -6125,11 +6126,6 @@
       "build": "Build",
       "dismiss": "Dismiss",
       "preview-label": "Preview"
-    },
-    "preview": {
-      "shortcut-tooltip": "Toggle Preview (D then P)",
-      "toggle": "Preview",
-      "view-changes": "View changes"
     },
     "public-dashboard-not-available": {
       "does-not-exist": "The dashboard you are trying to access does not exist",
@@ -11104,7 +11100,6 @@
       "toggle-active-mode": "Toggle in-active / view mode",
       "toggle-all-panel-legends": "Toggle all panel legends",
       "toggle-auto-fit": "Toggle auto fit panels (experimental feature)",
-      "toggle-dashboard-preview": "Toggle Preview while editing",
       "toggle-exemplars": "Toggle exemplars in all panel",
       "toggle-graph-crosshair": "Toggle shared graph crosshair",
       "toggle-kiosk": "Toggle kiosk mode (hides top nav)",

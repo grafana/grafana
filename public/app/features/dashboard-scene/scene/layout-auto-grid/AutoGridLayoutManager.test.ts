@@ -28,10 +28,13 @@ import {
   getMaxHeightCssValue,
 } from './AutoGridLayoutManager';
 
+afterEach(() => setTestFlags({}));
+
 describe('AutoGridLayoutManager', () => {
   it('disables a freshly attached grid when it activates during review', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const manager = AutoGridLayoutManager.createEmpty();
-    new DashboardScene({ body: manager, isEditing: true, editPresentation: 'preview' });
+    new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
     expect(manager.state.layout.state.isDraggable).toBe(true);
 
     const deactivate = manager.activate();
@@ -93,9 +96,10 @@ describe('AutoGridLayoutManager', () => {
   });
   describe('createFromLayout', () => {
     it('keeps a replacement auto grid non-draggable during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
       const layout = setupSceneWithDefaultGrid([getDefaultVizPanel()], {
         isEditing: true,
-        editPresentation: 'preview',
+        mode: 'view',
       });
 
       const autoLayout = AutoGridLayoutManager.createFromLayout(layout);

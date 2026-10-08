@@ -22,10 +22,13 @@ import { type DashboardSceneState } from '../types/dashboard';
 import { DashboardGridItem } from './DashboardGridItem';
 import { DefaultGridLayoutManager } from './DefaultGridLayoutManager';
 
+afterEach(() => setTestFlags({}));
+
 describe('DefaultGridLayoutManager', () => {
   it('disables a freshly attached grid when it activates during review', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const manager = DefaultGridLayoutManager.createEmpty();
-    new DashboardScene({ body: manager, isEditing: true, editPresentation: 'preview' });
+    new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
     expect(manager.state.grid.state.isDraggable).toBe(true);
 
     const deactivate = manager.activate();

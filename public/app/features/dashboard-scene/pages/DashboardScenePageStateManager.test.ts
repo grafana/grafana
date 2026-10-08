@@ -27,7 +27,7 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
-import { consumeEditPresentationAfterSave, setEditPresentationAfterSave } from '../saving/editPresentationAfterSave';
+import { consumeDashboardModeAfterSave, setDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -238,26 +238,26 @@ beforeEach(() => {
 });
 
 describe('DashboardScenePageStateManager v1', () => {
-  describe('review presentation after save navigation', () => {
+  describe('dashboard mode after save navigation', () => {
     afterEach(() => {
       setTestFlags({});
-      consumeEditPresentationAfterSave('');
+      consumeDashboardModeAfterSave('');
     });
 
-    it.each(['preview', 'full'] as const)(
+    it.each(['view', 'edit'] as const)(
       'restores %s once after saving and retains its choice for Assistant edits',
       async (presentation) => {
-        setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': true });
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
         setupLoadDashboardMock({
           dashboard: { uid: 'saved-copy', title: 'Saved title', editable: true },
           meta: { canEdit: true },
         });
-        setEditPresentationAfterSave('saved-copy', presentation);
+        setDashboardModeAfterSave('saved-copy', presentation);
         const loader = new DashboardScenePageStateManager({});
         await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
         const dashboard = loader.state.dashboard!;
         dashboard.onEnterEditMode('assistant');
-        expect(dashboard.state.editPresentation).toBe(presentation);
+        expect(dashboard.state.mode).toBe(presentation);
         expect(dashboard.state.isEditing).toBe(true);
         expect(dashboard.getInitialState()?.title).toBe('Saved title');
         dashboard.setState({ title: 'Later edit' });
@@ -266,20 +266,20 @@ describe('DashboardScenePageStateManager v1', () => {
 
         loader.clearSceneCache();
         await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
-        expect(loader.state.dashboard!.state.editPresentation).toBeUndefined();
+        expect(loader.state.dashboard!.state.mode).toBeUndefined();
         expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
       }
     );
 
     it('drops the handoff when another dashboard is opened first', async () => {
-      setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': true });
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
       setupLoadDashboardMock({ dashboard: { uid: 'other', editable: true }, meta: { canEdit: true } });
-      setEditPresentationAfterSave('saved-copy', 'preview');
+      setDashboardModeAfterSave('saved-copy', 'view');
       const loader = new DashboardScenePageStateManager({});
       await loader.loadDashboard({ uid: 'other', route: DashboardRoutes.Normal });
       expect(loader.state.dashboard!.state.uid).toBe('other');
       expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
-      expect(consumeEditPresentationAfterSave('saved-copy')).toBeUndefined();
+      expect(consumeDashboardModeAfterSave('saved-copy')).toBeUndefined();
     });
   });
 

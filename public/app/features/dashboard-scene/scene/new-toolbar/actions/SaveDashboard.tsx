@@ -2,7 +2,7 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { useFlagGrafanaCustomDashboardTemplates, useFlagGrafanaDashboardPreviewMode } from '@grafana/runtime/internal';
+import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
 import { Button, ButtonGroup, ConfirmModal, Dropdown, Menu } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { canManageDashboardTemplates } from 'app/features/dashboard/dashgrid/DashboardLibrary/utils/templatePermissions';
@@ -18,8 +18,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
   const isDirty = dashboard.state.isDirty;
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const isDashboardTemplatesFlagEnabled = useFlagGrafanaCustomDashboardTemplates();
-  const isPreviewModeEnabled = useFlagGrafanaDashboardPreviewMode();
-  const showChanges = isPreviewModeEnabled && isEditing;
+  const showChanges = dashboardModesEnabled() && isEditing;
 
   const { save, saveAsCopy: onSaveAsCopy, isNew } = getDashboardSaveActions(dashboard, isDashboardTemplatesFlagEnabled);
   const isManaged = dashboard.isManaged();
@@ -53,7 +52,7 @@ export const SaveDashboard = ({ dashboard }: ToolbarActionProps) => {
                 {showChanges && saveOptions && <Menu.Divider />}
                 {showChanges && (
                   <Menu.Item
-                    label={t('dashboard.preview.view-changes', 'View changes')}
+                    label={t('dashboard.modes.view-changes', 'View changes')}
                     icon="code-branch"
                     onClick={() => dashboard.openChanges()}
                   />

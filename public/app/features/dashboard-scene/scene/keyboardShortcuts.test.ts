@@ -79,6 +79,7 @@ describe('setupKeyboardShortcuts', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    setTestFlags({});
   });
 
   it('should setup keyboard shortcuts and return cleanup function', () => {
@@ -91,6 +92,18 @@ describe('setupKeyboardShortcuts', () => {
     // Call cleanup function
     cleanup();
     expect(mockKeybindingSet.removeAll).toHaveBeenCalled();
+  });
+
+  it('keeps panel editing available without registering the obsolete Preview shortcut', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      setupKeyboardShortcuts(mockScene);
+      const keys = mockKeybindingSet.addBinding.mock.calls.map(([binding]) => binding.key);
+      expect(keys).toContain('e');
+      expect(keys).not.toContain('d p');
+    } finally {
+      setTestFlags({});
+    }
   });
 
   describe('mod+o shortcut (toggle shared crosshair)', () => {
@@ -619,15 +632,16 @@ describe('setupKeyboardShortcuts', () => {
         expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard', 'dashboard', 'keyboard');
       });
 
-      it('ignores paste in review and enables the same shortcut after returning to full editing', () => {
-        mockScene.setState({ isEditing: true, editPresentation: 'preview' });
+      it('ignores paste in Viewing and enables the same shortcut after returning to Editing', () => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        mockScene.setState({ isEditing: true, mode: 'view' });
         localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
         setupKeyboardShortcuts(mockScene);
 
         getBinding('p v')!.onTrigger();
         expect(mockScene.pastePanel).not.toHaveBeenCalled();
 
-        mockScene.setState({ editPresentation: 'full' });
+        mockScene.setState({ mode: 'edit' });
         getBinding('p v')!.onTrigger();
         expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
       });

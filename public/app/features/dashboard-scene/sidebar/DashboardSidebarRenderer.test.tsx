@@ -78,6 +78,8 @@ export function buildTestScene() {
   return testScene;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('DashboardSidebarRenderer', () => {
   beforeEach(() => {
     setTestFlags({ dashboardNewLayouts: true });
@@ -148,31 +150,31 @@ describe('DashboardSidebarRenderer', () => {
     await waitFor(() => expect(scene.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 
-  describe('returning from Preview', () => {
-    beforeEach(() => setTestFlags({ 'grafana.dashboardPreviewMode': true }));
+  describe('returning from Viewing', () => {
+    beforeEach(() => setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true }));
     afterEach(() => {
       cleanup();
       setTestFlags({});
     });
 
-    it('restores the docked dashboard options pane after toggling Preview off', async () => {
+    it('restores the docked dashboard options pane after switching back to Editing', async () => {
       const scene = buildTestScene();
       scene.setState({ meta: { canEdit: true, canSave: true } });
       act(() => activateFullSceneTree(scene));
-      function SidebarWithPresentation() {
+      function SidebarWithMode() {
         const state = scene.useState();
         return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
       }
       const user = userEvent.setup();
-      render(<SidebarWithPresentation />);
+      render(<SidebarWithMode />);
       await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
       expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
       expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
       expect(scene.state.sidebar.state.isDocked).toBe(true);
 
-      act(() => scene.setEditPresentation('preview'));
+      act(() => scene.setDashboardMode('view'));
       expect(screen.queryByTestId(selectors.components.Sidebar.dockToggle)).not.toBeInTheDocument();
-      act(() => scene.setEditPresentation('full'));
+      act(() => scene.setDashboardMode('edit'));
 
       expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
       expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
@@ -215,21 +217,18 @@ describe('DashboardSidebarRenderer', () => {
     });
   });
 
-  it('shows the same sidebar buttons as view mode and opens Outline in Preview', async () => {
+  it('hides the Editing sidebar when switching to Viewing with an active edit session', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const scene = buildTestScene();
-    scene.setState({ isEditing: false, uid: 'dashboard-1' });
+    scene.setState({ mode: 'edit', meta: { canEdit: true, canSave: true } });
     act(() => activateFullSceneTree(scene));
-    render(<DashboardSidebarSplitter dashboard={scene} />);
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
     expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
-    const buttonLabels = () =>
-      screen.getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent);
-    const viewButtons = buttonLabels();
 
-    act(() => scene.setState({ isEditing: true, editPresentation: 'preview' }));
-    expect(buttonLabels()).toEqual(viewButtons);
+    act(() => scene.setDashboardMode('view'));
+    expect(scene.state.isEditing).toBe(true);
+    expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).not.toBeInTheDocument();
     expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.addButton)).not.toBeInTheDocument();
-    await userEvent.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.outlineButton));
-    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outline.searchInput)).toBeInTheDocument();
   });
 
   describe('hide button', () => {

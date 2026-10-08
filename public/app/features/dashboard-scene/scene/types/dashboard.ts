@@ -23,8 +23,6 @@ export interface DashboardViewState {
   /** True when editing */
   isEditing?: boolean;
   mode?: DashboardMode;
-  /** Omitted means default editing; explicit full editing opts out of automatic Assistant preview. */
-  editPresentation?: 'preview' | 'full';
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel key to view in fullscreen */
@@ -93,21 +91,12 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
   planning?: DashboardPlanningState;
 }
 
-export function isFullDashboardEditing(
-  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
-): boolean {
-  return Boolean(
-    state.isEditing &&
-      (dashboardModesEnabled() ? getDashboardMode(state) === 'edit' : state.editPresentation !== 'preview')
-  );
+export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  return Boolean(state.isEditing && (!dashboardModesEnabled() || getDashboardMode(state) === 'edit'));
 }
 
-export function isDashboardReviewing(
-  state: Pick<DashboardSceneState, 'mode' | 'isEditing' | 'editPresentation'>
-): boolean {
-  return dashboardModesEnabled()
-    ? getDashboardMode(state) !== 'edit'
-    : Boolean(state.isEditing && state.editPresentation === 'preview');
+export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  return dashboardModesEnabled() && getDashboardMode(state) !== 'edit';
 }
 
 export interface DashboardPlanningState {

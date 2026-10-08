@@ -62,7 +62,7 @@ import {
 } from 'app/types/dashboard';
 
 import { type PanelEditor } from '../panel-edit/PanelEditor';
-import { consumeDashboardModeAfterSave, consumeEditPresentationAfterSave } from '../saving/editPresentationAfterSave';
+import { consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardModesEnabled } from '../scene/dashboardModes';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -465,11 +465,6 @@ abstract class DashboardScenePageStateManagerBase<T>
       const mode = consumeDashboardModeAfterSave(options.uid);
       if (mode && dashboardModesEnabled()) {
         dashboard.setDashboardMode(mode);
-      }
-      const editPresentation = consumeEditPresentationAfterSave(options.uid);
-      if (editPresentation && dashboard.canEditDashboard() && dashboard.state.editable) {
-        dashboard.onEnterEditMode();
-        dashboard.setEditPresentation(editPresentation);
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });

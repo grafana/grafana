@@ -41,7 +41,6 @@ import { DashboardDataLayerControls } from './DashboardDataLayerControls';
 import { DashboardLinksControls } from './DashboardLinksControls';
 import { DashboardModePicker } from './DashboardModePicker';
 import { type DashboardScene } from './DashboardScene';
-import { PreviewModeControls } from './PreviewModeControls';
 import { VariableControls } from './VariableControls';
 import { DashboardControlsButton } from './dashboard-controls-menu/DashboardControlsMenuButton';
 import { hasDashboardControls, useHasDashboardControls } from './dashboard-controls-menu/utils';
@@ -336,7 +335,6 @@ function DashboardControlActions({
   return (
     <>
       {showShareButton && <ShareDashboardButton dashboard={dashboard} />}
-      {!modesEnabled && isEditing && <PreviewModeControls dashboard={dashboard} />}
       {showSaveButton && <SaveDashboard dashboard={dashboard} />}
       {!modesEnabled && showEditButton && <EditDashboardSwitch dashboard={dashboard} />}
       {showMakeEditableButton && <MakeDashboardEditableButton dashboard={dashboard} />}
