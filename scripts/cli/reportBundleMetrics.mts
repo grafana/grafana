@@ -20,7 +20,7 @@ async function main() {
     return;
   }
 
-  const rsdoctorMetrics = await readRsdoctorMetrics(path.join(buildDirectory, 'rspack', '.rsdoctor'));
+  const rsdoctorMetrics = await readRsdoctorMetrics(path.join(buildDirectory, '.rsdoctor'));
   for (const [name, value] of Object.entries(rsdoctorMetrics)) {
     console.log(`build.rspack.${name} ${value}`);
   }

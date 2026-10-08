@@ -16,7 +16,7 @@ export type Env = Record<string, string | true | undefined>;
 
 // Disk layout, URL and CDN path are one string. The backend rebuilds it too - see
 // webassets.PublicPathFor on the Go side.
-export const PUBLIC_PATH = 'public/build/rspack/';
+export const PUBLIC_PATH = 'public/build/';
 
 // `reactRefresh` emits calls into a runtime that only ReactRefreshRspackPlugin injects, so the
 // caller must register that plugin too. The `hmr` branch below does both; nothing else should

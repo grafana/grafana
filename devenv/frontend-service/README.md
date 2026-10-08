@@ -19,7 +19,7 @@ Quitting the process will stop the service from running.
 
 ### Rebuilding boot.js
 
-Tilt runs an `rspack boot` resource. When a file in `public/boot` changes, that resource rebuilds `public/build/rspack/boot.js`. The main rspack watch does not include that entry point.
+Tilt runs an `rspack boot` resource. When a file in `public/boot` changes, that resource rebuilds `public/build/boot.js`. The main rspack watch does not include that entry point.
 
 Hot module replacement is off in this stack on purpose: the CDN serves assets from disk, so the build has to write files instead of holding them in a dev server.
 

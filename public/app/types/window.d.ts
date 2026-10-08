@@ -8,10 +8,9 @@ export declare global {
     __grafana_public_path__: string;
 
     /**
-     * URL prefix the active bundler compiled its asset references against, including the
-     * build directory: 'public/build/' under webpack, 'public/build/rspack/' under rspack,
-     * prefixed with the CDN origin when one is configured. Use it for assets the bundler
-     * emits or copies into that directory (icons, maps, gazetteers).
+     * URL prefix of the build directory, 'public/build/', prefixed with the CDN origin when one
+     * is configured. Use it for assets the bundler emits or copies into that directory (icons,
+     * maps, gazetteers).
      */
     __grafana_build_path__: string;
     __grafana_load_failed: (err: unknown) => void;
