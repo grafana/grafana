@@ -612,7 +612,10 @@ func (hs *HTTPServer) GetDashboardVersions(c *contextmodel.ReqContext) response.
 
 	resp, err := hs.dashboardVersionService.List(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(http.StatusNotFound, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusNotFound, fmt.Sprintf("No versions found for dashboardId %d", dash.ID), err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to list dashboard versions", err)
 	}
 
 	loginMem := make(map[int64]string, len(resp.Versions))
@@ -705,7 +708,10 @@ func (hs *HTTPServer) GetDashboardVersion(c *contextmodel.ReqContext) response.R
 
 	res, err := hs.dashboardVersionService.Get(c.Req.Context(), &query)
 	if err != nil {
-		return response.Error(http.StatusInternalServerError, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dash.ID), err)
+		if errors.Is(err, dashboards.ErrDashboardNotFound) {
+			return response.Error(http.StatusNotFound, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", query.Version, dash.ID), err)
+		}
+		return response.Error(http.StatusInternalServerError, "Failed to get dashboard version", err)
 	}
 
 	creator := anonString
