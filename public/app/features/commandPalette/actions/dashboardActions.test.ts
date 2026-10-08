@@ -320,14 +320,10 @@ describe('dashboardActions', () => {
         ]);
       });
 
-      it('maps the hybrid hit tags onto the dashboard action', async () => {
-        server.use(
-          getHybridSearchHandler([{ name: 'hybrid-dashboard-1', title: 'Hybrid dashboard 1', tags: ['prod'] }])
-        );
+      it("does not set tags on hybrid dashboard actions, since the hybrid endpoint doesn't return them", async () => {
         const results = await getSearchResultActions('mySearchQuery', true);
-        expect(results[0]).toEqual(
-          expect.objectContaining({ id: 'go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1', tags: ['prod'] })
-        );
+        expect(results[0].id).toBe('go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1');
+        expect(results[0]).not.toHaveProperty('tags');
       });
 
       it('caps hybrid dashboard results at 20', async () => {
