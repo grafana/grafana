@@ -5,17 +5,7 @@
   "targets": {
     "start": {
       "dependsOn": [
-        "check-frontend-dev",
-        "themes-generate",
-        {
-          "projects": ["tag:scope:plugin"],
-          "target": "build"
-        }
-      ]
-    },
-    "start:rspack": {
-      "dependsOn": [
-        "build:rspack:boot:dev",
+        "build:boot:dev",
         "check-frontend-dev",
         "themes-generate",
         {
@@ -25,9 +15,9 @@
       ],
       "cache": false
     },
-    "start:rspack:noHmr": {
+    "start:noHmr": {
       "dependsOn": [
-        "build:rspack:boot:dev",
+        "build:boot:dev",
         "check-frontend-dev",
         "themes-generate",
         {
@@ -50,18 +40,7 @@
     },
     "dev": {
       "dependsOn": [
-        "themes-generate",
-        {
-          "projects": ["tag:scope:plugin"],
-          "target": "build"
-        }
-      ],
-      "outputs": ["{workspaceRoot}/public/build"],
-      "cache": true
-    },
-    "dev:rspack": {
-      "dependsOn": [
-        "build:rspack:boot:dev",
+        "build:boot:dev",
         "themes-generate",
         "build:swagger",
         {
@@ -71,7 +50,7 @@
       ],
       "cache": false
     },
-    "build:rspack:boot:dev": {
+    "build:boot:dev": {
       "cache": false
     },
     "build:swagger": {
