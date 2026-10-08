@@ -202,6 +202,8 @@ export const FlagKeys = {
   GrafanaDashboardVariablesMigration: "grafana.dashboardVariablesMigration",
   /** Enables the auto-height feature for dashboard panels */
   GrafanaDashboardsAutoHeightPanels: "grafana.dashboardsAutoHeightPanels",
+  /** Skips panel queries whose conditional rendering rules evaluate to hidden */
+  GrafanaDashboardsQueryConditionalRendering: "grafana.dashboardsQueryConditionalRendering",
   /** Enables the draft dashboard lifecycle: new dashboards can be created as drafts that stay hidden from list and search until they are published */
   GrafanaDraftDashboards: "grafana.draftDashboards",
   /** Check for the existence of logs when linking from the Trace View */
@@ -1444,6 +1446,17 @@ export const useFlagGrafanaDashboardVariablesMigration = (options?: ReactFlagEva
  */
 export const useFlagGrafanaDashboardsAutoHeightPanels = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.dashboardsAutoHeightPanels", false, options).value;
+};
+
+/**
+ * Skips panel queries whose conditional rendering rules evaluate to hidden
+ *
+ * **Details:**
+ * - flag key: `grafana.dashboardsQueryConditionalRendering`
+ * - default value: `false`
+ */
+export const useFlagGrafanaDashboardsQueryConditionalRendering = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.dashboardsQueryConditionalRendering", false, options).value;
 };
 
 /**

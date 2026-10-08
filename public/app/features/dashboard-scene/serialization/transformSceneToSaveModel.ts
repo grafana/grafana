@@ -30,6 +30,7 @@ import { getPanelDataFrames } from 'app/features/dashboard/components/HelpWizard
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
 import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
+import { getQueryConditionalRendering } from '../conditional-rendering/QueryConditionalRenderingBehaviour';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
@@ -306,7 +307,12 @@ function vizPanelDataToPanel(
   if (queryRunner) {
     // Clean up targets by removing hide: false (it's the default value)
     // This ensures consistency with Go backend which omits hide when false
+    const queryConditionalRendering = getQueryConditionalRendering(queryRunner);
     panel.targets = queryRunner.state.queries.map((query) => {
+      if (queryConditionalRendering && !queryConditionalRendering.getAuthoredHide(query)) {
+        const { hide, ...rest } = query;
+        return rest;
+      }
       if (query.hide === false) {
         const { hide, ...rest } = query;
         return rest;

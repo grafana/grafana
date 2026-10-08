@@ -29,6 +29,7 @@ import {
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { QueryConditionalRenderingBehaviour } from '../../conditional-rendering/QueryConditionalRenderingBehaviour';
 import { ConditionalRenderingGroup } from '../../conditional-rendering/group/ConditionalRenderingGroup';
 import { DashboardDatasourceBehaviour } from '../../scene/DashboardDatasourceBehaviour';
 import { type DashboardScene } from '../../scene/DashboardScene';
@@ -270,6 +271,7 @@ function createPanelDataProvider(
 
   let dataProvider: SceneDataProvider | undefined = undefined;
   const datasource = getPanelDataSource(panelKind);
+  const queryConditionalRendering = QueryConditionalRenderingBehaviour.fromPanelQueries(queriesWithUniqueRefIds);
 
   dataProvider = new SceneQueryRunner({
     datasource,
@@ -284,7 +286,10 @@ function createPanelDataProvider(
     dataLayerFilter: {
       panelId: panel.id,
     },
-    $behaviors: [new DashboardDatasourceBehaviour({})],
+    $behaviors: [
+      new DashboardDatasourceBehaviour({}),
+      ...(queryConditionalRendering ? [queryConditionalRendering] : []),
+    ],
   });
 
   // Wrap inner data provider in a data transformer

@@ -3070,6 +3070,21 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardsQueryConditionalRendering",
+        "resourceVersion": "1794836930450",
+        "creationTimestamp": "2026-11-16T13:48:50Z"
+      },
+      "spec": {
+        "description": "Skips panel queries whose conditional rendering rules evaluate to hidden",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dedicatedGrafanaComProxyAPIToken",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-05T13:55:22Z"

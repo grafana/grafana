@@ -9,6 +9,7 @@ import {
   type FieldConfigSource,
   type PanelKind,
   type PanelQueryKind,
+  type QueryConditionalRenderingGroupKind,
   type QueryOptionsSpec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -16,6 +17,7 @@ import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { getQueryConditionalRendering } from '../../conditional-rendering/QueryConditionalRenderingBehaviour';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { createPanelDataProvider } from '../../utils/createPanelDataProvider';
@@ -468,6 +470,45 @@ describe('buildVizPanel', () => {
 
     const reloaded = getPanelTimeRange(panelKind);
     expect(reloaded.state.compareWith).toBe('1w');
+  });
+
+  it('preserves query conditional rendering through v2 load and save', () => {
+    const conditionalRendering: QueryConditionalRenderingGroupKind = {
+      kind: 'ConditionalRenderingGroup',
+      spec: {
+        visibility: 'show',
+        condition: 'and',
+        items: [
+          { kind: 'ConditionalRenderingVariable', spec: { variable: 'hist_val', operator: 'equals', value: 'P90' } },
+        ],
+      },
+    };
+    const base = defaultPanelSpec();
+    const panelKind: PanelKind = {
+      kind: 'Panel',
+      spec: {
+        ...base,
+        data: {
+          kind: 'QueryGroup',
+          spec: {
+            ...base.data.spec,
+            queries: [
+              { kind: 'PanelQuery', spec: { ...defaultPanelQueryKind().spec, refId: 'A' } },
+              { kind: 'PanelQuery', spec: { ...defaultPanelQueryKind().spec, refId: 'B', conditionalRendering } },
+            ],
+          },
+        },
+      },
+    };
+
+    const viz = buildVizPanel(panelKind);
+    expect(getQueryConditionalRendering(getQueryRunnerFor(viz))?.state.refIds).toEqual(['B']);
+
+    const saved = vizPanelToSchemaV2(viz, undefined, false) as PanelKind;
+    expect(saved.spec.data.spec.queries.map((query) => query.spec.conditionalRendering)).toEqual([
+      undefined,
+      conditionalRendering,
+    ]);
   });
 
   it('does not create $timeRange when only hideTimeOverride is set', () => {
