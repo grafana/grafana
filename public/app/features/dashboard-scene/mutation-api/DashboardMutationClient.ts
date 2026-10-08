@@ -8,7 +8,7 @@
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../scene/DashboardScene';
-import { dashboardModesEnabled, getDashboardMode } from '../scene/dashboardModes';
+import { dashboardModesEnabled, isViewingDashboard } from '../scene/dashboardModes';
 
 import { SceneMutationClient } from './SceneMutationClient';
 import { LAZY_DASHBOARD_COMMANDS } from './commands/lazyRegistry';
@@ -66,7 +66,7 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
 
     const checkWrite = () =>
       dashboardModesEnabled() &&
-      getDashboardMode(this.scene.state) === 'view' &&
+      isViewingDashboard(this.scene.state) &&
       callerPluginId !== 'grafana-assistant-app' &&
       !PLANNING_ALLOWED_COMMANDS.has(type)
         ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'

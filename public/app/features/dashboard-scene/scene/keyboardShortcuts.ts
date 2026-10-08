@@ -27,7 +27,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 
 import { DashboardScene } from './DashboardScene';
 import { onRemovePanel, toggleVizPanelLegend } from './PanelMenuBehavior';
-import { canManuallyEditDashboard, getDashboardMode } from './dashboardModes';
+import { canManuallyEditDashboard, isViewingDashboard } from './dashboardModes';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
@@ -247,7 +247,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         if (!canManuallyEditDashboard(scene.state)) {
-          if (getDashboardMode(scene.state) !== 'view' || !scene.setDashboardMode('edit')) {
+          if (!isViewingDashboard(scene.state) || !scene.setDashboardMode('edit')) {
             return;
           }
         }

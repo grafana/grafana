@@ -246,7 +246,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Adds to undo history and selects new object
    */
   private handleEditAction(action: DashboardEditActionEventPayload, skipPerform = false) {
-    if (!getDashboardSceneFor(this).canApplyEditAction()) {
+    if (!getDashboardSceneFor(this).prepareEditAction()) {
       return;
     }
     if (this._activeBatch) {

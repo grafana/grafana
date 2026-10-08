@@ -47,7 +47,7 @@ import { getPanelIdForVizPanel } from '../utils/utils-panels';
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, type VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
-import { canManuallyEditDashboard, dashboardModesEnabled, getDashboardMode } from './dashboardModes';
+import { canManuallyEditDashboard, dashboardModesEnabled, isViewingDashboard } from './dashboardModes';
 import { PanelTimeRangeDrawer } from './panel-timerange/PanelTimeRangeDrawer';
 
 /**
@@ -92,7 +92,7 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
     }
 
     if (
-      (canManuallyEditDashboard(dashboard.state) || getDashboardMode(dashboard.state) === 'view') &&
+      (canManuallyEditDashboard(dashboard.state) || isViewingDashboard(dashboard.state)) &&
       dashboard.canEditDashboard() &&
       dashboard.state.editable &&
       !isReadOnlyRepeat &&

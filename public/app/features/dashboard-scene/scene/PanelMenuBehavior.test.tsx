@@ -102,12 +102,12 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
   });
 
-  it('opens panel editing from the View menu and enters Edit mode', async () => {
+  it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     const { scene, panel, menu } = await buildTestScene({});
     let deactivateMenu = () => {};
     try {
-      scene.setState({ mode: 'view', isEditing: true, editable: true });
+      scene.setState({ mode, isEditing: true, editable: true });
       panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
       deactivateMenu = menu.activate();
       await waitFor(() =>

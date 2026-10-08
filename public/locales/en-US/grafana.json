@@ -6028,6 +6028,7 @@
       "tooltip-previous": "Previous"
     },
     "modes": {
+      "agent-edit": "Agent editing",
       "change-mode": "Change dashboard mode",
       "current": "Dashboard mode: {{mode}}",
       "discard": "Discard changes",

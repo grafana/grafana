@@ -10,6 +10,7 @@ import {
 } from 'app/features/plugins/components/restrictedGrafanaApis/dashboardMutation/dashboardMutationApi';
 
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
+import { changeTitle } from '../actions/dashboard/changeTitle';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { setDashboardModeAfterSave, consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
@@ -120,7 +121,8 @@ it('accepts Assistant writes in View and refuses generic plugin writes', async (
   expect(scene.state.title).toBe('Original title');
   expect((await client.execute(mutation, 'grafana-assistant-app')).success).toBe(true);
   expect(scene.state.title).toBe('Assistant title');
-  expect(getDashboardMode(scene.state)).toBe('view');
+  expect(getDashboardMode(scene.state)).toBe('agent');
+  expect((await client.execute(mutation, 'another-app')).success).toBe(false);
   expect(canManuallyEditDashboard(scene.state)).toBe(false);
   expect((await client.execute({ type: 'GET_SPEC', payload: {} }, 'another-app')).success).toBe(true);
 });
@@ -141,7 +143,8 @@ it('refuses Assistant writes without edit permission', async () => {
 
 it('blocks direct edit actions and settings from View', () => {
   const scene = setup();
-  scene.onEnterEditMode('assistant');
+  scene.setDashboardMode('edit');
+  scene.setDashboardMode('view');
   const spec = JSON.parse(getDashboardResourceText(scene)).spec;
   spec.title = 'Hidden action';
   applyDashboardSpec({ scene, spec, description: 'Manual change', scope: 'dashboard' });
@@ -176,7 +179,7 @@ it.each(['label', 'caret'])('opens the mode picker from the %s and switches the 
   expect(isFullDashboardEditing(scene.state)).toBe(true);
 });
 
-it.each(['view', 'edit'] as const)('hands off %s once after first save or copy', (mode) => {
+it.each(['view', 'edit', 'agent'] as const)('hands off %s once after first save or copy', (mode) => {
   setDashboardModeAfterSave('new-uid', mode);
   expect(consumeDashboardModeAfterSave('new-uid')).toBe(mode);
   expect(consumeDashboardModeAfterSave('new-uid')).toBeUndefined();
@@ -194,7 +197,7 @@ it('binds View mutation permission to the host-provided plugin identity', async 
   const assistant = await createDashboardMutationApi('grafana-assistant-app').execute(mutation);
   expect(assistant.success).toBe(true);
   expect(scene.state.title).toBe('Assistant edit in View');
-  expect(getDashboardMode(scene.state)).toBe('view');
+  expect(getDashboardMode(scene.state)).toBe('agent');
 });
 
 it('blocks the legend shortcut from changing panel options in View', () => {
@@ -249,4 +252,76 @@ it.each([false, true])('keeps legacy dashboards in full editing for Assistant (p
   dashboard.onEnterEditMode('assistant');
   expect(isFullDashboardEditing(dashboard.state)).toBe(true);
   expect(dashboard.state.mode).toBeUndefined();
+});
+
+async function assistantChangesTitle(scene: ReturnType<typeof setup>, title: string) {
+  const spec = JSON.parse(getDashboardResourceText(scene)).spec;
+  spec.title = title;
+  return new DashboardMutationClient(scene).execute(
+    { type: 'APPLY_SPEC', payload: { spec, validate: true } },
+    'grafana-assistant-app'
+  );
+}
+
+it('labels Assistant edits from Viewing as Agent editing without adding a picker option', async () => {
+  const scene = setup();
+  render(
+    <TestProvider>
+      <DashboardModePicker dashboard={scene} />
+    </TestProvider>
+  );
+  await act(async () => {
+    expect((await assistantChangesTitle(scene, 'Agent draft')).success).toBe(true);
+  });
+  expect(screen.getByRole('button', { name: 'Dashboard mode: Agent editing' })).toBeInTheDocument();
+  expect(scene.state.title).toBe('Agent draft');
+  expect(isFullDashboardEditing(scene.state)).toBe(false);
+  const user = userEvent.setup();
+  await user.click(screen.getByRole('button', { name: 'Change dashboard mode' }));
+  expect(screen.queryByRole('menuitemradio', { name: /Agent editing/ })).not.toBeInTheDocument();
+  await user.click(screen.getByRole('menuitemradio', { name: /Manually edit panels/ }));
+  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
+  await act(async () => {
+    expect((await assistantChangesTitle(scene, 'Later Agent draft')).success).toBe(true);
+  });
+  expect(screen.getByRole('button', { name: 'Dashboard mode: Editing' })).toBeInTheDocument();
+});
+
+it('hands Agent editing to the user on a manual change and preserves the undo history', async () => {
+  const scene = setup();
+  expect((await assistantChangesTitle(scene, 'Agent draft')).success).toBe(true);
+  changeTitle({ source: scene, oldValue: 'Agent draft', newValue: 'Manual draft' });
+  expect(scene.state.title).toBe('Manual draft');
+  expect(getDashboardMode(scene.state)).toBe('edit');
+  expect(isFullDashboardEditing(scene.state)).toBe(true);
+  expect((await assistantChangesTitle(scene, 'Later Agent draft')).success).toBe(true);
+  expect(getDashboardMode(scene.state)).toBe('edit');
+  scene.state.sidebar.undoAction();
+  expect(scene.state.title).toBe('Manual draft');
+  scene.state.sidebar.undoAction();
+  expect(scene.state.title).toBe('Agent draft');
+});
+
+it('keeps Viewing for Assistant reads and rejected writes', async () => {
+  const scene = setup();
+  const client = new DashboardMutationClient(scene);
+  expect((await client.execute({ type: 'GET_SPEC', payload: {} }, 'grafana-assistant-app')).success).toBe(true);
+  expect(getDashboardMode(scene.state)).toBe('view');
+  scene.setState({ meta: { canEdit: false } });
+  expect((await assistantChangesTitle(scene, 'Denied')).success).toBe(false);
+  expect(scene.state.title).toBe('Original title');
+  expect(getDashboardMode(scene.state)).toBe('view');
+});
+
+it('can return to Viewing and lets a new Assistant edit start Agent editing again', async () => {
+  const scene = setup();
+  scene.setDashboardMode('edit');
+  expect((await assistantChangesTitle(scene, 'Assistant in Editing')).success).toBe(true);
+  expect(getDashboardMode(scene.state)).toBe('edit');
+  scene.setDashboardMode('view');
+  expect((await assistantChangesTitle(scene, 'Agent from Viewing')).success).toBe(true);
+  expect(getDashboardMode(scene.state)).toBe('agent');
+  scene.setDashboardMode('view');
+  expect(getDashboardMode(scene.state)).toBe('view');
+  expect(scene.state.title).toBe('Agent from Viewing');
 });

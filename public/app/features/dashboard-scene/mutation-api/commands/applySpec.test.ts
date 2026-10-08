@@ -127,7 +127,7 @@ describe('APPLY_SPEC during review', () => {
 
       expect(result.success).toBe(true);
       expect((await readSpec(scene)).title).toBe('Replacement during review');
-      expect(scene.state.mode).toBe('view');
+      expect(scene.state.mode).toBe('agent');
       expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
       const layout = scene.state.body;
       if (!(layout instanceof DefaultGridLayoutManager)) {

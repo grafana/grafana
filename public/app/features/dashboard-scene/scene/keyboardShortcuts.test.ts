@@ -320,12 +320,17 @@ describe('setupKeyboardShortcuts', () => {
     });
   });
 
-  it.each([true, false])('panel edit shortcut enters Edit from View only when editable=%s', async (editable) => {
+  it.each([
+    { mode: 'view' as const, editable: true },
+    { mode: 'view' as const, editable: false },
+    { mode: 'agent' as const, editable: true },
+    { mode: 'agent' as const, editable: false },
+  ])('panel edit shortcut enters Editing from $mode only when editable=$editable', async ({ mode, editable }) => {
     setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
     try {
       const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
       mockScene.setState({
-        mode: 'view',
+        mode,
         isEditing: true,
         editable,
         body: DefaultGridLayoutManager.fromVizPanels([panel]),
@@ -337,7 +342,7 @@ describe('setupKeyboardShortcuts', () => {
       attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
       const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'e')![0];
       await binding.onTrigger();
-      expect(mockScene.state.mode).toBe(editable ? 'edit' : 'view');
+      expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
       expect(locationService.getSearchObject().editPanel).toBe(editable ? '1' : undefined);
     } finally {
       setTestFlags({});

@@ -3,7 +3,7 @@ import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type DashboardSceneState } from './types/dashboard';
 
-export type DashboardMode = 'view' | 'edit';
+export type DashboardMode = 'view' | 'edit' | 'agent';
 
 export function dashboardModesEnabled(): boolean {
   return Boolean(
@@ -18,4 +18,9 @@ export function getDashboardMode(state: Pick<DashboardSceneState, 'mode' | 'isEd
 
 export function canManuallyEditDashboard(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
   return !dashboardModesEnabled() || getDashboardMode(state) === 'edit';
+}
+
+export function isViewingDashboard(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  const mode = getDashboardMode(state);
+  return mode === 'view' || mode === 'agent';
 }

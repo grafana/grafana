@@ -216,7 +216,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
   }
 
-  public canApplyEditAction() {
+  public prepareEditAction() {
+    if (dashboardModesEnabled() && getDashboardMode(this.state) === 'agent' && this._assistantWrites === 0) {
+      return this.setDashboardMode('edit');
+    }
     return !dashboardModesEnabled() || getDashboardMode(this.state) !== 'view' || this._assistantWrites > 0;
   }
   private _sidebarBeforeViewing?: Pick<DashboardSidebarState, 'openPane' | 'selectionContext'>;
@@ -491,7 +494,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public onEnterEditMode = (source: 'user' | 'assistant' = 'user') => {
-    const mode = this.state.mode ?? (source === 'assistant' ? 'view' : 'edit');
+    const currentMode = getDashboardMode(this.state);
+    let mode = this.state.mode ?? 'edit';
+    if (source === 'assistant' && currentMode === 'view') {
+      mode = 'agent';
+    } else if (source === 'user' && currentMode === 'agent') {
+      mode = 'edit';
+    }
     if (!this.state.isEditing) {
       this._editSessionSource = source;
       this._sidebarBeforeViewing = undefined;
@@ -514,8 +523,8 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (dashboardModesEnabled()) {
+      this.setState({ mode });
       this.applyDashboardMode();
-      return;
     }
   };
 

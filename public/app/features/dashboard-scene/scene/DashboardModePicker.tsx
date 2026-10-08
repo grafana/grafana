@@ -41,7 +41,10 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
       icon: 'pen',
     },
   ];
-  const current = options.find((option) => option.value === mode)!;
+  const current =
+    mode === 'agent'
+      ? { label: t('dashboard.modes.agent-edit', 'Agent editing'), icon: 'pen' as const }
+      : options.find((option) => option.value === mode)!;
 
   const menu = (
     <div className={styles.menu}>
