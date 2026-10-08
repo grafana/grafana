@@ -13,6 +13,7 @@
 
 # Documentation
 /.changelog-archive @grafana/grafana-backend-services-squad
+/AI_POLICY.md @grafana/grafana-community-support main
 /CHANGELOG.md @grafana/grafana-backend-services-squad
 /CODE_OF_CONDUCT.md @grafana/grafana-community-support
 /CONTRIBUTING.md @grafana/grafana-community-support
