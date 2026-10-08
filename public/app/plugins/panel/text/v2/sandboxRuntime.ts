@@ -18,6 +18,16 @@ const policy = bootstrap.dataset.policy;
 const nonce = bootstrap.nonce;
 bootstrap.remove();
 
+// srcdoc inherits Trusted Types enforcement, but not the parent's policies. Match Grafana's
+// default HTML policy for library DOM writes; protected panel HTML is sanitized by the parent.
+window.trustedTypes?.createPolicy('default', {
+  createHTML: (html) => html.replace(/<script/gi, '&lt;script'),
+});
+// Only the fixed Mermaid bundle received through the authenticated parent channel uses this policy.
+const scriptPolicy = window.trustedTypes?.createPolicy('grafana-text-panel-runtime', {
+  createScript: (source) => source,
+});
+
 let disposed = false;
 let verified = policy === undefined;
 let started = false;
@@ -94,7 +104,7 @@ async function renderDiagrams(command: RenderCommand, container: HTMLElement) {
   let render: RenderDiagrams | undefined;
   const script = Object.assign(document.createElement('script'), {
     nonce,
-    textContent: source,
+    textContent: scriptPolicy?.createScript(source) ?? source,
     registerMermaid: (renderer: RenderDiagrams) => {
       render = renderer;
     },

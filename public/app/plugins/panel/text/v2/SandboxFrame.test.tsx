@@ -294,3 +294,40 @@ it('reports a Mermaid loading error without removing permitted content', async (
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
   expect(element).toBeInTheDocument();
 });
+
+it('fails closed on a forbidden shell policy and preserves TrustedHTML branding when permitted', async () => {
+  const original = Object.getOwnPropertyDescriptor(window, 'trustedTypes');
+  const createHTML = jest.fn((html: string) => ({ toString: () => html }));
+  const createPolicy = jest
+    .fn()
+    .mockImplementationOnce(() => {
+      throw new TypeError('Policy forbidden');
+    })
+    .mockReturnValue({ createHTML });
+  Object.defineProperty(window, 'trustedTypes', { configurable: true, value: { createPolicy } });
+  const setter = jest.spyOn(HTMLIFrameElement.prototype, 'srcdoc', 'set');
+  try {
+    const options = props();
+    const view = render(<SandboxFrame {...options} />);
+    const denied = await frame();
+    expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+    expect(denied).not.toHaveAttribute('srcdoc');
+    view.rerender(<SandboxFrame {...options} html="<p>Refreshed secret</p>" />);
+    await frame();
+    expect(createPolicy).toHaveBeenCalledWith('grafana-text-panel-shell', expect.any(Object));
+    const shell = createHTML.mock.calls[0][0];
+    expect(shell).toContain('trusted runtime');
+    expect(shell).not.toContain('Refreshed secret');
+    expect(setter).toHaveBeenCalledWith(createHTML.mock.results[0].value);
+    view.rerender(<SandboxFrame {...options} html="<p>Another generation</p>" />);
+    await frame();
+    expect(createPolicy).toHaveBeenCalledTimes(2);
+  } finally {
+    setter.mockRestore();
+    if (original) {
+      Object.defineProperty(window, 'trustedTypes', original);
+    } else {
+      Reflect.deleteProperty(window, 'trustedTypes');
+    }
+  }
+});

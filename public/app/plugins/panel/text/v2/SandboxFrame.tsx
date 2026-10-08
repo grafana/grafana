@@ -7,6 +7,8 @@ import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { resourceOrigin, type TextSandboxState } from './sandboxPolicy';
 import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand, type MermaidCommand } from './sandboxProtocol';
 
+let shellPolicy: Pick<TrustedTypePolicy, 'createHTML'> | undefined;
+
 export interface SandboxFrameProps {
   /** Sanitized when protected; legacy HTML respects the administrator's sanitizer setting. */
   html: string;
@@ -217,6 +219,24 @@ function FrameDocument({
     const policyAttribute = appliedPolicy === undefined ? '' : ` data-policy="${escape(appliedPolicy)}"`;
     return `<!doctype html><html><head>${csp}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(window.location.origin)}"${policyAttribute}>${source.replace(/<\/script/gi, '<\\/script')}</script></body></html>`;
   }, [appliedPolicy, channel, nonce, source]);
+
+  useLayoutEffect(() => {
+    // Do not navigate to an empty srcdoc: it can race the runtime navigation in Chromium.
+    if (shell === undefined || !frame.current) {
+      return;
+    }
+    try {
+      // Only the application-built shell reaches this policy; panel HTML arrives later by message.
+      shellPolicy ??= window.trustedTypes?.createPolicy('grafana-text-panel-shell', {
+        createHTML: (html: string) => html,
+      });
+      // React stringifies srcDoc, discarding TrustedHTML. Assign it directly without changing the default policy.
+      Object.assign(frame.current, { srcdoc: shellPolicy?.createHTML(shell) ?? shell });
+    } catch {
+      setState((current) => ({ ...current, status: 'error' }));
+    }
+  }, [shell]);
+
   return (
     <iframe
       ref={frame}
@@ -233,8 +253,6 @@ function FrameDocument({
         height: size.height,
         border: 0,
       }}
-      // An empty srcdoc can race the runtime navigation and leave Chromium on a blank document.
-      srcDoc={shell}
     />
   );
 }

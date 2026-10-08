@@ -460,6 +460,113 @@ test.describe('Text sandbox network boundary', () => {
     await expect(page.locator('#host')).toHaveCount(1);
   });
 
+  for (const protectedFrame of [true, false]) {
+    test(`renders with enforcing Trusted Types (protected: ${protectedFrame})`, async ({ page }) => {
+      const requests: string[] = [];
+      await page.route('https://external.test/**', (route) => {
+        requests.push(route.request().url());
+        return route.abort();
+      });
+      await page.route('https://grafana.test/trusted-types', (route) =>
+        route.fulfill({
+          headers: {
+            'Content-Security-Policy':
+              "require-trusted-types-for 'script'; script-src 'nonce-deployment-test'; style-src 'unsafe-inline'; img-src data:",
+          },
+          contentType: 'text/html',
+          body: `<script nonce="deployment-test">
+            window.trustedTypes?.createPolicy('default', {
+              createHTML: (html) => html.replace(/<script/gi, '&lt;script'),
+              createScript: (script) => script
+            });
+          </script><div id="host"></div>`,
+        })
+      );
+      await page.goto('https://grafana.test/trusted-types');
+      await page.evaluate(
+        (source) => {
+          const script = document.createElement('script');
+          script.nonce = 'deployment-test';
+          script.textContent = source;
+          document.head.append(script);
+        },
+        await scriptPromise
+      );
+      await page.evaluate((protectedFrame) => {
+        window.sandboxStates = [];
+        window.sandboxSession = window.textSandbox.renderSandbox(document.getElementById('host')!, {
+          html: '<h2>Trusted Types content</h2><img src="https://external.test/secret"><pre class="mermaid">flowchart LR\nA[checkout] --> B[healthy]</pre>',
+          globalCss: '',
+          title: 'Text panel content',
+          policy: protectedFrame ? window.textSandbox.textSandboxPolicy([], '/public/fonts/') : undefined,
+          mermaid: window.textSandbox.mermaidConfig(),
+          onState: (state) => window.sandboxStates.push(state),
+          onHeight: () => {},
+        });
+      }, protectedFrame);
+      await expect(page.frameLocator('iframe').getByRole('heading', { name: 'Trusted Types content' })).toBeVisible();
+      await expect(page.frameLocator('iframe').getByText('healthy', { exact: true })).toBeVisible();
+      await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('ready');
+      if (protectedFrame) {
+        await expect
+          .poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.resources))
+          .toEqual(
+            expect.arrayContaining([
+              { directive: 'img-src', origin: undefined },
+              { directive: 'img-src', origin: 'https://external.test' },
+            ])
+          );
+      }
+      expect(requests).toEqual([]);
+      expect(
+        await page.evaluate(() => {
+          if (!window.trustedTypes) {
+            return true;
+          }
+          const div = document.createElement('div');
+          div.innerHTML = '<script>untrusted</script>';
+          return div.querySelector('script') === null;
+        })
+      ).toBe(true);
+      await page.evaluate(() => window.sandboxSession.update({ html: '<p>Refreshed content</p>' }));
+      await expect(page.frameLocator('iframe').getByText('Refreshed content')).toBeVisible();
+    });
+  }
+
+  test('fails closed when deployment CSP forbids the shell Trusted Types policy', async ({ page }) => {
+    test.skip(!(await page.evaluate(() => !!window.trustedTypes)), 'Requires Trusted Types support');
+    await page.route('https://grafana.test/forbidden-policy', (route) =>
+      route.fulfill({
+        headers: { 'Content-Security-Policy': "require-trusted-types-for 'script'; trusted-types default" },
+        contentType: 'text/html',
+        body: `<script>trustedTypes.createPolicy('default', { createScript: (script) => script });</script><div id="host"></div>`,
+      })
+    );
+    await page.goto('https://grafana.test/forbidden-policy');
+    await page.evaluate(
+      (source) => {
+        const script = document.createElement('script');
+        script.textContent = source;
+        document.head.append(script);
+      },
+      await scriptPromise
+    );
+    await page.evaluate(() => {
+      window.sandboxStates = [];
+      window.textSandbox.renderSandbox(document.getElementById('host')!, {
+        html: '<p>Private content</p>',
+        globalCss: '',
+        title: 'Text panel content',
+        policy: window.textSandbox.textSandboxPolicy([], '/public/fonts/'),
+        onState: (state) => window.sandboxStates.push(state),
+        onHeight: () => {},
+      });
+    });
+    await expect.poll(() => page.evaluate(() => window.sandboxStates.at(-1)?.status)).toBe('error');
+    await expect(page.getByTitle('Text panel content')).not.toHaveAttribute('srcdoc');
+    await expect(page.frameLocator('iframe').getByText('Private content')).toHaveCount(0);
+  });
+
   test('reuses the deployment nonce without weakening inherited CSP', async ({ page }) => {
     await page.route('https://grafana.test/deployment-csp', (route) =>
       route.fulfill({
