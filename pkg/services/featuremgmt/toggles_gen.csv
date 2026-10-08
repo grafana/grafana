@@ -27,7 +27,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2023-10-06,grafanaAPIServerWithExperimentalAPIs,experimental,@grafana/grafana-app-platform-squad,true,true,false
 2026-09-16,provisioningFolderMetadata,GA,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-16,provisioningExport,experimental,@grafana/grafana-app-platform-squad,false,true,false
-2026-09-16,provisioning.readmes,preview,@grafana/grafana-app-platform-squad,false,false,true
 2026-09-16,provisioning.gitConventions,preview,@grafana/grafana-app-platform-squad,false,true,false
 2026-09-16,provisioning.userAttribution,preview,@grafana/grafana-app-platform-squad,false,false,false
 2026-09-16,grafana.frontendLegacyFeatureToggleHandling,experimental,@grafana/grafana-frontend-platform,false,false,false

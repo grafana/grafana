@@ -198,8 +198,6 @@ export const FlagKeys = {
   PluginsUseMTPlugins: "plugins.useMTPlugins",
   /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
   ProvisioningGitConventions: "provisioning.gitConventions",
-  /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
-  ProvisioningReadmes: "provisioning.readmes",
   /** Author Git Sync commits as the acting Grafana user */
   ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Enable export functionality for provisioned resources */
@@ -1272,17 +1270,6 @@ export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("provisioning.gitConventions", true, options).value;
-};
-
-/**
- * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
- *
- * **Details:**
- * - flag key: `provisioning.readmes`
- * - default value: `true`
- */
-export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**
