@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
-import { type KeyboardEvent, useCallback, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { type RefObject, useCallback, useEffect } from 'react';
+import { useController, useForm } from 'react-hook-form';
 
 import {
   type DateTime,
@@ -26,6 +26,7 @@ import { isValid } from '../utils';
 import { TimeRangeFields } from './TimeRangeFields';
 
 interface Props {
+  calendarAnchor: RefObject<HTMLElement | null>;
   isFullscreen: boolean;
   value: TimeRange;
   onApply: (range: TimeRange) => void;
@@ -66,19 +67,60 @@ export const TimeRangeContent = (props: Props) => {
     fiscalYearStartMonth,
     onError,
     weekStart,
+    calendarAnchor,
   } = props;
   const style = useStyles2(getStyles);
 
   const {
     handleSubmit,
-    register,
+    control,
     formState: { errors },
     setValue,
-    watch,
   } = useForm<FormState>({
     defaultValues: {
       from: valueAsString(value.raw.from, timeZone),
       to: valueAsString(value.raw.to, timeZone),
+    },
+  });
+
+  const { field: fromField } = useController({
+    name: 'from',
+    control,
+    rules: {
+      required: ERROR_MESSAGES.default(),
+      validate: (value, formValues) => {
+        if (!isValid(value, false, timeZone)) {
+          return ERROR_MESSAGES.default();
+        }
+        if (
+          !!formValues.to &&
+          isValid(formValues.to, true, timeZone) &&
+          isRangeInvalid(value, formValues.to, timeZone)
+        ) {
+          return ERROR_MESSAGES.range();
+        }
+        return true;
+      },
+    },
+  });
+  const { field: toField } = useController({
+    name: 'to',
+    control,
+    rules: {
+      required: ERROR_MESSAGES.default(),
+      validate: (value, formValues) => {
+        if (!isValid(value, true, timeZone)) {
+          return ERROR_MESSAGES.default();
+        }
+        if (
+          !!formValues.from &&
+          isValid(formValues.from, false, timeZone) &&
+          isRangeInvalid(formValues.from, value, timeZone)
+        ) {
+          return ERROR_MESSAGES.range();
+        }
+        return true;
+      },
     },
   });
 
@@ -103,12 +145,6 @@ export const TimeRangeContent = (props: Props) => {
     },
     [setValue, timeZone]
   );
-
-  const submitOnEnter = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      onApply();
-    }
-  };
 
   const onCopy = () => {
     const rawSource: RawTimeRange = value.raw;
@@ -153,56 +189,29 @@ export const TimeRangeContent = (props: Props) => {
   return (
     <div>
       <TimeRangeFields
-        fromError={errors.from?.message}
-        toError={errors.to?.message}
         fieldSuffix={fyTooltip}
-        fromInput={{
-          ...register('from', {
-            required: ERROR_MESSAGES.default(),
-
-            validate: (value, formValues) => {
-              if (!isValid(value, false, timeZone)) {
-                return ERROR_MESSAGES.default();
-              }
-              if (
-                !!formValues.to &&
-                isValid(formValues.to, true, timeZone) &&
-                isRangeInvalid(value, formValues.to, timeZone)
-              ) {
-                return ERROR_MESSAGES.range();
-              }
-              return true;
-            },
-          }),
-          onClick: (event) => event.stopPropagation(),
-          onKeyDown: submitOnEnter,
-          'data-testid': selectors.components.TimePicker.fromField,
+        calendarAnchor={calendarAnchor}
+        onSubmit={onApply}
+        from={{
+          value: fromField.value,
+          onChange: fromField.onChange,
+          onBlur: fromField.onBlur,
+          inputRef: fromField.ref,
+          error: errors.from?.message,
+          testId: selectors.components.TimePicker.fromField,
         }}
-        toInput={{
-          ...register('to', {
-            required: ERROR_MESSAGES.default(),
-            validate: (value, formValues) => {
-              if (!isValid(value, true, timeZone)) {
-                return ERROR_MESSAGES.default();
-              }
-              if (
-                !!formValues.from &&
-                isValid(formValues.from, false, timeZone) &&
-                isRangeInvalid(formValues.from, value, timeZone)
-              ) {
-                return ERROR_MESSAGES.range();
-              }
-              return true;
-            },
-          }),
-          onClick: (event) => event.stopPropagation(),
-          onKeyDown: submitOnEnter,
-          'data-testid': selectors.components.TimePicker.toField,
+        to={{
+          value: toField.value,
+          onChange: toField.onChange,
+          onBlur: toField.onBlur,
+          inputRef: toField.ref,
+          error: errors.to?.message,
+          testId: selectors.components.TimePicker.toField,
         }}
         calendar={{
           isFullscreen,
-          from: dateTimeParse(watch('from'), { timeZone }),
-          to: dateTimeParse(watch('to'), { timeZone }),
+          from: dateTimeParse(fromField.value, { timeZone }),
+          to: dateTimeParse(toField.value, { timeZone }),
           onApply,
           onChange,
           timeZone,

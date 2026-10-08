@@ -25,6 +25,7 @@ interface ViewContext {
   applyFilter: (field: Field, predicate: MatcherConfig, parentIndex?: number) => void;
   clearFilter: (field: Field, parentIndex?: number) => void;
   clearFilters: () => void;
+  timeZone?: string;
 }
 const TableViewContext = createContext<ViewContext | undefined>(undefined);
 export const useTableView = () => useContext(TableViewContext);

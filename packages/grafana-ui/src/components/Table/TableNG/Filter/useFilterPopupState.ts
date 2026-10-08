@@ -102,7 +102,8 @@ export function useFilterPopupState({
                   filterTransformations.valueFilter.createPredicate(
                     field,
                     values.map((item) => item.value),
-                    selection
+                    selection,
+                    view.timeZone
                   ),
                   parentIndex
                 );
@@ -114,20 +115,12 @@ export function useFilterPopupState({
           ? ({ min, max, includeMissing }) =>
               view.applyFilter(
                 field,
-                {
-                  id: 'between',
-                  options: {
-                    from: min,
-                    to: max,
-                    inclusive: true,
-                    allowOpenBounds: true,
-                    includeMissing,
-                  } satisfies RangeValueMatcherOptions<number>,
-                },
+                filterTransformations.rangeFilter.createPredicate({ min, max, includeMissing }),
                 parentIndex
               )
           : undefined,
       onClear: view && field ? () => view.clearFilter(field, parentIndex) : undefined,
+      timeZone: view?.timeZone,
       range: range ? { min: range.from, max: range.to, includeMissing: range.includeMissing === true } : undefined,
       name,
       rows: rowsForPopup,

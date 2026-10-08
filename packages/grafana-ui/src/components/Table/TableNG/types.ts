@@ -113,6 +113,7 @@ interface BaseTableProps {
   /** Experimental transformation-backed table view, explicitly owned by its host. */
   rowTransformationsEnabled?: boolean;
   rowTransformations?: TableRowTransformations;
+  timeZone?: string;
   ariaLabel?: string;
   data: DataFrame;
   width: number;

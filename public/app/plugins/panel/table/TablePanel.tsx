@@ -148,6 +148,7 @@ export function TablePanel(props: Props) {
             }
           : undefined
       }
+      timeZone={props.timeZone}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}

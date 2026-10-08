@@ -7,7 +7,8 @@ import { type TableTransformation } from './types';
 export function createValuePredicate(
   field: Field,
   values: ValueSetOptions['values'],
-  selection?: ValueSetOptions
+  selection?: ValueSetOptions,
+  timeZone?: string
 ): MatcherConfig {
   return {
     id: 'inSet',
@@ -23,7 +24,7 @@ export function createValuePredicate(
         min: field.config.min,
         max: field.config.max,
       },
-      timeZone: selection?.timeZone,
+      timeZone: selection?.timeZone ?? timeZone,
     } satisfies ValueSetOptions,
   };
 }

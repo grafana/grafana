@@ -16,15 +16,9 @@ import { Body } from './CalendarBody';
 import { Footer } from './CalendarFooter';
 import { Header } from './CalendarHeader';
 
-const getStyles = (theme: GrafanaTheme2, isReversed = false) => {
+const getStyles = (theme: GrafanaTheme2) => {
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
-    container: css({
-      top: 0,
-      position: 'absolute',
-      [`${isReversed ? 'left' : 'right'}`]: '546px', // lmao
-    }),
-
     modalContainer: css({
       label: 'modalContainer',
       margin: '0 auto',
@@ -70,18 +64,18 @@ export interface TimePickerCalendarProps {
   isFullscreen: boolean;
   timeZone?: TimeZone;
   isReversed?: boolean;
-  anchorElement?: HTMLElement | null;
+  anchorElement: HTMLElement | null;
 }
 
 function TimePickerCalendar(props: TimePickerCalendarProps) {
   const theme = useTheme2();
   const { modalBackdrop } = useStyles2(getModalStyles);
-  const styles = getStyles(theme, props.isReversed);
+  const styles = getStyles(theme);
   const { isOpen, isFullscreen: isFullscreenProp, onClose } = props;
   const ref = useRef<HTMLElement>(null);
   const { refs, floatingStyles } = useFloating({
     elements: { reference: props.anchorElement },
-    placement: 'left-start',
+    placement: props.isReversed ? 'right-start' : 'left-start',
     strategy: 'fixed',
     middleware: [flip(), shift({ padding: 8 })],
     whileElementsMounted: autoUpdate,
@@ -125,11 +119,7 @@ function TimePickerCalendar(props: TimePickerCalendarProps) {
   if (!showInModal) {
     return (
       <FocusScope contain restoreFocus autoFocus>
-        <div
-          ref={props.anchorElement ? refs.setFloating : undefined}
-          className={props.anchorElement ? undefined : styles.container}
-          style={props.anchorElement ? floatingStyles : undefined}
-        >
+        <div ref={refs.setFloating} style={floatingStyles}>
           {calendar}
         </div>
       </FocusScope>
