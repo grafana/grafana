@@ -2,7 +2,7 @@ import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { StrictMode } from 'react';
 
-import { EventBusSrv, PanelDiagnosticsStore, type PanelDiagnostic } from '@grafana/data';
+import { createTheme, EventBusSrv, PanelDiagnosticsStore, ThemeContext, type PanelDiagnostic } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { PanelChrome } from './PanelChrome';
@@ -14,6 +14,33 @@ function Reporter({ items }: { items: readonly PanelDiagnostic[] }) {
   usePanelDiagnostics(items);
   return <div>Visualization</div>;
 }
+
+it('renders custom and Assistant actions as solid secondary buttons', () => {
+  const theme = createTheme();
+  const diagnostics = new PanelDiagnosticsStore();
+  diagnostics.createSource().set([
+    {
+      id: 'field',
+      severity: 'error',
+      text: 'Choose a field',
+      actions: [{ id: 'choose', label: 'Choose field', onClick: jest.fn() }],
+    },
+  ]);
+  render(
+    <ThemeContext.Provider value={theme}>
+      <PanelContextProvider
+        value={{ diagnostics, eventBus: new EventBusSrv(), eventsScope: 'panel', onInvestigateDiagnostic: jest.fn() }}
+      >
+        <PanelDiagnosticActions diagnostic={diagnostics.getSnapshot().items[0]} />
+      </PanelContextProvider>
+    </ThemeContext.Provider>
+  );
+  for (const name of ['Choose field', 'Fix with Assistant']) {
+    expect(screen.getByRole('button', { name })).toHaveStyle({
+      border: `1px solid ${theme.colors.secondary.subtleBorder}`,
+    });
+  }
+});
 
 it('publishes plugin-only warnings, updates them, and cleans up through Strict Mode', async () => {
   const store = new PanelDiagnosticsStore();
@@ -40,7 +67,7 @@ it('publishes plugin-only warnings, updates them, and cleans up through Strict M
   expect(store.getSnapshot().items).toEqual([]);
 });
 
-it('shares callback progress and failures across surfaces, and hides opted-out Assistant actions', async () => {
+it('shares callback progress and failures across inspector views, and hides opted-out Assistant actions', async () => {
   const store = new PanelDiagnosticsStore();
   let reject!: (error: Error) => void;
   const onClick = jest.fn(
@@ -65,11 +92,11 @@ it('shares callback progress and failures across surfaces, and hides opted-out A
     <PanelContextProvider
       value={{ diagnostics: store, eventBus: new EventBusSrv(), eventsScope: 'panel', onInvestigateDiagnostic }}
     >
-      <section aria-label="Popover">
+      <section aria-label="First inspector">
         <PanelDiagnosticActions diagnostic={error} />
         <PanelDiagnosticActions diagnostic={warning} />
       </section>
-      <section aria-label="Inspector">
+      <section aria-label="Second inspector">
         <PanelDiagnosticActions diagnostic={error} />
       </section>
     </PanelContextProvider>
@@ -77,7 +104,7 @@ it('shares callback progress and failures across surfaces, and hides opted-out A
   const user = userEvent.setup();
   await user.tab();
   expect(
-    within(screen.getByRole('region', { name: 'Popover' })).getByRole('button', { name: 'Choose field' })
+    within(screen.getByRole('region', { name: 'First inspector' })).getByRole('button', { name: 'Choose field' })
   ).toHaveFocus();
   await user.keyboard('{Enter}');
   for (const button of screen.getAllByRole('button', { name: 'Choose field' })) {

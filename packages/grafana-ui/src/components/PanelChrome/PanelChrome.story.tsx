@@ -17,8 +17,9 @@ import { Menu } from '../Menu/Menu';
 
 import { type PanelChromeProps } from './PanelChrome';
 import mdx from './PanelChrome.mdx';
-import { PanelContextProvider } from './PanelContext';
-import { usePanelDiagnostics } from './usePanelDiagnostics';
+import { PanelContextProvider, usePanelContext } from './PanelContext';
+import { PanelDiagnosticActions } from './PanelDiagnosticActions';
+import { usePanelDiagnostics, usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
 
 import { PanelChrome } from '.';
 
@@ -42,22 +43,39 @@ function DiagnosticDemo() {
     [resolved]
   );
   usePanelDiagnostics(items);
-  return <div>Open the panel status to see diagnostics and actions.</div>;
+  return <div>Open the panel status, then Inspect to see diagnostic actions.</div>;
+}
+
+function DiagnosticInspectorDemo() {
+  const { diagnostics } = usePanelContext();
+  const { items } = usePanelDiagnosticsSnapshot(diagnostics);
+  return (
+    <section aria-label="Diagnostic inspector">
+      {items.map((item) => (
+        <div key={item.id}>
+          <p>{item.text}</p>
+          <PanelDiagnosticActions diagnostic={item} />
+        </div>
+      ))}
+    </section>
+  );
 }
 
 export const RuntimeDiagnostics: StoryFn<typeof PanelChrome> = () => {
+  const [showInspector, setShowInspector] = useState(false);
   const [context] = useState(() => ({
     diagnostics: new PanelDiagnosticsStore(),
     eventBus: new EventBusSrv(),
     eventsScope: 'story',
     onInvestigateDiagnostic: action('investigate-diagnostic'),
-    onOpenInspector: action('inspect'),
+    onOpenInspector: () => setShowInspector(true),
   }));
   return (
     <PanelContextProvider value={context}>
       <PanelChrome width={500} height={200} title="Diagnostics and actions">
         {() => <DiagnosticDemo />}
       </PanelChrome>
+      {showInspector && <DiagnosticInspectorDemo />}
     </PanelContextProvider>
   );
 };

@@ -7,7 +7,7 @@ import { Stack } from '../Layout/Stack/Stack';
 import { usePanelContext } from './PanelContext';
 import { usePanelDiagnosticsSnapshot } from './usePanelDiagnostics';
 
-/** Shared actions for the status popover and inspector. @alpha */
+/** Diagnostic actions for the inspector. @alpha */
 export function PanelDiagnosticActions({ diagnostic }: { diagnostic: PanelDiagnosticEntry }) {
   const { diagnostics, onInvestigateDiagnostic } = usePanelContext();
   const snapshot = usePanelDiagnosticsSnapshot(diagnostics);
@@ -25,7 +25,6 @@ export function PanelDiagnosticActions({ diagnostic }: { diagnostic: PanelDiagno
               key={action.id}
               size="sm"
               variant="secondary"
-              fill="text"
               disabled={action.disabled || state?.pending}
               aria-busy={state?.pending}
               tooltip={action.disabledReason}
@@ -38,13 +37,7 @@ export function PanelDiagnosticActions({ diagnostic }: { diagnostic: PanelDiagno
           );
         })}
         {onInvestigateDiagnostic && current.assistant !== 'hidden' && (
-          <Button
-            size="sm"
-            variant="secondary"
-            fill="text"
-            icon="ai-sparkle"
-            onClick={() => onInvestigateDiagnostic(current.id)}
-          >
+          <Button size="sm" variant="secondary" icon="ai-sparkle" onClick={() => onInvestigateDiagnostic(current.id)}>
             {current.severity === 'error'
               ? t('grafana-ui.panel-chrome.fix-with-assistant', 'Fix with Assistant')
               : t('grafana-ui.panel-chrome.explain-with-assistant', 'Explain with Assistant')}

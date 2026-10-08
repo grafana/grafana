@@ -65,8 +65,9 @@ Unattributed errors are still available to host/panel resolvers.
 
 Actions are combined in order: diagnostic, datasource, then registered resolvers. Action IDs are
 namespaced by contributor. Any `assistant: 'hidden'` suppresses that diagnostic's Assistant CTA;
-custom actions otherwise coexist with Assistant. Callbacks may return promises. Pending state is
-shared by the popover and inspector, duplicate execution is blocked, and failures appear inline.
+custom actions otherwise coexist with Assistant. Actions appear only in the inspector, as secondary
+buttons; the status popover lists diagnostics and links to Inspect. Callbacks may return promises.
+Pending state is shared between inspector views, duplicate execution is blocked, and failures appear inline.
 
 Standalone hosts can provide a `PanelDiagnosticsStore` through `PanelContextProvider` around
 `PanelChrome`. Use `setExternal(getPanelDataDiagnostics(data, pluginLoadError))` as data changes,

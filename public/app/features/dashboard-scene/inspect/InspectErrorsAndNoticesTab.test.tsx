@@ -25,7 +25,13 @@ it('shows plugin-only diagnostics and callback actions alongside a custom inspec
       actions: [{ id: 'choose', label: 'Choose field', onClick }],
     },
   ]);
-  const context: PanelContext = { diagnostics: store, eventsScope: 'panel', eventBus: new EventBusSrv() };
+  const onInvestigateDiagnostic = jest.fn();
+  const context: PanelContext = {
+    diagnostics: store,
+    eventsScope: 'panel',
+    eventBus: new EventBusSrv(),
+    onInvestigateDiagnostic,
+  };
   const panel = new VizPanel({
     $data: new SceneDataNode({ data: { series: [], state: LoadingState.Done, timeRange: getDefaultTimeRange() } }),
     extendPanelContext: (_, target) => Object.assign(target, context),
@@ -46,8 +52,12 @@ it('shows plugin-only diagnostics and callback actions alongside a custom inspec
   expect(screen.getByText('Datasource details')).toBeVisible();
   await userEvent.click(screen.getByRole('button', { name: 'Choose field' }));
   expect(onClick).toHaveBeenCalledTimes(1);
+  await userEvent.click(screen.getByRole('button', { name: 'Explain with Assistant' }));
+  expect(onInvestigateDiagnostic).toHaveBeenCalledWith(store.getSnapshot().items[0].id);
   act(() => source.set([{ id: 'field', severity: 'error', text: 'Field removed' }]));
   expect(screen.getByText('Field removed')).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: 'Fix with Assistant' }));
+  expect(onInvestigateDiagnostic).toHaveBeenCalledTimes(2);
   expect(screen.queryByText('Choose a numeric field')).not.toBeInTheDocument();
   act(() => source.set([]));
   expect(screen.getByText('No errors or notices for this panel.')).toBeVisible();
