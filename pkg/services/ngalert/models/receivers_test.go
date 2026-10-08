@@ -332,7 +332,7 @@ func TestReceiver_Fingerprint(t *testing.T) {
 	completelyDifferentReceiver.Integrations[0].UID = "stable UID2"
 	completelyDifferentReceiver.Integrations[0].DisableResolveMessage = false
 	completelyDifferentReceiver.Integrations[0].SecureSettings = map[string]string{"test": "test"}
-	completelyDifferentReceiver.Provenance = ProvenanceAPI
+	completelyDifferentReceiver.Manager = ProvenanceToManagerProperties(ProvenanceAPI)
 
 	t.Run("stable across code changes", func(t *testing.T) {
 		expectedFingerprint := "c0c82936be34b183" // If this is a valid fingerprint generation change, update the expected value.
