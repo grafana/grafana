@@ -268,6 +268,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-16,kubernetesTeamsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesTeamsRedirect,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesUsersApi,experimental,@grafana/identity-access-team,false,false,false
+2026-10-08,kubernetesUsersReadApi,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesServiceAccountsApi,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesServiceAccountTokensApi,experimental,@grafana/identity-access-team,false,false,false
 2026-09-16,kubernetesSsoSettingsApi,experimental,@grafana/identity-access-team,false,false,false
