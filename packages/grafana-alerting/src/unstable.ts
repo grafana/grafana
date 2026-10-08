@@ -32,6 +32,14 @@ export {
 export { type RoutingTreeView } from './grafana/notificationPolicies/routingTreeView';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
 export {
+  RoutingTreePicker,
+  type RoutingTreePickerProps,
+} from './grafana/notificationPolicies/components/RoutingTreePicker/RoutingTreePicker';
+export {
+  RoutingTreePreview,
+  type RoutingTreePreviewProps,
+} from './grafana/notificationPolicies/components/RoutingTreePreview/RoutingTreePreview';
+export {
   buildRoutingTreeOptions,
   findRoutingTreeByName,
   getRoutingTreeDisplayName,
