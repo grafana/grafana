@@ -366,7 +366,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	// Keep authentication outside the breaker: token exchange failures do not
 	// indicate whether the plugin is reachable.
 	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID,
-		appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger))
+		withAuthFailureOutcome(appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger)))
 	if err != nil {
 		return nil, err
 	}
@@ -413,4 +413,24 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		return nil, err
 	}
 	return &tracedPluginHandler{Handler: handler, pluginID: b.pluginID, group: b.group.Name}, nil
+}
+
+// withAuthFailureOutcome records failed token exchanges on the request, for
+// grafana_router_backend_failures_total. They fail the call before it reaches
+// the plugin.
+func withAuthFailureOutcome(exchanger authn.TokenExchanger) authn.TokenExchanger {
+	if exchanger == nil {
+		return nil
+	}
+	return &authOutcomeExchanger{TokenExchanger: exchanger}
+}
+
+type authOutcomeExchanger struct{ authn.TokenExchanger }
+
+func (e *authOutcomeExchanger) Exchange(ctx context.Context, r authn.TokenExchangeRequest) (*authn.TokenExchangeResponse, error) {
+	res, err := e.TokenExchanger.Exchange(ctx, r)
+	if err != nil && ctx.Err() == nil {
+		setContextFailure(ctx, failureAuth)
+	}
+	return res, err
 }

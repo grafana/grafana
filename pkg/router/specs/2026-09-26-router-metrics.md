@@ -13,6 +13,7 @@ Every label has a bounded set of values, so no request can create new series:
 
 - `group` is always a group the router serves. Any other value becomes `unknown`, so arbitrary
   client paths can't create series.
+- `plugin_id` is the ID of a plugin the router serves, or empty for backends that aren't plugins.
 - `verb` is one of a fixed set (`metricVerbs` in `metrics.go`); anything else becomes `other`. See
   [Requests](#requests).
 - `route`, `reason`, `state` and `result` take only the values listed in their tables.
@@ -56,7 +57,7 @@ nothing changes, so watch its failures rather than its staleness.
 | --- | --- | --- | --- |
 | `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others |
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
-| `grafana_router_backend_failures_total` | counter | `group`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch` |
+| `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
 
 Groups on the single-tenant fallback keep one breaker per stack, so they have no
@@ -89,6 +90,45 @@ discovery the router builds), `next` (not the router's; passed on), `invalid` (r
 routing) or `unauthenticated` (rejected because the caller did not authenticate, in the standalone
 router).
 
+## Plugin calls
+
+| Metric | Type | Labels | Meaning |
+| --- | --- | --- | --- |
+| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `plugin_id`, `method`, `status_code` | Latency of gRPC calls to managed plugin deployments (`plugins_url`) |
+
+Each managed plugin's connection records its calls with dskit's client interceptors, and propagates
+the caller's trace with `otelgrpc`. `method` is the full gRPC method, such as
+`/grafana.plugin.v3.RouteService/CallRoute` or `/pluginv2.Resource/CallResource`, and `status_code`
+is the gRPC status code name (`OK`, `Unavailable`, `DeadlineExceeded`, …). A streaming call is
+observed when its stream ends.
+
+- Local plugins (`local-plugin`) are not recorded here. Their calls go through Grafana's plugin
+  client, whose `grafana_plugin_request_*` metrics cover them.
+- Only the gRPC status is recorded. A plugin that answers a route with an HTTP 5xx, or rejects an
+  admission review in its response, still records `OK`; the router's own
+  `grafana_router_http_request_duration_seconds{status_code}` shows those responses.
+- A call the breaker rejects, or whose token exchange fails, never reaches the connection. Those
+  count in `grafana_router_backend_failures_total` as `breaker_open` and `auth`.
+
+Managed plugin availability, counting the calls the router rejected on the plugin's behalf.
+`grafana_router_backend_failures_total` also counts local plugins, so `and on (plugin_id)` keeps
+only the plugins with gRPC series. The series are combined with `or` before summing, because `+`
+would drop a plugin with no series on one side:
+
+```promql
+sum by (plugin_id) (
+  rate(grafana_router_plugin_grpc_request_duration_seconds_count{status_code=~"Unavailable|DeadlineExceeded|Internal|Unknown|DataLoss|ResourceExhausted"}[5m])
+  or (rate(grafana_router_backend_failures_total{reason=~"breaker_open|auth"}[5m])
+      and on (plugin_id) group by (plugin_id) (grafana_router_plugin_grpc_request_duration_seconds_count))
+)
+/
+sum by (plugin_id) (
+  rate(grafana_router_plugin_grpc_request_duration_seconds_count{status_code!="Canceled"}[5m])
+  or (rate(grafana_router_backend_failures_total{reason=~"breaker_open|auth"}[5m])
+      and on (plugin_id) group by (plugin_id) (grafana_router_plugin_grpc_request_duration_seconds_count))
+)
+```
+
 ## Dashboard queries
 
 | Panel | Query |
@@ -106,6 +146,8 @@ router).
 | Request rate by group | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend"}[5m]))` |
 | Error ratio by group | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend",status_code=~"5.."}[5m])) / sum by (group) (rate(grafana_router_http_request_duration_seconds_count{route="backend"}[5m]))` |
 | p99 latency by group | `histogram_quantile(0.99, sum by (group, le) (rate(grafana_router_http_request_duration_seconds_bucket{route="backend"}[5m])))` |
+| Plugin gRPC calls by status | `sum by (plugin_id, status_code) (rate(grafana_router_plugin_grpc_request_duration_seconds_count[5m]))` |
+| p99 plugin gRPC latency | `histogram_quantile(0.99, sum by (plugin_id, method) (rate(grafana_router_plugin_grpc_request_duration_seconds[5m])))` |
 | Watches by group | `sum by (group) (grafana_router_longrunning_requests)` |
 | Unrecognized methods | `sum by (group) (rate(grafana_router_http_request_duration_seconds_count{verb="other"}[5m]))` |
 | Discovery served stale | `sum by (group) (rate(grafana_router_discovery_results_total{result=~"stale|unavailable"}[5m]))` |

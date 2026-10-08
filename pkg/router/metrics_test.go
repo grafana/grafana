@@ -70,8 +70,8 @@ func TestBackendFailureReasons(t *testing.T) {
 			require.Equal(t, http.StatusBadGateway, instrumented(svc, "/apis/test-app/v1/things"))
 		}
 		require.Equal(t, http.StatusServiceUnavailable, instrumented(svc, "/apis/test-app/v1/things"))
-		require.Equal(t, 6.0, testutil.ToFloat64(svc.metrics.backendFailures.WithLabelValues("test-app", failureTransport)))
-		require.Equal(t, 1.0, testutil.ToFloat64(svc.metrics.backendFailures.WithLabelValues("test-app", failureBreakerOpen)))
+		require.Equal(t, 6.0, testutil.ToFloat64(svc.metrics.backendFailures.WithLabelValues("test-app", "", failureTransport)))
+		require.Equal(t, 1.0, testutil.ToFloat64(svc.metrics.backendFailures.WithLabelValues("test-app", "", failureBreakerOpen)))
 		require.Equal(t, 1.0, testutil.ToFloat64(svc.metrics.breakerTransitions.WithLabelValues("test-app", "open")))
 	})
 	t.Run("redirect_rejected", func(t *testing.T) {
@@ -81,7 +81,7 @@ func TestBackendFailureReasons(t *testing.T) {
 		t.Cleanup(upstream.Close)
 		svc := metricsService(t, "test-app", upstream.URL)
 		require.Equal(t, http.StatusBadGateway, instrumented(svc, "/apis/test-app/v1/things"))
-		require.Equal(t, 1.0, testutil.ToFloat64(svc.metrics.backendFailures.WithLabelValues("test-app", failureRedirectRejected)))
+		require.Equal(t, 1.0, testutil.ToFloat64(svc.metrics.backendFailures.WithLabelValues("test-app", "", failureRedirectRejected)))
 	})
 }
 

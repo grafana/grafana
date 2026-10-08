@@ -55,8 +55,8 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Namespace: "grafana",
 			Subsystem: "router",
 			Name:      "backend_failures_total",
-			Help:      "Requests whose backend could not be reached or answered, by group and reason: breaker_open, timeout, transport, redirect_rejected or stack_origin_mismatch.",
-		}, []string{"group", "reason"}),
+			Help:      "Requests whose backend could not be reached or answered, by group, plugin ID (empty for other backends) and reason: breaker_open, timeout, transport, redirect_rejected, stack_origin_mismatch or auth.",
+		}, []string{"group", "plugin_id", "reason"}),
 		breakerTransitions: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: "router",
@@ -80,6 +80,25 @@ func (m *routerMetrics) breakerChanged(group string, to gobreaker.State) {
 
 func (m *routerMetrics) discoveryResult(group, result string) {
 	m.discoveryResults.WithLabelValues(group, result).Inc()
+}
+
+// newPluginGRPCRequestDuration returns the histogram of gRPC calls to plugin
+// deployments, registered with reg unless it is nil. Local plugins are
+// measured by the plugin client's grafana_plugin_request_* metrics instead.
+func newPluginGRPCRequestDuration(reg prometheus.Registerer) *prometheus.HistogramVec {
+	h := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace:                       "grafana",
+		Subsystem:                       "router",
+		Name:                            "plugin_grpc_request_duration_seconds",
+		Help:                            "Latency of gRPC calls to plugin deployments, by plugin, gRPC method and status code.",
+		NativeHistogramBucketFactor:     1.1,
+		NativeHistogramMaxBucketNumber:  160,
+		NativeHistogramMinResetDuration: time.Hour,
+	}, []string{"plugin_id", "method", "status_code"})
+	if reg != nil {
+		reg.MustRegister(h)
+	}
+	return h
 }
 
 // requestGroup returns the group a request is for: the group of an
@@ -106,7 +125,7 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	req, outcome := withRequestOutcome(req)
 	recordFailure := func() {
 		if outcome.failure != "" {
-			m.backendFailures.WithLabelValues(metricGroup, outcome.failure).Inc()
+			m.backendFailures.WithLabelValues(metricGroup, outcome.pluginID, outcome.failure).Inc()
 		}
 	}
 
