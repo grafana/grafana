@@ -11290,7 +11290,9 @@
       "title": "Your observability stack overview"
     },
     "recent-activity-tab": {
+      "browse": "Browse dashboards",
       "clear": "Clear recent activity",
+      "create": "Create your first dashboard",
       "empty": "No recent activity yet. Pages you visit will show up here.",
       "error-title": "Could not load your recent activity",
       "filter-alerting": "Alerting",

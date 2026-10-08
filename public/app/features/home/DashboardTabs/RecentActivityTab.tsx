@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
-import { Badge, Stack, useStyles2 } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Badge, LinkButton, Stack, useStyles2 } from '@grafana/ui';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
+import { contextSrv } from 'app/core/services/context_srv';
 import { type LocationInfo } from 'app/features/search/service/types';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
+import { AccessControlAction } from 'app/types/accessControl';
 import { useSelector } from 'app/types/store';
 
 import { TimeAgoCell } from '../TimeAgoCell';
@@ -22,6 +24,35 @@ interface Props {
   retry: () => void;
   foldersByUid: Record<string, LocationInfo>;
   density?: 'default' | 'compact';
+}
+
+/** An empty history means a new user or a fresh clear: point them at dashboards, as the Recent tab always did. */
+function EmptyStateCta() {
+  if (contextSrv.hasPermission(AccessControlAction.DashboardsCreate)) {
+    return (
+      <LinkButton
+        icon="plus"
+        href="/dashboard/new"
+        onClick={() =>
+          ctaClicked({ surface: 'recent_activity_tab', action: 'create_dashboard', placement: 'empty_state' })
+        }
+      >
+        <Trans i18nKey="home.recent-activity-tab.create">Create your first dashboard</Trans>
+      </LinkButton>
+    );
+  }
+  return (
+    <LinkButton
+      icon="apps"
+      href="/dashboards"
+      variant="secondary"
+      onClick={() =>
+        ctaClicked({ surface: 'recent_activity_tab', action: 'browse_dashboards', placement: 'empty_state' })
+      }
+    >
+      <Trans i18nKey="home.recent-activity-tab.browse">Browse dashboards</Trans>
+    </LinkButton>
+  );
 }
 
 export function RecentActivityTab({ items, loading, error, retry, foldersByUid, density }: Props) {
@@ -45,7 +76,8 @@ export function RecentActivityTab({ items, loading, error, retry, foldersByUid, 
     return (
       <DashboardTabEmptyState
         message={t('home.recent-activity-tab.empty', 'No recent activity yet. Pages you visit will show up here.')}
-        variant="completed"
+        variant="call-to-action"
+        button={<EmptyStateCta />}
         density={density}
       />
     );

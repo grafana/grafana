@@ -8,10 +8,13 @@ import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
 import { pageHistorySrv } from 'app/core/services/pageHistory/pageHistorySrv';
 import { type PageHistoryEntry } from 'app/core/services/pageHistory/types';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { clearHistoryClicked, ctaClicked, tabChanged } from '../analytics/main';
 
@@ -161,11 +164,53 @@ describe('DashboardTabs', () => {
     expect(screen.getByText('Starred Dashboard 3')).toBeInTheDocument();
   });
 
-  it('shows the empty state without a clear action when there is no recent activity', async () => {
-    render(<DashboardTabs extensionComponents={[]} />);
+  describe('empty Recent activity tab', () => {
+    // LinkButton renders a plain <a href>; clicking it would trigger a real jsdom navigation
+    // (console.error -> jest-fail-on-console). Route anchor clicks through the SPA history the
+    // way the app does so the onClick fires without navigating.
+    beforeEach(() => {
+      document.addEventListener('click', interceptLinkClicks);
+    });
 
-    expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
+    afterEach(() => {
+      document.removeEventListener('click', interceptLinkClicks);
+    });
+
+    it('offers to create a dashboard when the user may and has no clear action', async () => {
+      jest
+        .spyOn(contextSrv, 'hasPermission')
+        .mockImplementation((action: string) => action === AccessControlAction.DashboardsCreate);
+
+      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+
+      expect(await screen.findByText('No recent activity yet. Pages you visit will show up here.')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /clear recent activity/i })).not.toBeInTheDocument();
+
+      const create = screen.getByRole('link', { name: /create your first dashboard/i });
+      expect(create).toHaveAttribute('href', '/dashboard/new');
+      await user.click(create);
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'recent_activity_tab',
+        action: 'create_dashboard',
+        placement: 'empty_state',
+      });
+    });
+
+    it('offers to browse dashboards when the user may not create one', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
+
+      const { user } = render(<DashboardTabs extensionComponents={[]} />);
+
+      const browse = await screen.findByRole('link', { name: /browse dashboards/i });
+      expect(browse).toHaveAttribute('href', '/dashboards');
+      expect(screen.queryByRole('link', { name: /create your first dashboard/i })).not.toBeInTheDocument();
+      await user.click(browse);
+      expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
+        surface: 'recent_activity_tab',
+        action: 'browse_dashboards',
+        placement: 'empty_state',
+      });
+    });
   });
 
   it('shows empty state when no starred dashboards', async () => {

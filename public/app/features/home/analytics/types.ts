@@ -97,13 +97,20 @@ export type CtaClicked = EventVariants<
           placement: 'footer';
         }
     ))
-  | {
+  | ({
       surface: 'recent_activity_tab';
-      action: 'open_page';
-      placement: 'list';
-      /** Kind of page the row restores. Never the page itself: hrefs carry customer data. */
-      page_kind: PageHistoryKind;
-    }
+    } & (
+      | {
+          action: 'open_page';
+          placement: 'list';
+          /** Kind of page the row restores. Never the page itself: hrefs carry customer data. */
+          page_kind: PageHistoryKind;
+        }
+      | {
+          action: 'create_dashboard' | 'browse_dashboards';
+          placement: 'empty_state';
+        }
+    ))
   | {
       surface: 'recommendations';
       action: 'enable' | 'setup' | 'learn_more';
