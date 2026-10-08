@@ -206,7 +206,7 @@ secure:
   token: { create: 'GIT_PAT' }
 ```
 
-To use an OAuth App connection, add `spec.connection.name` with the name of the connection, and remove `secure.token`. This works for the `github`, `githubEnterprise`, `gitlab`, `bitbucket`, and `git` repository types. For `git`, if your provider expects a specific username with OAuth tokens, set it in `tokenUser`, for example `x-token-auth` for Bitbucket.
+To use an OAuth App connection, set `spec.connection.name` instead of `secure.token`. The repository type must match the connection type: `githubOAuth` for `github`, `githubEnterpriseOAuth` for `githubEnterprise`, `gitlabOAuth` for `gitlab`, `bitbucketOAuth` for `bitbucket`, and `gitOAuth` for `git`.
 
 Replace the placeholders with your values:
 
