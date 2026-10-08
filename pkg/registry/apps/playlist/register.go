@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	roleauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -82,9 +83,11 @@ func (p *AppInstaller) GetAuthorizer() authorizer.Authorizer {
 
 			if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagPlaylistsRBAC, false, openfeature.TransactionContext(ctx)) {
 				// Hotfix: grant None-role users viewer-level access until the toggle is enabled.
-				// All other roles are handled by the default role authorizer.
+				// Other roles use the legacy org-role rules. Multi-tenant API servers have no
+				// role authorizer in their chain, so the rules are applied here.
 				if user.GetOrgRole() != org.RoleNone {
-					return authorizer.DecisionNoOpinion, "", nil
+					//nolint:staticcheck // legacy path behind the toggle
+					return roleauthorizer.NewRoleAuthorizer().Authorize(ctx, attr)
 				}
 				switch attr.GetVerb() {
 				case "get", "list", "watch":

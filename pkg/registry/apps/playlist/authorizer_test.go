@@ -41,6 +41,7 @@ func (m *mockAttributes) GetAPIGroup() string     { return "playlist.grafana.app
 func (m *mockAttributes) GetResource() string     { return "playlists" }
 func (m *mockAttributes) GetNamespace() string    { return "default" }
 func (m *mockAttributes) GetName() string         { return "my-playlist" }
+func (m *mockAttributes) GetPath() string         { return "" }
 
 func installerWithToggle(t *testing.T, on bool, ac authlib.AccessClient) *AppInstaller {
 	provider.UsingFlags(t, map[string]memprovider.InMemoryFlag{
@@ -276,13 +277,19 @@ func TestGetAuthorizerToggleOff(t *testing.T) {
 		}
 	})
 
-	t.Run("non-None role defers to roleAuthorizer", func(t *testing.T) {
+	t.Run("non-None role uses legacy org-role rules", func(t *testing.T) {
 		auth := installerWithToggle(t, false, mockAC).GetAuthorizer()
-		for _, verb := range []string{"get", "list", "create"} {
+		for _, verb := range []string{"get", "list", "watch"} {
 			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
 			decision, _, err := auth.Authorize(viewerCtx, attrs)
 			require.NoError(t, err)
-			assert.Equal(t, authorizer.DecisionNoOpinion, decision, "verb: %s", verb)
+			assert.Equal(t, authorizer.DecisionAllow, decision, "verb: %s", verb)
+		}
+		for _, verb := range []string{"create", "update", "delete"} {
+			attrs := &mockAttributes{isResourceRequest: true, verb: verb}
+			decision, _, err := auth.Authorize(viewerCtx, attrs)
+			require.NoError(t, err)
+			assert.Equal(t, authorizer.DecisionDeny, decision, "verb: %s", verb)
 		}
 	})
 }
