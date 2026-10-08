@@ -17,10 +17,10 @@ const currentRange = rangeUtil.convertRawToRange({
   to: dateTime(100_000),
 });
 
-// Same millisecond on the first two rows. Array order and timeEpochMs both put the later line first.
+// Logs passed to getVisibleRange will be sorted by time
 const rows = [
-  createLogRow({ uid: 'later-in-ms', timeEpochMs: 20_000, timeEpochNs: '20000000050' }),
   createLogRow({ uid: 'earlier-in-ms', timeEpochMs: 20_000, timeEpochNs: '20000000010' }),
+  createLogRow({ uid: 'later-in-ms', timeEpochMs: 20_000, timeEpochNs: '20000000050' }),
   createLogRow({ uid: 'newest', timeEpochMs: 40_000, timeEpochNs: '40000000000' }),
 ];
 
@@ -31,6 +31,33 @@ describe('getVisibleRange', () => {
       to: 40_000,
       oldestNs: '20000000010',
       newestNs: '40000000000',
+    });
+  });
+
+  it('uses the last row as oldest when logs are sorted descending', () => {
+    const descending = [
+      createLogRow({ uid: 'newest', timeEpochMs: 40_000, timeEpochNs: '40000000000' }),
+      createLogRow({ uid: 'later-in-ms', timeEpochMs: 20_000, timeEpochNs: '20000000050' }),
+      createLogRow({ uid: 'earlier-in-ms', timeEpochMs: 20_000, timeEpochNs: '20000000010' }),
+    ];
+    expect(getVisibleRange(descending)).toEqual({
+      from: 20_000,
+      to: 40_000,
+      oldestNs: '20000000010',
+      newestNs: '40000000000',
+    });
+  });
+
+  it('treats the first row as newest when descending logs share a millisecond', () => {
+    const descending = [
+      createLogRow({ uid: 'newer-in-ms', timeEpochMs: 20_000, timeEpochNs: '20000000050' }),
+      createLogRow({ uid: 'older-in-ms', timeEpochMs: 20_000, timeEpochNs: '20000000010' }),
+    ];
+    expect(getVisibleRange(descending)).toEqual({
+      from: 20_000,
+      to: 20_000,
+      oldestNs: '20000000010',
+      newestNs: '20000000050',
     });
   });
 });

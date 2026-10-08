@@ -83,27 +83,16 @@ export interface InfiniteScrollTimeRange extends AbsoluteTimeRange {
 
 export function getVisibleRange(rows: LogRowModel[]): VisibleLogsRange {
   const firstTimeStamp = rows[0].timeEpochMs;
+  const firstNs = rows[0].timeEpochNs;
   const lastTimeStamp = rows[rows.length - 1].timeEpochMs;
+  const lastNs = rows[rows.length - 1].timeEpochNs;
 
-  let oldestNs = rows[0].timeEpochNs;
-  let newestNs = rows[0].timeEpochNs;
-  for (let i = 1; i < rows.length; i++) {
-    const ns = rows[i].timeEpochNs;
-    // Several rows can share a millisecond, and timeEpochMs does not order those.
-    if (BigInt(ns) < BigInt(oldestNs)) {
-      oldestNs = ns;
-    }
-    if (BigInt(ns) > BigInt(newestNs)) {
-      newestNs = ns;
-    }
-  }
+  const descending =
+    lastTimeStamp < firstTimeStamp || (lastTimeStamp === firstTimeStamp && BigInt(lastNs) < BigInt(firstNs));
 
-  const visibleRange =
-    lastTimeStamp < firstTimeStamp
-      ? { from: lastTimeStamp, to: firstTimeStamp, oldestNs, newestNs }
-      : { from: firstTimeStamp, to: lastTimeStamp, oldestNs, newestNs };
-
-  return visibleRange;
+  return descending
+    ? { from: lastTimeStamp, to: firstTimeStamp, oldestNs: lastNs, newestNs: firstNs }
+    : { from: firstTimeStamp, to: lastTimeStamp, oldestNs: firstNs, newestNs: lastNs };
 }
 
 function getPrevRange(visibleRange: VisibleLogsRange, currentRange: TimeRange): InfiniteScrollTimeRange {
@@ -188,7 +177,7 @@ export function withLokiInfiniteScrollBound<T extends DataQuery & { supportingQu
   range: InfiniteScrollTimeRange,
   datasourceType?: string
 ): T & { startNs?: string; endNs?: string } {
-  const { datasource } = query; 
+  const { datasource } = query;
   const configuredType =
     datasource && typeof datasource === 'object' && 'type' in datasource ? datasource.type : undefined;
   if ((typeof configuredType === 'string' ? configuredType : datasourceType) !== 'loki') {
