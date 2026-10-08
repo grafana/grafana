@@ -8,13 +8,12 @@ keywords:
   - profiling
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Troubleshooting
 title: Troubleshoot Parca data source issues
 weight: 500
-review_date: 2026-04-10
+review_date: 2026-10-08
 ---
 
 # Troubleshoot Parca data source issues
@@ -23,7 +22,51 @@ review_date: 2026-04-10
 This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
 {{< /admonition >}}
 
-This page provides solutions to common issues you might encounter when configuring or using the Parca data source. For configuration instructions, refer to [Configure the Parca data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/).
+This page provides solutions to common issues you might encounter when installing, configuring, or using the Parca data source. For installation and configuration instructions, refer to [Configure the Parca data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/).
+
+## Plugin installation issues
+
+These errors occur when Grafana can't load the manually installed Parca plugin. Because Grafana doesn't bundle the plugin, you build and install it yourself. Refer to [Install the plugin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/#install-the-plugin).
+
+### Parca doesn't appear in the data source list
+
+**Symptoms:**
+
+- Searching for `Parca` under **Connections** > **Add new connection** returns no results.
+- Existing Parca data sources report the plugin isn't found.
+
+**Possible causes and solutions:**
+
+| Cause                    | Solution                                                                                                                                                                                                                           |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Plugin isn't installed   | Build and install the plugin. Grafana 13.2 and later don't bundle it.                                                                                                                                                              |
+| Wrong plugin directory   | Confirm the plugin is in a `parca` directory inside the configured plugin path. Refer to the `plugins` option in [Configure Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#plugins). |
+| `plugin.json` missing    | Verify the plugin directory contains `plugin.json` at its top level. Copy the _contents_ of `dist/`, not the `dist` directory itself.                                                                                              |
+| Unsigned plugin blocked  | Add `allow_loading_unsigned_plugins = parca` to the `[plugins]` section of your Grafana configuration file and restart Grafana.                                                                                                    |
+| Grafana wasn't restarted | Restart Grafana. It discovers plugins only at startup.                                                                                                                                                                             |
+| File permissions         | Verify the Grafana process can read the plugin files. On package-based installations, run `chown -R grafana:grafana` on the plugin directory.                                                                                      |
+
+When Grafana loads the plugin, it logs the following warning on startup:
+
+```text
+WARN[...] Permitting unsigned plugin. This is not recommended   pluginId=parca
+```
+
+If this warning is absent, Grafana didn't load the plugin. Search the server log for `parca` to find the reason.
+
+### Queries fail but the data source appears
+
+**Symptoms:**
+
+- The Parca data source appears in the list and you can save it, but **Save & test** or any query fails.
+- The server log mentions a missing or non-executable plugin binary.
+
+**Solutions:**
+
+1. Verify you ran both build steps. The plugin needs its Go backend as well as its frontend assets, so `npm run build` alone isn't enough. Run `go run github.com/magefile/mage -v buildAll` and reinstall.
+1. Verify the plugin directory contains a `gpx_grafana-parca-datasource_*` executable for your operating system and architecture.
+1. Verify the executable has the execute permission bit set and isn't blocked by `noexec` on the mounted filesystem.
+1. Restart Grafana after replacing any plugin files.
 
 ## Connection errors
 
@@ -58,7 +101,7 @@ When the connection succeeds, the health check displays **"Data source is workin
 
 1. Verify network connectivity from the Grafana server to the Parca endpoint.
 1. Check that the Parca server is healthy and responding to requests.
-1. For Grafana Cloud, configure [Private data source connect](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) if accessing a private Parca instance.
+1. If a reverse proxy sits between Grafana and Parca, verify it forwards gRPC-Web requests without buffering or rewriting them. The plugin queries Parca using gRPC-Web over the Parca HTTP endpoint.
 
 ## Query errors
 
@@ -202,12 +245,13 @@ To capture detailed error information for troubleshooting:
 If you've tried the solutions on this page and still encounter issues:
 
 1. Check the [Grafana community forums](https://community.grafana.com/) for similar issues.
-1. Review the [Grafana GitHub issues](https://github.com/grafana/grafana/issues) for known bugs related to the Parca data source.
-1. Consult the [Parca documentation](https://www.parca.dev/docs) for service-specific guidance.
-1. Contact Grafana Support if you're an Enterprise, Cloud Pro, or Cloud Contracted user.
+1. Review the [plugin repository issues](https://github.com/grafana/grafana-parca-datasource/issues) for known bugs related to the Parca data source.
+1. Refer to the [Parca documentation](https://www.parca.dev/docs) for service-specific guidance.
+1. Report new bugs in the [grafana/grafana-parca-datasource](https://github.com/grafana/grafana-parca-datasource/issues/new) repository. The plugin is deprecated and only receives critical security updates until January 2, 2027.
 1. When reporting issues, include:
    - Grafana version
    - Parca server version
+   - Plugin commit or version you built from
    - Error messages (redact sensitive information)
    - Steps to reproduce
    - Relevant configuration (redact credentials)

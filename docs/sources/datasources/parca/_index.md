@@ -12,13 +12,12 @@ keywords:
   - flame graph
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Parca
 title: Parca data source
 weight: 1110
-review_date: 2026-04-10
+review_date: 2026-10-08
 ---
 
 # Parca data source
@@ -27,13 +26,20 @@ review_date: 2026-04-10
 This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
 {{< /admonition >}}
 
-Parca is a continuous profiling database for analysis of CPU and memory usage, down to the line number and throughout time. Grafana ships with built-in support for Parca, so you can add it as a data source and start querying your profiles in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/).
+Parca is a continuous profiling database for analysis of CPU and memory usage, down to the line number and throughout time. You can use the Parca data source to query your profiles in [Explore](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/explore/) and to build profiling dashboards.
+
+The Parca data source is developed and released from the standalone [grafana/grafana-parca-datasource](https://github.com/grafana/grafana-parca-datasource) repository. Grafana doesn't bundle the plugin, so you build it from source and install it manually before you can use it.
+
+{{< admonition type="note" >}}
+This plugin isn't published to the Grafana plugin catalog and isn't available in Grafana Cloud. You can't install it with Grafana CLI, the **Plugins** page, or the `plugins.preinstall` configuration option.
+{{< /admonition >}}
 
 Refer to the [Parca documentation](https://www.parca.dev/docs) to learn about continuous profiling and how to instrument your applications.
 
 To use Parca profiling data in Grafana, you should:
 
 1. [Set up Parca](https://www.parca.dev/docs/quickstart) to scrape profiles from your applications.
+1. [Build and install the Parca plugin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/#install-the-plugin) on your Grafana instance.
 1. [Configure the Parca data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/) in Grafana.
 1. [Query your profiling data](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/query-editor/) using the query editor in Explore.
 
@@ -69,13 +75,12 @@ Using the Parca data source, you can embed profiling data in your dashboards alo
 
 ## Plugin updates
 
-Always ensure that your plugin version is up-to-date so you have access to all current features and improvements. Navigate to **Plugins and data** > **Plugins** to check for updates. Grafana recommends upgrading to the latest Grafana version, and this applies to plugins as well.
+Because you install the plugin manually, Grafana can't update it for you. To update, pull the latest changes from [grafana/grafana-parca-datasource](https://github.com/grafana/grafana-parca-datasource), rebuild the plugin, and replace the contents of your plugin directory. Refer to [Install the plugin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/configure/#install-the-plugin) for the build and deployment steps.
 
-{{< admonition type="note" >}}
-Plugins are automatically updated in Grafana Cloud.
-{{< /admonition >}}
+The plugin only receives critical security updates until January 2, 2027. After that date it receives no further updates.
 
 ## Related resources
 
+- [Parca data source repository](https://github.com/grafana/grafana-parca-datasource)
 - [Official Parca documentation](https://www.parca.dev/docs)
 - [Grafana community forum](https://community.grafana.com/)

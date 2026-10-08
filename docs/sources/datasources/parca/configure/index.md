@@ -7,17 +7,17 @@ keywords:
   - grafana
   - parca
   - configure
+  - install
   - profiling
   - data source
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 menuTitle: Configure
 title: Configure the Parca data source
 weight: 200
-review_date: 2026-04-10
+review_date: 2026-10-08
 ---
 
 # Configure the Parca data source
@@ -26,23 +26,111 @@ review_date: 2026-04-10
 This plugin is deprecated and will only receive critical security updates. Support will end on January 2, 2027.
 {{< /admonition >}}
 
-This document explains how to configure the Parca data source in Grafana.
+This document explains how to install and configure the Parca data source in Grafana.
 
-You can configure the data source using the Grafana UI, a YAML provisioning file, or Terraform.
+To use the Parca data source plugin, you must build it from source and install it into your local Grafana plugin directory. After the plugin is installed, you can configure the data source using the Grafana UI, a YAML provisioning file, or Terraform.
 If you make any changes in the UI, select **Save & test** to preserve those changes.
 
 ## Before you begin
 
-Before configuring the data source, ensure you have:
+Before you install the plugin, ensure you have:
 
-- **Grafana permissions:** `Organization administrator` role.
+- **Grafana:** A self-managed Grafana instance, version 13.2 or later. The plugin isn't available in Grafana Cloud.
+- **Server access:** Shell access to the host running Grafana, with permission to write to the plugin directory and restart Grafana.
+- **Grafana permissions:** `Organization administrator` role to add and configure the data source.
 - **Parca instance:** A running Parca instance (v0.19 or later) accessible from your Grafana server.
+- **Build tools:** Node.js 24 or later, npm 11.12.1 or later, and Go 1.26.5 or later. These are the versions the plugin repository currently requires. Refer to `.nvmrc`, the `engines` field in `package.json`, and `go.mod` in the [plugin repository](https://github.com/grafana/grafana-parca-datasource) for the authoritative versions.
 
-If you're provisioning the data source, you also need administrative rights on the server hosting your Grafana instance.
+## Install the plugin
+
+The Parca plugin has both a frontend and a Go backend, so you must build both and then copy the result into your Grafana plugin directory.
+
+### Build the plugin from source
+
+Clone the repository and build the frontend and backend:
+
+```sh
+git clone https://github.com/grafana/grafana-parca-datasource.git
+cd grafana-parca-datasource
+npm ci
+npm run build
+go run github.com/magefile/mage -v buildAll
+```
+
+Both build commands are required. `npm run build` produces the frontend assets, and the `mage buildAll` target compiles the backend executables for each supported platform. Running only `npm run build` produces a plugin that Grafana loads but can't query, because the backend executable is missing.
+
+Both commands write their output to the `dist/` directory.
+
+### Deploy the plugin to Grafana
+
+Copy the contents of `dist/` into a `parca` directory inside your Grafana plugin directory. On a package-based Linux installation, the plugin directory is `/var/lib/grafana/plugins`:
+
+```sh
+sudo mkdir -p /var/lib/grafana/plugins/parca
+sudo cp -a dist/. /var/lib/grafana/plugins/parca/
+sudo chown -R grafana:grafana /var/lib/grafana/plugins/parca
+```
+
+The Grafana process must be able to read every file in the directory and execute the backend binary.
+
+If you run Grafana in Docker, mount the `dist/` directory at `/var/lib/grafana/plugins/parca` instead:
+
+```sh
+docker run -d \
+  -v "$(pwd)/dist:/var/lib/grafana/plugins/parca" \
+  -e GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=parca \
+  -p 3000:3000 \
+  grafana/grafana:latest
+```
+
+The plugin directory path is set by the `plugins` configuration option. If you've changed it, use your configured path instead. For more information, refer to [Configure Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#plugins).
+
+### Allow the unsigned plugin
+
+A plugin you build yourself isn't signed, and Grafana refuses to load unsigned plugins by default. Add the plugin ID to the `allow_loading_unsigned_plugins` option in your Grafana configuration file, typically `/etc/grafana/grafana.ini`:
+
+```ini
+[plugins]
+allow_loading_unsigned_plugins = parca
+```
+
+Restart Grafana to load the plugin:
+
+```sh
+sudo systemctl restart grafana-server
+```
+
+When Grafana loads an unsigned plugin, it writes a warning to the server log:
+
+```text
+WARN[...] Permitting unsigned plugin. This is not recommended   pluginId=parca
+```
+
+For more information, refer to [Plugin signatures](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/plugin-management/plugin-sign/) and the [`allow_loading_unsigned_plugins` option](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#allow_loading_unsigned_plugins).
+
+### Verify the plugin loaded
+
+To confirm Grafana loaded the plugin:
+
+1. Click **Connections** in the left-side menu.
+1. Click **Add new connection**.
+1. Type `Parca` in the search bar.
+
+If **Parca** doesn't appear, check the Grafana server log for plugin loading errors. Refer to [Troubleshoot Parca data source issues](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/parca/troubleshooting/#plugin-installation-issues).
+
+### Migrate from the bundled plugin
+
+Grafana 13.1 and earlier bundled the Parca plugin. If you're upgrading from one of those versions and you already have Parca data sources configured, install the plugin as described in the preceding sections before you upgrade Grafana. The plugin ID is still `parca`, so your existing data sources continue to work once Grafana can load the plugin.
+
+{{< admonition type="caution" >}}
+Don't delete and recreate your existing Parca data sources. Dashboards and alert rules reference data sources by UID, so a new UID breaks those references. Keep the existing data source and its UID.
+{{< /admonition >}}
+
+If you upgrade Grafana before you install the plugin, your Parca data sources and any panels that query them report the `parca` plugin isn't found. Installing the plugin and restarting Grafana resolves this without any change to your data sources.
 
 ## Add the data source
 
-To add the Parca data source:
+After the plugin is installed, add the Parca data source:
 
 1. Click **Connections** in the left-side menu.
 1. Click **Add new connection**.
@@ -131,7 +219,11 @@ If the test fails, verify that the URL is correct and that your Parca instance i
 You can define the data source in YAML files as part of the Grafana provisioning system.
 For more information, refer to [Provisioning Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources).
 
+Provisioning doesn't install the plugin. Install the plugin first, as described in [Install the plugin](#install-the-plugin), or Grafana fails to provision the data source because the `parca` plugin type isn't registered.
+
 ### YAML provisioning example
+
+Create a file such as `/etc/grafana/provisioning/datasources/parca.yaml` and restart Grafana:
 
 ```yaml
 apiVersion: 1
@@ -139,8 +231,14 @@ apiVersion: 1
 datasources:
   - name: Parca
     type: parca
+    uid: parca
+    access: proxy
     url: http://localhost:7070
 ```
+
+Set `url` to an address the Grafana server can reach. If Grafana and Parca run in separate containers, `localhost` resolves to the Grafana container, so use the Parca service name instead, for example `http://parca:7070`.
+
+Set `uid` explicitly so dashboards can reference the data source by a stable UID. If you're replacing an existing Parca data source, use its current UID.
 
 To provision with basic authentication:
 
@@ -150,6 +248,8 @@ apiVersion: 1
 datasources:
   - name: Parca
     type: parca
+    uid: parca
+    access: proxy
     url: http://localhost:7070
     basicAuth: true
     basicAuthUser: <USERNAME>
@@ -170,6 +270,7 @@ To provision the data source with Terraform, use the [`grafana_data_source` reso
 resource "grafana_data_source" "parca" {
   type = "parca"
   name = "Parca"
+  uid  = "parca"
   url  = "http://localhost:7070"
 }
 ```
@@ -180,6 +281,7 @@ To provision with basic authentication:
 resource "grafana_data_source" "parca" {
   type                = "parca"
   name                = "Parca"
+  uid                 = "parca"
   url                 = "http://localhost:7070"
   basic_auth_enabled  = true
   basic_auth_username = "<USERNAME>"
