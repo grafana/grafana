@@ -1273,3 +1273,109 @@ func TestPluginEnvVarsProvider_azureHostEnvVars(t *testing.T) {
 		})
 	}
 }
+
+func TestPluginEnvVarsProvider_goRuntimeEnvVars(t *testing.T) {
+	p := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test"}, SkipHostEnvVars: true}
+
+	for _, tc := range []struct {
+		name         string
+		hostLimit    string
+		hostGOGC     string
+		forward      bool
+		defaultLimit string
+		pluginLimit  string
+		wantLimit    string
+		wantGOGC     string
+	}{
+		{
+			name: "nothing configured sets nothing",
+		},
+		{
+			name:      "host values stay on the host without the switch",
+			hostLimit: "8GiB",
+			hostGOGC:  "50",
+		},
+		{
+			name:      "the switch forwards the host values",
+			hostLimit: "8GiB",
+			hostGOGC:  "50",
+			forward:   true,
+			wantLimit: "8GiB",
+			wantGOGC:  "50",
+		},
+		{
+			name:         "the default limit applies without the switch",
+			defaultLimit: "2GiB",
+			wantLimit:    "2GiB",
+		},
+		{
+			name:         "the default limit wins over the forwarded host value",
+			hostLimit:    "8GiB",
+			hostGOGC:     "50",
+			forward:      true,
+			defaultLimit: "2GiB",
+			wantLimit:    "2GiB",
+			wantGOGC:     "50",
+		},
+		{
+			name:         "the plugin limit wins over the default",
+			defaultLimit: "2GiB",
+			pluginLimit:  "1GiB",
+			wantLimit:    "1GiB",
+		},
+		{
+			name:        "the plugin limit wins over the forwarded host value",
+			hostLimit:   "8GiB",
+			forward:     true,
+			pluginLimit: "1GiB",
+			wantLimit:   "1GiB",
+		},
+		{
+			name:         "off removes the default for one plugin",
+			defaultLimit: "2GiB",
+			pluginLimit:  "off",
+			wantLimit:    "off",
+		},
+		{
+			name:        "a plugin limit the process would not start with is dropped",
+			hostLimit:   "8GiB",
+			forward:     true,
+			pluginLimit: "12GB",
+			wantLimit:   "8GiB",
+		},
+		{
+			name:         "a default limit the process would not start with is dropped",
+			defaultLimit: "0",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("GOMEMLIMIT", tc.hostLimit)
+			t.Setenv("GOGC", tc.hostGOGC)
+			settings := map[string]string{"custom_env_var": "customVal"}
+			if tc.pluginLimit != "" {
+				settings["memory_limit"] = tc.pluginLimit
+			}
+			cfg := &PluginInstanceCfg{
+				PluginSettings:          map[string]map[string]string{"test": settings},
+				DefaultMemoryLimit:      tc.defaultLimit,
+				ForwardGoRuntimeEnvVars: tc.forward,
+				Features:                featuremgmt.WithFeatures(),
+			}
+			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+
+			envVars := provider.PluginEnvVars(context.Background(), p)
+
+			require.Equal(t, tc.wantLimit, getEnvVar(envVars, "GOMEMLIMIT"))
+			require.Equal(t, tc.wantGOGC, getEnvVar(envVars, "GOGC"))
+			var limits int
+			for _, name := range envVarNames(envVars) {
+				if name == "GOMEMLIMIT" {
+					limits++
+				}
+			}
+			require.LessOrEqual(t, limits, 1, "GOMEMLIMIT must be set at most once")
+			require.Contains(t, envVars, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal")
+			require.NotContains(t, envVarNames(envVars), "GF_PLUGIN_MEMORY_LIMIT")
+		})
+	}
+}

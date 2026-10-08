@@ -95,7 +95,13 @@ func newClientConfig(descriptor PluginDescriptor, env []string, logger log.Logge
 		// We can ignore gosec G201 here, since the dynamic part of executablePath comes from the plugin definition
 		// nolint:gosec
 		cfg.Cmd = exec.Command(executablePath, descriptor.executableArgs...)
-		cfg.Cmd.Env = env
+		if skipHostEnvVars {
+			cfg.Cmd.Env = env
+		} else {
+			// The host environment goes first so Grafana's variables win, and go-plugin must not append it again.
+			cfg.Cmd.Env = append(os.Environ(), env...)
+			cfg.SkipHostEnv = true
+		}
 	}
 
 	return cfg, nil

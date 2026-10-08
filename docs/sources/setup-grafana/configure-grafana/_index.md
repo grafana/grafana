@@ -2816,6 +2816,40 @@ Requires `public_key_retrieval_disabled` to be `false` to have any effect.
 Enter a comma-separated list of plugin identifiers to avoid loading (including core plugins).
 These plugins are hidden in the catalog.
 
+#### `forward_host_env_vars`
+
+Enter a comma-separated list of plugin identifiers whose backend processes inherit every environment variable of the Grafana server process.
+The default is empty.
+
+By default, a backend plugin process receives the variables Grafana sets for it and a fixed allowlist of host variables.
+The allowlist is `PLUGIN_UNIX_SOCKET_DIR`, `HTTP_PROXY`, `HTTPS_PROXY`, `NO_PROXY` and their lowercase forms, `SSL_CERT_FILE`, and `SSL_CERT_DIR`.
+Use this option only when a plugin needs a host variable that isn't in the allowlist.
+Forwarding the whole environment exposes every secret in the Grafana server environment to that plugin process.
+When Grafana and the host environment set the same variable, the plugin process receives the value Grafana sets.
+
+To pass only the Go runtime variables to every plugin, use `forward_go_runtime_env_vars` instead.
+To bound the memory of one plugin process, use `memory_limit` in the [`[plugin.plugin_id]`](#pluginplugin_id) section.
+
+#### `forward_go_runtime_env_vars`
+
+Set to `true` to pass `GOMEMLIMIT` and `GOGC` from the Grafana server environment to every backend plugin process.
+The default is `false`.
+
+Each backend plugin runs as a separate process with its own Go runtime.
+A `GOMEMLIMIT` set on the container applies to the Grafana server process only.
+With this option, every plugin process receives the same limit as the Grafana server.
+The sum of the limits can exceed the memory available to the container.
+To give each plugin its own limit, use `default_memory_limit` or `memory_limit`.
+Both take precedence over the forwarded value.
+
+#### `default_memory_limit`
+
+Sets a soft memory limit for every backend plugin process that has no `memory_limit` of its own.
+Grafana passes the value to each process as the Go runtime `GOMEMLIMIT` variable.
+Plugin processes that aren't written in Go ignore the variable.
+The default is empty, which sets no limit.
+For the accepted values and the effect of a limit, refer to [`memory_limit`](#memory_limit).
+
 #### `preinstall`
 
 Enter a comma-separated list of plugin identifiers to install on startup, using the Grafana catalog as the source.
@@ -3009,6 +3043,29 @@ Properties described in this section are available for all plugins, but you must
 {{< /admonition >}}
 
 If `true`, propagate the tracing context to the plugin backend and enable tracing (if the backend supports it).
+
+#### `memory_limit`
+
+Sets a soft memory limit for the plugin backend process.
+Grafana passes the value to the process as the Go runtime `GOMEMLIMIT` variable.
+The value is a byte count with a `B`, `KiB`, `MiB`, `GiB`, or `TiB` suffix, for example `512MiB` or `2GiB`.
+The value `off` removes the limit that `default_memory_limit` or a forwarded `GOMEMLIMIT` sets for this plugin.
+If the value has any other format, such as the decimal unit `12GB`, Grafana fails to start and reports the section, key, and value.
+The Go runtime aborts a process that starts with a malformed `GOMEMLIMIT`.
+
+This setting applies to one plugin.
+It takes precedence over [`default_memory_limit`](#default_memory_limit) and over a `GOMEMLIMIT` forwarded from the Grafana server environment.
+The plugin process reads the limit when it starts, so a change takes effect after you restart Grafana.
+
+A memory limit makes the Go garbage collector run more often as the heap approaches the limit.
+It doesn't cap the size of the result data a query produces.
+Set the limit above the plugin's working set for its largest queries.
+A limit below the working set makes the plugin spend its time in garbage collection, and queries slow down by an order of magnitude.
+For more information, refer to the [Go garbage collector guide](https://go.dev/doc/gc-guide#Memory_limit).
+
+The environment variable override `GF_PLUGIN_<PLUGIN_ID>_MEMORY_LIMIT` applies only when a configuration file contains the `[plugin.<plugin_id>]` section.
+The section can be empty.
+To set a limit for every plugin from the environment, use `GF_PLUGINS_DEFAULT_MEMORY_LIMIT`.
 
 ### `as_external`
 
