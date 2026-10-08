@@ -121,7 +121,8 @@ async function getNotebookSearchResultActions(searchQuery: string): Promise<Comm
         },
       ];
     });
-  } catch {
+  } catch (error) {
+    console.error('Notebook search failed; omitting notebook results.', error);
     return [];
   }
 }

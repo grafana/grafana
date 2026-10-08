@@ -22,7 +22,7 @@ import (
 // nor the query below would see those writes — that is the point at which an informer becomes
 // available and becomes the right mechanism.
 func (s *Service) FullSync(ctx context.Context) error {
-	orgIDs, err := s.store.FetchOrgIds(ctx)
+	orgIDs, err := s.orgs.FetchOrgIds(ctx)
 	if err != nil {
 		// Counted as one whole-pass attempt: it failed before any org could be attempted, so there is
 		// no per-org outcome to record.
@@ -65,6 +65,10 @@ func (s *Service) FullSync(ctx context.Context) error {
 
 // fullSyncOrg queues the folders whose label disagrees with the database, and returns how many.
 func (s *Service) fullSyncOrg(ctx context.Context, orgID int64) (int, error) {
+	// Attach the per-org identity before any database- or namespace-scoped call below: a
+	// context-dependent LegacyDatabaseProvider needs it to resolve the right org's database.
+	ctx, _ = serviceIdentity(ctx, orgID)
+
 	withRules, err := s.store.GetAllFoldersWithRules(ctx, orgID)
 	if err != nil {
 		return 0, fmt.Errorf("list folders with rules: %w", err)
@@ -104,8 +108,6 @@ func (s *Service) labeledFolders(ctx context.Context, orgID int64) (map[string]s
 	if err != nil {
 		return nil, err
 	}
-
-	ctx, _ = serviceIdentity(ctx, orgID)
 
 	list, err := folders.ListAll(ctx, s.namespacer(orgID), resource.ListOptions{
 		LabelFilters: []string{HasRulesLabel + "=true"},

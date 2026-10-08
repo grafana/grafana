@@ -12,6 +12,8 @@ import (
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/util/flowcontrol"
 
@@ -28,6 +30,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	githubconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
@@ -55,6 +58,7 @@ type ControllerConfig struct {
 	resyncInterval        time.Duration
 	drainTimeout          time.Duration
 	provisioningClient    *client.Clientset
+	provisioningRESTCfg   *rest.Config
 	natsSubscriber        *nats.SubscriberService
 	unified               resources.ResourceStore
 	clients               resources.ClientFactory
@@ -343,8 +347,25 @@ func (c *ControllerConfig) ProvisioningClient() (*client.Clientset, error) {
 	}
 
 	c.provisioningClient = provisioningClient
+	// Kept for callers that need a route the typed clientset has no method for,
+	// such as the keys-only re-list.
+	c.provisioningRESTCfg = config
 
 	return provisioningClient, nil
+}
+
+// ProvisioningRESTClient returns a REST client for the provisioning apiserver,
+// for endpoints outside the typed clientset. It shares the clientset's config, so
+// building the clientset first is what supplies it.
+func (c *ControllerConfig) ProvisioningRESTClient() (rest.Interface, error) {
+	if _, err := c.ProvisioningClient(); err != nil {
+		return nil, err
+	}
+
+	cfg := rest.CopyConfig(c.provisioningRESTCfg)
+	cfg.GroupVersion = &schema.GroupVersion{Group: provisioning.GROUP, Version: provisioning.VERSION}
+	cfg.NegotiatedSerializer = scheme.Codecs.WithoutConversion()
+	return rest.RESTClientFor(cfg)
 }
 
 // wrapWithTracing wraps the rest config transport with otelhttp so outbound
@@ -686,9 +707,14 @@ func (c *ControllerConfig) ConnectionExtras() ([]connection.Extra, error) {
 	}
 	decrypter := connection.ProvideDecrypter(decryptSvc, connection.RegisterDecryptMetrics(c.Registry()))
 
+	// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
+	// since the client secret and tokens would otherwise travel in cleartext.
+	allowInsecure := c.Settings.Env == setting.Dev || c.Settings.SectionWithEnvOverrides("provisioning").Key("allow_insecure").MustBool(false)
+
 	extras := []connection.Extra{
 		githubconnection.Extra(decrypter, githubconnection.ProvideFactory()),
 		githuboauth.Extra(decrypter, githubrepo.ProvideFactory()),
+		gitoauth.Extra(decrypter, allowInsecure),
 	}
 
 	c.connectionExtras = extras

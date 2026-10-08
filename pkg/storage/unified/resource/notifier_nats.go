@@ -2,14 +2,16 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/dskit/backoff"
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -67,11 +69,11 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 // retried in the background with exponential backoff bounded by the watch's
 // MinBackoff/MaxBackoff.
 type natsNotifier struct {
-	subscriber EventSubscriber
-	expiry     *watchExpiry
-	dropped    *prometheus.CounterVec // by reason; nil is allowed (no accounting)
-	dropLog    *throttledLog
-	log        log.Logger
+	subscriber  EventSubscriber
+	invalidator Invalidator
+	dropped     *prometheus.CounterVec // by reason; nil is allowed (no accounting)
+	dropLog     *throttledLog
+	log         logging.Logger
 }
 
 const (
@@ -88,18 +90,18 @@ const dropLogInterval = 10 * time.Second
 
 var dropReasons = []string{dropReasonBufferFull, dropReasonUnmarshalError, dropReasonUnknownType}
 
-func newNatsNotifier(subscriber EventSubscriber, dropped *prometheus.CounterVec, logger log.Logger) *natsNotifier {
+func newNatsNotifier(subscriber EventSubscriber, invalidator Invalidator, dropped *prometheus.CounterVec, logger logging.Logger) *natsNotifier {
 	if dropped != nil {
 		for _, r := range dropReasons {
 			dropped.WithLabelValues(r)
 		}
 	}
 	return &natsNotifier{
-		subscriber: subscriber,
-		expiry:     newWatchExpiry(),
-		dropped:    dropped,
-		dropLog:    newThrottledLog(dropLogInterval),
-		log:        logger,
+		subscriber:  subscriber,
+		invalidator: invalidator,
+		dropped:     dropped,
+		dropLog:     newThrottledLog(dropLogInterval),
+		log:         logger,
 	}
 }
 
@@ -153,10 +155,6 @@ func (n *natsNotifier) drop(reason, msg string, logCtx ...any) {
 	}
 }
 
-func (n *natsNotifier) WatchInvalidation() <-chan struct{} {
-	return n.expiry.current()
-}
-
 func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Event {
 	opts = opts.normalize()
 	n.log.Info("creating new nats notifier", "buffer_size", opts.BufferSize)
@@ -200,7 +198,7 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 					}
 					// Watches may have opened while capture was unavailable. The first
 					// successful connection does not necessarily emit a reconnect callback.
-					n.expiry.expire()
+					n.invalidate()
 					opts.captured(nil)
 					return
 				}
@@ -238,7 +236,11 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 		n.log.Error("nats watch capture not ready, will retry", "error", err)
 		return false
 	}
-	go n.invalidateOnReconnect(ctx, sub, reconnected)
+	// NATS invokes reconnect callbacks before its final subscription flush is
+	// acknowledged. Keep the old generation until restored capture is ready so
+	// watches started during restoration also expire. This runs independently of
+	// event delivery; repeated reconnect signals can safely coalesce.
+	go reportReconnects(ctx, []Subscription{sub}, reconnected, n.invalidate)
 	n.log.Info("subscribed to nats watch stream")
 	context.AfterFunc(ctx, func() {
 		if err := sub.Unsubscribe(); err != nil {
@@ -248,32 +250,11 @@ func (n *natsNotifier) trySubscribe(ctx context.Context, handler func(subject st
 	return true
 }
 
-// NATS invokes reconnect callbacks before its final subscription flush is
-// acknowledged. Keep the old generation until restored capture is ready so
-// watches started during restoration also expire. This runs independently of
-// event delivery; repeated reconnect signals can safely coalesce.
-func (n *natsNotifier) invalidateOnReconnect(ctx context.Context, sub Subscription, reconnected <-chan struct{}) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case <-reconnected:
-			bo := backoff.New(ctx, backoff.Config{MinBackoff: defaultMinBackoff, MaxBackoff: defaultMaxBackoff})
-			for bo.Ongoing() {
-				readyCtx, cancel := context.WithTimeout(ctx, defaultMaxBackoff)
-				err := sub.WaitReady(readyCtx)
-				cancel()
-				if err == nil {
-					if ctx.Err() == nil {
-						n.expiry.expire()
-					}
-					break
-				}
-				// A failed acknowledgment does not guarantee another reconnect callback.
-				// Keep every watch in this generation until capture is confirmed.
-				bo.Wait()
-			}
-		}
+// invalidate expires the watches that may have missed events, so their clients
+// list again.
+func (n *natsNotifier) invalidate() {
+	if n.invalidator != nil {
+		n.invalidator.Invalidate()
 	}
 }
 
@@ -310,3 +291,120 @@ func (n *natsNotifier) decode(subject string, data []byte) (Event, bool) {
 // but we need refactor to publish them here in the notifier,
 // once we have a single notifier implementation (natsNotifier) and remove the pollingNotifier.
 func (n *natsNotifier) Publish(_ Event) {}
+
+// ErrWrittenKeysUnsupported is returned by WatchWrittenKeys from a backend, or a
+// configuration, that cannot report written keys.
+var ErrWrittenKeysUnsupported = errors.New("watching written keys needs the KV backend with the NATS notifier ([nats] enabled and notifier = true)")
+
+// writtenKeysBufferSize is how many keys can wait for the consumer before more
+// are dropped.
+const writtenKeysBufferSize = 10000
+
+// WatchWrittenKeys subscribes to NATS directly, one subscription per type, so
+// other types' notifications are never received.
+func (k *kvStorageBackend) WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error) {
+	if k.keysSubscriber == nil || !k.keysSubscriber.Enabled() {
+		return nil, ErrWrittenKeysUnsupported
+	}
+
+	keys := make(chan *resourcepb.ResourceKey, writtenKeysBufferSize)
+	dropLog := newThrottledLog(dropLogInterval)
+	handler := func(subject string, data []byte) {
+		var notification resourcepb.WatchNotification
+		if err := proto.Unmarshal(data, &notification); err != nil {
+			if _, ok := dropLog.next("unmarshal"); ok {
+				k.log.Warn("failed to unmarshal a watch notification for written keys", "subject", subject, "error", err)
+			}
+			return
+		}
+		key := &resourcepb.ResourceKey{
+			Namespace: notification.Namespace,
+			Group:     notification.Group,
+			Resource:  notification.Resource,
+			Name:      notification.Name,
+		}
+		select {
+		case keys <- key:
+		default:
+			if suppressed, ok := dropLog.next("full"); ok {
+				k.log.Warn("dropped written keys, the consumer is not keeping up", "subject", subject, "alsoDropped", suppressed)
+			}
+			onLost(key.Namespace)
+		}
+	}
+
+	// Every subscription reports a reconnect. They are combined into one signal,
+	// so reconnects close together usually give one report rather than one per
+	// type.
+	reconnected := make(chan struct{}, 1)
+	signal := func() {
+		select {
+		case reconnected <- struct{}{}:
+		default:
+		}
+	}
+
+	subs := make([]Subscription, 0, len(types))
+	unsubscribe := func() {
+		for _, sub := range subs {
+			_ = sub.Unsubscribe()
+		}
+	}
+	for _, gr := range types {
+		subject := resourcewatch.Subject(schema.GroupVersionResource{Group: gr.Group, Resource: gr.Resource}, "")
+		sub, err := k.keysSubscriber.Subscribe(ctx, subject, handler, signal)
+		if err != nil {
+			unsubscribe()
+			return nil, err
+		}
+		subs = append(subs, sub)
+	}
+	// The bus can accept a subscription locally while disconnected, so wait for
+	// the server to confirm before reporting that keys will be delivered.
+	readyCtx, cancel := context.WithTimeout(ctx, defaultMaxBackoff)
+	defer cancel()
+	for _, sub := range subs {
+		if err := sub.WaitReady(readyCtx); err != nil {
+			unsubscribe()
+			return nil, err
+		}
+	}
+	context.AfterFunc(ctx, unsubscribe)
+	go reportReconnects(ctx, subs, reconnected, func() { onLost("") })
+	return keys, nil
+}
+
+// reportReconnects calls onReconnect once all subscriptions are confirmed
+// restored after a reconnect. Called earlier, a write made before the server
+// restored a subscription would be missed by both the bus and whatever
+// onReconnect starts.
+func reportReconnects(ctx context.Context, subs []Subscription, reconnected <-chan struct{}, onReconnect func()) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-reconnected:
+		}
+		bo := backoff.New(ctx, backoff.Config{MinBackoff: defaultMinBackoff, MaxBackoff: defaultMaxBackoff})
+		for bo.Ongoing() {
+			if allReady(ctx, subs) {
+				onReconnect()
+				break
+			}
+			// A failed acknowledgment does not guarantee another reconnect
+			// callback, so keep trying until it succeeds.
+			bo.Wait()
+		}
+	}
+}
+
+func allReady(ctx context.Context, subs []Subscription) bool {
+	readyCtx, cancel := context.WithTimeout(ctx, defaultMaxBackoff)
+	defer cancel()
+	for _, sub := range subs {
+		if sub.WaitReady(readyCtx) != nil {
+			return false
+		}
+	}
+	return ctx.Err() == nil
+}

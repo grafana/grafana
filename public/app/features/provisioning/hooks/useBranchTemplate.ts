@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -24,7 +23,6 @@ interface UseBranchTemplateArgs {
 export function useBranchTemplate({ repository, vars, workflow, value, setBranch }: UseBranchTemplateArgs): {
   locked: boolean;
 } {
-  const flagEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   // One token per drawer open; stable across re-renders so the name doesn't churn as vars change.
   const random = useMemo(() => generateBranchToken(), []);
 
@@ -33,7 +31,7 @@ export function useBranchTemplate({ repository, vars, workflow, value, setBranch
   const enforce = repository?.branchOptions?.enforceTemplate ?? false;
   const hasTemplate = Boolean(template?.trim());
 
-  const active = flagEnabled && isBranchWorkflow && hasTemplate;
+  const active = isBranchWorkflow && hasTemplate;
   const rendered = active ? renderBranchName(template, { ...vars, random }) : '';
   // Enforcement requires an actual template AND a non-empty render: with no template (nothing to
   // enforce) or a template that sanitises to '' (e.g. an all-punctuation or non-Latin title), the

@@ -1,17 +1,17 @@
 module github.com/grafana/grafana/apps/dashvalidator
 
-go 1.26.6
+go 1.27.1
 
 require (
 	github.com/grafana/authlib/types v0.0.0-20260814184937-0d62418c2815
 	github.com/grafana/grafana v0.0.0-00010101000000-000000000000
-	github.com/grafana/grafana-app-sdk v0.60.2
-	github.com/grafana/grafana-app-sdk/logging v0.60.2
+	github.com/grafana/grafana-app-sdk v0.60.12
+	github.com/grafana/grafana-app-sdk/logging v0.60.12
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0
 	github.com/prometheus/prometheus v0.313.0
 	github.com/stretchr/testify v1.12.1
 	golang.org/x/sync v0.23.0
-	k8s.io/apimachinery v0.37.0
+	k8s.io/apimachinery v0.37.1
 	k8s.io/kube-openapi v0.0.0-20260821135717-be32def86098
 )
 
@@ -131,11 +131,11 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/google/wire v0.7.0 // indirect
-	github.com/grafana/alerting v0.0.0-20260923145145-361f525b0497 // indirect
-	github.com/grafana/authlib v0.0.0-20260922202713-e3b571f7135d // indirect
+	github.com/grafana/alerting v0.0.0-20261002125000-c42905f159d4 // indirect
+	github.com/grafana/authlib v0.0.0-20260930185708-1712fc9b273a // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20260907092321-7585a53bb600 // indirect
-	github.com/grafana/grafana-app-sdk/plugin v0.60.2 // indirect
+	github.com/grafana/grafana-app-sdk/plugin v0.60.12 // indirect
 	github.com/grafana/grafana-aws-sdk v1.5.5 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.4.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.296.5 // indirect
@@ -169,7 +169,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/memberlist v0.6.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/huandu/xstrings v1.5.0 // indirect
+	github.com/huandu/xstrings v1.6.0 // indirect
 	github.com/jaegertracing/jaeger-idl v0.12.0 // indirect
 	github.com/jessevdk/go-flags v1.6.1 // indirect
 	github.com/jmespath-community/go-jmespath v1.1.1 // indirect
@@ -180,7 +180,6 @@ require (
 	github.com/jszwedko/go-datemath v0.1.1-0.20260113213115-7f666eef0523 // indirect
 	github.com/klauspost/compress v1.20.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
-	github.com/klauspost/pgzip v1.2.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
 	github.com/lib/pq v1.12.3 // indirect
@@ -234,7 +233,7 @@ require (
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect
 	github.com/prometheus/exporter-toolkit v0.19.0 // indirect
 	github.com/prometheus/procfs v0.22.0 // indirect
-	github.com/protocolbuffers/txtpbfmt v0.0.0-20260803135053-1fd8a60d1ffc // indirect
+	github.com/protocolbuffers/txtpbfmt v0.0.0-20260916144827-6e6d8ebdba95 // indirect
 	github.com/puzpuzpuz/xsync/v4 v4.5.0 // indirect
 	github.com/redis/go-redis/v9 v9.22.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -257,17 +256,18 @@ require (
 	go.opentelemetry.io/collector/pdata v1.66.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.71.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace v0.71.0 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.72.0 // indirect
 	go.opentelemetry.io/contrib/propagators/jaeger v1.46.0 // indirect
 	go.opentelemetry.io/contrib/samplers/jaegerremote v0.37.3 // indirect
-	go.opentelemetry.io/otel v1.46.0 // indirect
+	go.opentelemetry.io/otel v1.47.0 // indirect
 	go.opentelemetry.io/otel/exporters/jaeger v1.17.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.46.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.46.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.46.0 // indirect
-	go.opentelemetry.io/otel/metric v1.46.0 // indirect
-	go.opentelemetry.io/otel/sdk v1.46.0 // indirect
-	go.opentelemetry.io/otel/trace v1.46.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.47.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.47.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.47.0 // indirect
+	go.opentelemetry.io/otel/log v1.47.0 // indirect
+	go.opentelemetry.io/otel/metric v1.47.0 // indirect
+	go.opentelemetry.io/otel/sdk v1.47.0 // indirect
+	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/mock v0.6.0 // indirect
@@ -280,15 +280,15 @@ require (
 	golang.org/x/net v0.59.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
-	golang.org/x/telemetry v0.0.0-20260908163034-4bcc4b2ee518 // indirect
+	golang.org/x/telemetry v0.0.0-20260924152758-ed294f943157 // indirect
 	golang.org/x/term v0.46.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
-	golang.org/x/tools v0.50.0 // indirect
+	golang.org/x/tools v0.51.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260911204522-f61a6ca850bd // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260911204522-f61a6ca850bd // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260928230214-8a89bd6388cc // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260928230214-8a89bd6388cc // indirect
 	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
@@ -300,11 +300,11 @@ require (
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.37.0 // indirect
-	k8s.io/apiextensions-apiserver v0.37.0 // indirect
-	k8s.io/apiserver v0.37.0 // indirect
-	k8s.io/client-go v0.37.0 // indirect
-	k8s.io/component-base v0.37.0 // indirect
+	k8s.io/api v0.37.1 // indirect
+	k8s.io/apiextensions-apiserver v0.37.1 // indirect
+	k8s.io/apiserver v0.37.1 // indirect
+	k8s.io/client-go v0.37.1 // indirect
+	k8s.io/component-base v0.37.1 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3 // indirect
 	modernc.org/libc v1.75.6 // indirect
@@ -349,7 +349,9 @@ replace (
 	github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 	github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
 	github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
+	github.com/grafana/grafana/pkg/storage/unified/apistore => ../../pkg/storage/unified/apistore
 	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ../../pkg/storage/unified/resource/kv
+	github.com/grafana/grafana/pkg/storage/unified/resourceclient => ../../pkg/storage/unified/resourceclient
 	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ../../pkg/storage/unified/resourcepb
 	github.com/grafana/grafana/pkg/util/sqlite => ../../pkg/util/sqlite
 

@@ -56,6 +56,8 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
+  /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
+  DashboardsLibraryPanelRepeatFromServerResolution: "dashboards.libraryPanelRepeatFromServerResolution",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -72,6 +74,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables tabular numerals for visualization legend values */
+  DatavizTabularNums: "dataviz.tabularNums",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -110,6 +114,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Offers the reserved Grafana home option in the home dashboard preference */
+  GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -144,6 +150,8 @@ export const FlagKeys = {
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer */
+  GrafanaScopesDashboardsMegaMenu: "grafana.scopesDashboardsMegaMenu",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
@@ -190,8 +198,6 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
-  /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
-  ProvisioningGitConventions: "provisioning.gitConventions",
   /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
   ProvisioningReadmes: "provisioning.readmes",
   /** Author Git Sync commits as the acting Grafana user */
@@ -437,10 +443,10 @@ export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions):
  *
  * **Details:**
  * - flag key: `dashboard.recentlyDeletedViaTrash`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboard.recentlyDeletedViaTrash", false, options).value;
+  return useFlag("dashboard.recentlyDeletedViaTrash", true, options).value;
 };
 
 /**
@@ -485,6 +491,17 @@ export const useFlagDashboardTemplatesAssistantButton = (options?: ReactFlagEval
  */
 export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardUndoRedo", false, options).value;
+};
+
+/**
+ * Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state
+ *
+ * **Details:**
+ * - flag key: `dashboards.libraryPanelRepeatFromServerResolution`
+ * - default value: `false`
+ */
+export const useFlagDashboardsLibraryPanelRepeatFromServerResolution = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.libraryPanelRepeatFromServerResolution", false, options).value;
 };
 
 /**
@@ -573,6 +590,17 @@ export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?
  */
 export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.experimentalColorSchemes", false, options).value;
+};
+
+/**
+ * Enables tabular numerals for visualization legend values
+ *
+ * **Details:**
+ * - flag key: `dataviz.tabularNums`
+ * - default value: `false`
+ */
+export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.tabularNums", false, options).value;
 };
 
 /**
@@ -785,6 +813,17 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Offers the reserved Grafana home option in the home dashboard preference
+ *
+ * **Details:**
+ * - flag key: `grafana.globalHomePreference`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGlobalHomePreference = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.globalHomePreference", false, options).value;
+};
+
+/**
  * Enables PLG-focused growth redesign of the unified homepage
  *
  * **Details:**
@@ -969,6 +1008,17 @@ export const useFlagGrafanaSavedQueriesPage = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.scenesFlickeringFix", true, options).value;
+};
+
+/**
+ * Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer
+ *
+ * **Details:**
+ * - flag key: `grafana.scopesDashboardsMegaMenu`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScopesDashboardsMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scopesDashboardsMegaMenu", false, options).value;
 };
 
 /**
@@ -1222,17 +1272,6 @@ export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationO
  */
 export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.useMTPlugins", false, options).value;
-};
-
-/**
- * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
- *
- * **Details:**
- * - flag key: `provisioning.gitConventions`
- * - default value: `true`
- */
-export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.gitConventions", true, options).value;
 };
 
 /**

@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 type acknowledgedEventSubscriber struct {
@@ -36,7 +36,8 @@ func TestNATSCaptureReadinessFailure(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				subscriber := &acknowledgedEventSubscriber{established: make(chan struct{})}
-				n := newNatsNotifier(subscriber, nil, log.NewNopLogger())
+				expiry := NewWatchExpiry()
+				n := newNatsNotifier(subscriber, expiry, nil, &logging.NoOpLogger{})
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				if mode == "canceled" {
@@ -52,11 +53,12 @@ func TestNATSCaptureReadinessFailure(t *testing.T) {
 func TestNATSCaptureReadinessAcknowledgment(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		subscriber := &acknowledgedEventSubscriber{established: make(chan struct{})}
-		n := newNatsNotifier(subscriber, nil, log.NewNopLogger())
+		expiry := NewWatchExpiry()
+		n := newNatsNotifier(subscriber, expiry, nil, &logging.NoOpLogger{})
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		ready := make(chan error, 1)
-		generation := n.WatchInvalidation()
+		generation := expiry.WatchInvalidation()
 		returned := make(chan struct{})
 		go func() {
 			n.Watch(ctx, WatchOptions{SettleDelay: time.Millisecond, captureReady: ready})
@@ -67,7 +69,7 @@ func TestNATSCaptureReadinessAcknowledgment(t *testing.T) {
 		close(subscriber.established)
 		<-returned
 		require.NoError(t, <-ready)
-		require.Equal(t, generation, n.WatchInvalidation(), "healthy initial capture must not invalidate watches")
+		require.Equal(t, generation, expiry.WatchInvalidation(), "healthy initial capture must not invalidate watches")
 	})
 }
 
@@ -92,18 +94,19 @@ func TestNATSInitialCaptureRecoveryInvalidatesWatches(t *testing.T) {
 					subscriber = sub
 					restore = func() { close(sub.established) }
 				}
-				n := newNatsNotifier(subscriber, nil, log.NewNopLogger())
+				expiry := NewWatchExpiry()
+				n := newNatsNotifier(subscriber, expiry, nil, &logging.NoOpLogger{})
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				ready := make(chan error, 1)
-				generation := n.WatchInvalidation()
+				generation := expiry.WatchInvalidation()
 				events := n.Watch(ctx, WatchOptions{captureReady: ready})
 				defer func() {
 					cancel()
 					_, ok := <-events
 					require.False(t, ok)
 				}()
-				require.Equal(t, generation, n.WatchInvalidation())
+				require.Equal(t, generation, expiry.WatchInvalidation())
 				require.Empty(t, ready)
 
 				if tc.canceled {
@@ -114,15 +117,15 @@ func TestNATSInitialCaptureRecoveryInvalidatesWatches(t *testing.T) {
 				if tc.canceled {
 					synctest.Wait()
 					require.Empty(t, ready)
-					require.Equal(t, generation, n.WatchInvalidation())
+					require.Equal(t, generation, expiry.WatchInvalidation())
 				} else {
 					require.NoError(t, <-ready)
 					_, open := <-generation
 					require.False(t, open, "recovery must close the old generation")
-					require.NotEqual(t, generation, n.WatchInvalidation())
+					require.NotEqual(t, generation, expiry.WatchInvalidation())
 				}
 				select {
-				case <-n.WatchInvalidation():
+				case <-expiry.WatchInvalidation():
 					t.Fatal("current generation must remain open")
 				default:
 				}
@@ -136,14 +139,15 @@ func TestNATSReconnectWaitsForRestoredCapture(t *testing.T) {
 		t.Run(mode, func(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				sub := &reconnectReadySubscriber{waiting: make(chan struct{}, 1), responses: make(chan error)}
-				n := newNatsNotifier(sub, nil, log.NewNopLogger())
+				expiry := NewWatchExpiry()
+				n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				events := n.Watch(ctx, WatchOptions{})
-				established := n.WatchInvalidation()
+				established := expiry.WatchInvalidation()
 				sub.reconnect()
 				<-sub.waiting
-				duringRestoration := n.WatchInvalidation()
+				duringRestoration := expiry.WatchInvalidation()
 				require.Equal(t, established, duringRestoration)
 
 				if mode != "restored" {
@@ -154,10 +158,10 @@ func TestNATSReconnectWaitsForRestoredCapture(t *testing.T) {
 						// With no response, the readiness deadline elapses in virtual time.
 						// A retry must happen without any further reconnect callback.
 						<-sub.waiting
-						require.Equal(t, established, n.WatchInvalidation(), "failed readiness must not open a fresh generation")
+						require.Equal(t, established, expiry.WatchInvalidation(), "failed readiness must not open a fresh generation")
 					}
 				}
-				duringRetry := n.WatchInvalidation()
+				duringRetry := expiry.WatchInvalidation()
 				select {
 				case <-established:
 					t.Fatal("expired before restored capture was acknowledged")
@@ -167,7 +171,7 @@ func TestNATSReconnectWaitsForRestoredCapture(t *testing.T) {
 				if mode == "canceled during retry" {
 					cancel()
 					synctest.Wait()
-					require.Equal(t, established, n.WatchInvalidation())
+					require.Equal(t, established, expiry.WatchInvalidation())
 					select {
 					case <-established:
 						t.Fatal("shutdown must not expire watches")
@@ -183,7 +187,7 @@ func TestNATSReconnectWaitsForRestoredCapture(t *testing.T) {
 							t.Fatal("watch missed reconnect invalidation")
 						}
 					}
-					after := n.WatchInvalidation()
+					after := expiry.WatchInvalidation()
 					require.NotEqual(t, established, after)
 					select {
 					case <-after:

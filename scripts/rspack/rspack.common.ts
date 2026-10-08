@@ -6,15 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
-import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import E2ESelectorsPlugin from './plugins/E2ESelectorsPlugin.ts';
 
 const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-// The ini parser also returns booleans, which EnvironmentPlugin types as strings but
-// JSON.stringifies the same way.
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const envConfig = getEnvConfig(grafanaRoot) as Record<string, string>;
+const envConfig = getEnvConfig(grafanaRoot);
 
 export type Env = Record<string, string | true | undefined>;
 
@@ -164,7 +160,6 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         /@kusto[\\/]language-service[\\/]bridge\.min\.js/.test(warning.module.readableIdentifier()),
     ],
     plugins: [
-      new CorsWorkerPlugin(),
       new E2ESelectorsPlugin(),
       new rspack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],

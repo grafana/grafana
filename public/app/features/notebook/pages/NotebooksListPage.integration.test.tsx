@@ -8,7 +8,7 @@ import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { __resetSearchAvailabilityForTests, NOTEBOOKS_PAGE_LIMIT } from '../list/notebookSearchAvailability';
+import { NOTEBOOKS_PAGE_LIMIT } from '../list/useNotebooksList';
 
 import { NotebooksListPage } from './NotebooksListPage';
 
@@ -24,7 +24,7 @@ const NOTEBOOKS_SEARCH_URL = `${NOTEBOOKS_URL}/search`;
 setBackendSrv(backendSrv);
 setupMockServer();
 
-/** A notebook as the LIST endpoint returns it — used only for the fallback case. */
+/** A notebook as the API returns it, for the create response. */
 function notebook(name: string, title: string) {
   return {
     metadata: {
@@ -103,7 +103,6 @@ describe('NotebooksListPage (integration)', () => {
 
   beforeEach(() => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
-    __resetSearchAvailabilityForTests();
     contextSrv.user.permissions = {
       [AccessControlAction.NotebooksWrite]: true,
       [AccessControlAction.NotebooksCreate]: true,
@@ -204,24 +203,5 @@ describe('NotebooksListPage (integration)', () => {
 
     // The first request carries no cursor; each one after it carries the previous page's token.
     expect(cursors).toEqual([undefined, 'cursor-2', 'cursor-3']);
-  });
-
-  it('falls back to LIST where the search endpoint is not served', async () => {
-    // What an apiserver without `enable_search_api` answers: the path parses as a request for a
-    // resource named "search".
-    server.use(
-      http.post(NOTEBOOKS_SEARCH_URL, () =>
-        HttpResponse.json({ kind: 'Status', status: 'Failure', code: 404, reason: 'NotFound' }, { status: 404 })
-      ),
-      http.get(NOTEBOOKS_URL, () =>
-        HttpResponse.json({ metadata: {}, items: [notebook('nb1', 'Checkout error spike')] })
-      )
-    );
-
-    render(<NotebooksListPage />);
-
-    // The list renders anyway, and the 404 never reaches the user as an error.
-    expect(await screen.findByText('Checkout error spike')).toBeInTheDocument();
-    expect(screen.queryByText('Failed to load notebooks')).not.toBeInTheDocument();
   });
 });
