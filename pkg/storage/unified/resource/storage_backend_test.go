@@ -1655,9 +1655,10 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 }
 
 func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) {
-	// The exact read fails on a right folder hint, before any row is answered, so
-	// its error belongs to the batch and names no object. A wrong hint sends every
-	// request to the resolved read, which fails at the object it was reading.
+	// With a right folder hint the exact read fails: a failed BatchGet belongs to
+	// the batch and names no object, a body that cannot be read belongs to its
+	// request. A wrong hint sends every request to the resolved read, which fails
+	// at the object it was reading.
 	tests := []struct {
 		name       string
 		firstError int
@@ -1677,9 +1678,8 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 		},
 		{
 			name:       "exact body read",
-			firstError: 0,
+			firstError: 1,
 			message:    "value is corrupt",
-			batchError: true,
 			wrap: func(store KV) KV {
 				return &unreadableValueKV{KV: store, nameMatch: "failure-1", err: errors.New("value is corrupt")}
 			},

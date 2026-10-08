@@ -1451,22 +1451,10 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 		}
 		entries := make([]batchReadEntry, len(requests))
 		for i, req := range requests {
-			entry := &entries[i]
-			entry.request = req.ReadRequest
-			if req.ReadRequest == nil || req.Key == nil {
-				entry.response = &BackendReadResponse{Error: NewBadRequestError("missing key")}
-				continue
-			}
-
-			entry.rv = ToSnowflakeRV(req.ResourceVersion)
-			if entry.rv > latestRV {
-				entry.response = &BackendReadResponse{Error: NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", entry.rv, latestRV))}
-				continue
-			}
-
-			// Same as ReadResource: an invalid name is a bad request, not a server error.
-			if errs := validation.IsValidGrafanaName(req.Key.Name); len(errs) > 0 {
-				entry.response = &BackendReadResponse{Error: NewBadRequestError(errs[0])}
+			entries[i].request = req.ReadRequest
+			entries[i].rv = ToSnowflakeRV(req.GetResourceVersion())
+			if errRes := validateBatchRead(req.ReadRequest, entries[i].rv, latestRV); errRes != nil {
+				entries[i].response = &BackendReadResponse{Error: errRes}
 			}
 		}
 
@@ -1476,12 +1464,19 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 				pending = append(pending, i)
 			}
 		}
-		hits, err := k.readExactVersions(ctx, requests, pending, includeDeleted, func(i int, response *BackendReadResponse) {
+		hits, failedBody, err := k.readExactVersions(ctx, requests, pending, includeDeleted, func(i int, response *BackendReadResponse) {
 			entries[i].response = response
 		})
+		// A failed BatchGet belongs to the whole batch, so it ends the batch at once.
 		if err != nil {
 			yield(&BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()}})
 			return
+		}
+		// A body that cannot be read belongs to its request. The requests before it
+		// are still answered first, as they are when a resolved body fails, so a
+		// caller whose page fills up before it never sees the error.
+		if failedBody >= 0 {
+			entries = entries[:failedBody+1]
 		}
 
 		keys := make([]kv.DataKey, 0, len(entries))
@@ -1590,18 +1585,34 @@ func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []Bat
 	}, nil
 }
 
+// validateBatchRead rejects a request the way ReadResource would, or returns nil.
+func validateBatchRead(req *resourcepb.ReadRequest, rv, latestRV int64) *resourcepb.ErrorResult {
+	if req == nil || req.Key == nil {
+		return NewBadRequestError("missing key")
+	}
+	if rv > latestRV {
+		return NewBadRequestError(fmt.Sprintf("too large resource version: %d (current %d)", rv, latestRV))
+	}
+	// An invalid name is a bad request, not a server error.
+	if errs := validation.IsValidGrafanaName(req.Key.Name); len(errs) > 0 {
+		return NewBadRequestError(errs[0])
+	}
+	return nil
+}
+
 // readExactVersions reads, in one call, the pending requests whose expected
 // folder names the stored key at their exact resource version, and hands each
 // hit to found. A key is the name, version, action and folder, and the action is
 // not known up front, so every action the read may return is tried. A missing key
 // is not an answer, only a wrong hint: the caller resolves it as usual.
 //
-// It returns the number of hits, or the storage or body read failure that
-// stopped the read.
+// It returns the number of hits and the BatchGet failure that stopped the read,
+// if any. A body that cannot be read stops the read too: its request gets the
+// error response and its index is returned, or -1 when every body was read.
 //
 // Search knows the exact version and folder of every row it returns, so a
 // search-backed read normally skips the per-object key lookup entirely.
-func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []BatchReadRequest, pending []int, includeDeleted bool, found func(int, *BackendReadResponse)) (int, error) {
+func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []BatchReadRequest, pending []int, includeDeleted bool, found func(int, *BackendReadResponse)) (int, int, error) {
 	actions := []kv.DataAction{DataActionCreated, DataActionUpdated}
 	if includeDeleted {
 		actions = append(actions, DataActionDeleted)
@@ -1630,14 +1641,14 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 		}
 	}
 	if len(candidates) == 0 {
-		return 0, nil
+		return 0, -1, nil
 	}
 
 	hits := 0
 	seen := make(map[int]bool, len(pending))
 	for obj, err := range k.dataStore.BatchGet(ctx, candidates) {
 		if err != nil {
-			return hits, err
+			return hits, -1, err
 		}
 		i, ok := byKey[obj.Key.String()]
 		if !ok || seen[i] {
@@ -1647,7 +1658,13 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 		seen[i] = true
 		value, err := readAndClose(obj.Value)
 		if err != nil {
-			return hits, err
+			found(i, &BackendReadResponse{
+				Key:             requests[i].Key,
+				ResourceVersion: obj.Key.ResourceVersion,
+				Folder:          obj.Key.Folder,
+				Error:           &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: err.Error()},
+			})
+			return hits, i, nil
 		}
 		hits++
 		found(i, &BackendReadResponse{
@@ -1657,7 +1674,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 			Folder:          obj.Key.Folder,
 		})
 	}
-	return hits, nil
+	return hits, -1, nil
 }
 
 func (*kvStorageBackend) SupportsDeletedBatchReads() bool {

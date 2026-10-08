@@ -1389,6 +1389,36 @@ func TestListWithSelectorsStopsAfterRuntimeFailure(t *testing.T) {
 	require.Equal(t, 2, kvWrapper.dataCalls)
 }
 
+// A body that cannot be read fails its own row only. When an earlier row already
+// fills the page, the list stops before it and pages forward instead of failing.
+func TestListWithSelectorsStopsBeforeAnUnreadableBodyPastAFullPage(t *testing.T) {
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		opts.KvStore = &unreadableValueKV{KV: opts.KvStore, nameMatch: "second-unreadable", err: errors.New("value is corrupt")}
+	})
+	names := []string{"first", "second-unreadable"}
+	rows := make([]*resourcepb.ResourceSearchRow, 0, len(names))
+	var listRV int64
+	for _, name := range names {
+		listRV = seedResource(t, backend, t.Context(), name, "folder-1")
+		rows = append(rows, folderSearchRow(appsKey(name), listRV, "folder-1", name))
+	}
+
+	// One byte is enough for the first body to fill the page.
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(listRV, rows)}, 1)
+	s.backend = backend
+	resp, err := s.listWithSelectors(identity.WithServiceIdentityContext(context.Background(), 1), &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Fields: []*resourcepb.Requirement{{Key: "spec.foo"}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.NotEmpty(t, resp.NextPageToken)
+}
+
 // folderSearchResponse is a field-values search response whose rows carry a folder.
 func folderSearchResponse(rv int64, rows []*resourcepb.ResourceSearchRow) *resourcepb.ResourceSearchResponse {
 	return &resourcepb.ResourceSearchResponse{
