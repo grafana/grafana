@@ -37,7 +37,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(0.25),
     }),
     dashlistCardLink: css({
-      paddingTop: theme.spacing(0.5),
       whiteSpace: 'normal',
       overflowWrap: 'break-word',
       wordBreak: 'break-word',
