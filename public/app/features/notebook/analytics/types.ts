@@ -115,14 +115,14 @@ export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTE
  * How an edit session began. `TOGGLE` is the Edit control inside an open notebook. `NAVIGATION` is
  * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
  * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
- * the more useful fact.
- *
- * Nothing sends an assistant value. The assistant writes cells without entering edit mode.
+ * the more useful fact. `ASSISTANT` is the mutation API rewriting the open document, same as
+ * DashboardScene's own `'assistant'` edit source.
  */
 export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   TOGGLE: 'toggle',
   NAVIGATION: 'navigation',
   NEW: 'new',
+  ASSISTANT: 'assistant',
 } as const;
 
 export type NotebookEditSessionSource =
@@ -167,6 +167,8 @@ export interface NotebookEditSessionEndedProperties extends EventProperty, Noteb
   redoCount: number;
   /** Whether the time range moved during the session, by any control. */
   timeRangeChanged: boolean;
+  /** Whether any cell's own time range override changed during the session. */
+  cellTimeRangeChanged: boolean;
   /** How the session ended. */
   endReason: NotebookEditSessionEndReason;
 }
@@ -302,11 +304,12 @@ export interface NotebookDeletedProperties extends EventProperty {
 
 /**
  * Why an autosave attempt failed. `build_failed` means autosave could not assemble the spec, so it
- * sent no request. `write_failed` means the request failed, either the create or the update. That
- * covers every write failure today, because nothing yet tells a conflict apart from the rest.
+ * sent no request. `conflict` means someone else saved the notebook first. `write_failed` covers
+ * every other failed request, either the create or the update.
  */
 export const NOTEBOOK_AUTOSAVE_FAILED_REASON = {
   BUILD_FAILED: 'build_failed',
+  CONFLICT: 'conflict',
   WRITE_FAILED: 'write_failed',
 } as const;
 
@@ -335,6 +338,26 @@ export interface NotebookAutosaveFailedProperties extends EventProperty {
   reason: NotebookAutosaveFailedReason;
   /** Failures in a row for this notebook since the last save that landed. */
   attempt: number;
+}
+
+/**
+ * How the user answered the "someone else has updated this notebook" prompt. `overwrite` writes the
+ * current content over theirs; `cancel` covers every way of not confirming (the Cancel button, the
+ * close button, Escape), since none of them says anything more specific than "not this".
+ */
+export const NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION = {
+  OVERWRITE: 'overwrite',
+  CANCEL: 'cancel',
+} as const;
+
+export type NotebookAutosaveConflictResolution =
+  (typeof NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION)[keyof typeof NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION];
+
+export interface NotebookAutosaveConflictResolvedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which way the user answered. */
+  resolution: NotebookAutosaveConflictResolution;
 }
 
 /** Where the panel was headed. Either a notebook the user picked, or one the same submit creates. */
@@ -371,4 +394,18 @@ export interface NotebookAddFailedProperties extends EventProperty {
   target: NotebookAddTarget;
   /** Why the attempt failed. */
   reason: NotebookAddFailedReason;
+}
+
+export const NOTEBOOK_INCIDENT_ACTION = {
+  DECLARE: 'declare',
+  ATTACH: 'attach',
+} as const;
+
+export type NotebookIncidentAction = (typeof NOTEBOOK_INCIDENT_ACTION)[keyof typeof NOTEBOOK_INCIDENT_ACTION];
+
+export interface NotebookIncidentActionClickedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which IRM action was picked: declaring an incident, or attaching to an existing one. */
+  action: NotebookIncidentAction;
 }

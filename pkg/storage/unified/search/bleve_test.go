@@ -11,12 +11,14 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/index/scorch"
 	blevesearch "github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	"github.com/prometheus/client_golang/prometheus"
@@ -976,6 +978,54 @@ func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
 }
 
 // TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
+func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
+	oldFeatures := []resource.IndexFeature{
+		resource.IndexFeatureDeletedMarker,
+		resource.IndexFeatureHoldsDeletedDocuments,
+		resource.IndexFeatureTrashFields,
+	}
+	newIndex := func(features []resource.IndexFeature) *bleveIndex {
+		return &bleveIndex{
+			features:              features,
+			fields:                resource.StandardSearchFields(),
+			searchFields:          newKindSearchFields(nil, "", "", nil),
+			keepsDeletedDocuments: true,
+		}
+	}
+	request := func(sort bool) *resourcepb.ResourceSearchRequest {
+		req := &resourcepb.ResourceSearchRequest{
+			Options:   &resourcepb.ListOptions{},
+			Limit:     10,
+			IsDeleted: true,
+		}
+		if sort {
+			req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		}
+		return req
+	}
+
+	t.Run("an older index still serves trash without the new sort", func(t *testing.T) {
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(false), nil, false, nil)
+		require.NotNil(t, searchReq)
+		require.Nil(t, errResult)
+	})
+
+	t.Run("an older index refuses the new sort", func(t *testing.T) {
+		searchReq, errResult := newIndex(oldFeatures).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		require.Nil(t, searchReq)
+		require.NotNil(t, errResult)
+		assert.Equal(t, int32(http.StatusServiceUnavailable), errResult.Code)
+		assert.Equal(t, "sorting trash by resource version is not available for this resource until its search index has been rebuilt", errResult.Message)
+	})
+
+	t.Run("a rebuilt index accepts the new sort", func(t *testing.T) {
+		features := append(slices.Clone(oldFeatures), resource.IndexFeatureSortableTrashResourceVersion)
+		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
+		require.NotNil(t, searchReq)
+		require.Nil(t, errResult)
+	})
+}
+
 func TestBleveSortCapabilityCheck(t *testing.T) {
 	const group, kindResource = "example.grafana.app", "widgets"
 	// v1 and v2 declare different fields on purpose: a request naming no version
@@ -1072,7 +1122,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
 			require.Nil(t, errResult)
 			require.NotNil(t, searchReq)
-			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "index_server_search_capability_violations_total"))
+			assert.Equal(t, 1, testutil.CollectAndCount(idx.indexMetrics.SearchCapabilityViolations, "grafana_index_server_search_capability_violations_total"))
 		})
 	}
 
@@ -1420,6 +1470,64 @@ func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
 	require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
 }
 
+// An in-memory index keeps every segment until it is evicted, so a segment
+// written for one document must not hold room for other documents, nor be sized
+// from what other indexes wrote.
+func TestInMemoryIndexSegmentsOnlyHoldTheirOwnDocuments(t *testing.T) {
+	large := strings.Repeat("panel title query expr datasource ", 150)
+	small := "panel"
+	newIndex := func(t *testing.T) bleve.Index {
+		t.Helper()
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
+		return idx
+	}
+	indexDocs := func(t *testing.T, idx bleve.Index, from, count int, body string) {
+		t.Helper()
+		batch := idx.NewBatch()
+		for i := from; i < from+count; i++ {
+			require.NoError(t, batch.Index(fmt.Sprintf("doc-%d", i), map[string]any{"title": fmt.Sprintf("title %d", i), "body": body}))
+		}
+		require.NoError(t, idx.Batch(batch))
+	}
+	memoryUsed := func(t *testing.T, idx bleve.Index) uint64 {
+		t.Helper()
+		advanced, err := idx.Advanced()
+		require.NoError(t, err)
+		scorchIndex, ok := advanced.(*scorch.Scorch)
+		require.True(t, ok)
+		return scorchIndex.MemoryUsed()
+	}
+
+	t.Run("no room reserved for more documents", func(t *testing.T) {
+		indexDocs(t, newIndex(t), 0, 1000, large)
+
+		idx := newIndex(t)
+		before := memoryUsed(t, idx)
+		for i := range 10 {
+			indexDocs(t, idx, i, 1, large)
+		}
+		// A segment holding one of these documents takes about 16 KiB; reserving room
+		// for a hundred more takes it over a MiB.
+		require.Less(t, memoryUsed(t, idx)-before, uint64(10*64<<10))
+	})
+
+	t.Run("not sized from other indexes' documents", func(t *testing.T) {
+		other := newIndex(t)
+		idx := newIndex(t)
+		before := memoryUsed(t, idx)
+		for i := range 10 {
+			// zapx sizes a new segment from the last segment any index wrote.
+			indexDocs(t, other, i, 1, large)
+			indexDocs(t, idx, i, 1, small)
+		}
+		// A segment holding one of these documents takes about 1.3 KiB; sized from
+		// the other index's documents it takes over 13 KiB.
+		require.Less(t, memoryUsed(t, idx)-before, uint64(10*4<<10))
+	})
+}
+
 // A local index whose build info cannot be read is discarded: there is no way to
 // tell whether it declares a requirement this binary cannot meet.
 func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
@@ -1453,6 +1561,40 @@ func TestReuseFileIndexRejectsUnreadableBuildInfo(t *testing.T) {
 		require.NoError(t, err)
 		require.Nil(t, idx)
 	})
+}
+
+func TestReuseFileIndexRequiresBuildAfterLastImport(t *testing.T) {
+	buildTime := time.Unix(1_700_000_000, 0)
+	logger := log.New("bleve-test")
+
+	for _, tt := range []struct {
+		name           string
+		lastImportTime time.Time
+		wantReuse      bool
+	}{
+		{name: "earlier import", lastImportTime: buildTime.Add(-time.Second), wantReuse: true},
+		{name: "equal import", lastImportTime: buildTime},
+		{name: "later import", lastImportTime: buildTime.Add(time.Second)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			backend, _ := setupBleveBackend(t, withRootDir(t.TempDir()))
+			resourceDir := t.TempDir()
+			index, err := newBleveIndex(filepath.Join(resourceDir, "index-dir"), bleve.NewIndexMapping(), buildTime, buildVersion, nil, "")
+			require.NoError(t, err)
+			require.NoError(t, setRV(index, 42))
+			require.NoError(t, index.Close())
+
+			reopened, _, rv, err := backend.tryReuseFileIndex(resourceDir, tt.lastImportTime, logger)
+			require.NoError(t, err)
+			if tt.wantReuse {
+				require.NotNil(t, reopened)
+				require.Equal(t, int64(42), rv)
+				require.NoError(t, reopened.Close())
+			} else {
+				require.Nil(t, reopened)
+			}
+		})
+	}
 }
 
 // Stands in for an index written by a newer binary.
@@ -1942,11 +2084,11 @@ func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
 
 func checkOpenIndexes(t *testing.T, reg prometheus.Gatherer, memory, file int) {
 	require.NoError(t, testutil.GatherAndCompare(reg, bytes.NewBufferString(fmt.Sprintf(`
-		# HELP index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
-		# TYPE index_server_open_indexes gauge
-		index_server_open_indexes{index_storage="memory"} %d
-		index_server_open_indexes{index_storage="file"} %d
-	`, memory, file)), "index_server_open_indexes"))
+		# HELP grafana_index_server_open_indexes Number of open indexes per storage type. An open index corresponds to single resource group.
+		# TYPE grafana_index_server_open_indexes gauge
+		grafana_index_server_open_indexes{index_storage="memory"} %d
+		grafana_index_server_open_indexes{index_storage="file"} %d
+	`, memory, file)), "grafana_index_server_open_indexes"))
 }
 
 func verifyDirEntriesCount(t *testing.T, dir string, count int) {

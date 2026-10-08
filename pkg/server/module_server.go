@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"sync"
 
@@ -169,6 +170,8 @@ type ModuleServer struct {
 	storageBackend   resource.StorageBackend
 	kvStore          resourcekv.KV
 	experimentalKV   *resource.ExperimentalKVOptions
+	watchExpiry      resource.WatchExpiry
+	blobBackend      resource.BlobSupport
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
@@ -353,7 +356,7 @@ func (s *ModuleServer) initRouterModule() (services.Service, error) {
 // that needs more than one background lifecycle can still register as a
 // single services.Service. A failure in any of them fails the composite;
 // starting awaits all healthy, stopping awaits all stopped.
-func newCompositeService(svcs ...services.Service) (services.Service, error) {
+func newCompositeService(svcs ...services.Service) (*services.BasicService, error) {
 	manager, err := services.NewManager(svcs...)
 	if err != nil {
 		return nil, fmt.Errorf("composing services: %w", err)
@@ -361,9 +364,28 @@ func newCompositeService(svcs ...services.Service) (services.Service, error) {
 	failureWatcher := services.NewFailureWatcher()
 	failureWatcher.WatchManager(manager)
 
+	stop := func(_ error) error {
+		// Close waits for listener callbacks, so keep receiving failures after running exits.
+		drained := make(chan struct{})
+		go func() {
+			defer close(drained)
+			for range failureWatcher.Chan() {
+			}
+		}()
+		err := services.StopManagerAndAwaitStopped(context.Background(), manager)
+		failureWatcher.Close()
+		<-drained
+		return err
+	}
+
 	return services.NewBasicService(
 		func(ctx context.Context) error {
-			return services.StartManagerAndAwaitHealthy(ctx, manager)
+			if err := services.StartManagerAndAwaitHealthy(ctx, manager); err != nil {
+				// BasicService does not call its stopping hook after startup failure.
+				_ = stop(err)
+				return err
+			}
+			return nil
 		},
 		func(ctx context.Context) error {
 			select {
@@ -373,9 +395,7 @@ func newCompositeService(svcs ...services.Service) (services.Service, error) {
 				return err
 			}
 		},
-		func(_ error) error {
-			return services.StopManagerAndAwaitStopped(context.Background(), manager)
-		},
+		stop,
 	), nil
 }
 
@@ -406,19 +426,18 @@ func (s *ModuleServer) initNATSModule() (services.Service, error) {
 	}
 	subscriber := nats.ProvideSubscriber(natsCfg, s.registerer)
 	s.natsSubscriber = subscriber
-	group, err := services.NewManager(publisher, subscriber)
+	group, err := newCompositeService(publisher, subscriber)
 	if err != nil {
 		return nil, err
 	}
-	return services.NewBasicService(
-		func(ctx context.Context) error { return services.StartManagerAndAwaitHealthy(ctx, group) },
-		func(ctx context.Context) error { <-ctx.Done(); return nil },
-		func(_ error) error { return services.StopManagerAndAwaitStopped(context.Background(), group) },
-	).WithName(modules.NATS), nil
+	return group.WithName(modules.NATS), nil
 }
 
 func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) func() (services.Service, error) {
 	return func() (services.Service, error) {
+		if s.watchExpiry == nil {
+			s.watchExpiry = resource.NewWatchExpiry()
+		}
 		if s.storageBackend == nil {
 			// If storage server not being used, disable GC, pruner, and RV manager
 			disableStorageServices := !storageServicesEnabled
@@ -434,13 +453,16 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 				}
 			}
 			opts := append([]sql.StorageBackendOption{sql.WithVectorBackend(s.vectorBackend)},
-				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber)...)
+				unified.NatsStorageBackendOptions(s.cfg, s.natsPublisher, s.natsSubscriber, s.watchExpiry)...)
 			if s.experimentalKV != nil {
 				opts = append(opts, sql.WithExperimentalKV(s.experimentalKV))
 			}
 			s.storageBackend, err = sql.NewStorageBackend(s.cfg, eDB, s.registerer, s.storageMetrics, disableStorageServices, kvStore, nil, opts...)
 			if err != nil {
 				return nil, err
+			}
+			if s.cfg.EnableSQLKVBackend && kvStore != nil {
+				s.blobBackend = resource.NewKVBlobSupport(kvStore)
 			}
 		}
 		if backendService, ok := s.storageBackend.(services.Service); ok {
@@ -475,7 +497,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 			return nil, err
 		}
 	}
-	serviceOptions := s.StorageServiceOptions
+	serviceOptions := s.unifiedServiceOptions()
 	if dashboardStats != nil {
 		serviceOptions = append(serviceOptions, sql.WithDashboardStats(dashboardStats))
 	}
@@ -517,12 +539,17 @@ func (s *ModuleServer) initZanzanaServerModule() (services.Service, error) {
 	return authz.ProvideZanzanaService(s.cfg, s.features, s.registerer, s.storeProvider, s.reconcileCRDs, reconcilerState)
 }
 
+func (s *ModuleServer) unifiedServiceOptions() []sql.ServiceOption {
+	return append(slices.Clone(s.StorageServiceOptions), sql.WithWatchExpiry(s.watchExpiry), sql.WithBlobBackend(s.blobBackend))
+}
+
 func (s *ModuleServer) initSearchServerModule() (services.Service, error) {
 	support, err := InitializeSearchSupport(s.cfg, s.features, s.tracer, s.registerer)
 	if err != nil {
 		return nil, err
 	}
-	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, s.StorageServiceOptions...)
+	serviceOptions := s.unifiedServiceOptions()
+	svc, err := sql.ProvideSearchGRPCService(s.cfg, s.features, s.log, s.registerer, support.DocBuilders, s.indexMetrics, s.vectorMetrics, s.searchServerRing, s.MemberlistKVConfig, s.httpServerRouter, s.storageBackend, s.vectorBackend, s.embedder, s.reranker, s.grpcService, serviceOptions...)
 	if err != nil {
 		return nil, err
 	}

@@ -37,7 +37,9 @@ type QOSEnqueueDequeuer interface {
 
 // ServerOptions contains the options for creating a new ResourceServer
 type ServerOptions struct {
+	WatchExpiry      resource.WatchExpiry
 	Backend          resource.StorageBackend
+	BlobBackend      resource.BlobSupport
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
 	Reranker         *rerank.Reranker
@@ -89,6 +91,7 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 		withSearchBackedListConfig,
 		withStorageMetrics,
 		withUsageStats,
+		withSeededWatches,
 		withNatsWatchMaxAge,
 	)
 	if err != nil {
@@ -187,6 +190,9 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
 	}
+	if resourceOpts.Blob.URL == "" {
+		resourceOpts.Blob.Backend = opts.BlobBackend
+	}
 	// Support local file blob
 	if strings.HasPrefix(resourceOpts.Blob.URL, "./data/") {
 		dir := strings.Replace(resourceOpts.Blob.URL, "./data", opts.Cfg.DataPath, 1)
@@ -217,6 +223,11 @@ func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	return nil
 }
 
+func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.SeededWatchesEnabled = opts.Cfg.SeededWatchesEnabled
+	return nil
+}
+
 func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
 	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
 		return nil
@@ -226,6 +237,7 @@ func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceSer
 }
 
 func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+	resourceOpts.WatchExpiry = opts.WatchExpiry
 	if opts.Backend == nil {
 		return fmt.Errorf("missing storage backend")
 	}

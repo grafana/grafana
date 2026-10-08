@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, copyTextToClipboard, Dropdown, IconButton, Menu, ToolbarButton } from '@grafana/ui';
@@ -10,6 +11,7 @@ import {
   NOTEBOOK_DELETE_SOURCE,
   NOTEBOOK_EXPORT_SOURCE,
   NOTEBOOK_FEEDBACK_SOURCE,
+  NOTEBOOK_INCIDENT_ACTION,
   NOTEBOOK_LINK_COPY_SOURCE,
 } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
@@ -123,9 +125,19 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
       <NotebookExportMenu
         uid={uid}
         getSpec={async () => transformNotebookSceneToSaveModel(scene)}
+        flushPendingChanges={() => scene.autosave.awaitPendingSave()}
         source={NOTEBOOK_EXPORT_SOURCE.NOTEBOOK_TOOLBAR}
       />
-      <IrmMenuItem onDeclare={() => setIsDeclaring(true)} onAttach={() => setIsAttaching(true)} />
+      <IrmMenuItem
+        onDeclare={() => {
+          NotebookAnalytics.incidentActionClicked(uid, NOTEBOOK_INCIDENT_ACTION.DECLARE);
+          setIsDeclaring(true);
+        }}
+        onAttach={() => {
+          NotebookAnalytics.incidentActionClicked(uid, NOTEBOOK_INCIDENT_ACTION.ATTACH);
+          setIsAttaching(true);
+        }}
+      />
       {canDeleteNotebooks() && (
         <>
           <Menu.Divider />
@@ -154,6 +166,7 @@ function NotebookActions({ uid, scene }: { uid: string; scene: NotebookScene }) 
             aria-haspopup="menu"
             // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
             tooltip={t('notebooks.view.more-actions', 'More actions')}
+            data-testid={selectors.pages.Notebooks.Item.toolbarKebabButton}
           />
         </Dropdown>
       )}

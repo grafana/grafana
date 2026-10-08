@@ -96,4 +96,4 @@ func (c *rolloutAccessClient) BatchCheck(ctx context.Context, id claims.AuthInfo
 	return c.clientFor(req.Namespace, group, resource, subresource).BatchCheck(ctx, id, req)
 }
 
-var _ claims.AccessClient = &rolloutAccessClient{}
+var _ claims.AccessClient = (*rolloutAccessClient)(nil)

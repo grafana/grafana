@@ -1,14 +1,19 @@
 import { screen, within } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { PROVISIONING_API_BASE as PROVISIONING_BASE } from '@grafana/test-utils/handlers';
+import server from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { contextSrv } from 'app/core/services/context_srv';
 import { ManagerKind } from 'app/features/apiserver/types';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
-import { useIsProvisionedInstance } from 'app/features/provisioning/hooks/useIsProvisionedInstance';
+import { setupProvisioningMswServer } from 'app/features/provisioning/mocks/server';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type FolderDTO } from 'app/types/folders';
 
@@ -16,9 +21,7 @@ import { mockFolderDTO } from '../fixtures/folder.fixture';
 
 import CreateNewButton from './CreateNewButton';
 
-jest.mock('app/features/provisioning/hooks/useIsProvisionedInstance', () => ({
-  useIsProvisionedInstance: jest.fn(),
-}));
+setupProvisioningMswServer();
 
 jest.mock(
   'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension',
@@ -42,8 +45,6 @@ jest.mock('@grafana/runtime/unstable', () => ({
 
 const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
-const mockUseIsProvisionedInstance = useIsProvisionedInstance as jest.MockedFunction<typeof useIsProvisionedInstance>;
-
 const mockParentFolder = mockFolderDTO();
 
 async function renderAndOpen(folder?: FolderDTO) {
@@ -55,9 +56,6 @@ async function renderAndOpen(folder?: FolderDTO) {
 }
 
 describe('NewActionsButton', () => {
-  beforeEach(() => {
-    mockUseIsProvisionedInstance.mockReturnValue(false);
-  });
   it('should display the correct urls with a given parent folder', async () => {
     await renderAndOpen(mockParentFolder);
 
@@ -139,24 +137,55 @@ describe('NewActionsButton', () => {
     expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
   });
 
-  it('should show Import dashboard button when entire instance is provisioned', async () => {
-    mockUseIsProvisionedInstance.mockReturnValue(true);
-    const regularFolder = mockFolderDTO(1, { managedBy: undefined });
-    await renderAndOpen(regularFolder);
+  describe('creating a folder with Git Sync configured', () => {
+    let originalProvisioning: boolean;
 
-    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
-  });
+    beforeEach(() => {
+      originalProvisioning = config.provisioningEnabled;
+      config.provisioningEnabled = true;
+      server.use(
+        http.get(`${PROVISIONING_BASE}/settings`, () =>
+          HttpResponse.json({
+            items: [
+              {
+                name: 'folderless-repo',
+                title: 'Folderless Repo',
+                type: 'github',
+                target: 'folderless',
+                workflows: ['write', 'branch'],
+              } satisfies RepositoryView,
+            ],
+          })
+        )
+      );
+    });
 
-  it('should show Import dashboard button when both instance and folder are provisioned', async () => {
-    mockUseIsProvisionedInstance.mockReturnValue(true);
-    const provisionedFolder = mockFolderDTO(1, { managedBy: ManagerKind.Repo });
-    await renderAndOpen(provisionedFolder);
+    afterEach(() => {
+      config.provisioningEnabled = originalProvisioning;
+    });
 
-    expect(screen.getByRole('menuitem', { name: 'New dashboard' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'New folder' })).toBeInTheDocument();
-    expect(screen.getByRole('menuitem', { name: 'Import dashboard' })).toBeInTheDocument();
+    // The drawer body owns the Git/database choice, so every close path has to drop it. Held here it
+    // would survive, and the next open would skip the choice.
+    it('forgets the choice when the drawer is closed and reopened', async () => {
+      const { user } = render(<CreateNewButton canCreateDashboard canCreateFolder isReadOnlyRepo={false} />);
+      await user.click(screen.getByText('New'));
+      await user.click(screen.getByRole('menuitem', { name: 'New folder' }));
+
+      /** The Git form is the only one of the two with a commit comment field. */
+      const findGitForm = () => screen.findByRole('textbox', { name: /comment/i });
+      const queryDatabaseForm = () => screen.queryByTestId(selectors.pages.BrowseDashboards.NewFolderForm.form);
+
+      await findGitForm();
+      await user.click(screen.getByRole('button', { name: 'Create in Grafana database instead' }));
+      expect(queryDatabaseForm()).toBeInTheDocument();
+
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      await user.click(screen.getByText('New'));
+      await user.click(screen.getByRole('menuitem', { name: 'New folder' }));
+
+      expect(await findGitForm()).toBeInTheDocument();
+      expect(queryDatabaseForm()).not.toBeInTheDocument();
+    });
   });
 
   describe('Dashboard from template button', () => {
