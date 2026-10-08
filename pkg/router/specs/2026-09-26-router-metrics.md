@@ -13,6 +13,7 @@ Every label has a bounded set of values, so no request can create new series:
 
 - `group` is always a group the router serves. Any other value becomes `unknown`, so arbitrary
   client paths can't create series.
+- `plugin_id` is the ID of a plugin the router serves, or empty for backends that aren't plugins.
 - `verb` is one of a fixed set (`metricVerbs` in `metrics.go`); anything else becomes `other`. See
   [Requests](#requests).
 - `route`, `reason`, `state` and `result` take only the values listed in their tables.
@@ -56,7 +57,7 @@ nothing changes, so watch its failures rather than its staleness.
 | --- | --- | --- | --- |
 | `grafana_router_breaker_state` | gauge | `group`, `state` | 1 for the group's current breaker state (`closed`, `half-open`, `open`), 0 for the others |
 | `grafana_router_breaker_transitions_total` | counter | `group`, `state` | Breaker state changes, by the state entered |
-| `grafana_router_backend_failures_total` | counter | `group`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch` |
+| `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
 
 Groups on the single-tenant fallback keep one breaker per stack, so they have no

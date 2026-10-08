@@ -55,8 +55,8 @@ func newRouterMetrics(reg prometheus.Registerer) *routerMetrics {
 			Namespace: "grafana",
 			Subsystem: "router",
 			Name:      "backend_failures_total",
-			Help:      "Requests whose backend could not be reached or answered, by group and reason: breaker_open, timeout, transport, redirect_rejected or stack_origin_mismatch.",
-		}, []string{"group", "reason"}),
+			Help:      "Requests whose backend could not be reached or answered, by group, plugin ID (empty for other backends) and reason: breaker_open, timeout, transport, redirect_rejected, stack_origin_mismatch or auth.",
+		}, []string{"group", "plugin_id", "reason"}),
 		breakerTransitions: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: "grafana",
 			Subsystem: "router",
@@ -106,7 +106,7 @@ func (m *routerMetrics) instrument(gr *GrafanaRouter, w http.ResponseWriter, req
 	req, outcome := withRequestOutcome(req)
 	recordFailure := func() {
 		if outcome.failure != "" {
-			m.backendFailures.WithLabelValues(metricGroup, outcome.failure).Inc()
+			m.backendFailures.WithLabelValues(metricGroup, outcome.pluginID, outcome.failure).Inc()
 		}
 	}
 
