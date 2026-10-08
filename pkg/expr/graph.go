@@ -419,6 +419,12 @@ nextNode:
 				}
 			}
 
+			if cmdNode.CMDType == TypeTransform {
+				if dsNode, ok := neededNode.(*DSNode); ok {
+					dsNode.isInputToTransform = true
+				}
+			}
+
 			if neededNode.ID() == cmdNode.ID() {
 				return fmt.Errorf("expression '%v' cannot reference itself. Must be query or another expression", neededVar)
 			}
@@ -446,6 +452,24 @@ nextNode:
 			neededNode.SetInputTo(cmdNode.RefID())
 
 			dp.SetEdge(edge)
+		}
+	}
+
+	return checkTransformInputs(registry)
+}
+
+// checkTransformInputs rejects a data source query that feeds both a transform expression and
+// another expression, because a data source node keeps a single representation of its frames.
+func checkTransformInputs(registry map[string]Node) error {
+	for refID, node := range registry {
+		dsNode, ok := node.(*DSNode)
+		if !ok || !dsNode.isInputToTransform {
+			continue
+		}
+		for consumer := range dsNode.IsInputTo() {
+			if cmdNode, ok := registry[consumer].(*CMDNode); !ok || cmdNode.CMDType != TypeTransform {
+				return fmt.Errorf("query %v is an input to a transform expression, so it can not also be an input to %v", refID, consumer)
+			}
 		}
 	}
 	return nil

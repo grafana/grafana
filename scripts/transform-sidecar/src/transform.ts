@@ -9,6 +9,7 @@ import { setTimeZoneResolver } from '../../../packages/grafana-data/src/datetime
 import { standardTransformersRegistry } from '../../../packages/grafana-data/src/transformations/standardTransformersRegistry';
 import { transformDataFrame } from '../../../packages/grafana-data/src/transformations/transformDataFrame';
 import { standardTransformers } from '../../../packages/grafana-data/src/transformations/transformers';
+import { FieldType } from '../../../packages/grafana-data/src/types/dataFrame';
 import { type DataTransformerConfig } from '../../../packages/grafana-data/src/types/transformations';
 
 export interface TransformRequest {
@@ -120,5 +121,27 @@ export async function runTransformRequest(req: TransformRequest): Promise<Transf
     transformDataFrame(req.transformations, frames, { interpolate: interpolator(req.vars ?? {}) })
   );
 
-  return { frames: output.map((frame) => dataFrameToJSON(frame)) };
+  return { frames: output.map((frame) => withGoTypeInfo(dataFrameToJSON(frame))) };
+}
+
+const GO_FIELD_TYPES: Partial<Record<FieldType, string>> = {
+  [FieldType.number]: 'float64',
+  [FieldType.string]: 'string',
+  [FieldType.boolean]: 'bool',
+  [FieldType.time]: 'time.Time',
+  [FieldType.enum]: 'enum',
+};
+
+// Go's data.Frame decoder picks each field's Go type from typeInfo, which dataFrameToJSON does not
+// write. Every field is marked nullable because transformations introduce nulls (outer joins,
+// empty groups). Integer fields come back as float64, since JS numbers carry no width.
+function withGoTypeInfo(frame: DataFrameJSON): DataFrameJSON {
+  if (!frame.schema) {
+    return frame;
+  }
+  const fields = frame.schema.fields.map((field) => ({
+    ...field,
+    typeInfo: { frame: (field.type && GO_FIELD_TYPES[field.type]) ?? 'json.RawMessage', nullable: true },
+  }));
+  return { ...frame, schema: { ...frame.schema, fields } };
 }

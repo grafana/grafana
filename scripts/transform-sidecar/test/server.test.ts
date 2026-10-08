@@ -81,6 +81,36 @@ describe('transform sidecar', () => {
     );
   });
 
+  it('adds Go typeInfo to every output field', async () => {
+    const res = await transform({
+      frames: [
+        {
+          schema: {
+            fields: [
+              { name: 'time', type: 'time' },
+              { name: 'svc', type: 'string' },
+              { name: 'v', type: 'number' },
+              { name: 'up', type: 'boolean' },
+            ],
+          },
+          data: { values: [[1000], ['a'], [1], [true]] },
+        },
+      ],
+      transformations: [{ id: 'merge', options: {} }],
+    });
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(
+      res.body.frames[0].schema.fields.map((f: { typeInfo: unknown }) => f.typeInfo),
+      [
+        { frame: 'time.Time', nullable: true },
+        { frame: 'string', nullable: true },
+        { frame: 'float64', nullable: true },
+        { frame: 'bool', nullable: true },
+      ]
+    );
+  });
+
   it('applies transformations in order and skips disabled ones', async () => {
     const res = await transform({
       frames: [stringNumberFrame(['b', 'c', 'a'], [2, 3, 1])],
