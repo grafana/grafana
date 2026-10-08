@@ -692,11 +692,11 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 	// Requests are built a chunk at a time, so only the comparison scales with
 	// the size of the type.
 	for chunk := range slices.Chunk(names, readChunkSize) {
-		requests := make([]*resourcepb.ReadRequest, 0, len(chunk))
+		requests := make([]BatchReadRequest, 0, len(chunk))
 		for _, name := range chunk {
-			requests = append(requests, &resourcepb.ReadRequest{
+			requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 				Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-			})
+			}})
 		}
 
 		for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
@@ -935,11 +935,11 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 	}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
-	requests := make([]*resourcepb.ReadRequest, 0, len(names))
+	requests := make([]BatchReadRequest, 0, len(names))
 	for _, name := range names {
-		requests = append(requests, &resourcepb.ReadRequest{
+		requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-		})
+		}})
 	}
 
 	items := make([]*BulkIndexItem, 0, len(names))
