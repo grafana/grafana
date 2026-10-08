@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/store/entity"
-	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -49,21 +48,16 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 	}
 	logger := st.Logger.New("org_id", orgID, "rule_uids", ruleUID)
 
-	conn := st.SQLStore
-	alertRuleTable := "alert_rule"
-	alertInstanceTable := "alert_instance"
-	alertRuleStateTable := "alert_rule_state"
-	alertRuleVersionTable := "alert_rule_version"
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
+	alertInstanceTable := dbHelper.Table("alert_instance")
+	alertRuleStateTable := dbHelper.Table("alert_rule_state")
+	alertRuleVersionTable := dbHelper.Table("alert_rule_version")
 	if st.LegacyDatabaseProvider != nil {
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return err
-		}
-		conn = dbHelper.DB
-		alertRuleTable = dbHelper.Table("alert_rule")
-		alertInstanceTable = dbHelper.Table("alert_instance")
-		alertRuleStateTable = dbHelper.Table("alert_rule_state")
-		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
 		ctx = ambientSessionFor(ctx, conn)
 	}
 
@@ -160,20 +154,18 @@ func (st RuleStore) DeleteAlertRulesByUID(ctx context.Context, orgID int64, user
 }
 
 func (st RuleStore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64, ruleUIDs []string) ([]alertRuleVersion, error) {
-	conn := st.SQLStore
-	alertRuleVersionTable := "alert_rule_version"
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn := dbHelper.DB
+	alertRuleVersionTable := dbHelper.Table("alert_rule_version")
 	if st.LegacyDatabaseProvider != nil {
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn = dbHelper.DB
-		alertRuleVersionTable = dbHelper.Table("alert_rule_version")
 		ctx = withoutAmbientSession(ctx)
 	}
 
 	var result []alertRuleVersion
-	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
+	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
 		var err error
 		result, err = latestVersionOfRulesByUID(sess, st.Logger, orgID, ruleUIDs, alertRuleVersionTable)
 		return err
@@ -473,16 +465,13 @@ func (st RuleStore) GetAlertRulesGroupByRuleUID(ctx context.Context, query *ngmo
 //
 // Served as a leading-prefix scan of the (org_id, namespace_uid, rule_group) index.
 func (st RuleStore) GetAllFoldersWithRules(ctx context.Context, orgID int64) (result map[string]struct{}, err error) {
-	conn := st.SQLStore
-	alertRuleTable := "alert_rule"
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
 	if st.LegacyDatabaseProvider != nil {
-		var dbHelper *legacysql.LegacyDatabaseHelper
-		dbHelper, err = st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn = dbHelper.DB
-		alertRuleTable = dbHelper.Table("alert_rule")
 		ctx = ambientSessionFor(ctx, conn)
 	}
 
@@ -868,23 +857,20 @@ func (st RuleStore) CountInFolders(ctx context.Context, orgID int64, folderUIDs 
 		return 0, nil
 	}
 
-	conn := st.SQLStore
-	alertRuleTable := "alert_rule"
+	// A context-dependent LegacyDatabaseProvider resolves the target database from the
+	// requester on ctx, which this interface allows callers to pass separately instead.
+	ctx = identity.WithRequester(ctx, user)
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return 0, err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
 	if st.LegacyDatabaseProvider != nil {
-		// A context-dependent LegacyDatabaseProvider resolves the target database from the
-		// requester on ctx, which this interface allows callers to pass separately instead.
-		ctx = identity.WithRequester(ctx, user)
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return 0, err
-		}
-		conn = dbHelper.DB
-		alertRuleTable = dbHelper.Table("alert_rule")
 		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	var count int64
-	var err error
 	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
 		args := make([]any, 0, len(folderUIDs))
 		for _, folderUID := range folderUIDs {
@@ -1861,20 +1847,18 @@ func (st RuleStore) DeleteInFolders(ctx context.Context, orgID int64, folderUIDs
 // LegacyDatabaseProvider, for callers that only need rule UIDs scoped to one folder (the delete
 // path here, and the folder reconciler) rather than ListAlertRules' many other callers.
 func (st RuleStore) ListAlertRuleUIDsInFolder(ctx context.Context, orgID int64, folderUID string) ([]string, error) {
-	conn := st.SQLStore
-	alertRuleTable := "alert_rule"
+	dbHelper, err := st.legacyDatabaseProvider(ctx)
+	if err != nil {
+		return nil, err
+	}
+	conn := dbHelper.DB
+	alertRuleTable := dbHelper.Table("alert_rule")
 	if st.LegacyDatabaseProvider != nil {
-		dbHelper, err := st.legacyDatabaseProvider(ctx)
-		if err != nil {
-			return nil, err
-		}
-		conn = dbHelper.DB
-		alertRuleTable = dbHelper.Table("alert_rule")
 		ctx = ambientSessionFor(ctx, conn)
 	}
 
 	var uids []string
-	err := conn.WithDbSession(ctx, func(sess *db.Session) error {
+	err = conn.WithDbSession(ctx, func(sess *db.Session) error {
 		return sess.Table(alertRuleTable).Cols("uid").Where("org_id = ? AND namespace_uid = ?", orgID, folderUID).Find(&uids)
 	})
 	if err != nil {
