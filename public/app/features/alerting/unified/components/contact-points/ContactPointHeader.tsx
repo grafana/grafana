@@ -4,7 +4,6 @@ import { Fragment, type JSX, useState } from 'react';
 import { getContactPointInUse } from '@grafana/alerting/unstable';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Dropdown, LinkButton, Menu, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import { useExportContactPoint } from 'app/features/alerting/unified/components/contact-points/useExportContactPoint';
@@ -13,6 +12,7 @@ import { useAlertmanager } from 'app/features/alerting/unified/state/Alertmanage
 import { isProvisionedResource, shouldUseK8sApi } from 'app/features/alerting/unified/utils/k8s/utils';
 
 import { useIntegrationTypeSchemas } from '../../api/integrationSchemasApi';
+import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { isGranted, isSupported } from '../../hooks/abilities/abilityUtils';
 import { useContactPointAbility } from '../../hooks/abilities/alertmanager/useContactPointAbility';
 import { ContactPointAction, isInUse, isInsufficientPermissions } from '../../hooks/abilities/types';
@@ -241,7 +241,7 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         {isProvisioned && <ProvisioningBadge tooltip provenance={provenance} />}
         {!isReferencedByAnything && <UnusedContactPointBadge />}
         <Spacer />
-        {config.unifiedAlerting.notificationHistoryEnabled && (
+        {isNotificationHistoryEnabled() && (
           <LinkButton
             variant="secondary"
             size="sm"
