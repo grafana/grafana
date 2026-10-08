@@ -4543,7 +4543,8 @@
       "metadata": {
         "name": "provisioning.gitConventions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-09T06:37:58Z"
+        "creationTimestamp": "2026-06-09T06:37:58Z",
+        "deletionTimestamp": "2026-10-08T06:01:07Z"
       },
       "spec": {
         "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",

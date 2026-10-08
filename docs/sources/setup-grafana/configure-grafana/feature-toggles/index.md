@@ -80,7 +80,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
 | `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
 | `provisioning.readmes`             | Render the README.md of a Git Sync provisioned folder inline below its dashboards list                                         |
-| `provisioning.gitConventions`      | Enable configurable commit message, branch name, and pull request title conventions for Git Sync                               |
 | `provisioning.userAttribution`     | Author Git Sync commits as the acting Grafana user                                                                             |
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
