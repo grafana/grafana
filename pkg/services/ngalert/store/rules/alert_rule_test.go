@@ -1201,10 +1201,12 @@ func TestIntegration_DeleteAlertRulesByUID_LegacyDatabaseProviderRequired(t *tes
 func TestIntegration_DeleteAlertRulesByUID_SingleConnectionPool(t *testing.T) {
 	tutil.SkipIntegrationTestInShortMode(t)
 
-	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
-	sqlStore.GetEngine().SetMaxOpenConns(1)
+	// NewTestStore gives this test its own database, isolated from the package-wide shared
+	// store InitTestDB reuses, so SetMaxOpenConns(1) below can't leak into other tests.
 	cfg := setting.NewCfg()
 	cfg.UnifiedAlerting.DeletedRuleRetention = 1000 * time.Hour
+	sqlStore := db.NewTestStore(t, sqlstore.WithCfg(cfg))
+	sqlStore.GetEngine().SetMaxOpenConns(1)
 	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
 	logger := log.New("test-dbstore")
 	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{}, featuremgmt.FlagAlertRuleRestore)
