@@ -1323,8 +1323,8 @@ func toRuleGroup(ctx context.Context, log log.Logger, groupKey ngmodels.AlertRul
 			alertingRule.Duration = rule.For.Seconds()
 			alertingRule.KeepFiringFor = rule.KeepFiringFor.Seconds()
 			alertingRule.Annotations = apimodels.LabelsFromMap(rule.Annotations)
-			alertingRule.Rule.IsPaused = rule.IsPaused
-			alertingRule.Rule.Provenance = apimodels.Provenance(provenance)
+			alertingRule.IsPaused = rule.IsPaused
+			alertingRule.Provenance = apimodels.Provenance(provenance)
 			if rule.NotificationSettings != nil {
 				alertingRule.NotificationSettings = apicompat.AlertRuleNotificationSettingsFromNotificationSettings(rule.NotificationSettings)
 			}
