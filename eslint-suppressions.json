@@ -943,7 +943,7 @@
   },
   "public/app/features/alerting/routes.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 3
+      "count": 2
     }
   },
   "public/app/features/alerting/state/alertDef.ts": {
@@ -1000,11 +1000,6 @@
     }
   },
   "public/app/features/alerting/unified/components/assistant/AnalizeRuleButton.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
-  "public/app/features/alerting/unified/components/contact-points/ContactPointHeader.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }
@@ -1191,11 +1186,6 @@
       "count": 1
     }
   },
-  "public/app/features/alerting/unified/components/rule-viewer/RuleViewer.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/alerting/unified/components/rule-viewer/tabs/QueryAndCondition.test.tsx": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1219,11 +1209,6 @@
   "public/app/features/alerting/unified/components/rules/RulesTable.tsx": {
     "react-hooks/exhaustive-deps": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistoryPage.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/components/rules/state-history/StateHistory.tsx": {
@@ -1344,11 +1329,6 @@
       "count": 3
     }
   },
-  "public/app/features/alerting/unified/notifications/NotificationsListSceneObject.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
   "public/app/features/alerting/unified/rule-editor/formDefaults.test.ts": {
     "@grafana/no-get-data-source-srv": {
       "count": 1
@@ -1382,16 +1362,6 @@
   "public/app/features/alerting/unified/testSetup/datasources.ts": {
     "@grafana/no-config-datasources": {
       "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/triage/instance-details/InstanceDetailsDrawer.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/alerting/unified/triage/instance-details/InstanceTimeline.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
     }
   },
   "public/app/features/alerting/unified/triage/instance-details/startInvestigationFromAlert.ts": {
@@ -2503,21 +2473,6 @@
       "count": 3
     },
     "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
-  },
-  "public/app/features/plugins/importer/importPluginModule.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/importer/pluginImporter.ts": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/plugins/sandbox/codeLoader.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

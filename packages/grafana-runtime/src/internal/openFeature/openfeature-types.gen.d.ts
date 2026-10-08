@@ -18,7 +18,6 @@ declare module "@openfeature/core" {
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
     | "provisioningExport"
-    | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"

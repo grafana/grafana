@@ -166,6 +166,8 @@ github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123 h
 github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260930143952-2d0116f02123/go.mod h1:2L3E8xEvJSJNKGQGWaJb3Dgd6QPRdjTZLQqKPlEgTQ0=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123 h1:zFNOhRDKMAughtwtMDpDLCwib39vxIoHyS/cQfh6VZU=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20260930143952-2d0116f02123/go.mod h1:9gvAd0/l64kHDu0uKlPV3+o4A3kqqbXbO99XIDJzVDc=
+github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0-20261007194028-8f91f8f99048 h1:Bttlvg0O9fb3Jvy/YK3ittuMhw+8vrBQArkKb64sFKU=
+github.com/grafana/grafana/pkg/storage/unified/resourceclient v0.0.0-20261007194028-8f91f8f99048/go.mod h1:yZn0D79DbiAghc5CUkAXGotlVCaoiHLg3U+eFX7kMF8=
 github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123 h1:N/PDC5wt8hSfBI0ywlAAxCbOC76TUdLDWc3wFLHcxrs=
 github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0-20260930143952-2d0116f02123/go.mod h1:3CzmhmNyG0hbCdh+JM5oDfel7QQmS4uzS2Fgw3NTcvE=
 github.com/grafana/otel-profiling-go v0.6.0 h1:W7lOZaJj4IJISXMcM1UBk3fJF3tzF2OD6MJBJaQp1H8=

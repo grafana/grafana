@@ -196,8 +196,6 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
-  /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
-  ProvisioningGitConventions: "provisioning.gitConventions",
   /** Author Git Sync commits as the acting Grafana user */
   ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Enable export functionality for provisioned resources */
@@ -1259,17 +1257,6 @@ export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationO
  */
 export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.useMTPlugins", false, options).value;
-};
-
-/**
- * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
- *
- * **Details:**
- * - flag key: `provisioning.gitConventions`
- * - default value: `true`
- */
-export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.gitConventions", true, options).value;
 };
 
 /**
