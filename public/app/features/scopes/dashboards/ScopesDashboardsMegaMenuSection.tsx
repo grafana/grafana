@@ -5,7 +5,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { useObservable } from '@grafana/data/unstable';
 import { Trans, t } from '@grafana/i18n';
 import { useScopes } from '@grafana/runtime';
-import { Button, LoadingPlaceholder, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, LoadingPlaceholder, Text, useStyles2 } from '@grafana/ui';
 
 import { useScopesServices } from '../ScopesContextProvider';
 
@@ -70,15 +70,17 @@ export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
             data-testid="scopes-dashboards-loading"
           />
         ) : filteredFolders[''] ? (
-          <ScrollContainer>
-            <ScopesDashboardsTree
-              folders={filteredFolders}
-              folderPath={['']}
-              subScopePath={[]}
-              onFolderUpdate={updateFolder}
-              onNavigate={onNavigate}
-            />
-          </ScrollContainer>
+          // No ScrollContainer here - this already lives inside MegaMenu's single outer
+          // ScrollContainer, which handles scrolling for the whole nav. Giving the tree its own
+          // nested one (flex:1/maxHeight:100%) would compete for space with the pinned box and nav
+          // list siblings instead of flowing with them.
+          <ScopesDashboardsTree
+            folders={filteredFolders}
+            folderPath={['']}
+            subScopePath={[]}
+            onFolderUpdate={updateFolder}
+            onNavigate={onNavigate}
+          />
         ) : (
           <p className={styles.noResultsContainer} data-testid="scopes-dashboards-notFoundForFilter">
             <Trans i18nKey="scopes.dashboards.noResultsForFilter">No results found for your query</Trans>
