@@ -581,6 +581,14 @@ describe('DataSourceWithBackend', () => {
   });
 
   describe('callHealthCheck', () => {
+    beforeEach(() => {
+      mockGetObjectValue.mockReturnValue({ health: ['dummy', 'canonical-id'] });
+    });
+
+    afterEach(() => {
+      mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
+    });
+
     test('check that callHealthCheck uses the data source UID', () => {
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
@@ -856,8 +864,13 @@ describe('DataSourceWithBackend', () => {
   });
 
   describe('buildResourcesDatasourceUrl', () => {
+    beforeEach(() => {
+      mockGetObjectValue.mockReturnValue({ resources: ['dummy', 'canonical-id'] });
+    });
+
     afterEach(() => {
       mockGetBooleanValue.mockReset().mockReturnValue(false);
+      mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
     });
 
     test('check that buildResourcesDatasourceUrl uses the new URL when feature flag is enabled', () => {
