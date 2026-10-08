@@ -16,7 +16,7 @@ import {
   mockTeamLabelValues,
   mockTeams,
   setupAlertIncidentTabsTests,
-} from './alertIncidentTabsTestSetup';
+} from './alertIncidentTabsTestUtils';
 import {
   ACTIVE_INCIDENTS_QUERY,
   GET_FIELDS_PATH,

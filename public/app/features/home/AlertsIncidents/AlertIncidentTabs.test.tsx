@@ -12,7 +12,7 @@ import {
   mockAlerts,
   mockIrmPlugin,
   setupAlertIncidentTabsTests,
-} from './alertIncidentTabsTestSetup';
+} from './alertIncidentTabsTestUtils';
 import { mockIncidents } from './mockIncidentsApi';
 
 jest.mock('../analytics/main', () => ({
