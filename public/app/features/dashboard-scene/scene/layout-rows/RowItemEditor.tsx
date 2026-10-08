@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef } from 'react';
+import { lazy, Suspense, useId, useMemo, useRef } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -13,6 +13,7 @@ import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSou
 
 import { edit } from '../../actions/utils/edit';
 import { useConditionalRenderingEditor } from '../../conditional-rendering/hooks/useConditionalRenderingEditor';
+import { AddSectionAnnotationButton, useSectionAnnotationLayers } from '../../sidebar/SectionAnnotationActions';
 import {
   getSectionFiltersCount,
   AddSectionFilterButton,
@@ -31,6 +32,13 @@ import { useLayoutCategory } from '../layouts-shared/DashboardLayoutSelector';
 import { generateUniqueTitle, useSidebarInputAutoFocus } from '../layouts-shared/utils';
 
 import { type RowItem } from './RowItem';
+
+// The list pulls in the annotation editor and data source picker; keep them out of the main bundle
+const SectionAnnotationsList = lazy(() =>
+  import(/* webpackChunkName: "dashboard-edit-actions" */ '../../sidebar/SectionAnnotationsList').then((m) => ({
+    default: m.SectionAnnotationsList,
+  }))
+);
 
 export function useSidebarOptions(this: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const model = this;
@@ -86,6 +94,36 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
   );
 
   const layoutCategory = useLayoutCategory(layout);
+  const annotationLayers = useSectionAnnotationLayers(model);
+
+  const sectionAnnotationsCategory = useMemo(() => {
+    // Like the dashboard-level category, show no count in the header; the sub-lists carry their own counts
+    const title = t('dashboard.rows-layout.row-options.section-annotations.title', 'Annotations');
+    const category = new OptionsPaneCategoryDescriptor({
+      title,
+      renderTitle: () => title,
+      id: SidebarCategoryType.RowSectionAnnotations,
+      isOpenDefault: true,
+      isDashboardSidebar: true,
+      itemsCount: annotationLayers.length,
+      headerActions: <AddSectionAnnotationButton sectionOwner={model} />,
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        id: SidebarCategoryType.RowSectionAnnotationsList,
+        skipField: true,
+        render: () => (
+          <Suspense fallback={null}>
+            <SectionAnnotationsList sectionOwner={model} />
+          </Suspense>
+        ),
+      })
+    );
+
+    return category;
+  }, [annotationLayers.length, model]);
 
   const sectionVariablesCategory = useMemo(() => {
     const category = new OptionsPaneCategoryDescriptor({
@@ -139,6 +177,7 @@ export function useSidebarOptions(this: RowItem, isNewElement: boolean): Options
     rowCategory,
     ...(config.featureToggles.dashboardUnifiedDrilldownControls ? [sectionFiltersCategory] : []),
     sectionVariablesCategory,
+    sectionAnnotationsCategory,
     ...layoutCategory,
     repeatCategory,
   ];

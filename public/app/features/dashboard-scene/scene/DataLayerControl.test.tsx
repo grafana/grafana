@@ -1,6 +1,7 @@
 import { act, render } from '@testing-library/react';
 
 import { SceneDataLayerBase, type SceneDataLayerProvider, type SceneDataLayerProviderState } from '@grafana/scenes';
+import { type AnnotationQuery } from '@grafana/schema';
 
 import { DashboardAnnotationsDataLayer } from './DashboardAnnotationsDataLayer';
 import { DataLayerControl } from './DataLayerControl';
@@ -59,6 +60,24 @@ describe('<DataLayerControl />', () => {
     const wrapper = container.querySelector('[data-dashboard-element-key="annotation-layer-key"]');
     expect(wrapper).toBeInTheDocument();
     expect(wrapper).toHaveAttribute('data-dashboard-element-type', 'annotation');
+  });
+
+  it('hides the annotation name when display is label hidden', async () => {
+    const layer = new DashboardAnnotationsDataLayer({
+      key: 'annotation-layer-key',
+      name: 'test-annotation',
+      isEnabled: true,
+      query: {
+        name: 'test-query',
+        enable: true,
+        iconColor: 'red',
+        hideLabel: true,
+      } as AnnotationQuery,
+    });
+
+    const { queryByText } = await renderControl(layer);
+
+    expect(queryByText('test-annotation')).not.toBeInTheDocument();
   });
 
   it('should expose data-layer type for non-annotation layers', async () => {
