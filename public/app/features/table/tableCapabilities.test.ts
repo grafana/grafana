@@ -1,6 +1,6 @@
 import { FieldType, toDataFrame } from '@grafana/data';
 
-import { supportsColumnManagement, withRefreshedTableCapabilities } from './tableCapabilities';
+import { supportsColumnManagement, withAdHocTransformCapabilities } from './tableCapabilities';
 
 const frame = () =>
   toDataFrame({
@@ -10,9 +10,9 @@ const frame = () =>
     ],
   });
 
-describe('withRefreshedTableCapabilities', () => {
+describe('withAdHocTransformCapabilities', () => {
   it('opts every column into filtering, reordering and hiding', () => {
-    const withCapabilities = withRefreshedTableCapabilities(frame());
+    const withCapabilities = withAdHocTransformCapabilities(frame());
 
     for (const field of withCapabilities.fields) {
       expect(field.config.custom).toMatchObject({ filterable: true, reorderable: true, hideable: true });
@@ -20,13 +20,13 @@ describe('withRefreshedTableCapabilities', () => {
   });
 
   it('overrides a capability the field config turned off', () => {
-    const [, b] = withRefreshedTableCapabilities(frame()).fields;
+    const [, b] = withAdHocTransformCapabilities(frame()).fields;
 
     expect(b.config.custom?.filterable).toBe(true);
   });
 
   it('leaves the rest of the field config alone', () => {
-    const [a] = withRefreshedTableCapabilities(frame()).fields;
+    const [a] = withAdHocTransformCapabilities(frame()).fields;
 
     expect(a.config.custom?.width).toBe(120);
   });
@@ -34,14 +34,14 @@ describe('withRefreshedTableCapabilities', () => {
   it('does not touch the frame it was given', () => {
     const original = frame();
 
-    withRefreshedTableCapabilities(original);
+    withAdHocTransformCapabilities(original);
 
     expect(original.fields[1].config.custom).toEqual({ filterable: false });
   });
 
   it('passes the values array through by reference', () => {
     const original = frame();
-    const [a] = withRefreshedTableCapabilities(original).fields;
+    const [a] = withAdHocTransformCapabilities(original).fields;
 
     // Scenes relies on field value identity when a field leaves the render.
     expect(a.values).toBe(original.fields[0].values);
@@ -57,7 +57,7 @@ describe('withRefreshedTableCapabilities', () => {
 
     expect(supportsColumnManagement(nested)).toBe(false);
 
-    for (const field of withRefreshedTableCapabilities(nested).fields) {
+    for (const field of withAdHocTransformCapabilities(nested).fields) {
       expect(field.config.custom).toMatchObject({ filterable: true, reorderable: false, hideable: false });
     }
   });
