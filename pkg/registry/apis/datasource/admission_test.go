@@ -334,6 +334,63 @@ func TestDataSourceUpdateGuardAllowsStaleUnifiedMirror(t *testing.T) {
 	}
 }
 
+func TestDataSourceUpdateGuardDryRunUsesSQLState(t *testing.T) {
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+	apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
+	admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
+	header := map[string]any{"team-1": "sensitive-value"}
+
+	for _, tt := range []struct {
+		name      string
+		verb      string
+		requested map[string]any
+		patch     string
+		wantError bool
+	}{
+		{name: "PUT echoes rules", verb: "update", requested: map[string]any{"teamHttpHeaders": header, "httpMethod": "POST"}},
+		{name: "PUT omits rules", verb: "update", requested: map[string]any{"httpMethod": "POST"}},
+		{name: "PUT changes rules", verb: "update", requested: map[string]any{"teamHttpHeaders": map[string]any{"team-1": "changed"}}, wantError: true},
+		{name: "PATCH changes unrelated field", verb: "patch", patch: `{"spec":{"jsonData":{"httpMethod":"POST"}}}`},
+		{name: "PATCH removes rules", verb: "patch", patch: `{"spec":{"jsonData":{"teamHttpHeaders":null}}}`, wantError: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			stored := updateGuardDataSource("example", map[string]any{"teamHttpHeaders": header, "httpMethod": "GET"})
+			provider := &countingUpdateDatasourceProvider{stored: stored.DeepCopy()}
+			legacy := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
+			mirror := &updateGuardMirrorStorage{
+				old:  updateGuardDataSource("example", map[string]any{"httpMethod": "GET"}),
+				done: make(chan error, 1),
+			}
+			cfg := dualwrite.NewFakeConfig()
+			cfg.UnifiedStorage[resourceInfo.GroupResource().String()] = setting.UnifiedStorageConfig{DualWriterMode: grafanarest.Mode1}
+			store, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(resourceInfo.GroupResource(), legacy, mirror)
+			require.NoError(t, err)
+
+			var objInfo rest.UpdatedObjectInfo
+			if tt.patch != "" {
+				objInfo = admittedMergePatchInfo(tt.patch, resourceInfo, admissionPlugin)
+			} else {
+				objInfo = admittedUpdateInfo(updateGuardDataSource("example", tt.requested), resourceInfo, admissionPlugin)
+			}
+			ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: tt.verb})
+			obj, _, err := store.Update(ctx, "example", objInfo, nil, nil, false, &metav1.UpdateOptions{DryRun: []string{metav1.DryRunAll}})
+			if tt.wantError {
+				require.True(t, apierrors.IsInvalid(err), "expected an invalid-object response: %v", err)
+				require.Empty(t, mirror.done)
+			} else {
+				require.NoError(t, err)
+				jsonData, _ := obj.(*datasourceV0.DataSource).Spec.JSONData().(map[string]any)
+				require.Equal(t, header, jsonData["teamHttpHeaders"])
+				require.NoError(t, <-mirror.done)
+				require.Equal(t, []string{metav1.DryRunAll}, mirror.dryRun)
+			}
+			require.Zero(t, provider.updates)
+			require.Equal(t, stored, provider.stored)
+		})
+	}
+}
+
 func TestDataSourceUpdateGuardUnifiedPrimary(t *testing.T) {
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
@@ -363,13 +420,15 @@ func TestDataSourceUpdateGuardUnifiedPrimary(t *testing.T) {
 
 type updateGuardMirrorStorage struct {
 	grafanarest.Storage
-	old  *datasourceV0.DataSource
-	done chan error
+	old    *datasourceV0.DataSource
+	done   chan error
+	dryRun []string
 }
 
 func (s *updateGuardMirrorStorage) Update(ctx context.Context, _ string, info rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc,
-	_ rest.ValidateObjectUpdateFunc, _ bool, _ *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	_ rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
 	obj, err := info.UpdatedObject(ctx, s.old.DeepCopy())
+	s.dryRun = append([]string(nil), options.DryRun...)
 	s.done <- err
 	return obj, false, err
 }
@@ -387,6 +446,26 @@ func admittedUpdateInfo(requested *datasourceV0.DataSource, resourceInfo utils.R
 		attrs := admission.NewAttributesRecord(ds, old, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
 			resourceInfo.GroupVersionResource(), "", admission.Update, &metav1.UpdateOptions{}, false, nil)
 		return ds, plugin.Admit(ctx, attrs, nil)
+	})
+}
+
+func admittedMergePatchInfo(patch string, resourceInfo utils.ResourceInfo, plugin admission.MutationInterface) rest.UpdatedObjectInfo {
+	return rest.DefaultUpdatedObjectInfo(nil, func(ctx context.Context, _, old runtime.Object) (runtime.Object, error) {
+		base, err := json.Marshal(old)
+		if err != nil {
+			return nil, err
+		}
+		patched, err := jsonpatch.MergePatch(base, []byte(patch))
+		if err != nil {
+			return nil, err
+		}
+		var proposed datasourceV0.DataSource
+		if err := json.Unmarshal(patched, &proposed); err != nil {
+			return nil, err
+		}
+		attrs := admission.NewAttributesRecord(&proposed, old, resourceInfo.GroupVersionKind(), proposed.Namespace, proposed.Name,
+			resourceInfo.GroupVersionResource(), "", admission.Update, &metav1.UpdateOptions{}, false, nil)
+		return &proposed, plugin.Admit(ctx, attrs, nil)
 	})
 }
 

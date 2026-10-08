@@ -49,6 +49,15 @@ type dualWriter struct {
 	metrics *dualWriterMetrics
 }
 
+// DryRunUpdatePreparer evaluates UpdatedObjectInfo against the authoritative
+// legacy object without writing it. Calling UpdatedObject runs the request's
+// transformers, including mutating admission, so they see the same stored
+// object as a live update. Validating admission runs later in unified storage's
+// dry-run through the separate updateValidation callback.
+type DryRunUpdatePreparer interface {
+	PrepareDryRunUpdate(ctx context.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, error)
+}
+
 func (d *dualWriter) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	readUnified, errorIsOK := d.getMode(ctx)
 	ctx, span := tracer.Start(ctx, "dualwrite.dualWriter.Get",
@@ -361,11 +370,25 @@ func (d *dualWriter) Update(ctx context.Context, name string, objInfo rest.Updat
 			attribute.Bool("readUnified", readUnified)))
 	defer span.End()
 
-	// During dry-run, skip legacy storage and delegate directly to unified storage
-	// which already handles dry-run correctly via DryRunnableStorage.
+	// During dry-run, skip legacy writes and delegate the simulation to unified
+	// storage, which handles dry-run via DryRunnableStorage. If legacy storage
+	// can prepare an update without writing, use its authoritative object for
+	// admission before the unified simulation.
 	if dryrun.IsDryRun(options.DryRun) {
 		if readUnified {
 			return d.unified.Update(ctx, name, objInfo, createValidation, updateValidation, forceAllowCreate, options)
+		}
+		if preparer, ok := d.legacy.(DryRunUpdatePreparer); ok {
+			ctx = addToContext(ctx)
+			approved, err := preparer.PrepareDryRunUpdate(ctx, name, objInfo)
+			if err != nil {
+				return nil, false, err
+			}
+			unifiedInfo := &wrappedUpdateInfo{
+				objInfo:             rest.DefaultUpdatedObjectInfo(approved),
+				updatedSecureValues: getUpdatedSecureValues(ctx),
+			}
+			return d.unified.Update(withMirroredUpdate(ctx), name, unifiedInfo, createValidation, updateValidation, true, options)
 		}
 		return d.unified.Update(ctx, name, &wrappedUpdateInfo{objInfo: objInfo}, createValidation, updateValidation, true, options)
 	}
