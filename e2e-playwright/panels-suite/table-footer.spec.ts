@@ -19,7 +19,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const minColumnIdx = await getColumnIdx(table, 'Min');
 
@@ -64,7 +64,7 @@ test.describe('Panels test: Table - Footer', { tag: ['@panels', '@table'] }, () 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const minColumnIdx = await getColumnIdx(table, 'Min');
 

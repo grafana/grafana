@@ -139,8 +139,6 @@ describe('queryResultToViewItem', () => {
       tags: [],
       location: '',
       ds_uid: [],
-      score: 0,
-      explain: {},
       ...partial,
     };
   }

@@ -877,18 +877,20 @@ func (k *failingBatchGetKV) BatchGet(ctx context.Context, section string, keys [
 	}
 }
 
-type failSecondBatchGetKV struct {
+// failDataBatchGetsKV fails every data BatchGet from the failFrom-th call on.
+type failDataBatchGetsKV struct {
 	KV
 	err       error
+	failFrom  int
 	dataCalls int
 }
 
-func (k *failSecondBatchGetKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+func (k *failDataBatchGetsKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
 	if section != kv.DataSection {
 		return k.KV.BatchGet(ctx, section, keys)
 	}
 	k.dataCalls++
-	if k.dataCalls != 2 {
+	if k.dataCalls < k.failFrom {
 		return k.KV.BatchGet(ctx, section, keys)
 	}
 	return func(yield func(kv.KeyValue, error) bool) {
@@ -1486,10 +1488,10 @@ func TestKvStorageBackend_BatchReadResource_TooHighResourceVersion(t *testing.T)
 
 	// A batch mixing a valid read with a too-high RV must reject only the latter,
 	// matching ReadResource, instead of resolving a lower retained revision.
-	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{
+	responses, err := backend.BatchReadResource(ctx, asBatchReads([]*resourcepb.ReadRequest{
 		{Key: key},
 		{Key: key, ResourceVersion: rv + 1000000000000},
-	}, false)
+	}), false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 2)
@@ -1506,10 +1508,10 @@ func TestKvStorageBackend_BatchReadResource_LatestResourceVersionFailureIsUpfron
 	ctx, cancel := context.WithCancel(t.Context())
 	cancel()
 
-	responses, err := backend.BatchReadResource(ctx, []*resourcepb.ReadRequest{{
+	responses, err := backend.BatchReadResource(ctx, asBatchReads([]*resourcepb.ReadRequest{{
 		Key:             appsKey("test-resource"),
 		ResourceVersion: rv,
-	}}, false)
+	}}), false)
 
 	require.ErrorIs(t, err, context.Canceled)
 	require.Nil(t, responses)
@@ -1530,7 +1532,7 @@ func TestKvStorageBackend_BatchReadResource_YieldsInRequestOrder(t *testing.T) {
 	}
 	requests[0], requests[2] = requests[2], requests[0]
 
-	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	responses, err := backend.BatchReadResource(t.Context(), asBatchReads(requests), false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, len(requests))
@@ -1553,7 +1555,7 @@ func TestKvStorageBackend_BatchReadResource_InvalidName(t *testing.T) {
 		{Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: "a"}},
 		{Key: invalidKey, ResourceVersion: rv + 1000000000000},
 	}
-	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	responses, err := backend.BatchReadResource(t.Context(), asBatchReads(requests), false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 3)
@@ -1567,7 +1569,9 @@ func TestKvStorageBackend_BatchReadResource_InvalidName(t *testing.T) {
 	require.Contains(t, got[2].Error.Message, "too large resource version")
 }
 
-func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(t *testing.T) {
+// Resolved reads stream their bodies. An exact-version hit is read in the same
+// call that found it, so this reads the latest versions, which always resolve.
+func TestKvStorageBackend_BatchReadResource_StopsReadingResolvedBodiesWhenConsumerStops(t *testing.T) {
 	kvWrapper := &bodyReadCountingKV{}
 	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 		kvWrapper.KV = opts.KvStore
@@ -1578,15 +1582,14 @@ func TestKvStorageBackend_BatchReadResource_StopsReadingBodiesWhenConsumerStops(
 		name := fmt.Sprintf("lazy-%02d", i)
 		obj, err := createTestObjectWithName(name, appsNamespace, "value")
 		require.NoError(t, err)
-		rv, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+		_, err = writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
 		require.NoError(t, err)
 		requests = append(requests, &resourcepb.ReadRequest{
-			Key:             &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name},
-			ResourceVersion: rv,
+			Key: &resourcepb.ResourceKey{Namespace: "default", Group: "apps", Resource: "resources", Name: name},
 		})
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	responses, err := backend.BatchReadResource(t.Context(), asBatchReads(requests), false)
 	require.NoError(t, err)
 	const wanted = 3
 	read := 0
@@ -1619,7 +1622,7 @@ func TestKvStorageBackend_BatchReadResource_MissingBodyKeepsPosition(t *testing.
 		})
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	responses, err := backend.BatchReadResource(t.Context(), asBatchReads(requests), false)
 	require.NoError(t, err)
 	got := collectBatchReadResponses(t, responses)
 	require.Len(t, got, 3)
@@ -1642,7 +1645,7 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 		{Key: appsKey("after"), ResourceVersion: seedResource(t, backend, t.Context(), "after", "")},
 	}
 
-	responses, err := backend.BatchReadResource(t.Context(), requests, false)
+	responses, err := backend.BatchReadResource(t.Context(), asBatchReads(requests), false)
 	require.NoError(t, err)
 	for response := range responses {
 		require.Equal(t, int32(http.StatusNotFound), response.Error.Code)
@@ -1652,24 +1655,49 @@ func TestKvStorageBackend_BatchReadResource_ClosesPrefetchedBodyWhenConsumerStop
 }
 
 func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) {
+	// With a right folder hint the exact read fails: a failed BatchGet belongs to
+	// the batch and names no object, a body that cannot be read belongs to its
+	// request. A wrong hint sends every request to the resolved read, which fails
+	// at the object it was reading.
 	tests := []struct {
 		name       string
 		firstError int
 		message    string
+		wrongHint  bool
+		batchError bool
 		wrap       func(KV) KV
 	}{
 		{
-			name:       "batch get",
+			name:       "exact batch get",
 			firstError: 0,
 			message:    "storage is down",
+			batchError: true,
 			wrap: func(store KV) KV {
 				return &failingBatchGetKV{KV: store, err: errors.New("storage is down")}
 			},
 		},
 		{
-			name:       "body read",
+			name:       "exact body read",
 			firstError: 1,
 			message:    "value is corrupt",
+			wrap: func(store KV) KV {
+				return &unreadableValueKV{KV: store, nameMatch: "failure-1", err: errors.New("value is corrupt")}
+			},
+		},
+		{
+			name:       "resolved batch get",
+			firstError: 0,
+			message:    "storage is down",
+			wrongHint:  true,
+			wrap: func(store KV) KV {
+				return &failDataBatchGetsKV{KV: store, err: errors.New("storage is down"), failFrom: 2}
+			},
+		},
+		{
+			name:       "resolved body read",
+			firstError: 1,
+			message:    "value is corrupt",
+			wrongHint:  true,
 			wrap: func(store KV) KV {
 				return &unreadableValueKV{KV: store, nameMatch: "failure-1", err: errors.New("value is corrupt")}
 			},
@@ -1681,13 +1709,17 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 			backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
 				opts.KvStore = tc.wrap(opts.KvStore)
 			})
-			requests := make([]*resourcepb.ReadRequest, 0, 3)
+			requests := make([]BatchReadRequest, 0, 3)
 			folders := make([]string, 0, 3)
 			for i := range 3 {
 				name := fmt.Sprintf("failure-%d", i)
 				folder := fmt.Sprintf("folder-%d", i)
 				rv := seedResource(t, backend, t.Context(), name, folder)
-				requests = append(requests, &resourcepb.ReadRequest{Key: appsKey(name), ResourceVersion: rv})
+				hint := folder
+				if tc.wrongHint {
+					hint = "elsewhere"
+				}
+				requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{Key: appsKey(name), ResourceVersion: rv}, Folder: hint})
 				folders = append(folders, folder)
 			}
 
@@ -1696,9 +1728,13 @@ func TestKvStorageBackend_BatchReadResource_StopsAtRuntimeFailure(t *testing.T) 
 			got := collectBatchReadResponses(t, responses)
 			require.Len(t, got, tc.firstError+1)
 			for i, response := range got {
-				require.Equal(t, requests[i].Key, response.Key)
-				require.Equal(t, requests[i].ResourceVersion, response.ResourceVersion)
-				require.Equal(t, folders[i], response.Folder)
+				if i < tc.firstError || !tc.batchError {
+					require.Equal(t, requests[i].Key, response.Key)
+					require.Equal(t, requests[i].ResourceVersion, response.ResourceVersion)
+					require.Equal(t, folders[i], response.Folder)
+				} else {
+					require.Equal(t, &BackendReadResponse{Error: response.Error}, response, "a batch error names no object")
+				}
 				if i < tc.firstError {
 					require.Nil(t, response.Error)
 					continue
@@ -1716,6 +1752,15 @@ func TestUnimplementedStorageBackend_BatchReadResourceReturnsUnsupportedUpFront(
 	require.Nil(t, responses)
 }
 
+// asBatchReads wraps requests without a folder hint.
+func asBatchReads(requests []*resourcepb.ReadRequest) []BatchReadRequest {
+	reads := make([]BatchReadRequest, len(requests))
+	for i, request := range requests {
+		reads[i] = BatchReadRequest{ReadRequest: request}
+	}
+	return reads
+}
+
 func collectBatchReadResponses(t *testing.T, responses iter.Seq[*BackendReadResponse]) []*BackendReadResponse {
 	t.Helper()
 	var got []*BackendReadResponse
@@ -1727,7 +1772,7 @@ func collectBatchReadResponses(t *testing.T, responses iter.Seq[*BackendReadResp
 
 func batchReadResources(t *testing.T, ctx context.Context, backend StorageBackend, requests []*resourcepb.ReadRequest, includeDeleted bool) []*BackendReadResponse {
 	t.Helper()
-	responses, err := backend.BatchReadResource(ctx, requests, includeDeleted)
+	responses, err := backend.BatchReadResource(ctx, asBatchReads(requests), includeDeleted)
 	require.NoError(t, err)
 	return collectBatchReadResponses(t, responses)
 }
@@ -4977,4 +5022,113 @@ func TestListModifiedSinceSingleConnection(t *testing.T) {
 			require.NoError(t, pool.PingContext(ctx))
 		})
 	}
+}
+
+// keyScanCountingKV counts data key scans, which is what resolving a key costs.
+type keyScanCountingKV struct {
+	KV
+	scans atomic.Int64
+}
+
+func (k *keyScanCountingKV) Keys(ctx context.Context, section string, opt ListOptions) iter.Seq2[string, error] {
+	if section == kv.DataSection {
+		k.scans.Add(1)
+	}
+	return k.KV.Keys(ctx, section, opt)
+}
+
+func TestKvStorageBackend_BatchReadResource_ReadsExactVersionsByFolderHint(t *testing.T) {
+	keys := &keyScanCountingKV{}
+	backend := setupTestStorageBackend(t, func(opts *KVBackendOptions) {
+		keys.KV = opts.KvStore
+		opts.KvStore = keys
+	})
+
+	obj, err := createTestObjectWithName("exact", appsNamespace, "v1")
+	require.NoError(t, err)
+	meta, err := utils.MetaAccessor(obj)
+	require.NoError(t, err)
+	meta.SetFolder("folder-1")
+	created, err := writeObject(t, backend, obj, resourcepb.WatchEvent_ADDED, 0)
+	require.NoError(t, err)
+	createdBody := objectToJSONBytes(t, obj)
+	obj.Object["spec"] = map[string]any{"value": "v2"}
+	updated, err := writeObject(t, backend, obj, resourcepb.WatchEvent_MODIFIED, created)
+	require.NoError(t, err)
+	updatedBody := objectToJSONBytes(t, obj)
+	deleted, err := writeObject(t, backend, obj, resourcepb.WatchEvent_DELETED, updated)
+	require.NoError(t, err)
+
+	key := storageTestKey("exact")
+	hint := func(rv int64, folder string) BatchReadRequest {
+		return BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{Key: key, ResourceVersion: rv}, Folder: folder}
+	}
+	read := func(t *testing.T, includeDeleted bool, reads ...BatchReadRequest) []*BackendReadResponse {
+		t.Helper()
+		keys.scans.Store(0)
+		responses, err := backend.BatchReadResource(t.Context(), reads, includeDeleted)
+		require.NoError(t, err)
+		return collectBatchReadResponses(t, responses)
+	}
+
+	t.Run("created and updated versions are read by exact key", func(t *testing.T) {
+		got := read(t, false, hint(created, "folder-1"), hint(updated, "folder-1"))
+
+		require.Len(t, got, 2)
+		for i, want := range []struct {
+			rv   int64
+			body []byte
+		}{{created, createdBody}, {updated, updatedBody}} {
+			require.Nil(t, got[i].Error)
+			require.Equal(t, want.rv, got[i].ResourceVersion)
+			require.Equal(t, want.body, got[i].Value)
+			require.Equal(t, "folder-1", got[i].Folder)
+			require.Equal(t, key, got[i].Key)
+		}
+		require.Zero(t, keys.scans.Load(), "no key was resolved")
+	})
+
+	t.Run("a deletion marker is read by exact key when included", func(t *testing.T) {
+		got := read(t, true, hint(deleted, "folder-1"))
+
+		require.Len(t, got, 1)
+		require.Nil(t, got[0].Error)
+		require.Equal(t, deleted, got[0].ResourceVersion)
+		require.Equal(t, updatedBody, got[0].Value)
+		require.Zero(t, keys.scans.Load())
+	})
+
+	t.Run("a live read of a deleted version is not found", func(t *testing.T) {
+		got := read(t, false, hint(deleted, "folder-1"))
+
+		require.Len(t, got, 1)
+		require.Equal(t, int32(http.StatusNotFound), got[0].Error.GetCode())
+	})
+
+	t.Run("a wrong folder falls back to resolving the key", func(t *testing.T) {
+		got := read(t, false, hint(updated, "folder-2"))
+
+		require.Len(t, got, 1)
+		require.Nil(t, got[0].Error)
+		require.Equal(t, updated, got[0].ResourceVersion)
+		require.Equal(t, updatedBody, got[0].Value)
+		require.Equal(t, "folder-1", got[0].Folder, "the folder comes from storage, not the hint")
+		require.NotZero(t, keys.scans.Load())
+	})
+
+	t.Run("hits and fallbacks keep request order", func(t *testing.T) {
+		got := read(t, false, hint(updated, "folder-2"), hint(created, "folder-1"), hint(deleted, "folder-1"))
+
+		require.Len(t, got, 3)
+		require.Equal(t, updated, got[0].ResourceVersion)
+		require.Equal(t, created, got[1].ResourceVersion)
+		require.Equal(t, int32(http.StatusNotFound), got[2].Error.GetCode())
+	})
+
+	t.Run("a too large version is still rejected", func(t *testing.T) {
+		got := read(t, false, hint(deleted+1_000_000_000_000, "folder-1"))
+
+		require.Len(t, got, 1)
+		require.Equal(t, int32(http.StatusBadRequest), got[0].Error.GetCode())
+	})
 }

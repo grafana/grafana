@@ -216,6 +216,16 @@ type ResourceLastImportTime struct {
 	LastImportTime time.Time
 }
 
+// BatchReadRequest is one object of a batch read.
+type BatchReadRequest struct {
+	*resourcepb.ReadRequest
+
+	// Folder is where the caller expects the version at ResourceVersion to be,
+	// such as the folder the search index recorded for it. It only lets the read
+	// skip a key lookup: a wrong folder costs that lookup, never a wrong answer.
+	Folder string
+}
+
 // The StorageBackend is an internal abstraction that supports interacting with
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
@@ -228,12 +238,12 @@ type StorageBackend interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
-	// BatchReadResource lazily reads several resources, yielding one response per
-	// request in order. Body reads stop when the consumer stops. The up-front error
-	// reports failures that happen before iteration; per-request failures are set
-	// on BackendReadResponse.Error. When includeDeleted is true, deletion markers
-	// can be resolved at their explicit resource versions.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error)
+	// BatchReadResource reads several resources, yielding one response per request
+	// in order. The up-front error reports failures that happen before iteration;
+	// per-request failures are set on BackendReadResponse.Error. When
+	// includeDeleted is true, deletion markers can be resolved at their explicit
+	// resource versions.
+	BatchReadResource(context.Context, []BatchReadRequest, bool) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be

@@ -1,6 +1,5 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { type Props as AutoSizerProps } from 'react-virtualized-auto-sizer';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -277,8 +276,7 @@ describe('Explore', () => {
 
       expect(await screen.findByTestId('signal-card-A')).toBeInTheDocument();
 
-      await userEvent.click(screen.getByRole('button', { name: /^Expand datasource explorer for query A / }));
-
+      // A leading Prometheus card opens by default.
       expect(screen.getByPlaceholderText('Search metrics')).toBeInTheDocument();
     });
 

@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type ReactNode, useId, useState } from 'react';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import { colorManipulator, type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -15,6 +15,8 @@ interface Props {
    */
   isExpandable: boolean;
   isExpanded: boolean;
+  /** With no other card to keep in view, an expanded card takes the whole card area. */
+  isOnlyCard: boolean;
   onToggleExpanded: () => void;
   onJumpToQuery: () => void;
   children?: ReactNode;
@@ -31,12 +33,29 @@ export function SignalCard({
   datasourceLogo,
   isExpandable,
   isExpanded,
+  isOnlyCard,
   onToggleExpanded,
   onJumpToQuery,
   children,
 }: Props) {
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, isOnlyCard);
   const expanded = isExpandable && isExpanded;
+  const cardRef = useRef<HTMLDivElement>(null);
+  // Only a card the user opens is scrolled to: one opened by default must not move the sidebar.
+  const scrollOnExpandRef = useRef(false);
+
+  useEffect(() => {
+    if (expanded && scrollOnExpandRef.current) {
+      // An expanded card is nearly as tall as the card area, so it usually opens past the bottom edge.
+      cardRef.current?.scrollIntoView({ block: 'nearest' });
+    }
+    scrollOnExpandRef.current = false;
+  }, [expanded]);
+
+  const toggleExpanded = () => {
+    scrollOnExpandRef.current = !expanded;
+    onToggleExpanded();
+  };
   // refIds are user-editable, so deriving the id from one risks characters that make
   // aria-controls unresolvable, or collisions with another card in a split pane.
   const bodyId = useId();
@@ -71,12 +90,16 @@ export function SignalCard({
       onJumpToQuery();
     }
     if (isExpandable) {
-      onToggleExpanded();
+      toggleExpanded();
     }
   };
 
   return (
-    <div className={cx(styles.card, expanded && styles.cardExpanded)} data-testid={`signal-card-${refId}`}>
+    <div
+      ref={cardRef}
+      className={cx(styles.card, expanded && styles.cardExpanded)}
+      data-testid={`signal-card-${refId}`}
+    >
       <div
         className={cx(
           styles.cardHeader,
@@ -119,19 +142,18 @@ export function SignalCard({
 
 // Matches the panel editor's SidebarCard sizing.
 const CARD_HEIGHT = 30;
-/**
- * Caps an expanded card so several open at once each stay reachable. Body content
- * is expected to scroll within that cap, while the card list scrolls around it.
- *
- * 360px fits the search field plus roughly ten metric rows - enough to browse without
- * constant scrolling, while still keeping an open card to about half the height of a
- * typical sidebar so the cards below it stay in view.
- */
-const EXPANDED_BODY_MAX_HEIGHT = 360;
+// Keeps the search field and a few metric rows usable in a short window, where `100cqh` gets small.
+const EXPANDED_CARD_MIN_HEIGHT = 200;
 
-const getStyles = (theme: GrafanaTheme2) => {
+const getStyles = (theme: GrafanaTheme2, isOnlyCard: boolean) => {
   // Room the revealed chevron needs, so it never sits on top of the datasource logo.
   const chevronGutter = theme.spacing(3.5);
+  // `cqh` resolves against SignalExplorer's card area, so these mirror its list's bottom padding and
+  // gap. With other cards, the next one stays in view below: its header plus top and bottom borders.
+  const listBottomPadding = theme.spacing(1);
+  const expandedHeight = isOnlyCard
+    ? `calc(100cqh - ${listBottomPadding})`
+    : `calc(100cqh - ${listBottomPadding} - ${theme.spacing(1)} - ${CARD_HEIGHT + 2}px)`;
 
   const cardChevron = css({
     label: 'signal-card-chevron',
@@ -190,7 +212,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     card: css({
       label: 'signal-card',
       position: 'relative',
-      // Cards keep their natural height and order; an expanded one grows in place.
+      // The list never squeezes a card; an expanded one grows in place and the list scrolls instead.
       flexShrink: 0,
       minHeight: CARD_HEIGHT,
       background: theme.colors.background.primary,
@@ -202,6 +224,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'signal-card-expanded',
       display: 'flex',
       flexDirection: 'column',
+      // Fixed rather than capped, so the card doesn't jump in size as its metrics load.
+      height: expandedHeight,
+      minHeight: EXPANDED_CARD_MIN_HEIGHT,
       '&::before': {
         content: '""',
         position: 'absolute',
@@ -271,8 +296,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       label: 'signal-card-body',
       display: 'flex',
       flexDirection: 'column',
+      flex: '1 1 auto',
       minHeight: 0,
-      maxHeight: EXPANDED_BODY_MAX_HEIGHT,
       borderTop: `1px solid ${theme.colors.border.weak}`,
     }),
   };

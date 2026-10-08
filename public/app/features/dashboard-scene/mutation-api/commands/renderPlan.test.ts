@@ -14,7 +14,7 @@ import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
-import { renderPlanContractFixture } from './renderPlanContractFixture';
+import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
@@ -158,6 +158,79 @@ describe('RENDER_PLAN', () => {
       'Throughput',
       'Errors',
     ]);
+  });
+
+  describe('rows nested inside a tab', () => {
+    const nestedPlan = {
+      ...plan,
+      layout: 'tabs' as const,
+      sections: [
+        {
+          title: 'Overview',
+          panels: [],
+          sections: [
+            { title: 'Service health', panels: [{ title: 'Request rate', vizType: 'timeseries' }] },
+            { title: 'Order flow', panels: [{ title: 'Revenue', vizType: 'timeseries' }] },
+          ],
+        },
+        { title: 'Details', panels: [{ title: 'Orders by country', vizType: 'barchart' }] },
+      ],
+    };
+
+    it('renders the nested rows and their panels instead of an empty tab', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
+
+      expect(result.success).toBe(true);
+      const [overview, details] = (scene.state.body as TabsLayoutManager).state.tabs;
+      const overviewLayout = overview.getLayout();
+      expect(overviewLayout).toBeInstanceOf(RowsLayoutManager);
+      expect((overviewLayout as RowsLayoutManager).state.rows.map((r) => r.state.title)).toEqual([
+        'Service health',
+        'Order flow',
+      ]);
+      expect(overviewLayout.getVizPanels().map((p) => p.state.title)).toEqual(['Request rate', 'Revenue']);
+      expect(details.getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(scene.state.body.getVizPanels().map((p) => p.state.key)).toEqual(['panel-1', 'panel-2', 'panel-3']);
+    });
+
+    it('cannot drag or resize the grids inside nested rows', async () => {
+      const { scene, client } = setup();
+
+      await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
+
+      const overview = (scene.state.body as TabsLayoutManager).state.tabs[0].getLayout() as RowsLayoutManager;
+      const grid = (overview.state.rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+      expect(grid.isDraggable()).toBe(false);
+      expect(grid.state.isResizable).toBe(false);
+    });
+
+    it('refuses nested rows when the plan layout is rows, and leaves the scene untouched', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: { ...nestedPlan, layout: 'rows' } });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.title).toBe('hello');
+      expect(scene.state.planning).toBeUndefined();
+    });
+
+    it('refuses a tab that has both its own panels and nested rows', async () => {
+      const { scene, client } = setup();
+      const [overview, details] = nestedPlan.sections;
+
+      const result = await client.execute({
+        type: 'RENDER_PLAN',
+        payload: {
+          ...nestedPlan,
+          sections: [{ ...overview, panels: [{ title: 'Stray panel', vizType: 'stat' }] }, details],
+        },
+      });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.planning).toBeUndefined();
+    });
   });
 
   it('renders stand-in variables alongside the plan, with generated sample values', async () => {
@@ -387,6 +460,23 @@ describe('RENDER_PLAN', () => {
     );
     expect(scene.state.$variables?.state.variables.map((v) => v.state.name)).toEqual(
       renderPlanContractFixture.variables
+    );
+  });
+
+  it('CONTRACT: accepts and renders the nested-tabs fixture payload', async () => {
+    const { scene, client } = setup();
+
+    const result = await client.execute({ type: 'RENDER_PLAN', payload: renderPlanNestedTabsContractFixture });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
+    expect((scene.state.body as TabsLayoutManager).state.tabs.map((t) => t.state.title)).toEqual(
+      renderPlanNestedTabsContractFixture.sections.map((s) => s.title)
+    );
+    expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(
+      renderPlanNestedTabsContractFixture.sections.flatMap((s) =>
+        (s.sections ?? [s]).flatMap((row) => row.panels.map((p) => p.title))
+      )
     );
   });
 });

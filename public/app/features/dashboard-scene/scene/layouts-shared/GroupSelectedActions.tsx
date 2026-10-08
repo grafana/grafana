@@ -50,9 +50,9 @@ export function GroupSelectedActions({ items }: Props) {
     groupSelectionInto({ source: manager.getRoot(), items, target });
 
     if (target === 'row') {
-      DashboardInteractions.trackGroupRowClick();
+      DashboardInteractions.trackGroupRowClick('edit_pane');
     } else {
-      DashboardInteractions.trackGroupTabClick();
+      DashboardInteractions.trackGroupTabClick('edit_pane');
     }
   };
 
