@@ -4,8 +4,8 @@ export function supportsColumnManagement(frame: DataFrame | undefined): boolean 
   return Boolean(frame && !frame.fields.some((field) => field.type === FieldType.nestedFrames));
 }
 
-/** Enables the refreshed table capabilities on every field without mutating the frame. */
-export function withRefreshedTableCapabilities(
+/** Sets field capabilities for ad hoc transformations without mutating the frame. */
+export function withAdHocTransformCapabilities(
   frame: DataFrame,
   columnManagementEnabled = supportsColumnManagement(frame)
 ): DataFrame {
