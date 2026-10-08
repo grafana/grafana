@@ -1,6 +1,6 @@
 import { render, screen } from 'test/test-utils';
 
-import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, type RepositoryStatus } from 'app/api/clients/provisioning/v0alpha1';
 
 import { RepositoryPullStatusCard } from './RepositoryPullStatusCard';
 
@@ -27,6 +27,121 @@ const createMockRepository = (overrides: Partial<Repository> = {}): Repository =
 });
 
 describe('RepositoryPullStatusCard', () => {
+  describe('last checked display', () => {
+    const toLocaleString = Date.prototype.toLocaleString;
+
+    beforeEach(() => {
+      jest.spyOn(Date.prototype, 'toLocaleString').mockImplementation(function (this: Date) {
+        return toLocaleString.call(this, 'en-US', { timeZone: 'UTC' });
+      });
+    });
+
+    afterEach(() => {
+      jest.restoreAllMocks();
+    });
+
+    it('updates the check time independently of the previous pull details', () => {
+      const status: RepositoryStatus = {
+        health: { healthy: true },
+        observedGeneration: 1,
+        sync: {
+          state: 'warning',
+          message: ['Some resources could not be synced'],
+          job: 'pull-123',
+          lastRef: 'abc1234567890',
+          finished: Date.UTC(2026, 9, 8, 10),
+          lastChecked: Date.UTC(2026, 9, 8, 11),
+        },
+      };
+      const { rerender } = render(<RepositoryPullStatusCard repo={createMockRepository({ status })} />);
+
+      expect(screen.getByText('Last checked:').nextElementSibling).toHaveTextContent('10/8/2026, 11:00:00 AM');
+      expect(screen.getByText('Last successful pull:').nextElementSibling).toHaveTextContent('10/8/2026, 10:00:00 AM');
+
+      rerender(
+        <RepositoryPullStatusCard
+          repo={createMockRepository({
+            status: { ...status, sync: { ...status.sync, lastChecked: Date.UTC(2026, 9, 8, 12) } },
+          })}
+        />
+      );
+
+      expect(screen.getByText('Last checked:').nextElementSibling).toHaveTextContent('10/8/2026, 12:00:00 PM');
+      expect(screen.getByText('Last successful pull:').nextElementSibling).toHaveTextContent('10/8/2026, 10:00:00 AM');
+      expect(screen.getByText('Status:').nextElementSibling).toHaveTextContent('warning');
+      expect(screen.getByText('Job ID:').nextElementSibling).toHaveTextContent('pull-123');
+      expect(screen.getByRole('link', { name: 'abc1234' })).toHaveAttribute(
+        'href',
+        'https://github.com/owner/repo/commit/abc1234567890'
+      );
+      expect(screen.getByText('Some resources could not be synced')).toBeInTheDocument();
+    });
+
+    it.each([
+      { name: 'missing', lastChecked: undefined },
+      { name: 'zero', lastChecked: 0 },
+    ])('hides a $name check time while preserving the pull completion time', ({ lastChecked }) => {
+      const repo = createMockRepository({
+        status: {
+          health: { healthy: true },
+          observedGeneration: 1,
+          sync: { state: 'success', message: [], finished: Date.UTC(2026, 9, 8, 10), lastChecked },
+        },
+      });
+      render(<RepositoryPullStatusCard repo={repo} />);
+
+      expect(screen.getByText('Last successful pull:').nextElementSibling).toHaveTextContent('10/8/2026, 10:00:00 AM');
+      expect(screen.queryByText('Last checked:')).not.toBeInTheDocument();
+    });
+
+    it('hides the check time when repository status is absent', () => {
+      render(<RepositoryPullStatusCard repo={createMockRepository({ status: undefined })} />);
+
+      expect(screen.getByText('Last successful pull:').nextElementSibling).toHaveTextContent('N/A');
+      expect(screen.queryByText('Last checked:')).not.toBeInTheDocument();
+    });
+
+    it('shows the check time when the backend starts reporting it', () => {
+      const status: RepositoryStatus = {
+        health: { healthy: true },
+        observedGeneration: 1,
+        sync: { state: 'success', message: [] },
+      };
+      const { rerender } = render(<RepositoryPullStatusCard repo={createMockRepository({ status })} />);
+
+      expect(screen.getByText('Status:').nextElementSibling).toHaveTextContent('success');
+      expect(screen.queryByText('Last checked:')).not.toBeInTheDocument();
+
+      rerender(
+        <RepositoryPullStatusCard
+          repo={createMockRepository({
+            status: { ...status, sync: { ...status.sync, lastChecked: Date.UTC(2026, 9, 8, 11) } },
+          })}
+        />
+      );
+
+      expect(screen.getByText('Last checked:').nextElementSibling).toHaveTextContent('10/8/2026, 11:00:00 AM');
+    });
+
+    it.each([{ state: 'pending' }, { state: 'working' }] as const)(
+      'displays the check time outside the busy historical section while $state',
+      ({ state }) => {
+        const repo = createMockRepository({
+          status: {
+            health: { healthy: true },
+            observedGeneration: 1,
+            sync: { state, message: [], lastChecked: Date.UTC(2026, 9, 8, 11) },
+          },
+        });
+        render(<RepositoryPullStatusCard repo={repo} />);
+
+        expect(screen.getByText('Last checked:').nextElementSibling).toHaveTextContent('10/8/2026, 11:00:00 AM');
+        expect(screen.getByText('Last successful pull:').closest('[aria-busy]')).toHaveAttribute('aria-busy', 'true');
+        expect(screen.getByText('10/8/2026, 11:00:00 AM').closest('[aria-busy="true"]')).toBeNull();
+      }
+    );
+  });
+
   describe('source information display', () => {
     it('should display repository URL as a link for GitHub repos', () => {
       render(<RepositoryPullStatusCard repo={createMockRepository()} />);
