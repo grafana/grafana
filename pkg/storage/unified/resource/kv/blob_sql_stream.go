@@ -28,8 +28,9 @@ type blobStreamQueries struct {
 	prepareAssembly string
 	// assembleBlob concatenates the staged chunks inside the database, so the
 	// complete value never has to fit in a client packet and is written once.
-	assembleBlob string
-	blobLength   string
+	assembleBlob   string
+	blobLength     string
+	truncationHint string
 }
 
 var (
@@ -42,6 +43,7 @@ var (
 		prepareAssembly: "SET SESSION group_concat_max_len = 67108864",
 		assembleBlob:    "UPDATE `resource_blob` SET `value` = (SELECT GROUP_CONCAT(`value` ORDER BY `chunk_index` SEPARATOR '') FROM `resource_blob_upload_chunk` WHERE `upload_id` = ?) WHERE `uuid` = ? AND `namespace` = ? AND `group` = ? AND `resource` = ? AND `name` = ?",
 		blobLength:      "SELECT LENGTH(`value`) FROM `resource_blob` WHERE `uuid` = ? AND `namespace` = ? AND `group` = ? AND `resource` = ? AND `name` = ?",
+		truncationHint:  "the database's max_allowed_packet is likely smaller than the blob",
 	}
 	postgresBlobStreamQueries = blobStreamQueries{
 		deleteExpiredChunks: `DELETE FROM "resource_blob_upload_chunk" WHERE "created" < $1`,
@@ -153,7 +155,11 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 		return 0, "", err
 	}
 	if stored != size {
-		return 0, "", fmt.Errorf("incomplete staged blob: stored %d of %d bytes", stored, size)
+		err := fmt.Errorf("incomplete staged blob: stored %d of %d bytes", stored, size)
+		if queries.truncationHint != "" {
+			err = fmt.Errorf("%w; %s", err, queries.truncationHint)
+		}
+		return 0, "", err
 	}
 	if _, err := tx.ExecContext(ctx, queries.deleteUploadChunks, uploadID); err != nil {
 		return 0, "", err

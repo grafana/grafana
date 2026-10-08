@@ -80,7 +80,8 @@ func TestBlobPublicationRejectsTruncatedAssembly(t *testing.T) {
 	mock.ExpectExec("DELETE FROM .*resource_blob_upload_chunk.* WHERE .*upload_id").WithArgs(uploadID).WillReturnResult(sqlmock.NewResult(0, 2))
 
 	_, _, err := store.SaveBlobStream(context.Background(), key, "application/octet-stream", bytes.NewReader(body))
-	require.ErrorContains(t, err, "incomplete staged blob")
+	require.ErrorContains(t, err, "incomplete staged blob: stored 65536 of 65537 bytes")
+	require.ErrorContains(t, err, "max_allowed_packet")
 	require.NoError(t, mock.ExpectationsWereMet())
 }
 
