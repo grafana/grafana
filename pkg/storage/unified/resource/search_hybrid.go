@@ -552,10 +552,8 @@ const rrfK = 60
 // is used for reranking alongside lexical text; the rest are payload for RAG consumers.
 const maxChunksPerHybridResult = 10
 
-// maxRerankCandidates caps the scored pool (the fused legs can reach 2x the
-// per-leg depth) so reranking is always a single provider call: it tracks
-// maxVectorSearchLimit but can never exceed Vertex's 200-records/call cap.
-const maxRerankCandidates = min(maxVectorSearchLimit, 200)
+// maxRerankCandidates bounds the combined candidate pool scored in one provider call.
+const maxRerankCandidates = 500
 
 type lexicalHit struct {
 	uid         string

@@ -169,10 +169,13 @@ func TestHybridSearchResources_WithoutReranking(t *testing.T) {
 
 func TestHybridSearchResources_CandidateBudgetIncludesEveryResource(t *testing.T) {
 	req := hybridResourcesTestRequest()
+	req.Resources = append(req.Resources, &resourcepb.HybridSearchResourcesRequest_Resource{
+		Group: "rules.alerting.grafana.app", Resource: "alertrules",
+	})
 	req.Limit = 100
 	responses := make(map[schema.GroupResource]*resourcepb.ResourceSearchResponse)
 	for _, resource := range req.Resources {
-		rows := make([][3]string, 150)
+		rows := make([][3]string, 200)
 		for i := range rows {
 			rows[i] = [3]string{fmt.Sprintf("%s-%d", resource.Resource, i), fmt.Sprintf("%s %d", resource.Resource, i), ""}
 		}
@@ -186,10 +189,10 @@ func TestHybridSearchResources_CandidateBudgetIncludesEveryResource(t *testing.T
 	require.NoError(t, err)
 	assert.Len(t, response.Results, 100)
 	assert.Equal(t, 1, scorer.calls)
-	require.Len(t, scorer.gotTexts, maxRerankCandidates)
-	for i := 0; i < maxRerankCandidates/2; i++ {
-		assert.Equal(t, fmt.Sprintf("dashboards %d", i), scorer.gotTexts[2*i])
-		assert.Equal(t, fmt.Sprintf("folders %d", i), scorer.gotTexts[2*i+1])
+	require.Len(t, scorer.gotTexts, 500)
+	for i, text := range scorer.gotTexts {
+		resource := req.Resources[i%len(req.Resources)].Resource
+		assert.Equal(t, fmt.Sprintf("%s %d", resource, i/len(req.Resources)), text)
 	}
 }
 
