@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -9,40 +11,61 @@ test.use({
   },
 });
 
-const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
-const DASHBOARD_NAME = 'Test variable output';
-
 test.describe(
   'Dashboard edit - datasource variables',
   {
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new datasource variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
-      const variable: Variable = {
+    test('can add a new datasource variable', async ({ page, selectors, controls, sidebar, panels }) => {
+      const viewUrl = await importVariableTestDashboard(page, selectors, panels);
+      const variable: Variable & { label: string } = {
         type: 'datasource',
         name: 'VariableUnderTest',
-        label: 'VariableUnderTest',
-        value: 'gdev-cloudwatch',
+        label: 'VariableUnderTestLabel',
+        value: 'gdev-slow-prometheus',
       };
-
+      // We keep only the provisioned instances because other suites create Prometheus data sources, so the options stay deterministic.
+      const nameFilter = '/^gdev-/';
       await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
 
-      await sidebar.variableOptions.datasource.selectType('CloudWatch');
-      await sidebar.variableOptions.datasource.setNameFilter('cloud');
+      await sidebar.variableOptions.datasource.selectType('Prometheus');
+      await sidebar.variableOptions.datasource.setNameFilter(nameFilter);
 
-      // Assert the variable dropdown is visible with correct label
-      const variableLabel = controls.variables.getLabel(variable.label!);
+      await expect(sidebar.variableOptions.datasource.getPreviewOfValues()).toHaveText([
+        'gdev-prometheus',
+        'gdev-slow-prometheus',
+      ]);
+
+      const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
-      await expect(variableLabel).toContainText(variable.label!);
+      await expect(variableLabel).toContainText(variable.label);
 
-      // Assert the variable values are correctly displayed in the panel
-      const panelBody = panels.getBodies().first();
-      await expect(panelBody).toBeVisible();
-      const markdownContent = panelBody.locator('.markdown-html');
-      await expect(markdownContent).toContainText(`${variable.name}: ${variable.value}`);
+      // We select the second option because initialization falls back to the first one, so only this proves the saved value.
+      await controls.variables.selectOption(variable.label, variable.value);
+      const dropdownTrigger = controls.variables.getDropdownTrigger(variable.label);
+      await expect(dropdownTrigger).toContainText(variable.value);
+
+      // We expect the uid because a data source variable interpolates its uid, which differs from the name for this instance.
+      const markdownContent = panels.getBody('Variable output').locator('.markdown-html');
+      await expect(markdownContent).toContainText('VariableUnderTest: gdev-slow-prometheus-uid');
+
+      await saveAndGotoDashboardUrl(page, controls, viewUrl);
+
+      await expect(variableLabel).toContainText(variable.label);
+      await expect(dropdownTrigger).toContainText(variable.value);
+      await expect(markdownContent).toContainText('VariableUnderTest: gdev-slow-prometheus-uid');
+
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
+      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.clickItem(variable.label);
+
+      await expect(sidebar.getPaneTitle()).toHaveText('Data source variable');
+      await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
+      await expect(sidebar.variableOptions.getLabelInput()).toHaveValue(variable.label);
+      await expect(sidebar.variableOptions.datasource.getTypeInput()).toHaveValue('Prometheus');
+      await expect(sidebar.variableOptions.datasource.getNameFilterInput()).toHaveValue(nameFilter);
     });
   }
 );
