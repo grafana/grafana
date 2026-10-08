@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 await build({
   absWorkingDir: dirname(fileURLToPath(import.meta.url)),
-  entryPoints: { server: 'src/server.ts', worker: 'src/worker.ts' },
+  entryPoints: { server: 'src/server.ts', worker: 'src/worker.ts', 'parity-compare': 'parity/compare.ts' },
   outdir: 'dist',
   outExtension: { '.js': '.cjs' },
   bundle: true,

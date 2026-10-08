@@ -81,6 +81,52 @@ describe('transform sidecar', () => {
     );
   });
 
+  it('writes NaN and ±Inf as entities instead of null', async () => {
+    const res = await transform({
+      frames: [
+        {
+          schema: { fields: [{ name: 'v', type: 'number' }] },
+          data: { values: [[1, null, null, null]], entities: [{ NaN: [1], Inf: [2], NegInf: [3] }] },
+        },
+      ],
+      transformations: [{ id: 'merge', options: {} }],
+    });
+
+    assert.equal(res.status, 200);
+    assert.deepEqual(res.body.frames[0].data.entities, [{ NaN: [1], Inf: [2], NegInf: [3] }]);
+  });
+
+  it('sends a field as raw JSON when its values do not match its type', async () => {
+    const res = await transform({
+      frames: [
+        {
+          schema: {
+            fields: [
+              { name: 'row', type: 'string' },
+              { name: 'col', type: 'string' },
+              { name: 'v', type: 'number' },
+            ],
+          },
+          data: {
+            values: [
+              ['r1', 'r2'],
+              ['a', 'b'],
+              [1, 2],
+            ],
+          },
+        },
+      ],
+      // groupingToMatrix fills missing cells of number fields with "".
+      transformations: [{ id: 'groupingToMatrix', options: { rowField: 'row', columnField: 'col', valueField: 'v' } }],
+    });
+
+    assert.equal(res.status, 200);
+    const fields = res.body.frames[0].schema.fields;
+    const a = fields.find((f: { name: string }) => f.name === 'a');
+    assert.equal(a.type, 'number');
+    assert.deepEqual(a.typeInfo, { frame: 'json.RawMessage', nullable: true });
+  });
+
   it('adds Go typeInfo to every output field', async () => {
     const res = await transform({
       frames: [

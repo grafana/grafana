@@ -100,6 +100,41 @@ Run the end-to-end Go test against a running sidecar:
 TRANSFORM_SIDECAR_URL=http://127.0.0.1:8095 go test ./pkg/expr -run TestTransformCommand
 ```
 
+## Parity with the browser
+
+`parity/run.sh` checks whether a panel would see the same frames from the sidecar as it does today:
+
+- **Browser path:** Go frame JSON → `dataFrameFromJSON` → `transformDataFrame`, run in-process.
+- **Sidecar path:** the same Go frames → `transform` expression → sidecar → Go → frame JSON → `dataFrameFromJSON`.
+
+```sh
+scripts/transform-sidecar/parity/run.sh [output dir]
+```
+
+- **Where things live.** Fixtures are defined in Go (`pkg/expr/transform_parity_test.go`), so `int64`, NaN, ±Inf, nullable values, and frame meta are built exactly as a data source would build them.
+- **Comparison.** The comparer (`parity/compare.ts`) dumps frames losslessly: `undefined`, NaN, and ±Inf are tagged, not turned into `null`. It ignores frame refIds, because the expression's refId replaces them by design. It also treats Go's default `typeVersion` [0, 0] as no version.
+- **Caveat.** The browser path runs in Node, not a real browser. It's the same `@grafana/data` code, minus the browser timezone.
+
+### Results: 38 fixtures, all 29 transformations
+
+34 fixtures match. The 4 differences:
+
+| Fixture                                         | Difference                                                             | Cause                                                                                                                                                | Fix                                                                                                                                                                                                 |
+| ----------------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `joinByField-outer-misaligned`, `ensureColumns` | Missing points are `undefined` in the browser, `null` from the sidecar | Go has no `undefined`. The JS wire format has an `Undef` entity, but the Go SDK ignores it                                                           | **Contract change:** SDK support for `Undef`. This affects panels, because the time series panel connects across `undefined` but breaks at `null` unless `spanNulls` is set. Alerting is unaffected |
+| `groupToNestedTable`                            | Nested-frames field type becomes `other` (values match)                | Go has no nested-frames field type. It stores the field as `json.RawMessage`, which encodes as `other`                                               | **Contract change:** an SDK field type for nested frames, or carrying the JS type through. As it stands, the table panel would not render the nested rows                                           |
+| `groupingToMatrix`                              | 3 number fields become `other` (values match)                          | The transform fills empty cells of number fields with `""`. The sidecar sends mixed-type fields as raw JSON, because Go can't decode them as numbers | **Fixable in the transform:** default empty cells to `null`. Before the fallback, this crashed Go decoding                                                                                          |
+
+### Found and fixed by the parity run
+
+- **NaN and ±Inf were lost.** `dataFrameToJSON` never writes `entities`, and it deletes existing ones, so `JSON.stringify` turned these values into `null`. The sidecar now writes NaN/Inf/NegInf entities, which Go reads.
+- **Mixed-type fields broke Go decoding.** `groupingToMatrix` returned a 200 that Go couldn't decode. The sidecar now sends such fields as raw JSON.
+
+### Behaviors to know (the same in both paths)
+
+- **`sortBy` and other field matchers use the display name.** A field with `config.displayName: "Latency"` is matched by `Latency`, not `latency`.
+- **`int64` values above 2^53 lose precision when the browser parses the JSON,** before any transformation runs.
+
 ## Configuration
 
 | Variable                           | Default                        |
@@ -129,6 +164,5 @@ TRANSFORM_SIDECAR_URL=http://127.0.0.1:8095 go test ./pkg/expr -run TestTransfor
 
 ## Not done yet
 
-- Browser vs sidecar parity tests (Phase 3)
 - Alert rule and query API consumers (Phase 4)
 - Benchmarks (Phase 5)

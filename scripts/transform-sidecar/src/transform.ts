@@ -4,12 +4,13 @@ import {
   dataFrameFromJSON,
   dataFrameToJSON,
   type DataFrameJSON,
+  type FieldValueEntityLookup,
 } from '../../../packages/grafana-data/src/dataframe/DataFrameJSON';
 import { setTimeZoneResolver } from '../../../packages/grafana-data/src/datetime/common';
 import { standardTransformersRegistry } from '../../../packages/grafana-data/src/transformations/standardTransformersRegistry';
 import { transformDataFrame } from '../../../packages/grafana-data/src/transformations/transformDataFrame';
 import { standardTransformers } from '../../../packages/grafana-data/src/transformations/transformers';
-import { FieldType } from '../../../packages/grafana-data/src/types/dataFrame';
+import { type DataFrame, FieldType } from '../../../packages/grafana-data/src/types/dataFrame';
 import { type DataTransformerConfig } from '../../../packages/grafana-data/src/types/transformations';
 
 export interface TransformRequest {
@@ -111,37 +112,81 @@ function isStringRecord(value: unknown): value is Record<string, string> {
   return isRecord(value) && Object.values(value).every((v) => typeof v === 'string');
 }
 
-export async function runTransformRequest(req: TransformRequest): Promise<TransformResponse> {
+/** Runs transformations over in-memory frames, the way a panel does. */
+export async function transformFrames(
+  frames: DataFrame[],
+  transformations: DataTransformerConfig[],
+  { timezone = 'utc', vars = {} }: { timezone?: string; vars?: Record<string, string> } = {}
+): Promise<DataFrame[]> {
   // Safe as a module-level setting because each worker runs one request at a time.
-  const timezone = req.timezone ?? 'utc';
   setTimeZoneResolver(() => timezone);
-
-  const frames = req.frames.map((frame) => dataFrameFromJSON(frame));
-  const output = await lastValueFrom(
-    transformDataFrame(req.transformations, frames, { interpolate: interpolator(req.vars ?? {}) })
-  );
-
-  return { frames: output.map((frame) => withGoTypeInfo(dataFrameToJSON(frame))) };
+  return lastValueFrom(transformDataFrame(transformations, frames, { interpolate: interpolator(vars) }));
 }
 
-const GO_FIELD_TYPES: Partial<Record<FieldType, string>> = {
-  [FieldType.number]: 'float64',
-  [FieldType.string]: 'string',
-  [FieldType.boolean]: 'bool',
-  [FieldType.time]: 'time.Time',
-  [FieldType.enum]: 'enum',
+export async function runTransformRequest(req: TransformRequest): Promise<TransformResponse> {
+  const output = await transformFrames(
+    req.frames.map((frame) => dataFrameFromJSON(frame)),
+    req.transformations,
+    req
+  );
+  return { frames: output.map(toGoFrameJSON) };
+}
+
+interface GoFieldType {
+  goType: string;
+  matches: (value: unknown) => boolean;
+}
+
+const isNumber = (value: unknown) => typeof value === 'number';
+
+const GO_FIELD_TYPES: Partial<Record<FieldType, GoFieldType>> = {
+  [FieldType.number]: { goType: 'float64', matches: isNumber },
+  [FieldType.string]: { goType: 'string', matches: (value) => typeof value === 'string' },
+  [FieldType.boolean]: { goType: 'bool', matches: (value) => typeof value === 'boolean' },
+  [FieldType.time]: { goType: 'time.Time', matches: isNumber },
+  [FieldType.enum]: { goType: 'enum', matches: isNumber },
 };
 
-// Go's data.Frame decoder picks each field's Go type from typeInfo, which dataFrameToJSON does not
-// write. Every field is marked nullable because transformations introduce nulls (outer joins,
-// empty groups). Integer fields come back as float64, since JS numbers carry no width.
-function withGoTypeInfo(frame: DataFrameJSON): DataFrameJSON {
-  if (!frame.schema) {
-    return frame;
+/**
+ * Encodes a frame for Go's data.Frame decoder, which dataFrameToJSON alone does not satisfy:
+ *
+ * - typeInfo picks each field's Go type, and the decoder panics without it. Every field is
+ *   nullable because transformations introduce nulls (outer joins, empty groups). Integer fields
+ *   come back as float64, since JS numbers carry no width.
+ * - A field whose values don't all match its declared type (groupingToMatrix fills number fields
+ *   with "") is sent as raw JSON, which the decoder accepts for any value.
+ * - NaN and ±Inf are written as entities. dataFrameToJSON drops them, and JSON.stringify turns them
+ *   into null. undefined is not written: Go has no value for it and would read null either way.
+ */
+function toGoFrameJSON(frame: DataFrame): DataFrameJSON {
+  const json = dataFrameToJSON(frame);
+  if (!json.schema) {
+    return json;
   }
-  const fields = frame.schema.fields.map((field) => ({
-    ...field,
-    typeInfo: { frame: (field.type && GO_FIELD_TYPES[field.type]) ?? 'json.RawMessage', nullable: true },
-  }));
-  return { ...frame, schema: { ...frame.schema, fields } };
+
+  const entities: Array<FieldValueEntityLookup | null> = [];
+  const fields = json.schema.fields.map((schemaField, i) => {
+    const values = frame.fields[i].values;
+    const goField = schemaField.type && GO_FIELD_TYPES[schemaField.type];
+    const typed = goField && values.every((v) => v === null || v === undefined || goField.matches(v));
+    entities.push(typed && goField.matches === isNumber ? nonFiniteEntities(values) : null);
+    return { ...schemaField, typeInfo: { frame: typed ? goField.goType : 'json.RawMessage', nullable: true } };
+  });
+
+  return {
+    schema: { ...json.schema, fields },
+    data: { values: [], ...json.data, ...(entities.some(Boolean) && { entities }) },
+  };
+}
+
+function nonFiniteEntities(values: unknown[]): FieldValueEntityLookup | null {
+  const lookup: FieldValueEntityLookup = {};
+  values.forEach((value, i) => {
+    if (typeof value !== 'number' || Number.isFinite(value)) {
+      return;
+    }
+    const key = Number.isNaN(value) ? 'NaN' : value > 0 ? 'Inf' : 'NegInf';
+    (lookup[key] ??= []).push(i);
+  });
+  return Object.keys(lookup).length ? lookup : null;
 }
