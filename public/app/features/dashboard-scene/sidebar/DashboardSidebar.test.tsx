@@ -32,11 +32,14 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabItem } from '../scene/layout-tabs/TabItem';
 import { performTabRepeats } from '../scene/layout-tabs/TabItemRepeater';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
+import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
 import { MAX_UNDO_ACTIONS } from './DashboardSidebar';
+import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
+import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
 import { DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
@@ -670,6 +673,14 @@ describe('DashboardSidebar', () => {
       };
     }
 
+    function fakeBulkElement(onDelete: () => void): BulkActionElement {
+      return {
+        isEditableDashboardElement: true,
+        getEditableElementInfo: () => ({ typeName: 'Test element', icon: 'folder', instanceName: '' }),
+        onDelete,
+      };
+    }
+
     it('aggregates edit actions performed between startBatch/endBatch into a single undo/redo entry', () => {
       const scene = buildTestScene();
       const sidebar = scene.state.sidebar;
@@ -749,6 +760,118 @@ describe('DashboardSidebar', () => {
       // Two tab deletions, aggregated into one undo entry, not two.
       expect(sidebar.state.undoStack).toHaveLength(1);
       expect(sidebar.state.undoStack[0].description).toBe('Remove tabs (2)');
+    });
+
+    it('ends a multi-row delete batch when a row deletion throws', () => {
+      const { dashboard, sidebar, row1, row2 } = setupWithTwoRows();
+      jest.spyOn(row2, 'onDelete').mockImplementation(() => {
+        throw new Error('delete failed');
+      });
+
+      expect(() => row1.createMultiSelectedElement([row1, row2]).onDelete()).toThrow('delete failed');
+      expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual(['row.remove']);
+
+      const layout = dashboard.state.body as RowsLayoutManager;
+      expect(layout.state.rows).toEqual([row2]);
+
+      sidebar.undoAction();
+      expect(layout.state.rows).toEqual([row1, row2]);
+
+      sidebar.redoAction();
+      expect(layout.state.rows).toEqual([row2]);
+
+      edit({
+        source: dashboard,
+        meta: { actionId: 'test.after-failure' },
+        perform: jest.fn(),
+        undo: jest.fn(),
+      });
+      expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([
+        'row.remove',
+        'test.after-failure',
+      ]);
+    });
+
+    it('ends a multi-tab delete batch when a tab deletion throws', () => {
+      const { dashboard, sidebar, tab1, tab2 } = setupWithTwoTabs();
+      jest.spyOn(tab2, 'onDelete').mockImplementation(() => {
+        throw new Error('delete failed');
+      });
+
+      expect(() => tab1.createMultiSelectedElement([tab1, tab2]).onDelete()).toThrow('delete failed');
+      expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual(['tab.remove']);
+
+      const layout = dashboard.state.body as TabsLayoutManager;
+      expect(layout.state.tabs).toEqual([tab2]);
+
+      sidebar.undoAction();
+      expect(layout.state.tabs).toEqual([tab1, tab2]);
+
+      sidebar.redoAction();
+      expect(layout.state.tabs).toEqual([tab2]);
+
+      edit({
+        source: dashboard,
+        meta: { actionId: 'test.after-failure' },
+        perform: jest.fn(),
+        undo: jest.fn(),
+      });
+      expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([
+        'tab.remove',
+        'test.after-failure',
+      ]);
+    });
+
+    it.each([
+      {
+        selection: 'mixed objects',
+        actionId: 'selection.remove',
+        create: (elements: BulkActionElement[], dashboard: DashboardScene) =>
+          new MultiSelectedObjectsEditableElement(elements, dashboard),
+      },
+      {
+        selection: 'panels',
+        actionId: 'panel.remove',
+        create: (elements: BulkActionElement[], dashboard: DashboardScene) =>
+          new MultiSelectedVizPanelsEditableElement(elements, dashboard),
+      },
+    ])('ends a multi-$selection delete batch when an element deletion throws', ({ actionId, create }) => {
+      const dashboard = buildTestScene();
+      const sidebar = dashboard.state.sidebar;
+      let deleted = false;
+      const successfulElement = fakeBulkElement(() =>
+        edit({
+          source: dashboard,
+          meta: { actionId: 'test.child-delete' },
+          perform: () => {
+            deleted = true;
+          },
+          undo: () => {
+            deleted = false;
+          },
+        })
+      );
+      const failingElement = fakeBulkElement(() => {
+        throw new Error('delete failed');
+      });
+
+      expect(() => create([successfulElement, failingElement], dashboard).onDelete()).toThrow('delete failed');
+      expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([actionId]);
+      expect(deleted).toBe(true);
+
+      sidebar.undoAction();
+      expect(deleted).toBe(false);
+
+      sidebar.redoAction();
+      expect(deleted).toBe(true);
+
+      edit({
+        source: dashboard,
+        meta: { actionId: 'test.after-failure' },
+        perform: jest.fn(),
+        undo: jest.fn(),
+      });
+      expect(sidebar.state.undoStack.map((action) => action.meta.actionId)).toEqual([actionId, 'test.after-failure']);
     });
   });
 

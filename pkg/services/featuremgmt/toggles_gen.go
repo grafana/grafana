@@ -766,6 +766,10 @@ const (
 	// Enables user APIs in the app platform
 	FlagKubernetesUsersApi = "kubernetesUsersApi"
 
+	// FlagKubernetesUsersReadApi
+	// Enables read-only user APIs in the app platform
+	FlagKubernetesUsersReadApi = "kubernetesUsersReadApi"
+
 	// FlagKubernetesServiceAccountsApi
 	// Enables service account APIs in the app platform
 	FlagKubernetesServiceAccountsApi = "kubernetesServiceAccountsApi"

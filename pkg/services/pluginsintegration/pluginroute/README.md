@@ -1,19 +1,19 @@
 # Plugin Route handler
 
-`NewHandler(plugin, Options)` builds one plugin's API server as an `http.Handler`.
+`NewHandler(pluginID, manifest, Options)` builds one plugin's API server as an `http.Handler`.
 It lives in `pkg/services/pluginsintegration` because it connects plugin definitions
 to Grafana's API server, storage, and access control. These dependencies belong in
 the main Grafana module, outside the standalone `pkg/plugins` module and `pkg/router`.
 
 Manifest kinds, custom v3 routes, admission, kind authorization, secret caching,
-and manifest OpenAPI processing live in this package. `NewAPI` selects the manifest
-implementation for plugins with manifests and `appplugin.AppPluginAPIBuilder` for
-settings-only plugins. Offline OpenAPI generation uses the same selection.
+and manifest OpenAPI processing live in this package. `NewAPI` takes a plugin ID
+and one manifest. Offline OpenAPI generation uses this builder for manifests and
+`appplugin.AppPluginAPIBuilder` for settings-only plugins.
 
 Manifest handlers serve only the manifest's declared kinds, routes, and served
 versions. Settings and their subresources are served exclusively at
-`/apis/{plugin-id}/v0alpha1`. The single-tenant router loads a separate settings
-backend for plugins with manifests; settings never appear under the manifest's
+`/apis/{plugin-id}/v0alpha1`. The embedded appplugin API server handles settings; the router prepares one
+backend per manifest. Settings never appear under the manifest's
 `ext.grafana.app` group, even when `appplugins.loadAppManifestAndKeepSettings` is enabled.
 
 The router loads plugin APIs and manifests independently of
@@ -25,8 +25,7 @@ Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
 shared resource client to that scheme and accepts a REST config provider for
 parent-folder lookups. The router supplies the embedded server's provider so folder
 existence and repository-manager consistency checks run for routed plugin kinds.
-Supplying a legacy settings store and a dual-write service preserves the embedded
-server's settings migration policy.
+Settings migration remains the responsibility of the embedded settings server.
 
 The caller owns authentication and must populate `identity.Requester` in the
 request context. The handler then checks namespace access, plugin access, and

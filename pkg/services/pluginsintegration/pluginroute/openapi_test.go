@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 )
 
@@ -225,7 +224,7 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 }
 
 func TestSpecVersion(t *testing.T) {
-	b := &manifestBuilder{group: "example.ext.grafana.app", pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &manifestBuilder{group: "example.ext.grafana.app", pluginID: "example-app"}
 
 	// The builder framework stamps Info.Title with "<group>/<version>"
 	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.app/v1alpha1"}}}

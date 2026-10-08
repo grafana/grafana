@@ -38,7 +38,7 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 	srq := &resourcepb.ResourceSearchRequest{
 		Options:      req.Options,
 		Limit:        req.Limit,
-		Fields:       []string{SEARCH_FIELD_RV},
+		Fields:       []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 	}
 
@@ -185,7 +185,9 @@ func applyContinueToken(srq *resourcepb.ResourceSearchRequest, nextPageToken str
 type listSearchRow struct {
 	key             *resourcepb.ResourceKey
 	resourceVersion int64
-	sortFields      []string
+	// folder is the folder the index recorded for this version, a hint for the read.
+	folder     string
+	sortFields []string
 }
 
 func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSearchRow, error) {
@@ -212,16 +214,25 @@ func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSe
 			})
 		}
 	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
+		folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
+			return f.GetName() == SEARCH_FIELD_FOLDER
+		})
 		rows = make([]listSearchRow, 0, len(response.GetRows()))
 		for i, row := range response.GetRows() {
 			if row == nil || row.GetKey() == nil {
 				return nil, fmt.Errorf("field-value row %d has no key", i)
 			}
-			rows = append(rows, listSearchRow{
+			listRow := listSearchRow{
 				key:             row.GetKey(),
 				resourceVersion: row.GetResourceVersion(),
 				sortFields:      row.GetSortFields(),
-			})
+			}
+			for _, value := range row.GetValues() {
+				if folderField >= 0 && value.GetFieldIndex() == uint32(folderField) && len(value.GetStringValues()) > 0 {
+					listRow.folder = value.GetStringValues()[0]
+				}
+			}
+			rows = append(rows, listRow)
 		}
 	default:
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
@@ -316,27 +327,31 @@ func (s *server) consumeSearchRows(
 const readChunkSize = 10
 
 func (s *server) readSearchRows(ctx context.Context, rows []listSearchRow) iter.Seq[*BackendReadResponse] {
-	requests := make([]*resourcepb.ReadRequest, len(rows))
+	return readResourcesInChunks(ctx, s.backend, searchRowReads(rows), readChunkSize)
+}
+
+func searchRowReads(rows []listSearchRow) []BatchReadRequest {
+	requests := make([]BatchReadRequest, len(rows))
 	for i, row := range rows {
-		requests[i] = &resourcepb.ReadRequest{
-			Key:             row.key,
-			ResourceVersion: row.resourceVersion,
+		requests[i] = BatchReadRequest{
+			ReadRequest: &resourcepb.ReadRequest{Key: row.key, ResourceVersion: row.resourceVersion},
+			Folder:      row.folder,
 		}
 	}
-	return readResourcesInChunks(ctx, s.backend, requests, readChunkSize)
+	return requests
 }
 
 // readResourcesInChunks reads the requests a chunk at a time, falling back to one
 // read per object on a backend without batch reads. A backend that answers a
 // chunk with the wrong number of responses is reported as an error, because the
 // responses could no longer be matched to what was asked.
-func readResourcesInChunks(ctx context.Context, backend StorageBackend, requests []*resourcepb.ReadRequest, chunkSize int) iter.Seq[*BackendReadResponse] {
+func readResourcesInChunks(ctx context.Context, backend StorageBackend, requests []BatchReadRequest, chunkSize int) iter.Seq[*BackendReadResponse] {
 	return func(yield func(*BackendReadResponse) bool) {
 		batchSupported := true
 		for chunk := range slices.Chunk(requests, chunkSize) {
 			if !batchSupported {
 				for _, request := range chunk {
-					if !yield(backend.ReadResource(ctx, request)) {
+					if !yield(backend.ReadResource(ctx, request.ReadRequest)) {
 						return
 					}
 				}
@@ -347,7 +362,7 @@ func readResourcesInChunks(ctx context.Context, backend StorageBackend, requests
 			if errors.Is(err, ErrBatchReadUnsupported) {
 				batchSupported = false
 				for _, request := range chunk {
-					if !yield(backend.ReadResource(ctx, request)) {
+					if !yield(backend.ReadResource(ctx, request.ReadRequest)) {
 						return
 					}
 				}

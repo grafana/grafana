@@ -48,7 +48,7 @@ func TestListTrashWithSearch(t *testing.T) {
 	require.Equal(t, 1, backend.batchCalls)
 	require.NotNil(t, searchClient.last)
 	require.True(t, searchClient.last.IsDeleted)
-	require.Equal(t, []string{SEARCH_FIELD_RV}, searchClient.last.Fields)
+	require.Equal(t, []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER}, searchClient.last.Fields)
 	require.Equal(t, []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV, Desc: true}}, searchClient.last.SortBy)
 	require.Equal(t, listPathTrashSearch, metricsState.listPath)
 }
@@ -429,7 +429,7 @@ func (b *trashBatchFakeBackend) SupportsDeletedBatchReads() bool {
 	return !b.unsupported
 }
 
-func (b *trashBatchFakeBackend) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
+func (b *trashBatchFakeBackend) BatchReadResource(_ context.Context, requests []BatchReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
 	b.batchCalls++
 	if b.unsupported || !includeDeleted {
 		return nil, ErrBatchReadUnsupported

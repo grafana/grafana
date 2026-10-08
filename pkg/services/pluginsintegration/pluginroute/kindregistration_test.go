@@ -29,18 +29,18 @@ func testBuilder(t *testing.T, manifest *app.ManifestData) *manifestBuilder {
 	t.Helper()
 
 	plugin := definition.PluginDefinition{
-		JSONData: plugins.JSONData{ID: "example-app"},
-		Manifest: manifest,
+		JSONData:  plugins.JSONData{ID: "example-app"},
+		Manifests: []*app.ManifestData{manifest},
 	}
 	group := plugin.JSONData.ID
 	if manifest != nil {
 		group = manifest.Group
 	}
 	return &manifestBuilder{
-		group:      group,
-		manifest:   manifest,
-		pluginJSON: plugin.JSONData,
-		clientV3:   &fakeRouteClient{},
+		group:    group,
+		manifest: manifest,
+		pluginID: plugin.JSONData.ID,
+		clientV3: &fakeRouteClient{},
 	}
 }
 
