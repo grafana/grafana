@@ -19,8 +19,8 @@ manifest_path = 'public/%s/assets-manifest.json' % build_dir
 boot_path = 'public/%s/boot.js' % build_dir
 
 # A cold build (yarn install + serial plugin builds + main rspack compile) can take
-# longer than Tilt's default 5m readiness timeout before 'yarn start' is ready, which
-# fails `tilt ci` in CI even though the build succeeds. Raise the readiness timeout.
+# longer than Tilt's default 5m readiness timeout, which fails `tilt ci` even though the
+# build succeeds.
 ci_settings(readiness_timeout='15m')
 
 # --- Frontend processes
@@ -41,8 +41,6 @@ local_resource(
   serve_cmd='yarn start:noHmr -- --env noTsCheck=1 --env noLint=1',
   resource_deps=['yarn install'],
 
-  # Note: this doesn't seem to work as expected - the assets-manifest is somehow created before
-  # the build is complete?
   readiness_probe=probe(
     initial_delay_secs=10,
     period_secs=1,
