@@ -2077,9 +2077,7 @@
       "routing-options": {
         "label": {
           "contact-point": "聯絡點",
-          "notification-policy": "通知政策",
-          "select-contact-point": "選擇聯絡點",
-          "use-notification-policy": "使用通知政策"
+          "notification-policy": "通知政策"
         }
       }
     },
@@ -13068,15 +13066,9 @@
       "card-author": "由{{author}}執行",
       "card-selected": "{{title}}（已選取）",
       "card-updated": "{{when}} 已更新",
-      "create-description": "描述",
-      "create-description-help": "提供給協作者的選用內容",
-      "create-description-placeholder": "您正在調查什麼？",
       "create-name": "筆記本名稱",
       "create-name-required": "必須輸入筆記本名稱",
       "create-name-taken": "已有同名的筆記本",
-      "create-tags": "標籤",
-      "create-tags-help": "選用 — 用於搜尋和篩選",
-      "create-tags-placeholder": "新增標籤",
       "created-by-me": "由我建立",
       "error-conflict": "您新增內容時，此筆記本已發生變更。請再試一次，將面板新增至最新版本。",
       "error-generic": "無法將面板新增至筆記本",
@@ -13086,6 +13078,8 @@
       "list-none": "您目前沒有筆記本。請建立新的筆記本。",
       "list-none-read-only": "您目前沒有筆記本，也沒有建立筆記本的權限。",
       "list-truncated": "並非所有筆記本都會顯示。請縮小搜尋範圍以尋找其他筆記本。",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "依標題搜尋",
       "sort-alphabetical": "依字母順序 (A–Z)",
       "sort-label": "排序筆記本",
@@ -13185,8 +13179,7 @@
       },
       "tag-filter-placeholder": "",
       "unknown-author": "匿名",
-      "count_other": "{{count}} 個筆記本",
-      "count-truncated_other": "已載入前 {{count}} 個筆記本"
+      "count_other": "{{count}} 個筆記本"
     },
     "new": {
       "default-title-with-date": ""
@@ -14028,6 +14021,7 @@
       "title": "您也可以在 Grafana Cloud 上使用 Git 同步"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "複製程式碼至剪貼簿"
     },
     "commit-message": {
@@ -14953,7 +14947,6 @@
       "alert-point-folder-cleanup": "移轉後，您可能需要手動移除或管理原始資料夾。",
       "alert-point-folder-structure": "移轉現有儀表板時，資料夾結構將在儲存庫中複製。原始資料夾將清空儀表板，但可能仍包含警示或資料庫面板。",
       "alert-point-instance-alerts": "現有的警示和資料庫面板將會遺失，移轉後將無法使用。",
-      "alert-point-permissions": "不支援微調權限。套用預設權限：管理員、編輯者和檢視者角色將保留其標準存取權限等級。",
       "alert-point-unsupported": "佈建的資料夾不支援警示和資料庫面板。",
       "alert-title": "重要提示：在繼續之前，請先檢閱 Git 同步限制",
       "app-mode-label": "應用程式設定",
@@ -15664,9 +15657,6 @@
     "description-tooltip": {
       "label": "描述"
     },
-    "generate-columns": {
-      "score": "分數"
-    },
     "results-table": {
       "datasource-header": "資料來源",
       "deleted-by-header": "刪除者",
@@ -16009,6 +15999,7 @@
       "update-preferences": "更新偏好設定時發生錯誤"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "首頁儀表板",
       "home-dashboard-placeholder": "預設儀表板",
       "language-preference-label": "語言",

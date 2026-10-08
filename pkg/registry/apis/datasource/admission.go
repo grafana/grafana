@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -28,13 +29,16 @@ func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	if !isCreate || !isDatasourceResource {
 		return nil
 	}
-	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard, false, openfeature.TransactionContext(ctx)) {
-		return nil
-	}
-
 	ds, ok := a.GetObject().(*datasourceV0.DataSource)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected DataSource object, got %T", a.GetObject()))
+	}
+	return validateNoTeamHTTPHeadersOnCreate(ctx, ds, &b.datasourceResourceInfo)
+}
+
+func validateNoTeamHTTPHeadersOnCreate(ctx context.Context, ds *datasourceV0.DataSource, resourceInfo *utils.ResourceInfo) error {
+	if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard, false, openfeature.TransactionContext(ctx)) {
+		return nil
 	}
 
 	// Missing, null, or non-object jsonData cannot contain the protected key.
@@ -46,7 +50,7 @@ func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	if _, present := jsonData["teamHttpHeaders"]; present {
 		// The legacy create API also rejects any presence of this key, but returns
 		// 403. Kubernetes uses 422 here to provide a structured field cause.
-		return apierrors.NewInvalid(b.datasourceResourceInfo.GroupVersionKind().GroupKind(), ds.Name, field.ErrorList{
+		return apierrors.NewInvalid(resourceInfo.GroupVersionKind().GroupKind(), ds.Name, field.ErrorList{
 			field.Forbidden(field.NewPath("spec", "jsonData", "teamHttpHeaders"), "manage Team LBAC rules through the TeamLBACRule API"),
 		})
 	}

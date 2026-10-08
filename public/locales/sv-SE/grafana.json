@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Kontaktpunkt",
-          "notification-policy": "Aviseringspolicy",
-          "select-contact-point": "Välj kontaktpunkt",
-          "use-notification-policy": "Använd aviseringspolicy"
+          "notification-policy": "Aviseringspolicy"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Av {{author}}",
       "card-selected": "{{title}} (valda)",
       "card-updated": "Uppdaterat {{when}}",
-      "create-description": "Beskrivning",
-      "create-description-help": "Valfritt sammanhang för samarbetspartner",
-      "create-description-placeholder": "Vad undersöker du?",
       "create-name": "Namn på anteckningsbok",
       "create-name-required": "Namn på anteckningsbok krävs",
       "create-name-taken": "En anteckningsbok med detta namn finns redan",
-      "create-tags": "Taggar",
-      "create-tags-help": "Valfritt – används för sökning och filtrering",
-      "create-tags-placeholder": "Lägg till en tagg",
       "created-by-me": "Skapad av mig",
       "error-conflict": "Denna anteckningsbok ändrades medan du lade till i den. Försök igen att lägga till panelen i den senaste versionen.",
       "error-generic": "Det gick inte att lägga till panelen i anteckningsboken",
@@ -13183,6 +13175,8 @@
       "list-none": "Du har inga anteckningsböcker ännu. Skapa en istället.",
       "list-none-read-only": "Du har inga anteckningsböcker ännu och ingen behörighet att skapa en.",
       "list-truncated": "Alla anteckningsböcker visas inte. Begränsa sökningen för att hitta andra.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Sök efter titel",
       "sort-alphabetical": "Alfabetiskt (A–Ö)",
       "sort-label": "Sortera anteckningsböcker",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anonym",
       "count_one": "{{count}} anteckningsbok",
-      "count_other": "{{count}} anteckningsböcker",
-      "count-truncated_one": "Första {{count}} anteckningsboken laddad",
-      "count-truncated_other": "Första {{count}} anteckningsböckerna laddade"
+      "count_other": "{{count}} anteckningsböcker"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Du kan även använda Git Sync i Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Kopiera kod till urklippet"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Du kan behöva ta bort eller hantera originalmappar manuellt efter migreringen.",
       "alert-point-folder-structure": "När du migrerar befintliga instrumentpaneler replikeras mappstrukturen i lagringsplatsen. Ursprungliga mappar kommer att tömmas på instrumentpaneler men kan fortfarande innehålla varningar eller bibliotekspaneler.",
       "alert-point-instance-alerts": "Befintliga larm och bibliotekspaneler kommer att gå förlorade och kommer inte att kunna användas efter migreringen.",
-      "alert-point-permissions": "Detaljerade behörigheter stöds inte. Standardbehörigheter gäller: administratörs-, redigerings- och visningsroller bevaras med deras standardåtkomstnivåer.",
       "alert-point-unsupported": "Larm och bibliotekspaneler stöds inte i tilldelade mappar.",
       "alert-title": "Viktigt: granska Git Sync-begränsningar innan du fortsätter",
       "app-mode-label": "Appkonfiguration",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Beskrivning"
     },
-    "generate-columns": {
-      "score": "Betyg"
-    },
     "results-table": {
       "datasource-header": "Datakälla",
       "deleted-by-header": "Raderat av",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Fel vid uppdatering av inställningar"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Heminstrumentpanel",
       "home-dashboard-placeholder": "Standardinstrumentpanel",
       "language-preference-label": "Språk",

@@ -74,7 +74,7 @@ func TestLoadInfoToleratesBadManifest(t *testing.T) {
 		AppManifest: true,
 	})
 	require.NoError(t, err)
-	require.Nil(t, info.Manifest)
+	require.Empty(t, info.Manifests)
 	require.Equal(t, "test-app", info.JSONData.ID)
 }
 
@@ -157,8 +157,14 @@ func TestLoadInfo(t *testing.T) {
 			"spec": {"appName": "test", "group": "test-app", "versions": []}}`), jsonData, Options{})
 		require.NoError(t, err)
 		assert.Equal(t, "test-app", info.JSONData.ID)
-		assert.Nil(t, info.Manifest, "manifest is only read when requested")
+		assert.Empty(t, info.Manifests, "manifests are only read when requested")
 		assert.Nil(t, info.Schemas, "schemas are only read when requested")
+	})
+
+	t.Run("missing manifest leaves manifests empty", func(t *testing.T) {
+		info, err := loadInfo(fstest.MapFS{}, jsonData, Options{AppManifest: true})
+		require.NoError(t, err)
+		require.Empty(t, info.Manifests)
 	})
 
 	t.Run("loads the manifest when requested", func(t *testing.T) {
@@ -166,8 +172,8 @@ func TestLoadInfo(t *testing.T) {
 			"spec": {"appName": "test", "group": "test-app", "versions": []}}`), jsonData,
 			Options{AppManifest: true})
 		require.NoError(t, err)
-		require.NotNil(t, info.Manifest)
-		assert.Equal(t, "test-app", info.Manifest.Group)
+		require.Len(t, info.Manifests, 1)
+		assert.Equal(t, "test-app", info.Manifests[0].Group)
 	})
 
 	t.Run("loads the v0alpha1 schema when requested", func(t *testing.T) {
@@ -321,8 +327,8 @@ func TestLoadPluginDefinition(t *testing.T) {
 			Options{Schemas: true, AppManifest: true})
 		require.NoError(t, err)
 		require.Len(t, defs, 1)
-		require.NotNil(t, defs[0].Manifest)
-		assert.Equal(t, "app-one", defs[0].Manifest.Group)
+		require.Len(t, defs[0].Manifests, 1)
+		assert.Equal(t, "app-one", defs[0].Manifests[0].Group)
 		assert.Contains(t, defs[0].Schemas, "v0alpha1")
 	})
 

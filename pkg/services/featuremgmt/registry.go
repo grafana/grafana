@@ -2198,15 +2198,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:            "kubernetesAlertingHistorian",
-			Description:     "Adds support for Kubernetes alerting historian APIs",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:         "plugins.useMTPlugins",
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,
@@ -2315,6 +2306,15 @@ var (
 		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "kubernetesUsersReadApi",
+			Description:  "Enables read-only user APIs in the app platform",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2484,38 +2484,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryRuleViewer",
-			Description: "Enables the notification history tab in the rule viewer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryGlobal",
-			Description: "Enables the notification history global menu item viewer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryTriage",
-			Description: "Enables the notification history timeline in the triage instance details drawer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryDetail",
-			Description: "Enables the notification history detail page",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:         "dashboard.recentlyDeletedViaTrash",
@@ -3430,6 +3398,16 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:         "datasources.apiServerConnectToHostedGrafanaDatabases",
+			Description:  "Connect to hosted grafana databases from datasource API servers",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

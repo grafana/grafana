@@ -2116,9 +2116,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Punkt kontaktu",
-          "notification-policy": "Zasady dotyczące powiadomień",
-          "select-contact-point": "Wybierz punkt kontaktu",
-          "use-notification-policy": "Używaj zasad dotyczących powiadomień"
+          "notification-policy": "Zasady dotyczące powiadomień"
         }
       }
     },
@@ -13359,15 +13357,9 @@
       "card-author": "Autor: {{author}}",
       "card-selected": "{{title}} (wybrano)",
       "card-updated": "Zaktualizowano {{when}}",
-      "create-description": "Opis",
-      "create-description-help": "Opcjonalny kontekst dla współpracowników",
-      "create-description-placeholder": "Czego dotyczy Twoje dochodzenie?",
       "create-name": "Nazwa notatnika",
       "create-name-required": "Nazwa notatnika jest wymagana",
       "create-name-taken": "Notatnik o tej nazwie już istnieje",
-      "create-tags": "Tagi",
-      "create-tags-help": "Opcjonalnie – używane do wyszukiwania i filtrowania",
-      "create-tags-placeholder": "Dodaj tag",
       "created-by-me": "Utworzone przeze mnie",
       "error-conflict": "Ten notatnik został w trakcie dodawania do niego treści. Spróbuj ponownie dodać panel do najnowszej wersji.",
       "error-generic": "Nie udało się dodać panelu do notatnika",
@@ -13377,6 +13369,8 @@
       "list-none": "Nie masz jeszcze żadnych notatników. Utwórz nowy notatnik.",
       "list-none-read-only": "Nie masz jeszcze żadnych notatników i nie masz uprawnień do ich tworzenia.",
       "list-truncated": "Nie wszystkie notatniki są wyświetlane. Zawęź wyszukiwanie, aby znaleźć inne notatniki.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Szukaj według tytułu",
       "sort-alphabetical": "Alfabetycznie (A–Z)",
       "sort-label": "Sortuj notatniki",
@@ -13479,11 +13473,7 @@
       "count_one": "{{count}} notatnik",
       "count_few": "{{count}} notatniki",
       "count_many": "{{count}} notatników",
-      "count_other": "{{count}} notatnika",
-      "count-truncated_one": "Pierwszy {{count}} notatnik został wczytany",
-      "count-truncated_few": "Pierwsze {{count}} notatniki zostały wczytane",
-      "count-truncated_many": "Pierwszych {{count}} notatników zostało wczytanych",
-      "count-truncated_other": "Pierwsze {{count}} notatnika zostało wczytane"
+      "count_other": "{{count}} notatnika"
     },
     "new": {
       "default-title-with-date": ""
@@ -14331,6 +14321,7 @@
       "title": "Możesz również korzystać z synchronizacji z Git w usłudze Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Skopiuj kod klucza do schowka"
     },
     "commit-message": {
@@ -15304,7 +15295,6 @@
       "alert-point-folder-cleanup": "Po migracji może być konieczne ręczne usunięcie oryginalnych folderów lub zarządzanie nimi.",
       "alert-point-folder-structure": "Podczas migracji istniejących pulpitów struktura folderów zostanie zreplikowana w repozytorium. Oryginalne foldery zostaną opróżnione z pulpitów, ale mogą nadal zawierać alerty lub panele biblioteki.",
       "alert-point-instance-alerts": "Istniejące alerty i panele biblioteki zostaną utracone i nie będą dostępne po migracji.",
-      "alert-point-permissions": "Uprawnienia szczegółowe nie są obsługiwane. Obowiązują domyślne uprawnienia: role administratora, osoby edytującej i osoby przeglądającej są zachowywane ze standardowymi poziomami dostępu.",
       "alert-point-unsupported": "Alerty i panele biblioteki nie są obsługiwane w aprowizowanych folderach.",
       "alert-title": "Ważne: zanim przejdziesz dalej, zapoznaj się z ograniczeniami synchronizacji z usługą Git",
       "app-mode-label": "Konfiguracja aplikacji",
@@ -16045,9 +16035,6 @@
     "description-tooltip": {
       "label": "Opis"
     },
-    "generate-columns": {
-      "score": "Wynik"
-    },
     "results-table": {
       "datasource-header": "Źródło danych",
       "deleted-by-header": "Usunięte przez",
@@ -16393,6 +16380,7 @@
       "update-preferences": "Błąd podczas aktualizowania preferencji"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Strona główna pulpitu",
       "home-dashboard-placeholder": "Domyślny pulpit",
       "language-preference-label": "Język",

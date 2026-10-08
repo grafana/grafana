@@ -28,7 +28,6 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -52,11 +51,11 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 	hybrid := true
 	manifest.Versions[1].Kinds[0].Search = &app.ManifestVersionKindSearch{Hybrid: &hybrid}
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
-		search:     stubIndexClient{},
-		opts:       Options{HybridAPIEnabled: true},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
+		search:   stubIndexClient{},
+		opts:     Options{HybridAPIEnabled: true},
 	}
 
 	container := restful.NewContainer()
@@ -92,15 +91,15 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 // generic subresources (/search, /trash), so those routes are dropped.
 func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 	manifest := testManifest(t)
-	operation := manifest.Versions[1].Routes.Namespaced["/foobar"]
-	manifest.Versions[1].Routes.Namespaced["/testkinds/search"] = operation
-	manifest.Versions[1].Routes.Namespaced["/app"] = operation
-	manifest.Versions[1].Routes.Cluster["/testkinds"] = operation
+	operation := manifest.Versions[1].Routes.Namespaced["/foobar"]          //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Namespaced["/testkinds/search"] = operation //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Namespaced["/app"] = operation              //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Cluster["/testkinds"] = operation           //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
@@ -132,14 +131,14 @@ func TestGetAPIRoutesSkipsReservedPaths(t *testing.T) {
 func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
 	manifest := testManifest(t)
 	op := &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "unservable"}}
-	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}
-	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op}
+	manifest.Versions[1].Routes.Namespaced["/headonly"] = spec3.PathProps{Head: op}                  //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Options: op, Trace: op} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 	manifest.Versions[1].Kinds[0].Routes["/kindhead"] = spec3.PathProps{Head: op}
 
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
 	routes := b.GetAPIRoutes(gv)
@@ -172,12 +171,12 @@ func TestGetAPIRoutesDropsUnservableMethods(t *testing.T) {
 
 	// The loaded manifest is shared with the rest of the server, so dropping a
 	// method must not edit it.
-	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Options)
+	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Options) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 }
 
 // A plugin without a manifest has no custom routes at all.
 func TestGetAPIRoutesWithoutManifest(t *testing.T) {
-	b := &manifestBuilder{group: "example-app", pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &manifestBuilder{group: "example-app", pluginID: "example-app"}
 	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example-app", Version: "v0alpha1"}))
 }
 
@@ -208,9 +207,9 @@ func TestGetAPIRoutesSkipsUnservedVersions(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions[2].Served = false
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 
 	require.Nil(t, b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v2alpha1"}))
@@ -237,9 +236,9 @@ func TestGetAPIRoutesKindRoutes(t *testing.T) {
 	manifest.Versions[1].Kinds[0].Routes["/status"] = manifest.Versions[1].Kinds[0].Routes["/reload"]
 
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
@@ -303,10 +302,10 @@ func TestWithPathParametersIsIdempotent(t *testing.T) {
 func TestVersionRouteNamespaceParameter(t *testing.T) {
 	manifest := testManifest(t)
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
-		search:     stubIndexClient{},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
+		search:   stubIndexClient{},
 	}
 	routes := b.GetAPIRoutes(schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
 	require.NotNil(t, routes)
@@ -344,10 +343,10 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
 	newBuilder := func(client appclientv3.Client, get getter) *manifestBuilder {
 		return &manifestBuilder{
-			group:      "example.ext.grafana.app",
-			pluginJSON: plugins.JSONData{ID: "example-app"},
-			clientV3:   client,
-			getter:     get,
+			group:    "example.ext.grafana.app",
+			pluginID: "example-app",
+			clientV3: client,
+			getter:   get,
 		}
 	}
 
@@ -598,11 +597,11 @@ func TestSearchRouteGates(t *testing.T) {
 	newBuilder := func(opts Options) *manifestBuilder {
 		manifest := testManifest(t)
 		return &manifestBuilder{
-			group:      manifest.Group,
-			manifest:   manifest,
-			pluginJSON: plugins.JSONData{ID: "example-app"},
-			search:     stubIndexClient{},
-			opts:       opts,
+			group:    manifest.Group,
+			manifest: manifest,
+			pluginID: "example-app",
+			search:   stubIndexClient{},
+			opts:     opts,
 		}
 	}
 
