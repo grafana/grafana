@@ -13,31 +13,15 @@ On top of the main Grafana development dependencies, you will need installed:
 - [Docker](https://docs.docker.com/get-started/get-docker/)
 - [Tilt](https://docs.tilt.dev/install.html). At the moment we're not using Kubernetes locally, so you shouldn't need to follow the instructions to install kubectl or kind.
 
-To start the stack, from the root of the Grafana project run `make frontend-service`. Tilt will orchestrate the webpack and docker builds, and then run the services with Docker compose. You can monitor it's progress and see logs with the URL to the Tilt console. Once done, you can access Grafana at `http://localhost:3000`.
+To start the stack, from the root of the Grafana project run `make frontend-service`. Tilt will orchestrate the rspack and docker builds, and then run the services with Docker compose. You can monitor it's progress and see logs with the URL to the Tilt console. Once done, you can access Grafana at `http://localhost:3000`.
 
 Quitting the process will stop the service from running.
 
-### Building with rspack
+### Rebuilding boot.js
 
-By default the stack builds the frontend with webpack. To build with rspack instead:
+Tilt runs an `rspack boot` resource. When a file in `public/boot` changes, that resource rebuilds `public/build/rspack/boot.js`. The main rspack watch does not include that entry point.
 
-```
-RSPACK=1 make frontend-service
-```
-
-This switches the build to `yarn start:rspack:noHmr` and turns on the
-`grafana.rspackBuild` feature flag so both backends read the manifest from
-`public/build/rspack`. The CDN mount is unchanged, because rspack writes inside the
-webpack output directory. Hot module replacement is off here on purpose: the CDN serves
-assets from disk, so the build has to write files instead of holding them in a dev server. The flag reaches the two backends by
-different routes: grafana-api reads it from static config, the frontend-service reads
-it from GOFF (`goff-flags.rspack.yaml`).
-
-Tilt also runs an `rspack boot` resource in this mode. When a file in `public/boot` changes,
-that resource rebuilds `public/build/rspack/boot.js`. The main rspack watch no longer includes
-that entry point.
-
-Switching between the two requires a full restart, not just a Tilt reload.
+Hot module replacement is off in this stack on purpose: the CDN serves assets from disk, so the build has to write files instead of holding them in a dev server.
 
 ### Grafana config
 

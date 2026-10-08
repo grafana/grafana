@@ -38,7 +38,7 @@ function inspect(config: unknown) {
 const noChecks = { noTsCheck: '1', noLint: '1' } as const;
 
 describe('the production config', () => {
-  // `--env` is a user-facing CLI surface and `build:rspack:nominify` already chains flags onto
+  // `--env` is a user-facing CLI surface and `build:nominify` already chains flags onto
   // it, so a production build must ignore `hmr` rather than quietly honour it: the result
   // compiles clean but ships unhashed filenames and Fast Refresh calls with no runtime.
   it('ignores --env hmr=1 entirely', () => {
@@ -53,7 +53,7 @@ describe('the production config', () => {
 });
 
 describe('the dev config without hmr', () => {
-  // This is what `start:rspack:noHmr` runs, and what the frontend-service stack builds with.
+  // This is what `start:noHmr` runs, and what the frontend-service stack builds with.
   it('keeps content hashes and starts no dev server', () => {
     const built = inspect(dev(noChecks));
 

@@ -408,7 +408,7 @@ jobs:
       - name: Generate RSDoctor metrics
         env:
           NO_SOURCEMAP: '1'
-        run: yarn build:stats:rspack
+        run: yarn build:stats
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:
