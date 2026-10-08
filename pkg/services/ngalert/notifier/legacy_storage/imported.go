@@ -79,8 +79,7 @@ func (e ImportedConfigRevision) receivers(match func(v1.PostableApiReceiver) boo
 			return nil, fmt.Errorf("failed to convert receiver %q: %w", r.Name, err)
 		}
 
-		recv.Provenance = models.ProvenanceConvertedPrometheus
-		recv.NormalizeManager()
+		recv.Manager = models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus)
 		result = append(result, recv)
 	}
 	return result, nil

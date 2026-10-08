@@ -134,7 +134,7 @@ func TestGetManagedRoute(t *testing.T) {
 		route, err := sut.GetManagedRoute(context.Background(), orgID, "imported", user)
 		require.NoError(t, err)
 
-		assert.Equal(t, models.ProvenanceConvertedPrometheus, route.Provenance)
+		assert.Equal(t, models.ProvenanceConvertedPrometheus, route.Provenance())
 		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceConvertedPrometheus), route.Manager)
 		assert.Equal(t, models.ResourceOriginImported, route.Origin)
 
@@ -150,9 +150,6 @@ func TestGetManagedRoute(t *testing.T) {
 			},
 		}
 		provStore := fakes.NewFakeProvisioningStore()
-		provStore.GetProvenanceFunc = func(_ context.Context, _ models.Provisionable, _ int64) (models.Provenance, error) {
-			return models.ProvenanceAPI, nil
-		}
 		terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
 		provStore.GetManagerPropertiesFunc = func(_ context.Context, _ models.Provisionable, _ int64) (utils.ManagerProperties, error) {
 			return terraform, nil
@@ -164,13 +161,12 @@ func TestGetManagedRoute(t *testing.T) {
 		route, err := sut.GetManagedRoute(context.Background(), orgID, models.DefaultRoutingTreeName, user)
 		require.NoError(t, err)
 
-		assert.Equal(t, models.ProvenanceAPI, route.Provenance)
+		assert.Equal(t, models.ProvenanceAPI, route.Provenance())
 		assert.Equal(t, terraform, route.Manager)
 		assert.Equal(t, models.ResourceOriginGrafana, route.Origin)
 
-		require.Len(t, provStore.Calls, 2)
-		assert.Equal(t, "GetProvenance", provStore.Calls[0].MethodName)
-		assert.Equal(t, "GetManagerProperties", provStore.Calls[1].MethodName)
+		require.Len(t, provStore.Calls, 1)
+		assert.Equal(t, "GetManagerProperties", provStore.Calls[0].MethodName)
 	})
 
 	t.Run("propagates provenance store error for grafana route", func(t *testing.T) {
@@ -182,8 +178,8 @@ func TestGetManagedRoute(t *testing.T) {
 		}
 		expectedErr := errors.New("provenance store failure")
 		provStore := fakes.NewFakeProvisioningStore()
-		provStore.GetProvenanceFunc = func(_ context.Context, _ models.Provisionable, _ int64) (models.Provenance, error) {
-			return models.ProvenanceNone, expectedErr
+		provStore.GetManagerPropertiesFunc = func(_ context.Context, _ models.Provisionable, _ int64) (utils.ManagerProperties, error) {
+			return utils.ManagerProperties{}, expectedErr
 		}
 		features := featuremgmt.WithFeatures(featuremgmt.FlagAlertingImportAlertmanagerAPI)
 
@@ -219,9 +215,9 @@ func TestGetManagedRoute(t *testing.T) {
 			}
 		}
 		require.NotNil(t, listRoute, "imported route should be present in list")
-		assert.Equal(t, singleRoute.Provenance, listRoute.Provenance,
+		assert.Equal(t, singleRoute.Provenance(), listRoute.Provenance(),
 			"provenance should be the same in single-get and list views")
-		assert.Equal(t, models.ProvenanceConvertedPrometheus, singleRoute.Provenance)
+		assert.Equal(t, models.ProvenanceConvertedPrometheus, singleRoute.Provenance())
 	})
 
 	t.Run("returns not found for unknown route", func(t *testing.T) {
@@ -279,12 +275,13 @@ func TestGetManagedRoutes(t *testing.T) {
 		}
 		terraform := utils.ManagerProperties{Kind: utils.ManagerKindTerraform, Identity: "tf-id"}
 		provStore := fakes.NewFakeProvisioningStore()
-		provStore.GetProvenancesFunc = func(_ context.Context, _ int64, _ string) (map[string]models.Provenance, error) {
-			return map[string]models.Provenance{"": models.ProvenanceAPI, "route-a": models.ProvenanceFile}, nil
-		}
-		// The provisioning store keys the default tree by "" (the legacy root route), not its UID.
+		// The provisioning store keys the default tree by "" (the legacy root route), not its UID. For
+		// legacy rows without a manager kind, it returns the manager derived from the stored provenance.
 		provStore.GetAllManagerPropertiesFunc = func(_ context.Context, _ int64, _ string) (map[string]utils.ManagerProperties, error) {
-			return map[string]utils.ManagerProperties{"": terraform}, nil
+			return map[string]utils.ManagerProperties{
+				"":        terraform,
+				"route-a": models.ProvenanceToManagerProperties(models.ProvenanceFile),
+			}, nil
 		}
 		sut := createServiceSut(configStore, provStore, featuremgmt.WithFeatures(), &acfakes.FakeRouteAccessService[*v1.ManagedRoute]{})
 
@@ -297,10 +294,10 @@ func TestGetManagedRoutes(t *testing.T) {
 		}
 		require.Contains(t, byUID, models.DefaultRoutingTreeName)
 		assert.Equal(t, terraform, byUID[models.DefaultRoutingTreeName].Manager)
-		assert.Equal(t, models.ProvenanceAPI, byUID[models.DefaultRoutingTreeName].Provenance)
+		assert.Equal(t, models.ProvenanceAPI, byUID[models.DefaultRoutingTreeName].Provenance())
 		require.Contains(t, byUID, "route-a")
-		// Without a stored manager, it is derived from the provenance.
 		assert.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceFile), byUID["route-a"].Manager)
+		assert.Equal(t, models.ProvenanceFile, byUID["route-a"].Provenance())
 	})
 
 	t.Run("filters out routes the user does not have access to", func(t *testing.T) {

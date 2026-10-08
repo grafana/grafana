@@ -41,7 +41,7 @@ func ConvertToK8sResource(orgID int64, rule v1.InhibitionRule, namespacer reques
 	}
 	i.UID = gapiutil.CalculateClusterWideUID(&i)
 
-	provenance.SetAnnotations(&i, rule.Provenance, rule.Manager)
+	provenance.SetAnnotations(&i, rule.Manager)
 
 	return &i
 }
@@ -71,15 +71,14 @@ func convertLabelsMatchersToK8s(matchers []v1.Matcher) []model.InhibitionRuleMat
 }
 
 func convertToDomainModel(rule *model.InhibitionRule) (v1.InhibitionRule, error) {
-	prov, manager, err := provenance.FromAnnotations(rule)
+	manager, err := provenance.FromAnnotations(rule)
 	if err != nil {
 		return v1.InhibitionRule{}, ngmodels.MakeErrInhibitionRuleInvalid(err)
 	}
 	return v1.InhibitionRule{
 		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(rule.Name),
-			Provenance: prov,
-			Manager:    manager,
+			UID:     v1.ResourceUID(rule.Name),
+			Manager: manager,
 		},
 		SourceMatchers: convertK8sMatchersToLabels(rule.Spec.SourceMatchers),
 		TargetMatchers: convertK8sMatchersToLabels(rule.Spec.TargetMatchers),

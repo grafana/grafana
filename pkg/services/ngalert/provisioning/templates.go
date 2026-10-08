@@ -84,10 +84,6 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 		return nil, nil
 	}
 
-	provenances, err := t.provenanceStore.GetProvenances(ctx, orgID, (&v1.TemplateGroup{}).ResourceType())
-	if err != nil {
-		return nil, err
-	}
 	managers, err := t.provenanceStore.GetAllManagerProperties(ctx, orgID, (&v1.TemplateGroup{}).ResourceType())
 	if err != nil {
 		return nil, err
@@ -105,7 +101,7 @@ func (t *TemplateService) GetTemplates(ctx context.Context, orgID int64) ([]v1.T
 			// with a Grafana template, so they must not pick up its record.
 			tmpl.SetImported()
 		} else {
-			tmpl.AssignManager(provenances[tmpl.ResourceID()], managers[tmpl.ResourceID()])
+			tmpl.Manager = managers[tmpl.ResourceID()]
 		}
 		templates = append(templates, tmpl)
 	}
@@ -165,7 +161,6 @@ func (t *TemplateService) UpsertTemplate(ctx context.Context, orgID int64, tmpl 
 	if err != nil {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
 	}
-	tmpl.NormalizeManager()
 
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -203,8 +198,7 @@ func (t *TemplateService) CreateTemplate(ctx context.Context, orgID int64, tmpl 
 	if tmpl.Kind == v1.TemplateKindMimir {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(errors.New("templates of kind 'Mimir' cannot be created"))
 	}
-	tmpl.NormalizeManager()
-	if err := t.validator(ctx, models.ProvenanceNone, tmpl.Provenance); err != nil {
+	if err := t.validator(ctx, models.ProvenanceNone, tmpl.Provenance()); err != nil {
 		return v1.TemplateGroup{}, err
 	}
 
@@ -263,7 +257,6 @@ func (t *TemplateService) UpdateTemplate(ctx context.Context, orgID int64, tmpl 
 	if err != nil {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(err)
 	}
-	tmpl.NormalizeManager()
 
 	revision, err := t.configStore.Get(ctx, orgID)
 	if err != nil {
@@ -294,14 +287,14 @@ func (t *TemplateService) updateTemplate(ctx context.Context, revision *legacy_s
 	if existing.Kind != tmpl.Kind {
 		return v1.TemplateGroup{}, MakeErrTemplateInvalid(errors.New("cannot change template kind"))
 	}
-	if existing.Provenance == models.ProvenanceConvertedPrometheus {
+	if existing.Provenance() == models.ProvenanceConvertedPrometheus {
 		return v1.TemplateGroup{}, makeErrTemplateOrigin(existing, "update")
 	}
-	if err := t.validator(ctx, existing.Provenance, tmpl.Provenance); err != nil {
+	if err := t.validator(ctx, existing.Provenance(), tmpl.Provenance()); err != nil {
 		return v1.TemplateGroup{}, err
 	}
 
-	err = t.checkOptimisticConcurrency(existing, tmpl.Provenance, tmpl.Version, "update")
+	err = t.checkOptimisticConcurrency(existing, tmpl.Provenance(), tmpl.Version, "update")
 	if err != nil {
 		return v1.TemplateGroup{}, err
 	}
@@ -364,7 +357,7 @@ func (t *TemplateService) deleteTemplate(ctx context.Context, orgID int64, prove
 	if !found {
 		return nil
 	}
-	if existing.Provenance == models.ProvenanceConvertedPrometheus {
+	if existing.Provenance() == models.ProvenanceConvertedPrometheus {
 		return makeErrTemplateOrigin(existing, "delete")
 	}
 
@@ -373,7 +366,7 @@ func (t *TemplateService) deleteTemplate(ctx context.Context, orgID int64, prove
 		return err
 	}
 
-	if err = t.validator(ctx, existing.Provenance, provenance); err != nil {
+	if err = t.validator(ctx, existing.Provenance(), provenance); err != nil {
 		return err
 	}
 
@@ -413,15 +406,11 @@ func (t *TemplateService) getTemplateByName(ctx context.Context, revision *legac
 }
 
 func (t *TemplateService) assignTemplateManager(ctx context.Context, orgID int64, tmpl *v1.TemplateGroup) error {
-	provenance, err := t.provenanceStore.GetProvenance(ctx, tmpl, orgID)
-	if err != nil {
-		return err
-	}
 	manager, err := t.provenanceStore.GetManagerProperties(ctx, tmpl, orgID)
 	if err != nil {
 		return err
 	}
-	tmpl.AssignManager(provenance, manager)
+	tmpl.Manager = manager
 	return nil
 }
 

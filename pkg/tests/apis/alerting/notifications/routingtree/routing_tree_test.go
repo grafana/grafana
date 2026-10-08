@@ -1073,13 +1073,14 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		allCreatedRoutes[models.DefaultRoutingTreeName] = k8sRoute(t, models.DefaultRoutingTreeName, &defaultPolicy)
 
 		for name, route := range allCreatedRoutes {
-			require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+			require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, models.ProvenanceAPI))
 
 			t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
 				got, err := adminClient.Get(ctx, nameToIdentifier(name))
 				require.NoError(t, err)
 				expected := route.Copy().(*v1beta1.RoutingTree)
-				expected.SetProvenanceStatus("API")
+				expected.SetProvenanceStatus(string(models.ProvenanceAPI))
+				expected.Annotations[utils.AnnoKeyManagerKind] = string(utils.ManagerKindClassicAPI) //nolint:staticcheck
 				assert.Equal(t, expected, got)
 			})
 		}
@@ -1157,7 +1158,7 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 		t.Run("Update on provisioned should succeed for admin", func(t *testing.T) {
 			for name := range policies {
 				t.Run(fmt.Sprintf("Policy %s", name), func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, models.ProvenanceAPI))
 
 					_, err := adminClient.Update(ctx, k8sRoute(t, name, policy_exports.Empty()), resource.UpdateOptions{ResourceVersion: ""}) // Bypass version check.
 					require.NoError(t, err)
@@ -1176,17 +1177,6 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 					// Incorrect Version should throw conflict.
 					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: "incorrect-version"}})
 					require.Truef(t, errors.IsConflict(err), "Should get Conflict error but got: %s", err)
-				})
-
-				t.Run("Delete provisioned should fail", func(t *testing.T) {
-					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, "API"))
-
-					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
-					assert.Error(t, err)
-					assert.ErrorContains(t, err, "provenance")
-
-					// Reset provenance.
-					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 
 				t.Run("Correct ResourceVersion should succeed", func(t *testing.T) {
@@ -1210,6 +1200,18 @@ func TestIntegrationMultipleRoutesCRUD(t *testing.T) {
 					} else {
 						validateGetErr(t, name, v1.StatusReasonNotFound)
 					}
+				})
+
+				_, _ = adminClient.Create(ctx, route, resource.CreateOptions{}) // Not necessary to check error here, downstream will catch.
+
+				t.Run("Delete on provisioned should succeed for admin", func(t *testing.T) {
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, models.ProvenanceAPI))
+
+					err := adminClient.Delete(ctx, nameToIdentifier(name), resource.DeleteOptions{Preconditions: resource.DeleteOptionsPreconditions{ResourceVersion: ""}})
+					require.NoError(t, err)
+
+					// Reset provenance.
+					require.NoError(t, db.SetProvenance(ctx, v1model.NewManagedRoute(name, &v1model.Route{}), org1.OrgID, ""))
 				})
 			})
 		}

@@ -182,7 +182,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 					testGrafanaRule.SourceMatchers,
 					testGrafanaRule.TargetMatchers,
 					[]string{"instance", "job"},
-					testGrafanaRule.Provenance,
+					testGrafanaRule.Provenance(),
 				)
 			}(),
 			version: testGrafanaRule.Version,
@@ -192,7 +192,7 @@ func TestService_UpdateInhibitionRule(t *testing.T) {
 					testGrafanaRule.SourceMatchers,
 					testGrafanaRule.TargetMatchers,
 					[]string{"instance", "job"},
-					testGrafanaRule.Provenance,
+					testGrafanaRule.Provenance(),
 				)
 			}(),
 		},
@@ -304,7 +304,7 @@ func TestService_InhibitionRuleManager(t *testing.T) {
 	created, err := sut.CreateInhibitionRule(ctx, rule, orgID)
 	require.NoError(t, err)
 	require.Equal(t, terraform, created.Manager)
-	require.Equal(t, models.ProvenanceAPI, created.Provenance)
+	require.Equal(t, models.ProvenanceAPI, created.Provenance())
 
 	got, err := sut.GetInhibitionRule(ctx, created.UID, orgID)
 	require.NoError(t, err)
@@ -316,13 +316,13 @@ func TestService_InhibitionRuleManager(t *testing.T) {
 	require.Equal(t, string(utils.ManagerKindTerraform), stored.ManagerKind)
 	require.Equal(t, "tf-id", stored.ManagerIdentity)
 
-	// An update without a manager falls back to the rule's provenance.
+	// A legacy caller that only knows the provenance replaces the specific manager with the classic one.
 	update := created
-	update.Manager = utils.ManagerProperties{}
+	update.Manager = models.ProvenanceToManagerProperties(models.ProvenanceAPI)
 	updated, err := sut.UpdateInhibitionRule(ctx, update, created.Version, orgID)
 	require.NoError(t, err)
 	require.Equal(t, models.ProvenanceToManagerProperties(models.ProvenanceAPI), updated.Manager)
-	require.Equal(t, models.ProvenanceAPI, updated.Provenance)
+	require.Equal(t, models.ProvenanceAPI, updated.Provenance())
 }
 
 func createInhibitionRuleSvcSut(enableImported bool) (*Service, *legacy_storage.AlertmanagerConfigStoreFake) {

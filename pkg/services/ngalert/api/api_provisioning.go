@@ -248,8 +248,8 @@ func (srv *ProvisioningSrv) RoutePutTemplate(c *contextmodel.ReqContext, body de
 		Content: body.Template,
 		Kind:    v1.TemplateKindGrafana,
 		ResourceMetadata: v1.ResourceMetadata{
-			Provenance: determineProvenance(c),
-			Version:    body.ResourceVersion,
+			Manager: alerting_models.ProvenanceToManagerProperties(determineProvenance(c)),
+			Version: body.ResourceVersion,
 		},
 	}
 	modified, err := srv.templates.UpsertTemplate(c.Req.Context(), c.GetOrgID(), tmpl)
@@ -309,7 +309,7 @@ func (srv *ProvisioningSrv) RouteGetMuteTimingsExport(c *contextmodel.ReqContext
 
 func (srv *ProvisioningSrv) RoutePostMuteTiming(c *contextmodel.ReqContext, mt definitions.MuteTimeInterval) response.Response {
 	ti := MuteTimeIntervalToModel(mt)
-	ti.Provenance = determineProvenance(c)
+	ti.Manager = alerting_models.ProvenanceToManagerProperties(determineProvenance(c))
 	created, err := srv.muteTimings.CreateMuteTiming(c.Req.Context(), ti, c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to create mute timing", err)
@@ -327,7 +327,7 @@ func (srv *ProvisioningSrv) RoutePutMuteTiming(c *contextmodel.ReqContext, mt de
 		mt.UID = name
 	}
 	ti := MuteTimeIntervalToModel(mt)
-	ti.Provenance = determineProvenance(c)
+	ti.Manager = alerting_models.ProvenanceToManagerProperties(determineProvenance(c))
 	updated, err := srv.muteTimings.UpdateMuteTiming(c.Req.Context(), ti, c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "failed to update mute timing", err)

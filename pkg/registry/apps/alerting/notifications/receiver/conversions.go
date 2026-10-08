@@ -88,7 +88,7 @@ func convertToK8sResource(
 		},
 		Spec: spec,
 	}
-	provenance.SetAnnotations(r, receiver.Provenance, receiver.Manager)
+	provenance.SetAnnotations(r, receiver.Manager)
 
 	if access != nil {
 		for _, action := range ngmodels.ReceiverPermissions() {
@@ -124,7 +124,7 @@ var permissionMapper = map[ngmodels.ReceiverPermission]string{
 }
 
 func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[string][]string, error) {
-	prov, manager, err := provenance.FromAnnotations(receiver)
+	manager, err := provenance.FromAnnotations(receiver)
 	if err != nil {
 		return nil, nil, ngmodels.ErrReceiverInvalid(err)
 	}
@@ -133,7 +133,6 @@ func convertToDomainModel(receiver *model.Receiver) (*ngmodels.Receiver, map[str
 		Name:         receiver.Spec.Title,
 		Integrations: make([]*ngmodels.Integration, 0, len(receiver.Spec.Integrations)),
 		Version:      receiver.ResourceVersion,
-		Provenance:   prov,
 		Manager:      manager,
 		Origin:       ngmodels.ResourceOriginGrafana, // Set to Grafana by default.
 	}

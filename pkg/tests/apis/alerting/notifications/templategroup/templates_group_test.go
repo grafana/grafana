@@ -162,6 +162,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 			Content: defaultDefn.Template,
 			Kind:    v1beta1.TemplateGroupTemplateKindGrafana,
 		}, actual.Spec)
+		require.Equal(t, "system", actual.GetProvenanceStatus())
 		defaultTemplateGroup = actual
 	})
 

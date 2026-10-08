@@ -51,32 +51,25 @@ type Receiver struct {
 	UID          string
 	Name         string
 	Integrations []*Integration
-	Provenance   Provenance
-	// Manager is the richer form of Provenance (see v1.ResourceMetadata). It is not part of the
-	// fingerprint.
+	// Manager records which tool manages the receiver (see v1.ResourceMetadata). Only its coarse
+	// view, Provenance, is part of the fingerprint.
 	Manager utils.ManagerProperties
 	Version string
 	Origin  ResourceOrigin
 }
 
-// NormalizeManager makes Manager and Provenance consistent. A known Manager determines Provenance;
-// otherwise Manager is derived from Provenance.
-func (r *Receiver) NormalizeManager() {
-	if r.Manager.Kind != utils.ManagerKindUnknown {
-		r.Provenance = ManagerPropertiesToProvenance(r.Manager)
-		return
-	}
-	r.Manager = ProvenanceToManagerProperties(r.Provenance)
+// Provenance is the legacy, coarse view of Manager.
+func (r Receiver) Provenance() Provenance {
+	return ManagerPropertiesToProvenance(r.Manager)
 }
 
 func (r *Receiver) Clone() Receiver {
 	clone := Receiver{
-		UID:        r.UID,
-		Name:       r.Name,
-		Provenance: r.Provenance,
-		Manager:    r.Manager,
-		Version:    r.Version,
-		Origin:     r.Origin,
+		UID:     r.UID,
+		Name:    r.Name,
+		Manager: r.Manager,
+		Version: r.Version,
+		Origin:  r.Origin,
 	}
 
 	if r.Integrations != nil {
@@ -505,7 +498,7 @@ func (r *Receiver) Fingerprint() string {
 	// fields that determine the rule state
 	sum.writeString(r.UID)
 	sum.writeString(r.Name)
-	sum.writeString(string(r.Provenance))
+	sum.writeString(string(r.Provenance()))
 
 	for _, integration := range r.Integrations {
 		writeIntegration(integration)
