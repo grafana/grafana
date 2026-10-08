@@ -470,7 +470,7 @@
     },
     "alert-manager-picker": {
       "external-alertmanagers-group": "外部 Alertmanager",
-      "external-alertmanagers-group-plugin": "",
+      "external-alertmanagers-group-plugin": "外部 Alertmanager（在 Prometheus Alerting 中打开）",
       "noOptionsMessage-no-datasources-found": "未找到数据源"
     },
     "alert-menu": {
@@ -741,26 +741,26 @@
     },
     "bulk-actions": {
       "delete": {
-        "affected-count": "",
-        "no-rules-affected": "",
+        "affected-count": "已删除 {{num}} 条规则",
+        "no-rules-affected": "未从文件夹中删除任何规则",
         "success": "规则已成功从文件夹中删除"
       },
       "pause": {
-        "affected-count": "",
-        "no-rules-affected": "",
+        "affected-count": "已暂停 {{num}} 条规则",
+        "no-rules-affected": "未暂停文件夹的任何规则",
         "success": "已成功暂停文件夹的规则评估"
       },
-      "skipped-provisioned": "",
+      "skipped-provisioned": "已跳过 {{num}} 条已预置的规则",
       "unpause": {
-        "affected-count": "",
-        "no-rules-affected": "",
-        "success": ""
+        "affected-count": "已恢复 {{num}} 条规则",
+        "no-rules-affected": "未恢复文件夹的任何规则",
+        "success": "已成功恢复文件夹的规则"
       }
     },
     "central-alert-history": {
-      "configure-loki-description": "",
-      "configure-loki-link": "",
-      "configure-loki-title": "",
+      "configure-loki-description": "跨警报规则查看历史记录需要 Loki。请让您的 Grafana 管理员为警报状态历史记录配置 Loki。",
+      "configure-loki-link": "配置警报状态历史记录",
+      "configure-loki-title": "配置 Loki 以查看警报历史记录",
       "description": {
         "alert-events": "查看由 Grafana 管理的警报规则生成的所有警报事件的历史记录。无论是否设置了静默或静音时段，都会显示所有警报事件。",
         "notifications": "查看由 Grafana 管理的警报规则发送的所有通知的历史记录。"
@@ -923,7 +923,7 @@
       "button-view": "查看",
       "export-ariaLabel-export": "导出",
       "export-label-export": "导出",
-      "export-legacy-integration-tooltip": "",
+      "export-legacy-integration-tooltip": "导出功能不适用于包含旧版集成的联络点",
       "label-delete": "删除",
       "label-manage-permissions": "管理权限",
       "tooltip-history": "查看针对此联络点的通知尝试历史记录",
@@ -1487,8 +1487,8 @@
       "text-loading": "正在加载..."
     },
     "grafana-receivers-exporter": {
-      "warning-v0-integrations-description": "",
-      "warning-v0-integrations-title": ""
+      "warning-v0-integrations-description": "仅包含旧版集成的联络点将被省略。同时包含旧版集成和 v1 集成的联络点将在导出时不包含其旧版集成。",
+      "warning-v0-integrations-title": "不包括旧版集成"
     },
     "grafana-rule-design-export-preview": {
       "text-loading": "正在加载..."
@@ -1718,9 +1718,9 @@
         "pause-none": "没有已暂停的规则",
         "pause-recording": "录制规则已暂停",
         "policy-tree": "策略树",
-        "preview": "",
-        "preview-config-aria": "",
-        "preview-rules-aria": "",
+        "preview": "预览",
+        "preview-config-aria": "预览配置",
+        "preview-rules-aria": "预览警报规则",
         "routing": "通知路由",
         "routing-none": "未选择策略树",
         "routing-tree": "策略树：{{name}}",
@@ -1778,19 +1778,19 @@
         "templates-duplicate": "重复的模板文件名称：“{{name}}”。模板文件名称必须唯一。",
         "templates-label": "通知模板",
         "templates-remove": "移除{{name}}",
-        "upload": "",
+        "upload": "拖拽 YAML 文件至此区域或点击进行上传",
         "validating": "正在验证配置...",
         "validation-error": "验证失败",
         "validation-error-desc": "验证配置失败。",
         "validation-success": "验证成功",
         "validation-success-desc": "未找到冲突。配置已准备就绪，可以导入。",
         "validation-warning": "为了避免与现有资源发生冲突，某些资源将被重命名",
-        "yaml-added-title": "",
-        "yaml-desc": "",
+        "yaml-added-title": "配置文件已上传",
+        "yaml-desc": "可接受的文件类型：{{extensions}}",
         "yaml-file": "Alertmanager 配置 YAML",
-        "yaml-invalid-type": "",
-        "yaml-remove": "",
-        "templates-added-title_other": ""
+        "yaml-invalid-type": "文件必须是 YAML 文件 ({{extensions}})",
+        "yaml-remove": "移除 {{name}}",
+        "templates-added-title_other": "模板文件已添加"
       },
       "step2": {
         "datasource": "数据源",
@@ -2077,9 +2077,7 @@
       "routing-options": {
         "label": {
           "contact-point": "联络点",
-          "notification-policy": "通知策略",
-          "select-contact-point": "选择联络点",
-          "use-notification-policy": "使用通知策略"
+          "notification-policy": "通知策略"
         }
       }
     },
@@ -2641,9 +2639,9 @@
       }
     },
     "proxied-alerting-route": {
-      "redirected-body": "",
-      "redirected-title": "",
-      "text-redirecting": ""
+      "redirected-body": "数据源托管警报由 Prometheus Alerting 插件处理。",
+      "redirected-title": "已在 Prometheus Alerting 插件中打开",
+      "text-redirecting": "正在重定向…"
     },
     "query-and-expressions-step": {
       "add-query": "添加查询",
@@ -2949,11 +2947,11 @@
     "rule-list": {
       "configure-datasource": "配置",
       "datasource-managed-notice": {
-        "action": "",
-        "body": "",
-        "inline-action": "",
-        "inline_other": "",
-        "title_other": ""
+        "action": "在 Prometheus Alerting 中查看规则",
+        "body": "此处不再显示它们的警报和录制规则。",
+        "inline-action": "查看",
+        "inline_other": "{{count}} 数据源由 Prometheus Alerting 插件管理",
+        "title_other": "{{count}} 数据源由 Prometheus Alerting 插件管理"
       },
       "ds-error": {
         "title": "无法加载此数据源的规则"
@@ -2976,7 +2974,7 @@
         "no-rules-found": "没有符合您当前筛选器组的提醒或录制规则。",
         "results-loading": "正在搜索 – 找到 {{numberOfRules}} 条规则",
         "results-with-cancellation": "搜索已取消 – 找到 {{numberOfRules}} 个规则",
-        "search-in-plugin": ""
+        "search-in-plugin": "在 Prometheus Alerting 中搜索数据源托管规则"
       },
       "hidden-empty-data-sources-show-all": "",
       "import-disabled-tooltip": {
@@ -3250,19 +3248,19 @@
         "action-disable": "禁用同步",
         "add-datasource-link": "添加 Mimir 数据源",
         "badge-active": "活跃",
-        "badge-failing": "",
+        "badge-failing": "同步失败",
         "badge-not-configured": "未配置",
         "badge-operator-managed": "由操作员管理",
-        "badge-pending": "",
-        "badge-stopped": "",
+        "badge-pending": "待处理的首次同步",
+        "badge-stopped": "同步已停止",
         "description": "将警报配置从 Mimir 或 Cortex Alertmanager 数据源持续同步到 Grafana。",
         "disable-confirm-action": "禁用同步",
         "disable-confirm-body": "禁用此项将停止从数据源 {{uid}} 进行持续同步。您以后可以通过再次选择数据源来重新启用。",
         "disable-confirm-body-generic": "禁用此项将停止持续同步。您以后可以通过再次选择数据源来重新启用。",
         "disable-confirm-title": "要禁用 Mimir Alertmanager 自动同步吗？",
         "disable-success": "Mimir Alertmanager 自动同步已禁用",
-        "merge-committed-info": "",
-        "merge-committed-title": "",
+        "merge-committed-info": "外部 Alertmanager 配置已合并到 Grafana。已停止从此数据源进行自动同步。",
+        "merge-committed-title": "配置已合并到 Grafana",
         "not-ready-body": "Grafana 尚未完成为此组织设置自动同步。请稍后重试。",
         "not-ready-title": "自动同步仍在初始化",
         "operator-managed-info": "此值由 grafana.ini 中的 <1>[unified_alerting] external_alertmanager_uid</1> 密钥设置，无法通过 UI 更改。编辑配置文件并重新启动 Grafana，或移除密钥以从此处管理同步。",
@@ -3281,7 +3279,7 @@
         "staged-conflict-active-title": "自动同步未运行",
         "staged-conflict-body": "Grafana 一次只能保留一个导入的配置，目前该位置已被 {{identifier}} 占用。请在下方提升或还原该配置，以释放自动同步功能。",
         "staged-conflict-title": "配置处于暂存状态时，自动同步不可用",
-        "sync-failed-title": "",
+        "sync-failed-title": "上次同步尝试失败",
         "title": "自动同步配置"
       },
       "import": {
@@ -3319,9 +3317,9 @@
           "rules-note-body": "警报规则和录制规则已作为 Grafana 管理的规则处于活动状态；提升操作仅合并上方的 Alertmanager 资源。",
           "success-body": "导入的资源已合并到您的实时配置中。",
           "success-title": "配置已提升",
-          "sync-ini-managed-body": "",
-          "sync-ini-managed-title": "",
-          "sync-not-cleared-body": "",
+          "sync-ini-managed-body": "Grafana 继续从 grafana.ini 中设置的数据源进行同步。移除该键以停止同步，并再次导入通知资源。",
+          "sync-ini-managed-title": "配置已提升，但自动同步仍处于活动状态",
+          "sync-not-cleared-body": "无法清除自动同步设置。在警报设置中禁用自动同步，以再次导入通知资源。",
           "sync-not-cleared-title": "配置已提升，但自动同步仍处于配置状态",
           "sync-stops-body": "合并后，资源将成为正常的 Grafana 资源，并停止跟踪数据源。合并过程中会关闭自动同步。",
           "sync-stops-title": "这将停止自动同步",
@@ -3360,7 +3358,7 @@
         "policy-tree-routes_other": "{{count}} 个路由"
       },
       "tabs": {
-        "alert-managers": "",
+        "alert-managers": "Alertmanager",
         "import": "导入"
       }
     },
@@ -4365,7 +4363,7 @@
       "label-top": "顶部"
     },
     "name-show-unfilled-area": "显示未填充区域",
-    "name-text-mode": "",
+    "name-text-mode": "文字模式",
     "name-value-display": "值显示",
     "presets": {
       "basic": "基础",
@@ -4386,11 +4384,11 @@
       "lcd": "条形仪表 - LCD"
     },
     "text-mode-options": {
-      "label-auto": "",
-      "label-name": "",
-      "label-none": "",
-      "label-value": "",
-      "label-value-and-name": ""
+      "label-auto": "自动",
+      "label-name": "名称",
+      "label-none": "无",
+      "label-value": "值",
+      "label-value-and-name": "值和名称"
     },
     "value-display-options": {
       "label-hidden": "隐藏",
@@ -4613,7 +4611,7 @@
     },
     "readme": {
       "add-readme": "添加自述文件",
-      "edit-doc-tooltip": "",
+      "edit-doc-tooltip": "编辑文档",
       "empty-message": "添加自述文件，描述此文件夹中的内容以及在哪里可以找到正确的数据面板。",
       "load-error-retry": "重试",
       "load-error-title": "",
@@ -13068,15 +13066,9 @@
       "card-author": "作者：{{author}}",
       "card-selected": "{{title}}（已选择）",
       "card-updated": "更新于 {{when}}",
-      "create-description": "描述",
-      "create-description-help": "供协作者参考的可选上下文",
-      "create-description-placeholder": "您正在调查什么？",
       "create-name": "笔记本名称",
       "create-name-required": "笔记本名称为必填项",
       "create-name-taken": "已存在具有此名称的笔记本",
-      "create-tags": "标签",
-      "create-tags-help": "可选 — 用于搜索和筛选",
-      "create-tags-placeholder": "添加标签",
       "created-by-me": "由我创建",
       "error-conflict": "此笔记本在您添加内容时发生了更改。请重试，以便将面板添加到最新版本的笔记本。",
       "error-generic": "将面板添加到笔记本失败",
@@ -13086,6 +13078,8 @@
       "list-none": "您还没有笔记本。请改为创建一个。",
       "list-none-read-only": "您还没有笔记本，也没有创建笔记本的权限。",
       "list-truncated": "并非所有笔记本都会显示。缩小搜索范围以查找其他笔记本。",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "按标题搜索",
       "sort-alphabetical": "按字母顺序 (A-Z)",
       "sort-label": "对笔记本进行排序",
@@ -13185,8 +13179,7 @@
       },
       "tag-filter-placeholder": "",
       "unknown-author": "匿名",
-      "count_other": "{{count}} 个笔记本",
-      "count-truncated_other": "已加载前 {{count}} 个笔记本"
+      "count_other": "{{count}} 个笔记本"
     },
     "new": {
       "default-title-with-date": ""
@@ -14028,6 +14021,7 @@
       "title": "您还可以在 Grafana Cloud 上使用 Git 同步"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "复制代码到剪贴板"
     },
     "commit-message": {
@@ -14953,7 +14947,6 @@
       "alert-point-folder-cleanup": "迁移后，您可能需要手动移除或管理原始文件夹。",
       "alert-point-folder-structure": "迁移现有数据面板时，文件夹结构将在存储库中复制。原始文件夹中的数据面板将清空，但可能仍包含警报或库面板。",
       "alert-point-instance-alerts": "现有警报和库面板将丢失，迁移后将不可用。",
-      "alert-point-permissions": "不支持细化权限。将应用默认权限：管理员、编辑者和查看者角色将保留其各自的标准访问级别。",
       "alert-point-unsupported": "预置文件夹中不支持警报和库面板。",
       "alert-title": "重要提示：在继续之前查看 Git 同步限制",
       "app-mode-label": "应用配置",
@@ -15664,9 +15657,6 @@
     "description-tooltip": {
       "label": "描述"
     },
-    "generate-columns": {
-      "score": "分数"
-    },
     "results-table": {
       "datasource-header": "数据源",
       "deleted-by-header": "删除者",
@@ -16009,6 +15999,7 @@
       "update-preferences": "更新偏好设置时出错"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "主页仪表板",
       "home-dashboard-placeholder": "默认仪表板",
       "language-preference-label": "语言",

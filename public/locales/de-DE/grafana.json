@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Kontaktpunkt",
-          "notification-policy": "Benachrichtigungsrichtlinie",
-          "select-contact-point": "Kontaktpunkt auswählen",
-          "use-notification-policy": "Benachrichtigungsrichtlinie nutzen"
+          "notification-policy": "Benachrichtigungsrichtlinie"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Von {{author}}",
       "card-selected": "{{title}} (ausgewählt)",
       "card-updated": "Aktualisiert am {{when}}",
-      "create-description": "Beschreibung",
-      "create-description-help": "Optionaler Kontext für Beteiligte",
-      "create-description-placeholder": "Was untersuchen Sie?",
       "create-name": "Notizbuchname",
       "create-name-required": "Ein Notizbuchname ist erforderlich",
       "create-name-taken": "Ein Notizbuch mit diesem Namen ist bereits vorhanden",
-      "create-tags": "Tags",
-      "create-tags-help": "Optional – wird für die Suche und Filterung verwendet",
-      "create-tags-placeholder": "Tag hinzufügen",
       "created-by-me": "Von mir erstellt",
       "error-conflict": "Dieses Notizbuch wurde geändert, während Sie etwas hinzugefügt haben. Versuchen Sie erneut, das Panel zur neuesten Version hinzuzufügen.",
       "error-generic": "Das Panel konnte nicht zum Notizbuch hinzugefügt werden",
@@ -13183,6 +13175,8 @@
       "list-none": "Sie haben noch keine Notizbücher. Erstellen Sie stattdessen eines.",
       "list-none-read-only": "Sie haben noch keine Notizbücher und keine Berechtigung, eines zu erstellen.",
       "list-truncated": "Es wird nicht jedes Notizbuch angezeigt. Schränken Sie die Suche ein, um andere zu finden.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Suche nach Titel",
       "sort-alphabetical": "Alphabetisch (A–Z)",
       "sort-label": "Notizbücher sortieren",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anonym",
       "count_one": "{{count}} Notizbuch",
-      "count_other": "{{count}} Notizbücher",
-      "count-truncated_one": "Erstes {{count}} Notizbuch geladen",
-      "count-truncated_other": "Erste {{count}} Notizbücher geladen"
+      "count_other": "{{count}} Notizbücher"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Sie können Git Sync auch in Grafana Cloud nutzen"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Code in Zwischenablage kopieren"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Möglicherweise müssen Sie Originalordner nach der Migration manuell entfernen oder verwalten.",
       "alert-point-folder-structure": "Bei der Migration von vorhandenen Dashboards wird die Ordnerstruktur im Repository repliziert. Die Dashboards in den Originalordnern werden geleert, die Ordner können jedoch noch Warnungen oder Bibliotheks-Panels enthalten.",
       "alert-point-instance-alerts": "Vorhandene Warnungen und Bibliotheks-Panels gehen verloren und sind nach der Migration nicht mehr nutzbar.",
-      "alert-point-permissions": "Feinkörnige Berechtigungen werden nicht unterstützt. Standardberechtigungen gelten: Administrator-, Editor- und Betrachter-Rollen werden mit ihren Standardzugriffsebenen beibehalten.",
       "alert-point-unsupported": "Warnungen und Bibliotheks-Panels werden in bereitgestellten Ordnern nicht unterstützt.",
       "alert-title": "Wichtig: Überprüfen Sie die Einschränkungen für Git Sync, bevor Sie fortfahren",
       "app-mode-label": "App-Konfiguration",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Beschreibung"
     },
-    "generate-columns": {
-      "score": "Wertung"
-    },
     "results-table": {
       "datasource-header": "Datenquelle",
       "deleted-by-header": "Gelöscht von",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Fehler beim Aktualisieren der Einstellungen"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Home-Dashboard",
       "home-dashboard-placeholder": "Standard-Dashboard",
       "language-preference-label": "Sprache",

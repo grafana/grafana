@@ -50,8 +50,10 @@ export class MultiSelectedObjectsEditableElement implements EditableDashboardEle
       { actionId: 'selection.remove' }
     );
 
-    this._elements.forEach((item) => item.onDelete());
-
-    endBatch(this._dashboard);
+    try {
+      this._elements.forEach((item) => item.onDelete());
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 }

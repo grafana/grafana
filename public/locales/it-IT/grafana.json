@@ -2090,9 +2090,7 @@
       "routing-options": {
         "label": {
           "contact-point": "Punto di contatto",
-          "notification-policy": "Criterio di notifica",
-          "select-contact-point": "Seleziona punto di contatto",
-          "use-notification-policy": "Usa criterio di notifica"
+          "notification-policy": "Criterio di notifica"
         }
       }
     },
@@ -13165,15 +13163,9 @@
       "card-author": "Da {{author}}",
       "card-selected": "{{title}} (selezionato)",
       "card-updated": "Aggiornato il {{when}}",
-      "create-description": "Descrizione",
-      "create-description-help": "Contesto facoltativo per i collaboratori",
-      "create-description-placeholder": "Cosa stai analizzando?",
       "create-name": "Nome blocco appunti",
       "create-name-required": "Il nome del blocco appunti è obbligatorio",
       "create-name-taken": "Esiste già un blocco appunti con questo nome",
-      "create-tags": "Tag",
-      "create-tags-help": "Facoltativo: utilizzato per la ricerca e il filtro",
-      "create-tags-placeholder": "Aggiungi un tag",
       "created-by-me": "Creato da me",
       "error-conflict": "Questo blocco appunti è stato modificato mentre stavi effettuando un'aggiunta. Riprova ad aggiungere il pannello alla versione più recente.",
       "error-generic": "Impossibile aggiungere il pannello al blocco appunti",
@@ -13183,6 +13175,8 @@
       "list-none": "Non hai ancora blocchi appunti. Creane uno invece.",
       "list-none-read-only": "Non hai ancora nessun blocco appunti e non hai l'autorizzazione per crearne uno.",
       "list-truncated": "Non vengono mostrati tutti i blocchi appunti. Restringi la ricerca per trovarne altri.",
+      "lock-time-range": "",
+      "lock-time-range-description": "",
       "search-placeholder": "Cerca per titolo",
       "sort-alphabetical": "In ordine alfabetico (A-Z)",
       "sort-label": "Ordina blocchi appunti",
@@ -13283,9 +13277,7 @@
       "tag-filter-placeholder": "",
       "unknown-author": "Anonimo",
       "count_one": "{{count}} blocco appunti",
-      "count_other": "{{count}} blocchi appunti",
-      "count-truncated_one": "Primo {{count}} blocco appunti caricato",
-      "count-truncated_other": "Primi {{count}} blocchi appunti caricati"
+      "count_other": "{{count}} blocchi appunti"
     },
     "new": {
       "default-title-with-date": ""
@@ -14129,6 +14121,7 @@
       "title": "Puoi anche utilizzare la sincronizzazione Git su Grafana Cloud"
     },
     "code-block": {
+      "aria-label-code": "",
       "aria-label-copy": "Copia codice negli appunti"
     },
     "commit-message": {
@@ -15070,7 +15063,6 @@
       "alert-point-folder-cleanup": "Potrebbe essere necessario rimuovere o gestire manualmente le cartelle originali dopo la migrazione.",
       "alert-point-folder-structure": "Quando si effettua la migrazione di dashboard esistenti, la struttura delle cartelle viene replicata nel repository. Le cartelle originali verranno svuotate dalle dashboard, ma potrebbero contenere ancora avvisi o pannelli della libreria.",
       "alert-point-instance-alerts": "Gli avvisi e i pannelli della libreria esistenti andranno persi e non saranno utilizzabili dopo la migrazione.",
-      "alert-point-permissions": "Le autorizzazioni dettagliate non sono supportate. Si applicano le autorizzazioni predefinite: i ruoli Amministratore, Editor e Visualizzatore vengono mantenuti con i loro livelli di accesso standard.",
       "alert-point-unsupported": "Gli avvisi e i pannelli della libreria non sono supportati nelle cartelle sottoposte a provisioning.",
       "alert-title": "Importante: prima di procedere, esamina le limitazioni della sincronizzazione Git",
       "app-mode-label": "Configurazione dell'app",
@@ -15791,9 +15783,6 @@
     "description-tooltip": {
       "label": "Descrizione"
     },
-    "generate-columns": {
-      "score": "Punteggio"
-    },
     "results-table": {
       "datasource-header": "Sorgente dati",
       "deleted-by-header": "Eliminazione effettuata da",
@@ -16137,6 +16126,7 @@
       "update-preferences": "Errore nell'aggiornamento delle preferenze"
     },
     "fields": {
+      "home-dashboard-global-home": "",
       "home-dashboard-label": "Pannello di controllo principale",
       "home-dashboard-placeholder": "Dashboard predefinito",
       "language-preference-label": "Lingua",
