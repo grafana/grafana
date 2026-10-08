@@ -1,17 +1,16 @@
 package commands
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	"github.com/urfave/cli/v2"
-
-	"github.com/grafana/grafana-app-sdk/app"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
 func TestWriteOpenAPIArgs(t *testing.T) {
@@ -20,20 +19,21 @@ func TestWriteOpenAPIArgs(t *testing.T) {
 		args    []string
 		target  string
 		output  string
+		version string
 		wantErr string
 	}{
 		{
 			name:   "flag before the target",
-			args:   []string{"-o", "spec.json", "test-app/v1alpha1"},
-			target: "test-app/v1alpha1",
+			args:   []string{"-o", "spec.json", "manifest.json"},
+			target: "manifest.json",
 			output: "spec.json",
 		},
 		{
 			// Flag parsing stops at the first positional argument, so this form
 			// reaches the action as three plain arguments.
 			name:   "flag after the target",
-			args:   []string{"test-app/v1alpha1", "-o", "spec.json"},
-			target: "test-app/v1alpha1",
+			args:   []string{"manifest.json", "-o", "spec.json"},
+			target: "manifest.json",
 			output: "spec.json",
 		},
 		{
@@ -44,40 +44,45 @@ func TestWriteOpenAPIArgs(t *testing.T) {
 		},
 		{
 			name:   "long flag with an equals sign",
-			args:   []string{"test-app", "--output=spec.json"},
-			target: "test-app",
+			args:   []string{"manifest.json", "--output=spec.json"},
+			target: "manifest.json",
 			output: "spec.json",
 		},
 		{
-			name:   "no output writes to stdout",
-			args:   []string{"test-app"},
-			target: "test-app",
+			name:   "output is optional during argument parsing",
+			args:   []string{"manifest.json"},
+			target: "manifest.json",
 		},
 		{
 			name:    "no target",
 			args:    []string{"-o", "spec.json"},
-			wantErr: "expected a manifest file or <pluginID>[/<version>]",
+			wantErr: "expected a manifest file",
 		},
 		{
 			name:    "output without a value",
-			args:    []string{"test-app", "-o"},
+			args:    []string{"manifest.json", "-o"},
 			wantErr: "missing value for -o",
 		},
 		{
 			name:    "unknown flag",
-			args:    []string{"test-app", "--pretty"},
+			args:    []string{"manifest.json", "--pretty"},
 			wantErr: `unknown flag "--pretty"`,
 		},
 		{
 			name:    "two targets",
-			args:    []string{"test-app", "other-app"},
-			wantErr: `unexpected argument "other-app"`,
+			args:    []string{"manifest.json", "other.json"},
+			wantErr: `unexpected argument "other.json"`,
 		},
+		{name: "version before target", args: []string{"--api-version", "v1", "manifest.json"}, target: "manifest.json", version: "v1"},
+		{name: "version after target", args: []string{"manifest.json", "--api-version=v1"}, target: "manifest.json", version: "v1"},
+		{name: "missing version", args: []string{"manifest.json", "--api-version"}, wantErr: "missing value for --api-version"},
+		{name: "empty version", args: []string{"manifest.json", "--api-version="}, wantErr: "missing value for --api-version"},
+		{name: "flag as output value", args: []string{"manifest.json", "-o", "--api-version=v1"}, wantErr: "missing value for -o"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			target, output, err := writeOpenAPIArgs(writeOpenAPIContext(t, tt.args))
+			target, output, version, err := writeOpenAPIArgs(writeOpenAPIContext(t, tt.args))
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
 				return
@@ -85,6 +90,7 @@ func TestWriteOpenAPIArgs(t *testing.T) {
 			require.NoError(t, err)
 			require.Equal(t, tt.target, target)
 			require.Equal(t, tt.output, output)
+			require.Equal(t, tt.version, version)
 		})
 	}
 }
@@ -115,50 +121,74 @@ func writeOpenAPIContext(t *testing.T, args []string) *cli.Context {
 	return ctx
 }
 
-// The target is a plugin id or a path, and the two overlap: pluginID/version
-// carries a slash, so a slash cannot be what tells them apart.
-func TestLooksLikePath(t *testing.T) {
-	for _, target := range []string{
-		"./dist/app-sdk-manifest.json",
-		"dist/app-sdk-manifest.json",
-		"/abs/path/manifest.json",
-		"../plugin/dist",
-		"~/plugins/app/dist/app-sdk-manifest.json",
-	} {
-		require.True(t, looksLikePath(target), target)
-	}
-
-	for _, target := range []string{
-		"grafana-app-sdk-test-app",
-		"grafana-app-sdk-test-app/v1alpha1",
-	} {
-		require.False(t, looksLikePath(target), target)
-	}
-}
-
-func TestWriteOpenAPIInputRejectsDirectory(t *testing.T) {
-	dir, err := os.MkdirTemp(".", "write-openapi-")
+func TestWriteOpenAPICommand(t *testing.T) {
+	raw, err := os.ReadFile("../../../registry/apis/appplugin/pluginopenapi/testdata/standalone/app-sdk-manifest.json")
 	require.NoError(t, err)
-	t.Cleanup(func() { require.NoError(t, os.RemoveAll(dir)) })
+	var manifest map[string]any
+	require.NoError(t, json.Unmarshal(raw, &manifest))
+	spec := manifest["spec"].(map[string]any)
+	versions := spec["versions"].([]any)
+	second := make(map[string]any)
+	for k, v := range versions[0].(map[string]any) {
+		second[k] = v
+	}
+	second["name"] = "v2alpha1"
+	spec["versions"] = append(versions, second)
+	raw, err = json.Marshal(manifest)
+	require.NoError(t, err)
+	path := filepath.Join(t.TempDir(), "manifest.json")
+	require.NoError(t, os.WriteFile(path, raw, 0600))
 
-	target := filepath.Base(dir)
-	_, _, _, err = writeOpenAPIInput(writeOpenAPIContext(t, []string{"test-app"}), target, "") //nolint:dogsled
-	require.ErrorContains(t, err, "is a directory; pass the manifest file inside it")
-}
-
-func TestOpenAPISpecFilename(t *testing.T) {
-	t.Run("uses manifest group", func(t *testing.T) {
-		plugin := definition.PluginDefinition{
-			JSONData:  plugins.JSONData{ID: "example-app"},
-			Manifests: []*app.ManifestData{{Group: "example.ext.grafana.app"}},
-		}
-
-		require.Equal(t, "example.ext.grafana.app-v1alpha1.json", openAPISpecFilename(plugin, "v1alpha1"))
+	t.Run("all served versions", func(t *testing.T) {
+		out := filepath.Join(t.TempDir(), "specs")
+		require.NoError(t, writeOpenAPICommand(writeOpenAPIContext(t, []string{path, "-o", out})))
+		files, err := os.ReadDir(out)
+		require.NoError(t, err)
+		require.Len(t, files, 2)
+		require.Equal(t, "example.ext.grafana.app-v1alpha1.json", files[0].Name())
+		require.Equal(t, "example.ext.grafana.app-v2alpha1.json", files[1].Name())
+	})
+	t.Run("one version to stdout", func(t *testing.T) {
+		ctx := writeOpenAPIContext(t, []string{path, "--api-version", "v1alpha1"})
+		var output bytes.Buffer
+		ctx.App.Writer = &output
+		require.NoError(t, writeOpenAPICommand(ctx))
+		var document map[string]any
+		require.NoError(t, json.Unmarshal(output.Bytes(), &document))
+		require.Equal(t, "example.ext.grafana.app/v1alpha1", document["info"].(map[string]any)["title"])
 	})
 
-	t.Run("uses plugin ID without manifest", func(t *testing.T) {
-		plugin := definition.PluginDefinition{JSONData: plugins.JSONData{ID: "example-app"}}
-
-		require.Equal(t, "example-app-v0alpha1.json", openAPISpecFilename(plugin, "v0alpha1"))
+	t.Run("one version", func(t *testing.T) {
+		out := filepath.Join(t.TempDir(), "spec.json")
+		require.NoError(t, writeOpenAPICommand(writeOpenAPIContext(t, []string{path, "--api-version", "v2alpha1", "-o", out})))
+		raw, err := os.ReadFile(out)
+		require.NoError(t, err)
+		var document map[string]any
+		require.NoError(t, json.Unmarshal(raw, &document))
+		require.Equal(t, "example.ext.grafana.app/v2alpha1", document["info"].(map[string]any)["title"])
+	})
+	for _, tc := range []struct {
+		name string
+		args []string
+		want string
+	}{
+		{"directory", []string{t.TempDir()}, "is a directory"},
+		{"missing file", []string{filepath.Join(t.TempDir(), "missing")}, "no such file"},
+		{"no output", []string{path}, "--api-version"},
+		{"unknown version", []string{path, "--api-version", "missing"}, "does not serve version"},
+		{"file for all versions", []string{path, "-o", filepath.Join(t.TempDir(), "spec.json")}, "names a file"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorContains(t, writeOpenAPICommand(writeOpenAPIContext(t, tc.args)), tc.want)
+		})
+	}
+	t.Run("no served versions", func(t *testing.T) {
+		unserved := strings.ReplaceAll(string(raw), `"served":true`, `"served":false`)
+		path := filepath.Join(t.TempDir(), "unserved.json")
+		require.NoError(t, os.WriteFile(path, []byte(unserved), 0600))
+		out := filepath.Join(t.TempDir(), "specs")
+		require.ErrorContains(t, writeOpenAPICommand(writeOpenAPIContext(t, []string{path, "-o", out})), "no served versions")
+		_, err := os.Stat(out)
+		require.ErrorIs(t, err, os.ErrNotExist)
 	})
 }
