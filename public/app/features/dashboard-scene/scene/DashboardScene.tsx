@@ -66,6 +66,7 @@ import {
   ManagerKind,
   type ResourceForCreate,
 } from '../../apiserver/types';
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
@@ -912,7 +913,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public duplicatePanel(vizPanel: VizPanel) {
-    getLayoutManagerFor(vizPanel).duplicatePanel?.(vizPanel);
+    duplicatePanel(vizPanel);
   }
 
   public copyPanel(vizPanel: VizPanel) {
@@ -1301,6 +1302,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       perform();
     } else {
       edit({
+        meta: { actionId: 'layout.switch', scope: 'dashboard' },
         description: t('dashboard.edit-actions.switch-layout', 'Switch layout'),
         source: this,
         perform,

@@ -33,7 +33,7 @@ export const getColumnIdx = async (loc: Page | Locator, columnName: string) => {
 };
 
 export const waitForTableLoad = async (loc: Page | Locator) => {
-  await expect(loc.locator('.rdg').first()).toBeVisible();
+  await expect(loc.locator('.rdg:not([aria-hidden="true"])').first()).toBeVisible();
 };
 
 /**

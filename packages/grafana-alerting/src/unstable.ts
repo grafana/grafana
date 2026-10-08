@@ -14,10 +14,16 @@ export {
 } from './grafana/contactPoints/utils';
 
 // Notification Policies / Routing Trees
-export { useListRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
+export { useRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
-export { isDefaultRoutingTreeName, isDefaultRoutingTree } from './grafana/notificationPolicies/routingTrees';
+export {
+  buildRoutingTreeOptions,
+  findRoutingTreeByName,
+  getRoutingTreeDisplayName,
+  isDefaultRoutingTreeName,
+  isDefaultRoutingTree,
+} from './grafana/notificationPolicies/routingTree.utils';
 
 // Rules
 export { StateText } from './grafana/rules/components/state/StateText';
