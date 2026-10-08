@@ -2,7 +2,7 @@
 
 A throwaway spike: a Node service that runs Grafana's frontend transformations, so a backend consumer (alert rules, Assistant, the query API) could use the same code the browser uses instead of a Go port.
 
-It runs the 29 transformations that live in `@grafana/data`. The ones in `public/app/features/transformers` (heatmap, regression, geo, and others) are not included yet.
+It runs 35 transformations: the 29 in `@grafana/data`, plus 6 bundled from `public/app/features/transformers`. See [Transformation coverage](#transformation-coverage).
 
 ## Run
 
@@ -272,6 +272,33 @@ Under 10 parallel requests, p50 drops for the large Prometheus workloads: 128 â†
    - **Cause:** `JSON.parse` internalizes short strings, so equal keys are the same object and compare by pointer. Flat (non-sliced) strings don't help: `TextDecoder` per value gave 14.1 ms and `fromCharCode` 13.1 ms.
    - **Interning fixes the transform but costs as much as it saves.** Mapping each decoded string to one shared instance brings the transform to 11.1 ms but costs 2.7 ms to decode, against 0.5 ms. With 50k unique log lines it costs 8.7 ms, so it's a net loss.
    - **Decision:** decoding stays as one decode plus slicing.
+
+## Transformation coverage
+
+The sidecar runs **35** of Grafana's 41 transformations. `GET /transformations` lists them.
+
+- **29 from `@grafana/data`.**
+- **6 bundled from `public/app/features/transformers`:** `heatmap`, `joinByLabels`, `partitionByValues`, `prepareTimeSeries`, `smoothing`, `timeSeriesTable`. They are imported from their real modules, with editors excluded, so the browser and the sidecar run the same code. `public/app/features/transformers/sidecarTransformations.ts` lists them, and the sidecar refuses to start if that list and its registry disagree.
+
+How the bundling works (`build.mjs`):
+
+- **App imports.** The `app/*` path alias is mapped to `public/app`.
+- **i18n.** `@grafana/i18n` is replaced by `src/i18n-shim.ts`, which returns the default English message. These modules only call `t()` for names and descriptions, and the real module pulls in React.
+- **Bundle guard.** The build fails if the bundle includes browser-only code: `@grafana/ui`, `@grafana/runtime`, `@grafana/i18n`, `react-dom`, `react-i18next`, or Monaco. Plain `react` is allowed, because the `@grafana/data` barrel imports it and it runs in Node.
+- **Pure helpers split out.** `getDistinctLabels` and `numberOrVariableValidator` moved from `transformers/utils.ts` (which also holds React hooks and `@grafana/ui` imports) to `transformers/transformerDataUtils.ts`. `variableRegex` moved from `variables/utils.ts` (store and runtime dependencies) to `variables/variableRegex.ts`. Importers were updated; behavior is unchanged.
+
+Not supported:
+
+| Transformation                                      | Why                                                                                                                                                                               |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `configFromData`, `rowsToFields`                    | Their field config mapping (`fieldToConfigMapping`) resolves color names with the viewer's theme (`config.theme2` from `@grafana/runtime`), so the result depends on the browser. |
+| `regression`                                        | Not tried yet. It imports pure-JS `ml-regression-*` packages.                                                                                                                     |
+| `extractFields`                                     | Not tried yet. Its `app/features/dimensions/utils` import needs checking for DOM use.                                                                                             |
+| `spatial`, `fieldLookup`                            | Geo code built on OpenLayers, and gazetteer files fetched over HTTP.                                                                                                              |
+| Deprecated aliases `seriesToColumns`, `append`      | Registered once under their canonical id (`joinByField`, `noop`), so a request naming the alias is rejected.                                                                      |
+| Plugin-contributed and panel system transformations | Registered in the browser at runtime.                                                                                                                                             |
+
+**Parity:** one or two fixtures per new transformation, in both wire formats. All match except `timeSeriesTable`, whose sparkline field type comes back as `other` instead of `frame`. That's the same "no nested-frame field type in Go" gap as `groupToNestedTable`, and the values match.
 
 ## Configuration
 

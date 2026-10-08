@@ -6,7 +6,8 @@ import { Trans, t } from '@grafana/i18n';
 import { InlineLabel } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
-import { getVariableSuggestions, numberOrVariableValidator } from '../../utils';
+import { numberOrVariableValidator } from '../../transformerDataUtils';
+import { getVariableSuggestions } from '../../utils';
 
 import { type ValueMatcherEditorConfig, type ValueMatcherUIProps, type ValueMatcherUIRegistryItem } from './types';
 

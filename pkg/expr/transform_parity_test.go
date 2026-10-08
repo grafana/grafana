@@ -75,6 +75,12 @@ func parityFixtures() []parityFixture {
 		data.NewField("svc", nil, []*string{new("api"), nil, new("api"), nil}),
 		data.NewField("v", nil, []float64{1, 2, 3, 4}),
 	)
+	wideSeries := data.NewFrame("",
+		data.NewField("time", nil, parityTimes(0, 1, 2, 3, 4, 5, 6, 7)),
+		data.NewField("cpu", data.Labels{"host": "a"}, []float64{1, 5, 2, 8, 3, 9, 4, 7}),
+		data.NewField("mem", data.Labels{"host": "a"}, []float64{10, 12, 11, 15, 13, 14, 12, 16}),
+	)
+	wideSeries.Meta = &data.FrameMeta{Type: data.FrameTypeTimeSeriesWide, TypeVersion: data.FrameTypeVersion{0, 1}}
 	unicode := data.NewFrame("",
 		data.NewField("name", nil, []*string{new("café"), new("日本語"), nil, new("🚀 launch"), new("plain")}),
 		data.NewField("v", nil, []float64{3, 1, 5, 2, 4}),
@@ -132,6 +138,13 @@ func parityFixtures() []parityFixture {
 		{name: "sortBy-big-int64", inputs: []data.Frames{{bigInts}}, transformations: `[{"id":"sortBy","options":{"sort":[{"field":"id"}]}}]`},
 		{name: "transpose", inputs: table(), transformations: `[{"id":"transpose","options":{}}]`},
 		{name: "roundtrip-frame-meta", inputs: []data.Frames{{withMeta}}, transformations: `[{"id":"limit","options":{"limitField":1}}]`},
+		{name: "heatmap", inputs: series(), transformations: `[{"id":"heatmap","options":{}}]`},
+		{name: "joinByLabels", inputs: series(), transformations: `[{"id":"joinByLabels","options":{"value":"pod"}}]`},
+		{name: "partitionByValues", inputs: table(), transformations: `[{"id":"partitionByValues","options":{"fields":["svc"],"keepFields":false}}]`},
+		{name: "prepareTimeSeries-wide-to-multi", inputs: []data.Frames{{wideSeries}}, transformations: `[{"id":"prepareTimeSeries","options":{"format":"multi"}}]`},
+		{name: "prepareTimeSeries-multi-to-long", inputs: series(), transformations: `[{"id":"prepareTimeSeries","options":{"format":"long"}}]`},
+		{name: "smoothing", inputs: []data.Frames{{wideSeries}}, transformations: `[{"id":"smoothing","options":{"resolution":5}}]`},
+		{name: "timeSeriesTable", inputs: series(), transformations: `[{"id":"timeSeriesTable","options":{}}]`},
 		{name: "roundtrip-unicode-strings", inputs: []data.Frames{{unicode}}, transformations: `[{"id":"sortBy","options":{"sort":[{"field":"v"}]}}]`},
 		{name: "roundtrip-unicode-nested-json", inputs: []data.Frames{{unicode}}, transformations: `[{"id":"groupToNestedTable","options":{"fields":{"name":{"operation":"groupby","aggregations":[]}}}}]`},
 		{name: "roundtrip-field-config", inputs: []data.Frames{{withConfig}}, transformations: `[{"id":"sortBy","options":{"sort":[{"field":"Latency"}]}}]`},

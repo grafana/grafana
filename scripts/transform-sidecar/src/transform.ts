@@ -10,7 +10,17 @@ import { standardTransformersRegistry } from '../../../packages/grafana-data/src
 import { transformDataFrame } from '../../../packages/grafana-data/src/transformations/transformDataFrame';
 import { standardTransformers } from '../../../packages/grafana-data/src/transformations/transformers';
 import { type DataFrame, FieldType } from '../../../packages/grafana-data/src/types/dataFrame';
-import { type DataTransformerConfig } from '../../../packages/grafana-data/src/types/transformations';
+import {
+  type DataTransformerConfig,
+  type DataTransformerInfo,
+} from '../../../packages/grafana-data/src/types/transformations';
+import { getHeatmapTransformer } from '../../../public/app/features/transformers/calculateHeatmap/heatmap';
+import { getJoinByLabelsTransformer } from '../../../public/app/features/transformers/joinByLabels/joinByLabels';
+import { getPartitionByValuesTransformer } from '../../../public/app/features/transformers/partitionByValues/partitionByValues';
+import { getPrepareTimeSeriesTransformer } from '../../../public/app/features/transformers/prepareTimeSeries/prepareTimeSeries';
+import { SIDECAR_APP_TRANSFORMATION_IDS } from '../../../public/app/features/transformers/sidecarTransformations';
+import { getSmoothingTransformer } from '../../../public/app/features/transformers/smoothing/smoothing';
+import { getTimeSeriesTableTransformer } from '../../../public/app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 
 export interface TransformRequest {
   frames: DataFrameJSON[];
@@ -26,9 +36,29 @@ export interface TransformResponse {
 
 export class BadRequestError extends Error {}
 
+// Transformations registered in public/app/features/transformers rather than @grafana/data. They are
+// bundled from there, editors excluded, so the browser and the sidecar run the same code.
+const appTransformers: DataTransformerInfo[] = [
+  getHeatmapTransformer(),
+  getJoinByLabelsTransformer(),
+  getPartitionByValuesTransformer(),
+  getPrepareTimeSeriesTransformer(),
+  getSmoothingTransformer(),
+  getTimeSeriesTableTransformer(),
+];
+
+const registered = appTransformers.map((info) => info.id).sort();
+if (registered.join() !== [...SIDECAR_APP_TRANSFORMATION_IDS].sort().join()) {
+  throw new Error(
+    `sidecar app transformations [${registered}] do not match SIDECAR_APP_TRANSFORMATION_IDS [${SIDECAR_APP_TRANSFORMATION_IDS}]`
+  );
+}
+
 // standardTransformers also lists deprecated aliases (seriesToColumns -> joinByField), which the
 // registry rejects as duplicate keys.
-const transformers = new Map(Object.values(standardTransformers).map((info) => [info.id, info]));
+const transformers = new Map(
+  [...Object.values(standardTransformers), ...appTransformers].map((info) => [info.id, info])
+);
 
 standardTransformersRegistry.setInit(() =>
   Array.from(transformers.values(), (info) => ({

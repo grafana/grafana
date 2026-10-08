@@ -22,7 +22,13 @@ const keepConcatFastPath = {
   },
 };
 
-await build({
+// The sidecar runs in Node, so browser-only code in the bundle is a mistake: a transformation module
+// importing UI or runtime code would either crash at load or silently drag in megabytes. Plain react
+// is allowed: the @grafana/data barrel imports it, and it runs in Node.
+const BROWSER_ONLY =
+  /node_modules\/(react-dom|react-i18next|i18next-browser-languagedetector|monaco-editor)\/|packages\/grafana-(ui|runtime|i18n)\//;
+
+const result = await build({
   absWorkingDir: dirname(fileURLToPath(import.meta.url)),
   entryPoints: {
     server: 'src/server.ts',
@@ -42,6 +48,18 @@ await build({
   // transformDataFrame reads this browser global to decide whether Scenes already interpolated
   // variables. The sidecar always interpolates itself.
   define: { 'window.__grafanaSceneContext': 'undefined' },
+  alias: {
+    // public/app/features/transformers imports app code as app/* (the frontend's path alias), and
+    // only uses t() from @grafana/i18n, whose real module pulls in React.
+    app: '../../public/app',
+    '@grafana/i18n': './src/i18n-shim.ts',
+  },
   plugins: [keepConcatFastPath],
+  metafile: true,
   logLevel: 'info',
 });
+
+const browserOnly = Object.keys(result.metafile.inputs).filter((input) => BROWSER_ONLY.test(input));
+if (browserOnly.length > 0) {
+  throw new Error(`the sidecar bundle includes browser-only modules:\n  ${browserOnly.join('\n  ')}`);
+}

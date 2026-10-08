@@ -1,6 +1,6 @@
 import { durationToMilliseconds, guessDecimals, isValidDuration, parseDuration, roundDecimals } from '@grafana/data';
 
-import { numberOrVariableValidator } from '../utils';
+import { numberOrVariableValidator } from '../transformerDataUtils';
 
 const { abs, pow } = Math;
 

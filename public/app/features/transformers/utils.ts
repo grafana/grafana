@@ -17,8 +17,6 @@ import { t } from '@grafana/i18n';
 import { getTemplateSrv } from '@grafana/runtime';
 import { FieldValidationMessage } from '@grafana/ui';
 
-import { variableRegex } from '../variables/utils';
-
 export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
   // get full names
   let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
@@ -105,20 +103,6 @@ export function DataFieldsErrorWrapper<T>(
   return WrappedComponent;
 }
 
-export function getDistinctLabels(input: DataFrame[]): Set<string> {
-  const distinct = new Set<string>();
-  for (const frame of input) {
-    for (const field of frame.fields) {
-      if (field.labels) {
-        for (const k of Object.keys(field.labels)) {
-          distinct.add(k);
-        }
-      }
-    }
-  }
-  return distinct;
-}
-
 export const getCategoriesLabels: () => { [K in TransformerCategory]: string } = () => ({
   combine: t('transformers.utils.get-categories-labels.combine', 'Combine'),
   calculateNewFields: t('transformers.utils.get-categories-labels.calculate-new-fields', 'Calculate new fields'),
@@ -134,21 +118,6 @@ export const getCategoriesLabels: () => { [K in TransformerCategory]: string } =
   reformat: t('transformers.utils.get-categories-labels.reformat', 'Reformat'),
   reorderAndRename: t('transformers.utils.get-categories-labels.reorder-and-rename', 'Reorder and rename'),
 });
-
-export const numberOrVariableValidator = (value: string | number) => {
-  if (typeof value === 'number') {
-    return true;
-  }
-  if (!Number.isNaN(Number(value))) {
-    return true;
-  }
-  const variableFound = variableRegex.test(value);
-  variableRegex.lastIndex = 0;
-  if (variableFound) {
-    return true;
-  }
-  return false;
-};
 
 export function getTimezoneOptions(includeInternal: boolean) {
   const timeZoneOptions: Array<SelectableValue<string>> = [];

@@ -6,7 +6,9 @@
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     // apache-arrow brings its own, newer @types/node; use the repo's.
-    "typeRoots": ["../../node_modules/@types"]
+    "typeRoots": ["../../node_modules/@types"],
+    // Same alias as build.mjs: public/app/features/transformers imports app code as app/*.
+    "paths": { "app/*": ["../../public/app/*"] }
   },
   "include": [
     "./src/**/*.ts",

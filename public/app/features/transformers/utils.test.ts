@@ -4,13 +4,8 @@ import { createElement } from 'react';
 import { FieldType, toDataFrame } from '@grafana/data';
 
 import { GroupByTransformerEditorBase } from './editors/GroupByTransformerEditor';
-import {
-  DataFieldsErrorWrapper,
-  detectPartialQueryFailures,
-  getAllFieldNamesFromDataFrames,
-  numberOrVariableValidator,
-  TIMEOUT,
-} from './utils';
+import { numberOrVariableValidator } from './transformerDataUtils';
+import { DataFieldsErrorWrapper, detectPartialQueryFailures, getAllFieldNamesFromDataFrames, TIMEOUT } from './utils';
 
 describe('validator', () => {
   it('validates a positive number', () => {

@@ -202,10 +202,10 @@ describe('transform sidecar', () => {
   });
 
   it('rejects unsupported transformation ids instead of passing data through', async () => {
-    const res = await transform({ frames: [], transformations: [{ id: 'groupBy' }, { id: 'heatmap' }] });
+    const res = await transform({ frames: [], transformations: [{ id: 'groupBy' }, { id: 'spatial' }] });
 
     assert.equal(res.status, 400);
-    assert.equal(res.body.error, 'unsupported transformations: heatmap');
+    assert.equal(res.body.error, 'unsupported transformations: spatial');
   });
 
   it('rejects malformed requests', async () => {
@@ -219,6 +219,27 @@ describe('transform sidecar', () => {
 
     assert.ok(transformations.includes('joinByField'));
     assert.ok(!transformations.includes('seriesToColumns'));
+  });
+
+  it('also lists the app-level transformations bundled from public/app, minus the theme-dependent ones', async () => {
+    const res = await fetch(`${server.baseUrl}/transformations`);
+    const { transformations } = await res.json();
+
+    const appLevel = [
+      'heatmap',
+      'joinByLabels',
+      'partitionByValues',
+      'prepareTimeSeries',
+      'smoothing',
+      'timeSeriesTable',
+    ];
+    assert.deepEqual(
+      appLevel.filter((id) => !transformations.includes(id)),
+      []
+    );
+    assert.ok(!transformations.includes('configFromData'));
+    assert.ok(!transformations.includes('rowsToFields'));
+    assert.equal(transformations.length, 35);
   });
 
   // Big-endian uint32 length-prefixed parts: a JSON header, then Arrow IPC files (see src/arrow.ts).

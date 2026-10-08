@@ -7,7 +7,7 @@ import { type HeatmapCalculationBucketConfig, HeatmapCalculationMode } from '@gr
 import { RadioButtonGroup, ScaleDistribution, Stack } from '@grafana/ui';
 
 import { SuggestionsInput } from '../../suggestionsInput/SuggestionsInput';
-import { numberOrVariableValidator } from '../../utils';
+import { numberOrVariableValidator } from '../../transformerDataUtils';
 import { convertDurationToMilliseconds } from '../utils';
 
 export const AxisEditor = ({ value, onChange, item }: StandardEditorProps<HeatmapCalculationBucketConfig>) => {

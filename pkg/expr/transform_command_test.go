@@ -170,10 +170,10 @@ func TestTransformCommand(t *testing.T) {
 
 	t.Run("returns the sidecar error message", func(t *testing.T) {
 		srv, _ := fakeSidecar(t, func(sidecarCall) (int, any) {
-			return http.StatusBadRequest, map[string]string{"error": "unsupported transformations: heatmap"}
+			return http.StatusBadRequest, map[string]string{"error": "unsupported transformations: spatial"}
 		})
 		s, req := newMockQueryService(responses, transformTestQueries(t, []string{"A"},
-			`{"type": "transform", "inputs": ["A"], "transformations": [{"id": "heatmap"}]}`))
+			`{"type": "transform", "inputs": ["A"], "transformations": [{"id": "spatial"}]}`))
 		s.cfg.TransformSidecarURL = srv.URL
 
 		pl, err := s.BuildPipeline(t.Context(), req)
@@ -181,7 +181,7 @@ func TestTransformCommand(t *testing.T) {
 		rsp, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
 		require.NoError(t, err)
 
-		require.ErrorContains(t, rsp.Responses["T"].Error, "transform sidecar returned 400: unsupported transformations: heatmap")
+		require.ErrorContains(t, rsp.Responses["T"].Error, "transform sidecar returned 400: unsupported transformations: spatial")
 	})
 
 	t.Run("returns an error instead of panicking on frames without typeInfo", func(t *testing.T) {
