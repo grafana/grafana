@@ -17,8 +17,10 @@ server, and a two-minute deadline. Interrupted uploads roll back. CDK and
 file-backed KV do not support streaming yet; snapshot clients still use unary
 calls until a separately deployed client change switches them over.
 
-This is a proof of concept: appending to one SQL BLOB row holds a transaction
-open and may be expensive for large blobs. Load-test it before enabling clients.
+Uploaded chunks are committed to `resource_blob_upload_chunk` as they arrive. On
+completion the database concatenates them into the `resource_blob` row in one
+statement, so the full value is written once and never has to fit in a client
+packet (such as MySQL's `max_allowed_packet`).
 
 ## Storage Overview
 

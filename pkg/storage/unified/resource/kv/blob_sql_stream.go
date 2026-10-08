@@ -13,25 +13,82 @@ import (
 )
 
 const (
-	blobUploadChunkTable = "resource_blob_upload_chunk"
-	blobUploadMaxSize    = 64 << 20
-	blobUploadOrphanAge  = 24 * time.Hour
+	blobUploadChunkSize = 64 << 10
+	blobUploadMaxSize   = 64 << 20
+	blobUploadOrphanAge = 24 * time.Hour
 )
+
+// blobStreamQueries holds fixed SQL text so streamed values are only ever bound parameters.
+type blobStreamQueries struct {
+	deleteExpiredChunks string
+	deleteUploadChunks  string
+	insertChunk         string
+	insertBlob          string
+	// prepareAssembly runs on the publishing connection before assembleBlob; empty when not needed.
+	prepareAssembly string
+	// assembleBlob concatenates the staged chunks inside the database, so the
+	// complete value never has to fit in a client packet and is written once.
+	assembleBlob string
+	blobLength   string
+}
+
+var (
+	mysqlBlobStreamQueries = blobStreamQueries{
+		deleteExpiredChunks: "DELETE FROM `resource_blob_upload_chunk` WHERE `created` < ?",
+		deleteUploadChunks:  "DELETE FROM `resource_blob_upload_chunk` WHERE `upload_id` = ?",
+		insertChunk:         "INSERT INTO `resource_blob_upload_chunk` (`upload_id`, `chunk_index`, `created`, `value`) VALUES (?, ?, ?, ?)",
+		insertBlob:          "INSERT INTO `resource_blob` (`uuid`, `created`, `group`, `resource`, `namespace`, `name`, `value`, `hash`, `content_type`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+		// GROUP_CONCAT truncates at 1 KiB by default; this must cover blobUploadMaxSize.
+		prepareAssembly: "SET SESSION group_concat_max_len = 67108864",
+		assembleBlob:    "UPDATE `resource_blob` SET `value` = (SELECT GROUP_CONCAT(`value` ORDER BY `chunk_index` SEPARATOR '') FROM `resource_blob_upload_chunk` WHERE `upload_id` = ?) WHERE `uuid` = ? AND `namespace` = ? AND `group` = ? AND `resource` = ? AND `name` = ?",
+		blobLength:      "SELECT LENGTH(`value`) FROM `resource_blob` WHERE `uuid` = ? AND `namespace` = ? AND `group` = ? AND `resource` = ? AND `name` = ?",
+	}
+	postgresBlobStreamQueries = blobStreamQueries{
+		deleteExpiredChunks: `DELETE FROM "resource_blob_upload_chunk" WHERE "created" < $1`,
+		deleteUploadChunks:  `DELETE FROM "resource_blob_upload_chunk" WHERE "upload_id" = $1`,
+		insertChunk:         `INSERT INTO "resource_blob_upload_chunk" ("upload_id", "chunk_index", "created", "value") VALUES ($1, $2, $3, $4)`,
+		insertBlob:          `INSERT INTO "resource_blob" ("uuid", "created", "group", "resource", "namespace", "name", "value", "hash", "content_type") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+		assembleBlob:        `UPDATE "resource_blob" SET "value" = (SELECT string_agg("value", ''::bytea ORDER BY "chunk_index") FROM "resource_blob_upload_chunk" WHERE "upload_id" = $1) WHERE "uuid" = $2 AND "namespace" = $3 AND "group" = $4 AND "resource" = $5 AND "name" = $6`,
+		blobLength:          `SELECT LENGTH("value") FROM "resource_blob" WHERE "uuid" = $1 AND "namespace" = $2 AND "group" = $3 AND "resource" = $4 AND "name" = $5`,
+	}
+	sqliteBlobStreamQueries = blobStreamQueries{
+		deleteExpiredChunks: `DELETE FROM "resource_blob_upload_chunk" WHERE "created" < ?`,
+		deleteUploadChunks:  `DELETE FROM "resource_blob_upload_chunk" WHERE "upload_id" = ?`,
+		insertChunk:         `INSERT INTO "resource_blob_upload_chunk" ("upload_id", "chunk_index", "created", "value") VALUES (?, ?, ?, ?)`,
+		insertBlob:          `INSERT INTO "resource_blob" ("uuid", "created", "group", "resource", "namespace", "name", "value", "hash", "content_type") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		// group_concat yields TEXT, which would corrupt binary values without the cast.
+		assembleBlob: `UPDATE "resource_blob" SET "value" = (SELECT CAST(group_concat("value", '' ORDER BY "chunk_index") AS BLOB) FROM "resource_blob_upload_chunk" WHERE "upload_id" = ?) WHERE "uuid" = ? AND "namespace" = ? AND "group" = ? AND "resource" = ? AND "name" = ?`,
+		blobLength:   `SELECT LENGTH("value") FROM "resource_blob" WHERE "uuid" = ? AND "namespace" = ? AND "group" = ? AND "resource" = ? AND "name" = ?`,
+	}
+)
+
+func blobStreamQueriesFor(dialect Dialect) (blobStreamQueries, error) {
+	switch dialect.Name() {
+	case "mysql":
+		return mysqlBlobStreamQueries, nil
+	case "postgres":
+		return postgresBlobStreamQueries, nil
+	case "sqlite":
+		return sqliteBlobStreamQueries, nil
+	default:
+		return blobStreamQueries{}, fmt.Errorf("blob streaming is not supported for dialect %q", dialect.Name())
+	}
+}
 
 // SaveBlobStream commits each staging chunk before receiving more data. Only
 // publishing the complete legacy blob needs a write transaction, so old servers
 // can still read the result without knowing about the staging table.
-// SQL formatting uses only constant identifiers and dialect syntax; values stay bound.
 func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType string, value io.Reader) (size int64, digest string, err error) {
-	p, q := k.dialect.Placeholder, k.dialect.QuoteIdent
+	queries, err := blobStreamQueriesFor(k.dialect)
+	if err != nil {
+		return 0, "", err
+	}
 	now := time.Now().UTC()
 	// Upload RPCs expire after two minutes; this also reclaims chunks left by a crashed process.
-	deleteExpired := fmt.Sprintf("DELETE FROM %s WHERE %s < %s", q(blobUploadChunkTable), q("created"), p(1)) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
-	if _, err := k.db.ExecContext(ctx, deleteExpired, now.Add(-blobUploadOrphanAge)); err != nil {
+	if _, err := k.db.ExecContext(ctx, queries.deleteExpiredChunks, now.Add(-blobUploadOrphanAge)); err != nil {
 		return 0, "", err
 	}
 	uploadID := uuid.NewV4().String()
-	deleteChunks := fmt.Sprintf("DELETE FROM %s WHERE %s = %s", q(blobUploadChunkTable), q("upload_id"), p(1)) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
 	published := false
 	defer func() {
 		if published {
@@ -40,13 +97,11 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 		// Cancellation must not prevent cleanup of already committed staging chunks.
 		cleanupCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 		defer cancel()
-		if _, cleanupErr := k.db.ExecContext(cleanupCtx, deleteChunks, uploadID); cleanupErr != nil {
+		if _, cleanupErr := k.db.ExecContext(cleanupCtx, queries.deleteUploadChunks, uploadID); cleanupErr != nil {
 			err = errors.Join(err, fmt.Errorf("clean up blob upload: %w", cleanupErr))
 		}
 	}()
-	insertChunk := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", q(blobUploadChunkTable), // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
-		joinQuoted(q, []string{"upload_id", "chunk_index", "created", "value"}), placeholders(p, 4))
-	buffer := make([]byte, 64<<10)
+	buffer := make([]byte, blobUploadChunkSize)
 	h := md5.New() // #nosec G401 nosemgrep: go.lang.security.audit.crypto.use_of_weak_crypto.use-of-md5
 	chunks := 0
 	for {
@@ -58,7 +113,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 			if int64(n) > blobUploadMaxSize-size {
 				return 0, "", fmt.Errorf("blob exceeds %d bytes", blobUploadMaxSize)
 			}
-			if _, err := k.db.ExecContext(ctx, insertChunk, uploadID, chunks, now, buffer[:n]); err != nil {
+			if _, err := k.db.ExecContext(ctx, queries.insertChunk, uploadID, chunks, now, buffer[:n]); err != nil {
 				return 0, "", err
 			}
 			_, _ = h.Write(buffer[:n])
@@ -75,22 +130,32 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 	if size == 0 {
 		return 0, "", fmt.Errorf("empty blob")
 	}
-	body, err := k.assembleBlobUpload(ctx, uploadID, size, chunks)
-	if err != nil {
-		return 0, "", err
-	}
 	digest = hex.EncodeToString(h.Sum(nil))
 	tx, err := k.db.BeginTx(ctx, nil)
 	if err != nil {
 		return 0, "", err
 	}
 	defer func() { _ = tx.Rollback() }()
-	cols := []string{"uuid", "created", "group", "resource", "namespace", "name", "value", "hash", "content_type"}
-	query := fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", q(resourceBlobTable), joinQuoted(q, cols), placeholders(p, len(cols))) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
-	if _, err := tx.ExecContext(ctx, query, key.UID, now, key.Group, key.Resource, key.Namespace, key.Name, body, digest, contentType); err != nil {
+	if queries.prepareAssembly != "" {
+		if _, err := tx.ExecContext(ctx, queries.prepareAssembly); err != nil {
+			return 0, "", err
+		}
+	}
+	if _, err := tx.ExecContext(ctx, queries.insertBlob, key.UID, now, key.Group, key.Resource, key.Namespace, key.Name, []byte{}, digest, contentType); err != nil {
 		return 0, "", err
 	}
-	if _, err := tx.ExecContext(ctx, deleteChunks, uploadID); err != nil {
+	if _, err := tx.ExecContext(ctx, queries.assembleBlob, append([]any{uploadID}, blobIdentityArgs(key)...)...); err != nil {
+		return 0, "", err
+	}
+	// Aggregates can truncate silently, so the published length must match what was received.
+	var stored int64
+	if err := tx.QueryRowContext(ctx, queries.blobLength, blobIdentityArgs(key)...).Scan(&stored); err != nil {
+		return 0, "", err
+	}
+	if stored != size {
+		return 0, "", fmt.Errorf("incomplete staged blob: stored %d of %d bytes", stored, size)
+	}
+	if _, err := tx.ExecContext(ctx, queries.deleteUploadChunks, uploadID); err != nil {
 		return 0, "", err
 	}
 	if err := tx.Commit(); err != nil {
@@ -98,61 +163,6 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 	}
 	published = true
 	return size, digest, nil
-}
-
-func (k *SqlKV) assembleBlobUpload(ctx context.Context, uploadID string, size int64, chunks int) ([]byte, error) {
-	p, q := k.dialect.Placeholder, k.dialect.QuoteIdent
-	// Only constant identifiers and dialect syntax are formatted; uploadID remains a bound value.
-	query := fmt.Sprintf("SELECT %s, %s FROM %s WHERE %s = %s ORDER BY %s", q("chunk_index"), q("value"), q(blobUploadChunkTable), q("upload_id"), p(1), q("chunk_index")) // #nosec G201 nosemgrep: go.lang.security.audit.database.string-formatted-query.string-formatted-query
-	rows, err := k.db.QueryContext(ctx, query, uploadID)
-	if err != nil {
-		return nil, err
-	}
-	defer func() { _ = rows.Close() }()
-	// One bounded allocation avoids growing-blob UPDATEs while retaining the old on-disk format.
-	body := make([]byte, int(size))
-	offset, count := 0, 0
-	for rows.Next() {
-		var index int
-		var chunk []byte
-		if err := rows.Scan(&index, &chunk); err != nil {
-			return nil, err
-		}
-		if index != count || len(chunk) == 0 || len(chunk) > len(body)-offset {
-			return nil, fmt.Errorf("invalid staged blob chunk")
-		}
-		offset += copy(body[offset:], chunk)
-		count++
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	if offset != len(body) || count != chunks {
-		return nil, fmt.Errorf("incomplete staged blob")
-	}
-	return body, nil
-}
-
-func joinQuoted(quote func(string) string, cols []string) string {
-	out := ""
-	for i, col := range cols {
-		if i > 0 {
-			out += ", "
-		}
-		out += quote(col)
-	}
-	return out
-}
-
-func placeholders(placeholder func(int) string, count int) string {
-	out := ""
-	for i := 1; i <= count; i++ {
-		if i > 1 {
-			out += ", "
-		}
-		out += placeholder(i)
-	}
-	return out
 }
 
 // ReadBlobStream retrieves bounded slices of the same value that unary reads use.
@@ -175,7 +185,7 @@ func (k *SqlKV) ReadBlobStream(ctx context.Context, key BlobKey, open func(strin
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		n := min(size-offset, int64(64<<10))
+		n := min(size-offset, int64(blobUploadChunkSize))
 		var slice string
 		switch k.dialect.Name() {
 		case "postgres":

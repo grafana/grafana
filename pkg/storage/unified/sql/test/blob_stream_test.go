@@ -65,6 +65,25 @@ func TestIntegrationBlobStreamingUsesExistingSQLTable(t *testing.T) {
 	}
 }
 
+func TestIntegrationBlobStreamingAcceptsMaximumSize(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	env := newKVBlobTestEnv(t)
+	value := bytes.Repeat([]byte{0, 0xff, 'x', 'y'}, (64<<20)/4)
+	key := env.newResource(t, "default")
+	put, err := env.kvBlobs.(resource.StreamingBlobSupport).PutResourceBlobStream(env.ctx, &resourcepb.PutBlobRequest{
+		Resource: key, ContentType: "application/octet-stream",
+	}, bytes.NewReader(value))
+	require.NoError(t, err)
+	require.Equal(t, int64(len(value)), put.Size)
+	hash := md5.Sum(value)
+	require.Equal(t, hex.EncodeToString(hash[:]), put.Hash)
+
+	unary := env.get(t, env.sqlBlobs, key, put.Uid)
+	require.Nil(t, unary.Error)
+	require.True(t, bytes.Equal(value, unary.Value), "unary read differs from upload")
+	require.Empty(t, stagedBlobChunks(t, env))
+}
+
 func TestIntegrationBlobStreamingRollsBackOnError(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	env := newKVBlobTestEnv(t)
