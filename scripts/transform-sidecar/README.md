@@ -94,6 +94,44 @@ Add it to a query request next to the data source queries it reads:
 - **Outputs.** The output frames come back as table data under the expression's refId.
 - **Disabled by default.** With no `transform_sidecar_url` set, transform expressions are rejected.
 
+### In an alert rule
+
+Set `"format": "alerting"` to return one labeled number per row instead of table data. The rules are the same as for SQL expressions in alerting:
+
+- each output frame has exactly one numeric field
+- string fields become labels
+- label sets must be unique
+
+The output can then feed a threshold or math expression. `pkg/services/ngalert/eval/transform_eval_test.go` evaluates such a rule through the alerting evaluator, the same call the scheduler makes, with no panel involved. The rule is query → `transform` (groupBy mean, `format: alerting`) → threshold > 100:
+
+| Service               | Mean latency | State                                                      |
+| --------------------- | ------------ | ---------------------------------------------------------- |
+| api                   | 180          | Alerting                                                   |
+| worker                | 40           | Normal                                                     |
+| idle                  | null → NaN   | Normal                                                     |
+| (sidecar unreachable) | none         | Error, `calling transform sidecar: ... connection refused` |
+
+`idle` is **Normal, not NoData**. The table-to-number conversion shared with SQL expressions reads a null value as NaN, and `NaN > 100` is false. DataPro's prototype reported NoData for the same input. This needs a decision either way, and it applies to SQL expressions in alert rules too.
+
+Without `format: alerting`, a reduce over the transform's output fails with `can only reduce type series`, because reduce doesn't accept table data.
+
+### From the query API
+
+This is the path an Assistant tool would use. It is the same pipeline, so nothing extra is needed. With `transform_sidecar_url` set, restart the backend (ini changes are read at startup) and run:
+
+```sh
+curl -s -u admin:admin -H 'Content-Type: application/json' http://localhost:3000/api/ds/query -d '{
+  "from": "now-1h", "to": "now",
+  "queries": [
+    {"refId": "A", "datasource": {"type": "grafana-testdata-datasource"}, "scenarioId": "csv_content",
+     "csvContent": "service,latency\napi,100\napi,260\nworker,40\nidle,"},
+    {"refId": "T", "datasource": {"type": "__expr__", "uid": "__expr__"}, "type": "transform", "inputs": ["A"],
+     "transformations": [{"id": "groupBy", "options": {"fields": {
+       "service": {"operation": "groupby", "aggregations": []},
+       "latency": {"operation": "aggregate", "aggregations": ["mean"]}}}}]}
+  ]}'
+```
+
 Run the end-to-end Go test against a running sidecar:
 
 ```sh
@@ -164,5 +202,4 @@ scripts/transform-sidecar/parity/run.sh [output dir]
 
 ## Not done yet
 
-- Alert rule and query API consumers (Phase 4)
 - Benchmarks (Phase 5)

@@ -32,6 +32,9 @@ type TransformCommand struct {
 	inputs          []string
 	transformations []json.RawMessage
 	timezone        string
+	// format "alerting" returns one labeled number per row instead of table data, so the output
+	// can feed threshold and math expressions in an alert rule.
+	format string
 
 	url     string
 	timeout time.Duration
@@ -42,6 +45,7 @@ type transformCommandModel struct {
 	Inputs          []string          `json:"inputs"`
 	Transformations []json.RawMessage `json:"transformations"`
 	Timezone        string            `json:"timezone,omitempty"`
+	Format          string            `json:"format,omitempty"`
 }
 
 // UnmarshalTransformCommand creates a TransformCommand from Grafana's frontend query.
@@ -60,12 +64,16 @@ func UnmarshalTransformCommand(rn *rawNode, cfg *setting.Cfg) (*TransformCommand
 	if len(model.Transformations) == 0 {
 		return nil, errors.New("transform expression requires at least one entry in 'transformations'")
 	}
+	if model.Format != "" && model.Format != "alerting" {
+		return nil, fmt.Errorf("transform expression format must be empty or 'alerting', got %q", model.Format)
+	}
 
 	return &TransformCommand{
 		refID:           rn.RefID,
 		inputs:          model.Inputs,
 		transformations: model.Transformations,
 		timezone:        model.Timezone,
+		format:          model.Format,
 		url:             strings.TrimSuffix(cfg.TransformSidecarURL, "/") + "/transform",
 		timeout:         cfg.TransformSidecarTimeout,
 		client:          http.DefaultClient,
@@ -119,12 +127,28 @@ func (tc *TransformCommand) Execute(ctx context.Context, _ time.Time, vars mathe
 		return mathexp.Results{}, fmt.Errorf("transform expression %s: %w", tc.refID, err)
 	}
 
-	if len(out) == 0 {
-		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
-	}
 	values := make(mathexp.Values, 0, len(out))
 	for _, frame := range out {
-		values = append(values, mathexp.TableData{Frame: frame})
+		if tc.format != "alerting" {
+			values = append(values, mathexp.TableData{Frame: frame})
+			continue
+		}
+		if frame.Rows() == 0 {
+			continue
+		}
+		// Same rules as SQL expressions: one numeric field per frame, string fields become
+		// labels, and label sets must be unique.
+		numbers, err := extractNumberSetFromSQLForAlerting(frame)
+		if err != nil {
+			return mathexp.Results{}, fmt.Errorf("transform expression %s: %w", tc.refID, err)
+		}
+		for _, n := range numbers {
+			values = append(values, n)
+		}
+	}
+
+	if len(values) == 0 {
+		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}, nil
 	}
 	return mathexp.Results{Values: values}, nil
 }

@@ -176,6 +176,16 @@ func TestTransformCommand(t *testing.T) {
 		}
 	})
 
+	t.Run("rejects an unknown format", func(t *testing.T) {
+		s, req := newMockQueryService(responses, transformTestQueries(t, []string{"A"},
+			`{"type": "transform", "inputs": ["A"], "format": "table", "transformations": [{"id": "merge"}]}`))
+		s.cfg.TransformSidecarURL = "http://127.0.0.1:1"
+
+		_, err := s.BuildPipeline(t.Context(), req)
+
+		require.ErrorContains(t, err, "format must be empty or 'alerting'")
+	})
+
 	t.Run("rejects a query that feeds both a transform and another expression", func(t *testing.T) {
 		queries := transformTestQueries(t, []string{"A"},
 			`{"type": "transform", "inputs": ["A"], "transformations": [{"id": "merge"}]}`)
