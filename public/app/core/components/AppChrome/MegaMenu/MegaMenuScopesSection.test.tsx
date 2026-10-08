@@ -57,7 +57,16 @@ const makeScopesServices = (
         dashboards: [],
         scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
         searchQuery: '',
-        filteredFolders: {},
+        filteredFolders: {
+          '': {
+            title: '',
+            expanded: true,
+            folders: {},
+            suggestedNavigations: {
+              'nav-1': { title: 'Suggested dashboard', url: '/d/abc', id: 'nav-1' },
+            },
+          },
+        },
         ...overrides,
       },
       changeSearchQuery: jest.fn(),
@@ -69,9 +78,9 @@ const makeScopesServices = (
 setBackendSrv(backendSrv);
 setupMockServer();
 
-const renderMegaMenu = () => {
+const renderMegaMenu = (onClose: () => void = () => {}) => {
   window.localStorage.clear();
-  return render(<MegaMenu onClose={() => {}} />, { preloadedState: { navBarTree: customisableNavTree } });
+  return render(<MegaMenu onClose={onClose} />, { preloadedState: { navBarTree: customisableNavTree } });
 };
 
 describe('MegaMenu scopes dashboards section', () => {
@@ -145,5 +154,36 @@ describe('MegaMenu scopes dashboards section', () => {
     const navList = screen.getByRole('list', { name: 'Navigation' });
 
     expect(scopesHeading.compareDocumentPosition(navList) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('closes the overlay menu when a suggested-dashboard link is clicked', async () => {
+    setTestFlags({ [FLAG]: true });
+    mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+    mockUseScopesServices.mockReturnValue(makeScopesServices());
+    const onClose = jest.fn();
+
+    const { user } = renderMegaMenu(onClose);
+
+    const link = await screen.findByText('Suggested dashboard');
+    await user.click(link);
+
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('isolates a render error in the section instead of crashing the whole menu', async () => {
+    setTestFlags({ [FLAG]: true });
+    mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+    mockUseScopesServices.mockImplementation(() => {
+      throw new Error('boom');
+    });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    renderMegaMenu();
+
+    // The rest of the nav (unrelated to the broken section) should still be usable.
+    expect(await screen.findByRole('list', { name: 'Navigation' })).toBeInTheDocument();
+    expect(screen.queryByText('Suggested dashboards')).not.toBeInTheDocument();
+
+    jest.mocked(console.error).mockRestore();
   });
 });

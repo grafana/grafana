@@ -12,6 +12,11 @@ import { useScopesServices } from '../ScopesContextProvider';
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
 import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
 
+interface Props {
+  /** Called after a suggested-dashboard link is clicked, e.g. so an overlay nav menu can close itself. */
+  onNavigate?: () => void;
+}
+
 /**
  * Renders the scopes-suggested dashboards tree as a section inside the native mega menu, below the
  * pinned box and above the regular nav tree. Unlike the standalone docked drawer this replaces,
@@ -19,7 +24,7 @@ import { ScopesDashboardsTreeSearch } from './ScopesDashboardsTreeSearch';
  * rather than an explanatory empty state, since it's part of the ambient nav rather than something
  * the user deliberately opened.
  */
-export function ScopesDashboardsMegaMenuSection() {
+export function ScopesDashboardsMegaMenuSection({ onNavigate }: Props) {
   const styles = useStyles2(getStyles);
   const scopes = useScopes();
   const scopeServices = useScopesServices();
@@ -71,6 +76,7 @@ export function ScopesDashboardsMegaMenuSection() {
               folderPath={['']}
               subScopePath={[]}
               onFolderUpdate={updateFolder}
+              onNavigate={onNavigate}
             />
           </ScrollContainer>
         ) : (

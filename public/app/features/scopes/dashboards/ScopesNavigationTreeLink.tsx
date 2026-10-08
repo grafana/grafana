@@ -16,9 +16,18 @@ export interface ScopesNavigationTreeLinkProps {
   title: string;
   id: string;
   subScopePath?: string[];
+  /** Called after a click is handled, e.g. so an overlay nav menu can close itself on navigation. */
+  onNavigate?: () => void;
 }
 
-export function ScopesNavigationTreeLink({ subScope, to, title, id, subScopePath }: ScopesNavigationTreeLinkProps) {
+export function ScopesNavigationTreeLink({
+  subScope,
+  to,
+  title,
+  id,
+  subScopePath,
+  onNavigate,
+}: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
   const locPathname = useLocation().pathname;
@@ -71,6 +80,8 @@ export function ScopesNavigationTreeLink({ subScope, to, title, id, subScopePath
       // Then navigate to the URL with updated query params
       locationService.push(newUrl);
     }
+
+    onNavigate?.();
   };
 
   return (

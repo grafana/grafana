@@ -7,7 +7,7 @@ import { type GrafanaTheme2, type NavModelItem } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaScopesDashboardsMegaMenu, useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
-import { ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
+import { ErrorBoundaryAlert, ScrollContainer, Text, useStyles2, Button, IconButton } from '@grafana/ui';
 import { useDragAndDrop } from '@grafana/ui/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { ScopesDashboardsMegaMenuSection } from 'app/features/scopes/dashboards/ScopesDashboardsMegaMenuSection';
@@ -153,8 +153,17 @@ export const MegaMenu = memo(
 
     // Scoped-dashboards section: rendered in both the canCustomise true/false branches below, since
     // canCustomise depends on an unrelated flag + sign-in state and shouldn't gate whether a user
-    // with scopes enabled sees their suggested dashboards.
-    const renderScopesDashboardsSection = () => scopesMegaMenuEnabled && <ScopesDashboardsMegaMenuSection />;
+    // with scopes enabled sees their suggested dashboards. Wrapped in its own error boundary so a
+    // render error in the suggested-dashboards tree doesn't take down the whole menu, matching how
+    // the docked drawer it replaces isolates ScopesDashboards in AppChrome.tsx.
+    const renderScopesDashboardsSection = () =>
+      scopesMegaMenuEnabled && (
+        <ErrorBoundaryAlert boundaryName="scopes-dashboards-mega-menu">
+          <ScopesDashboardsMegaMenuSection
+            onNavigate={state.megaMenuDocked && !state.fullscreenWorkspace ? undefined : onClose}
+          />
+        </ErrorBoundaryAlert>
+      );
 
     // Pinned box: a subtle grey box, with a "Pinned" heading, listing each pinned item as a compact
     // horizontal breadcrumb. Entries are drag-reorderable while editing.
