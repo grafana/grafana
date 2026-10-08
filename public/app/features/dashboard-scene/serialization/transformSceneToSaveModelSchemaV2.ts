@@ -56,6 +56,7 @@ import {
   defaultDashboardLink,
   type Preferences,
 } from '../../../../../packages/grafana-schema/src/schema/dashboard/v2';
+import { getQueryConditionalRendering } from '../conditional-rendering/QueryConditionalRenderingBehaviour';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
@@ -493,6 +494,7 @@ export function getVizPanelQueries(
 
   // Regular query handling (non-snapshot)
   const vizPanelQueries = queryRunner?.state.queries;
+  const queryConditionalRendering = getQueryConditionalRendering(queryRunner);
 
   if (vizPanelQueries) {
     vizPanelQueries.forEach((query) => {
@@ -524,10 +526,12 @@ export function getVizPanelQueries(
         delete dataQuery.datasource;
       }
 
+      const conditionalRendering = queryConditionalRendering?.getGroup(query.refId);
       const querySpecObj: PanelQuerySpec = {
         query: dataQuery,
         refId: query.refId,
-        hidden: Boolean(query.hide),
+        hidden: queryConditionalRendering ? queryConditionalRendering.getAuthoredHide(query) : Boolean(query.hide),
+        ...(conditionalRendering ? { conditionalRendering: conditionalRendering.serialize() } : {}),
       };
       queries.push({
         kind: 'PanelQuery',
