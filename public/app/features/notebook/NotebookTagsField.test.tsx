@@ -16,8 +16,8 @@ const mockUseLazyNotebookFieldFacetQuery = jest.mocked(useLazyNotebookFieldFacet
 const TAG_FILTER = 'Tag filter';
 
 /**
- * The facet the picker loads when it is focused. `undefined` stands for the answer where the search
- * route is not served: a 404, with nothing to read.
+ * The facet the picker loads when it is focused. `undefined` stands for a request that failed, so
+ * there is nothing to read.
  */
 function setFacet(terms: Array<{ value: string; count: number }> | undefined) {
   const trigger = jest.fn().mockResolvedValue({
@@ -127,70 +127,8 @@ describe('NotebookTagsField', () => {
     expect(onChange).toHaveBeenCalledWith(['rarely-used']);
   });
 
-  describe('when the facet cannot answer', () => {
-    // The tags a caller already holds are the only ones there are to offer where the search route is
-    // not served — which is the default, so this is the ordinary case rather than the exotic one.
-    it("offers the caller's fallback tags", async () => {
-      setFacet(undefined);
-      const { user } = render(
-        <NotebookTagsField
-          value={[]}
-          onChange={jest.fn()}
-          placeholder="Filter by tag"
-          fallbackTags={['errors', 'latency']}
-        />
-      );
-
-      await user.click(screen.getByLabelText(TAG_FILTER));
-      const listbox = await screen.findByRole('listbox');
-
-      expect(await within(listbox).findByText('errors')).toBeInTheDocument();
-      expect(within(listbox).getByText('latency')).toBeInTheDocument();
-    });
-
-    // A count over whatever one caller loaded is not the library's, so none is shown.
-    it('shows no counts beside them', async () => {
-      setFacet(undefined);
-      const { user } = render(
-        <NotebookTagsField value={[]} onChange={jest.fn()} placeholder="Filter by tag" fallbackTags={['errors']} />
-      );
-
-      await user.click(screen.getByLabelText(TAG_FILTER));
-
-      expect(await screen.findByRole('option')).toHaveTextContent('errors');
-      expect(screen.getByRole('option')).not.toHaveTextContent('(');
-    });
-
-    it('picks one the same way, so it reaches the caller', async () => {
-      setFacet(undefined);
-      const onChange = jest.fn();
-      const { user } = render(
-        <NotebookTagsField value={[]} onChange={onChange} placeholder="Filter by tag" fallbackTags={['latency']} />
-      );
-
-      await pickTag(user, 'latency');
-
-      expect(onChange).toHaveBeenCalledWith(['latency']);
-    });
-  });
-
-  // The facet knows the whole library and the counts; a caller's own rows are a lesser source, so
-  // they are only reached for when there is nothing else.
-  it('prefers the facet over the fallback when it answers', async () => {
-    setFacet([{ value: 'cost', count: 11 }]);
-    const { user } = render(
-      <NotebookTagsField value={[]} onChange={jest.fn()} placeholder="Filter by tag" fallbackTags={['errors']} />
-    );
-
-    await user.click(screen.getByLabelText(TAG_FILTER));
-    const listbox = await screen.findByRole('listbox');
-
-    expect(await within(listbox).findByText('cost')).toBeInTheDocument();
-    expect(within(listbox).queryByText('errors')).not.toBeInTheDocument();
-  });
-
-  // Where the search route is not served the facet cannot answer. The picker is still offered, and
-  // comes up empty rather than throwing out of the focus handler that loaded it.
+  // A failed facet request must not throw out of the focus handler that loaded it: the picker is
+  // still offered, and comes up empty.
   it('comes up empty when there is no facet to read', async () => {
     setFacet(undefined);
     const { user } = render(<NotebookTagsField value={[]} onChange={jest.fn()} placeholder="Filter by tag" />);

@@ -84,12 +84,12 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { type DashboardWithAccessInfo } from './types';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from './types';
 import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
-): DashboardWithAccessInfo<DashboardV2Spec> {
+): DashboardWithLoadInfo<DashboardV2Spec> {
   if (isDashboardV2Resource(dto)) {
     return dto;
   }
@@ -234,6 +234,8 @@ export function ensureV2Response(
     metadata,
     spec,
     access: accessMeta,
+    // This path is converted from v1 spec which has no repeat options on the grid items
+    libraryPanelRepeatUnresolved: true,
   };
 }
 

@@ -11,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -22,8 +23,8 @@ import (
 func TestAppPluginAPIBuilderOnlyServesSettings(t *testing.T) {
 	manifest := testManifest(t)
 	b, err := NewAppPluginAPIBuilder(definition.PluginDefinition{
-		JSONData: plugins.JSONData{ID: "example-app"},
-		Manifest: manifest,
+		JSONData:  plugins.JSONData{ID: "example-app"},
+		Manifests: []*app.ManifestData{manifest},
 	}, struct{ PluginClient }{}, struct{ PluginContextWrapper }{}, nil, nil, AppPluginRunnerOptions{}, nil, nil)
 	require.NoError(t, err)
 	gv := schema.GroupVersion{Group: "example-app", Version: apppluginV0.VERSION}

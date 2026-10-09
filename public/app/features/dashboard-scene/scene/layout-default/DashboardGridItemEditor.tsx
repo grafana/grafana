@@ -2,9 +2,9 @@ import { useCallback } from 'react';
 
 import { type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { sceneGraph, SceneGridLayout } from '@grafana/scenes';
 import { RadioButtonGroup, Select, TextLink } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { RepeatRowSelect2 } from 'app/features/dashboard/components/RepeatRowSelect/RepeatRowSelect';
@@ -75,7 +75,7 @@ export function getDashboardGridItemOptions(gridItem: DashboardGridItem): Option
 
   const options = [repeatCategory];
 
-  if (config.featureToggles.dashboardNewLayouts) {
+  if (isDashboardNewLayoutsEnabled()) {
     options.push(conditionalRenderingCategory);
   }
 

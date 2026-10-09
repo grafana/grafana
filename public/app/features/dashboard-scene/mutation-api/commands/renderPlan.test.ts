@@ -1,7 +1,8 @@
 import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
@@ -14,7 +15,7 @@ import { AddNewPane } from '../../sidebar/add-new/AddNewPane';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import { DashboardMutationClient } from '../DashboardMutationClient';
 
-import { renderPlanContractFixture } from './renderPlanContractFixture';
+import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
@@ -160,6 +161,85 @@ describe('RENDER_PLAN', () => {
     ]);
   });
 
+  describe('rows nested inside a tab', () => {
+    const nestedPlan = {
+      ...plan,
+      layout: 'tabs' as const,
+      sections: [
+        {
+          title: 'Overview',
+          panels: [],
+          sections: [
+            { title: 'Service health', panels: [{ title: 'Request rate', vizType: 'timeseries' }] },
+            { title: 'Order flow', panels: [{ title: 'Revenue', vizType: 'timeseries' }] },
+          ],
+        },
+        { title: 'Details', panels: [{ title: 'Orders by country', vizType: 'barchart' }] },
+      ],
+    };
+
+    it('renders the nested rows and their panels instead of an empty tab', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
+
+      expect(result.success).toBe(true);
+      const [overview, details] = (scene.state.body as TabsLayoutManager).state.tabs;
+      const overviewLayout = overview.getLayout();
+      expect(overviewLayout).toBeInstanceOf(RowsLayoutManager);
+      expect((overviewLayout as RowsLayoutManager).state.rows.map((r) => r.state.title)).toEqual([
+        'Service health',
+        'Order flow',
+      ]);
+      expect(overviewLayout.getVizPanels().map((p) => p.state.title)).toEqual(['Request rate', 'Revenue']);
+      expect(details.getLayout()).toBeInstanceOf(DefaultGridLayoutManager);
+      expect(scene.state.body.getVizPanels().map((p) => p.state.key)).toEqual(['panel-1', 'panel-2', 'panel-3']);
+    });
+
+    it('cannot drag or resize the grids inside nested rows', async () => {
+      // todo: fix in a followup
+      setTestFlags({ dashboardNewLayouts: false });
+      try {
+        const { scene, client } = setup();
+
+        await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
+
+        const overview = (scene.state.body as TabsLayoutManager).state.tabs[0].getLayout() as RowsLayoutManager;
+        const grid = (overview.state.rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+        expect(grid.isDraggable()).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+      } finally {
+        setTestFlags({});
+      }
+    });
+
+    it('refuses nested rows when the plan layout is rows, and leaves the scene untouched', async () => {
+      const { scene, client } = setup();
+
+      const result = await client.execute({ type: 'RENDER_PLAN', payload: { ...nestedPlan, layout: 'rows' } });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.title).toBe('hello');
+      expect(scene.state.planning).toBeUndefined();
+    });
+
+    it('refuses a tab that has both its own panels and nested rows', async () => {
+      const { scene, client } = setup();
+      const [overview, details] = nestedPlan.sections;
+
+      const result = await client.execute({
+        type: 'RENDER_PLAN',
+        payload: {
+          ...nestedPlan,
+          sections: [{ ...overview, panels: [{ title: 'Stray panel', vizType: 'stat' }] }, details],
+        },
+      });
+
+      expect(result).toMatchObject({ success: false });
+      expect(scene.state.planning).toBeUndefined();
+    });
+  });
+
   it('renders stand-in variables alongside the plan, with generated sample values', async () => {
     // The plan names only the variable, not what its values should look like -- sample values
     // are generated here rather than by the caller.
@@ -241,6 +321,16 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('the rendered grid cannot actually be dragged or resized', () => {
+    beforeEach(() => {
+      // With the flag on, editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
+      // The deferred case is covered separately below.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged (an
     // edit-mode transition) ever sets them false. Assert behaviour, not the raw flag, so a
     // future change that re-enables dragging some other way still fails this.
@@ -276,8 +366,7 @@ describe('RENDER_PLAN', () => {
     it('lands even when dashboardNewLayouts defers the correction behind a 10ms timeout', async () => {
       // With dashboardNewLayouts on, the correction lands inside a setTimeout(..., 10), not
       // synchronously -- assert it after that delay, not the same tick.
-      const originalToggle = config.featureToggles.dashboardNewLayouts;
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       try {
         const { scene, client } = setup();
 
@@ -289,7 +378,7 @@ describe('RENDER_PLAN', () => {
         expect(grid.getDragHooks()).toEqual({});
         expect(grid.state.isResizable).toBe(false);
       } finally {
-        config.featureToggles.dashboardNewLayouts = originalToggle;
+        setTestFlags({});
       }
     });
   });
@@ -387,6 +476,23 @@ describe('RENDER_PLAN', () => {
     );
     expect(scene.state.$variables?.state.variables.map((v) => v.state.name)).toEqual(
       renderPlanContractFixture.variables
+    );
+  });
+
+  it('CONTRACT: accepts and renders the nested-tabs fixture payload', async () => {
+    const { scene, client } = setup();
+
+    const result = await client.execute({ type: 'RENDER_PLAN', payload: renderPlanNestedTabsContractFixture });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.body).toBeInstanceOf(TabsLayoutManager);
+    expect((scene.state.body as TabsLayoutManager).state.tabs.map((t) => t.state.title)).toEqual(
+      renderPlanNestedTabsContractFixture.sections.map((s) => s.title)
+    );
+    expect(scene.state.body.getVizPanels().map((p) => p.state.title)).toEqual(
+      renderPlanNestedTabsContractFixture.sections.flatMap((s) =>
+        (s.sections ?? [s]).flatMap((row) => row.panels.map((p) => p.title))
+      )
     );
   });
 });

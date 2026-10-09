@@ -9,13 +9,27 @@ import {
   fetchLabelValues,
   getMetricCacheGeneration,
   invalidateMetricCache,
+  searchCatalog,
   subscribeToMetricCache,
   __clearCacheForTests,
 } from './metricResourceClient';
 
 const range = { raw: { from: 'now-1h', to: 'now' }, from: {}, to: {} } as unknown as TimeRange;
 
+const makeDatasource = ({
+  seriesLimit = 40000,
+  labelsApi = true,
+  searchApi = false,
+  lookupsDisabled = false,
+} = {}) => ({
+  seriesLimit,
+  lookupsDisabled,
+  hasLabelsMatchAPISupport: () => labelsApi,
+  hasSearchApiSupport: () => searchApi,
+});
+
 const makeLP = () => ({
+  datasource: makeDatasource(),
   start: jest.fn().mockResolvedValue([]),
   retrieveMetrics: jest.fn().mockReturnValue(['http_requests_total', 'node_load1']),
   retrieveMetricsMetadata: jest.fn().mockReturnValue({
@@ -37,12 +51,120 @@ describe('metricResourceClient', () => {
   it('maps names+metadata into MetricInfo with derived type', async () => {
     const lp = makeLP();
     (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
-    const rows = await fetchCatalog({ uid: 'p1' }, range);
+    const { metrics } = await fetchCatalog({ uid: 'p1' }, range);
     expect(lp.start).toHaveBeenCalled();
-    expect(rows).toEqual([
+    expect(metrics).toEqual([
       { name: 'http_requests_total', type: 'counter', help: 'total reqs', unit: '' },
       { name: 'node_load1', type: 'gauge', help: 'load', unit: undefined },
     ]);
+  });
+
+  describe('truncation', () => {
+    it.each([
+      { desc: 'fewer names than the series limit', options: { seriesLimit: 3 }, truncated: false },
+      { desc: 'exactly as many names as the series limit', options: { seriesLimit: 2 }, truncated: true },
+      { desc: 'a series limit of zero, which is uncapped', options: { seriesLimit: 0 }, truncated: false },
+      // Its limit caps series, not names, so a short name list says nothing about completeness.
+      { desc: 'the series endpoint, however few names', options: { labelsApi: false }, truncated: true },
+      { desc: 'the search API, which caps below the series limit', options: { searchApi: true }, truncated: true },
+      {
+        desc: 'disabled lookups, so the sidebar sends no search requests',
+        options: { labelsApi: false, lookupsDisabled: true },
+        truncated: false,
+      },
+    ])('reports truncated=$truncated for $desc', async ({ options, truncated }) => {
+      const lp = { ...makeLP(), datasource: makeDatasource(options) };
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await expect(fetchCatalog({ uid: 'p1' }, range)).resolves.toMatchObject({ truncated });
+    });
+  });
+
+  describe('searchCatalog', () => {
+    it('asks the datasource for metric names matching the term case-insensitively', async () => {
+      const lp = makeLP();
+      lp.queryLabelValues.mockResolvedValue(['quickpizza_requests_total']);
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      const rows = await searchCatalog({ uid: 'p1' }, range, 'quick');
+
+      expect(lp.queryLabelValues).toHaveBeenCalledWith(range, '__name__', '{__name__=~"(?i).*quick.*"}');
+      expect(rows.map((row) => row.name)).toEqual(['quickpizza_requests_total']);
+    });
+
+    it('matches regex metacharacters and quotes in the term literally', async () => {
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await searchCatalog({ uid: 'p1' }, range, 'a.b"c\\d');
+
+      expect(lp.queryLabelValues).toHaveBeenCalledWith(range, '__name__', '{__name__=~"(?i).*a\\\\.b\\"c\\\\\\\\d.*"}');
+    });
+
+    it('types results from the metadata the catalog loaded', async () => {
+      const lp = makeLP();
+      lp.queryLabelValues.mockResolvedValue(['node_load1']);
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await expect(searchCatalog({ uid: 'p1' }, range, 'load')).resolves.toEqual([
+        { name: 'node_load1', type: 'gauge', help: 'load', unit: undefined },
+      ]);
+      expect(lp.start).toHaveBeenCalledTimes(1);
+    });
+
+    it('serves a repeated term from cache until the datasource is invalidated', async () => {
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await searchCatalog({ uid: 'p1' }, range, 'load');
+      await searchCatalog({ uid: 'p1' }, range, 'load');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(1);
+
+      invalidateMetricCache({ uid: 'p1' });
+      await searchCatalog({ uid: 'p1' }, range, 'load');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(2);
+    });
+
+    it('serves terms differing only in case from one cache entry, since the match ignores case', async () => {
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      await searchCatalog({ uid: 'p1' }, range, 'Quick');
+      await searchCatalog({ uid: 'p1' }, range, 'quick');
+
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(1);
+    });
+
+    it('evicts the oldest term once 20 searches are cached', async () => {
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      for (let i = 0; i < 21; i++) {
+        await searchCatalog({ uid: 'p1' }, range, `term${i}`);
+      }
+      await searchCatalog({ uid: 'p1' }, range, 'term1');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(21);
+
+      await searchCatalog({ uid: 'p1' }, range, 'term0');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(22);
+    });
+
+    it('keeps a term that is searched again, evicting the least recently used one instead', async () => {
+      const lp = makeLP();
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      for (let i = 0; i < 20; i++) {
+        await searchCatalog({ uid: 'p1' }, range, `term${i}`);
+      }
+      await searchCatalog({ uid: 'p1' }, range, 'term0');
+      await searchCatalog({ uid: 'p1' }, range, 'term20');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(21);
+
+      await searchCatalog({ uid: 'p1' }, range, 'term0');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(21);
+      await searchCatalog({ uid: 'p1' }, range, 'term1');
+      expect(lp.queryLabelValues).toHaveBeenCalledTimes(22);
+    });
   });
 
   // Prometheus keys `/api/v1/metadata` by the BASE metric name, but the catalog lists the series. A
@@ -63,7 +185,7 @@ describe('metricResourceClient', () => {
         go_gc_pauses_seconds: { type: 'histogram', help: 'GC pause distribution' },
       });
 
-      const rows = await fetchCatalog({ uid: 'h1' }, range);
+      const { metrics: rows } = await fetchCatalog({ uid: 'h1' }, range);
 
       expect(rows.map((row) => row.type)).toEqual(['histogram', 'histogram', 'histogram']);
       // The help text describes the family, so it is the best answer for a member of it.
@@ -75,7 +197,7 @@ describe('metricResourceClient', () => {
         request_duration_seconds: { type: 'summary', help: 'request duration' },
       });
 
-      await expect(fetchCatalog({ uid: 'h2' }, range)).resolves.toEqual([
+      await expect(fetchCatalog({ uid: 'h2' }, range)).resolves.toHaveProperty('metrics', [
         { name: 'request_duration_seconds_sum', type: 'summary', help: 'request duration', unit: undefined },
       ]);
     });
@@ -86,7 +208,9 @@ describe('metricResourceClient', () => {
         http_requests: { type: 'histogram', help: 'base' },
       });
 
-      const [row] = await fetchCatalog({ uid: 'h3' }, range);
+      const {
+        metrics: [row],
+      } = await fetchCatalog({ uid: 'h3' }, range);
 
       expect(row.type).toBe('counter');
       expect(row.help).toBe('own');
@@ -99,7 +223,9 @@ describe('metricResourceClient', () => {
         deprecated_flags_inuse: { type: 'counter', help: 'in-use deprecated flags' },
       });
 
-      const [row] = await fetchCatalog({ uid: 'h5' }, range);
+      const {
+        metrics: [row],
+      } = await fetchCatalog({ uid: 'h5' }, range);
 
       expect(row.type).toBe('counter');
     });
@@ -108,7 +234,9 @@ describe('metricResourceClient', () => {
     it('does not treat a `_total` series as a classic histogram member', async () => {
       withMetadata(['odd_total'], { odd: { type: 'histogram', help: 'h' } });
 
-      const [row] = await fetchCatalog({ uid: 'h6' }, range);
+      const {
+        metrics: [row],
+      } = await fetchCatalog({ uid: 'h6' }, range);
 
       expect(row.type).toBe('native histogram');
     });
@@ -116,7 +244,7 @@ describe('metricResourceClient', () => {
     it('leaves a metric with no suffix and no metadata as unknown', async () => {
       withMetadata(['mystery_metric'], {});
 
-      await expect(fetchCatalog({ uid: 'h4' }, range)).resolves.toEqual([
+      await expect(fetchCatalog({ uid: 'h4' }, range)).resolves.toHaveProperty('metrics', [
         { name: 'mystery_metric', type: 'unknown', help: undefined, unit: undefined },
       ]);
     });
@@ -133,12 +261,13 @@ describe('metricResourceClient', () => {
   it('lookupsDisabled / empty metrics → [] without throwing', async () => {
     (getDataSourceInstance as jest.Mock).mockResolvedValue({
       languageProvider: {
+        datasource: makeDatasource(),
         start: jest.fn().mockResolvedValue([]),
         retrieveMetrics: () => [],
         retrieveMetricsMetadata: () => ({}),
       },
     });
-    await expect(fetchCatalog({ uid: 'p2' }, range)).resolves.toEqual([]);
+    await expect(fetchCatalog({ uid: 'p2' }, range)).resolves.toEqual({ metrics: [], truncated: false });
   });
 
   it('scopes label keys by the metric selector', async () => {
@@ -182,7 +311,7 @@ describe('metricResourceClient', () => {
 
     const lp = makeLP();
     (getDataSourceInstance as jest.Mock).mockResolvedValueOnce({ languageProvider: lp });
-    await expect(fetchCatalog({ uid: 'p3' }, range)).resolves.toEqual([
+    await expect(fetchCatalog({ uid: 'p3' }, range)).resolves.toHaveProperty('metrics', [
       { name: 'http_requests_total', type: 'counter', help: 'total reqs', unit: '' },
       { name: 'node_load1', type: 'gauge', help: 'load', unit: undefined },
     ]);
@@ -205,8 +334,8 @@ describe('metricResourceClient', () => {
       fetchCatalog({ uid: 'ds-b' }, range),
     ]);
 
-    expect(rowsA).toEqual([{ name: 'a_metric', type: 'counter', help: 'from A', unit: undefined }]);
-    expect(rowsB).toEqual([{ name: 'b_metric', type: 'gauge', help: 'from B', unit: undefined }]);
+    expect(rowsA.metrics).toEqual([{ name: 'a_metric', type: 'counter', help: 'from A', unit: undefined }]);
+    expect(rowsB.metrics).toEqual([{ name: 'b_metric', type: 'gauge', help: 'from B', unit: undefined }]);
     expect(lpA.start).toHaveBeenCalledTimes(1);
     expect(lpB.start).toHaveBeenCalledTimes(1);
   });
@@ -236,7 +365,7 @@ describe('metricResourceClient', () => {
       await fetchCatalog({ uid: 'p1' }, range);
       lp.retrieveMetrics.mockReturnValue(['http_requests_total', 'node_load1', 'brand_new_total']);
       jest.advanceTimersByTime(CACHE_TTL_MS + 1);
-      const rows = await fetchCatalog({ uid: 'p1' }, range);
+      const { metrics: rows } = await fetchCatalog({ uid: 'p1' }, range);
 
       expect(lp.start).toHaveBeenCalledTimes(2);
       expect(rows.map((row) => row.name)).toContain('brand_new_total');

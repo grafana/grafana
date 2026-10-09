@@ -10,6 +10,7 @@ import (
 
 	sdkk8s "github.com/grafana/grafana-app-sdk/k8s"
 	"github.com/grafana/grafana-app-sdk/resource"
+	"github.com/open-feature/go-sdk/openfeature"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
@@ -29,28 +30,31 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/contexthandler"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type UserK8sService struct {
-	logger          log.Logger
-	namespaceMapper request.NamespaceMapper
-	configProvider  apiserver.DirectRestConfigProvider
-	config          *setting.Cfg
-	tracer          tracing.Tracer
+	logger            log.Logger
+	namespaceMapper   request.NamespaceMapper
+	configProvider    apiserver.DirectRestConfigProvider
+	config            *setting.Cfg
+	tracer            tracing.Tracer
+	openFeatureClient *openfeature.Client
 }
 
 var _ user.Service = (*UserK8sService)(nil)
 
 func NewUserK8sService(logger log.Logger, cfg *setting.Cfg, configProvider apiserver.DirectRestConfigProvider, tracer tracing.Tracer) *UserK8sService {
 	return &UserK8sService{
-		logger:          logger,
-		namespaceMapper: request.GetNamespaceMapper(cfg),
-		configProvider:  configProvider,
-		config:          cfg,
-		tracer:          tracer,
+		logger:            logger,
+		namespaceMapper:   request.GetNamespaceMapper(cfg),
+		configProvider:    configProvider,
+		config:            cfg,
+		tracer:            tracer,
+		openFeatureClient: openfeature.NewDefaultClient(),
 	}
 }
 
@@ -116,18 +120,25 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 		return nil, err
 	}
 
+	if cmd.Email == "" {
+		cmd.Email = cmd.Login
+	}
+	if cmd.Login == "" {
+		cmd.Login = cmd.Email
+	}
+
 	uid := cmd.UID
 	if uid == "" {
-		uid = util.GenerateShortUID()
+		if s.isDeterministicUIDEnabled(ctx) {
+			uid = user.GenerateDeterministicUID(namespace, cmd.Email, cmd.Login)
+		} else {
+			uid = util.GenerateShortUID()
+		}
 	}
 
 	role := cmd.DefaultOrgRole
 	if role == "" && s.config != nil {
 		role = s.config.AutoAssignOrgRole
-	}
-
-	if cmd.Email == "" {
-		cmd.Email = cmd.Login
 	}
 
 	k8sUser := &iamv0alpha1.User{
@@ -150,6 +161,10 @@ func (s *UserK8sService) Create(ctx context.Context, cmd *user.CreateUserCommand
 
 	created, err := client.Create(ctx, k8sUser, resource.CreateOptions{})
 	if err != nil {
+		if apierrors.IsAlreadyExists(err) || apierrors.IsConflict(err) {
+			ctxLogger.Debug("k8s user already exists", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
+			return nil, user.ErrUserAlreadyExists
+		}
 		ctxLogger.Error("k8s user create failed", "namespace", namespace, "orgID", orgID, "login", cmd.Login, "err", err)
 		span.RecordError(err)
 		return nil, err
@@ -842,6 +857,14 @@ func (s *UserK8sService) getByFieldSelector(ctx context.Context, logger log.Logg
 		return nil, err
 	}
 	return toUser(found, orgID), nil
+}
+
+func (s *UserK8sService) isDeterministicUIDEnabled(ctx context.Context) bool {
+	if s.openFeatureClient == nil {
+		return false
+	}
+
+	return s.openFeatureClient.Boolean(ctx, featuremgmt.FlagKubernetesUsersDeterministicUID, false, openfeature.TransactionContext(ctx))
 }
 
 func toSignedInUser(u *iamv0alpha1.User, orgID int64) *user.SignedInUser {

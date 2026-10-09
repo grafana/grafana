@@ -124,6 +124,17 @@ function getDevServer(): DevServerConfiguration {
     allowedHosts: [...new Set([hostname, 'localhost', '127.0.0.1'])],
 
     client: {
+      overlay: {
+        runtimeErrors: (error) => {
+          const isResizeObserverWarning =
+            error.message === 'ResizeObserver loop completed with undelivered notifications.' ||
+            error.message === 'ResizeObserver loop limit exceeded';
+
+          // These browser notifications have no observer identity. Grid presence scopes the overlay
+          // filter without attributing the notification to RDG or changing resize delivery.
+          return !(isResizeObserverWarning && document.querySelector('.rdg'));
+        },
+      },
       // The page is served by Grafana on another port, so the client cannot infer where its
       // socket lives. Point it back at this server.
       webSocketURL: `ws://${hostname}:${port}/ws`,

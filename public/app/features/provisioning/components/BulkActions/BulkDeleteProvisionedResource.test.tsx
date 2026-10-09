@@ -1,8 +1,7 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import { useEffect } from 'react';
 import { render } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
@@ -458,7 +457,7 @@ describe('BulkDeleteProvisionedResource', () => {
     expect(await screen.findByText('Resources deleted successfully')).toBeInTheDocument();
   });
 
-  describe('commit message template (provisioning.gitConventions)', () => {
+  describe('commit message template', () => {
     // selectedItems in setup() has one folder + one dashboard => "2 resources".
     const templateRepository: RepositoryView = {
       name: 'test-folder',
@@ -468,17 +467,6 @@ describe('BulkDeleteProvisionedResource', () => {
       workflows: ['branch', 'write'],
       commit: { singleResourceMessageTemplate: 'chore: {{action}} {{title}}' },
     };
-
-    beforeEach(() => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-    });
-
-    afterEach(async () => {
-      // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
 
     it('pre-fills the comment from the rendered template and POSTs it', async () => {
       const { user, mockCreateBulkJob } = setup(templateRepository);

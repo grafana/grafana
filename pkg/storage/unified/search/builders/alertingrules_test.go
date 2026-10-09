@@ -393,9 +393,42 @@ func TestRecordingRuleBuilder_omits_alert_only_status_fields(t *testing.T) {
 		"kind": "RecordingRule",
 		"metadata": {"name": "r1"},
 		"spec": {"trigger": {"interval": "1m"}, "expressions": {}},
-		"status": {"state": "Alerting", "stateReason": "threshold exceeded"}
+		"status": {"state": "Alerting", "stateReason": "threshold exceeded", "totals": {"healthy": 1, "firing": 2, "pending": 3, "recovering": 4, "nodata": 5, "error": 6}}
 	}`)
 
 	assert.NotContains(t, doc.Fields, testFieldState)
 	assert.NotContains(t, doc.Fields, testFieldStateReason)
+	for _, name := range []string{"totalsHealthy", "totalsFiring", "totalsPending", "totalsRecovering", "totalsNoData", "totalsError"} {
+		assert.NotContains(t, doc.Fields, name)
+	}
+}
+
+func TestAlertRuleBuilder_totals(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		status string
+		want   map[string]any
+	}{
+		{name: "absent", status: `{}`},
+		{name: "null", status: `{"totals":null}`},
+		{name: "empty", status: `{"totals":{}}`},
+		{name: "null count", status: `{"totals":{"healthy":null}}`},
+		{name: "zero", status: `{"totals":{"healthy":0}}`, want: map[string]any{"totalsHealthy": int64(0)}},
+		{name: "complete", status: `{"totals":{"healthy":1,"firing":2,"pending":3,"recovering":4,"nodata":5,"error":6}}`,
+			want: map[string]any{"totalsHealthy": int64(1), "totalsFiring": int64(2), "totalsPending": int64(3), "totalsRecovering": int64(4), "totalsNoData": int64(5), "totalsError": int64(6)}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := buildAlertRuleDoc(t, fmt.Sprintf(`{
+				"apiVersion":"rules.alerting.grafana.app/v0alpha1","kind":"AlertRule",
+				"metadata":{"name":"r1"},"spec":{"expressions":{}},"status":%s
+			}`, tc.status))
+			for _, name := range []string{"totalsHealthy", "totalsFiring", "totalsPending", "totalsRecovering", "totalsNoData", "totalsError"} {
+				if value, ok := tc.want[name]; ok {
+					assert.Equal(t, value, doc.Fields[name])
+				} else {
+					assert.NotContains(t, doc.Fields, name)
+				}
+			}
+		})
+	}
 }

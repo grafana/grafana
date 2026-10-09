@@ -56,13 +56,13 @@ func moveDashboardToBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, 
 	return nil
 }
 
-func readDashboardBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, snap *dashv0.Snapshot) (map[string]any, bool, error) {
+func loadDashboardContent(ctx context.Context, blobs resourcepb.BlobStoreClient, snap *dashv0.Snapshot) (map[string]any, error) {
 	ref := snap.Blobs.Dashboard
 	if ref == nil || ref.Uid == "" {
-		return nil, false, nil
+		return snap.Spec.Dashboard, nil
 	}
 	if blobs == nil {
-		return nil, true, fmt.Errorf("snapshot %q references a blob but no blob store is configured", snap.Name)
+		return nil, fmt.Errorf("snapshot %q references a blob but no blob store is configured", snap.Name)
 	}
 	rsp, err := blobs.GetBlob(ctx, &resourcepb.GetBlobRequest{
 		Resource:       snapshotBlobKey(snap),
@@ -70,17 +70,17 @@ func readDashboardBlob(ctx context.Context, blobs resourcepb.BlobStoreClient, sn
 		MustProxyBytes: true,
 	})
 	if err != nil {
-		return nil, true, err
+		return nil, err
 	}
 	if rsp.Error != nil {
-		return nil, true, resource.StatusError(rsp.Error)
+		return nil, resource.StatusError(rsp.Error)
 	}
 	if rsp.Url != "" {
-		return nil, true, fmt.Errorf("signed blob URLs are not supported yet")
+		return nil, fmt.Errorf("signed blob URLs are not supported yet")
 	}
 	dash := map[string]any{}
 	if err := json.Unmarshal(rsp.Value, &dash); err != nil {
-		return nil, true, err
+		return nil, err
 	}
-	return dash, true, nil
+	return dash, nil
 }

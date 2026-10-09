@@ -11,6 +11,7 @@ import (
 	"k8s.io/apiserver/pkg/util/dryrun"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -82,6 +83,7 @@ func (s *folderStorage) Create(ctx context.Context,
 ) (runtime.Object, error) {
 	obj, err := s.store.Create(ctx, obj, createValidation, options)
 	if err != nil {
+		logging.FromContext(ctx).Warn("Failed to create folder", "error", err)
 		statusErr := apierrors.ToFolderStatusError(err)
 		return nil, &statusErr
 	}

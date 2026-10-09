@@ -38,8 +38,10 @@ export class TabItems implements EditableDashboardElement {
       { actionId: 'tab.remove', scope: 'multiple' }
     );
 
-    this._tabs.forEach((tab) => tab.onDelete());
-
-    endBatch(this._dashboard);
+    try {
+      this._tabs.forEach((tab) => tab.onDelete());
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 }
