@@ -24,24 +24,11 @@ type discoveredGroup struct {
 	discovery *apidiscoveryv2.APIGroupDiscovery
 }
 
-// discoverGroups fetches a target's /apis discovery document. It asks for the
-// aggregated format first: the standalone apiextensions apiserver lists
+// discoverGroupResources fetches a target's /apis discovery document. It asks
+// for the aggregated format first: the standalone apiextensions apiserver lists
 // CRD-backed groups only there, never in its plain /apis response. Servers
-// without it fall back to the classic APIGroupList.
-func discoverGroups(ctx context.Context, client *http.Client, baseURL string) ([]metav1.APIGroup, error) {
-	discovered, err := discoverGroupResources(ctx, client, baseURL)
-	if err != nil {
-		return nil, err
-	}
-	groups := make([]metav1.APIGroup, len(discovered))
-	for i, d := range discovered {
-		groups[i] = d.group
-	}
-	return groups, nil
-}
-
-// discoverGroupResources is discoverGroups, keeping each group's resources
-// when the target served the aggregated format.
+// without it fall back to the classic APIGroupList. Each group keeps its
+// resources when the target served the aggregated format.
 func discoverGroupResources(ctx context.Context, client *http.Client, baseURL string) ([]discoveredGroup, error) {
 	// A trailing slash would produce "//apis", which servers route differently.
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, strings.TrimSuffix(baseURL, "/")+apisPrefix, nil)
@@ -106,7 +93,7 @@ func decodeDiscoveryResponse(resp *http.Response, baseURL string) ([]discoveredG
 
 // apiGroupDiscoveryListToGroups converts the aggregated discovery document into
 // the classic APIGroup shape the rest of this package already expects
-// (matchesAnyPattern, newAggregateBackend). Versions keep the priority order
+// (matchesAnyPattern, newDiscoveredAggregateBackend). Versions keep the priority order
 // the upstream server returned them in; the first entry becomes
 // PreferredVersion, matching that ordering convention.
 func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []metav1.APIGroup {
@@ -129,9 +116,7 @@ func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []
 
 // aggregateBackend is a Backend for one group discovered on a fixed
 // aggregate target (baas_apiserver or cloud_app_platform_apiserver). Its
-// Load proxies to the target's own host, same shape as forwardBackend --
-// the difference is entirely in how Group/Key are learned (discovery poll
-// vs a RouteBackend CR), not in how requests are served.
+// Load proxies to the target's own host.
 type aggregateBackend struct {
 	targetName string
 	group      metav1.APIGroup
@@ -145,12 +130,8 @@ var (
 	_ DiscoveryProvider = (*aggregateBackend)(nil)
 )
 
-func newAggregateBackend(targetName string, group metav1.APIGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
-	return newDiscoveredAggregateBackend(targetName, discoveredGroup{group: group}, base, transport)
-}
-
-// newDiscoveredAggregateBackend also keeps the group's resources from the
-// poll, so /apis can be built without asking the target again. They are part
+// newDiscoveredAggregateBackend keeps the group's resources from the poll, so
+// /apis can be built without asking the target again. They are part
 // of the key, so a resource change on the target republishes discovery.
 func newDiscoveredAggregateBackend(targetName string, discovered discoveredGroup, base *url.URL, transport http.RoundTripper) (Backend, error) {
 	group := discovered.group

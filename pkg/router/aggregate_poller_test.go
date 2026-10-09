@@ -189,7 +189,7 @@ func (t *taggedTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 // transport (CAP-token-wrapped, used only for the router's own /apis poll)
 // must never end up as the aggregateBackend's proxy transport (which carries
 // real caller traffic and must forward the caller's own credentials
-// transparently, same as forwardBackend).
+// transparently).
 func TestAggregateTarget_PollUsesDedicatedProxyTransportNotDiscoveryClient(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		list := metav1.APIGroupList{Groups: []metav1.APIGroup{

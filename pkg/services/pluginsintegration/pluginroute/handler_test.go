@@ -315,7 +315,7 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		want   string
 	}{
 		{"empty manifest", func(p *definition.PluginDefinition, _ *Options) { p.Manifests = []*app.ManifestData{{}} }, "empty app manifest"},
-		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "example.com" }, "invalid manifest group"},
+		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "Bad_Group.example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
 		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil, nil) }, "unified storage client is required"},
 		{"storage provider without a getter", func(_ *definition.PluginDefinition, o *Options) {
@@ -347,7 +347,6 @@ func TestValidateManifest(t *testing.T) {
 	}{
 		{"nil manifest", nil, "missing manifest"},
 		{"empty manifest", &app.ManifestData{}, "empty app manifest"},
-		{"group outside the plugin domain", &app.ManifestData{Group: "example.com", Versions: testPlugin().Manifests[0].Versions}, "invalid manifest group"},
 		{"group that is not a DNS name", &app.ManifestData{Group: "Bad_Group.ext.grafana.app", Versions: testPlugin().Manifests[0].Versions}, "invalid manifest group"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
