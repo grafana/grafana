@@ -247,7 +247,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       key: 'e',
       onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
         if (!canManuallyEditDashboard(scene.state)) {
-          if (!isViewingDashboard(scene.state) || !scene.setDashboardMode('edit')) {
+          if (!isViewingDashboard(scene.state) || !scene.setDashboardMode('edit', 'shortcut')) {
             return;
           }
         }

@@ -464,7 +464,7 @@ abstract class DashboardScenePageStateManagerBase<T>
 
       const mode = consumeDashboardModeAfterSave(options.uid);
       if (mode && dashboardModesEnabled()) {
-        dashboard.setDashboardMode(mode);
+        dashboard.setDashboardMode(mode, 'restore');
       }
 
       this.setState({ dashboard: dashboard, isLoading: false });

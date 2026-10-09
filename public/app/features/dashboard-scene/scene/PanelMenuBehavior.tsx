@@ -106,6 +106,9 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         shortcut: 'e',
         href: getEditPanelUrl(getPanelIdForVizPanel(panel)),
         onClick: () => {
+          if (dashboardModesEnabled() && isViewingDashboard(dashboard.state)) {
+            dashboard.setDashboardMode('edit', 'panel_menu');
+          }
           DashboardInteractions.panelActionClicked('edit', getPanelIdForVizPanel(panel), 'panel', panel.state.pluginId);
         },
       });

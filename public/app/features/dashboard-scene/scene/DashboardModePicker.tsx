@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -15,15 +15,21 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const [isLabelMenuOpen, setIsLabelMenuOpen] = useState(false);
   const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
   const mode = getDashboardMode(state);
-  if (
+  const disabled = dashboard.managedResourceCannotBeEdited();
+  const hidden =
     !dashboardModesEnabled() ||
     !dashboard.canEditDashboard() ||
     (!state.editable && mode === 'view') ||
     state.editPanel ||
     state.editview ||
     state.viewPanel ||
-    state.planning
-  ) {
+    state.planning;
+  useEffect(() => {
+    if (!hidden && !disabled) {
+      dashboard.trackModePickerShown();
+    }
+  }, [dashboard, hidden, disabled]);
+  if (hidden) {
     return null;
   }
 
@@ -60,20 +66,24 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
             disabled={!state.editable && option.value !== 'view'}
             className={styles.item}
             component={mode === option.value ? SelectedMode : undefined}
-            onClick={() => dashboard.setDashboardMode(option.value)}
+            onClick={() => dashboard.setDashboardMode(option.value, 'picker')}
           />
         ))}
       </Menu>
     </div>
   );
-  const disabled = dashboard.managedResourceCannotBeEdited();
 
   return (
     <ButtonGroup ref={setButtonGroup}>
       <Dropdown
         positioningReference={buttonGroup}
         placement="bottom-end"
-        onVisibleChange={setIsLabelMenuOpen}
+        onVisibleChange={(visible) => {
+          setIsLabelMenuOpen(visible);
+          if (visible) {
+            dashboard.trackModePickerOpened();
+          }
+        }}
         overlay={menu}
       >
         <ToolbarButton
@@ -89,7 +99,12 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
       <Dropdown
         positioningReference={buttonGroup}
         placement="bottom-end"
-        onVisibleChange={setIsCaretMenuOpen}
+        onVisibleChange={(visible) => {
+          setIsCaretMenuOpen(visible);
+          if (visible) {
+            dashboard.trackModePickerOpened();
+          }
+        }}
         overlay={menu}
       >
         <ToolbarButton

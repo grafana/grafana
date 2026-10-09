@@ -177,6 +177,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     // is not active while panel edit is active so we have to let the sidebar (which owns undo/redo)
     // publish this event when it activates
     const dashboard = getDashboardSceneFor(this);
+    if (this.state.isDirty) {
+      dashboard.recordEditMutation();
+    }
     dashboard.state.sidebar.setPanelEditAction(editAction);
   }
 

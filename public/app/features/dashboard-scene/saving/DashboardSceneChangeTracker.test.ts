@@ -60,9 +60,7 @@ describe('DashboardSceneChangeTracker', () => {
           terminate,
         }) as unknown as CorsWorker
     );
-    const changeTracker = new DashboardSceneChangeTracker({
-      subscribeToEvent: jest.fn().mockReturnValue({ unsubscribe: jest.fn() }),
-    } as unknown as DashboardScene);
+    const changeTracker = new DashboardSceneChangeTracker(new DashboardScene({}));
     changeTracker.startTrackingChanges();
 
     expect(changeTracker['_changesWorker']).not.toBeUndefined();

@@ -5,6 +5,8 @@
  * rule: a plan preview is read-only.
  */
 
+import { isEqual } from 'lodash';
+
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../scene/DashboardScene';
@@ -71,7 +73,22 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
       !PLANNING_ALLOWED_COMMANDS.has(type)
         ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'
         : undefined;
-    const execute = () => super.executeChecked(mutation, checkWrite);
+    const execute = async () => {
+      const result = await super.executeChecked(mutation, checkWrite);
+      // Some commands update child scenes directly rather than publishing undoable actions.
+      if (
+        dashboardModesEnabled() &&
+        result.success &&
+        !this.isReadOnly(type) &&
+        !PLANNING_ALLOWED_COMMANDS.has(type) &&
+        type !== 'ENTER_EDIT_MODE' &&
+        type !== 'CREATE_NOTEBOOK_SPEC' &&
+        result.changes.some(({ previousValue, newValue }) => !isEqual(previousValue, newValue))
+      ) {
+        this.scene.recordEditMutation();
+      }
+      return result;
+    };
     return callerPluginId === 'grafana-assistant-app' ? this.scene.withAssistantWrite(execute) : execute();
   }
 }

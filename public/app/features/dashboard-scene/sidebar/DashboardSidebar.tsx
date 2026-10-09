@@ -249,6 +249,9 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
     if (!getDashboardSceneFor(this).prepareEditAction()) {
       return;
     }
+    if (skipPerform) {
+      getDashboardSceneFor(this).recordEditMutation();
+    }
     if (this._activeBatch) {
       this._activeBatch.actions.push(action);
       if (!skipPerform) {
@@ -336,7 +339,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
   }
 
   private undoSingleAction(action: DashboardEditActionEventPayload) {
-    action.undo();
+    getDashboardSceneFor(this).trackEditMutation(() => action.undo());
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {
@@ -356,7 +359,7 @@ export class DashboardSidebar extends SceneObjectBase<DashboardSidebarState> imp
    * Some edit actions also require clearing selection or selecting new objects
    */
   private performAction(action: DashboardEditActionEventPayload) {
-    action.perform();
+    getDashboardSceneFor(this).trackEditMutation(() => action.perform());
     action.source.publishEvent(new DashboardStateChangedEvent({ source: action.source }), true);
 
     if (action.addedObject) {

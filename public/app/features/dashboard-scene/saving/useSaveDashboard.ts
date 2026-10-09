@@ -47,6 +47,8 @@ export function useSaveDashboard(isCopy = false) {
           });
         }
 
+        // Attribute the submitted draft, even if the user switches modes while the save is in flight.
+        const editSessionTracking = scene.getEditSessionTracking();
         const result = await saveDashboardRtkQuery({
           dashboard: saveModel,
           folderUid: options.folderUid,
@@ -77,6 +79,14 @@ export function useSaveDashboard(isCopy = false) {
 
         await scene.saveCompleted(saveModel, resultData, options.folderUid);
 
+        if (editSessionTracking.edit_session_id) {
+          DashboardInteractions.editPeriodEnded({
+            ...editSessionTracking,
+            edit_session_id: editSessionTracking.edit_session_id,
+            outcome: isCopy ? 'saved_as_copy' : 'saved',
+          });
+        }
+
         // important that these happen before location redirect below
         appEvents.publish(new DashboardSavedEvent());
         notifyApp.success(t('dashboard-scene.use-save-dashboard.message-dashboard-saved', 'Dashboard saved'));
@@ -88,12 +98,14 @@ export function useSaveDashboard(isCopy = false) {
             name: saveModel.title || '',
             url: resultData.url,
             diff_count: diffCount,
+            ...editSessionTracking,
           });
         } else {
           trackDashboardSceneCreatedOrSaved(!!options.isNew, scene, {
             name: saveModel.title || '',
             url: resultData.url || '',
             diff_count: diffCount,
+            ...editSessionTracking,
             transformation_counts: scene.getTransformationCounts(saveModel),
             expression_counts: scene.getExpressionCounts(saveModel),
           });

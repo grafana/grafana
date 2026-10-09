@@ -1,4 +1,4 @@
-import { debounce } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import { type Unsubscribable } from 'rxjs';
 
 import {
@@ -40,6 +40,7 @@ import { type DashboardChangeInfo } from './shared';
 export class DashboardSceneChangeTracker {
   private _changeTrackerSub: Unsubscribable | undefined;
   private _changesWorker?: Worker;
+  private _settingsChangesSub?: Unsubscribable;
   private _dashboard: DashboardScene;
 
   constructor(dashboard: DashboardScene) {
@@ -218,6 +219,18 @@ export class DashboardSceneChangeTracker {
       this.updateIsDirty(!!e.data.hasChanges);
     };
 
+    // General settings update scene state directly, outside the undoable edit-action path.
+    this._settingsChangesSub = this._dashboard.subscribeToState((state, previous) => {
+      const properties = ['title', 'description', 'tags', 'editable', 'links', 'preload'] as const;
+      if (
+        properties.some((key) => !isEqual(state[key], previous[key])) ||
+        state.meta.folderUid !== previous.meta.folderUid ||
+        !isEqual(state.meta.k8s?.annotations, previous.meta.k8s?.annotations)
+      ) {
+        this._dashboard.recordEditMutation();
+      }
+    });
+
     const performSaveModelDiff = getChangeTrackerDebouncer(this.detectSaveModelChanges.bind(this));
 
     this._changeTrackerSub = this._dashboard.subscribeToEvent(
@@ -231,6 +244,8 @@ export class DashboardSceneChangeTracker {
   }
 
   public stopTrackingChanges() {
+    this._settingsChangesSub?.unsubscribe();
+    this._settingsChangesSub = undefined;
     this._changeTrackerSub?.unsubscribe();
     this._changeTrackerSub = undefined;
   }

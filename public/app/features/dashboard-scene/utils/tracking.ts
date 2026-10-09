@@ -15,6 +15,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 
+import { type DashboardEditSessionTracking } from './dashboardModeTracking';
 import { DashboardInteractions } from './interactions';
 
 export function trackDashboardSceneLoaded(dashboard: DashboardScene, duration?: number) {
@@ -59,7 +60,7 @@ export async function trackDashboardSceneCreatedOrSaved(
     diff_count: number;
     transformation_counts?: Record<string, number>;
     expression_counts?: Record<string, number>;
-  }
+  } & Partial<DashboardEditSessionTracking>
 ) {
   const sceneDashboardTrackingInfo = dashboard.getTrackingInformation();
   const dynamicDashboardsTrackingInformation = dashboard.getDynamicDashboardsTrackingInformation();
