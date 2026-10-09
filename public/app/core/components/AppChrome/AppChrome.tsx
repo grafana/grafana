@@ -30,6 +30,7 @@ import { useMegaMenuFocusHelper } from './MegaMenu/utils';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
+import { useAutoOpenMegaMenuForScopedContent } from './useAutoOpenMegaMenuForScopedContent';
 
 export const EXTENSION_SIDEBAR_FLOATING_TESTID = 'extension-sidebar-floating';
 
@@ -52,6 +53,8 @@ export function AppChrome({ children }: Props) {
   const state = chrome.useState();
   const scopes = useScopes();
   const isSplashScreenEnabled = useBooleanFlagValue('splashScreen', false);
+
+  useAutoOpenMegaMenuForScopedContent(chrome, state.chromeless, scopesMegaMenuEnabled);
 
   const { fullscreenWorkspaceActive, fullscreenWorkspaceFeatureFlagEnabled } = useFullscreenWorkspace();
 
@@ -78,11 +81,7 @@ export function AppChrome({ children }: Props) {
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
   const isScopesDashboardsOpen = Boolean(
-    !state.chromeless &&
-      !scopesMegaMenuEnabled &&
-      scopes?.state.enabled &&
-      scopes?.state.drawerOpened &&
-      !scopes?.state.readOnly
+    !state.chromeless && !scopesMegaMenuEnabled && scopes?.state.enabled && scopes?.state.drawerOpened
   );
 
   const headerLevels = useChromeHeaderLevels();

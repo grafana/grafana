@@ -11,6 +11,7 @@ import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { KioskMode } from 'app/types/dashboard';
 
 import { backendSrv } from '../../services/backend_srv';
@@ -28,6 +29,11 @@ jest.mock('@grafana/runtime', () => ({
   useScopes: jest.fn(),
 }));
 
+jest.mock('app/features/scopes/ScopesContextProvider', () => ({
+  ...jest.requireActual('app/features/scopes/ScopesContextProvider'),
+  useScopesServices: jest.fn(),
+}));
+
 jest.mock('app/core/hooks/useMediaQueryMinWidth');
 
 jest.mock('./ExtensionSidebar/ExtensionSidebar', () => ({
@@ -43,6 +49,37 @@ jest.mock('./ExtensionSidebar/ExtensionSidebarProvider', () => ({
 const mockUseMediaQueryMinWidth = jest.mocked(useMediaQueryMinWidth);
 const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
 const mockUseScopes = jest.mocked(useScopes);
+const mockUseScopesServices = jest.mocked(useScopesServices);
+
+interface MockDashboardsServiceStateOverrides {
+  loading?: boolean;
+  forScopeNames?: string[];
+  dashboards?: unknown[];
+  scopeNavigations?: Array<{ title: string; url: string }>;
+}
+
+const makeScopesServicesWithContent = (
+  overrides: MockDashboardsServiceStateOverrides = {}
+): ReturnType<typeof useScopesServices> =>
+  ({
+    scopesService: {},
+    scopesSelectorService: {},
+    scopesDashboardsService: {
+      stateObservable: { subscribe: () => ({ unsubscribe: () => {} }) },
+      state: {
+        loading: false,
+        forScopeNames: ['scope-a'],
+        dashboards: [],
+        scopeNavigations: [{ title: 'Suggested dashboard', url: '/d/abc' }],
+        searchQuery: '',
+        filteredFolders: {},
+        ...overrides,
+      },
+      changeSearchQuery: jest.fn(),
+      updateFolder: jest.fn(),
+      clearSearchQuery: jest.fn(),
+    },
+  }) as unknown as ReturnType<typeof useScopesServices>;
 
 const closedSidebarContext: ExtensionSidebarContextType = {
   isOpen: false,
@@ -161,7 +198,7 @@ describe('AppChrome', () => {
   describe('scopes dashboard drawer padding', () => {
     beforeEach(() => {
       mockUseScopes.mockReturnValue({
-        state: { enabled: true, drawerOpened: true, readOnly: false },
+        state: { enabled: true, drawerOpened: true },
       } as ReturnType<typeof useScopes>);
     });
 
@@ -201,6 +238,232 @@ describe('AppChrome', () => {
       await waitFor(() => {
         expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
       });
+    });
+  });
+
+  describe('scopes dashboards mega menu section', () => {
+    beforeEach(async () => {
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      await act(async () => {
+        setTestFlags({ 'grafana.scopesDashboardsMegaMenu': true });
+      });
+    });
+
+    it('hides the section in kiosk mode', async () => {
+      mockUseMediaQueryMinWidth.mockReturnValue(true); // forces the mega menu docked + open
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await screen.findByTestId('scopes-dashboards-container');
+
+      act(() => {
+        context.chrome.update({ kioskMode: KioskMode.Full });
+      });
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('scopes-dashboards-container')).not.toBeInTheDocument();
+      });
+    });
+
+    it('opens a closed mega menu when scoped content appears', async () => {
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      act(() => {
+        // Harmless unrelated update - forces a re-render so AppChrome re-reads the new mock above.
+        context.chrome.update({ actions: [] });
+      });
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+    });
+
+    it('does not open while the new scope is still loading, even with stale leftover content from the previous scope', async () => {
+      // fetchDashboards() advances forScopeNames + loading:true synchronously but leaves the
+      // *previous* scope's dashboards/scopeNavigations in place until the fetch resolves - that
+      // stale data must not be misread as "the new scope has content".
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // New scope's forScopeNames has advanced and it's loading, but scopeNavigations is still
+      // the old scope's stale data.
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ loading: true, forScopeNames: ['scope-b'] })
+      );
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // Fetch resolves with genuinely empty content for the new scope.
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({
+          loading: false,
+          forScopeNames: ['scope-b'],
+          dashboards: [],
+          scopeNavigations: [],
+        })
+      );
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('does not re-open the mega menu when returning to the same scope after a real disable/enable cycle', async () => {
+      // Regression test for returning to a still-applied scope: forScopeNames/dashboards never
+      // actually change for this case (fetchDashboards only re-runs when the applied scopes
+      // change), so the "seen" key never moves either. Matches the old docked drawer this
+      // replaces: drawerOpened only gets recomputed when fetchDashboards actually re-runs.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // Scopes become genuinely disabled (e.g. navigated to a non-scoped page) - wait past the
+      // 100ms debounce so this is a real disable, not just a transient flap.
+      mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
+
+      // Same scope re-enables (e.g. navigated back) - must NOT force the menu open again.
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('still opens for a genuinely different scope after the previous one was closed and disabled', async () => {
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-a'] }));
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+
+      mockUseScopes.mockReturnValue({ state: { enabled: false } } as ReturnType<typeof useScopes>);
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+      await act(async () => {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+      });
+
+      // A different scope's content arrives this time - this is genuinely new, so it must open.
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-b'] }));
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+    });
+
+    it('re-opens when the same scope is cleared and then re-applied', async () => {
+      // Regression test: clearing the scope selection genuinely resets forScopeNames to [] (a real
+      // fetchDashboards([]) call, not just a transient flap), so re-applying the *same* scope
+      // afterwards must be treated as fresh content again, not blocked by the previously-seen key.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-a'] }));
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // Scope selection cleared - fetchDashboards([]) resets forScopeNames/dashboards for real.
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      // The same scope is re-applied and genuinely re-fetched - must open again.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent({ forScopeNames: ['scope-a'] }));
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+    });
+
+    it('does not re-open the mega menu on unrelated re-renders once content has already been seen', async () => {
+      // DashboardSceneRenderer's edit-mode effect flips drawerOpened via toggleDrawer() on
+      // entering/exiting edit mode - that re-render must never be mistaken for new scoped content
+      // arriving and re-open a menu the user just closed.
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      await waitFor(() => {
+        expect(context.chrome.state.getValue().megaMenuOpen).toBe(true);
+      });
+
+      act(() => {
+        context.chrome.setMegaMenuOpen(false, false);
+      });
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
+    });
+
+    it('does not open the mega menu when the flag is off, even with content', async () => {
+      await act(async () => {
+        setTestFlags({ 'grafana.scopesDashboardsMegaMenu': false });
+      });
+      mockUseScopesServices.mockReturnValue(
+        makeScopesServicesWithContent({ forScopeNames: [], dashboards: [], scopeNavigations: [] })
+      );
+      const { context } = setup(<Page navId="child1">Children</Page>);
+
+      mockUseScopesServices.mockReturnValue(makeScopesServicesWithContent());
+      act(() => {
+        context.chrome.update({ actions: [] });
+      });
+
+      expect(context.chrome.state.getValue().megaMenuOpen).toBe(false);
     });
   });
 

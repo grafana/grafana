@@ -12,7 +12,6 @@ import { type ScopesMap, type SelectedScope } from './selector/types';
 
 export interface State {
   enabled: boolean;
-  readOnly: boolean;
 }
 
 /**
@@ -37,7 +36,6 @@ export class ScopesService implements ScopesContextValue {
   ) {
     this._state = new BehaviorSubject<State>({
       enabled: false,
-      readOnly: false,
     });
 
     this._stateObservable = new BehaviorSubject({
@@ -234,16 +232,6 @@ export class ScopesService implements ScopesContextValue {
   public changeScopes = (scopeNames: string[], parentNodeId?: string, scopeNodeId?: string) =>
     // Don't redirect on apply for initial load from URL. We only want to redirect when selecting from the selector
     this.selectorService.changeScopes(scopeNames, parentNodeId, scopeNodeId, false);
-
-  public setReadOnly = (readOnly: boolean) => {
-    if (this.state.readOnly !== readOnly) {
-      this.updateState({ readOnly });
-    }
-
-    if (readOnly && this.selectorService.state.opened) {
-      this.selectorService.closeAndReset();
-    }
-  };
 
   public setEnabled = (enabled: boolean) => {
     if (this.state.enabled !== enabled) {

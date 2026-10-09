@@ -120,16 +120,6 @@ describe('MegaMenu scopes dashboards section', () => {
     expect(screen.queryByText('Suggested dashboards')).not.toBeInTheDocument();
   });
 
-  it('is absent when scopes are read-only, even with the flag on and dashboards available', async () => {
-    setTestFlags({ [FLAG]: true });
-    mockUseScopes.mockReturnValue({ state: { enabled: true, readOnly: true } } as ReturnType<typeof useScopes>);
-    mockUseScopesServices.mockReturnValue(makeScopesServices());
-
-    renderMegaMenu();
-
-    expect(screen.queryByText('Suggested dashboards')).not.toBeInTheDocument();
-  });
-
   it('renders between the pinned box and the nav list when canCustomise is true', async () => {
     setTestFlags({ [FLAG]: true, [CUSTOMISE_FLAG]: true });
     mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
