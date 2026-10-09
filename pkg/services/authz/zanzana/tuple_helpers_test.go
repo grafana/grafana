@@ -769,32 +769,9 @@ func TestResourcePermissionTuplesPreservePluginGroup(t *testing.T) {
 	}
 }
 
-func TestStoredDatasourceRolePermissionsRemainAuthorized(t *testing.T) {
-	for _, tc := range []struct{ action, scope, legacyAction, legacyScope string }{
-		{"loki.datasource.grafana.app/datasources:get", "loki.datasource.grafana.app/datasources:uid:ds1", "datasources:read", "datasources:uid:ds1"},
-		{"query.grafana.app/query:create", "loki.datasource.grafana.app/datasources:uid:ds1", "datasources:query", "datasources:uid:ds1"},
-		{"*.datasource.grafana.app/datasources:update", "*.datasource.grafana.app/datasources:*", "datasources:write", "datasources:*"},
-	} {
-		t.Run(tc.action, func(t *testing.T) {
-			stored := &authzextv1.RolePermission{Action: tc.action, Scope: tc.scope}
-			original := proto.Clone(stored)
-			got, err := RoleToTuples("role1", []*authzextv1.RolePermission{stored})
-			require.NoError(t, err)
-			want, err := RoleToTuples("role1", []*authzextv1.RolePermission{{Action: tc.legacyAction, Scope: tc.legacyScope}})
-			require.NoError(t, err)
-			require.NotEmpty(t, want)
-			require.Len(t, got, len(want))
-			require.ElementsMatch(t, tupleKeyStrings(want), tupleKeyStrings(got))
-			require.True(t, proto.Equal(original, stored))
-		})
-	}
-}
-
 func TestDatasourceCreatePermissionWithEmptyScope(t *testing.T) {
 	for _, action := range []string{
 		"datasources:create",
-		"datasource.grafana.app/datasources:create",
-		"*.datasource.grafana.app/datasources:create",
 	} {
 		t.Run(action, func(t *testing.T) {
 			tuples, err := RoleToTuples("r1", []*authzextv1.RolePermission{{Action: action}})

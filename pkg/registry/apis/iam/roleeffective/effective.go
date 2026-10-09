@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 )
 
 // ActionScope is a minimal permission (action + scope) used for resolving effective permissions.
@@ -19,12 +18,10 @@ type ActionScope struct {
 func DiffRolespecPermissions(base, desired []iamv0.RolespecPermission) (added, omitted []iamv0.RolespecPermission) {
 	baseSet := make(map[iamv0.RolespecPermission]bool, len(base))
 	for _, p := range base {
-		p.Action, p.Scope = datasourcek8s.LegacyPermission(p.Action, p.Scope)
 		baseSet[p] = true
 	}
 	desiredSet := make(map[iamv0.RolespecPermission]bool, len(desired))
 	for _, p := range desired {
-		p.Action, p.Scope = datasourcek8s.LegacyPermission(p.Action, p.Scope)
 		desiredSet[p] = true
 	}
 	for p := range desiredSet {
@@ -33,7 +30,6 @@ func DiffRolespecPermissions(base, desired []iamv0.RolespecPermission) (added, o
 		}
 	}
 	for _, p := range base {
-		p.Action, p.Scope = datasourcek8s.LegacyPermission(p.Action, p.Scope)
 		if !desiredSet[p] {
 			omitted = append(omitted, p)
 		}
@@ -56,8 +52,7 @@ func ResolveEffective(
 
 	omitted := make(map[string]bool, len(role.Spec.PermissionsOmitted))
 	for _, p := range role.Spec.PermissionsOmitted {
-		action, scope := datasourcek8s.LegacyPermission(p.Action, p.Scope)
-		omitted[action+"|"+scope] = true
+		omitted[p.Action+"|"+p.Scope] = true
 	}
 
 	effectiveMap := make(map[string]ActionScope)
@@ -68,7 +63,6 @@ func ResolveEffective(
 			return nil, true, fmt.Errorf("role ref kind %q name %q: %w", roleRef.Kind, roleRef.Name, err)
 		}
 		for _, p := range perms {
-			p.Action, p.Scope = datasourcek8s.LegacyPermission(p.Action, p.Scope)
 			key := p.Action + "|" + p.Scope
 			if !omitted[key] {
 				effectiveMap[key] = p
@@ -77,7 +71,6 @@ func ResolveEffective(
 	}
 
 	for _, p := range role.Spec.Permissions {
-		p.Action, p.Scope = datasourcek8s.LegacyPermission(p.Action, p.Scope)
 		key := p.Action + "|" + p.Scope
 		effectiveMap[key] = ActionScope{Action: p.Action, Scope: p.Scope}
 	}

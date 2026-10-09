@@ -294,10 +294,9 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 	rolePerms := make([]RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
 		// Split the scope to get kind, attribute, identifier
-		action, scope := datasourcek8s.LegacyPermission(perm.Action, perm.Scope)
-		kind, _, identifier := splitScope(scope)
+		kind, _, identifier := splitScope(perm.Scope)
 		rolePerms = append(rolePerms, RolePermission{
-			Action:     action,
+			Action:     perm.Action,
 			Kind:       kind,
 			Identifier: identifier,
 		})
