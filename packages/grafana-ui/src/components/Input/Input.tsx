@@ -17,6 +17,8 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'prefix' | 'siz
   width?: number;
   /** Show an invalid state around the input */
   invalid?: boolean;
+  /** Sets the height of the input, matching the equivalent Button size. Defaults to `md`. */
+  size?: 'sm' | 'md';
   /** Show an icon as a prefix in the input */
   prefix?: ReactNode;
   /** Show an icon as a suffix in the input */
@@ -33,6 +35,7 @@ interface StyleDeps {
   theme: GrafanaTheme2;
   invalid?: boolean;
   width?: number;
+  size?: 'sm' | 'md';
 }
 
 /**
@@ -50,6 +53,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
     invalid: invalidProp,
     loading: loadingProp,
     width = 0,
+    size = 'md',
     id: idProp,
     disabled: disabledProp,
     'aria-describedby': ariaDescribedByProp,
@@ -84,7 +88,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
   const theme = useTheme2();
 
   // Don't pass the width prop, as this causes an unnecessary amount of Emotion calls when auto sizing
-  const styles = getInputStyles({ theme, invalid: !!invalid, width: autoSizeWidth ? undefined : width });
+  const styles = getInputStyles({ theme, invalid: !!invalid, width: autoSizeWidth ? undefined : width, size });
 
   const suffix = suffixProp || (loading && <Spinner inline={true} />);
 
@@ -140,7 +144,7 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
 
 Input.displayName = 'Input';
 
-export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: StyleDeps) => {
+export const getInputStyles = stylesFactory(({ theme, invalid = false, width, size = 'md' }: StyleDeps) => {
   const prefixSuffixStaticWidth = '28px';
   const prefixSuffix = css({
     position: 'absolute',
@@ -165,7 +169,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
         label: 'input-wrapper',
         display: 'flex',
         width: width ? theme.spacing(width) : '100%',
-        height: theme.spacing(theme.components.height.md),
+        height: theme.spacing(theme.components.height[size]),
         borderRadius: theme.shape.radius.default,
         '&:hover': {
           '> .prefix, .suffix, .input': {
@@ -240,7 +244,7 @@ export const getInputStyles = stylesFactory(({ theme, invalid = false, width }: 
 
     input: cx(
       getFocusStyle(theme),
-      sharedInputStyle(theme, invalid),
+      sharedInputStyle(theme, invalid, size),
       css({
         label: 'input-input',
         position: 'relative',
