@@ -129,6 +129,70 @@ describe('TableCellTooltip', () => {
     expect(screen.queryByRole('separator')).not.toBeInTheDocument();
   });
 
+  it.each(['hovered', 'pinned'])(
+    'lets Escape reach the parent when the %s tooltip has focus elsewhere',
+    async (mode) => {
+      const user = userEvent.setup();
+      const onEscape = jest.fn();
+      render(
+        <div role="dialog" tabIndex={-1} onKeyDown={(event) => event.key === 'Escape' && onEscape()}>
+          <div className="rdg-cell">
+            <TableCellTooltip {...makeProps()}>
+              <span>cell content</span>
+            </TableCellTooltip>
+          </div>
+          <button>Other control</button>
+        </div>
+      );
+      const trigger = screen.getByRole('button', { name: CARET_LABEL });
+      if (mode === 'pinned') {
+        await user.click(trigger);
+        await user.tab();
+        expect(trigger).toHaveAttribute('aria-pressed', 'true');
+      } else {
+        await user.click(screen.getByRole('button', { name: 'Other control' }));
+        await user.hover(trigger);
+      }
+      expect(screen.getByRole('button', { name: 'Other control' })).toHaveFocus();
+      expect(screen.getByRole('tooltip')).toHaveTextContent('hello');
+
+      await user.keyboard('{Escape}');
+
+      expect(onEscape).toHaveBeenCalledTimes(1);
+      expect(trigger).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    }
+  );
+
+  it.each(['trigger', 'content'])('consumes Escape when focus is on the tooltip %s', async (target) => {
+    const user = userEvent.setup();
+    const onEscape = jest.fn();
+    const FocusableRenderer: TableCellRenderer = () => <button>Tooltip action</button>;
+    render(
+      <div role="dialog" tabIndex={-1} onKeyDown={(event) => event.key === 'Escape' && onEscape()}>
+        <div className="rdg-cell">
+          <TableCellTooltip {...makeProps({ renderer: FocusableRenderer })}>
+            <span>cell content</span>
+          </TableCellTooltip>
+        </div>
+      </div>
+    );
+    const trigger = screen.getByRole('button', { name: CARET_LABEL });
+    await user.click(trigger);
+    const focusTarget = target === 'trigger' ? trigger : screen.getByRole('button', { name: 'Tooltip action' });
+    if (target === 'content') {
+      await user.click(focusTarget);
+    }
+    expect(focusTarget).toHaveFocus();
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Tooltip action');
+
+    await user.keyboard('{Escape}');
+
+    expect(trigger).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    expect(onEscape).not.toHaveBeenCalled();
+  });
+
   it('keeps the preview open while moving from the indicator to its content', async () => {
     const user = userEvent.setup();
     renderInRdgCell({ warnings: [{ id: 'size', message: 'Content is too long.' }] });

@@ -103,7 +103,12 @@ export const TableCellTooltip = memo(
       }
       const onEscape = (event: KeyboardEvent) => {
         if (event.key === 'Escape') {
-          event.stopPropagation();
+          if (
+            event.target instanceof Node &&
+            (tooltipCaretRef.current?.contains(event.target) || tooltipContentRef.current?.contains(event.target))
+          ) {
+            event.stopPropagation();
+          }
           dismiss();
         }
       };
