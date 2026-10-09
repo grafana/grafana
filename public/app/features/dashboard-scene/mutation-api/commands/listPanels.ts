@@ -130,7 +130,7 @@ export function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | 
       continue;
     }
     if (item.severity === 'error') {
-      errorList.push({ source: 'panel', message: item.text });
+      errorList.push({ source: 'render', message: item.text });
     } else {
       notices.push({ severity: item.severity, text: item.text });
     }

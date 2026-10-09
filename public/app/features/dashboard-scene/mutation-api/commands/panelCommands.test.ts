@@ -493,7 +493,7 @@ describe('Panel mutation commands', () => {
             title: 'Custom drawing',
             errors: [
               { source: 'query', message: 'Unknown column', refId: 'A' },
-              { source: 'panel', message: 'Draw failed: x is not defined' },
+              { source: 'render', message: 'Draw failed: x is not defined' },
             ],
           },
         ],
