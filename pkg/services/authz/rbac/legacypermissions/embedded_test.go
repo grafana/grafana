@@ -20,6 +20,7 @@ func TestLegacyHandlerRejectsUntrustedTransport(t *testing.T) {
 	channel := &inprocgrpc.Channel{}
 	authzv1.RegisterLegacyAuthzServiceServer(channel, &embeddedServer{guard: new(int)})
 	ctx := types.WithAuthInfo(context.Background(), ac.LegacyPermissionCaller("*"))
+	//nolint:staticcheck // Exercise the deprecated RPC's private-transport guard.
 	stream, err := authzv1.NewLegacyAuthzServiceClient(channel).LegacyGetUserPermissions(ctx, &authzv1.LegacyGetUserPermissionsRequest{
 		Namespace: "default", Identity: &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "one"},
 	})
@@ -27,6 +28,14 @@ func TestLegacyHandlerRejectsUntrustedTransport(t *testing.T) {
 		_, err = stream.Recv()
 	}
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
+}
+
+func TestEmbeddedEnumerationDoesNotImplementLegacyCheck(t *testing.T) {
+	channel := &inprocgrpc.Channel{}
+	authzv1.RegisterLegacyAuthzServiceServer(channel, &embeddedServer{guard: new(int)})
+	//nolint:staticcheck // Verify isolation from the deprecated check API in the shared service descriptor.
+	_, err := authzv1.NewLegacyAuthzServiceClient(channel).LegacyCheck(t.Context(), &authzv1.LegacyCheckRequest{})
+	require.Equal(t, codes.Unimplemented, status.Code(err))
 }
 
 func TestEmbeddedLegacyNamespaceValidation(t *testing.T) {

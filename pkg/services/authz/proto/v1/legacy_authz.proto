@@ -4,11 +4,21 @@ option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
 
 package authz.extention.v1;
 
+import "legacy_permissions.proto";
+
 // LegacyAuthzService provides deprecated compatibility APIs used while moving
 // legacy AccessControl evaluation into centralized AuthZ.
 service LegacyAuthzService {
   // Deprecated: transitional compatibility API for legacy RBAC checks.
   rpc LegacyCheck(LegacyCheckRequest) returns (LegacyCheckResponse);
+
+  // Deprecated: transitional compatibility API for legacy permission enumeration.
+  // Embedded-only: trusted assertions require the private transport guard and
+  // instance-scope validation. Network/standalone implementations must leave
+  // this method unimplemented. No HTTP route is exposed.
+  rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse) {
+    option deprecated = true;
+  }
 }
 
 message LegacyCheckRequest {

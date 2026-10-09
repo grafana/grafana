@@ -4,15 +4,6 @@ package authz.extention.v1;
 
 option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
 
-// Embedded-only legacy Access Control compatibility, separate from the existing
-// AuthzExtentionService so this service and its messages can be retired together.
-// Servers authenticate the service caller separately from the asserted target
-// and validate instance scope. Standalone servers must not register this service.
-service LegacyAuthzService {
-  // No HTTP route is exposed.
-  rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse);
-}
-
 // Trusted assertions from Grafana authentication, not end-user input. The caller
 // is authenticated by the transport, independently of this target identity.
 message LegacyPermissionIdentity {
@@ -45,12 +36,14 @@ message LegacyGetUserPermissionsRequest {
   bool skip_zanzana_cache = 5;
 }
 
-message LegacyPermission {
+// An enumerated grant, distinct from LegacyPermission's check expression with
+// alternative scopes. Keep the singular scope and preserve empty values.
+message LegacyUserPermission {
   string action = 1;
   string scope = 2;
 }
 
 message LegacyGetUserPermissionsResponse {
   // Preserve duplicates. Clients publish results only after successful EOF.
-  repeated LegacyPermission permissions = 1;
+  repeated LegacyUserPermission permissions = 1;
 }

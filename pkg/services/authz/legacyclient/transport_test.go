@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/types/descriptorpb"
 
 	"github.com/grafana/authlib/types"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
@@ -26,7 +27,7 @@ func TestClient_LegacyGetUserPermissionsWireSnapshot(t *testing.T) {
 			return status.Error(codes.InvalidArgument, "request did not survive transport")
 		}
 		for range 3 {
-			if err := stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}}); err != nil {
+			if err := stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}); err != nil {
 				return err
 			}
 		}
@@ -42,7 +43,7 @@ func TestClient_LegacyGetUserPermissionsWireSnapshot(t *testing.T) {
 
 func TestClient_LegacyGetUserPermissionsWireFailureDiscardsChunks(t *testing.T) {
 	server := &legacyTransportServer{handle: func(_ *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
-		if err := stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}}); err != nil {
+		if err := stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}); err != nil {
 			return err
 		}
 		return status.Error(codes.Internal, "failed after first chunk")
@@ -55,7 +56,7 @@ func TestClient_LegacyGetUserPermissionsWireFailureDiscardsChunks(t *testing.T) 
 func TestClient_LegacyGetUserPermissionsWireCancellation(t *testing.T) {
 	entered := make(chan struct{})
 	server := &legacyTransportServer{handle: func(_ *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
-		if err := stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}}); err != nil {
+		if err := stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}); err != nil {
 			return err
 		}
 		close(entered)
@@ -164,9 +165,14 @@ func TestLegacyAuthzServiceIsSeparate(t *testing.T) {
 	require.False(t, legacyImplementsAccess)
 	modern := modernv1.File_proto_v1_authz_proto.Services().ByName("AuthzService")
 	require.Nil(t, modern.Methods().ByName("LegacyGetUserPermissions"))
-	legacy := authzv1.File_legacy_permissions_proto.Services().ByName("LegacyAuthzService")
-	require.Equal(t, 1, legacy.Methods().Len())
-	require.Equal(t, "LegacyGetUserPermissions", string(legacy.Methods().Get(0).Name()))
+	legacy := authzv1.File_legacy_authz_proto.Services().ByName("LegacyAuthzService")
+	require.Equal(t, 2, legacy.Methods().Len())
+	require.NotNil(t, legacy.Methods().ByName("LegacyCheck"))
+	enumeration := legacy.Methods().ByName("LegacyGetUserPermissions")
+	require.NotNil(t, enumeration)
+	require.True(t, enumeration.IsStreamingServer())
+	require.True(t, enumeration.Options().(*descriptorpb.MethodOptions).GetDeprecated())
+	require.NotEqual(t, (&authzv1.LegacyPermission{}).ProtoReflect().Descriptor().FullName(), (&authzv1.LegacyUserPermission{}).ProtoReflect().Descriptor().FullName())
 }
 
 type oldPermissionsServer struct {

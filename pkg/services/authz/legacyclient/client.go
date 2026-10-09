@@ -77,6 +77,7 @@ func (c *LegacyClient) LegacyGetUserPermissions(ctx context.Context, caller type
 	// Cancel even when rejecting a malformed stream before EOF.
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+	//nolint:staticcheck // This adapter intentionally calls the deprecated embedded compatibility RPC.
 	stream, err := c.clientV1.LegacyGetUserPermissions(ctx, &authzv1.LegacyGetUserPermissionsRequest{
 		Namespace: req.Namespace,
 		GlobalOrg: req.GlobalOrg,

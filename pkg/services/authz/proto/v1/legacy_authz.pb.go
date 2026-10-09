@@ -387,7 +387,7 @@ var File_legacy_authz_proto protoreflect.FileDescriptor
 
 const file_legacy_authz_proto_rawDesc = "" +
 	"\n" +
-	"\x12legacy_authz.proto\x12\x12authz.extention.v1\"\xa9\x02\n" +
+	"\x12legacy_authz.proto\x12\x12authz.extention.v1\x1a\x18legacy_permissions.proto\"\xa9\x02\n" +
 	"\x12LegacyCheckRequest\x12\x1c\n" +
 	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12\x18\n" +
 	"\asubject\x18\x02 \x01(\tR\asubject\x12\x16\n" +
@@ -414,9 +414,10 @@ const file_legacy_authz_proto_rawDesc = "" +
 	"\x06action\x18\x01 \x01(\tR\x06action\x12\x16\n" +
 	"\x06scopes\x18\x02 \x03(\tR\x06scopes\"^\n" +
 	"\x14LegacyExpressionList\x12F\n" +
-	"\vexpressions\x18\x01 \x03(\v2$.authz.extention.v1.LegacyExpressionR\vexpressions2t\n" +
+	"\vexpressions\x18\x01 \x03(\v2$.authz.extention.v1.LegacyExpressionR\vexpressions2\x83\x02\n" +
 	"\x12LegacyAuthzService\x12^\n" +
-	"\vLegacyCheck\x12&.authz.extention.v1.LegacyCheckRequest\x1a'.authz.extention.v1.LegacyCheckResponseB8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"
+	"\vLegacyCheck\x12&.authz.extention.v1.LegacyCheckRequest\x1a'.authz.extention.v1.LegacyCheckResponse\x12\x8c\x01\n" +
+	"\x18LegacyGetUserPermissions\x123.authz.extention.v1.LegacyGetUserPermissionsRequest\x1a4.authz.extention.v1.LegacyGetUserPermissionsResponse\"\x03\x88\x02\x010\x01B8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"
 
 var (
 	file_legacy_authz_proto_rawDescOnce sync.Once
@@ -432,11 +433,13 @@ func file_legacy_authz_proto_rawDescGZIP() []byte {
 
 var file_legacy_authz_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_legacy_authz_proto_goTypes = []any{
-	(*LegacyCheckRequest)(nil),   // 0: authz.extention.v1.LegacyCheckRequest
-	(*LegacyCheckResponse)(nil),  // 1: authz.extention.v1.LegacyCheckResponse
-	(*LegacyExpression)(nil),     // 2: authz.extention.v1.LegacyExpression
-	(*LegacyPermission)(nil),     // 3: authz.extention.v1.LegacyPermission
-	(*LegacyExpressionList)(nil), // 4: authz.extention.v1.LegacyExpressionList
+	(*LegacyCheckRequest)(nil),               // 0: authz.extention.v1.LegacyCheckRequest
+	(*LegacyCheckResponse)(nil),              // 1: authz.extention.v1.LegacyCheckResponse
+	(*LegacyExpression)(nil),                 // 2: authz.extention.v1.LegacyExpression
+	(*LegacyPermission)(nil),                 // 3: authz.extention.v1.LegacyPermission
+	(*LegacyExpressionList)(nil),             // 4: authz.extention.v1.LegacyExpressionList
+	(*LegacyGetUserPermissionsRequest)(nil),  // 5: authz.extention.v1.LegacyGetUserPermissionsRequest
+	(*LegacyGetUserPermissionsResponse)(nil), // 6: authz.extention.v1.LegacyGetUserPermissionsResponse
 }
 var file_legacy_authz_proto_depIdxs = []int32{
 	2, // 0: authz.extention.v1.LegacyCheckRequest.expression:type_name -> authz.extention.v1.LegacyExpression
@@ -445,9 +448,11 @@ var file_legacy_authz_proto_depIdxs = []int32{
 	4, // 3: authz.extention.v1.LegacyExpression.any:type_name -> authz.extention.v1.LegacyExpressionList
 	2, // 4: authz.extention.v1.LegacyExpressionList.expressions:type_name -> authz.extention.v1.LegacyExpression
 	0, // 5: authz.extention.v1.LegacyAuthzService.LegacyCheck:input_type -> authz.extention.v1.LegacyCheckRequest
-	1, // 6: authz.extention.v1.LegacyAuthzService.LegacyCheck:output_type -> authz.extention.v1.LegacyCheckResponse
-	6, // [6:7] is the sub-list for method output_type
-	5, // [5:6] is the sub-list for method input_type
+	5, // 6: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:input_type -> authz.extention.v1.LegacyGetUserPermissionsRequest
+	1, // 7: authz.extention.v1.LegacyAuthzService.LegacyCheck:output_type -> authz.extention.v1.LegacyCheckResponse
+	6, // 8: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:output_type -> authz.extention.v1.LegacyGetUserPermissionsResponse
+	7, // [7:9] is the sub-list for method output_type
+	5, // [5:7] is the sub-list for method input_type
 	5, // [5:5] is the sub-list for extension type_name
 	5, // [5:5] is the sub-list for extension extendee
 	0, // [0:5] is the sub-list for field type_name
@@ -458,6 +463,7 @@ func file_legacy_authz_proto_init() {
 	if File_legacy_authz_proto != nil {
 		return
 	}
+	file_legacy_permissions_proto_init()
 	file_legacy_authz_proto_msgTypes[2].OneofWrappers = []any{
 		(*LegacyExpression_Permission)(nil),
 		(*LegacyExpression_All)(nil),

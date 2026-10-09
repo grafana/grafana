@@ -2,7 +2,9 @@
 
 This package owns Grafana's compatibility client for legacy Access Control enumeration. It is not a general authorization interface: new consumers should use Check/List rather than enumerate legacy permissions.
 
-The wire contract is the separate `LegacyAuthzService` in [`../proto/v1/legacy_permissions.proto`](../proto/v1/legacy_permissions.proto). Do not add it to `AuthzExtentionService` or register it on network/standalone AuthZ servers. The embedded provider in [`../rbac/legacypermissions/embedded.go`](../rbac/legacypermissions/embedded.go) constructs a private channel, authenticates the in-process transport, and validates the instance namespace independently of client preflight.
+The deprecated `LegacyGetUserPermissions` RPC is declared alongside `LegacyCheck` in [`LegacyAuthzService`](../proto/v1/legacy_authz.proto), separate from `AuthzExtentionService`. Its messages remain in [`legacy_permissions.proto`](../proto/v1/legacy_permissions.proto): `LegacyUserPermission` carries a single enumerated scope, unlike `LegacyCheck`'s `LegacyPermission` expression with alternative scopes. The RPC's protobuf `deprecated` option is set; it remains available only for transitional compatibility.
+
+Do not implement permission enumeration on network/standalone AuthZ servers: their default implementation must return `Unimplemented`. Sharing the service descriptor does not share the handlers. The embedded provider in [`../rbac/legacypermissions/embedded.go`](../rbac/legacypermissions/embedded.go) constructs a private channel, authenticates the in-process transport, and validates the instance namespace independently of client preflight. Its `LegacyCheck` method remains unimplemented.
 
 `Service` is the complete-snapshot Go interface used for injection. `LegacyClient` implements it using the generated streaming client. Its request/response types, buffering, and validation belong to Grafana, not authlib. Only existing authlib identity and service-permission helpers are reused; no new authlib version is required.
 
