@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/plugins/manager/sources"
@@ -55,7 +56,7 @@ func LoadManifest(ctx context.Context, path string) (definition.PluginDefinition
 	}
 
 	// The file the caller named wins over the one the directory happens to hold.
-	plugin.Manifest = manifest
+	plugin.Manifests = []*app.ManifestData{manifest}
 	return plugin, nil
 }
 

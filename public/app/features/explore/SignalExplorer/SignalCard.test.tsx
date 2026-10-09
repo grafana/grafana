@@ -15,6 +15,7 @@ const setup = (overrides: Partial<Parameters<typeof SignalCard>[0]> = {}) => {
         datasourceName="gdev-prometheus"
         isExpandable={true}
         isExpanded={false}
+        isOnlyCard={false}
         onToggleExpanded={onToggleExpanded}
         onJumpToQuery={onJumpToQuery}
         {...overrides}
@@ -125,6 +126,7 @@ describe('<SignalCard />', () => {
         datasourceName="gdev-prometheus"
         isExpandable={true}
         isExpanded={true}
+        isOnlyCard={false}
         onToggleExpanded={onToggleExpanded}
         onJumpToQuery={onJumpToQuery}
       >
@@ -136,6 +138,40 @@ describe('<SignalCard />', () => {
     expect(
       screen.getByRole('button', { name: 'Collapse datasource explorer for query A', expanded: true })
     ).toBeInTheDocument();
+  });
+
+  const expandedCard = (
+    <SignalCard
+      refId="A"
+      datasourceName="gdev-prometheus"
+      isExpandable={true}
+      isExpanded={true}
+      isOnlyCard={false}
+      onToggleExpanded={onToggleExpanded}
+      onJumpToQuery={onJumpToQuery}
+    >
+      <div>card body</div>
+    </SignalCard>
+  );
+
+  // An expanded card is nearly as tall as the card area, so it would otherwise open past its edge.
+  it('scrolls into view when the user expands it', async () => {
+    const { user, rerender } = setup();
+
+    await user.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
+    rerender(expandedCard);
+
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledTimes(1);
+    expect(HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+  });
+
+  // The explorer opens its first card by default, which must not scroll the sidebar on open.
+  it('does not scroll when it expands without the user asking', () => {
+    const { rerender } = setup();
+
+    rerender(expandedCard);
+
+    expect(HTMLElement.prototype.scrollIntoView).not.toHaveBeenCalled();
   });
 
   it('has no expand control and never renders a body when not expandable', () => {

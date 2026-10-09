@@ -309,8 +309,8 @@
     "@grafana/plugin-ui": "^0.17.3",
     "@grafana/prometheus": "13.2.1",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "8.19.0",
-    "@grafana/scenes-react": "8.19.0",
+    "@grafana/scenes": "8.21.0",
+    "@grafana/scenes-react": "8.21.0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
@@ -473,7 +473,7 @@
     "ws": "^8.20.1",
     "js-cookie": "^3.0.7",
     "@opentelemetry/core": "2.11.0",
-    "shell-quote": "1.10.0",
+    "shell-quote": "1.11.0",
     "tmp": "0.2.7",
     "yaml@npm:^1.10.0": "1.10.3",
     "tar@npm:7.5.11": "7.5.22",
@@ -493,7 +493,7 @@
   "engines": {
     "node": ">= 22 <25"
   },
-  "packageManager": "yarn@4.18.0",
+  "packageManager": "yarn@4.18.1",
   "dependenciesMeta": {
     "msw": {
       "built": true

@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "重置"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "辅助日志",
+      "description-auxiliary-logs": "启用此功能后，在查询表配置为<2>辅助日志</2>的数据面板上，每次查询都会产生 Azure Monitor 费用。辅助日志没有响应时间 SLA，仅用于临时查询和数据探索，不应用于需要实时数据的数据面板或用于警报。",
+      "label-enable-auxiliary-logs": "启用辅助日志"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}}原始查询",
@@ -187,47 +187,47 @@
       "tooltip-limit": "限制返回的行数（默认为 1000）。"
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "您确定要切换到辅助日志吗？",
       "body-basic-logs-queries": "您确定要切换到基本日志吗？",
       "confirmText-confirm": "确认",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "辅助日志查询根据扫描的数据量产生费用。辅助日志没有响应时间 SLA，不应用于需要实时数据的数据面板或用于警报。",
       "description-basic-logs-queries": "基本日志查询根据扫描的数据量产生费用。",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "分析",
+      "label-auxiliary": "辅助",
+      "label-basic": "基本",
       "label-logs": "日志",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "辅助日志查询",
       "title-basic-logs-queries": "基本日志查询",
       "tooltip-logs": "指定运行基本日志还是分析日志查询。",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "指定运行分析日志、基本日志还是辅助日志查询。",
+      "tooltip-logs-aux": "指定运行分析日志还是辅助日志查询。"
     },
     "logs-query-builder": {
       "title-no-tables": "资源加载成功，但没有任何表格"
     },
     "logs-query-editor": {
       "learn-more": "了解更多",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "使用辅助日志时，您一次只能选择一个资源。",
+      "notice-basic-single-resource": "使用基本日志时，您一次只能选择一个资源。",
+      "notice-same-resource-type": "您只能选择资源类型相同的项目。",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> 是一个分析表。",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> 是一个辅助日志表——按扫描的 GiB 数产生费用，没有响应时间 SLA，不适合实时或警报场景。",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> 是一个基本日志表——按扫描的 GiB 数产生费用。",
+      "tier-switch-revert": "还原为 {{fromTier}}",
+      "tier-switch-title": "查询等级设置为 {{toTier}}",
       "view-query": "在 Azure 门户中查看查询",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "此辅助日志查询在运行时将处理 {{dataIngested}} GiB。辅助日志没有响应时间 SLA，不适合实时或警报场景。",
+      "warning-auxiliary-raw": "这是一个辅助日志查询——使用搜索端点，按扫描的 GiB 数产生费用，没有响应时间 SLA，不适合实时或警报场景。在此模式下无法查询分析方案中的表（请对这些表使用分析层）。",
+      "warning-basic-raw": "这是一个基本日志查询——使用搜索端点，并按扫描的 GiB 数产生费用。在此模式下无法查询分析方案中的表（请对这些表使用分析层）。",
+      "warning-data-ingested": "此查询在运行时将处理 {{dataIngested}} GiB。"
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "此表位于辅助日志方案中。在数据源设置中启用“辅助日志”以查询此表。",
+      "description-auxiliary-enabled": "选择此表将把查询模式切换为辅助日志",
+      "description-basic-disabled": "此表位于基本日志方案中。在数据源设置中启用“基本日志”以查询此表。",
+      "description-basic-enabled": "选择此表将把查询模式切换为基本日志",
+      "description-plan-unavailable": "无法选择此表，因为无法确定其日志方案。",
+      "label-all-columns": "所有列"
     },
     "metric-name-field": {
       "label-metric": "指标"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "选择自定义命名空间",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "选择维度名称",
+      "aria-label-select-metric-name": "选择指标名称",
       "aria-label-select-namespace": "选择命名空间",
       "aria-label-select-query-type": "选择查询类型",
       "aria-label-select-region": "选择区域",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "选择资源组",
       "aria-label-select-subscription": "选择订阅",
       "label-custom-namespace": "自定义命名空间",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "维度名称",
+      "label-metric-name": "指标名称",
       "label-namespace": "命名空间",
       "label-query-type": "查询类型",
       "label-region": "区域",

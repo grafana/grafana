@@ -4,18 +4,22 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"sync"
 	"sync/atomic"
 	"time"
 
+	"github.com/grafana/dskit/middleware"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
@@ -38,9 +42,20 @@ type pluginManifestsTarget struct {
 	snapshot atomic.Pointer[[]Backend]
 	lastKeys atomic.Pointer[map[string]struct{}]
 
+	// requestDuration records every gRPC call to a plugin deployment, by
+	// plugin, method and status code.
+	requestDuration *prometheus.HistogramVec
+
 	connectionsMu sync.Mutex
-	connections   map[string]*grpc.ClientConn
+	connections   map[pluginConnectionKey]*grpc.ClientConn
 	closed        bool
+}
+
+// pluginConnectionKey identifies a connection by plugin as well as host,
+// because each connection records its calls under one plugin ID.
+type pluginConnectionKey struct {
+	host     string
+	pluginID string
 }
 
 func newPluginManifestsTarget(
@@ -59,11 +74,12 @@ func newPluginManifestsTarget(
 	}
 
 	t := &pluginManifestsTarget{
-		deps:     deps,
-		url:      rawURL,
-		client:   client,
-		patterns: patterns,
-		cooldown: newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+		deps:            deps,
+		url:             rawURL,
+		client:          client,
+		patterns:        patterns,
+		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
+		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)
@@ -115,47 +131,51 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
+	skipped := 0
 	for _, entry := range deployment.Plugins {
-		if entry.Definition.Manifest == nil {
-			continue
-		}
-		group := apiGroupFromManifestData(*entry.Definition.Manifest)
-		if !matchesAnyPattern(group.Name, t.patterns) {
-			continue
-		}
+		for _, manifest := range entry.Definition.Manifests {
+			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
+				continue
+			}
 
-		clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
-			return t.pluginClients(entry.Host)
+			clients := func(ctx context.Context, id string) (plugins.Client, appclientv3.Client, error) {
+				return t.pluginClients(entry.Host, entry.Definition.JSONData.ID)
+			}
+
+			// Remove any dependencies that may try to load settings
+			// After the manifest CRUD works, we can explore getting these wired properly
+			deps := t.deps
+			deps.PluginClient = nil
+			deps.ContextProvider = nil
+			deps.PluginSettings = nil
+			deps.DualWrite = nil
+			deps.AccessControl = pluginManifestAccessControl{}
+
+			backend, err := newPluginBackend(entry.Definition.JSONData.ID, manifest, clients, deps, nil)
+
+			if err != nil {
+				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
+				continue
+			}
+
+			backend.info = entry.Definition.JSONData.Info
+
+			// The host is outside PluginDefinition, but changing it must reload the backend.
+			key, keyErr := pluginDeploymentKey(entry, manifest)
+			if keyErr != nil {
+				logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
+				skipped++
+				continue
+			}
+			deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
+			backends = append(backends, deploymentBackend)
+			keys[deploymentBackend.Key()] = struct{}{}
 		}
-
-		// Remove any dependencies that may try to load settings
-		// After the manifest CRUD works, we can explore getting these wired properly
-		deps := t.deps
-		deps.PluginClient = nil
-		deps.ContextProvider = nil
-		deps.PluginSettings = nil
-		deps.DualWrite = nil
-		deps.AccessControl = pluginManifestAccessControl{}
-
-		backend, err := NewPluginBackend(entry.Definition, clients, deps)
-
-		if err != nil {
-			logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
-			continue
-		}
-
-		// The host is outside PluginDefinition, but changing it must reload the backend.
-		key, keyErr := pluginDeploymentKey(entry)
-		if keyErr != nil {
-			logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
-			continue
-		}
-		deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
-		backends = append(backends, deploymentBackend)
-		keys[deploymentBackend.Key()] = struct{}{}
 	}
 
 	t.snapshot.Store(&backends)
+	t.status.recordSkipped(skipped)
 
 	lastKeys := *t.lastKeys.Load()
 	if !sameKeySet(lastKeys, keys) {
@@ -167,7 +187,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	}
 }
 
-func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, appclientv3.Client, error) {
+func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Client, appclientv3.Client, error) {
 	if host == "" {
 		return nil, nil, nil // no client exists
 	}
@@ -176,18 +196,25 @@ func (t *pluginManifestsTarget) pluginClients(host string) (plugins.Client, appc
 	if t.closed {
 		return nil, nil, fmt.Errorf("router: plugin manifests target is closed")
 	}
-	conn := t.connections[host]
+	key := pluginConnectionKey{host: host, pluginID: pluginID}
+	conn := t.connections[key]
 	if conn == nil {
-		// Plugin deployments expose plaintext gRPC on the internal cluster network.
+		requestDuration := t.requestDuration.MustCurryWith(prometheus.Labels{"plugin_id": pluginID}).(*prometheus.HistogramVec)
 		var err error
-		conn, err = grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err = grpc.NewClient(host,
+			// Plugin deployments expose plaintext gRPC on the internal cluster network.
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
+			grpc.WithChainUnaryInterceptor(middleware.UnaryClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
+			grpc.WithChainStreamInterceptor(middleware.StreamClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
+		)
 		if err != nil {
 			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
 		}
 		if t.connections == nil {
-			t.connections = make(map[string]*grpc.ClientConn)
+			t.connections = make(map[pluginConnectionKey]*grpc.ClientConn)
 		}
-		t.connections[host] = conn
+		t.connections[key] = conn
 	}
 	// Caller authentication is added by PluginBackend.Load.
 	clientV3, err := grpcplugin.NewClientV3FromConn(conn, grpcplugin.ClientV3Options{})
@@ -239,11 +266,28 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 	if err := decodeLimitedJSON(resp.Body, maxPluginManifestsBytes, deployment); err != nil {
 		return nil, fmt.Errorf("router: decoding plugin manifests from %s: %w", rawURL, err)
 	}
+
+	// Move any deprecated singular manifest properties to the multiple flavor
+	// nolint:staticcheck
+	for i := range deployment.Plugins {
+		plugin := &deployment.Plugins[i]
+		if plugin.Definition.Manifest == nil {
+			continue // OK
+		}
+		// The plural entry is authoritative when both formats contain the same group.
+		if !slices.ContainsFunc(plugin.Definition.Manifests, func(manifest *app.ManifestData) bool {
+			return manifest != nil && manifest.Group == plugin.Definition.Manifest.Group
+		}) {
+			plugin.Definition.Manifests = append(plugin.Definition.Manifests, plugin.Definition.Manifest)
+		}
+		plugin.Definition.Manifest = nil
+	}
+
 	return deployment, nil
 }
 
-func pluginDeploymentKey(entry definition.PluginDeployment) (string, error) {
-	body, err := json.Marshal(entry)
+func pluginDeploymentKey(entry definition.PluginDeployment, manifest *app.ManifestData) (string, error) {
+	body, err := pluginManifestKeyData(entry.Definition, manifest, entry.Host)
 	if err != nil {
 		return "", fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
 	}

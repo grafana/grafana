@@ -24,6 +24,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
@@ -215,6 +216,16 @@ type ResourceLastImportTime struct {
 	LastImportTime time.Time
 }
 
+// BatchReadRequest is one object of a batch read.
+type BatchReadRequest struct {
+	*resourcepb.ReadRequest
+
+	// Folder is where the caller expects the version at ResourceVersion to be,
+	// such as the folder the search index recorded for it. It only lets the read
+	// skip a key lookup: a wrong folder costs that lookup, never a wrong answer.
+	Folder string
+}
+
 // The StorageBackend is an internal abstraction that supports interacting with
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
@@ -227,12 +238,12 @@ type StorageBackend interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
-	// BatchReadResource lazily reads several resources, yielding one response per
-	// request in order. Body reads stop when the consumer stops. The up-front error
-	// reports failures that happen before iteration; per-request failures are set
-	// on BackendReadResponse.Error. When includeDeleted is true, deletion markers
-	// can be resolved at their explicit resource versions.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error)
+	// BatchReadResource reads several resources, yielding one response per request
+	// in order. The up-front error reports failures that happen before iteration;
+	// per-request failures are set on BackendReadResponse.Error. When
+	// includeDeleted is true, deletion markers can be resolved at their explicit
+	// resource versions.
+	BatchReadResource(context.Context, []BatchReadRequest, bool) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -243,6 +254,18 @@ type StorageBackend interface {
 
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+
+	// WatchWrittenKeys delivers the key of each write to the given resource
+	// types, straight from the bus: without its body and in no particular order,
+	// so without the delay WatchWriteEvents holds events for to put them in
+	// order. It suits a consumer that re-reads what it is told about. Delivery is
+	// at-most-once, so onLost is called when keys may have been lost: with the
+	// namespace of a key dropped because the consumer was not keeping up, or with
+	// an empty namespace, meaning any, once a lost connection is restored. It must
+	// not block. The channel is never closed; cancel ctx to stop.
+	// ErrWrittenKeysUnsupported means the backend, or its configuration, cannot
+	// do this at all.
+	WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error)
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
@@ -279,6 +302,10 @@ type StorageBackend interface {
 
 	// GetResourceLastImportTime returns the import time for one namespaced resource, or zero if none exists.
 	GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error)
+
+	// ListResourceLastImportTimes returns the latest import times using the same age limit as single lookups.
+	// On failure, it may return times collected before the error so scans can still use them.
+	ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error)
 }
 
 type ModifiedResource struct {
@@ -1728,6 +1755,7 @@ func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *reso
 //nolint:gocyclo // Temporary list-path instrumentation
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
+	ctx, bodyStats := withListBodyStats(ctx)
 	path := listPathUnknown
 	selectorType := listSelectorType(req)
 	requestedLimit := int64(0)
@@ -1738,6 +1766,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	defer func() {
 		setListRequestPath(ctx, path)
 		annotateListRequest(span, path, selectorType, requestedLimit, req, rsp)
+		s.recordListBodyStats(span, bodyStats, path, rsp, err)
 		span.End()
 	}()
 
@@ -1971,6 +2000,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 			// If the page is already full, this extra authorized item confirms
 			// there are more results. Set the continue token and stop.
 			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+				setListStopReason(ctx, s.listLimitStopReason(req, rsp, pageBytes))
 				nextToken = lastContinueToken
 				break
 			}
@@ -2149,6 +2179,9 @@ func (s *server) listAuthorizedValuesPage(
 				if err := keyIter.Error(); err != nil {
 					return "", err
 				}
+				if nextToken != "" {
+					setListStopReason(ctx, s.listLimitStopReason(req, rsp, pageBytes))
+				}
 				return nextToken, nil
 			}
 		}
@@ -2208,7 +2241,17 @@ func continueTokenAfterFetchedValue(
 }
 
 func (s *server) listPageFull(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) bool {
-	return (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes
+	return s.listLimitStopReason(req, rsp, pageBytes) != ""
+}
+
+func (s *server) listLimitStopReason(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) string {
+	if pageBytes >= s.maxPageSizeBytes {
+		return listStopByteLimit
+	}
+	if req.Limit > 0 && len(rsp.Items) >= int(req.Limit) {
+		return listStopCountLimit
+	}
+	return ""
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
@@ -2946,13 +2989,16 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 		if err != nil {
 			return &resourcepb.GetBlobResponse{Error: err}, nil
 		}
-		if hasBlobs && !refs[req.Uid] {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-				Message: "blob is not referenced by the resource",
-				Code:    http.StatusNotFound,
-			}}, nil
+		info = refs[req.Uid]
+		if info == nil {
+			if hasBlobs {
+				return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
+					Message: "blob is not referenced by the resource",
+					Code:    http.StatusNotFound,
+				}}, nil
+			}
+			info = &utils.BlobInfo{UID: req.Uid}
 		}
-		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
 	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
@@ -2971,7 +3017,7 @@ type BlobReference struct {
 	ContentType string `json:"contentType,omitempty"`
 }
 
-func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]bool, bool, *resourcepb.ErrorResult) {
+func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]*utils.BlobInfo, bool, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {
 		return nil, false, r
 	}
@@ -2996,14 +3042,16 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 	if obj.Blobs == nil {
 		return nil, false, nil
 	}
-	refs := make(map[string]bool, len(obj.Blobs)+1)
+	refs := make(map[string]*utils.BlobInfo, len(obj.Blobs)+1)
 	for _, ref := range obj.Blobs {
 		if ref.UID != "" {
-			refs[ref.UID] = true
+			info := &utils.BlobInfo{UID: ref.UID, Size: ref.Size, Hash: ref.Hash}
+			info.SetContentType(ref.ContentType)
+			refs[ref.UID] = info
 		}
 	}
 	if info := utils.ParseBlobInfo(obj.Metadata.Annotations[utils.AnnoKeyBlob]); info != nil && info.UID != "" {
-		refs[info.UID] = true
+		refs[info.UID] = info
 	}
 	return refs, true, nil
 }

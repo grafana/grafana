@@ -41,7 +41,7 @@ import (
 const cloudRouterSection = "cloud_router"
 
 // ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
-// [cloud_router] section. It returns (nil, nil) when no source is configured
+// [cloud_router] and [router.aggregate.<name>] sections. It returns (nil, nil) when no source is configured
 // (appmanifest_apiserver_url, an aggregate target url, plugins_url or
 // st_discovery_url), and the caller falls back to another loader.
 //
@@ -58,9 +58,9 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, fmt.Errorf("%s: apiserver_url was renamed to appmanifest_apiserver_url -- update your config", cloudRouterSection)
 	}
 
-	aggregateTargetConfigs, err := parseAggregateTargets(section)
+	aggregateTargetConfigs, err := parseAggregateTargets(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		return nil, err
 	}
 
 	// plugins_url needs no CAP token (it is an unauthenticated in-cluster
@@ -84,14 +84,18 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 	}
 
 	// cap_token/token_exchange_url are only needed for the appmanifest
-	// apiserver and the two CAP-token-authenticated aggregate targets --
-	// pluginsTarget alone must be able to activate without them.
+	// apiserver and CAP-token-authenticated aggregate targets --
+	// pluginsTarget and discovery_auth = none targets must be able to activate without them.
+	needsTokenExchange := appManifestApiserverURL != ""
+	for _, targetCfg := range aggregateTargetConfigs {
+		needsTokenExchange = needsTokenExchange || !targetCfg.anonymousDiscovery()
+	}
 	var tokenExchanger *authnlib.TokenExchangeClient
-	if appManifestApiserverURL != "" || len(aggregateTargetConfigs) > 0 {
+	if needsTokenExchange {
 		capToken := section.Key("cap_token").MustString("")
 		tokenExchangeURL := section.Key("token_exchange_url").MustString("")
 		if capToken == "" || tokenExchangeURL == "" {
-			return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url, baas_apiserver.url, or cloud_app_platform_apiserver.url is set", cloudRouterSection)
+			return nil, fmt.Errorf("%s: cap_token and token_exchange_url are required when appmanifest_apiserver_url or an aggregate target url without discovery_auth = none is set", cloudRouterSection)
 		}
 
 		tokenExchanger, err = authnlib.NewTokenExchangeClient(authnlib.TokenExchangeConfig{
@@ -105,8 +109,8 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 
 	var aggregateTargets []*aggregateTarget
 	for _, targetCfg := range aggregateTargetConfigs {
-		if targetCfg.Audience == "" {
-			return nil, fmt.Errorf("%s: %s.audience is required when %s.url is set", cloudRouterSection, targetCfg.Name, targetCfg.Name)
+		if targetCfg.Audience == "" && !targetCfg.anonymousDiscovery() {
+			return nil, fmt.Errorf("%s%s: audience is required when url is set", aggregateSectionPrefix, targetCfg.Name)
 		}
 		tlsCfg, err := buildAggregateTLSConfig(targetCfg.CAFile, targetCfg.InsecureSkipVerify)
 		if err != nil {
@@ -121,9 +125,11 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 			// WrapTransport still applies the CAP token exchange on top of it.
 			// TLS is set on the transport because client-go rejects a custom
 			// Transport combined with TLSClientConfig.
-			Transport:     newAggregateBaseTransport(tlsCfg),
-			WrapTransport: aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience),
-			Timeout:       defaultAggregateDiscoveryTimeout,
+			Transport: newAggregateBaseTransport(tlsCfg),
+			Timeout:   defaultAggregateDiscoveryTimeout,
+		}
+		if !targetCfg.anonymousDiscovery() {
+			restCfg.WrapTransport = aggregateTokenWrapper(targetCfg.Name, tokenExchanger, targetCfg.Audience)
 		}
 		httpClient, err := rest.HTTPClientFor(restCfg)
 		if err != nil {
@@ -442,8 +448,8 @@ func (l *cloudLoader) Load(ctx context.Context) ([]Backend, error) {
 		}
 	}
 
-	// Aggregate targets override ST; later targets override earlier targets.
-	for _, target := range l.aggregateTargets {
+	// Aggregate targets override ST; reverse order makes the first target win.
+	for _, target := range slices.Backward(l.aggregateTargets) {
 		for _, b := range target.Backends() {
 			put(b)
 		}
@@ -681,7 +687,7 @@ func buildAggregateTLSConfig(caFile string, insecure bool) (*tls.Config, error) 
 	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
 	switch {
 	case insecure:
-		// Operator-gated via <name>.insecure, same trust model as
+		// Operator-gated via router.aggregate.<name> insecure, same trust model as
 		// apiserver_insecure for the appmanifest apiserver: only enable for a
 		// target reached over a link that's actually trusted, since this
 		// disables both CA and hostname verification (MITM exposure).
@@ -712,6 +718,7 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 
 	// 2. Iterate the second slice and correlate
 	var combined []Backend
+	skipped := 0
 	for _, b := range backends {
 		m, ok := manifestMap[b.Name]
 		if !ok {
@@ -724,6 +731,7 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 			// config block, have a nil Forward -- not yet supported here.
 			if b.Spec.Forward == nil {
 				logging.FromContext(ctx).Warn("router.NewForwardBackend: route backend has no forward config, skipping", "Group", m.group.Name, "mode", b.Spec.Mode)
+				skipped++
 				continue
 			}
 			transportKey := tlsCacheKey{
@@ -736,18 +744,22 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 			transport, err := l.transportFor(transportKey)
 			if err != nil {
 				logging.FromContext(ctx).Warn("router.NewForwardBackend failed to create or fetch cached transport", "Group", m.group.Name, "err", err)
+				skipped++
 				continue
 			}
 			current, err := NewForwardBackend(m.group, b.Spec, b.ResourceVersion+"-"+m.key, transport)
 			if err != nil {
 				logging.FromContext(ctx).Warn("router.NewForwardBackend failed", "Group", m.group.Name, "err", err)
+				skipped++
 				continue
 			}
 			combined = append(combined, current)
 		} else {
 			logging.FromContext(ctx).Warn("RoutesLoader: manifest not found for route backend", "name", b.Name)
+			skipped++
 			continue
 		}
 	}
+	l.routeBackendStatus.recordSkipped(skipped)
 	return combined
 }
