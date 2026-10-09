@@ -1,5 +1,5 @@
 import { customAlphabet } from 'nanoid';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { t } from '@grafana/i18n';
@@ -82,6 +82,18 @@ interface BaseDrawerProps {
   directory?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
+  /**
+   * Form fields for the resource itself, rendered above the commit fields so one drawer holds both.
+   * Pair with `getSpec` so the committed body reflects the fields at submit time.
+   */
+  children?: ReactNode;
+  /** Returns the spec to commit at submit time. Defaults to `resource.spec`. */
+  getSpec?: () => Record<string, unknown> | undefined;
+  /**
+   * Called on submit when no repository is involved (the folder is not managed and no repository was
+   * picked), so the caller stores the resource in Grafana. Without it the drawer requires a repository.
+   */
+  onSave?: () => Promise<void> | void;
   onDismiss?: () => void;
   /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
   onWriteSuccess?: (resource: unknown) => void;
@@ -105,13 +117,15 @@ interface BaseDrawerProps {
  * `update`/`delete` resolve the repository from the existing resource's annotations and take none.
  */
 export type SaveProvisionedResourceDrawerProps = BaseDrawerProps &
-  ({ action: 'create'; repositoryName: string } | { action: 'update' | 'delete'; repositoryName?: never });
+  ({ action: 'create'; repositoryName?: string } | { action: 'update' | 'delete'; repositoryName?: never });
 
 interface FormProps {
   kind: ResourceKindInfo;
   resourceName: string;
   title: string;
-  body?: Record<string, unknown>;
+  getBody: () => Record<string, unknown> | undefined;
+  children?: ReactNode;
+  onSave?: BaseDrawerProps['onSave'];
   action: ProvisionedResourceAction;
   isNew: boolean;
   successMessage?: string;
@@ -127,7 +141,9 @@ function FormContent({
   kind,
   resourceName,
   title,
-  body,
+  getBody,
+  children,
+  onSave,
   action,
   isNew,
   successMessage,
@@ -138,6 +154,7 @@ function FormContent({
   onWriteSuccess,
   onBranchSuccess,
 }: FormProps) {
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | undefined>(undefined);
   // The kind's stable key is the UI-facing resource type for the commit message, telemetry and fields.
   const resourceType = kind.key;
@@ -212,6 +229,18 @@ function FormContent({
 
   const doSave = async ({ ref, workflow, path }: BaseProvisionedFormData) => {
     setError(undefined);
+    const body = getBody();
+    if (!repository && onSave) {
+      setSaving(true);
+      try {
+        await onSave();
+      } catch (err) {
+        showError(err);
+      } finally {
+        setSaving(false);
+      }
+      return;
+    }
     const repoName = repository?.name;
     // Use the submitted path: for new resources the path field is editable, so the user may have
     // changed it from the initial slug. For existing resources the field is read-only (== initial).
@@ -245,15 +274,18 @@ function FormContent({
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(doSave)}>
         <Stack direction="column" gap={2}>
-          <ResourceEditFormSharedFields
-            resourceType={resourceType}
-            isNew={isNew}
-            canPushToConfiguredBranch={canPushToConfiguredBranch}
-            repository={repository}
-            lockComment={locked}
-            commitMessage={message}
-            lockBranch={lockBranch}
-          />
+          {children}
+          {repository && (
+            <ResourceEditFormSharedFields
+              resourceType={resourceType}
+              isNew={isNew}
+              canPushToConfiguredBranch={canPushToConfiguredBranch}
+              repository={repository}
+              lockComment={locked}
+              commitMessage={message}
+              lockBranch={lockBranch}
+            />
+          )}
 
           {error && <ProvisioningAlert error={error} />}
 
@@ -261,12 +293,12 @@ function FormContent({
             <Button variant="secondary" fill="outline" onClick={onDismiss}>
               {t('provisioning.save-resource.button-cancel', 'Cancel')}
             </Button>
-            <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading}>
+            <Button type="submit" variant={isDelete ? 'destructive' : 'primary'} disabled={request.isLoading || saving}>
               {isDelete
                 ? request.isLoading
                   ? t('provisioning.save-resource.button-deleting', 'Deleting...')
                   : t('provisioning.save-resource.button-delete', 'Delete')
-                : request.isLoading
+                : request.isLoading || saving
                   ? t('provisioning.save-resource.button-saving', 'Saving...')
                   : t('provisioning.save-resource.button-save', 'Save')}
             </Button>
@@ -315,6 +347,9 @@ function ResourceDrawerContent({
   readOnlyMessage,
   directory = '',
   branchPrefix,
+  children,
+  getSpec,
+  onSave,
   onDismiss,
   onWriteSuccess,
   onBranchSuccess,
@@ -344,14 +379,23 @@ function ResourceDrawerContent({
     : resource;
 
   // Delete removes the file, so it commits no body; create/update commit the standard resource shape.
-  const body = isDelete
-    ? undefined
-    : { apiVersion: resource.apiVersion, kind: resource.kind, metadata: { name: resourceName }, spec: resource.spec };
+  // Read at submit time, so fields rendered as `children` are reflected.
+  const getBody = () =>
+    isDelete
+      ? undefined
+      : {
+          apiVersion: resource.apiVersion,
+          kind: resource.kind,
+          metadata: { name: resourceName },
+          spec: getSpec ? getSpec() : resource.spec,
+        };
 
   // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
   const prefix = branchPrefix ?? kind.key;
+  const wantsRepository = !isNew || Boolean(repositoryName);
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
+    skipQuery: !wantsRepository,
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
@@ -366,18 +410,18 @@ function ResourceDrawerContent({
     : t('provisioning.save-resource.drawer-title-save', 'Save provisioned {{resource}}', { resource: resourceLabel });
 
   const initialValues = useMemo<BaseProvisionedFormData | undefined>(() => {
-    if (!repository || isLoading) {
+    if (isLoading || (wantsRepository && !repository)) {
       return undefined;
     }
     return {
       title: title || '',
       comment: '',
-      ref: getDefaultRef(repository, prefix),
-      repo: repository.name || '',
+      ref: repository ? getDefaultRef(repository, prefix) : '',
+      repo: repository?.name || '',
       path: sourcePath || '',
-      workflow: getDefaultWorkflow(repository),
+      workflow: repository ? getDefaultWorkflow(repository) : undefined,
     };
-  }, [repository, isLoading, title, sourcePath, prefix]);
+  }, [repository, isLoading, wantsRepository, title, sourcePath, prefix]);
 
   return (
     <Drawer
@@ -391,7 +435,7 @@ function ResourceDrawerContent({
     >
       <ProvisionedFormGate
         isLoading={isLoading}
-        isMissingRepo={isMissingRepo}
+        isMissingRepo={wantsRepository && isMissingRepo}
         isReadOnly={isReadOnlyRepo}
         readOnlyMessage={
           readOnlyMessage ??
@@ -406,8 +450,9 @@ function ResourceDrawerContent({
             kind={kind}
             resourceName={resourceName}
             title={title}
-            body={body}
+            getBody={getBody}
             action={action}
+            onSave={onSave}
             isNew={isNew}
             successMessage={successMessage}
             initialValues={initialValues}
@@ -416,7 +461,9 @@ function ResourceDrawerContent({
             onDismiss={onDismiss}
             onWriteSuccess={onWriteSuccess}
             onBranchSuccess={onBranchSuccess}
-          />
+          >
+            {children}
+          </FormContent>
         )}
       </ProvisionedFormGate>
     </Drawer>

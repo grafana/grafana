@@ -50,56 +50,47 @@ resource, so render it for every row.
 <provisioning.ManagedBadge resource={item} />
 ```
 
-## 4. Save through the repository
+## 4. Save in one drawer
 
-The drawer offers a commit to the configured branch, or to a new branch with a pull request, as the
-repository allows. Open it instead of the API call when the resource goes to a repository.
+`SaveResourceDrawer` is one drawer for the resource fields and the commit fields, like the dashboard
+save drawer. Render the resource fields as `children`, return the spec from `getSpec`, and store the
+resource in Grafana from `onSave`. The drawer decides where the save goes:
 
-**Folder-scoped kind.** The folder decides. Save through the API as usual; when the folder is Git
-Sync managed, the API rejects the write with a 403 that `isManagedFolderError` recognizes. Open the
-drawer with `folderName`, and the drawer finds the repository and puts the file in the folder's
-directory.
-
-```tsx
-try {
-  await createNote(spec, folderUid);
-} catch (e) {
-  if (provisioning.isManagedFolderError(e)) {
-    setCommitToRepo(true);
-  }
-}
-```
-
-**Folderless kind.** There is no folder, so the user picks the repository in the create form. Put
-`RepositorySelect` in the form (it renders nothing when no repository can take the kind), and pass
-the value to the drawer as `repositoryName`. An empty value means a normal API save.
-
-```tsx
-<provisioning.RepositorySelect group={GROUP} kind="Tag" value={repo} onChange={setRepo} />
-```
+- `folderName` set and the folder is Git Sync managed: the commit fields show, and Save commits to
+  that repository, in the folder's directory.
+- Folderless kind with `onSave`: a repository picker shows. A pick commits to that repository; no pick
+  calls `onSave`.
+- `update` or `delete` of a managed resource: the resource annotations name the repository.
+- Otherwise: Save calls `onSave`.
 
 ```tsx
 <provisioning.SaveResourceDrawer
-  action="create"
-  folderName={folderUid} // or repositoryName={repo}
-  title={spec.title}
-  resource={{ apiVersion: 'myapp.ext.grafana.app/v1alpha1', kind: 'Note', spec }}
+  action={resource ? 'update' : 'create'}
+  title={name}
+  folderName={folderUid}
+  resource={resource ?? { apiVersion: 'myapp.ext.grafana.app/v1alpha1', kind: 'Note' }}
+  getSpec={() => ({ name })}
+  onSave={() => (resource ? update(resource, { name }) : create({ name }, folderUid))}
   onDismiss={close}
-  onWriteSuccess={(stored) => { close(); refresh(); }}
+  onWriteSuccess={() => { close(); refresh(); }}
   onBranchSuccess={(commit) => { close(); setCommit(commit); }}
-/>
+>
+  <Field label="Name"><Input value={name} onChange={(e) => setName(e.currentTarget.value)} /></Field>
+  <Field label="Folder"><FolderPicker value={folderUid} onChange={setFolderUid} /></Field>
+</provisioning.SaveResourceDrawer>
 ```
 
 Results:
 
+- `onSave()`: no repository was involved. The plugin stored the resource.
 - `onWriteSuccess(resource)`: the commit went to the configured branch and Grafana stored the resource.
 - `onBranchSuccess(commit)`: the commit went to another branch. The resource is not in Grafana until
   the branch merges and the repository syncs. Pass `commit` to the pull request banner (step 5).
 - `onDismiss()`: the user closed the drawer.
 
-For `update` and `delete` of a managed resource, open the drawer with the stored resource; its
-annotations name the repository. A direct API write to a managed resource also works: Grafana
-commits it to the configured branch. The drawer adds the choice of a branch and a pull request.
+A plugin with its own form can still use the drawer as a second step: save through the API, and
+open the drawer with `folderName` when `isManagedFolderError` matches, or with `RepositorySelect`
+in its form for a folderless kind.
 
 ## 5. Show the pull request banner
 
