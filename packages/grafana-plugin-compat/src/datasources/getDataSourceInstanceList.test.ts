@@ -10,6 +10,11 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceList: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstanceList: undefined,
+}));
+
 const mockRuntimeGetDataSourceInstanceList = jest.mocked(rtGetDataSourceInstanceList);
 const mockData = {
   uid: 'ds-logs',

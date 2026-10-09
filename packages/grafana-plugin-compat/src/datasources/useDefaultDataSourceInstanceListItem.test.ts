@@ -11,6 +11,11 @@ jest.mock('@grafana/runtime/unstable', () => ({
   useDefaultDataSourceInstanceListItem: jest.fn(),
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  useDefaultDataSourceInstanceListItem: undefined,
+}));
+
 const mockRuntimeUseDefaultDataSourceInstanceListItem = jest.mocked(rtUseDefaultDataSourceInstanceListItem);
 
 const alpha = getMockedListItem({ uid: 'ds-a', name: 'A' });
