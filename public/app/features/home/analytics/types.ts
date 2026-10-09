@@ -1,4 +1,5 @@
 import { type EventProperty, type EventVariants } from '@grafana/runtime/unstable';
+import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
 
 export interface TabChanged extends EventProperty {
   /** Tab the user switched to. */
@@ -23,6 +24,27 @@ export interface RecommendationsShown extends EventProperty {
 export interface ClearHistoryClicked extends EventProperty {
   /** Number of dashboards in history before clearing. */
   dashboard_count: number;
+  /** Number of pages of any kind in history before clearing. */
+  page_count: number;
+}
+
+/** Counts cover the whole history, not the rows left after the kind filter. */
+export interface RecentActivityShown extends EventProperty {
+  /** Pages of any kind in history when the tab was displayed. */
+  page_count: number;
+  /** Dashboards in history. */
+  dashboard_count: number;
+  /** Explore sessions in history. */
+  explore_count: number;
+  /** Alerting pages in history. */
+  alerting_count: number;
+  /** App plugin pages in history. */
+  app_count: number;
+}
+
+export interface RecentActivityFilterChanged extends EventProperty {
+  /** Kind the user chose to show, or `all`. */
+  filter: PageHistoryKind | 'all';
 }
 
 export interface SolutionFilterChanged extends EventProperty {
@@ -94,11 +116,22 @@ export type CtaClicked = EventVariants<
           placement: 'footer';
         }
     ))
-  | {
+  | ({
       surface: 'recent_tab';
-      action: 'create_dashboard' | 'browse_dashboards';
-      placement: 'empty_state';
-    }
+    } & (
+      | {
+          action: 'open_page';
+          placement: 'list';
+          /** Kind of page the row restores. Never the page itself: hrefs carry customer data. */
+          page_kind: PageHistoryKind;
+          /** 0-based row index as displayed, so clicks on the top row can be told from deeper ones. */
+          position: number;
+        }
+      | {
+          action: 'create_dashboard' | 'browse_dashboards';
+          placement: 'empty_state';
+        }
+    ))
   | {
       surface: 'recommendations';
       action: 'enable' | 'setup' | 'learn_more';

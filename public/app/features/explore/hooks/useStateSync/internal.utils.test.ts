@@ -1,3 +1,5 @@
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+
 import {
   CoreApp,
   DataSourceApi,
@@ -22,52 +24,17 @@ import {
   urlDiff,
 } from './internal.utils';
 
-function makeSettings(
-  uid: string,
-  name: string,
-  type: string,
-  opts: { isDefault?: boolean } = {}
-): DataSourceInstanceSettings {
-  return {
-    id: 1,
-    uid,
-    name,
-    type,
-    access: 'direct',
-    jsonData: {},
-    readOnly: false,
-    isDefault: opts.isDefault ?? false,
-    meta: {
-      id: type,
-      name: type,
-      type: 'datasource',
-      module: '',
-      baseUrl: '',
-      metrics: true,
-      info: {
-        author: { name: '' },
-        description: '',
-        links: [],
-        logos: { small: '', large: '' },
-        screenshots: [],
-        updated: '',
-        version: '',
-      },
-    } as unknown as DataSourcePluginMeta,
-  } as DataSourceInstanceSettings;
-}
-
 interface TestQuery extends DataQuery {
   expr?: string;
 }
 
 const DEFAULT_DS_NAME = 'default datasource';
 const dsSettings: Record<string, DataSourceInstanceSettings> = {
-  default: makeSettings('default-uid', DEFAULT_DS_NAME, 'test-db', { isDefault: true }),
-  loki: makeSettings('loki-uid', 'loki', 'logs'),
-  elastic: makeSettings('elastic-uid', 'elastic', 'elasticsearch'),
-  mixed: makeSettings('mixed-uid', MIXED_DATASOURCE_NAME, 'mixed'),
-  withDefaultQuery: makeSettings('with-default-query-uid', 'withDefaultQuery', 'with-default-query'),
+  default: makeDataSourceSettings('default-uid', DEFAULT_DS_NAME, 'test-db', { isDefault: true }),
+  loki: makeDataSourceSettings('loki-uid', 'loki', 'logs'),
+  elastic: makeDataSourceSettings('elastic-uid', 'elastic', 'elasticsearch'),
+  mixed: makeDataSourceSettings('mixed-uid', MIXED_DATASOURCE_NAME, 'mixed'),
+  withDefaultQuery: makeDataSourceSettings('with-default-query-uid', 'withDefaultQuery', 'with-default-query'),
 };
 
 // Deriving identity from the settings the loader passes to the constructor — the identity a real
