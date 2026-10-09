@@ -290,7 +290,7 @@ func TestPrometheusBackend_Record(t *testing.T) {
 			backend := NewRemotePrometheusBackend(cfg, fakeWriter, logger, met)
 
 			if tc.expectedFrames != nil {
-				var extraLabels map[string]string
+				extraLabels := map[string]string{"grafana_org_id": "1"}
 				fakeWriter.On(
 					"WriteDatasource", ctx, cfg.DatasourceUID, testMetricName, now, mock.Anything, orgID, extraLabels,
 				).Return(tc.expectedErr).Once().Run(func(args mock.Arguments) {
