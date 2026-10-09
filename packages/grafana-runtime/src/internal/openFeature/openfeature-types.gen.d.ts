@@ -18,8 +18,6 @@ declare module "@openfeature/core" {
     | "awsAssumeRolePerDatasourceExternalId"
     | "provisioningFolderMetadata"
     | "provisioningExport"
-    | "provisioning.readmes"
-    | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
@@ -29,6 +27,8 @@ declare module "@openfeature/core" {
     | "grafana.newPanelQueryErrorsUI"
     | "useKubernetesShortURLsAPI"
     | "dashboardNewLayouts"
+    | "dashboards.libraryPanelRepeatFromServerResolution"
+    | "dashboards.publicDashboardBadgeFromApi"
     | "dashboard.notebooks"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
@@ -54,12 +54,12 @@ declare module "@openfeature/core" {
     | "enableExtensionsAdminPage"
     | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
+    | "alerting.ruleReviews"
     | "alerting.ruleQuality"
     | "alertRuleRestore"
     | "datasources.azureMonitorBatchAPI"
     | "alertingRuleRecoverDeleted"
     | "recentlyViewedDashboards"
-    | "experimentRecentlyViewedDashboards"
     | "foldersAppPlatformAPI"
     | "otelLogsFormatting"
     | "grafana.starredFolders"
@@ -92,6 +92,7 @@ declare module "@openfeature/core" {
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
+    | "grafana.scopesDashboardsMegaMenu"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "paneledit.buttonLabels"
@@ -129,7 +130,8 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
-    | "grafana.logDetailsDisplayedFieldControls";
+    | "grafana.logDetailsDisplayedFieldControls"
+    | "grafana.globalHomePreference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

@@ -1,0 +1,117 @@
+import { useCallback, useMemo } from 'react';
+
+import { t } from '@grafana/i18n';
+import { Combobox, type ComboboxOption } from '@grafana/ui';
+
+import { ALL_SCOPE, type FilterSelection, resolveFilterScope } from './filterSelection';
+
+/**
+ * Loads the label options a filter offers, each valued with encodeFilterLabel and with `group`
+ * set to render a header above the options sharing it.
+ */
+export type LoadFilterOptions = () => Promise<Array<ComboboxOption<string>>>;
+
+const collator = new Intl.Collator();
+
+// '' is the default scope of every selection, so the option value is the selection itself.
+const getYourTeamsOption = (): ComboboxOption<string> => ({
+  label: t('home.alerts-incidents.team-filter-your-teams', 'Your teams'),
+  value: '',
+});
+
+const getAllOption = (label: string, value: string): ComboboxOption<string> => ({ label, value });
+
+// Single sort site for both tabs, so neither data hook has to. Grouped options stay
+// together under their header; ungrouped ones sort ahead of them.
+function sortOptions(options: Array<ComboboxOption<string>>): Array<ComboboxOption<string>> {
+  const sorted = [...options].sort(
+    (a, b) => collator.compare(a.group ?? '', b.group ?? '') || collator.compare(a.label ?? '', b.label ?? '')
+  );
+  // A lone header is noise, e.g. for an org whose only incident label is `team`,
+  // so headers only appear with several groups.
+  const singleGroup = new Set(sorted.map((option) => option.group)).size <= 1;
+  return singleGroup ? sorted.map(({ group, ...option }) => option) : sorted;
+}
+
+interface Props {
+  /** Called each time the dropdown opens and as the user types. */
+  loadOptions: LoadFilterOptions;
+  /** '' is the default scope, ALL_SCOPE the org-wide pick, anything else an option value. */
+  selected: FilterSelection;
+  onChange: (selection: FilterSelection) => void;
+  /**
+   * Whether the default scope is the user's own teams (alerts, for team members). Adds a
+   * "Your teams" default plus an explicit escape hatch to everything; otherwise the default
+   * option already means everything.
+   */
+  offersYourTeams: boolean;
+  /** Label of the unfiltered option, e.g. "All alerts" or "All incidents". */
+  allOptionLabel: string;
+  ariaLabel: string;
+}
+
+/**
+ * Dropdown to filter a homepage view by one label value. Presentational: the caller supplies
+ * the options and owns the selection.
+ */
+export function LabelFilterCombobox({
+  loadOptions,
+  selected,
+  onChange,
+  offersYourTeams,
+  allOptionLabel,
+  ariaLabel,
+}: Props) {
+  // Only a "your teams" default needs a distinct sentinel for org-wide; otherwise '' already means all.
+  const allOption = useMemo(
+    () => getAllOption(allOptionLabel, offersYourTeams ? ALL_SCOPE : ''),
+    [allOptionLabel, offersYourTeams]
+  );
+
+  // Async Combobox needs the full option (not just the value) to show a label.
+  // Must be memoized: a new object every render makes downshift think the
+  // selection changed, which wipes the input while the user is typing.
+  const valueOption = useMemo(() => {
+    const scope = resolveFilterScope(selected);
+    switch (scope.kind) {
+      case 'all':
+        return allOption;
+      case 'label':
+        // Built from the selection alone, so a pick whose option is gone (e.g. archived) still shows.
+        return { label: scope.label.value, value: selected };
+      case 'default':
+        // Without a "your teams" scope the default already means everything, so show that.
+        return offersYourTeams ? getYourTeamsOption() : allOption;
+    }
+  }, [selected, offersYourTeams, allOption]);
+
+  const searchOptions = useCallback(
+    async (inputValue: string): Promise<Array<ComboboxOption<string>>> => {
+      const options = sortOptions(await loadOptions());
+      const query = inputValue.toLowerCase();
+      // Typing a field name (the group header) lists everything under it.
+      const matching = options.filter(
+        (option) => option.label?.toLowerCase().includes(query) || option.group?.toLowerCase().includes(query)
+      );
+      // The scope options only belong on the unfiltered default list.
+      const scopeOptions = offersYourTeams ? [getYourTeamsOption(), allOption] : [allOption];
+      return inputValue ? matching : [...scopeOptions, ...matching];
+    },
+    [loadOptions, offersYourTeams, allOption]
+  );
+
+  return (
+    <Combobox
+      prefixIcon="filter"
+      options={searchOptions}
+      value={valueOption}
+      onChange={(option) => {
+        // Re-selecting the current value is a no-op so the parent doesn't re-render.
+        if (option.value !== selected) {
+          onChange(option.value);
+        }
+      }}
+      aria-label={ariaLabel}
+    />
+  );
+}

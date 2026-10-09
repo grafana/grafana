@@ -15,6 +15,7 @@ import (
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata/metrics"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -631,7 +632,10 @@ func (s *secureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Context
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueSetInactiveAllFromGroup.Name(), err)
 	}
 
-	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
+	if err := secretdatabase.RetryOnTransientTransactionError(ctx, func() error {
+		_, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+		return err
+	}); err != nil {
 		return fmt.Errorf("setting inactive all secure values from group %q in namespace %q: %w", apiGroup, namespace, err)
 	}
 

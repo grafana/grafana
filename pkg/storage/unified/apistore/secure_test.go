@@ -22,8 +22,8 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/registry/apis/secret"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	secret "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -424,7 +424,7 @@ func TestSecureLifecycle(t *testing.T) {
 }
 
 type conflictOnceClient struct {
-	resource.ResourceClient
+	resourceclient.ResourceClient
 	prev    []byte
 	updates int
 }

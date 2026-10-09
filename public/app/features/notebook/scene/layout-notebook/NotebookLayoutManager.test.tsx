@@ -35,7 +35,7 @@ setPluginImportUtils({
 
 beforeEach(() => {
   mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: false });
-  contextSrv.isSignedIn = false;
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
 });
 
 import { type NotebookEditHistory } from '../NotebookEditHistory';
@@ -227,13 +227,28 @@ describe('NotebookLayoutManager', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders the document header with title, time range and tags', async () => {
+  it('renders the document header with title and tags', async () => {
     renderNotebook();
 
     expect(screen.getByRole('heading', { name: 'My notebook' })).toBeInTheDocument();
-    expect(screen.getByText(/now-6h/)).toBeInTheDocument();
     expect(screen.getByText('incident')).toBeInTheDocument();
     expect(screen.getByText('checkout')).toBeInTheDocument();
+  });
+
+  // The time picker above the document already shows it.
+  it('leaves the time range out of the header on screen', async () => {
+    renderNotebook();
+
+    expect(screen.queryByText('Time')).not.toBeInTheDocument();
+  });
+
+  it('shows the time range in the header when asked to', async () => {
+    const manager = buildManager([]);
+    manager.setState({ showTimeRange: true });
+    renderManager(manager);
+
+    expect(screen.getByText('Time')).toBeInTheDocument();
+    expect(screen.queryByText(/now-6h/)).not.toBeInTheDocument();
   });
 
   it('renders a narrative markdown cell and shows a collapsed cell by name only', async () => {
@@ -293,7 +308,7 @@ describe('NotebookLayoutManager', () => {
     it('opens the saved-queries drawer with the Notebook context and inserts the selected query on selection', async () => {
       const openDrawer = jest.fn();
       mockUseQueryLibraryContext.mockReturnValue({ openDrawer, queryLibraryEnabled: true });
-      contextSrv.isSignedIn = true;
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
       const suggestion = {
         pluginId: 'barchart',
         name: 'barchart',

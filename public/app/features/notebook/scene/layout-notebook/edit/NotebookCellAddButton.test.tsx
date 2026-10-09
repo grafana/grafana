@@ -15,7 +15,7 @@ const mockUseQueryLibraryContext = useQueryLibraryContext as jest.Mock;
 
 beforeEach(() => {
   mockUseQueryLibraryContext.mockReturnValue({ queryLibraryEnabled: true });
-  contextSrv.isSignedIn = true;
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
 });
 
 describe('NotebookCellAddButton', () => {

@@ -29,8 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
-	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -703,7 +702,7 @@ func TestEnsureRepoManagedByParentFolder(t *testing.T) {
 			opts:         StorageOptions{EnableFolderSupport: true},
 			getDynClient: failingDynClient(errors.New("dynamic client should not be consulted for root parent")),
 		}
-		obj := makeDashboard(t, folder.GeneralFolderUID, nil)
+		obj := makeDashboard(t, "general", nil)
 		require.NoError(t, s.ensureRepoManagedByParentFolder(context.Background(), obj))
 	})
 }

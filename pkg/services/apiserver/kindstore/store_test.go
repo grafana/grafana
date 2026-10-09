@@ -354,7 +354,7 @@ func TestNew(t *testing.T) {
 
 	t.Run("a kind schema installs validation and the status subresource", func(t *testing.T) {
 		manifest := testManifest(t)
-		// NewAppPluginAPIBuilder serves manifest kinds under the plugin ID.
+		// Resolve the schema under the same group as the store.
 		manifest.Group = gvk.Group
 		defs := LoadOpenAPIDefinitions(func(name string) spec.Ref {
 			return spec.MustCreateRef(name)

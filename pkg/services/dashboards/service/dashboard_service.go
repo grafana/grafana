@@ -1704,6 +1704,10 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 	ctx, span := tracer.Start(ctx, "dashboards.service.DeleteInFolders")
 	defer span.End()
 
+	// Attach the requester to ctx: a context-dependent LegacyDatabaseProvider (used by
+	// DeleteByDashboardUIDs below) can only resolve the target database from here.
+	ctx = identity.WithRequester(ctx, u)
+
 	// We need a list of dashboard uids inside the folder to delete related public dashboards
 	dashes, err := dr.searchDashboardsThroughK8s(ctx, &dashboards.FindPersistedDashboardsQuery{
 		SignedInUser: u,

@@ -36,6 +36,7 @@ import (
 // tests that never reach the authorizer (e.g. non-reader repositories).
 func newJobAuthClients(t *testing.T) *resources.MockClientFactory {
 	rc := resources.NewMockResourceClients(t)
+	rc.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Maybe()
 	rc.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 	rc.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
 		func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
@@ -73,6 +74,76 @@ func newTestRepo(name, namespace string) *provisioning.Repository {
 			},
 		},
 	}
+}
+
+func TestNewJobAuthorizer(t *testing.T) {
+	ctx := t.Context()
+	cfg := newTestRepo("my-repo", "default")
+
+	t.Run("reader-only repository returns bad request", func(t *testing.T) {
+		c := &jobsConnector{}
+		authorizer, err := c.newJobAuthorizer(ctx, repository.NewMockReader(t), cfg)
+		require.True(t, apierrors.IsBadRequest(err))
+		require.ErrorContains(t, err, "repository does not support reading and writing")
+		require.Nil(t, authorizer)
+	})
+
+	t.Run("client factory error is preserved", func(t *testing.T) {
+		clients := resources.NewMockClientFactory(t)
+		clients.EXPECT().Clients(ctx, cfg.Namespace).Return(nil, assert.AnError).Once()
+		c := &jobsConnector{clients: clients}
+		authorizer, err := c.newJobAuthorizer(ctx, repository.NewMockReaderWriter(t), cfg)
+		require.ErrorIs(t, err, assert.AnError)
+		require.Nil(t, authorizer)
+	})
+
+	t.Run("folder client error is preserved", func(t *testing.T) {
+		resourceClients := resources.NewMockResourceClients(t)
+		resourceClients.EXPECT().Folder(ctx).Return(nil, schema.GroupVersionKind{}, assert.AnError).Once()
+		clients := resources.NewMockClientFactory(t)
+		clients.EXPECT().Clients(ctx, cfg.Namespace).Return(resourceClients, nil).Once()
+		c := &jobsConnector{clients: clients}
+		authorizer, err := c.newJobAuthorizer(ctx, repository.NewMockReaderWriter(t), cfg)
+		require.ErrorIs(t, err, assert.AnError)
+		require.ErrorContains(t, err, "get folder client for authorization")
+		require.Nil(t, authorizer)
+	})
+
+	t.Run("folder manager resolves configured metadata for previews", func(t *testing.T) {
+		rw := repository.NewMockReaderWriter(t)
+		rw.EXPECT().Config().Return(cfg)
+		rw.EXPECT().Read(mock.Anything, "team/_folder.json", "").Return(&repository.FileInfo{
+			Data: []byte(`{"metadata":{"name":"configured-team"}}`),
+		}, nil).Once()
+		folder := makeUnstructured("configured-team", cfg.Name)
+		folderMeta, err := utils.MetaAccessor(folder)
+		require.NoError(t, err)
+		folderMeta.SetManagerProperties(utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: cfg.Name})
+		folderMeta.SetSourceProperties(utils.SourceProperties{Path: "team/"})
+		folderClient := &mockDynamic{}
+		folderClient.On("Get", mock.Anything, "configured-team", metav1.GetOptions{}, []string(nil)).Return(folder, nil).Once()
+		t.Cleanup(func() { folderClient.AssertExpectations(t) })
+		resourceClients := resources.NewMockResourceClients(t)
+		resourceClients.EXPECT().Folder(ctx).Return(folderClient, resources.FolderKind, nil).Once()
+		clients := resources.NewMockClientFactory(t)
+		clients.EXPECT().Clients(ctx, cfg.Namespace).Return(resourceClients, nil).Once()
+		access := auth.NewMockAccessChecker(t)
+		access.EXPECT().Check(ctx, authlib.CheckRequest{
+			Group: resources.DashboardResource.Group, Resource: resources.DashboardResource.Resource,
+			Name: "test-dashboard", Verb: utils.VerbGet,
+		}, "configured-team").Return(nil).Once()
+		c := &jobsConnector{clients: clients, access: access, folderMetadataEnabled: true}
+		authorizer, err := c.newJobAuthorizer(ctx, rw, cfg)
+		require.NoError(t, err)
+		obj := makeUnstructured("test-dashboard", "pr-folder")
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		err = authorizer.AuthorizeResourcePreview(ctx, &resources.ParsedResource{
+			Info: &repository.FileInfo{Path: "team/dashboard.json", Ref: "feature"},
+			Obj:  obj, Meta: meta, GVR: resources.DashboardResource, FolderScoped: true,
+		})
+		require.NoError(t, err)
+	})
 }
 
 func TestPullRequestJobRejected(t *testing.T) {
@@ -345,7 +416,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
@@ -366,7 +437,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 			return req.Resource == resources.DashboardResource.Resource && req.Verb == utils.VerbGet
 		}), "").Return(apierrors.NewForbidden(schema.GroupResource{}, "", nil))
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
@@ -390,7 +461,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), rootFolder).Return(apierrors.NewForbidden(schema.GroupResource{}, "", nil)).Once()
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
@@ -422,7 +493,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 			}), rootFolder).Return(nil).Once()
 		}
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
@@ -459,7 +530,7 @@ func TestAuthorizeResourceJob(t *testing.T) {
 			}), "").Return(nil).Once()
 		}
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
 		spec := provisioning.JobSpec{
@@ -501,7 +572,7 @@ func TestAuthorizePushJob(t *testing.T) {
 			return req.Verb == utils.VerbGet
 		}), "").Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
 
@@ -515,7 +586,7 @@ func TestAuthorizePushJob(t *testing.T) {
 			return req.Verb == utils.VerbGet
 		}), "").Return(apierrors.NewForbidden(schema.GroupResource{}, "", nil))
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t), folderMetadataEnabled: false}
 
@@ -564,7 +635,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
 
@@ -578,7 +649,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{SkipResourceDeletion: true}}
 
@@ -595,7 +666,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 			return req.Verb == utils.VerbDelete
 		}), mock.Anything).Return(forbidden)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
 
@@ -613,7 +684,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 			return req.Verb == utils.VerbGet || req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{}}
 
@@ -632,7 +703,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 			return req.Verb == utils.VerbDelete
 		}), mock.Anything).Return(forbidden)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		spec := provisioning.JobSpec{Action: provisioning.JobActionMigrate, Migrate: &provisioning.MigrateJobOptions{Branch: "feature-x"}}
 
@@ -659,6 +730,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 			Return(makeUnstructured("my-dash", "folder-abc"), nil)
 
 		rc := resources.NewMockResourceClients(t)
+		rc.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Maybe()
 		rc.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		rc.EXPECT().ForKind(mock.Anything, mock.Anything).RunAndReturn(
 			func(_ context.Context, gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
@@ -674,7 +746,7 @@ func TestAuthorizeMigrateJob(t *testing.T) {
 		clientsMock := resources.NewMockClientFactory(t)
 		clientsMock.EXPECT().Clients(mock.Anything, mock.Anything).Return(rc, nil).Maybe()
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: clientsMock}
 		spec := provisioning.JobSpec{
 			Action: provisioning.JobActionMigrate,
@@ -699,7 +771,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 	t.Run("empty targets succeeds", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeDeleteJob(ctx, mockReader, cfg, nil, nil)
 		require.NoError(t, err)
@@ -711,7 +783,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbDelete
 		}), mock.AnythingOfType("string")).Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
@@ -724,7 +796,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(forbidden)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
@@ -742,7 +814,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 				req.Verb == utils.VerbDelete
 		}), mock.AnythingOfType("string")).Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
@@ -756,7 +828,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbDelete
 		}), "folder-abc").Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		clientsMock := resources.NewMockClientFactory(t)
 
 		dynClient := &mockDynamic{}
@@ -764,6 +836,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 			Return(makeUnstructured("my-dash", "folder-abc"), nil)
 
 		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Once()
 		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
 			Group: "dashboard.grafana.app", Kind: "Dashboard",
@@ -779,7 +852,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 
 	t.Run("ResourceRef not found is skipped", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		clientsMock := resources.NewMockClientFactory(t)
 
 		notFound := apierrors.NewNotFound(schema.GroupResource{}, "missing-dash")
@@ -787,6 +860,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		dynClient.On("Get", mock.Anything, "missing-dash", metav1.GetOptions{}, []string(nil)).Return(nil, notFound)
 
 		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Once()
 		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		clients.EXPECT().ForKind(mock.Anything, mock.Anything).Return(dynClient, dashGVR, nil)
 		clientsMock.EXPECT().Clients(mock.Anything, "default").Return(clients, nil)
@@ -802,7 +876,7 @@ func TestAuthorizeDeleteJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(forbidden).Once()
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, "team-a/dash1.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, "team-b/dash2.json", "").Return(testDashboardFileInfo(), nil).Maybe()
@@ -830,7 +904,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 
 	t.Run("empty targets succeeds", func(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		c := &jobsConnector{access: accessMock, clients: newJobAuthClients(t)}
 		err := c.authorizeMoveJob(ctx, mockReader, cfg, &provisioning.MoveJobOptions{
 			TargetPath: "dest/",
@@ -847,7 +921,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, "src/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
@@ -863,7 +937,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 		accessMock := auth.NewMockAccessChecker(t)
 		accessMock.EXPECT().Check(mock.Anything, mock.Anything, mock.Anything).Return(forbidden).Once()
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		mockReader.On("Config").Return(cfg).Maybe()
 		mockReader.On("Read", mock.Anything, "restricted/dashboard.json", "").Return(testDashboardFileInfo(), nil)
 		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).Return(nil, repository.ErrFileNotFound).Maybe()
@@ -882,7 +956,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 			return req.Group == dashGVR.Group && req.Resource == dashGVR.Resource && req.Verb == utils.VerbUpdate
 		}), "folder-abc").Return(nil)
 
-		mockReader := repository.NewMockReader(t)
+		mockReader := repository.NewMockReaderWriter(t)
 		clientsMock := resources.NewMockClientFactory(t)
 
 		dynClient := &mockDynamic{}
@@ -890,6 +964,7 @@ func TestAuthorizeMoveJob(t *testing.T) {
 			Return(makeUnstructured("my-dash", "folder-abc"), nil)
 
 		clients := resources.NewMockResourceClients(t)
+		clients.EXPECT().Folder(mock.Anything).Return(&mockDynamic{}, resources.FolderKind, nil).Once()
 		clients.EXPECT().SupportedResources().Return(resources.SupportedProvisioningResources).Maybe()
 		clients.EXPECT().ForKind(mock.Anything, schema.GroupVersionKind{
 			Group: "dashboard.grafana.app", Kind: "Dashboard",

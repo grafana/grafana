@@ -115,6 +115,43 @@ describe('dashboardV2SpecSchema', () => {
     expect(panel.spec.vizConfig.spec.fieldConfig.defaults).toEqual({ custom: { x: 1 } });
   });
 
+  it('keeps both ends of a panel queryOptions time override (timeFrom and timeTo)', () => {
+    const spec = minimalSpec({
+      elements: {
+        'panel-1': {
+          kind: 'Panel',
+          spec: {
+            id: 1,
+            title: 'P',
+            links: [],
+            data: {
+              kind: 'QueryGroup',
+              spec: { queries: [], transformations: [], queryOptions: { timeFrom: 'now-6h', timeTo: 'now' } },
+            },
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'timeseries',
+              version: '',
+              spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        },
+      },
+    });
+
+    const result = dashboardV2SpecSchema.safeParse(spec);
+    expect(result.success).toBe(true);
+    if (!result.success) {
+      return;
+    }
+    const panel = result.data.elements['panel-1'];
+    expect(panel.kind).toBe('Panel');
+    if (panel.kind !== 'Panel') {
+      return;
+    }
+    expect(panel.spec.data.spec.queryOptions).toMatchObject({ timeFrom: 'now-6h', timeTo: 'now' });
+  });
+
   it('validates a deeply nested recursive layout (rows -> tabs -> grid)', () => {
     const spec = minimalSpec({
       layout: {

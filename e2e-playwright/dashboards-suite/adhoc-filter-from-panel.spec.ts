@@ -72,7 +72,7 @@ test.describe(
       await expect(panel, 'panel is rendered').toBeVisible();
 
       // Wait for the table to load completely
-      const table = panel.locator('.rdg');
+      const table = panel.getByRole('grid');
       await expect(table, 'table is rendered').toBeVisible();
 
       const firstValue = (await getCell(table, 1, 1).textContent())!;

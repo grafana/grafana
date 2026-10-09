@@ -114,7 +114,7 @@ describe('CanvasGridAddActions', () => {
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.groupPanels));
 
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.addRow));
-      expect(DashboardInteractions.trackGroupRowClick).toHaveBeenCalled();
+      expect(DashboardInteractions.trackGroupRowClick).toHaveBeenCalledWith('canvas');
     });
 
     it('should call DashboardInteractions.trackGroupTabClick when clicking on group into tab', async () => {
@@ -125,7 +125,7 @@ describe('CanvasGridAddActions', () => {
 
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.groupPanels));
       await user.click(await screen.findByTestId(selectors.components.CanvasGridAddActions.addTab));
-      expect(DashboardInteractions.trackGroupTabClick).toHaveBeenCalled();
+      expect(DashboardInteractions.trackGroupTabClick).toHaveBeenCalledWith('canvas');
     });
 
     // Note: Ungroup functionality has been moved to TabsLayoutManagerRenderer and RowsLayoutManagerRenderer

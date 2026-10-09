@@ -14,6 +14,7 @@ import { isEditableDashboardElement } from '../../scene/types/EditableDashboardE
 import { isDashboardSceneLike } from '../../scene/types/dashboard';
 import { LinkEdit } from '../../settings/links/LinkEdit';
 import { getEditableVariableMetadata, isSceneVariable, isVariableEditable } from '../../settings/variables/utils';
+import { getPredefinedOrigin } from '../../utils/predefinedVariables';
 
 /**
  * Lightweight version of `getEditableElementFor(obj)?.getEditableElementInfo().typeName`.
@@ -53,7 +54,7 @@ export function getElementTypeName(sceneObj: SceneObject | undefined | null): st
   }
 
   if (isSceneVariable(sceneObj)) {
-    if (!isVariableEditable(sceneObj)) {
+    if (!isVariableEditable(sceneObj) && !getPredefinedOrigin(sceneObj.state.origin)) {
       return undefined;
     }
 

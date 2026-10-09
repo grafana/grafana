@@ -11,12 +11,14 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/index/scorch"
 	blevesearch "github.com/blevesearch/bleve/v2/search"
 	"github.com/blevesearch/bleve/v2/search/query"
 	"github.com/prometheus/client_golang/prometheus"
@@ -1466,6 +1468,64 @@ func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
 	require.Contains(t, bi.Features, resource.IndexFeatureHoldsDeletedDocuments)
 	require.Contains(t, bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments)
 	require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
+}
+
+// An in-memory index keeps every segment until it is evicted, so a segment
+// written for one document must not hold room for other documents, nor be sized
+// from what other indexes wrote.
+func TestInMemoryIndexSegmentsOnlyHoldTheirOwnDocuments(t *testing.T) {
+	large := strings.Repeat("panel title query expr datasource ", 150)
+	small := "panel"
+	newIndex := func(t *testing.T) bleve.Index {
+		t.Helper()
+		idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = idx.Close() })
+		return idx
+	}
+	indexDocs := func(t *testing.T, idx bleve.Index, from, count int, body string) {
+		t.Helper()
+		batch := idx.NewBatch()
+		for i := from; i < from+count; i++ {
+			require.NoError(t, batch.Index(fmt.Sprintf("doc-%d", i), map[string]any{"title": fmt.Sprintf("title %d", i), "body": body}))
+		}
+		require.NoError(t, idx.Batch(batch))
+	}
+	memoryUsed := func(t *testing.T, idx bleve.Index) uint64 {
+		t.Helper()
+		advanced, err := idx.Advanced()
+		require.NoError(t, err)
+		scorchIndex, ok := advanced.(*scorch.Scorch)
+		require.True(t, ok)
+		return scorchIndex.MemoryUsed()
+	}
+
+	t.Run("no room reserved for more documents", func(t *testing.T) {
+		indexDocs(t, newIndex(t), 0, 1000, large)
+
+		idx := newIndex(t)
+		before := memoryUsed(t, idx)
+		for i := range 10 {
+			indexDocs(t, idx, i, 1, large)
+		}
+		// A segment holding one of these documents takes about 16 KiB; reserving room
+		// for a hundred more takes it over a MiB.
+		require.Less(t, memoryUsed(t, idx)-before, uint64(10*64<<10))
+	})
+
+	t.Run("not sized from other indexes' documents", func(t *testing.T) {
+		other := newIndex(t)
+		idx := newIndex(t)
+		before := memoryUsed(t, idx)
+		for i := range 10 {
+			// zapx sizes a new segment from the last segment any index wrote.
+			indexDocs(t, other, i, 1, large)
+			indexDocs(t, idx, i, 1, small)
+		}
+		// A segment holding one of these documents takes about 1.3 KiB; sized from
+		// the other index's documents it takes over 13 KiB.
+		require.Less(t, memoryUsed(t, idx)-before, uint64(10*4<<10))
+	})
 }
 
 // A local index whose build info cannot be read is discarded: there is no way to

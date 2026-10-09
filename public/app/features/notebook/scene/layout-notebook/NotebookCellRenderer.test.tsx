@@ -55,7 +55,7 @@ const mockGetVizSuggestionForQuery = getVizSuggestionForQuery as jest.Mock;
 
 beforeEach(() => {
   mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: false });
-  contextSrv.isSignedIn = false;
+  jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(false);
   mockGetVizSuggestionForQuery.mockReset().mockResolvedValue(undefined);
 });
 
@@ -256,7 +256,7 @@ describe('NotebookCellRenderer', () => {
       // keyDown rather than user.type: a click here actually converts the cell via onConvert.
       it('is offered under Visualization once saved queries are available', async () => {
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer: jest.fn(), queryLibraryEnabled: true });
-        contextSrv.isSignedIn = true;
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
         const cell = buildMarkdownCellInLayout();
         const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
 
@@ -270,7 +270,7 @@ describe('NotebookCellRenderer', () => {
       it('opens the drawer with the Notebook context and converts the cell once a query is selected', async () => {
         const openDrawer = jest.fn();
         mockUseQueryLibraryContext.mockReturnValue({ openDrawer, queryLibraryEnabled: true });
-        contextSrv.isSignedIn = true;
+        jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
         const cell = buildMarkdownCellInLayout();
         const onFocusRequest = jest.fn();
         const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} onFocusRequest={onFocusRequest} />);
