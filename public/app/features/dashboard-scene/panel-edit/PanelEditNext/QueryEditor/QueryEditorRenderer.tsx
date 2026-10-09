@@ -43,6 +43,11 @@ interface QueryEditorPanelProps {
   startQueryPreview: (originalRefId: string, proposedQuery: DataQuery) => QueryPreview | undefined;
 }
 
+interface RegisteredCoauthoringAdapter {
+  adapter: QueryEditorCoauthoringAdapterV1;
+  identity: string;
+}
+
 export function QueryEditorPanel({
   query,
   queryDsData,
@@ -55,24 +60,32 @@ export function QueryEditorPanel({
   startQueryPreview,
 }: QueryEditorPanelProps) {
   const coauthoringEnabled = useFlagQueryeditorCoauthoringUi();
-  const coauthoringIdentity = `${queryDsData?.dsSettings?.uid ?? ''}:${query?.refId ?? ''}`;
   const coauthoringDatasourceType = queryDsData?.dsSettings?.type ?? '';
-  const [coauthoringAdapter, setCoauthoringAdapter] = useState<QueryEditorCoauthoringAdapterV1>();
+  const coauthoringDatasourceUid =
+    queryDsData?.dsSettings?.rawRef?.uid ?? queryDsData?.datasource?.uid ?? queryDsData?.dsSettings?.uid ?? '';
+  const coauthoringIdentity = `${coauthoringDatasourceType}:${coauthoringDatasourceUid}:${query?.refId ?? ''}`;
+  const coauthoringAvailable = coauthoringEnabled && coauthoringDatasourceType === PROMETHEUS_DATASOURCE_TYPE;
+  const [registeredCoauthoringAdapter, setRegisteredCoauthoringAdapter] = useState<RegisteredCoauthoringAdapter>();
   const error = data?.errors?.find((e) => e.refId === query?.refId);
   const queryRefId = query?.refId;
   // Filter panel data to only include data for this specific query
   const filteredData = useMemo(() => {
     return queryRefId && data ? filterPanelDataToQuery(data, queryRefId) : undefined;
   }, [data, queryRefId]);
-  const coauthoringRegistration = useMemo<QueryEditorCoauthoringRegistrationV1>(
-    () => ({
+  const coauthoringRegistration = useMemo<QueryEditorCoauthoringRegistrationV1>(() => {
+    const registrar: QueryEditorCoauthoringRegistrationV1 = {
       register: (adapter) => {
-        setCoauthoringAdapter(adapter);
-        return () => setCoauthoringAdapter((current) => (current === adapter ? undefined : current));
+        const registration = { adapter, identity: coauthoringIdentity };
+        setRegisteredCoauthoringAdapter(registration);
+        return () => setRegisteredCoauthoringAdapter((current) => (current === registration ? undefined : current));
       },
-    }),
-    []
-  );
+    };
+    return registrar;
+  }, [coauthoringIdentity]);
+  const coauthoringAdapter =
+    coauthoringAvailable && registeredCoauthoringAdapter?.identity === coauthoringIdentity
+      ? registeredCoauthoringAdapter.adapter
+      : undefined;
   const proposalTransaction = useQueryProposalTransaction({
     query,
     queries,
@@ -146,10 +159,7 @@ export function QueryEditorPanel({
 
   const { datasource, dsSettings } = queryDsData;
   const internalCoauthoringProps: InternalQueryEditorCoauthoringPropsV1 = {
-    unstable_queryEditorCoauthoringV1:
-      coauthoringEnabled && coauthoringDatasourceType === PROMETHEUS_DATASOURCE_TYPE
-        ? coauthoringRegistration
-        : undefined,
+    unstable_queryEditorCoauthoringV1: coauthoringAvailable ? coauthoringRegistration : undefined,
   };
   return (
     <>

@@ -1,12 +1,56 @@
+import { useCallback, useSyncExternalStore } from 'react';
 import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
-import { type VizPanel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  type SceneObject,
+  type SceneVariable,
+  SceneVariableSet,
+  SceneVariableValueChangedEvent,
+  type VizPanel,
+} from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
 import { getPanelScopedVars } from '../utils';
+
+function getInScopeVariables(panel: VizPanel): SceneVariable[] {
+  const variables: SceneVariable[] = [];
+  let current: SceneObject | undefined = panel.parent ?? panel;
+
+  while (current) {
+    if (current.state.$variables instanceof SceneVariableSet) {
+      variables.push(...current.state.$variables.state.variables);
+    }
+    current = current.parent;
+  }
+
+  return variables;
+}
+
+function useResolvedDatasourceUid(datasourceUid: string | undefined, panel: VizPanel | undefined): string | undefined {
+  const getSnapshot = useCallback(
+    () => (datasourceUid && panel ? sceneGraph.interpolate(panel, datasourceUid) : datasourceUid),
+    [datasourceUid, panel]
+  );
+  const subscribe = useCallback(
+    (onStoreChange: VoidFunction) => {
+      if (!datasourceUid || !panel || getSnapshot() === datasourceUid) {
+        return () => undefined;
+      }
+
+      const subscriptions = getInScopeVariables(panel).map((variable) =>
+        variable.subscribeToEvent(SceneVariableValueChangedEvent, onStoreChange)
+      );
+      return () => subscriptions.forEach((subscription) => subscription.unsubscribe());
+    },
+    [datasourceUid, getSnapshot, panel]
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
 
 /**
  * Loads the datasource for a query. Falls back to the panel's datasource if the query doesn't
@@ -21,6 +65,10 @@ export function useQueryDatasource(
   panelDsSettings: DataSourceInstanceSettings | undefined,
   panel?: VizPanel
 ) {
+  const resolvedDatasourceUid = useResolvedDatasourceUid(
+    query ? (query.datasource?.uid ?? panelDsSettings?.uid) : undefined,
+    panel
+  );
   const { value, loading, error } = useAsync(async () => {
     if (!query) {
       return undefined;
@@ -56,7 +104,8 @@ export function useQueryDatasource(
     // Narrow deps are intentional: widening to [query, panelDsSettings] would re-run on every
     // field change (SQL text, refId, hide flag), flickering `loading` and briefly clearing
     // `queryDsData` on every keystroke. Only datasource-identity changes should invalidate.
-    // `panel` is omitted: its identity is stable for the editor's lifetime.
+    // `panel` is omitted because its identity is stable for the editor's lifetime;
+    // `resolvedDatasourceUid` invalidates the lookup when a datasource variable changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     query?.refId,
@@ -64,6 +113,7 @@ export function useQueryDatasource(
     query?.datasource?.type,
     panelDsSettings?.uid,
     panelDsSettings?.meta.mixed,
+    resolvedDatasourceUid,
   ]);
 
   return {
