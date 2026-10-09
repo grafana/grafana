@@ -11,8 +11,8 @@ import { clockPanelMetaOnPrem, myOrgTestAppMeta, v0alpha1Response } from '../plu
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import {
   clockPanelOnPremPluginMeta,
-  cloudwatchPluginMeta,
   myOrgTestAppSettings,
+  testdataPluginMeta,
 } from './test-fixtures/v0alpha1Response';
 import { type Settings as v0alpha1Settings } from './types';
 import { updateAppPluginSettings } from './updateAppPluginSettings';
@@ -26,7 +26,7 @@ jest.mock('../pluginMeta/plugins', () => ({
 
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
 const refetchPluginMetaMock = jest.mocked(refetchPluginMeta);
-const cloudwatch = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'cloudwatch')!;
+const testdata = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-testdata-datasource')!;
 
 describe('settings', () => {
   let backendSrv: BackendSrv;
@@ -218,11 +218,11 @@ describe('settings', () => {
       });
 
       it('should just map data source plugins', async () => {
-        refetchPluginMetaMock.mockResolvedValue(cloudwatch);
+        refetchPluginMetaMock.mockResolvedValue(testdata);
 
-        const result = await updateAppPluginSettings(cloudwatch.spec.pluginJson.id, {});
+        const result = await updateAppPluginSettings(testdata.spec.pluginJson.id, {});
 
-        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(result).toEqual(testdataPluginMeta);
         expect(backendSrv.post).not.toHaveBeenCalled();
         expect(backendSrv.get).not.toHaveBeenCalled();
       });
