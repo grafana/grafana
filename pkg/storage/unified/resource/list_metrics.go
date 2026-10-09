@@ -96,7 +96,8 @@ func (s *server) recordListBodyStats(span trace.Span, stats *listBodyStats, path
 		return
 	}
 	switch path {
-	case listPathStoreAuthorizeFirst, listPathStoreFetchFirst, listPathSearchFallbackAuthorizeFirst, listPathSearchFallbackFetchFirst:
+	case listPathStoreAuthorizeFirst, listPathStoreFetchFirst, listPathSearchFallbackAuthorizeFirst, listPathSearchFallbackFetchFirst,
+		listPathSearch, listPathTrashSearch:
 	default:
 		return
 	}

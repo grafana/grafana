@@ -123,7 +123,8 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
 				Value: item.value.Value, ResourceVersion: item.value.ResourceVersion,
 			})
-			if s.listPageFull(req, rsp, pageBytes) {
+			if reason := s.listLimitStopReason(req, rsp, pageBytes); reason != "" {
+				setListStopReason(ctx, reason)
 				token, err := newSearchContinueToken(item.row.sortFields, page.resourceVersion, sortAscending)
 				if err != nil {
 					return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}, nil
