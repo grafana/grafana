@@ -3,6 +3,7 @@
  *
  * @public
  */
+import * as React from 'react';
 
 export const AnnoKeyManagerKind = 'grafana.app/managedBy';
 export const AnnoKeyManagerIdentity = 'grafana.app/managerId';
@@ -85,20 +86,16 @@ export function setRegisterResourceKinds(impl: RegisterResourceKinds): void {
   pending.splice(0).forEach(impl);
 }
 
-/**
- * Exposed component: a drawer that commits a resource to a Git Sync repository.
- * Use it with `usePluginComponent(SaveResourceDrawerComponent)`.
- */
-export const SaveResourceDrawerComponent = 'grafana/provisioning/save-resource-drawer/v1';
-
 export interface SaveResourceDrawerProps {
   /** The resource to commit. `apiVersion`, `kind`, `metadata.name` and `spec` are written to the file. */
   resource: ManagedResource & { apiVersion?: string; kind?: string; metadata?: { name?: string }; spec?: unknown };
   action: 'create' | 'update' | 'delete';
   /** Shown in the drawer and used for the commit message and the file name of a new resource. */
   title: string;
-  /** For `create`: the folder the resource goes into. The drawer finds the repository from it. */
+  /** For `create` of a folder-scoped kind: the folder the resource goes into. The drawer finds the repository from it. */
   folderName?: string;
+  /** For `create` of a folderless kind: the repository to commit to, from `RepositorySelect`. */
+  repositoryName?: string;
   onDismiss?: () => void;
   /** The resource is stored in Grafana (commit to the configured branch). */
   onWriteSuccess?: (resource: unknown) => void;
@@ -119,23 +116,65 @@ export interface BranchCommit {
   configuredBranch?: string;
 }
 
-/**
- * Exposed component: the banner that dashboards show after a commit to a branch, with a link to open
- * the pull request. Use it with `usePluginComponent(PullRequestBannerComponent)`.
- */
-export const PullRequestBannerComponent = 'grafana/provisioning/pull-request-banner/v1';
-
 export interface PullRequestBannerProps extends BranchCommit {
   /** What the commit did. Defaults to `create`. */
   action?: 'create' | 'update' | 'delete';
 }
 
-/**
- * Exposed component: the badge that shows which system manages a resource. Renders nothing for an
- * unmanaged resource. Use it with `usePluginComponent(ManagedBadgeComponent)`.
- */
-export const ManagedBadgeComponent = 'grafana/provisioning/managed-badge/v1';
-
 export interface ManagedBadgeProps {
   resource: ManagedResource;
 }
+
+export interface RepositorySelectProps {
+  /** The kind the user is about to create. The select renders nothing when the kind cannot go to a repository. */
+  group: string;
+  kind: string;
+  /** Selected repository name. Empty means the resource is stored in Grafana. */
+  value?: string;
+  onChange: (repositoryName: string) => void;
+}
+
+interface Components {
+  SaveResourceDrawer: React.ComponentType<SaveResourceDrawerProps>;
+  ManagedBadge: React.ComponentType<ManagedBadgeProps>;
+  PullRequestBanner: React.ComponentType<PullRequestBannerProps>;
+  RepositorySelect: React.ComponentType<RepositorySelectProps>;
+}
+
+let components: Partial<Components> = {};
+
+/** @internal Used by Grafana at startup to provide the component implementations. */
+export function setComponents(impl: Components): void {
+  components = impl;
+}
+
+function shell<K extends keyof Components>(name: K): Components[K] {
+  const Shell = (props: React.ComponentProps<Components[K]>) => {
+    const Impl = components[name] as React.ComponentType<typeof props> | undefined;
+    if (Impl) {
+      return <Impl {...props} />;
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      return <div>@grafana/runtime provisioning.{name} is not set</div>;
+    }
+    return null;
+  };
+  Shell.displayName = name;
+  return Shell;
+}
+
+/** A drawer that commits a resource to a Git Sync repository. */
+export const SaveResourceDrawer = shell('SaveResourceDrawer');
+
+/** The badge that shows which system manages a resource. Renders nothing for an unmanaged resource. */
+export const ManagedBadge = shell('ManagedBadge');
+
+/** The banner that dashboards show after a commit to a branch, with a link to open the pull request. */
+export const PullRequestBanner = shell('PullRequestBanner');
+
+/**
+ * A form field to pick the repository for a new resource. Put it in the create form of a folderless
+ * kind; pass the value to `SaveResourceDrawer` as `repositoryName`. Renders nothing when provisioning
+ * is off or no repository exists.
+ */
+export const RepositorySelect = shell('RepositorySelect');

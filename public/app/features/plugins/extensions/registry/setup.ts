@@ -1,6 +1,5 @@
 /* eslint-disable @grafana/i18n/no-untranslated-strings */
 import { type AppPluginConfig, PluginExtensionExposedComponents } from '@grafana/data';
-import { provisioning } from '@grafana/runtime';
 import { FlagKeys, getAppPluginMetas, getCachedPromise, getFeatureFlagClient } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
@@ -10,10 +9,6 @@ import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibr
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
-import { ManagedBadgeExposedComponent } from 'app/features/provisioning/components/ManagedBadgeExposedComponent';
-import { ProvisionedResourceDrawerExposedComponent } from 'app/features/provisioning/components/Shared/ProvisionedResourceDrawerExposedComponent';
-import { PullRequestBannerExposedComponent } from 'app/features/provisioning/components/Shared/PullRequestBannerExposedComponent';
-import { addResourceKinds } from 'app/features/provisioning/utils/resourceKinds';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
 
@@ -32,8 +27,6 @@ export function initRegistries(apps: AppPluginConfig[]): PluginExtensionRegistri
 }
 
 function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry }: PluginExtensionRegistries) {
-  provisioning.setRegisterResourceKinds(addResourceKinds);
-
   // Registering core extension links
   addedLinksRegistry.register({
     pluginId: 'grafana',
@@ -110,24 +103,6 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
             },
           ]
         : []),
-      {
-        id: provisioning.SaveResourceDrawerComponent,
-        title: 'Save provisioned resource drawer',
-        description: 'Commits a resource to a Git Sync repository',
-        component: ProvisionedResourceDrawerExposedComponent,
-      },
-      {
-        id: provisioning.ManagedBadgeComponent,
-        title: 'Managed badge',
-        description: 'Shows which system manages a resource',
-        component: ManagedBadgeExposedComponent,
-      },
-      {
-        id: provisioning.PullRequestBannerComponent,
-        title: 'Pull request banner',
-        description: 'Shown after a commit to a branch, with a link to open the pull request',
-        component: PullRequestBannerExposedComponent,
-      },
     ],
   });
 }
