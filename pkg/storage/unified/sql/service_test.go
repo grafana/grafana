@@ -54,6 +54,7 @@ type mockResourceServer struct {
 	resourcepb.UnimplementedResourceStatsServer
 	resourcepb.UnimplementedBulkStoreServer
 	resourcepb.UnimplementedBlobStoreServer
+	resourcepb.UnimplementedBlobStoreStreamingServer
 	resourcepb.UnimplementedQuotasServer
 }
 
