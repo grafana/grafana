@@ -159,6 +159,23 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleReviews",
+        "resourceVersion": "1791369430263",
+        "creationTimestamp": "2026-10-07T09:54:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-07 10:37:10.26353 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable assistant reviews on the alert quality page.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleStatusSync",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-11T20:29:50Z"
@@ -1058,6 +1075,20 @@
       },
       "spec": {
         "description": "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "authz.useLegacyCheck",
+        "resourceVersion": "1791463413681",
+        "creationTimestamp": "2026-10-08T12:43:33Z"
+      },
+      "spec": {
+        "description": "Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -3322,15 +3353,18 @@
     {
       "metadata": {
         "name": "inlineLogDetailsNoScrolls",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T11:18:41Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2026-03-11T11:18:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables an inline version of Log Details that creates no new scrolls",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3960,14 +3994,17 @@
     {
       "metadata": {
         "name": "lokiAlignedQuerySplitting",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-26T10:03:21Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2026-03-26T10:03:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Aligns query splitting chunks with UTC midnight",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4232,15 +4269,18 @@
     {
       "metadata": {
         "name": "otelLogsFormatting",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T15:42:14Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2025-07-16T15:42:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Applies OTel formatting templates to displayed logs",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5700,13 +5740,16 @@
     {
       "metadata": {
         "name": "unifiedNavbars",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-09T12:51:22Z"
+        "resourceVersion": "1791558064690",
+        "creationTimestamp": "2025-04-09T12:51:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 15:01:04.690462 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables unified navbars",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-catalog",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }

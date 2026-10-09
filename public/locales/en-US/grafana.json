@@ -3026,7 +3026,7 @@
       },
       "toggle": {
         "use-new-experience": "Use new experience",
-        "view-previous-experience": "Revert to previous experience"
+        "view-previous-experience-deprecated": "Revert to previous experience (deprecated)"
       },
       "unknown-rule-type": "Unknown rule type"
     },
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Collapse all",
+      "deprecation-notice": {
+        "body": "It will be removed in a future release of Grafana and replaced by the new alert rule list.",
+        "switch-button": "Switch to the new list",
+        "title": "This version of the alert rule list is deprecated"
+      },
       "expand-all": "Expand all"
     },
     "rule-list-v2": {
@@ -9006,8 +9011,8 @@
     },
     "show-all-spans": "Show all spans",
     "signal-card": {
-      "collapse-aria-label": "Collapse datasource explorer for query {{refId}}",
-      "expand-aria-label": "Expand datasource explorer for query {{refId}}",
+      "collapse-aria-label": "Collapse datasource explorer for query {{refId}} ({{datasourceName}})",
+      "expand-aria-label": "Expand datasource explorer for query {{refId}} ({{datasourceName}})",
       "jump-to-query-label": "Jump to query {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13172,6 +13177,11 @@
       "saving-title": "This notebook is still saving",
       "stay": "Stay"
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": "Assistant edit"
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Cancel",
       "confirm-discard": "Discard",
@@ -13253,6 +13263,7 @@
       "redo-action": "Redo: {{action}}",
       "remove-query": "Remove query",
       "remove-tag": "Remove tag",
+      "rename": "Rename notebook",
       "reset-cell-time-range": "Use notebook time range",
       "select-query": "Select query",
       "set-cell-time-range": "Set panel time range",
@@ -17748,15 +17759,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "Add sort field",
+      "all-fields-used": "Every field is already used",
       "description": {
         "sort-fields": "Sort fields in a frame."
       },
+      "drag-handle-label": "Drag to change sort priority",
       "label-field": "Field",
       "label-reverse": "Reverse",
       "name": {
         "sort-by": "Sort by"
       },
-      "placeholder-select-field": "Select field"
+      "placeholder-select-field": "Select field",
+      "remove-sort-field": "Remove sort field"
     },
     "supplier": {
       "description": {

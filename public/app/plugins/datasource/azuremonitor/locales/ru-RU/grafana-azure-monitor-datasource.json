@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Сброс"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Вспомогательные логи",
+      "description-auxiliary-logs": "Включение этой функции влечет за собой затраты на каждый запрос Azure Monitor на панелях дашбордов, связанный с таблицами для <2>вспомогательных логов</2>. Вспомогательные логи не имеют SLA по времени ответа, предназначены только для специальных запросов и анализа данных и не должны использоваться для дашбордов, требующих данных в реальном времени, или для функции оповещения.",
+      "label-enable-auxiliary-logs": "Включить вспомогательные логи"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Необработанный запрос {{queryDisplayName}}",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Установите ограничение по количеству возвращаемых строк (по умолчанию — 1000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Действительно перейти на вспомогательные логи?",
       "body-basic-logs-queries": "Действительно перейти на базовые журналы?",
       "confirmText-confirm": "Подтвердить",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Запросы к вспомогательным логам являются платными. Затраты зависят от объема сканируемых данных. Вспомогательные логи не имеют SLA по времени ответа и не должны использоваться для дашбордов, требующих данных в реальном времени, или для функции оповещения.",
       "description-basic-logs-queries": "Запросы базовых журналов являются платными. Затраты зависят от объема сканируемых данных.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Аналитические",
+      "label-auxiliary": "Вспомогательные",
+      "label-basic": "Базовые",
       "label-logs": "Журналы",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Запросы к вспомогательным логам",
       "title-basic-logs-queries": "Запросы базовых журналов",
       "tooltip-logs": "Указывает, следует ли выполнять запросы базовых или аналитических журналов.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Определяет, следует ли выполнять запросы к аналитическим, базовым или вспомогательным логам.",
+      "tooltip-logs-aux": "Определяет, следует ли выполнять запросы к аналитическим или вспомогательным логам."
     },
     "logs-query-builder": {
       "title-no-tables": "Ресурс загружен, но без таблиц"
     },
     "logs-query-editor": {
       "learn-more": "Подробнее",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "При использовании вспомогательных логов можно выбирать только один ресурс за раз.",
+      "notice-basic-single-resource": "При использовании базовых логов можно выбирать только один ресурс за раз.",
+      "notice-same-resource-type": "Можно выбирать только элементы одного и того же типа ресурса.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> — это аналитическая таблица.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> — это таблица вспомогательных логов. Она является платной (затраты зависят от объема сканируемых данных), не имеет SLA по времени ответа и не подходит для сценариев работы в реальном времени или отправки оповещений.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> — это таблица базовых логов. Она является платной (затраты зависят от объема сканируемых данных).",
+      "tier-switch-revert": "Вернуться к {{fromTier}}",
+      "tier-switch-title": "Уровень запросов установлен на {{toTier}}",
       "view-query": "Просмотр запроса на портале Azure",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "При выполнении этот запрос к вспомогательным логам обрабатывает {{dataIngested}} ГиБ данных. Вспомогательные логи не имеют SLA по времени ответа и не подходят для сценариев работы в реальном времени или отправки оповещений. ",
+      "warning-auxiliary-raw": "Это запрос к вспомогательным логам. Он использует конечную точку поиска, является платным (затраты зависят от объема сканируемых данных), не имеет SLA по времени ответа и не подходит для сценариев работы в реальном времени или отправки оповещений. В этом режиме нельзя отправлять запросы к таблицам плана «Аналитика» — для них используйте уровень аналитики. ",
+      "warning-basic-raw": "Это запрос к базовым логам. Он использует конечную точку поиска и является платным (затраты зависят от объема сканируемых данных). В этом режиме нельзя отправлять запросы к таблицам плана «Аналитика» — для них используйте уровень аналитики. ",
+      "warning-data-ingested": "При выполнении этот запрос обрабатывает {{dataIngested}} ГиБ данных. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Эта таблица относится к плану «Вспомогательные логи». Чтобы выполнять к ней запросы, включите «Вспомогательные логи» в параметрах источника данных.",
+      "description-auxiliary-enabled": "При выборе этой таблицы режим запроса переключится на вспомогательные логи",
+      "description-basic-disabled": "Эта таблица относится к плану «Базовые логи». Чтобы выполнять к ней запросы, включите «Базовые логи» в параметрах источника данных.",
+      "description-basic-enabled": "При выборе этой таблицы режим запроса переключится на базовые логи",
+      "description-plan-unavailable": "Невозможно выбрать эту таблицу, поскольку не удалось определить ее план логов.",
+      "label-all-columns": "Все столбцы"
     },
     "metric-name-field": {
       "label-metric": "Метрика"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Выбрать пользовательское пространство имен",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Выбрать название измерения",
+      "aria-label-select-metric-name": "Выбрать имя метрики",
       "aria-label-select-namespace": "Выбрать пространство имен",
       "aria-label-select-query-type": "Выбрать тип запроса",
       "aria-label-select-region": "Выбрать область",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Выбрать группу ресурсов",
       "aria-label-select-subscription": "Выбрать подписку",
       "label-custom-namespace": "Пользовательское пространство имен",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Название измерения",
+      "label-metric-name": "Имя метрики",
       "label-namespace": "Пространство имен",
       "label-query-type": "Тип запроса",
       "label-region": "Регион",

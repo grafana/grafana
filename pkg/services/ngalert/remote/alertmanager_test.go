@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/alerting/utils/hash"
 	amv2 "github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
@@ -902,7 +903,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			name: "default config with InhibitRules",
 			config: func() *apimodels.PostableUserConfig {
 				c := mustLoad(defaultGrafanaConfig)
-				c.AlertmanagerConfig.InhibitRules = []config.InhibitRule{{}}
+				c.AlertmanagerConfig.InhibitRules = []common.InhibitRule{{}}
 				return c
 			}(),
 			expected: false,

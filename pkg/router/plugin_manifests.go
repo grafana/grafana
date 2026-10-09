@@ -29,12 +29,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/definition"
 )
 
+// Key prefixes for the backends of each plugin manifests source.
+const (
+	pluginsKeyPrefix = "managed"
+	coreKeyPrefix    = "core"
+)
+
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
 type pluginManifestsTarget struct {
-	url      string
-	client   *http.Client
-	patterns []*regexp.Regexp
-	deps     PluginDependencies
+	keyPrefix string // prefixes every backend Key, so sources never share a key
+	source    string // reported by Backend.Source
+	url       string
+	client    *http.Client
+	patterns  []*regexp.Regexp
+	deps      PluginDependencies
 
 	cooldown *cooldown
 	status   pollStatus
@@ -59,6 +67,8 @@ type pluginConnectionKey struct {
 }
 
 func newPluginManifestsTarget(
+	keyPrefix string,
+	source string,
 	rawURL string,
 	patterns []*regexp.Regexp,
 	client *http.Client,
@@ -66,20 +76,22 @@ func newPluginManifestsTarget(
 ) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
 	if err != nil {
-		return nil, fmt.Errorf("router: parsing plugins_url %q: %w", rawURL, err)
+		return nil, fmt.Errorf("router: parsing %s %q: %w", source, rawURL, err)
 	}
 	// url.Parse accepts empty and relative URLs; see newAggregateTarget.
 	if parsed.Scheme == "" || parsed.Host == "" {
-		return nil, fmt.Errorf("router: plugins_url must be absolute (scheme and host required): url=%q", rawURL)
+		return nil, fmt.Errorf("router: %s must be absolute (scheme and host required): url=%q", source, rawURL)
 	}
 
 	t := &pluginManifestsTarget{
+		keyPrefix:       keyPrefix,
+		source:          source,
 		deps:            deps,
 		url:             rawURL,
 		client:          client,
 		patterns:        patterns,
 		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
-		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister),
+		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)
@@ -131,6 +143,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
+	skipped := 0
 	for _, entry := range deployment.Plugins {
 		for _, manifest := range entry.Definition.Manifests {
 			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
@@ -154,24 +167,27 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
 				continue
 			}
 
 			backend.info = entry.Definition.JSONData.Info
 
 			// The host is outside PluginDefinition, but changing it must reload the backend.
-			key, keyErr := pluginDeploymentKey(entry, manifest)
+			key, keyErr := pluginDeploymentKey(t.keyPrefix, entry, manifest)
 			if keyErr != nil {
 				logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
+				skipped++
 				continue
 			}
-			deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
+			deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key, source: t.source}
 			backends = append(backends, deploymentBackend)
 			keys[deploymentBackend.Key()] = struct{}{}
 		}
 	}
 
 	t.snapshot.Store(&backends)
+	t.status.recordSkipped(skipped)
 
 	lastKeys := *t.lastKeys.Load()
 	if !sameKeySet(lastKeys, keys) {
@@ -278,24 +294,30 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		}
 		plugin.Definition.Manifest = nil
 	}
+	for _, plugin := range deployment.Plugins {
+		for _, manifest := range plugin.Definition.Manifests {
+			definition.MigrateDeprecatedRoutes(manifest)
+		}
+	}
 
 	return deployment, nil
 }
 
-func pluginDeploymentKey(entry definition.PluginDeployment, manifest *app.ManifestData) (string, error) {
+func pluginDeploymentKey(keyPrefix string, entry definition.PluginDeployment, manifest *app.ManifestData) (string, error) {
 	body, err := pluginManifestKeyData(entry.Definition, manifest, entry.Host)
 	if err != nil {
 		return "", fmt.Errorf("router: fingerprinting plugin manifest entry %q: %w", entry.Definition.JSONData.ID, err)
 	}
 	sum := sha256.Sum256(body)
-	return "managed:" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
+	return keyPrefix + ":" + entry.Definition.JSONData.ID + ":" + hex.EncodeToString(sum[:])[:16], nil
 }
 
 // pluginDeploymentBackend includes the remote host in the deployment key.
 type pluginDeploymentBackend struct {
 	Backend
-	key string
+	key    string
+	source string
 }
 
 func (b *pluginDeploymentBackend) Key() string    { return b.key }
-func (b *pluginDeploymentBackend) Source() string { return sourcePluginsURL }
+func (b *pluginDeploymentBackend) Source() string { return b.source }

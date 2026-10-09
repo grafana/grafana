@@ -68,7 +68,7 @@ func TestBackendTracing(t *testing.T) {
 }
 
 func TestProxyTracing(t *testing.T) {
-	for _, mode := range []string{"forward", "aggregate", "single-tenant"} {
+	for _, mode := range []string{"aggregate", "single-tenant"} {
 		t.Run(mode, func(t *testing.T) {
 			recorder := setupRouterTracing(t)
 			upstreamContext := make(chan trace.SpanContext, 1)
@@ -84,8 +84,6 @@ func TestProxyTracing(t *testing.T) {
 			var handler http.Handler
 			var err error
 			switch mode {
-			case "forward":
-				backend, err = NewForwardBackend(group, forwardSpec(upstream.URL), "1", transport)
 			case "aggregate":
 				base, parseErr := url.Parse(upstream.URL)
 				require.NoError(t, parseErr)
