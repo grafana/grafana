@@ -288,10 +288,9 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 //     pkg/services/authz/rbac/mapper.go, where `globalroles` is wired with
 //     `useWildcardScope: true`).
 //
-//   - `roles:write`  → `edit`   on group_resource:iam.grafana.app/roles.
-//     `edit` is used (instead of `update`) because the FGA schema defines
-//     create/update/delete on group_resource as `... or edit`, and the legacy
-//     `roles:write` action covers create + update + patch + delete.
+//   - `roles:write` → `create` and `update` on group_resource:iam.grafana.app/roles.
+//     `update` also covers patch. The `edit` action set would additionally grant
+//     read and delete, which require separate legacy permissions.
 //
 //   - `roles:delete` → `delete` on group_resource:iam.grafana.app/roles.
 func RoleManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
@@ -312,7 +311,8 @@ func RoleManagementToTuples(subject string, permission RolePermission) []*openfg
 		)
 	case actionRolesWrite:
 		tuples = append(tuples,
-			NewGroupResourceTuple(subject, RelationSetEdit, rolesGroup, rolesResource, ""),
+			NewGroupResourceTuple(subject, RelationCreate, rolesGroup, rolesResource, ""),
+			NewGroupResourceTuple(subject, RelationUpdate, rolesGroup, rolesResource, ""),
 		)
 	case actionRolesDelete:
 		tuples = append(tuples,
