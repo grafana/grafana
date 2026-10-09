@@ -6,6 +6,40 @@ import { getDefaultTimeRange } from '../types/time';
 import { getPanelDataStatusItems, PanelStatusStore } from './PanelNotices';
 
 describe('PanelStatusStore', () => {
+  it('keeps equivalent snapshots stable while using the latest action callbacks', async () => {
+    const store = new PanelStatusStore();
+    const source = store.createSource();
+    const initial = store.getSnapshot();
+    source.set([]);
+    source.setActionResolver(undefined);
+    expect(store.getSnapshot()).toBe(initial);
+    const clicked = jest.fn();
+    const publish = (value: number) => {
+      source.set([
+        {
+          id: 'a',
+          severity: 'warning',
+          text: 'Choose field',
+          actions: [{ id: 'choose', label: 'Choose', onClick: () => clicked(value) }],
+        },
+      ]);
+      source.setActionResolver(() => ({
+        actions: [{ id: 'resolve', label: 'Resolve', onClick: () => clicked(value * 10) }],
+      }));
+    };
+    publish(1);
+    const snapshot = store.getSnapshot();
+    publish(2);
+    expect(store.getSnapshot()).toBe(snapshot);
+    const item = snapshot.items[0];
+    for (const action of item.actions!) {
+      await store.runAction(item.id, action.id);
+    }
+    expect(clicked.mock.calls).toEqual([[2], [20]]);
+    source.set([{ id: 'a', severity: 'error', text: 'Field removed' }]);
+    expect(store.getSnapshot().items[0]).toMatchObject({ severity: 'error', text: 'Field removed' });
+  });
+
   it('blocks disabled callbacks and contains synchronous failures after enabling', async () => {
     const store = new PanelStatusStore();
     const source = store.createSource();

@@ -857,8 +857,6 @@ export interface DataSourceInstanceListItem {
   apiVersion?: string;
   name: string;
   meta: DataSourcePluginMeta;
-  /** @deprecated -- use `getDefaultDataSourceInstanceListItem()` */
-  isDefault: boolean;
 }
 
 /**

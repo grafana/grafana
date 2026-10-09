@@ -68,8 +68,25 @@ describe('RuleListPageTitle', () => {
     });
   });
 
-  describe('when on OLD view (alertingListViewV2PreviewToggle enabled, alertingListViewV2 disabled)', () => {
-    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle'] });
+  describe('when alertingListViewV2 is disabled', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle'], disable: ['alertingListViewV2'] });
+
+    it('should not show the toggle button, even with a stored preference for the new list', () => {
+      setPreviewToggle('alertingListViewV2', true);
+
+      renderRuleListPageTitle();
+
+      expect(ui.useNewExperienceButton.query()).not.toBeInTheDocument();
+      expect(ui.revertButton.query()).not.toBeInTheDocument();
+    });
+  });
+
+  describe('when on OLD view (both toggles enabled, stored preference for the old list)', () => {
+    testWithFeatureToggles({ enable: ['alertingListViewV2PreviewToggle', 'alertingListViewV2'] });
+
+    beforeEach(() => {
+      setPreviewToggle('alertingListViewV2', false);
+    });
 
     it('should show "Use new experience" button', () => {
       renderRuleListPageTitle();
@@ -102,6 +119,11 @@ describe('RuleListPageTitle', () => {
       renderRuleListPageTitle();
       expect(ui.revertButton.get()).toBeInTheDocument();
       expect(ui.useNewExperienceButton.query()).not.toBeInTheDocument();
+    });
+
+    it('should label the revert button as deprecated', () => {
+      renderRuleListPageTitle();
+      expect(ui.revertButton.get()).toHaveTextContent('Revert to previous experience (deprecated)');
     });
 
     describe('when alertingTriage is disabled', () => {

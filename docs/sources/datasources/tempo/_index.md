@@ -130,6 +130,27 @@ After you've connected Grafana to Tempo, you can configure correlations between 
 - [Trace to profiles](configure-tempo-data-source/configure-trace-to-profiles/): Link spans to profiling data in Grafana Pyroscope with embedded flame graphs.
 - [Trace correlations](configure-tempo-data-source/trace-correlations/): Create custom correlation links to any data source or external URL.
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to search and query your Tempo data source, use the `gcx datasources tempo` commands:
+
+```sh
+# Search for traces with a TraceQL query
+gcx datasources tempo query -d <DATASOURCE_UID> '{ span.http.status_code >= 500 }' --since 1h
+
+# Retrieve a single trace by its ID
+gcx datasources tempo get -d <DATASOURCE_UID> <TRACE_ID>
+
+# List all trace labels, or the values for a single label
+gcx datasources tempo labels -d <DATASOURCE_UID>
+gcx datasources tempo labels -d <DATASOURCE_UID> --label service.name
+
+# Run a TraceQL metrics query that returns time series
+gcx datasources tempo metrics -d <DATASOURCE_UID> '{ } | rate()' --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Tempo data source and _`<TRACE_ID>`_ with a hex-encoded trace ID. You can omit the `-d` flag when `datasources.tempo` is configured in your `gcx` context. The `query` command searches for traces, `get` retrieves a single trace by ID, and `metrics` returns time series from a TraceQL metrics query.
+
 ## Related resources
 
 - [Introduction to tracing](https://grafana.com/docs/tempo/<TEMPO_VERSION>/introduction/)

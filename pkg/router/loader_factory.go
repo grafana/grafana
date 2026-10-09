@@ -17,8 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader prefers configured cloud routes (appmanifest apiserver,
-// the two fixed aggregate targets, and/or plugins_url -- see
+// ProvideRoutesLoader prefers configured cloud routes (aggregate targets,
+// plugins_url, core_url and/or st_discovery_url -- see
 // ProvideCloudRoutesLoaderFactory), then local plugins. Dummy groups let the
 // router run when none of those sources are available.
 func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
@@ -69,6 +69,7 @@ func ProvideCloudRoutesLoader(
 		MetricsRegister:    reg,
 		RESTConfigProvider: clients.RESTConfigProvider,
 		Unified:            clients.Resource,
+		AccessClient:       clients.Access,
 		Decrypter:          decrypter,
 		TokenExchanger:     newClientV3TokenExchanger(cfg),
 		Tracer:             tracer,

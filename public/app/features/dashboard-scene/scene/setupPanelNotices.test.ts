@@ -7,9 +7,12 @@ import {
   type PanelData,
   type PanelStatusItem,
 } from '@grafana/data';
+import { getTemplateSrv, setTemplateSrv } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { SceneDataNode, VizPanel } from '@grafana/scenes';
 import type { PanelContext } from '@grafana/ui';
+
+import { initTemplateSrv } from '../../../../test/helpers/initTemplateSrv';
 
 import { setupPanelNotices } from './setupPanelNotices';
 
@@ -104,6 +107,7 @@ it('ignores stale datasource loads and supplies current query context to action 
   const { data, context, store } = setup();
   const close = context.activateNotices!();
   const current = response('Current error');
+  current.request!.targets[0].datasource = { uid: 'other-metrics' };
   data.setState({ data: current });
   resolveOld(datasource);
   await new Promise((resolve) => setTimeout(resolve, 0));
@@ -112,21 +116,140 @@ it('ignores stale datasource loads and supplies current query context to action 
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry Current error']);
   expect(datasource.getPanelStatusActions).toHaveBeenCalledWith(
-    expect.objectContaining({ text: 'Current error', datasourceUid: 'metrics', refId: 'A' }),
+    expect.objectContaining({ text: 'Current error', datasourceUid: 'other-metrics', refId: 'A' }),
     { data: current, query: current.request!.targets[0] }
   );
   const next = response('After variable change');
+  next.request!.targets[0].datasource = { uid: 'other-metrics' };
   next.request!.scopedVars = { datasource: { value: 'other-instance' } };
   jest.mocked(getDataSourceInstance).mockResolvedValueOnce(datasource);
   data.setState({ data: next });
   expect(store.getSnapshot().items[0].assistant).toBe('hidden');
   await new Promise((resolve) => setTimeout(resolve, 0));
   expect(getDataSourceInstance).toHaveBeenLastCalledWith(
-    { uid: 'metrics' },
+    { uid: 'other-metrics' },
     { datasource: { value: 'other-instance' } }
   );
   expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry After variable change']);
   close();
+});
+
+it('retains actions and pending datasource loads across equivalent refreshes', async () => {
+  const datasource = new ActionDatasource({
+    id: 1,
+    uid: 'metrics',
+    type: 'test',
+    name: 'Metrics',
+    access: 'proxy',
+    readOnly: false,
+    meta: {} as DataSourceApi['meta'],
+    jsonData: {},
+  });
+  let resolve!: (value: DataSourceApi) => void;
+  jest
+    .mocked(getDataSourceInstance)
+    .mockClear()
+    .mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      })
+    );
+  const { data, context, store } = setup();
+  const close = context.activateNotices!();
+  data.setState({ data: response('While loading') });
+  expect(getDataSourceInstance).toHaveBeenCalledTimes(1);
+  resolve(datasource);
+  await new Promise((done) => setTimeout(done, 0));
+  expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry While loading']);
+  const current = response('After refresh');
+  data.setState({ data: current });
+  expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry After refresh']);
+  expect(store.getSnapshot().items[0].assistant).not.toBe('hidden');
+  expect(getDataSourceInstance).toHaveBeenCalledTimes(1);
+  expect(datasource.getPanelStatusActions).toHaveBeenLastCalledWith(
+    expect.objectContaining({ text: 'After refresh' }),
+    { data: current, query: current.request!.targets[0] }
+  );
+  close();
+});
+
+it('reloads a variable datasource when its value changes with unchanged scoped variables', async () => {
+  const previousTemplateSrv = getTemplateSrv();
+  const templateSrv = initTemplateSrv('panel-notices', [
+    { type: 'datasource', name: 'source', current: { value: 'metrics' } },
+  ]);
+  setTemplateSrv(templateSrv);
+  const datasource = new ActionDatasource({
+    id: 1,
+    uid: 'metrics',
+    type: 'test',
+    name: 'Metrics',
+    access: 'proxy',
+    readOnly: false,
+    meta: {} as DataSourceApi['meta'],
+    jsonData: {},
+  });
+  jest.mocked(getDataSourceInstance).mockClear().mockResolvedValue(datasource);
+  const { data, context, store } = setup();
+  const current = response('Variable error');
+  current.request!.targets[0].datasource = { uid: '$source' };
+  data.setState({ data: current });
+  const close = context.activateNotices!();
+  try {
+    await new Promise((done) => setTimeout(done, 0));
+    expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry Variable error']);
+    data.setState({ data: { ...current, request: { ...current.request!, scopedVars: {} } } });
+    expect(getDataSourceInstance).toHaveBeenCalledTimes(1);
+    expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry Variable error']);
+    templateSrv.init([{ type: 'datasource', name: 'source', current: { value: 'other-metrics' } }]);
+    data.setState({ data: { ...current, request: { ...current.request!, scopedVars: {} } } });
+    expect(getDataSourceInstance).toHaveBeenCalledTimes(2);
+    expect(store.getSnapshot().items[0]).toMatchObject({ assistant: 'hidden', actions: [] });
+    await new Promise((done) => setTimeout(done, 0));
+    expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry Variable error']);
+  } finally {
+    close();
+    setTemplateSrv(previousTemplateSrv);
+  }
+});
+
+it('retries a failed datasource load on the next request and ignores loads after deactivation', async () => {
+  const datasource = new ActionDatasource({
+    id: 1,
+    uid: 'metrics',
+    type: 'test',
+    name: 'Metrics',
+    access: 'proxy',
+    readOnly: false,
+    meta: {} as DataSourceApi['meta'],
+    jsonData: {},
+  });
+  let resolve!: (value: DataSourceApi) => void;
+  jest
+    .mocked(getDataSourceInstance)
+    .mockClear()
+    .mockRejectedValueOnce(new Error('Unavailable'))
+    .mockResolvedValueOnce(datasource)
+    .mockReturnValueOnce(
+      new Promise((done) => {
+        resolve = done;
+      })
+    );
+  const { data, context, store } = setup();
+  const close = context.activateNotices!();
+  await new Promise((done) => setTimeout(done, 0));
+  expect(store.getSnapshot().items[0]).toMatchObject({ text: 'First error', actions: [] });
+  data.setState({ data: response('Recovered') });
+  await new Promise((done) => setTimeout(done, 0));
+  expect(store.getSnapshot().items[0].actions?.map(({ label }) => label)).toEqual(['Retry Recovered']);
+  expect(getDataSourceInstance).toHaveBeenCalledTimes(2);
+  const changed = response('Other datasource');
+  changed.request!.targets[0].datasource = { uid: 'other' };
+  data.setState({ data: changed });
+  close();
+  resolve(datasource);
+  await new Promise((done) => setTimeout(done, 0));
+  expect(store.getSnapshot()).toEqual({ generation: 1, items: [], actions: {} });
 });
 
 it('gives cloned panels fresh runtime status state', () => {

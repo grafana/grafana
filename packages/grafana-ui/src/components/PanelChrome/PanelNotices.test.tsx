@@ -8,12 +8,102 @@ import { selectors } from '@grafana/e2e-selectors';
 import { PanelChrome } from './PanelChrome';
 import { PanelContextProvider } from './PanelContext';
 import { PanelStatusActions } from './PanelStatusActions';
-import { usePanelNotices } from './usePanelNotices';
+import { usePanelNotices, usePanelStatusSnapshot } from './usePanelNotices';
 
 function Reporter({ items }: { items: readonly PanelNotice[] }) {
   usePanelNotices(items);
   return <div>Visualization</div>;
 }
+
+it.each([false, true])(
+  'settles inline notices and resolvers without stale callbacks (notices: %s)',
+  async (hasNotice) => {
+    const store = new PanelStatusStore();
+    const context = { notices: store, eventBus: new EventBusSrv(), eventsScope: 'panel' };
+    const clicked = jest.fn();
+    let renders = 0;
+    function InlineReporter({ value }: { value: number }) {
+      if (++renders > 30) {
+        throw new Error('Panel notices did not settle');
+      }
+      usePanelNotices(
+        hasNotice
+          ? [
+              {
+                id: 'field',
+                severity: 'warning',
+                text: 'Choose field',
+                actions: [{ id: 'choose', label: 'Choose', onClick: () => clicked(value) }],
+              },
+            ]
+          : [],
+        () => ({ actions: [{ id: 'resolve', label: 'Resolve', onClick: () => clicked(value * 10) }] })
+      );
+      const snapshot = usePanelStatusSnapshot(store);
+      return (
+        <div>
+          Visualization
+          {snapshot.items.map((item) => (
+            <PanelStatusActions key={item.id} statusItem={item} />
+          ))}
+        </div>
+      );
+    }
+    const ui = (value: number) => (
+      <StrictMode>
+        <PanelContextProvider value={context}>
+          <PanelChrome width={400} height={200} title="My panel">
+            {() => <InlineReporter value={value} />}
+          </PanelChrome>
+        </PanelContextProvider>
+      </StrictMode>
+    );
+    const { rerender, unmount } = render(ui(1));
+    rerender(ui(2));
+    expect(screen.getByText('Visualization')).toBeVisible();
+    if (hasNotice) {
+      await userEvent.click(screen.getByRole('button', { name: 'Choose' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Resolve' }));
+      expect(clicked.mock.calls).toEqual([[2], [20]]);
+    } else {
+      expect(store.getSnapshot().items).toEqual([]);
+    }
+    unmount();
+    expect(store.getSnapshot().items).toEqual([]);
+  }
+);
+
+it.each(['structured', 'legacy'] as const)(
+  'preserves %s host errors before activation and after clearing',
+  async (kind) => {
+    const store = new PanelStatusStore();
+    const context = { notices: store, eventBus: new EventBusSrv(), eventsScope: 'panel' };
+    const props =
+      kind === 'structured'
+        ? { statusItems: [{ severity: 'error' as const, text: 'Query failed' }] }
+        : { statusMessage: 'Query failed' };
+    render(
+      <PanelContextProvider value={context}>
+        <PanelChrome width={400} height={200} title="My panel" {...props}>
+          {() => <div>Visualization</div>}
+        </PanelChrome>
+      </PanelContextProvider>
+    );
+    expect(screen.getByTestId(selectors.components.Panels.Panel.status('error'))).toBeVisible();
+    act(() => store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]));
+    await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+    expect(await screen.findByText('Query failed')).toBeVisible();
+    expect(screen.getByText('Choose field')).toBeVisible();
+    act(() => store.setExternal([]));
+    expect(screen.getByTestId(selectors.components.Panels.Panel.status('warning'))).toBeVisible();
+    expect(screen.queryByText('Query failed')).not.toBeInTheDocument();
+    act(() => store.clear());
+    expect(screen.getByTestId(selectors.components.Panels.Panel.status('error'))).toBeVisible();
+    act(() => store.setExternal([]));
+    expect(screen.getByText('Visualization')).toBeVisible();
+    expect(screen.queryByTestId(selectors.components.Panels.Panel.status('error'))).not.toBeInTheDocument();
+  }
+);
 
 it('renders normal-sized solid secondary actions separated from the status message', () => {
   const theme = createTheme();

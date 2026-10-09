@@ -1,14 +1,19 @@
 package pluginroute
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
 
-	"github.com/gorilla/mux"
+	authlib "github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -22,95 +27,32 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
-	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
 	"github.com/grafana/grafana/pkg/util/errhttp"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
-	// namespaceParameter is the path parameter carrying the namespace on routes
-	// mounted under /namespaces/{namespace}.
-	namespaceParameter = "namespace"
-
-	// nameParameter is the path parameter carrying the parent object's name on a
-	// kind subresource route.
-	nameParameter = "name"
+	namespaceParameter = manifestroutes.NamespaceParameter
+	nameParameter      = manifestroutes.NameParameter
 )
 
-// reservedSubresources are served by the kind store itself, so a manifest kind
-// route may not claim them.
-var reservedSubresources = map[string]bool{"status": true}
-
-// dropUnservableMethods removes the operations the route mounter has no case
-// for. Left in the spec, addRouteFromSpec rejects them and the error aborts
-// apiserver startup -- one plugin's manifest would take down every group. The
-// returned props are a copy, so the loaded manifest is untouched.
-func dropUnservableMethods(props spec3.PathProps, warn func(method string)) (spec3.PathProps, bool) {
-	for _, m := range []struct {
-		method string
-		op     **spec3.Operation
-	}{
-		{http.MethodHead, &props.Head},
-		{http.MethodTrace, &props.Trace},
-		{http.MethodOptions, &props.Options},
-	} {
-		if *m.op != nil {
-			warn(m.method)
-			*m.op = nil
-		}
-	}
-	return props, len(builder.GetPathOperations(&props)) > 0
+// routeOptions are the parts of the manifest route rules that depend on this
+// server. The settings resource is served in every version. TRACE echoes the
+// request back, and OPTIONS is answered 405 like any other undeclared method.
+var routeOptions = manifestroutes.Options{
+	ReservedResources: []string{apppluginV0.APP_RESOURCE_NAME},
+	UnservedMethods:   []string{http.MethodTrace, http.MethodOptions},
 }
 
+// GetAPIRoutes returns the generic search and keys routes the apiserver mounts
+// for this version's kinds. The manifest's own routes are served by routeMux.
 func (b *manifestBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
-	if b.manifest == nil {
+	if b.servedVersion(gv) == nil {
 		return nil
 	}
 
-	for _, version := range b.manifest.Versions {
-		if version.Name != gv.Version || !version.Served {
-			continue
-		}
-		return b.manifestRoutes(gv, version)
-	}
-
-	return nil
-}
-
-// manifestRoutes mounts a version's custom routes: version routes directly under
-// the group version, and kind routes as subresources of a single object.
-func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.ManifestVersion) *builder.APIRoutes {
 	routes := &builder.APIRoutes{}
-	reserved := reservedResourceNames(version)
-
-	addVersionRoute := func(dst *[]builder.APIRouteHandler, path string, props spec3.PathProps, params ...*spec3.Parameter) {
-		path = strings.TrimPrefix(path, "/")
-		if root, _, _ := strings.Cut(path, "/"); reserved[root] {
-			logging.DefaultLogger.Warn("skipping manifest route that shadows a resource path",
-				"group", gv.Group, "version", gv.Version, "path", path)
-			return
-		}
-		props, served := dropUnservableMethods(props, func(method string) {
-			logging.DefaultLogger.Warn("skipping manifest route method the apiserver cannot serve",
-				"group", gv.Group, "version", gv.Version, "path", path, "method", method)
-		})
-		if !served {
-			return
-		}
-		*dst = append(*dst, builder.APIRouteHandler{
-			Path:    path,
-			Spec:    withPathParameters(props, nil, params...),
-			Schemas: version.Routes.Schemas,
-			Handler: b.routeHandler(gv, "", path),
-		})
-	}
-	for path, props := range version.Routes.Cluster {
-		addVersionRoute(&routes.Root, path, props)
-	}
-	for path, props := range version.Routes.Namespaced {
-		addVersionRoute(&routes.Namespace, path, props, namespacePathParameter())
-	}
 
 	// A manifest whose search declarations cannot be read cannot be searched, but
 	// the rest of its API still works, so this drops search rather than the group.
@@ -126,41 +68,163 @@ func (b *manifestBuilder) manifestRoutes(gv schema.GroupVersion, version app.Man
 		routes.Namespace = append(routes.Namespace, keys.Namespace...)
 	}
 
-	for _, kind := range version.Kinds {
-		plural := strings.ToLower(kind.Plural)
+	if !hasRoutes(routes) {
+		return nil
+	}
+	return routes
+}
 
-		// Cluster kinds have no namespace segment to mount under.
-		dst := &routes.Namespace
-		params := []*spec3.Parameter{namespacePathParameter(), namePathParameter()}
-		if kind.Scope == kindstore.ClusterScope {
-			dst = &routes.Root
-			params = []*spec3.Parameter{namePathParameter()}
-		}
+// hasRoutes reports whether any custom route is mounted.
+func hasRoutes(routes *builder.APIRoutes) bool {
+	return routes != nil && (len(routes.Root) > 0 || len(routes.Namespace) > 0)
+}
 
-		for path, props := range kind.Routes {
-			path = strings.TrimPrefix(path, "/")
-			if path == "" || reservedSubresources[path] {
-				logging.DefaultLogger.Warn("skipping manifest kind route that shadows a subresource",
-					"group", gv.Group, "version", gv.Version, "kind", kind.Kind, "path", path)
-				continue
-			}
-			props, served := dropUnservableMethods(props, func(method string) {
-				logging.DefaultLogger.Warn("skipping manifest kind route method the apiserver cannot serve",
-					"group", gv.Group, "version", gv.Version, "kind", kind.Kind, "path", path, "method", method)
-			})
-			if !served {
-				continue
-			}
-			*dst = append(*dst, builder.APIRouteHandler{
-				Path:    plural + "/{" + nameParameter + "}/" + path,
-				Spec:    withPathParameters(props, []string{kind.Kind}, params...),
-				Schemas: version.Routes.Schemas,
-				Handler: b.routeHandler(gv, plural, path),
-			})
+func (b *manifestBuilder) servedVersion(gv schema.GroupVersion) *app.ManifestVersion {
+	if b.manifest == nil {
+		return nil
+	}
+	for i, version := range b.manifest.Versions {
+		if version.Name == gv.Version && version.Served {
+			return &b.manifest.Versions[i]
 		}
 	}
+	return nil
+}
 
+// versionRoutes returns the custom routes a served version mounts. skip is
+// told about each declared path, or method, that is not mounted.
+func (b *manifestBuilder) versionRoutes(gv schema.GroupVersion, skip func(manifestroutes.Problem)) []manifestroutes.Route {
+	version := b.servedVersion(gv)
+	if version == nil {
+		return nil
+	}
+	return parseManifestRoutes(*version, skip)
+}
+
+// parseManifestRoutes resolves a version's custom routes from its OpenAPI paths.
+// Deprecated routes were moved there when the manifest was loaded.
+func parseManifestRoutes(version app.ManifestVersion, skip func(manifestroutes.Problem)) []manifestroutes.Route {
+	routes, problems := manifestroutes.Parse(version, routeOptions)
+	for _, p := range problems {
+		skip(p)
+	}
 	return routes
+}
+
+func ignoreSkipped(manifestroutes.Problem) {}
+
+// routeMux serves the manifest's custom routes and hands every other request
+// to next. It wraps the apiserver's handler, inside the filter chain, so a
+// request reaching a route has already been authenticated and authorized.
+func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer) http.Handler {
+	if b.manifest == nil {
+		return next
+	}
+	metrics := builder.NewCustomRouteMetrics(reg)
+	mux := http.NewServeMux()
+	index := newRouteIndex(b.group)
+	mounted := 0
+	for _, version := range b.manifest.Versions {
+		if !version.Served {
+			continue
+		}
+		gv := schema.GroupVersion{Group: b.group, Version: version.Name}
+		warn := func(p manifestroutes.Problem) {
+			logging.DefaultLogger.Warn("skipping manifest route",
+				"group", gv.Group, "version", gv.Version, "path", p.Path, "method", p.Method, "reason", p.Reason)
+		}
+		// manifestroutes.Parse has already registered every pattern on a scratch
+		// mux, so registering them again cannot fail.
+		root := "/apis/" + gv.String() + "/"
+		for _, route := range b.versionRoutes(gv, warn) {
+			handler := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, b.routeHandler(gv, route))
+			for method := range manifestroutes.Operations(&route.Operations) {
+				mux.Handle(method+" "+root+route.Pattern, handler)
+				mounted++
+			}
+			index.add(version.Name, route)
+		}
+	}
+	if mounted == 0 {
+		return next
+	}
+
+	// Reached for a candidate that no route matches. Only candidates go through
+	// the mux, so its cleaning and redirecting of paths never touches the API
+	// server's requests.
+	mux.Handle(fallbackPattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// The path is the plugin's, since paths the apiserver serves are never
+		// mounted, so an undeclared method is refused here rather than passed on
+		// to answer 404.
+		if allowed := allowedMethods(mux, r); len(allowed) > 0 {
+			methodNotAllowed(w, r, allowed)
+			return
+		}
+		next.ServeHTTP(w, r)
+	}))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !index.candidate(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		mux.ServeHTTP(w, r)
+	})
+}
+
+// fallbackPattern is registered on the route mux for a candidate path that no
+// route matches.
+const fallbackPattern = "/"
+
+// servedMethods are the methods a manifest route can be mounted for. HEAD is
+// matched by a GET pattern too.
+var servedMethods = []string{
+	http.MethodDelete, http.MethodGet, http.MethodHead,
+	http.MethodPatch, http.MethodPost, http.MethodPut,
+}
+
+// allowedMethods returns the methods mux serves for r's path, the same lookup
+// ServeMux makes for its own 405s, leaving out the fallback. Registering a
+// method-less pattern per path instead would conflict with another route's
+// wildcard.
+func allowedMethods(mux *http.ServeMux, r *http.Request) []string {
+	var allowed []string
+	// A shallow copy is enough to look up a route, and this runs for every
+	// request the apiserver serves, so the headers are not cloned.
+	probe := *r
+	for _, method := range servedMethods {
+		probe.Method = method
+		if _, pattern := mux.Handler(&probe); pattern != "" && pattern != fallbackPattern {
+			allowed = append(allowed, method)
+		}
+	}
+	return allowed
+}
+
+// methodNotAllowed answers a method the route does not declare, listing the
+// ones it does.
+func methodNotAllowed(w http.ResponseWriter, r *http.Request, allowed []string) {
+	w.Header().Set("Allow", strings.Join(allowed, ", "))
+	// Not apierrors.NewMethodNotSupported, which names a resource kind that a
+	// custom route does not have.
+	_ = errhttp.Write(r.Context(), &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusMethodNotAllowed,
+		Reason:  metav1.StatusReasonMethodNotAllowed,
+		Message: r.Method + " is not supported",
+	}}, w)
+}
+
+// routeSpec documents the path segments a route is mounted under.
+func routeSpec(route manifestroutes.Route) *spec3.PathProps {
+	var params []*spec3.Parameter
+	if route.Namespaced {
+		params = append(params, namespacePathParameter())
+	}
+	if route.Kind == nil {
+		return withPathParameters(route.Operations, nil, params...)
+	}
+	return withPathParameters(route.Operations, []string{route.Kind.Kind}, append(params, namePathParameter())...)
 }
 
 // searchRoutes builds the generic search, trash and hybrid endpoints for the kinds this
@@ -233,82 +297,185 @@ func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes 
 	return nil
 }
 
-// routeHandler forwards a manifest route to the plugin's v3 route service.
-// resource is empty for version routes; for a kind subresource route it is the
-// kind's plural, and the parent object's name comes from the path.
-func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, resource, path string) http.HandlerFunc {
+// routeHandler forwards a manifest route to the plugin's v3 route service. A
+// kind subresource route also carries the parent object, named by the path.
+func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestroutes.Route) http.HandlerFunc {
+	path, resource := route.Path, ""
+	if route.Kind != nil {
+		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
+	}
+	forward := httpadapter.HandlerFunc(b.clientV3)
+	checks := routeChecks(gv, route, resource)
+	// ServeMux matches HEAD against a GET pattern, so a route that declares GET
+	// but not HEAD is called for HEAD too.
+	headAsGet := route.Operations.Head == nil && route.Operations.Get != nil
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ns := ""
+		if route.Namespaced {
+			ns = r.PathValue(namespaceParameter)
+			ctx = request.WithNamespace(ctx, ns)
+			r = r.WithContext(ctx)
+		}
 
 		// Without this the plugin only sees the raw URL, and no group, version,
-		// namespace or parent object.
+		// namespace or parent object. Path is the declared route, not the one it
+		// was called with, because app-sdk's simple.App finds handlers by exact
+		// declared path; the request URL still carries the concrete one.
 		info := httpadapter.RouteInfo{
 			Group:     gv.Group,
 			Version:   gv.Version,
-			Namespace: request.NamespaceValue(ctx),
+			Namespace: ns,
 			Path:      path,
+		}
+
+		// Unified storage applies the resource level access control to reading the parent.
+		var parentMeta utils.GrafanaMetaAccessor
+		var parentObj runtime.Object
+		name := ""
+		if resource != "" {
+			name = r.PathValue(nameParameter)
+		}
+		if name != "" {
+			// The getter is wired in UpdateAPIGroupInfo; a route that somehow
+			// serves before then must not panic on the request path.
+			if b.getter == nil {
+				_ = errhttp.Write(ctx, apierrors.NewInternalError(
+					errors.New("plugin storage is not ready")), w)
+				return
+			}
+			obj, err := b.getter(ctx, gv.WithResource(resource), name)
+			if err != nil {
+				_ = errhttp.Write(ctx, err, w)
+				return
+			}
+			m, err := utils.MetaAccessor(obj)
+			if err != nil {
+				_ = errhttp.Write(ctx, err, w)
+				return
+			}
+			parentObj, parentMeta = obj, m
+		}
+
+		// Before the parent's secure values are decrypted, so a request the
+		// manifest refuses never decrypts them.
+		if check, declared := checks[r.Method]; declared {
+			if err := b.checkDeclaredAccess(ctx, check, ns, name, parentMeta); err != nil {
+				_ = errhttp.Write(ctx, err, w)
+				return
+			}
 		}
 
 		if resource != "" {
 			parent := &pluginv3.RouteResource{}
 			parent.SetResource(resource)
-
-			if name := mux.Vars(r)[nameParameter]; name != "" {
-				// The getter is wired in UpdateAPIGroupInfo; a route that somehow
-				// serves before then must not panic on the request path.
-				if b.getter == nil {
-					_ = errhttp.Write(ctx, apierrors.NewInternalError(
-						errors.New("plugin storage is not ready")), w)
-					return
-				}
-				// Unified storage will apply the resource level access control
-				obj, err := b.getter(ctx, gv.WithResource(resource), name)
+			if parentObj != nil {
+				raw, err := json.Marshal(parentObj)
 				if err != nil {
 					_ = errhttp.Write(ctx, err, w)
 					return
 				}
-				m, err := utils.MetaAccessor(obj)
-				if err != nil {
-					_ = errhttp.Write(ctx, err, w)
-					return
-				}
-				raw, err := json.Marshal(obj)
-				if err != nil {
-					_ = errhttp.Write(ctx, err, w)
-					return
-				}
-
-				sv, err := b.decrypter.get(ctx, m)
+				sv, err := b.decrypter.get(ctx, parentMeta)
 				if err != nil {
 					_ = errhttp.Write(ctx, err, w)
 					return
 				}
 				parent.SetName(name)
-				parent.SetRv(m.GetResourceVersion())
+				parent.SetRv(parentMeta.GetResourceVersion())
 				parent.SetRaw(raw)
 				parent.SetDecryptedSecureValues(sv)
 			}
 			info.Parent = parent
 		}
-		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
+
 		// The caller's identity reaches the plugin only as the access token the
-		// v3 client exchanges for it, never as an ID token in the HTTP headers.
-		req.Header.Del(proxyutil.IDHeaderName)
-		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
+		// v3 client exchanges for it: httpadapter drops the ID token and the other
+		// credential headers, so the request is not cloned to remove them.
+		req := r.WithContext(httpadapter.WithRouteInfo(ctx, info))
+		if headAsGet && req.Method == http.MethodHead {
+			// The plugin is asked for what it declared, and a plugin that finds its
+			// handler by method, as app-sdk's simple.App does, has none for HEAD.
+			req.Method = http.MethodGet
+			w = headResponseWriter{w}
+		}
+		forward.ServeHTTP(w, req)
 	}
 }
 
-// reservedResourceNames lists the path roots already claimed by resource storage
-// in this version. A custom route mounted there would shadow the resource, or its
-// generic subresources such as /search and /trash.
-func reservedResourceNames(version app.ManifestVersion) map[string]bool {
-	reserved := map[string]bool{apppluginV0.APP_RESOURCE_NAME: true}
-	for _, kind := range version.Kinds {
-		if kind.Plural != "" {
-			reserved[strings.ToLower(kind.Plural)] = true
+// headResponseWriter answers a HEAD request served by a GET operation: it keeps
+// the status and headers, and drops the body.
+type headResponseWriter struct {
+	http.ResponseWriter
+}
+
+func (w headResponseWriter) Write(p []byte) (int, error) { return len(p), nil }
+
+// Unwrap lets http.ResponseController reach the underlying writer.
+func (w headResponseWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+
+// routeCheck is a declared access check, complete but for what only a request
+// knows.
+type routeCheck struct {
+	check authlib.CheckRequest
+	// namesParent is set when the check is for the parent object's own
+	// resource, so it is checked against that object and its folder.
+	namesParent bool
+}
+
+// routeChecks completes a route's declared checks, by method, as far as they
+// can be before a request. A HEAD request reads what a GET does, so without a
+// check of its own it gets the GET operation's.
+func routeChecks(gv schema.GroupVersion, route manifestroutes.Route, parentResource string) map[string]routeCheck {
+	if len(route.Authz) == 0 {
+		return nil
+	}
+	checks := make(map[string]routeCheck, len(route.Authz)+1)
+	for method, check := range route.Authz {
+		check.Group = gv.Group
+		checks[method] = routeCheck{check: check, namesParent: parentResource != "" && check.Resource == parentResource}
+	}
+	if _, ok := checks[http.MethodHead]; !ok {
+		if get, ok := checks[http.MethodGet]; ok {
+			checks[http.MethodHead] = get
 		}
 	}
-	return reserved
+	return checks
+}
+
+// checkDeclaredAccess runs a route's declared access check for a request,
+// filling in its namespace and, for a check on the parent's own resource, the
+// parent's name and folder.
+func (b *manifestBuilder) checkDeclaredAccess(ctx context.Context, rc routeCheck, namespace, name string, parent utils.GrafanaMetaAccessor) error {
+	check := rc.check
+	if b.accessClient == nil {
+		return forbidden(check, "the route declares an access check, and no access client is configured")
+	}
+	authInfo, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewUnauthorized("no identity found for the request")
+	}
+
+	check.Namespace = namespace
+	folder := ""
+	if rc.namesParent {
+		check.Name = name
+		if parent != nil {
+			folder = parent.GetFolder()
+		}
+	}
+
+	res, err := b.accessClient.Check(ctx, authInfo, check, folder)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("access check: %w", err))
+	}
+	if !res.Allowed {
+		return forbidden(check, fmt.Sprintf("%s %s is not allowed", check.Verb, check.Resource))
+	}
+	return nil
+}
+
+func forbidden(check authlib.CheckRequest, reason string) error {
+	return apierrors.NewForbidden(schema.GroupResource{Group: check.Group, Resource: check.Resource}, check.Name, errors.New(reason))
 }
 
 // namespacePathParameter documents the {namespace} segment that namespaced

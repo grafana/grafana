@@ -89,7 +89,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
                 folderTitle: dto.metadata.annotations?.[AnnoKeyFolderTitle],
                 folderUid: dto.metadata.annotations?.[AnnoKeyFolder],
               },
-              label: formatLabel(dto.metadata.annotations?.[AnnoKeyFolder], dto.spec.title),
+              label: formatLabel(dto.metadata.annotations?.[AnnoKeyFolderTitle], dto.spec.title),
             });
           } else {
             if (dto.dashboard) {

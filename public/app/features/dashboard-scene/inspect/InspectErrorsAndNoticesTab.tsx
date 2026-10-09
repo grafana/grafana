@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-import { type DataSourceApi } from '@grafana/data';
+import { getPanelDataStatusItems, type DataSourceApi } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   type SceneComponentProps,
@@ -48,7 +48,13 @@ function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<Inspe
   if (context.notices) {
     return (
       <PanelContextProvider value={context}>
-        <StandardErrorsAndNoticesInspector statusItems={snapshot.items} />
+        <StandardErrorsAndNoticesInspector
+          statusItems={
+            snapshot.hostInitialized
+              ? snapshot.items
+              : [...getPanelDataStatusItems(panelData, panel.state._pluginLoadError), ...snapshot.items]
+          }
+        />
         {CustomInspector && <CustomInspector datasource={dataSource} data={panelData?.series ?? []} errors={errors} />}
       </PanelContextProvider>
     );

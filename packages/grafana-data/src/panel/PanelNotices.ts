@@ -1,3 +1,5 @@
+import { isEqual } from 'lodash';
+
 import type { QueryResultMetaNotice } from '../types/data';
 import type { DataQueryError } from '../types/datasource';
 import type { PanelData } from '../types/panel';
@@ -61,6 +63,8 @@ export interface PanelStatusActionState {
 /** @alpha */
 export interface PanelStatusSnapshot {
   generation: number;
+  /** Whether host status has been supplied, including an explicitly empty result. */
+  hostInitialized?: boolean;
   items: readonly PanelStatusItem[];
   actions: Readonly<Record<string, PanelStatusActionState>>;
 }
@@ -141,6 +145,11 @@ export class PanelStatusStore implements PanelNotices {
   private listeners = new Set<() => void>();
   private snapshot: PanelStatusSnapshot = { generation: 0, items: [], actions: {} };
   private pending = new Map<string, object>();
+  private hostInitialized?: boolean;
+  private callbacks = new Map<
+    string,
+    { current: PanelStatusAction['onClick']; invoke: PanelStatusAction['onClick'] }
+  >();
 
   getSnapshot = () => this.snapshot;
 
@@ -180,6 +189,7 @@ export class PanelStatusStore implements PanelNotices {
 
   /** Replaces only host-provided status items. @alpha */
   setExternal(items: readonly PanelStatusItem[], datasourceResolver?: PanelStatusActionResolver) {
+    this.hostInitialized = true;
     this.external = items;
     this.datasourceResolver = datasourceResolver;
     this.rebuild();
@@ -196,6 +206,8 @@ export class PanelStatusStore implements PanelNotices {
     this.external = [];
     this.datasourceResolver = undefined;
     this.pending.clear();
+    this.callbacks.clear();
+    this.hostInitialized = undefined;
     this.snapshot = { generation: this.snapshot.generation + 1, items: [], actions: {} };
     this.emit();
   }
@@ -229,6 +241,7 @@ export class PanelStatusStore implements PanelNotices {
   }
 
   private rebuild() {
+    const activeCallbacks = new Set<string>();
     const base: PanelStatusItem[] = [
       ...this.external.map((item) => ({ ...item, id: `external:${item.id}` })),
       ...Array.from(this.sources, ([id, source]) =>
@@ -244,7 +257,18 @@ export class PanelStatusStore implements PanelNotices {
             assistant = 'hidden';
           }
           for (const action of contribution?.actions ?? []) {
-            actions.push({ ...action, id: JSON.stringify([owner, action.id]) });
+            const id = JSON.stringify([owner, action.id]);
+            const key = JSON.stringify([item.id, id]);
+            activeCallbacks.add(key);
+            let callback = this.callbacks.get(key);
+            if (!callback) {
+              const entry = { current: action.onClick, invoke: () => entry.current() };
+              callback = entry;
+              this.callbacks.set(key, entry);
+            }
+            // Inline callbacks must stay current without publishing another identical snapshot.
+            callback.current = action.onClick;
+            actions.push({ ...action, id, onClick: callback.invoke });
           }
         };
         const resolve = (owner: string, resolver?: PanelStatusActionResolver) => {
@@ -278,7 +302,19 @@ export class PanelStatusStore implements PanelNotices {
         this.pending.delete(key);
       }
     }
-    this.snapshot = { generation: this.snapshot.generation, items, actions };
+    for (const key of this.callbacks.keys()) {
+      if (!activeCallbacks.has(key)) {
+        this.callbacks.delete(key);
+      }
+    }
+    if (
+      this.snapshot.hostInitialized === this.hostInitialized &&
+      isEqual(this.snapshot.items, items) &&
+      isEqual(this.snapshot.actions, actions)
+    ) {
+      return;
+    }
+    this.snapshot = { generation: this.snapshot.generation, hostInitialized: this.hostInitialized, items, actions };
     this.emit();
   }
 

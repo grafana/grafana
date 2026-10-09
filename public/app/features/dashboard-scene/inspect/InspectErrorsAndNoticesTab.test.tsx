@@ -13,6 +13,36 @@ class CustomDatasource extends DataSourceApi {
   components = { ErrorsAndNoticesInspector: () => <div>Datasource details</div> };
 }
 
+it('shows query errors before host initialization and respects an initialized empty store', () => {
+  const store = new PanelStatusStore();
+  store.createSource().set([{ id: 'panel', severity: 'warning', text: 'Choose field' }]);
+  const panel = new VizPanel({
+    $data: new SceneDataNode({
+      data: {
+        series: [],
+        state: LoadingState.Error,
+        timeRange: getDefaultTimeRange(),
+        errors: [{ message: 'Query failed' }],
+      },
+    }),
+    extendPanelContext: (_, context) => {
+      context.notices = store;
+    },
+  });
+  const tab = new InspectErrorsAndNoticesTab({ panelRef: panel.getRef() });
+  render(<tab.Component model={tab} />);
+  expect(screen.getByText('Query failed')).toBeVisible();
+  expect(screen.getByText('Choose field')).toBeVisible();
+  act(() => store.setExternal([]));
+  expect(screen.getByText('Choose field')).toBeVisible();
+  expect(screen.queryByText('Query failed')).not.toBeInTheDocument();
+  act(() => store.clear());
+  expect(screen.getByText('Query failed')).toBeVisible();
+  act(() => store.setExternal([]));
+  expect(screen.getByText('No errors or notices for this panel.')).toBeVisible();
+  expect(screen.queryByText('Query failed')).not.toBeInTheDocument();
+});
+
 it('shows plugin-only notices and callback actions alongside a custom inspector, then updates live', async () => {
   const store = new PanelStatusStore();
   const source = store.createSource();

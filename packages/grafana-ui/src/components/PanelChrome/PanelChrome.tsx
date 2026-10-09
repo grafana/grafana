@@ -181,10 +181,9 @@ export function PanelChrome({
   const { notices, activateNotices } = usePanelContext();
   useEffect(() => activateNotices?.(), [activateNotices]);
   const statusSnapshot = usePanelStatusSnapshot(notices);
-  if (notices) {
-    statusItems = [...statusSnapshot.items];
-    statusMessage = undefined;
-  }
+  const hasStatus = Boolean(
+    statusSnapshot.items.length || (!statusSnapshot.hostInitialized && (statusMessage || statusItems?.length))
+  );
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
@@ -433,7 +432,7 @@ export function PanelChrome({
               </HoverWidget>
             )}
 
-            {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
+            {hasStatus && (
               <div className={styles.errorContainerFloating}>
                 <PanelStatus
                   message={statusMessage}
@@ -457,7 +456,7 @@ export function PanelChrome({
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               onPointerUp={onPointerUp}
             >
-              {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
+              {hasStatus && (
                 <div className={dragClassCancel}>
                   <PanelStatus
                     message={statusMessage}

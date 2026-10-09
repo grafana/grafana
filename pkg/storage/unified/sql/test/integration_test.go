@@ -225,8 +225,9 @@ func TestIntegrationSearchBackedList(t *testing.T) {
 
 	t.Run("kv backend (batched reads)", func(t *testing.T) {
 		ctx := context.Background()
-		backend, _ := unitest.NewTestSqlKvBackend(t, ctx, true)
-		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true})
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, true, scans.Wrap)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
 	})
 
 	t.Run("sql backend (per-resource fallback)", func(t *testing.T) {
@@ -251,8 +252,9 @@ func TestIntegrationSearchBackedTrashList(t *testing.T) {
 
 	t.Run("kv backend (batched reads)", func(t *testing.T) {
 		ctx := context.Background()
-		backend, _ := unitest.NewTestSqlKvBackend(t, ctx, true)
-		unitest.RunTestSearchBackedTrashList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true})
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, true, scans.Wrap)
+		unitest.RunTestSearchBackedTrashList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
 	})
 
 	t.Run("sql backend (storage fallback)", func(t *testing.T) {

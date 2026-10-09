@@ -128,6 +128,20 @@ describe('NotebookRenderPage', () => {
     expect(screen.queryByRole('button', { name: /refresh time interval/i })).not.toBeInTheDocument();
   });
 
+  // The notebook page leaves it to the time picker, which the capture has none of.
+  it('shows the time range under the title', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    stubStateManager(buildScene());
+
+    render(<NotebookRenderPage />);
+
+    await screen.findByText('Findings');
+    expect(screen.getByText('Time')).toBeInTheDocument();
+    expect(
+      screen.getByText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} → \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+    ).toBeInTheDocument();
+  });
+
   it('abandons autosave, so the render can never write to the notebook it is rendering', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const scene = buildScene();

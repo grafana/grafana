@@ -185,17 +185,25 @@ func (m *MockResourceIndex) ForgetType(gr schema.GroupResource) error {
 
 // documentRefs is what ListDocumentRefs answers with, by resource type.
 func (m *MockResourceIndex) ListDocumentRefs(_ context.Context, gr schema.GroupResource) iter.Seq2[DocumentRef, error] {
+	// One ref at a time, as the real index pages, so a document written while a
+	// caller is part way through is seen once the caller gets to it.
 	return func(yield func(DocumentRef, error) bool) {
 		m.updateIndexMu.Lock()
-		refs := slices.Clone(m.documentRefs[gr])
 		err := m.documentRefsErr
 		m.updateIndexMu.Unlock()
-
 		if err != nil {
 			yield(DocumentRef{}, err)
 			return
 		}
-		for _, ref := range refs {
+		for i := 0; ; i++ {
+			m.updateIndexMu.Lock()
+			refs := m.documentRefs[gr]
+			if i >= len(refs) {
+				m.updateIndexMu.Unlock()
+				return
+			}
+			ref := refs[i]
+			m.updateIndexMu.Unlock()
 			if !yield(ref, nil) {
 				return
 			}

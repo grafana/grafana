@@ -1,13 +1,25 @@
+import { isEqual } from 'lodash';
+
 import {
   getPanelDataStatusItems,
   PanelStatusStore,
+  type ScopedVars,
   type PanelData,
   type DataSourceApi,
   type PanelStatusActionResolver,
 } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { sceneGraph, type SceneDataProvider, type VizPanel } from '@grafana/scenes';
 import type { PanelContext } from '@grafana/ui';
+
+interface CachedDatasource {
+  scopedVars?: ScopedVars;
+  resolvedUid: string;
+  loaded: boolean;
+  instance?: DataSourceApi;
+  request?: PanelData['request'];
+}
 
 /** Attaches runtime state to the cached context, never to serialized panel state. */
 export function setupPanelNotices(panel: VizPanel, context: PanelContext) {
@@ -31,61 +43,61 @@ export function setupPanelNotices(panel: VizPanel, context: PanelContext) {
 
   function connect() {
     let disposed = false;
-    let revision = 0;
     let provider: SceneDataProvider | undefined;
     let dataSubscription: { unsubscribe(): void } | undefined;
     let pluginId = panel.state.pluginId;
-    const datasources = new Map<string, DataSourceApi | undefined>();
-    let request: PanelData['request'];
+    const datasources = new Map<string, CachedDatasource>();
 
     const update = () => {
-      const currentRevision = ++revision;
       const data = provider?.state.data;
-      if (data?.request !== request) {
-        // Datasource variables can resolve to a different instance on the next request.
-        datasources.clear();
-        request = data?.request;
-      }
       const entries = getPanelDataStatusItems(data, panel.state._pluginLoadError);
+      const scopedVars = data?.request?.scopedVars;
+      const uids = new Set(entries.map((entry) => entry.datasourceUid).filter((uid): uid is string => Boolean(uid)));
+      for (const uid of datasources.keys()) {
+        if (!uids.has(uid)) {
+          datasources.delete(uid);
+        }
+      }
+      for (const uid of uids) {
+        const resolvedUid = uid.includes('$')
+          ? getTemplateSrv().replace(uid, scopedVars, (value: string | string[]) =>
+              Array.isArray(value) ? value[0] : value
+            )
+          : uid;
+        const cached = datasources.get(uid);
+        if (
+          cached?.resolvedUid === resolvedUid &&
+          isEqual(cached.scopedVars, scopedVars) &&
+          (!cached.loaded || cached.instance || cached.request === data?.request)
+        ) {
+          continue;
+        }
+        const entry: CachedDatasource = { scopedVars, resolvedUid, loaded: false, request: data?.request };
+        datasources.set(uid, entry);
+        void getDataSourceInstance({ uid }, scopedVars)
+          .catch(() => undefined)
+          .then((instance) => {
+            if (disposed || datasources.get(uid) !== entry) {
+              return;
+            }
+            entry.instance = instance;
+            entry.loaded = true;
+            // A load may span several refreshes; publish actions against the current query data.
+            update();
+          });
+      }
       const resolver: PanelStatusActionResolver = (entry) => {
-        if (entry.datasourceUid && !datasources.has(entry.datasourceUid)) {
+        const datasource = entry.datasourceUid ? datasources.get(entry.datasourceUid) : undefined;
+        if (entry.datasourceUid && !datasource?.loaded) {
           // Do not briefly offer Assistant before the datasource's opt-out policy has loaded.
           return { assistant: 'hidden' };
         }
-        const datasource = entry.datasourceUid ? datasources.get(entry.datasourceUid) : undefined;
-        return datasource?.getPanelStatusActions?.(entry, {
+        return datasource?.instance?.getPanelStatusActions?.(entry, {
           data,
           query: data?.request?.targets.find((query) => query.refId === entry.refId),
         });
       };
       store.setExternal(entries, resolver);
-      const uids = [
-        ...new Set(
-          entries
-            .map((entry) => entry.datasourceUid)
-            .filter((uid): uid is string => typeof uid === 'string' && uid.length > 0 && !datasources.has(uid))
-        ),
-      ];
-      if (!uids.length) {
-        return;
-      }
-      void Promise.all(
-        uids.map(async (uid): Promise<[string, DataSourceApi | undefined]> => {
-          try {
-            return [uid, await getDataSourceInstance({ uid }, data?.request?.scopedVars)];
-          } catch {
-            return [uid, undefined];
-          }
-        })
-      ).then((results) => {
-        if (disposed || revision !== currentRevision) {
-          return;
-        }
-        for (const [uid, datasource] of results) {
-          datasources.set(uid, datasource);
-        }
-        store.setExternal(entries, resolver);
-      });
     };
 
     const bind = () => {
