@@ -92,12 +92,26 @@ export interface SaveResourceDrawerProps {
   action: 'create' | 'update' | 'delete';
   /** Shown in the drawer and used for the commit message and the file name of a new resource. */
   title: string;
-  /** For `create` of a folder-scoped kind: the folder the resource goes into. The drawer finds the repository from it. */
+  /**
+   * For `create` of a folder-scoped kind: the folder the resource goes into. When the folder is Git
+   * Sync managed, the drawer shows the commit fields and commits to that repository.
+   */
   folderName?: string;
-  /** For `create` of a folderless kind: the repository to commit to, from `RepositorySelect`. */
-  repositoryName?: string;
+  /**
+   * Form fields for the resource itself, so one drawer holds both the resource and the commit fields.
+   * Pair with `getSpec`, and with `onSave` for the case where no repository is involved.
+   */
+  children?: React.ReactNode;
+  /** Returns the spec to commit at submit time. Defaults to `resource.spec`. */
+  getSpec?: () => Record<string, unknown> | undefined;
+  /**
+   * Called on submit when no repository is involved, so the plugin stores the resource in Grafana.
+   * Without it, the drawer requires a repository. With it, a folderless `create` also shows a
+   * repository picker in the drawer.
+   */
+  onSave?: () => Promise<void> | void;
   onDismiss?: () => void;
-  /** The resource is stored in Grafana (commit to the configured branch). */
+  /** The resource is stored in Grafana through the repository (commit to the configured branch). */
   onWriteSuccess?: (resource: unknown) => void;
   /** The resource is committed to a branch and not stored in Grafana yet. Pass the data to the PR banner. */
   onBranchSuccess?: (data: BranchCommit) => void;
