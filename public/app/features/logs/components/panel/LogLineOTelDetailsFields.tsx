@@ -133,6 +133,7 @@ const LogLineOTelDetailsField = ({
   const [showFieldsStats, setShowFieldStats] = useState(false);
   const [fieldCount, setFieldCount] = useState(0);
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
+  const { fontSize } = useLogListContext();
   const { app, isLabelFilterActive, noInteractions, onClickFilterLabel, onClickFilterOutLabel, prettifyJSON } =
     useLogListContext();
 
@@ -277,7 +278,7 @@ const LogLineOTelDetailsField = ({
               {onClickFilterLabel && fieldSupportsFilters && (
                 <AsyncIconButton
                   name="filter-plus"
-                  size="sm"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterLabel}
                   // We purposely want to pass a new function on every render to allow the active state to be updated when log details remains open between updates.
                   isActive={labelFilterActive}
@@ -287,7 +288,7 @@ const LogLineOTelDetailsField = ({
               {onClickFilterOutLabel && fieldSupportsFilters && (
                 <IconButton
                   name="filter-minus"
-                  size="sm"
+                  size={fontSize === 'small' ? 'sm' : undefined}
                   tooltip={
                     app === CoreApp.Explore && log.dataFrame?.refId
                       ? t('logs.log-line-details.fields.filter-out-query', 'Filter out value in query {{query}}', {
@@ -301,7 +302,7 @@ const LogLineOTelDetailsField = ({
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
-                size="sm"
+                size={fontSize === 'small' ? 'sm' : undefined}
                 tooltip={t('logs.log-line-details.fields.adhoc-statistics', 'Ad-hoc statistics')}
                 className={styles.statsIcon}
                 disabled={!singleKey}
@@ -330,7 +331,7 @@ const LogLineOTelDetailsField = ({
               include={includeAdhocValue}
               exclude={excludeAdhocValue}
               isValueActive={labelFilterActive}
-              iconSize="sm"
+              iconSize={fontSize === 'small' ? 'sm' : undefined}
               className={styles.stats}
               stats={fieldStats}
               label={keys[0]}
