@@ -430,18 +430,43 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       expect(scene.editHistory.state.canRedo).toBe(false);
     });
 
-    // A body swap normally clears both stacks (NotebookScene.tsx), since older per-cell steps hold
-    // closures over the body it just discarded. But replaying THIS write's own undo/redo is itself a
-    // body swap, and must not trip that same guard — otherwise undoing back past an assistant write
-    // would wipe out a manual edit recorded after it, losing its redo entry for good.
-    it('replaying the assistant write on undo does not discard a later manual edit’s redo entry', async () => {
+    it('keeps an earlier assistant write undoable after a second one', async () => {
       const scene = notebookScene();
       const client = new NotebookMutationClient(scene);
+      const beforeTitle = scene.state.title;
 
-      // A manual edit from before the write: stale once the body is replaced, so the write correctly
-      // clears it (this is the ordinary, documented clearing behavior, not what's under test here).
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: {
+          spec: notebookSpec({ title: 'First', elements: { only: markdownCell('## First') }, cells: ['only'] }),
+        },
+      });
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: {
+          spec: notebookSpec({ title: 'Second', elements: { only: markdownCell('## Second') }, cells: ['only'] }),
+        },
+      });
+
+      expect(scene.editHistory.undo()).toBe(true); // undoes the second write
+      expect(scene.state.title).toBe('First');
+
+      expect(scene.editHistory.undo()).toBe(true); // undoes the first write too
+      expect(scene.state.title).toBe(beforeTitle);
+    });
+
+    // The assistant's write is one entry among others, like any other edit: a manual change from
+    // before it, the write itself, and a manual change after it all stay independently reachable in
+    // strict LIFO order. Undoing the write swaps the body back without disturbing what's above or
+    // below it on either stack — there is nothing here that treats a body swap specially.
+    it('undoes and redoes a full stack of manual edits around an assistant write, in strict LIFO order', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const tagsBeforeAnything = scene.state.tags;
+
       scene.onEnterEditMode();
       scene.onTagsChange([...(scene.state.tags ?? []), 'before']);
+      const tagsAfterBefore = scene.state.tags;
 
       await client.execute({
         type: 'APPLY_NOTEBOOK_SPEC',
@@ -453,19 +478,25 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       scene.onTagsChange([...(scene.state.tags ?? []), 'after']);
       const afterManualEdit = scene.state.tags;
 
-      scene.editHistory.undo(); // undoes the manual tag edit
+      scene.editHistory.undo(); // undoes the manual tag edit made after the write
       expect(scene.editHistory.state.canRedo).toBe(true);
 
       scene.editHistory.undo(); // undoes the assistant write — swaps the body back
+      // The edit from before the write was never discarded: it's still reachable underneath.
+      expect(scene.editHistory.state.canUndo).toBe(true);
 
+      scene.editHistory.undo(); // undoes the edit from before the write too
       expect(scene.editHistory.state.canUndo).toBe(false);
-      expect(scene.editHistory.state.canRedo).toBe(true);
+      expect(scene.state.tags).toEqual(tagsBeforeAnything);
 
-      scene.editHistory.redo(); // redoes the assistant write first (LIFO order)
+      scene.editHistory.redo(); // redoes the edit from before the write
+      expect(scene.state.tags).toEqual(tagsAfterBefore);
+
+      scene.editHistory.redo(); // redoes the assistant write
       expect(cellNamesOf(scene)).toEqual(afterApply);
       expect(scene.editHistory.state.canRedo).toBe(true);
 
-      scene.editHistory.redo(); // then the manual tag edit
+      scene.editHistory.redo(); // redoes the manual edit made after the write
       expect(scene.state.tags).toEqual(afterManualEdit);
       expect(scene.editHistory.state.canRedo).toBe(false);
     });

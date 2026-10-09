@@ -459,28 +459,19 @@ describe('NotebookScene', () => {
       });
     });
 
-    it('clears history when the notebook body is replaced', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      scene.state.body.addCell('code', 1);
-      const replacement = new NotebookLayoutManager({ cells: [] });
+    // A different notebook is never the same scene instance swapping its body under itself — it's a
+    // distinct NotebookScene, built fresh by transformNotebookToScene, with its own editHistory that
+    // was never going to know about the first one's stack in the first place.
+    it('gives a different notebook scene its own independent edit history', () => {
+      const first = buildScene(false, 'nb1');
+      activate(first);
+      first.state.body.addCell('code', 1);
+      expect(first.editHistory.state.canUndo).toBe(true);
 
-      scene.setState({ body: replacement });
+      const second = buildScene(false, 'nb2');
+      activate(second);
 
-      expect(scene.editHistory.state.canUndo).toBe(false);
-      replacement.addCell('code', 0);
-      expect(scene.editHistory.state.canUndo).toBe(true);
-    });
-
-    it('records history for a body replaced before activation', () => {
-      const scene = buildScene(false);
-      const replacement = new NotebookLayoutManager({ cells: [] });
-      scene.setState({ body: replacement });
-
-      activate(scene);
-      replacement.addCell('code', 0);
-
-      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(second.editHistory.state.canUndo).toBe(false);
     });
 
     it('keeps history across a deactivation and activation', () => {

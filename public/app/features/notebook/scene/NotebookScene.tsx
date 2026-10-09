@@ -184,12 +184,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.title !== prevState.title) {
           newState.body.setTitle?.(newState.title);
         }
-        // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
-        // the steps cannot run any more — unless this body change IS a recorded step being undone or
-        // redone, in which case the history already knows what it's doing with its own stacks.
-        if (newState.body !== prevState.body && !this.editHistory.isReplaying) {
-          this.editHistory.clear();
-        }
       });
 
       // Only while editing. A reader moving the time range is theirs to move, and the notebook
