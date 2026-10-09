@@ -13,8 +13,8 @@ import { refetchPluginSettings } from './refetchPluginSettings';
 import { legacyMyOrgTestAppSettings } from './test-fixtures/legacy.settings';
 import {
   clockPanelOnPremPluginMeta,
-  cloudwatchPluginMeta,
   myOrgTestAppSettings,
+  testdataPluginMeta,
 } from './test-fixtures/v0alpha1Response';
 
 jest.mock('../pluginMeta/plugins', () => ({
@@ -25,7 +25,7 @@ jest.mock('../pluginMeta/plugins', () => ({
 
 const getPluginMetaFromCacheMock = jest.mocked(getPluginMetaFromCache);
 const refetchPluginMetaMock = jest.mocked(refetchPluginMeta);
-const cloudwatch = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'cloudwatch')!;
+const testdata = v0alpha1Response.items.find((i) => i.spec.pluginJson.id === 'grafana-testdata-datasource')!;
 
 describe('settings', () => {
   let backendSrv: BackendSrv;
@@ -106,11 +106,11 @@ describe('settings', () => {
       });
 
       it('should use legacy apis for data source plugins', async () => {
-        refetchPluginMetaMock.mockResolvedValue(cloudwatch);
+        refetchPluginMetaMock.mockResolvedValue(testdata);
 
-        const result = await refetchPluginSettings(cloudwatch.spec.pluginJson.id);
+        const result = await refetchPluginSettings(testdata.spec.pluginJson.id);
 
-        expect(result).toEqual(cloudwatchPluginMeta);
+        expect(result).toEqual(testdataPluginMeta);
         expect(backendSrv.get).not.toHaveBeenCalled();
       });
 
