@@ -52,6 +52,9 @@ func TestIntegrationLegacyLoaderParity(t *testing.T) {
 				{UserID: 7, AuthenticatedBy: "render", OrgID: 1, OrgRole: org.RoleNone},
 				{ApiKeyID: 7, OrgID: 1, OrgRole: org.RoleViewer},
 				{OrgID: 1, OrgRole: org.RoleNone},
+				{UserID: 7, UserUID: "8", OrgID: -1},
+				{UserID: 7, UserUID: "8", OrgID: -1, Namespace: "org--1"},
+				{UserID: 7, UserUID: "8", OrgID: 1, OrgRole: org.RoleNone},
 				{UserID: 7, OrgID: 0, OrgRole: org.RoleViewer},
 				{UserID: 7, OrgID: 0, OrgRole: org.RoleNone, IsGrafanaAdmin: true},
 			} {

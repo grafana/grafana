@@ -76,6 +76,8 @@ func TestIntegrationGetUserPermissions_ContractRequesterSources(t *testing.T) {
 				{"team", user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleNone, TeamIDs: []int64{10}}, []accesscontrol.Permission{baseline, grant}}, //nolint:staticcheck // Numeric RBAC team grants are distinct from contextual groups.
 				{"basic", user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleViewer}, []accesscontrol.Permission{baseline, grant}},
 				{"none", user.SignedInUser{UserID: 8, OrgID: 1, OrgRole: org.RoleNone}, []accesscontrol.Permission{baseline}},
+				{"no-org-membership", user.SignedInUser{UserID: 7, OrgID: -1}, []accesscontrol.Permission{baseline}},
+				{"no-org-membership-mapped-namespace", user.SignedInUser{UserID: 7, OrgID: -1, Namespace: "org--1"}, []accesscontrol.Permission{baseline}},
 				{"service-account", user.SignedInUser{UserID: 7, OrgID: 1, OrgRole: org.RoleNone, IsServiceAccount: true}, []accesscontrol.Permission{baseline, grant}},
 				{"anonymous-viewer", user.SignedInUser{IsAnonymous: true, OrgID: 1, OrgRole: org.RoleViewer}, []accesscontrol.Permission{baseline, grant}},
 				{"anonymous-none", user.SignedInUser{IsAnonymous: true, OrgID: 1, OrgRole: org.RoleNone}, []accesscontrol.Permission{baseline}},
@@ -92,6 +94,55 @@ func TestIntegrationGetUserPermissions_ContractRequesterSources(t *testing.T) {
 				})
 			}
 		})
+	}
+}
+
+func TestIntegrationGetUserPermissions_ContractNoOrgMembership(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, cache := range []bool{false, true} {
+		for _, scope := range []struct {
+			name, stackID, memberNamespace, missingNamespace string
+		}{
+			{"unmapped", "", "", ""},
+			{"self-managed", "", "default", "org--1"},
+			{"cloud", "12", "stacks-12", "stacks-12"},
+		} {
+			t.Run(fmt.Sprintf("cache=%t/%s", cache, scope.name), func(t *testing.T) {
+				s := setupTestEnv(t, false)
+				s.cfg.RBAC.PermissionCache = cache
+				s.cfg.StackID = scope.stackID
+				baseline := accesscontrol.Permission{Action: "folders:read", Scope: "folders:uid:sharedwithme"}
+				memberGrant := accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:member-org"}
+				addContractUserGrant(t, s.sql, "managed:member-org", 1, 7, memberGrant)
+				addContractUserGrant(t, s.sql, "managed:selected-org", 2, 7,
+					accesscontrol.Permission{Action: "dashboards:read", Scope: "dashboards:uid:selected-org"})
+
+				member := user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: 1, OrgRole: org.RoleViewer}
+				// GetSignedInUser normalizes a valid user without membership to
+				// OrgID=-1 and an empty role. NamespaceSync may then map it to org--1.
+				// These enumeration contracts accept that trusted identity, not HTTP headers.
+				missing := user.SignedInUser{UserID: 7, UserUID: "seven", OrgID: -1}
+				member.Namespace, missing.Namespace = scope.memberNamespace, scope.missingNamespace
+				for _, step := range []struct {
+					name      string
+					requester user.SignedInUser
+					options   accesscontrol.Options
+					want      []accesscontrol.Permission
+				}{
+					{"member-cold", member, accesscontrol.Options{}, []accesscontrol.Permission{baseline, memberGrant}},
+					{"no-membership-cold", missing, accesscontrol.Options{}, []accesscontrol.Permission{baseline}},
+					{"no-membership-warm", missing, accesscontrol.Options{}, []accesscontrol.Permission{baseline}},
+					{"no-membership-reload", missing, accesscontrol.Options{ReloadCache: true}, []accesscontrol.Permission{baseline}},
+					{"member-after-no-membership", member, accesscontrol.Options{}, []accesscontrol.Permission{baseline, memberGrant}},
+				} {
+					t.Run(step.name, func(t *testing.T) {
+						got, err := s.GetUserPermissions(t.Context(), &step.requester, step.options)
+						require.NoError(t, err)
+						require.ElementsMatch(t, step.want, rawPermissions(got))
+					})
+				}
+			})
+		}
 	}
 }
 
