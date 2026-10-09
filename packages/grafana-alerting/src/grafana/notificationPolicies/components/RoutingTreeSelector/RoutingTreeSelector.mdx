@@ -20,8 +20,7 @@ function MyComponent() {
 Use the `multi` prop to allow selecting multiple routing trees. The `onChange` callback receives an array of `RoutingTree` objects and `value` accepts an array of tree names.
 
 ```tsx
-import { RoutingTreeSelector } from '@grafana/alerting/unstable';
-import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import { RoutingTreeSelector, type RoutingTree } from '@grafana/alerting/unstable';
 
 function MyComponent() {
   const [selected, setSelected] = useState<string[]>([]);
@@ -41,8 +40,11 @@ function MyComponent() {
 Combine with `useMatchInstancesToSpecificRouteTree` to preview which routes match a set of labels:
 
 ```tsx
-import { RoutingTreeSelector, useMatchInstancesToSpecificRouteTree } from '@grafana/alerting/unstable';
-import type { RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
+import {
+  RoutingTreeSelector,
+  useMatchInstancesToSpecificRouteTree,
+  type RoutingTree,
+} from '@grafana/alerting/unstable';
 import type { Label } from '@grafana/alerting';
 
 function RoutingPreview() {

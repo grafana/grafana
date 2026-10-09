@@ -4,7 +4,12 @@
 
 // Contact Points
 export * from './grafana/api/notifications/v1beta1/types';
+export type { RoutingTree } from './grafana/api/notifications';
 export { useListContactPoints } from './grafana/contactPoints/hooks/v1beta1/useContactPoints';
+export {
+  useResolvedContactPoint,
+  type ResolvedContactPoint,
+} from './grafana/contactPoints/hooks/v1beta1/useResolvedContactPoint';
 export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector';
 export {
   getContactPointDescription,
@@ -41,6 +46,17 @@ export {
 export { useListTimeIntervals } from './grafana/muteTimings/hooks/useListTimeIntervals';
 
 // Notification settings
+export {
+  NotificationsSettingsSelector,
+  type RecipientMode,
+  type NotificationsSettingsSelectorProps,
+} from './grafana/notificationSettings/components/NotificationsSettingsSelector/NotificationsSettingsSelector';
+export {
+  asSimplifiedRouting,
+  asNamedRoutingTree,
+  toSimplifiedRouting,
+  toNamedRoutingTree,
+} from './grafana/notificationSettings/utils/routingValue';
 export { isValidPromDuration, isValidRoutingTimings } from './grafana/notificationSettings/utils/promDuration';
 export {
   DurationField,
