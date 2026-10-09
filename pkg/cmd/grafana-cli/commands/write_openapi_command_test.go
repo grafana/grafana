@@ -124,7 +124,7 @@ func writeOpenAPIContext(t *testing.T, args []string) *cli.Context {
 }
 
 func TestWriteOpenAPICommand(t *testing.T) {
-	raw, err := os.ReadFile("../../../registry/apis/appplugin/pluginopenapi/testdata/standalone/app-sdk-manifest.json")
+	raw, err := os.ReadFile("testdata/write-openapi/standalone/app-sdk-manifest.json")
 	require.NoError(t, err)
 	var manifest map[string]any
 	require.NoError(t, json.Unmarshal(raw, &manifest))
@@ -134,8 +134,15 @@ func TestWriteOpenAPICommand(t *testing.T) {
 	for k, v := range versions[0].(map[string]any) {
 		second[k] = v
 	}
+	// The fixture declares v2alpha1 unserved; serve it as a copy of v1alpha1.
 	second["name"] = "v2alpha1"
-	spec["versions"] = append(versions, second)
+	served := []any{versions[0]}
+	for _, v := range versions[1:] {
+		if v.(map[string]any)["name"] != "v2alpha1" {
+			served = append(served, v)
+		}
+	}
+	spec["versions"] = append(served, second)
 	raw, err = json.Marshal(manifest)
 	require.NoError(t, err)
 	path := filepath.Join(t.TempDir(), "manifest.json")

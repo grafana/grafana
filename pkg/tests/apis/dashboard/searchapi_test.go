@@ -21,11 +21,20 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	searchV0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationSearchAPI(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchAPI)
+}
+
+func TestIntegrationSearchAndTrashIgnoreRemovedSettings(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchAndTrashIgnoreRemovedSettings)
+}
 
 // Covers the endpoint end to end: the envelope, paging, and which items a
 // non-admin sees.
@@ -35,7 +44,7 @@ import (
 // through NewServiceAuthorizer, whose coarse gate checks token permissions and
 // leaves user permissions to the per-item check, so a search succeeds here with
 // or without the restatement. That rule is covered by unit tests on the chain.
-func TestIntegrationSearchAPI(t *testing.T) {
+func testIntegrationSearchAPI(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -334,7 +343,7 @@ func TestIntegrationSearchAPI(t *testing.T) {
 	})
 }
 
-func TestIntegrationSearchAndTrashIgnoreRemovedSettings(t *testing.T) {
+func testIntegrationSearchAndTrashIgnoreRemovedSettings(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	t.Setenv(setting.EnvKey("grafana-apiserver", "enable_search_api"), "false")
 	t.Setenv(setting.EnvKey("grafana-apiserver", "enable_trash_api"), "false")

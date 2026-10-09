@@ -11,7 +11,8 @@ const MAX_HISTORY_LENGTH = 100;
  *
  * `ADD_CELL` means a new cell went into the layout. Changing a cell that is already there is `EDIT`,
  * however much it changes. `TAGS` covers both adding and removing a tag — the document's tag list
- * changing, however which way.
+ * changing, however which way. `TITLE` is the same idea for the notebook's own title, a scene-level
+ * field rather than a cell.
  */
 export const NOTEBOOK_EDIT_KIND = {
   ADD_CELL: 'add-cell',
@@ -19,6 +20,7 @@ export const NOTEBOOK_EDIT_KIND = {
   MOVE_CELL: 'move-cell',
   EDIT: 'edit',
   TAGS: 'tags',
+  TITLE: 'title',
 } as const;
 
 export type NotebookEditKind = (typeof NOTEBOOK_EDIT_KIND)[keyof typeof NOTEBOOK_EDIT_KIND];
