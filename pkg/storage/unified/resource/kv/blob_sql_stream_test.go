@@ -6,7 +6,6 @@ import (
 	"crypto/md5"
 	"database/sql/driver"
 	"encoding/hex"
-	"io"
 	"strconv"
 	"strings"
 	"testing"
@@ -87,7 +86,7 @@ func TestBlobPublicationCoalescesShortReads(t *testing.T) {
 					mock.ExpectExec("DELETE FROM .*resource_blob_upload_chunk.* WHERE .*upload_id").WithArgs(uploadID).WillReturnResult(sqlmock.NewResult(0, 0))
 					mock.ExpectCommit()
 
-					var reader io.Reader = iotest.OneByteReader(bytes.NewReader(body))
+					reader := iotest.OneByteReader(bytes.NewReader(body))
 					if eofWithData {
 						reader = iotest.DataErrReader(reader)
 					}
