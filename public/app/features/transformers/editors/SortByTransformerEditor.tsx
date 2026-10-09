@@ -1,5 +1,7 @@
 import { css, cx } from '@emotion/css';
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd';
+import { uniqueId } from 'lodash';
+import { useState } from 'react';
 
 import { type GrafanaTheme2, type TransformerUIProps } from '@grafana/data';
 import { type SortByField, type SortByTransformerOptions } from '@grafana/data/internal';
@@ -17,23 +19,44 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
 
   const sorts: SortByField[] = options.sort?.length ? options.sort : [{ field: '' }];
   const hasMultipleSorts = sorts.length > 1;
+  const usedFields = new Set(sorts.map((s) => s.field));
+  const canAddSort = variables.length > 0 || fieldNames.some((name) => !usedFields.has(name));
   const dragHandleLabel = t(
     'transformers.sort-by-transformer-editor.drag-handle-label',
     'Drag to change sort priority'
   );
 
-  const updateSorts = (sort: SortByField[]) => onChange({ ...options, sort });
+  // SortByField has no id, so drag identity is tracked here; it must follow the row through every
+  // reorder, otherwise dnd restores focus to whichever row took over the index.
+  const [storedIds, setIds] = useState<string[]>(() => sorts.map(() => uniqueId('sort-')));
+
+  // Realign when options.sort changes from outside this editor, such as an undo or a panel JSON edit.
+  const ids = storedIds.length === sorts.length ? storedIds : sorts.map((_, i) => storedIds[i] ?? uniqueId('sort-'));
+  if (ids !== storedIds) {
+    setIds(ids);
+  }
+
+  const updateSorts = (sort: SortByField[], nextIds: string[]) => {
+    setIds(nextIds);
+    onChange({ ...options, sort });
+  };
 
   const onSortChange = (idx: number, cfg: SortByField) => {
-    updateSorts(sorts.map((s, i) => (i === idx ? cfg : s)));
+    updateSorts(
+      sorts.map((s, i) => (i === idx ? cfg : s)),
+      ids
+    );
   };
 
   const onAddSort = () => {
-    updateSorts([...sorts, { field: '' }]);
+    updateSorts([...sorts, { field: '' }], [...ids, uniqueId('sort-')]);
   };
 
   const onRemoveSort = (idx: number) => {
-    updateSorts(sorts.filter((_, i) => i !== idx));
+    updateSorts(
+      sorts.filter((_, i) => i !== idx),
+      ids.filter((_, i) => i !== idx)
+    );
   };
 
   const onDragEnd = (result: DropResult) => {
@@ -41,9 +64,12 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
       return;
     }
     const next = [...sorts];
+    const nextIds = [...ids];
     const [moved] = next.splice(result.source.index, 1);
+    const [movedId] = nextIds.splice(result.source.index, 1);
     next.splice(result.destination.index, 0, moved);
-    updateSorts(next);
+    nextIds.splice(result.destination.index, 0, movedId);
+    updateSorts(next, nextIds);
   };
 
   return (
@@ -59,12 +85,7 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
                   .map((name) => ({ label: name, value: name }));
 
                 return (
-                  <Draggable
-                    key={`sort-${index}`}
-                    draggableId={`sort-${index}`}
-                    index={index}
-                    isDragDisabled={!hasMultipleSorts}
-                  >
+                  <Draggable key={ids[index]} draggableId={ids[index]} index={index} isDragDisabled={!hasMultipleSorts}>
                     {(dragProvided) => (
                       <div ref={dragProvided.innerRef} className={styles.row} {...dragProvided.draggableProps}>
                         <span
@@ -120,7 +141,18 @@ export const SortByTransformerEditor = ({ input, options, onChange }: Transforme
           )}
         </Droppable>
       </DragDropContext>
-      <Button size="sm" icon="plus" variant="secondary" onClick={onAddSort}>
+      <Button
+        size="sm"
+        icon="plus"
+        variant="secondary"
+        onClick={onAddSort}
+        disabled={!canAddSort}
+        tooltip={
+          canAddSort
+            ? undefined
+            : t('transformers.sort-by-transformer-editor.all-fields-used', 'Every field is already used')
+        }
+      >
         <Trans i18nKey="transformers.sort-by-transformer-editor.add-sort-field">Add sort field</Trans>
       </Button>
     </div>

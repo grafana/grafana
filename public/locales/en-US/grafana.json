@@ -17780,6 +17780,7 @@
     },
     "sort-by-transformer-editor": {
       "add-sort-field": "Add sort field",
+      "all-fields-used": "Every field is already used",
       "description": {
         "sort-fields": "Sort fields in a frame."
       },
