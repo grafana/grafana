@@ -20,9 +20,11 @@ import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 
 import { buildPanelEditScene } from '../../panel-edit/PanelEditor';
 import { type DashboardScene } from '../../scene/DashboardScene';
+import { dashboardViews } from '../../scene/dashboardViewRegistry';
 import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { transformSaveModelSchemaV2ToScene } from '../../serialization/transformSaveModelSchemaV2ToScene';
 import { findVizPanelByKey } from '../../utils/findVizPanel';
+import { createDeferred } from '../../utils/test-utils';
 import { getLibraryPanelBehavior } from '../../utils/utils';
 
 import { applySpecCommand } from './applySpec';
@@ -183,6 +185,53 @@ describe('APPLY_SPEC with a panel open for editing', () => {
     await waitFor(() => expect(editedPanelKey(scene)).toBe('panel-2'));
     expect(editorIsAttached(scene)).toBe(true);
   });
+
+  it.each(['library fetch', 'editor bundle'])(
+    'does not restore a pending %s loader on undo and reopens on redo',
+    async (phase) => {
+      const scene = buildScene(makeSpec());
+      scene.onEnterEditMode();
+      const originalBody = scene.state.body;
+      const ready = createDeferred<void>();
+      const original = dashboardViews.editPanel;
+      const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+        const view = original(...args);
+        return {
+          ...view,
+          load: async (signal) => {
+            await ready.promise;
+            return view.load(signal);
+          },
+        };
+      });
+      const key = phase === 'library fetch' ? 'panel-2' : 'panel-1';
+      try {
+        scene.urlSync!.updateFromUrl({ editPanel: key });
+        expect(scene.state.loadingView).toBe('editPanel');
+        await applySpec(scene, makeSpec());
+        if (phase === 'library fetch') {
+          getLibraryPanelBehavior(findVizPanelByKey(scene, key)!)!.setState({ isLoaded: true });
+        }
+        ready.resolve();
+        await waitFor(() => expect(editedPanelKey(scene)).toBe(key));
+        expect(editorIsAttached(scene)).toBe(true);
+
+        scene.state.sidebar.undoAction();
+        expect(scene.state.body === originalBody).toBe(true);
+        expect(scene.state.loadingView).toBeUndefined();
+        expect(editedPanelKey(scene)).toBeUndefined();
+
+        scene.state.sidebar.redoAction();
+        await waitFor(() => expect(editedPanelKey(scene)).toBe(key));
+        expect(editorIsAttached(scene)).toBe(true);
+        expect(scene.state.loadingView).toBeUndefined();
+      } finally {
+        ready.resolve();
+        scene.cancelPendingViews();
+        loadEditor.mockRestore();
+      }
+    }
+  );
 
   it('recovers the pane when a rebuild races an in-flight `?editPanel=` wait', async () => {
     const scene = buildScene(makeSpec());

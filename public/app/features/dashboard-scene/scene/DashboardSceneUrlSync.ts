@@ -23,6 +23,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * panel whose fetch fails) loses the editor for good.
    */
   private _heldEditPanelId?: string;
+  private _editPanelRequest?: Promise<void>;
   private _libPanelSub?: Unsubscribable;
 
   constructor(private _scene: DashboardScene) {}
@@ -50,10 +51,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * pane and re-resolve the id against the tree it swaps in.
    */
   public retainEditPanelAcrossRebuild(panelId: string) {
+    this._editPanelRequest = undefined;
     this._heldEditPanelId = panelId;
   }
 
   private _releaseEditPanel() {
+    this._editPanelRequest = undefined;
     const wasHeld = this._heldEditPanelId !== undefined;
     this._heldEditPanelId = undefined;
     if (wasHeld) {
@@ -198,6 +201,7 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
    * Temporary solution, with some refactoring of PanelEditor we can remove this
    */
   private _waitForLibPanelToLoadBeforeEnteringPanelEdit(panelId: string, libPanel: LibraryPanelBehavior) {
+    this._editPanelRequest = undefined;
     this._libPanelSub?.unsubscribe();
     this._heldEditPanelId = panelId;
 
@@ -280,8 +284,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     this._libPanelSub = undefined;
     this._heldEditPanelId = panelId;
 
-    openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID).then(() => {
-      if (this._heldEditPanelId === panelId) {
+    const request = openPanelEditor(this._scene, panel, panel.state.pluginId === UNCONFIGURED_PANEL_PLUGIN_ID);
+    this._editPanelRequest = request;
+    request.then(() => {
+      // The same panel can be requested again before a superseded load completes.
+      if (this._editPanelRequest === request) {
+        this._editPanelRequest = undefined;
         this._heldEditPanelId = undefined;
       }
     });

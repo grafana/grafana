@@ -1,4 +1,5 @@
 import { waitFor } from '@testing-library/react';
+import { createBrowserHistory } from 'history';
 
 import {
   CoreApp,
@@ -2289,6 +2290,141 @@ describe('DashboardScene', () => {
       await opening;
       expect(scene.state.overlay).toBe(modal);
     });
+  });
+
+  describe('lazy view cleanup', () => {
+    it('keeps a request started by loading completion cancellable', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<SceneObject>();
+      let newer: Promise<void> | undefined;
+      const subscription = scene.subscribeToState((state, previous) => {
+        if (previous.loadingView && !state.loadingView && !newer) {
+          newer = scene.showModalAsync(() => pending.promise);
+        }
+      });
+      try {
+        await scene.showModalAsync(async () => undefined);
+        expect(scene.state.loadingView).toBe('overlay');
+        scene.closeModal();
+        pending.resolve(new SceneGridLayout({ children: [] }));
+        await newer;
+        expect(scene.state.loadingView).toBeUndefined();
+        expect(scene.state.overlay).toBeUndefined();
+        const modal = new SceneGridLayout({ children: [] });
+        await scene.showModalAsync(async () => modal);
+        expect(scene.state.overlay).toBe(modal);
+      } finally {
+        subscription.unsubscribe();
+      }
+    });
+
+    it('keeps browser Back and Forward updating the scene after repeated view commits', async () => {
+      const previousUrl = window.location.href;
+      window.history.replaceState({}, '', '/d/dash-1/test');
+      const history = createBrowserHistory();
+      const getHistory = jest.spyOn(locationService, 'getHistory').mockReturnValue(history);
+      const getLocation = jest.spyOn(locationService, 'getLocation').mockImplementation(() => history.location);
+      const scene = buildTestScene();
+      const unlisten = history.listen((location) => {
+        scene.urlSync?.updateFromUrl({ viewPanel: new URLSearchParams(location.search).get('viewPanel') });
+      });
+      try {
+        for (let i = 0; i < 3; i++) {
+          const modal = new SceneGridLayout({ children: [] });
+          await scene.showModalAsync(async () => modal);
+          expect(scene.state.overlay).toBe(modal);
+          scene.closeModal();
+        }
+        history.push('/d/dash-1/test?viewPanel=panel-1');
+        history.push('/d/dash-1/test?viewPanel=panel-2');
+        expect(scene.state.viewPanel).toBe('panel-2');
+
+        history.goBack();
+        await waitFor(() => expect(scene.state.viewPanel).toBe('panel-1'));
+        history.goForward();
+        await waitFor(() => expect(scene.state.viewPanel).toBe('panel-2'));
+      } finally {
+        unlisten();
+        getHistory.mockRestore();
+        getLocation.mockRestore();
+        window.history.replaceState({}, '', previousUrl);
+      }
+    });
+
+    it.each(['success', 'undefined', 'rejection', 'cancellation', 'commit failure'])(
+      'releases the history listener once after %s and allows another view',
+      async (outcome) => {
+        const scene = buildTestScene();
+        const history = locationService.getHistory();
+        const originalListen = history.listen.bind(history);
+        const disposers: jest.Mock[] = [];
+        const listen = jest.spyOn(history, 'listen').mockImplementation((listener) => {
+          const dispose = jest.fn(originalListen(listener));
+          disposers.push(dispose);
+          return dispose;
+        });
+        const pending = createDeferred<SceneObject | undefined>();
+        const modal = new SceneGridLayout({ children: [] });
+        const opening = scene.loadView({ key: 'overlay', load: () => pending.promise });
+        const commit = jest.spyOn(scene, 'setState');
+        try {
+          if (outcome === 'commit failure') {
+            commit.mockImplementationOnce(() => {
+              throw new Error('Commit failed');
+            });
+          }
+          if (outcome === 'cancellation') {
+            scene.cancelPendingViews();
+          }
+          if (outcome === 'rejection') {
+            pending.reject(new Error('Load failed'));
+          } else {
+            pending.resolve(outcome === 'undefined' ? undefined : modal);
+          }
+          if (outcome === 'rejection' || outcome === 'commit failure') {
+            await expect(opening).rejects.toThrow(outcome === 'rejection' ? 'Load failed' : 'Commit failed');
+          } else {
+            await opening;
+          }
+          expect(disposers).toHaveLength(1);
+          expect(disposers[0]).toHaveBeenCalledTimes(1);
+          expect(scene.state.loadingView).toBeUndefined();
+          expect(scene.state.overlay).toBe(outcome === 'success' ? modal : undefined);
+
+          await scene.showModalAsync(async () => modal);
+          expect(scene.state.overlay).toBe(modal);
+          expect(disposers[1]).toHaveBeenCalledTimes(1);
+        } finally {
+          commit.mockRestore();
+          listen.mockRestore();
+        }
+      }
+    );
+
+    it.each(['older first', 'newer first'])(
+      'preserves the newer editor when an older load rejects %s',
+      async (order) => {
+        const scene = buildTestScene();
+        const older = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+        const newer = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+        const first = scene.loadView({ key: 'editPanel', load: () => older.promise });
+        const second = scene.loadView({ key: 'editPanel', load: () => newer.promise });
+        const editor = buildPanelEditScene(findVizPanelByKey(scene, 'panel-2')!);
+        if (order === 'newer first') {
+          newer.resolve(editor);
+          await second;
+        }
+        older.reject(new Error('Old chunk failed'));
+        await expect(first).rejects.toThrow('Old chunk failed');
+        if (order === 'older first') {
+          expect(scene.state.loadingView).toBe('editPanel');
+          newer.resolve(editor);
+          await second;
+        }
+        expect(scene.state.editPanel).toBe(editor);
+        expect(scene.state.loadingView).toBeUndefined();
+      }
+    );
   });
 
   describe('lazy panel editor', () => {

@@ -1251,20 +1251,30 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         request.abort();
       }
     });
+    let cleanedUp = false;
+    const cleanup = () => {
+      if (cleanedUp) {
+        return;
+      }
+      cleanedUp = true;
+      subscription.unsubscribe();
+      unlisten();
+    };
     try {
       const value = await view.load(request.signal);
       if (value !== undefined && !request.signal.aborted) {
         // Committing the view can normalize its URL; that is not a new navigation request.
-        subscription.unsubscribe();
-        unlisten();
+        cleanup();
         this.setState({ [view.key]: value });
       }
     } finally {
-      subscription.unsubscribe();
-      unlisten();
+      cleanup();
       if (this._viewRequest === request) {
         request.abort();
-        this._viewRequest = undefined;
+        // Clearing loading state can synchronously start another request.
+        if (this._viewRequest === request) {
+          this._viewRequest = undefined;
+        }
       }
     }
   }

@@ -11,6 +11,7 @@ import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { dashboardViews } from './dashboardViewRegistry';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
@@ -320,6 +321,45 @@ describe('DashboardSceneUrlSync', () => {
   });
 
   describe('entering edit mode', () => {
+    it('retains the newer URL hold when an older request for the same panel completes', async () => {
+      const scene = buildTestScene();
+      const first = createDeferred<void>();
+      const second = createDeferred<void>();
+      const original = dashboardViews.editPanel;
+      const ready = [first, second];
+      const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+        const view = original(...args);
+        const pending = ready.shift()!;
+        return {
+          ...view,
+          load: async (signal) => {
+            await pending.promise;
+            return view.load(signal);
+          },
+        };
+      });
+      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      try {
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        scene.urlSync?.updateFromUrl({ editPanel: null });
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        first.resolve();
+        await openEditor.mock.results[0].value;
+        expect(scene.state.loadingView).toBe('editPanel');
+        expect(scene.urlSync?.getUrlState().editPanel).toBe('panel-1');
+        second.resolve();
+        await openEditor.mock.results[1].value;
+        expect(scene.state.editPanel?.getUrlKey()).toBe('1');
+        expect(scene.state.loadingView).toBeUndefined();
+      } finally {
+        first.resolve();
+        second.resolve();
+        scene.cancelPendingViews();
+        openEditor.mockRestore();
+        loadEditor.mockRestore();
+      }
+    });
+
     it('preserves a deep-linked panel editor while entering dashboard edit mode', async () => {
       locationService.push('/d/test/test?editPanel=1');
       const scene = buildTestScene();

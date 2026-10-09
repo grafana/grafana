@@ -247,6 +247,52 @@ describe('DashboardScenePage', () => {
     }
   });
 
+  it('restores dashboard scroll position after loading and closing the panel editor', async () => {
+    const ready = createDeferred<void>();
+    const original = dashboardViews.editPanel;
+    const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+      const view = original(...args);
+      return {
+        ...view,
+        load: async (signal) => {
+          await ready.promise;
+          return view.load(signal);
+        },
+      };
+    });
+    try {
+      setup();
+      expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+      const scene = getDashboardScenePageStateManager().getCache()['my-dash-uid'];
+      const scroll = { scrollTop: 420, scrollTo: jest.fn() };
+      scene.onSetScrollRef(scroll);
+      // Keep a measurable scroll surface across Page remounts; jsdom has no layout or scrolling.
+      const setScrollRef = jest.spyOn(scene, 'onSetScrollRef').mockImplementation(() => {});
+      const remember = jest.spyOn(scene, 'rememberScrollPos');
+      const restore = jest.spyOn(scene, 'restoreScrollPos');
+      try {
+        act(() => locationService.partial({ editPanel: 'panel-1' }));
+        expect(await screen.findByText('Loading ...')).toBeInTheDocument();
+        expect(remember).toHaveBeenCalledTimes(1);
+        scroll.scrollTop = 0;
+        await act(async () => ready.resolve());
+        expect(await screen.findByText('Panel options')).toBeInTheDocument();
+        expect(remember).toHaveBeenCalledTimes(1);
+        expect(restore).not.toHaveBeenCalled();
+        act(() => locationService.partial({ editPanel: null }));
+        expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+        expect(scroll.scrollTo).toHaveBeenCalledWith(0, 420);
+      } finally {
+        setScrollRef.mockRestore();
+        remember.mockRestore();
+        restore.mockRestore();
+      }
+    } finally {
+      cleanup();
+      loadEditor.mockRestore();
+    }
+  });
+
   it('leaves the page loader when editing a mounted library panel whose fetch fails', async () => {
     const { pending, fetchPanel } = mockPendingLibraryPanel();
 

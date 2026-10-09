@@ -99,7 +99,8 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
     },
     undo: () => {
       const outgoingKeys = Object.keys(sceneUtils.getUrlState(scene));
-      scene.setState(previousState);
+      // A previously pending editor has no state key to overwrite the editor from the rebuilt tree.
+      scene.setState({ ...previousState, editPanel: previousState.editPanel });
       scene.state.sidebar.refreshAfterRebuild();
       // The restored tree is the one the apply replaced, so its spec state can be read from it now.
       const urlUpdates = urlUpdatesForSwap(scene, {
