@@ -1,11 +1,18 @@
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
+
 import { describeExplorePanes } from './describeExplorePanes';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  getDataSourceInstanceSettings: async (ref: string) => (ref === 'loki-uid' ? { name: 'Ops Logs' } : undefined),
-}));
-
 const explorePanes = (panes: unknown) => `?schemaVersion=1&panes=${encodeURIComponent(JSON.stringify(panes))}`;
+
+beforeEach(() => {
+  setDataSourceInstanceSettings({
+    loki: makeDataSourceSettings('loki-uid', 'Ops Logs', 'loki', { isDefault: true }),
+    prom: makeDataSourceSettings('prom-uid', 'Prom', 'prometheus'),
+    mixed: makeDataSourceSettings('mixed-uid', '-- Mixed --', 'mixed', { mixed: true }),
+  });
+});
 
 describe('describeExplorePanes', () => {
   it('names the datasource and reads the query text of every pane', async () => {
@@ -25,6 +32,26 @@ describe('describeExplorePanes', () => {
       { datasource: 'Ops Logs', queries: ['{service_name="api"}', 'up'] },
       // A datasource that no longer resolves keeps its ref so the row still says something.
       { datasource: 'unknown-uid', queries: ['select 1'] },
+    ]);
+  });
+
+  it('names each query its own datasource in a mixed pane', async () => {
+    const search = explorePanes({
+      abc: {
+        datasource: 'mixed-uid',
+        queries: [
+          { refId: 'A', expr: 'up', datasource: { uid: 'prom-uid', type: 'prometheus' } },
+          { refId: 'B', expr: '{a="b"}', datasource: 'loki-uid' },
+          { refId: 'C', expr: 'rate', datasource: { uid: 'gone' } },
+          { refId: 'D', expr: 'x' },
+          { refId: 'E', expr: '', datasource: 'loki-uid' },
+        ],
+        range: { from: 'now-1h', to: 'now' },
+      },
+    });
+
+    expect(await describeExplorePanes(search)).toEqual([
+      { datasource: undefined, queries: ['Prom: up', 'Ops Logs: {a="b"}', 'gone: rate', 'x'] },
     ]);
   });
 
