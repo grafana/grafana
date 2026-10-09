@@ -1,18 +1,26 @@
 package search
 
 import (
+	"context"
 	"errors"
+	"fmt"
+	"runtime"
+	"slices"
 	"sync"
 	"testing"
 	"time"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2/search"
+	index "github.com/blevesearch/bleve_index_api"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -476,6 +484,18 @@ func searchFolderTree(t *testing.T, index resource.ResourceIndex, folders ...str
 // A folderTree filter finds what is in a folder and everything below it, and
 // follows folder moves and deletes at once, without rewriting what is below.
 func TestGlobalIndexSearchesAFolderAndEverythingBelowIt(t *testing.T) {
+	// Both ways of filtering on the folders found: a term per folder, and a check
+	// of each document's folder against the set.
+	for _, limit := range []int{folderTermFilterLimit, 0} {
+		t.Run(fmt.Sprintf("term filter limit %d", limit), func(t *testing.T) {
+			defer func(old int) { folderTermFilterLimit = old }(folderTermFilterLimit)
+			folderTermFilterLimit = limit
+			testGlobalIndexSearchesAFolderAndEverythingBelowIt(t)
+		})
+	}
+}
+
+func testGlobalIndexSearchesAFolderAndEverythingBelowIt(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
 	key := resource.GlobalSearchKey("default")
 	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
@@ -702,4 +722,284 @@ func TestFolderTreeSearchOperators(t *testing.T) {
 		require.NotNil(t, rsp.Error, "%s %v", tc.operator, tc.values)
 		assert.Equal(t, int32(400), rsp.Error.Code)
 	}
+}
+
+// BenchmarkGlobalFolderTree measures searches of a folder and everything below
+// it in a global index the size of the largest namespaces: 300k folders, each
+// holding one dashboard. Subtrees of 100, 10k and 100k folders have ten
+// subfolders per folder.
+//
+//	go test ./pkg/storage/unified/search/ -run '^$' -bench BenchmarkGlobalFolderTree -benchtime 20x
+func BenchmarkGlobalFolderTree(b *testing.B) {
+	key := resource.GlobalSearchKey("default")
+	backend, err := NewBleveBackend(BleveOptions{
+		Root:          b.TempDir(),
+		FileThreshold: 1,
+		IndexCacheTTL: time.Hour,
+		Logger:        log.NewNopLogger(),
+		BuildVersion:  buildVersion,
+	}, resource.ProvideIndexMetrics(prometheus.NewRegistry()))
+	require.NoError(b, err)
+	b.Cleanup(backend.Stop)
+
+	subtrees := []struct {
+		root string
+		size int
+	}{{"s100", 100}, {"s10k", 10_000}, {"s100k", 100_000}, {"rest", 190_000}}
+	var items []*resource.BulkIndexItem
+	for _, st := range subtrees {
+		names := make([]string, st.size)
+		for i := range st.size {
+			names[i] = fmt.Sprintf("%s-%d", st.root, i)
+			parent := ""
+			if i > 0 {
+				parent = names[(i-1)/10]
+			}
+			items = append(items,
+				folderTreeDoc(key, "folders", names[i], parent),
+				folderTreeDoc(key, "dashboards", "dash-"+names[i], names[i]))
+		}
+	}
+	folders := len(items) / 2
+
+	start := time.Now()
+	built, err := backend.BuildIndex(b.Context(), key, int64(len(items)), "benchmark", func(index resource.ResourceIndex) (int64, error) {
+		for chunk := range slices.Chunk(items, 10_000) {
+			if err := index.BulkIndex(&resource.BulkIndexRequest{Items: chunk}); err != nil {
+				return 0, err
+			}
+		}
+		return 1, nil
+	}, nil, false, time.Time{}, 0)
+	require.NoError(b, err)
+	b.Logf("built %d documents in %s", len(items), time.Since(start))
+	index := built.(*bleveIndex)
+
+	unload := func() {
+		index.folders.mu.Lock()
+		index.folders.loaded = false
+		index.folders.parent, index.folders.children = nil, nil
+		index.folders.mu.Unlock()
+	}
+
+	b.Run("load", func(b *testing.B) {
+		b.ReportAllocs()
+		var bytesPerFolder float64
+		for b.Loop() {
+			b.StopTimer()
+			unload()
+			runtime.GC()
+			var before, after runtime.MemStats
+			runtime.ReadMemStats(&before)
+			b.StartTimer()
+
+			_, err := index.folderSubtree(b.Context(), []string{"s100-0"})
+			require.NoError(b, err)
+
+			b.StopTimer()
+			runtime.GC()
+			runtime.ReadMemStats(&after)
+			// The whole process's heap, so it can also shrink; that run says nothing.
+			if grown := int64(after.HeapAlloc) - int64(before.HeapAlloc); grown > 0 {
+				bytesPerFolder = float64(grown) / float64(folders)
+			}
+			b.StartTimer()
+		}
+		b.ReportMetric(bytesPerFolder, "tree-bytes/folder")
+	})
+
+	access := NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
+	ctx := identity.WithRequester(b.Context(), &user.SignedInUser{Namespace: "default"})
+	search := func(b *testing.B, field, folder string) {
+		rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "default"},
+				Fields: []*resourcepb.Requirement{{Key: field, Operator: string(selection.In), Values: []string{folder}}},
+			},
+			Limit: 10,
+		}, nil, nil)
+		require.NoError(b, err)
+		require.Nil(b, rsp.Error)
+		require.Len(b, rsp.Results.Rows, 10)
+	}
+
+	for _, st := range subtrees[:3] {
+		root := st.root + "-0"
+		b.Run(fmt.Sprintf("expand/subtree=%d", st.size), func(b *testing.B) {
+			b.ReportAllocs()
+			for b.Loop() {
+				found, err := index.folderSubtree(b.Context(), []string{root})
+				require.NoError(b, err)
+				require.Len(b, found, st.size)
+			}
+		})
+		for _, filter := range []struct {
+			name  string
+			limit int
+		}{{"terms", st.size}, {"set", 0}} {
+			b.Run(fmt.Sprintf("search-%s/subtree=%d", filter.name, st.size), func(b *testing.B) {
+				defer func(old int) { folderTermFilterLimit = old }(folderTermFilterLimit)
+				folderTermFilterLimit = filter.limit
+				b.ReportAllocs()
+				for b.Loop() {
+					search(b, resource.SEARCH_FIELD_FOLDER_TREE, root)
+				}
+			})
+		}
+		b.Run(fmt.Sprintf("search-parallel-with-moves/subtree=%d", st.size), func(b *testing.B) {
+			b.ReportAllocs()
+			stop := make(chan struct{})
+			var wg sync.WaitGroup
+			wg.Go(func() {
+				for i := 0; ; i++ {
+					select {
+					case <-stop:
+						return
+					default:
+					}
+					// A folder in "rest" moves back and forth, so every move takes the
+					// tree's lock but leaves the searched subtree alone.
+					parent := "rest-1"
+					if i%2 == 0 {
+						parent = "rest-2"
+					}
+					assert.NoError(b, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+						folderTreeDoc(key, "folders", "rest-100", parent),
+					}}))
+				}
+			})
+			b.RunParallel(func(pb *testing.PB) {
+				for pb.Next() {
+					search(b, resource.SEARCH_FIELD_FOLDER_TREE, root)
+				}
+			})
+			close(stop)
+			wg.Wait()
+		})
+	}
+	// For comparison: every document, and a filter on one folder, without the tree.
+	b.Run("search/everything", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			search(b, resource.SEARCH_FIELD_FOLDER_TREE, "general")
+		}
+	})
+	b.Run("search/one-folder", func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			search(b, resource.SEARCH_FIELD_FOLDER, "s100-0")
+		}
+	})
+}
+
+// failingDocValues fails every read of a document's folder.
+type failingDocValues struct{}
+
+func (failingDocValues) VisitDocValues(index.IndexInternalID, index.DocValueVisitor) error {
+	return errors.New("doc values are unreadable")
+}
+func (failingDocValues) BytesRead() uint64 { return 0 }
+
+// A folder set check reads documents it does not pass on, so it stops when the
+// search is cancelled, and fails when a folder cannot be read rather than
+// leaving the document out.
+func TestFolderSetSearcherStopsOnCancelAndFailsOnUnreadableFolders(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	key := resource.GlobalSearchKey("default")
+	built, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		items := make([]*resource.BulkIndexItem, 0, 2*folderSetCheckEvery)
+		for i := range 2 * folderSetCheckEvery {
+			items = append(items, folderTreeDoc(key, "dashboards", fmt.Sprintf("dash-%d", i), "elsewhere"))
+		}
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	idx := built.(*bleveIndex)
+	advanced, err := idx.index.Advanced()
+	require.NoError(t, err)
+	reader, err := advanced.Reader()
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = reader.Close() })
+
+	next := func(ctx context.Context, folders index.DocValueReader) error {
+		all, err := bleve.NewMatchAllQuery().Searcher(ctx, reader, idx.index.Mapping(), search.SearcherOptions{})
+		require.NoError(t, err)
+		defer func() { _ = all.Close() }()
+		s := newFolderSetSearcher(ctx, all, folders, map[string]struct{}{"wanted": {}})
+		_, err = s.Next(&search.SearchContext{DocumentMatchPool: search.NewDocumentMatchPool(s.DocumentMatchPoolSize(), 0)})
+		return err
+	}
+
+	dv, err := reader.DocValueReader([]string{resource.SEARCH_FIELD_FOLDER})
+	require.NoError(t, err)
+	require.NoError(t, next(t.Context(), dv), "no document is in the set, and that is not an error")
+
+	cancelled, cancel := context.WithCancel(t.Context())
+	cancel()
+	require.ErrorIs(t, next(cancelled, dv), context.Canceled)
+
+	require.ErrorContains(t, next(t.Context(), failingDocValues{}), "doc values are unreadable")
+}
+
+// Combined with a text query, a folder set check still returns its errors
+// rather than counting them as documents that do not match: bleve drops the
+// errors of filters, so the check wraps the search instead of being one.
+func TestFolderSetCheckErrorsReachTheSearchWithATextQuery(t *testing.T) {
+	defer func(old int) { folderTermFilterLimit = old }(folderTermFilterLimit)
+	folderTermFilterLimit = 0
+
+	backend, _ := setupBleveBackend(t)
+	key := resource.GlobalSearchKey("default")
+	built, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			folderTreeDoc(key, "folders", "top", ""),
+			folderTreeDoc(key, "dashboards", "dash-top", "top"),
+			folderTreeDoc(key, "dashboards", "dash-root", ""),
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	idx := built.(*bleveIndex)
+
+	run := func(readFolders func(index.IndexReader) (index.DocValueReader, error)) ([]string, error) {
+		filters, errResult := idx.filterQueries(t.Context(), &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+			Key:    &resourcepb.ResourceKey{Namespace: "default"},
+			Fields: []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: string(selection.In), Values: []string{"top"}}},
+		}})
+		require.Nil(t, errResult)
+		require.Len(t, filters, 1)
+		filters[0].(*folderSetQuery).readFolders = readFolders
+		text := bleve.NewMatchQuery("dash")
+		text.SetField(resource.SEARCH_FIELD_TITLE)
+		rsp, err := idx.index.SearchInContext(t.Context(), bleve.NewSearchRequest(scopeQuery(wrapInFolderSets(filters, text), false, 0)))
+		if err != nil {
+			return nil, err
+		}
+		names := make([]string, 0, len(rsp.Hits))
+		for _, hit := range rsp.Hits {
+			names = append(names, hit.ID)
+		}
+		return names, nil
+	}
+
+	names, err := run(nil)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"default/dashboard.grafana.app/dashboards/dash-top"}, names)
+
+	// The same through Search, which builds the query itself.
+	rsp, err := idx.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}),
+		NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Key:    &resourcepb.ResourceKey{Namespace: "default"},
+				Fields: []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: string(selection.In), Values: []string{"top"}}},
+			},
+			Query: "dash",
+			Limit: 10,
+		}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	require.Len(t, rsp.Results.Rows, 1)
+	assert.Equal(t, "dash-top", rsp.Results.Rows[0].Key.Name)
+
+	_, err = run(func(index.IndexReader) (index.DocValueReader, error) { return failingDocValues{}, nil })
+	require.ErrorContains(t, err, "doc values are unreadable")
 }
