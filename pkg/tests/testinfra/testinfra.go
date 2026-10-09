@@ -1286,3 +1286,17 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	require.NoError(t, err)
 	return u
 }
+
+// RunWithFeatureToggle runs each mode sequentially so the environment override is
+// restored after its servers are stopped. The callback must create a fresh test environment.
+func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
+	t.Helper()
+
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
+			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
+
+			run(t)
+		})
+	}
+}

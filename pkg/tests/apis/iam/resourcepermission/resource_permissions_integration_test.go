@@ -50,6 +50,14 @@ type permission struct {
 	verb string
 }
 
+func TestIntegrationResourcePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationResourcePermissions)
+}
+
+func TestIntegrationResourcePermissionSearch(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationResourcePermissionSearch)
+}
+
 func newPermission(kind, name, verb string) permission {
 	return permission{
 		kind: kind,
@@ -100,7 +108,7 @@ func newk8sTestHelperClients(helper *apis.K8sTestHelper) *k8sTestClients {
 	}
 }
 
-func TestIntegrationResourcePermissions(t *testing.T) {
+func testIntegrationResourcePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1}
@@ -635,7 +643,7 @@ func getNamesFromList(list *unstructured.UnstructuredList) []string {
 	return names
 }
 
-func TestIntegrationResourcePermissionSearch(t *testing.T) {
+func testIntegrationResourcePermissionSearch(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
