@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -29,8 +30,8 @@ func TestIsTransientTransactionError(t *testing.T) {
 		{name: "pgx serialization", err: &pgconn.PgError{Code: "40001"}, want: true},
 		{name: "pq deadlock", err: &pq.Error{Code: "40P01"}, want: true},
 		{name: "pq serialization", err: &pq.Error{Code: "40001"}, want: true},
-		{name: "stringified mysql deadlock", err: errors.New("Error 1213 (40001): Deadlock found when trying to get lock"), want: true},
-		{name: "stringified postgres serialization", err: errors.New("SQLSTATE 40001"), want: true},
+		{name: "stringified mysql deadlock", err: errors.New("Error 1213 (40001): Deadlock found when trying to get lock"), want: false},
+		{name: "stringified postgres serialization", err: errors.New("SQLSTATE 40001"), want: false},
 	}
 
 	for _, tt := range tests {
@@ -77,15 +78,27 @@ func TestRetryTransientTransaction(t *testing.T) {
 		})
 
 		require.ErrorIs(t, err, deadlockErr)
-		require.Equal(t, transientTransactionBackoff.MaxRetries+1, attempts)
+		require.Equal(t, transientTransactionBackoff.MaxRetries, attempts)
+	})
+
+	t.Run("does not invoke operation when already canceled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+		err := RetryOnTransientTransactionError(ctx, func() error {
+			t.Fatal("operation called after cancellation")
+			return nil
+		})
+
+		require.ErrorIs(t, err, context.Canceled)
 	})
 
 	t.Run("honors context cancellation while waiting", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
+		defer cancel()
 		attempts := 0
 		err := RetryOnTransientTransactionError(ctx, func() error {
 			attempts++
-			cancel()
+			time.AfterFunc(time.Millisecond, cancel)
 			return &mysql.MySQLError{Number: 1213}
 		})
 

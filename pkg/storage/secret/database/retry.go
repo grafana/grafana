@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"errors"
-	"strings"
 	"time"
 
 	"github.com/go-sql-driver/mysql"
@@ -17,22 +16,23 @@ import (
 var transientTransactionBackoff = backoff.Config{
 	MinBackoff: 25 * time.Millisecond,
 	MaxBackoff: 100 * time.Millisecond,
-	// dskit/backoff counts retries after the initial attempt, so this is four attempts.
-	MaxRetries: 3,
+	MaxRetries: 4,
 }
 
 func RetryOnTransientTransactionError(ctx context.Context, operation func() error) error {
 	boff := backoff.New(ctx, transientTransactionBackoff)
-	for {
-		err := operation()
-		if err == nil || !isTransientTransactionError(err) || !boff.Ongoing() {
-			if ctxErr := ctx.Err(); ctxErr != nil && isTransientTransactionError(err) {
-				return ctxErr
-			}
+	var err error
+	for boff.Ongoing() {
+		err = operation()
+		if err == nil || !isTransientTransactionError(err) {
 			return err
 		}
 		boff.Wait()
 	}
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return ctxErr
+	}
+	return err
 }
 
 func isTransientTransactionError(err error) bool {
@@ -52,11 +52,5 @@ func isTransientTransactionError(err error) bool {
 		return string(pqErr.Code) == "40P01" || string(pqErr.Code) == "40001"
 	}
 
-	msg := err.Error()
-	return strings.Contains(msg, "Error 1213") ||
-		strings.Contains(msg, "Error 1205") ||
-		strings.Contains(msg, "SQLSTATE 40P01") ||
-		strings.Contains(msg, "SQLSTATE 40001") ||
-		strings.Contains(msg, "deadlock detected") ||
-		strings.Contains(msg, "could not serialize")
+	return false
 }
