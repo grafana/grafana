@@ -23,7 +23,6 @@ func TestUserAlertingHeadersMiddleware(t *testing.T) {
 
 		_, err := cdt.MiddlewareHandler.QueryData(req.Context(), &backend.QueryDataRequest{
 			PluginContext: pluginCtx,
-			Headers:       map[string]string{},
 		})
 		require.NoError(t, err)
 		return cdt.QueryDataReq
@@ -41,7 +40,6 @@ func TestUserAlertingHeadersMiddleware(t *testing.T) {
 
 		err := cdt.MiddlewareHandler.QueryChunkedData(req.Context(), &backend.QueryChunkedDataRequest{
 			PluginContext: pluginCtx,
-			Headers:       map[string]string{},
 		}, nopChunkedWriter{})
 		require.NoError(t, err)
 		return cdt.QueryChunkedDataReq
@@ -66,6 +64,25 @@ func TestUserAlertingHeadersMiddleware(t *testing.T) {
 		outChunkedReq := testQueryChunkedDataReq(t, req)
 		require.Equal(t, "", outChunkedReq.Headers["FromAlert"])
 		require.Equal(t, "", outChunkedReq.GetHTTPHeader("X-Rule-Name"))
+	})
+
+	t.Run("Preserve FromAlert with nil headers and no other alerting headers", func(t *testing.T) {
+		req, err := http.NewRequest(http.MethodGet, "/some/thing", nil)
+		require.NoError(t, err)
+		req.Header.Set("FromAlert", "true")
+
+		t.Run("QueryData", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				outReq := testQueryDataReq(t, req)
+				require.Equal(t, map[string]string{"FromAlert": "true"}, outReq.Headers)
+			})
+		})
+		t.Run("QueryChunkedData", func(t *testing.T) {
+			require.NotPanics(t, func() {
+				outReq := testQueryChunkedDataReq(t, req)
+				require.Equal(t, map[string]string{"FromAlert": "true"}, outReq.Headers)
+			})
+		})
 	})
 
 	t.Run("Use Alerting headers when they exist", func(t *testing.T) {

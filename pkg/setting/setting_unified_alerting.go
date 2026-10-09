@@ -208,6 +208,7 @@ type RemoteAlertmanagerSettings struct {
 }
 
 type UnifiedAlertingScreenshotSettings struct {
+	IncludeAlertHistory        bool
 	Capture                    bool
 	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
@@ -536,6 +537,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots := uaCfg.Screenshots
 
 	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+	uaCfgScreenshots.IncludeAlertHistory = screenshots.Key("include_alert_history").MustBool(true)
 
 	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
 	if captureTimeout > screenshotsMaxCaptureTimeout {

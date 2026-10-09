@@ -209,6 +209,15 @@ func applyChange(
 		return false
 	}
 
+	// A file that cannot be synced: nothing to write, only the warning to report.
+	if change.Action == repository.FileActionIgnored && change.Warning != nil {
+		progress.Record(ctx, jobs.NewPathOnlyResult(change.Path).
+			WithAction(change.Action).
+			WithWarning(change.Warning).
+			Build())
+		return false
+	}
+
 	if change.Action == repository.FileActionDeleted {
 		deleteCtx, deleteSpan := tracer.Start(ctx, "provisioning.sync.full.apply_changes.delete")
 		resultBuilder := jobs.NewPathOnlyResult(change.Path).WithAction(change.Action)
@@ -245,6 +254,9 @@ func applyChange(
 			resultBuilder.WithError(fmt.Errorf("deleting resource %s/%s %s: %w", change.Existing.Group, gvk.Kind, change.Existing.Name, err))
 		} else {
 			quotaTracker.Release()
+			if change.Warning != nil {
+				resultBuilder.WithWarning(change.Warning)
+			}
 			// Keep this tree mutation scoped to folder metadata for now.
 			// It clears the deleted folder's stale in-memory entry so the same
 			// full sync can recreate that folder at a new path when _folder.json

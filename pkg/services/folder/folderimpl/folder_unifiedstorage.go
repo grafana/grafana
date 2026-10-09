@@ -274,7 +274,7 @@ func (s *Service) getFolderByID(ctx context.Context, id int64, orgID int64) (*fo
 	}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 
@@ -345,7 +345,7 @@ func (s *Service) getFolderByTitle(ctx context.Context, orgID int64, title strin
 	}
 
 	res, err := s.k8sclient.Search(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return nil, err
 	}
 
@@ -646,8 +646,9 @@ func (s *Service) Delete(ctx context.Context, cmd *folder.DeleteFolderCommand) e
 				return folder.ErrInternal.Errorf("failed to delete child dashboard: %w", err)
 			}
 		}
-		// Delete all public dashboards in the folders
-		err = s.publicDashboardService.DeleteByDashboardUIDs(ctx, cmd.OrgID, dashboardUIDs)
+		// Delete all public dashboards in the folders. The requester is attached to ctx here since
+		// a context-dependent LegacyDatabaseProvider can only resolve the target database from it.
+		err = s.publicDashboardService.DeleteByDashboardUIDs(identity.WithRequester(ctx, cmd.SignedInUser), cmd.OrgID, dashboardUIDs)
 		if err != nil {
 			return folder.ErrInternal.Errorf("failed to delete public dashboards: %w", err)
 		}

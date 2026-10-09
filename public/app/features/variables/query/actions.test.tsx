@@ -29,7 +29,7 @@ import { type VariableQueryEditorProps } from '../types';
 import { toKeyedVariableIdentifier, toVariablePayload } from '../utils';
 
 import { setVariableQueryRunner, VariableQueryRunner } from './VariableQueryRunner';
-import { flattenQuery, hasSelfReferencingQuery, updateQueryVariableOptions } from './actions';
+import { flattenQuery, updateQueryVariableOptions } from './actions';
 import { createQueryVariableAdapter } from './adapter';
 import { updateVariableOptions } from './reducer';
 
@@ -197,80 +197,6 @@ describe('query actions', () => {
 
         return dispatchedActions.length === expectedNumberOfActions;
       });
-    });
-  });
-
-  describe('hasSelfReferencingQuery', () => {
-    it('when called with a string', () => {
-      const query = '$query';
-      const name = 'query';
-
-      expect(hasSelfReferencingQuery(name, query)).toBe(true);
-    });
-
-    it('when called with an array', () => {
-      const query = ['$query'];
-      const name = 'query';
-
-      expect(hasSelfReferencingQuery(name, query)).toBe(true);
-    });
-
-    it('when called with a simple object', () => {
-      const query = { a: '$query' };
-      const name = 'query';
-
-      expect(hasSelfReferencingQuery(name, query)).toBe(true);
-    });
-
-    it('when called with a complex object', () => {
-      const query = {
-        level2: {
-          level3: {
-            query: 'query3',
-            refId: 'C',
-            num: 2,
-            bool: true,
-            arr: [
-              { query: 'query4', refId: 'D', num: 4, bool: true },
-              {
-                query: 'query5',
-                refId: 'E',
-                num: 5,
-                bool: true,
-                arr: [{ query: '$query', refId: 'F', num: 6, bool: true }],
-              },
-            ],
-          },
-          query: 'query2',
-          refId: 'B',
-          num: 1,
-          bool: false,
-        },
-        query: 'query1',
-        refId: 'A',
-        num: 0,
-        bool: true,
-        arr: [
-          { query: 'query7', refId: 'G', num: 7, bool: true },
-          {
-            query: 'query8',
-            refId: 'H',
-            num: 8,
-            bool: true,
-            arr: [{ query: 'query9', refId: 'I', num: 9, bool: true }],
-          },
-        ],
-      };
-      const name = 'query';
-
-      expect(hasSelfReferencingQuery(name, query)).toBe(true);
-    });
-
-    it('when called with a number', () => {
-      const query = 1;
-      const name = 'query';
-
-      expect(hasSelfReferencingQuery(name, query)).toBe(false);
     });
   });
 

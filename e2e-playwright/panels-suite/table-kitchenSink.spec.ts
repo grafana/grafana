@@ -61,7 +61,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     // to avoid a race condition when counting up , wait for react-data-grid to finish rendering.
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const longTextColIdx = await getColumnIdx(table, 'Long Text');
 
     // text wrapping is enabled by default on this panel.
@@ -158,7 +158,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     ).toBeVisible();
 
     // click the "State" column header to sort it.
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
     const stateColumnHeader = getCell(table, 0, 1);
 
     await stateColumnHeader.getByText('Info').click();
@@ -185,7 +185,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
 
@@ -323,7 +323,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await disableAllTextWrap(page, selectors);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     // - pills column currently does not support DataLinks.
     // - we don't apply DataLinks to Actions or DataLinks columns.
@@ -389,7 +389,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const minColumnIdx = await getColumnIdx(table, 'Min');
@@ -556,7 +556,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
 
     await waitForTableLoad(page);
 
-    const table = page.locator('.rdg');
+    const table = page.locator('.rdg:not([aria-hidden="true"])');
 
     const infoColumnIdx = await getColumnIdx(table, 'Info');
     const dataLinkColumnIdx = await getColumnIdx(table, 'Data Link');
@@ -621,7 +621,7 @@ test.describe('Panels test: Table - Kitchen Sink', { tag: ['@panels', '@table'] 
     const panelContent = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.content).first();
     await waitForTableLoad(panelContent);
 
-    const table = panelContent.locator('.rdg');
+    const table = panelContent.locator('.rdg:not([aria-hidden="true"])');
 
     const frameCombobox = panelContent.getByRole('combobox');
     await expect(frameCombobox).toBeVisible();

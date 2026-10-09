@@ -1,11 +1,11 @@
 import { css } from '@emotion/css';
 import cx from 'clsx';
-import { memo, type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, type MouseEvent, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useMeasure from 'react-use/lib/useMeasure';
 
 import { type DataFrame, type GrafanaTheme2, type LinkModel } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
+import { Alert, Icon, RadioButtonGroup, Spinner, useStyles2 } from '@grafana/ui';
 
 import { Edge } from './Edge';
 import { EdgeLabel } from './EdgeLabel';
@@ -13,6 +13,7 @@ import { Legend } from './Legend';
 import { Marker } from './Marker';
 import { Node } from './Node';
 import { ViewControls } from './ViewControls';
+import { formatGraphDataError } from './dataErrors';
 import { type Config, defaultConfig, useLayout, type LayoutCache } from './layout';
 import { LayoutAlgorithm, type ZoomMode } from './panelcfg.gen';
 import { type EdgeDatumLayout, type NodeDatum, type NodesMarker } from './types';
@@ -22,7 +23,13 @@ import { useFocusPositionOnLayout } from './useFocusPositionOnLayout';
 import { useHighlight } from './useHighlight';
 import { usePanning } from './usePanning';
 import { useZoom } from './useZoom';
-import { processNodes, type Bounds, findConnectedNodesForEdge, findConnectedNodesForNode } from './utils';
+import {
+  type Bounds,
+  type PreparedGraph,
+  findConnectedNodesForEdge,
+  findConnectedNodesForNode,
+  processNodes,
+} from './utils';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
@@ -125,10 +132,74 @@ interface Props {
   panelId?: string;
   zoomMode?: ZoomMode;
   layoutAlgorithm?: LayoutAlgorithm;
+  renderError?: (message: string) => ReactNode;
 }
-export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, layoutAlgorithm }: Props) {
-  const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
+
+interface RendererProps extends Omit<Props, 'renderError'> {
+  firstNodesDataFrame?: DataFrame;
+  firstEdgesDataFrame?: DataFrame;
+  processed: PreparedGraph;
+}
+
+export function NodeGraph(props: Props) {
+  const styles = useStyles2(getNodeGraphStyles);
+  const { dataFrames, renderError } = props;
   const { edges: edgesDataFrames, nodes: nodesDataFrames } = useCategorizeFrames(dataFrames);
+  const firstNodesDataFrame = nodesDataFrames[0];
+  const firstEdgesDataFrame = edgesDataFrames[0];
+  const processed = useMemo(
+    () => processNodes(firstNodesDataFrame, firstEdgesDataFrame),
+    [firstEdgesDataFrame, firstNodesDataFrame]
+  );
+  const errorMessage = useMemo(() => (processed.error ? formatGraphDataError(processed.error) : ''), [processed.error]);
+
+  if (processed.error) {
+    if (renderError) {
+      return renderError(errorMessage);
+    }
+
+    return (
+      <div className={styles.errorWrapper}>
+        <Alert title={t('nodeGraph.data-error.title', 'Cannot visualize graph data')} severity="error">
+          {errorMessage}
+        </Alert>
+      </div>
+    );
+  }
+
+  return (
+    <NodeGraphRenderer
+      getLinks={props.getLinks}
+      dataFrames={props.dataFrames}
+      nodeLimit={props.nodeLimit}
+      panelId={props.panelId}
+      zoomMode={props.zoomMode}
+      layoutAlgorithm={props.layoutAlgorithm}
+      firstNodesDataFrame={firstNodesDataFrame}
+      firstEdgesDataFrame={firstEdgesDataFrame}
+      processed={processed}
+    />
+  );
+}
+
+const getNodeGraphStyles = () => ({
+  errorWrapper: css({
+    whiteSpace: 'pre-line',
+  }),
+});
+
+function NodeGraphRenderer({
+  getLinks,
+  dataFrames,
+  nodeLimit,
+  panelId,
+  zoomMode,
+  layoutAlgorithm,
+  firstNodesDataFrame,
+  firstEdgesDataFrame,
+  processed,
+}: RendererProps) {
+  const nodeCountLimit = nodeLimit || defaultNodeCountLimit;
 
   const [measureRef, { width, height }] = useMeasure();
   const [config, setConfig] = useState<Config>(defaultConfig);
@@ -149,22 +220,12 @@ export function NodeGraph({ getLinks, dataFrames, nodeLimit, panelId, zoomMode, 
     }
   }, [layoutAlgorithm]);
 
-  const firstNodesDataFrame = nodesDataFrames[0];
-  const firstEdgesDataFrame = edgesDataFrames[0];
-
   // Ensure we use unique IDs for the marker tip elements, since IDs are global
   // in the entire HTML document. This prevents hidden tips when an earlier
   // occurence is hidden (editor is open in front of an existing node graph
   // panel) or when the earlier tips have different properties (color, size, or
   // shape for example).
   const svgIdNamespace = panelId || 'nodegraphpanel';
-
-  // TODO we should be able to allow multiple dataframes for both edges and nodes, could be issue with node ids which in
-  //  that case should be unique or figure a way to link edges and nodes dataframes together.
-  const processed = useMemo(
-    () => processNodes(firstNodesDataFrame, firstEdgesDataFrame),
-    [firstEdgesDataFrame, firstNodesDataFrame]
-  );
 
   // We need hover state here because for nodes we also highlight edges and for edges have labels separate to make
   // sure they are visible on top of everything else
@@ -399,6 +460,7 @@ interface NodesProps {
   onClick: (event: MouseEvent<SVGElement>, node: NodeDatum) => void;
   hoveringIds?: string[];
 }
+
 const Nodes = memo(function Nodes(props: NodesProps) {
   return (
     <>
@@ -426,6 +488,7 @@ interface MarkersProps {
   markers: NodesMarker[];
   onClick: (event: MouseEvent<SVGElement>, marker: NodesMarker) => void;
 }
+
 const Markers = memo(function Nodes(props: MarkersProps) {
   return (
     <>
@@ -447,6 +510,7 @@ interface EdgesProps {
   processedNodesLength: number;
   processedEdgesLength: number;
 }
+
 const Edges = memo(function Edges(props: EdgesProps) {
   return (
     <>
@@ -476,6 +540,7 @@ interface EdgeLabelsProps {
   nodeHoveringId?: string;
   edgeHoveringId?: string;
 }
+
 const EdgeLabels = memo(function EdgeLabels(props: EdgeLabelsProps) {
   return (
     <>

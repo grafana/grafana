@@ -121,7 +121,7 @@ export function applyNullInsertThreshold(opts: NullInsertOptions): DataFrame {
 
 function nullInsertThreshold(
   refValues: number[],
-  frameValues: any[][],
+  frameValues: unknown[][],
   threshold: number,
   refFieldPseudoMin: number | null = null,
   // will insert a trailing null when refFieldPseudoMax > last datapoint + threshold
@@ -184,7 +184,7 @@ function nullInsertThreshold(
     return frameValues;
   }
 
-  const filledFieldValues: any[][] = [];
+  const filledFieldValues: unknown[][] = [];
 
   for (let fieldValues of frameValues) {
     let filledValues;

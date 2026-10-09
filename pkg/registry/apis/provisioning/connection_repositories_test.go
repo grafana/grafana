@@ -99,8 +99,9 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 			{Name: "repo2", Owner: "owner2", URL: "https://github.com/owner2/repo2"},
 		}
 
-		conn := connection.NewMockConnection(t)
-		conn.EXPECT().ListRepositories(mock.Anything).Return(expectedRepos, nil).Once()
+		lister := connection.NewMockRepositoryLister(t)
+		lister.EXPECT().ListRepositories(mock.Anything).Return(expectedRepos, nil).Once()
+		conn := listingConnection{connection.NewMockConnection(t), lister}
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
@@ -126,8 +127,9 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		conn := connection.NewMockConnection(t)
-		conn.EXPECT().ListRepositories(mock.Anything).Return(nil, errors.New("github API error")).Once()
+		lister := connection.NewMockRepositoryLister(t)
+		lister.EXPECT().ListRepositories(mock.Anything).Return(nil, errors.New("github API error")).Once()
+		conn := listingConnection{connection.NewMockConnection(t), lister}
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
 
 		handler, err := connector.Connect(ctx, "test-connection", nil, responder)
@@ -147,8 +149,9 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 		ctx := context.Background()
 		responder := &mockResponder{}
 
-		conn := connection.NewMockConnection(t)
-		conn.EXPECT().ListRepositories(mock.Anything).Return(nil, connection.ErrAuthentication).Once()
+		lister := connection.NewMockRepositoryLister(t)
+		lister.EXPECT().ListRepositories(mock.Anything).Return(nil, connection.ErrAuthentication).Once()
+		conn := listingConnection{connection.NewMockConnection(t), lister}
 		access.EXPECT().GetConnection(mock.Anything, "test-connection").Return(conn, nil).Once()
 		access.EXPECT().
 			GetConnectionSpec(mock.Anything, "test-connection").
@@ -170,6 +173,11 @@ func TestConnectionRepositoriesConnector(t *testing.T) {
 }
 
 // mockResponder implements rest.Responder for testing
+type listingConnection struct {
+	*connection.MockConnection
+	*connection.MockRepositoryLister
+}
+
 type mockResponder struct {
 	called bool
 	err    error
@@ -354,7 +362,6 @@ func TestConnectionRepositoriesConnector_WithGitHubConnection(t *testing.T) {
 		responder := &mockResponder{}
 
 		conn := connection.NewMockConnection(t)
-		conn.EXPECT().ListRepositories(mock.Anything).Return(nil, connection.ErrNotImplemented).Once()
 		access := NewMockConnectionRepositoriesAccess(t)
 		access.EXPECT().GetConnection(mock.Anything, "test-gitlab-connection").Return(conn, nil).Once()
 

@@ -1,7 +1,5 @@
 import { useForm } from 'react-hook-form';
-import { act, render, screen } from 'test/test-utils';
-
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { render, screen } from 'test/test-utils';
 
 import { type RepositoryFormData } from '../types';
 
@@ -19,25 +17,6 @@ function Wrapper() {
 }
 
 describe('BranchOptionsSection', () => {
-  beforeEach(() => {
-    // Default to the gitConventions flag being enabled; specific tests override.
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  it('renders nothing when the gitConventions flag is off', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    const { container } = render(<Wrapper />);
-
-    expect(container).toBeEmptyDOMElement();
-  });
-
   it('renders collapsed by default, hiding the inner fields', () => {
     render(<Wrapper />);
 

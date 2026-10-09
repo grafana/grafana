@@ -30,7 +30,7 @@ func TestNewAppPluginAPIBuilderStartsNoGoroutines(t *testing.T) {
 	baseline := runtime.NumGoroutine()
 
 	for range 100 {
-		_, err := NewAppPluginAPIBuilder(plugin, nil, nil, nil, nil, nil, nil, nil, AppPluginRunnerOptions{}, nil, nil)
+		_, err := NewAppPluginAPIBuilder(plugin, nil, nil, nil, nil, AppPluginRunnerOptions{}, nil, nil)
 		require.NoError(t, err)
 	}
 
@@ -84,42 +84,18 @@ func TestRegisterAPIServiceRoutedPlugins(t *testing.T) {
 				cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 					appPluginSettingsWildcard: {DualWriterMode: rest.Mode5},
 				}
-				_, err := RegisterAPIService(registrar, nil, nil, nil, sources, nil,
-					roles, nil, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
-				if !tc.router && !tc.register {
-					require.NoError(t, err)
-					require.Empty(t, registrar.builders)
-					require.Empty(t, roles.roles)
-					return
-				}
-				withManifest := tc.router || tc.manifest
-				if roleErr != nil && withManifest {
-					require.ErrorIs(t, err, roleErr)
-					require.Empty(t, registrar.builders)
-					return
-				}
+				_, err := RegisterAPIService(registrar, nil, nil, sources, nil,
+					roles, nil, nil, nil, featuremgmt.WithFeatures(), cfg)
 				require.NoError(t, err)
-				group := "example-app"
-				if withManifest {
-					group = "example.ext.grafana.app"
-					registeredRoles := byName(t, roles.roles)
-					require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:reader")
-					require.Contains(t, registeredRoles, "fixed:example.ext.grafana.app:writer")
-				} else {
-					require.Empty(t, roles.roles)
-				}
+				require.Empty(t, roles.roles, "the settings API must not declare manifest roles")
 				groups := make([]string, 0, len(registrar.builders))
 				for _, b := range registrar.builders {
 					groups = append(groups, builder.GetGroupVersions(b)[0].Group)
 				}
-				if tc.router {
-					require.Empty(t, groups)
-					for _, group := range []string{"example.ext.grafana.app", "legacy-app"} {
-						require.Equal(t, rest.Mode5, cfg.UnifiedStorage["app."+group].DualWriterMode,
-							"the shared dual-write service must see the resolved settings configuration for %s", group)
-					}
+				if tc.register {
+					require.Equal(t, []string{"example-app", "legacy-app"}, groups)
 				} else {
-					require.Equal(t, []string{group, "legacy-app"}, groups)
+					require.Empty(t, groups)
 				}
 			})
 		}

@@ -103,9 +103,9 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/share-query/
   filter-with-dashboard-datasource:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
+      destination: /docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/build-dashboards/filter-group-by/#filter-any-data-using-the-dashboard-data-source
 ---
 
 # Data sources
@@ -256,7 +256,6 @@ Grafana ships with the following core data sources, organized by their primary u
 
 ### Profiles
 
-- [Parca](parca/)
 - [Pyroscope](pyroscope/)
 
 ### SQL databases

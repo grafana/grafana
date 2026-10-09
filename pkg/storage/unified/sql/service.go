@@ -56,6 +56,7 @@ type service struct {
 
 	// -- Shared Components
 	watchExpiry   resource.WatchExpiry
+	blobBackend   resource.BlobSupport
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -103,6 +104,10 @@ func WithAuthenticator(authn func(ctx context.Context) (context.Context, error))
 	return func(s *service) {
 		s.authenticator = authn
 	}
+}
+
+func WithBlobBackend(blob resource.BlobSupport) ServiceOption {
+	return func(s *service) { s.blobBackend = blob }
 }
 
 // WithDashboardStats sets the dashboard stats used by the vector backfiller
@@ -436,6 +441,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 	serverOptions := ServerOptions{
 		WatchExpiry:    s.watchExpiry,
 		Backend:        s.backend,
+		BlobBackend:    s.blobBackend,
 		VectorBackend:  s.vectorBackend,
 		Embedder:       s.embedder,
 		Reranker:       s.reranker,
@@ -645,6 +651,7 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.BlobStoreStreaming_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
@@ -653,6 +660,9 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		wrapped := s.withErrorResultConversion(desc)
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
 			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
 		}
 		srv.RegisterService(wrapped, handler)
 	}

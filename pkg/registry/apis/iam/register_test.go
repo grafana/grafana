@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/noopstorage"
@@ -225,6 +226,53 @@ func TestUpdateUsersAPIGroup_TeamsSubresourceRequiresTeamsAPI(t *testing.T) {
 
 			_, registered := storage[iamv0.UserResourceInfo.StoragePath("teams")]
 			require.Equal(t, tt.wantRegistered, registered)
+		})
+	}
+}
+
+func TestUpdateUsersAPIGroup_ReadOnly(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		readOnly bool
+	}{
+		{name: "full API exposes write verbs and status"},
+		{name: "read-only API exposes only read verbs", readOnly: true},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			scheme := runtime.NewScheme()
+			require.NoError(t, iamv0.AddToScheme(scheme))
+
+			b := &IdentityAccessManagementAPIBuilder{
+				dual:     dualwrite.NewMockService(t),
+				unified:  resource.NewMockResourceClient(t),
+				tracing:  tracing.InitializeTracerForTest(),
+				logger:   log.NewNopLogger(),
+				features: Features{UsersAPI: true, UsersAPIReadOnly: tt.readOnly},
+			}
+			storage := map[string]rest.Storage{}
+			err := b.UpdateUsersAPIGroup(builder.APIGroupOptions{
+				Scheme:     scheme,
+				OptsGetter: appinstaller.NewNoopRESTOptionsGetter(),
+			}, storage, true, true)
+			require.NoError(t, err)
+
+			users := storage[iamv0.UserResourceInfo.StoragePath()]
+			require.Implements(t, (*rest.Getter)(nil), users)
+			require.Implements(t, (*rest.Lister)(nil), users)
+			require.Implements(t, (*rest.Watcher)(nil), users)
+
+			_, isCreater := users.(rest.Creater)
+			_, isUpdater := users.(rest.Updater)
+			_, isDeleter := users.(rest.GracefulDeleter)
+			require.Equal(t, !tt.readOnly, isCreater)
+			require.Equal(t, !tt.readOnly, isUpdater)
+			require.Equal(t, !tt.readOnly, isDeleter)
+
+			_, hasStatus := storage[iamv0.UserResourceInfo.StoragePath("status")]
+			require.Equal(t, !tt.readOnly, hasStatus)
+
+			_, hasTeams := storage[iamv0.UserResourceInfo.StoragePath("teams")]
+			require.True(t, hasTeams)
 		})
 	}
 }

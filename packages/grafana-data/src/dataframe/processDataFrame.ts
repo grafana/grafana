@@ -13,7 +13,6 @@ import {
   type DataFrameWithValue,
   type DataFrameDTO,
   type FieldDTO,
-  type FieldConfig,
 } from '../types/dataFrame';
 import { type DataQueryResponseData } from '../types/datasource';
 import { type GraphSeriesXY, type GraphSeriesValue } from '../types/graph';
@@ -96,7 +95,7 @@ function convertTimeSeriesToDataFrame(timeSeries: TimeSeries): DataFrame {
   ];
 
   if (timeSeries.title) {
-    (fields[1].config as FieldConfig).displayNameFromDS = timeSeries.title;
+    fields[1].config.displayNameFromDS = timeSeries.title;
   }
 
   return {

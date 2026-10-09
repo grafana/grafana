@@ -1,0 +1,62 @@
+name: Dashboard Re-embedding Approval
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+    branches: [main]
+    paths:
+      - pkg/storage/unified/search/embed/dashboard/extractor.go
+      - .github/workflows/pr-reembed-version-approval.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check dashboard re-embedding approval
+    runs-on: ubuntu-arm64-small
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          filter: blob:none
+          persist-credentials: false
+
+      - name: Check dashboard extractor version
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          APPROVED: ${{ contains(github.event.pull_request.labels.*.name, 're-embed-approved') }}
+        run: |
+          set -euo pipefail
+          base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+          extractor=pkg/storage/unified/search/embed/dashboard/extractor.go
+          pattern='s/^[[:space:]]*const[[:space:]]+extractorVersion[[:space:]]*=[[:space:]]*([0-9]+)[[:space:]]*(\/\/.*)?$/\1/p'
+          old_version=$(git show "$base:$extractor" | sed -nE "$pattern")
+          new_version=$(git show "$HEAD_SHA:$extractor" | sed -nE "$pattern")
+
+          if [[ ! "$old_version" =~ ^(0|[1-9][0-9]*)$ || ! "$new_version" =~ ^(0|[1-9][0-9]*)$ ]]; then
+            echo '::error::Cannot read dashboard extractorVersion. Update this check if its declaration has moved or changed format.'
+            exit 1
+          fi
+          if (( new_version <= old_version )); then
+            echo 'Dashboard extractor version has not increased.'
+            exit 0
+          fi
+
+          echo "Dashboard extractor version: $old_version -> $new_version"
+          echo 'This can trigger dashboard re-embedding across enrolled deployments. Review the scope and provider cost.'
+          echo 'For sizing, query the affected deployments (this counts embedding rows, not dashboards):'
+          echo 'sum(grafana_vector_storage_embeddings_stored{resource="dashboards"})'
+          if [[ "$APPROVED" != true ]]; then
+            echo '::error::Add the re-embed-approved label after reviewing the dashboard re-embedding scope and cost. If you are unsure, reach out to #grafana-search-and-storage on Slack.'
+            exit 1
+          fi

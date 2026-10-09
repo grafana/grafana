@@ -6,6 +6,7 @@
 package apis
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -137,6 +138,13 @@ var appManifestData = app.ManifestData{
 				Cluster: map[string]spec3.PathProps{},
 				Schemas: map[string]spec.Schema{},
 			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/usage\":{\"get\":{\"operationId\":\"getUsage\",\"parameters\":[{\"name\":\"group\",\"in\":\"query\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"resource\",\"in\":\"query\",\"required\":true,\"schema\":{\"type\":\"string\"}}],\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"namespace\",\"resource\",\"group\",\"usage\",\"limit\",\"apiVersion\",\"kind\"],\"properties\":{\"apiVersion\":{\"description\":\"APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources\",\"type\":\"string\"},\"group\":{\"type\":\"string\"},\"kind\":{\"description\":\"Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds\",\"type\":\"string\"},\"limit\":{\"type\":\"integer\"},\"namespace\":{\"type\":\"string\"},\"resource\":{\"type\":\"string\"},\"usage\":{\"type\":\"integer\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 	},
 }

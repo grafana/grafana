@@ -773,6 +773,7 @@ type Cfg struct {
 	SearchInjectFailuresPercent                int
 	EnableSearch                               bool
 	EnableSearchClient                         bool
+	SearchClientForwardAuthEnabled             bool
 	// SearchEnforceSortCapability rejects a sort on a field that does not declare
 	// sorting. Off by default: violations are counted first, so they can be fixed
 	// before requests start failing.
@@ -868,6 +869,7 @@ type Cfg struct {
 	// TODO: remove this when sql/backend backwards compatibility is no longer needed.
 	LogSQLBackendCalls                bool
 	KVLeaseTTL                        time.Duration
+	ResourceVersionMaxWait            time.Duration
 	EnableGarbageCollection           bool
 	GarbageCollectionDryRun           bool
 	GarbageCollectionInterval         time.Duration
@@ -883,6 +885,7 @@ type Cfg struct {
 	EventPruningInterval time.Duration
 	SearchLookback       time.Duration
 	NotifierSettleDelay  time.Duration
+	SeededWatchesEnabled bool
 	// ResourceVersionBatchTransactionTimeout bounds one batched WithTx in the
 	// resource version manager (all WriteEventFunc calls + RV stamp updates).
 	ResourceVersionBatchTransactionTimeout time.Duration
@@ -1010,6 +1013,7 @@ func RedactedValue(key, value string) string {
 		"WEBHOOK_TOKEN$",
 		"INSTALL_TOKEN$",
 		"PROXY_TOKEN$",
+		"EXCHANGE_TOKEN$",
 	} {
 		if match, err := regexp.MatchString(pattern, uppercased); match && err == nil {
 			return RedactedPassword

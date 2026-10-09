@@ -33,13 +33,14 @@ type SecretsManagerSettings struct {
 	// In OSS, the provider type can only be "secret_key". In Enterprise, it can additionally be one of: "aws_kms", "azure_keyvault", "google_kms", "hashicorp_vault"
 	ConfiguredKMSProviders map[string]map[string]string
 
-	GrpcClientEnable        bool   // Whether to enable the gRPC client. If disabled, it will use the in-process services implementations.
-	GrpcClientLoadBalancing bool   // Whether to enable gRPC client-side load balancing
-	GrpcServerUseTLS        bool   // Whether to use TLS when communicating with the gRPC server
-	GrpcServerTLSSkipVerify bool   // Whether to skip TLS verification when communicating with the gRPC server
-	GrpcServerTLSServerName string // Server name to use for TLS verification
-	GrpcServerAddress       string // Address for gRPC secrets server
-	GrpcGrafanaServiceName  string // Service name to use for background grafana decryption/inline
+	GrpcClientEnable               bool   // Whether to enable the gRPC client. If disabled, it will use the in-process services implementations.
+	GrpcClientLoadBalancing        bool   // Whether to enable gRPC client-side load balancing
+	GrpcServerUseTLS               bool   // Whether to use TLS when communicating with the gRPC server
+	GrpcServerTLSSkipVerify        bool   // Whether to skip TLS verification when communicating with the gRPC server
+	GrpcServerTLSServerName        string // Server name to use for TLS verification
+	GrpcServerAddress              string // Address for gRPC secrets server
+	GrpcGrafanaServiceName         string // Service name to use for background grafana decryption/inline
+	GrpcTokenExchangerNamespaceAll bool   // Whether to override the token exchanger namespace to *
 
 	// Used for testing. Set to false to disable the control loop.
 	GCWorkerEnabled bool
@@ -77,6 +78,7 @@ func (cfg *Cfg) readSecretsManagerSettings() {
 	cfg.SecretsManagement.GrpcServerTLSServerName = valueAsString(secretsMgmt, "grpc_server_tls_server_name", "")
 	cfg.SecretsManagement.GrpcServerAddress = valueAsString(secretsMgmt, "grpc_server_address", "")
 	cfg.SecretsManagement.GrpcGrafanaServiceName = valueAsString(secretsMgmt, "grpc_grafana_service_name", "")
+	cfg.SecretsManagement.GrpcTokenExchangerNamespaceAll = secretsMgmt.Key("grpc_token_exchanger_namespace_all").MustBool(false)
 
 	cfg.SecretsManagement.GCWorkerEnabled = secretsMgmt.Key("gc_worker_enabled").MustBool(true)
 	cfg.SecretsManagement.GCWorkerMaxBatchSize = uint16(secretsMgmt.Key("gc_worker_batch_size").MustUint(16))

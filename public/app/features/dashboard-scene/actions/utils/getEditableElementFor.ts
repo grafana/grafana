@@ -21,6 +21,7 @@ import { VariableSetEditableElement } from '../../settings/variables/VariableSet
 import { isSceneVariable, isVariableEditable } from '../../settings/variables/utils';
 import { VizPanelEditableElement } from '../../sidebar/VizPanelEditableElement';
 import { DashboardEditableElement } from '../../sidebar/dashboard/DashboardEditableElement';
+import { getPredefinedOrigin } from '../../utils/predefinedVariables';
 
 export function getEditableElementFor(sceneObj: SceneObject | undefined | null): EditableDashboardElement | undefined {
   if (!sceneObj) {
@@ -52,7 +53,8 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
   }
 
   if (isSceneVariable(sceneObj)) {
-    if (!isVariableEditable(sceneObj)) {
+    // Predefined variables are not dashboard-owned, but selecting one opens a read-only editor.
+    if (!isVariableEditable(sceneObj) && !getPredefinedOrigin(sceneObj.state.origin)) {
       return undefined;
     }
     return new VariableEditableElement(sceneObj);

@@ -1,10 +1,11 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ComponentProps } from 'react';
 import { type Props } from 'react-virtualized-auto-sizer';
 
 import { type DataFrame, FieldType } from '@grafana/data';
+import { joinByFieldTransformer, mockTransformationsRegistry } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
@@ -28,6 +29,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
 // frame to TableNG — snapshotted here, before TableNG's own fallback caching pass (which mutates
 // field.state on the same object in place) can run and mask the thing we're trying to observe.
 let dataArrivedWithCachedDisplayNames: boolean | undefined;
+let tableNGFrames: DataFrame[] = [];
 jest.mock('@grafana/ui/unstable', () => {
   const actual = jest.requireActual('@grafana/ui/unstable');
   return {
@@ -35,6 +37,7 @@ jest.mock('@grafana/ui/unstable', () => {
     // Delegate to the real component so the "grid renders" assertions keep working.
     TableNG: (props: TableNGProps) => {
       dataArrivedWithCachedDisplayNames = props.data.fields.every((f) => Boolean(f.state?.displayName));
+      tableNGFrames.push(props.data);
       return <actual.TableNG {...props} />;
     },
   };
@@ -250,6 +253,7 @@ describe('InspectDataTab', () => {
   describe('when useTableNG is true', () => {
     beforeEach(() => {
       dataArrivedWithCachedDisplayNames = undefined;
+      tableNGFrames = [];
     });
 
     it('should render the data with TableNG instead of the legacy Table', () => {
@@ -278,6 +282,40 @@ describe('InspectDataTab', () => {
       );
 
       expect(dataArrivedWithCachedDisplayNames).toBe(true);
+    });
+
+    it('should not show a join computed from older data after the data refreshes', async () => {
+      mockTransformationsRegistry([joinByFieldTransformer]);
+      const hasValue = (frame: DataFrame, value: string) => frame.fields.some((f) => f.values.includes(value));
+      const selectDataFrame = async (label: string) => {
+        await userEvent.click(screen.getByRole('combobox', { name: /Select dataframe/i }));
+        await userEvent.click(screen.getByText(label));
+      };
+      const renderTab = (data?: DataFrame[]) => (
+        <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+          <InspectDataTab {...createProps({ useTableNG: true, ...(data && { data }) })} />
+        </OpenFeatureProvider>
+      );
+
+      const { rerender } = render(renderTab());
+      await userEvent.click(screen.getByText(/Data options/i));
+      await selectDataFrame('Series joined by time');
+      await waitFor(() => expect(hasValue(tableNGFrames.at(-1)!, 'd')).toBe(true));
+      expect(hasValue(tableNGFrames.at(-1)!, 'uniqueA')).toBe(true);
+
+      await selectDataFrame('First data frame (0)');
+      const [first, second] = createProps().data!;
+      const refreshedFirst = {
+        ...first,
+        fields: first.fields.map((f) => (f.name === 'name' ? { ...f, values: ['uniqueB', 'b', 'c'] } : f)),
+      };
+      rerender(renderTab([refreshedFirst, second]));
+
+      tableNGFrames = [];
+      await selectDataFrame('Series joined by time');
+      await waitFor(() => expect(hasValue(tableNGFrames.at(-1)!, 'd')).toBe(true));
+      expect(hasValue(tableNGFrames.at(-1)!, 'uniqueB')).toBe(true);
+      expect(tableNGFrames.some((frame) => hasValue(frame, 'uniqueA'))).toBe(false);
     });
   });
 });

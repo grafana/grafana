@@ -1,17 +1,10 @@
 import * as z from 'zod';
 
-import { type MetricFindValue, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { type PromQuery } from '@grafana/prometheus';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
 import { hasSelection } from './kubernetesData';
-import { DatasourceBoundFilterSchema, parseStoredFilter } from './solutionFilter';
-
-// An empty regex alternative would match series that lack the label, so blank entries are dropped.
-const TrimmedValues = z
-  .array(z.string())
-  .transform((values) => values.map((value) => value.trim()).filter((value) => value !== ''));
+import { fetchLabelValues } from './promQuery';
+import { DatasourceBoundFilterSchema, parseStoredFilter, TrimmedValues } from './solutionFilter';
 
 const KubernetesFilterSchema = DatasourceBoundFilterSchema.extend({
   cluster: z.string().trim(),
@@ -65,30 +58,12 @@ const VALUE_SOURCE_METRIC: Record<KubernetesScopeLabel, string> = {
   node: 'kube_node_info',
 };
 
-// Matches the inventory lookback (KUBE_STATE_LOOKBACK).
-const VALUES_RANGE = { from: 'now-24h', to: 'now' };
-
-/**
- * Distinct `key` values in `uid` over the last 24h, optionally narrowed to `cluster` ('' = all). The
- * Prometheus datasource caches label values per snapped time range itself (1–60 min by cacheLevel),
- * so reopening the dialog inside that window issues no request and a moved window refreshes the list.
- */
-export async function fetchKubernetesLabelValues(
-  uid: string,
-  key: KubernetesScopeLabel,
-  cluster: string
-): Promise<string[]> {
-  const ds = await getDataSourceInstance({ uid });
-  if (!ds.getTagValues) {
-    return [];
-  }
-  const query: PromQuery = { refId: 'values', expr: VALUE_SOURCE_METRIC[key] };
-  const result = await ds.getTagValues({
+/** Distinct `key` values in `uid` over the last 24h, optionally narrowed to `cluster` ('' = all). */
+export function fetchKubernetesLabelValues(uid: string, key: KubernetesScopeLabel, cluster: string): Promise<string[]> {
+  return fetchLabelValues(
+    uid,
     key,
-    filters: cluster ? [{ key: 'cluster', operator: '=', value: cluster }] : [],
-    timeRange: rangeUtil.convertRawToRange(VALUES_RANGE),
-    queries: [query],
-  });
-  const values: MetricFindValue[] = Array.isArray(result) ? result : (result.data ?? []);
-  return values.map((v) => String(v.value ?? v.text));
+    VALUE_SOURCE_METRIC[key],
+    cluster ? [{ key: 'cluster', operator: '=', value: cluster }] : []
+  );
 }
