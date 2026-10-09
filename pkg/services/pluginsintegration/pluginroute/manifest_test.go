@@ -13,7 +13,6 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
 func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
@@ -106,9 +105,9 @@ func TestGetGroupVersions(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions = append(manifest.Versions, app.ManifestVersion{Name: "unused", Served: false})
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 
 	require.Equal(t, []schema.GroupVersion{

@@ -16,8 +16,8 @@ func TestLoadManifestStandalone(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "example-app", plugin.JSONData.ID)
-	require.NotNil(t, plugin.Manifest)
-	require.Equal(t, "example-app", plugin.Manifest.AppName)
+	require.Len(t, plugin.Manifests, 1)
+	require.Equal(t, "example-app", plugin.Manifests[0].AppName)
 	require.Empty(t, plugin.JSONData.Info.Version, "there is no plugin.json to take a version from")
 
 	versions, err := Versions(plugin, Options{})
@@ -39,7 +39,7 @@ func TestLoadManifestBesidePluginJSON(t *testing.T) {
 
 	require.Equal(t, "grafana-example-app", plugin.JSONData.ID)
 	require.Equal(t, "4.5.6", plugin.JSONData.Info.Version)
-	require.Equal(t, "example-app", plugin.Manifest.AppName, "the manifest is still the one that was named")
+	require.Equal(t, "example-app", plugin.Manifests[0].AppName, "the manifest is still the one that was named")
 
 	oas, err := Build(plugin, "v1alpha1", Options{})
 	require.NoError(t, err)
