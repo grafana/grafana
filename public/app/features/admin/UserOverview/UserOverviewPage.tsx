@@ -1,28 +1,23 @@
-import { css } from '@emotion/css';
-import { skipToken } from '@reduxjs/toolkit/query';
-import { useParams, useSearchParams } from 'react-router-dom-v5-compat';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom-v5-compat';
 
-import { type Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Stack, Tab, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { useListTeamsRolesQuery } from 'app/api/clients/legacy';
-import { useListUserRolesQuery } from 'app/api/clients/roles';
+import { Alert, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { UserSortableHeader, useUserTableSort } from '../UserTableSorting';
-
+import { LoadError } from './LoadError';
 import { UserDetails } from './UserDetails';
-import { OrganizationsTab, SessionsTab, AuthenticationTab, UserRolesEditor } from './UserManagement';
-import { type RoleAssignment, type OverviewUser, useUserOverview, useGetOverviewTeamsQuery } from './api';
+import { OrganizationsTab, SessionsTab, AuthenticationTab } from './UserManagement';
+import { UserRoles } from './UserRoles';
+import { UserTeams } from './UserTeams';
+import { useUserOverview } from './api';
 
 export default function UserOverviewPage() {
-  const styles = useStyles2(getStyles);
+  const { pathname } = useLocation();
   const { id: uid = '' } = useParams();
-  const [params, setParams] = useSearchParams();
+  const [params] = useSearchParams();
   const tab = params.get('tab') ?? 'details';
   const overview = useUserOverview(uid);
   const user = overview.user;
@@ -56,13 +51,13 @@ export default function UserOverviewPage() {
         text: user?.login || t('admin.user-overview.title', 'User'),
         subTitle: user?.email,
         img: profile?.avatarUrl,
+        children: tabs.map(({ id, label }) => ({
+          text: label,
+          url: `${pathname}?tab=${id}`,
+          active: active === id,
+        })),
       }}
     >
-      <TabsBar className={styles.tabs}>
-        {tabs.map(({ id, label }) => (
-          <Tab key={id} label={label} active={active === id} onChangeTab={() => setParams({ tab: id })} />
-        ))}
-      </TabsBar>
       <Page.Contents isLoading={!user && overview.isLoading}>
         {!user ? (
           overview.error ? (
@@ -71,191 +66,21 @@ export default function UserOverviewPage() {
             <Alert severity="warning" title={t('admin.user-overview.not-found', 'This information is not available')} />
           )
         ) : (
-          user && (
-            <>
-              {active === 'details' && (
-                <Stack direction="column" gap={3}>
-                  <UserDetails key={uid} user={user} />
-                  {Boolean(overview.error) && <LoadError error={overview.error} />}
-                </Stack>
-              )}
-              {active === 'teams' && <UserTeams uid={uid} />}
-              {active === 'roles' && <UserRoles user={user} />}
-              {active === 'organizations' && profile && <OrganizationsTab user={profile} />}
-              {active === 'sessions' && <SessionsTab uid={uid} />}
-              {active === 'authentication' && profile && <AuthenticationTab user={profile} />}
-            </>
-          )
+          <>
+            {active === 'details' && (
+              <Stack direction="column" gap={3}>
+                <UserDetails key={uid} user={user} />
+                {Boolean(overview.error) && <LoadError error={overview.error} />}
+              </Stack>
+            )}
+            {active === 'teams' && <UserTeams uid={uid} />}
+            {active === 'roles' && <UserRoles user={user} />}
+            {active === 'organizations' && profile && <OrganizationsTab user={profile} />}
+            {active === 'sessions' && <SessionsTab uid={uid} />}
+            {active === 'authentication' && profile && <AuthenticationTab user={profile} />}
+          </>
         )}
       </Page.Contents>
     </Page>
-  );
-}
-
-const getStyles = (theme: GrafanaTheme2) => ({
-  tabs: css({ marginBottom: theme.spacing(3) }),
-});
-
-function LoadError({ error }: { error: unknown }) {
-  const status = error && typeof error === 'object' && 'status' in error ? error.status : undefined;
-  return (
-    <Alert
-      severity="warning"
-      title={
-        status === 403
-          ? t('admin.user-overview.forbidden', 'You do not have permission to view this information')
-          : status === 404
-            ? t('admin.user-overview.not-found', 'This information is not available')
-            : t('admin.user-overview.load-error', 'Unable to load this information. Please try again.')
-      }
-    />
-  );
-}
-
-function TeamLink({ team }: { team: Team }) {
-  return (
-    <TextLink color="primary" inline={false} href={`/org/teams/edit/${team.metadata.name}`}>
-      {team.spec.title}
-    </TextLink>
-  );
-}
-
-function UserTeams({ uid }: { uid: string }) {
-  const { currentData: teams, isFetching: isLoading, error } = useGetOverviewTeamsQuery(uid);
-  const { sortedRows, headerProps } = useUserTableSort(teams ?? [], {
-    name: (team) => team.spec.title,
-    email: (team) => team.spec.email || '',
-  });
-  if (isLoading) {
-    return <Text>{t('admin.user-overview.loading', 'Loading…')}</Text>;
-  }
-  if (error) {
-    return <LoadError error={error} />;
-  }
-  return teams?.length ? (
-    <table className="filter-table form-inline">
-      <thead>
-        <tr>
-          <UserSortableHeader {...headerProps('name')}>
-            {t('admin.user-overview.team-name', 'Team name')}
-          </UserSortableHeader>
-          <UserSortableHeader {...headerProps('email')}>{t('admin.user-overview.email', 'Email')}</UserSortableHeader>
-        </tr>
-      </thead>
-      <tbody>
-        {sortedRows.map((team) => (
-          <tr key={team.metadata.name}>
-            <td>
-              <TeamLink team={team} />
-            </td>
-            <td>{team.spec.email || '—'}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  ) : (
-    <Text color="secondary">
-      {t('admin.user-overview.no-teams', 'This user does not belong to any teams in the current organization.')}
-    </Text>
-  );
-}
-
-function UserRoles({ user }: { user: OverviewUser }) {
-  const licensed = contextSrv.licensedAccessControlEnabled();
-  const canReadUserRoles = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
-  const canReadTeamRoles = contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
-  const teams = useGetOverviewTeamsQuery(licensed && canReadTeamRoles ? user.uid : skipToken);
-  const userId = user.id;
-  const directRoles = useListUserRolesQuery(
-    licensed && canReadUserRoles && userId > 0
-      ? { userId, targetOrgId: contextSrv.user.orgId, includeMapped: true }
-      : skipToken
-  );
-  const teamIds = (teams.currentData ?? [])
-    .map((team) => Number(team.metadata.labels?.['grafana.app/deprecatedInternalID']))
-    .filter((id) => id > 0);
-  const roles = useListTeamsRolesQuery(
-    licensed && canReadTeamRoles && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
-  );
-  const basic: RoleAssignment = {
-    id: 'basic',
-    role: user.role === 'None' ? t('admin.user-overview.no-basic-role', 'No basic role') : user.role,
-    type: 'direct',
-  };
-  const assignments: RoleAssignment[] = [
-    ...(basic.role ? [basic] : []),
-    ...(directRoles.currentData ?? []).map(
-      (role): RoleAssignment => ({
-        id: `direct:${role.uid}`,
-        role: role.displayName || role.name,
-        description: role.description,
-        type: 'direct',
-      })
-    ),
-    ...(teams.currentData ?? []).flatMap((team) =>
-      (roles.currentData?.[Number(team.metadata.labels?.['grafana.app/deprecatedInternalID'])] ?? []).map(
-        (role): RoleAssignment => ({
-          id: `${team.metadata.name}:${role.uid}`,
-          role: role.displayName || role.name || '',
-          description: role.description,
-          type: 'team',
-          team,
-        })
-      )
-    ),
-  ];
-  const assignmentType = (assignment: RoleAssignment) =>
-    assignment.id === 'basic'
-      ? t('admin.user-overview.basic', 'Basic role')
-      : assignment.type === 'team'
-        ? t('admin.user-overview.inherited', 'Inherited from team')
-        : t('admin.user-overview.direct', 'Directly assigned');
-  const assignmentSource = (assignment: RoleAssignment) =>
-    assignment.team?.spec.title ??
-    (assignment.id === 'basic' ? t('admin.user-overview.default', 'Default basic role') : user.login);
-  const { sortedRows, headerProps } = useUserTableSort(assignments, {
-    role: (assignment) => assignment.role,
-    type: assignmentType,
-    source: assignmentSource,
-  });
-  return (
-    <Stack direction="column" gap={2}>
-      {!!user.id && <UserRolesEditor user={user} basicRole={user.role} />}
-      {licensed && (!canReadUserRoles || !canReadTeamRoles) && <LoadError error={{ status: 403 }} />}
-      {Boolean(teams.error || roles.error || directRoles.error) && (
-        <LoadError error={teams.error || roles.error || directRoles.error} />
-      )}
-      {licensed && canReadUserRoles && !userId && <LoadError error={{ status: 404 }} />}
-      {(teams.isFetching || roles.isFetching || directRoles.isFetching) && (
-        <Text>{t('admin.user-overview.loading', 'Loading…')}</Text>
-      )}
-      <table className="filter-table form-inline">
-        <thead>
-          <tr>
-            <UserSortableHeader {...headerProps('role')}>{t('admin.user-overview.role', 'Role')}</UserSortableHeader>
-            <UserSortableHeader {...headerProps('type')}>
-              {t('admin.user-overview.assignment', 'Assignment type')}
-            </UserSortableHeader>
-            <UserSortableHeader {...headerProps('source')}>
-              {t('admin.user-overview.source', 'Source')}
-            </UserSortableHeader>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRows.map((assignment) => (
-            <tr key={assignment.id}>
-              <td>
-                <Stack direction="column" gap={0}>
-                  <Text>{assignment.role}</Text>
-                  {assignment.description && <Text color="secondary">{assignment.description}</Text>}
-                </Stack>
-              </td>
-              <td>{assignmentType(assignment)}</td>
-              <td>{assignment.team ? <TeamLink team={assignment.team} /> : assignmentSource(assignment)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </Stack>
   );
 }

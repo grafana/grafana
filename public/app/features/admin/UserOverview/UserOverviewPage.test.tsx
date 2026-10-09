@@ -7,6 +7,7 @@ import { locationService, setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import config from 'app/core/config';
+import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -54,6 +55,7 @@ const profile: UserDTO = {
 };
 
 beforeEach(() => {
+  document.addEventListener('click', interceptLinkClicks);
   config.featureToggles.kubernetesUsersApi = true;
   setTestFlags({ kubernetesTeamsApi: true });
   jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(true);
@@ -96,6 +98,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  document.removeEventListener('click', interceptLinkClicks);
   setTestFlags();
   delete config.featureToggles.kubernetesUsersApi;
   jest.restoreAllMocks();
@@ -542,9 +545,9 @@ it('sorts teams by their displayed name in both directions', async () => {
 it('sorts role assignments by the displayed assignment type', async () => {
   const { user } = setup('roles');
   await screen.findByRole('link', { name: 'Platform' });
-  await user.click(screen.getByRole('button', { name: 'Assignment type' }));
+  await user.click(screen.getByRole('button', { name: 'Sort column Assignment type' }));
   expect(screen.getAllByRole('row')[1]).toHaveTextContent('Basic role');
-  await user.click(screen.getByRole('button', { name: 'Assignment type' }));
+  await user.click(screen.getByRole('button', { name: 'Sort column Assignment type' }));
   expect(screen.getAllByRole('row')[1]).toHaveTextContent('Inherited from team');
 });
 
@@ -575,8 +578,8 @@ it('sorts sessions by timestamps rather than relative date labels', async () => 
   );
   const { user } = setup('sessions');
   await screen.findByText('10.0.0.1');
-  await user.click(screen.getByRole('button', { name: 'Last seen' }));
+  await user.click(screen.getByRole('button', { name: 'Sort column Last seen' }));
   expect(screen.getAllByRole('row')[1]).toHaveTextContent('10.0.0.2');
-  await user.click(screen.getByRole('button', { name: 'Last seen' }));
+  await user.click(screen.getByRole('button', { name: 'Sort column Last seen' }));
   expect(screen.getAllByRole('row')[1]).toHaveTextContent('10.0.0.1');
 });
