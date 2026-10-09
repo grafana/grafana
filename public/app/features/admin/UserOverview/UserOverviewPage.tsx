@@ -2,12 +2,12 @@ import { css } from '@emotion/css';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useParams, useSearchParams } from 'react-router-dom-v5-compat';
 
-import { type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
+import { type Team } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Stack, Tab, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { useListTeamsRolesQuery, useGetUserByIdQuery, useGetOrgUsersForCurrentOrgQuery } from 'app/api/clients/legacy';
+import { useListTeamsRolesQuery } from 'app/api/clients/legacy';
 import { useListUserRolesQuery } from 'app/api/clients/roles';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -17,24 +17,16 @@ import { UserSortableHeader, useUserTableSort } from '../UserTableSorting';
 
 import { UserDetails } from './UserDetails';
 import { OrganizationsTab, SessionsTab, AuthenticationTab, UserRolesEditor } from './UserManagement';
-import { type RoleAssignment, type OverviewProfile, useGetOverviewUserQuery, useGetOverviewTeamsQuery } from './api';
+import { type RoleAssignment, type OverviewUser, useUserOverview, useGetOverviewTeamsQuery } from './api';
 
 export default function UserOverviewPage() {
   const styles = useStyles2(getStyles);
   const { id: uid = '' } = useParams();
   const [params, setParams] = useSearchParams();
   const tab = params.get('tab') ?? 'details';
-  const overview = useGetOverviewUserQuery(uid);
-  const canReadProfile = contextSrv.hasPermission(AccessControlAction.UsersRead);
-  const profileQuery = useGetUserByIdQuery(canReadProfile ? { userId: uid } : skipToken);
-  const profile = profileQuery.currentData;
-  const user = overview.currentData?.user;
-  const onUpdated = () => {
-    if (canReadProfile) {
-      profileQuery.refetch();
-    }
-    overview.refetch();
-  };
+  const overview = useUserOverview(uid);
+  const user = overview.user;
+  const profile = user?.hasProfile ? user : undefined;
   const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
   const showOrganizations = profile && contextSrv.hasPermission(AccessControlAction.OrgsRead);
   const showAuthentication =
@@ -61,8 +53,8 @@ export default function UserOverviewPage() {
     <Page
       navId="global-users"
       pageNav={{
-        text: user?.spec.login || t('admin.user-overview.title', 'User'),
-        subTitle: user?.spec.email,
+        text: user?.login || t('admin.user-overview.title', 'User'),
+        subTitle: user?.email,
         img: profile?.avatarUrl,
       }}
     >
@@ -71,29 +63,27 @@ export default function UserOverviewPage() {
           <Tab key={id} label={label} active={active === id} onChangeTab={() => setParams({ tab: id })} />
         ))}
       </TabsBar>
-      <Page.Contents isLoading={!user && (overview.isFetching || profileQuery.isFetching)}>
-        {!user && (overview.error || profileQuery.error) ? (
-          <LoadError error={overview.error || profileQuery.error} />
+      <Page.Contents isLoading={!user && overview.isLoading}>
+        {!user ? (
+          overview.error ? (
+            <LoadError error={overview.error} />
+          ) : (
+            <Alert severity="warning" title={t('admin.user-overview.not-found', 'This information is not available')} />
+          )
         ) : (
           user && (
             <>
               {active === 'details' && (
                 <Stack direction="column" gap={3}>
-                  <UserDetails
-                    key={uid}
-                    user={user}
-                    profile={profile}
-                    hasLastSeen={!!overview.currentData?.hasLastSeen}
-                    onUpdated={onUpdated}
-                  />
-                  {Boolean(profileQuery.error) && <LoadError error={profileQuery.error} />}
+                  <UserDetails key={uid} user={user} />
+                  {Boolean(overview.error) && <LoadError error={overview.error} />}
                 </Stack>
               )}
               {active === 'teams' && <UserTeams uid={uid} />}
-              {active === 'roles' && <UserRoles user={user} profile={profile} onUpdated={onUpdated} />}
-              {active === 'organizations' && profile && <OrganizationsTab user={profile} onUpdated={onUpdated} />}
+              {active === 'roles' && <UserRoles user={user} />}
+              {active === 'organizations' && profile && <OrganizationsTab user={profile} />}
               {active === 'sessions' && <SessionsTab uid={uid} />}
-              {active === 'authentication' && profile && <AuthenticationTab user={profile} onUpdated={onUpdated} />}
+              {active === 'authentication' && profile && <AuthenticationTab user={profile} />}
             </>
           )
         )}
@@ -170,24 +160,12 @@ function UserTeams({ uid }: { uid: string }) {
   );
 }
 
-function UserRoles({ user, profile, onUpdated }: { user: User; profile?: OverviewProfile; onUpdated: () => void }) {
-  const orgUsers = useGetOrgUsersForCurrentOrgQuery(
-    contextSrv.hasPermission(AccessControlAction.OrgUsersRead) ? { query: user.spec.login } : skipToken
-  );
-  const orgUser = orgUsers.currentData?.find((member) => member.uid === user.metadata.name);
-  const editableUser = orgUser
-    ? {
-        id: orgUser.userId,
-        uid: orgUser.uid,
-        isExternallySynced: orgUser.isExternallySynced,
-        isProvisioned: orgUser.isProvisioned,
-      }
-    : profile;
+function UserRoles({ user }: { user: OverviewUser }) {
   const licensed = contextSrv.licensedAccessControlEnabled();
   const canReadUserRoles = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
   const canReadTeamRoles = contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
-  const teams = useGetOverviewTeamsQuery(licensed && canReadTeamRoles ? user.metadata.name! : skipToken);
-  const userId = Number(user.metadata.labels?.['grafana.app/deprecatedInternalID']);
+  const teams = useGetOverviewTeamsQuery(licensed && canReadTeamRoles ? user.uid : skipToken);
+  const userId = user.id;
   const directRoles = useListUserRolesQuery(
     licensed && canReadUserRoles && userId > 0
       ? { userId, targetOrgId: contextSrv.user.orgId, includeMapped: true }
@@ -201,10 +179,7 @@ function UserRoles({ user, profile, onUpdated }: { user: User; profile?: Overvie
   );
   const basic: RoleAssignment = {
     id: 'basic',
-    role:
-      (orgUser?.role ?? user.spec.role) === 'None'
-        ? t('admin.user-overview.no-basic-role', 'No basic role')
-        : (orgUser?.role ?? user.spec.role),
+    role: user.role === 'None' ? t('admin.user-overview.no-basic-role', 'No basic role') : user.role,
     type: 'direct',
   };
   const assignments: RoleAssignment[] = [
@@ -237,7 +212,7 @@ function UserRoles({ user, profile, onUpdated }: { user: User; profile?: Overvie
         : t('admin.user-overview.direct', 'Directly assigned');
   const assignmentSource = (assignment: RoleAssignment) =>
     assignment.team?.spec.title ??
-    (assignment.id === 'basic' ? t('admin.user-overview.default', 'Default basic role') : user.spec.login);
+    (assignment.id === 'basic' ? t('admin.user-overview.default', 'Default basic role') : user.login);
   const { sortedRows, headerProps } = useUserTableSort(assignments, {
     role: (assignment) => assignment.role,
     type: assignmentType,
@@ -245,18 +220,7 @@ function UserRoles({ user, profile, onUpdated }: { user: User; profile?: Overvie
   });
   return (
     <Stack direction="column" gap={2}>
-      {editableUser && (
-        <UserRolesEditor
-          user={editableUser}
-          basicRole={orgUser?.role ?? user.spec.role}
-          onUpdated={() => {
-            if (orgUsers.currentData) {
-              orgUsers.refetch();
-            }
-            onUpdated();
-          }}
-        />
-      )}
+      {!!user.id && <UserRolesEditor user={user} basicRole={user.role} />}
       {licensed && (!canReadUserRoles || !canReadTeamRoles) && <LoadError error={{ status: 403 }} />}
       {Boolean(teams.error || roles.error || directRoles.error) && (
         <LoadError error={teams.error || roles.error || directRoles.error} />

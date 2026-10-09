@@ -1,7 +1,6 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Input, RadioButtonGroup, Stack } from '@grafana/ui';
@@ -13,8 +12,8 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AccountManagement, ActionError, useUserAction } from './UserManagement';
-import { type OverviewProfile } from './api';
+import { AccountManagement, ActionError } from './UserManagement';
+import { type OverviewUser } from './api';
 
 type EditableField = 'name' | 'email' | 'login' | 'password' | 'isGrafanaAdmin';
 interface DetailField {
@@ -24,58 +23,47 @@ interface DetailField {
   locked?: string;
 }
 
-export function UserDetails({
-  user,
-  profile,
-  hasLastSeen,
-  onUpdated,
-}: {
-  user: User;
-  profile?: OverviewProfile;
-  hasLastSeen: boolean;
-  onUpdated: () => void;
-}) {
+export function UserDetails({ user }: { user: OverviewUser }) {
   const [editing, setEditing] = useState<EditableField | null>(null);
   const [value, setValue] = useState('');
-  const [updateProfile] = useUpdateUserMutation();
-  const [updatePassword] = useAdminUpdateUserPasswordMutation();
-  const [updateAdmin] = useAdminUpdateUserPermissionsMutation();
-  const { run, failed, pending } = useUserAction(() => {
-    setEditing(null);
-    onUpdated();
-  });
+  const [updateProfile, profileUpdate] = useUpdateUserMutation();
+  const [updatePassword, passwordUpdate] = useAdminUpdateUserPasswordMutation();
+  const [updateAdmin, adminUpdate] = useAdminUpdateUserPermissionsMutation();
+  const mutation = editing === 'password' ? passwordUpdate : editing === 'isGrafanaAdmin' ? adminUpdate : profileUpdate;
+  const pending = mutation.isLoading;
+  const failed = editing && mutation.isError;
   const yes = t('admin.user-overview.yes', 'Yes');
   const no = t('admin.user-overview.no', 'No');
-  const origins = profile?.authLabels ?? user.spec.externalAuthInfo?.map((auth) => auth.module);
+  const origins = user.authLabels;
   const origin = origins ? [...new Set(origins)].join(', ') || t('admin.user-overview.local', 'Grafana') : undefined;
-  const provisioned = profile?.isProvisioned ?? user.spec.provisioned;
-  const external = profile?.isExternal || provisioned;
+  const provisioned = user.isProvisioned;
+  const external = user.isExternal || provisioned;
   const synced = external ? t('admin.user-overview.managed-externally', 'Managed externally') : undefined;
-  const can = (action: AccessControlAction) => !!profile && contextSrv.hasPermissionInMetadata(action, profile);
+  const can = (action: AccessControlAction) => user.hasProfile && contextSrv.hasPermissionInMetadata(action, user);
   const canEditProfile = can(AccessControlAction.UsersWrite) && !external;
   const canEditPassword = can(AccessControlAction.UsersPasswordUpdate) && !external;
   const canEditAdmin =
-    can(AccessControlAction.UsersPermissionsUpdate) && !profile?.isGrafanaAdminExternallySynced && !provisioned;
-  const isAdmin = profile?.isGrafanaAdmin ?? user.spec.grafanaAdmin;
-  const created = user.metadata.creationTimestamp ?? profile?.createdAt;
-  const lastSeen = user.status?.lastSeenAt ? user.status.lastSeenAt * 1000 : 0;
+    can(AccessControlAction.UsersPermissionsUpdate) && !user.isGrafanaAdminExternallySynced && !provisioned;
+  const isAdmin = user.isGrafanaAdmin;
+  const created = user.createdAt;
+  const lastSeen = user.lastSeenAt ? Date.parse(user.lastSeenAt) : 0;
   const never = !lastSeen || (created && lastSeen < new Date(created).getTime());
   const fields: DetailField[] = [
     {
       label: t('admin.user-overview.login', 'Login'),
-      value: profile?.login ?? user.spec.login,
+      value: user.login,
       edit: canEditProfile ? 'login' : undefined,
       locked: synced,
     },
     {
       label: t('admin.user-overview.name', 'Name'),
-      value: profile?.name ?? user.spec.title,
+      value: user.name,
       edit: canEditProfile ? 'name' : undefined,
       locked: synced,
     },
     {
       label: t('admin.user-overview.email', 'Email'),
-      value: profile?.email ?? user.spec.email,
+      value: user.email,
       edit: canEditProfile ? 'email' : undefined,
       locked: synced,
     },
@@ -83,15 +71,14 @@ export function UserDetails({
     { label: t('admin.user-overview.provisioned', 'Provisioned'), value: provisioned ? yes : no },
     {
       label: t('admin.user-overview.status', 'Status'),
-      value:
-        (profile?.isDisabled ?? user.spec.disabled)
-          ? t('admin.user-overview.disabled', 'Disabled')
-          : t('admin.user-overview.enabled', 'Enabled'),
+      value: user.isDisabled
+        ? t('admin.user-overview.disabled', 'Disabled')
+        : t('admin.user-overview.enabled', 'Enabled'),
     },
     { label: t('admin.user-overview.created', 'Created'), value: created ? dateTimeFormat(created) : undefined },
     {
       label: t('admin.user-overview.last-active', 'Last active'),
-      value: !hasLastSeen
+      value: !user.lastSeenAt
         ? undefined
         : never
           ? t('admin.user-overview.never', 'Never')
@@ -102,15 +89,15 @@ export function UserDetails({
       value: isAdmin ? yes : no,
       edit: canEditAdmin ? 'isGrafanaAdmin' : undefined,
       locked:
-        profile?.isGrafanaAdminExternallySynced || provisioned
+        user.isGrafanaAdminExternallySynced || provisioned
           ? t('admin.user-overview.managed-externally', 'Managed externally')
           : undefined,
     },
-    ...(profile
+    ...(user.hasProfile
       ? [
           {
             label: t('admin.user-profile.label-numerical-identifier', 'Numerical identifier'),
-            value: String(profile.id),
+            value: String(user.id),
           },
         ]
       : []),
@@ -119,29 +106,30 @@ export function UserDetails({
       : []),
   ];
 
-  const save = () => {
-    if (!profile || !editing) {
+  const save = async () => {
+    if (!user.hasProfile || !editing) {
       return;
     }
     const field = editing;
-    run(() =>
-      field === 'isGrafanaAdmin'
-        ? updateAdmin({
-            userId: profile.uid,
-            adminUpdateUserPermissionsForm: { isGrafanaAdmin: value === 'true' },
-          }).unwrap()
-        : field === 'password'
-          ? updatePassword({ userId: profile.uid, adminUpdateUserPasswordForm: { password: value } }).unwrap()
-          : updateProfile({
-              userId: profile.uid,
-              updateUserCommand: {
-                name: profile.name,
-                email: profile.email,
-                login: profile.login,
-                [field]: value,
-              },
-            }).unwrap()
-    );
+    const result = await (field === 'isGrafanaAdmin'
+      ? updateAdmin({
+          userId: user.uid,
+          adminUpdateUserPermissionsForm: { isGrafanaAdmin: value === 'true' },
+        })
+      : field === 'password'
+        ? updatePassword({ userId: user.uid, adminUpdateUserPasswordForm: { password: value } })
+        : updateProfile({
+            userId: user.uid,
+            updateUserCommand: {
+              name: user.name,
+              email: user.email,
+              login: user.login,
+              [field]: value,
+            },
+          }));
+    if (!('error' in result)) {
+      setEditing(null);
+    }
   };
 
   return (
@@ -227,7 +215,7 @@ export function UserDetails({
           ))}
         </tbody>
       </table>
-      {profile && <AccountManagement user={profile} onUpdated={onUpdated} />}
+      {user.hasProfile && <AccountManagement user={user} />}
     </Stack>
   );
 }

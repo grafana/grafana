@@ -6,6 +6,7 @@ import {
   type CreateTeamApiArg,
 } from '@grafana/api-clients/internal/rtkq/legacy';
 import { type RequestOptions } from '@grafana/api-clients/rtkq';
+import { generatedAPI as iamAPI } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type SyncInfo } from 'app/types/ldap';
 import { type OrgUser, type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
 
@@ -22,6 +23,19 @@ type UserDefinitions = {
   adminGetUserAuthTokens: OverrideResultType<Definitions['adminGetUserAuthTokens'], UserSession[]>;
   getSyncStatus: OverrideResultType<Definitions['getSyncStatus'], SyncInfo>;
 };
+
+async function invalidateIAMUser(
+  _arg: unknown,
+  { dispatch, queryFulfilled }: Parameters<NonNullable<Definitions['updateUser']['onQueryStarted']>>[1]
+) {
+  try {
+    await queryFulfilled;
+    // User management still writes through legacy routes while readers can use IAM.
+    dispatch(iamAPI.util.invalidateTags(['User']));
+  } catch {
+    // The mutation result exposes failures to the caller; failed writes change no data.
+  }
+}
 
 /**
  * Adds a check to the endpoint that will pass on the showSuccessAlert property to the backend_srv. This way it's
@@ -51,6 +65,15 @@ function withSuccessAlertCheck<ApiArg extends {}, Def extends { query?: (arg: Ap
 
 export const legacyAPI = userUIDAPI.enhanceEndpoints<never, UserDefinitions>({
   endpoints: {
+    updateUser: { onQueryStarted: invalidateIAMUser },
+    adminDisableUser: { onQueryStarted: invalidateIAMUser },
+    adminEnableUser: { onQueryStarted: invalidateIAMUser },
+    adminUpdateUserPermissions: { onQueryStarted: invalidateIAMUser },
+    updateOrgUser: { onQueryStarted: invalidateIAMUser },
+    updateOrgUserForCurrentOrg: { onQueryStarted: invalidateIAMUser },
+    addOrgUser: { onQueryStarted: invalidateIAMUser },
+    removeOrgUser: { onQueryStarted: invalidateIAMUser },
+    postSyncUserWithLdap: { onQueryStarted: invalidateIAMUser },
     getUserById: (definition) => {
       const query = definition.query!;
       definition.query = (arg) => ({ ...query(arg), params: { accesscontrol: true } });

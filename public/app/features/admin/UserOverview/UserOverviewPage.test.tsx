@@ -426,21 +426,26 @@ it('uses legacy teams when discovery does not advertise the membership API', asy
   expect(iamRequests).not.toHaveBeenCalled();
 });
 
-it('uses organization user data on older servers without requiring global user read', async () => {
+it('shows unavailable without fetching all organization users when IAM is absent for an org-only reader', async () => {
   const profileRequests = jest.fn();
+  const orgRequests = jest.fn();
   jest.spyOn(contextSrv, 'hasPermission').mockImplementation((action) => action === AccessControlAction.OrgUsersRead);
   server.use(
     http.get('/apis', () => new HttpResponse(null, { status: 404 })),
-    http.get('/api/org/users', () => HttpResponse.json([{ ...profile, userId: 12, role: 'Viewer', orgId: 1 }])),
+    http.get('/api/org/users', () => {
+      orgRequests();
+      return HttpResponse.json([{ ...profile, userId: 12, role: 'Viewer', orgId: 1 }]);
+    }),
     http.get('/api/users/alice', () => {
       profileRequests();
       return new HttpResponse(null, { status: 403 });
     })
   );
   setup();
-  expect(await screen.findByText('Alice Example')).toBeInTheDocument();
+  expect(await screen.findByText('This information is not available')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
   expect(profileRequests).not.toHaveBeenCalled();
+  expect(orgRequests).not.toHaveBeenCalled();
 });
 
 it.each([403, 500])('does not switch to legacy data when IAM returns %s', async (status) => {

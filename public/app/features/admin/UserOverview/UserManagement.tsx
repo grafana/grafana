@@ -34,27 +34,6 @@ import { UserSessions } from '../UserSessions';
 
 interface Props {
   user: UserDTO;
-  onUpdated: () => void;
-}
-
-export function useUserAction(onUpdated: () => void) {
-  const [failed, setFailed] = useState(false);
-  const [pending, setPending] = useState(false);
-  const run = async (action: () => Promise<unknown>, refresh = true) => {
-    setFailed(false);
-    setPending(true);
-    try {
-      await action();
-      if (refresh) {
-        onUpdated();
-      }
-    } catch {
-      setFailed(true);
-    } finally {
-      setPending(false);
-    }
-  };
-  return { run, pending, failed };
 }
 
 export function ActionError() {
@@ -63,38 +42,32 @@ export function ActionError() {
   );
 }
 
-export function AccountManagement({ user, onUpdated }: Props) {
-  const [deleteUser] = useAdminDeleteUserMutation();
-  const [disableUser] = useAdminDisableUserMutation();
-  const [enableUser] = useAdminEnableUserMutation();
-  const { run, failed } = useUserAction(onUpdated);
+export function AccountManagement({ user }: Props) {
+  const [deleteUser, deletion] = useAdminDeleteUserMutation();
+  const [disableUser, disabling] = useAdminDisableUserMutation();
+  const [enableUser, enabling] = useAdminEnableUserMutation();
   return (
     <Stack direction="column" gap={3}>
-      {failed && <ActionError />}
+      {(deletion.isError || disabling.isError || enabling.isError) && <ActionError />}
       <UserAccountActions
         user={user}
-        onUserDelete={() =>
-          run(async () => {
-            await deleteUser({ userId: user.uid }).unwrap();
+        onUserDelete={async () => {
+          if (!('error' in (await deleteUser({ userId: user.uid })))) {
             locationService.push('/admin/users');
-          }, false)
-        }
-        onUserDisable={() => run(() => disableUser({ userId: user.uid }).unwrap())}
-        onUserEnable={() => run(() => enableUser({ userId: user.uid }).unwrap())}
+          }
+        }}
+        onUserDisable={() => disableUser({ userId: user.uid })}
+        onUserEnable={() => enableUser({ userId: user.uid })}
       />
     </Stack>
   );
 }
 
-export function OrganizationsTab({ user, onUpdated }: Props) {
-  const [addOrgUser] = useAddOrgUserMutation();
-  const [removeOrgUser] = useRemoveOrgUserMutation();
-  const [updateOrgRole] = useUpdateOrgUserMutation();
-  const { currentData: orgs, error, refetch } = useGetUserOrgListQuery({ userId: user.uid });
-  const { run, failed } = useUserAction(() => {
-    refetch();
-    onUpdated();
-  });
+export function OrganizationsTab({ user }: Props) {
+  const [addOrgUser, adding] = useAddOrgUserMutation();
+  const [removeOrgUser, removing] = useRemoveOrgUserMutation();
+  const [updateOrgRole, updating] = useUpdateOrgUserMutation();
+  const { currentData: orgs, error } = useGetUserOrgListQuery({ userId: user.uid });
   if (error) {
     return <Alert severity="warning" title={t('admin.user-overview.orgs-error', 'Unable to load organizations')} />;
   }
@@ -103,28 +76,23 @@ export function OrganizationsTab({ user, onUpdated }: Props) {
   }
   return (
     <Stack direction="column" gap={2}>
-      {failed && <ActionError />}
+      {(adding.isError || removing.isError || updating.isError) && <ActionError />}
       <UserOrgs
         user={user}
         orgs={orgs}
         isExternalUser={user.isExternallySynced || user.isProvisioned}
-        onOrgAdd={(orgId, role) =>
-          run(() => addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } }).unwrap())
-        }
-        onOrgRemove={(orgId) => run(() => removeOrgUser({ orgId, userId: user.uid }).unwrap())}
-        onOrgRoleChange={(orgId, role) =>
-          run(() => updateOrgRole({ orgId, userId: user.uid, updateOrgUserCommand: { role } }).unwrap())
-        }
+        onOrgAdd={(orgId, role) => addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } })}
+        onOrgRemove={(orgId) => removeOrgUser({ orgId, userId: user.uid })}
+        onOrgRoleChange={(orgId, role) => updateOrgRole({ orgId, userId: user.uid, updateOrgUserCommand: { role } })}
       />
     </Stack>
   );
 }
 
 export function SessionsTab({ uid }: { uid: string }) {
-  const [revokeSession] = useAdminRevokeUserAuthTokenMutation();
-  const [revokeSessions] = useAdminLogoutUserMutation();
-  const { currentData: sessions, error, refetch } = useAdminGetUserAuthTokensQuery({ userId: uid });
-  const { run, failed } = useUserAction(refetch);
+  const [revokeSession, revoking] = useAdminRevokeUserAuthTokenMutation();
+  const [revokeSessions, revokingAll] = useAdminLogoutUserMutation();
+  const { currentData: sessions, error } = useAdminGetUserAuthTokensQuery({ userId: uid });
   if (error) {
     return <Alert severity="warning" title={t('admin.user-overview.sessions-error', 'Unable to load sessions')} />;
   }
@@ -133,25 +101,19 @@ export function SessionsTab({ uid }: { uid: string }) {
   }
   return (
     <Stack direction="column" gap={2}>
-      {failed && <ActionError />}
+      {(revoking.isError || revokingAll.isError) && <ActionError />}
       <UserSessions
         sessions={sessions}
-        onSessionRevoke={(authTokenId) =>
-          run(() => revokeSession({ userId: uid, revokeAuthTokenCmd: { authTokenId } }).unwrap())
-        }
-        onAllSessionsRevoke={() => run(() => revokeSessions({ userId: uid }).unwrap())}
+        onSessionRevoke={(authTokenId) => revokeSession({ userId: uid, revokeAuthTokenCmd: { authTokenId } })}
+        onAllSessionsRevoke={() => revokeSessions({ userId: uid })}
       />
     </Stack>
   );
 }
 
-export function AuthenticationTab({ user, onUpdated }: Props) {
-  const [syncUser] = usePostSyncUserWithLdapMutation();
-  const { currentData: status, error, refetch } = useGetSyncStatusQuery();
-  const { run, failed } = useUserAction(() => {
-    refetch();
-    onUpdated();
-  });
+export function AuthenticationTab({ user }: Props) {
+  const [syncUser, syncing] = usePostSyncUserWithLdapMutation();
+  const { currentData: status, error } = useGetSyncStatusQuery();
   if (error) {
     return (
       <Alert
@@ -165,12 +127,8 @@ export function AuthenticationTab({ user, onUpdated }: Props) {
   }
   return (
     <Stack direction="column" gap={2}>
-      {failed && <ActionError />}
-      <UserLdapSyncInfo
-        user={user}
-        ldapSyncInfo={status}
-        onUserSync={() => run(() => syncUser({ userId: user.id }).unwrap())}
-      />
+      {syncing.isError && <ActionError />}
+      <UserLdapSyncInfo user={user} ldapSyncInfo={status} onUserSync={() => syncUser({ userId: user.id })} />
     </Stack>
   );
 }
@@ -182,15 +140,12 @@ function isBasicRole(role: string): role is OrgRole {
 export function UserRolesEditor({
   user,
   basicRole,
-  onUpdated,
 }: {
   user: Pick<UserDTO, 'id' | 'uid' | 'isExternallySynced' | 'isProvisioned'>;
   basicRole: string;
-  onUpdated: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [updateBasicRole] = useUpdateOrgUserForCurrentOrgMutation();
-  const { run, failed, pending } = useUserAction(onUpdated);
+  const [updateBasicRole, { isError: failed, isLoading: pending }] = useUpdateOrgUserForCurrentOrgMutation();
   const licensed = contextSrv.licensedAccessControlEnabled();
   const canEditBasic =
     contextSrv.hasPermission(AccessControlAction.OrgUsersWrite) && !user.isExternallySynced && !user.isProvisioned;
@@ -206,8 +161,7 @@ export function UserRolesEditor({
   if ((!canEditBasic && !canEditDirect) || !isBasicRole(basicRole)) {
     return null;
   }
-  const updateBasic = (role: OrgRole) =>
-    run(() => updateBasicRole({ userId: user.id, updateOrgUserCommand: { role } }).unwrap());
+  const updateBasic = (role: OrgRole) => updateBasicRole({ userId: user.id, updateOrgUserCommand: { role } });
   return (
     <Stack direction="column" gap={2}>
       {failed && <ActionError />}
