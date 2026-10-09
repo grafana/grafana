@@ -139,6 +139,8 @@ type kvBackendMetrics struct {
 	WatchNotificationsPublished       *prometheus.CounterVec
 	WatchNotificationPublishFailures  *prometheus.CounterVec
 	GCGroupResourceDuration           *prometheus.HistogramVec
+	GCCycleDuration                   *prometheus.HistogramVec
+	GCCycleBatches                    *prometheus.HistogramVec
 	ResourceVersionGenerationFailures *prometheus.CounterVec
 	ResourceVersionClockRegression    prometheus.Gauge
 	ResourceVersionOrderingRejections *prometheus.CounterVec
@@ -200,6 +202,24 @@ func newKVBackendMetrics(reg prometheus.Registerer) *kvBackendMetrics {
 			Name: "grafana_storage_server_watch_notifications_publish_failures_total",
 			Help: "Watch notifications that failed to marshal or publish to NATS, by group, resource, and action. Each one is an event live consumers never receive; they recover it on their next re-list.",
 		}, []string{"group", "resource", "action"}),
+		GCCycleDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "grafana_storage_server_gc_cycle_duration_seconds",
+			Help:    "Elapsed duration of a garbage-collection cycle, including batch waits, by outcome.",
+			Buckets: []float64{1, 5, 30, 60, 300, 900, 1800, 3600, 7200, 14400, 28800, 43200, 86400, 172800},
+
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"outcome"}),
+		GCCycleBatches: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "grafana_storage_server_gc_cycle_batches",
+			Help:    "Number of nonempty scan batches in a garbage-collection cycle, including partially processed batches, by outcome.",
+			Buckets: []float64{1, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000},
+
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{"outcome"}),
 		GCGroupResourceDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_gc_group_resource_duration_seconds",
 			Help:    "Duration of a garbage-collection pass over one group/resource.",
@@ -762,9 +782,21 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.runGarbageCollection")
 	defer span.End()
 
+	start := time.Now()
+	var batches int
+	outcome := "success"
+	defer func() {
+		if ctx.Err() != nil {
+			outcome = "cancelled"
+		}
+		b.metrics.GCCycleDuration.WithLabelValues(outcome).Observe(time.Since(start).Seconds())
+		b.metrics.GCCycleBatches.WithLabelValues(outcome).Observe(float64(batches))
+	}()
+
 	// get group and resources
 	groupResources, err := b.dataStore.getGroupResources(ctx)
 	if err != nil {
+		outcome = "error"
 		b.log.Error("failed to list group resources for garbage collection", "error", err)
 		return
 	}
@@ -776,8 +808,10 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 
 		// garbageCollectGroupResource will remove all deleted key for resources from a given group+resource
 		// with resource versions older than the cutoff timestamp,
-		err := b.garbageCollectGroupResource(ctx, gr.Group, gr.Resource, resourceCutoff)
+		groupBatches, err := b.garbageCollectGroupResource(ctx, gr.Group, gr.Resource, resourceCutoff)
+		batches += groupBatches
 		if err != nil {
+			outcome = "error"
 			b.log.Error("garbage collection failed",
 				"group", gr.Group,
 				"resource", gr.Resource,
@@ -800,7 +834,7 @@ func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeS
 // Revisions newer than that marker are retained, so trash left behind by an object that was
 // deleted and later recreated with the same name is collected, while the recreated revisions
 // (and any deletion still within the retention window) are kept.
-func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, group, resourceName string, cutoffTimestamp int64) error {
+func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, group, resourceName string, cutoffTimestamp int64) (int, error) {
 	ctx, span := tracer.Start(ctx, "resource.kvStorageBackend.garbageCollectGroupResource")
 	batchSize := b.garbageCollection.BatchSize
 
@@ -811,6 +845,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 	start := time.Now()
 	defer func() { b.metrics.observeGCGroupResource(group, resourceName, time.Since(start)) }()
 
+	batches := 0
 	totalDeleted := int64(0)
 	deletedPerNamespace := map[string]int64{}
 
@@ -855,14 +890,17 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		for dataKey, err := range it {
 			if err != nil {
-				return fmt.Errorf("failed to list collection before delete: %s", err)
+				return batches, fmt.Errorf("failed to list collection before delete: %s", err)
 			}
 
+			if keysProcessed == 0 {
+				batches++
+			}
 			keysProcessed++
 
 			dk, err := ParseKey(dataKey)
 			if err != nil {
-				return fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
+				return batches, fmt.Errorf("failed to parse dataKey '%s': %s", dataKey, err)
 			}
 
 			objectKey := ListRequestKey{
@@ -890,7 +928,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 			if dk.Action == DataActionDeleted {
 				// Every buffered revision is <= this expired marker's RV, so it is all trash.
 				if err := deleteBuffered(); err != nil {
-					return err
+					return batches, err
 				}
 			}
 		}
@@ -902,7 +940,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return batches, ctx.Err()
 		case <-time.After(b.garbageCollection.BatchWait):
 		}
 	}
@@ -927,7 +965,7 @@ func (b *kvStorageBackend) garbageCollectGroupResource(ctx context.Context, grou
 		)
 	}
 
-	return nil
+	return batches, nil
 }
 
 func (b *kvStorageBackend) garbageCollectionCutoffTimestamp(group, resourceName string, defaultCutoff int64) int64 {
