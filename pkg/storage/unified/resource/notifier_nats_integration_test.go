@@ -4,19 +4,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
+	"net"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	natsserver "github.com/nats-io/nats-server/v2/server"
 	"github.com/prometheus/client_golang/prometheus"
 	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/peer"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
@@ -350,4 +356,136 @@ type noWatchStream struct{ *kvStorageBackend }
 
 func (noWatchStream) WatchWriteEvents(context.Context) (<-chan *WrittenEvent, error) {
 	return nil, errors.New("the watch stream is not used here")
+}
+
+// stallingKV blocks BatchGet while stalled, like a store too slow to read
+// notified values back under load.
+type stallingKV struct {
+	KV
+	stalled atomic.Bool
+	release chan struct{}
+}
+
+func (s *stallingKV) BatchGet(ctx context.Context, section string, keys []string) iter.Seq2[kv.KeyValue, error] {
+	if s.stalled.Load() {
+		select {
+		case <-s.release:
+		case <-ctx.Done():
+		}
+	}
+	return s.KV.BatchGet(ctx, section, keys)
+}
+
+// A notification dropped by a full notifier buffer is missed by every watch, so
+// the watch must expire and the client's re-list must recover the write.
+func TestIntegrationNatsWatchExpiresWhenNotifierDrops(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	_, pub, sub := startNatsRoundTrip(t)
+	store := &stallingKV{release: make(chan struct{})}
+	srv := newWatchTestServer(t, watchTestServerOpts{
+		EventSubscriber:    natsSubscriberAdapter{sub: sub},
+		EventPublisher:     pub,
+		NotifierBufferSize: 1,
+		WrapKV: func(kv KV) KV {
+			store.KV = kv
+			return store
+		},
+	})
+	ctx := authlib.WithAuthInfo(t.Context(), newWatchTestUser())
+	req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
+		Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace,
+	}}, SendInitialEvents: true, AllowWatchBookmarks: true}
+
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	watch, done := startNatsRecoveryWatch(t, ctx, srv, req)
+	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_BOOKMARK)
+	require.NoError(t, createTestPlaylist(ctx, srv))
+	requireNatsRecoveryEvent(t, watch, resourcepb.WatchEvent_ADDED)
+	created := 2
+
+	// Notifications back up behind the stalled read until the buffer drops one.
+	store.stalled.Store(true)
+	var watchErr error
+	require.Eventually(t, func() bool {
+		require.NoError(t, createTestPlaylist(ctx, srv))
+		created++
+		select {
+		case watchErr = <-done:
+			return true
+		default:
+			return false
+		}
+	}, 10*time.Second, 20*time.Millisecond, "watch did not expire after the notifier dropped a notification")
+	require.True(t, IsResourceVersionExpired(watchErr), "expected ResourceExpired, got %v", watchErr)
+	store.stalled.Store(false)
+	close(store.release)
+
+	count := 0
+	_, err := srv.backend.ListIterator(ctx, &resourcepb.ListRequest{Options: req.Options}, func(iter ListIterator) error {
+		for iter.Next() {
+			count++
+		}
+		return iter.Error()
+	})
+	require.NoError(t, err)
+	require.Equal(t, created, count, "relist must recover the writes whose notifications were dropped")
+}
+
+// Clients reconnect watches more often than the max age, so expiry must follow
+// each client's phase across reconnects rather than restart with every watch.
+func TestIntegrationNatsWatchMaxAgeFollowsClientPhase(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	const maxAge = 2 * time.Second
+	_, pub, sub := startNatsRoundTrip(t)
+	srv := newWatchTestServer(t, watchTestServerOpts{
+		EventSubscriber: natsSubscriberAdapter{sub: sub},
+		EventPublisher:  pub,
+		NatsWatchMaxAge: maxAge,
+	})
+	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace}
+	req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: key}}
+	controller := func(uid string) authlib.AuthInfo {
+		u := newWatchTestUser()
+		u.UserUID = uid
+		return u
+	}
+
+	// Every reconnect is relayed by another apiserver replica, with a new port.
+	clients := []struct {
+		name string
+		user authlib.AuthInfo
+	}{
+		{"controller a", controller("a")},
+		{"controller b", controller("b")},
+		{"service caller", &identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "apiserver"}},
+	}
+	for _, c := range clients {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			clientCtx := func(n int) context.Context {
+				return peer.NewContext(authlib.WithAuthInfo(t.Context(), c.user),
+					&peer.Peer{Addr: &net.TCPAddr{IP: net.ParseIP(fmt.Sprintf("10.0.0.%d", n%250+1)), Port: 40000 + n}})
+			}
+			phase := watchMaxAgePhase(c.user, key, maxAge)
+
+			// Each reconnect lasts a fifth of the max age.
+			deadline := time.Now().Add(2*maxAge + time.Second)
+			for n := 0; time.Now().Before(deadline); n++ {
+				watchCtx, cancel := context.WithTimeout(clientCtx(n), maxAge/5)
+				err := srv.Watch(req, newMockWatchServer(watchCtx))
+				expiredAt := time.Now()
+				cancel()
+				if err == nil {
+					continue
+				}
+				require.True(t, IsResourceVersionExpired(err), "expected ResourceExpired, got %v", err)
+				offset := (time.Duration(expiredAt.UnixNano())%maxAge - phase + maxAge) % maxAge
+				require.Less(t, offset, 200*time.Millisecond, "expired %v after the client's phase", offset)
+				return
+			}
+			t.Fatal("reconnecting watch never expired")
+		})
+	}
 }
