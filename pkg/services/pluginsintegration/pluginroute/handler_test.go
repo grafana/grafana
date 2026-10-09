@@ -371,6 +371,30 @@ func TestNewHandlerRejectsDuplicateVersions(t *testing.T) {
 	})
 }
 
+// A version name is a segment of every URL the version serves. One that is not
+// a valid segment would build route patterns ServeMux panics on, or routes that
+// can never be reached.
+func TestNewHandlerRejectsInvalidVersionNames(t *testing.T) {
+	for _, name := range []string{"", "v1/beta", "V1", "1alpha1", "v1.0", "v1_alpha"} {
+		t.Run(name, func(t *testing.T) {
+			plugin := routesOnlyPlugin()
+			manifest := plugin.Manifests[0]
+			manifest.Versions[0].Name = name
+			manifest.PreferredVersion = name
+			require.ErrorContains(t, ValidateManifest(plugin.JSONData.ID, manifest), "invalid version name")
+			require.NotPanics(t, func() {
+				_, err := NewHandler(plugin.JSONData.ID, manifest, allowAll(testOptions()))
+				require.ErrorContains(t, err, "invalid version name")
+			})
+		})
+	}
+	for _, name := range []string{"v1", "v1alpha1", "v2beta3", "v0alpha1"} {
+		plugin := testPlugin()
+		plugin.Manifests[0].Versions[0].Name = name
+		require.NoError(t, ValidateManifest(plugin.JSONData.ID, plugin.Manifests[0]), name)
+	}
+}
+
 func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 	plugin := testPlugin()
 	expected := APIGroup(plugin.Manifests[0])

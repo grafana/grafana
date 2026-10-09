@@ -252,6 +252,11 @@ func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 		// Every version is looked up by its name, so a second one with the same
 		// name would never be served as declared, and its routes would be mounted
 		// twice.
+		// A version name is a path segment of every URL the version serves, so it
+		// must be one, as it must be for a custom resource definition.
+		if errs := validation.IsDNS1035Label(version.Name); len(errs) > 0 {
+			return fmt.Errorf("plugin %q: invalid version name %q: %s", pluginID, version.Name, strings.Join(errs, "; "))
+		}
 		if versions[version.Name] {
 			return fmt.Errorf("plugin %q: version %s is declared more than once", pluginID, version.Name)
 		}
