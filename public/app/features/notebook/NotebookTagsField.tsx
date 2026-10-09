@@ -43,12 +43,6 @@ interface Props {
   allowCustomValue?: boolean;
   /** Associates a caller's `<label>` or `Field` with the input. */
   inputId?: string;
-  /**
-   * Tags to offer when the facet cannot answer, for a caller that already holds some — the rows a
-   * list has loaded. Not a substitute where the facet works: it knows the whole library and the
-   * counts, and these are only what one caller happens to be holding.
-   */
-  fallbackTags?: string[];
   disabled?: boolean;
 }
 
@@ -60,26 +54,16 @@ interface Props {
  *
  * Options come from the search index's `tags` facet, aggregated over every notebook rather than over
  * whatever rows a caller is showing, and asked for only when the control is focused — so a form
- * nobody touches costs no request. Where the search route is not served the facet cannot answer, and
- * a caller holding tags of its own passes them as `fallbackTags` to stand in for it.
+ * nobody touches costs no request.
  */
-export function NotebookTagsField({
-  value,
-  onChange,
-  placeholder,
-  allowCustomValue,
-  inputId,
-  disabled,
-  fallbackTags = NO_TAGS,
-}: Props) {
+export function NotebookTagsField({ value, onChange, placeholder, allowCustomValue, inputId, disabled }: Props) {
   const [fetchFacet] = useLazyNotebookFieldFacetQuery();
   const tags = value.length > 0 ? value : NO_TAGS;
 
   /**
    * The dropdown's options. TagFilter calls this from its focus handler, so it must not throw: the
-   * result is destructured rather than `.unwrap()`ed, because where the search route is not served
-   * this 404s and `unwrap()` would rethrow that. Reading `data` leaves it undefined instead, and the
-   * fallback below takes over.
+   * result is destructured rather than `.unwrap()`ed, which would rethrow a failed request out of
+   * that handler. Reading `data` leaves it undefined instead and the picker comes up empty.
    *
    * `preferCacheValue` — the second argument — reuses what the facet already answered for this
    * mount. Without it every focus is another request for a list that barely moves.
@@ -87,13 +71,8 @@ export function NotebookTagsField({
   const tagOptions = useCallback(async (): Promise<TermCount[]> => {
     const { data } = await fetchFacet({ field: TAGS_FIELD, limit: TAG_FACET_LIMIT }, true);
     const terms = data?.facets?.[TAGS_FIELD] ?? [];
-    if (terms.length > 0) {
-      return terms.map((term) => ({ term: term.value, count: term.count }));
-    }
-    // Counted as zero rather than counted at all: TagBadge renders no number for zero, and a count
-    // over whatever one caller loaded would read as the library's.
-    return fallbackTags.map((term) => ({ term, count: 0 }));
-  }, [fetchFacet, fallbackTags]);
+    return terms.map((term) => ({ term: term.value, count: term.count }));
+  }, [fetchFacet]);
 
   return (
     <TagFilter

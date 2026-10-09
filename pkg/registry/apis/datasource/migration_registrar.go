@@ -9,10 +9,10 @@ import (
 )
 
 // DataSourceMigration returns the MigrationDefinition for datasource config migration.
-// A single "primary" GroupResource is used for config/registration, while the actual
-// MigratorFunc streams each datasource with its per-plugin GroupResource key.
+// Every datasource type is stored in the datasource.grafana.app collection, labeled with
+// its per-plugin group (see apistore.SharedStorage).
 func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.MigrationDefinition {
-	gr := schema.GroupResource{Group: "datasource.grafana.app", Resource: "datasources"}
+	gr := schema.GroupResource{Group: datasourceV0.GROUP, Resource: "datasources"}
 
 	return migrations.MigrationDefinition{
 		ID:          "datasource",
@@ -21,7 +21,7 @@ func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.Migr
 			{
 				GroupResource: gr,
 				LockTables:    []string{"data_source"},
-				// Per-plugin group (see ResourceGroupsFunc), all served at the v0alpha1 floor.
+				// Every plugin group is served at the v0alpha1 floor.
 				FloorVersion: datasourceV0.VERSION,
 			},
 		},
@@ -32,7 +32,6 @@ func DataSourceMigration(dsMigrator migrator.DataSourceMigrator) migrations.Migr
 			migrator.DataSourceCountValidation(),
 		},
 		// data_source table is still used by other code paths
-		RenameTables:       []string{},
-		ResourceGroupsFunc: dsMigrator.PluginGroups,
+		RenameTables: []string{},
 	}
 }

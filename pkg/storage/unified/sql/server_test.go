@@ -193,6 +193,16 @@ func TestWithAuthorizeBeforeFetch(t *testing.T) {
 	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
 }
 
+func TestWithSeededWatches(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		cfg := setting.NewCfg()
+		cfg.SeededWatchesEnabled = enabled
+		resourceOpts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withSeededWatches)
+		require.NoError(t, err)
+		require.Equal(t, enabled, resourceOpts.SeededWatchesEnabled)
+	}
+}
+
 func TestWithNatsWatchMaxAge(t *testing.T) {
 	const maxAge = 5 * time.Minute
 

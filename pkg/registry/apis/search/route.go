@@ -13,15 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ConfigSection and ConfigKey name the ini setting that turns these endpoints
-// on. Both are on by default.
-//
-// Trash has its own key rather than sharing ConfigKey, because a deployment may
-// want search on for live search alone.
 const (
 	ConfigSection   = "grafana-apiserver"
-	ConfigKey       = "enable_search_api"
-	ConfigKeyTrash  = "enable_trash_api"
 	ConfigKeyHybrid = "enable_hybrid_api"
 	// ConfigKeyGlobalSearch turns on the search that spans resource types. Off by
 	// default, and useless without the global index it reads

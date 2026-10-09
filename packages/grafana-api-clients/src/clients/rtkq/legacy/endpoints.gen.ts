@@ -5127,7 +5127,10 @@ export type PreferencesQueryHistoryPreference = {
   homeTab?: string;
 };
 export type PreferencesSpec = {
-  /** UID for the home dashboard */
+  /** UID for the home dashboard. The reserved value "global-home" is not a
+    dashboard UID: it selects the instance default home (home_page, the
+    configured home dashboard file, or the built-in home page) instead of
+    falling through to lower-precedence preferences. */
   homeDashboardUID?: string;
   /** Explicit home URL (NOTE: this can only be modified in the system settings) */
   homeURL?: string;

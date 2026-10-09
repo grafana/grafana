@@ -30,6 +30,10 @@ var gvrServiceAccounts = schema.GroupVersionResource{
 }
 
 func TestIntegrationServiceAccounts(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationServiceAccounts)
+}
+
+func testIntegrationServiceAccounts(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode2, rest.Mode3, rest.Mode4, rest.Mode5}

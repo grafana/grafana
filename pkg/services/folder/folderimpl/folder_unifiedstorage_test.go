@@ -997,6 +997,32 @@ func TestSearchFolders(t *testing.T) {
 	})
 }
 
+func TestFolderLookupSearchErrors(t *testing.T) {
+	id, title := int64(1), "title"
+	for name, lookup := range map[string]folder.GetFolderQuery{
+		"by ID":    {ID: &id}, //nolint:staticcheck // Exercise legacy lookup compatibility.
+		"by title": {Title: &title},
+	} {
+		for _, tc := range folderStorageFailures(t) {
+			t.Run(name+"/"+tc.name, func(t *testing.T) {
+				cli := new(client.MockK8sHandler)
+				cli.On("GetNamespace", int64(1)).Return("default").Once()
+				cli.On("Search", mock.Anything, int64(1), mock.Anything).Return(tc.searchResponse(), tc.err).Once()
+				svc := &Service{k8sclient: cli, tracer: noop.NewTracerProvider().Tracer("test")}
+				query := lookup
+				query.OrgID = 1
+				query.SignedInUser = &user.SignedInUser{OrgID: 1}
+
+				got, err := svc.Get(t.Context(), &query)
+
+				require.Nil(t, got)
+				requireFolderStorageError(t, tc.want, err)
+				cli.AssertExpectations(t)
+			})
+		}
+	}
+}
+
 func TestGetFolderByTitle(t *testing.T) {
 	fakeK8sClient := new(client.MockK8sHandler)
 	folderStore := folder.NewFakeStore()

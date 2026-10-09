@@ -49,7 +49,7 @@ describe('ElementEditPaneHeader', () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
 
-      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Row');
+      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Row', 'edit_pane');
     });
 
     it('should call DashboardInteractions.trackDeleteDashboardElement when deleting a tab', async () => {
@@ -60,7 +60,7 @@ describe('ElementEditPaneHeader', () => {
       const user = userEvent.setup();
       await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
 
-      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Tab');
+      expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Tab', 'edit_pane');
     });
   });
 
@@ -72,7 +72,7 @@ describe('ElementEditPaneHeader', () => {
     const user = userEvent.setup();
     await user.click(screen.getByTestId(selectors.components.EditPaneHeader.deleteButton));
 
-    expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Panel');
+    expect(DashboardInteractions.trackDeleteDashboardElement).toHaveBeenCalledWith('Panel', 'edit_pane');
   });
 
   describe('tracking panel actions', () => {

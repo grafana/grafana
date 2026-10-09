@@ -15,8 +15,6 @@ export interface AddedToNotebook {
 
 interface CreateNotebookFields {
   title: string;
-  description?: string;
-  tags: string[];
 }
 
 /**
@@ -51,17 +49,7 @@ export async function createNotebookWithPanel(
   entryPoint: NotebookEntryPoint,
   isLibraryPanel: boolean
 ): Promise<AddedToNotebook> {
-  const spec = appendPanelToNotebook(
-    {
-      ...defaultNotebookSpec(),
-      title: fields.title,
-      // Omitted rather than empty: description is optional in the schema, and an empty string
-      // would round-trip as a description the user never wrote.
-      ...(fields.description ? { description: fields.description } : {}),
-      tags: fields.tags,
-    },
-    panel
-  );
+  const spec = appendPanelToNotebook({ ...defaultNotebookSpec(), title: fields.title }, panel);
 
   const created = await createNotebook(spec);
   NotebookAnalytics.created(created.uid, entryPoint, spec.layout.spec.cells.length, { panel, isLibraryPanel });

@@ -10,6 +10,8 @@ import {
   type NotebookAddFailedProperties,
   type NotebookAddFailedReason,
   type NotebookAddTarget,
+  type NotebookAutosaveConflictResolution,
+  type NotebookAutosaveConflictResolvedProperties,
   type NotebookAutosaveFailedProperties,
   type NotebookAutosaveFailedReason,
   type NotebookCellAddedFromAddToNotebookProperties,
@@ -24,6 +26,8 @@ import {
   type NotebookExportedProperties,
   type NotebookExportDestination,
   type NotebookExportSource,
+  type NotebookIncidentAction,
+  type NotebookIncidentActionClickedProperties,
   type NotebookLinkCopiedProperties,
   type NotebookLinkCopySource,
   type NotebookListFilteredProperties,
@@ -69,11 +73,19 @@ const createCellAddedFromAddToNotebookEvent = createNotebookEvent<NotebookCellAd
 /** Fired on each autosave error, never on success. A save still in flight has no outcome to report. */
 const createAutosaveFailedEvent = createNotebookEvent<NotebookAutosaveFailedProperties>('autosave_failed');
 
+/** Fired once the user answers the save-conflict prompt, whichever way: this is the choice, not the conflict. */
+const createAutosaveConflictResolvedEvent =
+  createNotebookEvent<NotebookAutosaveConflictResolvedProperties>('autosave_conflict_resolved');
+
 /** Fired once an export action actually completed: a copy that landed, or a download. */
 const createExportedEvent = createNotebookEvent<NotebookExportedProperties>('exported');
 
 /** Fired once a copy-link click actually put the link on the clipboard. */
 const createLinkCopiedEvent = createNotebookEvent<NotebookLinkCopiedProperties>('link_copied');
+
+/** Fired when an IRM action is picked from the notebook's menu, as its form opens. */
+const createIncidentActionClickedEvent =
+  createNotebookEvent<NotebookIncidentActionClickedProperties>('incident_action_clicked');
 
 /** Fired once per committed filter change on the notebooks list, as the change commits. */
 const createListFilteredEvent = createNotebookEvent<NotebookListFilteredProperties>('list_filtered');
@@ -156,12 +168,20 @@ export const NotebookAnalytics = {
     createAutosaveFailedEvent({ notebookUid, reason, attempt });
   },
 
+  autosaveConflictResolved(notebookUid: string, resolution: NotebookAutosaveConflictResolution): void {
+    createAutosaveConflictResolvedEvent({ notebookUid, resolution });
+  },
+
   exported(notebookUid: string, destination: NotebookExportDestination, source: NotebookExportSource): void {
     createExportedEvent({ notebookUid, destination, source });
   },
 
   linkCopied(notebookUid: string, source: NotebookLinkCopySource): void {
     createLinkCopiedEvent({ notebookUid, source });
+  },
+
+  incidentActionClicked(notebookUid: string, action: NotebookIncidentAction): void {
+    createIncidentActionClickedEvent({ notebookUid, action });
   },
 
   listFiltered(filterType: NotebookListFilterType, filters: NotebookListFilterState): void {

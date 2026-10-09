@@ -8,8 +8,10 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
+import { replacePanel } from '../actions/panel/replacePanel';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../utils/utils';
 
 import { LibraryPanelBehavior } from './LibraryPanelBehavior';
@@ -41,10 +43,15 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
-        // keep the same key from the panelToReplace
-        // this is important for edit mode
-        newPanel.setState({ key: panelToReplace.state.key });
-        layoutItem.setElementBody(newPanel);
+        if (isDashboardNewLayoutsEnabled()) {
+          replacePanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
+        } else {
+          // This else block is needed only for old architecture which reuses the same component
+          // but has no way to trigger dashboard actions. It can be removed when
+          // the dashboardNewLayouts toggle is removed
+          newPanel.setState({ key: panelToReplace.state.key });
+          layoutItem.setElementBody(newPanel);
+        }
       }
     } else {
       dashboard.addPanel(newPanel);

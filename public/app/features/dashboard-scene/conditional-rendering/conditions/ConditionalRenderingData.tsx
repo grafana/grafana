@@ -198,6 +198,7 @@ function ConditionalRenderingDataRenderer({ model }: SceneComponentProps<Conditi
         value={enableConditionOption}
         onChange={({ value: newValue }) => {
           edit({
+            meta: { actionId: 'conditional-rendering.changeRule', scope: 'query-result' },
             description: t('dashboard.edit-actions.edit-query-result-rule', 'Change query result rule'),
             source: model,
             perform: () => model.changeValue(Boolean(newValue)),

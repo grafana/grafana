@@ -16,6 +16,7 @@ type tracedPluginHandler struct {
 }
 
 func (h *tracedPluginHandler) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	setPluginID(req, h.pluginID)
 	span := trace.SpanFromContext(req.Context())
 	if parent, ok := req.Context().Value(routerSpanKey{}).(trace.SpanContext); ok && parent.Equal(span.SpanContext()) {
 		// Routed plugin execution is already timed by the backend span.

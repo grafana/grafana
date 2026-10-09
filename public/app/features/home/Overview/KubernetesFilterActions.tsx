@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Combobox, type ComboboxOption, Field, MultiCombobox } from '@grafana/ui';
+import { Combobox, Field, MultiCombobox } from '@grafana/ui';
 
 import { hasSelection, type KubernetesScope } from '../solutions/kubernetesData';
 import {
@@ -13,7 +13,12 @@ import {
   summarizeKubernetesFilter,
 } from '../solutions/kubernetesFilter';
 
-import { type CardFilterActionsProps, SolutionFilterActions, type SolutionFilterSpec } from './SolutionFilterActions';
+import {
+  type CardFilterActionsProps,
+  SolutionFilterActions,
+  type SolutionFilterSpec,
+  toOptions,
+} from './SolutionFilterActions';
 
 const NO_SCOPE: KubernetesScope = { cluster: '', namespaces: [], nodes: [] };
 
@@ -144,8 +149,4 @@ function KubernetesFilterFields({ datasource, form: { control, watch } }: Kubern
       </Field>
     </>
   );
-}
-
-function toOptions(values: string[] | undefined): Array<ComboboxOption<string>> {
-  return (values ?? []).map((value) => ({ label: value, value }));
 }

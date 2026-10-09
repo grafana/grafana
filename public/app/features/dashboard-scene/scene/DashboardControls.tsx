@@ -24,6 +24,7 @@ import {
 import { Box, Button, ButtonGroup, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/services/context_srv';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ContextualNavigationPaneToggle } from 'app/features/scopes/dashboards/ContextualNavigationPaneToggle';
 import { KioskMode } from 'app/types/dashboard';
@@ -214,19 +215,18 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
   const panelEditVariables = getPanelEditVariables(dashboard);
   const { chrome } = useGrafana();
   const { kioskMode } = chrome.useState();
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
 
   if (!model.hasControls()) {
     // The controls row hosts the dashboard action buttons (with new layouts) and the panel edit
     // actions, so it must render even when the dashboard itself contributes no other controls.
     // DashboardControlActions handles the per-button visibility, including the sidebar cases.
-    if ((config.featureToggles.dashboardNewLayouts || editPanel) && kioskMode !== KioskMode.Full) {
+    if ((dashboardNewLayoutsEnabled || editPanel) && kioskMode !== KioskMode.Full) {
       return (
         <>
           <div data-testid={selectors.pages.Dashboard.Controls} className={styles.controls}>
             {!hideVariableControls && <VariableControls dashboard={dashboard} />}
-            {!hideVariableControls && config.featureToggles.dashboardNewLayouts && (
-              <AddControlsButton dashboard={dashboard} />
-            )}
+            {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
             <div className={cx(styles.rightControls, editPanel && styles.rightControlsWrap)}>
               <div className={styles.fixedControls}>
                 <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
@@ -258,12 +258,12 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
             <refreshPicker.Component model={refreshPicker} />
           </div>
         )}
-        {(config.featureToggles.dashboardNewLayouts || editPanel) && (
+        {(dashboardNewLayoutsEnabled || editPanel) && (
           <div className={styles.fixedControls}>
             <DashboardControlActions dashboard={dashboard} hidePlaylistNav={hidePlaylistNav} />
           </div>
         )}
-        {config.featureToggles.dashboardUnifiedDrilldownControls && !config.featureToggles.dashboardNewLayouts && (
+        {config.featureToggles.dashboardUnifiedDrilldownControls && !dashboardNewLayoutsEnabled && (
           <div className={styles.fixedControls}>
             <DashboardFiltersOverviewPaneToggle dashboard={dashboard} />
           </div>
@@ -280,9 +280,7 @@ function DashboardControlsRenderer({ model }: SceneComponentProps<DashboardContr
       )}
       {!hideLinksControls && !editPanel && <DashboardLinksControls links={links} dashboard={dashboard} />}
       {!hideDashboardControls && hasDashboardControls && <DashboardControlsButton dashboard={dashboard} />}
-      {!hideVariableControls && config.featureToggles.dashboardNewLayouts && (
-        <AddControlsButton dashboard={dashboard} />
-      )}
+      {!hideVariableControls && dashboardNewLayoutsEnabled && <AddControlsButton dashboard={dashboard} />}
       <DefaultControlsLoadingSkeleton
         dashboard={dashboard}
         hideVariableControls={hideVariableControls}

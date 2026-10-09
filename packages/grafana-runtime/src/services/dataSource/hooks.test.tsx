@@ -301,20 +301,8 @@ describe('useDataSourceInstance', () => {
 });
 
 describe('useDefaultDataSourceInstanceListItem', () => {
-  const alpha = {
-    uid: 'uid-alpha',
-    type: 'test-db',
-    name: 'Alpha',
-    meta: {},
-    isDefault: false,
-  } as DataSourceInstanceListItem;
-  const bravo = {
-    uid: 'uid-bravo',
-    type: 'test-db',
-    name: 'Bravo',
-    meta: {},
-    isDefault: true,
-  } as DataSourceInstanceListItem;
+  const alpha = { uid: 'uid-alpha', type: 'test-db', name: 'Alpha', meta: {} } as DataSourceInstanceListItem;
+  const bravo = { uid: 'uid-bravo', type: 'test-db', name: 'Bravo', meta: {} } as DataSourceInstanceListItem;
 
   it('starts loading then resolves to the flagged item', async () => {
     const { result } = renderHook(() => useDefaultDataSourceInstanceListItem([alpha, bravo]));
@@ -345,19 +333,32 @@ describe('useDefaultDataSourceInstanceListItem', () => {
     expect(result.current.item).toBe(itemAfterFirstRender);
   });
 
-  it('re-resolves when the flag moves to another item', async () => {
+  it('re-resolves when the items change', async () => {
     const { result, rerender } = renderHook(({ items }) => useDefaultDataSourceInstanceListItem(items), {
       initialProps: { items: [alpha, bravo] },
     });
 
     await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
 
-    rerender({
-      items: [
-        { ...alpha, isDefault: true },
-        { ...bravo, isDefault: false },
-      ],
+    rerender({ items: [alpha] });
+    await waitFor(() => expect(result.current.item).toBeUndefined());
+  });
+
+  it('re-resolves when the default moves to another instance in the cache', async () => {
+    const { result } = renderHook(() => useDefaultDataSourceInstanceListItem([alpha, bravo]));
+
+    await waitFor(() => expect(result.current.item?.name).toBe('Bravo'));
+
+    act(() => {
+      syncDataSourceInstanceSettings({
+        datasources: {
+          Alpha: { ...fixtures.Alpha, isDefault: true },
+          Bravo: { ...fixtures.Bravo, isDefault: false },
+        },
+        defaultDatasource: 'Alpha',
+      });
     });
+
     await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
   });
 });

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"iter"
 	"net/http"
 	"sync"
@@ -24,6 +25,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
@@ -77,15 +79,28 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
 
-const natsWatchMaxAgeJitterFraction = 0.2
+// watchMaxAgePhase spreads max-age expiry across clients. Clients reconnect
+// watches more often than the max age, possibly through another apiserver
+// replica or to another storage server, so the phase comes only from inputs
+// that survive a reconnect: the caller and the watched key.
+func watchMaxAgePhase(user claims.AuthInfo, key *resourcepb.ResourceKey, maxAge time.Duration) time.Duration {
+	h := fnv.New64a()
+	for _, s := range []string{user.GetUID(), key.Group, key.Resource, key.Namespace} {
+		_, _ = h.Write([]byte(s))
+		_, _ = h.Write([]byte{0})
+	}
+	return time.Duration(h.Sum64() % uint64(maxAge))
+}
 
-func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration {
-	bo := backoff.New(ctx, backoff.Config{
-		MinBackoff: time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction)),
-		MaxBackoff: time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction)),
-		MaxRetries: 1,
-	})
-	return bo.NextDelay()
+// nextWatchMaxAgeExpiry returns the delay until the next wall-clock boundary at
+// phase, in (0, maxAge]. Wall-clock boundaries keep a client's period intact
+// when it reconnects, even to another server.
+func nextWatchMaxAgeExpiry(now time.Time, maxAge, phase time.Duration) time.Duration {
+	d := (phase - time.Duration(now.UnixNano())%maxAge + maxAge) % maxAge
+	if d == 0 {
+		return maxAge
+	}
+	return d
 }
 
 // filteredBookmarkDelay leaves a recovery window for late writes without
@@ -105,6 +120,7 @@ type ResourceServer interface {
 	resourcepb.ResourceStatsServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
+	resourcepb.BlobStoreStreamingServer
 	resourcepb.QuotasServer
 	// Deprecated: clients should use grpc.health.v1.Health with modules.StorageServer service name instead
 	resourcepb.DiagnosticsServer //nolint:staticcheck
@@ -215,6 +231,16 @@ type ResourceLastImportTime struct {
 	LastImportTime time.Time
 }
 
+// BatchReadRequest is one object of a batch read.
+type BatchReadRequest struct {
+	*resourcepb.ReadRequest
+
+	// Folder is where the caller expects the version at ResourceVersion to be,
+	// such as the folder the search index recorded for it. It only lets the read
+	// skip a key lookup: a wrong folder costs that lookup, never a wrong answer.
+	Folder string
+}
+
 // The StorageBackend is an internal abstraction that supports interacting with
 // the underlying raw storage medium.  This interface is never exposed directly,
 // it is provided by concrete instances that actually write values.
@@ -227,12 +253,12 @@ type StorageBackend interface {
 	// Read a resource from storage optionally at an explicit version
 	ReadResource(context.Context, *resourcepb.ReadRequest) *BackendReadResponse
 
-	// BatchReadResource lazily reads several resources, yielding one response per
-	// request in order. Body reads stop when the consumer stops. The up-front error
-	// reports failures that happen before iteration; per-request failures are set
-	// on BackendReadResponse.Error. When includeDeleted is true, deletion markers
-	// can be resolved at their explicit resource versions.
-	BatchReadResource(context.Context, []*resourcepb.ReadRequest, bool) (iter.Seq[*BackendReadResponse], error)
+	// BatchReadResource reads several resources, yielding one response per request
+	// in order. The up-front error reports failures that happen before iteration;
+	// per-request failures are set on BackendReadResponse.Error. When
+	// includeDeleted is true, deletion markers can be resolved at their explicit
+	// resource versions.
+	BatchReadResource(context.Context, []BatchReadRequest, bool) (iter.Seq[*BackendReadResponse], error)
 
 	// When the ResourceServer executes a List request, this iterator will
 	// query the backend for potential results.  All results will be
@@ -243,6 +269,18 @@ type StorageBackend interface {
 
 	// ListHistory is like ListIterator, but it returns the history of a resource
 	ListHistory(context.Context, *resourcepb.ListRequest, func(ListIterator) error) (int64, error)
+
+	// WatchWrittenKeys delivers the key of each write to the given resource
+	// types, straight from the bus: without its body and in no particular order,
+	// so without the delay WatchWriteEvents holds events for to put them in
+	// order. It suits a consumer that re-reads what it is told about. Delivery is
+	// at-most-once, so onLost is called when keys may have been lost: with the
+	// namespace of a key dropped because the consumer was not keeping up, or with
+	// an empty namespace, meaning any, once a lost connection is restored. It must
+	// not block. The channel is never closed; cancel ctx to stop.
+	// ErrWrittenKeysUnsupported means the backend, or its configuration, cannot
+	// do this at all.
+	WatchWrittenKeys(ctx context.Context, types []schema.GroupResource, onLost func(namespace string)) (<-chan *resourcepb.ResourceKey, error)
 
 	// ListModifiedSince will return all resources that have changed since the given resource version.
 	// If a resource has changes, only the latest change will be returned.
@@ -279,6 +317,10 @@ type StorageBackend interface {
 
 	// GetResourceLastImportTime returns the import time for one namespaced resource, or zero if none exists.
 	GetResourceLastImportTime(ctx context.Context, nsr NamespacedResource) (time.Time, error)
+
+	// ListResourceLastImportTimes returns the latest import times using the same age limit as single lookups.
+	// On failure, it may return times collected before the error so scans can still use them.
+	ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error)
 }
 
 type ModifiedResource struct {
@@ -301,12 +343,12 @@ type BlobSupport interface {
 	// Indicates if storage layer supports signed urls
 	SupportsSignedURLs() bool
 
-	// Get the raw blob bytes and metadata -- limited to protobuf message size
-	// For larger payloads, we should use presigned URLs to upload from the client
+	// Get the raw blob bytes and metadata -- limited to protobuf message size.
+	// Remote SQL-backed uploads can instead use StreamingBlobSupport.
 	PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error)
 
 	// Get blob contents.  When possible, this will return a signed URL
-	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	// Remote SQL-backed downloads can instead use StreamingBlobSupport.
 	GetResourceBlob(ctx context.Context, resource *resourcepb.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resourcepb.GetBlobResponse, error)
 
 	// TODO? List+Delete?  This is for admin access
@@ -498,8 +540,12 @@ type ResourceServerOptions struct {
 	// Watch clients that set AllowWatchBookmarks. Zero defaults to defaultBookmarkFrequency.
 	BookmarkFrequency time.Duration
 
-	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
-	// Zero disables expiry.
+	// SeededWatchesEnabled enables KV watch-cache seeding and checked resume admission.
+	// Legacy SQL backends always use the unseeded path.
+	SeededWatchesEnabled bool
+
+	// NatsWatchMaxAge forces NATS-backed watch clients to re-list once per max
+	// age, at a per-client phase. Zero disables expiry.
 	NatsWatchMaxAge time.Duration
 
 	// WatchExpiry is shared with notification producers. Nil creates a local expiry.
@@ -666,6 +712,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		vectorBackend:                  opts.VectorBackend,
 		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
+		blobTransfers:                  newBlobTransfers(),
 		diagnostics:                    opts.Diagnostics,
 		access:                         opts.AccessClient,
 		secure:                         opts.SecureValues,
@@ -688,6 +735,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		manifestSearchFields:           opts.Search.SearchFields,
 		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
 		bookmarkFrequency:              opts.BookmarkFrequency,
+		seededWatchesEnabled:           opts.SeededWatchesEnabled,
 		natsWatchMaxAge:                opts.NatsWatchMaxAge,
 		watchExpiry:                    opts.WatchExpiry,
 		vectorWriteReconciler:          opts.VectorReconciler,
@@ -777,6 +825,7 @@ type server struct {
 	vectorBackend             vector.VectorBackend
 	bulkBatchOptions          BulkBatchOptions
 	blob                      BlobSupport
+	blobTransfers             *blobTransfers
 	secure                    secrets.InlineSecureValueSupport
 	search                    *searchServer
 	searchClient              resourcepb.ResourceIndexClient
@@ -796,9 +845,10 @@ type server struct {
 	manifestSearchFields *SearchFieldsRegistry
 
 	// Background watch task -- this has permissions for everything
-	ctx         context.Context
-	cancel      context.CancelFunc
-	broadcaster Broadcaster[*WrittenEvent]
+	ctx          context.Context
+	cancel       context.CancelFunc
+	broadcaster  Broadcaster[*WrittenEvent]
+	watchStartup *watchStartup
 
 	// Graceful shutdown: tracks in-flight write operations so Stop can wait
 	// for them to complete before tearing down the backend.
@@ -824,7 +874,8 @@ type server struct {
 	artificialSuccessfulWriteDelay time.Duration
 	storageEnabled                 bool
 
-	bookmarkFrequency time.Duration
+	bookmarkFrequency    time.Duration
+	seededWatchesEnabled bool
 
 	natsWatchMaxAge time.Duration
 	watchExpiry     WatchExpiry
@@ -874,28 +925,11 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
-		if s.initErr == nil && s.natsWatchMaxAge > 0 {
-			go s.runNatsWatchExpiry()
-		}
-
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
-}
-
-func (s *server) runNatsWatchExpiry() {
-	for {
-		timer := time.NewTimer(jitteredWatchMaxAge(s.ctx, s.natsWatchMaxAge))
-		select {
-		case <-s.ctx.Done():
-			timer.Stop()
-			return
-		case <-timer.C:
-			s.watchExpiry.Invalidate()
-		}
-	}
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
@@ -939,6 +973,13 @@ func (s *server) Stop(ctx context.Context) error {
 
 	// Stops streaming (broadcaster, watch events).
 	s.cancel()
+	if s.watchStartup != nil {
+		select {
+		case <-s.watchStartup.stopped:
+		case <-ctx.Done():
+			s.log.Warn("timed out waiting for watch startup and capture to stop")
+		}
+	}
 
 	// Wait for in-flight write operations to finish, respecting the context deadline.
 	// After the unlock above, no new Add(1) can happen, so Wait is safe.
@@ -1714,6 +1755,7 @@ func requireListIdentity(ctx context.Context, req *resourcepb.ListRequest) *reso
 //nolint:gocyclo // Temporary list-path instrumentation
 func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *resourcepb.ListResponse, err error) {
 	ctx, span := tracer.Start(ctx, "resource.server.List")
+	ctx, bodyStats := withListBodyStats(ctx)
 	path := listPathUnknown
 	selectorType := listSelectorType(req)
 	requestedLimit := int64(0)
@@ -1724,6 +1766,7 @@ func (s *server) List(ctx context.Context, req *resourcepb.ListRequest) (rsp *re
 	defer func() {
 		setListRequestPath(ctx, path)
 		annotateListRequest(span, path, selectorType, requestedLimit, req, rsp)
+		s.recordListBodyStats(span, bodyStats, path, rsp, err)
 		span.End()
 	}()
 
@@ -1957,6 +2000,7 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 			// If the page is already full, this extra authorized item confirms
 			// there are more results. Set the continue token and stop.
 			if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= maxPageBytes {
+				setListStopReason(ctx, s.listLimitStopReason(req, rsp, pageBytes))
 				nextToken = lastContinueToken
 				break
 			}
@@ -2135,6 +2179,9 @@ func (s *server) listAuthorizedValuesPage(
 				if err := keyIter.Error(); err != nil {
 					return "", err
 				}
+				if nextToken != "" {
+					setListStopReason(ctx, s.listLimitStopReason(req, rsp, pageBytes))
+				}
 				return nextToken, nil
 			}
 		}
@@ -2194,7 +2241,17 @@ func continueTokenAfterFetchedValue(
 }
 
 func (s *server) listPageFull(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) bool {
-	return (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes
+	return s.listLimitStopReason(req, rsp, pageBytes) != ""
+}
+
+func (s *server) listLimitStopReason(req *resourcepb.ListRequest, rsp *resourcepb.ListResponse, pageBytes int) string {
+	if pageBytes >= s.maxPageSizeBytes {
+		return listStopByteLimit
+	}
+	if req.Limit > 0 && len(rsp.Items) >= int(req.Limit) {
+		return listStopCountLimit
+	}
+	return ""
 }
 
 // listFromTrash lists deleted resources. Trash uses a different authorization
@@ -2239,7 +2296,11 @@ func (s *server) listFromTrash(ctx context.Context, req *resourcepb.ListRequest)
 			}
 
 			// The deletion marker records the deleting user as the last updater.
-			if !authorizer.Allowed(ctx, iter.Folder(), obj.GetUpdatedBy()) {
+			allowed, err := authorizer.Allowed(ctx, iter.Folder(), obj.GetUpdatedBy())
+			if err != nil {
+				return err
+			}
+			if !allowed {
 				continue
 			}
 
@@ -2302,6 +2363,10 @@ const producerChanSize = 100
 
 // Start the server.broadcaster (requires that the backend storage services are enabled)
 func (s *server) initWatcher() error {
+	if backend, ok := s.backend.(seededWatchBackend); ok && s.seededWatchesEnabled {
+		s.initSeededWatcher(backend)
+		return nil
+	}
 	events, err := s.backend.WatchWriteEvents(s.ctx)
 	if err != nil {
 		return err
@@ -2322,7 +2387,11 @@ func (s *server) initWatcher() error {
 
 			s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
 			s.mostRecentRV.Store(v.ResourceVersion)
-			out <- v
+			select {
+			case out <- v:
+			case <-s.ctx.Done():
+				return
+			}
 		}
 	}()
 
@@ -2391,13 +2460,51 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 
 	// Start listening -- this will buffer any changes that happen while we backfill.
-	// If events are generated faster than we can process them, then some events will be dropped.
-	// TODO: Think of a way to allow the client to catch up.
-	stream, err := s.broadcaster.Subscribe(ctx, fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace), key.Resource)
+	_, isKVBackend := s.backend.(KVBackend)
+	requestedSince := req.Since
+	if isKVBackend {
+		requestedSince = ToSnowflakeRV(requestedSince)
+	}
+	name := fmt.Sprintf("%s/%s/%s", key.Group, key.Resource, key.Namespace)
+	var stream <-chan *WrittenEvent
+	if s.watchStartup != nil {
+		var resume *watchResume
+		if req.Since > 0 && !req.SendInitialEvents {
+			resume = &watchResume{groupResource: GroupResource{Group: key.Group, Resource: key.Resource}, since: requestedSince, requestedRV: req.Since}
+		}
+		stream, err = s.watchStartup.broadcaster.subscribeWatch(ctx, name, key.Resource, resume)
+	} else {
+		stream, err = s.broadcaster.Subscribe(ctx, name, key.Resource)
+	}
 	if err != nil {
 		return err
 	}
 	defer s.broadcaster.Unsubscribe(stream)
+
+	since := requestedSince
+	expired := func() error {
+		if ctx.Err() != nil {
+			return nil
+		}
+		s.log.Debug("watch: expiring stream to bound stale-state duration",
+			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
+		return NewResourceVersionExpiredError(since)
+	}
+	select {
+	case <-watchExpiryC:
+		return expired()
+	default:
+	}
+
+	// A boundary passing during the initial list fires as soon as the live loop
+	// starts; the reconnect then waits a full max age for its next boundary.
+	var maxAgeC <-chan time.Time
+	if s.natsWatchMaxAge > 0 {
+		phase := watchMaxAgePhase(user, key, s.natsWatchMaxAge)
+		timer := time.NewTimer(nextWatchMaxAgeExpiry(time.Now(), s.natsWatchMaxAge, phase))
+		defer timer.Stop()
+		maxAgeC = timer.C
+	}
 
 	// Determine a safe starting resource-version for the watch.
 	// When the client requests SendInitialEvents we will use the resource-version
@@ -2470,6 +2577,11 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				if !checker(iter.Name(), iter.Folder()) {
 					continue
 				}
+				select {
+				case <-watchExpiryC:
+					return expired()
+				default:
+				}
 				if err := srv.Send(&resourcepb.WatchEvent{
 					Type: resourcepb.WatchEvent_ADDED,
 					Resource: &resourcepb.WatchEvent_Resource{
@@ -2494,17 +2606,14 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		}
 	}
 
-	var since int64 // resource version to start watching from
 	switch {
 	case req.SendInitialEvents:
 		since = processedRV
 	case req.Since == 0:
 		since = mostRecentRV
 	default:
-		since = req.Since
+		since = requestedSince
 	}
-
-	_, isKVBackend := s.backend.(KVBackend)
 
 	// Set up periodic bookmark ticker when the client opted in.
 	var bookmarkC <-chan time.Time
@@ -2512,15 +2621,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		ticker := time.NewTicker(s.bookmarkFrequency)
 		defer ticker.Stop()
 		bookmarkC = ticker.C
-	}
-
-	expired := func() error {
-		if ctx.Err() != nil {
-			return nil
-		}
-		s.log.Debug("watch: expiring stream to bound stale-state duration",
-			"group", key.Group, "resource", key.Resource, "namespace", key.Namespace, "since", since)
-		return NewResourceVersionExpiredError(since)
 	}
 
 	for {
@@ -2534,6 +2634,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		case <-ctx.Done():
 			return nil
 		case <-watchExpiryC:
+			return expired()
+		case <-maxAgeC:
 			return expired()
 
 		case <-bookmarkC:
@@ -2579,7 +2681,10 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 				}
 				if event.PreviousRV > 0 {
 					prevObj, err := s.Read(ctx, &resourcepb.ReadRequest{Key: event.Key, ResourceVersion: event.PreviousRV})
-					if err = ErrorFromResponse(prevObj.GetError(), err); err != nil {
+					if err = ErrorFromResponse(prevObj.GetError(), err); err != nil && AsErrorResult(err).Code == http.StatusNotFound {
+						// History pruning can remove the previous revision while the event is still replayable.
+						s.log.Debug("previous object no longer available", "key", event.Key, "resource_version", event.PreviousRV)
+					} else if err != nil {
 						// This scenario should never happen, but if it does, we should log it and continue
 						// sending the event without the previous object. The client will decide what to do.
 						s.log.Error("error reading previous object", "key", event.Key, "resource_version", event.PreviousRV, "error", err)
@@ -2736,22 +2841,27 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	if failure := s.authorizeBlobPut(ctx, req); failure != nil {
+		return &resourcepb.PutBlobResponse{Error: failure}, nil
+	}
+	rsp, err := s.blob.PutResourceBlob(ctx, req)
+	if err != nil {
+		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	return rsp, nil
+}
+
+func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRequest) *resourcepb.ErrorResult {
 	if r := verifyRequestKey(req.Resource); r != nil {
-		return &resourcepb.PutBlobResponse{Error: r}, nil
+		return r
 	}
 	if s.blob == nil {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "blob store not configured",
-			Code:    http.StatusNotImplemented,
-		}}, nil
+		return &resourcepb.ErrorResult{Message: "blob store not configured", Code: http.StatusNotImplemented}
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}}, nil
+		return &resourcepb.ErrorResult{Message: "no user found in context", Code: http.StatusUnauthorized}
 	}
 
 	// Load the parent to pick create vs update and to get its folder for
@@ -2768,7 +2878,7 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	case parent.Error != nil:
 		// Surface backend status as-is; collapsing to 404 would hide
 		// transient 5xx as "not found".
-		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+		return parent.Error
 	default:
 		folder = parent.Folder
 	}
@@ -2781,19 +2891,12 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 		Name:      name,
 	}, folder)
 	if err != nil {
-		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+		return AsErrorResult(err)
 	}
 	if !a.Allowed {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Code: http.StatusForbidden,
-		}}, nil
+		return &resourcepb.ErrorResult{Code: http.StatusForbidden}
 	}
-
-	rsp, err := s.blob.PutResourceBlob(ctx, req)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
-	}
-	return rsp, nil
+	return nil
 }
 
 func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
@@ -2860,20 +2963,29 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+	info, failure := s.resolveBlobGet(ctx, req)
+	if failure != nil {
+		return &resourcepb.GetBlobResponse{Error: failure}, nil
+	}
+	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
+	if err != nil {
+		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	return rsp, nil
+}
+
+func (s *server) resolveBlobGet(ctx context.Context, req *resourcepb.GetBlobRequest) (*utils.BlobInfo, *resourcepb.ErrorResult) {
 	if req.Resource == nil {
-		return &resourcepb.GetBlobResponse{Error: NewBadRequestError("missing resource key")}, nil
+		return nil, NewBadRequestError("missing resource key")
 	}
 	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
-		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+		return nil, errRes
 	}
 	if r := verifyRequestKey(req.Resource); r != nil {
-		return &resourcepb.GetBlobResponse{Error: r}, nil
+		return nil, r
 	}
 	if s.blob == nil {
-		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "blob store not configured",
-			Code:    http.StatusNotImplemented,
-		}}, nil
+		return nil, &resourcepb.ErrorResult{Message: "blob store not configured", Code: http.StatusNotImplemented}
 	}
 
 	var info *utils.BlobInfo
@@ -2881,35 +2993,28 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 		// The linked blob is stored in the resource metadata attributes
 		obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
 		if status != nil {
-			return &resourcepb.GetBlobResponse{Error: status}, nil
+			return nil, status
 		}
 
 		info = obj.GetBlob()
 		if info == nil || info.UID == "" {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-				Message: "Resource does not have a linked blob",
-				Code:    404,
-			}}, nil
+			return nil, &resourcepb.ErrorResult{Message: "Resource does not have a linked blob", Code: 404}
 		}
 	} else {
 		refs, hasBlobs, err := s.getBlobReferences(ctx, req.Resource, req.ResourceVersion)
 		if err != nil {
-			return &resourcepb.GetBlobResponse{Error: err}, nil
+			return nil, err
 		}
-		if hasBlobs && !refs[req.Uid] {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-				Message: "blob is not referenced by the resource",
-				Code:    http.StatusNotFound,
-			}}, nil
+		info = refs[req.Uid]
+		if info == nil {
+			if hasBlobs {
+				return nil, &resourcepb.ErrorResult{Message: "blob is not referenced by the resource", Code: http.StatusNotFound}
+			}
+			info = &utils.BlobInfo{UID: req.Uid}
 		}
-		info = &utils.BlobInfo{UID: req.Uid}
 	}
 
-	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
-	}
-	return rsp, nil
+	return info, nil
 }
 
 const BlobsField = "blobs"
@@ -2921,7 +3026,7 @@ type BlobReference struct {
 	ContentType string `json:"contentType,omitempty"`
 }
 
-func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]bool, bool, *resourcepb.ErrorResult) {
+func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.ResourceKey, rv int64) (map[string]*utils.BlobInfo, bool, *resourcepb.ErrorResult) {
 	if r := verifyRequestKey(key); r != nil {
 		return nil, false, r
 	}
@@ -2946,14 +3051,16 @@ func (s *server) getBlobReferences(ctx context.Context, key *resourcepb.Resource
 	if obj.Blobs == nil {
 		return nil, false, nil
 	}
-	refs := make(map[string]bool, len(obj.Blobs)+1)
+	refs := make(map[string]*utils.BlobInfo, len(obj.Blobs)+1)
 	for _, ref := range obj.Blobs {
 		if ref.UID != "" {
-			refs[ref.UID] = true
+			info := &utils.BlobInfo{UID: ref.UID, Size: ref.Size, Hash: ref.Hash}
+			info.SetContentType(ref.ContentType)
+			refs[ref.UID] = info
 		}
 	}
 	if info := utils.ParseBlobInfo(obj.Metadata.Annotations[utils.AnnoKeyBlob]); info != nil && info.UID != "" {
-		refs[info.UID] = true
+		refs[info.UID] = info
 	}
 	return refs, true, nil
 }

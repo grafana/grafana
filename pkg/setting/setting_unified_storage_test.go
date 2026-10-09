@@ -58,6 +58,33 @@ func TestKVLeaseTTLBounds(t *testing.T) {
 	}
 }
 
+func TestSeededWatchesEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		configured string
+		env        string
+		want       bool
+	}{
+		{name: "default off"},
+		{name: "enabled", configured: "true", want: true},
+		{name: "disabled", configured: "false"},
+		{name: "environment enables", configured: "false", env: "true", want: true},
+		{name: "environment disables", configured: "true", env: "false"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			if tc.configured != "" {
+				cfg.Raw.Section("unified_storage").Key("seeded_watches_enabled").SetValue(tc.configured)
+			}
+			if tc.env != "" {
+				t.Setenv("GF_UNIFIED_STORAGE_SEEDED_WATCHES_ENABLED", tc.env)
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SeededWatchesEnabled)
+		})
+	}
+}
+
 func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
 	cfg := NewCfg()
 	cfg.setUnifiedStorageConfig()
@@ -66,6 +93,33 @@ func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
 	cfg.Raw.Section("unified_storage").Key("grpc_error_result_to_status").SetValue("true")
 	cfg.setUnifiedStorageConfig()
 	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
+}
+
+func TestSearchClientForwardAuthEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		env   bool
+		want  bool
+	}{
+		{name: "default"},
+		{name: "enabled", value: "true", want: true},
+		{name: "disabled", value: "false"},
+		{name: "environment override", value: "false", env: true, want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("search_client_forward_auth_enabled").SetValue(tc.value)
+			}
+			if tc.env {
+				t.Setenv("GF_UNIFIED_STORAGE_SEARCH_CLIENT_FORWARD_AUTH_ENABLED", "true")
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SearchClientForwardAuthEnabled)
+		})
+	}
 }
 
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {

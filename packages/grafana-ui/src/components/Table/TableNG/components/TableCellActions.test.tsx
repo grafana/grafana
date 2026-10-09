@@ -31,6 +31,34 @@ function setup(overrides: Partial<TableCellActionsProps> = {}) {
 
 describe('TableCellActions', () => {
   describe('refreshed menu', () => {
+    it('invokes Assistant from an Assistant-only menu by keyboard', async () => {
+      const onAddToAssistant = jest.fn();
+      setup({ tableRefreshEnabled: true, cellInspect: false, showFilters: false, onAddToAssistant });
+      await userEvent.tab();
+      await userEvent.keyboard('{Enter}');
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual(['Add to Assistant']);
+      screen.getByRole('menuitem', { name: 'Add to Assistant' }).focus();
+      await userEvent.keyboard('{Enter}');
+      expect(onAddToAssistant).toHaveBeenCalledTimes(1);
+    });
+
+    it('places Assistant after inspection and filtering', async () => {
+      setup({ tableRefreshEnabled: true, onAddToAssistant: jest.fn() });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+        'Inspect value',
+        'Filter for value',
+        'Filter out value',
+        'Add to Assistant',
+      ]);
+    });
+
+    it('preserves inline actions when refresh is disabled even with an Assistant callback', () => {
+      setup({ tableRefreshEnabled: false, onAddToAssistant: jest.fn() });
+      expect(screen.getByRole('button', { name: 'Inspect value' })).toBeInTheDocument();
+      expect(screen.queryByText('Add to Assistant')).not.toBeInTheDocument();
+    });
+
     it('opens inspection with the cell value and closes the menu', async () => {
       const { setInspectCell } = setup({ tableRefreshEnabled: true });
       await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));

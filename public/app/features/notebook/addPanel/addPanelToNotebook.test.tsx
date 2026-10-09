@@ -210,22 +210,21 @@ describe('addPanelToExistingNotebook', () => {
 });
 
 describe('createNotebookWithPanel', () => {
-  it('creates a notebook carrying the panel, description and tags', async () => {
+  // The modal asks for a name only, so the rest of the header is the schema's empty default: no
+  // tags, and no description key at all rather than an empty one nobody wrote.
+  it('creates a notebook carrying the panel under the given name, with no tags or description', async () => {
     const captured = captureCreate();
 
     const added = await createNotebookWithPanel(
-      { title: 'Checkout latency investigation', description: 'What are you investigating?', tags: ['latency'] },
+      { title: 'Checkout latency investigation' },
       panel('p95 latency'),
       'dashboard_panel',
       false
     );
 
     expect(added).toEqual({ uid: 'nb2', title: 'Checkout latency investigation' });
-    expect(captured.body!.spec).toMatchObject({
-      title: 'Checkout latency investigation',
-      description: 'What are you investigating?',
-      tags: ['latency'],
-    });
+    expect(captured.body!.spec).toMatchObject({ title: 'Checkout latency investigation', tags: [] });
+    expect(captured.body!.spec).not.toHaveProperty('description');
     expect(Object.keys(captured.body!.spec!.elements)).toEqual(['p95-latency']);
   });
 
@@ -233,29 +232,11 @@ describe('createNotebookWithPanel', () => {
   it('sends a create body the apiserver can type', async () => {
     const captured = captureCreate();
 
-    await createNotebookWithPanel(
-      { title: 'Untitled', description: '', tags: [] },
-      panel('Chart'),
-      'dashboard_panel',
-      false
-    );
+    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'dashboard_panel', false);
 
     expect(captured.body!.apiVersion).toBe('dashboard.grafana.app/v2beta1');
     expect(captured.body!.kind).toBe('Notebook');
     expect(captured.body!.metadata?.generateName).toBe('n');
-  });
-
-  it('omits an empty description rather than writing one the user never typed', async () => {
-    const captured = captureCreate();
-
-    await createNotebookWithPanel(
-      { title: 'Untitled', description: '', tags: [] },
-      panel('Chart'),
-      'dashboard_panel',
-      false
-    );
-
-    expect(captured.body!.spec).not.toHaveProperty('description');
   });
 
   // The notebook exists but cannot be opened, so this is a failure rather than a link-less success:
@@ -264,14 +245,14 @@ describe('createNotebookWithPanel', () => {
     captureCreate(null);
 
     await expect(
-      createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'dashboard_panel', false)
+      createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'dashboard_panel', false)
     ).rejects.toThrow(/carried no name/);
   });
 
   it('reports the caller entry point and cell count once the notebook is created', async () => {
     captureCreate();
 
-    await createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'explore', false);
+    await createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'explore', false);
 
     expect(NotebookAnalytics.created).toHaveBeenCalledTimes(1);
     expect(NotebookAnalytics.created).toHaveBeenCalledWith('nb2', 'explore', 1, {
@@ -285,9 +266,7 @@ describe('createNotebookWithPanel', () => {
   it('does not report a create when the write fails', async () => {
     captureCreate(null);
 
-    await expect(
-      createNotebookWithPanel({ title: 'Untitled', tags: [] }, panel('Chart'), 'explore', false)
-    ).rejects.toThrow();
+    await expect(createNotebookWithPanel({ title: 'Untitled' }, panel('Chart'), 'explore', false)).rejects.toThrow();
 
     expect(NotebookAnalytics.created).not.toHaveBeenCalled();
   });
