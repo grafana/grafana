@@ -118,6 +118,11 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         if (this.isSuperseded(seq)) {
           return;
         }
+        // Here rather than in the scene's own activation or teardown, both of which have the url in the
+        // way: `UrlSyncContextProvider` applies the url to the scene before the scene activates, so
+        // resetting there would throw away a `?from=&to=` somebody was linked to, and its cleanup runs
+        // after the scene's, by which point the router has moved on to the next page.
+        cached.scene.autosave.discardViewOnlyTimeChanges();
         NotebookAnalytics.loaded(cached.scene, true);
         this.setState({ scene: cached.scene, isLoading: false });
         return;

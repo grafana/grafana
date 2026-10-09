@@ -33,6 +33,7 @@ use (
 	./pkg/build/wire // skip:golangci-lint
 	./pkg/codegen
 	./pkg/infra/features
+	./pkg/infra/metrics
 	./pkg/plugins
 	./pkg/plugins/codegen
 	./pkg/storage/unified/apistore

@@ -1974,21 +1974,13 @@ func (s *server) listAuthorized(ctx context.Context, req *resourcepb.ListRequest
 		}
 
 		extractFn := func(c candidateItem) authz.BatchCheckItem {
+			item := listAuthorizationItem(key, c.name, c.folder, c.resourceVersion)
 			// Cross-namespace keys-only lists must authorize each item in its own
 			// namespace. Namespaced lists retain the request scope.
-			namespace := key.Namespace
-			if req.KeysOnly && namespace == "" {
-				namespace = c.namespace
+			if req.KeysOnly && item.Namespace == "" {
+				item.Namespace = c.namespace
 			}
-			return authz.BatchCheckItem{
-				Name:               c.name,
-				Folder:             c.folder,
-				Verb:               utils.VerbGet,
-				Group:              key.Group,
-				Resource:           key.Resource,
-				Namespace:          namespace,
-				FreshnessTimestamp: ResourceVersionTime(c.resourceVersion),
-			}
+			return item
 		}
 
 		var lastContinueToken string
@@ -2074,19 +2066,22 @@ func listKeyCandidates(keyIter ListKeyIterator) iter.Seq[BackendListKey] {
 }
 
 func listKeyAuthorizationItem(req *resourcepb.ListRequest, item BackendListKey) authz.BatchCheckItem {
-	key := req.Options.Key
-	namespace := key.Namespace
-	if req.KeysOnly && namespace == "" {
-		namespace = item.Key.Namespace
+	check := listAuthorizationItem(req.Options.Key, item.Key.Name, item.Folder, item.ResourceVersion)
+	if req.KeysOnly && check.Namespace == "" {
+		check.Namespace = item.Key.Namespace
 	}
+	return check
+}
+
+func listAuthorizationItem(key *resourcepb.ResourceKey, name, folder string, resourceVersion int64) authz.BatchCheckItem {
 	return authz.BatchCheckItem{
-		Name:               item.Key.Name,
-		Folder:             item.Folder,
+		Name:               name,
+		Folder:             folder,
 		Verb:               utils.VerbGet,
 		Group:              key.Group,
 		Resource:           key.Resource,
-		Namespace:          namespace,
-		FreshnessTimestamp: ResourceVersionTime(item.ResourceVersion),
+		Namespace:          key.Namespace,
+		FreshnessTimestamp: ResourceVersionTime(resourceVersion),
 	}
 }
 
