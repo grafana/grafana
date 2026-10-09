@@ -137,6 +137,7 @@
   },
   "components": {
     "height": {
+      "sm": 3,
       "md": 3.5,
       "lg": 4.5
     },
