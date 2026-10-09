@@ -1,19 +1,18 @@
 # Plugin Route handler
 
-`NewHandler(plugin, Options)` builds one plugin's API server as an `http.Handler`.
+`NewHandler(pluginID, manifest, Options)` builds one plugin's API server as an `http.Handler`.
 It lives in `pkg/services/pluginsintegration` because it connects plugin definitions
 to Grafana's API server, storage, and access control. These dependencies belong in
 the main Grafana module, outside the standalone `pkg/plugins` module and `pkg/router`.
 
 Manifest kinds, custom v3 routes, admission, kind authorization, secret caching,
-and manifest OpenAPI processing live in this package. `NewAPI` selects the manifest
-implementation for plugins with manifests and `appplugin.AppPluginAPIBuilder` for
-settings-only plugins. Offline OpenAPI generation uses the same selection.
+and manifest OpenAPI processing live in this package. `BuildOpenAPI` renders the
+same API's spec offline; see [Rendering the spec offline](#rendering-the-spec-offline).
 
 Manifest handlers serve only the manifest's declared kinds, routes, and served
 versions. Settings and their subresources are served exclusively at
-`/apis/{plugin-id}/v0alpha1`. The single-tenant router loads a separate settings
-backend for plugins with manifests; settings never appear under the manifest's
+`/apis/{plugin-id}/v0alpha1`. The embedded appplugin API server handles settings; the router prepares one
+backend per manifest. Settings never appear under the manifest's
 `ext.grafana.app` group, even when `appplugins.loadAppManifestAndKeepSettings` is enabled.
 
 The router loads plugin APIs and manifests independently of
@@ -25,8 +24,7 @@ Each handler has its own scheme and storage options. `UnifiedStorage` adapts a
 shared resource client to that scheme and accepts a REST config provider for
 parent-folder lookups. The router supplies the embedded server's provider so folder
 existence and repository-manager consistency checks run for routed plugin kinds.
-Supplying a legacy settings store and a dual-write service preserves the embedded
-server's settings migration policy.
+Settings migration remains the responsibility of the embedded settings server.
 
 The caller owns authentication and must populate `identity.Requester` in the
 request context. The handler then checks namespace access, plugin access, and
@@ -36,6 +34,17 @@ declares manifest roles and resolves wildcard settings storage configuration at
 startup, including for plugins whose API is served by the router. Callers outside
 that registration path must provision roles and configure their dual-write service
 for the plugin's settings resource before constructing a handler.
+
+A manifest that declares no kinds has nothing to store, so no API server is built
+for it. The handler serves its routes, its group and version discovery, and its
+OpenAPI documents directly. It runs the API server's own authentication,
+authorization, timeout and cache-control filters, with the same authorizer, so
+callers see the same decisions and errors. A routes-only handler needs no
+storage provider. Version discovery lists no resources, and the OpenAPI document
+describes only the plugin's routes. A manifest that mixes versions with and
+without kinds still gets an API server, which has nothing to install for a
+version without kinds; the handler serves that version's discovery and OpenAPI
+documents the same way, and lists it in the group's discovery.
 
 No listener or background server hooks are started. After stopping and draining
 requests, callers can release storage with `Handler.Destroy()`. The router's
@@ -56,9 +65,38 @@ The registration honors:
 - manifest-declared version routes and kind subresource routes, forwarded to
   the plugin's v3 route service.
 
-The manifest group must be a DNS name ending in `.ext.grafana.app`. Only served
-versions are exposed, with the preferred version first. The generated OpenAPI
-document uses each kind's schema for request bodies, responses, and examples.
+The manifest group must be a DNS name ending in `.ext.grafana.app`
+(`ValidateManifest`). Only served versions are exposed, with the preferred
+version first. The generated OpenAPI document uses each kind's schema for
+request bodies, responses, and examples.
+
+## Custom routes
+
+A version's custom routes are the paths in its manifest `openapi` section,
+relative to the version root. A manifest from before app-sdk published routes
+there only has the deprecated `routes` and per-kind `routes`. Those are moved
+to the same paths when the manifest is loaded, by
+`definition.MigrateDeprecatedRoutes`, so this package never reads them, and
+`ValidateManifest` refuses a manifest that still has them. The components in the `openapi` section are
+published in the spec and replace any component already published under the
+same name.
+
+Paths under `namespaces/{namespace}/` are namespaced. A path of the form
+`{plural}/{name}/<subresource>` is a subresource of one object of that kind, and
+the plugin receives the stored object with the request. Which paths can be
+served, including catch-all segments, is decided by
+[`manifestroutes`](manifestroutes/README.md), which is written to be copied into
+app-sdk so a manifest can be checked when it is generated. A path it rejects is
+skipped with a warning, and left out of the spec and the authorizer as well.
+The router reserves the `app` settings resource and does not serve `TRACE` or
+`OPTIONS`.
+
+The routes are served by a `ServeMux` that wraps the API server's own handler,
+inside its filter chain, so a request reaching a route has already been
+authenticated and authorized. A request for any other path goes to the API
+server. A declared path called with an undeclared method is answered `405`
+with an `Allow` header. The generic search, trash, hybrid, and list-keys routes
+are mounted on the API server like any other builder's routes.
 
 ## Authorization
 
@@ -69,8 +107,23 @@ basic roles. Folder permissions still determine access to individual
 folder-scoped objects.
 
 Cluster-scoped kinds are reserved for service identities unless the manifest
-marks them `userReadable`. End users can only `get`, `list`, or `watch` a user-readable
-cluster-scoped kind.
+marks them `userReadable`. End users can only `get` or `list` a user-readable
+cluster-scoped kind; watching one is left to service identities.
+
+A manifest route can also declare an access check on each operation, with the
+`x-grafana-declared-authz-*` extensions (see
+[`manifestroutes`](manifestroutes/README.md#declared-access-checks)). The route
+handler runs it through the configured `AccessClient` before calling the plugin,
+and after reading the parent object, so a refused request never has the parent's
+secure values decrypted. The check's group is the manifest's, its namespace the
+request's, and its verb the declared one or else the one the operation's method
+implies, never anything from the URL or query string. A check on the parent's
+own resource also names the parent and its folder. A HEAD request that declares
+no check of its own gets the GET operation's, and a HEAD request to a route that
+declares GET but not HEAD is sent to the plugin as the GET it declared, with the
+response body dropped. A route that declares a check is refused when no access
+client is configured.
+
 
 ## Admission hooks
 
@@ -88,3 +141,32 @@ fields.
 
 Schema validation runs after mutation. A mutation that produces an object that
 does not match the manifest schema is rejected before it is stored.
+
+## Rendering the spec offline
+
+`BuildOpenAPI` renders the OpenAPI v3 spec for one served version of a manifest
+without storage or a running plugin backend. `grafana cli write-openapi` is
+built on it; see the [command's README](../../../cmd/grafana-cli/commands/README.md).
+
+It builds the handler with `NewHandler`, using a no-op REST options getter and
+offline stand-ins for the plugin, search, and resource store clients, and then
+requests `/openapi/v3/apis/<group>/<version>` from it as a service identity.
+The spec is therefore produced by the same code that serves it, rather than by
+a separate pipeline that has to be kept in step.
+
+The rendered spec always registers search, trash, hybrid, and list-keys
+routes, since it describes every route a plugin can get. The usual per-kind
+eligibility rules still apply: trash is limited to dashboards, and hybrid
+requires `search.hybrid: true` on a namespaced kind.
+
+To compare with a running server:
+
+```sh
+curl -s -u admin:admin \
+  http://localhost:3000/openapi/v3/apis/<group>/<version> | python3 -m json.tool --indent 2 > server.json
+grafana cli write-openapi ./dist/app-sdk-manifest.json --api-version <version> -o cli.json
+diff <(python3 -m json.tool --indent 2 cli.json) server.json
+```
+
+Expect differences only where the server's configuration disables the generic
+routes the rendered spec always includes.

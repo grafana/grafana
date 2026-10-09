@@ -120,6 +120,24 @@ For more MySQL dashboards, browse the [Grafana dashboard catalog](https://grafan
 The MySQL integration monitors your MySQL _server_ using Prometheus metrics. The MySQL _data source_ documented here queries data stored _in_ MySQL tables. These are complementary features for different use cases.
 {{< /admonition >}}
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to explore and query your MySQL data source, use the `gcx datasources mysql` commands:
+
+```sh
+# List tables and views, or filter to a single database
+gcx datasources mysql list-tables -d <DATASOURCE_UID>
+gcx datasources mysql list-tables -d <DATASOURCE_UID> --database mydb
+
+# Show the columns of a table
+gcx datasources mysql describe-table orders -d <DATASOURCE_UID>
+
+# Run a SQL query (server-side macros like $__timeFilter are supported)
+gcx datasources mysql query -d <DATASOURCE_UID> 'SELECT * FROM events WHERE $__timeFilter(created_at)' --since 1h
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your MySQL data source. You can omit the `-d` flag when `datasources.mysql` is configured in your `gcx` context. The `query` command supports Grafana server-side macros such as `$__timeFilter` and `$__timeGroup`, and `list-tables` and `describe-table` help you explore the schema. Database and table names match exactly and are case-sensitive.
+
 ## Related data sources
 
 - [PostgreSQL](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/postgres/) - For PostgreSQL databases.

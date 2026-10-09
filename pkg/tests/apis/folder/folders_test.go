@@ -1197,9 +1197,9 @@ func TestIntegrationFoldersCreateAPIEndpointK8S(t *testing.T) {
 		{
 			description:            "folder creation fails given folder service error %s",
 			input:                  folderWithoutParentInput,
-			expectedCode:           http.StatusPreconditionFailed,
-			expectedMessage:        folder.ErrVersionMismatch.Error(),
-			expectedFolderSvcError: folder.ErrVersionMismatch,
+			expectedCode:           http.StatusConflict,
+			expectedMessage:        "a folder with the same UID already exists",
+			expectedFolderSvcError: folder.ErrSameUIDExists,
 			createSecondRecord:     true,
 			permissions:            folderCreatePermission,
 		},

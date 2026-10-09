@@ -90,7 +90,7 @@ export const LogLabelStatsRow = ({
         <div className={style.logStatsActions}>
           {include && (
             <AsyncIconButton
-              name="search-plus"
+              name="filter-plus"
               onClick={() => include(value)}
               isActive={isValueActive ? () => isValueActive(value) : undefined}
               size={iconSize}
@@ -99,7 +99,7 @@ export const LogLabelStatsRow = ({
           )}
           {exclude && (
             <IconButton
-              name="search-minus"
+              name="filter-minus"
               size={iconSize}
               tooltip={t('logs.log-line-details.fields.filter-out', 'Filter out value')}
               onClick={() => exclude(value)}

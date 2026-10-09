@@ -9,6 +9,9 @@ import (
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/apiserver/options"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests"
@@ -17,6 +20,38 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestIntegrationFolderServiceGetFolder(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFolderServiceGetFolder)
+}
+
+func TestIntegrationUpdateFolder(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationUpdateFolder)
+}
+
+func TestIntegrationCreateFolder(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationCreateFolder)
+}
+
+func TestIntegrationCreateFolderDuplicateUID(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationCreateFolderDuplicateUID)
+}
+
+func TestIntegrationNestedFolders(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationNestedFolders)
+}
+
+func TestIntegrationSharedWithMe(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSharedWithMe)
+}
+
+func TestIntegrationBasicRoles(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationBasicRoles)
+}
+
+func TestIntegrationFineGrainedPermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFineGrainedPermissions)
+}
 
 func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
 	t.Helper()
@@ -36,7 +71,7 @@ func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID stri
 	require.NoError(t, err)
 }
 
-func TestIntegrationFolderServiceGetFolder(t *testing.T) {
+func testIntegrationFolderServiceGetFolder(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -105,7 +140,7 @@ func TestIntegrationFolderServiceGetFolder(t *testing.T) {
 	}
 }
 
-func TestIntegrationUpdateFolder(t *testing.T) {
+func testIntegrationUpdateFolder(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -149,7 +184,7 @@ func TestIntegrationUpdateFolder(t *testing.T) {
 	})
 }
 
-func TestIntegrationCreateFolder(t *testing.T) {
+func testIntegrationCreateFolder(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableQuota:      true,
@@ -194,7 +229,63 @@ func TestIntegrationCreateFolder(t *testing.T) {
 	})
 }
 
-func TestIntegrationNestedFolders(t *testing.T) {
+func testIntegrationCreateFolderDuplicateUID(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, backend := range []struct {
+		name        string
+		storageType options.StorageType
+		sqlKV       bool
+	}{
+		{name: "default"},
+		{name: "sqlkv", storageType: options.StorageTypeUnified, sqlKV: true},
+		{name: "sqlkv-grpc", storageType: options.StorageTypeUnifiedGrpc, sqlKV: true},
+	} {
+		t.Run(backend.name, func(t *testing.T) {
+			opts := testinfra.GrafanaOpts{
+				DisableAnonymous:     true,
+				EnableSQLKVBackend:   backend.sqlKV,
+				APIServerStorageType: backend.storageType,
+			}
+			if backend.storageType == options.StorageTypeUnifiedGrpc {
+				opts.EnableFeatureToggles = []string{featuremgmt.FlagAppPlatformGrpcClientAuth}
+				opts.UnsafeGRPCServerAuthentication = true
+			}
+			dir, path := testinfra.CreateGrafDir(t, opts)
+			grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
+			adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
+
+			created, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
+				Title: "Folder",
+				UID:   "foobar",
+			})
+			require.NoError(t, err)
+			require.Equal(t, http.StatusOK, created.Code())
+			require.Equal(t, "foobar", created.Payload.UID)
+
+			for _, uid := range []string{"foobar", "FOOBAR"} {
+				t.Run(uid, func(t *testing.T) {
+					if uid != "foobar" && !db.IsTestDbMySQL() {
+						t.Skip("case-variant UID collisions require MySQL's case-insensitive name collation")
+					}
+
+					_, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{Title: "Folder", UID: uid})
+					var conflict *folders.CreateFolderConflict
+					require.ErrorAs(t, err, &conflict)
+					require.NotNil(t, conflict.Payload.Message)
+					assert.Equal(t, "a folder with the same UID already exists", *conflict.Payload.Message)
+					assert.NotEqual(t, "version-mismatch", conflict.Payload.Status)
+
+					original, err := adminClient.Folders.GetFolderByUID("foobar")
+					require.NoError(t, err)
+					assert.Equal(t, created.Payload, original.Payload)
+				})
+			}
+		})
+	}
+}
+
+func testIntegrationNestedFolders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -343,7 +434,7 @@ func TestIntegrationNestedFolders(t *testing.T) {
 	})
 }
 
-func TestIntegrationSharedWithMe(t *testing.T) {
+func testIntegrationSharedWithMe(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -394,7 +485,7 @@ func TestIntegrationSharedWithMe(t *testing.T) {
 	})
 }
 
-func TestIntegrationBasicRoles(t *testing.T) {
+func testIntegrationBasicRoles(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -529,7 +620,7 @@ func TestIntegrationBasicRoles(t *testing.T) {
 	})
 }
 
-func TestIntegrationFineGrainedPermissions(t *testing.T) {
+func testIntegrationFineGrainedPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

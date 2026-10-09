@@ -12,7 +12,6 @@ import {
   type PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { getLogger } from '@grafana/runtime/unstable';
 import { type GenericDataSourcePlugin } from 'app/features/datasources/types';
 import { getPanelPluginLoadError } from 'app/features/panel/components/PanelPluginError';
@@ -150,7 +149,6 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
         pluginVersion: meta.info?.version ?? '',
         expectedHash: meta.moduleHash ?? '',
         loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
-        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
       });
     }
     return Promise.resolve(cached);
@@ -164,7 +162,6 @@ const importPlugin = <M extends PluginMeta, P extends PanelPlugin | GenericDataS
         pluginVersion: meta.info?.version ?? '',
         expectedHash: meta.moduleHash ?? '',
         loadingStrategy: meta.loadingStrategy ?? PluginLoadingStrategy.fetch,
-        sriChecksEnabled: String(Boolean(config.featureToggles.pluginsSriChecks)),
       });
     }
     return getPromiseFromCache(meta);

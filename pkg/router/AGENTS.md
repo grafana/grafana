@@ -74,7 +74,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - A watch runs through `serveWatch`: it ends when its group's backend is replaced or removed, and
     when the service stops (`closeWatches`), so clients re-watch and shutdown never waits on it.
   - Watches are long-running requests, identified with the apiserver's `RequestInfoFactory`: they
-    count in `grafana_router_longrunning_requests`, not in the duration histogram or in-flight gauge.
+    count in `grafana_router_http_requests_total` and `grafana_router_longrunning_requests`, not in
+    the duration histogram or in-flight gauge.
   - Upgrades are rejected with a 400 (`rejectUpgrade`): watch over WebSocket is not supported. The
     deprecated `/watch/` path form is not supported either.
 
@@ -166,7 +167,12 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     and `result` have fixed sets of values. A new label value must come from a fixed set too.
   - In middleware mode, only requests the router owns (`owns`) are instrumented.
   - New backends must name their source (`Backend.Source`), and new sources should report through
-    `loaderStatus`, or their loads don't appear in the metrics.
+    `loaderStatus`, or their loads don't appear in the metrics. A source that skips a backend logs
+    why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
+  - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
+    instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
+    Connections are keyed by host and plugin ID, because each records its calls under one
+    `plugin_id`. Local plugins are measured by `grafana_plugin_request_*` instead.
 
 ## Lifecycle
 
@@ -194,7 +200,7 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | --- | --- |
 | `appmanifest_apiserver_url` | Remote apiserver serving the RouteBackend and AppManifest CRs. Unset disables the CR source. The legacy `apiserver_url` is a hard error. |
 | `apiserver_ca_file`, `apiserver_insecure` | TLS settings for `appmanifest_apiserver_url` only. |
-| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target is set. The CAP token is exchanged per request. |
+| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
@@ -212,7 +218,8 @@ Legacy targets keep their previous relative priority: cloud app platform before 
 | Key | Meaning |
 | --- | --- |
 | `url` | Target base URL. Unset skips the target. |
-| `audience` | Required when `url` is set. |
+| `audience` | Required when `url` is set, unless `discovery_auth = none`, where setting it is an error. |
+| `discovery_auth` | `cap_token` (default) signs the router's own `/apis` discovery polls with an exchanged CAP token. `none` polls anonymously, only for targets that serve discovery without auth. Proxied resource requests are unaffected and still carry the caller's credentials. Not read from the legacy `[cloud_router]` keys. |
 | `poll_interval` | Positive discovery polling duration, default `30s`. |
 | `group_regex` | Comma-separated globs that narrow discovered groups. Unset matches all. |
 | `ca_file`, `insecure` | Per-target TLS settings. |

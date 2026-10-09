@@ -94,6 +94,13 @@ var appManifestData = app.ManifestData{
 				Cluster:    map[string]spec3.PathProps{},
 				Schemas:    map[string]spec.Schema{},
 			},
+			OpenAPI: func() app.ManifestVersionOpenAPI {
+				var openAPI app.ManifestVersionOpenAPI
+				if err := json.Unmarshal([]byte("{\"paths\":{\"/namespaces/{namespace}/shorturls/{name}/goto\":{\"get\":{\"operationId\":\"getGoto\",\"responses\":{\"default\":{\"description\":\"Default OK response\",\"content\":{\"application/json\":{\"schema\":{\"type\":\"object\",\"required\":[\"url\"],\"properties\":{\"url\":{\"type\":\"string\"}},\"additionalProperties\":false}}}}}},\"parameters\":[{\"name\":\"namespace\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}},{\"name\":\"name\",\"in\":\"path\",\"required\":true,\"schema\":{\"type\":\"string\"}}]}}}"), &openAPI); err != nil {
+					panic(err)
+				}
+				return openAPI
+			}(),
 		},
 	},
 }
