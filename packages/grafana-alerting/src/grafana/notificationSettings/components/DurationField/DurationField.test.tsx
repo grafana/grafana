@@ -9,7 +9,15 @@ import { DurationField } from './DurationField';
 const label = 'Group wait';
 const getInput = () => screen.getByRole('textbox', { name: label });
 
-function Controlled({ initial = '', onSubmit = jest.fn() }: { initial?: string; onSubmit?: (value: string) => void }) {
+function Controlled({
+  initial = '',
+  onSubmit = jest.fn(),
+  allowZero,
+}: {
+  initial?: string;
+  onSubmit?: (value: string) => void;
+  allowZero?: boolean;
+}) {
   const [value, setValue] = useState(initial);
   return (
     <form
@@ -18,7 +26,7 @@ function Controlled({ initial = '', onSubmit = jest.fn() }: { initial?: string; 
         onSubmit(value);
       }}
     >
-      <DurationField label={label} value={value} onChange={setValue} placeholder="30s" />
+      <DurationField label={label} value={value} onChange={setValue} placeholder="30s" allowZero={allowZero} />
     </form>
   );
 }
@@ -122,5 +130,23 @@ describe('DurationField', () => {
     render(<DurationField label={label} value="" onChange={jest.fn()} placeholder="30s" disabled />);
 
     expect(getInput()).toBeDisabled();
+  });
+
+  it('accepts zero by default', async () => {
+    render(<Controlled initial="0s" />);
+
+    await userEvent.click(getInput());
+    await userEvent.tab();
+
+    expect(screen.queryByText(/greater than zero/i)).not.toBeInTheDocument();
+  });
+
+  it('rejects zero with its own message when allowZero is false', async () => {
+    render(<Controlled initial="0s" allowZero={false} />);
+
+    await userEvent.click(getInput());
+    await userEvent.tab();
+
+    expect(screen.getByText(/greater than zero/i)).toBeInTheDocument();
   });
 });
