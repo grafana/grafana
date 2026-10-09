@@ -28,3 +28,7 @@ export function describeRef(ref: DataSourceRef | string | null | undefined): str
 export function logDataSourceDebug(message: string, context?: LogContext): void {
   getLogger('grafana/runtime.plugins.datasource').logDebug(message, context);
 }
+
+export function logDataSourceMeasurement(type: string, values: Record<string, number>, context?: LogContext): void {
+  getLogger('grafana/runtime.plugins.datasource').logMeasurement(type, values, context);
+}

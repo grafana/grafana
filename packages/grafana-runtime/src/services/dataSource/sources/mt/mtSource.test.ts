@@ -1,9 +1,10 @@
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import { AppEvents, type DataSourceInstanceSettings, type DataSourcePluginMeta, type EventBus } from '@grafana/data';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { config } from '../../../../config';
 import { FlagKeys } from '../../../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../../../utils/getCachedPromise';
+import { setAppEvents } from '../../../appEvents';
 import { type DataSourceSrv, setDataSourceSrv } from '../../../dataSourceSrv';
 import { setLogger } from '../../../logging/registry';
 import { setDatasourcePluginMetas } from '../../../pluginMeta/datasources';
@@ -12,6 +13,8 @@ import {
   FALLBACK_TO_LEGACY_SETTINGS_WARNING,
   MISSING_PLUGIN_DROPPED_WARNING,
   MT_FILL_FAILED,
+  MT_PARITY_MISMATCH_WARNING,
+  MT_SETTINGS_PARITY_MISMATCH_WARNING,
   NUMERIC_ID_REF_WARNING,
   SETTINGS_FETCH_FAILED,
   SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
@@ -73,7 +76,11 @@ function callsTo(url: string): number {
 
 const logWarning = jest.fn();
 const logError = jest.fn();
+const logMeasurement = jest.fn();
 const originalFetch = global.fetch;
+// eslint-disable-next-line @grafana/no-config-datasources -- the parity tests set the boot data baseline
+const originalBootDatasources = config.datasources;
+const originalDefaultDatasource = config.defaultDatasource;
 
 beforeAll(() => {
   setTestFlags({
@@ -91,17 +98,25 @@ afterAll(() => {
   global.fetch = originalFetch;
 });
 
+afterEach(() => {
+  // eslint-disable-next-line @grafana/no-config-datasources -- restore the parity baseline
+  config.datasources = originalBootDatasources;
+  config.defaultDatasource = originalDefaultDatasource;
+  setAppEvents(undefined as unknown as EventBus);
+});
+
 beforeEach(() => {
   _resetForTests();
   invalidateCachedPromisesCache();
   fetchMock.mockClear();
   logWarning.mockClear();
   logError.mockClear();
+  logMeasurement.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
     logDebug: jest.fn(),
     logError,
     logInfo: jest.fn(),
-    logMeasurement: jest.fn(),
+    logMeasurement,
     logWarning,
   });
   config.namespace = 'default';
@@ -297,5 +312,176 @@ describe('refresh after a data source change', () => {
       reason: 'reload',
       source: 'mt',
     });
+  });
+});
+
+describe('comparison with boot data', () => {
+  // Boot data for the same data sources as the default routes.
+  const bootProm = {
+    id: 12,
+    uid: 'uid-prom',
+    name: 'Prom',
+    type: 'prometheus',
+    meta: metas.prometheus,
+    isDefault: true,
+    access: 'proxy',
+    url: '/api/datasources/proxy/uid/uid-prom',
+    readOnly: false,
+    jsonData: { directUrl: 'http://prom:9090' },
+  } as DataSourceInstanceSettings;
+  const bootGrafana = {
+    id: -1,
+    uid: 'grafana',
+    name: '-- Grafana --',
+    type: 'datasource',
+    meta: metas.grafana,
+    isDefault: false,
+    readOnly: false,
+    jsonData: {},
+  } as DataSourceInstanceSettings;
+
+  function setBootData(datasources: Record<string, DataSourceInstanceSettings>, defaultDatasource = 'Prom'): void {
+    // eslint-disable-next-line @grafana/no-config-datasources -- the boot data baseline under test
+    config.datasources = datasources;
+    config.defaultDatasource = defaultDatasource;
+  }
+
+  function parityWarnings(message: string) {
+    return logWarning.mock.calls.filter(([logged]) => logged === message);
+  }
+
+  it('measures the fill and finds no mismatch when the MT list matches boot data', async () => {
+    setBootData({ Prom: bootProm, '-- Grafana --': bootGrafana });
+    initDataSourceInstanceSettings({}, '');
+
+    await getDataSourceInstanceList();
+
+    expect(logMeasurement).toHaveBeenCalledWith(
+      'datasource_cache_fill',
+      {
+        durationMs: expect.any(Number),
+        connections: 1,
+        items: 2,
+        builtIns: 1,
+        droppedMissingPlugin: 0,
+        bootItems: 2,
+        missingInMt: 0,
+        extraInMt: 0,
+        fieldMismatches: 0,
+        defaultMismatch: 0,
+      },
+      { reason: 'boot' }
+    );
+    expect(parityWarnings(MT_PARITY_MISMATCH_WARNING)).toEqual([]);
+  });
+
+  it('warns with the uids and fields that differ from boot data', async () => {
+    setBootData(
+      { Prom: { ...bootProm, name: 'Old name' }, Gone: { ...bootProm, uid: 'uid-gone', name: 'Gone' } },
+      'Gone'
+    );
+    initDataSourceInstanceSettings({}, '');
+
+    await getDataSourceInstanceList();
+
+    expect(parityWarnings(MT_PARITY_MISMATCH_WARNING)).toEqual([
+      [
+        MT_PARITY_MISMATCH_WARNING,
+        { reason: 'boot', missingInMt: 'uid-gone', extraInMt: 'grafana', fieldMismatches: 'uid-prom:name' },
+      ],
+    ]);
+    expect(logMeasurement.mock.calls[0][1]).toMatchObject({
+      missingInMt: 1,
+      extraInMt: 1,
+      fieldMismatches: 1,
+      defaultMismatch: 1,
+    });
+  });
+
+  it('compares a reload with the payload DataSourceSrv fetched, not the boot data from page load', async () => {
+    setBootData({ Prom: bootProm, '-- Grafana --': bootGrafana });
+    initDataSourceInstanceSettings({}, '');
+    await getDataSourceInstanceList();
+    logMeasurement.mockClear();
+
+    await syncDataSourceInstanceSettings({ datasources: { '-- Grafana --': bootGrafana }, defaultDatasource: '' });
+
+    expect(logMeasurement).toHaveBeenCalledWith(
+      'datasource_cache_fill',
+      expect.objectContaining({ bootItems: 1, extraInMt: 1 }),
+      { reason: 'reload' }
+    );
+  });
+
+  it('warns once per uid with the names of the settings fields that differ from boot data', async () => {
+    setBootData({ Prom: { ...bootProm, readOnly: true, jsonData: {} }, '-- Grafana --': bootGrafana });
+    initDataSourceInstanceSettings({}, '');
+
+    await getDataSourceInstanceSettings('uid-prom');
+    // A reload drops the loaded settings, so the next lookup loads and compares them again.
+    await syncDataSourceInstanceSettings({ datasources: {}, defaultDatasource: '' });
+    await getDataSourceInstanceSettings('uid-prom');
+
+    expect(callsTo(PROM_URL)).toBe(2);
+
+    expect(parityWarnings(MT_SETTINGS_PARITY_MISMATCH_WARNING)).toEqual([
+      [MT_SETTINGS_PARITY_MISMATCH_WARNING, { uid: 'uid-prom', type: 'prometheus', fields: 'readOnly,jsonData' }],
+    ]);
+  });
+
+  it('does not warn about settings that match boot data', async () => {
+    setBootData({ Prom: bootProm, '-- Grafana --': bootGrafana });
+    initDataSourceInstanceSettings({}, '');
+
+    await getDataSourceInstanceSettings('uid-prom');
+
+    expect(parityWarnings(MT_SETTINGS_PARITY_MISMATCH_WARNING)).toEqual([]);
+  });
+});
+
+describe('error notification', () => {
+  const publish = jest.fn();
+
+  beforeEach(() => {
+    publish.mockClear();
+    setAppEvents({ publish } as unknown as EventBus);
+  });
+
+  function errorToasts() {
+    return publish.mock.calls.filter(([event]) => event.type === AppEvents.alertError.name);
+  }
+
+  it('shows one error toast when the fill fails, and none for a retry that fails again', async () => {
+    routes[CONNECTIONS_URL] = { status: 500 };
+    initDataSourceInstanceSettings({}, '');
+
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceCacheFillError);
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceCacheFillError);
+
+    expect(errorToasts()).toEqual([
+      [{ type: AppEvents.alertError.name, payload: ['Data sources failed to load', 'Refresh the page to try again.'] }],
+    ]);
+  });
+
+  it('shows the toast again for a failure after a successful fill', async () => {
+    routes[CONNECTIONS_URL] = { status: 500 };
+    initDataSourceInstanceSettings({}, '');
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceCacheFillError);
+    routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection] } };
+    await getDataSourceInstanceList();
+    routes[CONNECTIONS_URL] = { status: 500 };
+
+    await syncDataSourceInstanceSettings({ datasources: {}, defaultDatasource: '' });
+
+    expect(errorToasts()).toHaveLength(2);
+  });
+
+  it('shows no toast when a per-uid settings request fails', async () => {
+    routes[PROM_URL] = { status: 500 };
+    initDataSourceInstanceSettings({}, '');
+
+    await expect(getDataSourceInstanceSettings('uid-prom')).rejects.toBeInstanceOf(DataSourceSettingsFetchError);
+
+    expect(errorToasts()).toEqual([]);
   });
 });

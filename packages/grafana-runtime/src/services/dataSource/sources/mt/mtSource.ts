@@ -95,6 +95,6 @@ export class MTDataSource implements DataSourceCacheSource {
 
     this.connectionsByUid = new Map(latest.map((connection) => [connection.name, connection]));
     this.itemsByUid = new Map(snapshot.items.map((item) => [item.uid, item]));
-    return snapshot;
+    return { ...snapshot, stats: { connections: latest.length, droppedMissingPlugin: droppedTypes.length } };
   }
 }
