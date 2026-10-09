@@ -1301,7 +1301,10 @@ func testIntegrationDashboardServicePermissions(t *testing.T) {
 
 						stored, err := http.Get(fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", grafanaListedAddr, dashboard.UID)) // nolint:gosec
 						require.NoError(t, err)
-						defer stored.Body.Close()
+						t.Cleanup(func() {
+							require.NoError(t, stored.Body.Close())
+						})
+
 						require.Equal(t, http.StatusOK, stored.StatusCode)
 						var result struct {
 							Meta struct {

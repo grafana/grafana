@@ -361,7 +361,6 @@ func testIntegrationNestedFolders(t *testing.T) {
 				assert.Equal(t, http.StatusOK, resp.Code())
 				assert.Equal(t, "", resp.Payload.ParentUID)
 			})
-
 		})
 	})
 
@@ -776,7 +775,10 @@ func testIntegrationFolderPermissionCombinations(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 				response, err := http.DefaultClient.Do(req)
 				require.NoError(t, err)
-				defer response.Body.Close()
+				t.Cleanup(func() {
+					require.NoError(t, response.Body.Close())
+				})
+
 				responseBody, err := io.ReadAll(response.Body)
 				require.NoError(t, err)
 				require.Equal(t, tc.wantStatus, response.StatusCode, string(responseBody))
