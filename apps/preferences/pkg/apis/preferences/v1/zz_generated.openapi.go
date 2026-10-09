@@ -204,7 +204,7 @@ func schema_pkg_apis_preferences_v1_PreferencesSpec(ref common.ReferenceCallback
 					},
 					"homeDashboardUID": {
 						SchemaProps: spec.SchemaProps{
-							Description: "UID for the home dashboard",
+							Description: "UID for the home dashboard. The reserved value \"global-home\" is not a dashboard UID: it selects the instance default home (home_page, the configured home dashboard file, or the built-in home page) instead of falling through to lower-precedence preferences.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

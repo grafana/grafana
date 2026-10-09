@@ -5,7 +5,7 @@ import { type ComponentProps } from 'react';
 import { type TimeRange } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 
-import { MetricsList } from './MetricsList';
+import { MetricsList, STATUS_SETTLE_MS } from './MetricsList';
 import { useLabelValues } from './data/useLabelValues';
 import { useMetricCatalog } from './data/useMetricCatalog';
 import { useMetricDetail } from './data/useMetricDetail';
@@ -32,8 +32,8 @@ const otherTimeRange = { raw: { from: 'now-6h', to: 'now' }, from: {}, to: {} } 
 
 const row = (name: string): MetricInfo => ({ name, type: 'counter' });
 
-const setCatalog = (metrics: MetricInfo[], rest: { loading?: boolean; error?: Error } = {}) => {
-  useMetricCatalogMock.mockReturnValue({ metrics, loading: false, ...rest });
+const setCatalog = (metrics: MetricInfo[], rest: { loading?: boolean; error?: Error; truncated?: boolean } = {}) => {
+  useMetricCatalogMock.mockReturnValue({ metrics, truncated: false, loading: false, ...rest });
 };
 
 const onSelectMetric = jest.fn();
@@ -64,13 +64,68 @@ const setLabelValues = (values: string[], rest: { loading?: boolean; error?: Err
 
 const expandMetric = (name: string) => userEvent.click(screen.getByRole('button', { name: `Expand ${name}` }));
 
+// The global mock reports every element in view the moment it is observed, which would page a long
+// catalog to its end on mount. This one stays out of view until a test says otherwise.
+interface FakeObserver {
+  callback: IntersectionObserverCallback;
+  targets: Element[];
+  connected: boolean;
+}
+
+let observers: FakeObserver[] = [];
+// Stands in for a card tall enough that the end of the list is in view however many rows it holds.
+let inViewOnObserve = false;
+
+class FakeIntersectionObserver {
+  private record: FakeObserver;
+
+  constructor(callback: IntersectionObserverCallback) {
+    this.record = { callback, targets: [], connected: true };
+    observers.push(this.record);
+  }
+
+  observe(target: Element) {
+    this.record.targets.push(target);
+    if (inViewOnObserve) {
+      notify(this.record, true);
+    }
+  }
+
+  unobserve() {}
+
+  disconnect() {
+    this.record.connected = false;
+  }
+}
+
+function notify(observer: FakeObserver, isIntersecting: boolean) {
+  const entries = observer.targets.map((target) => ({ target, isIntersecting }) as IntersectionObserverEntry);
+  observer.callback(entries, observer as unknown as IntersectionObserver);
+}
+
+const scrollToEnd = () =>
+  act(() => {
+    observers.filter((observer) => observer.connected).forEach((observer) => notify(observer, true));
+  });
+
+const loadMoreButton = () => screen.queryByRole('button', { name: 'Load more metrics' });
+
 describe('<MetricsList />', () => {
+  const originalIntersectionObserver = global.IntersectionObserver;
+
   beforeEach(() => {
+    observers = [];
+    inViewOnObserve = false;
+    global.IntersectionObserver = FakeIntersectionObserver as unknown as typeof IntersectionObserver;
     onSelectMetric.mockReset();
     useMetricCatalogMock.mockReset();
     useMetricDetailMock.mockReset().mockReturnValue({ labelKeys: [], loading: false });
     useLabelValuesMock.mockReset().mockReturnValue({ values: [], loading: false });
     reportInteractionMock.mockReset();
+  });
+
+  afterEach(() => {
+    global.IntersectionObserver = originalIntersectionObserver;
   });
 
   it('renders the search input', () => {
@@ -115,6 +170,16 @@ describe('<MetricsList />', () => {
     expect(screen.getByText('Loading metrics…')).toBeInTheDocument();
   });
 
+  // A line of text above the rows would shift the list on every keystroke of a server-side search.
+  it('shows a spinner in the search box instead of the loading text while rows stay on screen', () => {
+    setCatalog([row('up')], { loading: true });
+    renderList();
+
+    expect(screen.getByText('up')).toBeInTheDocument();
+    expect(screen.getByTestId('Spinner')).toBeInTheDocument();
+    expect(screen.queryByText('Loading metrics…')).not.toBeInTheDocument();
+  });
+
   // Announced rather than merely coloured: the error replaces the loading text with nothing focused,
   // so a screen reader user gets no other cue that the list is not coming. The message comes with it,
   // because "failed" alone leaves nothing to act on.
@@ -142,7 +207,7 @@ describe('<MetricsList />', () => {
   describe('batching', () => {
     const manyMetrics = Array.from({ length: 100 }, (_, i) => row(`metric_${i}`));
 
-    it('renders only the first batch of a large catalog', () => {
+    it('renders only the first batch of a large catalog while the end of the list is out of view', () => {
       setCatalog(manyMetrics);
       renderList();
 
@@ -151,19 +216,60 @@ describe('<MetricsList />', () => {
       expect(screen.queryByText('metric_99')).not.toBeInTheDocument();
     });
 
-    it('adds exactly one increment per "show more"', async () => {
+    it('adds exactly one batch when the end of the list scrolls into view', () => {
       setCatalog(manyMetrics);
       renderList();
 
-      await userEvent.click(screen.getByRole('button', { name: 'Show more metrics' }));
+      scrollToEnd();
 
       expect(rowCount()).toBe(50);
+      expect(screen.getByText('metric_49')).toBeInTheDocument();
+    });
+
+    // A batch that leaves the end of the list in view changes nothing an observer reports, so without
+    // a fresh check after each batch the list would stop short with empty space below it.
+    it('keeps adding batches while the end of the list stays in view, until the catalog runs out', () => {
+      inViewOnObserve = true;
+      setCatalog(manyMetrics);
+      renderList();
+
+      expect(rowCount()).toBe(100);
+      expect(loadMoreButton()).not.toBeInTheDocument();
+    });
+
+    // The end of the list only exists once there are rows to page, so it is first watched when the
+    // catalog lands, not when the list mounts.
+    it('starts filling the space below once a catalog that was still loading arrives', () => {
+      inViewOnObserve = true;
+      setCatalog([], { loading: true });
+      const { rerender } = renderList();
+      expect(screen.queryAllByRole('listitem')).toHaveLength(0);
+
+      // A refresh tick: the same range in a new object, so the memoized list sees the arrived catalog
+      // without its paging being reset.
+      setCatalog(manyMetrics);
+      rerender(list({ timeRange: { ...timeRange } }));
+
+      expect(rowCount()).toBe(100);
+    });
+
+    // The search box is outside the scroll region, so without this a narrowed list would open at the
+    // offset the previous one was scrolled to.
+    it('scrolls back to the top when the search changes', async () => {
+      setCatalog(manyMetrics);
+      renderList();
+      const scroller = screen.getByRole('list').closest<HTMLElement>('[tabindex="0"]')!;
+      scroller.scrollTop = 500;
+
+      await userEvent.type(screen.getByPlaceholderText('Search metrics'), 'm');
+
+      expect(scroller.scrollTop).toBe(0);
     });
 
     it('drops back to the first batch when the search changes', async () => {
       setCatalog(manyMetrics);
       renderList();
-      await userEvent.click(screen.getByRole('button', { name: 'Show more metrics' }));
+      scrollToEnd();
       expect(rowCount()).toBe(50);
 
       await userEvent.type(screen.getByPlaceholderText('Search metrics'), 'metric');
@@ -171,11 +277,136 @@ describe('<MetricsList />', () => {
       expect(rowCount()).toBe(25);
     });
 
-    it('offers no "show more" once the whole catalog is on screen', () => {
+    it('stops watching for the end of the list once the whole catalog is on screen', () => {
       setCatalog([row('up')]);
       renderList();
 
-      expect(screen.queryByRole('button', { name: 'Show more metrics' })).not.toBeInTheDocument();
+      expect(loadMoreButton()).not.toBeInTheDocument();
+    });
+
+    // Screen reader browse mode and tabbing to the last row never scroll the end into view, so loading
+    // has to be reachable as a control too.
+    it('loads the next batch on request and moves focus to its first row', async () => {
+      setCatalog(manyMetrics);
+      renderList();
+
+      await userEvent.click(loadMoreButton()!);
+
+      expect(rowCount()).toBe(50);
+      expect(screen.getByRole('button', { name: 'Expand metric_25' })).toHaveFocus();
+    });
+
+    // Tabbing to the control scrolls it into view; loading then would move it out from under the user.
+    it('leaves loading to the user while the load-more control has focus', () => {
+      setCatalog(manyMetrics);
+      renderList();
+
+      act(() => loadMoreButton()!.focus());
+      scrollToEnd();
+
+      expect(rowCount()).toBe(25);
+    });
+
+    // The control goes away with the last batch, and focus must not go with it to the document body.
+    it('keeps focus on a row when the last batch loads on request', async () => {
+      setCatalog(manyMetrics.slice(0, 30));
+      renderList();
+
+      await userEvent.click(loadMoreButton()!);
+
+      expect(rowCount()).toBe(30);
+      expect(loadMoreButton()).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Expand metric_25' })).toHaveFocus();
+    });
+  });
+
+  // Rows arrive on scroll with no other cue, so this is how a screen reader user learns whether the
+  // list has more to load. It speaks every change, so it must only change once the list settles.
+  describe('screen reader status', () => {
+    const manyMetrics = Array.from({ length: 100 }, (_, i) => row(`metric_${i}`));
+    const status = () => screen.getByRole('status');
+
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    const settle = () =>
+      act(() => {
+        jest.advanceTimersByTime(STATUS_SETTLE_MS);
+      });
+
+    it('announces how much of the catalog is on screen once each batch settles', () => {
+      setCatalog(manyMetrics);
+      renderList();
+      expect(status()).toBeEmptyDOMElement();
+
+      settle();
+      expect(status()).toHaveTextContent(/^Query A: showing 25 of 100 metrics$/);
+
+      scrollToEnd();
+      expect(status()).toHaveTextContent(/^Query A: showing 25 of 100 metrics$/);
+
+      settle();
+      expect(status()).toHaveTextContent(/^Query A: showing 50 of 100 metrics$/);
+    });
+
+    // Every keystroke narrows the list, and a live region queues each change behind the typing echo.
+    it('announces the settled result of a search rather than one count per keystroke', async () => {
+      useMetricCatalogMock.mockImplementation((_dsRef, _range, opts) => ({
+        metrics: manyMetrics.filter((metric) => metric.name.includes(opts?.searchText ?? '')),
+        truncated: false,
+        loading: false,
+      }));
+      renderList();
+      settle();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+      // Passes through "metric_9", which matches eleven metrics, on the way to one.
+      await user.type(screen.getByPlaceholderText('Search metrics'), 'metric_99');
+      expect(status()).toHaveTextContent(/^Query A: showing 25 of 100 metrics$/);
+
+      settle();
+      expect(status()).toHaveTextContent(/^Query A: showing 1 of 1 metric$/);
+    });
+
+    it('announces a search that matches nothing', async () => {
+      useMetricCatalogMock.mockImplementation((_dsRef, _range, opts) => ({
+        metrics: opts?.searchText ? [] : manyMetrics,
+        truncated: false,
+        loading: false,
+      }));
+      renderList();
+      settle();
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+
+      await user.type(screen.getByPlaceholderText('Search metrics'), 'no_such_metric');
+      settle();
+
+      expect(status()).toHaveTextContent(/^Query A: no metrics found$/);
+    });
+
+    // A cut-short catalog's length is where the series limit stopped it, not how many metrics exist.
+    it('gives the count as a lower bound when the series limit cut the catalog short', () => {
+      setCatalog(manyMetrics, { truncated: true });
+      renderList();
+
+      settle();
+
+      expect(status()).toHaveTextContent(/^Query A: showing 25 of at least 100 metrics$/);
+    });
+
+    // The counts mid-fetch describe the list being replaced, not the one the user asked for.
+    it('stays silent while the catalog is loading', () => {
+      setCatalog(manyMetrics, { loading: true });
+      renderList();
+
+      settle();
+
+      expect(status()).toBeEmptyDOMElement();
     });
   });
 
@@ -339,6 +570,7 @@ describe('<MetricsList />', () => {
     it('hands up the entry from the catalog as it stands, not as it first rendered', async () => {
       useMetricCatalogMock.mockImplementation((_dsRef, _timeRange, opts) => ({
         metrics: [{ name: 'up', type: 'gauge', help: opts?.searchText ? 'Searched help.' : 'Initial help.' }],
+        truncated: false,
         loading: false,
       }));
       renderList();
@@ -479,9 +711,9 @@ describe('<MetricsList />', () => {
       expect(screen.getAllByTestId('signal-explorer-value-row')).toHaveLength(25);
     });
 
-    // A long catalog and a high-cardinality label put both "show more" buttons in the same scroll
-    // region, so the visible text alone cannot say which list either one extends.
-    it('names both "show more" buttons distinctly when they are on screen together', async () => {
+    // A long catalog and a high-cardinality label put both load controls in the same scroll region, so
+    // the visible text alone cannot say which list either one extends.
+    it('names the values and metrics load controls distinctly when both are on screen', async () => {
       setCatalog(Array.from({ length: 100 }, (_, i) => row(`metric_${i}`)));
       setLabelKeys(['job']);
       setLabelValues(Array.from({ length: 100 }, (_, i) => `value-${i}`));
@@ -489,8 +721,8 @@ describe('<MetricsList />', () => {
       await expandMetric('metric_0');
       await expandLabel('job');
 
-      expect(screen.getByRole('button', { name: 'Show more metrics' })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Show more values' })).toBeInTheDocument();
+      expect(loadMoreButton()).toBeInTheDocument();
     });
 
     it('forgets the expanded label when its metric collapses', async () => {

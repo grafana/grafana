@@ -249,7 +249,12 @@ export function TextNGEditor({
         />
       </div>
     ) : (
-      <TextNGHtmlView html={previewHtml} className={cx('markdown-html', styles.fullHeight)} testId={testId} />
+      <TextNGHtmlView
+        html={previewHtml}
+        hasData={Boolean(series?.length)}
+        className={cx('markdown-html', styles.fullHeight)}
+        testId={testId}
+      />
     );
   };
 
