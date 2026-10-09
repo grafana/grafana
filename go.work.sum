@@ -698,6 +698,8 @@ github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.20 h1:nBtAkfvLanKNwKfmsxfpLqY
 github.com/aws/aws-sdk-go-v2/feature/rds/auth v1.6.20/go.mod h1:wtCkeFPPKHdxFPrZGkdT5tKR4boa3GvW54sYdGNWPHg=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.6 h1:qYQ4pzQ2Oz6WpQ8T3HvGHnZydA72MnLuFK9tJwmrbHw=
 github.com/aws/aws-sdk-go-v2/internal/ini v1.8.6/go.mod h1:O3h0IK87yXci+kg6flUKzJnWeziQUKciKrLjcatSNcY=
+github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3/go.mod h1:aqsLGsPs+rJfwDBwWHLcIV8F7AFcikFTPLwUD4RwORQ=
+github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0/go.mod h1:MLJu3PUd8fp5Qvj4CiLvyY5H8y7kxHKlTp060Wsd+Vc=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.56.2 h1:xi/ECwajy2mixviBD7bKAlGGSwzEaFKX2wIhrZt9NGw=
 github.com/aws/aws-sdk-go-v2/service/dynamodb v1.56.2/go.mod h1:dLREOeW66eVaaGIOi2ZlLHDgkR3nuJ02rd00j0YSlBE=
 github.com/aws/aws-sdk-go-v2/service/dynamodbstreams v1.32.13 h1:xQ9dX2jxVm14uNVe0WomcCSza832ytYWt1ZBu2LrBLM=
@@ -706,6 +708,8 @@ github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.11.20 h1:ru+
 github.com/aws/aws-sdk-go-v2/service/internal/endpoint-discovery v1.11.20/go.mod h1:ihZMtPTKoX/ugQRHbui6zNdSgVYN1KY2Dgwb2d3hXlc=
 github.com/aws/aws-sdk-go-v2/service/kinesis v1.33.0 h1:JPXkrQk5OS/+Q81fKH97Ll/Vmmy0p9vwHhxw+V+tVjg=
 github.com/aws/aws-sdk-go-v2/service/kinesis v1.33.0/go.mod h1:dJngkoVMrq0K7QvRkdRZYM4NUp6cdWa2GBdpm8zoY8U=
+github.com/aws/aws-sdk-go-v2/service/oam v1.18.3/go.mod h1:wGhpdyftHX6/1U4egowHkYdypwBMjpb+KjAAprv6z20=
+github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6/go.mod h1:Z4xLt5mXspLKjBV92i165wAJ/3T6TIv4n7RtIS8pWV0=
 github.com/aws/aws-sdk-go-v2/service/sns v1.39.14 h1:p8WdWDh5AwSZdp19Haa3XMyPCICi9Z375a/Nu3IIEZY=
 github.com/aws/aws-sdk-go-v2/service/sns v1.39.14/go.mod h1:NKVY7DER6VXHkt2I/ycmHakALNboi3Rqwt4eEf/1Cnk=
 github.com/aws/aws-sdk-go-v2/service/sqs v1.42.24 h1:JP2wjWGmUp8lTCZb13Dv0Eciyc1jbO8pd0HZVMHFlrc=
@@ -1058,15 +1062,12 @@ github.com/grafana/grafana-app-sdk/logging v0.60.4/go.mod h1:uOj20cIKXKJccxLN/ah
 github.com/grafana/grafana-app-sdk/logging v0.60.5/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
 github.com/grafana/grafana-app-sdk/logging v0.60.6/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
 github.com/grafana/grafana-app-sdk/logging v0.60.9/go.mod h1:uOj20cIKXKJccxLN/ahBK+VJ1p59Bxzf4Gyasrq+aSc=
-github.com/grafana/grafana-app-sdk/logging v0.60.12 h1:NuRlgxB4yceFN6cKpzCCZXTlDqKu87Zy8XTLFufD+KQ=
-github.com/grafana/grafana-app-sdk/logging v0.60.12/go.mod h1:AvOi0e4Vh1J6wUAhGRI+4y5bv+vHcrVhWOwQjZ6vIJ0=
 github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20260928014939-0c93a558d9a8 h1:zn8Ve1hy/3mSzyu35TGjDHksJerhzUrBBCxZBxwtLhA=
 github.com/grafana/grafana-app-sdk/plugin v0.17.3-0.20260928014939-0c93a558d9a8/go.mod h1:pz2SDW+6GxureV3DN4lPc4dYk/ZOXe4dKVeiPlPKBX4=
 github.com/grafana/grafana-app-sdk/plugin v0.60.0/go.mod h1:mk+b9l1/cQrJYCc1oLIp+duAP2R0NoljfYmJOkDSwvI=
 github.com/grafana/grafana-app-sdk/plugin v0.60.6/go.mod h1:42Toq7RE0n0dWp9dTYp/iHAh0dNsN7L0P+dkkgTAm9w=
-github.com/grafana/grafana-app-sdk/plugin v0.60.12 h1:KWzqKV+PfjOf8VdQiKK8qIa6MHcw3VJYCH6MkNLSq0E=
-github.com/grafana/grafana-app-sdk/plugin v0.60.12/go.mod h1:etNhnxv420vN1vu2liloOx4DXHNW3CrBHZmdhfFFBoo=
 github.com/grafana/grafana-plugin-sdk-go v0.292.0/go.mod h1:lnWyfzENuIU+N2EzivEe9YJob8AAqPl7HBMXMbPyv3k=
+github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.18/go.mod h1:kQTcZL+iotYO1NcHD2lUxJtguxMvrnTi7XSLW4c3T7U=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.9/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
 github.com/grafana/schemads v0.2.2/go.mod h1:TX0YfoMxJ8dl1ONXTa+rFk1y3sw1khGwQjB8dKKfzds=

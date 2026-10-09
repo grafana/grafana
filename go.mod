@@ -73,13 +73,8 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.19.2 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.20.12 // @grafana/alerting-backend
 	github.com/aws/aws-sdk-go-v2/service/bedrockruntime v1.50.5 // @grafana/grafana-search-and-storage
-	github.com/aws/aws-sdk-go-v2/service/cloudwatch v1.45.3 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs v1.73.0 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.307.0 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/kms v1.50.3 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/licensemanager v1.37.14 // @grafana/grafana-operator-experience-squad
-	github.com/aws/aws-sdk-go-v2/service/oam v1.18.3 // @grafana/data-sources-plugins
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.26.6 // @grafana/data-sources-plugins
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.102.2 // @grafana/grafana-search-and-storage
 	github.com/aws/aws-sdk-go-v2/service/secretsmanager v1.41.4 // @grafana/grafana-operator-experience-squad
 	github.com/aws/aws-sdk-go-v2/service/sts v1.49.0 // @grafana/grafana-operator-experience-squad
@@ -151,7 +146,6 @@ require (
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.296.5 // @grafana/grafana-catalog
-	github.com/grafana/grafana-prometheus-datasource/pkg/promlib v0.0.18 // @grafana/data-sources-plugins
 	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0 // @grafana/alerting-backend
