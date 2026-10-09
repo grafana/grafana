@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/notify/webhook"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -157,7 +158,7 @@ func TestExtraAlertmanagerConfig_ToGrafanaTimeIntervals(t *testing.T) {
 func TestExtraAlertmanagerConfig_ReceiverNameStubs(t *testing.T) {
 	c := ExtraAlertmanagerConfig{
 		Receivers: []config.Receiver{
-			{Name: "recv1", WebhookConfigs: []*config.WebhookConfig{{}}},
+			{Name: "recv1", WebhookConfigs: []*webhook.WebhookConfig{{}}},
 			{Name: "recv2"},
 		},
 	}
