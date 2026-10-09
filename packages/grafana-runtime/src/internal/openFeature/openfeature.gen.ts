@@ -280,8 +280,6 @@ export const FlagKeys = {
   UnifiedNavbars: "unifiedNavbars",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
-  /** Use session storage for handling the redirection after login */
-  UseSessionStorageForRedirection: "useSessionStorageForRedirection",
   /** Allows authenticated API calls in actions */
   VizActionsAuth: "vizActionsAuth",
 } as const;
@@ -1747,17 +1745,6 @@ export const useFlagUnifiedNavbars = (options?: ReactFlagEvaluationOptions): boo
  */
 export const useFlagUseKubernetesShortURLsAPI = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("useKubernetesShortURLsAPI", true, options).value;
-};
-
-/**
- * Use session storage for handling the redirection after login
- *
- * **Details:**
- * - flag key: `useSessionStorageForRedirection`
- * - default value: `true`
- */
-export const useFlagUseSessionStorageForRedirection = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("useSessionStorageForRedirection", true, options).value;
 };
 
 /**

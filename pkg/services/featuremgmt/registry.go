@@ -1293,7 +1293,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       identityAccessTeam,
 			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
 			Name:        "rolePickerDrawer",

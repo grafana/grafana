@@ -54,7 +54,6 @@ declare module "@openfeature/core" {
     | "alertingListViewV2"
     | "alertingNavigationV2"
     | "vizActionsAuth"
-    | "useSessionStorageForRedirection"
     | "enableExtensionsAdminPage"
     | "azureMonitorEnableUserAuth"
     | "alerting.dataSourceManagedRouteProxy"
