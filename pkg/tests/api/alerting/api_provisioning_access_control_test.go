@@ -41,6 +41,22 @@ type provisioningTestEnv struct {
 	env               *server.TestEnv
 }
 
+func TestIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningContactPointsAccessControl)
+}
+
+func TestIntegrationProvisioningTemplatesAccessControl(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningTemplatesAccessControl)
+}
+
+func TestIntegrationProvisioningMuteTimingsAccessControl(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningMuteTimingsAccessControl)
+}
+
+func TestIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningNotificationPoliciesAccessControl)
+}
+
 func setupProvisioningAccessControlTest(t *testing.T) provisioningTestEnv {
 	t.Helper()
 
@@ -93,7 +109,7 @@ func (e provisioningTestEnv) createUserAndClient(t *testing.T, tc provisioningTe
 	return client
 }
 
-func TestIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
+func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	e := setupProvisioningAccessControlTest(t)
@@ -263,7 +279,7 @@ func TestIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 	}
 }
 
-func TestIntegrationProvisioningTemplatesAccessControl(t *testing.T) {
+func testIntegrationProvisioningTemplatesAccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	e := setupProvisioningAccessControlTest(t)
@@ -396,7 +412,7 @@ func TestIntegrationProvisioningTemplatesAccessControl(t *testing.T) {
 	}
 }
 
-func TestIntegrationProvisioningMuteTimingsAccessControl(t *testing.T) {
+func testIntegrationProvisioningMuteTimingsAccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	e := setupProvisioningAccessControlTest(t)
@@ -544,7 +560,7 @@ func TestIntegrationProvisioningMuteTimingsAccessControl(t *testing.T) {
 	}
 }
 
-func TestIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) {
+func testIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	e := setupProvisioningAccessControlTest(t)

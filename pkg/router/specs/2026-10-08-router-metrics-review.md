@@ -31,16 +31,14 @@ only the middleware mode serves, are out of scope.
     metric. The router gets the plugin process's raw v3 client (`v3.NewLazyClient`), which bypasses
     Grafana's plugin client middleware.
 
-- [ ] **M3. Count backends dropped during a load.** Add a gauge
-  `grafana_router_rejected_backends{source,reason}`, rebuilt on each load like `shadowed_groups`,
-  with a fixed set of reasons. These drops are logged but appear in no metric:
-  - `cloud_router.go` `combineByName`: no forward block, transport or CA error, invalid URL,
-    missing manifest;
-  - `plugin_manifests.go`: invalid or unfingerprintable `plugins_url` entries;
-  - `aggregate_poller.go`: unfingerprintable discovered groups;
-  - `router.go` `reconcile`: per-group `Backend.Load` failures, which today show only as an
-    unattributed `reconcile_errors_total`. These happen in the router, not a loader, so the router
-    must track them itself.
+- [x] **M3. Count backends dropped during a load.** Added the gauge
+  `grafana_router_skipped_backends{source}`, rebuilt on each load like `shadowed_groups`, counting
+  the skips in `combineByName` and the `plugins_url` and aggregate polls. It has no `reason` label:
+  each skip is already logged with its error. Add one, from a fixed set, if alerting needs to tell
+  skips apart.
+  - Not counted: per-group `Backend.Load` failures in `reconcile`. They happen in the router, not a
+    loader, keep the group's last-known-good backend, and already count in
+    `reconcile_errors_total`.
 
 ## Recommended
 

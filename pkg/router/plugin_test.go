@@ -305,8 +305,7 @@ func TestPluginLoaderSkipsInvalidManifest(t *testing.T) {
 		JSONData: plugins.JSONData{ID: "valid-app", Type: plugins.TypeApp},
 		FS:       plugins.NewFakeFS(),
 	}}
-	// Claims a core group; building its API would panic, and serving it
-	// would shadow the embedded server's dashboards.
+	// Claims a core group, which a local plugin may never serve.
 	invalid := &plugins.FoundBundle{Primary: plugins.FoundPlugin{
 		JSONData: plugins.JSONData{ID: "invalid-app", Type: plugins.TypeApp},
 		FS: plugins.NewInMemoryFS(map[string][]byte{
@@ -375,8 +374,29 @@ func TestInitPluginRolesDeclarationFailure(t *testing.T) {
 	}
 }
 
+func TestPluginBackendCoreGroups(t *testing.T) {
+	plugin := func(group string) definition.PluginDefinition {
+		return definition.PluginDefinition{
+			JSONData:  plugins.JSONData{ID: "core-app"},
+			Manifests: []*app.ManifestData{{AppName: "core", Group: group, Versions: []app.ManifestVersion{{Name: "v1", Served: true}}}},
+		}
+	}
+	newBackend := func(group string) (*PluginBackend, error) {
+		return testPluginBackend(t, plugin(group), nil, PluginDependencies{})
+	}
+
+	backend, err := newBackend("playlist.grafana.app")
+	require.NoError(t, err)
+	require.Equal(t, "playlist.grafana.app", backend.Group().Name)
+
+	_, err = newBackend("dashboard.grafana.app")
+	require.ErrorContains(t, err, "must end in .ext.grafana.app", "a core group that is not listed is never served")
+	_, err = newBackend(".ext.grafana.app")
+	require.Error(t, err)
+}
+
 func TestPluginBackendManifestGroupValidation(t *testing.T) {
-	for _, group := range []string{"example.ext.grafana.app", "", "example.ext.grafana.com", "example.grafana.app", "example-app"} {
+	for _, group := range []string{"example.ext.grafana.app", "", "example.ext.grafana.com", "folder.grafana.app", "example-app"} {
 		t.Run(group, func(t *testing.T) {
 			backend, err := testPluginBackend(t, definition.PluginDefinition{
 				JSONData:  plugins.JSONData{ID: "example-app"},
@@ -433,6 +453,22 @@ func TestPluginLoaderStartupDiscoveryRequiresMiddleware(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestInitPluginRolesSkipsRoutableCoreGroups(t *testing.T) {
+	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+			return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{
+				JSONData: plugins.JSONData{ID: "playlist-app", Type: plugins.TypeApp},
+				FS: plugins.NewInMemoryFS(map[string][]byte{
+					"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"playlist","group":"playlist.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Playlist","plural":"playlists","scope":"Namespaced"}]}]}}`),
+				}),
+			}}}, nil
+		}}}
+	}}
+	service := &recordingManifestRoleService{}
+	require.NoError(t, initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service}))
+	require.Zero(t, service.calls, "a core group keeps the roles its own app declares")
 }
 
 func TestInitPluginRolesDoesNotLoadSchemas(t *testing.T) {
@@ -544,7 +580,7 @@ func TestPluginLoaderIsolatesFingerprintFailure(t *testing.T) {
 	bad.Versions = append([]app.ManifestVersion(nil), good.Versions...)
 	path := spec3.PathProps{Post: &spec3.Operation{}}
 	path.Post.AddExtension("x-unencodable", func() {})
-	bad.Versions[0].Routes.Namespaced = map[string]spec3.PathProps{"/bad": path} //nolint:staticcheck
+	bad.Versions[0].OpenAPI.Paths = map[string]spec3.PathProps{"/namespaces/{namespace}/bad": path}
 	defs := []definition.PluginDefinition{
 		{JSONData: plugins.JSONData{ID: "example-app"}, Manifests: []*app.ManifestData{&bad, good}},
 		{JSONData: plugins.JSONData{ID: "other-app"}, Manifests: []*app.ManifestData{good}},

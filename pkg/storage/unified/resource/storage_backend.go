@@ -1657,9 +1657,11 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 	}
 	byKey := make(map[string]int, len(pending)*len(actions))
 	candidates := make([]kv.DataKey, 0, len(pending)*len(actions))
+	requested := 0
 	for _, i := range pending {
 		req := requests[i]
 		rv := ToSnowflakeRV(req.ResourceVersion)
+		before := len(candidates)
 		for _, action := range actions {
 			key := kv.DataKey{
 				Group:           req.Key.Group,
@@ -1677,14 +1679,26 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 			byKey[key.String()] = i
 			candidates = append(candidates, key)
 		}
+		if len(candidates) > before {
+			requested++
+		}
 	}
 	if len(candidates) == 0 {
 		return 0, -1, nil
 	}
 
+	// Only one of the actions tried for a request can exist, so the list body
+	// stats count one body request per request rather than one per candidate key,
+	// and stay comparable with store lists.
+	stats := listBodyStatsFromContext(ctx)
+	if stats != nil {
+		stats.bodyKeysRequested += requested
+	}
+	exactCtx := withoutListBodyStats(ctx)
+
 	hits := 0
 	seen := make(map[int]bool, len(pending))
-	for obj, err := range k.dataStore.BatchGet(ctx, candidates) {
+	for obj, err := range k.dataStore.BatchGet(exactCtx, candidates) {
 		if err != nil {
 			return hits, -1, err
 		}
@@ -1694,6 +1708,9 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 			continue
 		}
 		seen[i] = true
+		if stats != nil {
+			stats.bodiesConsumed++
+		}
 		value, err := readAndClose(obj.Value)
 		if err != nil {
 			found(i, &BackendReadResponse{

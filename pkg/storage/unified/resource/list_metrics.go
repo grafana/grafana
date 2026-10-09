@@ -85,6 +85,26 @@ func listBodyStatsFromContext(ctx context.Context) *listBodyStats {
 	return stats
 }
 
+// withoutListBodyStats hides the list's body stats from work done on the list's
+// behalf that does not return bodies, such as an in-process search building a
+// missing index.
+func withoutListBodyStats(ctx context.Context) context.Context {
+	if listBodyStatsFromContext(ctx) == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, listBodyStatsKey{}, (*listBodyStats)(nil))
+}
+
+// reportSearchListBodies opts a search-backed list into the body stats when its
+// bodies are read from a KV backend, as a KV-backed store list is. It is marked
+// when the path is chosen rather than on the first read, so a list whose search
+// returns no rows is still counted.
+func (s *server) reportSearchListBodies(ctx context.Context) {
+	if stats := listBodyStatsFromContext(ctx); stats != nil && supportsDeletedBatchReads(s.backend) {
+		stats.supported = true
+	}
+}
+
 func setListStopReason(ctx context.Context, reason string) {
 	if stats := listBodyStatsFromContext(ctx); stats != nil {
 		stats.stopReason = reason
@@ -96,7 +116,8 @@ func (s *server) recordListBodyStats(span trace.Span, stats *listBodyStats, path
 		return
 	}
 	switch path {
-	case listPathStoreAuthorizeFirst, listPathStoreFetchFirst, listPathSearchFallbackAuthorizeFirst, listPathSearchFallbackFetchFirst:
+	case listPathStoreAuthorizeFirst, listPathStoreFetchFirst, listPathSearchFallbackAuthorizeFirst, listPathSearchFallbackFetchFirst,
+		listPathSearch, listPathTrashSearch:
 	default:
 		return
 	}

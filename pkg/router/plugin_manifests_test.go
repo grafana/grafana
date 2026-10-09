@@ -82,7 +82,7 @@ func TestPluginManifestsTarget_PollsFiltersAndSkipsEntriesWithoutManifest(t *tes
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(t.Context())
@@ -108,7 +108,7 @@ func TestPluginManifestsTarget_GroupRegexNarrowsToMatchingGroups(t *testing.T) {
 	patterns, err := compileGroupPatterns([]string{"*.internal"})
 	require.NoError(t, err)
 
-	target, err := newPluginManifestsTarget(srv.URL, patterns, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, patterns, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
@@ -121,7 +121,7 @@ func TestPluginManifestsTarget_SignalsDirtyOnlyOnKeySetChange(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	ctx := t.Context()
@@ -150,7 +150,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 	}))
 	defer srv.Close()
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	// Seed a snapshot as if a previous poll had succeeded, then confirm a
@@ -166,7 +166,7 @@ func TestPluginManifestsTarget_FailedPollLeavesLastKnownGoodSnapshot(t *testing.
 func TestNewPluginManifestsTarget_RejectsNonAbsoluteURL(t *testing.T) {
 	for _, badURL := range []string{"", "/just/a/path", "plugins.example.invalid"} {
 		t.Run(badURL, func(t *testing.T) {
-			_, err := newPluginManifestsTarget(badURL, nil, http.DefaultClient, PluginDependencies{})
+			_, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, badURL, nil, http.DefaultClient, PluginDependencies{})
 			require.ErrorContains(t, err, "must be absolute")
 		})
 	}
@@ -178,7 +178,7 @@ func TestPluginManifestsTargetReloadsOnHostChange(t *testing.T) {
 		_, _ = w.Write([]byte(body))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 	dirty := make(chan struct{}, 1)
 	target.poll(t.Context(), dirty)
@@ -200,7 +200,7 @@ func TestPluginManifestsTargetRemoteClient(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 	reg := prometheus.NewRegistry()
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{MetricsRegister: reg})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{MetricsRegister: reg})
 	require.NoError(t, err)
 	t.Cleanup(target.closeConnections)
 
@@ -388,7 +388,7 @@ func TestPluginManifestsTargetServesKindsWithoutBackendClient(t *testing.T) {
 	}))
 	defer srv.Close()
 	storage := &manifestKindResourceClient{}
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{Unified: storage})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{Unified: storage})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Len(t, target.Backends(), 1)
@@ -468,7 +468,7 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 		require.NoError(t, json.NewEncoder(w).Encode(deployment))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 	dirty := make(chan struct{}, 1)
 	target.poll(t.Context(), dirty)
@@ -495,6 +495,30 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 	}
 }
 
+// Manifests from the feed are moved off the deprecated routes when they are
+// read, as manifests from files are, so the handler never sees those.
+func TestFetchPluginManifestsMigratesDeprecatedRoutes(t *testing.T) {
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
+	plugin := payload["plugins"].([]any)[0].(map[string]any)["definition"].(map[string]any)
+	manifest := plugin["manifests"].([]any)[0].(map[string]any)
+	version := manifest["versions"].([]any)[0].(map[string]any)
+	version["routes"] = map[string]any{"namespaced": map[string]any{
+		"/ping": map[string]any{"get": map[string]any{"responses": map[string]any{"200": map[string]any{"description": "OK"}}}},
+	}}
+	delete(version, "openapi")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(payload))
+	}))
+	defer srv.Close()
+
+	deployment, err := fetchPluginManifests(t.Context(), srv.Client(), srv.URL)
+	require.NoError(t, err)
+	got := deployment.Plugins[0].Definition.Manifests[0].Versions[0]
+	require.Contains(t, got.OpenAPI.Paths, "/namespaces/{namespace}/ping")
+	require.Equal(t, app.ManifestVersionRoutes{}, got.Routes) //nolint:staticcheck // SA1019: checking it is cleared.
+}
+
 func TestFetchPluginManifestsMigratesSingularManifest(t *testing.T) {
 	var payload map[string]any
 	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
@@ -511,7 +535,7 @@ func TestFetchPluginManifestsMigratesSingularManifest(t *testing.T) {
 	require.Equal(t, "appsdktest.ext.grafana.app", deployment.Plugins[0].Definition.Manifests[0].Group)
 	require.Nil(t, deployment.Plugins[0].Definition.Manifest) //nolint:staticcheck
 
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	require.Len(t, target.Backends(), 1)
@@ -532,7 +556,7 @@ func TestFetchPluginManifestsPrefersPluralEntry(t *testing.T) {
 		require.NoError(t, json.NewEncoder(w).Encode(payload))
 	}))
 	defer srv.Close()
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 	target.poll(t.Context(), make(chan struct{}, 1))
 	backends := target.Backends()

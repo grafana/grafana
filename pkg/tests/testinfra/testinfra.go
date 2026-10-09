@@ -788,6 +788,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 			require.NoError(t, err)
 		}
 	}
+	{
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("grpc_error_result_to_status", "true")
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageDisableSearch {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)
@@ -1285,4 +1291,22 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 	u, err := usrSvc.Create(context.Background(), &cmd)
 	require.NoError(t, err)
 	return u
+}
+
+// RunWithFeatureToggle runs each mode sequentially so the environment override is
+// restored after its servers are stopped. The callback must create a fresh test environment.
+func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
+	t.Helper()
+
+	for _, enabled := range []bool{
+		false,
+		// TODO: Uncomment when https://github.com/grafana/identity-access-team/issues/2436 is completed.
+		// true,
+	} {
+		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
+			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
+
+			run(t)
+		})
+	}
 }

@@ -135,6 +135,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2024-06-06,azureMonitorPrometheusExemplars,GA,@grafana/data-sources-plugins,false,false,false
 2024-06-13,authZGRPCServer,experimental,@grafana/identity-access-team,false,false,false
 2026-08-20,authz.userPermissions,experimental,@grafana/identity-access-team,false,false,false
+2026-10-08,authz.useLegacyCheck,experimental,@grafana/identity-access-team,false,false,false
 2024-06-19,zanzana,experimental,@grafana/identity-access-team,false,false,false
 2025-10-21,zanzanaNoLegacyClient,experimental,@grafana/identity-access-team,false,false,false
 2026-04-20,zanzanaMergeUserPermissions,experimental,@grafana/identity-access-team,false,false,false
@@ -167,6 +168,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-09-18,alerting.dataSourceManagedRouteProxy,experimental,@grafana/alerting-squad,false,false,true
 2026-07-28,alerting.manualAssistantInvestigation,experimental,@grafana/alerting-squad,false,false,true
 2025-07-16,alertingAIAnalyzeCentralStateHistory,experimental,@grafana/alerting-squad,false,false,false
+2026-10-07,alerting.ruleReviews,experimental,@grafana/alerting-squad,false,false,false
 2026-07-14,alerting.ruleQuality,experimental,@grafana/alerting-squad,false,false,false
 2024-12-13,lokiLabelNamesQueryApi,GA,@grafana/data-sources-plugins,false,false,false
 2025-05-22,teamHttpHeadersTempo,experimental,@grafana/identity-access-team,false,false,false
@@ -193,7 +195,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-12,datasources.azureMonitorBatchAPI,preview,@grafana/data-sources-plugins,false,false,false
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
-2025-04-09,unifiedNavbars,GA,@grafana/grafana-catalog,false,false,true
+2025-04-09,unifiedNavbars,GA,@grafana/grafana-frontend-navigation,false,false,true
 2025-04-09,metricsFromProfiles,privatePreview,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-31,grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-15,tempoAlerting,experimental,@grafana/data-sources-plugins,false,false,false

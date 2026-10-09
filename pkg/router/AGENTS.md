@@ -20,8 +20,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
   group in one `Load` makes the last one win, with a warning, and must never panic.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
-  and transports are cached by TLS settings (`transportFor`), so a rebuilt group reuses its pool.
-  Never recreate unrelated backends on a route change.
+  and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
+  its pool. Never recreate unrelated backends on a route change.
 - **Build discovery from what is served,** meaning `r.served`, never the raw `Load` result. A group
   whose reload failed keeps serving and advertising its last-known-good backend.
 - **Reconcile is level-triggered.** `Notify` is a coalescing wake with no payload, and every wake
@@ -46,11 +46,18 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
     proxying.
   - Any 304 must carry an `ETag`.
-- **In middleware mode the router serves only app plugin groups** (`isPluginAPIGroup`: a
-  `*.ext.grafana.app` manifest group, or a plugin ID with a hyphen and no dots). It runs ahead of
-  the embedded API server, so it must never shadow a group that server owns. `NewPluginBackend`
-  enforces the same rule in every mode. One bad backend or plugin fails only its own group; it
-  must never stop the reconcile loop.
+- **The router may replace groups the embedded API server serves, core groups included.** APIs move
+  to the router gradually, so in middleware mode a group the router serves takes over that group from
+  the embedded server: its requests, discovery and OpenAPI. This is expected, and must keep working.
+  Don't reintroduce a filter on which groups the router may serve. Which groups are routed is decided
+  by the configured sources.
+- **A plugin backend serves only plugin groups and the routable core groups.** `newPluginBackend`
+  accepts a `*.ext.grafana.app` group or one of the hardcoded `routableCoreGroups`, from any source.
+  Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
+  `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
+  misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
+  it, never one whose data or permissions matter (dashboards, folders, IAM).
+- **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -90,10 +97,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | dskit service, middleware entry point | `service.go` |
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Loader selection | `loader_factory.go` |
-| Forward-mode backend (RouteBackend CR) | `forward.go` |
-| Cloud loader: RouteBackend/AppManifest CRs, source priority | `cloud_router.go` |
+| Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
-| Managed plugins (`plugins_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
+| Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader and `PluginBackend` | `plugin.go` |
 | Single-tenant (ST) fallback | `st_fallback.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `obo_exchanger.go`, `restconfig.go` |
@@ -114,14 +120,13 @@ earlier ones:
    routed to the right stack by the namespace in the path.
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
-3. **RouteBackend CRs**, correlated by name with an AppManifest CR, or with the manifests embedded
-   in the binary for core groups. Only Forward mode is implemented. Backends without a `Forward`
-   block (Operator and Plugin modes) are skipped with a warning.
+3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
+   plugins, without `plugins_group_regex` filtering.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
 
-Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
+Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
+`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
 
 ## Serving and discovery
 
@@ -134,7 +139,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
-  that group.
+  that group, and its requests never reach `next`.
 - **Aggregated discovery** is built without a request per backend per call:
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.
@@ -155,7 +160,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
   - A write past the limit never fails: `ReverseProxy` panics when a write fails, and discovery
     fetches run on their own goroutines.
   - Polled responses go through `decodeLimitedJSON`: aggregate and ST discovery (16 MiB),
-    `plugins_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
+    `plugins_url` and `core_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
     (`maxStackResponseBytes`, 1 MiB). A response over its limit fails the poll.
 - **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric, its labels and example
   dashboard queries; keep it in sync with `metrics.go`.
@@ -167,7 +172,8 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     and `result` have fixed sets of values. A new label value must come from a fixed set too.
   - In middleware mode, only requests the router owns (`owns`) are instrumented.
   - New backends must name their source (`Backend.Source`), and new sources should report through
-    `loaderStatus`, or their loads don't appear in the metrics.
+    `loaderStatus`, or their loads don't appear in the metrics. A source that skips a backend logs
+    why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
   - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
     instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
     Connections are keyed by host and plugin ID, because each records its calls under one
@@ -180,7 +186,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
   source, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
   migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
   the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
-  implements `services.Service` (such as `cloudLoader`, which runs informers and poll loops) is run
+  implements `services.Service` (such as `cloudLoader`, which runs poll loops) is run
   alongside it with `newCompositeService`, so both start and stop together.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
@@ -197,11 +203,11 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 
 | Key | Meaning |
 | --- | --- |
-| `appmanifest_apiserver_url` | Remote apiserver serving the RouteBackend and AppManifest CRs. Unset disables the CR source. The legacy `apiserver_url` is a hard error. |
-| `apiserver_ca_file`, `apiserver_insecure` | TLS settings for `appmanifest_apiserver_url` only. |
-| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
+| `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
+| `appmanifest_apiserver_url`, `apiserver_url` | Removed. When no other source is configured, either one is a startup error rather than a silent fallback to the dummy loader. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
@@ -246,8 +252,8 @@ Every URL must be absolute; a trailing slash is tolerated.
 Before landing, scan with semgrep. The sensitive surface:
 
 - the headers that proxies forward to backends;
-- the `InsecureSkipVerify` paths in `transportFor` and `buildAggregateTLSConfig`, which are
-  deliberately enabled by spec or config;
+- the `InsecureSkipVerify` path in `buildAggregateTLSConfig`, which is deliberately enabled by
+  config;
 - the CAP token exchange and credential handling in `cloud_router.go`;
 - the OBO exchange (`obo_exchanger.go`);
 - the ST fallback's stack lookup and host selection.

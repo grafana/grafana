@@ -71,19 +71,19 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 		}, []string{"operation", "reason", "group", "resource"}),
 		ListBodyKeysRequested: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_list_body_keys_requested_total",
-			Help: "Body keys requested via datastore BatchGet by KV-backed store lists, not database rows read. Includes missing keys; retries inside KV implementations are not counted.",
+			Help: "Body keys requested via datastore BatchGet by KV-backed store and search-backed lists, not database rows read. A search-backed exact read counts one key per object, however many candidate keys it tries. Includes missing keys; retries inside KV implementations are not counted.",
 		}, []string{"list_path", "stop_reason"}),
 		ListBodiesConsumed: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_list_bodies_consumed_total",
-			Help: "Body values yielded by the KV iterator to datastore for KV-backed store lists, including lookahead. Does not count driver read-ahead or drained rows.",
+			Help: "Body values yielded by the KV iterator to datastore for KV-backed store and search-backed lists, including lookahead. Does not count driver read-ahead or drained rows.",
 		}, []string{"list_path", "stop_reason"}),
 		ListItemsReturned: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_storage_server_list_items_returned_total",
-			Help: "Items in successful KV-backed store list responses with body-read accounting. Failed responses contribute zero items.",
+			Help: "Items in successful KV-backed store and search-backed list responses with body-read accounting. Failed responses contribute zero items.",
 		}, []string{"list_path", "stop_reason"}),
 		ListUnusedBodyRequests: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:    "grafana_storage_server_list_unused_body_requests",
-			Help:    "Requested body keys minus returned items per successful KV-backed store list. Measures over-requesting, not actual database overfetch; includes missing and unauthorized resources.",
+			Help:    "Requested body keys minus returned items per successful KV-backed store or search-backed list. Measures over-requesting, not actual database overfetch; includes missing and unauthorized resources.",
 			Buckets: []float64{0, 1, 2, 5, 10, 25, 49, 50, 100, 250, 500, 1000},
 		}, []string{"list_path", "stop_reason"}),
 		Broadcaster: newBroadcasterMetrics(reg),
