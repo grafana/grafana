@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LegacyAuthzService_LegacyGetUserPermissions_FullMethodName = "/authz.extention.v1.LegacyAuthzService/LegacyGetUserPermissions"
+	LegacyAuthzService_LegacyGetUserPermissions_FullMethodName     = "/authz.extention.v1.LegacyAuthzService/LegacyGetUserPermissions"
+	LegacyAuthzService_LegacySearchUsersPermissions_FullMethodName = "/authz.extention.v1.LegacyAuthzService/LegacySearchUsersPermissions"
 )
 
 // LegacyAuthzServiceClient is the client API for LegacyAuthzService service.
@@ -33,6 +34,7 @@ const (
 type LegacyAuthzServiceClient interface {
 	// No HTTP route is exposed.
 	LegacyGetUserPermissions(ctx context.Context, in *LegacyGetUserPermissionsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[LegacyGetUserPermissionsResponse], error)
+	LegacySearchUsersPermissions(ctx context.Context, in *LegacySearchUsersPermissionsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[LegacySearchUsersPermissionsResponse], error)
 }
 
 type legacyAuthzServiceClient struct {
@@ -62,6 +64,25 @@ func (c *legacyAuthzServiceClient) LegacyGetUserPermissions(ctx context.Context,
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type LegacyAuthzService_LegacyGetUserPermissionsClient = grpc.ServerStreamingClient[LegacyGetUserPermissionsResponse]
 
+func (c *legacyAuthzServiceClient) LegacySearchUsersPermissions(ctx context.Context, in *LegacySearchUsersPermissionsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[LegacySearchUsersPermissionsResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &LegacyAuthzService_ServiceDesc.Streams[1], LegacyAuthzService_LegacySearchUsersPermissions_FullMethodName, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &grpc.GenericClientStream[LegacySearchUsersPermissionsRequest, LegacySearchUsersPermissionsResponse]{ClientStream: stream}
+	if err := x.ClientStream.SendMsg(in); err != nil {
+		return nil, err
+	}
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	return x, nil
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type LegacyAuthzService_LegacySearchUsersPermissionsClient = grpc.ServerStreamingClient[LegacySearchUsersPermissionsResponse]
+
 // LegacyAuthzServiceServer is the server API for LegacyAuthzService service.
 // All implementations should embed UnimplementedLegacyAuthzServiceServer
 // for forward compatibility.
@@ -73,6 +94,7 @@ type LegacyAuthzService_LegacyGetUserPermissionsClient = grpc.ServerStreamingCli
 type LegacyAuthzServiceServer interface {
 	// No HTTP route is exposed.
 	LegacyGetUserPermissions(*LegacyGetUserPermissionsRequest, grpc.ServerStreamingServer[LegacyGetUserPermissionsResponse]) error
+	LegacySearchUsersPermissions(*LegacySearchUsersPermissionsRequest, grpc.ServerStreamingServer[LegacySearchUsersPermissionsResponse]) error
 }
 
 // UnimplementedLegacyAuthzServiceServer should be embedded to have
@@ -84,6 +106,9 @@ type UnimplementedLegacyAuthzServiceServer struct{}
 
 func (UnimplementedLegacyAuthzServiceServer) LegacyGetUserPermissions(*LegacyGetUserPermissionsRequest, grpc.ServerStreamingServer[LegacyGetUserPermissionsResponse]) error {
 	return status.Error(codes.Unimplemented, "method LegacyGetUserPermissions not implemented")
+}
+func (UnimplementedLegacyAuthzServiceServer) LegacySearchUsersPermissions(*LegacySearchUsersPermissionsRequest, grpc.ServerStreamingServer[LegacySearchUsersPermissionsResponse]) error {
+	return status.Error(codes.Unimplemented, "method LegacySearchUsersPermissions not implemented")
 }
 func (UnimplementedLegacyAuthzServiceServer) testEmbeddedByValue() {}
 
@@ -116,6 +141,17 @@ func _LegacyAuthzService_LegacyGetUserPermissions_Handler(srv interface{}, strea
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type LegacyAuthzService_LegacyGetUserPermissionsServer = grpc.ServerStreamingServer[LegacyGetUserPermissionsResponse]
 
+func _LegacyAuthzService_LegacySearchUsersPermissions_Handler(srv interface{}, stream grpc.ServerStream) error {
+	m := new(LegacySearchUsersPermissionsRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(LegacyAuthzServiceServer).LegacySearchUsersPermissions(m, &grpc.GenericServerStream[LegacySearchUsersPermissionsRequest, LegacySearchUsersPermissionsResponse]{ServerStream: stream})
+}
+
+// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
+type LegacyAuthzService_LegacySearchUsersPermissionsServer = grpc.ServerStreamingServer[LegacySearchUsersPermissionsResponse]
+
 // LegacyAuthzService_ServiceDesc is the grpc.ServiceDesc for LegacyAuthzService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -127,6 +163,11 @@ var LegacyAuthzService_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "LegacyGetUserPermissions",
 			Handler:       _LegacyAuthzService_LegacyGetUserPermissions_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "LegacySearchUsersPermissions",
+			Handler:       _LegacyAuthzService_LegacySearchUsersPermissions_Handler,
 			ServerStreams: true,
 		},
 	},

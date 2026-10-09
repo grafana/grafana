@@ -321,6 +321,142 @@ func (x *LegacyGetUserPermissionsResponse) GetPermissions() []*LegacyPermission 
 	return nil
 }
 
+type LegacySearchUsersPermissionsRequest struct {
+	state         protoimpl.MessageState    `protogen:"open.v1"`
+	Namespace     string                    `protobuf:"bytes,1,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	Caller        *LegacyPermissionIdentity `protobuf:"bytes,2,opt,name=caller,proto3" json:"caller,omitempty"`
+	Action        string                    `protobuf:"bytes,3,opt,name=action,proto3" json:"action,omitempty"`
+	ActionPrefix  string                    `protobuf:"bytes,4,opt,name=action_prefix,json=actionPrefix,proto3" json:"action_prefix,omitempty"`
+	Scope         string                    `protobuf:"bytes,5,opt,name=scope,proto3" json:"scope,omitempty"`
+	UserId        int64                     `protobuf:"varint,6,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LegacySearchUsersPermissionsRequest) Reset() {
+	*x = LegacySearchUsersPermissionsRequest{}
+	mi := &file_legacy_permissions_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LegacySearchUsersPermissionsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LegacySearchUsersPermissionsRequest) ProtoMessage() {}
+
+func (x *LegacySearchUsersPermissionsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_legacy_permissions_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LegacySearchUsersPermissionsRequest.ProtoReflect.Descriptor instead.
+func (*LegacySearchUsersPermissionsRequest) Descriptor() ([]byte, []int) {
+	return file_legacy_permissions_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *LegacySearchUsersPermissionsRequest) GetNamespace() string {
+	if x != nil {
+		return x.Namespace
+	}
+	return ""
+}
+
+func (x *LegacySearchUsersPermissionsRequest) GetCaller() *LegacyPermissionIdentity {
+	if x != nil {
+		return x.Caller
+	}
+	return nil
+}
+
+func (x *LegacySearchUsersPermissionsRequest) GetAction() string {
+	if x != nil {
+		return x.Action
+	}
+	return ""
+}
+
+func (x *LegacySearchUsersPermissionsRequest) GetActionPrefix() string {
+	if x != nil {
+		return x.ActionPrefix
+	}
+	return ""
+}
+
+func (x *LegacySearchUsersPermissionsRequest) GetScope() string {
+	if x != nil {
+		return x.Scope
+	}
+	return ""
+}
+
+func (x *LegacySearchUsersPermissionsRequest) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+type LegacySearchUsersPermissionsResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        int64                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	Permissions   []*LegacyPermission    `protobuf:"bytes,2,rep,name=permissions,proto3" json:"permissions,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LegacySearchUsersPermissionsResponse) Reset() {
+	*x = LegacySearchUsersPermissionsResponse{}
+	mi := &file_legacy_permissions_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LegacySearchUsersPermissionsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LegacySearchUsersPermissionsResponse) ProtoMessage() {}
+
+func (x *LegacySearchUsersPermissionsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_legacy_permissions_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LegacySearchUsersPermissionsResponse.ProtoReflect.Descriptor instead.
+func (*LegacySearchUsersPermissionsResponse) Descriptor() ([]byte, []int) {
+	return file_legacy_permissions_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *LegacySearchUsersPermissionsResponse) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
+}
+
+func (x *LegacySearchUsersPermissionsResponse) GetPermissions() []*LegacyPermission {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
 var File_legacy_permissions_proto protoreflect.FileDescriptor
 
 const file_legacy_permissions_proto_rawDesc = "" +
@@ -354,9 +490,20 @@ const file_legacy_permissions_proto_rawDesc = "" +
 	"\x06action\x18\x01 \x01(\tR\x06action\x12\x14\n" +
 	"\x05scope\x18\x02 \x01(\tR\x05scope\"j\n" +
 	" LegacyGetUserPermissionsResponse\x12F\n" +
-	"\vpermissions\x18\x01 \x03(\v2$.authz.extention.v1.LegacyPermissionR\vpermissions2\x9e\x01\n" +
+	"\vpermissions\x18\x01 \x03(\v2$.authz.extention.v1.LegacyPermissionR\vpermissions\"\xf5\x01\n" +
+	"#LegacySearchUsersPermissionsRequest\x12\x1c\n" +
+	"\tnamespace\x18\x01 \x01(\tR\tnamespace\x12D\n" +
+	"\x06caller\x18\x02 \x01(\v2,.authz.extention.v1.LegacyPermissionIdentityR\x06caller\x12\x16\n" +
+	"\x06action\x18\x03 \x01(\tR\x06action\x12#\n" +
+	"\raction_prefix\x18\x04 \x01(\tR\factionPrefix\x12\x14\n" +
+	"\x05scope\x18\x05 \x01(\tR\x05scope\x12\x17\n" +
+	"\auser_id\x18\x06 \x01(\x03R\x06userId\"\x87\x01\n" +
+	"$LegacySearchUsersPermissionsResponse\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\x03R\x06userId\x12F\n" +
+	"\vpermissions\x18\x02 \x03(\v2$.authz.extention.v1.LegacyPermissionR\vpermissions2\xb4\x02\n" +
 	"\x12LegacyAuthzService\x12\x87\x01\n" +
-	"\x18LegacyGetUserPermissions\x123.authz.extention.v1.LegacyGetUserPermissionsRequest\x1a4.authz.extention.v1.LegacyGetUserPermissionsResponse0\x01B8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"
+	"\x18LegacyGetUserPermissions\x123.authz.extention.v1.LegacyGetUserPermissionsRequest\x1a4.authz.extention.v1.LegacyGetUserPermissionsResponse0\x01\x12\x93\x01\n" +
+	"\x1cLegacySearchUsersPermissions\x127.authz.extention.v1.LegacySearchUsersPermissionsRequest\x1a8.authz.extention.v1.LegacySearchUsersPermissionsResponse0\x01B8Z6github.com/grafana/grafana/pkg/services/authz/proto/v1b\x06proto3"
 
 var (
 	file_legacy_permissions_proto_rawDescOnce sync.Once
@@ -370,23 +517,29 @@ func file_legacy_permissions_proto_rawDescGZIP() []byte {
 	return file_legacy_permissions_proto_rawDescData
 }
 
-var file_legacy_permissions_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_legacy_permissions_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_legacy_permissions_proto_goTypes = []any{
-	(*LegacyPermissionIdentity)(nil),         // 0: authz.extention.v1.LegacyPermissionIdentity
-	(*LegacyGetUserPermissionsRequest)(nil),  // 1: authz.extention.v1.LegacyGetUserPermissionsRequest
-	(*LegacyPermission)(nil),                 // 2: authz.extention.v1.LegacyPermission
-	(*LegacyGetUserPermissionsResponse)(nil), // 3: authz.extention.v1.LegacyGetUserPermissionsResponse
+	(*LegacyPermissionIdentity)(nil),             // 0: authz.extention.v1.LegacyPermissionIdentity
+	(*LegacyGetUserPermissionsRequest)(nil),      // 1: authz.extention.v1.LegacyGetUserPermissionsRequest
+	(*LegacyPermission)(nil),                     // 2: authz.extention.v1.LegacyPermission
+	(*LegacyGetUserPermissionsResponse)(nil),     // 3: authz.extention.v1.LegacyGetUserPermissionsResponse
+	(*LegacySearchUsersPermissionsRequest)(nil),  // 4: authz.extention.v1.LegacySearchUsersPermissionsRequest
+	(*LegacySearchUsersPermissionsResponse)(nil), // 5: authz.extention.v1.LegacySearchUsersPermissionsResponse
 }
 var file_legacy_permissions_proto_depIdxs = []int32{
 	0, // 0: authz.extention.v1.LegacyGetUserPermissionsRequest.identity:type_name -> authz.extention.v1.LegacyPermissionIdentity
 	2, // 1: authz.extention.v1.LegacyGetUserPermissionsResponse.permissions:type_name -> authz.extention.v1.LegacyPermission
-	1, // 2: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:input_type -> authz.extention.v1.LegacyGetUserPermissionsRequest
-	3, // 3: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:output_type -> authz.extention.v1.LegacyGetUserPermissionsResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	0, // 2: authz.extention.v1.LegacySearchUsersPermissionsRequest.caller:type_name -> authz.extention.v1.LegacyPermissionIdentity
+	2, // 3: authz.extention.v1.LegacySearchUsersPermissionsResponse.permissions:type_name -> authz.extention.v1.LegacyPermission
+	1, // 4: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:input_type -> authz.extention.v1.LegacyGetUserPermissionsRequest
+	4, // 5: authz.extention.v1.LegacyAuthzService.LegacySearchUsersPermissions:input_type -> authz.extention.v1.LegacySearchUsersPermissionsRequest
+	3, // 6: authz.extention.v1.LegacyAuthzService.LegacyGetUserPermissions:output_type -> authz.extention.v1.LegacyGetUserPermissionsResponse
+	5, // 7: authz.extention.v1.LegacyAuthzService.LegacySearchUsersPermissions:output_type -> authz.extention.v1.LegacySearchUsersPermissionsResponse
+	6, // [6:8] is the sub-list for method output_type
+	4, // [4:6] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_legacy_permissions_proto_init() }
@@ -401,7 +554,7 @@ func file_legacy_permissions_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_legacy_permissions_proto_rawDesc), len(file_legacy_permissions_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

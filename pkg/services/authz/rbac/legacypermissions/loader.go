@@ -47,15 +47,16 @@ type Loader struct {
 	features featuremgmt.FeatureToggles
 	license  licensing.Licensing
 	zanzana  MigratedPermissions
+	search   *LegacySearchService
 	flight   singleflight.Group
 	log      log.Logger
 }
 
 func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver,
 	cache *localcache.CacheService, cfg *setting.Cfg, features featuremgmt.FeatureToggles,
-	license licensing.Licensing, zanzana MigratedPermissions,
+	license licensing.Licensing, zanzana MigratedPermissions, options ...LoaderOption,
 ) *Loader {
-	return &Loader{
+	loader := &Loader{
 		store:    permissionStore{sql},
 		catalog:  catalog,
 		actions:  actionResolver,
@@ -66,6 +67,11 @@ func NewLoader(sql db.DB, catalog *RoleCatalog, actionResolver ac.ActionResolver
 		zanzana:  zanzana,
 		log:      log.New("authz.legacypermissions"),
 	}
+	loader.search = newLoaderSearchService(loader)
+	for _, option := range options {
+		option(loader)
+	}
+	return loader
 }
 
 var _ ac.UserPermissionsEvaluator = (*Loader)(nil)
