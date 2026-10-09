@@ -11,6 +11,8 @@
 import { waitFor } from '@testing-library/react';
 import { cloneDeep } from 'lodash';
 
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -107,6 +109,13 @@ function editorIsAttached(scene: DashboardScene) {
 }
 
 describe('APPLY_SPEC with a panel open for editing', () => {
+  beforeAll(() => {
+    setPluginImportUtils({
+      importPanelPlugin: async () => getPanelPlugin({}),
+      getPanelPluginFromCache: () => undefined,
+    });
+  });
+
   it('re-binds the editor onto the panel in the rebuilt tree', async () => {
     const scene = buildScene(makeSpec());
     const beforeSwap = openPanelEdit(scene, 'panel-1');

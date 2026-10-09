@@ -54,12 +54,13 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
   }
 
   private _releaseEditPanel() {
-    if (this._heldEditPanelId !== undefined) {
+    const wasHeld = this._heldEditPanelId !== undefined;
+    this._heldEditPanelId = undefined;
+    if (wasHeld) {
       this._scene.cancelPendingViews();
     }
     this._libPanelSub?.unsubscribe();
     this._libPanelSub = undefined;
-    this._heldEditPanelId = undefined;
   }
 
   private getAutoFitPanels(): string | undefined {
@@ -230,12 +231,12 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
               })
             );
           }
-          if (panel?.state._pluginLoadError) {
+          if (!panel || panel.state._pluginLoadError) {
             sub.unsubscribe();
             return;
           }
-          // The loading page does not mount the panel that normally activates this behavior.
-          sub.add(libPanel.activate());
+          // Keep the panel active while the loading page unmounts it; deactivation removes the error listener.
+          sub.add(panel.activate());
         }),
     });
   }

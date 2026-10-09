@@ -40,6 +40,7 @@ describe('DashboardSceneUrlSync', () => {
           if (outcome === 'cancelled') {
             scene.urlSync?.updateFromUrl({ editPanel: null });
             expect(behavior.isActive).toBe(false);
+            expect(panel.isActive).toBe(false);
           }
           if (outcome === 'failed') {
             pending.reject(new Error('Library panel unavailable'));
@@ -61,6 +62,7 @@ describe('DashboardSceneUrlSync', () => {
             expect(scene.state.editPanel).toBeUndefined();
           }
           expect(behavior.isActive).toBe(false);
+          expect(panel.isActive).toBe(false);
         } finally {
           scene.cancelPendingViews();
           fetchPanel.mockRestore();

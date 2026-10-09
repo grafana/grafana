@@ -1237,6 +1237,17 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
           (key) => nextSearch.get(key) !== search.get(key)
         )
       ) {
+        if (
+          this._viewRequest === request &&
+          !request.signal.aborted &&
+          view.key === 'editPanel' &&
+          nextLocation.pathname === location.pathname &&
+          nextSearch.get('orgId') === search.get('orgId') &&
+          nextSearch.get('editPanel') !== search.get('editPanel')
+        ) {
+          // Resolve the new editor before cancellation can publish the old held panel ID back into the URL.
+          this._urlSync.updateFromUrl({ editPanel: nextSearch.get('editPanel') });
+        }
         request.abort();
       }
     });
