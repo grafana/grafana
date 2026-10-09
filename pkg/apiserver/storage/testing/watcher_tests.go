@@ -1226,17 +1226,6 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 		}
 		return ret
 	}
-	initialEventsEndFromLastCreatedPod := func(createdInitialPods []*example.Pod) watch.Event {
-		return watch.Event{
-			Type: watch.Bookmark,
-			Object: &example.Pod{
-				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: createdInitialPods[len(createdInitialPods)-1].ResourceVersion,
-					Annotations:     map[string]string{"k8s.io/initial-events-end": "true"},
-				},
-			},
-		}
-	}
 	scenarios := []struct {
 		name                string
 		allowWatchBookmarks bool
@@ -1246,6 +1235,7 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 		// after adding the initial pods which is then used to establish a new watch request
 		useCurrentRV           bool
 		useRVBeforeInitialPods bool
+		expectInitialEventsEnd bool
 
 		initialPods                []*example.Pod
 		podsAfterEstablishingWatch []*example.Pod
@@ -1255,14 +1245,12 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 		expectedEventsAfterEstablishingWatch func(createdPodsAfterWatch []*example.Pod) []watch.Event
 	}{
 		{
-			name:                               "allowWatchBookmarks=true, sendInitialEvents=true, RV=unset",
-			allowWatchBookmarks:                true,
-			sendInitialEvents:                  &trueVal,
-			initialPods:                        []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
-			expectedInitialEventsInRandomOrder: addEventsFromCreatedPods,
-			expectedInitialEventsInStrictOrder: func(createdInitialPods []*example.Pod) []watch.Event {
-				return []watch.Event{initialEventsEndFromLastCreatedPod(createdInitialPods)}
-			},
+			name:                                 "allowWatchBookmarks=true, sendInitialEvents=true, RV=unset",
+			allowWatchBookmarks:                  true,
+			sendInitialEvents:                    &trueVal,
+			expectInitialEventsEnd:               true,
+			initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
+			expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
 			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
 			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
 		},
@@ -1291,15 +1279,13 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 		},
 
 		{
-			name:                               "allowWatchBookmarks=true, sendInitialEvents=true, RV=0",
-			allowWatchBookmarks:                true,
-			sendInitialEvents:                  &trueVal,
-			resourceVersion:                    "0",
-			initialPods:                        []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
-			expectedInitialEventsInRandomOrder: addEventsFromCreatedPods,
-			expectedInitialEventsInStrictOrder: func(createdInitialPods []*example.Pod) []watch.Event {
-				return []watch.Event{initialEventsEndFromLastCreatedPod(createdInitialPods)}
-			},
+			name:                                 "allowWatchBookmarks=true, sendInitialEvents=true, RV=0",
+			allowWatchBookmarks:                  true,
+			sendInitialEvents:                    &trueVal,
+			resourceVersion:                      "0",
+			expectInitialEventsEnd:               true,
+			initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
+			expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
 			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
 			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
 		},
@@ -1331,15 +1317,13 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 		},
 
 		{
-			name:                               "allowWatchBookmarks=true, sendInitialEvents=true, RV=1",
-			allowWatchBookmarks:                true,
-			sendInitialEvents:                  &trueVal,
-			resourceVersion:                    "1",
-			initialPods:                        []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
-			expectedInitialEventsInRandomOrder: addEventsFromCreatedPods,
-			expectedInitialEventsInStrictOrder: func(createdInitialPods []*example.Pod) []watch.Event {
-				return []watch.Event{initialEventsEndFromLastCreatedPod(createdInitialPods)}
-			},
+			name:                                 "allowWatchBookmarks=true, sendInitialEvents=true, RV=1",
+			allowWatchBookmarks:                  true,
+			sendInitialEvents:                    &trueVal,
+			resourceVersion:                      "1",
+			expectInitialEventsEnd:               true,
+			initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
+			expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
 			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
 			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
 		},
@@ -1373,15 +1357,13 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 		},
 
 		{
-			name:                               "allowWatchBookmarks=true, sendInitialEvents=true, RV=useCurrentRV",
-			allowWatchBookmarks:                true,
-			sendInitialEvents:                  &trueVal,
-			useCurrentRV:                       true,
-			initialPods:                        []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
-			expectedInitialEventsInRandomOrder: addEventsFromCreatedPods,
-			expectedInitialEventsInStrictOrder: func(createdInitialPods []*example.Pod) []watch.Event {
-				return []watch.Event{initialEventsEndFromLastCreatedPod(createdInitialPods)}
-			},
+			name:                                 "allowWatchBookmarks=true, sendInitialEvents=true, RV=useCurrentRV",
+			allowWatchBookmarks:                  true,
+			sendInitialEvents:                    &trueVal,
+			useCurrentRV:                         true,
+			expectInitialEventsEnd:               true,
+			initialPods:                          []*example.Pod{makePod("1"), makePod("2"), makePod("3")},
+			expectedInitialEventsInRandomOrder:   addEventsFromCreatedPods,
 			podsAfterEstablishingWatch:           []*example.Pod{makePod("4"), makePod("5")},
 			expectedEventsAfterEstablishingWatch: addEventsFromCreatedPods,
 		},
@@ -1492,6 +1474,24 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 				scenario.resourceVersion = fmt.Sprintf("%d", currentStorageRV)
 			}
 
+			if scenario.expectInitialEventsEnd {
+				// The bookmark identifies the list snapshot, whose RV can differ from
+				// the last object's RV (the SQL backend uses an exclusive upper bound).
+				out := &example.PodList{}
+				require.NoError(t, store.GetList(ctx, KeyFunc("", ""), storage.ListOptions{
+					Predicate: storage.Everything,
+					Recursive: true,
+				}, out))
+				scenario.expectedInitialEventsInStrictOrder = func(_ []*example.Pod) []watch.Event {
+					return []watch.Event{{Type: watch.Bookmark, Object: &example.Pod{
+						ObjectMeta: metav1.ObjectMeta{
+							ResourceVersion: out.ResourceVersion,
+							Annotations:     map[string]string{"k8s.io/initial-events-end": "true"},
+						},
+					}}}
+				}
+			}
+
 			opts := storage.ListOptions{Predicate: storage.Everything, Recursive: true}
 			opts.SendInitialEvents = scenario.sendInitialEvents
 			opts.Predicate.AllowWatchBookmarks = scenario.allowWatchBookmarks
@@ -1531,12 +1531,12 @@ func RunWatchSemantics(ctx context.Context, t *testing.T, store storage.Interfac
 // by adding the pod to a different ns to advance the global RV
 func RunWatchSemanticInitialEventsExtended(ctx context.Context, t *testing.T, store storage.Interface) {
 	trueVal := true
-	expectedInitialEventsInStrictOrder := func(firstPod, secondPod *example.Pod) []watch.Event {
+	expectedInitialEventsInStrictOrder := func(firstPod *example.Pod, snapshotRV string) []watch.Event {
 		return []watch.Event{
 			{Type: watch.Added, Object: firstPod},
 			{Type: watch.Bookmark, Object: &example.Pod{
 				ObjectMeta: metav1.ObjectMeta{
-					ResourceVersion: secondPod.ResourceVersion,
+					ResourceVersion: snapshotRV,
 					Annotations:     map[string]string{"k8s.io/initial-events-end": "true"},
 				},
 			}},
@@ -1558,6 +1558,17 @@ func RunWatchSemanticInitialEventsExtended(ctx context.Context, t *testing.T, st
 	err = store.Create(ctx, computePodKey(pod), pod, secondPod, 0)
 	require.NoError(t, err, "failed to add a pod: %v")
 
+	out := &example.PodList{}
+	require.NoError(t, store.GetList(ctx, KeyFunc("", ""), storage.ListOptions{
+		Predicate: storage.Everything,
+		Recursive: true,
+	}, out))
+	snapshotRV, err := strconv.ParseInt(out.ResourceVersion, 10, 64)
+	require.NoError(t, err)
+	secondPodRV, err := strconv.ParseInt(secondPod.ResourceVersion, 10, 64)
+	require.NoError(t, err)
+	require.GreaterOrEqual(t, snapshotRV, secondPodRV)
+
 	opts := storage.ListOptions{Predicate: storage.Everything, Recursive: true}
 	opts.SendInitialEvents = &trueVal
 	opts.Predicate.AllowWatchBookmarks = true
@@ -1568,7 +1579,7 @@ func RunWatchSemanticInitialEventsExtended(ctx context.Context, t *testing.T, st
 
 	// make sure we only get initial events from the first ns
 	// followed by the bookmark with the global RV
-	testCheckResultsInStrictOrder(t, w, expectedInitialEventsInStrictOrder(firstPod, secondPod))
+	testCheckResultsInStrictOrder(t, w, expectedInitialEventsInStrictOrder(firstPod, out.ResourceVersion))
 	testCheckNoMoreResults(t, w)
 }
 
