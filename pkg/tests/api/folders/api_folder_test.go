@@ -21,6 +21,38 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestIntegrationFolderServiceGetFolder(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFolderServiceGetFolder)
+}
+
+func TestIntegrationUpdateFolder(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationUpdateFolder)
+}
+
+func TestIntegrationCreateFolder(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationCreateFolder)
+}
+
+func TestIntegrationCreateFolderDuplicateUID(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationCreateFolderDuplicateUID)
+}
+
+func TestIntegrationNestedFolders(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationNestedFolders)
+}
+
+func TestIntegrationSharedWithMe(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSharedWithMe)
+}
+
+func TestIntegrationBasicRoles(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationBasicRoles)
+}
+
+func TestIntegrationFineGrainedPermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFineGrainedPermissions)
+}
+
 func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
 	t.Helper()
 
@@ -39,7 +71,7 @@ func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID stri
 	require.NoError(t, err)
 }
 
-func TestIntegrationFolderServiceGetFolder(t *testing.T) {
+func testIntegrationFolderServiceGetFolder(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -108,7 +140,7 @@ func TestIntegrationFolderServiceGetFolder(t *testing.T) {
 	}
 }
 
-func TestIntegrationUpdateFolder(t *testing.T) {
+func testIntegrationUpdateFolder(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -152,7 +184,7 @@ func TestIntegrationUpdateFolder(t *testing.T) {
 	})
 }
 
-func TestIntegrationCreateFolder(t *testing.T) {
+func testIntegrationCreateFolder(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableQuota:      true,
@@ -197,7 +229,7 @@ func TestIntegrationCreateFolder(t *testing.T) {
 	})
 }
 
-func TestIntegrationCreateFolderDuplicateUID(t *testing.T) {
+func testIntegrationCreateFolderDuplicateUID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	for _, backend := range []struct {
@@ -253,7 +285,7 @@ func TestIntegrationCreateFolderDuplicateUID(t *testing.T) {
 	}
 }
 
-func TestIntegrationNestedFolders(t *testing.T) {
+func testIntegrationNestedFolders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -402,7 +434,7 @@ func TestIntegrationNestedFolders(t *testing.T) {
 	})
 }
 
-func TestIntegrationSharedWithMe(t *testing.T) {
+func testIntegrationSharedWithMe(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -453,7 +485,7 @@ func TestIntegrationSharedWithMe(t *testing.T) {
 	})
 }
 
-func TestIntegrationBasicRoles(t *testing.T) {
+func testIntegrationBasicRoles(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -588,7 +620,7 @@ func TestIntegrationBasicRoles(t *testing.T) {
 	})
 }
 
-func TestIntegrationFineGrainedPermissions(t *testing.T) {
+func testIntegrationFineGrainedPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, p := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
