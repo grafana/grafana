@@ -805,7 +805,6 @@ func testIntegrationAlertRulePostExport(t *testing.T) {
 	testinfra.SQLiteIntegrationTest(t)
 
 	dir, configPath := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
 		EnableUnifiedAlerting: true,
 		DisableAnonymous:      true,
 		AppModeProduction:     true,
