@@ -1,18 +1,20 @@
-package pluginopenapi
+package pluginroute
 
 import (
 	"context"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
-
 	"google.golang.org/grpc"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+// The offline clients stand in for dependencies BuildOpenAPI needs to register
+// routes but that are only called while serving requests.
 
 var _ appclientv3.Client = offlineClientV3{}
 

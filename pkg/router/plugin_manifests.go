@@ -282,6 +282,11 @@ func fetchPluginManifests(ctx context.Context, client *http.Client, rawURL strin
 		}
 		plugin.Definition.Manifest = nil
 	}
+	for _, plugin := range deployment.Plugins {
+		for _, manifest := range plugin.Definition.Manifests {
+			definition.MigrateDeprecatedRoutes(manifest)
+		}
+	}
 
 	return deployment, nil
 }

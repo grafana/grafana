@@ -69,6 +69,7 @@ func ProvideCloudRoutesLoader(
 		MetricsRegister:    reg,
 		RESTConfigProvider: clients.RESTConfigProvider,
 		Unified:            clients.Resource,
+		AccessClient:       clients.Access,
 		Decrypter:          decrypter,
 		TokenExchanger:     newClientV3TokenExchanger(cfg),
 		Tracer:             tracer,

@@ -133,16 +133,22 @@ func TestHandlerServesManifestRoutes(t *testing.T) {
 func TestHandlerDeniesUnauthenticatedRequests(t *testing.T) {
 	handler := loadHandler(t, testPlugin(), testOptions())
 
-	res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds")
-	require.Equal(t, http.StatusUnauthorized, res.Code, res.Body.String())
+	// Manifest routes are matched inside the apiserver chain, so they are
+	// authenticated like the resources are.
+	for _, path := range []string{"namespaces/default/testkinds", "namespaces/default/widgets", "things"} {
+		res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/"+path)
+		require.Equal(t, http.StatusUnauthorized, res.Code, "%s: %s", path, res.Body.String())
+	}
 }
 
 func TestHandlerDeniesCallerWithoutPluginAccess(t *testing.T) {
 	handler := withRequester(loadHandler(t, testPlugin(), testOptions()))
 
-	res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds")
-	require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
-	require.Contains(t, res.Body.String(), "no plugin access checker is configured")
+	for _, path := range []string{"namespaces/default/testkinds", "namespaces/default/widgets", "things"} {
+		res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/"+path)
+		require.Equal(t, http.StatusForbidden, res.Code, "%s: %s", path, res.Body.String())
+		require.Contains(t, res.Body.String(), "no plugin access checker is configured")
+	}
 }
 
 func TestHandlerSharesOneMetricsRegistry(t *testing.T) {
@@ -264,18 +270,16 @@ func testPlugin() definition.PluginDefinition {
 				{
 					Name:   "v1alpha1",
 					Served: true,
-					Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-						Cluster:    map[string]spec3.PathProps{"/things": {Get: testOperation("listThings")}},
-						Namespaced: map[string]spec3.PathProps{"/widgets": {Get: testOperation("listWidgets")}},
-					},
+					OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+						"/things":                         {Get: testOperation("listThings")},
+						"/namespaces/{namespace}/widgets": {Get: testOperation("listWidgets")},
+						"/namespaces/{namespace}/testkinds/{name}/reload": {Get: testOperation("reloadTestKind")},
+					}},
 					Kinds: []app.ManifestVersionKind{{
 						Kind:   "TestKind",
 						Plural: "TestKinds",
 						Scope:  "Namespaced",
 						Schema: testSchema(),
-						Routes: map[string]spec3.PathProps{
-							"/reload": {Get: testOperation("reloadTestKind")},
-						},
 					}},
 				},
 				{Name: "v2alpha1", Served: false},
@@ -314,6 +318,11 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
 		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil, nil) }, "unified storage client is required"},
+		{"storage provider without a getter", func(_ *definition.PluginDefinition, o *Options) {
+			o.Storage = func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
+				return nil, nil
+			}
+		}, "storage provider returned no REST options getter"},
 		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) {
 			p.Manifests[0].Versions[0].Kinds[0].Kind = "Settings"
 		}, "reserved kind name"},
@@ -325,6 +334,64 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 			require.ErrorContains(t, err, tc.want)
 			require.Nil(t, handler)
 		})
+	}
+}
+
+func TestValidateManifest(t *testing.T) {
+	require.NoError(t, ValidateManifest("example-app", testPlugin().Manifests[0]))
+
+	for _, tc := range []struct {
+		name     string
+		manifest *app.ManifestData
+		want     string
+	}{
+		{"nil manifest", nil, "missing manifest"},
+		{"empty manifest", &app.ManifestData{}, "empty app manifest"},
+		{"group outside the plugin domain", &app.ManifestData{Group: "example.com", Versions: testPlugin().Manifests[0].Versions}, "invalid manifest group"},
+		{"group that is not a DNS name", &app.ManifestData{Group: "Bad_Group.ext.grafana.app", Versions: testPlugin().Manifests[0].Versions}, "invalid manifest group"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorContains(t, ValidateManifest("example-app", tc.manifest), tc.want)
+		})
+	}
+}
+
+// Two versions with one name would mount the same routes twice, which
+// ServeMux refuses with a panic.
+func TestNewHandlerRejectsDuplicateVersions(t *testing.T) {
+	plugin := testPlugin()
+	manifest := plugin.Manifests[0]
+	manifest.Versions[1] = manifest.Versions[0]
+	require.ErrorContains(t, ValidateManifest(plugin.JSONData.ID, manifest), "version v1alpha1 is declared more than once")
+
+	require.NotPanics(t, func() {
+		handler, err := NewHandler(plugin.JSONData.ID, manifest, allowAll(testOptions()))
+		require.ErrorContains(t, err, "declared more than once")
+		require.Nil(t, handler)
+	})
+}
+
+// A version name is a segment of every URL the version serves. One that is not
+// a valid segment would build route patterns ServeMux panics on, or routes that
+// can never be reached.
+func TestNewHandlerRejectsInvalidVersionNames(t *testing.T) {
+	for _, name := range []string{"", "v1/beta", "V1", "1alpha1", "v1.0", "v1_alpha"} {
+		t.Run(name, func(t *testing.T) {
+			plugin := routesOnlyPlugin()
+			manifest := plugin.Manifests[0]
+			manifest.Versions[0].Name = name
+			manifest.PreferredVersion = name
+			require.ErrorContains(t, ValidateManifest(plugin.JSONData.ID, manifest), "invalid version name")
+			require.NotPanics(t, func() {
+				_, err := NewHandler(plugin.JSONData.ID, manifest, allowAll(testOptions()))
+				require.ErrorContains(t, err, "invalid version name")
+			})
+		})
+	}
+	for _, name := range []string{"v1", "v1alpha1", "v2beta3", "v0alpha1"} {
+		plugin := testPlugin()
+		plugin.Manifests[0].Versions[0].Name = name
+		require.NoError(t, ValidateManifest(plugin.JSONData.ID, plugin.Manifests[0]), name)
 	}
 }
 

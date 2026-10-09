@@ -495,6 +495,30 @@ func TestPluginManifestsTargetMultipleManifests(t *testing.T) {
 	}
 }
 
+// Manifests from the feed are moved off the deprecated routes when they are
+// read, as manifests from files are, so the handler never sees those.
+func TestFetchPluginManifestsMigratesDeprecatedRoutes(t *testing.T) {
+	var payload map[string]any
+	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))
+	plugin := payload["plugins"].([]any)[0].(map[string]any)["definition"].(map[string]any)
+	manifest := plugin["manifests"].([]any)[0].(map[string]any)
+	version := manifest["versions"].([]any)[0].(map[string]any)
+	version["routes"] = map[string]any{"namespaced": map[string]any{
+		"/ping": map[string]any{"get": map[string]any{"responses": map[string]any{"200": map[string]any{"description": "OK"}}}},
+	}}
+	delete(version, "openapi")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		require.NoError(t, json.NewEncoder(w).Encode(payload))
+	}))
+	defer srv.Close()
+
+	deployment, err := fetchPluginManifests(t.Context(), srv.Client(), srv.URL)
+	require.NoError(t, err)
+	got := deployment.Plugins[0].Definition.Manifests[0].Versions[0]
+	require.Contains(t, got.OpenAPI.Paths, "/namespaces/{namespace}/ping")
+	require.Equal(t, app.ManifestVersionRoutes{}, got.Routes) //nolint:staticcheck // SA1019: checking it is cleared.
+}
+
 func TestFetchPluginManifestsMigratesSingularManifest(t *testing.T) {
 	var payload map[string]any
 	require.NoError(t, json.Unmarshal([]byte(pluginManifestsFixture), &payload))

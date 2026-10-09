@@ -1,4 +1,4 @@
-package pluginopenapi
+package commands
 
 import (
 	"context"
@@ -14,15 +14,15 @@ import (
 
 const pluginJSONFile = "plugin.json"
 
-// LoadManifest reads an app-sdk manifest file into the definition the spec is
-// rendered from.
+// loadOpenAPIManifest reads an app-sdk manifest file into the definition the
+// spec is rendered from.
 //
 // A plugin's APIs are served under the group its manifest declares, but the
 // settings API also depends on the plugin's metadata and schema. When a
-// plugin.json sits beside the manifest, LoadManifest loads the complete plugin
+// plugin.json sits beside the manifest, loadOpenAPIManifest loads the complete plugin
 // definition. Otherwise, the manifest's app name stands in for the plugin ID
 // and the settings API uses its defaults.
-func LoadManifest(ctx context.Context, path string) (definition.PluginDefinition, error) {
+func loadOpenAPIManifest(ctx context.Context, path string) (definition.PluginDefinition, error) {
 	var plugin definition.PluginDefinition
 
 	raw, err := os.ReadFile(path) // #nosec G304 -- a path the operator typed
