@@ -1656,7 +1656,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 	if stats != nil {
 		stats.bodyKeysRequested += requested
 	}
-	exactCtx := context.WithValue(ctx, listBodyStatsKey{}, (*listBodyStats)(nil))
+	exactCtx := withoutListBodyStats(ctx)
 
 	hits := 0
 	seen := make(map[int]bool, len(pending))
