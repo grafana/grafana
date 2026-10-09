@@ -164,3 +164,25 @@ func TestKindPoliciesSkipKindsWithoutPlural(t *testing.T) {
 	}}})
 	require.Empty(t, policies)
 }
+
+// A kind route's subresource starts with a literal segment, which is what the
+// authorizer is given for a request below it, so a route with parameters
+// further down is still recognised.
+func TestGetAuthorizerParameterizedCustomRoute(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds,
+		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope})
+	manifest.Versions[1].OpenAPI.Paths["/secrets/{name}/rotate/{key}"] = spec3.PathProps{Post: &spec3.Operation{}}
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  kindPolicies(manifest),
+		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+	}
+	require.Equal(t, map[string]bool{"rotate": true}, b.kindPolicies["secrets"].customRoutes)
+
+	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{UserID: 1, OrgID: 1})
+	decision, reason, err := b.GetAuthorizer().Authorize(ctx,
+		authorizer.AttributesRecord{Resource: "secrets", Subresource: "rotate", Verb: "create"})
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, decision, reason)
+}

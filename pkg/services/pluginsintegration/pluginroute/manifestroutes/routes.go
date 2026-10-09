@@ -324,6 +324,9 @@ func (r *Route) resolve(kinds map[string]*app.ManifestVersionKind, reserved map[
 			return kind.Kind + " is namespaced, so its routes must be under " + NamespacedPrefix
 		case first == "":
 			return "a kind route needs a subresource below " + root + "/{" + NameParameter + "}/"
+		case isParameter(first):
+			// A parameter would also match status, which every kind serves.
+			return "a kind route's subresource must start with a literal segment, not " + first
 		case reservedSubresources[first]:
 			return "shadows the " + first + " subresource every kind has"
 		}
@@ -334,6 +337,10 @@ func (r *Route) resolve(kinds map[string]*app.ManifestVersionKind, reserved map[
 	switch {
 	case root == "":
 		return "shadows the version root"
+	case isParameter(root):
+		// A parameter would also match the kinds' own paths, and the reserved
+		// resources'.
+		return "a route must start with a literal segment, not " + root
 	case reserved[root]:
 		return "shadows the " + root + " resource"
 	case !r.Namespaced && root == "namespaces":
@@ -404,6 +411,11 @@ func (r *Route) parsePattern() string {
 	}
 	r.SpecPath = strings.Join(published, "/")
 	return ""
+}
+
+func isParameter(segment string) bool {
+	_, ok := parameterName(segment)
+	return ok
 }
 
 func parameterName(segment string) (string, bool) {

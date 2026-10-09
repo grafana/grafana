@@ -21,12 +21,11 @@ func TestRouteIndexCandidate(t *testing.T) {
 			{Kind: "Node", Plural: "Nodes", Scope: "Cluster"},
 		},
 		OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
-			"/report":                                      get,
-			"/files/{path:*}":                              get,
-			"/namespaces/{namespace}/widgets":              get,
-			"/namespaces/{namespace}/{kind}/export":        get,
+			"/report":                         get,
+			"/files/{path:*}":                 get,
+			"/namespaces/{namespace}/widgets": get,
 			"/namespaces/{namespace}/things/{name}/reload": get,
-			"/nodes/{name}/{action}":                       get,
+			"/nodes/{name}/rebuild/{step}":                 get,
 		}},
 	}
 	routes, problems := manifestroutes.Parse(version, routeOptions)
@@ -44,12 +43,14 @@ func TestRouteIndexCandidate(t *testing.T) {
 		root + "files":                                    true,
 		root + "other":                                    false,
 		root + "namespaces/default/widgets":               true,
-		root + "namespaces/default/anything/export":       true, // a parameter root
+		root + "namespaces/default/anything/export":       false,
 		root + "namespaces/default/things":                false,
 		root + "namespaces/default/things/thing-1":        false,
 		root + "namespaces/default/things/thing-1/status": false,
 		root + "namespaces/default/things/thing-1/reload": true,
-		root + "nodes/node-1/anything":                    true, // a parameter subresource
+		root + "nodes/node-1/rebuild/now":                 true,
+		root + "nodes/node-1/status":                      false,
+		root + "nodes/node-1/anything":                    false,
 		root + "nodes":                                    false,
 		root + "nodes/node-1":                             false,
 		root + "namespaces":                               false,

@@ -391,3 +391,32 @@ func TestParseUnservedMethodsAnyMethod(t *testing.T) {
 	require.Empty(t, routes)
 	require.Len(t, problems, 9, "each removed method, and the path left with none")
 }
+
+// A route that starts with a parameter can match a path the server serves
+// itself, whatever the route's other segments: the kinds' list and object
+// paths at the version root, and status below an object. So the first segment
+// of every route must be a literal.
+func TestParseRequiresALiteralFirstSegment(t *testing.T) {
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/{x}":                            get(), // would match the things list
+		"/namespaces/{namespace}/{a}/{b}": get(), // would match a thing
+		"/{path:*}":                       get(),
+		"/namespaces/{namespace}/things/{name}/{action}":  get(), // would match status
+		"/namespaces/{namespace}/things/{name}/{path:*}":  get(),
+		"/nodes/{name}/{path...}":                         get(),
+		"/namespaces/{namespace}/things/{name}/files/{p}": get(),
+		"/namespaces/{namespace}/reports/{id}":            get(),
+	}), Options{})
+	require.ElementsMatch(t, []string{
+		"/namespaces/{namespace}/things/{name}/files/{p}",
+		"/namespaces/{namespace}/reports/{id}",
+	}, declaredPaths(routes))
+	require.Equal(t, map[string]string{
+		"/{x}":                            "a route must start with a literal segment, not {x}",
+		"/namespaces/{namespace}/{a}/{b}": "a route must start with a literal segment, not {a}",
+		"/{path:*}":                       "a route must start with a literal segment, not {path:*}",
+		"/namespaces/{namespace}/things/{name}/{action}": "a kind route's subresource must start with a literal segment, not {action}",
+		"/namespaces/{namespace}/things/{name}/{path:*}": "a kind route's subresource must start with a literal segment, not {path:*}",
+		"/nodes/{name}/{path...}":                        "a kind route's subresource must start with a literal segment, not {path...}",
+	}, reasons(problems))
+}

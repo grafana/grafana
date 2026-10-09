@@ -32,6 +32,10 @@ A path is reported when it:
 
 - shadows the version root, a kind's own paths, the `status` subresource, a
   reserved resource, or the namespace mount point;
+- starts with a parameter, at the version root or below `{plural}/{name}/`.
+  A parameter there could match a path the server serves itself: a kind's
+  list or objects, or `status`. Parameters are fine after a literal first
+  segment;
 - puts a kind route at the wrong scope;
 - has a parameter that is not a whole segment (`v{version}`), constrains its
   value (`{id:[0-9]+}`), or is not a clean path (`a//b`, `a/../b`);

@@ -10,11 +10,12 @@ import (
 // manifest route, so the many requests for the API server's own resources go
 // straight to it without a ServeMux lookup, which is far more expensive.
 //
-// It relies on manifestroutes.Parse: a version route never starts with a kind's
-// plural, the settings resource, or namespaces, and a kind route is always
-// below {plural}/{name}/ with a subresource other than status. So a path the
-// index rejects is never a manifest route's, and one it accepts still has to
-// match one in the mux.
+// It relies on manifestroutes.Parse: a version route starts with a literal
+// segment that is not a kind's plural, the settings resource, or namespaces,
+// and a kind route is below {plural}/{name}/ with a subresource that starts
+// with a literal segment other than status. So the first segment of a path
+// decides whether a route can match it, a path the index rejects is never a
+// manifest route's, and one it accepts still has to match one in the mux.
 type routeIndex struct {
 	prefix   string // /apis/<group>/
 	versions map[string]*[2]scopeIndex
@@ -22,17 +23,10 @@ type routeIndex struct {
 
 // scopeIndex holds one scope's routes: cluster (0) or namespaced (1).
 type scopeIndex struct {
-	roots    map[string]bool // first path segment of a version route
-	anyRoot  bool            // a version route starts with a parameter
-	kinds    map[string]subresourceIndex
-	hasKinds bool
-}
-
-// subresourceIndex holds the first segments below {plural}/{name}/ of a kind's
-// routes.
-type subresourceIndex struct {
-	first map[string]bool
-	any   bool // a kind route's subresource starts with a parameter
+	roots map[string]bool // first path segment of a version route
+	// kinds holds, by plural, the first segments below {plural}/{name}/ of the
+	// kind's routes.
+	kinds map[string]map[string]bool
 }
 
 func newRouteIndex(group string) *routeIndex {
@@ -52,32 +46,21 @@ func (x *routeIndex) add(version string, route manifestroutes.Route) {
 
 	if route.Kind != nil {
 		if scope.kinds == nil {
-			scope.kinds = map[string]subresourceIndex{}
+			scope.kinds = map[string]map[string]bool{}
 		}
 		plural := strings.ToLower(route.Kind.Plural)
-		subs := scope.kinds[plural]
-		if subs.first == nil {
-			subs.first = map[string]bool{}
+		if scope.kinds[plural] == nil {
+			scope.kinds[plural] = map[string]bool{}
 		}
 		first, _, _ := strings.Cut(route.Subresource, "/")
-		if isParameterSegment(first) {
-			subs.any = true
-		} else {
-			subs.first[first] = true
-		}
-		scope.kinds[plural] = subs
-		scope.hasKinds = true
+		scope.kinds[plural][first] = true
 		return
 	}
 
-	root, _, _ := strings.Cut(route.Path, "/")
-	if isParameterSegment(root) {
-		scope.anyRoot = true
-		return
-	}
 	if scope.roots == nil {
 		scope.roots = map[string]bool{}
 	}
+	root, _, _ := strings.Cut(route.Path, "/")
 	scope.roots[root] = true
 }
 
@@ -105,19 +88,13 @@ func (x *routeIndex) candidate(path string) bool {
 	}
 
 	root, below, _ := strings.Cut(rest, "/")
-	if scope.hasKinds {
-		if subs, ok := scope.kinds[root]; ok {
-			name, sub, ok := strings.Cut(below, "/")
-			if !ok || name == "" {
-				return false
-			}
-			first, _, _ := strings.Cut(sub, "/")
-			return subs.any || subs.first[first]
+	if subresources, ok := scope.kinds[root]; ok {
+		name, sub, ok := strings.Cut(below, "/")
+		if !ok || name == "" {
+			return false
 		}
+		first, _, _ := strings.Cut(sub, "/")
+		return subresources[first]
 	}
-	return scope.anyRoot || scope.roots[root]
-}
-
-func isParameterSegment(segment string) bool {
-	return strings.HasPrefix(segment, "{")
+	return scope.roots[root]
 }
