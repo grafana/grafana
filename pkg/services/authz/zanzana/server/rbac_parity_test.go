@@ -1158,6 +1158,134 @@ func TestIntegrationRBACParityRoleManagement(t *testing.T) {
 	}
 }
 
+// Edit allows reading/updating a service account, but only Admin allows deletion
+// and permission management. Neither action set includes service-account creation.
+// Use production writers so mismatches in tuple translation remain visible.
+func TestIntegrationRBACParityServiceAccountPermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	const (
+		group    = "iam.grafana.app"
+		resource = "serviceaccounts"
+		uid      = "sa-target"
+	)
+
+	grants := []struct {
+		action         string
+		permissionVerb string
+		allowed        map[string]bool
+	}{
+		{"serviceaccounts:edit", "Edit", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true, utils.VerbUpdate: true, utils.VerbPatch: true}},
+		{"serviceaccounts:admin", "Admin", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true, utils.VerbUpdate: true, utils.VerbPatch: true, utils.VerbDelete: true, utils.VerbDeleteCollection: true, utils.VerbGetPermissions: true, utils.VerbSetPermissions: true}},
+		{"serviceaccounts:read", "", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true}},
+		{"serviceaccounts:write", "", map[string]bool{utils.VerbUpdate: true, utils.VerbPatch: true}},
+		{"serviceaccounts:delete", "", map[string]bool{utils.VerbDelete: true, utils.VerbDeleteCollection: true}},
+		{"serviceaccounts.permissions:read", "", map[string]bool{utils.VerbGetPermissions: true}},
+		{"serviceaccounts.permissions:write", "", map[string]bool{utils.VerbSetPermissions: true}},
+		{"serviceaccounts:create", "", map[string]bool{utils.VerbCreate: true}},
+		{"", "", map[string]bool{}},
+	}
+	for _, source := range []string{"role", "resource-permission"} {
+		for _, scope := range []string{"serviceaccounts:uid:" + uid, "serviceaccounts:uid:*", ""} {
+			for _, grant := range grants {
+				unscoped := grant.action == "serviceaccounts:create" || grant.action == ""
+				if unscoped != (scope == "") {
+					continue
+				}
+				// ResourcePermission grants target an existing object, not a wildcard.
+				if source == "resource-permission" && (grant.permissionVerb == "" || scope != "serviceaccounts:uid:"+uid) {
+					continue
+				}
+				t.Run(source+"/"+grant.action+"/"+scope, func(t *testing.T) {
+					permissions := []accesscontrol.Permission{}
+					rolePermissions := []*authzextv1.RolePermission{}
+					if grant.action != "" {
+						permissions = append(permissions, accesscontrol.Permission{Action: grant.action, Scope: scope})
+						rolePermissions = append(rolePermissions, &authzextv1.RolePermission{Action: grant.action, Scope: scope})
+					}
+					var tuples []*openfgav1.TupleKey
+					var err error
+					if source == "role" {
+						tuples, err = zanzana.RoleToTuples("sa-permissions", rolePermissions)
+						// Keep the binding even if the translator drops an unsupported action.
+						tuples = append(tuples, common.NewTuple(paritySubject, common.RelationAssignee, "role:sa-permissions"))
+					} else {
+						tuples, err = zanzana.GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
+							Resource:   &authzextv1.Resource{Group: group, Resource: resource, Name: uid},
+							Permission: &authzextv1.Permission{Kind: "User", Name: parityUserUID, Verb: grant.permissionVerb},
+						})
+					}
+					require.NoError(t, err)
+					srv := setupOpenFGAServer(t)
+					setupOpenFGADatabase(t, srv, tuples)
+					rbacService := rbac.NewTestService(parityUserUID, permissions, nil)
+					batch := &authzv1.BatchCheckRequest{Namespace: namespace, Subject: paritySubject}
+					expectedBatch := map[string]bool{}
+					for _, verb := range []string{utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbUpdate, utils.VerbPatch, utils.VerbDelete, utils.VerbDeleteCollection, utils.VerbGetPermissions, utils.VerbSetPermissions, utils.VerbCreate} {
+						t.Run(verb, func(t *testing.T) {
+							names := []string{uid, "sa-other"}
+							if verb == utils.VerbCreate {
+								names = []string{""}
+							}
+							for _, name := range names {
+								allowed := grant.allowed[verb] && (unscoped || scope == "serviceaccounts:uid:*" || name == uid)
+								id := verb + "-" + name
+								expectedBatch[id] = allowed
+								batch.Checks = append(batch.Checks, &authzv1.BatchCheckItem{CorrelationId: id, Group: group, Resource: resource, Verb: verb, Name: name})
+								t.Run("Check/"+name, func(t *testing.T) {
+									req := parityCheckReq(group, resource, "", verb, name, "")
+									rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+									require.NoError(t, err)
+									require.Equal(t, allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+									res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+									require.NoError(t, err)
+									assert.Equal(t, allowed, res.GetAllowed(), "Zanzana diverges from RBAC")
+								})
+							}
+							t.Run("List", func(t *testing.T) {
+								expected := parityListResult{}
+								if grant.allowed[verb] {
+									if unscoped {
+										// RBAC List currently returns the empty scope as an item.
+										expected.Items = []string{""}
+									} else if scope == "serviceaccounts:uid:*" {
+										expected.All = true
+									} else {
+										expected.Items = []string{uid}
+									}
+								}
+								req := parityListReq(group, resource, "", verb)
+								rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								require.Equal(t, normalizeParityList(expected), toParityListResult(rbacRes), "RBAC answer changed")
+								res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								assert.Equal(t, normalizeParityList(expected), toParityListResult(res), "Zanzana diverges from RBAC")
+							})
+						})
+					}
+					t.Run("BatchCheck", func(t *testing.T) {
+						rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						res, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+						require.NoError(t, err)
+						for engine, response := range map[string]*authzv1.BatchCheckResponse{"RBAC": rbacRes, "Zanzana": res} {
+							require.Len(t, response.GetResults(), len(expectedBatch), engine)
+							for id, allowed := range expectedBatch {
+								t.Run(engine+"/"+id, func(t *testing.T) {
+									require.Contains(t, response.GetResults(), id)
+									result := response.GetResults()[id]
+									require.Empty(t, result.GetError())
+									assert.Equal(t, allowed, result.GetAllowed())
+								})
+							}
+						}
+					})
+				})
+			}
+		}
+	}
+}
+
 // Exercise the production translators, not hand-built creation tuples. Both role
 // permissions and ResourcePermission grants must survive a reconciliation.
 func TestIntegrationRBACParityCreationGrants(t *testing.T) {
