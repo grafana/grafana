@@ -465,6 +465,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
+	if enableAuthInfoApi {
+		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
+			return err
+		}
+	}
+
 	if enableUserApi {
 		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync, enableTeamsApi); err != nil {
 			return err
@@ -473,12 +479,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if enableServiceAccountsApi {
 		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync, enableServiceAccountTokensApi); err != nil {
-			return err
-		}
-	}
-
-	if enableAuthInfoApi {
-		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -731,6 +731,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 	}
 
 	storage[authInfoResource.StoragePath()] = authInfoStore
+	b.authInfoStorage = authInfoStore
 	return nil
 }
 
@@ -770,6 +771,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
+	if authInfos, ok := b.authInfoStorage.(user.AuthInfoStorage); ok && !readOnly {
+		userStore = user.NewCascadeDeleter(userStore, authInfos)
+	}
 	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
 		iamv0.UserResourceInfo.GroupResource(),
