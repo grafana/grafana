@@ -96,7 +96,6 @@ describe('replacePanel', () => {
     });
     deactivate = activateFullSceneTree(dashboard);
 
-
     replacePanel({ source, oldPanel, newPanel });
 
     expect(source.state.repeatedPanels).toMatchObject([
