@@ -176,8 +176,6 @@ func (r ResourceInfo) UsesRootFolderPermissions() bool {
 var explicitCreateExceptions = map[string]bool{
 	// Folder Edit/Admin include creating subfolders.
 	"folder.grafana.app/folders": true,
-	// Legacy roles:write includes creation and is stored as a group-resource edit tuple.
-	"iam.grafana.app/roles": true,
 }
 
 // RequiresExplicitCreate prevents resource Edit/Admin from creating new resources.

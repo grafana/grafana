@@ -714,7 +714,7 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 // TestTranslateRoleToTuples_RoleManagementPermissions verifies the reconciler
 // end-to-end (Role CRD → tuples) for the three legacy role-management actions:
 //
-//   - roles:write + permissions:type:delegate → edit on group_resource:.../roles
+//   - roles:write + permissions:type:delegate → create and update on group_resource:.../roles
 //   - roles:delete + permissions:type:delegate → delete on group_resource:.../roles
 //   - roles:read + roles:* → get on both .../roles and .../globalroles
 //
@@ -739,7 +739,8 @@ func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
 	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
 		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/roles"},
 		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/globalroles"},
-		{User: "role:role-admin#assignee", Relation: "edit", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/roles"},
 		{User: "role:role-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/roles"},
 	}), tupleKeyStrings(tuples))
 

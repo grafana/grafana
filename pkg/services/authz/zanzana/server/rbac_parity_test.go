@@ -1025,15 +1025,6 @@ func TestIntegrationRBACParityCreateExceptions(t *testing.T) {
 			resource:   folderResource,
 			tuples:     []*openfgav1.TupleKey{common.NewGroupResourceTuple(paritySubject, common.RelationSetAdmin, folderGroup, folderResource, "")},
 		},
-		{
-			name:       "role management write",
-			permission: accesscontrol.Permission{Action: "roles:write", Scope: "permissions:type:delegate"},
-			group:      "iam.grafana.app",
-			resource:   "roles",
-			tuples: zanzana.RoleManagementToTuples(paritySubject, zanzana.RolePermission{
-				Action: "roles:write", Kind: "permissions", Identifier: "delegate",
-			}),
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -1080,6 +1071,80 @@ func TestIntegrationRBACParityCreateExceptions(t *testing.T) {
 				}
 			})
 		})
+	}
+}
+
+// Role write is not an Edit action set: it must not imply read or delete.
+func TestIntegrationRBACParityRoleManagement(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, scope := range []struct {
+		scope, kind, identifier string
+	}{
+		{"permissions:type:delegate", "permissions", "delegate"},
+		{"roles:*", "roles", "*"},
+	} {
+		for _, permission := range []struct {
+			action  string
+			allowed map[string]bool
+		}{
+			{"roles:write", map[string]bool{utils.VerbCreate: true, utils.VerbUpdate: true, utils.VerbPatch: true}},
+			{"roles:read", map[string]bool{utils.VerbGet: true, utils.VerbList: true, utils.VerbWatch: true}},
+			{"roles:delete", map[string]bool{utils.VerbDelete: true, utils.VerbDeleteCollection: true}},
+		} {
+			t.Run(scope.scope+"/"+permission.action, func(t *testing.T) {
+				srv := setupOpenFGAServer(t)
+				setupOpenFGADatabase(t, srv, zanzana.RoleManagementToTuples(paritySubject, zanzana.RolePermission{
+					Action: permission.action, Kind: scope.kind, Identifier: scope.identifier,
+				}))
+				rbacService := rbac.NewTestService(parityUserUID, []accesscontrol.Permission{{Action: permission.action, Scope: scope.scope}}, nil)
+				batch := &authzv1.BatchCheckRequest{Namespace: namespace, Subject: paritySubject}
+				for _, verb := range []string{utils.VerbCreate, utils.VerbUpdate, utils.VerbPatch, utils.VerbGet, utils.VerbList, utils.VerbWatch, utils.VerbDelete, utils.VerbDeleteCollection} {
+					t.Run(verb, func(t *testing.T) {
+						allowed := permission.allowed[verb]
+						for _, name := range []string{"", "role-1"} {
+							t.Run("Check/"+name, func(t *testing.T) {
+								req := parityCheckReq("iam.grafana.app", "roles", "", verb, name, "")
+								rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								require.Equal(t, allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+								res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								assert.Equal(t, allowed, res.GetAllowed(), "Zanzana diverges from RBAC")
+							})
+							batch.Checks = append(batch.Checks, &authzv1.BatchCheckItem{
+								CorrelationId: verb + "-" + name, Group: "iam.grafana.app", Resource: "roles", Verb: verb, Name: name,
+							})
+						}
+						t.Run("List", func(t *testing.T) {
+							req := parityListReq("iam.grafana.app", "roles", "", verb)
+							expected := normalizeParityList(parityListResult{All: allowed})
+							rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+							require.NoError(t, err)
+							require.Equal(t, expected, toParityListResult(rbacRes), "RBAC answer changed")
+							res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+							require.NoError(t, err)
+							assert.Equal(t, expected, toParityListResult(res), "Zanzana diverges from RBAC")
+						})
+					})
+				}
+				t.Run("BatchCheck", func(t *testing.T) {
+					rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+					require.NoError(t, err)
+					res, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+					require.NoError(t, err)
+					for engine, response := range map[string]*authzv1.BatchCheckResponse{"RBAC": rbacRes, "Zanzana": res} {
+						require.Len(t, response.GetResults(), len(batch.Checks), engine)
+						for _, item := range batch.Checks {
+							require.Contains(t, response.GetResults(), item.CorrelationId, engine)
+							result := response.GetResults()[item.CorrelationId]
+							require.Empty(t, result.GetError(), engine)
+							assert.Equal(t, permission.allowed[item.Verb], result.GetAllowed(), "%s: %s", engine, item.CorrelationId)
+						}
+					}
+				})
+			})
+		}
 	}
 }
 
