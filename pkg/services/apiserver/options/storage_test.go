@@ -14,7 +14,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -63,6 +65,46 @@ func TestStorageOptionsRetryCodes(t *testing.T) {
 			}
 		})
 	}
+}
+
+type oversizedReadServer struct {
+	resourcepb.UnimplementedResourceStoreServer
+	attempts atomic.Int32
+}
+
+func (s *oversizedReadServer) Read(context.Context, *resourcepb.ReadRequest) (*resourcepb.ReadResponse, error) {
+	s.attempts.Add(1)
+	return &resourcepb.ReadResponse{Value: make([]byte, 64*1024)}, nil
+}
+
+func TestStorageOptionsDoesNotRetryMessageSizeErrors(t *testing.T) {
+	srv := &oversizedReadServer{}
+	listener := bufconn.Listen(1024 * 1024)
+	t.Cleanup(func() { require.NoError(t, listener.Close()) })
+	server := grpc.NewServer()
+	resourcepb.RegisterResourceStoreServer(server, srv)
+	t.Cleanup(server.Stop)
+	go func() { _ = server.Serve(listener) }()
+
+	opts := NewStorageOptions().buildGrpcDialOptions()
+	opts = append(opts,
+		grpc.WithContextDialer(func(ctx context.Context, _ string) (net.Conn, error) {
+			return listener.DialContext(ctx)
+		}),
+		// The server response is far larger than this limit.
+		grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(1024)),
+	)
+	conn, err := grpc.NewClient("passthrough:///storage", opts...)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, conn.Close()) })
+	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
+	defer cancel()
+	_, err = resourcepb.NewResourceStoreClient(conn).Read(ctx, &resourcepb.ReadRequest{})
+	require.Equal(t, int32(1), srv.attempts.Load())
+	require.ErrorContains(t, err, "received message larger than max")
+	res := resourceutil.AsErrorResult(err)
+	require.Equal(t, int32(http.StatusRequestEntityTooLarge), res.Code)
+	require.Equal(t, string(metav1.StatusReasonRequestEntityTooLarge), res.Reason)
 }
 
 func TestStorageOptions_Validate(t *testing.T) {

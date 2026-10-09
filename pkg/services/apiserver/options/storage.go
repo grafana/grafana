@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/client-go/rest"
@@ -317,6 +320,26 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	return nil
 }
 
+// messageSizeErrorInterceptor sits inside the retry interceptor.
+// A message that is too large fails the same way on every attempt.
+// gRPC reports it as ResourceExhausted, the same code as rate limiting.
+// This interceptor gives it its own status, so callers do not retry it.
+func messageSizeErrorInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	err := invoker(ctx, method, req, reply, cc, opts...)
+	if status.Code(err) != codes.ResourceExhausted || !strings.Contains(err.Error(), "message larger than max") {
+		return err
+	}
+	st := status.New(codes.InvalidArgument, err.Error())
+	if withDetails, detailsErr := st.WithDetails(&resourcepb.ErrorResult{
+		Message: err.Error(),
+		Reason:  string(metav1.StatusReasonRequestEntityTooLarge),
+		Code:    http.StatusRequestEntityTooLarge,
+	}); detailsErr == nil {
+		st = withDetails
+	}
+	return st.Err()
+}
+
 // buildGrpcDialOptions creates gRPC dial options with resilience mechanisms:
 // - Round-robin load balancing with client-side health checking
 // - Retry interceptor for transient connection issues
@@ -333,7 +356,7 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 	opts := []grpc.DialOption{
 		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithChainUnaryInterceptor(retryInterceptor),
+		grpc.WithChainUnaryInterceptor(retryInterceptor, messageSizeErrorInterceptor),
 		grpc.WithDefaultServiceConfig(`{"loadBalancingPolicy":"round_robin"}`),
 		grpc.WithConnectParams(grpc.ConnectParams{
 			Backoff: backoff.Config{
