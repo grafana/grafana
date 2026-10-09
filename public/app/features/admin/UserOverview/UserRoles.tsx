@@ -10,7 +10,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { LoadError } from './LoadError';
 import { TeamLink } from './TeamLink';
-import { UserRolesEditor } from './UserManagement';
+import { UserRolesEditor } from './UserRolesEditor';
 import { UserTable } from './UserTable';
 import { type OverviewUser, type RoleAssignment, useGetOverviewTeamsQuery } from './api';
 

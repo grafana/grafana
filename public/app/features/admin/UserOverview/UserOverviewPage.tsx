@@ -7,9 +7,11 @@ import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
+import { AuthenticationTab } from './AuthenticationTab';
 import { LoadError } from './LoadError';
+import { OrganizationsTab } from './OrganizationsTab';
+import { SessionsTab } from './SessionsTab';
 import { UserDetails } from './UserDetails';
-import { OrganizationsTab, SessionsTab, AuthenticationTab } from './UserManagement';
 import { UserRoles } from './UserRoles';
 import { UserTeams } from './UserTeams';
 import { useUserOverview } from './api';

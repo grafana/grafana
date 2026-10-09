@@ -12,7 +12,8 @@ import {
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { AccountManagement, ActionError } from './UserManagement';
+import { AccountManagement } from './AccountManagement';
+import { ActionError } from './ActionError';
 import { type OverviewUser } from './api';
 
 type EditableField = 'name' | 'email' | 'login' | 'password' | 'isGrafanaAdmin';
@@ -138,85 +139,125 @@ export function UserDetails({ user }: { user: OverviewUser }) {
       <table className="filter-table form-inline">
         <tbody>
           {fields.map((field) => (
-            <tr key={field.label}>
-              <td className={`width-16 ${labelStyle}`}>{field.label}</td>
-              <td className="width-25" colSpan={2}>
-                {field.edit && editing === field.edit ? (
-                  <form
-                    id={`user-field-${field.edit}`}
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      save();
-                    }}
-                  >
-                    {editing === 'isGrafanaAdmin' ? (
-                      <RadioButtonGroup
-                        options={[
-                          { label: yes, value: 'true' },
-                          { label: no, value: 'false' },
-                        ]}
-                        value={value}
-                        onChange={setValue}
-                        disabled={pending}
-                      />
-                    ) : (
-                      <Input
-                        aria-label={field.label}
-                        value={value}
-                        onChange={(event) => setValue(event.currentTarget.value)}
-                        type={editing === 'password' ? 'password' : editing === 'email' ? 'email' : 'text'}
-                        autoFocus
-                        disabled={pending}
-                        width={30}
-                      />
-                    )}
-                  </form>
-                ) : (
-                  <span>{field.value || '—'}</span>
-                )}
-              </td>
-              <td>
-                {field.edit && editing === field.edit ? (
-                  <Stack gap={1}>
-                    <Button type="submit" form={`user-field-${field.edit}`} disabled={pending}>
-                      {t('admin.user-overview.save', 'Save')}
-                    </Button>
-                    <Button fill="text" disabled={pending} onClick={() => setEditing(null)}>
-                      {t('admin.user-overview.cancel', 'Cancel')}
-                    </Button>
-                  </Stack>
-                ) : (
-                  <>
-                    {field.edit ? (
-                      <Button
-                        fill="text"
-                        aria-label={t('admin.user-overview.edit-field', 'Edit {{field}}', { field: field.label })}
-                        disabled={pending}
-                        onClick={() => {
-                          setEditing(field.edit!);
-                          setValue(
-                            field.edit === 'password'
-                              ? ''
-                              : field.edit === 'isGrafanaAdmin'
-                                ? String(isAdmin)
-                                : (field.value ?? '')
-                          );
-                        }}
-                      >
-                        {t('admin.user-profile.edit-button', 'Edit')}
-                      </Button>
-                    ) : (
-                      field.locked && <span className={lockStyle}>{field.locked}</span>
-                    )}
-                  </>
-                )}
-              </td>
-            </tr>
+            <DetailRow
+              key={field.label}
+              field={field}
+              editing={editing === field.edit}
+              value={value}
+              pending={pending}
+              onChange={setValue}
+              onSave={save}
+              onCancel={() => setEditing(null)}
+              onEdit={() => {
+                setEditing(field.edit!);
+                profileUpdate.reset();
+                passwordUpdate.reset();
+                adminUpdate.reset();
+                setValue(
+                  field.edit === 'password'
+                    ? ''
+                    : field.edit === 'isGrafanaAdmin'
+                      ? String(isAdmin)
+                      : (field.value ?? '')
+                );
+              }}
+            />
           ))}
         </tbody>
       </table>
       {user.hasProfile && <AccountManagement user={user} />}
     </Stack>
+  );
+}
+
+function DetailRow({
+  field,
+  editing,
+  value,
+  pending,
+  onChange,
+  onSave,
+  onCancel,
+  onEdit,
+}: {
+  field: DetailField;
+  editing: boolean;
+  value: string;
+  pending: boolean;
+  onChange: (value: string) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  onEdit: () => void;
+}) {
+  if (editing) {
+    return (
+      <tr>
+        <td className={`width-16 ${labelStyle}`}>{field.label}</td>
+        <td className="width-25" colSpan={2}>
+          <form
+            id={`user-field-${field.edit}`}
+            onSubmit={(event) => {
+              event.preventDefault();
+              onSave();
+            }}
+          >
+            {field.edit === 'isGrafanaAdmin' ? (
+              <RadioButtonGroup
+                options={[
+                  { label: t('admin.user-overview.yes', 'Yes'), value: 'true' },
+                  { label: t('admin.user-overview.no', 'No'), value: 'false' },
+                ]}
+                value={value}
+                onChange={onChange}
+                disabled={pending}
+              />
+            ) : (
+              <Input
+                aria-label={field.label}
+                value={value}
+                onChange={(event) => onChange(event.currentTarget.value)}
+                type={field.edit === 'password' ? 'password' : field.edit === 'email' ? 'email' : 'text'}
+                autoFocus
+                disabled={pending}
+                width={30}
+              />
+            )}
+          </form>
+        </td>
+        <td>
+          <Stack gap={1}>
+            <Button type="submit" form={`user-field-${field.edit}`} disabled={pending}>
+              {t('admin.user-overview.save', 'Save')}
+            </Button>
+            <Button fill="text" disabled={pending} onClick={onCancel}>
+              {t('admin.user-overview.cancel', 'Cancel')}
+            </Button>
+          </Stack>
+        </td>
+      </tr>
+    );
+  }
+  return (
+    <tr>
+      <td className={`width-16 ${labelStyle}`}>{field.label}</td>
+      <td className="width-25" colSpan={2}>
+        {field.value || '—'}
+      </td>
+      <td>
+        {field.edit ? (
+          <Button
+            fill="text"
+            aria-label={t('admin.user-overview.edit-field', 'Edit {{field}}', { field: field.label })}
+            disabled={pending}
+            onClick={onEdit}
+          >
+            {t('admin.user-profile.edit-button', 'Edit')}
+          </Button>
+        ) : (
+          field.locked && <span className={lockStyle}>{field.locked}</span>
+        )}
+      </td>
+    </tr>
   );
 }
 
