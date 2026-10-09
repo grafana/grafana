@@ -36,8 +36,9 @@ export interface MutationClient {
 type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
 
 export interface PanelRuntimeError {
-  // Where the error came from, so callers can tell a failed query from a broken plugin.
-  source: 'query' | 'plugin' | 'notice';
+  // Where the error came from, so callers can tell a failed query from a broken plugin. `render` errors
+  // are the ones a loaded panel reported while drawing, through `PanelContext.notices`.
+  source: 'query' | 'plugin' | 'notice' | 'render';
   // A subset of `@grafana/data`'s `DataQueryError`; refId/type are set for query errors only.
   message?: string;
   refId?: string;

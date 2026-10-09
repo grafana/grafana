@@ -615,7 +615,14 @@ Read current errors on the open dashboard without returning panel specifications
 { "type": "GET_PANEL_ERRORS", "payload": { "elements": ["panel-1", "panel-5"] } }
 ```
 
-Omit `elements` to inspect all elements. The response includes `errors` (element name, title, and structured query/plugin/error-notice messages), separate `noDataPanels`, `panelsChecked`, and `uncheckedPanels` with reasons `loading`, `status_unavailable`, or `not_found`. Loading panels do not report stale errors. Empty error lists do not establish that unchecked panels are healthy; render those panels and check again. Callers should detect command availability on older Grafana versions.
+Omit `elements` to inspect all elements. The response includes `errors` (element name, title, and structured messages), separate `noDataPanels`, `panelsChecked`, and `uncheckedPanels` with reasons `loading`, `status_unavailable`, or `not_found`. Loading panels do not report stale errors. Empty error lists do not establish that unchecked panels are healthy; render those panels and check again. Callers should detect command availability on older Grafana versions.
+
+Each error has a `source`:
+
+- `query`: a query returned an error.
+- `plugin`: the panel plugin failed to load (missing, disabled or broken module). Change the panel type or install the plugin.
+- `notice`: a data frame notice with error severity.
+- `render`: the loaded panel reported an error while drawing, through `PanelContext.notices`. Fix the panel's options or code.
 
 ### `LIST_PANELS`
 

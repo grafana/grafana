@@ -124,6 +124,18 @@ export function getPanelRuntimeStatus(vizPanel: VizPanel): PanelRuntimeStatus | 
     }
   }
 
+  // Errors and notices the panel plugin published itself, such as a failed draw (PanelContext.notices).
+  for (const item of vizPanel.getPanelContext().notices?.getSnapshot().items ?? []) {
+    if (item.origin !== 'panel') {
+      continue;
+    }
+    if (item.severity === 'error') {
+      errorList.push({ source: 'render', message: item.text });
+    } else {
+      notices.push({ severity: item.severity, text: item.text });
+    }
+  }
+
   const hasData = Array.isArray(series) && series.some((s: DataFrame) => s.fields.length > 0);
 
   return {
