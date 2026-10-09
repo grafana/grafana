@@ -89,7 +89,7 @@ export function LabelValues({ id, dsRef, timeRange, metric, labelKey }: Props) {
       {visible.length > 0 && (
         <ul className={styles.valueList}>
           {visible.map((value) => (
-            <li key={value} className={styles.valueRow} data-testid="signal-explorer-value-row">
+            <li key={value} className={styles.valueRow} title={value} data-testid="signal-explorer-value-row">
               {value}
             </li>
           ))}

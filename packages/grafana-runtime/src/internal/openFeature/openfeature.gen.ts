@@ -22,6 +22,8 @@ export const FlagKeys = {
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
+  /** Enable assistant reviews on the alert quality page. */
+  AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables the new Alerting navigation structure with improved menu grouping */
@@ -58,6 +60,8 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
   DashboardsLibraryPanelRepeatFromServerResolution: "dashboards.libraryPanelRepeatFromServerResolution",
+  /** Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto */
+  DashboardsPublicDashboardBadgeFromApi: "dashboards.publicDashboardBadgeFromApi",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -303,6 +307,17 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
+ * Enable assistant reviews on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleReviews`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleReviews = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleReviews", false, options).value;
+};
+
+/**
  * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
  *
  * **Details:**
@@ -498,6 +513,17 @@ export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagDashboardsLibraryPanelRepeatFromServerResolution = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboards.libraryPanelRepeatFromServerResolution", false, options).value;
+};
+
+/**
+ * Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto
+ *
+ * **Details:**
+ * - flag key: `dashboards.publicDashboardBadgeFromApi`
+ * - default value: `false`
+ */
+export const useFlagDashboardsPublicDashboardBadgeFromApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.publicDashboardBadgeFromApi", false, options).value;
 };
 
 /**

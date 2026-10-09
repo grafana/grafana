@@ -653,6 +653,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "dashboards.publicDashboardBadgeFromApi",
+			Description: "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
@@ -1164,6 +1172,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "authz.useLegacyCheck",
+			Description:  "Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "zanzana",
 			Description:  "Use openFGA as authorization engine.",
 			Stage:        FeatureStageExperimental,
@@ -1439,6 +1456,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "alerting.ruleReviews",
+			Description:  "Enable assistant reviews on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 		{
 			Name:         "alerting.ruleQuality",
