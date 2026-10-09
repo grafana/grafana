@@ -235,7 +235,9 @@ var (
 	_ builder.OpenAPIPostProcessor     = (*manifestBuilder)(nil)
 )
 
-// ValidateManifest reports whether a manifest can be served for a plugin.
+// ValidateManifest reports whether a manifest can be served for a plugin. It
+// checks only that the group is a valid name: which groups a plugin may serve
+// is the caller's policy (see newPluginBackend in pkg/router).
 func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 	if manifest == nil {
 		return fmt.Errorf("missing manifest")

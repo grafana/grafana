@@ -455,6 +455,22 @@ func TestPluginLoaderStartupDiscoveryRequiresMiddleware(t *testing.T) {
 	}
 }
 
+func TestInitPluginRolesSkipsRoutableCoreGroups(t *testing.T) {
+	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
+		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
+			return []*plugins.FoundBundle{{Primary: plugins.FoundPlugin{
+				JSONData: plugins.JSONData{ID: "playlist-app", Type: plugins.TypeApp},
+				FS: plugins.NewInMemoryFS(map[string][]byte{
+					"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"playlist","group":"playlist.grafana.app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Playlist","plural":"playlists","scope":"Namespaced"}]}]}}`),
+				}),
+			}}}, nil
+		}}}
+	}}
+	service := &recordingManifestRoleService{}
+	require.NoError(t, initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service}))
+	require.Zero(t, service.calls, "a core group keeps the roles its own app declares")
+}
+
 func TestInitPluginRolesDoesNotLoadSchemas(t *testing.T) {
 	ctx := t.Context()
 	roles := &recordingManifestRoleService{}

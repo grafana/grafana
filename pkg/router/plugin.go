@@ -189,7 +189,11 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 				continue
 			}
 			group := manifest.Group
-			if !strings.HasSuffix(group, pluginManifestGroupSuffix) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+			if slices.Contains(routableCoreGroups, group) {
+				// A core group keeps the roles its own app declares.
+				continue
+			}
+			if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
 				logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
 				continue
 			}
@@ -209,7 +213,7 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
-				if jsonData.ID == "v1" || !isAppPluginID(jsonData.ID) {
+				if !isAppPluginID(jsonData.ID) {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
