@@ -110,7 +110,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 		if err := ctx.Err(); err != nil {
 			return 0, "", err
 		}
-		n, readErr := value.Read(buffer)
+		n, readErr := io.ReadFull(value, buffer)
 		if n > 0 {
 			if int64(n) > blobUploadMaxSize-size {
 				return 0, "", fmt.Errorf("blob exceeds %d bytes", blobUploadMaxSize)
@@ -122,7 +122,7 @@ func (k *SqlKV) SaveBlobStream(ctx context.Context, key BlobKey, contentType str
 			size += int64(n)
 			chunks++
 		}
-		if errors.Is(readErr, io.EOF) {
+		if errors.Is(readErr, io.EOF) || errors.Is(readErr, io.ErrUnexpectedEOF) {
 			break
 		}
 		if readErr != nil {

@@ -3,10 +3,14 @@ package kv
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"database/sql/driver"
+	"encoding/hex"
+	"io"
 	"strconv"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -67,6 +71,35 @@ func TestBlobPublicationAssemblesInDatabase(t *testing.T) {
 			require.Equal(t, int64(len(body)), size)
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
+	}
+}
+
+func TestBlobPublicationCoalescesShortReads(t *testing.T) {
+	for _, dialect := range []string{"mysql", "postgres", "sqlite"} {
+		for _, length := range []int{2 * blobUploadChunkSize, 2*blobUploadChunkSize + 17} {
+			for _, eofWithData := range []bool{false, true} {
+				t.Run(dialect+"/"+strconv.Itoa(length)+"/eofWithData="+strconv.FormatBool(eofWithData), func(t *testing.T) {
+					store, _, mock := setupSQLKVMock(t, dialect)
+					key := BlobKey{UID: "uid", Group: "group", Resource: "resource", Namespace: "ns", Name: "name"}
+					body := bytes.Repeat([]byte{0xff}, length)
+					uploadID := sameUploadID{id: new(string)}
+					expectStagedUpload(mock, dialect, uploadID, key, body, len(body))
+					mock.ExpectExec("DELETE FROM .*resource_blob_upload_chunk.* WHERE .*upload_id").WithArgs(uploadID).WillReturnResult(sqlmock.NewResult(0, 0))
+					mock.ExpectCommit()
+
+					var reader io.Reader = iotest.OneByteReader(bytes.NewReader(body))
+					if eofWithData {
+						reader = iotest.DataErrReader(reader)
+					}
+					size, digest, err := store.SaveBlobStream(context.Background(), key, "application/octet-stream", reader)
+					require.NoError(t, err)
+					require.Equal(t, int64(len(body)), size)
+					sum := md5.Sum(body)
+					require.Equal(t, hex.EncodeToString(sum[:]), digest)
+					require.NoError(t, mock.ExpectationsWereMet())
+				})
+			}
+		}
 	}
 }
 
