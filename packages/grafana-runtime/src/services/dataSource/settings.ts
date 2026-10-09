@@ -25,7 +25,7 @@ import { applyFilters, type GetDataSourceInstanceListFilters } from './listFilte
 import { describeRef, logDataSourceWarning } from './logging';
 import { clearPluginCache } from './pluginCache';
 import { resolveRef, _resetForTests as resetResolveRef } from './resolveRef';
-import { BootDataSource, createBootDataSnapshot } from './sources/bootDataSource';
+import { BootDataSource } from './sources/bootDataSource';
 import { createDataSourceCacheSource } from './sources/selectSource';
 import { type BootDataSourceSettings } from './sources/types';
 
@@ -43,6 +43,7 @@ export function initDataSourceInstanceSettings(
   settings: Record<string, DataSourceInstanceSettings>,
   defaultDsName: string
 ): void {
+  clearPluginCache();
   setDataSourceCacheSource(createDataSourceCacheSource({ datasources: settings, defaultDatasource: defaultDsName }));
 }
 
@@ -106,9 +107,10 @@ export async function reloadDataSourceInstanceSettings(): Promise<void> {
 }
 
 /**
- * Sync the instance-settings cache from an already-fetched `/api/frontend/settings`
- * payload, without issuing another backend request. Built-in (e.g. expression) and
- * runtime data sources survive because the cache re-applies them.
+ * Sync the instance-settings cache after a data source change. The boot source reuses the
+ * already-fetched `/api/frontend/settings` payload without another backend request. The MT
+ * source ignores the payload and refetches. Built-in (e.g. expression) and runtime data
+ * sources survive because the cache re-applies them.
  *
  * Transition-period helper: while both the legacy `DataSourceSrv` and the new async
  * datasource APIs exist, `DataSourceSrv.reload()` calls this so a single fetch updates
@@ -116,9 +118,12 @@ export async function reloadDataSourceInstanceSettings(): Promise<void> {
  *
  * @internal
  */
-export function syncDataSourceInstanceSettings(settings: BootDataSourceSettings): void {
+export async function syncDataSourceInstanceSettings(settings: BootDataSourceSettings): Promise<void> {
+  // The boot source builds its snapshot from the payload. The MT source ignores it and refetches.
+  const source = getDataSourceCacheSource() ?? new BootDataSource(settings);
+  const snapshot = await source.refreshList(settings);
   clearPluginCache();
-  applySnapshot(createBootDataSnapshot(settings));
+  applySnapshot(snapshot);
 }
 
 /**

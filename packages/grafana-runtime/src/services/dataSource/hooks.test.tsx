@@ -180,8 +180,8 @@ describe('useDataSourceInstanceListItem', () => {
     const { result } = renderHook(() => useDataSourceInstanceListItem('uid-alpha'));
     await waitFor(() => expect(result.current.item?.name).toBe('Alpha'));
 
-    act(() => {
-      syncDataSourceInstanceSettings({
+    await act(async () => {
+      await syncDataSourceInstanceSettings({
         datasources: { Synced: ds({ id: 1, uid: 'uid-alpha', name: 'Synced', type: 'test-db' }) },
         defaultDatasource: 'Synced',
       });
