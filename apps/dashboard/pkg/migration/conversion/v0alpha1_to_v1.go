@@ -81,10 +81,12 @@ func ConvertDashboard_V0_to_V1(in *dashv0.Dashboard, out *dashv1.Dashboard, scop
 		return schemaversion.NewMigrationError(err.Error(), schemaversion.GetSchemaVersion(in.Spec.Object), schemaversion.LATEST_VERSION, "Convert_V0_to_V1")
 	}
 
-	// merge contexts to have namespace and spans
 	if ctxWithNamespace != nil {
 		if ns := request.NamespaceValue(ctxWithNamespace); ns != "" {
 			ctx = request.WithNamespace(ctx, ns)
+		}
+		if requester, err := identity.GetRequester(ctxWithNamespace); err == nil {
+			ctx = identity.WithRequester(ctx, requester)
 		}
 	}
 
