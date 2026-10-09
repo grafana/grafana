@@ -268,13 +268,17 @@ func runTestKVAllSections(t *testing.T, kv kvpkg.KV, nsPrefix string) {
 		t.Run(section, func(t *testing.T) {
 			ctx := t.Context()
 			key := namespacedKey(nsPrefix, "key")
-			// Binary bytes exercise the default opaque value contract.
-			value := []byte{0x00, 0xff, 'a', 'b', 'c'}
+			// Most SQL sections use text columns, so their fixtures must be valid text.
+			value := []byte(`{"value":"all-sections-test"}`)
 			switch section {
+			case kvpkg.SearchSnapshotDataSection, kvpkg.SearchSnapshotManifestSection:
+				// Search snapshots use binary columns and must preserve arbitrary bytes.
+				value = []byte{0x00, 0xff, 'a', 'b', 'c'}
 			case kvpkg.BlobDataSection:
 				// SQL decodes the resource identity and content type into separate columns.
-				key = (kvpkg.BlobKey{Group: "group", Resource: "resource", Namespace: nsPrefix, Name: "name", UID: "all-sections-test"}).String()
-				value = append(kvpkg.EncodeBlobValueHeader("application/octet-stream"), value...)
+				// PostgreSQL requires the blob UID to be a valid UUID.
+				key = (kvpkg.BlobKey{Group: "group", Resource: "resource", Namespace: nsPrefix, Name: "name", UID: "00000000-0000-4000-8000-000000000001"}).String()
+				value = append(kvpkg.EncodeBlobValueHeader("application/octet-stream"), 0x00, 0xff, 'a', 'b', 'c')
 			case kvpkg.LastImportTimeSection:
 				// SQL stores the timestamp from the key and ignores the value.
 				key = kvpkg.LastImportTimeKey(nsPrefix, "group", "resource", time.Unix(1700000000, 0))
