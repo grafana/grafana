@@ -518,6 +518,18 @@ describe('userStorage', () => {
       expect(getStoreMocks().set).not.toHaveBeenCalled();
     });
 
+    it('refreshes the cache from the fetched resource even when the write fails', async () => {
+      const storage = new UserStorage('svc');
+      request.mockReturnValueOnce(fetched('6', { key: 'old' }));
+      expect(await storage.getItem('key')).toBe('old');
+      request.mockReturnValueOnce(fetched('7', { key: 'fresh' })).mockImplementationOnce(fail(500));
+
+      await expect(storage.updateItem('key', () => 'next')).rejects.toEqual({ status: 500 });
+
+      expect(await storage.getItem('key')).toBe('fresh');
+      expect(request).toHaveBeenCalledTimes(3);
+    });
+
     it('uses localStorage in one step when the user is not signed in', async () => {
       config.bootData.user.isSignedIn = false;
       getStoreMocks().get.mockReturnValue('old');
@@ -532,7 +544,7 @@ describe('userStorage', () => {
     });
   });
 
-  describe('acquireLock', () => {
+  describe('operation queue', () => {
     it('runs queued operations one after another', async () => {
       const deferred = <T,>() => {
         let resolve!: (value: T) => void;
@@ -652,7 +664,7 @@ describe('userStorage', () => {
       expect(value).toBe('new-value1');
     });
 
-    it('concurrent initialization requests share the same promise', async () => {
+    it('concurrent first reads make one request', async () => {
       let resolvePromise: (value: FetchResponse | FetchError) => void;
       const promise = new Promise<FetchResponse | FetchError>((resolve) => {
         resolvePromise = resolve;

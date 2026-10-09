@@ -1,4 +1,4 @@
-import { get } from 'lodash';
+import { get, noop } from 'lodash';
 import { useRef } from 'react';
 import { lastValueFrom } from 'rxjs';
 
@@ -9,15 +9,15 @@ import { type BackendSrvRequest, getBackendSrv } from '../services';
 
 const baseURL = `/apis/userstorage.grafana.app/v0alpha1/namespaces/${config.namespace}/user-storage`;
 
-// Global cache for user storage initialization requests
-// Cache key: resourceName (e.g., "plugin-id:user-uid")
-// Cache value: Promise<UserStorageSpec | null> | UserStorageSpec | null
-const storageCache = new Map<string, Promise<UserStorageSpec | null> | UserStorageSpec | null>();
+// Per resourceName (e.g. "plugin-id:user-uid"): the spec, or `null` once a GET returned 404.
+// Only touched under the operation lock, so it never has to hold a pending load.
+const storageCache = new Map<string, UserStorageSpec | null>();
 
-// Lock map to serialize operations per resourceName
-// Cache key: resourceName
-// Cache value: Promise that resolves when the lock is available
+// Per resourceName: settles once the last queued operation has finished.
 const operationLocks = new Map<string, Promise<void>>();
+
+// Each attempt costs one GET and one write; this bounds the cost of a key many tabs fight over.
+const WRITE_ATTEMPTS = 3;
 
 /**
  * Clears the global storage cache. Used for testing purposes.
@@ -32,9 +32,6 @@ export function _clearStorageCache() {
 }
 
 interface RequestOptions extends BackendSrvRequest {
-  manageError?: (err: unknown) => { error: unknown };
-  showErrorAlert?: boolean;
-
   // rtk codegen sets this
   body?: BackendSrvRequest['data'];
 }
@@ -60,13 +57,17 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
     );
     return { data: responseData, meta };
   } catch (error) {
-    return requestOptions.manageError ? requestOptions.manageError(error) : { error };
+    return { error };
   }
 }
 
 /**
  * A class for interacting with the backend user storage.
- * Exposed internally only to avoid misuse (wrong service name)..
+ * Exposed internally only to avoid misuse (wrong service name).
+ *
+ * Two failure policies coexist on purpose. `getItem`, `setItem`, `deleteItem` and `allItems` fall back to
+ * localStorage when a request fails, so a plugin keeps working. `updateItem` rejects instead: its callers
+ * merge against the stored copy, and a merge over a copy the server never saw is worse than no write.
  */
 export class UserStorage implements UserStorageType {
   private service: string;
@@ -81,41 +82,29 @@ export class UserStorage implements UserStorageType {
     this.canUseUserStorage = config.bootData.user.isSignedIn;
   }
 
-  /**
-   * Serializes operations on this resourceName: resolves once every earlier holder has released, with
-   * the function that releases this hold. A hold never rejects, so a holder whose operation throws
-   * still releases from its `finally` and later holders are not stuck.
-   */
-  private acquireLock(): Promise<() => void> {
+  private localKey(key: string) {
+    return `${this.resourceName}:${key}`;
+  }
+
+  /** Runs `operation` once every earlier operation on this resourceName has settled, whether it succeeded or threw. */
+  private runExclusive<T>(operation: () => Promise<T>): Promise<T> {
     const previous = operationLocks.get(this.resourceName) ?? Promise.resolve();
-    let release = () => {};
-    const mine = new Promise<void>((resolve) => {
-      release = resolve;
-    });
-    const tail = previous.then(() => mine);
+    const result = previous.then(operation);
+    const tail = result.then(noop, noop);
     operationLocks.set(this.resourceName, tail);
-    return previous.then(() => () => {
-      release();
+    tail.then(() => {
       if (operationLocks.get(this.resourceName) === tail) {
         operationLocks.delete(this.resourceName);
       }
     });
+    return result;
   }
 
   /** The stored resource, `null` when none exists yet (404). Throws on any other failure. */
   private async fetchResource(): Promise<UserStorageResource | null> {
-    const response = await apiRequest<UserStorageResource>({
-      url: `/${this.resourceName}`,
-      method: 'GET',
-      manageError: (error) => {
-        if (get(error, 'status') === 404) {
-          return { error: null };
-        }
-        return { error };
-      },
-    });
+    const response = await apiRequest<UserStorageResource>({ url: `/${this.resourceName}`, method: 'GET' });
     if ('error' in response) {
-      if (response.error === null) {
+      if (get(response.error, 'status') === 404) {
         return null;
       }
       throw response.error;
@@ -123,60 +112,38 @@ export class UserStorage implements UserStorageType {
     return response.data;
   }
 
+  private createResource(data: UserStorageSpec['data']) {
+    return apiRequest<UserStorageResource>({
+      url: `/`,
+      method: 'POST',
+      body: {
+        metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
+        spec: { data },
+      },
+    });
+  }
+
+  /** Merge-patch; a `null` value deletes that key. With `metadata.resourceVersion` the server rejects a stale write. */
+  private patchResource(body: {
+    metadata?: { resourceVersion: string };
+    spec: { data: Record<string, string | null> };
+  }) {
+    return apiRequest<UserStorageResource>({
+      headers: { 'Content-Type': 'application/merge-patch+json' },
+      url: `/${this.resourceName}`,
+      method: 'PATCH',
+      body,
+    });
+  }
+
+  /** Fills the cache on first use. Runs under the lock, so nothing reads the cache mid-load. Returns the load error, if any. */
   private async init(): Promise<unknown> {
-    // Check global cache first
-    const cached = storageCache.get(this.resourceName);
-    if (cached !== undefined) {
-      if (cached instanceof Promise) {
-        // Cache has a promise, await it
-        try {
-          await cached;
-          return;
-        } catch (error) {
-          // Promise rejected, return error to match original behavior
-          return error;
-        }
-      } else {
-        // Cache has a resolved result, already initialized
-        return;
-      }
-    }
-
-    // No cache entry, create the request promise and cache it atomically
-    // Use a double-check pattern to handle race conditions
-    let requestPromise = storageCache.get(this.resourceName);
-    if (requestPromise instanceof Promise) {
-      // Another instance created the promise between our check and now, use it
-      try {
-        await requestPromise;
-        return;
-      } catch (error) {
-        return error;
-      }
-    }
-
-    // Create new promise
-    requestPromise = this.fetchResource().then((resource) => resource?.spec ?? null);
-
-    // Atomically set the promise only if cache is still empty
-    const existing = storageCache.get(this.resourceName);
-    if (existing === undefined) {
-      storageCache.set(this.resourceName, requestPromise);
-    } else if (existing instanceof Promise) {
-      // Another instance set a promise, use it instead
-      requestPromise = existing;
-    } else {
-      // Another instance already resolved, we're done
+    if (storageCache.has(this.resourceName)) {
       return;
     }
-
     try {
-      const result = await requestPromise;
-      // Replace promise with resolved result in cache
-      storageCache.set(this.resourceName, result);
+      storageCache.set(this.resourceName, (await this.fetchResource())?.spec ?? null);
     } catch (error) {
-      // Remove failed promise from cache so it can be retried
-      storageCache.delete(this.resourceName);
       return error;
     }
     return;
@@ -184,103 +151,40 @@ export class UserStorage implements UserStorageType {
 
   async getItem(key: string): Promise<string | null> {
     if (!this.canUseUserStorage) {
-      // Fallback to localStorage
-      return store.get(`${this.resourceName}:${key}`) ?? null;
+      return store.get(this.localKey(key)) ?? null;
     }
-
-    // Acquire lock to serialize operations
-    const releaseLock = await this.acquireLock();
-    try {
-      // Ensure storage is initialized
+    return this.runExclusive(async () => {
       await this.init();
-      const storageSpec = storageCache.get(this.resourceName);
-      if (!storageSpec) {
-        // Storage doesn't exist or still loading, fallback to localStorage
-        return store.get(`${this.resourceName}:${key}`) ?? null;
+      const spec = storageCache.get(this.resourceName);
+      if (!spec) {
+        // No resource yet, or the load failed: fall back to localStorage
+        return store.get(this.localKey(key)) ?? null;
       }
-      if (storageSpec instanceof Promise) {
-        const result = await storageSpec;
-        return result?.data[key] ?? null;
-      }
-      return storageSpec.data[key] ?? null;
-    } finally {
-      releaseLock();
-    }
+      return spec.data[key] ?? null;
+    });
   }
 
   async setItem(key: string, value: string): Promise<void> {
     if (!this.canUseUserStorage) {
-      // Fallback to localStorage
-      store.set(`${this.resourceName}:${key}`, value);
+      store.set(this.localKey(key), value);
       return;
     }
-
-    // Acquire lock to serialize operations
-    const releaseLock = await this.acquireLock();
-    try {
-      const newData = { data: { [key]: value } };
-      // Ensure storage is initialized
+    return this.runExclusive(async () => {
       const error = await this.init();
       if (error) {
-        // Fallback to localStorage
-        store.set(`${this.resourceName}:${key}`, value);
+        store.set(this.localKey(key), value);
         return;
       }
-
-      let storageSpec = storageCache.get(this.resourceName);
-      if (storageSpec instanceof Promise) {
-        storageSpec = await storageSpec;
-      }
-      if (!storageSpec) {
-        // No user storage found, create a new one
-        const createResult = await apiRequest<UserStorageSpec>({
-          url: `/`,
-          method: 'POST',
-          body: {
-            metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
-            spec: newData,
-          },
-          manageError: (error) => {
-            // Fallback to localStorage
-            store.set(`${this.resourceName}:${key}`, value);
-            return { error };
-          },
-        });
-        if ('error' in createResult && createResult.error) {
-          // Error occurred, fallback already handled in manageError
-          return;
-        }
-        // Update global cache with the new storage
-        storageCache.set(this.resourceName, newData);
+      const spec = storageCache.get(this.resourceName);
+      const result = spec
+        ? await this.patchResource({ spec: { data: { [key]: value } } })
+        : await this.createResource({ [key]: value });
+      if ('error' in result) {
+        store.set(this.localKey(key), value);
         return;
       }
-
-      // Clone the storage spec to avoid mutating the cached object directly
-      // This prevents race conditions where multiple setItem calls modify the same object
-      const updatedSpec: UserStorageSpec = {
-        data: { ...storageSpec.data, [key]: value },
-      };
-
-      const updateResult = await apiRequest<UserStorageSpec>({
-        headers: { 'Content-Type': 'application/merge-patch+json' },
-        url: `/${this.resourceName}`,
-        method: 'PATCH',
-        body: { spec: newData },
-        manageError: (error) => {
-          // Fallback to localStorage
-          store.set(`${this.resourceName}:${key}`, value);
-          return { error };
-        },
-      });
-      if ('error' in updateResult && updateResult.error) {
-        // Error occurred, fallback already handled in manageError
-        return;
-      }
-      // Update global cache with the modified storage (using cloned object)
-      storageCache.set(this.resourceName, updatedSpec);
-    } finally {
-      releaseLock();
-    }
+      storageCache.set(this.resourceName, { data: { ...spec?.data, [key]: value } });
+    });
   }
 
   /**
@@ -288,46 +192,33 @@ export class UserStorage implements UserStorageType {
    * (`null` when there is none) and returns the value to store, or `undefined` to store nothing.
    * Signed in: fetches the resource fresh, writes with its `metadata.resourceVersion` so the server
    * rejects a write over a copy it has not seen, and on that rejection re-reads and re-runs `update`
-   * (three attempts). Rejects when a request fails; nothing is written to localStorage.
-   * Signed out: localStorage, read and written in one synchronous step, so tabs cannot interleave.
+   * (`WRITE_ATTEMPTS` times). Every snapshot it fetches refreshes the cache, so a later `getItem` sees the
+   * fresh value even when the write fails. Rejects when a request fails; nothing is written to localStorage.
+   * Signed out: localStorage. There is no cross-tab lock, so two tabs updating at the same instant can drop
+   * one update; the next update merges from storage again.
    */
   async updateItem(key: string, update: (current: string | null) => string | undefined): Promise<void> {
     if (!this.canUseUserStorage) {
-      const storeKey = `${this.resourceName}:${key}`;
-      const next = update(store.get(storeKey) ?? null);
+      const next = update(store.get(this.localKey(key)) ?? null);
       if (next !== undefined) {
-        store.set(storeKey, next);
+        store.set(this.localKey(key), next);
       }
       return;
     }
-
-    const releaseLock = await this.acquireLock();
-    try {
-      for (let attempt = 0; attempt < 3; attempt++) {
+    return this.runExclusive(async () => {
+      for (let attempt = 0; attempt < WRITE_ATTEMPTS; attempt++) {
         const resource = await this.fetchResource();
+        storageCache.set(this.resourceName, resource?.spec ?? null);
         const next = update(resource?.spec.data[key] ?? null);
         if (next === undefined) {
-          storageCache.set(this.resourceName, resource?.spec ?? null);
           return;
         }
         const result = resource
-          ? await apiRequest<UserStorageResource>({
-              headers: { 'Content-Type': 'application/merge-patch+json' },
-              url: `/${this.resourceName}`,
-              method: 'PATCH',
-              body: {
-                metadata: { resourceVersion: resource.metadata.resourceVersion },
-                spec: { data: { [key]: next } },
-              },
+          ? await this.patchResource({
+              metadata: { resourceVersion: resource.metadata.resourceVersion },
+              spec: { data: { [key]: next } },
             })
-          : await apiRequest<UserStorageResource>({
-              url: `/`,
-              method: 'POST',
-              body: {
-                metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
-                spec: { data: { [key]: next } },
-              },
-            });
+          : await this.createResource({ [key]: next });
         if ('error' in result) {
           // Stale version, or another client created the resource first: re-read and run `update` again.
           if (get(result.error, 'status') === 409) {
@@ -339,89 +230,41 @@ export class UserStorage implements UserStorageType {
         return;
       }
       throw new Error('User storage: conflicting writes');
-    } finally {
-      releaseLock();
-    }
+    });
   }
 
   async deleteItem(key: string): Promise<void> {
     if (!this.canUseUserStorage) {
-      // Fallback to localStorage
-      store.delete(`${this.resourceName}:${key}`);
+      store.delete(this.localKey(key));
       return;
     }
-
-    // Acquire lock to serialize operations
-    const releaseLock = await this.acquireLock();
-    try {
-      // Ensure storage is initialized
+    return this.runExclusive(async () => {
       const error = await this.init();
-      if (error) {
-        // Fallback to localStorage
-        store.delete(`${this.resourceName}:${key}`);
+      const spec = storageCache.get(this.resourceName);
+      if (error || !spec) {
+        // Nothing to delete server-side (load failed or no resource); clear the localStorage fallback instead
+        store.delete(this.localKey(key));
         return;
       }
-
-      let storageSpec = storageCache.get(this.resourceName);
-      if (storageSpec instanceof Promise) {
-        storageSpec = await storageSpec;
-      }
-      if (!storageSpec) {
-        // Storage doesn't exist, nothing to delete
-        store.delete(`${this.resourceName}:${key}`);
+      const result = await this.patchResource({ spec: { data: { [key]: null } } });
+      if ('error' in result) {
+        store.delete(this.localKey(key));
         return;
       }
-
-      // Clone the storage spec to avoid mutating the cached object directly
-      const updatedData = { ...storageSpec.data };
-      delete updatedData[key];
-      const updatedSpec: UserStorageSpec = { data: updatedData };
-
-      const deleteResult = await apiRequest<UserStorageSpec>({
-        headers: { 'Content-Type': 'application/merge-patch+json' },
-        url: `/${this.resourceName}`,
-        method: 'PATCH',
-        body: { spec: { data: { [key]: null } } },
-        manageError: (error) => {
-          // Fallback to localStorage
-          store.delete(`${this.resourceName}:${key}`);
-          return { error };
-        },
-      });
-      if ('error' in deleteResult && deleteResult.error) {
-        // Error occurred, fallback already handled in manageError
-        return;
-      }
-      // Update global cache with the modified storage (using cloned object)
-      storageCache.set(this.resourceName, updatedSpec);
-    } finally {
-      releaseLock();
-    }
+      const { [key]: _, ...data } = spec.data;
+      storageCache.set(this.resourceName, { data });
+    });
   }
 
   async allItems(): Promise<Record<string, string>> {
     if (!this.canUseUserStorage) {
-      // Fallback to localStorage
       return store.all(`${this.resourceName}:`);
     }
-
-    // Acquire lock to serialize operations
-    const releaseLock = await this.acquireLock();
-    try {
-      // Ensure storage is initialized
+    return this.runExclusive(async () => {
       await this.init();
-      let storageSpec = storageCache.get(this.resourceName);
-      if (storageSpec instanceof Promise) {
-        storageSpec = await storageSpec;
-      }
-      if (!storageSpec) {
-        // Storage doesn't exist, fallback to localStorage
-        return store.all(`${this.resourceName}:`);
-      }
-      return { ...storageSpec.data };
-    } finally {
-      releaseLock();
-    }
+      const spec = storageCache.get(this.resourceName);
+      return spec ? { ...spec.data } : store.all(`${this.resourceName}:`);
+    });
   }
 }
 
