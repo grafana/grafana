@@ -9,9 +9,9 @@ import (
 	"sync"
 	"testing"
 	"time"
+	"uuid"
 
 	"github.com/go-jose/go-jose/v4/jwt"
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -63,7 +63,7 @@ type TestOptions struct {
 
 // GenerateRandomNSPrefix creates a random namespace prefix for test isolation
 func GenerateRandomNSPrefix() string {
-	uid := uuid.New().String()[:10]
+	uid := uuid.NewV4().String()[:10]
 	return fmt.Sprintf("test-%s", uid)
 }
 
@@ -1278,22 +1278,22 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 			Name:      "nnn",
 		}
 
-		// PutBlob must 404 before the parent exists (see blob.proto).
 		preExisting, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
 			Method:      resourcepb.PutBlobRequest_GRPC,
 			ContentType: "plain/text",
-			Value:       []byte("rejected"),
+			Value:       []byte("before parent"),
+			Folder:      "fff",
 		})
 		require.NoError(t, err)
-		require.NotNil(t, preExisting.Error)
-		require.Equal(t, int32(http.StatusNotFound), preExisting.Error.Code)
+		require.Nil(t, preExisting.Error)
 
 		initial := &unstructured.Unstructured{}
 		initialMeta, err := utils.MetaAccessor(initial)
 		require.NoError(t, err)
 		initialMeta.SetName(key.Name)
 		initialMeta.SetNamespace(key.Namespace)
+		initialMeta.SetFolder("fff")
 		initial.SetAPIVersion(key.Group + "/v1")
 		initial.SetKind("Test")
 		initialVal, err := initial.MarshalJSON()
@@ -1301,6 +1301,10 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: initialVal})
 		require.NoError(t, err)
 		require.Nil(t, created.Error)
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: preExisting.Uid}, true)
+		require.NoError(t, err)
+		require.Contains(t, string(found.Value), "before parent")
 
 		b1, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
 			Resource:    key,
@@ -1323,7 +1327,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.Equal(t, "b0da48de4ff92e0ad0d836de4d746937", b2.Hash)
 
 		// Check that we can still access both values
-		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
+		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
 		require.NoError(t, err)
 		require.Contains(t, string(found.Value), "hello 11111")
 
@@ -1337,6 +1341,7 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		meta.SetBlob(&utils.BlobInfo{UID: b2.Uid, Hash: b1.Hash})
 		meta.SetName(key.Name)
 		meta.SetNamespace(key.Namespace)
+		meta.SetFolder("fff")
 		obj.SetAPIVersion(key.Group + "/v1")
 		obj.SetKind("Test")
 		val, err := obj.MarshalJSON()
@@ -1357,6 +1362,70 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Contains(t, string(res.Value), "hello 11111")
+	})
+
+	t.Run("replace a blob referenced by the blobs field", func(t *testing.T) {
+		key := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "replace"}
+		putBlob := func(value string) *resourcepb.PutBlobResponse {
+			rsp, err := server.PutBlob(ctx, &resourcepb.PutBlobRequest{
+				Resource:    key,
+				Method:      resourcepb.PutBlobRequest_GRPC,
+				ContentType: "plain/text",
+				Value:       []byte(value),
+			})
+			require.NoError(t, err)
+			require.Nil(t, rsp.Error)
+			return rsp
+		}
+		withBlob := func(uid string) []byte {
+			obj := &unstructured.Unstructured{}
+			obj.SetAPIVersion(key.Group + "/v1")
+			obj.SetKind("Test")
+			obj.SetName(key.Name)
+			obj.SetNamespace(key.Namespace)
+			obj.Object[resource.BlobsField] = map[string]any{"logo": map[string]any{"uid": uid}}
+			val, err := obj.MarshalJSON()
+			require.NoError(t, err)
+			return val
+		}
+		getBlob := func(uid string, rv int64) *resourcepb.GetBlobResponse {
+			rsp, err := server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, Uid: uid, ResourceVersion: rv})
+			require.NoError(t, err)
+			return rsp
+		}
+
+		v1 := putBlob("logo v1")
+		created, err := server.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: withBlob(v1.Uid)})
+		require.NoError(t, err)
+		require.Nil(t, created.Error)
+
+		v2 := putBlob("logo v2")
+		require.NotEqual(t, v1.Uid, v2.Uid)
+		updated, err := server.Update(ctx, &resourcepb.UpdateRequest{Key: key, Value: withBlob(v2.Uid), ResourceVersion: created.ResourceVersion})
+		require.NoError(t, err)
+		require.Nil(t, updated.Error)
+
+		rsp := getBlob(v2.Uid, 0)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v2", string(rsp.Value))
+
+		rsp = getBlob(v1.Uid, 0)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+
+		rsp = getBlob(v1.Uid, created.ResourceVersion)
+		require.Nil(t, rsp.Error)
+		require.Equal(t, "logo v1", string(rsp.Value))
+
+		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: v1.Uid}, true)
+		require.NoError(t, err)
+		require.Equal(t, "logo v1", string(found.Value))
+
+		otherKey := &resourcepb.ResourceKey{Namespace: ns, Group: "ggg", Resource: "rrr", Name: "nnn"}
+		rsp, err = server.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: otherKey, Uid: v2.Uid})
+		require.NoError(t, err)
+		require.NotNil(t, rsp.Error)
+		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
 	})
 }
 
@@ -1513,7 +1582,7 @@ func WriteEvent(ctx context.Context, store resource.StorageBackend, name string,
 	event := resource.WriteEvent{
 		Type:  action,
 		Value: options.Value,
-		GUID:  uuid.New().String(),
+		GUID:  uuid.NewV4().String(),
 		Key: &resourcepb.ResourceKey{
 			Namespace: options.Namespace,
 			Group:     options.Group,
@@ -1654,14 +1723,29 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
+	assertListedTimes := func(t *testing.T, expected map[resource.NamespacedResource]time.Time) map[resource.NamespacedResource]time.Time {
+		t.Helper()
+		times, err := backend.ListResourceLastImportTimes(ctx)
+		require.NoError(t, err)
+		for key, single := range expected {
+			require.False(t, single.IsZero())
+			require.Equal(t, single, times[key], "resource %s", key)
+		}
+		return times
+	}
+
 	t.Run("no imported times by default", func(t *testing.T) {
-		lastImportTime, err := backend.GetResourceLastImportTime(ctx, resource.NamespacedResource{
+		key := resource.NamespacedResource{
 			Namespace: nsPrefix + "-not-imported",
 			Group:     "dashboards",
 			Resource:  "dashboard",
-		})
+		}
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, key)
 		require.NoError(t, err)
 		require.True(t, lastImportTime.IsZero())
+		times, err := backend.ListResourceLastImportTimes(ctx)
+		require.NoError(t, err)
+		require.NotContains(t, times, key)
 	})
 
 	t.Run("last imported time after bulk import", func(t *testing.T) {
@@ -1696,6 +1780,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		result := collectLastImportedTimes(t, backend, ctx, collections)
 		require.Len(t, result, len(collections))
+		assertListedTimes(t, result)
 
 		now := time.Now()
 
@@ -1736,11 +1821,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		const delta = 5 * time.Second
 		// Verify that last imported times are combination of both bulk imports
 		result1 := collectLastImportedTimes(t, backend, ctx, collections1)
+		assertListedTimes(t, result1)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
 		// Sleep a bit to make sure that the last import time generated for dashboards in ns1 is different from before.
 		// Since we use DATETIME type in SQL, we need to wait at least one second.
+		t.Log("waiting 1s so the second import has a newer timestamp")
 		time.Sleep(1 * time.Second)
 
 		// Do another bulk import, without overwriting existing resources. We import into ns1-dashboards (same as before),
@@ -1771,6 +1858,8 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		allCollections = append(allCollections, collections1...)
 		allCollections = append(allCollections, collections2...)
 		result2 := collectLastImportedTimes(t, backend, ctx, allCollections)
+		times := assertListedTimes(t, result2)
+		require.NotContains(t, times, resource.NamespacedResource{Namespace: ns2, Group: "dashboards", Resource: "dashboard"})
 
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
@@ -1782,7 +1871,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		// Last import time for ns1 dashboard has been updated
 		ns1DashboardsKey := resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}
-		require.NotEqual(t, result1[ns1DashboardsKey], result2[ns1DashboardsKey])
+		require.True(t, result2[ns1DashboardsKey].After(result1[ns1DashboardsKey]))
 	})
 }
 
@@ -2132,7 +2221,7 @@ func runTestIntegrationBackendErrorResponses(t *testing.T, backend resource.Stor
 	makeValue := func(name string) []byte {
 		return fmt.Appendf(nil,
 			`{"apiVersion":"%s/v0alpha1","kind":"%s","metadata":{"name":"%s","namespace":"%s","uid":"%s"}}`,
-			group, kind, name, ns, uuid.New().String(),
+			group, kind, name, ns, uuid.NewV4().String(),
 		)
 	}
 

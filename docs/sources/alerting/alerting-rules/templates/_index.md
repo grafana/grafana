@@ -17,70 +17,6 @@ labels:
     - oss
 title: Template annotations and labels
 weight: 500
-refs:
-  shared-dynamic-label-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/dynamic-labels/
-  reference-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#labels
-  reference-values:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/#values
-  annotations:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/#annotations
-  explore:
-    - pattern: /docs/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-  intro-to-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/templates/
-  alert-rule-template-reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/reference/
-  alert-rule-template-examples:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/templates/examples/
-  notification-template-reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  notification-data-reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/#notification-data
-  view-alert-state:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state/
-  preview-notifications:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates
-  labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/latest/alerting/fundamentals/alert-rules/annotation-label/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
 ---
 
 # Template annotations and labels
@@ -98,16 +34,16 @@ In this diagram, you can see the differences between both types of templates.
 
 {{< figure src="/media/docs/alerting/how-notification-templates-works.png" max-width="1200px" alt="How templating works" >}}
 
-Refer to [Templates Introduction](ref:intro-to-templates) for a more detailed explanation of this diagram.
+Refer to [Templates Introduction](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/templates/) for a more detailed explanation of this diagram.
 
 Both types of templates are written in the Go templating system. However, it's important to understand that variables and functions used in notification templates are different from those used in annotation and label templates.
 
-1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like [`$labels`](ref:reference-labels) and [`$values`](ref:reference-values) represent alert query data of the individual alert instance.
-1.  **Template notifications**: Notification templates format the notification content for a group of alerts. Variables like [`.Alerts`](ref:notification-data-reference) include all firing and resolved alerts in the notification.
+1.  **Template annotations and labels**: These templates add extra information to individual alert instances. Template variables like [`$labels`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#labels) and [`$values`](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/#values) represent alert query data of the individual alert instance.
+1.  **Template notifications**: Notification templates format the notification content for a group of alerts. Variables like [`.Alerts`](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/#notification-data) include all firing and resolved alerts in the notification.
 
 ## Template annotations
 
-[Annotations](ref:annotations) add additional information to alert instances and are often used to help identify the alert and guide responders on how to address the issue.
+[Annotations](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/#annotations) add additional information to alert instances and are often used to help identify the alert and guide responders on how to address the issue.
 
 Annotations are key-value pairs defined in the alert rule. They can contain plain text or template code that is evaluated when the alert fires.
 
@@ -161,12 +97,12 @@ You can template annotations when creating or editing an alert rule.
 
 Two common methods are used to test and preview annotation templates:
 
-1. Trigger the alert and [view the alert instance state in the Grafana UI](ref:view-alert-state), where all annotations of the alert instance are displayed.
-1. Use a notification template that displays all annotations, then [preview the notification template](ref:preview-notifications) using the alert instance.
+1. Trigger the alert and [view the alert instance state in the Grafana UI](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state/), where all annotations of the alert instance are displayed.
+1. Use a notification template that displays all annotations, then [preview the notification template](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/#preview-notification-templates) using the alert instance.
 
 ## Template labels
 
-The set of [labels](ref:labels) for an alert instance is used to uniquely identify that alert among all other alert instances.
+The set of [labels](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/) for an alert instance is used to uniquely identify that alert among all other alert instances.
 
 Labels determine how alerts are routed and managed for notifications, making their design key to the effectiveness of your alerting system.
 
@@ -198,7 +134,7 @@ In this example, the value of the `severity` label is determined by the query va
 > **Note:** An alert instance is uniquely identified by its set of labels.
 >
 > - Avoid displaying query values in labels, as this can create numerous alert instances—one for each distinct label set. Instead, use annotations for query values.
-> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](ref:shared-dynamic-label-example).
+> - If a templated label's value changes, it maps to a different alert instance, and the previous instance is considered **stale**. Learn all the details in this [example using dynamic labels](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/dynamic-labels/).
 
 [//]: <> ({{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
@@ -224,8 +160,8 @@ To preview label values, select `Use notification policy`, and then click on `Pr
 
 For further details on how to template alert rules, refer to:
 
-- [Annotation and label template reference](ref:alert-rule-template-reference)
-- [Annotation and label examples](ref:alert-rule-template-examples)
+- [Annotation and label template reference](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/reference/)
+- [Annotation and label examples](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/templates/examples/)
 
 {{< admonition type="tip" >}}
 For a practical example of templating, refer to our [Getting Started with Templating tutorial](https://grafana.com/tutorials/alerting-get-started-pt4/).

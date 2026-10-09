@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/testing/protocmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -74,7 +77,7 @@ func TestAsErrorResult_NamespaceMismatchIsForbidden(t *testing.T) {
 			require.Equal(t, int32(http.StatusForbidden), got.Code, "an authorization outcome must not burn the 5xx error budget")
 			require.Equal(t, string(metav1.StatusReasonForbidden), got.Reason)
 			require.Equal(t, claims.ErrNamespaceMismatch.Error(), got.Message)
-			require.True(t, apierrors.IsForbidden(GetError(got)), "callers should see a typed Forbidden error")
+			require.True(t, apierrors.IsForbidden(StatusError(got)), "callers should see a typed Forbidden error")
 		})
 	}
 }
@@ -254,6 +257,62 @@ func TestIsConflict(t *testing.T) {
 	}
 }
 
+func TestStatusError_HTTPCode(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		code int32
+		want int32
+	}{
+		{name: "unspecified", want: http.StatusInternalServerError},
+		{name: "explicit client error", code: http.StatusTooManyRequests, want: http.StatusTooManyRequests},
+		{name: "explicit server error", code: http.StatusServiceUnavailable, want: http.StatusServiceUnavailable},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			for _, source := range []string{"direct", "embedded", "grpc details"} {
+				t.Run(source, func(t *testing.T) {
+					res := &resourcepb.ErrorResult{
+						Code:    tc.code,
+						Message: "search unavailable",
+						Reason:  string(metav1.StatusReasonServiceUnavailable),
+						Details: &resourcepb.ErrorDetails{
+							Group: "test.grafana.app", Kind: "tests", Name: "test", Uid: "uid",
+							RetryAfterSeconds: 12,
+							Causes:            []*resourcepb.ErrorCause{{Reason: "FieldValueInvalid", Field: "spec.query", Message: "invalid query"}},
+						},
+					}
+					original := proto.Clone(res)
+					var got error
+					switch source {
+					case "direct":
+						got = StatusError(res)
+					case "embedded":
+						got = StatusErrorFromResponse(res, nil)
+					case "grpc details":
+						st, err := status.New(codes.Unavailable, "transport message").WithDetails(res)
+						require.NoError(t, err)
+						got = StatusErrorFromResponse(nil, st.Err())
+					}
+
+					var apiStatus apierrors.APIStatus
+					require.ErrorAs(t, got, &apiStatus)
+					require.Equal(t, tc.want, apiStatus.Status().Code)
+					want := proto.Clone(res).(*resourcepb.ErrorResult)
+					want.Code = tc.want
+					require.Empty(t, cmp.Diff(want, AsErrorResult(got), protocmp.Transform()))
+					require.Empty(t, cmp.Diff(original, res, protocmp.Transform()))
+
+					w := httptest.NewRecorder()
+					// An unspecified status code (0) would panic in WriteHeader without the fallback.
+					require.NotPanics(t, func() {
+						require.Equal(t, int(tc.want), errhttp.Write(context.Background(), got, w))
+					})
+					require.Equal(t, int(tc.want), w.Code)
+				})
+			}
+		})
+	}
+}
+
 func TestStatusErrorFromResponse_NoErrorsReturnsNil(t *testing.T) {
 	require.NoError(t, StatusErrorFromResponse(nil, nil))
 }
@@ -335,7 +394,7 @@ func TestStatusErrorFromResponse_TransportErrorTakesPrecedenceOverResponseError(
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)
 	require.Equal(t, int32(http.StatusServiceUnavailable), apiStatus.Status().Code)
-	require.Contains(t, apiStatus.Status().Message, "storage unavailable")
+	require.Equal(t, http.StatusText(http.StatusServiceUnavailable), apiStatus.Status().Message)
 }
 
 func TestStatusErrorFromResponse_UnwrapsKubernetesStatusErrors(t *testing.T) {
@@ -352,6 +411,41 @@ func TestStatusErrorFromResponse_UnwrapsKubernetesStatusErrors(t *testing.T) {
 	var apiStatus apierrors.APIStatus
 	require.ErrorAs(t, err, &apiStatus)
 	require.Equal(t, want, apiStatus.Status())
+}
+
+func TestStatusErrorFromResponse_PreservesKubernetesServerError(t *testing.T) {
+	original := apierrors.NewServiceUnavailable("index unavailable")
+	got := StatusErrorFromResponse(nil, fmt.Errorf("search: %w", original))
+
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, got, &apiStatus)
+	require.Equal(t, original.Status(), apiStatus.Status())
+}
+
+func TestStatusErrorFromResponse_HidesUnstructuredGRPCServerErrors(t *testing.T) {
+	for _, grpcCode := range []codes.Code{codes.Unknown, codes.Internal, codes.Unavailable, codes.DeadlineExceeded} {
+		t.Run(grpcCode.String(), func(t *testing.T) {
+			transportErr := status.Error(grpcCode, "private database failure")
+			err := StatusErrorFromResponse(nil, fmt.Errorf("search: %w", transportErr))
+
+			var apiStatus apierrors.APIStatus
+			require.ErrorAs(t, err, &apiStatus)
+			got := apiStatus.Status()
+			require.Equal(t, http.StatusText(int(got.Code)), got.Message)
+			require.NotContains(t, err.Error(), "private database failure")
+		})
+	}
+}
+
+func TestStatusErrorFromResponse_PreservesStructuredGRPCServerError(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusServiceUnavailable, Message: "index unavailable"}
+	st, err := status.New(codes.Unavailable, "transport message").WithDetails(failure)
+	require.NoError(t, err)
+
+	got := StatusErrorFromResponse(nil, st.Err())
+	var apiStatus apierrors.APIStatus
+	require.ErrorAs(t, got, &apiStatus)
+	require.Equal(t, failure.Message, apiStatus.Status().Message)
 }
 
 func TestStatusErrorFromResponse_MapsGRPCCodesWithoutDetails(t *testing.T) {
@@ -413,15 +507,34 @@ func TestStatusErrorFromResponse_MapsContextErrors(t *testing.T) {
 			var apiStatus apierrors.APIStatus
 			require.ErrorAs(t, err, &apiStatus)
 			require.Equal(t, tc.httpCode, apiStatus.Status().Code)
+			if tc.httpCode >= http.StatusInternalServerError {
+				require.Equal(t, http.StatusText(int(tc.httpCode)), apiStatus.Status().Message)
+			}
 		})
 	}
 }
 
-func TestStatusErrorFromResponse_UnknownErrorBecomesInternalServerError(t *testing.T) {
-	err := StatusErrorFromResponse(nil, errors.New("unexpected failure"))
-
-	var apiStatus apierrors.APIStatus
-	require.ErrorAs(t, err, &apiStatus)
-	require.Equal(t, int32(http.StatusInternalServerError), apiStatus.Status().Code)
-	require.Equal(t, "unexpected failure", apiStatus.Status().Message)
+func TestStatusErrorFromResponse_Passthroughs(t *testing.T) {
+	cases := []struct {
+		name string
+		err  error
+	}{
+		{
+			name: "error",
+			err:  errors.New("error"),
+		},
+		{
+			name: "ErrNamespaceMismatch",
+			err:  claims.ErrNamespaceMismatch,
+		},
+		{
+			name: "wrapped",
+			err:  fmt.Errorf("wrapped: %w", errors.New("wrapped")),
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorIs(t, StatusErrorFromResponse(nil, tc.err), tc.err)
+		})
+	}
 }

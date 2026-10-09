@@ -85,7 +85,6 @@ describe('getDataSourceInstanceListItem', () => {
       apiVersion: undefined,
       name: 'Alpha',
       meta: metas['test-db'],
-      isDefault: false,
     });
   });
 
@@ -98,9 +97,9 @@ describe('getDataSourceInstanceListItem', () => {
     expect((await getDataSourceInstanceListItem({ uid: 'uid-alpha', type: 'not-the-real-type' }))?.name).toBe('Alpha');
   });
 
-  it('normalises a missing isDefault to false', async () => {
-    expect(instances.Alpha.isDefault).toBeUndefined();
-    expect((await getDataSourceInstanceListItem('uid-alpha'))?.isDefault).toBe(false);
+  it('does not carry the isDefault flag of the instance settings', async () => {
+    expect(instances.Bravo.isDefault).toBe(true);
+    expect(await getDataSourceInstanceListItem('uid-bravo')).not.toHaveProperty('isDefault');
   });
 
   it('carries the instance type, not the plugin id', async () => {

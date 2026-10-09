@@ -318,7 +318,7 @@ func TestIntegrationService_RegisterActionSets(t *testing.T) {
 			actionSets := NewActionSetService()
 			_, err := New(
 				setting.NewCfg(), tt.options, features, routing.NewRouteRegister(), licensingtest.NewFakeLicensing(),
-				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, nil, actionSets, //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+				ac, &actest.FakeService{}, db.InitTestDB(t), nil, nil, nil, actionSets, iam.Features{}, //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			)
 			require.NoError(t, err)
 
@@ -582,7 +582,7 @@ func TestService_K8sActionFormat(t *testing.T) {
 
 			service, err := New(
 				cfg, tt.opts, features, routing.NewRouteRegister(), license,
-				ac, acService, sql, nil, nil, nil, NewActionSetService(),
+				ac, acService, sql, nil, nil, nil, NewActionSetService(), iam.Features{},
 			)
 
 			if tt.expectErr {
@@ -611,103 +611,113 @@ func TestService_K8sActionFormat(t *testing.T) {
 	}
 }
 
-// enableRedirectFlags installs a global OpenFeature provider where both K8s
-// resource-permission redirect flags resolve to true, restoring the noop provider
-// on cleanup. Mirrors how the flags are read in production (via OpenFeature).
-func enableRedirectFlags(t *testing.T) {
-	t.Helper()
-	openfeatureTestMutex.Lock()
-	provider, err := featuremgmt.CreateStaticProviderWithStandardFlags(map[string]memprovider.InMemoryFlag{
-		featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect, true),
-		featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      setting.NewInMemoryFlag(featuremgmt.FlagKubernetesAuthzResourcePermissionApis, true),
-	})
-	require.NoError(t, err)
-	require.NoError(t, openfeature.SetProviderAndWait(provider))
-	t.Cleanup(func() {
-		_ = openfeature.SetProviderAndWait(openfeature.NoopProvider{})
-		openfeatureTestMutex.Unlock()
-	})
-}
-
 func TestRequiresAPIGroup(t *testing.T) {
 	tests := []struct {
 		name            string
 		resource        string
 		k8sActionFormat bool
-		redirectFlags   bool
+		apiEnabled      bool
 		want            bool
 	}{
 		{name: "nothing enabled", resource: "dashboards", want: false},
 		{name: "k8sActionFormat always requires it", resource: "dashboards", k8sActionFormat: true, want: true},
 		{name: "k8sActionFormat requires it even for exempt resource", resource: "teams", k8sActionFormat: true, want: true},
-		{name: "redirect requires it for a regular resource", resource: "dashboards", redirectFlags: true, want: true},
-		{name: "redirect requires it for receivers", resource: "receivers", redirectFlags: true, want: true},
-		{name: "redirect exempts teams", resource: "teams", redirectFlags: true, want: false},
-		{name: "redirect exempts datasources", resource: "datasources", redirectFlags: true, want: false},
+		{name: "available API requires it for a regular resource", resource: "dashboards", apiEnabled: true, want: true},
+		{name: "available API requires it for receivers", resource: "receivers", apiEnabled: true, want: true},
+		{name: "available API exempts teams", resource: "teams", apiEnabled: true, want: false},
+		{name: "available API exempts datasources", resource: "datasources", apiEnabled: true, want: false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.redirectFlags {
-				enableRedirectFlags(t)
-			}
-			got := requiresAPIGroup(context.Background(), tt.resource, tt.k8sActionFormat)
+			got := requiresAPIGroup(tt.resource, tt.k8sActionFormat, iam.Features{ResourcePermissionsAPI: tt.apiEnabled})
 			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
-func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
+type stackResourcePermissionRedirectProvider struct {
+	openfeature.NoopProvider
+}
+
+func (stackResourcePermissionRedirectProvider) BooleanEvaluation(_ context.Context, flag string, defaultValue bool, evalCtx openfeature.FlattenedContext) openfeature.BoolResolutionDetail {
+	if flag != featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect {
+		return openfeature.BoolResolutionDetail{Value: defaultValue}
+	}
+	return openfeature.BoolResolutionDetail{Value: evalCtx[openfeature.TargetingKey] == "enabled"}
+}
+
+func TestResourcePermissionRedirectKeepsAPIAtStartupAndRedirectPerStack(t *testing.T) {
+	openfeatureTestMutex.Lock()
+	domain := t.Name()
+	require.NoError(t, openfeature.SetNamedProviderAndWait(domain, stackResourcePermissionRedirectProvider{}))
+	previousClient := ofClient
+	ofClient = openfeature.NewClient(domain)
+	t.Cleanup(func() {
+		ofClient = previousClient
+		require.NoError(t, openfeature.SetNamedProviderAndWait(domain, openfeature.NoopProvider{}))
+		openfeatureTestMutex.Unlock()
+	})
+
+	contextForStack := func(stack string) context.Context {
+		return openfeature.WithTransactionContext(
+			context.Background(),
+			openfeature.NewEvaluationContext(stack, nil),
+		)
+	}
+
+	require.True(t, k8sResourcePermissionRedirectEnabled(contextForStack("enabled"), true))
+	require.False(t, k8sResourcePermissionRedirectEnabled(contextForStack("disabled"), true))
+	require.False(t, k8sResourcePermissionRedirectEnabled(contextForStack("enabled"), false))
+}
+
+func TestService_APIGroupRequiredWhenResourcePermissionsAPIEnabled(t *testing.T) {
 	tests := []struct {
-		name          string
-		resource      string
-		apiGroup      string
-		redirectFlags bool
-		expectErr     bool
+		name       string
+		resource   string
+		apiGroup   string
+		apiEnabled bool
+		expectErr  bool
 	}{
 		{
-			name:          "non-teams resource without APIGroup and redirect enabled fails",
-			resource:      "dashboards",
-			apiGroup:      "",
-			redirectFlags: true,
-			expectErr:     true,
+			name:       "non-teams resource without APIGroup and API enabled fails",
+			resource:   "dashboards",
+			apiGroup:   "",
+			apiEnabled: true,
+			expectErr:  true,
 		},
 		{
-			name:          "non-teams resource with APIGroup and redirect enabled succeeds",
-			resource:      "dashboards",
-			apiGroup:      "dashboard.grafana.app",
-			redirectFlags: true,
-			expectErr:     false,
+			name:       "non-teams resource with APIGroup and API enabled succeeds",
+			resource:   "dashboards",
+			apiGroup:   "dashboard.grafana.app",
+			apiEnabled: true,
+			expectErr:  false,
 		},
 		{
-			name:          "teams resource without APIGroup is exempt even when redirect enabled",
-			resource:      "teams",
-			apiGroup:      "",
-			redirectFlags: true,
-			expectErr:     false,
+			name:       "teams resource without APIGroup is exempt when API enabled",
+			resource:   "teams",
+			apiGroup:   "",
+			apiEnabled: true,
+			expectErr:  false,
 		},
 		{
-			name:          "datasources resource without APIGroup is exempt even when redirect enabled",
-			resource:      "datasources",
-			apiGroup:      "",
-			redirectFlags: true,
-			expectErr:     false,
+			name:       "datasources resource without APIGroup is exempt when API enabled",
+			resource:   "datasources",
+			apiGroup:   "",
+			apiEnabled: true,
+			expectErr:  false,
 		},
 		{
-			name:          "non-teams resource without APIGroup is fine when redirect disabled",
-			resource:      "dashboards",
-			apiGroup:      "",
-			redirectFlags: false,
-			expectErr:     false,
+			name:       "non-teams resource without APIGroup is fine when API disabled",
+			resource:   "dashboards",
+			apiGroup:   "",
+			apiEnabled: false,
+			expectErr:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if tt.redirectFlags {
-				enableRedirectFlags(t)
-			}
-
 			sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 			cfg := setting.NewCfg()
 			license := licensingtest.NewFakeLicensing()
@@ -718,6 +728,7 @@ func TestService_APIGroupRequiredWhenRedirectEnabled(t *testing.T) {
 			_, err := New(
 				cfg, Options{Resource: tt.resource, APIGroup: tt.apiGroup}, features,
 				routing.NewRouteRegister(), license, ac, &actest.FakeService{}, sql, nil, nil, nil, NewActionSetService(),
+				iam.Features{ResourcePermissionsAPI: tt.apiEnabled},
 			)
 
 			if tt.expectErr {
@@ -848,13 +859,13 @@ func TestIsActionSetEnabledResource_Notebook(t *testing.T) {
 
 func setupTestEnvironment(t *testing.T, ops Options) (*Service, user.Service, team.Service) {
 	t.Helper()
-	service, userSvc, teamSvc, _ := setupTestEnvironmentWithCfg(t, ops, featuremgmt.WithFeatures())
+	service, userSvc, teamSvc, _ := setupTestEnvironmentWithCfg(t, ops, featuremgmt.WithFeatures(), false)
 	return service, userSvc, teamSvc
 }
 
 // setupTestEnvironmentWithCfg is like setupTestEnvironment but lets the caller pass feature
 // toggles and returns the *setting.Cfg so tests can tweak it (e.g. the dual-writer mode).
-func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles) (*Service, user.Service, team.Service, *setting.Cfg) {
+func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt.FeatureToggles, resourcePermissionsAPIEnabled bool) (*Service, user.Service, team.Service, *setting.Cfg) {
 	t.Helper()
 
 	sql := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
@@ -881,6 +892,7 @@ func setupTestEnvironmentWithCfg(t *testing.T, ops Options, features featuremgmt
 	service, err := New(
 		cfg, ops, features, routing.NewRouteRegister(), license,
 		ac, acService, sql, teamSvc, userSvc, serviceAccountRetriever, NewActionSetService(),
+		iam.Features{ResourcePermissionsAPI: resourcePermissionsAPIEnabled},
 	)
 	require.NoError(t, err)
 
@@ -968,7 +980,7 @@ func TestIntegrationService_SetUserPermissionForTeams_Redirect(t *testing.T) {
 			// The teams redirect is gated on the kubernetesTeamsRedirect toggle.
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures(), false)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -1021,7 +1033,7 @@ func TestIntegrationService_SetPermissionsForTeams_Redirect(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures(), false)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -1147,7 +1159,7 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectWrites(t *testing.
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures(), false)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -1239,7 +1251,7 @@ func TestIntegrationService_SetUserPermissionForTeams_RedirectExternal(t *testin
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures(), false)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
 			}
@@ -1383,7 +1395,7 @@ func TestIntegrationService_SetPermissionsForTeams_RedirectWrites(t *testing.T) 
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures(), false)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}

@@ -19,7 +19,7 @@ type FakeServiceAccountService struct {
 	ExpectedServiceAccountTokens           []apikey.APIKey
 }
 
-var _ serviceaccounts.Service = new(FakeServiceAccountService)
+var _ serviceaccounts.Service = (*FakeServiceAccountService)(nil)
 
 func (f *FakeServiceAccountService) AddServiceAccountToken(ctx context.Context, id int64, cmd *serviceaccounts.AddServiceAccountTokenCommand) (*apikey.APIKey, error) {
 	return f.ExpectedAPIKey, f.ExpectedErr

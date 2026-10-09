@@ -4,11 +4,10 @@ import { Point } from 'ol/geom';
 import WebGLPointsLayer from 'ol/layer/WebGLPoints';
 import VectorSource from 'ol/source/Vector';
 
-import { DataHoverClearEvent, type DataFrame, type PanelProps } from '@grafana/data';
+import { DataHoverClearEvent, type DataFrame } from '@grafana/data';
 
 import { GeomapPanel } from '../GeomapPanel';
 import { type GeomapHoverPayload, type GeomapLayerHover } from '../event';
-import { type Options } from '../panelcfg.gen';
 
 import { pointerMoveListener, setTooltipListeners } from './tooltip';
 
@@ -74,7 +73,7 @@ describe('tooltip utils', () => {
     jest.clearAllMocks();
 
     // Create mock objects
-    panel = new GeomapPanel({} as PanelProps<Options>);
+    panel = new GeomapPanel({} as ConstructorParameters<typeof GeomapPanel>[0]);
 
     // Create a proper MouseEvent instance to pass the instanceof check
     const mouseEvent = new MouseEvent('pointermove');

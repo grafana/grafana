@@ -156,7 +156,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			fakeFolderService := foldertest.NewFakeService()
 			fakeFolderService.ExpectedFolder = &folder.Folder{
-				ID:        1,
+				ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID:     1,
 				UID:       "1",
 				ManagedBy: utils.ManagerKindRepo,
@@ -186,7 +186,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 			hs.Features = featuremgmt.WithFeatures(featuremgmt.FlagProvisioningFolderMetadata)
 			fakeFolderService := foldertest.NewFakeService()
 			fakeFolderService.ExpectedFolder = &folder.Folder{
-				ID:        1,
+				ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID:     1,
 				UID:       "1",
 				ManagedBy: utils.ManagerKindRepo,
@@ -211,7 +211,7 @@ func TestHTTPServer_UpdateFolderPermissions(t *testing.T) {
 		server := SetupAPITestServer(t, func(hs *HTTPServer) {
 			fakeFolderService := foldertest.NewFakeService()
 			fakeFolderService.ExpectedFolder = &folder.Folder{
-				ID:        1,
+				ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID:     1,
 				UID:       "1",
 				ManagedBy: utils.ManagerKindUnknown, // Not managed by provisioning

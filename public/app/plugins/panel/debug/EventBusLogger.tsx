@@ -11,7 +11,7 @@ interface Props {
 interface BusEventEx {
   key: number;
   type: string;
-  path: string;
+  path: string[] | undefined;
   payload: any;
 }
 let counter = 100;
@@ -22,7 +22,7 @@ export const EventBusLoggerPanel = memo(({ eventBus }: Props) => {
   useEffect(() => {
     const eventObserver: PartialObserver<BusEvent> = {
       next: (event: BusEvent) => {
-        const origin: any = event.origin;
+        const origin: (EventBus & { path?: string[] }) | undefined = event.origin;
         const busEvent: BusEventEx = {
           key: counter++,
           type: event.type,

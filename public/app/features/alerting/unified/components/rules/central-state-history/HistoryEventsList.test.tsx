@@ -1,7 +1,7 @@
 import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byTestId } from 'testing-library-selector';
 
-import { getDefaultTimeRange } from '@grafana/data';
+import { dateTime, getDefaultTimeRange } from '@grafana/data';
 
 import { setupMswServer } from '../../../mockApi';
 import { captureRequests } from '../../../mocks/server/events';
@@ -194,7 +194,7 @@ describe('HistoryEventsList', () => {
       const to = 456;
       const matchers = '{alertname="alert_1",team="alerting"}';
 
-      await getHistory(from, to, matchers);
+      await getHistory({ from: dateTime(from * 1000), to: dateTime(to * 1000) }, matchers);
 
       const requests = await capture;
       expect(requests).toHaveLength(1);

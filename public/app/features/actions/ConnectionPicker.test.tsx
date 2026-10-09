@@ -40,7 +40,6 @@ function createDataSource(name: string, uid: string, dsType: string): DataSource
     name,
     uid,
     meta,
-    isDefault: false,
     type: dsType,
   };
 }

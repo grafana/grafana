@@ -112,8 +112,13 @@ type pgxPoolCollector struct {
 	acquiredConns     *prometheus.Desc
 	idleConns         *prometheus.Desc
 	totalConns        *prometheus.Desc
+	constructingConns *prometheus.Desc
+	maxConns          *prometheus.Desc
 	acquireCount      *prometheus.Desc
+	acquireDuration   *prometheus.Desc
 	emptyAcquireCount *prometheus.Desc
+	emptyAcquireWait  *prometheus.Desc
+	canceledAcquires  *prometheus.Desc
 }
 
 func newPgxPoolCollector(pool *pgxpool.Pool) *pgxPoolCollector {
@@ -125,8 +130,13 @@ func newPgxPoolCollector(pool *pgxpool.Pool) *pgxPoolCollector {
 		acquiredConns:     d("pgxpool_acquired_conns", "Number of currently acquired connections in the pool."),
 		idleConns:         d("pgxpool_idle_conns", "Number of currently idle connections in the pool."),
 		totalConns:        d("pgxpool_total_conns", "Total number of resources currently in the pool."),
+		constructingConns: d("pgxpool_constructing_conns", "Number of connections currently being established."),
+		maxConns:          d("pgxpool_max_conns", "Maximum size of the pool."),
 		acquireCount:      d("pgxpool_acquire_total", "Cumulative count of successful acquires from the pool."),
+		acquireDuration:   d("pgxpool_acquire_duration_seconds_total", "Cumulative time spent in successful acquires from the pool."),
 		emptyAcquireCount: d("pgxpool_empty_acquire_total", "Cumulative count of acquires that had to wait for a connection."),
+		emptyAcquireWait:  d("pgxpool_empty_acquire_wait_seconds_total", "Cumulative time successful acquires spent waiting for a connection to be released or established because the pool was empty."),
+		canceledAcquires:  d("pgxpool_canceled_acquire_total", "Cumulative count of acquires canceled by their context."),
 	}
 }
 
@@ -134,8 +144,13 @@ func (c *pgxPoolCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.acquiredConns
 	ch <- c.idleConns
 	ch <- c.totalConns
+	ch <- c.constructingConns
+	ch <- c.maxConns
 	ch <- c.acquireCount
+	ch <- c.acquireDuration
 	ch <- c.emptyAcquireCount
+	ch <- c.emptyAcquireWait
+	ch <- c.canceledAcquires
 }
 
 func (c *pgxPoolCollector) Collect(ch chan<- prometheus.Metric) {
@@ -143,6 +158,11 @@ func (c *pgxPoolCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.acquiredConns, prometheus.GaugeValue, float64(s.AcquiredConns()))
 	ch <- prometheus.MustNewConstMetric(c.idleConns, prometheus.GaugeValue, float64(s.IdleConns()))
 	ch <- prometheus.MustNewConstMetric(c.totalConns, prometheus.GaugeValue, float64(s.TotalConns()))
+	ch <- prometheus.MustNewConstMetric(c.constructingConns, prometheus.GaugeValue, float64(s.ConstructingConns()))
+	ch <- prometheus.MustNewConstMetric(c.maxConns, prometheus.GaugeValue, float64(s.MaxConns()))
 	ch <- prometheus.MustNewConstMetric(c.acquireCount, prometheus.CounterValue, float64(s.AcquireCount()))
+	ch <- prometheus.MustNewConstMetric(c.acquireDuration, prometheus.CounterValue, s.AcquireDuration().Seconds())
 	ch <- prometheus.MustNewConstMetric(c.emptyAcquireCount, prometheus.CounterValue, float64(s.EmptyAcquireCount()))
+	ch <- prometheus.MustNewConstMetric(c.emptyAcquireWait, prometheus.CounterValue, s.EmptyAcquireWaitTime().Seconds())
+	ch <- prometheus.MustNewConstMetric(c.canceledAcquires, prometheus.CounterValue, float64(s.CanceledAcquireCount()))
 }

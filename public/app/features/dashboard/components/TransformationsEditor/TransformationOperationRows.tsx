@@ -5,8 +5,7 @@ import { t } from '@grafana/i18n';
 import { Alert, Button } from '@grafana/ui';
 
 import { TransformationOperationRow } from './TransformationOperationRow';
-import { type TransformationData } from './TransformationsEditor';
-import { type TransformationsEditorTransformation } from './types';
+import { type TransformationData, type TransformationsEditorTransformation } from './types';
 
 interface TransformationOperationRowsProps {
   data: TransformationData;

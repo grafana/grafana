@@ -29,21 +29,21 @@ func TestBuildPhaseRecorder(t *testing.T) {
 	rec.flush()
 
 	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
-# HELP index_server_build_documents_total Documents reaching each phase of building or updating an index. Fetched minus converted is how many produced nothing to give the index, and fetched minus committed is how many did not reach it.
-# TYPE index_server_build_documents_total counter
-index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 1
-index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
-# HELP index_server_build_source_bytes_total Bytes of stored objects read while building or updating an index.
-# TYPE index_server_build_source_bytes_total counter
-index_server_build_source_bytes_total{group="dashboard.grafana.app",path="build",resource="dashboards"} 150
-# HELP index_server_build_phase_seconds_total Seconds spent building or updating an index, by phase: fetch reads the stored object, convert turns it into a search document, map adds it to an index batch, commit writes the batch, promote moves an index that outgrew memory onto disk.
-# TYPE index_server_build_phase_seconds_total counter
-index_server_build_phase_seconds_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 2
-index_server_build_phase_seconds_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
+# HELP grafana_index_server_build_documents_total Documents reaching each phase of building or updating an index. Fetched minus converted is how many produced nothing to give the index, and fetched minus committed is how many did not reach it.
+# TYPE grafana_index_server_build_documents_total counter
+grafana_index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 1
+grafana_index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
+# HELP grafana_index_server_build_source_bytes_total Bytes of stored objects read while building or updating an index.
+# TYPE grafana_index_server_build_source_bytes_total counter
+grafana_index_server_build_source_bytes_total{group="dashboard.grafana.app",path="build",resource="dashboards"} 150
+# HELP grafana_index_server_build_phase_seconds_total Seconds spent building or updating an index, by phase: fetch reads the stored object, convert turns it into a search document, map adds it to an index batch, commit writes the batch, promote moves an index that outgrew memory onto disk.
+# TYPE grafana_index_server_build_phase_seconds_total counter
+grafana_index_server_build_phase_seconds_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 2
+grafana_index_server_build_phase_seconds_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
 `),
-		"index_server_build_documents_total",
-		"index_server_build_source_bytes_total",
-		"index_server_build_phase_seconds_total"))
+		"grafana_index_server_build_documents_total",
+		"grafana_index_server_build_source_bytes_total",
+		"grafana_index_server_build_phase_seconds_total"))
 
 	// A second flush must not double count.
 	rec.flush()

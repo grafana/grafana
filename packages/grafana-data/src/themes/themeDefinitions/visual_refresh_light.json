@@ -136,6 +136,10 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "height": {
+      "md": 3.5,
+      "lg": 4.5
+    },
     "table": {
       "headerBackground": "palette.neutral150",
       "border": "palette.neutral250",
@@ -248,5 +252,22 @@
         "border": "palette.neutral200"
       }
     }
+  },
+  "typography": {
+    "fontWeightBold": 600,
+    "xxl": { "fontWeight": 600, "fontSize": 24, "lineHeight": 34, "letterSpacing": 0.3 },
+    "xl": { "fontWeight": 600, "fontSize": 22, "lineHeight": 30, "letterSpacing": -0.2 },
+    "lg": { "fontWeight": 500, "fontSize": 20, "lineHeight": 26, "letterSpacing": 0 },
+    "md": { "fontWeight": 500, "fontSize": 16, "lineHeight": 22, "letterSpacing": 0 },
+    "base": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "sm": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 },
+    "h1": { "fontWeight": 600, "fontSize": 24, "lineHeight": 34, "letterSpacing": 0.3 },
+    "h2": { "fontWeight": 600, "fontSize": 22, "lineHeight": 30, "letterSpacing": -0.2 },
+    "h3": { "fontWeight": 500, "fontSize": 20, "lineHeight": 26, "letterSpacing": 0 },
+    "h4": { "fontWeight": 500, "fontSize": 16, "lineHeight": 22, "letterSpacing": 0 },
+    "h5": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "h6": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 },
+    "body": { "fontWeight": 400, "fontSize": 14, "lineHeight": 22, "letterSpacing": 0 },
+    "bodySmall": { "fontWeight": 500, "fontSize": 12, "lineHeight": 18, "letterSpacing": 0.2 }
   }
 }

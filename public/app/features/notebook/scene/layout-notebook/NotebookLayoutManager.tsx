@@ -38,6 +38,8 @@ import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
+import { isDiscardableContent, isEmptyMarkdown } from './cellEmptiness';
+import { buildCellSceneTimeRange, type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
 import { getCellDropIndicator, NotebookCellFrame, type NotebookDragState } from './edit/NotebookCellFrame';
 import { NotebookFooterAddCell } from './edit/NotebookFooterAddCell';
@@ -46,7 +48,6 @@ import {
   NOTEBOOK_CELL_CONTROLS_PINNED_CLASS,
   NOTEBOOK_CELL_FRAME_CLASS,
 } from './edit/cellClassNames';
-import { isEmptyMarkdown } from './isEmptyMarkdown';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 interface NotebookLayoutManagerState extends SceneObjectState {
@@ -62,10 +63,23 @@ interface NotebookLayoutManagerState extends SceneObjectState {
    * reintroduces the dependency cycle.
    */
   isEditing?: boolean;
+  /**
+   * Set only by NotebookRenderPage. On screen the time picker already shows the range; a PDF has no
+   * picker, so the header carries it instead.
+   */
+  showTimeRange?: boolean;
 }
 
 // Keep typing useful to undo without storing every keystroke as a separate action.
 const CONTENT_EDIT_COALESCE_MS = 800;
+
+/**
+ * Stable class on the document column, alongside its generated one. Hand-written so the PDF export
+ * can reach it from a global rule (see NotebookScene): the column's reading-width padding is there
+ * to keep prose comfortable on a wide screen, and on a page it only double-counts the page's own
+ * margin, leaving the document needlessly narrow.
+ */
+export const NOTEBOOK_DOCUMENT_CLASS = 'notebook-document';
 
 interface PendingContentEdit {
   elementName: string;
@@ -457,6 +471,35 @@ export class NotebookLayoutManager
     });
   }
 
+  public setCellTimeRange(cell: NotebookCellItem, spec: CellTimeRangeSpec | undefined): void {
+    const panel = cell.state.body;
+    const before = { $timeRange: cell.state.$timeRange, panelTimeRange: panel?.state.$timeRange };
+    const after = {
+      $timeRange: spec ? buildCellSceneTimeRange(spec.from, spec.to) : undefined,
+      panelTimeRange: undefined,
+    };
+
+    const apply = (state: typeof before) => {
+      cell.setState({ $timeRange: state.$timeRange });
+      panel?.setState({ $timeRange: state.panelTimeRange });
+      getQueryRunnerFor(panel)?.runQueries();
+    };
+
+    if (!this.state.isEditing) {
+      apply(after);
+      return;
+    }
+
+    this.executeEdit({
+      label: spec
+        ? t('notebooks.history.set-cell-time-range', 'Set panel time range')
+        : t('notebooks.history.reset-cell-time-range', 'Use notebook time range'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => apply(after),
+      undo: () => apply(before),
+    });
+  }
+
   /**
    * Converts `cell`'s content to `type` in place — the trailing-slot markdown cell's "/" menu (see
    * NotebookCellRenderer) uses this rather than inserting a separate new cell the way the add-block
@@ -652,6 +695,8 @@ export class NotebookLayoutManager
       elementName: this.nextElementName(`${cell.state.elementName}-copy`),
       body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
       ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+      // A bare .clone() would reuse the same $timeRange instance across both cells.
+      ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
     });
 
     this.executeEdit({
@@ -786,6 +831,7 @@ export class NotebookLayoutManager
         key: undefined,
         body: cell.state.body?.clone({ key: getVizPanelKeyForPanelId(nextId()) }),
         ...(cell.state.content ? { content: structuredClone(cell.state.content) } : {}),
+        ...(cell.state.$timeRange ? { $timeRange: cell.state.$timeRange.clone({ key: undefined }) } : {}),
       })
     );
 
@@ -807,9 +853,10 @@ export class NotebookLayoutManager
 
 function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLayoutManager>) {
   const styles = useStyles2(getStyles);
-  const { cells, title, tags, isEditing, key } = model.useState();
+  const { cells, title, tags, isEditing, showTimeRange, key } = model.useState();
 
-  const timeRange = sceneGraph.getTimeRange(model).useState();
+  const sceneTimeRange = sceneGraph.getTimeRange(model);
+  const { value: timeRange } = sceneTimeRange.useState();
 
   const onTagsChange = useCallback((nextTags: string[]) => model.setTagsFromHeader(nextTags), [model]);
   const onTitleChange = useCallback((nextTitle: string) => model.setTitleFromHeader(nextTitle), [model]);
@@ -898,13 +945,13 @@ function NotebookLayoutManagerRenderer({ model }: SceneComponentProps<NotebookLa
   );
 
   return (
-    <div className={styles.document}>
+    <div className={cx(NOTEBOOK_DOCUMENT_CLASS, styles.document)}>
       <header className={styles.header}>
         <NotebookDocumentHeader
           title={title}
           tags={tags}
-          timeFrom={timeRange.from}
-          timeTo={timeRange.to}
+          timeRange={showTimeRange ? timeRange : undefined}
+          timeZone={sceneTimeRange.getTimeZone()}
           isEditing={isEditing}
           onTagsChange={onTagsChange}
           onTitleChange={onTitleChange}
@@ -1023,6 +1070,12 @@ export function splitSeed(
 }
 
 function confirmRemoveCell(model: NotebookLayoutManager, cell: NotebookCellItem) {
+  // Nothing to lose, nothing to confirm — see isDiscardableContent for what that means per block type.
+  if (isDiscardableContent(cell.state.content)) {
+    model.removeCell(cell);
+    return;
+  }
+
   appEvents.publish(
     new ShowConfirmModalEvent({
       title: t('notebook.cell.delete-confirm-title', 'Delete block?'),

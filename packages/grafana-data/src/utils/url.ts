@@ -45,8 +45,8 @@ type EncodeURIComponentParams = Parameters<typeof encodeURIComponent>[0];
  *  Encodes URL parameters in the style of AngularJS.
  *  Use `serializeParams` to encode parameters using `encodeURIComponent` instead.
  */
-function toUrlParams(a: any, encodeAsAngularJS = true) {
-  const s: any[] = [];
+function toUrlParams(a: unknown, encodeAsAngularJS = true) {
+  const s: string[] = [];
   const rbracket = /\[\]$/;
 
   const encodingFunction = encodeAsAngularJS

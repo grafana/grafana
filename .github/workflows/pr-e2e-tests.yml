@@ -383,7 +383,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    runs-on: ubuntu-x64-small
+    runs-on: ubuntu-x64-large
     steps:
       - id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main
@@ -405,6 +405,10 @@ jobs:
         with:
           name: grafana-frontend
           path: public
+      - name: Generate RSDoctor metrics
+        env:
+          NO_SOURCEMAP: '1'
+        run: yarn build:stats:rspack
       - name: Extract and publish metrics
         run: ./scripts/ci-frontend-metrics.sh | node .github/workflows/scripts/publish-frontend-metrics.mts
         env:

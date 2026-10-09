@@ -1826,21 +1826,21 @@ func testDataStoreGetResourceKeyAtRevision(t *testing.T, ctx context.Context, ds
 	require.NoError(t, err)
 
 	// Get key at rv2 should return rv2
-	dataKey, err := ds.GetResourceKeyAtRevision(ctx, key, rv2)
+	dataKey, err := ds.GetResourceKeyAtRevision(ctx, key, rv2, false)
 	require.NoError(t, err)
 
 	require.Equal(t, rv2, dataKey.ResourceVersion)
 	require.Equal(t, DataActionUpdated, dataKey.Action)
 
 	// Get key at rv1 should return rv1
-	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, rv1)
+	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, rv1, false)
 	require.NoError(t, err)
 
 	require.Equal(t, rv1, dataKey.ResourceVersion)
 	require.Equal(t, DataActionCreated, dataKey.Action)
 
 	// Get key at revision 0 should return latest (rv3)
-	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, 0)
+	dataKey, err = ds.GetResourceKeyAtRevision(ctx, key, 0, false)
 	require.NoError(t, err)
 
 	require.Equal(t, rv3, dataKey.ResourceVersion)

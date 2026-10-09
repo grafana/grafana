@@ -11,22 +11,6 @@ labels:
 title: When SLOs reduce alert noise
 menuTitle: When SLOs reduce alert noise
 weight: 1040
-refs:
-  design-alerts-for-first-responders-and-clear-actions:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/best-practices/#design-alerts-for-first-responders-and-clear-actions
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/guides/best-practices/#design-alerts-for-first-responders-and-clear-actions
-  prioritize-symptoms-but-dont-ignore-infrastructure-signals:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/best-practices/#prioritize-symptoms-but-dont-ignore-infrastructure-signals
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/guides/best-practices/#prioritize-symptoms-but-dont-ignore-infrastructure-signals
-  mitigate-flapping-alerts:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/guides/best-practices/#mitigate-flapping-alerts
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/guides/best-practices/#mitigate-flapping-alerts
 ---
 
 # When SLOs reduce alert noise
@@ -67,7 +51,7 @@ SLOs and threshold-based alerts are complementary. In some cases, tracking the s
 
 ## The alert has no actionable response
 
-[Alerts should be actionable](ref:design-alerts-for-first-responders-and-clear-actions). An alert nobody acts on is operational noise. If the alert consistently triggers no response, but the metric still matters to your team, this is a reliability concern.
+[Alerts should be actionable](/docs/grafana/<GRAFANA_VERSION>/alerting/guides/best-practices/#design-alerts-for-first-responders-and-clear-actions). An alert nobody acts on is operational noise. If the alert consistently triggers no response, but the metric still matters to your team, this is a reliability concern.
 
 This reliability metric could indicate service health over time. It's worth tracking in operational dashboards, but it's not designed to trigger immediate action.
 
@@ -93,7 +77,7 @@ In other cases, the SLO is driven by the business, such as a customer commitment
 
 Before creating a shared SLO, teams need to agree on clear ownership.
 
-In both cases, the shift is often from internal metrics to user-facing reliability metrics, as recommended in the [best practice to prioritize symptoms over causes](ref:prioritize-symptoms-but-dont-ignore-infrastructure-signals).
+In both cases, the shift is often from internal metrics to user-facing reliability metrics, as recommended in the [best practice to prioritize symptoms over causes](/docs/grafana/<GRAFANA_VERSION>/alerting/guides/best-practices/#prioritize-symptoms-but-dont-ignore-infrastructure-signals).
 
 Creating a shared SLO should not eliminate existing related alerts. This is a good moment to evaluate whether existing alerts trigger immediate action. If you notice these alerts are less actionable, and that the underlying reliability metric is better measured as an SLO, then migrate the existing alert to a team-scoped SLO.
 
@@ -105,7 +89,7 @@ The alert fires and resolves without human intervention, a pattern commonly refe
 
 {{< figure src="/media/docs/alerting/slo-guide-flapping-alert-timeline.png" max-width="750px" caption="Alert instance states for a flapping alert" >}}
 
-Alerting best practices recommend [tuning away flapping alerts](ref:mitigate-flapping-alerts) by tweaking alert rule settings to avoid detecting short spikes and transient issues. Tuning reduces noise, but can remove the signal entirely.
+Alerting best practices recommend [tuning away flapping alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/guides/best-practices/#mitigate-flapping-alerts) by tweaking alert rule settings to avoid detecting short spikes and transient issues. Tuning reduces noise, but can remove the signal entirely.
 
 {{< figure src="/media/docs/alerting/slo-guide-non-flapping-alert-timeline.png" max-width="750px" caption="Alert instance states after mitigating flapping behavior" >}}
 

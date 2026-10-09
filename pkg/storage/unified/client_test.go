@@ -12,7 +12,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -22,6 +24,126 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+func clientIdentityCounts(t *testing.T) map[string]float64 {
+	t.Helper()
+	families, err := prometheus.DefaultGatherer.Gather()
+	require.NoError(t, err)
+	counts := map[string]float64{}
+	for _, family := range families {
+		if family.GetName() == "grafana_unified_storage_client_identity_total" {
+			for _, metric := range family.Metric {
+				counts[metric.Label[0].GetValue()] = metric.GetCounter().GetValue()
+			}
+		}
+	}
+	return counts
+}
+
+func TestForwardSearchUnaryInterceptor(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		info    *identity.StaticRequester
+		cancel  bool
+		expired bool
+		code    codes.Code
+	}{
+		{name: "classic", info: &identity.StaticRequester{AccessToken: "original-access", IDToken: "original-id"}},
+		{name: "obo", info: &identity.StaticRequester{AccessToken: "original-obo"}},
+		{name: "service", info: &identity.StaticRequester{Type: authlib.TypeAccessPolicy, AccessToken: "original-service"}},
+		{name: "missing auth info", code: codes.Unauthenticated},
+		{name: "missing access token", info: &identity.StaticRequester{IDToken: "id-only"}, code: codes.Unauthenticated},
+		{name: "cancelled", info: &identity.StaticRequester{AccessToken: "access"}, cancel: true, code: codes.Canceled},
+		{name: "expired deadline", info: &identity.StaticRequester{AccessToken: "access"}, expired: true, code: codes.DeadlineExceeded},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithCancel(t.Context())
+			defer cancel()
+			if tc.cancel {
+				cancel()
+			}
+			if tc.expired {
+				var stop context.CancelFunc
+				ctx, stop = context.WithDeadline(ctx, time.Now().Add(-time.Second))
+				defer stop()
+			}
+			if tc.info != nil {
+				ctx = authlib.WithAuthInfo(ctx, tc.info)
+			}
+			original := metadata.Pairs("x-access-token", "stale-access", "x-access-token", "another-access", "x-id-token", "stale-id", "route", "search", "traceparent", "trace")
+			ctx = metadata.NewOutgoingContext(ctx, original)
+			ctx = metadata.NewIncomingContext(ctx, metadata.Pairs("x-access-token", "unverified-access", "x-id-token", "unverified-id"))
+			before := clientIdentityCounts(t)
+			called := false
+			check := func(out context.Context) {
+				called = true
+				md, _ := metadata.FromOutgoingContext(out)
+				require.Equal(t, []string{tc.info.AccessToken}, md.Get("x-access-token"))
+				if tc.info.IDToken == "" {
+					require.Empty(t, md.Get("x-id-token"))
+				} else {
+					require.Equal(t, []string{tc.info.IDToken}, md.Get("x-id-token"))
+				}
+				require.Equal(t, []string{"search"}, md.Get("route"))
+				require.Equal(t, []string{"trace"}, md.Get("traceparent"))
+				require.Equal(t, ctx.Done(), out.Done())
+				wantDeadline, wantOK := ctx.Deadline()
+				gotDeadline, gotOK := out.Deadline()
+				require.Equal(t, wantOK, gotOK)
+				require.Equal(t, wantDeadline, gotDeadline)
+				md.Set("route", "modified")
+			}
+			err := forwardSearchUnaryInterceptor(ctx, "Search", nil, nil, nil, func(out context.Context, _ string, _, _ any, _ *grpc.ClientConn, _ ...grpc.CallOption) error {
+				check(out)
+				return status.Error(codes.PermissionDenied, "receiver denied")
+			})
+			after := clientIdentityCounts(t)
+			if tc.code == codes.OK {
+				require.True(t, called)
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+				require.Equal(t, before["forwarded"]+1, after["forwarded"])
+			} else {
+				require.False(t, called)
+				require.Equal(t, tc.code, status.Code(err))
+				require.Equal(t, before["forwarded"], after["forwarded"])
+			}
+			delete(before, "forwarded")
+			delete(after, "forwarded")
+			require.Equal(t, before, after)
+			require.Equal(t, metadata.Pairs("x-access-token", "stale-access", "x-access-token", "another-access", "x-id-token", "stale-id", "route", "search", "traceparent", "trace"), original)
+		})
+	}
+}
+
+func TestInternalSearchForwardingConfiguration(t *testing.T) {
+	searchServer := createTestGrpcServer(t, "127.0.0.1:0")
+	t.Cleanup(searchServer.s.Stop)
+	cfg := setting.NewCfg()
+	cfg.Env = "production"
+	cfg.EnableSearchClient = true
+	cfg.SearchClientForwardAuthEnabled = true
+	cfg.Raw.Section("grafana-apiserver").Key("search_server_address").SetValue(searchServer.addr)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagAppPlatformGrpcClientAuth)
+
+	client, err := NewStorageApiSearchClient(cfg, features)
+	require.NoError(t, err)
+	require.NotNil(t, client)
+
+	_, err = NewSearchClient(cfg, features)
+	require.ErrorContains(t, err, "token exchange url is required")
+	_, err = NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+	require.ErrorContains(t, err, "requires appPlatformGrpcClientAuth")
+
+	cfg.SearchClientForwardAuthEnabled = false
+	_, err = NewStorageApiSearchClient(cfg, features)
+	require.ErrorContains(t, err, "token exchange url is required")
+
+	cfg.SearchClientForwardAuthEnabled = true
+	cfg.EnableSearchClient = false
+	client, err = NewStorageApiSearchClient(cfg, featuremgmt.WithFeatures())
+	require.NoError(t, err)
+	require.Nil(t, client)
+}
 
 func TestUnifiedStorageClient(t *testing.T) {
 	resourceServerAddress := ":11000"
@@ -46,6 +168,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				authlib.FixedAccessClient(true),
+				nil,
 				nil,
 				nil,
 				nil,
@@ -90,6 +213,7 @@ func TestUnifiedStorageClient(t *testing.T) {
 				nil,
 				nil,
 				authlib.FixedAccessClient(true),
+				nil,
 				nil,
 				nil,
 				nil,

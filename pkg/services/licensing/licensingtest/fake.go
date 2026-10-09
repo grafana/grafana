@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 )
 
-var _ licensing.Licensing = new(FakeLicensing)
+var _ licensing.Licensing = (*FakeLicensing)(nil)
 
 func NewFakeLicensing() *FakeLicensing {
 	return &FakeLicensing{&mock.Mock{}}

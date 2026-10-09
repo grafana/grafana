@@ -107,7 +107,7 @@ const mustKeepProps: { [str: string]: boolean } = {
   key: true,
 };
 
-const defaults: any = {
+const defaults: Record<string, unknown> = {
   gridPos: { x: 0, y: 0, h: 3, w: 6 },
   targets: [{ refId: 'A' }],
   cachedPluginOptions: {},

@@ -11,6 +11,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBuildResourceServerOptionsGRPCErrorResultToStatus(t *testing.T) {
+	cfg := setting.NewCfg()
+	for _, enabled := range []bool{false, true} {
+		cfg.UnifiedStorageGRPCErrorResultToStatus = enabled
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg})
+		require.NoError(t, err)
+		require.Equal(t, enabled, opts.GRPCErrorResultToStatus)
+	}
+}
+
 func TestIsHighAvailabilityEnabled(t *testing.T) {
 	tests := []struct {
 		name string
@@ -175,6 +185,24 @@ func TestWithAccessClientValidatesAuthzConfig(t *testing.T) {
 	}
 }
 
+func TestWithAuthorizeBeforeFetch(t *testing.T) {
+	cfg := setting.NewCfg()
+	cfg.AuthorizeBeforeFetchEnabled = true
+	resourceOpts := &resource.ResourceServerOptions{}
+	require.NoError(t, withAuthorizeBeforeFetch(&ServerOptions{Cfg: cfg}, resourceOpts))
+	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
+}
+
+func TestWithSeededWatches(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		cfg := setting.NewCfg()
+		cfg.SeededWatchesEnabled = enabled
+		resourceOpts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg}, withSeededWatches)
+		require.NoError(t, err)
+		require.Equal(t, enabled, resourceOpts.SeededWatchesEnabled)
+	}
+}
+
 func TestWithNatsWatchMaxAge(t *testing.T) {
 	const maxAge = 5 * time.Minute
 
@@ -203,4 +231,39 @@ func TestWithNatsWatchMaxAge(t *testing.T) {
 			require.Equal(t, tt.want, resourceOpts.NatsWatchMaxAge)
 		})
 	}
+}
+
+func TestWithBackendSharesWatchExpiry(t *testing.T) {
+	expiry := resource.NewWatchExpiry()
+	resourceOpts := &resource.ResourceServerOptions{}
+	require.NoError(t, withBackend(&ServerOptions{
+		Backend: &resource.UnimplementedStorageBackend{}, WatchExpiry: expiry,
+	}, resourceOpts))
+	require.Same(t, expiry, resourceOpts.WatchExpiry)
+}
+
+func TestWithBlobConfigUsesBlobBackend(t *testing.T) {
+	blob := resource.NewKVBlobSupport(nil)
+
+	t.Run("uses the blob backend when no blob url is set", func(t *testing.T) {
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: setting.NewCfg(), BlobBackend: blob}, withBlobConfig)
+		require.NoError(t, err)
+		require.Same(t, blob, opts.Blob.Backend)
+	})
+
+	t.Run("prefers the blob url over the blob backend", func(t *testing.T) {
+		cfg := setting.NewCfg()
+		cfg.Raw.Section("grafana-apiserver").Key("blob_url").SetValue("mem://")
+		opts, err := buildResourceServerOptions(&ServerOptions{Cfg: cfg, BlobBackend: blob}, withBlobConfig)
+		require.NoError(t, err)
+		require.Nil(t, opts.Blob.Backend)
+		require.Equal(t, "mem://", opts.Blob.URL)
+	})
+}
+
+func TestWithBlobBackendSetsServiceBlobBackend(t *testing.T) {
+	blob := resource.NewKVBlobSupport(nil)
+	s := &service{}
+	WithBlobBackend(blob)(s)
+	require.Same(t, blob, s.blobBackend)
 }

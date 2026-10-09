@@ -49,7 +49,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.1",
     "@types/node": "24.10.1",
-    "@types/semver": "7.7.1",
+    "@types/semver": "7.8.0",
     "@typescript/native": "npm:typescript@^7.0.2",
     "acorn": "8.15.0",
     "esbuild": "0.28.1",

@@ -53,6 +53,17 @@ export function RepositoryPullStatusCard({ repo }: { repo: Repository }) {
             <Text variant="body">{status?.sync.job ?? 'N/A'}</Text>
           </div>
 
+          {!!status?.sync.lastChecked && (
+            <>
+              <Text color="secondary">
+                <Trans i18nKey="provisioning.repository-overview.last-checked">Last checked:</Trans>
+              </Text>
+              <div className={styles.spanTwo}>
+                <Text variant="body">{formatTimestamp(status.sync.lastChecked)}</Text>
+              </div>
+            </>
+          )}
+
           <div
             className={cx(styles.historicalData, { [styles.historicalDataOverlay]: isWorking })}
             aria-busy={isWorking}

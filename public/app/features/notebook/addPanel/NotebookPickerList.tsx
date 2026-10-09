@@ -11,7 +11,9 @@ import { NotebookPickerCard } from './NotebookPickerCard';
 /**
  * The list is meant to be the modal's only scroll region — the tabs, filters and footer should stay
  * put while it scrolls. Modal caps itself at 80% of the viewport and the rest of the modal takes
- * roughly 360px of that, so the list gets what is left.
+ * roughly 420px of that — the time-range lock below the list included, whose two lines would
+ * otherwise push the modal into scrolling itself and hide its description — so the list gets what
+ * is left.
  *
  * Bounded in viewport units rather than by flexing to fill the space: the two entry points render
  * different modal wrappers (Explore's plugin-extension wrapper adds a plain div of its own), and
@@ -21,7 +23,7 @@ import { NotebookPickerCard } from './NotebookPickerCard';
  * itself — better than a list too short to show a single notebook. It stays inside the max so a
  * short list is still sized by its content rather than padded out to the floor.
  */
-const LIST_MAX_HEIGHT = 'max(200px, calc(80vh - 360px))';
+const LIST_MAX_HEIGHT = 'max(200px, calc(80vh - 420px))';
 
 interface Props {
   notebooks: NotebookRow[];

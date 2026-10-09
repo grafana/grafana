@@ -150,6 +150,9 @@ export const getGridStyles = memoize(
 
         border: 'none',
 
+        // The grid defaults to tabular digits; override them while dataviz.tabularNums is disabled.
+        ...(theme.flags.tabularNums ? {} : { fontVariantNumeric: 'normal' }),
+
         '.rdg-cell': {
           padding: TABLE.CELL_PADDING,
 
@@ -203,7 +206,7 @@ export const getGridStyles = memoize(
           [`${SELECTED_CELL_SELECTOR}:not(:focus-within)`]: { outline: 'none' },
         },
 
-        '.rdg-cell.rdg-cell-frozen': {
+        '.rdg-cell.rdg-cell-frozen-start': {
           backgroundColor: 'var(--rdg-row-background-color)',
           zIndex: theme.zIndex.tooltip - 4,
           [SELECTED_CELL_SELECTOR]: { zIndex: theme.zIndex.tooltip - 3 },
@@ -212,14 +215,22 @@ export const getGridStyles = memoize(
           }),
         },
 
+        // Row hover is painted on `.rdg-row`, but frozen cells carry a solid background to occlude
+        // scrolled content, so they'd otherwise miss the highlight. Exclude expansion containers
+        // because hovering a nested table also hovers its container. Selected rows are handled below.
+        [`.rdg-row:not(.rdg-header-row, .rdg-summary-row, .${NESTED_ROW_CLASS}, [aria-selected='true']):hover > .rdg-cell.rdg-cell-frozen-start`]:
+          {
+            backgroundColor: 'var(--rdg-row-hover-background-color)',
+          },
+
         // have to override styles for row selection to workaround safari styles workaround
         '[role="row"][aria-selected="true"]': {
           '&:hover': {
-            '.rdg-cell.rdg-cell-frozen': {
+            '.rdg-cell.rdg-cell-frozen-start': {
               backgroundColor: 'var(--rdg-row-selected-hover-background-color)',
             },
           },
-          '.rdg-cell.rdg-cell-frozen': {
+          '.rdg-cell.rdg-cell-frozen-start': {
             backgroundColor: 'var(--rdg-row-selected-background-color)',
           },
         },
@@ -233,11 +244,11 @@ export const getGridStyles = memoize(
           [`.${STRIPED_ROW_CLASS}:not([aria-selected='true'])`]: {
             backgroundColor: table.rowStripedBackground,
             // A `.rdg-cell` inherits its background from the row, which is how the row rule reaches
-            // the cells at all (rows are `display: contents`, so they paint no box of their own).
+            // the cells at all (rows use subgrid to align with the parent grid's tracks).
             // Frozen cells are the exception: they set an opaque background so they can occlude the
             // cells scrolling behind them, so the stripe has to be repeated here or a striped row's
             // frozen column falls back to the plain row background.
-            '.rdg-cell.rdg-cell-frozen': {
+            '.rdg-cell.rdg-cell-frozen-start': {
               backgroundColor: table.rowStripedBackground,
             },
           },
@@ -251,10 +262,16 @@ export const getGridStyles = memoize(
           },
         }),
 
+        // Summary rows are sticky stacking contexts; raising their cells alone cannot place them
+        // above active or hovered frozen body cells outside that context.
+        '.rdg-summary-row': {
+          zIndex: theme.zIndex.tooltip - 1,
+        },
+
         '.rdg-header-row, .rdg-summary-row': {
           '.rdg-cell': {
             zIndex: theme.zIndex.tooltip - 5,
-            '&.rdg-cell-frozen': {
+            '&.rdg-cell-frozen-start': {
               zIndex: theme.zIndex.tooltip - 1,
             },
           },
@@ -293,11 +310,11 @@ export const getGridStyles = memoize(
             // box-shadow painted at its border edge.
             boxShadow: '0 -1px 0 0 var(--rdg-header-background-color)',
           },
-          // The `.rdg-cell.rdg-cell-frozen` rule above (for solid, occluding frozen body cells)
+          // The `.rdg-cell.rdg-cell-frozen-start` rule above (for solid, occluding frozen body cells)
           // also matches frozen *header* cells, at higher specificity than the plain `.rdg-cell`
           // inheriting the header's background — so a frozen column's header cell fell back to the
           // row background instead. Three classes' worth of specificity here beats that rule's two.
-          '.rdg-header-row > .rdg-cell.rdg-cell-frozen': {
+          '.rdg-header-row > .rdg-cell.rdg-cell-frozen-start': {
             backgroundColor: 'var(--rdg-header-background-color)',
           },
           // The header's corners are painted rather than clipped. A corner made by transparency needs
@@ -384,7 +401,10 @@ export const getGridStyles = memoize(
       }),
       cellNested: css({
         [SELECTED_CELL_SELECTOR]: { outline: 'none' },
-        '&:hover': { backgroundColor: 'transparent' },
+        // beta.60 paints row hover/selection on `.rdg-row`, not `.rdg-cell`, so a transparent
+        // container cell lets that color bleed through around the nested grid. Paint the full-width
+        // container with the opaque base row background so it stays neutral.
+        backgroundColor: 'var(--rdg-row-background-color)',
       }),
       noDataNested: css({
         height: TABLE.NESTED_NO_DATA_HEIGHT,
@@ -483,19 +503,40 @@ export const getMaxHeightCellStyles: TableCellStyles = memoize(
   { isMatchingKey: isTableCellStylesKeyEqual }
 );
 
-export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign) =>
-  css({
-    display: 'none',
-    position: 'absolute',
-    top: 0,
-    margin: 'auto',
-    height: '100%',
-    color: theme.colors.text.primary,
-    background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
-    padding: theme.spacing.x0_5,
-    paddingInlineStart: theme.spacing.x1,
-    [textAlign === 'right' ? 'left' : 'right']: 0,
-  })
+export const getCellActionStyles = memoize((theme: GrafanaTheme2, textAlign: TextAlign, tableRefreshEnabled = false) =>
+  tableRefreshEnabled
+    ? css({
+        display: 'flex',
+        position: 'absolute',
+        top: '50%',
+        transform: 'translateY(-50%)',
+        [textAlign === 'right' ? 'left' : 'right']: theme.spacing(0.5),
+        borderRadius: theme.shape.radius.default,
+        padding: theme.spacing(0.5),
+        color: theme.colors.text.primary,
+        background: colorManipulator.alpha(theme.colors.background.primary, 0.9),
+        opacity: 0,
+        pointerEvents: 'none',
+        // Limit hover to the owning cell, including its optional height wrapper, not an outer nested grid.
+        // Mouse focus remains on the trigger after dismissal; only keyboard focus should keep actions visible.
+        '.rdg-cell:hover > &, .rdg-cell:hover > div > &, &:has(:focus-visible), &:has([aria-expanded="true"])': {
+          opacity: 1,
+          pointerEvents: 'auto',
+        },
+        button: { margin: 0 },
+      })
+    : css({
+        display: 'none',
+        position: 'absolute',
+        top: 0,
+        margin: 'auto',
+        height: '100%',
+        color: theme.colors.text.primary,
+        background: theme.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+        padding: theme.spacing.x0_5,
+        paddingInlineStart: theme.spacing.x1,
+        [textAlign === 'right' ? 'left' : 'right']: 0,
+      })
 );
 
 export const getLinkStyles = memoize((theme: GrafanaTheme2, canBeColorized: boolean) =>

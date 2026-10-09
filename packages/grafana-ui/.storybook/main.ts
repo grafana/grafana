@@ -2,11 +2,12 @@ import path, { dirname, join } from 'node:path';
 import { mergeRsbuildConfig } from '@rsbuild/core';
 import { pluginReact } from '@rsbuild/plugin-react';
 import type { StorybookConfig } from 'storybook-react-rsbuild';
-import remarkGfm from 'remark-gfm';
 import { copyAssetsSync } from './copyAssets.ts';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
+
+const themeCss = /grafana\.(dark|light)\.css$/;
 
 const coreComponentsGlobs: StorybookConfig['stories'] = [
   // Specific high-level documentation pages
@@ -40,19 +41,7 @@ copyAssetsSync();
 const mainConfig: StorybookConfig = {
   stories,
 
-  addons: [
-    {
-      name: getAbsolutePath('@storybook/addon-docs'),
-      options: {
-        mdxPluginOptions: {
-          mdxCompileOptions: {
-            remarkPlugins: [remarkGfm],
-          },
-        },
-      },
-    },
-    getAbsolutePath('@storybook/addon-a11y'),
-  ],
+  addons: [getAbsolutePath('@storybook/addon-docs'), getAbsolutePath('@storybook/addon-a11y')],
 
   framework: {
     name: getAbsolutePath('storybook-react-rsbuild'),
@@ -85,6 +74,9 @@ const mainConfig: StorybookConfig = {
       plugins: [pluginReact()],
 
       tools: {
+        bundlerChain: (chain, { CHAIN_ID }) => {
+          chain.module.rule(CHAIN_ID.RULE.CSS).exclude.add(themeCss);
+        },
         rspack: (rspackConfig) => {
           rspackConfig.module ??= {};
           rspackConfig.module.rules ??= [];
@@ -97,12 +89,12 @@ const mainConfig: StorybookConfig = {
                 exposes: ['$', 'jQuery'],
               },
             },
-            // Rsbuild's own CSS pipeline has no `lazyStyleTag` equivalent, so the theme
-            // stylesheets get their own chain. `url: false` keeps relative url() refs
+            // Rsbuild's own CSS pipeline has no `lazyStyleTag` equivalent, so the generated
+            // theme stylesheets get their own chain. `url: false` keeps relative url() refs
             // (fonts, checkbox sprites) unresolved so they resolve at runtime against the
             // assets copyAssets.ts puts in staticDirs.
             {
-              test: /\.scss$/,
+              test: themeCss,
               type: 'javascript/auto',
               use: [
                 {
@@ -116,16 +108,6 @@ const mainConfig: StorybookConfig = {
                   loader: require.resolve('css-loader'),
                   options: {
                     url: false,
-                    importLoaders: 2,
-                  },
-                },
-                {
-                  loader: require.resolve('sass-loader'),
-                  options: {
-                    sassOptions: {
-                      // silencing these warnings since we're planning to remove sass when angular is gone
-                      silenceDeprecations: ['import', 'global-builtin'],
-                    },
                   },
                 },
               ],

@@ -3,6 +3,7 @@ package search
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -52,6 +53,8 @@ var legacyFilterableFields = map[string]struct{}{
 	fieldRoutingTree:         {},
 	fieldMetric:              {},
 	fieldTargetDatasourceUID: {},
+	fieldState:               {},
+	fieldHealth:              {},
 }
 
 // legacyTextFields are the fields a text leaf may name. The legacy store's only
@@ -81,6 +84,12 @@ var scalarFilterFields = map[string]struct{}{
 	fieldMetric:              {},
 	fieldTargetDatasourceUID: {},
 	fieldLabels:              {},
+}
+
+var negatableFilterFields = map[string]struct{}{
+	fieldLabels: {},
+	fieldState:  {},
+	fieldHealth: {},
 }
 
 // kindSelectableLabelKeys are the resource metadata label keys a labelSelector may
@@ -163,8 +172,8 @@ func validateWhere(where *searchv0.WhereNode, k perKind, p *field.Path) ([]searc
 				errs = append(errs, cerr)
 				continue
 			}
-			if ck != "text" && ck != "filter" {
-				errs = append(errs, field.Invalid(cp, ck, "only text and filter leaves are allowed inside and"))
+			if ck != "text" && ck != "filter" && ck != "regex" {
+				errs = append(errs, field.Invalid(cp, ck, "only text, filter and regex leaves are allowed inside and"))
 				continue
 			}
 			// A second text leaf would overwrite the backend query, so it is rejected
@@ -187,7 +196,7 @@ func validateWhere(where *searchv0.WhereNode, k perKind, p *field.Path) ([]searc
 			leaves = append(leaves, child)
 		}
 		return leaves, errs
-	case "text", "filter":
+	case "text", "filter", "regex":
 		return []searchv0.WhereNode{*where}, validateLeaf(where, key, k, p)
 	default:
 		// or, not, range, exists: modelled for the future, rejected today.
@@ -214,6 +223,9 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	if n.Filter != nil {
 		set = append(set, "filter")
 	}
+	if n.Regex != nil {
+		set = append(set, "regex")
+	}
 	if n.Range != nil {
 		set = append(set, "range")
 	}
@@ -226,7 +238,7 @@ func singleKey(n *searchv0.WhereNode, p *field.Path) (string, *field.Error) {
 	case 0:
 		// An empty node matters as much as an over-set one: it would flatten to no
 		// constraint at all and quietly return every rule.
-		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter")
+		return "", field.Invalid(p, "{}", "node must set exactly one of: and, or, not, text, filter, regex")
 	default:
 		return "", field.Invalid(p, strings.Join(set, ", "), "node must set exactly one key")
 	}
@@ -238,6 +250,34 @@ func validateLeaf(n *searchv0.WhereNode, key string, k perKind, p *field.Path) f
 		return validateTextLeaf(n.Text, k, p.Child("text"))
 	case "filter":
 		return validateFilterLeaf(n.Filter, k, p.Child("filter"))
+	case "regex":
+		return validateRegexLeaf(n.Regex, k, p.Child("regex"))
+	}
+	return nil
+}
+
+// validateRegexLeaf accepts regex on labels only: it is the one field the legacy
+// backend evaluates in memory, so every other field would be honoured on
+// unified and dropped on legacy. The pattern is parsed with the subset unified
+// search accepts, so both backends reject the same patterns with a 422 rather
+// than legacy accepting what unified answers with a 400.
+func validateRegexLeaf(r *searchv0.RegexPredicate, k perKind, p *field.Path) field.ErrorList {
+	fp := p.Child("field")
+	if r.Field == "" {
+		return field.ErrorList{field.Required(fp, "regex field is required")}
+	}
+	if errs := checkCapability(k, r.Field, resource.SearchCapabilityFilter, fp); len(errs) > 0 {
+		return errs
+	}
+	if r.Field != fieldLabels {
+		return field.ErrorList{field.Invalid(fp, r.Field, fmt.Sprintf("regex filtering is only supported on %q", fieldLabels))}
+	}
+	pp := p.Child("pattern")
+	if r.Pattern == "" {
+		return field.ErrorList{field.Required(pp, "regex pattern is required")}
+	}
+	if _, _, err := parseLabelRegex(r.Pattern); err != nil {
+		return field.ErrorList{field.Invalid(pp, r.Pattern, err.Error())}
 	}
 	return nil
 }
@@ -310,11 +350,11 @@ func validateFilterLeaf(f *searchv0.FilterPredicate, k perKind, p *field.Path) f
 		errs = append(errs, field.Invalid(p.Child("values"), f.Values, fmt.Sprintf("filter on %q accepts exactly one value", f.Field)))
 		return errs
 	}
-	// Only the labels field round-trips negation to the legacy backend
-	// (requirementToLabelMatcher reads the operator). Every other field's legacy
-	// matcher ignores the operator and would apply NotIn as an inclusive match,
-	// returning the opposite of what was asked for.
-	if f.Operator == perKindFilterOperatorNotIn && f.Field != fieldLabels {
+	// Only labels, state and health round-trip negation to the legacy backend
+	// (requirementToLabelMatcher and listFilter.add read the operator). Every
+	// other field's legacy matcher ignores the operator and would apply NotIn as
+	// an inclusive match, returning the opposite of what was asked for.
+	if _, negatable := negatableFilterFields[f.Field]; f.Operator == perKindFilterOperatorNotIn && !negatable {
 		errs = append(errs, field.Invalid(p.Child("operator"), f.Operator, fmt.Sprintf("the NotIn operator is not supported on %q", f.Field)))
 		return errs
 	}
@@ -409,9 +449,7 @@ func validateSort(sorts []searchv0.SortField, k perKind, p *field.Path) field.Er
 	return errs
 }
 
-// validateReturnFields checks the projection. A field must be retrievable on the
-// kind and carried by the result table both backends emit, else it would be
-// silently absent from every hit.
+// Reject fields either backend cannot return, rather than silently omitting them.
 func validateReturnFields(fields []string, k perKind, p *field.Path) field.ErrorList {
 	var errs field.ErrorList
 	for i, name := range fields {
@@ -420,7 +458,7 @@ func validateReturnFields(fields []string, k perKind, p *field.Path) field.Error
 			errs = append(errs, capErrs...)
 			continue
 		}
-		if _, ok := results.index[name]; !ok {
+		if !slices.Contains(resultColumns, name) {
 			errs = append(errs, field.Invalid(fp, name, "returning this field is not supported"))
 		}
 	}

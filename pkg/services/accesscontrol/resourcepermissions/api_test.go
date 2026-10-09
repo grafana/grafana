@@ -640,10 +640,9 @@ func TestIntegrationApi_setUserPermission_dualWriterModeFallback(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlags(t, map[string]bool{
 				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
-				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 			})
 
-			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			service, usrSvc, _, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures(), true)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -694,10 +693,9 @@ func TestIntegrationApi_getPermissions_dualWriterModeFallback(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			setOpenFeatureFlags(t, map[string]bool{
 				featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
-				featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 			})
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptions, featuremgmt.WithFeatures(), true)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -869,7 +867,7 @@ func TestIntegrationApi_setUserPermissionForTeams_dualWriterModeFallback(t *test
 			// The teams redirect is gated on the kubernetesTeamsRedirect toggle.
 			setOpenFeatureFlag(t, featuremgmt.FlagKubernetesTeamsRedirect, true)
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, testOptionsForTeams, featuremgmt.WithFeatures(), false)
 			cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 				iamv0.TeamResourceInfo.GroupResource().String(): {DualWriterMode: tt.mode},
 			}
@@ -960,7 +958,7 @@ func TestIntegrationApi_setUserPermissionForTeams_removeMemberDualWrite(t *testi
 				opts.RestConfigProvider = &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: ts.URL}}
 			}
 
-			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures())
+			service, usrSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, opts, featuremgmt.WithFeatures(), false)
 			dbHelper, err := legacysql.NewDatabaseProvider(service.sqlStore)(context.Background())
 			require.NoError(t, err)
 			// Mode1 is non-authoritative, so the request dual-writes and falls through to legacy.
@@ -1134,13 +1132,12 @@ func runBulkPermissionHTTPScenario(t *testing.T, redirect bool, initial, command
 	if redirect {
 		setOpenFeatureFlags(t, map[string]bool{
 			featuremgmt.FlagKubernetesAuthZResourcePermissionsRedirect: true,
-			featuremgmt.FlagKubernetesAuthzResourcePermissionApis:      true,
 		})
 		k8sServer := newResourcePermissionAPIServer(t)
 		options.RestConfigProvider = &mockDirectRestConfigProvider{restConfig: &clientrest.Config{Host: k8sServer.URL}}
 	}
 
-	service, userSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, options, featuremgmt.WithFeatures())
+	service, userSvc, teamSvc, cfg := setupTestEnvironmentWithCfg(t, options, featuremgmt.WithFeatures(), redirect)
 	if redirect {
 		cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
 			iamv0.ResourcePermissionInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},

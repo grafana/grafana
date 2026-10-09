@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -40,19 +43,21 @@ type RulesForSubjectREST struct {
 	teamLister teamLister
 	tracer     trace.Tracer
 	logger     log.Logger
+	metrics    *forSubjectMetrics
 }
 
 type teamLister interface {
 	List(ctx context.Context, options *metainternalversion.ListOptions) (runtime.Object, error)
 }
 
-func NewRulesForSubjectREST(ruleGetter rest.Getter, teamGetter rest.Getter, teamLister teamLister, tracer trace.Tracer) *RulesForSubjectREST {
+func NewRulesForSubjectREST(ruleGetter rest.Getter, teamGetter rest.Getter, teamLister teamLister, tracer trace.Tracer, reg prometheus.Registerer) *RulesForSubjectREST {
 	return &RulesForSubjectREST{
 		ruleGetter: ruleGetter,
 		teamGetter: teamGetter,
 		teamLister: teamLister,
 		tracer:     tracer,
 		logger:     log.New("teamlbac.for-subject"),
+		metrics:    newForSubjectMetrics(reg),
 	}
 }
 
@@ -76,35 +81,46 @@ func (s *RulesForSubjectREST) ConnectMethods() []string {
 
 func (s *RulesForSubjectREST) Connect(ctx context.Context, datasourceName string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(_ http.ResponseWriter, req *http.Request) {
+		start := time.Now()
+		outcome, errorClass := forSubjectOutcomeError, forSubjectErrorInternal
+		defer func() { s.metrics.observe(outcome, errorClass, datasourceName, start) }()
 		ctx, span := s.tracer.Start(req.Context(), "teamlbac.for-subject")
-		defer span.End()
+		defer func() {
+			span.SetAttributes(attribute.String("outcome", string(outcome)), attribute.String("error_class", string(errorClass)))
+			span.End()
+		}()
 
 		requestInfo, ok := k8srequest.RequestInfoFrom(req.Context())
 		if !ok || len(requestInfo.Parts) != 5 || requestInfo.Parts[2] != "for-subject" {
+			outcome, errorClass = forSubjectOutcomeRejected, forSubjectErrorBadRequest
 			responder.Error(apierrors.NewBadRequest("expected /for-subject/{type}/{uid}"))
 			return
 		}
 		subjectType := requestInfo.Parts[3]
 		subjectUID := requestInfo.Parts[4]
 		if subjectType != userSubjectType {
+			outcome, errorClass = forSubjectOutcomeRejected, forSubjectErrorBadRequest
 			responder.Error(apierrors.NewBadRequest(fmt.Sprintf("unsupported subjectType %q", subjectType)))
 			return
 		}
 		if subjectUID == "" {
+			outcome, errorClass = forSubjectOutcomeRejected, forSubjectErrorBadRequest
 			responder.Error(apierrors.NewBadRequest("subjectUID is required"))
 			return
 		}
 
-		response, err := s.getRulesForUser(common.WithSubresourceNamespace(ctx), datasourceName, subjectUID)
+		response, result, err := s.getRulesForUser(common.WithSubresourceNamespace(ctx), datasourceName, subjectUID)
 		if err != nil {
+			errorClass = classifyForSubjectError(err)
 			responder.Error(err)
 			return
 		}
+		outcome, errorClass = result, forSubjectErrorNone
 		responder.Object(http.StatusOK, response)
 	}), nil
 }
 
-func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceName, userUID string) (*iamv0.GetTeamLBACRulesForSubjectResponse, error) {
+func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceName, userUID string) (*iamv0.GetTeamLBACRulesForSubjectResponse, forSubjectOutcome, error) {
 	// TeamLBACRule metadata.name identifies the datasource as
 	// "<datasource type>.<datasource UID>".
 	logger := s.logger.FromContext(ctx)
@@ -121,18 +137,18 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 		// No stored rule means this datasource has no LBAC rules, so return an
 		// empty result. Authorization and routing happen before this storage read,
 		// so failures from those steps are still returned to the caller.
-		return response, nil
+		return response, forSubjectOutcomeNoRules, nil
 	}
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	allRules, ok := obj.(*iamv0.TeamLBACRule)
 	if !ok {
-		return nil, apierrors.NewInternalError(fmt.Errorf("unexpected TeamLBACRule object type %T", obj))
+		return nil, "", apierrors.NewInternalError(fmt.Errorf("unexpected TeamLBACRule object type %T", obj))
 	}
 
 	if len(allRules.Spec.TeamFilters) == 0 {
-		return response, nil
+		return response, forSubjectOutcomeEmptyRule, nil
 	}
 
 	// Looking up only the teams referenced by this rule keeps work proportional
@@ -142,6 +158,7 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 	// many teams, but it returns every team for the user and legacy numeric rule
 	// keys would still need separate resolution.
 	missingTeamKeys := make([]string, 0)
+	matchedTeam, returnedFilters := false, false
 	for teamKey, filters := range allRules.Spec.TeamFilters {
 		if _, err := strconv.ParseInt(teamKey, 10, 64); err == nil {
 			// Numeric keys are retained only for rules written before team UIDs
@@ -152,15 +169,18 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 		}
 		team, err := s.getTeam(storageCtx, teamKey)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if team == nil {
+			s.metrics.incMissingTeam()
 			missingTeamKeys = append(missingTeamKeys, teamKey)
 			continue
 		}
 		if !hasMember(team, userUID) {
 			continue
 		}
+		matchedTeam = true
+		returnedFilters = returnedFilters || len(filters) > 0
 		response.TeamFilters[teamKey] = append([]string(nil), filters...)
 	}
 	if len(missingTeamKeys) > 0 {
@@ -169,7 +189,13 @@ func (s *RulesForSubjectREST) getRulesForUser(ctx context.Context, datasourceNam
 		logger.Warn("TeamLBACRule references teams that do not exist",
 			"namespace", namespace, "datasource", datasourceName, "teamKeys", missingTeamKeys)
 	}
-	return response, nil
+	if !matchedTeam {
+		return response, forSubjectOutcomeNoTeamMembership, nil
+	}
+	if !returnedFilters {
+		return response, forSubjectOutcomeNoApplicableFilters, nil
+	}
+	return response, forSubjectOutcomeFiltersReturned, nil
 }
 
 func (s *RulesForSubjectREST) getTeam(ctx context.Context, teamKey string) (*iamv0.Team, error) {

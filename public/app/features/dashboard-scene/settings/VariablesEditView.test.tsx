@@ -1,8 +1,6 @@
-import { OpenFeatureProvider } from '@openfeature/react-sdk';
-import { render as RTLRender } from '@testing-library/react';
-import * as React from 'react';
+import { act } from '@testing-library/react';
 import { of } from 'rxjs';
-import { TestProvider } from 'test/helpers/TestProvider';
+import { render } from 'test/test-utils';
 
 import {
   FieldType,
@@ -25,14 +23,6 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { activateFullSceneTree } from '../utils/test-utils';
 
 import { VariablesEditView } from './VariablesEditView';
-
-function render(component: React.ReactNode) {
-  return RTLRender(
-    <TestProvider>
-      <OpenFeatureProvider>{component}</OpenFeatureProvider>
-    </TestProvider>
-  );
-}
 
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({})),
@@ -229,13 +219,26 @@ describe('VariablesEditView', () => {
     let variableView: VariablesEditView;
 
     beforeEach(async () => {
+      // New layouts plus the settings redesign replace this list with a sidebar redirect.
+      // setTestFlags replaces the whole config, so keep the redesign flag from beforeAll.
+      setTestFlags({
+        [FlagKeys.GrafanaDashboardSettingsRedesign]: false,
+        dashboardNewLayouts: false,
+      });
       const result = await buildTestScene();
       variableView = result.variableView;
     });
 
-    it('should not show Provisioned by data source section when no variables have origin', () => {
-      const { queryByText } = render(<variableView.Component model={variableView} />);
+    afterEach(() => {
+      act(() => {
+        setTestFlags({ [FlagKeys.GrafanaDashboardSettingsRedesign]: false });
+      });
+    });
 
+    it('should not show Provisioned by data source section when no variables have origin', async () => {
+      const { findByText, queryByText } = render(<variableView.Component model={variableView} />);
+
+      expect(await findByText('customVar')).toBeInTheDocument();
       expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
     });
 
@@ -251,9 +254,9 @@ describe('VariablesEditView', () => {
       });
       variableView.getVariableSet().setState({ variables: [...variables, originVariable] });
 
-      const { getByText } = render(<variableView.Component model={variableView} />);
+      const { findByText } = render(<variableView.Component model={variableView} />);
 
-      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+      expect(await findByText('Provisioned by data source')).toBeInTheDocument();
     });
   });
 

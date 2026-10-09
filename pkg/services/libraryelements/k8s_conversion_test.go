@@ -38,7 +38,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	userSvc.ExpectedListUsersByIdOrUid = []*user.User{testUser}
 
 	testFolder := &folder.Folder{
-		ID:    1,
+		ID:    1, //nolint:staticcheck // Exercise legacy field compatibility.
 		UID:   "test-folder-uid",
 		Title: "Test Folder",
 	}
@@ -48,7 +48,7 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 
 	dashboardsSvc := &dashboards.FakeDashboardService{}
 	testDashboard := &dashboards.DashboardRef{
-		ID:        1,
+		ID:        1, //nolint:staticcheck // Exercise legacy field compatibility.
 		UID:       "test-dashboard-uid",
 		FolderUID: testFolder.UID,
 	}
@@ -180,12 +180,16 @@ func TestUnstructuredToLegacyLibraryPanelDTO(t *testing.T) {
 	require.Empty(t, result.Meta.FolderName)
 	require.Zero(t, result.FolderID) // nolint:staticcheck
 
-	meta.SetFolder(ac.GeneralFolderUID)
-	result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
-	require.NoError(t, err)
-	require.Equal(t, ac.GeneralFolderUID, result.FolderUID)
-	require.Equal(t, dashboards.RootFolderName, result.Meta.FolderName)
-	require.Zero(t, result.FolderID) // nolint:staticcheck
+	handler.folderService = nil // Root panels must not fetch a synthetic folder.
+	for _, root := range []string{"", ac.GeneralFolderUID} {
+		meta.SetFolder(root)
+		result, err = handler.unstructuredToLegacyLibraryPanelDTO(reqContext, *unstructuredObj)
+		require.NoError(t, err)
+		require.Empty(t, result.FolderUID)
+		require.Empty(t, result.Meta.FolderUID)
+		require.Equal(t, dashboards.RootFolderName, result.Meta.FolderName)
+		require.Zero(t, result.FolderID) // nolint:staticcheck
+	}
 
 	// Missing creator metadata must not prevent a valid updater from being
 	// resolved. GetUsersFromMeta stops at an untyped/empty identity string.

@@ -340,10 +340,12 @@ function getLokiDatasourcesToTry(
 
 /**
  * Checks whether logs exist for any of the given queries.
- * When a prior successful Loki variation/datasource is stored, only that option is re-checked —
- * discovery already ran, so empty results mean logs are absent rather than that we should probe again.
- * Otherwise each variation is probed in order; the first match is stored for future checks.
- * If the configured Loki datasource has no logs, other Loki datasources are tried.
+ * When a prior successful Loki datasource is stored, only that datasource is re-checked —
+ * discovery already ran, so empty results mean logs are absent rather than that we should probe
+ * other datasources again. Within that datasource, a prior successful query variation is tried
+ * first but falls through to the other naming conventions (see probeForMatchingQuery), since
+ * different services behind the same datasource pair can log under different field names.
+ * The first match (of either a fresh probe or a fallback) is stored for future checks.
  */
 function checkForLogsInQueries(
   queries: DataQuery[],
@@ -397,8 +399,10 @@ function checkForLogsInQueries(
 
 /**
  * Probes query variations against a single datasource.
- * When a stored refId exists for that datasource, only that variation is checked —
- * discovery already identified the working query, so empty results mean no logs for this span/trace.
+ * When a stored refId exists for that datasource, that variation (plus its no-span-id fallback)
+ * is tried first — but different services behind the same datasource pair can log under a
+ * different field-naming convention, so an empty result falls through to the remaining variations
+ * rather than being taken as proof that this span/trace has no logs.
  */
 function probeForMatchingQuery(
   queries: DataQuery[],
@@ -408,8 +412,10 @@ function probeForMatchingQuery(
 ): Observable<DataQuery | undefined> {
   const storedRefId = getStoredLokiQueryMatch(traceDatasourceUid, logsDatasourceUid);
   const storedQuery = storedRefId ? queries.find((q) => q.refId === storedRefId) : undefined;
-  // Prefer the known match exclusively; do not fall through to other naming conventions.
-  const queriesToProbe = storedQuery ? addNoSpanIdFallback(storedQuery) : queries;
+
+  const queriesToProbe = storedQuery
+    ? [...addNoSpanIdFallback(storedQuery), ...queries.filter((q) => q !== storedQuery)]
+    : queries;
 
   return from(queriesToProbe).pipe(
     concatMap((query) =>
@@ -436,6 +442,7 @@ function rewriteLinkForMatch(linkModel: LinkModel, match: LogsCheckMatch, drilld
   // (closed over that reference) uses the matched query and datasource.
   if (linkModel.interpolatedParams) {
     linkModel.interpolatedParams.query = matchedQueries[0];
+    linkModel.href = href;
   }
 
   return {
@@ -463,26 +470,28 @@ function rebuildExploreHref(linkModel: LinkModel, queries: DataQuery[], datasour
 }
 
 /**
- * Adds a fallback query for environments where there is a trace_id filter but no span_id filters.
+ * Adds a fallback query for environments where there is a trace_id filter but no span_id filter.
+ *
+ * getQueryForLoki produces two shapes that can carry a span_id constraint:
+ * - line-contains: two line filters, `|= "<traceId>" |= "<spanId>"` — the span_id one is always last.
+ * - structured (default/job): a single field filter, `| <field>="<spanId>"`.
  */
 export function addNoSpanIdFallback(query: DataQuery) {
   if ('expr' in query === false || typeof query.expr !== 'string') {
     return [query];
   }
-  if (!query.expr.toLowerCase().includes('span')) {
+  const lineFilterCount = query.expr.match(/\|=/g)?.length ?? 0;
+  if (lineFilterCount < 2 && !query.expr.toLowerCase().includes('span')) {
     return [query];
   }
-  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*(?:=~|!~|!=|=)\s*(?:"(?:\\.|[^"\\])*"|`[^`]*`|[^\s|]+)/gi;
+  const spanIdFilter = /\s*\|\s*(?:span_?id|otel_span_id)\b\s*=\s*"(?:\\.|[^"\\])*"/gi;
 
-  // Add fallback without span_id filter
-  const fallbackQuery = {
-    ...query,
-    expr: query.expr.includes('!=')
-      ? query.expr.substring(0, query.expr.lastIndexOf('|=') - 1)
-      : query.expr.replace(spanIdFilter, ''),
-  };
+  const fallbackExpr =
+    lineFilterCount >= 2
+      ? query.expr.slice(0, query.expr.lastIndexOf('|=')).trimEnd()
+      : query.expr.replace(spanIdFilter, '');
 
-  return [query, fallbackQuery];
+  return [query, { ...query, expr: fallbackExpr }];
 }
 
 function checkForLogs(query: DataQuery, timeRange: TimeRange): Observable<boolean> {

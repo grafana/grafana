@@ -21,7 +21,6 @@ import { config, reportInteraction } from '@grafana/runtime';
 import { type TimeZone } from '@grafana/schema';
 import { useStyles2 } from '@grafana/ui';
 
-import { autoColor } from '../Theme';
 import { merge as mergeShortcuts } from '../keyboard-shortcuts';
 import type TNil from '../types/TNil';
 import type TTraceTimeline from '../types/TTraceTimeline';
@@ -38,11 +37,11 @@ function getStyles(theme: GrafanaTheme2) {
   return {
     TraceTimelineViewer: css({
       label: 'TraceTimelineViewer',
-      borderBottom: `1px solid ${autoColor(theme, '#bbb')}`,
+      borderBottom: `1px solid ${theme.colors.border.medium}`,
 
       '& .json-markup': {
-        lineHeight: '17px',
-        fontFamily: 'monospace',
+        lineHeight: theme.typography.bodySmall.lineHeight,
+        fontFamily: theme.typography.fontFamilyMonospace,
         whiteSpace: 'pre-wrap',
       },
 
@@ -56,9 +55,8 @@ function getStyles(theme: GrafanaTheme2) {
 
       '& .json-markup-string': {
         color: theme.colors.text.primary,
-        // Auto-linked http(s) values stay teal; plugin/resource links stay blue via KeyValuesTable
         '& a': {
-          color: autoColor(theme, 'teal'),
+          color: theme.colors.text.link,
         },
       },
 

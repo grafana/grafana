@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import * as React from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
 import { Field, Input, Text, useStyles2 } from '@grafana/ui';
 
@@ -125,6 +126,7 @@ export function NotebookTitleEditor({ title, onChange }: Props) {
           ref={focusTrigger}
           className={styles.trigger}
           title={t('dashboard.notebook-layout.title-edit', 'Edit title')}
+          data-testid={selectors.pages.Notebooks.Item.titleEditorTrigger}
           onClick={() => {
             // Seeded on open rather than kept in step with the prop, so a title replaced elsewhere is
             // picked up without anything overwriting what someone is in the middle of typing.

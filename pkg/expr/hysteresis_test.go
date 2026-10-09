@@ -2,7 +2,6 @@ package expr
 
 import (
 	"context"
-	"encoding/json"
 	"testing"
 	"time"
 
@@ -115,107 +114,6 @@ func TestHysteresisExecute(t *testing.T) {
 			}
 			require.NoError(t, err)
 			require.EqualValues(t, result.Values, tc.expected)
-		})
-	}
-}
-
-func TestLoadedDimensionsFromFrame(t *testing.T) {
-	correctType := &data.FrameMeta{Type: "fingerprints", TypeVersion: data.FrameTypeVersion{1, 0}}
-	testCases := []struct {
-		name          string
-		frame         *data.Frame
-		expected      Fingerprints
-		expectedError bool
-	}{
-		{
-			name:          "should fail if frame has wrong type",
-			frame:         data.NewFrame("test").SetMeta(&data.FrameMeta{Type: "test"}),
-			expectedError: true,
-		},
-		{
-			name:          "should fail if frame has unsupported version",
-			frame:         data.NewFrame("test").SetMeta(&data.FrameMeta{Type: "fingerprints", TypeVersion: data.FrameTypeVersion{1, 1}}),
-			expectedError: true,
-		},
-		{
-			name:          "should fail if frame has no fields",
-			frame:         data.NewFrame("test").SetMeta(correctType),
-			expectedError: true,
-		},
-		{
-			name: "should fail if frame has many fields",
-			frame: data.NewFrame("test",
-				data.NewField("fingerprints", nil, []uint64{}),
-				data.NewField("test", nil, []string{}),
-			).SetMeta(correctType),
-			expectedError: true,
-		},
-		{
-			name: "should fail if frame has field of a wrong type",
-			frame: data.NewFrame("test",
-				data.NewField("fingerprints", nil, []int64{}),
-			).SetMeta(correctType),
-			expectedError: true,
-		},
-		{
-			name: "should fail if frame has nullable uint64 field",
-			frame: data.NewFrame("test",
-				data.NewField("fingerprints", nil, []*uint64{}),
-			).SetMeta(correctType),
-			expectedError: true,
-		},
-		{
-			name: "should create LoadedMetrics",
-			frame: data.NewFrame("test",
-				data.NewField("fingerprints", nil, []uint64{1, 2, 3, 4, 5}),
-			).SetMeta(correctType),
-			expected: Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			result, err := fingerprintsFromFrame(testCase.frame)
-			if testCase.expectedError {
-				require.Error(t, err)
-			} else {
-				require.EqualValues(t, testCase.expected, result)
-				b, _ := json.Marshal(testCase.frame)
-				t.Log(string(b))
-			}
-		})
-	}
-}
-
-func TestFingerprintsToFrame(t *testing.T) {
-	testCases := []struct {
-		name          string
-		input         Fingerprints
-		expected      Fingerprints
-		expectedError bool
-	}{
-		{
-			name:     "when empty map",
-			input:    Fingerprints{},
-			expected: Fingerprints{},
-		},
-		{
-			name:     "when nil",
-			input:    nil,
-			expected: Fingerprints{},
-		},
-		{
-			name:     "when has values",
-			input:    Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
-			expected: Fingerprints{1: {}, 2: {}, 3: {}, 4: {}, 5: {}},
-		},
-	}
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			frame := fingerprintsToFrame(testCase.input)
-			actual, err := fingerprintsFromFrame(frame)
-			require.NoError(t, err)
-			require.EqualValues(t, testCase.expected, actual)
 		})
 	}
 }

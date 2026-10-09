@@ -1,7 +1,9 @@
 package folder
 
 import (
+	"crypto/x509"
 	"fmt"
+	"os"
 
 	"github.com/grafana/authlib/authn"
 	"k8s.io/client-go/dynamic"
@@ -18,6 +20,9 @@ import (
 // [operator]
 // folders_server_url =
 // tls_insecure =
+// tls_cert_file =
+// tls_key_file =
+// tls_ca_file =
 // [grpc_client_authentication]
 // token =
 // token_exchange_url =
@@ -29,8 +34,14 @@ func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
 		return nil, fmt.Errorf("folders_server_url is required in [operator] section")
 	}
 
-	tlsConfig := rest.TLSClientConfig{
-		Insecure: operatorSec.Key("tls_insecure").MustBool(false),
+	tlsConfig, err := buildTLSConfig(
+		operatorSec.Key("tls_insecure").MustBool(false),
+		operatorSec.Key("tls_cert_file").String(),
+		operatorSec.Key("tls_key_file").String(),
+		operatorSec.Key("tls_ca_file").String(),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build TLS configuration: %w", err)
 	}
 
 	tokenExchangeClient, err := buildTokenExchangeClient(cfg)
@@ -56,6 +67,35 @@ func buildDynamicClient(cfg *setting.Cfg) (dynamic.Interface, error) {
 	}
 
 	return dynClient, nil
+}
+
+func buildTLSConfig(insecure bool, certFile, keyFile, caFile string) (rest.TLSClientConfig, error) {
+	tlsConfig := rest.TLSClientConfig{
+		Insecure: insecure,
+	}
+
+	if certFile != "" && keyFile != "" {
+		tlsConfig.CertFile = certFile
+		tlsConfig.KeyFile = keyFile
+	}
+
+	if caFile != "" {
+		// caFile is set in operator.ini file
+		// nolint:gosec
+		caCert, err := os.ReadFile(caFile)
+		if err != nil {
+			return tlsConfig, fmt.Errorf("failed to read CA certificate file: %w", err)
+		}
+
+		caCertPool := x509.NewCertPool()
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return tlsConfig, fmt.Errorf("failed to parse CA certificate")
+		}
+
+		tlsConfig.CAData = caCert
+	}
+
+	return tlsConfig, nil
 }
 
 func buildTokenExchangeClient(cfg *setting.Cfg) (*authn.TokenExchangeClient, error) {

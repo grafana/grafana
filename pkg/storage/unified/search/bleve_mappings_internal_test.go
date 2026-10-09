@@ -3,6 +3,7 @@ package search
 import (
 	"maps"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -35,6 +36,42 @@ func flatMappings(t *testing.T, def resource.SearchFieldDefinition) map[string]*
 		out[name] = sub.Fields[0]
 	}
 	return out
+}
+
+func TestDeletedResourceVersionMappingOverrideIsTopLevelOnly(t *testing.T) {
+	gvr := schema.GroupVersionResource{Group: "example.test", Version: "v1", Resource: "widgets"}
+	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+		gvr: {{
+			Name: resource.SEARCH_FIELD_DELETED_RV,
+			Type: resource.SearchFieldTypeInt64,
+			Capabilities: []resource.SearchCapability{
+				resource.SearchCapabilityFilter,
+				resource.SearchCapabilitySort,
+				resource.SearchCapabilityRetrieve,
+			},
+		}},
+	}, nil)
+
+	indexMapping, err := GetBleveMappings(provider, gvr.Group, gvr.Resource, nil)
+	require.NoError(t, err)
+	impl := indexMapping.(*mapping.IndexMappingImpl)
+
+	topLevel := impl.DefaultMapping.Properties[resource.SEARCH_FIELD_DELETED_RV]
+	require.NotNil(t, topLevel)
+	require.Len(t, topLevel.Fields, 1)
+	assert.Equal(t, "text", topLevel.Fields[0].Type)
+	assert.False(t, topLevel.Fields[0].Index)
+
+	fields := impl.DefaultMapping.Properties[strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, ".")]
+	require.NotNil(t, fields)
+	custom := fields.Properties[resource.SEARCH_FIELD_DELETED_RV]
+	require.NotNil(t, custom)
+	require.Len(t, custom.Fields, 1)
+	assert.Equal(t, "number", custom.Fields[0].Type)
+	assert.True(t, custom.Fields[0].Index)
+	assert.True(t, custom.Fields[0].Store)
+	assert.True(t, custom.Fields[0].DocValues)
+	assert.NotContains(t, fields.Properties, resource.SEARCH_FIELD_DELETED_RV_SORT)
 }
 
 func TestAddCapabilityFieldMappings_FilterRetrieve_LegacyShape(t *testing.T) {
@@ -952,7 +989,7 @@ func TestFilterQueries_LabelsUseAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "in", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	mq, ok := queries[0].(*query.MatchQuery)
@@ -968,7 +1005,7 @@ func TestFilterQueries_LabelNotInUsesAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "notin", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	bq, ok := queries[0].(*query.BooleanQuery)
@@ -1006,7 +1043,7 @@ func labelIndex(t *testing.T, keywordLabels bool, key string, values ...string) 
 func labelFilterHits(t *testing.T, idx bleve.Index, key, operator string, values ...string) []string {
 	t.Helper()
 	b := &bleveIndex{index: idx, labelsAreKeyword: labelAnalyzerIsKeyword(idx), standard: resource.StandardSearchFields()}
-	queries, errRes := b.filterQueries(&resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+	queries, errRes := b.filterQueries(t.Context(), &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
 	}})
 	require.Nil(t, errRes)
@@ -1080,7 +1117,7 @@ func TestFilterQueries_DoesNotMutateRequest(t *testing.T) {
 	// Search can re-run the builder on the post-rank authz cursor fallback, so
 	// two passes must leave the shared requirements untouched (no double-prefix).
 	for range 2 {
-		_, e := b.filterQueries(req)
+		_, e := b.filterQueries(t.Context(), req)
 		require.Nil(t, e)
 	}
 	assert.Equal(t, "team", req.Options.Labels[0].Key)

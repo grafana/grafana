@@ -102,6 +102,8 @@ func TestBuild_MountingRules(t *testing.T) {
 		}}
 	}
 	widget := app.ManifestVersionKind{Kind: "Widget", Plural: "widgets", Scope: supportedKindScope}
+	widgetOptedOut := widget
+	widgetOptedOut.Storage = &app.ManifestVersionKindStorage{ListKeys: new(false)}
 
 	for name, tc := range map[string]struct {
 		manifests []*app.ManifestData
@@ -111,6 +113,10 @@ func TestBuild_MountingRules(t *testing.T) {
 		"namespaced kind is mounted": {
 			manifests: manifest(true, widget),
 			want:      []string{"widgets/list-keys"},
+		},
+		"kind opting out is skipped": {
+			manifests: manifest(true, widgetOptedOut),
+			want:      nil,
 		},
 		"cluster-scoped kind is skipped": {
 			manifests: manifest(true, widget,
@@ -129,6 +135,34 @@ func TestBuild_MountingRules(t *testing.T) {
 				return
 			}
 			assert.Equal(t, tc.want, got[gv.String()])
+		})
+	}
+}
+
+func TestBuild_ListKeysOptOutWinsAcrossDuplicateDeclarations(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.grafana.app", Version: "v1"}
+	widget := app.ManifestVersionKind{Kind: "Widget", Plural: "widgets", Scope: supportedKindScope}
+	widgetOptedOut := widget
+	widgetOptedOut.Storage = &app.ManifestVersionKindStorage{ListKeys: new(false)}
+	manifest := func(kind app.ManifestVersionKind) *app.ManifestData {
+		return &app.ManifestData{
+			Group: gv.Group,
+			Versions: []app.ManifestVersion{{
+				Name: gv.Version, Served: true, Kinds: []app.ManifestVersionKind{kind},
+			}},
+		}
+	}
+
+	for name, manifests := range map[string][]*app.ManifestData{
+		"opt-out follows enabled declaration": {manifest(widget), manifest(widgetOptedOut)},
+		"enabled declaration follows opt-out": {manifest(widgetOptedOut), manifest(widget)},
+	} {
+		t.Run(name, func(t *testing.T) {
+			routes := BuildForServedGroupVersions(
+				manifests, map[schema.GroupVersion]bool{gv: true}, true, nil, fakeStore{})
+
+			assert.Empty(t, paths(routes))
+			assert.Empty(t, namespacedPaths(routes))
 		})
 	}
 }
@@ -208,6 +242,26 @@ func TestBuild_MountsKindsDeclaredByManifestAndBuilderOnce(t *testing.T) {
 	want := map[string][]string{gv.String(): {"widgets/list-keys"}}
 	assert.Equal(t, want, paths(routes), "cluster-wide mount")
 	assert.Equal(t, want, namespacedPaths(routes), "namespaced mount")
+}
+
+func TestBuild_ListFilteredResourceManifestsDisableListKeys(t *testing.T) {
+	b := &fakeBuilder{gvs: []schema.GroupVersion{
+		{Group: "preferences.grafana.app", Version: "v1"},
+		{Group: "preferences.grafana.app", Version: "v1alpha1"},
+		{Group: "collections.grafana.app", Version: "v1alpha1"},
+		{Group: "dashboard.grafana.app", Version: "v1"},
+	}}
+
+	routes := Build(true, nil, fakeStore{}, []builder.APIGroupBuilder{b}, nil)
+	root := paths(routes)
+	namespaced := namespacedPaths(routes)
+
+	for _, got := range []map[string][]string{root, namespaced} {
+		assert.NotContains(t, got, "preferences.grafana.app/v1")
+		assert.NotContains(t, got, "preferences.grafana.app/v1alpha1")
+		assert.NotContains(t, got, "collections.grafana.app/v1alpha1")
+		assert.Contains(t, got["dashboard.grafana.app/v1"], "dashboards/list-keys")
+	}
 }
 
 // A cluster-scoped kind has nothing to list across, so it must reach neither slot.

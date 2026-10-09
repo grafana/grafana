@@ -16,7 +16,7 @@ import { configureStore } from 'app/store/configureStore';
 import { ctaClicked } from '../analytics/main';
 
 import { IncidentsCard } from './IncidentsCard';
-import { type IncidentFilterSelection } from './incidentFilter';
+import { type FilterSelection } from './filterSelection';
 import { ACTIVE_INCIDENTS_QUERY, QUERY_PREVIEWS_PATH, mockIncidents } from './mockIncidentsApi';
 import { useIncidents } from './useIncidents';
 
@@ -65,7 +65,7 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-function IncidentsCardWithData({ filter }: { filter?: IncidentFilterSelection } = {}) {
+function IncidentsCardWithData({ filter }: { filter?: FilterSelection } = {}) {
   const data = useIncidents(filter);
   return <IncidentsCard data={data} />;
 }

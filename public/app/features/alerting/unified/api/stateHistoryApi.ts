@@ -1,4 +1,4 @@
-import { type DataFrameJSON } from '@grafana/data';
+import { type DataFrameJSON, type RawTimeRange, rangeUtil } from '@grafana/data';
 
 import { alertingApi } from './alertingApi';
 
@@ -8,19 +8,20 @@ export const stateHistoryApi = alertingApi.injectEndpoints({
       DataFrameJSON,
       {
         ruleUid?: string;
-        from?: number;
-        to?: number;
+        timeRange: RawTimeRange;
         limit?: number;
         matchers?: string;
         previous?: string;
         current?: string;
       }
     >({
-      query: ({ ruleUid, from, to, limit = 100, matchers, previous, current }) => {
+      query: ({ ruleUid, timeRange, limit = 100, matchers, previous, current }) => {
+        // Resolve relative bounds like "now-30d" on every request so polling moves the time window forward.
+        const resolvedTimeRange = rangeUtil.convertRawToRange(timeRange);
         const params: Record<string, string | number | undefined> = {
           ruleUID: ruleUid,
-          from,
-          to,
+          from: resolvedTimeRange.from.unix(),
+          to: resolvedTimeRange.to.unix(),
           limit,
           previous,
           current,

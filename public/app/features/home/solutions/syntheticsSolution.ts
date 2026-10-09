@@ -3,30 +3,38 @@ import memoize from 'micro-memoize';
 import { formattedValueToString, getValueFormat, locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { contextSrv } from 'app/core/services/context_srv';
-import { constructDataSourceExploreUrl } from 'app/features/datasources/utils';
 
 import { SYNTHETIC_MONITORING_APP_ID, SYNTHETIC_MONITORING_CHECKS_WRITE } from './appPluginIds';
-import { accessibleAppPage, openAppLabel, openExploreLabel } from './pluginPages';
+import { accessibleAppPage, exploreFallbackCta, openAppLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
+import { noMatchStats, scopeFor } from './solutionFilter';
 import { solutionOffer } from './solutionOffer';
-import { detectSignal } from './solutionState';
+import { detectSignal, type SignalDetection } from './solutionState';
 import {
   fetchSyntheticsHealth,
   fetchSyntheticsStats,
   fetchSyntheticsSuccessSeries,
   probeSyntheticChecks,
 } from './syntheticsData';
+import { type SyntheticsFilter } from './syntheticsFilter';
 import { type Solution } from './types';
 
 const formatUsageNumber = getValueFormat('short');
 
-export function syntheticsSolution(): Solution {
-  const detect = memoize(() => detectSignal(probeSyntheticChecks));
+/** Shared Synthetics detection; solutions recreated for a new filter reuse it so the datasource is never re-resolved. */
+export function syntheticsDetection(): () => Promise<SignalDetection> {
+  return memoize(() => detectSignal(probeSyntheticChecks));
+}
+
+export function syntheticsSolution(
+  filter: SyntheticsFilter | null,
+  detect: () => Promise<SignalDetection> = syntheticsDetection()
+): Solution {
   const datasource = async () => (await detect()).datasource;
 
-  const stats = datasourceFact(datasource, fetchSyntheticsStats);
-  const health = datasourceFact(datasource, fetchSyntheticsHealth);
-  const successSeries = datasourceFact(datasource, fetchSyntheticsSuccessSeries);
+  const stats = datasourceFact(datasource, (ds) => fetchSyntheticsStats(ds, scopeFor(filter, ds)));
+  const health = datasourceFact(datasource, (ds) => fetchSyntheticsHealth(ds, scopeFor(filter, ds)));
+  const successSeries = datasourceFact(datasource, (ds) => fetchSyntheticsSuccessSeries(ds, scopeFor(filter, ds)));
 
   const alert = memoize(async () => {
     const status = await health();
@@ -91,8 +99,12 @@ export function syntheticsSolution(): Solution {
     alert,
     stats: async () => {
       const usage = await stats();
-      if (!usage?.checks || usage.checks <= 0) {
+      if (!usage || usage.checks === null) {
+        // Unreachable datasource or a failed count query: unknown, not empty.
         return null;
+      }
+      if (usage.checks <= 0) {
+        return noMatchStats(filter, datasource, t('home.solutions.synthetics.filter.no-match', 'All checks ignored'));
       }
       const checkCount = Math.ceil(usage.checks);
       return {
@@ -138,11 +150,7 @@ export function syntheticsSolution(): Solution {
             href: locationUtil.assureBaseUrl(homePage),
             action: 'open_solution',
           }
-        : {
-            label: openExploreLabel(),
-            href: constructDataSourceExploreUrl({ name: ds.name }),
-            action: 'open_solution',
-          };
+        : exploreFallbackCta(ds);
     },
   };
 }

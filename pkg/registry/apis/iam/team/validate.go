@@ -7,18 +7,17 @@ import (
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/selection"
 
 	"github.com/grafana/authlib/types"
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/team/folderownership"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func ValidateOnCreate(ctx context.Context, teamSearchClient resourcepb.ResourceIndexClient, obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
+func ValidateOnCreate(ctx context.Context, teamSearchClient *dualwrite.Selector[SearchBackend], obj *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -51,7 +50,7 @@ func ValidateOnCreate(ctx context.Context, teamSearchClient resourcepb.ResourceI
 	return nil
 }
 
-func ValidateOnUpdate(ctx context.Context, teamSearchClient resourcepb.ResourceIndexClient, obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
+func ValidateOnUpdate(ctx context.Context, teamSearchClient *dualwrite.Selector[SearchBackend], obj, old *iamv0alpha1.Team, egr legacy.ExternalGroupReconciler) error {
 	requester, err := identity.GetRequester(ctx)
 	if err != nil {
 		return apierrors.NewUnauthorized("no identity found")
@@ -107,41 +106,23 @@ func ValidateOnUpdate(ctx context.Context, teamSearchClient resourcepb.ResourceI
 // miss colliding teams the requester cannot read and let the duplicate through.
 // Legacy's UNIQUE constraint rejects duplicates regardless of visibility, so the
 // elevated lookup (and the existence leak in its 409) is parity with legacy.
-func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIndexClient, namespace, name, title string) error {
+func validateTitleUnique(ctx context.Context, searchClient *dualwrite.Selector[SearchBackend], namespace, name, title string) error {
 	nsInfo, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return apierrors.NewInternalError(fmt.Errorf("parse namespace: %w", err))
 	}
 	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 
-	gr := iamv0alpha1.TeamResourceInfo.GroupResource()
-	req := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Group:     gr.Group,
-				Resource:  gr.Resource,
-				Namespace: namespace,
-			},
-			Fields: []*resourcepb.Requirement{
-				{
-					Key:      resource.SEARCH_FIELD_TITLE,
-					Operator: string(selection.DoubleEquals), // exact (case-insensitive) match on title
-					Values:   []string{title},
-				},
-			},
-		},
-		Fields:       []string{resource.SEARCH_FIELD_NAME},
-		Limit:        2,
-		Page:         1,
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-	}
-
-	resp, err := searchClient.Search(ctx, req)
+	backend, err := searchClient.Resolve(ctx)
 	if err != nil {
 		return err
 	}
-
-	resultNames, err := teamSearchResultNames(resp)
+	resp, err := backend.Search(ctx, SearchQuery{
+		Namespace: namespace,
+		Title:     title,
+		Limit:     2,
+		Page:      1,
+	})
 	if err != nil {
 		return err
 	}
@@ -149,30 +130,13 @@ func validateTitleUnique(ctx context.Context, searchClient resourcepb.ResourceIn
 	// A hit on the team itself isn't a conflict: on update the search can match
 	// the team's own indexed title (e.g. a case-only rename). Any hit on a
 	// different team means the title is taken.
-	for _, resultName := range resultNames {
-		if resultName != name {
-			return apierrors.NewConflict(gr, name, fmt.Errorf("team name '%s' is already taken", title))
+	for _, hit := range resp.Hits {
+		if hit.Name != name {
+			return apierrors.NewConflict(iamv0alpha1.TeamResourceInfo.GroupResource(), name, fmt.Errorf("team name '%s' is already taken", title))
 		}
 	}
 
 	return nil
-}
-
-func teamSearchResultNames(resp *resourcepb.ResourceSearchResponse) ([]string, error) {
-	var names []string
-	switch resp.GetResultFormat() {
-	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
-		for _, row := range resp.GetResults().GetRows() {
-			names = append(names, row.GetKey().GetName())
-		}
-	case resourcepb.ResourceSearchRequest_FIELD_VALUES:
-		for _, row := range resp.GetRows() {
-			names = append(names, row.GetKey().GetName())
-		}
-	default:
-		return nil, fmt.Errorf("unsupported search result format %d", resp.GetResultFormat())
-	}
-	return names, nil
 }
 
 func ValidateOnDelete(ctx context.Context, searcher resourcepb.ResourceIndexClient, obj *iamv0alpha1.Team) error {

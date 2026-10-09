@@ -156,12 +156,12 @@ func (h *Handler) listKeys(kind kindRef, namespaced bool) http.HandlerFunc {
 			h.log.FromContext(ctx).Error("list-keys failed",
 				"group", kind.group, "resource", kind.resource,
 				"namespace", namespace, "error", err)
-			errhttp.Write(ctx, resource.GetError(resource.AsErrorResult(err)), w)
+			errhttp.Write(ctx, resource.StatusError(resource.AsErrorResult(err)), w)
 			return
 		}
 		// The backend also reports failures in the payload, not only as a transport error.
 		if res.GetError() != nil {
-			errhttp.Write(ctx, resource.GetError(res.GetError()), w)
+			errhttp.Write(ctx, resource.StatusError(res.GetError()), w)
 			return
 		}
 

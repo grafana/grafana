@@ -29,6 +29,8 @@ allow_assign_grafana_admin = true
 signout_redirect_url = http://localhost:8087/realms/grafana/protocol/openid-connect/logout?post_logout_redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Flogin
 ```
 
+If Grafana runs in a container, it cannot reach Keycloak on `localhost`. Keep `auth_url` on `localhost:8087` for the browser and point `token_url` at an address the container can reach, such as `http://host.docker.internal:8087/...`. Keycloak always issues tokens for `http://localhost:8087`, so token refreshes keep working.
+
 ## Devenv setup jwt auth
 
 To launch the block, use the oauth source. Ex:

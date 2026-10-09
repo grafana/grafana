@@ -43,6 +43,7 @@ func TestSubscriptionWaitReady(t *testing.T) {
 				cfg := setting.NATSSettings{Enabled: true, Mode: setting.NATSModeExternal, ClientURLs: []string{"nats://127.0.0.1:1"}}
 				subscriber := newSubscriber(log.NewNopLogger(), newSubscriberMetrics(), newConfig(cfg, nil))
 				t.Cleanup(subscriber.close)
+				require.NoError(t, subscriber.starting(context.Background()))
 				sub, err := subscriber.Subscribe(t.Context(), "grafana.ready", func(string, []byte) {}, tc.opts...)
 				require.NoError(t, err)
 				ctx, cancel := context.WithTimeout(t.Context(), 10*time.Millisecond)

@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import webpack, { type Compiler } from 'webpack';
@@ -11,17 +12,16 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 // selector source that, when changed in watch mode, should trigger a regenerate
 const selectorsSrc = path.join('packages', 'grafana-e2e-selectors', 'src');
 
-// runs the generator in a subprocess (tsx) and captures the JSON on stdout. we shell out rather than
-// import the generator directly because the webpack config is loaded by native node, which can't resolve
-// the selector source's extensionless imports; tsx (esbuild resolution) can. shell: true so windows
-// resolves the yarn.cmd shim, which node refuses to spawn directly since the CVE-2024-27980 fix.
+// The webpack config runs under native Node; the generator needs tsx for extensionless TypeScript imports.
+const selectorsPackage = path.join(repoRoot, 'packages/grafana-e2e-selectors');
+const tsxCli = createRequire(path.join(selectorsPackage, 'package.json')).resolve('tsx/cli');
+
 function generate(): string {
-  return execFileSync('yarn', ['workspace', '@grafana/e2e-selectors', 'generate-e2e-selectors-json', '--stdout'], {
-    cwd: repoRoot,
-    encoding: 'utf8',
-    maxBuffer: 10 * 1024 * 1024,
-    shell: true,
-  });
+  return execFileSync(
+    process.execPath,
+    [tsxCli, path.join(selectorsPackage, 'scripts/generate-e2e-selectors-json.ts'), '--stdout'],
+    { cwd: repoRoot, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 }
+  );
 }
 
 // emits e2e-selectors.json into the build output so @grafana/plugin-e2e can fetch it at test runtime,
@@ -32,12 +32,12 @@ export default class E2ESelectorsPlugin {
   private json = '';
 
   apply(compiler: Compiler): void {
-    // one-shot builds (yarn build, yarn dev, docker image): generate once before the build runs
+    // one-shot builds: generate once before the build runs
     compiler.hooks.beforeRun.tap('E2ESelectorsPlugin', () => {
       this.json = generate();
     });
 
-    // watch mode (yarn start): the first compile has no modifiedFiles, so generate once; on later
+    // watch mode: the first compile has no modifiedFiles, so generate once; on later
     // rebuilds only regenerate when a selector source file changed
     compiler.hooks.watchRun.tap('E2ESelectorsPlugin', (watchCompiler: Compiler) => {
       const modified = watchCompiler.modifiedFiles;

@@ -2,16 +2,17 @@ import { useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 
 import { PageLayoutType } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
+import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
 import { PlanningControls } from './new-toolbar/PlanningControls';
@@ -19,7 +20,6 @@ import { PlanningControls } from './new-toolbar/PlanningControls';
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
     controls,
-    overlay,
     editview,
     body,
     editPanel,
@@ -85,7 +85,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return (
       <>
         <editview.Component model={editview} />
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </>
     );
   }
@@ -113,9 +113,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
    */
   function renderControls() {
     if (planning) {
-      return config.featureToggles.dashboardNewLayouts ? (
-        <PlanningControls dashboard={model} planning={planning} />
-      ) : null;
+      return isDashboardNewLayoutsEnabled() ? <PlanningControls dashboard={model} planning={planning} /> : null;
     }
 
     return controls && <controls.Component model={controls} />;
@@ -135,7 +133,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
             body={renderBody()}
           />
         )}
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </Page>
     </>
   );

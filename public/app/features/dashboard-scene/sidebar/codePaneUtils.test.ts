@@ -18,7 +18,7 @@ jest.mock('../../dashboard/api/utils', () => ({
 }));
 
 jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
-  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {} })),
+  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {}, forEachChild: jest.fn() })),
 }));
 
 jest.mock('@grafana/scenes', () => {
@@ -49,7 +49,7 @@ function buildApplyDashboard(uid?: string): DashboardScene {
       isEditing: true,
       meta: {},
       body: { editModeChanged: jest.fn() },
-      sidebar: { closePane: jest.fn() },
+      sidebar: { refreshAfterRebuild: jest.fn() },
     },
     serializer: { metadata: {}, getK8SMetadata: () => ({}) },
     onEnterEditMode: jest.fn(),

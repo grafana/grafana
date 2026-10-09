@@ -22,7 +22,7 @@ type actionNameMigrator struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(actionNameMigrator)
+var _ migrator.CodeMigration = (*actionNameMigrator)(nil)
 
 func (m *actionNameMigrator) SQL(migrator.Dialect) string {
 	return CodeMigrationSQL

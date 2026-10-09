@@ -13,16 +13,19 @@ type StorageMetrics struct {
 	WatchEventReadyLatency *prometheus.HistogramVec
 	WatchEventSendDuration *prometheus.HistogramVec
 	PollerLatency          prometheus.Histogram
-	ListWithFieldSelectors *prometheus.CounterVec
 	RequestDuration        *prometheus.HistogramVec
 	DegradedOperations     *prometheus.CounterVec
+	ListBodyKeysRequested  *prometheus.CounterVec
+	ListBodiesConsumed     *prometheus.CounterVec
+	ListItemsReturned      *prometheus.CounterVec
+	ListUnusedBodyRequests *prometheus.HistogramVec
 	Broadcaster            *BroadcasterMetrics
 }
 
 func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 	return &StorageMetrics{
 		WatchEventLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_watch_event_latency_seconds",
+			Name:                            "grafana_storage_server_watch_event_latency_seconds",
 			Help:                            "Time (in seconds) from resource version generation to the watch event being scheduled with the gRPC transport",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
@@ -30,7 +33,7 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),
 		WatchEventReadyLatency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_watch_event_ready_latency_seconds",
+			Name:                            "grafana_storage_server_watch_event_ready_latency_seconds",
 			Help:                            "Time (in seconds) from resource version generation until the watch event is ready to be sent over gRPC",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -38,7 +41,7 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),
 		WatchEventSendDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_watch_event_send_duration_seconds",
+			Name:                            "grafana_storage_server_watch_event_send_duration_seconds",
 			Help:                            "Time (in seconds) spent scheduling a watch event with the gRPC transport, including its flow-control wait",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -46,30 +49,43 @@ func ProvideStorageMetrics(reg prometheus.Registerer) *StorageMetrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"group", "resource"}),
 		PollerLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name:                            "storage_server_poller_query_latency_seconds",
+			Name:                            "grafana_storage_server_poller_query_latency_seconds",
 			Help:                            "poller query latency",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1, // enable native histograms
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
 		}),
-		ListWithFieldSelectors: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_field_selector_search_total",
-			Help: "number of times List was served by field selector search",
-		}, []string{"resource", "served_by"}),
 		RequestDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "storage_server_grpc_request_duration_seconds",
-			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by group and resource.",
+			Name:                            "grafana_storage_server_grpc_request_duration_seconds",
+			Help:                            "Time (in seconds) spent serving unified storage gRPC requests, labeled by method, group, resource, status, and List execution path.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
 			NativeHistogramMaxBucketNumber:  160,
 			NativeHistogramMinResetDuration: time.Hour,
-		}, []string{"method", "group", "resource", "status_code"}),
+		}, []string{"method", "group", "resource", "status_code", "list_path"}),
 		DegradedOperations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "storage_server_degraded_operations_total",
+			Name: "grafana_storage_server_degraded_operations_total",
 			Help: "Operations that proceeded despite a failed external dependency " +
 				"(e.g. a guard/check that was skipped because a downstream call failed).",
 		}, []string{"operation", "reason", "group", "resource"}),
+		ListBodyKeysRequested: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_list_body_keys_requested_total",
+			Help: "Body keys requested via datastore BatchGet by KV-backed store and search-backed lists, not database rows read. A search-backed exact read counts one key per object, however many candidate keys it tries. Includes missing keys; retries inside KV implementations are not counted.",
+		}, []string{"list_path", "stop_reason"}),
+		ListBodiesConsumed: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_list_bodies_consumed_total",
+			Help: "Body values yielded by the KV iterator to datastore for KV-backed store and search-backed lists, including lookahead. Does not count driver read-ahead or drained rows.",
+		}, []string{"list_path", "stop_reason"}),
+		ListItemsReturned: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_storage_server_list_items_returned_total",
+			Help: "Items in successful KV-backed store and search-backed list responses with body-read accounting. Failed responses contribute zero items.",
+		}, []string{"list_path", "stop_reason"}),
+		ListUnusedBodyRequests: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:    "grafana_storage_server_list_unused_body_requests",
+			Help:    "Requested body keys minus returned items per successful KV-backed store or search-backed list. Measures over-requesting, not actual database overfetch; includes missing and unauthorized resources.",
+			Buckets: []float64{0, 1, 2, 5, 10, 25, 49, 50, 100, 250, 500, 1000},
+		}, []string{"list_path", "stop_reason"}),
 		Broadcaster: newBroadcasterMetrics(reg),
 	}
 }

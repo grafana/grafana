@@ -1,18 +1,6 @@
 import { type MetricFindValue, type TypedVariableModel, type AnnotationQuery } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import {
-  type DataQuery,
-  type DataSourceRef,
-  type Panel,
-  type RowPanel,
-  type VariableModel,
-  type VariableType,
-  type FieldConfigSource as FieldConfigSourceV1,
-  FieldColorModeId as FieldColorModeIdV1,
-  ThresholdsMode as ThresholdsModeV1,
-  MappingType as MappingTypeV1,
-  SpecialValueMatch as SpecialValueMatchV1,
-} from '@grafana/schema';
+import { type DataQuery, type DataSourceRef, type Panel, type RowPanel } from '@grafana/schema';
 import {
   type AnnotationQueryKind,
   type Spec as DashboardV2Spec,
@@ -23,10 +11,6 @@ import {
   type PanelQueryKind,
   type QueryVariableKind,
   type TransformationKind,
-  type FieldColorModeId,
-  type FieldConfigSource,
-  type ThresholdsMode,
-  type SpecialValueMatch,
   type AdhocVariableKind,
   type CustomVariableKind,
   type ConstantVariableKind,
@@ -45,10 +29,7 @@ import {
   defaultFieldConfigSource,
   defaultPanelQueryKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import {
-  type DashboardLink,
-  type DataTransformerConfig,
-} from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
+import { type DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/Dashboard_types.gen';
 import { isWeekStart, type WeekStart } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
@@ -60,20 +41,11 @@ import {
   AnnoKeyUpdatedBy,
   AnnoKeyUpdatedTimestamp,
   DeprecatedInternalId,
-  type ObjectMeta,
 } from 'app/features/apiserver/types';
 import { convertRowsToGridPanels, type LegacyRow } from 'app/features/dashboard/state/convertRowsToGridPanels';
-import { transformV2ToV1AnnotationQuery } from 'app/features/dashboard-scene/serialization/annotations';
 import { GRID_ROW_HEIGHT } from 'app/features/dashboard-scene/serialization/const';
 import { validateFiltersOrigin } from 'app/features/dashboard-scene/serialization/sceneVariablesSetToVariables';
-import { type TypedVariableModelV2 } from 'app/features/dashboard-scene/serialization/transformSaveModelSchemaV2ToScene';
 import { getDefaultDataSourceRef } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
-import {
-  transformCursorSyncV2ToV1,
-  transformSortVariableToEnumV1,
-  transformVariableHideToEnumV1,
-  transformVariableRefreshToEnumV1,
-} from 'app/features/dashboard-scene/serialization/transformToV1TypesUtils';
 import {
   LEGACY_STRING_VALUE_KEY,
   transformCursorSynctoEnum,
@@ -84,12 +56,12 @@ import {
 } from 'app/features/dashboard-scene/serialization/transformToV2TypesUtils';
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
-import { type DashboardWithAccessInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from './types';
+import { isDashboardResource, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>
-): DashboardWithAccessInfo<DashboardV2Spec> {
+): DashboardWithLoadInfo<DashboardV2Spec> {
   if (isDashboardV2Resource(dto)) {
     return dto;
   }
@@ -234,60 +206,13 @@ export function ensureV2Response(
     metadata,
     spec,
     access: accessMeta,
+    // This path is converted from v1 spec which has no repeat options on the grid items
+    libraryPanelRepeatUnresolved: true,
   };
-}
-
-export function ensureV1Response(
-  dashboard: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | DashboardWithAccessInfo<DashboardDataDTO>
-): DashboardDTO {
-  // if dashboard is not on v1 schema or v2 schema, return as is
-  if (!isDashboardResource(dashboard)) {
-    return dashboard;
-  }
-
-  const spec = dashboard.spec;
-  // if dashboard is on v1 schema
-  if (isDashboardV0Spec(spec)) {
-    return {
-      meta: {
-        ...dashboard.access,
-        isNew: false,
-        isFolder: false,
-        uid: dashboard.metadata.name,
-        k8s: dashboard.metadata,
-        version: dashboard.metadata.generation,
-        publicDashboardEnabled: dashboard.access.isPublic,
-      },
-      dashboard: spec,
-    };
-  } else {
-    // if dashboard is on v2 schema convert to v1 schema
-    return {
-      meta: {
-        created: dashboard.metadata.creationTimestamp,
-        createdBy: dashboard.metadata.annotations?.[AnnoKeyCreatedBy] ?? '',
-        updated: dashboard.metadata.annotations?.[AnnoKeyUpdatedTimestamp],
-        updatedBy: dashboard.metadata.annotations?.[AnnoKeyUpdatedBy],
-        folderUid: dashboard.metadata.annotations?.[AnnoKeyFolder],
-        slug: dashboard.metadata.annotations?.[AnnoKeySlug],
-        url: dashboard.access.url,
-        canAdmin: dashboard.access.canAdmin,
-        canDelete: dashboard.access.canDelete,
-        canEdit: dashboard.access.canEdit,
-        canSave: dashboard.access.canSave,
-        canShare: dashboard.access.canShare,
-        canStar: dashboard.access.canStar,
-        annotationsPermissions: dashboard.access.annotationsPermissions,
-        publicDashboardEnabled: dashboard.access.isPublic,
-      },
-      dashboard: transformDashboardV2SpecToV1(spec, dashboard.metadata),
-    };
-  }
 }
 
 export const ResponseTransformers = {
   ensureV2Response,
-  ensureV1Response,
 };
 
 function getElementsFromPanels(
@@ -983,502 +908,6 @@ function getAnnotations(annotations: AnnotationQuery[]): DashboardV2Spec['annota
     };
     return aq;
   });
-}
-
-function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
-  const variables: VariableModel[] = [];
-
-  for (const v of vars) {
-    const commonProperties = {
-      name: v.spec.name,
-      label: v.spec.label,
-      ...(v.spec.description && { description: v.spec.description }),
-      skipUrlSync: v.spec.skipUrlSync,
-      hide: transformVariableHideToEnumV1(v.spec.hide),
-      type: transformToV1VariableTypes(v),
-    };
-
-    switch (v.kind) {
-      case 'QueryVariable':
-        const qv: VariableModel = {
-          ...commonProperties,
-          current: {
-            text: v.spec.current.text,
-            value: v.spec.current.value,
-          },
-          options: v.spec.options,
-          query:
-            LEGACY_STRING_VALUE_KEY in v.spec.query.spec
-              ? v.spec.query.spec[LEGACY_STRING_VALUE_KEY]
-              : v.spec.query.spec,
-          datasource: {
-            type: v.spec.query?.group,
-            uid: v.spec.query?.datasource?.name,
-          },
-          sort: transformSortVariableToEnumV1(v.spec.sort),
-          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
-          regex: v.spec.regex,
-          regexApplyTo: v.spec.regexApplyTo,
-          allValue: v.spec.allValue,
-          includeAll: v.spec.includeAll,
-          multi: v.spec.multi,
-          // @ts-expect-error - definition is not part of v1 VariableModel
-          definition: v.spec.definition,
-        };
-        variables.push(qv);
-        break;
-      case 'DatasourceVariable':
-        const dv: VariableModel = {
-          ...commonProperties,
-          current: v.spec.current,
-          options: [],
-          regex: v.spec.regex,
-          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
-          query: v.spec.pluginId,
-          multi: v.spec.multi,
-          allValue: v.spec.allValue,
-          includeAll: v.spec.includeAll,
-        };
-        variables.push(dv);
-        break;
-      case 'CustomVariable':
-        const cv: VariableModel = {
-          ...commonProperties,
-          current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
-          },
-          options: v.spec.options,
-          query: v.spec.query,
-          multi: v.spec.multi,
-          allValue: v.spec.allValue,
-          includeAll: v.spec.includeAll,
-        };
-        variables.push(cv);
-        break;
-      case 'ConstantVariable':
-        const constant: VariableModel = {
-          ...commonProperties,
-          current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
-          },
-          hide: transformVariableHideToEnumV1(v.spec.hide),
-          // @ts-expect-error
-          query: v.spec.current.value,
-        };
-        variables.push(constant);
-        break;
-      case 'IntervalVariable':
-        const iv: VariableModel = {
-          ...commonProperties,
-          current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
-          },
-          hide: transformVariableHideToEnumV1(v.spec.hide),
-          query: v.spec.query,
-          refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
-          options: v.spec.options,
-          // @ts-expect-error
-          auto: v.spec.auto,
-          auto_min: v.spec.auto_min,
-          auto_count: v.spec.auto_count,
-        };
-        variables.push(iv);
-        break;
-      case 'TextVariable':
-        const current = {
-          text: v.spec.current.value,
-          value: v.spec.current.value,
-        };
-
-        const tv: VariableModel = {
-          ...commonProperties,
-          current: {
-            text: v.spec.current.value,
-            value: v.spec.current.value,
-          },
-          options: [{ ...current, selected: true }],
-          query: v.spec.query,
-        };
-        variables.push(tv);
-        break;
-      case 'GroupByVariable':
-        const gv: VariableModel = {
-          ...commonProperties,
-          datasource: {
-            uid: v.datasource?.name,
-            type: v.group,
-          },
-          current: v.spec.current,
-          options: v.spec.options,
-        };
-        variables.push(gv);
-        break;
-      case 'AdhocVariable':
-        const av: VariableModel = {
-          ...commonProperties,
-          datasource: {
-            uid: v.datasource?.name,
-            type: v.group,
-          },
-          // @ts-expect-error
-          baseFilters: v.spec.baseFilters,
-          filters: v.spec.filters,
-          defaultKeys: v.spec.defaultKeys,
-        };
-        variables.push(av);
-        break;
-      case 'SwitchVariable':
-        const sv: VariableModel = {
-          ...commonProperties,
-          current: {
-            text: v.spec.current,
-            value: v.spec.current,
-          },
-          options: [
-            {
-              text: v.spec.enabledValue,
-              value: v.spec.enabledValue,
-              selected: v.spec.current === v.spec.enabledValue,
-            },
-            {
-              text: v.spec.disabledValue,
-              value: v.spec.disabledValue,
-              selected: v.spec.current === v.spec.disabledValue,
-            },
-          ],
-          query: '',
-        };
-        variables.push(sv);
-        break;
-      default:
-        // do not throw error, just log it
-        console.error(`Variable transformation not implemented: ${v}`);
-    }
-  }
-  return variables;
-}
-
-interface LibraryPanelDTO extends Pick<Panel, 'libraryPanel' | 'id' | 'title' | 'gridPos' | 'type'> {}
-
-function getPanelsV1(
-  panels: DashboardV2Spec['elements'],
-  layout: DashboardV2Spec['layout']
-): Array<Panel | LibraryPanelDTO> {
-  const panelsV1: Array<Panel | LibraryPanelDTO | RowPanel> = [];
-
-  let maxPanelId = 0;
-
-  if (layout.kind !== 'GridLayout') {
-    throw new Error('Cannot convert non-GridLayout layout to v1');
-  }
-
-  for (const item of layout.spec.items) {
-    const panel = panels[item.spec.element.name];
-    const v1Panel = transformV2PanelToV1Panel(panel, item);
-    panelsV1.push(v1Panel);
-    if (v1Panel.id ?? 0 > maxPanelId) {
-      maxPanelId = v1Panel.id ?? 0;
-    }
-  }
-
-  // Update row panel ids to be unique
-  for (const panel of panelsV1) {
-    if (panel.type === 'row' && panel.id === -1) {
-      panel.id = ++maxPanelId;
-    }
-  }
-  return panelsV1;
-}
-
-function transformV2PanelToV1Panel(
-  p: PanelKind | LibraryPanelKind,
-  layoutElement: GridLayoutItemKind,
-  yOverride?: number
-): Panel | LibraryPanelDTO {
-  const { x, y, width, height, repeat } = layoutElement?.spec || { x: 0, y: 0, width: 0, height: 0 };
-  const gridPos = { x, y: yOverride ?? y, w: width, h: height };
-  if (p.kind === 'Panel') {
-    const panel = p.spec;
-    return {
-      id: panel.id,
-      type: panel.vizConfig.group,
-      title: panel.title,
-      description: panel.description,
-      fieldConfig: transformMappingsToV1(panel.vizConfig.spec.fieldConfig),
-      options: panel.vizConfig.spec.options,
-      pluginVersion: panel.vizConfig.version,
-      links:
-        // @ts-expect-error - Panel link is wrongly typed as DashboardLink
-        panel.links?.map<DashboardLink>((l) => ({
-          title: l.title,
-          url: l.url,
-          ...(l.targetBlank !== undefined && { targetBlank: l.targetBlank }),
-        })) || [],
-      targets: panel.data.spec.queries.map((q) => {
-        return {
-          refId: q.spec.refId,
-          hide: q.spec.hidden,
-          datasource: {
-            uid: q.spec.query.datasource?.name,
-            type: q.spec.query.group,
-          },
-          ...q.spec.query.spec,
-        };
-      }),
-      transformations: panel.data.spec.transformations.map((t) => ({
-        id: t.group,
-        ...t.spec,
-      })),
-      gridPos,
-      ...(panel.data.spec.queryOptions.cacheTimeout !== undefined && {
-        cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-      }),
-      ...(panel.data.spec.queryOptions.maxDataPoints !== undefined && {
-        maxDataPoints: panel.data.spec.queryOptions.maxDataPoints,
-      }),
-      ...(panel.data.spec.queryOptions.interval !== undefined && { interval: panel.data.spec.queryOptions.interval }),
-      ...(panel.data.spec.queryOptions.hideTimeOverride !== undefined && {
-        hideTimeOverride: panel.data.spec.queryOptions.hideTimeOverride,
-      }),
-      ...(panel.data.spec.queryOptions.queryCachingTTL !== undefined && {
-        queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-      }),
-      ...(panel.data.spec.queryOptions.timeFrom !== undefined && { timeFrom: panel.data.spec.queryOptions.timeFrom }),
-      ...(panel.data.spec.queryOptions.timeShift !== undefined && {
-        timeShift: panel.data.spec.queryOptions.timeShift,
-      }),
-      ...(panel.data.spec.queryOptions.timeCompare !== undefined && {
-        timeCompare: panel.data.spec.queryOptions.timeCompare,
-      }),
-      ...(panel.transparent !== undefined && { transparent: panel.transparent }),
-      ...(repeat?.value !== undefined && { repeat: repeat.value }),
-      ...(repeat?.direction !== undefined && { repeatDirection: repeat.direction }),
-      ...(repeat?.maxPerRow !== undefined && { maxPerRow: repeat.maxPerRow }),
-    };
-  } else if (p.kind === 'LibraryPanel') {
-    const panel = p.spec;
-    return {
-      id: panel.id,
-      title: panel.title,
-      gridPos,
-      libraryPanel: {
-        uid: panel.libraryPanel.uid,
-        name: panel.libraryPanel.name,
-      },
-      type: 'library-panel-ref',
-    };
-  } else {
-    throw new Error(`Unknown element kind: ${p}`);
-  }
-}
-
-export function transformMappingsToV1(fieldConfig: FieldConfigSource): FieldConfigSourceV1 {
-  const getThresholdsMode = (mode: ThresholdsMode): ThresholdsModeV1 => {
-    switch (mode) {
-      case 'absolute':
-        return ThresholdsModeV1.Absolute;
-      case 'percentage':
-        return ThresholdsModeV1.Percentage;
-      default:
-        return ThresholdsModeV1.Absolute;
-    }
-  };
-
-  const transformedDefaults: any = {
-    ...fieldConfig.defaults,
-  };
-
-  if (fieldConfig.defaults.mappings && fieldConfig.defaults.mappings.length > 0) {
-    transformedDefaults.mappings = fieldConfig.defaults.mappings.flatMap((mapping) => {
-      switch (mapping.type) {
-        case 'value':
-          return {
-            ...mapping,
-            type: MappingTypeV1.ValueToText,
-          };
-        case 'range':
-          return {
-            ...mapping,
-            type: MappingTypeV1.RangeToText,
-          };
-        case 'regex':
-          return {
-            ...mapping,
-            type: MappingTypeV1.RegexToText,
-          };
-        case 'special': {
-          const v1Match = transformSpecialValueMatchToV1(mapping.options.match);
-          if (v1Match === undefined) {
-            return [];
-          }
-          return {
-            ...mapping,
-            options: {
-              ...mapping.options,
-              match: v1Match,
-            },
-            type: MappingTypeV1.SpecialValue,
-          };
-        }
-        default:
-          return mapping;
-      }
-    });
-  }
-
-  if (fieldConfig.defaults.thresholds) {
-    transformedDefaults.thresholds = {
-      ...fieldConfig.defaults.thresholds,
-      mode: getThresholdsMode(fieldConfig.defaults.thresholds.mode),
-    };
-  }
-
-  if (fieldConfig.defaults.color?.mode) {
-    transformedDefaults.color = {
-      ...fieldConfig.defaults.color,
-      mode: colorIdToEnumv1(fieldConfig.defaults.color.mode),
-    };
-  }
-
-  return {
-    ...fieldConfig,
-    defaults: transformedDefaults,
-  };
-}
-
-function colorIdToEnumv1(colorId: FieldColorModeId): FieldColorModeIdV1 {
-  switch (colorId) {
-    case 'thresholds':
-      return FieldColorModeIdV1.Thresholds;
-    case 'palette-classic':
-      return FieldColorModeIdV1.PaletteClassic;
-    case 'palette-classic-by-name':
-      return FieldColorModeIdV1.PaletteClassicByName;
-    case 'continuous-GrYlRd':
-      return FieldColorModeIdV1.ContinuousGrYlRd;
-    case 'continuous-RdYlGr':
-      return FieldColorModeIdV1.ContinuousRdYlGr;
-    case 'continuous-BlYlRd':
-      return FieldColorModeIdV1.ContinuousBlYlRd;
-    case 'continuous-YlRd':
-      return FieldColorModeIdV1.ContinuousYlRd;
-    case 'continuous-BlPu':
-      return FieldColorModeIdV1.ContinuousBlPu;
-    case 'continuous-YlBl':
-      return FieldColorModeIdV1.ContinuousYlBl;
-    case 'continuous-blues':
-      return FieldColorModeIdV1.ContinuousBlues;
-    case 'continuous-reds':
-      return FieldColorModeIdV1.ContinuousReds;
-    case 'continuous-greens':
-      return FieldColorModeIdV1.ContinuousGreens;
-    case 'continuous-purples':
-      return FieldColorModeIdV1.ContinuousPurples;
-    case 'continuous-viridis':
-      return FieldColorModeIdV1.ContinuousViridis;
-    case 'continuous-magma':
-      return FieldColorModeIdV1.ContinuousMagma;
-    case 'continuous-plasma':
-      return FieldColorModeIdV1.ContinuousPlasma;
-    case 'continuous-inferno':
-      return FieldColorModeIdV1.ContinuousInferno;
-    case 'continuous-cividis':
-      return FieldColorModeIdV1.ContinuousCividis;
-    case 'fixed':
-      return FieldColorModeIdV1.Fixed;
-    case 'shades':
-      return FieldColorModeIdV1.Shades;
-    default:
-      return FieldColorModeIdV1.Thresholds;
-  }
-}
-
-function transformSpecialValueMatchToV1(match: SpecialValueMatch): SpecialValueMatchV1 | undefined {
-  switch (match) {
-    case 'true':
-      return SpecialValueMatchV1.True;
-    case 'false':
-      return SpecialValueMatchV1.False;
-    case 'null':
-      return SpecialValueMatchV1.Null;
-    case 'nan':
-      return SpecialValueMatchV1.NaN;
-    case 'null+nan':
-      return SpecialValueMatchV1.NullAndNan;
-    case 'empty':
-      return SpecialValueMatchV1.Empty;
-    default:
-      console.warn(`Skipping special value mapping with unknown match type: "${match}"`);
-      return undefined;
-  }
-}
-
-function transformToV1VariableTypes(variable: TypedVariableModelV2): VariableType {
-  switch (variable.kind) {
-    case 'QueryVariable':
-      return 'query';
-    case 'DatasourceVariable':
-      return 'datasource';
-    case 'CustomVariable':
-      return 'custom';
-    case 'ConstantVariable':
-      return 'constant';
-    case 'IntervalVariable':
-      return 'interval';
-    case 'TextVariable':
-      return 'textbox';
-    case 'GroupByVariable':
-      return 'groupby';
-    case 'AdhocVariable':
-      return 'adhoc';
-    case 'SwitchVariable':
-      return 'switch';
-    default:
-      throw new Error(`Unknown variable type: ${variable}`);
-  }
-}
-
-function transformDashboardV2SpecToV1(spec: DashboardV2Spec, metadata: ObjectMeta): DashboardDataDTO {
-  const annotations = (spec.annotations ?? []).map(transformV2ToV1AnnotationQuery);
-
-  const gnetId = metadata.annotations?.[AnnoKeyDashboardGnetId];
-  const variables = getVariablesV1(spec.variables ?? []);
-  const panels = getPanelsV1(spec.elements, spec.layout);
-  return {
-    uid: metadata.name,
-    title: spec.title,
-    description: spec.description,
-    tags: spec.tags,
-    schemaVersion: 40,
-    graphTooltip: transformCursorSyncV2ToV1(spec.cursorSync),
-    preload: spec.preload,
-    liveNow: spec.liveNow,
-    editable: spec.editable,
-    gnetId: gnetId?.length ? +gnetId : undefined,
-    revision: spec.revision,
-    time: {
-      from: spec.timeSettings.from,
-      to: spec.timeSettings.to,
-    },
-    timezone: spec.timeSettings.timezone,
-    refresh: spec.timeSettings.autoRefresh,
-    timepicker: {
-      refresh_intervals: spec.timeSettings.autoRefreshIntervals,
-      hidden: spec.timeSettings.hideTimepicker,
-      quick_ranges: spec.timeSettings.quickRanges,
-      nowDelay: spec.timeSettings.nowDelay,
-    },
-    fiscalYearStartMonth: spec.timeSettings.fiscalYearStartMonth,
-    weekStart: spec.timeSettings.weekStart,
-    version: metadata.generation,
-    links: spec.links,
-    annotations: { list: annotations },
-    panels,
-    templating: { list: variables },
-  };
 }
 
 function transformAnnotationMappingsV1ToV2(

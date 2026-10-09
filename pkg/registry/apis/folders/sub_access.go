@@ -22,8 +22,8 @@ type subAccessREST struct {
 	accessClient authlib.AccessClient
 }
 
-var _ = rest.Connecter(&subAccessREST{})
-var _ = rest.StorageMetadata(&subAccessREST{})
+var _ rest.Connecter = (*subAccessREST)(nil)
+var _ rest.StorageMetadata = (*subAccessREST)(nil)
 
 func (r *subAccessREST) New() runtime.Object {
 	return &foldersV1.FolderAccessInfo{}

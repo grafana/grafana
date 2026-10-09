@@ -38,7 +38,7 @@ type secureValueClient struct {
 	access    authorizer.Authorizer
 }
 
-var _ SecureValueClient = &secureValueClient{}
+var _ SecureValueClient = (*secureValueClient)(nil)
 
 func ProvideSecureValueClient(service contracts.SecureValueService, validator contracts.SecureValueValidator, access claims.AccessClient) SecureValueClient {
 	return &secureValueClient{

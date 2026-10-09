@@ -7,6 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/grafana/authlib/authn"
+	authtypes "github.com/grafana/authlib/types"
+
 	pluginsv0alpha1 "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
 )
@@ -64,7 +67,7 @@ func (pm *ProviderManager) Run(ctx context.Context) error {
 // Returns ErrMetaNotFound only if all providers return ErrMetaNotFound.
 // Otherwise, returns the last non-ErrMetaNotFound error if all providers fail.
 func (pm *ProviderManager) GetMeta(ctx context.Context, ref PluginRef) (*Result, error) {
-	metrics.MetaRequestsTotal.WithLabelValues(ref.ID, ref.Version).Inc()
+	metrics.MetaRequestsTotal.WithLabelValues(ref.ID, ref.Version, callerIdentity(ctx)).Inc()
 
 	cacheKey := pm.cacheKey(ref)
 
@@ -146,6 +149,22 @@ func (pm *ProviderManager) cleanupExpired() {
 		metrics.MetaCacheEvictionsTotal.Add(float64(evicted))
 		metrics.MetaCacheSize.Set(float64(len(pm.cache)))
 	}
+}
+
+// callerIdentity returns the service identity of the caller (from its access token),
+// or "unknown" if the request carries no service identity (e.g. an end-user session).
+func callerIdentity(ctx context.Context) string {
+	authInfo, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok || authInfo == nil {
+		return "unknown"
+	}
+
+	identities := authInfo.GetExtra()[authn.ServiceIdentityKey]
+	if len(identities) == 0 {
+		return "unknown"
+	}
+
+	return identities[0]
 }
 
 func (pm *ProviderManager) cacheKey(ref PluginRef) string {

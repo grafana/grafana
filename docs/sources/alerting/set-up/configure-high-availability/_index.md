@@ -18,17 +18,6 @@ labels:
     - oss
 title: Configure high availability
 weight: 600
-refs:
-  state-history:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor-status/view-alert-state-history/
-  meta-monitoring:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/monitor/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/monitor/
 ---
 
 # Configure high availability
@@ -233,7 +222,7 @@ The default value is `200`. This setting applies to both Memberlist and Redis HA
 
 ## Verify your high availability setup
 
-When running multiple Grafana instances, all alert rules are evaluated on every instance by default. This multiple evaluation of alert rules is visible in the [state history](ref:state-history) and provides a straightforward way to verify that your high availability configuration is working correctly.
+When running multiple Grafana instances, all alert rules are evaluated on every instance by default. This multiple evaluation of alert rules is visible in the [state history](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor-status/view-alert-state-history/) and provides a straightforward way to verify that your high availability configuration is working correctly.
 
 {{< admonition type="note" >}}
 
@@ -278,7 +267,7 @@ Note that these alerting high availability metrics are exposed via the `/metrics
         - grafana:3000
 ```
 
-For more information on monitoring alerting metrics, refer to [Alerting meta-monitoring](ref:meta-monitoring). For a demo, see [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
+For more information on monitoring alerting metrics, refer to [Alerting meta-monitoring](/docs/grafana/<GRAFANA_VERSION>/alerting/monitor/). For a demo, see [alerting high availability examples using Docker Compose](https://github.com/grafana/alerting-ha-docker-examples/).
 
 ## Prevent duplicate notifications
 

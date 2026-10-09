@@ -19,6 +19,10 @@ export function canEditNotebooks(): boolean {
   return contextSrv.hasPermission(AccessControlAction.NotebooksWrite);
 }
 
+export function canReadNotebooks(): boolean {
+  return contextSrv.hasPermission(AccessControlAction.NotebooksRead);
+}
+
 /**
  * `notebooks:create` is granted on `folders:*` rather than `notebooks:*`, the create verb resolving
  * root to the general folder. It still answers here, because hasPermission ignores scope.

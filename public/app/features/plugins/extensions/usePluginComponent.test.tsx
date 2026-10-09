@@ -1,9 +1,11 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import type { JSX } from 'react';
+import userEvent from '@testing-library/user-event';
+import { type JSX, useState } from 'react';
 
 import { type AppPluginConfig, PluginContextProvider, type PluginMeta, PluginType } from '@grafana/data';
 
 import { ExtensionRegistriesProvider } from './ExtensionRegistriesContext';
+import * as errors from './errors';
 import { isGrafanaDevMode } from './isGrafanaDevMode';
 import { log } from './logs/log';
 import { resetLogMock } from './logs/testUtils';
@@ -171,6 +173,69 @@ describe('usePluginComponent()', () => {
     });
 
     expect(await screen.findByText('Hello World')).toBeVisible();
+  });
+
+  it('preserves local edits when the consuming plugin context rerenders', async () => {
+    function Editor() {
+      const [draft, setDraft] = useState('');
+      return <input aria-label="Draft" value={draft} onChange={(event) => setDraft(event.target.value)} />;
+    }
+    registries.exposedComponentsRegistry.register({
+      pluginId,
+      configs: [{ ...exposedComponentConfig, component: Editor }],
+    });
+    function Consumer() {
+      const { component: Component } = usePluginComponent(exposedComponentId);
+      return Component && <Component />;
+    }
+    function Host() {
+      return (
+        <PluginContextProvider meta={pluginMeta}>
+          <ExtensionRegistriesProvider registries={registries}>
+            <Consumer />
+          </ExtensionRegistriesProvider>
+        </PluginContextProvider>
+      );
+    }
+    const { rerender } = render(<Host />);
+    await userEvent.setup().type(screen.getByRole('textbox', { name: 'Draft' }), 'Unsaved notebook edit');
+
+    rerender(<Host />);
+
+    expect(screen.getByRole('textbox', { name: 'Draft' })).toHaveValue('Unsaved notebook edit');
+  });
+
+  it('hides a mounted component when the consuming plugin removes its declared dependency', () => {
+    jest.mocked(isGrafanaDevMode).mockReturnValue(true);
+    registries.exposedComponentsRegistry.register({ pluginId, configs: [exposedComponentConfig] });
+    function Consumer() {
+      const { component: Component } = usePluginComponent(exposedComponentId);
+      return Component && <Component />;
+    }
+    function Host({ allowed }: { allowed: boolean }) {
+      return (
+        <PluginContextProvider
+          meta={{
+            ...pluginMeta,
+            dependencies: {
+              ...pluginMeta.dependencies!,
+              extensions: { exposedComponents: allowed ? [exposedComponentId] : [] },
+            },
+          }}
+        >
+          <ExtensionRegistriesProvider registries={registries}>
+            <Consumer />
+          </ExtensionRegistriesProvider>
+        </PluginContextProvider>
+      );
+    }
+    const { rerender } = render(<Host allowed />);
+    expect(screen.getByText('Hello World')).toBeVisible();
+
+    rerender(<Host allowed={false} />);
+
+    expect(screen.queryByText('Hello World')).not.toBeInTheDocument();
+    expect(log.error).toHaveBeenCalledWith(errors.EXPOSED_COMPONENT_DEPENDENCY_MISSING);
   });
 
   it('should only render the hook once', async () => {

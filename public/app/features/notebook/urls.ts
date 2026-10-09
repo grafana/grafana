@@ -80,3 +80,13 @@ export function isNotebookEditUrl(): boolean {
 
   return search.get(NOTEBOOK_EDIT_PARAM) === NOTEBOOK_EDIT_PARAM_ON;
 }
+
+/**
+ * The chromeless route the PDF export points the headless browser at (see export/openNotebookPdf).
+ *
+ * `render` is a static segment, which a v6 `<Routes>` ranks above the view route's `:slug?`, so it
+ * cannot be swallowed as one. Raw, with no sub-path applied, like `notebookViewUrl`.
+ */
+export function notebookRenderUrl(uid: string): string {
+  return `${notebookViewUrl(uid)}/render`;
+}

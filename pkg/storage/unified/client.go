@@ -15,8 +15,11 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/flagext"
@@ -24,6 +27,7 @@ import (
 	"github.com/grafana/dskit/middleware"
 	"github.com/grafana/dskit/services"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -35,6 +39,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/federated"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -71,7 +76,8 @@ type Options struct {
 	// Subscriber backs the shadow NATS notifier when nats.notifier_shadow is on.
 	// Like Publisher, it is wired in-process so a monolith can run the shadow;
 	// gated on Enabled(), so a disabled bus starts nothing.
-	Subscriber nats.Subscriber
+	Subscriber  nats.Subscriber
+	WatchExpiry resource.WatchExpiry
 }
 
 // natsEventSubscriber adapts nats.Subscriber to resource.EventSubscriber for the
@@ -84,11 +90,11 @@ type natsEventSubscriber struct {
 
 func (a natsEventSubscriber) Enabled() bool { return a.sub.Enabled() }
 
-func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte)) (resource.Subscription, error) {
-	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler))
+func (a natsEventSubscriber) Subscribe(ctx context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (resource.Subscription, error) {
+	return a.sub.Subscribe(ctx, subject, nats.MessageHandler(handler), nats.WithOnReconnect(onReconnect))
 }
 
-func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber) []sql.StorageBackendOption {
+func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subscriber nats.Subscriber, invalidator resource.Invalidator) []sql.StorageBackendOption {
 	var opts []sql.StorageBackendOption
 	if publisher != nil {
 		opts = append(opts, sql.WithEventPublisher(publisher))
@@ -98,7 +104,7 @@ func NatsStorageBackendOptions(cfg *setting.Cfg, publisher nats.Publisher, subsc
 	}
 	switch {
 	case cfg.NATS.Notifier:
-		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}))
+		opts = append(opts, sql.WithNatsNotifier(natsEventSubscriber{sub: subscriber}, invalidator))
 	case cfg.NATS.NotifierShadow:
 		opts = append(opts, sql.WithNatsNotifierShadow(natsEventSubscriber{sub: subscriber}))
 	}
@@ -126,7 +132,7 @@ func ProvideUnifiedStorageClient(opts *Options,
 		BlobStoreURL:            apiserverCfg.Key("blob_url").MustString(""),
 		BlobThresholdBytes:      apiserverCfg.Key("blob_threshold_bytes").MustInt(options.BlobThresholdDefault),
 		GrpcClientKeepaliveTime: apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime),
-	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV)
+	}, opts.Cfg, opts.Features, opts.Tracer, opts.Reg, opts.Authzc, opts.Docs, storageMetrics, indexMetrics, vectorMetrics, opts.SecureValues, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.DashboardStats, opts.KV, opts.EDB, gcGate, opts.Publisher, opts.Subscriber, opts.ExperimentalKV, opts.WatchExpiry)
 	if err == nil {
 		// Used to get the folder stats
 		// Pass cfg directly so the federated client reads the current dual-writer mode
@@ -163,6 +169,7 @@ func newClient(opts options.StorageOptions,
 	eventPublisher nats.Publisher,
 	eventSubscriber nats.Subscriber,
 	experimentalKV *resource.ExperimentalKVOptions,
+	watchExpiry resource.WatchExpiry,
 ) (resource.ResourceClient, error) {
 	ctx := context.Background()
 
@@ -174,7 +181,9 @@ func newClient(opts options.StorageOptions,
 		}
 
 		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:                 backend,
+			SeededWatchesEnabled:    cfg.SeededWatchesEnabled,
+			GRPCErrorResultToStatus: cfg.UnifiedStorageGRPCErrorResultToStatus,
 			Blob: resource.BlobConfig{
 				URL: opts.BlobStoreURL,
 			},
@@ -215,7 +224,26 @@ func newClient(opts options.StorageOptions,
 		return resource.NewResourceClient(conn, indexConn, cfg, features, tracer)
 
 	default:
-		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil, nil)
+		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
+			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber, watchExpiry)...)
+		if experimentalKV != nil {
+			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
+		}
+		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
+		if err != nil {
+			return nil, err
+		}
+
+		// Snapshots live in the storage KV, so the store can only be built once the backend exists.
+		var snapshotStore search.RemoteIndexStore
+		if cfg.IndexSnapshotEnabled {
+			snapshotStore, err = sql.BuildKVSnapshotStore(cfg, backend, log.New("unified-storage-snapshot-store"))
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil, snapshotStore)
 		if err != nil {
 			return nil, err
 		}
@@ -232,24 +260,21 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
-		storageOpts := append([]sql.StorageBackendOption{sql.WithVectorBackend(vectorBackend)},
-			NatsStorageBackendOptions(cfg, eventPublisher, eventSubscriber)...)
-		if experimentalKV != nil {
-			storageOpts = append(storageOpts, sql.WithExperimentalKV(experimentalKV))
-		}
-		backend, err := sql.NewStorageBackend(cfg, eDB, reg, storageMetrics, false, kvStore, gcGate, storageOpts...)
-		if err != nil {
-			return nil, err
-		}
-
 		if backendService, ok := backend.(services.Service); ok {
 			if err := services.StartAndAwaitRunning(ctx, backendService); err != nil {
 				return nil, fmt.Errorf("failed to start storage backend: %w", err)
 			}
 		}
 
+		var blobBackend resource.BlobSupport
+		if cfg.EnableSQLKVBackend {
+			blobBackend = resource.NewKVBlobSupport(kvStore)
+		}
+
 		serverOptions := sql.ServerOptions{
+			WatchExpiry:    watchExpiry,
 			Backend:        backend,
+			BlobBackend:    blobBackend,
 			VectorBackend:  vectorBackend,
 			Embedder:       embedderInstance,
 			Reranker:       rerankerInstance,
@@ -267,10 +292,9 @@ func newClient(opts options.StorageOptions,
 		}
 
 		if cfg.QOSEnabled {
-			qosReg := prometheus.WrapRegistererWithPrefix("resource_server_qos_", reg)
 			queue := scheduler.NewQueue(&scheduler.QueueOptions{
 				MaxSizePerTenant: cfg.QOSMaxSizePerTenant,
-				Registerer:       qosReg,
+				Registerer:       reg,
 				Logger:           cfg.Logger,
 			})
 			if err := services.StartAndAwaitRunning(ctx, queue); err != nil {
@@ -317,7 +341,7 @@ func NewStorageApiSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureTog
 	var searchClient resourcepb.ResourceIndexClient
 	var err error
 	if cfg.EnableSearchClient {
-		searchClient, err = NewSearchClient(cfg, features)
+		searchClient, err = newSearchClient(cfg, features, cfg.SearchClientForwardAuthEnabled)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create search client: %w", err)
 		}
@@ -382,6 +406,10 @@ func newRemoteResourceClientFromConfig(cfg *setting.Cfg, reg prometheus.Register
 }
 
 func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (resourcepb.ResourceIndexClient, error) {
+	return newSearchClient(cfg, features, false)
+}
+
+func newSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles, forwardAuth bool) (resourcepb.ResourceIndexClient, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	searchServerAddress := apiserverCfg.Key("search_server_address").MustString("")
 	grpcClientKeepaliveTime := apiserverCfg.Key("grpc_client_keepalive_time").MustDuration(options.DefaultGrpcClientKeepaliveTime)
@@ -389,17 +417,24 @@ func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (res
 	if searchServerAddress == "" {
 		return nil, fmt.Errorf("expecting search_server_address to be set for search client under grafana-apiserver section")
 	}
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	grpcClientAuth := features != nil && features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth)
+	if forwardAuth && !grpcClientAuth {
+		return nil, fmt.Errorf("search_client_forward_auth_enabled requires appPlatformGrpcClientAuth")
+	}
 
 	metrics := newClientMetrics(prometheus.NewRegistry())
 	conn, err := grpcConn(searchServerAddress, metrics, grpcClientKeepaliveTime)
 	if err != nil {
 		return nil, err
 	}
+	if forwardAuth {
+		cc := grpchan.InterceptClientConn(conn, forwardSearchUnaryInterceptor, nil)
+		return resourcepb.NewResourceIndexClient(cc), nil
+	}
 
-	// When the modern grpc client auth is enabled, mirror NewRemoteResourceClient
-	// and use the authlib interceptor with IDTokenExtractor.
-	//nolint:staticcheck // not yet migrated to OpenFeature
-	if features != nil && features.IsEnabledGlobally(featuremgmt.FlagAppPlatformGrpcClientAuth) {
+	// Mirror NewRemoteResourceClient so exchanges preserve the caller's ID token.
+	if grpcClientAuth {
 		clientCfg := authnGrpcUtils.ReadGrpcClientConfig(cfg)
 		clientInt, err := resource.NewAuthnGrpcClientInterceptor(
 			otel.Tracer("github.com/grafana/grafana/pkg/storage/unified"),
@@ -413,6 +448,7 @@ func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (res
 			},
 		)
 		if err != nil {
+			_ = conn.Close()
 			return nil, fmt.Errorf("could not create authn interceptor for search client: %w", err)
 		}
 		cc := grpchan.InterceptClientConn(conn, clientInt.UnaryClientInterceptor, clientInt.StreamClientInterceptor)
@@ -421,6 +457,42 @@ func NewSearchClient(cfg *setting.Cfg, features featuremgmt.FeatureToggles) (res
 
 	cc := grpchan.InterceptClientConn(conn, grpcUtils.UnaryClientInterceptor, grpcUtils.StreamClientInterceptor)
 	return resourcepb.NewResourceIndexClient(cc), nil
+}
+
+// forwardSearchCredentials carries the caller's verified tokens to search without
+// exchanging them. Search must share storage's authentication audience and signing keys.
+// Like the search distributor, it forwards credentials in outgoing gRPC metadata.
+// AuthInfo supplies verified credentials; metadata is copied so replacing stale
+// tokens cannot affect other calls.
+func forwardSearchCredentials(ctx context.Context) (context.Context, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, status.FromContextError(err).Err()
+	}
+	info, ok := types.AuthInfoFrom(ctx)
+	if !ok || info == nil || info.GetAccessToken() == "" {
+		return nil, status.Error(codes.Unauthenticated, "authenticated access token is required to call search")
+	}
+	md, _ := metadata.FromOutgoingContext(ctx)
+	md = md.Copy()
+	if md == nil {
+		md = make(metadata.MD)
+	}
+	md.Set("x-access-token", info.GetAccessToken())
+	if idToken := info.GetIDToken(); idToken != "" {
+		md.Set("x-id-token", idToken)
+	} else {
+		md.Delete("x-id-token")
+	}
+	return metadata.NewOutgoingContext(ctx, md), nil
+}
+
+func forwardSearchUnaryInterceptor(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+	ctx, err := forwardSearchCredentials(ctx)
+	if err != nil {
+		return err
+	}
+	resourceclient.RecordForwardedClientIdentity()
+	return invoker(ctx, method, req, reply, cc, opts...)
 }
 
 // grpcConn creates a new gRPC connection to the provided address.
@@ -480,10 +552,10 @@ func GrpcConn(address string, reg prometheus.Registerer) (*grpc.ClientConn, erro
 // and middleware.StreamClientUserHeaderInterceptor as we don't need them.
 func instrument(requestDuration *prometheus.HistogramVec, instrumentationLabelOptions ...middleware.InstrumentationOption) ([]grpc.UnaryClientInterceptor, []grpc.StreamClientInterceptor) {
 	return []grpc.UnaryClientInterceptor{
-			middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}, []grpc.StreamClientInterceptor{
-			middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
-		}
+		middleware.UnaryClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}, []grpc.StreamClientInterceptor{
+		middleware.StreamClientInstrumentInterceptor(requestDuration, instrumentationLabelOptions...),
+	}
 }
 
 func newClientMetrics(reg prometheus.Registerer) *clientMetrics {

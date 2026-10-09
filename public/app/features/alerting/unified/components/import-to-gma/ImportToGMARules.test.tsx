@@ -1,4 +1,4 @@
-import { render, testWithFeatureToggles, waitFor } from 'test/test-utils';
+import { render, waitFor } from 'test/test-utils';
 import { byLabelText, byRole } from 'testing-library-selector';
 
 import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
@@ -53,7 +53,6 @@ describe('ImportToGMARules', () => {
   });
 
   grantUserPermissions([AccessControlAction.AlertingRuleExternalRead, AccessControlAction.AlertingRuleCreate]);
-  testWithFeatureToggles({ enable: ['alertingImportYAMLUI', 'alertingMigrationUI'] });
 
   it('should render the import source options', () => {
     render(<ImportToGMARules />);

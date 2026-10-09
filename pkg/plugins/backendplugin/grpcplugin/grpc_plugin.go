@@ -8,11 +8,11 @@ import (
 	"github.com/hashicorp/go-plugin"
 	"go.opentelemetry.io/otel/trace"
 
+	v3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	appgrpcplugin "github.com/grafana/grafana-app-sdk/plugin/grpcplugin"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -21,7 +21,7 @@ type grpcPlugin struct {
 	clientFactory  func() (*plugin.Client, error)
 	client         *plugin.Client
 	pluginClient   *ClientV2
-	clientV3       v3.ClientV3
+	clientV3       v3.Client
 	logger         log.Logger
 	mutex          sync.RWMutex
 	decommissioned bool
@@ -107,8 +107,10 @@ func (p *grpcPlugin) Start(_ context.Context) error {
 	return nil
 }
 
-func loadClientV3(rpcClient plugin.ClientProtocol) v3.ClientV3 {
-	client, err := appgrpcplugin.NewClientV3(rpcClient)
+// loadClientV3 returns the plugin's v3 transport client. Consumers add caller
+// authentication with v3.WithAuthentication.
+func loadClientV3(rpcClient plugin.ClientProtocol) v3.Client {
+	client, err := appgrpcplugin.NewClientV3(rpcClient, appgrpcplugin.ClientV3Options{})
 	if err != nil {
 		// Plugins that predate v3 do not dispense these services, which is the
 		// common case for now, so a failure here is not worth surfacing.
@@ -161,7 +163,7 @@ func (p *grpcPlugin) Target() backendplugin.Target {
 }
 
 // ClientV3 implements [backendplugin.PluginV3].
-func (p *grpcPlugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
+func (p *grpcPlugin) ClientV3(ctx context.Context) (v3.Client, bool) {
 	p.mutex.RLock()
 	defer p.mutex.RUnlock()
 	if p.client != nil && !p.client.Exited() && p.clientV3 != nil {

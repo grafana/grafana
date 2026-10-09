@@ -13,24 +13,6 @@ labels:
 menuTitle: High-cardinality alerts
 title: Examples of high-cardinality alerts
 weight: 1105
-refs:
-  usage-cost-alerts:
-    - pattern: /docs/
-      destination: /docs/grafana-cloud/cost-management-and-billing/usage-cost-alerts/
-  planning-mimir-capacity:
-    - pattern: /docs/
-      destination: /docs/mimir/latest/manage/run-production-environment/planning-capacity/
-  adaptative-metrics:
-    - pattern: /docs/
-      destination: /docs/grafana-cloud/adaptive-telemetry/adaptive-metrics/introduction/
-  cloud-metrics-invoice:
-    - pattern: /docs/
-      destination: /docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/metrics-invoice/
-  multi-dimensional-example:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/multi-dimensional-alerts/
 ---
 
 # Examples of high-cardinality alerts
@@ -46,7 +28,7 @@ These examples show how to detect and alert on early signs of high cardinality:
 - **Sudden series growth**: detect runaway cardinality increases caused by misconfigured exporters or new deployments.
 - **High ingestion rate**: detect when too many samples per second are being ingested, even if the total series count is stable.
 
-Use these alert patterns to act on high-cardinality growth, and consider implementing [Adaptive Metrics recommendations](ref:adaptative-metrics) to keep your observability costs under control.
+Use these alert patterns to act on high-cardinality growth, and consider implementing [Adaptive Metrics recommendations](/docs/grafana-cloud/adaptive-telemetry/adaptive-metrics/introduction/) to keep your observability costs under control.
 
 ## Choose metrics to monitor active series
 
@@ -54,11 +36,11 @@ First, identify which metric reports the number of active time series.
 
 Prometheus, Mimir, and Grafana Cloud expose this information differently:
 
-| Environment             | Metric                                | Description                                                                                                                                                                                 |
-| :---------------------- | :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Prometheus**          | `prometheus_tsdb_head_series`         | Reports the number of active series currently stored in memory (the head block) of a single Prometheus instance. It includes series that have stopped receiving samples for up to one hour. |
-| **Grafana Cloud**       | `grafanacloud_instance_active_series` | Tracks the number of [active series in your Grafana Cloud Metrics backend (Mimir](ref:cloud-metrics-invoice)).                                                                              |
-| **Prometheus or Mimir** | `count({__name__!=""})`               | Counts the number of series with recent samples by scanning the TSDB index. This query is expensive and should be exposed through a recording rule.                                         |
+| Environment             | Metric                                | Description                                                                                                                                                                                   |
+| :---------------------- | :------------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Prometheus**          | `prometheus_tsdb_head_series`         | Reports the number of active series currently stored in memory (the head block) of a single Prometheus instance. It includes series that have stopped receiving samples for up to one hour.   |
+| **Grafana Cloud**       | `grafanacloud_instance_active_series` | Tracks the number of [active series in your Grafana Cloud Metrics backend (Mimir](/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/metrics-invoice/)). |
+| **Prometheus or Mimir** | `count({__name__!=""})`               | Counts the number of series with recent samples by scanning the TSDB index. This query is expensive and should be exposed through a recording rule.                                           |
 
 ## Detect total active series near limits
 
@@ -111,7 +93,7 @@ For more robust alerting, you can compare your current usage to the `max_global_
 
 Instead of monitoring the total number of active series, you can fine-tune alerts to detect high cardinality within a specific scope — for example, by filtering on certain namespaces, services, or metrics known to generate many label combinations.
 
-[Multi-dimensional alerts](ref:multi-dimensional-example) let you evaluate each metric independently, so you can identify which metric is responsible for the label explosion instead of only tracking the overall total.
+[Multi-dimensional alerts](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/) let you evaluate each metric independently, so you can identify which metric is responsible for the label explosion instead of only tracking the overall total.
 
 You can apply label filters, or use `{__name__=~"regex"}` to select specific metrics. Then, use `count by (__name__)` to group results per metric name.
 
@@ -190,7 +172,7 @@ grafanacloud_instance_samples_per_second
 > 1e5
 ```
 
-Alternatively, Grafana Cloud metrics limits are based on [data points per minute (DPM)](ref:cloud-metrics-invoice): the number of samples sent per minute across all your active series.
+Alternatively, Grafana Cloud metrics limits are based on [data points per minute (DPM)](/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/metrics-invoice/): the number of samples sent per minute across all your active series.
 
 To monitor when your actual data-point rate approaches your DPM limit, you can compare total ingestion to your plan’s DPM limit:
 
@@ -218,8 +200,8 @@ This alert helps you detect when your organization is ingesting data faster and 
 
 Here’s list of additional resources related to this example:
 
-- [Multi-dimensional alerting example](ref:multi-dimensional-example) – Learn how Grafana creates separate alert instances for each unique label set.
-- [Understand Grafana Cloud active series and DPM](ref:cloud-metrics-invoice)– See how active series and data points per minute (DPM) are used to calculate metrics usage in Grafana Cloud.
-- [Create Grafana Cloud usage alerts](ref:usage-cost-alerts) – Set up alerts when your usage or costs approach your predefined limits.
-- [Plan capacity for Mimir](ref:planning-mimir-capacity)– Learn how to plan ingestion rate and memory capacity for Mimir or Prometheus environments.
-- [Adaptive Metrics recommendations](ref:adaptative-metrics) – Use Adaptive Metrics to automatically reduce high-cardinality metrics and control observability costs.
+- [Multi-dimensional alerting example](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/) – Learn how Grafana creates separate alert instances for each unique label set.
+- [Understand Grafana Cloud active series and DPM](/docs/grafana-cloud/cost-management-and-billing/manage-invoices/understand-your-invoice/metrics-invoice/)– See how active series and data points per minute (DPM) are used to calculate metrics usage in Grafana Cloud.
+- [Create Grafana Cloud usage alerts](/docs/grafana-cloud/cost-management-and-billing/usage-cost-alerts/) – Set up alerts when your usage or costs approach your predefined limits.
+- [Plan capacity for Mimir](/docs/mimir/latest/manage/run-production-environment/planning-capacity/)– Learn how to plan ingestion rate and memory capacity for Mimir or Prometheus environments.
+- [Adaptive Metrics recommendations](/docs/grafana-cloud/adaptive-telemetry/adaptive-metrics/introduction/) – Use Adaptive Metrics to automatically reduce high-cardinality metrics and control observability costs.

@@ -7,8 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
@@ -90,10 +89,7 @@ func webhookExpected(cfg *provisioning.Repository) bool {
 }
 
 func createWebhook(ctx context.Context, repo repository.WebhookRepository) (repository.WebhookConfig, error) {
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("could not generate secret: %w", err)
-	}
+	secret := uuid.NewV4()
 
 	hook, err := repo.WebhookClient().CreateWebhook(ctx, repo.WebhookURL(), repo.SubscribedEvents(), secret.String())
 	if err != nil {
@@ -156,10 +152,7 @@ func updateWebhook(ctx context.Context, repo repository.WebhookRepository) (repo
 	}
 
 	// Something has changed in the webhook. Let's rotate the secret as well, so as to ensure we end up with a 100% correct webhook.
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return nil, false, fmt.Errorf("could not generate secret: %w", err)
-	}
+	secret := uuid.NewV4()
 	hook.SetSecret(secret.String())
 	if err := client.EditWebhook(ctx, hook); err != nil {
 		// Repo is either legitimately deleted or the token no longer has access and this is a private
@@ -223,10 +216,7 @@ func rotateWebhookSecret(ctx context.Context, repo repository.WebhookRepository)
 		return nil, fmt.Errorf("get webhook for rotation: %w", err)
 	}
 
-	secret, err := uuid.NewRandom()
-	if err != nil {
-		return nil, fmt.Errorf("generate rotation secret: %w", err)
-	}
+	secret := uuid.NewV4()
 	hook.SetSecret(secret.String())
 
 	if err := client.EditWebhook(ctx, hook); err != nil {

@@ -234,7 +234,7 @@ export class JsonExplorer {
 
     // some pretty handling of number arrays
     if (this.isNumberArray()) {
-      this.json.forEach((val: any, index: number) => {
+      this.json.forEach((val: unknown, index: number) => {
         if (index > 0) {
           arrayWrapperSpan.appendChild(createElement('span', 'array-comma', ','));
         }
