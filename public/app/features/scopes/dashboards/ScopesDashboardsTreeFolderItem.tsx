@@ -105,6 +105,7 @@ export function ScopesDashboardsTreeFolderItem({
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     container: css({
       display: 'flex',
@@ -129,13 +130,18 @@ const getStyles = (theme: GrafanaTheme2) => {
       wordBreak: 'break-word',
       flex: 1,
     }),
+    // Matches the regular nav items' icon tint (MegaMenuItem.tsx) so this tree's icons read as part
+    // of the same nav rather than a visually distinct drawer transplant.
     icon: css({
       marginTop: theme.spacing(0.25),
+      color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
     }),
+    // Matches the regular nav items' base (non-active) text color (MegaMenuItemText.tsx).
     titleContainer: css({
       display: 'flex',
       alignItems: 'center',
       flex: 1,
+      color: theme.colors.text.secondary,
     }),
     exchangeIcon: css({
       opacity: 0.7,
