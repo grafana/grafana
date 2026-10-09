@@ -37,6 +37,9 @@ type SearchBackedListOptions struct {
 	// ExpectBatchReads asserts the read used BatchReadResource (KV backends)
 	// rather than the per-resource fallback.
 	ExpectBatchReads bool
+	// AuthorizeBeforeFetch runs the server with authorize_before_fetch_enabled, so
+	// search rows are authorized in one batch before any is read.
+	AuthorizeBeforeFetch bool
 	// DataKeyScans, when set, reports how many data key scans storage has made.
 	// Search-backed reads must make none: search gives the exact version and
 	// folder of every row, so no storage key has to be resolved.
@@ -151,22 +154,52 @@ func (c *countingBackend) ReadResource(ctx context.Context, req *resourcepb.Read
 // denyFolderAccess allows everything except one folder, denying through both
 // Compile (the in-searcher filter) and Check (the per-row authorizeRead) so the
 // index and the List authorization agree.
-type denyFolderAccess struct{ denied string }
+type denyFolderAccess struct {
+	denied      string
+	checks      atomic.Int64
+	batchChecks atomic.Int64
+	compiles    atomic.Int64
+}
 
-func (a denyFolderAccess) Check(_ context.Context, _ claims.AuthInfo, _ claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+func (a *denyFolderAccess) Check(_ context.Context, _ claims.AuthInfo, _ claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	a.checks.Add(1)
 	return claims.CheckResponse{Allowed: folder != a.denied, Zookie: claims.NoopZookie{}}, nil
 }
 
-func (a denyFolderAccess) Compile(_ context.Context, _ claims.AuthInfo, _ claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+func (a *denyFolderAccess) Compile(_ context.Context, _ claims.AuthInfo, _ claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	a.compiles.Add(1)
 	return func(_, folder string) bool { return folder != a.denied }, claims.NoopZookie{}, nil
 }
 
-func (a denyFolderAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+func (a *denyFolderAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	a.batchChecks.Add(1)
 	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
 	for _, c := range req.Checks {
 		results[c.CorrelationID] = claims.BatchCheckResult{Allowed: c.Folder != a.denied}
 	}
 	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func (a *denyFolderAccess) reset() {
+	a.checks.Store(0)
+	a.batchChecks.Store(0)
+	a.compiles.Store(0)
+}
+
+// assertListAuthorization checks how storage authorized the rows of lists list
+// calls that read rows rows. With AuthorizeBeforeFetch each call is authorized in
+// one BatchCheck and no row gets its own Check; otherwise every row read gets
+// one. The in-process search makes one BatchCheck per call of its own.
+func assertListAuthorization(t *testing.T, opts SearchBackedListOptions, access *denyFolderAccess, lists, rows int) {
+	t.Helper()
+	searchBatchChecks := int64(lists)
+	if opts.AuthorizeBeforeFetch {
+		require.Zero(t, access.checks.Load(), "no row is checked on its own")
+		require.Equal(t, searchBatchChecks+int64(lists), access.batchChecks.Load(), "storage authorizes each list call in one BatchCheck")
+		return
+	}
+	require.Equal(t, int64(rows), access.checks.Load(), "every row read is checked on its own")
+	require.Equal(t, searchBatchChecks, access.batchChecks.Load(), "only search batches its checks")
 }
 
 // RunTestSearchBackedList exercises the search-backed LIST path end to end
@@ -264,9 +297,11 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		write(fmt.Sprintf("other-%02d", i), otherTeam, okFolder, "other")
 	}
 
+	access := &denyFolderAccess{denied: deniedFolder}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      counting,
-		AccessClient: denyFolderAccess{denied: deniedFolder},
+		Backend:                     counting,
+		AccessClient:                access,
+		AuthorizeBeforeFetchEnabled: opts.AuthorizeBeforeFetch,
 		Search: resource.SearchOptions{
 			Backend:   searchBackend,
 			Resources: labelFolderBuilderSupplier{},
@@ -298,6 +333,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		counting.batchReads.Store(0)
 		counting.reads.Store(0)
+		access.reset()
 
 		got := map[string]want{}
 		var token string
@@ -335,6 +371,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		require.Equal(t, 2, pages, "expected two pages")
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
+		assertListAuthorization(t, opts, access, pages, authorized)
 		if opts.ExpectBatchReads {
 			require.Equal(t, int64(6), counting.batchReads.Load(), "the two pages should use 10-row lazy batched reads")
 			require.Equal(t, int64(0), counting.reads.Load())
@@ -347,11 +384,13 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		var resp *resourcepb.ListResponse
 		var err error
+		access.reset()
 		assertNoKeyScans(t, opts, func() { resp, err = server.List(ctx, newReq(1000, "")) })
 		require.NoError(t, err)
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.NextPageToken, "the whole set fits on one page")
 		require.Len(t, resp.Items, authorized)
+		assertListAuthorization(t, opts, access, 1, authorized)
 
 		if opts.ExpectBatchReads {
 			// Compile filters the denied folder during search, so all 55 hits reach
@@ -435,7 +474,7 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 	writeObject("provisioned", adminFolder, "user:other", true, true)
 	writeObject("live", adminFolder, "", false, false)
 
-	access := denyFolderAccess{denied: deniedFolder}
+	access := &denyFolderAccess{denied: deniedFolder}
 	newServer := func(allowSearch bool) resource.ResourceServer {
 		config := resource.SearchBackedListConfig{}
 		searchOptions := resource.SearchOptions{}

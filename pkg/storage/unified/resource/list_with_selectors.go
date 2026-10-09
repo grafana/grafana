@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/grafana/authlib/authz"
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"go.opentelemetry.io/otel/attribute"
@@ -77,7 +78,14 @@ func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequ
 		}}, nil
 	}
 
-	if result := s.consumeSearchRows(ctx, user, req, page.rows, s.readSearchRows(ctx, page.rows), page.resourceVersion, rsp); result != nil {
+	rows := page.rows
+	if s.authorizeBeforeFetchEnabled && page.folderIndexed {
+		rows, errRes = s.authorizeSearchRows(ctx, page.rows)
+		if errRes != nil {
+			return &resourcepb.ListResponse{Error: errRes}, nil
+		}
+	}
+	if result := s.consumeSearchRows(ctx, user, req, rows, s.readSearchRows(ctx, rows), page.resourceVersion, rsp); result != nil {
 		return result, nil
 	}
 
@@ -92,6 +100,8 @@ type searchListPage struct {
 	response        *resourcepb.ResourceSearchResponse
 	rows            []listSearchRow
 	resourceVersion int64
+	// An indexed folder column distinguishes root-level objects from unknown folders.
+	folderIndexed bool
 }
 
 func (s *server) executeSearchListPage(
@@ -116,20 +126,13 @@ func (s *server) executeSearchListPage(
 		return nil, nil, err
 	}
 
-	page := &searchListPage{response: searchResp, resourceVersion: listRV}
-	if searchResp.GetError() != nil {
-		return page, nil, nil
-	}
-
-	page.rows, err = decodeListSearchRows(searchResp)
+	page, err := decodeSearchListPage(searchResp, listRV)
 	if err != nil {
 		s.log.Error("Invalid search response for List", "group", req.Options.Key.Group, "resource", req.Options.Key.Resource, "error", err)
 		return nil, AsErrorResult(err), nil
 	}
-	span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.GetTotalHits())))
-	// If it's the first page, set the listRV to the search response RV.
-	if page.resourceVersion <= 0 {
-		page.resourceVersion = searchResp.GetResourceVersion()
+	if searchResp.GetError() == nil {
+		span.AddEvent("search finished", trace.WithAttributes(attribute.Int64("total_hits", searchResp.GetTotalHits())))
 	}
 	return page, nil, nil
 }
@@ -186,13 +189,25 @@ type listSearchRow struct {
 	key             *resourcepb.ResourceKey
 	resourceVersion int64
 	// folder is the folder the index recorded for this version, a hint for the read.
-	folder     string
+	folder string
+	// authorized is set when the row was authorized in folder before it was read.
+	authorized bool
 	sortFields []string
 }
 
-func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSearchRow, error) {
+// decodeSearchListPage turns a search response into a list page. A response that
+// reports an error carries no rows. listRV is the version a continued list is
+// pinned to; the first page takes the version of the search response.
+func decodeSearchListPage(response *resourcepb.ResourceSearchResponse, listRV int64) (*searchListPage, error) {
 	if response == nil {
 		return nil, fmt.Errorf("empty search response")
+	}
+	page := &searchListPage{response: response, resourceVersion: listRV}
+	if response.GetError() != nil {
+		return page, nil
+	}
+	if page.resourceVersion <= 0 {
+		page.resourceVersion = response.GetResourceVersion()
 	}
 
 	var rows []listSearchRow
@@ -200,7 +215,7 @@ func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSe
 	case resourcepb.ResourceSearchRequest_UNSPECIFIED, resourcepb.ResourceSearchRequest_RESOURCE_TABLE:
 		table := response.GetResults()
 		if table == nil {
-			return nil, nil
+			return page, nil
 		}
 		rows = make([]listSearchRow, 0, len(table.GetRows()))
 		for i, row := range table.GetRows() {
@@ -217,6 +232,7 @@ func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSe
 		folderField := slices.IndexFunc(response.GetFields(), func(f *resourcepb.ResourceSearchField) bool {
 			return f.GetName() == SEARCH_FIELD_FOLDER
 		})
+		page.folderIndexed = folderField >= 0
 		rows = make([]listSearchRow, 0, len(response.GetRows()))
 		for i, row := range response.GetRows() {
 			if row == nil || row.GetKey() == nil {
@@ -237,7 +253,8 @@ func decodeListSearchRows(response *resourcepb.ResourceSearchResponse) ([]listSe
 	default:
 		return nil, fmt.Errorf("unsupported search result format %d", response.GetResultFormat())
 	}
-	return rows, nil
+	page.rows = rows
+	return page, nil
 }
 
 func (s *server) consumeSearchRows(
@@ -280,9 +297,12 @@ func (s *server) consumeSearchRows(
 			)
 			continue
 		}
-		// The storage reads do no authorization, so authorize each row before
-		// surfacing a row-scoped error. An unauthorized row must not reveal details.
-		if row.key != nil {
+		// The storage reads do no authorization. A row authorized before the read
+		// needs no second check when storage holds it in the folder it was
+		// authorized in. Any other row is authorized now, before surfacing a
+		// row-scoped error: an unauthorized row must not reveal details.
+		verified := row.authorized && val.Error == nil && val.Folder == row.folder
+		if row.key != nil && !verified {
 			if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
 				if errRes.Code == http.StatusForbidden {
 					if val.Error != nil {
@@ -333,6 +353,22 @@ func (s *server) consumeSearchRows(
 		}}
 	}
 	return nil
+}
+
+// authorizeSearchRows uses indexed folders; consumeSearchRows checks again if
+// storage resolves a different folder. The caller must require the folder column.
+func (s *server) authorizeSearchRows(ctx context.Context, rows []listSearchRow) ([]listSearchRow, *resourcepb.ErrorResult) {
+	kept := make([]listSearchRow, 0, len(rows))
+	for row, err := range authz.FilterAuthorized(ctx, s.access, slices.Values(rows), func(row listSearchRow) authz.BatchCheckItem {
+		return listAuthorizationItem(row.key, row.key.Name, row.folder, row.resourceVersion)
+	}, authz.WithTracer(tracer)) {
+		if err != nil {
+			return nil, AsErrorResult(err)
+		}
+		row.authorized = true
+		kept = append(kept, row)
+	}
+	return kept, nil
 }
 
 // readChunkSize is how many objects one batch read asks storage for, which
