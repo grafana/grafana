@@ -23,18 +23,22 @@ var leaderRetryBackoff = 5 * time.Second
 // election. A scheduler error is returned as-is, like runMT without election:
 // the lease is released first so another replica can take over while the
 // app-sdk runtime surfaces the error.
+//
+// Cancellation of ctx is a shutdown requested by the caller, not a failure of
+// the scheduler, so it returns nil: the app-sdk runtime treats any non-nil
+// error from a runnable as that runnable failing.
 func (r *Runner) runMTAsLeader(ctx context.Context, logger logging.Logger) error {
 	for {
 		if err := r.runMTElectionRound(ctx, logger); err != nil {
 			return err
 		}
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return nil
 		}
 		logger.Info("checkscheduler leader lease lost, re-entering election", "backoff", leaderRetryBackoff)
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return nil
 		case <-time.After(leaderRetryBackoff):
 		}
 	}

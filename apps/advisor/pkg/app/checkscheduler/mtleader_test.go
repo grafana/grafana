@@ -59,7 +59,7 @@ func TestRunMTAsLeader_FollowerDoesNotSchedule(t *testing.T) {
 	defer cancel()
 	err := r.Run(ctx)
 
-	assert.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.NoError(t, err, "cancelling the parent context is a clean shutdown")
 	assert.Zero(t, listCalls.Load(), "a replica that never leads must not run discovery")
 	assert.Zero(t, testutil.ToFloat64(metrics.MTSchedulerIsLeader))
 }
@@ -79,7 +79,7 @@ func TestRunMTAsLeader_LeaderRunsScheduler(t *testing.T) {
 	defer cancel()
 	err := r.Run(ctx)
 
-	assert.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.NoError(t, err, "cancelling the parent context is a clean shutdown")
 	require.NotNil(t, leaderGaugeDuringRun.Load(), "the leader must run discovery")
 	assert.Equal(t, float64(1), leaderGaugeDuringRun.Load())
 	assert.Zero(t, testutil.ToFloat64(metrics.MTSchedulerIsLeader), "gauge must reset once leadership ends")
@@ -119,7 +119,7 @@ func TestRunMTAsLeader_ReentersElectionAfterLeaseLoss(t *testing.T) {
 	defer cancel()
 	err := r.Run(ctx)
 
-	assert.ErrorIs(t, err, context.DeadlineExceeded)
+	assert.NoError(t, err, "cancelling the parent context is a clean shutdown")
 	assert.GreaterOrEqual(t, rounds.Load(), int32(2), "runner must re-enter the election after losing the lease")
 	assert.GreaterOrEqual(t, listCalls.Load(), int32(2), "each round that leads must run the scheduler")
 	assert.Equal(t, int32(1), maxActive.Load(), "scheduler runs must not overlap across rounds")
