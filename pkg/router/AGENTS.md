@@ -167,7 +167,8 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
     and `result` have fixed sets of values. A new label value must come from a fixed set too.
   - In middleware mode, only requests the router owns (`owns`) are instrumented.
   - New backends must name their source (`Backend.Source`), and new sources should report through
-    `loaderStatus`, or their loads don't appear in the metrics.
+    `loaderStatus`, or their loads don't appear in the metrics. A source that skips a backend logs
+    why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
   - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
     instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
     Connections are keyed by host and plugin ID, because each records its calls under one

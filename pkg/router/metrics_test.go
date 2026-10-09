@@ -16,6 +16,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -185,6 +186,7 @@ func newStatusService(t *testing.T) (*Service, *statusLoader, *prometheus.Regist
 		sources: []sourceStatus{
 			{Source: sourceRouteBackend, LastSuccess: time.Unix(1700000000, 0).UTC(), Successes: 4},
 			{Source: sourceSingleTenant, Failures: 2},
+			{Source: sourcePluginsURL, Skipped: 2},
 		},
 	}
 	reg := prometheus.NewRegistry()
@@ -232,13 +234,20 @@ grafana_router_reconciles_total 2
 # HELP grafana_router_shadowed_groups Number of API groups a source offered that a higher-priority source serves instead, in the latest load.
 # TYPE grafana_router_shadowed_groups gauge
 grafana_router_shadowed_groups{source="single-tenant"} 1
+# HELP grafana_router_skipped_backends Number of backends a route source skipped in its latest successful load or poll. Each skip is logged with its error.
+# TYPE grafana_router_skipped_backends gauge
+grafana_router_skipped_backends{source="plugins_url"} 2
+grafana_router_skipped_backends{source="routebackend"} 0
+grafana_router_skipped_backends{source="single-tenant"} 0
 # HELP grafana_router_source_last_success_timestamp_seconds When each route source last loaded successfully, in seconds since the Unix epoch.
 # TYPE grafana_router_source_last_success_timestamp_seconds gauge
 grafana_router_source_last_success_timestamp_seconds{source="routebackend"} 1.7e+09
 # HELP grafana_router_source_polls_total Load or poll attempts of each route source, by result: success or failure.
 # TYPE grafana_router_source_polls_total counter
+grafana_router_source_polls_total{result="failure",source="plugins_url"} 0
 grafana_router_source_polls_total{result="failure",source="routebackend"} 0
 grafana_router_source_polls_total{result="failure",source="single-tenant"} 2
+grafana_router_source_polls_total{result="success",source="plugins_url"} 0
 grafana_router_source_polls_total{result="success",source="routebackend"} 4
 grafana_router_source_polls_total{result="success",source="single-tenant"} 0
 # HELP grafana_router_stack_lookups_total Single-tenant stack lookups, by result: cache_hit, resolved, not_found, throttled or error.
@@ -249,7 +258,7 @@ grafana_router_stack_lookups_total{result="resolved"} 1
 	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(expected),
 		"grafana_router_breaker_state", "grafana_router_breaker_transitions_total", "grafana_router_groups",
 		"grafana_router_ready", "grafana_router_reconcile_errors_total", "grafana_router_reconciles_total",
-		"grafana_router_shadowed_groups", "grafana_router_source_last_success_timestamp_seconds",
+		"grafana_router_shadowed_groups", "grafana_router_skipped_backends", "grafana_router_source_last_success_timestamp_seconds",
 		"grafana_router_source_polls_total", "grafana_router_stack_lookups_total"))
 	require.Equal(t, 1, testutil.CollectAndCount(reg, "grafana_router_last_reconcile_timestamp_seconds"))
 }
@@ -328,4 +337,63 @@ func TestRejectedWatchesAreCounted(t *testing.T) {
 	require.Equal(t, 1.0, testutil.ToFloat64(requests.WithLabelValues("test-app", "watch", routeUnauthenticated, "401")))
 	require.Equal(t, 1.0, testutil.ToFloat64(requests.WithLabelValues("test-app", "watch", routeBackend, "400")))
 	require.Zero(t, testutil.CollectAndCount(svc.metrics.duration), "rejected watches are still watches")
+}
+
+func TestRouteBackendSkips(t *testing.T) {
+	routeBackend := func(name string, spec v1alpha2.RouteBackendSpec) v1alpha2.RouteBackend {
+		return v1alpha2.RouteBackend{ObjectMeta: metav1.ObjectMeta{Name: name, ResourceVersion: "1"}, Spec: spec}
+	}
+	badCA := "not a certificate"
+	withBadCA := forwardSpec("https://bad-tls.example.com")
+	withBadCA.Forward.Tls.CaData = &badCA
+
+	apps := []string{"valid", "no-forward", "bad-tls", "relative-url"}
+	manifests := make([]v1alpha2.AppManifest, 0, len(apps))
+	for _, app := range apps {
+		manifests = append(manifests, v1alpha2.AppManifest{
+			ObjectMeta: metav1.ObjectMeta{Name: app, ResourceVersion: "1"},
+			Spec: v1alpha2.AppManifestSpec{
+				AppName: app, Group: app + ".grafana.app",
+				Versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}},
+			},
+		})
+	}
+	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
+	combined := loader.combineByName(t.Context(), manifests, []v1alpha2.RouteBackend{
+		routeBackend("valid", forwardSpec("https://valid.example.com")),
+		routeBackend("no-forward", v1alpha2.RouteBackendSpec{Mode: v1alpha2.RouteBackendSpecModeOperator}),
+		routeBackend("bad-tls", withBadCA),
+		routeBackend("relative-url", forwardSpec("/relative")),
+		routeBackend("no-manifest", forwardSpec("https://no-manifest.example.com")),
+		routeBackend("also-no-manifest", forwardSpec("https://also-no-manifest.example.com")),
+	})
+
+	require.Len(t, combined, 1)
+	require.Equal(t, 5, loader.routeBackendStatus.status(sourceRouteBackend).Skipped)
+
+	// Each load replaces the counts, so a fixed backend stops being reported.
+	loader.combineByName(t.Context(), manifests[:1], []v1alpha2.RouteBackend{
+		routeBackend("valid", forwardSpec("https://valid.example.com")),
+	})
+	require.Zero(t, loader.routeBackendStatus.status(sourceRouteBackend).Skipped)
+}
+
+func TestPluginManifestsSkips(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = w.Write([]byte(`{"plugins": [
+			{"definition": {"jsonData": {"id": "grafana-core-app", "type": "app"}, "manifests": [
+				{"appName": "core", "group": "dashboard.grafana.app", "versions": [{"name": "v1", "served": true}]}
+			]}},
+			{"definition": {"jsonData": {"id": "grafana-unserved-app", "type": "app"}, "manifests": [
+				{"appName": "unserved", "group": "unserved.ext.grafana.app", "versions": [{"name": "v1", "served": false}]}
+			]}}
+		]}`))
+	}))
+	t.Cleanup(srv.Close)
+	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	require.NoError(t, err)
+
+	target.poll(t.Context(), make(chan struct{}, 1))
+	require.Empty(t, target.Backends())
+	require.Equal(t, 2, target.status.status(sourcePluginsURL).Skipped)
 }

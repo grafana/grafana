@@ -718,6 +718,7 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 
 	// 2. Iterate the second slice and correlate
 	var combined []Backend
+	skipped := 0
 	for _, b := range backends {
 		m, ok := manifestMap[b.Name]
 		if !ok {
@@ -730,6 +731,7 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 			// config block, have a nil Forward -- not yet supported here.
 			if b.Spec.Forward == nil {
 				logging.FromContext(ctx).Warn("router.NewForwardBackend: route backend has no forward config, skipping", "Group", m.group.Name, "mode", b.Spec.Mode)
+				skipped++
 				continue
 			}
 			transportKey := tlsCacheKey{
@@ -742,18 +744,22 @@ func (l *cloudLoader) combineByName(ctx context.Context, manifests []v1alpha2.Ap
 			transport, err := l.transportFor(transportKey)
 			if err != nil {
 				logging.FromContext(ctx).Warn("router.NewForwardBackend failed to create or fetch cached transport", "Group", m.group.Name, "err", err)
+				skipped++
 				continue
 			}
 			current, err := NewForwardBackend(m.group, b.Spec, b.ResourceVersion+"-"+m.key, transport)
 			if err != nil {
 				logging.FromContext(ctx).Warn("router.NewForwardBackend failed", "Group", m.group.Name, "err", err)
+				skipped++
 				continue
 			}
 			combined = append(combined, current)
 		} else {
 			logging.FromContext(ctx).Warn("RoutesLoader: manifest not found for route backend", "name", b.Name)
+			skipped++
 			continue
 		}
 	}
+	l.routeBackendStatus.recordSkipped(skipped)
 	return combined
 }

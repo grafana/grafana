@@ -25,6 +25,8 @@ type sourceStatus struct {
 	// Successes and Failures count attempts since the router started.
 	Successes uint64
 	Failures  uint64
+	// Skipped is the number of backends the latest successful load skipped.
+	Skipped int
 }
 
 // shadowedGroup is a group that one source offered but a higher-priority
@@ -50,6 +52,7 @@ type pollStatus struct {
 	lastSuccess atomic.Int64 // Unix nanoseconds; zero if never
 	successes   atomic.Uint64
 	failures    atomic.Uint64
+	skipped     atomic.Int64
 }
 
 func (p *pollStatus) recordSuccess(now time.Time) {
@@ -61,8 +64,13 @@ func (p *pollStatus) recordFailure() {
 	p.failures.Add(1)
 }
 
+// recordSkipped records how many backends the latest load skipped.
+func (p *pollStatus) recordSkipped(skipped int) {
+	p.skipped.Store(int64(skipped))
+}
+
 func (p *pollStatus) status(source string) sourceStatus {
-	s := sourceStatus{Source: source, Successes: p.successes.Load(), Failures: p.failures.Load()}
+	s := sourceStatus{Source: source, Successes: p.successes.Load(), Failures: p.failures.Load(), Skipped: int(p.skipped.Load())}
 	if ns := p.lastSuccess.Load(); ns != 0 {
 		s.LastSuccess = time.Unix(0, ns).UTC()
 	}
