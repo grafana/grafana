@@ -50,6 +50,8 @@ export interface SelectCommonProps<T> {
   hideSelectedOptions?: boolean;
   inputValue?: string;
   invalid?: boolean;
+  /** Sets the height of the select, matching the equivalent Button size. Defaults to `md`. */
+  size?: 'sm' | 'md';
   isClearable?: boolean;
   /** The id to set on the SelectContainer component. To set the id for a label (with htmlFor), @see inputId instead */
   id?: string;
