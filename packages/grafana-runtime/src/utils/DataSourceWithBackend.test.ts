@@ -629,7 +629,20 @@ describe('DataSourceWithBackend', () => {
       expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
     });
 
-    test.each([{ health: ['prometheus'] }, { resources: ['dummy'] }, { health: 'dummy' }, {}, null])(
+    test.each([{ health: ['*'] }, { health: ['prometheus', '*'] }])(
+      'uses the new health URL with wildcard list $health',
+      ({ health }) => {
+        mockGetObjectValue.mockReturnValue({ health, resources: [] });
+        const { mock, ds } = createMockDatasource({ type: 'community-datasource' });
+        ds.callHealthCheck();
+
+        expect(mock.calls[0][0].url).toEqual(
+          '/apis/community-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/health'
+        );
+      }
+    );
+
+    test.each([{ health: ['prometheus'] }, { resources: ['dummy'] }, { resources: ['*'] }, { health: '*' }, {}, null])(
       'keeps health calls on the legacy API when the plugin is not allowed: %j',
       (allowedTypes) => {
         mockGetObjectValue.mockReturnValue(allowedTypes);
@@ -912,7 +925,21 @@ describe('DataSourceWithBackend', () => {
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
 
-    test.each([{ resources: ['prometheus'] }, { health: ['dummy'] }, { resources: 'dummy' }, {}, null])(
+    test.each([{ resources: ['*'] }, { resources: ['prometheus', '*'] }])(
+      'uses the new resources URL with wildcard list $resources',
+      ({ resources }) => {
+        mockGetObjectValue.mockReturnValue({ resources, health: [] });
+        const url = createMockDatasource({ type: 'community-datasource' }).ds.buildResourcesDatasourceUrl(
+          'api/v1/labels'
+        );
+
+        expect(url).toBe(
+          '/apis/community-datasource.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
+        );
+      }
+    );
+
+    test.each([{ resources: ['prometheus'] }, { health: ['dummy'] }, { health: ['*'] }, { resources: '*' }, {}, null])(
       'keeps resource calls on the legacy API when the plugin is not allowed: %j',
       (allowedTypes) => {
         mockGetObjectValue.mockReturnValue(allowedTypes);
