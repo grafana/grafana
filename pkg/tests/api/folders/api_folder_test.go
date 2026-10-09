@@ -735,15 +735,16 @@ func createFolderPermissionUser(
 ) {
 	t.Helper()
 
+	orgID := env.Cfg.DefaultOrgID()
 	userID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
 		DefaultOrgRole: string(org.RoleNone),
 		Login:          login,
 		Password:       user.Password(login),
-		OrgID:          1,
+		OrgID:          orgID,
 	})
 	store := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 	for _, grant := range grants {
-		_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: userID}, grant, nil)
+		_, err := store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, grant, nil)
 		require.NoError(t, err)
 	}
 }

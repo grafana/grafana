@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"slices"
 	"testing"
+	"time"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
@@ -761,7 +762,14 @@ func testIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) 
 func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	const (
+		ruleGroupInterval = time.Minute
+		// Keep two rules so one request can update a rule and delete another.
+		initialRuleCount = 2
+	)
+
 	e := setupProvisioningAccessControlTest(t)
+	orgID := e.env.Cfg.DefaultOrgID()
 	e.adminClient.CreateFolder(t, "rules-target", "Rules target")
 	e.adminClient.CreateFolder(t, "rules-other", "Rules other")
 
@@ -772,10 +780,11 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 			group := definitions.AlertRuleGroup{
 				Title:     fmt.Sprintf("permissions-%d", i),
 				FolderUID: "rules-target",
-				Interval:  60,
+				Interval:  int64(ruleGroupInterval / time.Second),
 			}
-			for j := range 2 {
-				group.Rules = append(group.Rules, provisioningPermissionRule(fmt.Sprintf("permission-rule-%d-%d", i, j), group.Title))
+			for j := range initialRuleCount {
+				uid := fmt.Sprintf("permission-rule-%d-%d", i, j)
+				group.Rules = append(group.Rules, provisioningPermissionRule(uid, group.Title, orgID))
 			}
 
 			var before definitions.AlertRuleGroup
@@ -801,7 +810,8 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 				group.Rules[0].Title = "Updated rule"
 			case "update and create":
 				group.Rules[0].Title = "Updated rule"
-				group.Rules = append(group.Rules, provisioningPermissionRule(fmt.Sprintf("new-rule-%d", i), group.Title))
+				uid := fmt.Sprintf("new-rule-%d", i)
+				group.Rules = append(group.Rules, provisioningPermissionRule(uid, group.Title, orgID))
 			case "update and delete":
 				group.Rules[0].Title = "Updated rule"
 				group.Rules = group.Rules[:1]
@@ -836,11 +846,11 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 	}
 }
 
-func provisioningPermissionRule(uid, group string) definitions.ProvisionedAlertRule {
+func provisioningPermissionRule(uid, group string, orgID int64) definitions.ProvisionedAlertRule {
 	return definitions.ProvisionedAlertRule{
 		UID:          uid,
 		Title:        uid,
-		OrgID:        1,
+		OrgID:        orgID,
 		FolderUID:    "rules-target",
 		RuleGroup:    group,
 		Condition:    "A",
@@ -892,7 +902,7 @@ func (e provisioningTestEnv) createUserAndClient(t *testing.T, tc provisioningTe
 	for _, cmd := range tc.permissions {
 		_, err := e.permissionsStore.SetUserResourcePermission(
 			context.Background(),
-			1,
+			e.env.Cfg.DefaultOrgID(),
 			accesscontrol.User{ID: userID},
 			cmd,
 			nil,

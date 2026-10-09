@@ -664,8 +664,9 @@ func createScopedServiceAccountTargets(t *testing.T, helper *apis.K8sTestHelper,
 		User: helper.Org1.Admin,
 		GVR:  gvrServiceAccounts,
 	})
-	ids := make([]string, 0, 2)
-	for _, suffix := range []string{"target", "other"} {
+	suffixes := []string{"target", "other"}
+	ids := make([]string, 0, len(suffixes))
+	for _, suffix := range suffixes {
 		name := fmt.Sprintf("scope-%d-%s", index, suffix)
 		title := fmt.Sprintf("Scope %d %s", index, suffix)
 		created := createNamedServiceAccount(t, ctx, helper, admin, name, title)

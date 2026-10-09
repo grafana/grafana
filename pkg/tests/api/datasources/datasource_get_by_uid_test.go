@@ -64,7 +64,7 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 		EnableFeatureToggles:    []string{featuremgmt.FlagDatasourceLegacyIdApi},
 	})
 	env := helper.GetEnv()
-	ds := createResolverDataSource(t, &env, "resolver-target", "Resolver target", 1)
+	ds := createResolverDataSource(t, &env, "resolver-target", "Resolver target", helper.Org1.OrgID)
 
 	t.Run("UID grants authorize resolved names and IDs", func(t *testing.T) {
 		cases := []struct {
@@ -122,7 +122,7 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 
 	t.Run("name cache is isolated by organization", func(t *testing.T) {
 		name := "Same name in two organizations"
-		first := createResolverDataSource(t, &env, "org-one-ds", name, 1)
+		first := createResolverDataSource(t, &env, "org-one-ds", name, helper.Org1.OrgID)
 		second := createResolverDataSource(t, &env, "org-two-ds", name, helper.OrgB.OrgID)
 
 		callerA := helper.CreateUser("resolver-org-a", apis.Org1, org.RoleNone, datasourceReadGrant(first.UID))
@@ -147,7 +147,7 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 	})
 
 	t.Run("deleting and recreating a name invalidates its resolved UID", func(t *testing.T) {
-		original := createResolverDataSource(t, &env, "before-recreate", "Reused name", 1)
+		original := createResolverDataSource(t, &env, "before-recreate", "Reused name", helper.Org1.OrgID)
 		caller := helper.CreateUser("before-recreate-user", apis.Org1, org.RoleNone, datasourceReadGrant(original.UID))
 		path := fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(original.Name))
 		requireDataSourceRead(t, helper, caller, path, http.StatusOK, original.UID)
@@ -159,7 +159,7 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 		}, &struct{}{})
 		require.Equal(t, http.StatusOK, removed.Response.StatusCode, string(removed.Body))
 
-		replacement := createResolverDataSource(t, &env, "after-recreate", original.Name, 1)
+		replacement := createResolverDataSource(t, &env, "after-recreate", original.Name, helper.Org1.OrgID)
 
 		// Deletion also removes grants, so restore the old UID grant to isolate resolver invalidation.
 		oldCaller := helper.CreateUser("old-uid-after-recreate", apis.Org1, org.RoleNone, datasourceReadGrant(original.UID))

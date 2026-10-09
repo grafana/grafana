@@ -1158,8 +1158,9 @@ func createScopedTeamTargets(t *testing.T, helper *apis.K8sTestHelper, index int
 		User: helper.Org1.Admin,
 		GVR:  gvrTeams,
 	})
-	ids := make([]string, 0, 2)
-	for _, suffix := range []string{"target", "other"} {
+	suffixes := []string{"target", "other"}
+	ids := make([]string, 0, len(suffixes))
+	for _, suffix := range suffixes {
 		name := fmt.Sprintf("scope-%d-%s", index, suffix)
 		title := fmt.Sprintf("Scope %d %s", index, suffix)
 		created := createNamedTeam(t, ctx, helper, admin, name, title, "")

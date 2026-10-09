@@ -315,6 +315,8 @@ func testIntegrationAnnotations(t *testing.T) {
 func testIntegrationAnnotationScopePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	const annotationTimeMillis int64 = 1234567890000
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous:        true,
 		DisableAuthZClientCache: true,
@@ -367,12 +369,17 @@ func testIntegrationAnnotationScopePermissions(t *testing.T) {
 					if tc.organization {
 						dashboardUID = ""
 					}
-					annotationID := createScopedAnnotation(t, helper, dashboardUID)
+					annotationID := createScopedAnnotation(t, helper, dashboardUID, annotationTimeMillis)
 					path := fmt.Sprintf("/api/annotations/%d", annotationID)
 
 					var update []byte
 					if method == http.MethodPut || method == http.MethodPatch {
-						update = []byte(`{"text":"Updated annotation","time":1234567890000}`)
+						var err error
+						update, err = json.Marshal(map[string]interface{}{
+							"text": "Updated annotation",
+							"time": annotationTimeMillis,
+						})
+						require.NoError(t, err)
 					}
 					response := apis.DoRequest(helper, apis.RequestParams{
 						User:   caller,
@@ -594,11 +601,13 @@ func annotationScopePermissionCases(dashboardUID, parentUID, otherUID string) []
 	}
 }
 
-func createScopedAnnotation(t *testing.T, helper *apis.K8sTestHelper, dashboardUID string) int64 {
+func createScopedAnnotation(
+	t *testing.T, helper *apis.K8sTestHelper, dashboardUID string, timestampMillis int64,
+) int64 {
 	t.Helper()
 
 	body, err := json.Marshal(dtos.PostAnnotationsCmd{
-		Time:         1234567890000,
+		Time:         timestampMillis,
 		Text:         "Original annotation",
 		DashboardUID: dashboardUID,
 	})
