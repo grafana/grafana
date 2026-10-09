@@ -15,12 +15,8 @@ import { AddNewConnection } from './ConnectData';
 
 jest.mock('app/features/datasources/api');
 
-beforeAll(() => {
+beforeEach(() => {
   setTestFlags({ [FlagKeys.ConnectionsFilterSidebar]: true });
-});
-
-afterAll(() => {
-  setTestFlags({});
 });
 
 jest.mock('@grafana/runtime', () => ({
