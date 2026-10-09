@@ -142,7 +142,7 @@ Git Sync is available for any Git provider through a Pure Git repository type, a
 | GitLab                               | Cloud, Enterprise      | Personal Access Token or OAuth App              |
 | Bitbucket                            | Cloud, Enterprise      | API token with scopes or OAuth App              |
 
-Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up. To use OAuth Apps, refer to [Enable OAuth connection types](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-oauth-connection-types).
+Note that Pure Git, GitLab and Bitbucket are supported in Grafana v12.4.x or later only. Refer to [Enable Git providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-git-providers) to set them up. To make OAuth Apps available in self-managed Grafana, refer to [Enable OAuth connection types](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before#enable-oauth-connection-types).
 
 To learn more about Git, refer to [Getting Started - About Version Control](https://git-scm.com/book/en/v2/Getting-Started-About-Version-Control) of the [Pro Git book](https://git-scm.com/book/en/v2) in the official Git documentation.
 

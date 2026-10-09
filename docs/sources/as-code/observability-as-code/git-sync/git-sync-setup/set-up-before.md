@@ -49,7 +49,7 @@ If you're using Grafana Enterprise v12.4.0 and want to set up Git Sync with pure
 
 ## Enable OAuth connection types
 
-In self-managed Grafana, you can choose which OAuth App connection types are available with `connection_types` in your configuration file:
+If you're using self-managed Grafana and the OAuth App connection type for your provider isn't available, add it to `connection_types` in your configuration file:
 
 1. Open your Grafana configuration file, either `grafana.ini` or `custom.ini`.
 1. Add the connection types:
@@ -70,10 +70,6 @@ The available OAuth connection types are:
 | `githubEnterpriseOAuth` | GitHub Enterprise | Enterprise       |
 | `gitlabOAuth`           | GitLab            | Enterprise       |
 | `bitbucketOAuth`        | Bitbucket         | Enterprise       |
-
-{{< admonition type="note" >}}
-Setting `connection_types` replaces the default list. Keep `github` in the list, and `githubEnterprise` in Grafana Enterprise, if you also connect with GitHub App.
-{{< /admonition >}}
 
 ## Network connectivity and IP allowlisting
 
@@ -183,7 +179,7 @@ You can now proceed to [Set up Git Sync](https://grafana.com/docs/grafana/<GRAFA
 An OAuth App lets Grafana act on your behalf in your Git provider. You create the app in your provider, then authorize it once from Grafana. Grafana stores the access token and refreshes it when the provider supports refresh tokens.
 
 {{< admonition type="caution" >}}
-An OAuth App connection acts as the user who authorized it. Every repository that uses the connection, and every user who can run its sync jobs, uses that user's access token. The token can reach every repository that user can access, not only the ones connected to Grafana. Removing the user from Grafana doesn't revoke the token. Revoke it in your Git provider.
+An OAuth App connection acts as the user who authorized it. Every repository that uses the connection and every user who can run its sync jobs will use the access token of the user that authorized the connection. The token can reach every repository that user can access, not only those connected to Grafana. Removing the user from Grafana doesn't revoke the token. Revoke it in your Git provider.
 
 To limit access, authorize the app with a dedicated account that can only access the repositories you sync. For GitHub, consider a GitHub App, which is scoped to the repositories where it's installed.
 {{< /admonition >}}

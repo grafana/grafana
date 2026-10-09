@@ -201,7 +201,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 You can connect GitHub, GitHub Enterprise, GitLab, Bitbucket, and Pure Git repositories with an OAuth App. Grafana authorizes the app once and uses the resulting token for every repository that uses the connection.
 
-Before you begin, [enable the OAuth connection type](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#enable-oauth-connection-types) for your provider and [create an OAuth App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-an-oauth-app).
+Before you begin, make sure that the [OAuth connection type is enabled](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#enable-oauth-connection-types) for your provider, and [create an OAuth App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-an-oauth-app).
 
 To connect with an OAuth App, select **Connect with OAuth App** as the authentication method:
 
@@ -213,15 +213,13 @@ To connect with an OAuth App, select **Connect with OAuth App** as the authentic
      - GitHub Enterprise: **Custom server URL**, **Client ID**, and **Client secret**.
      - GitLab: **Application ID** and **Client secret**.
      - Bitbucket: **Client ID**, **Workspace**, and **Client secret**.
-     - Pure Git: **Client ID**, **Client secret**, **Authorization URL**, **Token URL**, and **Scopes**.
+     - Pure Git: **Client ID**, **Client secret**, **Authorization URL**, **Token URL**, and **Scopes**. Also enter the **Repository URL**. If your provider expects a specific username with OAuth tokens, enter it in **Username**, for example `x-token-auth` for Bitbucket.
   1. Click **Create and authorize**. Grafana opens the consent page of your provider in a new tab.
   1. Approve the access.
 
-For Pure Git, also enter the **Repository URL**. If your provider expects a specific username with OAuth tokens, enter it in **Username**, for example `x-token-auth` for Bitbucket.
+Next, select **Configure repository** to set up your provisioning folder.
 
-Select **Configure repository** to set up your provisioning folder.
-
-If the connection later shows **Disconnected**, for example because the token expired or was revoked, go to the **Connections** tab, select the connection, and click **Reauthorize**.
+If the connection later shows as **Disconnected**, for example because the token expired or was revoked, go to the **Connections** tab, select the connection, and click **Reauthorize**.
 
 ## Configure the provisioning repository
 
