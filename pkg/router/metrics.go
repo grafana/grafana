@@ -95,8 +95,10 @@ func (m *routerMetrics) discoveryResult(group, result string) {
 // newPluginGRPCRequestDuration returns the histogram of gRPC calls to plugin
 // deployments, registered with reg unless it is nil. Local plugins are
 // measured by the plugin client's grafana_plugin_request_* metrics instead.
-func newPluginGRPCRequestDuration(reg prometheus.Registerer) *prometheus.HistogramVec {
+// The source const label lets plugins_url and core_url register on one registry.
+func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *prometheus.HistogramVec {
 	h := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		ConstLabels:                     prometheus.Labels{"source": source},
 		Namespace:                       "grafana",
 		Subsystem:                       "router",
 		Name:                            "plugin_grpc_request_duration_seconds",

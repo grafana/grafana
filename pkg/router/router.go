@@ -153,11 +153,6 @@ type GrafanaRouter struct {
 	// Set before serving by the standalone target; middleware keeps its delegate.
 	unregisteredGroupHandler http.Handler
 
-	// acceptGroup, when set, limits which groups reconcile will serve. Set
-	// before Run; the middleware uses it so the router never shadows a group
-	// the embedded API server owns.
-	acceptGroup func(group string) bool
-
 	// reconciles and reconcileErrors count completed reconciles, and
 	// lastReconcile is when the latest one finished (Unix nanoseconds), for
 	// metrics.
@@ -590,10 +585,6 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
-		if r.acceptGroup != nil && !r.acceptGroup(group) {
-			logging.FromContext(ctx).Warn("router: group not allowed in this mode, skipping", "group", group)
-			continue
-		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.

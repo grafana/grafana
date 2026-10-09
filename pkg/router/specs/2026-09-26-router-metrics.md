@@ -113,7 +113,7 @@ router).
 
 | Metric | Type | Labels | Meaning |
 | --- | --- | --- | --- |
-| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `plugin_id`, `method`, `status_code` | Latency of gRPC calls to managed plugin deployments (`plugins_url`) |
+| `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url` or `core_url` |
 
 Each managed plugin's connection records its calls with dskit's client interceptors, and propagates
 the caller's trace with `otelgrpc`. `method` is the full gRPC method, such as

@@ -138,6 +138,11 @@ Each item has a stable ID. Tick it here when it lands, and note the PR number.
     plugin-shaped (`isPluginAPIGroup`, #133578), so a plugin can't claim a core group. The cloud
     loader logs when one source shadows another, and `grafana_router_shadowed_groups` counts it
     (#133638).
+  - **Update (2026-10-09):** the router-wide group filter was removed, so the router can take over
+    core groups from the embedded API server as APIs move to it. `pluginroute.ValidateManifest` no
+    longer restricts the group either. `newPluginBackend` now requires a `.ext.grafana.app` group
+    or one of the hardcoded `routableCoreGroups` (playlists and the example app), from any source, so
+    a plugin still can't claim any other core group.
 
 - [x] **P8. Confirm remote plugin authorization before rollout.** `pluginManifestAccessControl`
   (`plugin_manifests_ac.go`) grants app access to every requester, and `authenticatingWrapper` only
