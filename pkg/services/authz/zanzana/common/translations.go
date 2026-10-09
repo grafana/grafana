@@ -206,12 +206,7 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 		return nil, false
 	}
 
-	m, ok := translation.mapping[action]
-	if !ok {
-		return nil, false
-	}
-
-	group, resource, subresource, verb, ok := actionListParams(translation, m)
+	group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
 	if !ok {
 		return nil, false
 	}
@@ -261,7 +256,11 @@ func IsBasicRole(name string) bool {
 	return slices.Contains(basicRolesUIDs, name)
 }
 
-func actionListParams(translation resourceTranslation, m actionMapping) (group, resource, subresource, verb string, ok bool) {
+func translateActionToKubernetesAttributes(translation resourceTranslation, action string) (group, resource, subresource, verb string, ok bool) {
+	m, ok := translation.mapping[action]
+	if !ok {
+		return "", "", "", "", false
+	}
 	group = translation.group
 	resource = translation.resource
 	if m.group != "" && m.resource != "" {
@@ -294,11 +293,7 @@ func TranslateActionToListParams(action string) (group, resource, subresource, v
 
 	for _, typ := range translationTypes {
 		translation := resourceTranslations[typ]
-		if m, ok := translation.mapping[action]; ok {
-			group, resource, subresource, verb, ok := actionListParams(translation, m)
-			if !ok {
-				return "", "", "", ""
-			}
+		if group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action); ok {
 			return group, resource, subresource, verb
 		}
 	}
@@ -337,11 +332,10 @@ var supportedActions = func() []ActionListEntry {
 		sort.Strings(actions)
 
 		for _, action := range actions {
-			m := translation.mapping[action]
 			if _, ok := seen[action]; ok {
 				continue
 			}
-			group, resource, subresource, verb, ok := actionListParams(translation, m)
+			group, resource, subresource, verb, ok := translateActionToKubernetesAttributes(translation, action)
 			if !ok {
 				continue
 			}
