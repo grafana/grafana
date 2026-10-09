@@ -1419,11 +1419,6 @@ func (k *kvStorageBackend) ReadResource(ctx context.Context, req *resourcepb.Rea
 }
 
 func (k *kvStorageBackend) BatchReadResource(ctx context.Context, requests []BatchReadRequest, includeDeleted bool) (iter.Seq[*BackendReadResponse], error) {
-	// Search-backed lists read their bodies here, so they can report body reads
-	// the same way KV-backed store lists do.
-	if stats := listBodyStatsFromContext(ctx); stats != nil {
-		stats.supported = true
-	}
 	// Reject a too-large RV the same way ReadResource does. GetResourceKeyAtRevision
 	// would otherwise resolve the highest retained revision below it, so the batch
 	// and single-read paths would disagree when search and storage briefly diverge.
@@ -1661,7 +1656,7 @@ func (k *kvStorageBackend) readExactVersions(ctx context.Context, requests []Bat
 	if stats != nil {
 		stats.bodyKeysRequested += requested
 	}
-	exactCtx := context.WithValue(ctx, listBodyStatsKey{}, (*listBodyStats)(nil))
+	exactCtx := withoutListBodyStats(ctx)
 
 	hits := 0
 	seen := make(map[int]bool, len(pending))
