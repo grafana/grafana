@@ -134,16 +134,12 @@ func TestResponseHeaderTimeout(t *testing.T) {
 }
 
 func TestProxyTransportsHaveAResponseHeaderTimeout(t *testing.T) {
-	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
-	forward, err := loader.transportFor(tlsCacheKey{})
-	require.NoError(t, err)
 	st, err := newSingleTenantFallback(singleTenantFallbackOptions{
 		cacheSize:   1,
 		resolveHost: func(context.Context, int64) (singleTenantStack, error) { return singleTenantStack{}, nil },
 	})
 	require.NoError(t, err)
 	for name, transport := range map[string]*http.Transport{
-		"forward":            forward,
 		"aggregate":          newAggregateBaseTransport(nil),
 		"single-tenant (ST)": st.transport,
 	} {

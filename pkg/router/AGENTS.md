@@ -20,8 +20,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   `/apis/<group>/...`). Don't reintroduce a path mux that flattens routes into prefixes. A duplicate
   group in one `Load` makes the last one win, with a warning, and must never panic.
 - **Keep connection pools across a reload.** Reconcile rebuilds only groups whose `Key()` changed,
-  and transports are cached by TLS settings (`transportFor`), so a rebuilt group reuses its pool.
-  Never recreate unrelated backends on a route change.
+  and each source keeps its transports or gRPC connections across polls, so a rebuilt group reuses
+  its pool. Never recreate unrelated backends on a route change.
 - **Build discovery from what is served,** meaning `r.served`, never the raw `Load` result. A group
   whose reload failed keeps serving and advertising its last-known-good backend.
 - **Reconcile is level-triggered.** `Notify` is a coalescing wake with no payload, and every wake
@@ -90,10 +90,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | dskit service, middleware entry point | `service.go` |
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Loader selection | `loader_factory.go` |
-| Forward-mode backend (RouteBackend CR) | `forward.go` |
-| Cloud loader: RouteBackend/AppManifest CRs, source priority | `cloud_router.go` |
+| Forward-mode backend (`NewForwardBackend`) | `forward.go` |
+| Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
-| Managed plugins (`plugins_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
+| Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader and `PluginBackend` | `plugin.go` |
 | Single-tenant (ST) fallback | `st_fallback.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `obo_exchanger.go`, `restconfig.go` |
@@ -114,14 +114,13 @@ earlier ones:
    routed to the right stack by the namespace in the path.
 2. **Aggregate targets**, discovered by polling each target's `/apis`. The first target in INI section
    order wins when multiple targets discover the same group.
-3. **RouteBackend CRs**, correlated by name with an AppManifest CR, or with the manifests embedded
-   in the binary for core groups. Only Forward mode is implemented. Backends without a `Forward`
-   block (Operator and Plugin modes) are skipped with a warning.
+3. **Core APIs**, from `core_url` (for example playlists). Same format and backends as managed
+   plugins, without `plugins_group_regex` filtering.
 4. **Managed plugins**, from `plugins_url`. These are `PluginBackend`s reached over gRPC, wrapped to
    authenticate `X-Access-Token`.
 
-Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
+Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
+`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
 
 ## Serving and discovery
 
@@ -155,7 +154,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
   - A write past the limit never fails: `ReverseProxy` panics when a write fails, and discovery
     fetches run on their own goroutines.
   - Polled responses go through `decodeLimitedJSON`: aggregate and ST discovery (16 MiB),
-    `plugins_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
+    `plugins_url` and `core_url` (`maxPluginManifestsBytes`, 32 MiB) and grafana.com stack lookups
     (`maxStackResponseBytes`, 1 MiB). A response over its limit fails the poll.
 - **Metrics:** `specs/2026-09-26-router-metrics.md` lists every metric, its labels and example
   dashboard queries; keep it in sync with `metrics.go`.
@@ -181,7 +180,7 @@ Each `Backend.Key()` encodes its source: the CR resource versions, `aggregate:<t
   source, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
   migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
   the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
-  implements `services.Service` (such as `cloudLoader`, which runs informers and poll loops) is run
+  implements `services.Service` (such as `cloudLoader`, which runs poll loops) is run
   alongside it with `newCompositeService`, so both start and stop together.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
@@ -198,11 +197,10 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 
 | Key | Meaning |
 | --- | --- |
-| `appmanifest_apiserver_url` | Remote apiserver serving the RouteBackend and AppManifest CRs. Unset disables the CR source. The legacy `apiserver_url` is a hard error. |
-| `apiserver_ca_file`, `apiserver_insecure` | TLS settings for `appmanifest_apiserver_url` only. |
-| `cap_token`, `token_exchange_url` | Required when the CR source or any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
+| `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
@@ -247,8 +245,8 @@ Every URL must be absolute; a trailing slash is tolerated.
 Before landing, scan with semgrep. The sensitive surface:
 
 - the headers that proxies forward to backends;
-- the `InsecureSkipVerify` paths in `transportFor` and `buildAggregateTLSConfig`, which are
-  deliberately enabled by spec or config;
+- the `InsecureSkipVerify` path in `buildAggregateTLSConfig`, which is deliberately enabled by
+  config;
 - the CAP token exchange and credential handling in `cloud_router.go`;
 - the OBO exchange (`obo_exchanger.go`);
 - the ST fallback's stack lookup and host selection.

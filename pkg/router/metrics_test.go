@@ -16,7 +16,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
@@ -339,45 +338,6 @@ func TestRejectedWatchesAreCounted(t *testing.T) {
 	require.Zero(t, testutil.CollectAndCount(svc.metrics.duration), "rejected watches are still watches")
 }
 
-func TestRouteBackendSkips(t *testing.T) {
-	routeBackend := func(name string, spec v1alpha2.RouteBackendSpec) v1alpha2.RouteBackend {
-		return v1alpha2.RouteBackend{ObjectMeta: metav1.ObjectMeta{Name: name, ResourceVersion: "1"}, Spec: spec}
-	}
-	badCA := "not a certificate"
-	withBadCA := forwardSpec("https://bad-tls.example.com")
-	withBadCA.Forward.Tls.CaData = &badCA
-
-	apps := []string{"valid", "no-forward", "bad-tls", "relative-url"}
-	manifests := make([]v1alpha2.AppManifest, 0, len(apps))
-	for _, app := range apps {
-		manifests = append(manifests, v1alpha2.AppManifest{
-			ObjectMeta: metav1.ObjectMeta{Name: app, ResourceVersion: "1"},
-			Spec: v1alpha2.AppManifestSpec{
-				AppName: app, Group: app + ".grafana.app",
-				Versions: []v1alpha2.AppManifestManifestVersion{{Name: "v1"}},
-			},
-		})
-	}
-	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
-	combined := loader.combineByName(t.Context(), manifests, []v1alpha2.RouteBackend{
-		routeBackend("valid", forwardSpec("https://valid.example.com")),
-		routeBackend("no-forward", v1alpha2.RouteBackendSpec{Mode: v1alpha2.RouteBackendSpecModeOperator}),
-		routeBackend("bad-tls", withBadCA),
-		routeBackend("relative-url", forwardSpec("/relative")),
-		routeBackend("no-manifest", forwardSpec("https://no-manifest.example.com")),
-		routeBackend("also-no-manifest", forwardSpec("https://also-no-manifest.example.com")),
-	})
-
-	require.Len(t, combined, 1)
-	require.Equal(t, 5, loader.routeBackendStatus.status(sourceRouteBackend).Skipped)
-
-	// Each load replaces the counts, so a fixed backend stops being reported.
-	loader.combineByName(t.Context(), manifests[:1], []v1alpha2.RouteBackend{
-		routeBackend("valid", forwardSpec("https://valid.example.com")),
-	})
-	require.Zero(t, loader.routeBackendStatus.status(sourceRouteBackend).Skipped)
-}
-
 func TestPluginManifestsSkips(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		_, _ = w.Write([]byte(`{"plugins": [
@@ -390,7 +350,7 @@ func TestPluginManifestsSkips(t *testing.T) {
 		]}`))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
