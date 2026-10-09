@@ -1716,7 +1716,8 @@
       "metadata": {
         "name": "datasources.apiserver.useNewAPIsForDatasourceResources",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-04-27T12:46:38Z"
+        "creationTimestamp": "2026-04-27T12:46:38Z",
+        "deletionTimestamp": "2026-10-09T13:01:43Z"
       },
       "spec": {
         "description": "Use the new datasource API groups for datasource resource requests, frontend flag",
@@ -1920,7 +1921,8 @@
       "metadata": {
         "name": "datasourcesApiServerEnableHealthEndpointFrontend",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T17:02:42Z"
+        "creationTimestamp": "2026-03-11T17:02:42Z",
+        "deletionTimestamp": "2026-10-09T13:01:43Z"
       },
       "spec": {
         "description": "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
