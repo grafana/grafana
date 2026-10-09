@@ -5,10 +5,9 @@ import { useAsyncRetry } from 'react-use';
 import { type ComponentTypeWithExtensionMeta, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { useFlagGrafanaGrowthHomepage } from '@grafana/runtime/internal';
-import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
+import { ScrollContainer, Stack, Tab, TabContent, TabsBar, useStyles2, Text, TextLink } from '@grafana/ui';
 import { SETUPGUIDE_PLUGIN_ID } from 'app/core/constants';
 import { getMostUsedDashboards, isMostUsedAvailable } from 'app/features/browse-dashboards/api/mostUsed';
-import { getRecentlyViewedDashboards } from 'app/features/browse-dashboards/api/recentlyViewed';
 import { useDashboardLocationInfo } from 'app/features/search/hooks/useDashboardLocationInfo';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 
@@ -17,8 +16,8 @@ import { tabChanged } from '../analytics/main';
 
 import { DashboardTabsSkeleton } from './DashboardTabsSkeleton';
 import { MostUsedDashboardsTab } from './MostUsedDashboardsTab';
-import { RecentDashboardsClearButton } from './RecentDashboardsClearButton';
-import { RecentDashboardsTab } from './RecentDashboardsTab';
+import { RecentActivityFooter } from './RecentActivityFooter';
+import { RecentActivityTab } from './RecentActivityTab';
 import { StarredDashboardsTab } from './StarredDashboardsTab';
 import {
   type HomepageTabExtensionProps,
@@ -27,11 +26,11 @@ import {
   DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN,
   DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT,
 } from './types';
+import { useRecentActivity } from './useRecentActivity';
 
 const RECENT_TAB_ID = 'recent';
 const MOST_USED_TAB_ID = 'most-used';
 const STARRED_TAB_ID = 'starred';
-const MAX_RECENT = 20;
 const MAX_MOST_USED = 20;
 const MAX_STARRED = 30;
 const DEFAULT_TAB_IDS = [RECENT_TAB_ID, MOST_USED_TAB_ID, STARRED_TAB_ID];
@@ -70,16 +69,13 @@ interface Props {
 
 export function DashboardTabs({ extensionComponents }: Props) {
   const styles = useStyles2(getStyles);
+  const redesignEnabled = useFlagGrafanaGrowthHomepage();
+  const mostUsedAvailable = isMostUsedAvailable();
   const [activeTab, setActiveTab] = useState(RECENT_TAB_ID);
   const [extensionTabs, setExtensionTabs] = useState<HomepageTab[]>([]);
   const [initialLoadDone, setInitialLoadDone] = useState(false);
 
-  const {
-    value: recentDashboards,
-    loading: recentLoading,
-    error: recentError,
-    retry: recentRetry,
-  } = useAsyncRetry(() => getRecentlyViewedDashboards(MAX_RECENT), []);
+  const recent = useRecentActivity();
 
   const {
     value: starredDashboards,
@@ -91,9 +87,6 @@ export function DashboardTabs({ extensionComponents }: Props) {
     return response.view.toArray();
   }, []);
 
-  const mostUsedAvailable = isMostUsedAvailable();
-  const redesignEnabled = useFlagGrafanaGrowthHomepage();
-
   const {
     value: mostUsedDashboards,
     loading: mostUsedLoading,
@@ -104,12 +97,13 @@ export function DashboardTabs({ extensionComponents }: Props) {
     [mostUsedAvailable]
   );
 
-  const hasRecent = !!recentDashboards?.length;
+  const hasRecent = recent.total > 0;
   const hasMostUsed = mostUsedAvailable && !!mostUsedDashboards?.length;
   const hasStarred = !!starredDashboards?.length;
-  const initialLoading = recentLoading || starredLoading || (mostUsedAvailable && mostUsedLoading);
+  const initialLoading = recent.loading || starredLoading || (mostUsedAvailable && mostUsedLoading);
 
-  const hasDashboards = hasRecent || hasMostUsed || hasStarred;
+  // Folder names are only needed when some row shows a dashboard.
+  const hasDashboards = hasMostUsed || hasStarred || recent.counts.dashboard > 0;
   const { foldersByUid } = useDashboardLocationInfo(hasDashboards);
 
   const registerTab = useCallback((tab: HomepageTab) => {
@@ -157,16 +151,12 @@ export function DashboardTabs({ extensionComponents }: Props) {
     }
   }, [initialLoading]);
 
-  if (!initialLoadDone) {
-    return <DashboardTabsSkeleton redesignEnabled={redesignEnabled} />;
-  }
-
   const builtInTabs: HomepageTab[] = [
     {
       id: RECENT_TAB_ID,
       label: t('home.dashboard-tabs.recent', 'Recent'),
-      activeLabel: t('home.dashboard-tabs.recent-active', 'Recent dashboards'),
-      counter: recentDashboards?.length,
+      activeLabel: t('home.dashboard-tabs.recent-activity-active', 'Recent activity'),
+      counter: recent.total,
     },
     ...(mostUsedAvailable
       ? [
@@ -224,13 +214,13 @@ export function DashboardTabs({ extensionComponents }: Props) {
             minHeight={`${redesignEnabled ? DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN : DASHBOARD_TABS_SCROLL_HEIGHT_DEFAULT}px`}
           >
             {activeTab === RECENT_TAB_ID && (
-              <RecentDashboardsTab
-                dashboards={recentDashboards ?? []}
-                loading={recentLoading}
-                error={recentError}
-                retry={recentRetry}
+              <RecentActivityTab
+                items={recent.items}
+                counts={recent.counts}
+                loading={recent.loading}
+                error={recent.error}
+                retry={recent.retry}
                 foldersByUid={foldersByUid}
-                onStarChange={starredRetry}
                 density={listDensity}
               />
             )}
@@ -255,11 +245,15 @@ export function DashboardTabs({ extensionComponents }: Props) {
               />
             )}
           </ScrollContainer>
-          {/* Show reset recent dashboards button in the redesign UI and when tab is recent tab */}
-          {redesignEnabled && activeTab === RECENT_TAB_ID && !recentLoading && !recentError && (
-            <Box padding={1} paddingTop={1.5}>
-              <RecentDashboardsClearButton dashboards={recentDashboards ?? []} retry={recentRetry} redesignEnabled />
-            </Box>
+          {/* Pinned below the scroll area so it stays visible however long the list is. */}
+          {activeTab === RECENT_TAB_ID && hasRecent && !recent.error && (
+            <RecentActivityFooter
+              counts={recent.counts}
+              total={recent.total}
+              filter={recent.filter}
+              onFilterChange={recent.setFilter}
+              onClear={recent.clear}
+            />
           )}
         </TabContent>
       )}
@@ -272,6 +266,8 @@ export function DashboardTabs({ extensionComponents }: Props) {
         ))}
     </>
   );
+  // The header and card frame don't depend on data; only the tabs wait, since which one to land on isn't known yet.
+  const content = initialLoadDone ? renderContent() : <DashboardTabsSkeleton redesignEnabled={redesignEnabled} />;
   return (
     <Stack direction="column" gap={redesignEnabled ? 1 : 2} minWidth={0}>
       {redesignEnabled ? (
@@ -286,11 +282,11 @@ export function DashboardTabs({ extensionComponents }: Props) {
           </Stack>
 
           <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
-            {renderContent()}
+            {content}
           </HomeSection>
         </>
       ) : (
-        <>{renderContent()}</>
+        content
       )}
     </Stack>
   );
