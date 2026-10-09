@@ -6,7 +6,7 @@ proxy that serves `/apis` and `/openapi/v3` by API group. A `RoutesLoader` suppl
 
 This file holds the current rules. For the reasoning and history behind them, see `specs/`,
 especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
-`specs/2026-09-25-router-review-plan.md`.
+`specs/2026-10-10-router-review-plan.md`.
 
 ## Rules
 
@@ -36,7 +36,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   breaker accounting. Any `ResponseWriter` wrapper between `ReverseProxy` and the client must forward
   `Flush` (via `Unwrap`, or a no-op `Flush` for buffering writers). Handlers get
   `statusRecorder.writer()`, not the recorder itself, because in-process plugin apiservers need a
-  real `http.Flusher` (plus `CloseNotify`) to serve watches.
+  real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
+  plugin backends break only on plugin client calls, where only reachability errors count
+  (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
+  rejected backend redirect is not a breaker failure.
 - **Each poll loop has exactly one pacing source**: its `cooldown`. Don't add a second ticker. A
   failed poll changes nothing; the previous snapshot keeps serving.
 - **Proxy hygiene:**
@@ -93,16 +96,19 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
 | Root discovery (`/apis`, `/openapi/v3`) | `discovery.go`, `discovery_handler.go` |
 | Per-group-version OpenAPI cache | `openapi_cache.go` |
-| Circuit breaker, status recorder | `breaker.go` |
+| Circuit breaker, status recorder | `breaker.go`, `plugin_breaker.go` |
 | dskit service, middleware entry point | `service.go` |
+| Watch handling, upgrade rejection, verb classification | `watch.go` |
+| Outbound header policy, proxy failure labels, request outcomes | `outbound.go`, `proxy_errors.go`, `request_outcome.go` |
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
+| Source names and loader status | `sources.go` |
 | Loader selection | `loader_factory.go` |
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
-| Local plugin loader and `PluginBackend` | `plugin.go` |
+| Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
 | Single-tenant (ST) fallback | `st_fallback.go` |
-| Storage and loopback clients for plugin backends | `storage.go`, `obo_exchanger.go`, `restconfig.go` |
+| Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 | Dummy loader (the default when nothing is configured) | `dummy.go` |
 
 ## Route sources
@@ -183,7 +189,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 
 - **Standalone:** the dskit `router` target. `pkg/server`'s `initRouterModule` builds the loader
   and the `Service`. The loader is `ProvideCloudRoutesLoader` when `[cloud_router]` configures a
-  source, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
+  source or any `[router.aggregate.<name>]` target is set, and otherwise the Wire injector `InitializeRoutesLoader`. Only the injector opens and
   migrates the SQL database, which the local plugin loader needs. `RegisterTargetRoutes` mounts it on
   the module server's HTTP router next to `/metrics`, `/livez` and `/readyz`. A loader that also
   implements `services.Service` (such as `cloudLoader`, which runs poll loops) is run
@@ -209,6 +215,8 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
 | `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
+| `st_cache_size`, `st_breaker_cache_size` | Sizes of the ST fallback's stack lookup cache and per-destination breaker cache. Default `10000` each. |
+| `st_lookup_rate`, `st_lookup_burst` | Rate limit on grafana.com stack lookups, per second and burst. Default `20` and `40`; a rate of `0` disables the limit. |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in
 priority order. Repeating a section name merges its keys; it does not create another target.
@@ -255,16 +263,19 @@ Before landing, scan with semgrep. The sensitive surface:
 - the `InsecureSkipVerify` path in `buildAggregateTLSConfig`, which is deliberately enabled by
   config;
 - the CAP token exchange and credential handling in `cloud_router.go`;
-- the OBO exchange (`obo_exchanger.go`);
+- the OBO exchange for plugin storage clients (`storage.go`, which delegates to unified storage);
 - the ST fallback's stack lookup and host selection.
 
 Dispatch by group has no injection sinks, since the group is only ever used as a map key.
 
 ## Further reading
 
-- `specs/2026-08-17-router-discovery-openapi-design.md`: the discovery and OpenAPI design.
-- `specs/2026-08-19-router-circuit-breaker-design.md`: the circuit breaker, and why health checks
-  are passive.
+- `specs/2026-08-17-router-discovery-openapi-design.md`: the original discovery and OpenAPI design
+  (historical; its key decisions still hold).
+- `specs/2026-08-19-router-circuit-breaker-design.md`: why health checks are passive, and why
+  gobreaker (the mechanics have since changed).
 - `specs/2026-09-11-router-aggregate-discovery-design.md`: aggregate targets and the cooldown.
 - `specs/2026-09-25-router-design-notes.md`: why there's no mux, readiness, notify semantics,
   config history.
+- `specs/2026-09-26-router-metrics.md`: every metric, and dashboard queries.
+- `specs/2026-10-10-router-review-plan.md`: open work.
