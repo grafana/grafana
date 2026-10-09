@@ -246,6 +246,7 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	expiry := NewWatchExpiry()
+	gen := expiry.WatchInvalidation()
 	n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
 
 	ctx := t.Context()
@@ -260,12 +261,14 @@ func TestNatsNotifierWatch_DropsUnknownType(t *testing.T) {
 
 	expectNoEvent(t, out)
 	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unknown_type")))
+	assertNotInvalidated(t, gen)
 }
 
 func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 	sub := &fakeEventSubscriber{enabled: true}
 	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
 	expiry := NewWatchExpiry()
+	gen := expiry.WatchInvalidation()
 	n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
 
 	ctx := t.Context()
@@ -275,6 +278,40 @@ func TestNatsNotifierWatch_DropsUnmarshalableData(t *testing.T) {
 
 	expectNoEvent(t, out)
 	assert.Equal(t, float64(1), testutil.ToFloat64(dropped.WithLabelValues("unmarshal_error")))
+	assertNotInvalidated(t, gen)
+}
+
+func assertNotInvalidated(t *testing.T, gen <-chan struct{}) {
+	t.Helper()
+	select {
+	case <-gen:
+		t.Fatal("decode drops must not invalidate watches")
+	default:
+	}
+}
+
+func TestNatsNotifierWatch_BufferFullInvalidatesWatches(t *testing.T) {
+	sub := &fakeEventSubscriber{enabled: true}
+	dropped := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "dropped_total"}, []string{"reason"})
+	expiry := NewWatchExpiry()
+	gen := expiry.WatchInvalidation()
+	n := newNatsNotifier(sub, expiry, dropped, &logging.NoOpLogger{})
+
+	// Nobody reads out, so once it is full the settle loop stops draining raw.
+	n.Watch(t.Context(), WatchOptions{BufferSize: 1})
+	data := mustMarshalNotification(t, &resourcepb.WatchNotification{
+		Type: resourcepb.WatchNotification_ADDED, Group: "g", Resource: "r", Name: "n", ResourceVersion: 1,
+	})
+	require.Eventually(t, func() bool {
+		sub.currentHandler()("some.subject", data)
+		return testutil.ToFloat64(dropped.WithLabelValues(dropReasonBufferFull)) > 0
+	}, 5*time.Second, 10*time.Millisecond)
+
+	select {
+	case <-gen:
+	default:
+		t.Fatal("a buffer-full drop must invalidate watches")
+	}
 }
 
 func TestThrottledLog_ReleasesOneLinePerInterval(t *testing.T) {

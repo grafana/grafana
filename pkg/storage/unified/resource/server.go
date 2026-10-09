@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"iter"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -19,6 +21,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -78,15 +81,40 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 // to Watch clients that have AllowWatchBookmarks enabled.
 const defaultBookmarkFrequency = 10 * time.Second
 
-const natsWatchMaxAgeJitterFraction = 0.2
+// watchMaxAgePhase spreads max-age expiry across clients. Clients reconnect
+// watches more often than the max age, so the phase must come from inputs that
+// survive a reconnect: the caller, the watched key and the peer host (the port
+// changes on every new connection).
+func watchMaxAgePhase(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, maxAge time.Duration) time.Duration {
+	h := fnv.New64a()
+	for _, s := range []string{user.GetUID(), key.Group, key.Resource, key.Namespace, peerHost(ctx)} {
+		_, _ = h.Write([]byte(s))
+		_, _ = h.Write([]byte{0})
+	}
+	return time.Duration(h.Sum64() % uint64(maxAge))
+}
 
-func jitteredWatchMaxAge(ctx context.Context, base time.Duration) time.Duration {
-	bo := backoff.New(ctx, backoff.Config{
-		MinBackoff: time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction)),
-		MaxBackoff: time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction)),
-		MaxRetries: 1,
-	})
-	return bo.NextDelay()
+func peerHost(ctx context.Context) string {
+	p, ok := peer.FromContext(ctx)
+	if !ok || p.Addr == nil {
+		return ""
+	}
+	addr := p.Addr.String()
+	if host, _, err := net.SplitHostPort(addr); err == nil {
+		return host
+	}
+	return addr
+}
+
+// nextWatchMaxAgeExpiry returns the delay until the next wall-clock boundary at
+// phase, in (0, maxAge]. Wall-clock boundaries keep a client's period intact
+// when it reconnects, even to another server.
+func nextWatchMaxAgeExpiry(now time.Time, maxAge, phase time.Duration) time.Duration {
+	d := (phase - time.Duration(now.UnixNano())%maxAge + maxAge) % maxAge
+	if d == 0 {
+		return maxAge
+	}
+	return d
 }
 
 // filteredBookmarkDelay leaves a recovery window for late writes without
@@ -529,8 +557,8 @@ type ResourceServerOptions struct {
 	// Legacy SQL backends always use the unseeded path.
 	SeededWatchesEnabled bool
 
-	// NatsWatchMaxAge forces NATS-backed watch clients to re-list periodically.
-	// Zero disables expiry.
+	// NatsWatchMaxAge forces NATS-backed watch clients to re-list once per max
+	// age, at a per-client phase. Zero disables expiry.
 	NatsWatchMaxAge time.Duration
 
 	// WatchExpiry is shared with notification producers. Nil creates a local expiry.
@@ -908,28 +936,11 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = services.StartAndAwaitRunning(s.ctx, s.statsIngester)
 		}
 
-		if s.initErr == nil && s.natsWatchMaxAge > 0 {
-			go s.runNatsWatchExpiry()
-		}
-
 		if s.initErr != nil {
 			s.log.Error("error running resource server init", "error", s.initErr)
 		}
 	})
 	return s.initErr
-}
-
-func (s *server) runNatsWatchExpiry() {
-	for {
-		timer := time.NewTimer(jitteredWatchMaxAge(s.ctx, s.natsWatchMaxAge))
-		select {
-		case <-s.ctx.Done():
-			timer.Stop()
-			return
-		case <-timer.C:
-			s.watchExpiry.Invalidate()
-		}
-	}
 }
 
 // startVectorIndexers launches the vector reconciler (which owns and runs
@@ -2496,6 +2507,16 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	default:
 	}
 
+	// A boundary passing during the initial list fires as soon as the live loop
+	// starts; the reconnect then waits a full max age for its next boundary.
+	var maxAgeC <-chan time.Time
+	if s.natsWatchMaxAge > 0 {
+		phase := watchMaxAgePhase(ctx, user, key, s.natsWatchMaxAge)
+		timer := time.NewTimer(nextWatchMaxAgeExpiry(time.Now(), s.natsWatchMaxAge, phase))
+		defer timer.Stop()
+		maxAgeC = timer.C
+	}
+
 	// Determine a safe starting resource-version for the watch.
 	// When the client requests SendInitialEvents we will use the resource-version
 	// of the last object returned from the initial list (handled below).
@@ -2624,6 +2645,8 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 		case <-ctx.Done():
 			return nil
 		case <-watchExpiryC:
+			return expired()
+		case <-maxAgeC:
 			return expired()
 
 		case <-bookmarkC:
