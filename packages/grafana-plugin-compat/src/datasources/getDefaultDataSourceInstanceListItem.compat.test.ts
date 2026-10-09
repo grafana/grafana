@@ -10,6 +10,11 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDefaultDataSourceInstanceListItem: undefined,
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDefaultDataSourceInstanceListItem: undefined,
+}));
+
 const mockDatasourceSrv = getMockedDatasourceSrv();
 
 function givenDefaultUids(...defaultUids: string[]) {
