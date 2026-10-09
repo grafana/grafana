@@ -180,6 +180,7 @@ The following configuration parameters are available:
 | Field                                   | Description                                                     |
 | --------------------------------------- | --------------------------------------------------------------- |
 | `metadata.name`                         | Unique identifier for this repository resource                  |
+| `metadata.namespace`                    | Use `org-<ORG_ID>` to map each repository resource to a specific org|
 | `spec.title`                            | Human-readable name displayed in Grafana UI                     |
 | `spec.type`                             | Repository type (`github`, `githubEnterprise`)                  |
 | `spec.github.url`                       | GitHub repository URL                                           |
