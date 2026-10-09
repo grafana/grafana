@@ -13,10 +13,12 @@ function Controlled({
   initial = '',
   onSubmit = jest.fn(),
   allowZero,
+  allowMilliseconds,
 }: {
   initial?: string;
   onSubmit?: (value: string) => void;
   allowZero?: boolean;
+  allowMilliseconds?: boolean;
 }) {
   const [value, setValue] = useState(initial);
   return (
@@ -26,7 +28,14 @@ function Controlled({
         onSubmit(value);
       }}
     >
-      <DurationField label={label} value={value} onChange={setValue} placeholder="30s" allowZero={allowZero} />
+      <DurationField
+        label={label}
+        value={value}
+        onChange={setValue}
+        placeholder="30s"
+        allowZero={allowZero}
+        allowMilliseconds={allowMilliseconds}
+      />
     </form>
   );
 }
@@ -148,5 +157,23 @@ describe('DurationField', () => {
     await userEvent.tab();
 
     expect(screen.getByText(/greater than zero/i)).toBeInTheDocument();
+  });
+
+  it('accepts milliseconds by default', async () => {
+    render(<Controlled initial="500ms" />);
+
+    await userEvent.click(getInput());
+    await userEvent.tab();
+
+    expect(screen.queryByText(/invalid duration format/i)).not.toBeInTheDocument();
+  });
+
+  it('rejects milliseconds when allowMilliseconds is false', async () => {
+    render(<Controlled initial="500ms" allowMilliseconds={false} />);
+
+    await userEvent.click(getInput());
+    await userEvent.tab();
+
+    expect(screen.getByText(/invalid duration format/i)).toBeInTheDocument();
   });
 });

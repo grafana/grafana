@@ -33,7 +33,26 @@ describe('isValidPromDuration with allowZero: false', () => {
   });
 });
 
+describe('isValidPromDuration with allowMilliseconds: false', () => {
+  it.each(['500ms', '1m500ms', '0ms'])('rejects %s', (value) => {
+    expect(isValidPromDuration(value, { allowMilliseconds: false })).toBe(false);
+  });
+
+  it.each(['90s', '1m30s', '2d4h20m', '0', '0s', ''])('accepts %s', (value) => {
+    expect(isValidPromDuration(value, { allowMilliseconds: false })).toBe(true);
+  });
+
+  it('accepts milliseconds by default', () => {
+    expect(isValidPromDuration('500ms')).toBe(true);
+  });
+});
+
 describe('isValidRoutingTimings', () => {
+  // The rules API timing schema has no milliseconds unit.
+  it.each(['groupWait', 'groupInterval', 'repeatInterval'] as const)('rejects milliseconds in %s', (field) => {
+    expect(isValidRoutingTimings({ [field]: '500ms' })).toBe(false);
+  });
+
   it('accepts unset timings and zero group wait', () => {
     expect(isValidRoutingTimings({})).toBe(true);
     expect(isValidRoutingTimings({ groupWait: '0s', groupInterval: '5m', repeatInterval: '4h' })).toBe(true);
