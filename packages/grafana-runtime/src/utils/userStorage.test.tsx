@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { config } from '../config';
 import { type BackendSrvRequest, type FetchError, type FetchResponse, type BackendSrv } from '../services';
 
-import { usePluginUserStorage, useUserStorage, _clearStorageCache } from './userStorage';
+import { usePluginUserStorage, useUserStorage, _clearStorageCache, UserStorage } from './userStorage';
 
 const request = jest.fn<Promise<FetchResponse | FetchError>, BackendSrvRequest[]>();
 
@@ -399,6 +399,185 @@ describe('userStorage', () => {
       const result = await storage.allItems();
       expect(request).not.toHaveBeenCalled();
       expect(result).toEqual({ key1: 'new' });
+    });
+  });
+
+  describe('updateItem', () => {
+    const url = '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/svc:abc';
+    const fetched = (resourceVersion: string, data: Record<string, string>) =>
+      Promise.resolve({ status: 200, data: { metadata: { resourceVersion }, spec: { data } } } as FetchResponse);
+    const ok = () => Promise.resolve({ status: 200 } as FetchResponse);
+    const fail = (status: number) => () => Promise.reject({ status } as FetchError);
+
+    it('patches with the fetched resourceVersion and caches the result', async () => {
+      request.mockImplementation((options) => (options.method === 'GET' ? fetched('7', { key: 'a' }) : ok()));
+      const storage = new UserStorage('svc');
+
+      await storage.updateItem('key', (current) => current + 'b');
+
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          url,
+          method: 'PATCH',
+          data: { metadata: { resourceVersion: '7' }, spec: { data: { key: 'ab' } } },
+        })
+      );
+      request.mockClear();
+      expect(await storage.getItem('key')).toBe('ab');
+      expect(request).not.toHaveBeenCalled();
+    });
+
+    it('re-reads and re-runs update after a version conflict', async () => {
+      const update = jest.fn((current: string | null) => `${current}!`);
+      request
+        .mockReturnValueOnce(fetched('7', { key: 'a' }))
+        .mockImplementationOnce(fail(409))
+        .mockReturnValueOnce(fetched('8', { key: 'z' }))
+        .mockReturnValueOnce(ok());
+
+      await new UserStorage('svc').updateItem('key', update);
+
+      expect(update).toHaveBeenCalledTimes(2);
+      expect(update).toHaveBeenNthCalledWith(2, 'z');
+      expect(request).toHaveBeenCalledTimes(4);
+      expect(request).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          method: 'PATCH',
+          data: { metadata: { resourceVersion: '8' }, spec: { data: { key: 'z!' } } },
+        })
+      );
+    });
+
+    it('gives up after three conflicts', async () => {
+      request.mockImplementation((options) => (options.method === 'GET' ? fetched('7', { key: 'a' }) : fail(409)()));
+
+      await expect(new UserStorage('svc').updateItem('key', () => 'b')).rejects.toThrow(
+        'User storage: conflicting writes'
+      );
+      expect(request).toHaveBeenCalledTimes(6);
+    });
+
+    it('creates the resource when none exists', async () => {
+      request.mockImplementationOnce(fail(404)).mockReturnValueOnce(ok());
+      const update = jest.fn(() => 'first');
+
+      await new UserStorage('svc').updateItem('key', update);
+
+      expect(update).toHaveBeenCalledWith(null);
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(request).toHaveBeenNthCalledWith(
+        2,
+        expect.objectContaining({
+          url: '/apis/userstorage.grafana.app/v0alpha1/namespaces/default/user-storage/',
+          method: 'POST',
+          data: {
+            metadata: { name: 'svc:abc', labels: { user: 'abc', service: 'svc' } },
+            spec: { data: { key: 'first' } },
+          },
+        })
+      );
+    });
+
+    it('patches the resource another client created first', async () => {
+      request
+        .mockImplementationOnce(fail(404))
+        .mockImplementationOnce(fail(409))
+        .mockReturnValueOnce(fetched('3', {}))
+        .mockReturnValueOnce(ok());
+
+      await new UserStorage('svc').updateItem('key', () => 'v');
+
+      expect(request).toHaveBeenCalledTimes(4);
+      expect(request).toHaveBeenNthCalledWith(
+        4,
+        expect.objectContaining({
+          url,
+          method: 'PATCH',
+          data: { metadata: { resourceVersion: '3' }, spec: { data: { key: 'v' } } },
+        })
+      );
+    });
+
+    it('writes nothing when update returns undefined and refreshes the cache', async () => {
+      request.mockReturnValueOnce(fetched('7', { key: 'stored' }));
+      const storage = new UserStorage('svc');
+
+      await storage.updateItem('key', () => undefined);
+
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(await storage.getItem('key')).toBe('stored');
+      expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects on a failed write without falling back to localStorage', async () => {
+      request.mockReturnValueOnce(fetched('7', { key: 'a' })).mockImplementationOnce(fail(500));
+
+      await expect(new UserStorage('svc').updateItem('key', () => 'b')).rejects.toEqual({ status: 500 });
+      expect(getStoreMocks().set).not.toHaveBeenCalled();
+    });
+
+    it('uses localStorage in one step when the user is not signed in', async () => {
+      config.bootData.user.isSignedIn = false;
+      getStoreMocks().get.mockReturnValue('old');
+      const update = jest.fn(() => 'new');
+
+      await new UserStorage('svc').updateItem('key', update);
+
+      expect(getStoreMocks().get).toHaveBeenCalledWith('svc:abc:key');
+      expect(update).toHaveBeenCalledWith('old');
+      expect(getStoreMocks().set).toHaveBeenCalledWith('svc:abc:key', 'new');
+      expect(request).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('acquireLock', () => {
+    it('runs queued operations one after another', async () => {
+      const deferred = <T,>() => {
+        let resolve!: (value: T) => void;
+        const promise = new Promise<T>((r) => (resolve = r));
+        return { promise, resolve };
+      };
+      const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+      const firstGet = deferred<FetchResponse>();
+      const patchB = deferred<FetchResponse>();
+      const updateC = jest.fn(() => 'c');
+      let patches = 0;
+      request.mockImplementation((options) => {
+        if (options.method === 'GET') {
+          return request.mock.calls.length === 1
+            ? firstGet.promise
+            : Promise.resolve({
+                status: 200,
+                data: { metadata: { resourceVersion: '1' }, spec: { data: {} } },
+              } as FetchResponse);
+        }
+        patches++;
+        return patches === 1 ? patchB.promise : Promise.resolve({ status: 200 } as FetchResponse);
+      });
+      const storage = new UserStorage('svc');
+
+      const a = storage.getItem('key');
+      const b = storage.updateItem('key', () => 'b');
+      const c = storage.updateItem('key', updateC);
+      await flush();
+      // A holds the lock on its pending GET; B and C are queued.
+      expect(request).toHaveBeenCalledTimes(1);
+
+      firstGet.resolve({
+        status: 200,
+        data: { metadata: { resourceVersion: '0' }, spec: { data: {} } },
+      } as FetchResponse);
+      await flush();
+      // B fetched and is waiting on its PATCH; C has not started.
+      expect(request).toHaveBeenCalledTimes(3);
+      expect(updateC).not.toHaveBeenCalled();
+
+      patchB.resolve({ status: 200 } as FetchResponse);
+      await Promise.all([a, b, c]);
+      expect(updateC).toHaveBeenCalledTimes(1);
+      expect(request).toHaveBeenCalledTimes(5);
     });
   });
 

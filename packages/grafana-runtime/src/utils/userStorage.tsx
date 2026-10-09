@@ -43,6 +43,11 @@ type UserStorageSpec = {
   data: { [key: string]: string };
 };
 
+type UserStorageResource = {
+  metadata: { resourceVersion: string };
+  spec: UserStorageSpec;
+};
+
 async function apiRequest<T>(requestOptions: RequestOptions) {
   try {
     const { data: responseData, ...meta } = await lastValueFrom(
@@ -77,33 +82,45 @@ export class UserStorage implements UserStorageType {
   }
 
   /**
-   * Acquires a lock for this resourceName to serialize operations.
-   * Returns a function to release the lock when done.
+   * Serializes operations on this resourceName: resolves once every earlier holder has released, with
+   * the function that releases this hold. A hold never rejects, so a holder whose operation throws
+   * still releases from its `finally` and later holders are not stuck.
    */
-  private async acquireLock(): Promise<() => void> {
-    // Wait for any existing lock
-    let lockPromise = operationLocks.get(this.resourceName);
-    if (lockPromise) {
-      await lockPromise;
-    }
-
-    // Create a new lock promise that will be resolved when this operation completes
-    let resolveLock: (() => void) | undefined;
-    const newLockPromise = new Promise<void>((resolve) => {
-      resolveLock = resolve;
+  private acquireLock(): Promise<() => void> {
+    const previous = operationLocks.get(this.resourceName) ?? Promise.resolve();
+    let release = () => {};
+    const mine = new Promise<void>((resolve) => {
+      release = resolve;
     });
-    operationLocks.set(this.resourceName, newLockPromise);
-
-    // Return a function to release the lock
-    return () => {
-      if (resolveLock) {
-        resolveLock();
-      }
-      // Remove lock if it's still the current one (in case another operation started)
-      if (operationLocks.get(this.resourceName) === newLockPromise) {
+    const tail = previous.then(() => mine);
+    operationLocks.set(this.resourceName, tail);
+    return previous.then(() => () => {
+      release();
+      if (operationLocks.get(this.resourceName) === tail) {
         operationLocks.delete(this.resourceName);
       }
-    };
+    });
+  }
+
+  /** The stored resource, `null` when none exists yet (404). Throws on any other failure. */
+  private async fetchResource(): Promise<UserStorageResource | null> {
+    const response = await apiRequest<UserStorageResource>({
+      url: `/${this.resourceName}`,
+      method: 'GET',
+      manageError: (error) => {
+        if (get(error, 'status') === 404) {
+          return { error: null };
+        }
+        return { error };
+      },
+    });
+    if ('error' in response) {
+      if (response.error === null) {
+        return null;
+      }
+      throw response.error;
+    }
+    return response.data;
   }
 
   private async init(): Promise<unknown> {
@@ -139,27 +156,7 @@ export class UserStorage implements UserStorageType {
     }
 
     // Create new promise
-    requestPromise = (async (): Promise<UserStorageSpec | null> => {
-      const userStorage = await apiRequest<{ spec: UserStorageSpec }>({
-        url: `/${this.resourceName}`,
-        method: 'GET',
-        manageError: (error) => {
-          if (get(error, 'status') === 404) {
-            return { error: null };
-          }
-          return { error };
-        },
-      });
-      if ('error' in userStorage) {
-        if (userStorage.error === null) {
-          // 404 - storage doesn't exist
-          return null;
-        }
-        // Other error, throw so it can be caught and returned
-        throw userStorage.error;
-      }
-      return userStorage.data.spec;
-    })();
+    requestPromise = this.fetchResource().then((resource) => resource?.spec ?? null);
 
     // Atomically set the promise only if cache is still empty
     const existing = storageCache.get(this.resourceName);
@@ -281,6 +278,67 @@ export class UserStorage implements UserStorageType {
       }
       // Update global cache with the modified storage (using cloned object)
       storageCache.set(this.resourceName, updatedSpec);
+    } finally {
+      releaseLock();
+    }
+  }
+
+  /**
+   * Read-modify-write of one item against what is stored right now. `update` gets the stored value
+   * (`null` when there is none) and returns the value to store, or `undefined` to store nothing.
+   * Signed in: fetches the resource fresh, writes with its `metadata.resourceVersion` so the server
+   * rejects a write over a copy it has not seen, and on that rejection re-reads and re-runs `update`
+   * (three attempts). Rejects when a request fails; nothing is written to localStorage.
+   * Signed out: localStorage, read and written in one synchronous step, so tabs cannot interleave.
+   */
+  async updateItem(key: string, update: (current: string | null) => string | undefined): Promise<void> {
+    if (!this.canUseUserStorage) {
+      const storeKey = `${this.resourceName}:${key}`;
+      const next = update(store.get(storeKey) ?? null);
+      if (next !== undefined) {
+        store.set(storeKey, next);
+      }
+      return;
+    }
+
+    const releaseLock = await this.acquireLock();
+    try {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const resource = await this.fetchResource();
+        const next = update(resource?.spec.data[key] ?? null);
+        if (next === undefined) {
+          storageCache.set(this.resourceName, resource?.spec ?? null);
+          return;
+        }
+        const result = resource
+          ? await apiRequest<UserStorageResource>({
+              headers: { 'Content-Type': 'application/merge-patch+json' },
+              url: `/${this.resourceName}`,
+              method: 'PATCH',
+              body: {
+                metadata: { resourceVersion: resource.metadata.resourceVersion },
+                spec: { data: { [key]: next } },
+              },
+            })
+          : await apiRequest<UserStorageResource>({
+              url: `/`,
+              method: 'POST',
+              body: {
+                metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
+                spec: { data: { [key]: next } },
+              },
+            });
+        if ('error' in result) {
+          // Stale version, or another client created the resource first: re-read and run `update` again.
+          if (get(result.error, 'status') === 409) {
+            continue;
+          }
+          throw result.error;
+        }
+        storageCache.set(this.resourceName, { data: { ...resource?.spec.data, [key]: next } });
+        return;
+      }
+      throw new Error('User storage: conflicting writes');
     } finally {
       releaseLock();
     }
