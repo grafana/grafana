@@ -11,6 +11,20 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"k8s.io/component-base/metrics/legacyregistry"
 
+	// Enable the ecosystem-standard client-go REST client metrics. This blank
+	// import's init() does two process-global things: it registers the collectors
+	// (rest_client_request_duration_seconds{verb,host},
+	// rest_client_requests_total{code,method,host}, retries, sizes, ...) on
+	// legacyregistry, and it installs adapters into client-go's global metric hooks
+	// (k8s.io/client-go/tools/metrics.RequestLatency/RequestResult/...), which are
+	// no-ops until something registers them. Every REST client built from a
+	// *rest.Config — dynamic, clientset, discovery — calls those hooks on each
+	// request (client-go/rest/request.go), so this instruments all of Grafana's
+	// outbound Kubernetes API traffic, not just one caller. ProvideGatherer below
+	// gathers legacyregistry and addPrefixWrapper adds the grafana_ prefix, so these
+	// surface on /metrics as grafana_rest_client_*.
+	_ "k8s.io/component-base/metrics/prometheus/restclient"
+
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/graphitebridge"
 	"github.com/grafana/grafana/pkg/setting"
