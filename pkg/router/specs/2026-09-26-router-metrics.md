@@ -43,31 +43,30 @@ Every label has a bounded set of values, so no request can create new series:
 | `grafana_router_shadowed_groups` | gauge | `source` | Groups a source offered that a higher-priority source serves instead |
 | `grafana_router_skipped_backends` | gauge | `source` | Backends a source skipped in its latest successful load or poll |
 | `grafana_router_source_last_success_timestamp_seconds` | gauge | `source` | When each source last loaded successfully |
-| `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` (for `routebackend`, direct lists, informer events and informer errors) |
+| `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
 
-Sources are `routebackend`, `aggregate:<target>`, `single-tenant`, `plugins_url`, `local-plugin`
+Sources are `aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`, `local-plugin`
 and `dummy`.
 
-The polled sources (`aggregate:<target>`, `single-tenant`, `plugins_url`) record every poll, so a
-stale last success means the source is failing. `routebackend` is watched by informers instead: it
-records a success when it lists directly (before the informers sync) or an informer receives an
-event, and a failure on each informer list or watch error. Its last success doesn't move while
-nothing changes, so watch its failures rather than its staleness.
+Every cloud source (`aggregate:<target>`, `single-tenant`, `core_url`, `plugins_url`) is polled
+and records every poll, so a stale last success means the source is failing.
 
 A skipped backend is not served, and its group falls back to a lower-priority source if one offers
 it. Each skip is logged with its error, which says why. Backends are skipped by:
 
-- `routebackend`: a RouteBackend with no matching AppManifest (often transient, when a RouteBackend
-  is applied before its AppManifest), no forward block, invalid TLS settings, or a URL
-  `NewForwardBackend` rejects;
-- `plugins_url`: a manifest `NewPluginBackend` rejects, such as for a group that isn't a plugin
-  group, or one with no served versions;
-- `plugins_url` and `aggregate:<target>`: a backend whose key could not be computed, which is not
-  expected to happen.
+- `plugins_url` and `core_url`: a manifest `NewPluginBackend` rejects, such as for a group that
+  isn't a plugin group or a routable core group (`routableCoreGroups`), or one with no served
+  versions;
+- `plugins_url`, `core_url` and `aggregate:<target>`: a backend whose key could not be computed,
+  which is not expected to happen.
+
+Groups filtered out by `plugins_group_regex` or a target's `group_regex` are not counted as
+skipped.
 
 A backend whose `Load` fails in `reconcile` is not counted here. Its group keeps its last-known-good
-backend, and the failure counts in `grafana_router_reconcile_errors_total`.
+backend, the failure counts in `grafana_router_reconcile_errors_total`, and the reconcile is
+retried with backoff.
 
 ## Backends
 
@@ -78,7 +77,7 @@ backend, and the failure counts in `grafana_router_reconcile_errors_total`.
 | `grafana_router_backend_failures_total` | counter | `group`, `plugin_id`, `reason` | Requests whose backend failed: `breaker_open`, `timeout`, `transport`, `redirect_rejected`, `stack_origin_mismatch`, `auth` (a plugin token exchange failed) |
 | `grafana_router_discovery_results_total` | counter | `group`, `result` | How aggregated discovery was obtained: `provided`, `cached`, `fetched`, `stale`, `unavailable` |
 
-Groups on the single-tenant fallback keep one breaker per stack, so they have no
+Groups on the single-tenant fallback keep one breaker per destination host and group, so they have no
 `grafana_router_breaker_state` series.
 
 ## Requests
@@ -115,7 +114,7 @@ router).
 | --- | --- | --- | --- |
 | `grafana_router_plugin_grpc_request_duration_seconds` | histogram (classic and native) | `source`, `plugin_id`, `method`, `status_code` | Latency of gRPC calls to plugin deployments; `source` is `plugins_url` or `core_url` |
 
-Each managed plugin's connection records its calls with dskit's client interceptors, and propagates
+Each plugin deployment's connection (`plugins_url` or `core_url`) records its calls with dskit's client interceptors, and propagates
 the caller's trace with `otelgrpc`. `method` is the full gRPC method, such as
 `/grafana.plugin.v3.RouteService/CallRoute` or `/pluginv2.Resource/CallResource`, and `status_code`
 is the gRPC status code name (`OK`, `Unavailable`, `DeadlineExceeded`, …). A streaming call is
@@ -129,7 +128,7 @@ observed when its stream ends.
 - A call the breaker rejects, or whose token exchange fails, never reaches the connection. Those
   count in `grafana_router_backend_failures_total` as `breaker_open` and `auth`.
 
-Managed plugin availability, counting the calls the router rejected on the plugin's behalf.
+Plugin deployment availability (`plugins_url` and `core_url`), counting the calls the router rejected on the plugin's behalf.
 `grafana_router_backend_failures_total` also counts local plugins, so `and on (plugin_id)` keeps
 only the plugins with gRPC series. The series are combined with `or` before summing, because `+`
 would drop a plugin with no series on one side:
@@ -158,8 +157,8 @@ sum by (plugin_id) (
 | Groups by source | `sum by (source) (grafana_router_groups)` |
 | Shadowed groups | `sum by (source) (grafana_router_shadowed_groups)` |
 | Skipped backends | `sum by (source) (grafana_router_skipped_backends) > 0` |
-| Stale polled sources | `time() - grafana_router_source_last_success_timestamp_seconds{source!="routebackend"}` |
-| Poll and watch failure rate | `sum by (source) (rate(grafana_router_source_polls_total{result="failure"}[5m]))` |
+| Stale polled sources | `time() - grafana_router_source_last_success_timestamp_seconds` |
+| Poll failure rate | `sum by (source) (rate(grafana_router_source_polls_total{result="failure"}[5m]))` |
 | Open breakers | `grafana_router_breaker_state{state!="closed"} == 1` |
 | Breaker flapping | `sum by (group) (increase(grafana_router_breaker_transitions_total{state="open"}[1h]))` |
 | Backend failures by reason | `sum by (group, reason) (rate(grafana_router_backend_failures_total[5m]))` |
