@@ -681,7 +681,11 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 
 func (s *service) withErrorResultConversion(desc *grpc.ServiceDesc) *grpc.ServiceDesc {
 	if s.cfg != nil && s.cfg.UnifiedStorageGRPCErrorResultToStatus {
-		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), nil)
+		var streamInterceptor grpc.StreamServerInterceptor
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			streamInterceptor = resource.BlobStreamErrorResultInterceptor()
+		}
+		return grpchan.InterceptServer(desc, resource.UnaryErrorResultInterceptor(), streamInterceptor)
 	}
 	return desc
 }

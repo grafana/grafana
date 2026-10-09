@@ -55,6 +55,56 @@ func TestUnaryErrorResultInterceptor(t *testing.T) {
 	}
 }
 
+type embeddedBlobErrorServer struct {
+	resourcepb.UnimplementedBlobStoreStreamingServer
+	failure *resourcepb.ErrorResult
+}
+
+func (s *embeddedBlobErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+	if _, err := stream.Recv(); err != nil {
+		return err
+	}
+	return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: s.failure})
+}
+
+func (s *embeddedBlobErrorServer) GetBlobStream(_ *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+	return stream.Send(&resourcepb.GetBlobResponse{Error: s.failure})
+}
+
+func TestBlobStreamErrorResultConversionInProcess(t *testing.T) {
+	failure := &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "denied"}
+	for _, enabled := range []bool{false, true} {
+		channel := &inprocgrpc.Channel{}
+		desc := &resourcepb.BlobStoreStreaming_ServiceDesc
+		if enabled {
+			desc = grpchan.InterceptServer(desc, nil, BlobStreamErrorResultInterceptor())
+		}
+		channel.RegisterService(desc, &embeddedBlobErrorServer{failure: failure})
+		client := resourcepb.NewBlobStoreStreamingClient(channel)
+		check := func(responseError *resourcepb.ErrorResult, err error) {
+			if !enabled {
+				require.NoError(t, err)
+				require.True(t, proto.Equal(failure, responseError))
+				return
+			}
+			require.Equal(t, codes.PermissionDenied, status.Code(err))
+			require.Equal(t, failure.Message, status.Convert(err).Message())
+			details := status.Convert(err).Details()
+			require.Len(t, details, 1)
+			require.True(t, proto.Equal(failure, details[0].(*resourcepb.ErrorResult)))
+		}
+		put, err := client.PutBlobStream(t.Context())
+		require.NoError(t, err)
+		require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
+		putResp, err := put.CloseAndRecv()
+		check(putResp.GetError(), err)
+		get, err := client.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
+		require.NoError(t, err)
+		getResp, err := get.Recv()
+		check(getResp.GetError(), err)
+	}
+}
+
 func TestUnaryRequestDurationInterceptor(t *testing.T) {
 	tests := []struct {
 		name string
