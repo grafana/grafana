@@ -95,9 +95,8 @@ type Route struct {
 	Operations spec3.PathProps
 
 	// Authz holds the access check each operation declares, by method. Group,
-	// Namespace and Name are left for the server to fill in for each request,
-	// and so is Verb when the operation does not declare one: the check then
-	// uses the request's own verb.
+	// Namespace and Name are left for the server to fill in for each request.
+	// Verb is always set: the declared one, or the one the method implies.
 	Authz map[string]authlib.CheckRequest
 }
 
@@ -214,6 +213,15 @@ func Parse(version app.ManifestVersion, opts Options) ([]Route, []Problem) {
 	return routes, problems
 }
 
+// impliedVerbs are the verbs an operation that declares no verb is checked
+// with. The verb depends only on the method, so the check a route makes is
+// known from the manifest alone, whatever URL or query string it is called
+// with.
+var impliedVerbs = map[string]string{
+	http.MethodGet: "get", http.MethodHead: "get", http.MethodPost: "create",
+	http.MethodPut: "update", http.MethodPatch: "patch", http.MethodDelete: "delete",
+}
+
 // authzVerbs are the verbs a declared check may use.
 var authzVerbs = []string{
 	// Standard verbs
@@ -229,7 +237,7 @@ func authzChecks(props *spec3.PathProps, drop func(method, reason string)) map[s
 	var checks map[string]authlib.CheckRequest
 	ops := Operations(props)
 	for _, method := range slices.Sorted(maps.Keys(ops)) {
-		check, declared, err := authzCheck(ops[method])
+		check, declared, err := authzCheck(method, ops[method])
 		if err != nil {
 			drop(method, err.Error())
 			*props = withoutMethods(*props, []string{method}, func(string) {})
@@ -243,10 +251,17 @@ func authzChecks(props *spec3.PathProps, drop func(method, reason string)) map[s
 		}
 		checks[method] = check
 	}
+	// A ServeMux GET pattern also matches HEAD, so with the HEAD operation gone
+	// its requests would reach the GET operation and its check instead.
+	if ops[http.MethodHead] != nil && props.Head == nil && props.Get != nil {
+		drop(http.MethodGet, "it would also answer HEAD, whose access declaration cannot be read")
+		*props = withoutMethods(*props, []string{http.MethodGet}, func(string) {})
+		delete(checks, http.MethodGet)
+	}
 	return checks
 }
 
-func authzCheck(op *spec3.Operation) (authlib.CheckRequest, bool, error) {
+func authzCheck(method string, op *spec3.Operation) (authlib.CheckRequest, bool, error) {
 	resource, hasResource, err := stringExtension(op, ExtensionAuthzResource)
 	if err != nil {
 		return authlib.CheckRequest{}, false, err
@@ -265,7 +280,12 @@ func authzCheck(op *spec3.Operation) (authlib.CheckRequest, bool, error) {
 		}
 		return authlib.CheckRequest{}, false, nil
 	}
-	if hasVerb && !slices.Contains(authzVerbs, verb) {
+	if !hasVerb {
+		if verb = impliedVerbs[method]; verb == "" {
+			return authlib.CheckRequest{}, false, fmt.Errorf("%s implies no verb, so %s must be set", method, ExtensionAuthzVerb)
+		}
+	}
+	if !slices.Contains(authzVerbs, verb) {
 		return authlib.CheckRequest{}, false, fmt.Errorf("%s must be one of %s, not %q",
 			ExtensionAuthzVerb, strings.Join(authzVerbs, ", "), verb)
 	}

@@ -1,6 +1,7 @@
 package pluginroute
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -304,6 +305,10 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
 	}
 	forward := httpadapter.HandlerFunc(b.clientV3)
+	checks := routeChecks(gv, route, resource)
+	// ServeMux matches HEAD against a GET pattern, so a route that declares GET
+	// but not HEAD is called for HEAD too.
+	headAsGet := route.Operations.Head == nil && route.Operations.Get != nil
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ns := ""
@@ -354,9 +359,11 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 
 		// Before the parent's secure values are decrypted, so a request the
 		// manifest refuses never decrypts them.
-		if err := b.checkDeclaredAccess(r, gv, route, resource, ns, name, parentMeta); err != nil {
-			_ = errhttp.Write(ctx, err, w)
-			return
+		if check, declared := checks[r.Method]; declared {
+			if err := b.checkDeclaredAccess(ctx, check, ns, name, parentMeta); err != nil {
+				_ = errhttp.Write(ctx, err, w)
+				return
+			}
 		}
 
 		if resource != "" {
@@ -384,54 +391,77 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 		// The caller's identity reaches the plugin only as the access token the
 		// v3 client exchanges for it: httpadapter drops the ID token and the other
 		// credential headers, so the request is not cloned to remove them.
-		forward.ServeHTTP(w, r.WithContext(httpadapter.WithRouteInfo(ctx, info)))
+		req := r.WithContext(httpadapter.WithRouteInfo(ctx, info))
+		if headAsGet && req.Method == http.MethodHead {
+			// The plugin is asked for what it declared, and a plugin that finds its
+			// handler by method, as app-sdk's simple.App does, has none for HEAD.
+			req.Method = http.MethodGet
+			w = headResponseWriter{w}
+		}
+		forward.ServeHTTP(w, req)
 	}
 }
 
-// declaredCheck returns the access check the manifest declares for a request's
-// method. A HEAD request reads what a GET does, so one that declares no check
-// of its own gets the GET operation's.
-func declaredCheck(route manifestroutes.Route, method string) (authlib.CheckRequest, bool) {
-	check, ok := route.Authz[method]
-	if !ok && method == http.MethodHead {
-		check, ok = route.Authz[http.MethodGet]
-	}
-	return check, ok
+// headResponseWriter answers a HEAD request served by a GET operation: it keeps
+// the status and headers, and drops the body.
+type headResponseWriter struct {
+	http.ResponseWriter
 }
 
-// checkDeclaredAccess runs the access check the manifest declares for the
-// request, if any, filling in what only the request knows. The parent's name
-// and folder apply only when the check is for the parent's own resource, which
-// is parentResource for a kind route.
-func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVersion, route manifestroutes.Route, parentResource, namespace, name string, parent utils.GrafanaMetaAccessor) error {
-	check, ok := declaredCheck(route, r.Method)
-	if !ok {
+func (w headResponseWriter) Write(p []byte) (int, error) { return len(p), nil }
+
+// Unwrap lets http.ResponseController reach the underlying writer.
+func (w headResponseWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+
+// routeCheck is a declared access check, complete but for what only a request
+// knows.
+type routeCheck struct {
+	check authlib.CheckRequest
+	// namesParent is set when the check is for the parent object's own
+	// resource, so it is checked against that object and its folder.
+	namesParent bool
+}
+
+// routeChecks completes a route's declared checks, by method, as far as they
+// can be before a request. A HEAD request reads what a GET does, so without a
+// check of its own it gets the GET operation's.
+func routeChecks(gv schema.GroupVersion, route manifestroutes.Route, parentResource string) map[string]routeCheck {
+	if len(route.Authz) == 0 {
 		return nil
 	}
-	ctx := r.Context()
+	checks := make(map[string]routeCheck, len(route.Authz)+1)
+	for method, check := range route.Authz {
+		check.Group = gv.Group
+		checks[method] = routeCheck{check: check, namesParent: parentResource != "" && check.Resource == parentResource}
+	}
+	if _, ok := checks[http.MethodHead]; !ok {
+		if get, ok := checks[http.MethodGet]; ok {
+			checks[http.MethodHead] = get
+		}
+	}
+	return checks
+}
+
+// checkDeclaredAccess runs a route's declared access check for a request,
+// filling in its namespace and, for a check on the parent's own resource, the
+// parent's name and folder.
+func (b *manifestBuilder) checkDeclaredAccess(ctx context.Context, rc routeCheck, namespace, name string, parent utils.GrafanaMetaAccessor) error {
+	check := rc.check
 	if b.accessClient == nil {
-		return forbidden(gv, check, "the route declares an access check, and no access client is configured")
+		return forbidden(check, "the route declares an access check, and no access client is configured")
 	}
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
 		return apierrors.NewUnauthorized("no identity found for the request")
 	}
 
-	check.Group = gv.Group
 	check.Namespace = namespace
 	folder := ""
-	if parentResource != "" && check.Resource == parentResource {
+	if rc.namesParent {
 		check.Name = name
 		if parent != nil {
 			folder = parent.GetFolder()
 		}
-	}
-	if check.Verb == "" {
-		info, ok := request.RequestInfoFrom(ctx)
-		if !ok || info.Verb == "" {
-			return forbidden(gv, check, "the request has no verb to check")
-		}
-		check.Verb = info.Verb
 	}
 
 	res, err := b.accessClient.Check(ctx, authInfo, check, folder)
@@ -439,13 +469,13 @@ func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVe
 		return apierrors.NewInternalError(fmt.Errorf("access check: %w", err))
 	}
 	if !res.Allowed {
-		return forbidden(gv, check, fmt.Sprintf("%s %s is not allowed", check.Verb, check.Resource))
+		return forbidden(check, fmt.Sprintf("%s %s is not allowed", check.Verb, check.Resource))
 	}
 	return nil
 }
 
-func forbidden(gv schema.GroupVersion, check authlib.CheckRequest, reason string) error {
-	return apierrors.NewForbidden(schema.GroupResource{Group: gv.Group, Resource: check.Resource}, check.Name, errors.New(reason))
+func forbidden(check authlib.CheckRequest, reason string) error {
+	return apierrors.NewForbidden(schema.GroupResource{Group: check.Group, Resource: check.Resource}, check.Name, errors.New(reason))
 }
 
 // namespacePathParameter documents the {namespace} segment that namespaced

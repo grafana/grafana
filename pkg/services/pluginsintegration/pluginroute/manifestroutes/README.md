@@ -71,14 +71,21 @@ extensions app-sdk codegen writes from a route's `authz` section:
 | --- | --- |
 | `x-grafana-declared-authz-resource` | the resource checked; required for a check |
 | `x-grafana-declared-authz-subresource` | the subresource checked, if any |
-| `x-grafana-declared-authz-verb` | the verb checked; without it, the request's own verb |
+| `x-grafana-declared-authz-verb` | the verb checked; without it, the one the method implies |
 
 `Route.Authz` holds the resulting `authlib.CheckRequest` for each operation, by
 HTTP method. Group, namespace and name come from the request, so the server
-fills them in, and it fills in the verb from the request when none is
-declared. The plugin router runs these checks before calling the plugin. An operation whose declaration cannot be read, such as a verb
+fills them in. Without a declared verb, the check uses the one the method
+implies: `get` for GET and HEAD, `create` for POST, `update` for PUT, `patch`
+for PATCH and `delete` for DELETE. It never depends on the URL or query string
+the route is called with, so a route's check is known from the manifest alone.
+An operation whose method implies no verb, such as OPTIONS, must declare one. The plugin router runs these checks before calling the plugin. An operation whose declaration cannot be read, such as a verb
 or subresource without a resource or an unknown verb, is reported and not
 served.
+
+A GET operation also answers HEAD, so when a path's HEAD operation is dropped
+this way, its GET operation is dropped with it, rather than serving HEAD with
+the GET operation's check.
 
 The extensions must be on the operation. A path's own extensions are not
 available, because `ManifestVersionOpenAPI.Paths` holds `spec3.PathProps`,

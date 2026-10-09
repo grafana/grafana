@@ -356,6 +356,21 @@ func TestValidateManifest(t *testing.T) {
 	}
 }
 
+// Two versions with one name would mount the same routes twice, which
+// ServeMux refuses with a panic.
+func TestNewHandlerRejectsDuplicateVersions(t *testing.T) {
+	plugin := testPlugin()
+	manifest := plugin.Manifests[0]
+	manifest.Versions[1] = manifest.Versions[0]
+	require.ErrorContains(t, ValidateManifest(plugin.JSONData.ID, manifest), "version v1alpha1 is declared more than once")
+
+	require.NotPanics(t, func() {
+		handler, err := NewHandler(plugin.JSONData.ID, manifest, allowAll(testOptions()))
+		require.ErrorContains(t, err, "declared more than once")
+		require.Nil(t, handler)
+	})
+}
+
 func TestAPIGroupMatchesHandlerWithoutSettings(t *testing.T) {
 	plugin := testPlugin()
 	expected := APIGroup(plugin.Manifests[0])

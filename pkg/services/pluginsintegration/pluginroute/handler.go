@@ -247,7 +247,16 @@ func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
 		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
 	}
+	versions := make(map[string]bool, len(manifest.Versions))
 	for _, version := range manifest.Versions {
+		// Every version is looked up by its name, so a second one with the same
+		// name would never be served as declared, and its routes would be mounted
+		// twice.
+		if versions[version.Name] {
+			return fmt.Errorf("plugin %q: version %s is declared more than once", pluginID, version.Name)
+		}
+		versions[version.Name] = true
+
 		// Loading a manifest moves these to the OpenAPI paths, so a manifest that
 		// still has them was not loaded through definition and would lose them.
 		routes := version.Routes //nolint:staticcheck // SA1019: only checked, to refuse a manifest that was not migrated.

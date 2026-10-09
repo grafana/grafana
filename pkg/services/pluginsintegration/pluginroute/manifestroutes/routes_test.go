@@ -279,7 +279,7 @@ func TestParseKeepsDeclaredOperations(t *testing.T) {
 }
 
 // An operation can declare the access check a request must pass. Without a
-// declared verb the check uses the request's, so Verb is left empty.
+// declared verb, the check uses the one the method implies.
 func TestParseAuthz(t *testing.T) {
 	op := func(ext map[string]any) *spec3.Operation {
 		o := &spec3.Operation{}
@@ -300,23 +300,21 @@ func TestParseAuthz(t *testing.T) {
 			Patch:  op(map[string]any{ExtensionAuthzResource: "reports", ExtensionAuthzVerb: "approve"}),
 			Post:   op(map[string]any{ExtensionAuthzResource: 42}),
 		},
-		"/trace": {Options: op(map[string]any{ExtensionAuthzResource: "reports"})}, // any method can use the request's verb
+		"/trace": {Options: op(map[string]any{ExtensionAuthzResource: "reports"})}, // OPTIONS implies no verb
 	}), Options{})
 	got := byDeclared(routes)
 
 	require.Equal(t, map[string]authlib.CheckRequest{
-		http.MethodPost: {Resource: "things", Subresource: "reconcile"},
+		http.MethodPost: {Verb: "create", Resource: "things", Subresource: "reconcile"},
 		http.MethodGet:  {Verb: "list", Resource: "things"},
 	}, got["/namespaces/{namespace}/things/{name}/reconcile"].Authz, "an operation without a declaration needs no check")
 	require.NotNil(t, got["/namespaces/{namespace}/things/{name}/reconcile"].Operations.Put)
 
 	report := got["/report"]
 	require.Equal(t, map[string]authlib.CheckRequest{
-		http.MethodGet: {Resource: "reports"},
-	}, report.Authz)
-	require.Equal(t, map[string]authlib.CheckRequest{
-		http.MethodOptions: {Resource: "reports"},
-	}, got["/trace"].Authz)
+		http.MethodGet: {Verb: "get", Resource: "reports"},
+	}, report.Authz, "without a declared verb, the one the method implies")
+	require.NotContains(t, got, "/trace")
 	require.Equal(t, spec3.PathProps{Get: report.Operations.Get}, report.Operations,
 		"an operation whose check cannot be read is not served without it")
 
@@ -324,6 +322,8 @@ func TestParseAuthz(t *testing.T) {
 		"DELETE /report": "an authz subresource or verb needs x-grafana-declared-authz-resource",
 		"PATCH /report":  `x-grafana-declared-authz-verb must be one of get, list, watch, create, update, patch, delete, deletecollection, get_permissions, set_permissions, not "approve"`,
 		"POST /report":   "x-grafana-declared-authz-resource must be a non-empty string",
+		"OPTIONS /trace": "OPTIONS implies no verb, so x-grafana-declared-authz-verb must be set",
+		"/trace":         "no operation is served",
 	}, reasons(problems))
 }
 
@@ -418,5 +418,23 @@ func TestParseRequiresALiteralFirstSegment(t *testing.T) {
 		"/namespaces/{namespace}/things/{name}/{action}": "a kind route's subresource must start with a literal segment, not {action}",
 		"/namespaces/{namespace}/things/{name}/{path:*}": "a kind route's subresource must start with a literal segment, not {path:*}",
 		"/nodes/{name}/{path...}":                        "a kind route's subresource must start with a literal segment, not {path...}",
+	}, reasons(problems))
+}
+
+// A GET operation also answers HEAD, so when a path's HEAD operation is
+// dropped for an access declaration that cannot be read, its GET goes too:
+// otherwise HEAD would be served with GET's check, or with none.
+func TestParseMalformedHeadCheckDropsGet(t *testing.T) {
+	head := &spec3.Operation{}
+	head.AddExtension(ExtensionAuthzVerb, "watch") // a verb without a resource
+	post := &spec3.Operation{}
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/report": {Get: &spec3.Operation{}, Head: head, Post: post},
+	}), Options{})
+	require.Len(t, routes, 1)
+	require.Equal(t, spec3.PathProps{Post: post}, routes[0].Operations)
+	require.Equal(t, map[string]string{
+		"HEAD /report": "an authz subresource or verb needs x-grafana-declared-authz-resource",
+		"GET /report":  "it would also answer HEAD, whose access declaration cannot be read",
 	}, reasons(problems))
 }
