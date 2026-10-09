@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/apistore
 
-go 1.27.1
+go 1.27.2
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
