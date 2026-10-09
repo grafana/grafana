@@ -416,8 +416,8 @@ function ResourceDrawerContent({
           spec: getSpec ? getSpec() : resource.spec,
         };
 
-  // Branch names can't contain spaces, so prefix from the stable `key`, not the display noun.
-  const prefix = branchPrefix ?? kind.key;
+  // Branch names can't contain spaces or dots, so prefix from the kind name, not the display noun.
+  const prefix = branchPrefix ?? kind.kind.toLowerCase();
   const wantsRepository = !isNew || Boolean(repositoryName);
   const { repository, isLoading, isReadOnlyRepo, isMissingRepo } = useGetResourceRepositoryView({
     name: getManagerIdentity(managedResource),
