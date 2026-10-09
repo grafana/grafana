@@ -40,6 +40,8 @@ export const FlagKeys = {
   AlertingEnrichmentPerRule: "alertingEnrichmentPerRule",
   /** Enables the new Jira integration for contact points in cloud alert managers. */
   AlertingJiraIntegration: "alertingJiraIntegration",
+  /** Enables the new alert list view design */
+  AlertingListViewV2: "alertingListViewV2",
   /** Enables the alerting list view v2 preview toggle */
   AlertingListViewV2PreviewToggle: "alertingListViewV2PreviewToggle",
   /** Enables the migration wizard UI to migrate alert rules and notification resources from external sources to Grafana Alerting */
@@ -68,12 +70,18 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Enables user auth for Azure Monitor datasource only */
+  AzureMonitorEnableUserAuth: "azureMonitorEnableUserAuth",
   /** Enables the logs builder mode for the Azure Monitor data source */
   AzureMonitorLogsBuilderEditor: "azureMonitorLogsBuilderEditor",
+  /** Enables the updated Azure Monitor resource picker */
+  AzureResourcePickerUpdates: "azureResourcePickerUpdates",
   /** Allow elements nesting */
   CanvasPanelNesting: "canvasPanelNesting",
   /** Allow pan and zoom in canvas panel */
   CanvasPanelPanZoom: "canvasPanelPanZoom",
+  /** Enables cross-account querying in CloudWatch datasources */
+  CloudWatchCrossAccountQuerying: "cloudWatchCrossAccountQuerying",
   /** Enables the new sidebar filter panel in the Add new connection page */
   ConnectionsFilterSidebar: "connectionsFilterSidebar",
   /** Enables browser crash detection reporting to Faro. */
@@ -126,6 +134,8 @@ export const FlagKeys = {
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enables tabular numerals for visualization legend values */
   DatavizTabularNums: "dataviz.tabularNums",
+  /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
+  DisableScriptedDashboards: "disableScriptedDashboards",
   /** Set this to true to enable all app chrome extensions registered by plugins. */
   EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
@@ -358,6 +368,8 @@ export const FlagKeys = {
   TimeRangeProvider: "timeRangeProvider",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
+  /** Enables unified navbars */
+  UnifiedNavbars: "unifiedNavbars",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
   /** Use the scopes navigation endpoint instead of the dashboardbindings endpoint */
@@ -507,6 +519,17 @@ export const useFlagAlertingEnrichmentPerRule = (options?: ReactFlagEvaluationOp
  */
 export const useFlagAlertingJiraIntegration = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingJiraIntegration", false, options).value;
+};
+
+/**
+ * Enables the new alert list view design
+ *
+ * **Details:**
+ * - flag key: `alertingListViewV2`
+ * - default value: `true`
+ */
+export const useFlagAlertingListViewV2 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingListViewV2", true, options).value;
 };
 
 /**
@@ -664,6 +687,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
+ * Enables user auth for Azure Monitor datasource only
+ *
+ * **Details:**
+ * - flag key: `azureMonitorEnableUserAuth`
+ * - default value: `true`
+ */
+export const useFlagAzureMonitorEnableUserAuth = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorEnableUserAuth", true, options).value;
+};
+
+/**
  * Enables the logs builder mode for the Azure Monitor data source
  *
  * **Details:**
@@ -672,6 +706,17 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
  */
 export const useFlagAzureMonitorLogsBuilderEditor = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("azureMonitorLogsBuilderEditor", false, options).value;
+};
+
+/**
+ * Enables the updated Azure Monitor resource picker
+ *
+ * **Details:**
+ * - flag key: `azureResourcePickerUpdates`
+ * - default value: `true`
+ */
+export const useFlagAzureResourcePickerUpdates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureResourcePickerUpdates", true, options).value;
 };
 
 /**
@@ -694,6 +739,17 @@ export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("canvasPanelPanZoom", false, options).value;
+};
+
+/**
+ * Enables cross-account querying in CloudWatch datasources
+ *
+ * **Details:**
+ * - flag key: `cloudWatchCrossAccountQuerying`
+ * - default value: `true`
+ */
+export const useFlagCloudWatchCrossAccountQuerying = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("cloudWatchCrossAccountQuerying", true, options).value;
 };
 
 /**
@@ -980,6 +1036,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
  */
 export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.tabularNums", false, options).value;
+};
+
+/**
+ * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+ *
+ * **Details:**
+ * - flag key: `disableScriptedDashboards`
+ * - default value: `true`
+ */
+export const useFlagDisableScriptedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("disableScriptedDashboards", true, options).value;
 };
 
 /**
@@ -2256,6 +2323,17 @@ export const useFlagTimeRangeProvider = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagTransformationsEmptyPlaceholder = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("transformationsEmptyPlaceholder", false, options).value;
+};
+
+/**
+ * Enables unified navbars
+ *
+ * **Details:**
+ * - flag key: `unifiedNavbars`
+ * - default value: `false`
+ */
+export const useFlagUnifiedNavbars = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("unifiedNavbars", false, options).value;
 };
 
 /**
