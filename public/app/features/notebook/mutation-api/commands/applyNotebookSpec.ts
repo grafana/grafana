@@ -130,9 +130,10 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // edited, which a spec that fails to rebuild must not leave behind.
       scene.enterEditModeForDocumentWrite(NOTEBOOK_EDIT_SESSION_SOURCE.ASSISTANT);
 
-      // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
-      // instead of being folded into (or lost under) the whole-document swap.
+      // Closes out any cell or title edit still coalescing, so it lands as its own undo step under
+      // this one instead of being folded into (or lost under) the whole-document swap.
       scene.state.body.commitPendingEdits();
+      scene.commitTitleEdit();
 
       const previousState = scene.state;
       const newState = {

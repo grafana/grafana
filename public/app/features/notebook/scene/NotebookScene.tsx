@@ -230,6 +230,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
           this.setState({ isEditing: false });
           this.state.body.editModeChanged?.(false);
         }
+        this.commitTitleEdit();
         stopAutosave?.();
         destroyMutationClient();
         timeRangeSub.unsubscribe();
@@ -350,6 +351,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     const wasEditing = this.state.isEditing;
 
     this.state.body.commitPendingEdits();
+    this.commitTitleEdit();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
     // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
@@ -377,9 +379,10 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       return;
     }
 
-    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
-    // instead of being interrupted by it.
+    // Closes out any cell or title edit still coalescing, so it lands as its own undo step under
+    // this one instead of being interrupted by it.
     this.state.body.commitPendingEdits();
+    this.commitTitleEdit();
 
     this.editHistory.execute({
       label:
@@ -470,6 +473,15 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     clearTimeout(edit.timer);
     if (this.pendingTitleEdit === edit) {
       this.pendingTitleEdit = undefined;
+    }
+  }
+
+  // Left open underneath another action, a later keystroke would mutate this now-buried edit
+  // instead of extending the live one, and editHistory.discard (which only acts on the top of the
+  // stack) would fail to drop it.
+  public commitTitleEdit(): void {
+    if (this.pendingTitleEdit) {
+      this.finishTitleEdit(this.pendingTitleEdit);
     }
   }
 

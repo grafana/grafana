@@ -557,6 +557,38 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       scene.editHistory.redo();
       expect(scene.state.title).toBe('Renamed after the assistant edit');
     });
+
+    it('keeps a rename typed back to its start as its own step, even across an intervening write', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+      const titleBeforeRename = scene.state.title;
+
+      scene.onTitleChange('Renamed mid-keystroke');
+
+      // title is set explicitly so the spec swap preserves the in-progress rename instead of
+      // resetting it to the fixture's default.
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: {
+          spec: notebookSpec({
+            title: 'Renamed mid-keystroke',
+            elements: { only: markdownCell('## After') },
+            cells: ['only'],
+          }),
+        },
+      });
+
+      scene.onTitleChange(titleBeforeRename);
+
+      scene.editHistory.undo();
+      scene.editHistory.undo();
+      expect(scene.state.title).toBe('Renamed mid-keystroke');
+      expect(cellNamesOf(scene)).not.toEqual(['only']);
+      expect(scene.editHistory.state.canUndo).toBe(true);
+
+      scene.editHistory.undo();
+      expect(scene.state.title).toBe(titleBeforeRename);
+    });
   });
 
   // The scene already shows the new document, but nothing durable happened. A caller told this succeeded

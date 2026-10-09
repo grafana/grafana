@@ -847,5 +847,64 @@ describe('NotebookScene', () => {
       act(() => scene.editHistory.undo());
       expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
     });
+
+    it('starts a fresh pending edit after a tag change, instead of extending the buried one', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTagsChange(['incident']));
+      // Without the commit above, this would extend the buried rename and silently discard it instead
+      // of recording a new step, since editHistory.discard only acts on the top of the stack.
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit before leaving edit mode', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onEnterEditMode());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onExitEditMode());
+      act(() => scene.onEnterEditMode());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed by onExitEditMode.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit on deactivation', () => {
+      const scene = buildScene(false);
+      const deactivate = scene.activate();
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => deactivate());
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed on deactivation.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
   });
 });
