@@ -43,6 +43,9 @@ func TestMigrateDeprecatedRoutes(t *testing.T) {
 			"Shared": *spec.Int64Property(),
 		}, version.OpenAPI.Components.Schemas, "OpenAPI components win over route schemas")
 		require.Equal(t, app.ManifestVersionRoutes{}, version.Routes) //nolint:staticcheck // SA1019: checking it is cleared.
+		for _, kind := range version.Kinds {
+			require.Nil(t, kind.Routes, "%s's routes are cleared once they are paths", kind.Kind)
+		}
 	})
 
 	t.Run("existing OpenAPI paths are authoritative", func(t *testing.T) {
@@ -59,6 +62,7 @@ func TestMigrateDeprecatedRoutes(t *testing.T) {
 		MigrateDeprecatedRoutes(manifest)
 		require.Equal(t, paths, manifest.Versions[0].OpenAPI.Paths)
 		require.Equal(t, app.ManifestVersionRoutes{}, manifest.Versions[0].Routes) //nolint:staticcheck // SA1019: checking it is cleared.
+		require.Nil(t, manifest.Versions[0].Kinds[0].Routes, "stale kind routes are cleared too")
 	})
 
 	t.Run("a version without routes is left alone", func(t *testing.T) {

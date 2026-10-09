@@ -875,6 +875,15 @@ func TestValidateManifestRejectsDeprecatedRoutes(t *testing.T) {
 
 	definition.MigrateDeprecatedRoutes(manifest)
 	require.NoError(t, ValidateManifest("example-app", manifest))
+
+	// A kind's own routes are deprecated in the same way, and would otherwise be
+	// dropped without a word, since only the OpenAPI paths are served.
+	manifest = testManifest(t)
+	manifest.Versions[1].Kinds[0].Routes = map[string]spec3.PathProps{"/refresh": {Post: &spec3.Operation{}}}
+	require.ErrorContains(t, ValidateManifest("example-app", manifest), "kind TestKind in version v1alpha1 still has its own routes")
+
+	definition.MigrateDeprecatedRoutes(manifest)
+	require.NoError(t, ValidateManifest("example-app", manifest))
 }
 
 // OpenAPI paths that would shadow resource storage, or that mount a kind's

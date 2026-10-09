@@ -13,10 +13,11 @@ import (
 // under.
 const namespacedRoutePrefix = "/namespaces/{namespace}"
 
-// MigrateDeprecatedRoutes moves each version's deprecated Routes into its
-// OpenAPI paths, so a manifest written before app-sdk published routes there
-// is served the same way as one written after. Routes is cleared, since the
-// OpenAPI paths are authoritative once they exist.
+// MigrateDeprecatedRoutes moves each version's deprecated Routes, and each of its
+// kinds' Routes, into its OpenAPI paths, so a manifest written before app-sdk
+// published routes there is served the same way as one written after. Both are
+// cleared, since the OpenAPI paths are authoritative once they exist, and the
+// router refuses a manifest that still has either.
 //
 // A version without OpenAPI paths gets its routes the way app-sdk codegen
 // writes them: cluster routes at the version root, namespaced routes under the
@@ -34,6 +35,11 @@ func MigrateDeprecatedRoutes(manifest *app.ManifestData) {
 func migrateVersionRoutes(version *app.ManifestVersion) {
 	legacy := version.Routes                     //nolint:staticcheck // SA1019: this is where the deprecated routes are migrated.
 	version.Routes = app.ManifestVersionRoutes{} //nolint:staticcheck // SA1019: as above.
+	kindRoutes := make([]map[string]spec3.PathProps, len(version.Kinds))
+	for i := range version.Kinds {
+		kindRoutes[i] = version.Kinds[i].Routes
+		version.Kinds[i].Routes = nil
+	}
 	if len(version.OpenAPI.Paths) > 0 {
 		return
 	}
@@ -52,7 +58,7 @@ func migrateVersionRoutes(version *app.ManifestVersion) {
 		if kind.Scope != "Cluster" {
 			prefix = namespacedRoutePrefix + prefix
 		}
-		add(prefix, kind.Routes)
+		add(prefix, kindRoutes[i])
 	}
 	if len(paths) > 0 {
 		version.OpenAPI.Paths = paths

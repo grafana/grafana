@@ -254,6 +254,11 @@ func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 		if len(routes.Cluster) > 0 || len(routes.Namespaced) > 0 || len(routes.Schemas) > 0 {
 			return fmt.Errorf("plugin %q: version %s still has deprecated routes; load the manifest with definition.ParseManifest, or call definition.MigrateDeprecatedRoutes", pluginID, version.Name)
 		}
+		for _, kind := range version.Kinds {
+			if len(kind.Routes) > 0 {
+				return fmt.Errorf("plugin %q: kind %s in version %s still has its own routes; load the manifest with definition.ParseManifest, or call definition.MigrateDeprecatedRoutes", pluginID, kind.Kind, version.Name)
+			}
+		}
 	}
 	return nil
 }
