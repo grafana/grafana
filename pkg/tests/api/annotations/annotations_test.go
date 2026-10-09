@@ -13,12 +13,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -26,6 +29,10 @@ import (
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+func TestIntegrationAnnotationScopePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationAnnotationScopePermissions)
 }
 
 func TestIntegrationAnnotations(t *testing.T) {
@@ -303,6 +310,91 @@ func testIntegrationAnnotations(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+}
+
+func testIntegrationAnnotationScopePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{DisableAnonymous: true, DisableAuthZClientCache: true})
+	env := helper.GetEnv()
+	addr := env.Server.HTTPServer.Listener.Addr().String()
+	parent := createFolder(t, addr, "Annotation parent")
+	childBody, err := json.Marshal(folder.CreateFolderCommand{Title: "Annotation child", ParentUID: parent.UID})
+	require.NoError(t, err)
+	child := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/folders", Body: childBody}, &dtos.Folder{})
+	require.Equal(t, http.StatusOK, child.Response.StatusCode)
+	dashboard := createDashboard(t, addr, "Annotation target", 0, child.Result.UID)
+	other := createDashboard(t, addr, "Annotation other", 0, "")
+
+	cases := []struct {
+		name, resource, attribute, resourceID string
+		organization, readOnly                bool
+		allowed                               bool
+	}{
+		{name: "dashboard grant", resource: "dashboards", attribute: "uid", resourceID: dashboard.UID, allowed: true},
+		{name: "ancestor folder grant", resource: "folders", attribute: "uid", resourceID: parent.UID, allowed: true},
+		{name: "different dashboard", resource: "dashboards", attribute: "uid", resourceID: other.UID},
+		{name: "organization grant cannot access dashboard annotation", resource: "annotations", attribute: "type", resourceID: "organization"},
+		{name: "organization grant", resource: "annotations", attribute: "type", resourceID: "organization", organization: true, allowed: true},
+		{name: "dashboard grant cannot access organization annotation", resource: "dashboards", attribute: "uid", resourceID: dashboard.UID, organization: true},
+		{name: "read only dashboard", resource: "dashboards", attribute: "uid", resourceID: dashboard.UID, readOnly: true, allowed: true},
+	}
+
+	for i, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			actions := []string{accesscontrol.ActionAnnotationsRead}
+			if !tc.readOnly {
+				actions = append(actions, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete)
+			}
+			caller := helper.CreateUser(fmt.Sprintf("annotation-grants-%d", i), apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: actions, Resource: tc.resource, ResourceAttribute: tc.attribute, ResourceID: tc.resourceID},
+				{Actions: []string{dashboards.ActionDashboardsRead}, Resource: "dashboards", ResourceAttribute: "uid", ResourceID: "*"},
+			})
+
+			for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
+				t.Run(method, func(t *testing.T) {
+					annotation := dtos.PostAnnotationsCmd{Time: 1234567890000, Text: "Original annotation"}
+					if !tc.organization {
+						annotation.DashboardUID = dashboard.UID
+					}
+					body, err := json.Marshal(annotation)
+					require.NoError(t, err)
+					created := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/annotations", Body: body}, &struct {
+						ID int64 `json:"id"`
+					}{})
+					require.Equal(t, http.StatusOK, created.Response.StatusCode, string(created.Body))
+					require.NotZero(t, created.Result.ID)
+					path := fmt.Sprintf("/api/annotations/%d", created.Result.ID)
+
+					var update []byte
+					if method == http.MethodPut || method == http.MethodPatch {
+						update = []byte(`{"text":"Updated annotation","time":1234567890000}`)
+					}
+					response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: method, Path: path, Body: update}, &map[string]interface{}{})
+					allowed := tc.allowed && (method == http.MethodGet || !tc.readOnly)
+					expected := http.StatusForbidden
+					if allowed {
+						expected = http.StatusOK
+					}
+					require.Equal(t, expected, response.Response.StatusCode, string(response.Body))
+
+					stored := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodGet, Path: path}, &struct {
+						Text string `json:"text"`
+					}{})
+					if allowed && method == http.MethodDelete {
+						require.Equal(t, http.StatusNotFound, stored.Response.StatusCode)
+					} else {
+						require.Equal(t, http.StatusOK, stored.Response.StatusCode, string(stored.Body))
+						text := "Original annotation"
+						if allowed && (method == http.MethodPut || method == http.MethodPatch) {
+							text = "Updated annotation"
+						}
+						require.Equal(t, text, stored.Result.Text)
+					}
+				})
+			}
+		})
+	}
 }
 
 func createAnnotation(t *testing.T, grafanaListedAddr string, username, password string, payload map[string]interface{}) {

@@ -17,8 +17,10 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,6 +28,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelScopePermissions)
+}
 
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelConnections)
@@ -57,6 +63,72 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 
 func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryElementFolderHierarchy)
+}
+
+func testIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode5} {
+		t.Run(fmt.Sprintf("storage mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true, DisableAuthZClientCache: true,
+				EnableFeatureToggles: []string{featuremgmt.FlagLibraryelementsKubernetesLibraryPanels},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{"librarypanels.dashboard.grafana.app": {DualWriterMode: mode}},
+			})
+			ctx := createTestContext(t, helper, helper.Org1)
+			allowedFolder, err := createFolder(t, helper, ctx.AdminUser, "Allowed panels")
+			require.NoError(t, err)
+			deniedFolder, err := createFolder(t, helper, ctx.AdminUser, "Denied panels")
+			require.NoError(t, err)
+			panel, err := createLibraryElement(t, ctx, ctx.AdminUser, "Allowed panel", allowedFolder.UID)
+			require.NoError(t, err)
+			other, err := createLibraryElement(t, ctx, ctx.AdminUser, "Other panel", deniedFolder.UID)
+			require.NoError(t, err)
+
+			for _, tc := range []struct{ name, resource, uid string }{
+				{name: "direct panel grant", resource: "library.panels", uid: panel},
+				{name: "folder grant", resource: "folders", uid: allowedFolder.UID},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					grant := resourcepermissions.SetResourcePermissionCommand{Actions: []string{libraryelements.ActionLibraryPanelsRead}, Resource: tc.resource, ResourceAttribute: "uid", ResourceID: tc.uid}
+					caller := helper.CreateUser(fmt.Sprintf("panel-reader-%s", tc.resource), apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{grant})
+
+					for _, request := range []struct {
+						uid    string
+						status int
+					}{{panel, http.StatusOK}, {other, http.StatusForbidden}, {panel, http.StatusOK}} {
+						response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: fmt.Sprintf("/api/library-elements/%s", request.uid)}, &map[string]interface{}{})
+						require.Equal(t, request.status, response.Response.StatusCode, string(response.Body))
+					}
+
+					path := fmt.Sprintf("/api/library-elements/%s", panel)
+					before := apis.DoRequest(helper, apis.RequestParams{User: ctx.AdminUser, Method: http.MethodGet, Path: path}, &map[string]interface{}{})
+					require.Equal(t, http.StatusOK, before.Response.StatusCode)
+					result := (*before.Result)["result"].(map[string]interface{})
+					patch, err := json.Marshal(map[string]interface{}{"name": "Unauthorized rename", "version": result["version"], "model": result["model"]})
+					require.NoError(t, err)
+					for _, method := range []string{http.MethodPatch, http.MethodDelete} {
+						var body []byte
+						if method == http.MethodPatch {
+							body = patch
+						}
+						response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: method, Path: path, Body: body}, &struct{}{})
+						require.Equal(t, http.StatusForbidden, response.Response.StatusCode, string(response.Body))
+						after := apis.DoRequest(helper, apis.RequestParams{User: ctx.AdminUser, Method: http.MethodGet, Path: path}, &map[string]interface{}{})
+						require.Equal(t, http.StatusOK, after.Response.StatusCode)
+						require.Equal(t, result, (*after.Result)["result"])
+					}
+
+					grant.Actions = nil
+					helper.SetPermissions(caller, []resourcepermissions.SetResourcePermissionCommand{grant})
+					reload := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: "/api/access-control/user/permissions?reloadcache=true"}, &map[string]interface{}{})
+					require.Equal(t, http.StatusOK, reload.Response.StatusCode)
+					revoked := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: path}, &struct{}{})
+					require.Equal(t, http.StatusForbidden, revoked.Response.StatusCode, string(revoked.Body))
+				})
+			}
+		})
+	}
 }
 
 // this tests the /api path still, but behind the scenes is using search to get the library connections

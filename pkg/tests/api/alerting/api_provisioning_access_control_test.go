@@ -2,18 +2,22 @@ package alerting
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"testing"
 
 	"github.com/prometheus/alertmanager/config"
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/expr"
 	"github.com/grafana/grafana/pkg/server"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -41,6 +45,10 @@ type provisioningTestEnv struct {
 	env               *server.TestEnv
 }
 
+func TestIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningRuleGroupPermissionCombinations)
+}
+
 func TestIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningContactPointsAccessControl)
 }
@@ -57,64 +65,46 @@ func TestIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) 
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationProvisioningNotificationPoliciesAccessControl)
 }
 
-func setupProvisioningAccessControlTest(t *testing.T) provisioningTestEnv {
-	t.Helper()
-
-	testinfra.SQLiteIntegrationTest(t)
-
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		DisableAnonymous:      true,
-		AppModeProduction:     true,
-	})
-
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-
-	return provisioningTestEnv{
-		grafanaListedAddr: grafanaListedAddr,
-		adminClient:       newAlertingApiClient(grafanaListedAddr, "admin", "admin"),
-		permissionsStore:  resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures()),
-		env:               env,
-	}
-}
-
-func (e provisioningTestEnv) createUserAndClient(t *testing.T, tc provisioningTestCase) apiClient {
-	t.Helper()
-
-	login := util.GenerateShortUID()
-	orgRole := org.RoleNone
-	if tc.orgRole != "" {
-		orgRole = tc.orgRole
-	}
-	userID := createUser(t, e.env.SQLStore, e.env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(orgRole),
-		Password:       user.Password(login),
-		Login:          login,
-	})
-
-	for _, cmd := range tc.permissions {
-		_, err := e.permissionsStore.SetUserResourcePermission(
-			context.Background(),
-			1,
-			accesscontrol.User{ID: userID},
-			cmd,
-			nil,
-		)
-		require.NoError(t, err)
-	}
-
-	client := newAlertingApiClient(e.grafanaListedAddr, login, login)
-	client.ReloadCachedPermissions(t)
-	return client
-}
-
 func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	e := setupProvisioningAccessControlTest(t)
 
 	testCases := []provisioningTestCase{
+		{
+			name:        "provisioning set status only",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}}},
+		},
+		{
+			name:        "receivers create without provisioning set status",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingReceiversCreate}, Resource: "receivers", ResourceAttribute: "uid", ResourceID: "*"}},
+		},
+		{
+			name:        "receivers read and update without provisioning set status",
+			canRead:     true,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingReceiversRead, accesscontrol.ActionAlertingReceiversUpdate}, Resource: "receivers", ResourceAttribute: "uid", ResourceID: "*"}},
+		},
+		{
+			name:        "receivers read and delete without provisioning set status",
+			canRead:     true,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingReceiversRead, accesscontrol.ActionAlertingReceiversDelete}, Resource: "receivers", ResourceAttribute: "uid", ResourceID: "*"}},
+		},
+		{
+			name: "receivers update on another UID", canRead: true,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{accesscontrol.ActionAlertingReceiversRead}, Resource: "receivers", ResourceAttribute: "uid", ResourceID: "*"},
+				{Actions: []string{accesscontrol.ActionAlertingReceiversUpdate}, Resource: "receivers", ResourceAttribute: "uid", ResourceID: "another-receiver"},
+				{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}},
+			},
+		},
+		{
+			name: "receivers delete on another UID", canRead: true,
+			permissions: []resourcepermissions.SetResourcePermissionCommand{
+				{Actions: []string{accesscontrol.ActionAlertingReceiversRead}, Resource: "receivers", ResourceAttribute: "uid", ResourceID: "*"},
+				{Actions: []string{accesscontrol.ActionAlertingReceiversDelete}, Resource: "receivers", ResourceAttribute: "uid", ResourceID: "another-receiver"},
+				{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}},
+			},
+		},
 		// Built-in roles.
 		{name: "no permissions"},
 		{name: "Viewer", orgRole: org.RoleViewer, canRead: true},
@@ -258,12 +248,18 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 			require.Equalf(t, http.StatusAccepted, status, body)
 
 			t.Run("PUT", func(t *testing.T) {
+				before, status, body := e.adminClient.GetContactPointsByNameWithStatus(t, existing.Name)
+				require.Equal(t, http.StatusOK, status, body)
+
 				existing.Settings.Set("message", "updated_message")
-				status, body := client.UpdateContactPointWithStatus(t, existing.UID, existing)
+				status, body = client.UpdateContactPointWithStatus(t, existing.UID, existing)
 				if tc.canUpdate {
 					require.Equalf(t, http.StatusAccepted, status, body)
 				} else {
 					require.Equalf(t, http.StatusForbidden, status, body)
+					after, status, body := e.adminClient.GetContactPointsByNameWithStatus(t, existing.Name)
+					require.Equal(t, http.StatusOK, status, body)
+					require.Equal(t, before, after)
 				}
 			})
 
@@ -273,6 +269,10 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 					require.Equalf(t, http.StatusAccepted, status, body)
 				} else {
 					require.Equalf(t, http.StatusForbidden, status, body)
+					remaining, status, body := e.adminClient.GetContactPointsByNameWithStatus(t, existing.Name)
+					require.Equal(t, http.StatusOK, status, body)
+					require.Len(t, remaining, 1)
+					require.Equal(t, existing.UID, remaining[0].UID)
 				}
 			})
 		})
@@ -285,6 +285,18 @@ func testIntegrationProvisioningTemplatesAccessControl(t *testing.T) {
 	e := setupProvisioningAccessControlTest(t)
 
 	testCases := []provisioningTestCase{
+		{
+			name:        "provisioning set status only",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}}},
+		},
+		{
+			name:        "templates write without provisioning set status",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingNotificationsTemplatesWrite}}},
+		},
+		{
+			name:        "templates delete without provisioning set status",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingNotificationsTemplatesDelete}}},
+		},
 		// Built-in roles.
 		{name: "no permissions"},
 		{name: "Viewer", orgRole: org.RoleViewer, canRead: true},
@@ -418,6 +430,18 @@ func testIntegrationProvisioningMuteTimingsAccessControl(t *testing.T) {
 	e := setupProvisioningAccessControlTest(t)
 
 	testCases := []provisioningTestCase{
+		{
+			name:        "provisioning set status only",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}}},
+		},
+		{
+			name:        "time intervals write without provisioning set status",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingNotificationsTimeIntervalsWrite}}},
+		},
+		{
+			name:        "time intervals delete without provisioning set status",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingNotificationsTimeIntervalsDelete}}},
+		},
 		// Built-in roles.
 		{name: "no permissions"},
 		{name: "Viewer", orgRole: org.RoleViewer, canRead: true},
@@ -566,6 +590,14 @@ func testIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) 
 	e := setupProvisioningAccessControlTest(t)
 
 	testCases := []provisioningTestCase{
+		{
+			name:        "provisioning set status only",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}}},
+		},
+		{
+			name:        "routes write without provisioning set status",
+			permissions: []resourcepermissions.SetResourcePermissionCommand{{Actions: []string{accesscontrol.ActionAlertingRoutesWrite}}},
+		},
 		// Built-in roles.
 		{name: "no permissions"},
 		{name: "Viewer", orgRole: org.RoleViewer, canRead: true},
@@ -669,4 +701,202 @@ func testIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) 
 			})
 		})
 	}
+}
+
+func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	e := setupProvisioningAccessControlTest(t)
+	e.adminClient.CreateFolder(t, "rules-target", "Rules target")
+	e.adminClient.CreateFolder(t, "rules-other", "Rules other")
+
+	cases := []struct {
+		name, operation, missingAction, wrongScopeAction, provisioningAction string
+		mutationAction                                                       string
+		wantStatus                                                           int
+	}{
+		{name: "update", operation: "update", mutationAction: accesscontrol.ActionAlertingRuleUpdate, wantStatus: http.StatusOK},
+		{name: "create", operation: "create", mutationAction: accesscontrol.ActionAlertingRuleCreate, wantStatus: http.StatusOK},
+		{name: "delete group", operation: "delete", mutationAction: accesscontrol.ActionAlertingRuleDelete, wantStatus: http.StatusNoContent},
+		{
+			name:           "missing rule read",
+			operation:      "update",
+			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
+			missingAction:  accesscontrol.ActionAlertingRuleRead,
+			wantStatus:     http.StatusForbidden,
+		},
+		{
+			name:           "missing folder read",
+			operation:      "update",
+			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
+			missingAction:  folder.ActionFoldersRead,
+			wantStatus:     http.StatusForbidden,
+		},
+		{
+			name:           "missing set status",
+			operation:      "update",
+			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
+			missingAction:  accesscontrol.ActionAlertingProvisioningSetStatus,
+			wantStatus:     http.StatusForbidden,
+		},
+		{name: "missing mutation permission", operation: "update", wantStatus: http.StatusForbidden},
+		{
+			name:             "update scoped to another folder",
+			operation:        "update",
+			mutationAction:   accesscontrol.ActionAlertingRuleUpdate,
+			wrongScopeAction: accesscontrol.ActionAlertingRuleUpdate,
+			wantStatus:       http.StatusForbidden,
+		},
+		{
+			name:             "read scoped to another folder",
+			operation:        "update",
+			mutationAction:   accesscontrol.ActionAlertingRuleUpdate,
+			wrongScopeAction: accesscontrol.ActionAlertingRuleRead,
+			wantStatus:       http.StatusForbidden,
+		},
+		{name: "update cannot also create", operation: "update and create", mutationAction: accesscontrol.ActionAlertingRuleUpdate, wantStatus: http.StatusForbidden},
+		{name: "update cannot also delete", operation: "update and delete", mutationAction: accesscontrol.ActionAlertingRuleUpdate, wantStatus: http.StatusForbidden},
+		{name: "provisioning write alternative", operation: "update", provisioningAction: accesscontrol.ActionAlertingProvisioningWrite, wantStatus: http.StatusOK},
+		{
+			name:               "rules provisioning write alternative",
+			operation:          "update",
+			provisioningAction: accesscontrol.ActionAlertingRulesProvisioningWrite,
+			wantStatus:         http.StatusOK,
+		},
+	}
+
+	for i, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			group := definitions.AlertRuleGroup{Title: fmt.Sprintf("permissions-%d", i), FolderUID: "rules-target", Interval: 60}
+			for j := range 2 {
+				group.Rules = append(group.Rules, provisioningPermissionRule(fmt.Sprintf("permission-rule-%d-%d", i, j), group.Title))
+			}
+			var before definitions.AlertRuleGroup
+			var status int
+			var body string
+			if tc.operation != "create" {
+				_, status, body = e.adminClient.CreateOrUpdateRuleGroupProvisioning(t, group)
+				require.Equal(t, http.StatusOK, status, body)
+				before, status, body = e.adminClient.GetRuleGroupProvisioning(t, group.FolderUID, group.Title)
+				require.Equal(t, http.StatusOK, status, body)
+			}
+
+			var grants []resourcepermissions.SetResourcePermissionCommand
+			if tc.provisioningAction != "" {
+				grants = append(grants, resourcepermissions.SetResourcePermissionCommand{Actions: []string{tc.provisioningAction}}, resourcepermissions.SetResourcePermissionCommand{Actions: []string{folder.ActionFoldersRead}, Resource: "folders", ResourceAttribute: "uid", ResourceID: group.FolderUID})
+			} else {
+				scopedActions := []string{accesscontrol.ActionAlertingRuleRead, folder.ActionFoldersRead}
+				if tc.mutationAction != "" {
+					scopedActions = append(scopedActions, tc.mutationAction)
+				}
+				scopedActions = slices.DeleteFunc(scopedActions, func(action string) bool { return action == tc.missingAction || action == tc.wrongScopeAction })
+				grants = append(grants, resourcepermissions.SetResourcePermissionCommand{Actions: scopedActions, Resource: "folders", ResourceAttribute: "uid", ResourceID: group.FolderUID})
+				if tc.missingAction != accesscontrol.ActionAlertingProvisioningSetStatus {
+					grants = append(grants, resourcepermissions.SetResourcePermissionCommand{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}})
+				}
+				if tc.wrongScopeAction != "" {
+					grants = append(grants, resourcepermissions.SetResourcePermissionCommand{Actions: []string{tc.wrongScopeAction}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "rules-other"})
+				}
+			}
+			client := e.createUserAndClient(t, provisioningTestCase{permissions: grants})
+
+			if tc.operation != "create" {
+				group = before
+				group.Rules = slices.Clone(before.Rules)
+			}
+
+			switch tc.operation {
+			case "update":
+				group.Rules[0].Title = "Updated rule"
+			case "update and create":
+				group.Rules[0].Title = "Updated rule"
+				group.Rules = append(group.Rules, provisioningPermissionRule(fmt.Sprintf("new-rule-%d", i), group.Title))
+			case "update and delete":
+				group.Rules[0].Title = "Updated rule"
+				group.Rules = group.Rules[:1]
+			}
+
+			if tc.operation == "delete" {
+				status, body = client.DeleteRulesGroupProvisioning(t, group.FolderUID, group.Title)
+			} else {
+				_, status, body = client.CreateOrUpdateRuleGroupProvisioning(t, group)
+			}
+			require.Equal(t, tc.wantStatus, status, body)
+			after, status, body := e.adminClient.GetRuleGroupProvisioning(t, group.FolderUID, group.Title)
+			if tc.operation == "delete" {
+				require.Equal(t, http.StatusNotFound, status, body)
+				return
+			}
+			require.Equal(t, http.StatusOK, status, body)
+			if tc.wantStatus == http.StatusForbidden {
+				require.Equal(t, before, after, "denied requests must not partially change the group")
+			} else {
+				require.Len(t, after.Rules, len(group.Rules))
+				for _, expected := range group.Rules {
+					index := slices.IndexFunc(after.Rules, func(rule definitions.ProvisionedAlertRule) bool { return rule.UID == expected.UID })
+					require.NotEqual(t, -1, index)
+					require.Equal(t, expected.Title, after.Rules[index].Title)
+				}
+			}
+		})
+	}
+}
+
+func provisioningPermissionRule(uid, group string) definitions.ProvisionedAlertRule {
+	return definitions.ProvisionedAlertRule{
+		UID: uid, Title: uid, OrgID: 1, FolderUID: "rules-target", RuleGroup: group,
+		Condition: "A", NoDataState: definitions.Alerting, ExecErrState: definitions.AlertingErrState,
+		Data: []definitions.AlertQuery{{RefID: "A", DatasourceUID: expr.DatasourceUID, Model: json.RawMessage(`{"type":"math","expression":"1"}`)}},
+	}
+}
+
+func setupProvisioningAccessControlTest(t *testing.T) provisioningTestEnv {
+	t.Helper()
+
+	testinfra.SQLiteIntegrationTest(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		EnableUnifiedAlerting: true,
+		DisableAnonymous:      true,
+		AppModeProduction:     true,
+	})
+
+	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+
+	return provisioningTestEnv{
+		grafanaListedAddr: grafanaListedAddr,
+		adminClient:       newAlertingApiClient(grafanaListedAddr, "admin", "admin"),
+		permissionsStore:  resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures()),
+		env:               env,
+	}
+}
+
+func (e provisioningTestEnv) createUserAndClient(t *testing.T, tc provisioningTestCase) apiClient {
+	t.Helper()
+
+	login := util.GenerateShortUID()
+	orgRole := org.RoleNone
+	if tc.orgRole != "" {
+		orgRole = tc.orgRole
+	}
+	userID := createUser(t, e.env.SQLStore, e.env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(orgRole),
+		Password:       user.Password(login),
+		Login:          login,
+	})
+
+	for _, cmd := range tc.permissions {
+		_, err := e.permissionsStore.SetUserResourcePermission(
+			context.Background(),
+			1,
+			accesscontrol.User{ID: userID},
+			cmd,
+			nil,
+		)
+		require.NoError(t, err)
+	}
+
+	client := newAlertingApiClient(e.grafanaListedAddr, login, login)
+	client.ReloadCachedPermissions(t)
+	return client
 }

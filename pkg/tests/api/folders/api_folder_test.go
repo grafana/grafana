@@ -2,16 +2,22 @@ package folders
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"testing"
 
 	"github.com/grafana/grafana-openapi-client-go/client/folders"
 	"github.com/grafana/grafana-openapi-client-go/models"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/tests"
@@ -20,6 +26,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+func TestIntegrationFolderPermissionCombinations(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFolderPermissionCombinations)
+}
 
 func TestIntegrationFolderServiceGetFolder(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFolderServiceGetFolder)
@@ -51,24 +61,6 @@ func TestIntegrationBasicRoles(t *testing.T) {
 
 func TestIntegrationFineGrainedPermissions(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFineGrainedPermissions)
-}
-
-func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
-	t.Helper()
-
-	permissionPayload := map[string]interface{}{
-		"items": permissions,
-	}
-
-	payloadBytes, err := json.Marshal(permissionPayload)
-	require.NoError(t, err)
-
-	u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", grafanaListedAddr, folderUID)
-	resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
-	require.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
-	err = resp.Body.Close()
-	require.NoError(t, err)
 }
 
 func testIntegrationFolderServiceGetFolder(t *testing.T) {
@@ -293,7 +285,7 @@ func testIntegrationNestedFolders(t *testing.T) {
 		EnableQuota:      true,
 	})
 
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	grafanaListedAddr, _ := testinfra.StartGrafanaEnv(t, dir, path)
 
 	adminClient := tests.GetClient(grafanaListedAddr, "admin", "admin")
 
@@ -370,43 +362,6 @@ func testIntegrationNestedFolders(t *testing.T) {
 				assert.Equal(t, "", resp.Payload.ParentUID)
 			})
 
-			t.Run("should prevent moving folders to escalate permissions", func(t *testing.T) {
-				store, cfg := env.SQLStore, env.Cfg
-				orgID := int64(1)
-				editorUser := tests.CreateUser(t, store, cfg, user.CreateUserCommand{
-					DefaultOrgRole: string(org.RoleViewer),
-					OrgID:          orgID,
-					Password:       "editor",
-					Login:          "editor",
-				})
-				editorClient := tests.GetClient(grafanaListedAddr, "editor", "editor")
-
-				sourceResp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
-					Title: "Source Folder",
-					UID:   "source-folder-limited",
-				})
-				require.NoError(t, err)
-				require.Equal(t, http.StatusOK, sourceResp.Code())
-
-				destResp, err := adminClient.Folders.CreateFolder(&models.CreateFolderCommand{
-					Title: "Destination Folder",
-					UID:   "dest-folder-higher",
-				})
-				require.NoError(t, err)
-				require.Equal(t, http.StatusOK, destResp.Code())
-				// downgrade to viewer on destination folder
-				setFolderPermissions(t, grafanaListedAddr, destResp.Payload.UID, []map[string]interface{}{
-					{
-						"userId":     editorUser,
-						"permission": 1,
-					},
-				})
-
-				_, err = editorClient.Folders.MoveFolder(sourceResp.Payload.UID, &models.MoveFolderCommand{
-					ParentUID: destResp.Payload.UID,
-				})
-				require.Error(t, err)
-			})
 		})
 	})
 
@@ -688,4 +643,190 @@ func testIntegrationFineGrainedPermissions(t *testing.T) {
 
 	_, err = noneClient.Folders.GetFolderByUID(parentResp.Payload.UID)
 	require.Error(t, err, "None user should not be able to access parent folder directly")
+}
+
+func testIntegrationFolderPermissionCombinations(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{DisableAnonymous: true, DisableAuthZClientCache: true})
+	addr, env := testinfra.StartGrafanaEnv(t, dir, path)
+	admin := tests.GetClient(addr, "admin", "admin")
+
+	target, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{Title: "Metadata target", UID: "metadata-target"})
+	require.NoError(t, err)
+	other, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{Title: "Metadata other", UID: "metadata-other"})
+	require.NoError(t, err)
+
+	t.Run("canAdmin requires both permissions on the requested folder", func(t *testing.T) {
+		cases := []struct {
+			name                               string
+			read, write, otherWrite, wantAdmin bool
+		}{
+			{name: "neither"},
+			{name: "read only", read: true},
+			{name: "write only", write: true},
+			{name: "both", read: true, write: true, wantAdmin: true},
+			{name: "permissions split across folders", read: true, otherWrite: true},
+		}
+
+		for i, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				actions := []string{foldermodel.ActionFoldersRead}
+				if tc.read {
+					actions = append(actions, foldermodel.ActionFoldersPermissionsRead)
+				}
+				if tc.write {
+					actions = append(actions, foldermodel.ActionFoldersPermissionsWrite)
+				}
+
+				grants := []resourcepermissions.SetResourcePermissionCommand{
+					{Actions: actions, Resource: "folders", ResourceAttribute: "uid", ResourceID: target.Payload.UID},
+				}
+				if tc.otherWrite {
+					grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+						Actions: []string{foldermodel.ActionFoldersPermissionsWrite}, Resource: "folders", ResourceAttribute: "uid", ResourceID: other.Payload.UID,
+					})
+				}
+
+				login := fmt.Sprintf("folder-metadata-%d", i)
+				createFolderPermissionUser(t, env, login, grants)
+				response, err := tests.GetClient(addr, login, login).Folders.GetFolderByUID(target.Payload.UID)
+				require.NoError(t, err)
+				require.Equal(t, http.StatusOK, response.Code())
+				assert.Equal(t, tc.wantAdmin, response.Payload.CanAdmin)
+				assert.False(t, response.Payload.CanEdit)
+				assert.False(t, response.Payload.CanDelete)
+			})
+		}
+	})
+
+	t.Run("move permission combinations", func(t *testing.T) {
+		cases := []struct {
+			name                                                                   string
+			destinationAction                                                      string
+			root, noSourceWrite, extraDestinationPermission, extraSourcePermission bool
+			wantStatus                                                             int
+			wantError                                                              string
+		}{
+			{name: "neither destination permission", wantStatus: http.StatusForbidden},
+			// The storage validator additionally requires create on the destination.
+			{name: "destination write without create", destinationAction: foldermodel.ActionFoldersWrite, wantStatus: http.StatusForbidden},
+			{name: "destination create", destinationAction: foldermodel.ActionFoldersCreate, wantStatus: http.StatusOK},
+			{name: "missing source write", destinationAction: foldermodel.ActionFoldersCreate, noSourceWrite: true, wantStatus: http.StatusForbidden},
+			{name: "root create", destinationAction: foldermodel.ActionFoldersCreate, root: true, wantStatus: http.StatusOK},
+			{name: "root without create", root: true, wantStatus: http.StatusForbidden},
+			{
+				name:                       "permission escalation",
+				destinationAction:          foldermodel.ActionFoldersWrite,
+				extraDestinationPermission: true,
+				wantStatus:                 http.StatusForbidden,
+				wantError:                  "folders.accessEscalation",
+			},
+			{
+				name:                       "matching source permissions",
+				destinationAction:          foldermodel.ActionFoldersCreate,
+				extraDestinationPermission: true,
+				extraSourcePermission:      true,
+				wantStatus:                 http.StatusOK,
+			},
+		}
+
+		for i, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				source, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{Title: fmt.Sprintf("Move source %d", i), ParentUID: target.Payload.UID})
+				require.NoError(t, err)
+				destination := other.Payload.UID
+				if tc.root {
+					destination = foldermodel.GeneralFolderUID
+				}
+
+				sourceActions := []string{foldermodel.ActionFoldersRead, foldermodel.ActionFoldersCreate}
+				if !tc.noSourceWrite {
+					sourceActions = append(sourceActions, foldermodel.ActionFoldersWrite)
+				}
+				if tc.extraSourcePermission {
+					sourceActions = append(sourceActions, foldermodel.ActionFoldersPermissionsRead)
+				}
+				grants := []resourcepermissions.SetResourcePermissionCommand{
+					{Actions: sourceActions, Resource: "folders", ResourceAttribute: "uid", ResourceID: source.Payload.UID},
+					{Actions: []string{foldermodel.ActionFoldersRead}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "*"},
+				}
+				if tc.destinationAction != "" {
+					destinationActions := []string{tc.destinationAction}
+					if tc.extraDestinationPermission {
+						destinationActions = append(destinationActions, foldermodel.ActionFoldersPermissionsRead)
+					}
+					grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+						Actions: destinationActions, Resource: "folders", ResourceAttribute: "uid", ResourceID: destination,
+					})
+				}
+
+				login := fmt.Sprintf("folder-move-%d", i)
+				createFolderPermissionUser(t, env, login, grants)
+				parentUID := destination
+				if tc.root {
+					parentUID = ""
+				}
+				body, err := json.Marshal(models.MoveFolderCommand{ParentUID: parentUID})
+				require.NoError(t, err)
+
+				req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/api/folders/%s/move", addr, source.Payload.UID), bytes.NewReader(body))
+				require.NoError(t, err)
+				req.SetBasicAuth(login, login)
+				req.Header.Set("Content-Type", "application/json")
+				response, err := http.DefaultClient.Do(req)
+				require.NoError(t, err)
+				defer response.Body.Close()
+				responseBody, err := io.ReadAll(response.Body)
+				require.NoError(t, err)
+				require.Equal(t, tc.wantStatus, response.StatusCode, string(responseBody))
+				if tc.wantError != "" {
+					var failure struct {
+						MessageID string `json:"messageId"`
+					}
+					require.NoError(t, json.Unmarshal(responseBody, &failure))
+					require.Equal(t, tc.wantError, failure.MessageID)
+				}
+
+				stored, err := admin.Folders.GetFolderByUID(source.Payload.UID)
+				require.NoError(t, err)
+				expectedParent := source.Payload.ParentUID
+				if tc.wantStatus == http.StatusOK {
+					expectedParent = parentUID
+				}
+				require.Equal(t, expectedParent, stored.Payload.ParentUID)
+			})
+		}
+	})
+}
+
+func createFolderPermissionUser(t *testing.T, env *server.TestEnv, login string, grants []resourcepermissions.SetResourcePermissionCommand) {
+	t.Helper()
+
+	userID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleNone), Login: login, Password: user.Password(login), OrgID: 1,
+	})
+	store := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+	for _, grant := range grants {
+		_, err := store.SetUserResourcePermission(context.Background(), 1, accesscontrol.User{ID: userID}, grant, nil)
+		require.NoError(t, err)
+	}
+}
+
+func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
+	t.Helper()
+
+	permissionPayload := map[string]interface{}{
+		"items": permissions,
+	}
+
+	payloadBytes, err := json.Marshal(permissionPayload)
+	require.NoError(t, err)
+
+	u := fmt.Sprintf("http://admin:admin@%s/api/folders/%s/permissions", grafanaListedAddr, folderUID)
+	resp, err := http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	err = resp.Body.Close()
+	require.NoError(t, err)
 }

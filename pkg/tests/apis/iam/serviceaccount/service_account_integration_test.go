@@ -2,7 +2,9 @@ package serviceaccount
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,6 +65,7 @@ func testIntegrationServiceAccounts(t *testing.T) {
 
 			if mode < rest.Mode3 {
 				doServiceAccountCRUDTestsUsingTheLegacyAPIs(t, helper)
+				doServiceAccountScopedPermissionTests(t, helper)
 			}
 		})
 	}
@@ -535,5 +538,76 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 		var statusErr *errors.StatusError
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
+	})
+}
+
+func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
+	t.Run("legacy API permissions are scoped to the target", func(t *testing.T) {
+		ctx := context.Background()
+		admin := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvrServiceAccounts})
+		cases := []struct {
+			name                     string
+			actions                  []string
+			read, write, wrongTarget bool
+		}{
+			{name: "no permissions"},
+			{name: "read only", actions: []string{serviceaccounts.ActionRead}, read: true},
+			{name: "write only", actions: []string{serviceaccounts.ActionWrite}, write: true},
+			{name: "read and write", actions: []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite}, read: true, write: true},
+			{name: "permission management only", actions: []string{serviceaccounts.ActionPermissionsWrite}},
+			{name: "different target", actions: []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionPermissionsWrite}, wrongTarget: true},
+		}
+
+		for i, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				resources := make([]*unstructured.Unstructured, 0, 2)
+				for _, suffix := range []string{"target", "other"} {
+					created := createNamedServiceAccount(t, ctx, helper, admin, fmt.Sprintf("scope-%d-%s", i, suffix), fmt.Sprintf("Scope %d %s", i, suffix))
+					resources = append(resources, created)
+					t.Cleanup(func() { require.NoError(t, admin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})) })
+				}
+				targetID := resources[0].GetLabels()[utils.LabelKeyDeprecatedInternalID]
+				require.NotEmpty(t, targetID)
+				grantedID := targetID
+				if tc.wrongTarget {
+					grantedID = resources[1].GetLabels()[utils.LabelKeyDeprecatedInternalID]
+				}
+				caller := helper.CreateUser(fmt.Sprintf("serviceaccount-scope-%d", i), apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
+					{Actions: tc.actions, Resource: "serviceaccounts", ResourceAttribute: "id", ResourceID: grantedID},
+				})
+				path := fmt.Sprintf("/api/serviceaccounts/%s", targetID)
+				before := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: path}, &map[string]interface{}{})
+				require.Equal(t, http.StatusOK, before.Response.StatusCode, string(before.Body))
+
+				get := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: path}, &struct{}{})
+				expected := http.StatusForbidden
+				if tc.read {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, get.Response.StatusCode, string(get.Body))
+
+				body, err := json.Marshal(map[string]interface{}{"name": "Updated scoped resource"})
+				require.NoError(t, err)
+				update := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodPatch, Path: path, Body: body}, &struct{}{})
+				expected = http.StatusForbidden
+				if tc.write {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, update.Response.StatusCode, string(update.Body))
+				after := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: path}, &map[string]interface{}{})
+				require.Equal(t, http.StatusOK, after.Response.StatusCode)
+				if tc.write {
+					require.Equal(t, "Updated scoped resource", (*after.Result)["name"])
+				} else {
+					require.Equal(t, before.Result, after.Result)
+				}
+
+				deleted := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodDelete, Path: path}, &struct{}{})
+				require.Equal(t, http.StatusForbidden, deleted.Response.StatusCode, string(deleted.Body))
+				stillExists := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: path}, &map[string]interface{}{})
+				require.Equal(t, http.StatusOK, stillExists.Response.StatusCode)
+				require.Equal(t, after.Result, stillExists.Result)
+			})
+		}
 	})
 }

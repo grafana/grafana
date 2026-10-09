@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -37,6 +39,10 @@ type testMode struct {
 	featureToggles []string
 }
 
+func TestIntegrationDataSourceScopeResolution(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDataSourceScopeResolution)
+}
+
 func TestIntegrationDataSourceGetByUID(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDataSourceGetByUID)
 }
@@ -47,6 +53,99 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 
 func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDataSourceDeleteByUID)
+}
+
+func testIntegrationDataSourceScopeResolution(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous: true, DisableAuthZClientCache: true,
+		EnableFeatureToggles: []string{featuremgmt.FlagDatasourceLegacyIdApi},
+	})
+	env := helper.GetEnv()
+
+	ds := createResolverDataSource(t, &env, "resolver-target", "Resolver target", 1)
+	t.Run("UID grants authorize resolved names and IDs", func(t *testing.T) {
+		cases := []struct {
+			name, grant string
+			want        int
+		}{
+			{name: "matching UID", grant: ds.UID, want: http.StatusOK},
+			{name: "wildcard UID", grant: "*", want: http.StatusOK},
+			{name: "different UID", grant: "other-uid", want: http.StatusForbidden},
+		}
+		for i, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				caller := helper.CreateUser(fmt.Sprintf("resolver-user-%d", i), apis.Org1, org.RoleNone, datasourceReadGrant(tc.grant))
+				paths := []string{fmt.Sprintf("/api/datasources/uid/%s", ds.UID), fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(ds.Name)), fmt.Sprintf("/api/datasources/%d", ds.ID)}
+				for _, path := range paths {
+					t.Run(path, func(t *testing.T) {
+						response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
+						require.Equal(t, tc.want, response.Response.StatusCode, string(response.Body))
+						if tc.want == http.StatusOK {
+							require.Equal(t, ds.UID, response.Result.UID)
+						}
+					})
+				}
+			})
+		}
+	})
+
+	t.Run("missing name preserves scoped and wildcard responses", func(t *testing.T) {
+		for _, tc := range []struct {
+			scope string
+			want  int
+		}{{ds.UID, http.StatusForbidden}, {"*", http.StatusForbidden}} {
+			caller := helper.CreateUser(fmt.Sprintf("missing-name-%s", tc.scope), apis.Org1, org.RoleNone, datasourceReadGrant(tc.scope))
+			response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: "/api/datasources/name/missing-name"}, &dtos.DataSource{})
+			require.Equal(t, tc.want, response.Response.StatusCode, string(response.Body))
+		}
+	})
+
+	t.Run("name cache is isolated by organization", func(t *testing.T) {
+		name := "Same name in two organizations"
+		first := createResolverDataSource(t, &env, "org-one-ds", name, 1)
+		second := createResolverDataSource(t, &env, "org-two-ds", name, helper.OrgB.OrgID)
+		callerA := helper.CreateUser("resolver-org-a", apis.Org1, org.RoleNone, datasourceReadGrant(first.UID))
+		callerBWrong := helper.CreateUser("resolver-org-b-wrong", apis.Org2, org.RoleNone, datasourceReadGrant(first.UID))
+		callerB := helper.CreateUser("resolver-org-b", apis.Org2, org.RoleNone, datasourceReadGrant(second.UID))
+		for _, tc := range []struct {
+			caller apis.User
+			uid    string
+			want   int
+		}{
+			{callerA, first.UID, http.StatusOK}, {callerBWrong, "", http.StatusForbidden}, {callerB, second.UID, http.StatusOK}, {callerA, first.UID, http.StatusOK},
+		} {
+			response := apis.DoRequest(helper, apis.RequestParams{User: tc.caller, Method: http.MethodGet, Path: fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(name))}, &dtos.DataSource{})
+			require.Equal(t, tc.want, response.Response.StatusCode, string(response.Body))
+			if tc.want == http.StatusOK {
+				require.Equal(t, tc.uid, response.Result.UID)
+			}
+		}
+	})
+
+	t.Run("deleting and recreating a name invalidates its resolved UID", func(t *testing.T) {
+		original := createResolverDataSource(t, &env, "before-recreate", "Reused name", 1)
+		caller := helper.CreateUser("before-recreate-user", apis.Org1, org.RoleNone, datasourceReadGrant(original.UID))
+		path := fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(original.Name))
+		warm := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
+		require.Equal(t, http.StatusOK, warm.Response.StatusCode)
+		require.Equal(t, original.UID, warm.Result.UID)
+
+		removed := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodDelete, Path: fmt.Sprintf("/api/datasources/uid/%s", original.UID)}, &struct{}{})
+		require.Equal(t, http.StatusOK, removed.Response.StatusCode, string(removed.Body))
+		replacement := createResolverDataSource(t, &env, "after-recreate", original.Name, 1)
+
+		// Deletion also removes grants, so restore the old UID grant to isolate resolver invalidation.
+		oldCaller := helper.CreateUser("old-uid-after-recreate", apis.Org1, org.RoleNone, datasourceReadGrant(original.UID))
+		denied := apis.DoRequest(helper, apis.RequestParams{User: oldCaller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
+		require.Equal(t, http.StatusForbidden, denied.Response.StatusCode)
+
+		newCaller := helper.CreateUser("new-uid-after-recreate", apis.Org1, org.RoleNone, datasourceReadGrant(replacement.UID))
+		allowed := apis.DoRequest(helper, apis.RequestParams{User: newCaller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
+		require.Equal(t, http.StatusOK, allowed.Response.StatusCode, string(allowed.Body))
+		require.Equal(t, replacement.UID, allowed.Result.UID)
+	})
 }
 
 // getTestModes returns the test configurations to run tests against
@@ -1061,4 +1160,21 @@ func createUserWithPermissions(
 	cacheResp, err := http.Get(cacheURL) // nolint:gosec
 	require.NoError(t, err)
 	require.NoError(t, cacheResp.Body.Close())
+}
+
+func datasourceReadGrant(uid string) []resourcepermissions.SetResourcePermissionCommand {
+	return []resourcepermissions.SetResourcePermissionCommand{{
+		Actions: []string{datasources.ActionRead}, Resource: "datasources", ResourceAttribute: "uid", ResourceID: uid,
+	}}
+}
+
+func createResolverDataSource(t *testing.T, env *server.TestEnv, uid, name string, orgID int64) *datasources.DataSource {
+	t.Helper()
+
+	ds, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
+		OrgID: orgID, UID: uid, Name: name, Type: datasources.DS_TESTDATA, Access: datasources.DS_ACCESS_PROXY,
+	})
+	require.NoError(t, err)
+
+	return ds
 }
