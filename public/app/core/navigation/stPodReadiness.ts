@@ -1,4 +1,4 @@
-export type StPodStatus = 'unknown' | 'waiting' | 'ready' | 'gaveUp';
+type StPodStatus = 'unknown' | 'waiting' | 'ready' | 'gaveUp';
 
 let status: StPodStatus = 'unknown';
 
