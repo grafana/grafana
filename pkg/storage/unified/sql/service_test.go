@@ -73,6 +73,14 @@ func (s *embeddedErrorServer) Search(context.Context, *resourcepb.ResourceSearch
 	return &resourcepb.ResourceSearchResponse{Error: s.failure}, nil
 }
 
+func (s *embeddedErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+	return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: s.failure})
+}
+
+func (s *embeddedErrorServer) GetBlobStream(_ *resourcepb.GetBlobRequest, stream resourcepb.BlobStoreStreaming_GetBlobStreamServer) error {
+	return stream.Send(&resourcepb.GetBlobResponse{Error: s.failure})
+}
+
 func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
 	failure := &resourcepb.ErrorResult{Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "missing", Details: &resourcepb.ErrorDetails{Name: "item"}}
 	for _, enabled := range []bool{false, true} {
@@ -106,6 +114,18 @@ func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
 				if !standalone {
 					readResp, err := resourcepb.NewResourceStoreClient(conn).Read(t.Context(), &resourcepb.ReadRequest{})
 					check(readResp.GetError(), err)
+
+					blobs := resourcepb.NewBlobStoreStreamingClient(conn)
+					put, err := blobs.PutBlobStream(t.Context())
+					require.NoError(t, err)
+					require.NoError(t, put.Send(&resourcepb.PutBlobRequest{}))
+					putResp, err := put.CloseAndRecv()
+					check(putResp.GetError(), err)
+
+					get, err := blobs.GetBlobStream(t.Context(), &resourcepb.GetBlobRequest{})
+					require.NoError(t, err)
+					getResp, err := get.Recv()
+					check(getResp.GetError(), err)
 				}
 			})
 		}
