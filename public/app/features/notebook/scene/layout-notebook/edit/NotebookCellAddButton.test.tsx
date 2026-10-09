@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from 'test/test-utils';
+import { fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -66,6 +66,20 @@ describe('NotebookCellAddButton', () => {
 
     const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
     expect(submenu.getByRole('menuitem', { name: 'New from Saved Queries' })).toBeInTheDocument();
+  });
+
+  // The Saved Queries picker opens on top, so a menu left open would overlap it.
+  it('closes its menu when "New from Saved Queries" is picked', async () => {
+    const onAddSavedQuery = jest.fn();
+    const { user } = render(<NotebookCellAddButton index={1} onAddSavedQuery={onAddSavedQuery} />);
+
+    await user.click(screen.getByRole('button', { name: 'Click to add above' }));
+    fireEvent.keyDown(screen.getByRole('menuitem', { name: 'Visualization' }), { key: 'ArrowRight' });
+    const submenu = within(await screen.findByTestId(selectors.components.Menu.SubMenu.container));
+    fireEvent.click(submenu.getByRole('menuitem', { name: 'New from Saved Queries' }));
+
+    expect(onAddSavedQuery).toHaveBeenCalledWith(1);
+    await waitFor(() => expect(screen.queryByRole('menuitem', { name: 'Visualization' })).not.toBeInTheDocument());
   });
 
   it('does not offer "New from Saved Queries" when onAddSavedQuery is omitted', async () => {

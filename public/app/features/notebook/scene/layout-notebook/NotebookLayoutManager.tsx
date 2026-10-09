@@ -40,7 +40,6 @@ import { isNotebookScene } from '../isNotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookDocumentHeader } from './NotebookDocumentHeader';
-import { applyQueries } from './applyQueries';
 import { isDiscardableContent, isEmptyMarkdown } from './cellEmptiness';
 import { buildCellSceneTimeRange, type CellTimeRangeSpec } from './cellTimeRange';
 import { type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
@@ -542,10 +541,9 @@ export class NotebookLayoutManager
    * content-diffing undo/coalescing machinery, which is built around comparing two CellContentKind
    * values and doesn't apply to a content -> body transition.
    */
-  private convertCellToPanel(cell: NotebookCellItem): void {
+  private convertCellToPanel(cell: NotebookCellItem, panel: VizPanel = this.buildVisualizationPanel()): void {
     const previousContent = cell.state.content;
     const previousElementName = cell.state.elementName;
-    const panel = this.buildVisualizationPanel();
     // A sibling cell may legally still reference previousElementName (see onContentChange); give the
     // converted cell a fresh one only then, so serialize() doesn't collapse both into one entry.
     const hasSharedName = this.state.cells.some(
@@ -598,14 +596,18 @@ export class NotebookLayoutManager
    * `content` — see buildVisualizationPanel and this file's own header comment on why a query-first
    * cell is a Panel element, not a bespoke content kind.
    */
-  private buildCellFor(type: NotebookBlockType, index: number): { cell: NotebookCellItem; index: number } | undefined {
+  private buildCellFor(
+    type: NotebookBlockType,
+    index: number,
+    panel?: VizPanel
+  ): { cell: NotebookCellItem; index: number } | undefined {
     const clampedIndex = Math.max(0, Math.min(index, this.state.cells.length));
 
     if (type === 'visualization') {
       const cell = new NotebookCellItem({
         elementName: this.nextElementName(type),
         source: 'user',
-        body: this.buildVisualizationPanel(),
+        body: panel ?? this.buildVisualizationPanel(),
       });
       return { cell, index: clampedIndex };
     }
@@ -671,8 +673,11 @@ export class NotebookLayoutManager
     query: DataQuery,
     title?: string
   ): Promise<NotebookCellItem | undefined> => {
+    const panel = await this.buildSavedQueryPanel(query, title);
+
+    // Clamped only now: the cells list may have changed while the suggestion was being looked up.
     index = this.clampBeforeTrailingSlot(index);
-    const built = this.buildCellFor('visualization', index);
+    const built = this.buildCellFor('visualization', index, panel);
     if (!built) {
       return undefined;
     }
@@ -684,7 +689,6 @@ export class NotebookLayoutManager
       undo: () => this.removeCellInstance(built.cell),
     });
 
-    await this.applySavedQueryToCell(built.cell, query, title);
     return built.cell;
   };
 
@@ -694,24 +698,25 @@ export class NotebookLayoutManager
     query: DataQuery,
     title?: string
   ): Promise<void> => {
-    this.convertCellToPanel(cell);
-    await this.applySavedQueryToCell(cell, query, title);
+    const panel = await this.buildSavedQueryPanel(query, title);
+    // Deleted (or undone away) while the suggestion was being looked up.
+    if (!this.state.cells.includes(cell)) {
+      return;
+    }
+    this.convertCellToPanel(cell, panel);
   };
 
   /**
-   * Applies `query`'s top viz suggestion to `cell`'s panel and sets the query on its runner —
-   * mirrors Dashboards' Unconfigured Panel "Use saved query" flow, minus its DashboardScene coupling.
-   * Still applies the query when no suggestion comes back, falling back to the panel's default viz.
+   * Builds a detached panel carrying `query`'s top viz suggestion, title and query — mirrors
+   * Dashboards' Unconfigured Panel "Use saved query" flow, minus its DashboardScene coupling.
+   * Fully configured before it's attached so the whole pick lands as one undo step, and nothing
+   * is inserted until the (async) suggestion lookup is done.
    */
-  private async applySavedQueryToCell(cell: NotebookCellItem, query: DataQuery, title?: string): Promise<void> {
-    const panel = cell.state.body;
-    if (!panel) {
-      return;
-    }
+  private async buildSavedQueryPanel(query: DataQuery, title?: string): Promise<VizPanel> {
+    const panel = this.buildVisualizationPanel();
 
-    // Shared by "no suggestion returned" and "suggestion lookup/apply threw" below: either way the
-    // query still gets applied with the panel's default viz, so this is a warning, not an error — an
-    // "apply failed, try again" toast would invite a retry that inserts or converts a second cell.
+    // A lookup miss or failure still applies the query with the default viz, so this is a warning,
+    // not an error — an "apply failed, try again" toast would invite a retry that adds a second cell.
     const warnNoSuggestion = () =>
       appEvents.emit(AppEvents.alertWarning, [
         t('notebook.add-block.saved-query-no-suggestion', 'No visualization found'),
@@ -725,7 +730,12 @@ export class NotebookLayoutManager
       const timeRange = sceneGraph.getTimeRange(this).state.value;
       const suggestion = await getVizSuggestionForQuery(query, timeRange);
       if (suggestion) {
-        await panel.changePluginType(suggestion.pluginId, suggestion.options ?? {}, suggestion.fieldConfig);
+        // Plain state, not changePluginType: the plugin loads (and fills in defaults) on activation.
+        panel.setState({
+          pluginId: suggestion.pluginId,
+          options: suggestion.options ?? {},
+          fieldConfig: suggestion.fieldConfig ?? { defaults: {}, overrides: [] },
+        });
       } else {
         warnNoSuggestion();
       }
@@ -734,19 +744,17 @@ export class NotebookLayoutManager
     }
 
     if (title) {
-      panel.setState({ title });
+      panel.setState({ title, hoverHeader: false });
     }
 
-    const runner = this.getQueryRunnerForCell(cell);
+    // Written straight to the runner, not through applyQueries, which would record its own undo step.
+    // The runner runs it on activation.
+    const runner = getQueryRunnerFor(panel);
     if (runner) {
-      applyQueries(
-        cell,
-        runner,
-        [{ ...query, refId: query.refId || 'A' }],
-        t('notebooks.history.add-block', 'Add block')
-      );
-      runner.runQueries();
+      setQueryRunnerQueries(runner, [{ ...query, refId: query.refId || 'A' }]);
     }
+
+    return panel;
   }
 
   /**

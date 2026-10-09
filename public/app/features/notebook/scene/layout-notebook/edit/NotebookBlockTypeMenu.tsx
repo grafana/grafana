@@ -107,26 +107,21 @@ export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
         // A plain array, not a component that could render null: Menu.Item opens a submenu based on
         // childItems.length alone, which would still be > 0 for a null child.
         //
-        // Each child stops propagation itself, or the click bubbles to the parent's own onClick
-        // (its guard only holds while its submenu is closed) and fires the plain insert too.
+        // Child clicks must keep bubbling — a host Dropdown only closes on a click that reaches its
+        // overlay wrapper — so the parent's own onClick filters them out instead of children stopping
+        // propagation.
         const childItems = [
           <Menu.Item
             key="new-visualization"
             icon="plus"
             label={t('notebook.add-block.new-visualization', 'New Visualization')}
-            onClick={(event) => {
-              event.stopPropagation();
-              onPick?.(option.type);
-            }}
+            onClick={() => onPick?.(option.type)}
           />,
           <Menu.Item
             key="new-from-saved-queries"
             icon="book-open"
             label={t('notebook.add-block.new-from-saved-queries', 'New from Saved Queries')}
-            onClick={(event) => {
-              event.stopPropagation();
-              onPickSavedQuery();
-            }}
+            onClick={onPickSavedQuery}
           />,
         ];
 
@@ -135,7 +130,12 @@ export function NotebookBlockTypeMenu({ onPick, onPickSavedQuery }: Props) {
             key={option.type}
             icon={option.icon}
             label={option.label}
-            onClick={() => onPick?.(option.type)}
+            onClick={(event) => {
+              const clickedItem = event.target instanceof Element ? event.target.closest('[role="menuitem"]') : null;
+              if (clickedItem === event.currentTarget) {
+                onPick?.(option.type);
+              }
+            }}
             childItems={childItems}
           />
         );

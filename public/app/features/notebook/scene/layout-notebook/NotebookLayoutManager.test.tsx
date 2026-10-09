@@ -948,24 +948,38 @@ describe('NotebookLayoutManager', () => {
     it('inserts a visualization cell at the given index and applies the suggested viz type and the query', async () => {
       mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
       const manager = buildManager(buildNarrativeCells(['a', 'b']));
-      const changePluginType = jest.spyOn(VizPanel.prototype, 'changePluginType').mockResolvedValue(undefined);
 
       const cell = await manager.addCellFromSavedQuery(1, query, 'My query title');
 
       expect(cellNames(manager)).toEqual(['a', 'visualization-1', 'b']);
-      expect(changePluginType).toHaveBeenCalledWith(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
-      expect(cell?.state.body?.state.title).toBe('My query title');
+      expect(cell?.state.body?.state).toMatchObject({
+        pluginId: suggestion.pluginId,
+        options: suggestion.options,
+        fieldConfig: suggestion.fieldConfig,
+        title: 'My query title',
+        hoverHeader: false,
+      });
       expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
+    });
+
+    it('records the whole pick as a single undo step', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const manager = buildManager(buildNarrativeCells(['a', 'b']));
+      const history = attachHistory(manager);
+
+      await manager.addCellFromSavedQuery(1, query, 'My query title');
+      history.undo();
+
+      expect(cellNames(manager)).toEqual(['a', 'b']);
+      expect(history.state.canUndo).toBe(false);
     });
 
     it('still applies the query when no suggestion is found, falling back to the default viz', async () => {
       mockGetVizSuggestionForQuery.mockResolvedValue(undefined);
       const manager = buildManager(buildNarrativeCells(['a']));
-      const changePluginType = jest.spyOn(VizPanel.prototype, 'changePluginType');
 
       const cell = await manager.addCellFromSavedQuery(1, query);
 
-      expect(changePluginType).not.toHaveBeenCalled();
       expect(cell?.state.body?.state.pluginId).toBe('timeseries');
       expect(getQueryRunnerFor(cell?.state.body)?.state.queries).toEqual([query]);
     });
@@ -1024,14 +1038,42 @@ describe('NotebookLayoutManager', () => {
         content: { kind: 'Markdown', spec: { text: '' } },
       });
       const manager = buildManager([...buildNarrativeCells(['a', 'b']), trailing]);
-      const changePluginType = jest.spyOn(VizPanel.prototype, 'changePluginType').mockResolvedValue(undefined);
 
       await manager.convertCellFromSavedQuery(trailing, query);
 
       expect(cellNames(manager)).toEqual(['a', 'b', 'paragraph-1']);
       expect(trailing.state.content).toBeUndefined();
-      expect(changePluginType).toHaveBeenCalledWith(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
+      expect(trailing.state.body?.state.pluginId).toBe(suggestion.pluginId);
       expect(getQueryRunnerFor(trailing.state.body)?.state.queries).toEqual([query]);
+    });
+
+    it('records the conversion as a single undo step', async () => {
+      mockGetVizSuggestionForQuery.mockResolvedValue(suggestion);
+      const [a, b] = buildNarrativeCells(['a', 'b']);
+      const manager = buildManager([a, b]);
+      const history = attachHistory(manager);
+      const before = b.state.content;
+
+      await manager.convertCellFromSavedQuery(b, query);
+      history.undo();
+
+      expect(b.state.body).toBeUndefined();
+      expect(b.state.content).toEqual(before);
+      expect(history.state.canUndo).toBe(false);
+    });
+
+    it('leaves a cell deleted during the suggestion lookup alone', async () => {
+      let resolveSuggestion: (value: typeof suggestion) => void = () => {};
+      mockGetVizSuggestionForQuery.mockReturnValue(new Promise((resolve) => (resolveSuggestion = resolve)));
+      const [a, b] = buildNarrativeCells(['a', 'b']);
+      const manager = buildManager([a, b]);
+
+      const pending = manager.convertCellFromSavedQuery(b, query);
+      manager.setState({ cells: [a] });
+      resolveSuggestion(suggestion);
+      await pending;
+
+      expect(b.state.body).toBeUndefined();
     });
   });
 
