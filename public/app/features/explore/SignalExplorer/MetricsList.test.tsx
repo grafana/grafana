@@ -440,6 +440,18 @@ describe('<MetricsList />', () => {
       expect(useMetricDetailMock).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' }, timeRange, 'up');
     });
 
+    // The key truncates with an ellipsis, so hovering is the only way to read a long one in full.
+    it('exposes the full label key on hover', async () => {
+      const longKey = 'kubernetes_pod_controller_revision_hash';
+      setCatalog([row('up')]);
+      setLabelKeys([longKey]);
+      renderList();
+
+      await expandMetric('up');
+
+      expect(screen.getByRole('button', { name: `Show values for ${longKey}` })).toHaveAttribute('title', longKey);
+    });
+
     it('collapses again, unmounting the labels', async () => {
       setCatalog([row('up')]);
       setLabelKeys(['job']);
@@ -621,6 +633,17 @@ describe('<MetricsList />', () => {
 
       expect(screen.getByText('web-1')).toBeInTheDocument();
       expect(useLabelValuesMock).toHaveBeenCalledWith({ uid: 'prom-uid', type: 'prometheus' }, timeRange, 'up', 'job');
+    });
+
+    // The row truncates with an ellipsis, so hovering is the only way to read a long value in full.
+    it('exposes the full value on hover', async () => {
+      const longValue = 'kube-prometheus-stack-prometheus-node-exporter-7f9c8d6b5-abcde';
+      setLabelValues([longValue]);
+      await openJob();
+
+      await expandLabel('job');
+
+      expect(screen.getByText(longValue)).toHaveAttribute('title', longValue);
     });
 
     it('renders only the first batch of a high-cardinality label', async () => {
