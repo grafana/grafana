@@ -33,7 +33,9 @@ export function SimplifiedRoutingFields({
   disabledReason,
 }: SimplifiedRoutingFieldsProps) {
   const styles = useStyles2(getStyles);
-  const { isError: isTimeIntervalsError } = useListTimeIntervals();
+  const { isError, currentData } = useListTimeIntervals();
+  // A refetch that fails keeps the last good list, which the selects still offer.
+  const isTimeIntervalsError = isError && !currentData;
   const disabled = Boolean(disabledReason);
 
   const hasRouteSettings = Boolean(

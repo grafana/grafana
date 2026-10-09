@@ -1,11 +1,18 @@
+import { type ThunkDispatch, type UnknownAction } from '@reduxjs/toolkit';
+import { act, waitFor } from '@testing-library/react';
+import { HttpResponse } from 'msw';
+
 import { setupMockServer } from '@grafana/test-utils/server';
 
+import { store } from '../../../../../tests/provider';
 import { render, screen } from '../../../../../tests/test-utils';
+import { notificationsAPI } from '../../../api/notifications';
 import {
   ListTimeIntervalApiResponseFactory,
   TimeIntervalFactory,
 } from '../../../api/notifications/v1beta1/mocks/fakes/TimeIntervals';
 import { listTimeIntervalHandler } from '../../../api/notifications/v1beta1/mocks/handlers/TimeIntervalHandlers/listTimeIntervalHandler';
+import { useListTimeIntervals } from '../../../muteTimings/hooks/useListTimeIntervals';
 
 import { SimplifiedRoutingFields } from './SimplifiedRoutingFields';
 
@@ -187,5 +194,49 @@ describe('SimplifiedRoutingFields', () => {
     expect(screen.queryByText(/grouping:/i)).not.toBeInTheDocument();
     expect(screen.getByLabelText(/^group by$/i)).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: /override grouping/i })).toBeChecked();
+  });
+
+  describe('time intervals warning', () => {
+    const warning = /could not load mute\/active timings/i;
+
+    // Shares the cache entry, so it shows when the failed request has actually landed.
+    function QueryStatus() {
+      const { isError } = useListTimeIntervals();
+      return <span data-testid="query-status">{isError ? 'error' : 'ok'}</span>;
+    }
+
+    function renderWithStatus() {
+      return render(
+        <>
+          <QueryStatus />
+          <SimplifiedRoutingFields value={{}} onChange={jest.fn()} />
+        </>
+      );
+    }
+
+    it('warns when the time intervals could not be loaded at all', async () => {
+      server.use(listTimeIntervalHandler(() => new HttpResponse(null, { status: 500 })));
+
+      const { user } = renderWithStatus();
+      await user.click(screen.getByRole('button', { name: /muting, grouping and timings/i }));
+
+      expect(await screen.findByText(warning)).toBeInTheDocument();
+    });
+
+    it('does not warn when a later refetch fails, since the loaded intervals are still offered', async () => {
+      const { user } = renderWithStatus();
+      await user.click(screen.getByRole('button', { name: /muting, grouping and timings/i }));
+      await screen.findByLabelText(/mute timings/i);
+      expect(screen.getByTestId('query-status')).toHaveTextContent('ok');
+
+      server.use(listTimeIntervalHandler(() => new HttpResponse(null, { status: 500 })));
+      const dispatch = store.dispatch as ThunkDispatch<unknown, unknown, UnknownAction>;
+      await act(async () => {
+        await dispatch(notificationsAPI.endpoints.listTimeInterval.initiate({}, { forceRefetch: true }));
+      });
+
+      await waitFor(() => expect(screen.getByTestId('query-status')).toHaveTextContent('error'));
+      expect(screen.queryByText(warning)).not.toBeInTheDocument();
+    });
   });
 });
