@@ -78,11 +78,13 @@ interface BaseDrawerProps {
   successMessage?: string;
   /** Message shown when the repository can't be edited from the UI. */
   readOnlyMessage?: string;
+  /** Directory for a new resource's file, with a trailing slash. Defaults to the repository root. */
+  directory?: string;
   /** Prefix for generated branch names. Defaults to the kind's key. */
   branchPrefix?: string;
   onDismiss?: () => void;
   /** Override the default post-commit (configured-branch) navigation to the kind's list page. */
-  onWriteSuccess?: () => void;
+  onWriteSuccess?: (resource: unknown) => void;
   /** Override the default post-push (PR workflow) navigation to the kind's list page. */
   onBranchSuccess?: (data: {
     ref: string;
@@ -117,7 +119,7 @@ interface FormProps {
   repository?: RepositoryView;
   canPushToConfiguredBranch: boolean;
   onDismiss?: () => void;
-  onWriteSuccess?: () => void;
+  onWriteSuccess?: (resource: unknown) => void;
   onBranchSuccess?: SaveProvisionedResourceDrawerProps['onBranchSuccess'];
 }
 
@@ -194,7 +196,7 @@ function FormContent({
     successMessage,
     handlers: {
       onDismiss,
-      onWriteSuccess: () => writeSuccess(),
+      onWriteSuccess: (resource) => writeSuccess(resource),
       // Branch (PR) workflow: pass the repo info so the destination page can render the PR banner.
       onBranchSuccess: ({ ref, urls }) =>
         branchSuccess({
@@ -311,6 +313,7 @@ function ResourceDrawerContent({
   repositoryName,
   successMessage,
   readOnlyMessage,
+  directory = '',
   branchPrefix,
   onDismiss,
   onWriteSuccess,
@@ -334,7 +337,7 @@ function ResourceDrawerContent({
           annotations: {
             [AnnoKeyManagerKind]: ManagerKind.Repo,
             [AnnoKeyManagerIdentity]: repositoryName ?? '',
-            [AnnoKeySourcePath]: getNewResourcePath(title, kind.key),
+            [AnnoKeySourcePath]: directory + getNewResourcePath(title, kind.key),
           },
         },
       }
