@@ -2,7 +2,8 @@
 
 The `provisioning` namespace in `@grafana/runtime` lets an app plugin support Git Sync for its own
 kinds. It has three parts: helpers that read the manager annotations, a registration call for the
-kinds the app serves, and two exposed UI components.
+kinds the app serves, and three exposed UI components. `grafana/app-examples/example-gitsync-app`
+shows the full flow.
 
 ```ts
 import { provisioning, usePluginComponent } from '@grafana/runtime';
@@ -88,11 +89,26 @@ const { component: SaveDrawer } = usePluginComponent<provisioning.SaveResourceDr
 Results:
 
 - `onWriteSuccess(resource)`: the commit went to the configured branch and Grafana stored the resource.
-- `onBranchSuccess({ ref, pullRequestUrl, repositoryUrl })`: the commit went to another branch. The
-  resource is not in Grafana until the branch merges and the repository syncs.
+- `onBranchSuccess(commit)`: the commit went to another branch. The resource is not in Grafana until
+  the branch merges and the repository syncs. Pass `commit` to the pull request banner (step 5).
 - `onDismiss()`: the user closed the drawer.
 
-For `update` and `delete`, pass the stored resource; its annotations name the repository.
+For `update` and `delete` of a managed resource, open the drawer directly with the stored resource;
+its annotations name the repository. A direct API write to a managed resource also works: Grafana
+commits it to the configured branch. The drawer adds the choice of a branch and a pull request.
+
+## 5. Show the pull request banner
+
+After `onBranchSuccess`, keep the commit data in state and render the banner at the top of the page.
+It is the banner that dashboards show, with the branch names and an "Open pull request" link.
+
+```tsx
+const { component: PullRequestBanner } = usePluginComponent<provisioning.PullRequestBannerProps>(
+  provisioning.PullRequestBannerComponent
+);
+
+{commit && PullRequestBanner && <PullRequestBanner {...commit} action="create" />}
+```
 
 ## Backend requirements
 
