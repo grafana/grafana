@@ -1299,7 +1299,8 @@ func (s *Service) listPermission(ctx context.Context, scopeMap map[string]bool, 
 		return s.listPermissionWithFolderAuthz(ctx, scopeMap, req)
 	}
 
-	if scopeMap["*"] {
+	// As in Check, verbs that skip scope accept an unscoped action grant.
+	if scopeMap["*"] || (t.SkipScope(req.Verb) && scopeMap[""]) {
 		return &authzv1.ListResponse{
 			All:    true,
 			Zookie: &authzv1.Zookie{Timestamp: time.Now().Unix()},

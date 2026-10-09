@@ -1185,7 +1185,7 @@ func TestIntegrationRBACParityServiceAccountPermissions(t *testing.T) {
 		{"", "", map[string]bool{}},
 	}
 	for _, source := range []string{"role", "resource-permission"} {
-		for _, scope := range []string{"serviceaccounts:uid:" + uid, "serviceaccounts:uid:*", ""} {
+		for _, scope := range []string{"serviceaccounts:uid:" + uid, "serviceaccounts:uid:*", "serviceaccounts:*", ""} {
 			for _, grant := range grants {
 				unscoped := grant.action == "serviceaccounts:create" || grant.action == ""
 				if unscoped != (scope == "") {
@@ -1227,7 +1227,7 @@ func TestIntegrationRBACParityServiceAccountPermissions(t *testing.T) {
 								names = []string{""}
 							}
 							for _, name := range names {
-								allowed := grant.allowed[verb] && (unscoped || scope == "serviceaccounts:uid:*" || name == uid)
+								allowed := grant.allowed[verb] && (unscoped || strings.HasSuffix(scope, ":*") || name == uid)
 								id := verb + "-" + name
 								expectedBatch[id] = allowed
 								batch.Checks = append(batch.Checks, &authzv1.BatchCheckItem{CorrelationId: id, Group: group, Resource: resource, Verb: verb, Name: name})
@@ -1244,10 +1244,7 @@ func TestIntegrationRBACParityServiceAccountPermissions(t *testing.T) {
 							t.Run("List", func(t *testing.T) {
 								expected := parityListResult{}
 								if grant.allowed[verb] {
-									if unscoped {
-										// RBAC List currently returns the empty scope as an item.
-										expected.Items = []string{""}
-									} else if scope == "serviceaccounts:uid:*" {
+									if unscoped || strings.HasSuffix(scope, ":*") {
 										expected.All = true
 									} else {
 										expected.Items = []string{uid}
