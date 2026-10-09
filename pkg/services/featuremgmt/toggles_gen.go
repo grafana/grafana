@@ -395,6 +395,10 @@ const (
 	// Route user permission snapshots through the AuthZ service.
 	FlagAuthzUserPermissions = "authz.userPermissions"
 
+	// FlagAuthzUseLegacyCheck
+	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
+	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
+
 	// FlagZanzana
 	// Use openFGA as authorization engine.
 	FlagZanzana = "zanzana"
