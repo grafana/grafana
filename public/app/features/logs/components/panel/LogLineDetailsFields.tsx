@@ -687,7 +687,10 @@ const LinkValuesMenu = ({
                     target={link.target}
                     onClick={(event) => {
                       onLinkClick?.(link);
-                      link.onClick?.(event);
+                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
+                        event.preventDefault();
+                        link.onClick(event);
+                      }
                     }}
                   />
                 </div>
