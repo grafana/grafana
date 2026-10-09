@@ -18,16 +18,18 @@ import {
 } from '@grafana/runtime';
 import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { type Dashboard } from '@grafana/schema';
+import { type Dashboard, type LibraryPanel } from '@grafana/schema';
 import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import * as libraryPanels from 'app/features/library-panels/state/api';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
+import { dashboardViews } from '../scene/dashboardViewRegistry';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
+import { createDeferred, setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
 import { DashboardScenePage, type Props } from './DashboardScenePage';
 import {
@@ -142,6 +144,7 @@ const panelPlugin = getPanelPlugin(
   },
   CustomVizPanel
 );
+panelPlugin.meta.info.logos.small = 'public/build/img/grafana_icon.svg';
 
 beforeEach(() => {
   setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
@@ -178,6 +181,7 @@ describe('DashboardScenePage', () => {
     });
     locationService.push('/d/my-dash-uid');
     getDashboardScenePageStateManager().clearDashboardCache();
+    getDashboardScenePageStateManager().clearSceneCache();
     loadDashboardMock.mockClear();
     loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
@@ -206,6 +210,251 @@ describe('DashboardScenePage', () => {
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
     expect(await screen.findByText('Content B')).toBeInTheDocument();
   });
+
+  it('keeps the page loader until the editor is ready and opens it only once when the URL normalizes', async () => {
+    loadDashboardMock.mockResolvedValue({ dashboard: cloneDeep(simpleDashboard), meta: { slug: '123' } });
+    const pending = createDeferred<void>();
+    const original = dashboardViews.editPanel;
+    const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+      const view = original(...args);
+      return {
+        ...view,
+        load: async (signal) => {
+          await pending.promise;
+          return view.load(signal);
+        },
+      };
+    });
+    locationService.push('/d/my-dash-uid?editPanel=panel-1&from=now-6h&to=now&var-team=frontend');
+    try {
+      setup();
+      await waitFor(() => expect(loadEditor).toHaveBeenCalled());
+      expect(screen.getByText('Loading ...')).toBeInTheDocument();
+      expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+      await act(async () => pending.resolve());
+      expect(await screen.findByText('Panel options')).toBeInTheDocument();
+      expect(loadEditor).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
+      expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+      expect(locationService.getSearchObject()).toMatchObject({
+        editPanel: '1',
+        from: 'now-6h',
+        to: 'now',
+        'var-team': 'frontend',
+      });
+    } finally {
+      loadEditor.mockRestore();
+    }
+  });
+
+  it('restores dashboard scroll position after loading and closing the panel editor', async () => {
+    const ready = createDeferred<void>();
+    const original = dashboardViews.editPanel;
+    const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+      const view = original(...args);
+      return {
+        ...view,
+        load: async (signal) => {
+          await ready.promise;
+          return view.load(signal);
+        },
+      };
+    });
+    try {
+      setup();
+      expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+      const scene = getDashboardScenePageStateManager().getCache()['my-dash-uid'];
+      const scroll = { scrollTop: 420, scrollTo: jest.fn() };
+      scene.onSetScrollRef(scroll);
+      // Keep a measurable scroll surface across Page remounts; jsdom has no layout or scrolling.
+      const setScrollRef = jest.spyOn(scene, 'onSetScrollRef').mockImplementation(() => {});
+      const remember = jest.spyOn(scene, 'rememberScrollPos');
+      const restore = jest.spyOn(scene, 'restoreScrollPos');
+      try {
+        act(() => locationService.partial({ editPanel: 'panel-1' }));
+        expect(await screen.findByText('Loading ...')).toBeInTheDocument();
+        expect(remember).toHaveBeenCalledTimes(1);
+        scroll.scrollTop = 0;
+        await act(async () => ready.resolve());
+        expect(await screen.findByText('Panel options')).toBeInTheDocument();
+        expect(remember).toHaveBeenCalledTimes(1);
+        expect(restore).not.toHaveBeenCalled();
+        act(() => locationService.partial({ editPanel: null }));
+        expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
+        expect(scroll.scrollTo).toHaveBeenCalledWith(0, 420);
+      } finally {
+        setScrollRef.mockRestore();
+        remember.mockRestore();
+        restore.mockRestore();
+      }
+    } finally {
+      cleanup();
+      loadEditor.mockRestore();
+    }
+  });
+
+  it('leaves the page loader when editing a mounted library panel whose fetch fails', async () => {
+    const { pending, fetchPanel } = mockPendingLibraryPanel();
+
+    try {
+      setup();
+      expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+      expect(fetchPanel).toHaveBeenCalledWith('library-a', true);
+      act(() => locationService.partial({ editPanel: 'panel-1' }));
+      expect(await screen.findByText('Loading ...')).toBeInTheDocument();
+      expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+
+      await act(async () => pending.reject(new Error('Library panel unavailable')));
+
+      expect(await screen.findByTestId(selectors.components.Panels.Panel.status('error'))).toBeInTheDocument();
+      expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
+    } finally {
+      cleanup();
+      fetchPanel.mockRestore();
+    }
+  });
+
+  it.each(['mounted dashboard', 'direct URL'])(
+    'keeps the loader through library resolution and editor loading from a %s',
+    async (entry) => {
+      const { pending, fetchPanel, libraryPanel } = mockPendingLibraryPanel();
+      const editorReady = createDeferred<void>();
+      const original = dashboardViews.editPanel;
+      const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+        const view = original(...args);
+        return {
+          ...view,
+          load: async (signal) => {
+            await editorReady.promise;
+            return view.load(signal);
+          },
+        };
+      });
+
+      try {
+        if (entry === 'direct URL') {
+          locationService.partial({ editPanel: 'panel-1' });
+        }
+        setup();
+        if (entry === 'mounted dashboard') {
+          expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+          act(() => locationService.partial({ editPanel: 'panel-1' }));
+        }
+        await waitFor(() => expect(fetchPanel).toHaveBeenCalledWith('library-a', true));
+        const loader = screen.getByText('Loading ...');
+        expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+
+        await act(async () => pending.resolve(libraryPanel));
+
+        await waitFor(() => expect(loadEditor).toHaveBeenCalled());
+        expect(loader).toBeInTheDocument();
+        expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+        expect(screen.queryByText('Panel options')).not.toBeInTheDocument();
+
+        await act(async () => editorReady.resolve());
+
+        expect(await screen.findByText('Panel options')).toBeInTheDocument();
+        expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+        expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
+      } finally {
+        cleanup();
+        fetchPanel.mockRestore();
+        loadEditor.mockRestore();
+      }
+    }
+  );
+
+  it.each([
+    { action: 'closing', editPanel: undefined },
+    { action: 'replacing', editPanel: 'panel-2' },
+  ])('ignores a late library response after $action the pending editor', async ({ editPanel }) => {
+    const { pending, fetchPanel, libraryPanel } = mockPendingLibraryPanel();
+
+    try {
+      const { unmount } = setup();
+      expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+      const scene = getDashboardScenePageStateManager().getCache()['my-dash-uid'];
+      const panel = dashboardSceneGraph.getVizPanels(scene)[0];
+      act(() => locationService.partial({ editPanel: 'panel-1' }));
+      expect(await screen.findByText('Loading ...')).toBeInTheDocument();
+
+      act(() => locationService.partial({ editPanel }));
+
+      expect(await screen.findByText(editPanel ? 'Panel options' : 'Content B')).toBeInTheDocument();
+      expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
+      expect(locationService.getSearchObject().editPanel).toBe(editPanel ? '2' : undefined);
+      if (editPanel) {
+        expect(panel.isActive).toBe(false);
+      }
+      await act(async () => pending.resolve(libraryPanel));
+      expect(scene.state.editPanel?.state.panelRef.resolve().state.key).toBe(editPanel);
+      expect(screen.getByText(editPanel ? 'Panel options' : 'Content B')).toBeInTheDocument();
+
+      unmount();
+      expect(panel.isActive).toBe(false);
+    } finally {
+      cleanup();
+      fetchPanel.mockRestore();
+    }
+  });
+
+  it.each(['library fetch', 'editor bundle'])(
+    'preserves the replacement editor URL and loader while the previous %s finishes',
+    async (phase) => {
+      const { pending, fetchPanel, libraryPanel } = mockPendingLibraryPanel();
+      const firstEditorReady = createDeferred<void>();
+      const secondEditorReady = createDeferred<void>();
+      const original = dashboardViews.editPanel;
+      const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+        const view = original(...args);
+        const ready = args[0].state.key === 'panel-1' ? firstEditorReady : secondEditorReady;
+        return {
+          ...view,
+          load: async (signal) => {
+            await ready.promise;
+            return view.load(signal);
+          },
+        };
+      });
+
+      try {
+        setup();
+        expect(await screen.findByTitle('Panel A')).toBeInTheDocument();
+        act(() => locationService.partial({ editPanel: 'panel-1' }));
+        const loader = await screen.findByText('Loading ...');
+        if (phase === 'editor bundle') {
+          await act(async () => pending.resolve(libraryPanel));
+          expect(loadEditor).toHaveBeenCalledTimes(1);
+        }
+
+        act(() => locationService.partial({ editPanel: 'panel-2', 'var-team': 'frontend' }));
+
+        expect(locationService.getSearchObject()).toMatchObject({ editPanel: 'panel-2', 'var-team': 'frontend' });
+        expect(loader).toBeInTheDocument();
+        expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+
+        await act(async () => {
+          pending.resolve(libraryPanel);
+          firstEditorReady.resolve();
+        });
+
+        expect(loader).toBeInTheDocument();
+        expect(locationService.getSearchObject().editPanel).toBe('panel-2');
+        expect(screen.queryByText('Panel options')).not.toBeInTheDocument();
+        await act(async () => secondEditorReady.resolve());
+
+        expect(await screen.findByText('Panel options')).toBeInTheDocument();
+        expect(locationService.getSearchObject()).toMatchObject({ editPanel: '2', 'var-team': 'frontend' });
+        const scene = getDashboardScenePageStateManager().getCache()['my-dash-uid'];
+        expect(scene.state.editPanel?.state.panelRef.resolve().state.key).toBe('panel-2');
+        expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
+      } finally {
+        cleanup();
+        fetchPanel.mockRestore();
+        loadEditor.mockRestore();
+      }
+    }
+  );
 
   it('shows Powered by footer in kiosk mode', async () => {
     setup({ routeProps: { queryParams: { kiosk: true } } });
@@ -515,6 +764,27 @@ describe('DashboardScenePage', () => {
     });
   });
 });
+
+function mockPendingLibraryPanel() {
+  const dashboard = cloneDeep(simpleDashboard);
+  dashboard.panels![0] = { ...dashboard.panels![0], libraryPanel: { uid: 'library-a', name: 'Library A' } };
+  loadDashboardMock.mockResolvedValue({ dashboard, meta: { slug: '123', canEdit: true } });
+  const pending = createDeferred<LibraryPanel>();
+  const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+  const libraryPanel: LibraryPanel = {
+    uid: 'library-a',
+    name: 'Library A',
+    type: 'custom-viz-panel',
+    version: 1,
+    model: {
+      type: 'custom-viz-panel',
+      title: 'Panel A',
+      options: { content: 'Library content' },
+      fieldConfig: { defaults: {}, overrides: [] },
+    },
+  };
+  return { pending, fetchPanel, libraryPanel };
+}
 
 interface VizOptions {
   content: string;

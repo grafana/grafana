@@ -308,6 +308,7 @@ function buildFrameShell({
   return `<!doctype html>
 <html>
   <head>
+    <meta http-equiv="x-dns-prefetch-control" content="off">
     ${cspMeta}
     <base target="_blank">
   </head>
