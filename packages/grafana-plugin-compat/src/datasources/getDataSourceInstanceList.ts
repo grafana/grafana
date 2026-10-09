@@ -1,16 +1,24 @@
 /* eslint-disable @grafana/no-get-data-source-srv */
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
-import { type GetDataSourceListFilters, getDataSourceSrv } from '@grafana/runtime';
+import {
+  type GetDataSourceListFilters,
+  getDataSourceSrv,
+  getDataSourceInstanceList as stableGetDataSourceInstanceList,
+} from '@grafana/runtime';
 import {
   type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList as rtGetDataSourceInstanceList,
+  getDataSourceInstanceList as unstableGetDataSourceInstanceList,
 } from '@grafana/runtime/unstable';
 
 export async function getDataSourceInstanceList(
   filters?: GetDataSourceInstanceListFilters
 ): Promise<DataSourceInstanceListItem[]> {
-  if (typeof rtGetDataSourceInstanceList === 'function') {
-    return rtGetDataSourceInstanceList(filters);
+  if (typeof stableGetDataSourceInstanceList === 'function') {
+    return stableGetDataSourceInstanceList(filters);
+  }
+
+  if (typeof unstableGetDataSourceInstanceList === 'function') {
+    return unstableGetDataSourceInstanceList(filters);
   }
 
   return backwardsCompatibleGetDataSourceInstanceList(filters);
