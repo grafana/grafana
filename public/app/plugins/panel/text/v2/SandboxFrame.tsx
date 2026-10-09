@@ -217,7 +217,7 @@ function FrameDocument({
         ? ''
         : `<meta http-equiv="Content-Security-Policy" content="${escape(appliedPolicy)}">`;
     const policyAttribute = appliedPolicy === undefined ? '' : ` data-policy="${escape(appliedPolicy)}"`;
-    return `<!doctype html><html><head>${csp}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(window.location.origin)}"${policyAttribute}>${source.replace(/<\/script/gi, '<\\/script')}</script></body></html>`;
+    return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${csp}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(window.location.origin)}"${policyAttribute}>${source.replace(/<\/script/gi, '<\\/script')}</script></body></html>`;
   }, [appliedPolicy, channel, nonce, source]);
 
   useLayoutEffect(() => {
