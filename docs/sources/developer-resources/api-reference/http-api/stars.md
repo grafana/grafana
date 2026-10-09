@@ -12,14 +12,14 @@ labels:
     - enterprise
     - oss
     - cloud
-title: Collections Stars HTTP API
+title: Stars HTTP API
 weight: 100
 ---
 
-# Collections Stars HTTP API
+# Stars HTTP API
 
 {{< admonition type="note" >}}
-Available in Grafana 13.3 and later.
+Available in Grafana 13 and later.
 
 This API complies with the new Grafana API structure. To learn more refer to documentation about the [API structure in Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/api-reference/http-api/apis).
 
@@ -62,10 +62,6 @@ One endpoint shape now covers every starrable resource instead of one endpoint p
 `PUT /apis/collections.grafana.app/v1alpha1/namespaces/{namespace}/stars/user-{user_uid}/update/{group}/{kind}/{id}`
 
 Stars a resource for the signed-in user.
-
-**Required permissions**
-
-TBC
 
 **Example request**:
 
