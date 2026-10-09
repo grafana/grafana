@@ -515,15 +515,15 @@ type LegacyGetUserPermissionsRequest struct {
 	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// True selects instance-global legacy grants (org zero). When both this and
 	// no_org_membership are false, use the namespace's org. Never crosses tenants.
-	GlobalOrg   bool `protobuf:"varint,3,opt,name=global_org,json=globalOrg,proto3" json:"global_org,omitempty"`
-	ReloadCache bool `protobuf:"varint,4,opt,name=reload_cache,json=reloadCache,proto3" json:"reload_cache,omitempty"`
-	// Bypass Zanzana cache reads AND writes without refreshing legacy caches.
-	SkipZanzanaCache bool `protobuf:"varint,5,opt,name=skip_zanzana_cache,json=skipZanzanaCache,proto3" json:"skip_zanzana_cache,omitempty"`
+	GlobalOrg bool `protobuf:"varint,3,opt,name=global_org,json=globalOrg,proto3" json:"global_org,omitempty"`
 	// Preserve the legacy no-membership state (org -1), not a tenant namespace.
 	// Mutually exclusive with global_org.
 	NoOrgMembership bool `protobuf:"varint,6,opt,name=no_org_membership,json=noOrgMembership,proto3" json:"no_org_membership,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	ReloadCache     bool `protobuf:"varint,4,opt,name=reload_cache,json=reloadCache,proto3" json:"reload_cache,omitempty"`
+	// Bypass Zanzana cache reads AND writes without refreshing legacy caches.
+	SkipZanzanaCache bool `protobuf:"varint,5,opt,name=skip_zanzana_cache,json=skipZanzanaCache,proto3" json:"skip_zanzana_cache,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *LegacyGetUserPermissionsRequest) Reset() {
@@ -577,6 +577,13 @@ func (x *LegacyGetUserPermissionsRequest) GetGlobalOrg() bool {
 	return false
 }
 
+func (x *LegacyGetUserPermissionsRequest) GetNoOrgMembership() bool {
+	if x != nil {
+		return x.NoOrgMembership
+	}
+	return false
+}
+
 func (x *LegacyGetUserPermissionsRequest) GetReloadCache() bool {
 	if x != nil {
 		return x.ReloadCache
@@ -587,13 +594,6 @@ func (x *LegacyGetUserPermissionsRequest) GetReloadCache() bool {
 func (x *LegacyGetUserPermissionsRequest) GetSkipZanzanaCache() bool {
 	if x != nil {
 		return x.SkipZanzanaCache
-	}
-	return false
-}
-
-func (x *LegacyGetUserPermissionsRequest) GetNoOrgMembership() bool {
-	if x != nil {
-		return x.NoOrgMembership
 	}
 	return false
 }
@@ -750,10 +750,10 @@ const file_legacy_authz_proto_rawDesc = "" +
 	"\bidentity\x18\x01 \x01(\v2,.authz.extention.v1.LegacyPermissionIdentityR\bidentity\x12\x1c\n" +
 	"\tnamespace\x18\x02 \x01(\tR\tnamespace\x12\x1d\n" +
 	"\n" +
-	"global_org\x18\x03 \x01(\bR\tglobalOrg\x12!\n" +
+	"global_org\x18\x03 \x01(\bR\tglobalOrg\x12*\n" +
+	"\x11no_org_membership\x18\x06 \x01(\bR\x0fnoOrgMembership\x12!\n" +
 	"\freload_cache\x18\x04 \x01(\bR\vreloadCache\x12,\n" +
-	"\x12skip_zanzana_cache\x18\x05 \x01(\bR\x10skipZanzanaCache\x12*\n" +
-	"\x11no_org_membership\x18\x06 \x01(\bR\x0fnoOrgMembership\"D\n" +
+	"\x12skip_zanzana_cache\x18\x05 \x01(\bR\x10skipZanzanaCache\"D\n" +
 	"\x14LegacyUserPermission\x12\x16\n" +
 	"\x06action\x18\x01 \x01(\tR\x06action\x12\x14\n" +
 	"\x05scope\x18\x02 \x01(\tR\x05scope\"n\n" +
