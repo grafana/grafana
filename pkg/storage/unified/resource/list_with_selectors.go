@@ -373,7 +373,7 @@ func (s *server) authorizeSearchRows(ctx context.Context, rows []listSearchRow) 
 			}
 		}
 	}
-	allowed := make(map[int]bool, len(rows))
+	allowed := make([]bool, len(rows))
 	for i, err := range authz.FilterAuthorized(ctx, s.access, batched, func(i int) authz.BatchCheckItem {
 		row := rows[i]
 		return listAuthorizationItem(row.key, row.key.Name, row.folder, row.resourceVersion)
