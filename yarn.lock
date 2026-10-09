@@ -2124,6 +2124,24 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana-cloud/test-observability@npm:0.8.2":
+  version: 0.8.2
+  resolution: "@grafana-cloud/test-observability@npm:0.8.2::__archiveUrl=https%3A%2F%2Fus-npm.pkg.dev%2Fgrafanalabs-dev%2Fcloud-npm-dev%2F%40grafana-cloud%2Ftest-observability%2F-%2F%40grafana-cloud%2Ftest-observability-0.8.2.tgz"
+  dependencies:
+    "@grafana/faro-instrumentation-replay": "npm:^2.11.0"
+    "@grafana/faro-web-sdk": "npm:^2.11.0"
+    "@grafana/faro-web-tracing": "npm:^2.11.0"
+    "@opentelemetry/api": "npm:^1.9.0"
+    "@opentelemetry/sdk-trace-web": "npm:^2.0.0"
+    uuid: "npm:11.1.0"
+  peerDependencies:
+    "@playwright/test": ^1.53.0
+  bin:
+    grafana-test-observability: dist/cli/upload.mjs
+  checksum: 10/a2fc40523c0a83fedb6ee7028c91754324b177941c09f835125419f9d294f1d3c4d3ee0c9dbd1e5b350735d392b410cf70250c4f7471209e807a24d94a246d50
+  languageName: node
+  linkType: hard
+
 "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor":
   version: 0.0.0-use.local
   resolution: "@grafana-plugins/grafana-azure-monitor-datasource@workspace:public/app/plugins/datasource/azuremonitor"
@@ -2508,7 +2526,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-instrumentation-replay@npm:^2.12.0":
+"@grafana/faro-instrumentation-replay@npm:^2.11.0, @grafana/faro-instrumentation-replay@npm:^2.12.0":
   version: 2.12.1
   resolution: "@grafana/faro-instrumentation-replay@npm:2.12.1"
   dependencies:
@@ -2519,7 +2537,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-sdk@npm:^2.12.0, @grafana/faro-web-sdk@npm:^2.12.1":
+"@grafana/faro-web-sdk@npm:^2.11.0, @grafana/faro-web-sdk@npm:^2.12.0, @grafana/faro-web-sdk@npm:^2.12.1":
   version: 2.12.1
   resolution: "@grafana/faro-web-sdk@npm:2.12.1"
   dependencies:
@@ -2530,7 +2548,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/faro-web-tracing@npm:^2.12.0":
+"@grafana/faro-web-tracing@npm:^2.11.0, @grafana/faro-web-tracing@npm:^2.12.0":
   version: 2.12.1
   resolution: "@grafana/faro-web-tracing@npm:2.12.1"
   dependencies:
@@ -20029,6 +20047,7 @@ __metadata:
     "@floating-ui/dom": "npm:^1.7.6"
     "@floating-ui/react": "npm:0.27.20"
     "@formatjs/intl-durationformat": "npm:^0.11.0"
+    "@grafana-cloud/test-observability": "npm:0.8.2"
     "@grafana/alerting": "workspace:*"
     "@grafana/api-clients": "workspace:*"
     "@grafana/assistant": "npm:0.1.34"
@@ -33865,21 +33884,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"uuid@npm:11.1.0, uuid@npm:^11.0.0, uuid@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "uuid@npm:11.1.0"
+  bin:
+    uuid: dist/esm/bin/uuid
+  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
+  languageName: node
+  linkType: hard
+
 "uuid@npm:14.0.1":
   version: 14.0.1
   resolution: "uuid@npm:14.0.1"
   bin:
     uuid: dist-node/bin/uuid
   checksum: 10/0f978fd5b0269d7acb615342aeb131f0b8d85eeb8ec34f2915d906baa3befcc14a079a430d0f8116aec6fd20c850cbfab65d1b3d1643fa81ed373c0cf9574f18
-  languageName: node
-  linkType: hard
-
-"uuid@npm:^11.0.0, uuid@npm:^11.1.0":
-  version: 11.1.0
-  resolution: "uuid@npm:11.1.0"
-  bin:
-    uuid: dist/esm/bin/uuid
-  checksum: 10/d2da43b49b154d154574891ced66d0c83fc70caaad87e043400cf644423b067542d6f3eb641b7c819224a7cd3b4c2f21906acbedd6ec9c6a05887aa9115a9cf5
   languageName: node
   linkType: hard
 

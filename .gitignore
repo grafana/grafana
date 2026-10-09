@@ -218,6 +218,7 @@ compilation-stats.json
 !/e2e-playwright/extensions/.keep
 /e2e/extensions-suite
 /test-results/
+/test-observability-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
