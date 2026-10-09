@@ -83,6 +83,10 @@ export function getFieldConfigFromFrame(
     config.mappings = combineValueMappings(context);
   }
 
+  if (context.thresholdValues) {
+    combineThresholds(config, context);
+  }
+
   // Threshold steps are pushed in the order their fields appear in the frame.
   // Downstream consumers (getActiveThreshold, the filled-region gradient, ...)
   // assume steps are sorted ascending by value, so mapping more than one field
@@ -98,6 +102,8 @@ interface FieldToConfigContext {
   mappingValues?: unknown[];
   mappingColors?: string[];
   mappingTexts?: string[];
+  thresholdValues?: unknown[];
+  thresholdColors?: unknown[];
 }
 
 type FieldToConfigMapHandlerProcessor = (
@@ -195,6 +201,27 @@ export const configMapHandlers: FieldToConfigMapHandler[] = [
     },
   },
   {
+    key: 'thresholds.value',
+    name: 'Thresholds / Value',
+    targetProperty: 'thresholds',
+    defaultReducer: ReducerID.allValues,
+    // Rows to fields passes one value per row instead of an array
+    processor: (value, config, context) => {
+      context.thresholdValues = isArray(value) ? value : [value];
+      return config.thresholds;
+    },
+  },
+  {
+    key: 'thresholds.color',
+    name: 'Thresholds / Color',
+    targetProperty: 'thresholds',
+    defaultReducer: ReducerID.allValues,
+    processor: (value, config, context) => {
+      context.thresholdColors = isArray(value) ? value : [value];
+      return config.thresholds;
+    },
+  },
+  {
     key: 'mappings.value',
     name: 'Value mappings / Value',
     targetProperty: 'mappings',
@@ -262,6 +289,32 @@ function combineValueMappings(context: FieldToConfigContext): ValueMapping[] {
   return [valueMap];
 }
 
+// Values and colors are paired by row index, so a skipped value must not shift
+// the colors of the rows after it.
+function combineThresholds(config: FieldConfig, context: FieldToConfigContext) {
+  const values = context.thresholdValues ?? [];
+
+  for (let i = 0; i < values.length; i++) {
+    const numeric = anyToNumber(values[i]);
+    if (isNaN(numeric)) {
+      continue;
+    }
+
+    if (!config.thresholds) {
+      config.thresholds = {
+        mode: ThresholdsMode.Absolute,
+        steps: [],
+      };
+    }
+
+    const color = context.thresholdColors?.[i];
+    config.thresholds.steps.push({
+      value: numeric,
+      color: isValidColor(color) ? color : 'red',
+    });
+  }
+}
+
 let configMapHandlersIndex: Record<string, FieldToConfigMapHandler> | null = null;
 
 function getConfigMapHandlersIndex() {
@@ -306,19 +359,23 @@ function toDecimalsOrUndefined(value: unknown) {
 // check such as tinycolor accepts formats like 'ff0000' that still crash.
 // decomposeColor only checks the prefix, so 'rgb(foo)' parses to NaN channels
 // without throwing; skip those too.
-function toFixedColorOrUndefined(value: unknown) {
+function isValidColor(value: unknown): value is string {
   if (typeof value !== 'string') {
-    return;
+    return false;
   }
 
   let channels: number[];
   try {
     channels = colorManipulator.decomposeColor(grafanaConfig.theme2.visualization.getColorByName(value)).values;
   } catch {
-    return;
+    return false;
   }
 
-  if (channels.length < 3 || !channels.every(Number.isFinite)) {
+  return channels.length >= 3 && channels.every(Number.isFinite);
+}
+
+function toFixedColorOrUndefined(value: unknown) {
+  if (!isValidColor(value)) {
     return;
   }
 
