@@ -152,6 +152,14 @@
   rebaseWhen: "conflicted",
   reviewers: ["team:grafana/grafana-frontend-platform"],
   separateMajorMinor: false,
+  gomod: {
+    vulnerabilityAlerts: {
+      enabled: true,
+      addLabels: ["area/security"],
+      additionalBranchPrefix: "",
+      groupName: "security-{{{datasource}}}-{{{depName}}}",
+    },
+  },
   vulnerabilityAlerts: {
     enabled: true,
     addLabels: ["area/security"],
