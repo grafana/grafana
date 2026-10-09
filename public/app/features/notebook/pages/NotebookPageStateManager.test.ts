@@ -149,6 +149,22 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.key).toBe(first);
   });
 
+  // Leaving a notebook and coming back to it is not a document replacement: it's the same scene,
+  // with the same editHistory, reused from the cache above. A person who navigated away by mistake
+  // should not find their undo history gone.
+  it('keeps the cached scene’s undo history across a revisit', async () => {
+    serveNotebooks();
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+  });
+
   it("reuses the cached scene when the only thing that moved the generation was this page's own save", async () => {
     serveGenerations(1, 2);
     const manager = new NotebookPageStateManager({ isLoading: false });
@@ -178,6 +194,24 @@ describe('NotebookPageStateManager', () => {
 
     expect(manager.state.scene).toBeInstanceOf(NotebookScene);
     expect(manager.state.scene?.state.key).not.toBe(first);
+  });
+
+  // The flip side of the cache-reuse case above: once the server moved past what this page saved,
+  // the rebuild is a genuinely different document, built fresh — its editHistory starts empty by
+  // construction, not by anything clearing the old one.
+  it('starts with an empty undo history when the scene is rebuilt rather than reused', async () => {
+    serveGenerations(1, 3);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+    manager.state.scene?.autosave.setState({ savedGeneration: 2 });
+    testStore.dispatch(dashboardAPIv2beta1.util.resetApiState());
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(false);
   });
 
   it('keeps the cached scene when the query layer answers from before this page saved', async () => {
