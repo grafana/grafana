@@ -110,21 +110,27 @@ const getStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   meta: css({
     display: 'flex',
     alignItems: 'center',
-    flex: 1,
+    flex: '0 0 auto',
     gap: theme.spacing(2),
     justifyContent: 'flex-start',
+    // Takes the free space on this line, so links sit on the right while they
+    // fit beside the timestamp. Once they wrap, this no longer affects them.
+    marginRight: 'auto',
   }),
   timestamp: css({
     color: theme.colors.text.secondary,
     fontFamily: theme.typography.fontFamilyMonospace,
+    whiteSpace: 'nowrap',
   }),
   links: css({
     display: 'flex',
     flexWrap: 'wrap',
-    justifyContent: 'flex-end',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: theme.spacing(0.5),
-    marginLeft: 'auto',
+    flex: '0 0 auto',
+    width: 'max-content',
     maxWidth: '100%',
+    minWidth: 'min(100%, max-content)',
   }),
 });
