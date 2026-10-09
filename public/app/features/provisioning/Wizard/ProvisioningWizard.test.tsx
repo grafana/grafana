@@ -78,7 +78,7 @@ async function navigateToConnectionStep(
   }
 
   if ((type === 'bitbucket' || type === 'git') && data?.tokenUser) {
-    await pasteIntoInput(user, screen.getByPlaceholderText('username'), data.tokenUser);
+    await pasteIntoInput(user, screen.getByPlaceholderText(type === 'git' ? 'git' : 'username'), data.tokenUser);
   }
 
   if (type !== 'local' && data?.url) {
@@ -951,7 +951,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="git" />);
 
       await typeIntoTokenField(user, 'token or password', 'test-token');
-      await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
+      await pasteIntoInput(user, screen.getByPlaceholderText('git'), 'test-user');
       await pasteIntoInput(
         user,
         screen.getByRole('textbox', { name: /Repository URL/i }),

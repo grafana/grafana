@@ -190,6 +190,22 @@ describe('usePagination', () => {
     expect(result.current.numPages).toBe(25);
   });
 
+  it('refits from opaque iframe metrics when the runtime reports content height', () => {
+    const container = document.createElement('div');
+    Object.defineProperty(container, 'clientHeight', { value: 300 + CONTENT_PADDING });
+    const frame = document.createElement('iframe');
+    container.appendChild(frame);
+    const { result } = setup({}, container);
+    expect(result.current.rowWindow?.count).toBe(15);
+
+    act(() => {
+      frame.setAttribute('data-text-content-height', '750');
+      container.dispatchEvent(new Event('text-content-resized'));
+    });
+
+    expect(result.current.rowWindow?.count).toBe(6);
+  });
+
   it('leaves the padding clientHeight reports out of the room it fits rows into', () => {
     // 750px over the 15 estimated rows is 50px each: six fill a 300px box, five fit
     // once its padding is taken out.

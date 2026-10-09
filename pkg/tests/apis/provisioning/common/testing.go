@@ -1238,6 +1238,35 @@ func (h *ProvisioningTestHelper) TriggerConnectionReconciliation(t *testing.T, n
 	require.NoError(t, err, "failed to patch status for connection %s", name)
 }
 
+func (h *ProvisioningTestHelper) AuthorizeConnection(t *testing.T, name, code, redirectURI string) {
+	t.Helper()
+	body, err := json.Marshal(&provisioning.ConnectionAuthorizeRequest{
+		Spec: provisioning.ConnectionAuthorizeRequestSpec{
+			Code:        code,
+			RedirectURI: redirectURI,
+		},
+	})
+	require.NoError(t, err)
+
+	var statusCode int
+	result := h.AdminREST.Post().
+		Namespace("default").
+		Resource("connections").
+		Name(name).
+		SubResource("authorize").
+		Body(body).
+		SetHeader("Content-Type", "application/json").
+		Do(t.Context()).
+		StatusCode(&statusCode)
+	require.NoError(t, result.Error(), "authorize should succeed")
+	require.Equal(t, http.StatusOK, statusCode)
+
+	var res provisioning.ConnectionAuthorizeRequest
+	require.NoError(t, result.Into(&res))
+	assert.True(t, res.Status.Authorized, "response should report authorized")
+	assert.Empty(t, res.Spec.Code, "authorization code should not be echoed back")
+}
+
 // TriggerRepositoryReconciliation forces the controller to re-process a repo
 // by touching its status (aging the health timestamp by 1ms).
 // Updating it by incrementing its generation by +1 is not triggering a reconciliation.
@@ -3460,36 +3489,10 @@ func (h *GitTestHelper) createRepo(
 		require.NoError(t, err, "failed to create user")
 	}
 
-	remote, err := h.gitServer.CreateRepo(t.Context(), repoName, user)
-	require.NoError(t, err, "failed to create remote repository")
+	remote, local := h.CreateRemoteGitRepo(t, repoName, user, opts.initialFiles)
 
 	if opts.exportRepo {
 		h.exportRepoInfos[repoName] = &exportRepoInfo{user: user, remote: remote}
-	}
-
-	local, err := gittest.NewLocalRepo(t.Context())
-	require.NoError(t, err, "failed to create local repository")
-	t.Cleanup(func() {
-		if err := local.Cleanup(); err != nil {
-			t.Logf("failed to cleanup local repo: %v", err)
-		}
-	})
-
-	_, err = local.InitWithRemote(user, remote)
-	require.NoError(t, err, "failed to initialize local repo with remote")
-
-	for filePath, content := range opts.initialFiles {
-		err = local.CreateFile(filePath, string(content))
-		require.NoError(t, err, "failed to create file %s", filePath)
-	}
-
-	if len(opts.initialFiles) > 0 {
-		_, err = local.Git("add", ".")
-		require.NoError(t, err, "failed to add files")
-		_, err = local.Git("commit", "-m", "Add initial files")
-		require.NoError(t, err, "failed to commit files")
-		_, err = local.Git("push")
-		require.NoError(t, err, "failed to push files")
 	}
 
 	workflows := []string{"write"}
@@ -3519,6 +3522,40 @@ func (h *GitTestHelper) createRepo(
 
 	if opts.waitForReady {
 		h.waitForReadyRepository(t, repoName)
+	}
+
+	return remote, local
+}
+
+func (h *GitTestHelper) CreateRemoteGitRepo(t *testing.T, repoName string, user *gittest.User, initialFiles map[string][]byte) (*gittest.RemoteRepository, *gittest.LocalRepo) {
+	t.Helper()
+
+	remote, err := h.gitServer.CreateRepo(t.Context(), repoName, user)
+	require.NoError(t, err, "failed to create remote repository")
+
+	local, err := gittest.NewLocalRepo(t.Context())
+	require.NoError(t, err, "failed to create local repository")
+	t.Cleanup(func() {
+		if err := local.Cleanup(); err != nil {
+			t.Logf("failed to cleanup local repo: %v", err)
+		}
+	})
+
+	_, err = local.InitWithRemote(user, remote)
+	require.NoError(t, err, "failed to initialize local repo with remote")
+
+	for filePath, content := range initialFiles {
+		err = local.CreateFile(filePath, string(content))
+		require.NoError(t, err, "failed to create file %s", filePath)
+	}
+
+	if len(initialFiles) > 0 {
+		_, err = local.Git("add", ".")
+		require.NoError(t, err, "failed to add files")
+		_, err = local.Git("commit", "-m", "Add initial files")
+		require.NoError(t, err, "failed to commit files")
+		_, err = local.Git("push")
+		require.NoError(t, err, "failed to push files")
 	}
 
 	return remote, local

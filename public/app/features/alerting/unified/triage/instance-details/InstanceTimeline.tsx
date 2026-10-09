@@ -8,7 +8,6 @@ import {
 import { type GrafanaTheme2, textUtil } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Icon, LinkButton, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
 import { receiverTypeNames } from 'app/plugins/datasource/alertmanager/consts';
 import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto';
@@ -16,6 +15,7 @@ import { type GrafanaAlertStateWithReason } from 'app/types/unified-alerting-dto
 import { StateTag } from '../../components/StateTag';
 import { EventState } from '../../components/rules/central-state-history/EventListSceneObject';
 import { type LogRecord } from '../../components/rules/state-history/common';
+import { isNotificationHistoryEnabled } from '../../featureToggles';
 import { INTEGRATION_ICONS } from '../../types/contact-points';
 import { formatPrometheusDuration } from '../../utils/time';
 import { createRelativeUrl } from '../../utils/url';
@@ -430,7 +430,7 @@ function NotificationRow({ notification }: { notification: NotificationEntry }) 
         <Text variant="bodySmall" color="secondary">
           {formatPrometheusDuration(Math.floor(notification.duration / 1_000_000))}
         </Text>
-        {config.featureToggles.alertingNotificationHistoryDetail && (
+        {isNotificationHistoryEnabled() && (
           <Tooltip content={t('alerting.instance-details.view-notification-tooltip', 'View full notification details')}>
             <LinkButton
               variant="secondary"

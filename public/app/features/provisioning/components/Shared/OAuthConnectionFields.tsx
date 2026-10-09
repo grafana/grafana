@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { Trans, t } from '@grafana/i18n';
-import { Button, Field, Input, SecretInput, Stack } from '@grafana/ui';
+import { Button, Field, Input, SecretInput, Stack, TagsInput } from '@grafana/ui';
 
 import { type ConnectionFormData, type OAuthConnectionType } from '../../types';
+import { validateHttpUrl } from '../../utils/validators';
 
 interface OAuthConnectionFieldsProps {
   /** Whether fields are required. Depends if we are in edit mode or not. */
@@ -80,6 +81,77 @@ export function OAuthConnectionFields({
             })}
           />
         </Field>
+      )}
+
+      {type === 'gitOAuth' && (
+        <>
+          <Field
+            noMargin
+            label={t('provisioning.connection-form.label-auth-url', 'Authorization URL')}
+            description={t(
+              'provisioning.connection-form.description-auth-url',
+              'The OAuth authorization endpoint of your Git provider'
+            )}
+            invalid={!!errors.authURL}
+            error={errors.authURL?.message}
+            required={required}
+          >
+            <Input
+              id="authURL"
+              {...register('authURL', {
+                required: requiredValidation,
+                validate: validateHttpUrl,
+              })}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              placeholder="https://git.example.com/oauth/authorize"
+            />
+          </Field>
+          <Field
+            noMargin
+            label={t('provisioning.connection-form.label-token-url', 'Token URL')}
+            description={t(
+              'provisioning.connection-form.description-token-url',
+              'The OAuth token endpoint of your Git provider'
+            )}
+            invalid={!!errors.tokenURL}
+            error={errors.tokenURL?.message}
+            required={required}
+          >
+            <Input
+              id="tokenURL"
+              {...register('tokenURL', {
+                required: requiredValidation,
+                validate: validateHttpUrl,
+              })}
+              // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+              placeholder="https://git.example.com/oauth/token"
+            />
+          </Field>
+          <Field
+            noMargin
+            htmlFor="scopes"
+            label={t('provisioning.connection-form.label-scopes', 'Scopes')}
+            description={t(
+              'provisioning.connection-form.description-scopes',
+              'OAuth scopes that grant read and write access to your repositories'
+            )}
+          >
+            <Controller
+              name="scopes"
+              control={control}
+              render={({ field: { value, onChange } }) => (
+                <TagsInput
+                  id="scopes"
+                  tags={value ?? []}
+                  onChange={onChange}
+                  addOnBlur
+                  autoColors={false}
+                  placeholder={t('provisioning.connection-form.placeholder-scopes', 'Type a scope and press Enter')}
+                />
+              )}
+            />
+          </Field>
+        </>
       )}
 
       <Field

@@ -450,13 +450,13 @@ func TestPluginBreakerRejectionMetrics(t *testing.T) {
 				_, err := client.AdmissionReview(r.Context(), &pluginv3.AdmissionReviewRequest{})
 				require.True(t, apierrors.IsServiceUnavailable(err))
 				w.WriteHeader(http.StatusServiceUnavailable)
-			})}}
+			})}, pluginID: "test-app"}
 			router := withGroupHandlerAndBreaker(group, handler, cb)
 			metrics := newRouterMetrics(prometheus.NewRegistry())
 			response := httptest.NewRecorder()
 			metrics.instrument(router, response, newAuthenticatedRequest(http.MethodPost, "/apis/"+group+"/v1/things", nil), http.NotFoundHandler())
 			require.Equal(t, http.StatusServiceUnavailable, response.Code)
-			require.Equal(t, 1.0, testutil.ToFloat64(metrics.backendFailures.WithLabelValues(group, failureBreakerOpen)))
+			require.Equal(t, 1.0, testutil.ToFloat64(metrics.backendFailures.WithLabelValues(group, "test-app", failureBreakerOpen)))
 			require.Zero(t, raw.calls)
 			_, err = allowPluginCall(context.WithValue(withoutRequestOutcome(t.Context()), clientBreakerKey{}, cb))
 			require.True(t, apierrors.IsServiceUnavailable(err))

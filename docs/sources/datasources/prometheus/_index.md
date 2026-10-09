@@ -91,6 +91,27 @@ preinstall_sync = prometheus
 ; preinstall_sync = prometheus@<version>
 ```
 
+{{< docs/shared source="grafana" lookup="datasources/query-with-gcx.md" version="<GRAFANA_VERSION>" >}}
+
+For example, to query your Prometheus data source, use the `gcx datasources prometheus` commands:
+
+```sh
+# Run an instant PromQL query using an explicit data source UID
+gcx datasources prometheus query -d <DATASOURCE_UID> 'up{job="grafana"}'
+
+# Run a range query over the last hour
+gcx datasources prometheus query -d <DATASOURCE_UID> 'rate(http_requests_total[5m])' --since 1h --step 1m
+
+# List all labels, or the values for a single label
+gcx datasources prometheus labels -d <DATASOURCE_UID>
+gcx datasources prometheus labels -d <DATASOURCE_UID> --label job
+
+# Get metadata, including the type and help text, for a metric
+gcx datasources prometheus metadata -d <DATASOURCE_UID> --metric http_requests_total
+```
+
+Replace _`<DATASOURCE_UID>`_ with the UID of your Prometheus data source. You can omit the `-d` flag when `datasources.prometheus` is configured in your `gcx` context. The same commands work with Prometheus-compatible data sources that `gcx` maps to this resolver, including Amazon Managed Service for Prometheus and other `grafana-*prometheus-datasource` flavors.
+
 ## Related resources
 
 - [What is Prometheus?](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/fundamentals/intro-to-prometheus/)

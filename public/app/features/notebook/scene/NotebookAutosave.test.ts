@@ -1033,6 +1033,68 @@ describe('NotebookAutosave', () => {
 
         stopPanel();
       });
+
+      // The assistant's write has no modal to answer, so it asks for the look to write instead.
+      it('resolves a discard to the look from before the reader’s change, including a failed edit', async () => {
+        const { scene, panel } = buildSceneWithPanel();
+        deactivate = scene.activate();
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+
+        scene.onEnterEditMode();
+        recolourLegend(panel, 'red');
+        jest.mocked(updateNotebook).mockRejectedValueOnce(new Error('apiserver said no'));
+        await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+        scene.onExitEditMode();
+        recolourLegend(panel, 'blue');
+
+        const resolved = scene.autosave.resolveViewOnlyVizChanges('discard');
+
+        expect(resolved.get('panel1')?.spec.fieldConfig.overrides[0].properties[0].value).toEqual({
+          mode: 'fixed',
+          fixedColor: 'red',
+        });
+        // Only reads: the reader keeps seeing their change until the write replaces the scene.
+        expect(panel.state.fieldConfig.overrides[0].properties[0].value).toEqual({
+          mode: 'fixed',
+          fixedColor: 'blue',
+        });
+
+        stopPanel();
+      });
+
+      it('resolves a discard to the saved look when nothing else was edited', async () => {
+        const { scene, panel } = buildSceneWithPanel();
+        deactivate = scene.activate();
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+
+        recolourLegend(panel);
+
+        const resolved = scene.autosave.resolveViewOnlyVizChanges('discard');
+
+        expect(resolved.get('panel1')?.spec.fieldConfig.overrides).toEqual([]);
+
+        stopPanel();
+      });
+
+      it('resolves a keep to the current look', async () => {
+        const { scene, panel } = buildSceneWithPanel();
+        deactivate = scene.activate();
+        const stopPanel = panel.activate();
+        await jest.advanceTimersByTimeAsync(0);
+
+        recolourLegend(panel, 'blue');
+
+        const resolved = scene.autosave.resolveViewOnlyVizChanges('keep');
+
+        expect(resolved.get('panel1')?.spec.fieldConfig.overrides[0].properties[0].value).toEqual({
+          mode: 'fixed',
+          fixedColor: 'blue',
+        });
+
+        stopPanel();
+      });
     });
 
     // The other half of the rule: a writer who recolours has to get it back when they reload.

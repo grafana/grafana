@@ -19,12 +19,13 @@ var errSearchCannotAnswerTrash = errors.New("search cannot answer this trash lis
 func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListTrashFromSearch")
 	defer span.End()
+	s.reportSearchListBodies(ctx)
 	minResourceVersion := ToSnowflakeRV(req.ResourceVersion)
 
 	srq := &resourcepb.ResourceSearchRequest{
 		Options:      req.Options,
 		Limit:        req.Limit,
-		Fields:       []string{SEARCH_FIELD_RV},
+		Fields:       []string{SEARCH_FIELD_RV, SEARCH_FIELD_FOLDER},
 		SortBy:       []*resourcepb.ResourceSearchRequest_Sort{{Field: SEARCH_FIELD_DELETED_RV, Desc: true}},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		IsDeleted:    true,
@@ -67,11 +68,7 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 		obj   utils.GrafanaMetaAccessor
 	}
 	for chunk := range slices.Chunk(page.rows, readChunkSize) {
-		requests := make([]*resourcepb.ReadRequest, len(chunk))
-		for i, row := range chunk {
-			requests[i] = &resourcepb.ReadRequest{Key: row.key, ResourceVersion: row.resourceVersion}
-		}
-		values, err := s.backend.BatchReadResource(ctx, requests, true)
+		values, err := s.backend.BatchReadResource(ctx, searchRowReads(chunk), true)
 		if errors.Is(err, ErrBatchReadUnsupported) {
 			if req.NextPageToken == "" {
 				return nil, fmt.Errorf("%w: %w", errSearchCannotAnswerTrash, err)
@@ -127,7 +124,8 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
 				Value: item.value.Value, ResourceVersion: item.value.ResourceVersion,
 			})
-			if s.listPageFull(req, rsp, pageBytes) {
+			if reason := s.listLimitStopReason(req, rsp, pageBytes); reason != "" {
+				setListStopReason(ctx, reason)
 				token, err := newSearchContinueToken(item.row.sortFields, page.resourceVersion, sortAscending)
 				if err != nil {
 					return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}, nil

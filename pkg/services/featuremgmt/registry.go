@@ -255,23 +255,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.readmes",
-			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
-		},
-		{
-			Name:            "provisioning.gitConventions",
-			Description:     "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
-			Stage:           FeatureStagePublicPreview,
-			RequiresRestart: true,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true", // enabled by default
-			Generate:        Generate{Go: true, React: true},
-		},
-		{
 			Name:        "provisioning.userAttribution",
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
@@ -657,9 +640,25 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
+		},
+		{
+			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
+			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "dashboards.publicDashboardBadgeFromApi",
+			Description: "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
 		},
 		{
 			Name:        "disableScriptedDashboards",
@@ -744,10 +743,10 @@ var (
 		{
 			Name:        "timeComparison",
 			Description: "Enables time comparison option in supported panels",
-			Stage:       FeatureStagePublicPreview,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaDatavizSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "tableSharedCrosshair",
@@ -1173,6 +1172,15 @@ var (
 			Generate:     Generate{Go: true},
 		},
 		{
+			Name:         "authz.useLegacyCheck",
+			Description:  "Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
 			Name:         "zanzana",
 			Description:  "Use openFGA as authorization engine.",
 			Stage:        FeatureStageExperimental,
@@ -1448,6 +1456,15 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "alerting.ruleReviews",
+			Description:  "Enable assistant reviews on the alert quality page.",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaAlertingSquad,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true, React: true},
 		},
 		{
 			Name:         "alerting.ruleQuality",
@@ -1818,15 +1835,6 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:         "experimentRecentlyViewedDashboards",
-			Description:  "A/A test for recently viewed dashboards feature",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendNavigation,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "false",
-		},
-		{
 			Name:         "alertEnrichment",
 			Description:  "Enable configuration of alert enrichments in Grafana Cloud.",
 			Stage:        FeatureStageExperimental,
@@ -2151,11 +2159,11 @@ var (
 			Name:            "panelTimeSettings",
 			Description:     "Enables a new panel time settings drawer",
 			Generate:        Generate{LegacyGo: true, LegacyFrontend: true},
-			Stage:           FeatureStagePublicPreview,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
 			HideFromDocs:    false,
-			Expression:      "false",
+			Expression:      "true",
 		},
 		{
 			Name:        "awsDatasourcesHttpProxy",
@@ -2188,15 +2196,6 @@ var (
 			Generate:    Generate{LegacyFrontend: true},
 			Owner:       grafanaObservabilityLogsSquad,
 			Expression:  "false",
-		},
-		{
-			Name:            "kubernetesAlertingHistorian",
-			Description:     "Adds support for Kubernetes alerting historian APIs",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-			Generate:        Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:         "plugins.useMTPlugins",
@@ -2307,6 +2306,15 @@ var (
 		{
 			Name:         "kubernetesUsersApi",
 			Description:  "Enables user APIs in the app platform",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
+		},
+		{
+			Name:         "kubernetesUsersReadApi",
+			Description:  "Enables read-only user APIs in the app platform",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -2476,38 +2484,6 @@ var (
 			HideFromDocs: true,
 			Expression:   "false",
 			Generate:     Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryRuleViewer",
-			Description: "Enables the notification history tab in the rule viewer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryGlobal",
-			Description: "Enables the notification history global menu item viewer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryTriage",
-			Description: "Enables the notification history timeline in the triage instance details drawer",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
-		},
-		{
-			Name:        "alertingNotificationHistoryDetail",
-			Description: "Enables the notification history detail page",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaAlertingSquad,
-			Expression:  "true",
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:         "dashboard.recentlyDeletedViaTrash",
@@ -3111,6 +3087,15 @@ var (
 			Generate:        Generate{Go: true},
 		},
 		{
+			Name:            "reporting.legacySettingServiceUsesK8SClient",
+			Description:     "Redirect legacy report setting service to use the Kubernetes client wrapper",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
 			Name:            "reporting.redirectReportsToK8SApi",
 			Description:     "Redirect legacy report CRUD API endpoints to the Kubernetes reporting API",
 			Stage:           FeatureStageExperimental,
@@ -3422,6 +3407,16 @@ var (
 			Expression:   "false",
 			Generate:     Generate{React: true},
 		},
+		{
+			Name:         "datasources.apiServerConnectToHostedGrafanaDatabases",
+			Description:  "Connect to hosted grafana databases from datasource API servers",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaDataSourcesPlugins,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+
 		// tl;dr: name your new flag `component.featureName`, specify Go and/or React generation targets, and use with OpenFeature!
 		//
 		// Adding a new feature flag? Be sure to check out the updated docs at /contribute/feature-toggles.md#Steps-to-adding-a-feature-toggle

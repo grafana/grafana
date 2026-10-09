@@ -137,6 +137,7 @@ export interface UnifiedAlertingConfig {
   minInterval: string;
   stateHistory?: UnifiedAlertingStateHistoryConfig;
   recordingRulesEnabled?: boolean;
+  notificationHistoryEnabled?: boolean;
   defaultRecordingRulesTargetDatasourceUID?: string;
 
   // Backward compatibility aliases - deprecated

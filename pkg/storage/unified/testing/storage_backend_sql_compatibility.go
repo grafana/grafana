@@ -29,17 +29,27 @@ import (
 
 func NewTestSqlKvBackend(t *testing.T, ctx context.Context, backwardsCompatible bool) (resource.KVBackend, sqldb.DB) {
 	t.Helper()
+	return NewTestSqlKvBackendWithKV(t, ctx, backwardsCompatible, nil)
+}
+
+// NewTestSqlKvBackendWithKV is NewTestSqlKvBackend with its KV passed through
+// wrap, when set, so a test can observe or alter what storage asks the KV for.
+func NewTestSqlKvBackendWithKV(t *testing.T, ctx context.Context, backwardsCompatible bool, wrap func(resource.KV) resource.KV) (resource.KVBackend, sqldb.DB) {
+	t.Helper()
 
 	dbstore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(t, err)
 	dbConn, err := eDB.Init(ctx)
 	require.NoError(t, err)
-	kv, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
+	store, err := kv.NewSQLKV(dbConn.SqlDB(), dbConn.DriverName())
 	require.NoError(t, err)
+	if wrap != nil {
+		store = wrap(store)
+	}
 
 	kvOpts := resource.KVBackendOptions{
-		KvStore:        kv,
+		KvStore:        store,
 		SearchLookback: time.Second,
 		// keep it low in tests as most of them don't exercise concurrent writes
 		WatchOptions: resource.WatchOptions{SettleDelay: time.Millisecond},

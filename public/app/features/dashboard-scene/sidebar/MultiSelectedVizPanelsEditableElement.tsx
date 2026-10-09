@@ -64,10 +64,12 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
       { actionId: 'panel.remove', scope: 'multiple' }
     );
 
-    this._panels.forEach((panel) => {
-      panel.onDelete();
-    });
-
-    endBatch(this._dashboard);
+    try {
+      this._panels.forEach((panel) => {
+        panel.onDelete();
+      });
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 }

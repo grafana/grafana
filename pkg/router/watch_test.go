@@ -287,12 +287,14 @@ func TestWatchMetricsAreSeparate(t *testing.T) {
 		return testutil.ToFloat64(metrics.longRunning.WithLabelValues(watchGroup)) == 0
 	}, time.Second, time.Millisecond)
 	require.Zero(t, testutil.CollectAndCount(metrics.duration), "a watch is not observed as a request duration")
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "watch", routeBackend, "200")), "a watch is counted when it ends")
 
 	resp, err := http.Get(rig.url + watchPath)
 	require.NoError(t, err)
 	_ = resp.Body.Close()
 	require.Equal(t, 1, testutil.CollectAndCount(metrics.duration))
-	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend, "204")))
+	require.Equal(t, uint64(1), histogramCount(t, metrics.duration.WithLabelValues(watchGroup, "list", routeBackend)))
+	require.Equal(t, 1.0, testutil.ToFloat64(metrics.requests.WithLabelValues(watchGroup, "list", routeBackend, "204")))
 }
 
 func histogramCount(t *testing.T, observer prometheus.Observer) uint64 {

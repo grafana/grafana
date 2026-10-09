@@ -10,8 +10,10 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appresource "github.com/grafana/grafana-app-sdk/resource"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/alertrule"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/rules/recordingrule"
@@ -99,6 +101,29 @@ func TestLegacyBackendFilteringAndPagination(t *testing.T) {
 	require.Same(t, requester, store.requester)
 	require.Equal(t, int64(1), store.query.OrgID)
 	require.Equal(t, ngmodels.RuleTypeFilterAlerting, store.query.RuleType)
+}
+
+func TestLegacyBackendLabelRegex(t *testing.T) {
+	store := &ruleSearchStore{rules: ngmodels.RulesGroup{
+		{UID: "a", Title: "a", Labels: map[string]string{"team": "a", "env": "prod"}},
+		{UID: "b", Title: "b", Labels: map[string]string{"team": "b", "env": "prod"}},
+		{UID: "c", Title: "c", Labels: map[string]string{"team": "c", "env": "prod"}},
+		{UID: "d", Title: "d", Labels: map[string]string{"team": "a", "env": "dev"}},
+	}}
+	backend := legacyBackendForTest(store)
+	ctx := identity.WithRequester(t.Context(), &identity.StaticRequester{OrgID: 1})
+	query := &Query{Resource: alertrule.ResourceInfo.GroupResource(), Limit: 1}
+	query.Filters = append(query.Filters, labelMatcherRequirement(labelMatcher{key: "env", value: "prod", op: matchEquals}))
+	query.Regexes = []*searchv0.RegexPredicate{{Field: fieldLabels, Pattern: "team=a|b"}}
+	result, err := backend.Search(ctx, query)
+	require.NoError(t, err)
+	require.Equal(t, int64(2), result.TotalHits, "total counts every match, not just the page")
+	require.Len(t, result.Hits, 1)
+	require.Equal(t, "a", result.Hits[0].Name)
+
+	query.Regexes = []*searchv0.RegexPredicate{{Field: fieldLabels, Pattern: "team=(a"}}
+	_, err = backend.Search(ctx, query)
+	require.True(t, apierrors.IsBadRequest(err), "an invalid pattern is bad input, not a server error: %v", err)
 }
 
 func TestLegacyBackendKindSelection(t *testing.T) {

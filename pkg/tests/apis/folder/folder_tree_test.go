@@ -23,6 +23,7 @@ import (
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/setting"
@@ -30,6 +31,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationFolderTree(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationFolderTree)
+}
 
 func TestIntegrationFolderTreeZanzana(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
@@ -48,7 +53,7 @@ func TestIntegrationFolderTreeZanzana(t *testing.T) {
 	})
 }
 
-func TestIntegrationFolderTree(t *testing.T) {
+func testIntegrationFolderTree(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	if !db.IsTestDbSQLite() {

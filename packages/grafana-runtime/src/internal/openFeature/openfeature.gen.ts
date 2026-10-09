@@ -22,20 +22,14 @@ export const FlagKeys = {
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
+  /** Enable assistant reviews on the alert quality page. */
+  AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables the new alert list view design */
   AlertingListViewV2: "alertingListViewV2",
   /** Enables the new Alerting navigation structure with improved menu grouping */
   AlertingNavigationV2: "alertingNavigationV2",
-  /** Enables the notification history detail page */
-  AlertingNotificationHistoryDetail: "alertingNotificationHistoryDetail",
-  /** Enables the notification history global menu item viewer */
-  AlertingNotificationHistoryGlobal: "alertingNotificationHistoryGlobal",
-  /** Enables the notification history tab in the rule viewer */
-  AlertingNotificationHistoryRuleViewer: "alertingNotificationHistoryRuleViewer",
-  /** Enables the notification history timeline in the triage instance details drawer */
-  AlertingNotificationHistoryTriage: "alertingNotificationHistoryTriage",
   /** Enables the UI functionality to recover and view deleted alert rules */
   AlertingRuleRecoverDeleted: "alertingRuleRecoverDeleted",
   /** Enables the alerting triage feature */
@@ -72,6 +66,10 @@ export const FlagKeys = {
   DashboardTemplatesAssistantButton: "dashboardTemplatesAssistantButton",
   /** Enables undo/redo in dynamic dashboards */
   DashboardUndoRedo: "dashboardUndoRedo",
+  /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
+  DashboardsLibraryPanelRepeatFromServerResolution: "dashboards.libraryPanelRepeatFromServerResolution",
+  /** Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto */
+  DashboardsPublicDashboardBadgeFromApi: "dashboards.publicDashboardBadgeFromApi",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
   DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
@@ -96,8 +94,6 @@ export const FlagKeys = {
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
   EnableExtensionsAdminPage: "enableExtensionsAdminPage",
-  /** A/A test for recently viewed dashboards feature */
-  ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Enable Faro session replay for Grafana */
   FaroSessionReplay: "faroSessionReplay",
   /** Enables the feedback button in the dashboard edit sidebar */
@@ -186,8 +182,6 @@ export const FlagKeys = {
   GrafanaVisualDesignRefresh: "grafana.visualDesignRefresh",
   /** Enables an inline version of Log Details that creates no new scrolls */
   InlineLogDetailsNoScrolls: "inlineLogDetailsNoScrolls",
-  /** Adds support for Kubernetes alerting historian APIs */
-  KubernetesAlertingHistorian: "kubernetesAlertingHistorian",
   /** Enables team APIs in the app platform */
   KubernetesTeamsApi: "kubernetesTeamsApi",
   /** Routes library panel requests from /api to the /apis endpoint */
@@ -216,10 +210,6 @@ export const FlagKeys = {
   PluginsUseMTPluginSettings: "plugins.useMTPluginSettings",
   /** Enables plugins decoupling from bootdata */
   PluginsUseMTPlugins: "plugins.useMTPlugins",
-  /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
-  ProvisioningGitConventions: "provisioning.gitConventions",
-  /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
-  ProvisioningReadmes: "provisioning.readmes",
   /** Author Git Sync commits as the acting Grafana user */
   ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Enable export functionality for provisioned resources */
@@ -329,6 +319,17 @@ export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions)
 };
 
 /**
+ * Enable assistant reviews on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleReviews`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleReviews = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleReviews", false, options).value;
+};
+
+/**
  * Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source
  *
  * **Details:**
@@ -359,50 +360,6 @@ export const useFlagAlertingListViewV2 = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagAlertingNavigationV2 = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alertingNavigationV2", true, options).value;
-};
-
-/**
- * Enables the notification history detail page
- *
- * **Details:**
- * - flag key: `alertingNotificationHistoryDetail`
- * - default value: `true`
- */
-export const useFlagAlertingNotificationHistoryDetail = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingNotificationHistoryDetail", true, options).value;
-};
-
-/**
- * Enables the notification history global menu item viewer
- *
- * **Details:**
- * - flag key: `alertingNotificationHistoryGlobal`
- * - default value: `true`
- */
-export const useFlagAlertingNotificationHistoryGlobal = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingNotificationHistoryGlobal", true, options).value;
-};
-
-/**
- * Enables the notification history tab in the rule viewer
- *
- * **Details:**
- * - flag key: `alertingNotificationHistoryRuleViewer`
- * - default value: `true`
- */
-export const useFlagAlertingNotificationHistoryRuleViewer = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingNotificationHistoryRuleViewer", true, options).value;
-};
-
-/**
- * Enables the notification history timeline in the triage instance details drawer
- *
- * **Details:**
- * - flag key: `alertingNotificationHistoryTriage`
- * - default value: `true`
- */
-export const useFlagAlertingNotificationHistoryTriage = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("alertingNotificationHistoryTriage", true, options).value;
 };
 
 /**
@@ -604,6 +561,28 @@ export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): 
 };
 
 /**
+ * Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state
+ *
+ * **Details:**
+ * - flag key: `dashboards.libraryPanelRepeatFromServerResolution`
+ * - default value: `false`
+ */
+export const useFlagDashboardsLibraryPanelRepeatFromServerResolution = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.libraryPanelRepeatFromServerResolution", false, options).value;
+};
+
+/**
+ * Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto
+ *
+ * **Details:**
+ * - flag key: `dashboards.publicDashboardBadgeFromApi`
+ * - default value: `false`
+ */
+export const useFlagDashboardsPublicDashboardBadgeFromApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.publicDashboardBadgeFromApi", false, options).value;
+};
+
+/**
  * Use the new datasource API groups for datasource resource requests, frontend flag
  *
  * **Details:**
@@ -733,17 +712,6 @@ export const useFlagEnableColorblindSafePanelOptions = (options?: ReactFlagEvalu
  */
 export const useFlagEnableExtensionsAdminPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("enableExtensionsAdminPage", false, options).value;
-};
-
-/**
- * A/A test for recently viewed dashboards feature
- *
- * **Details:**
- * - flag key: `experimentRecentlyViewedDashboards`
- * - default value: `false`
- */
-export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("experimentRecentlyViewedDashboards", false, options).value;
 };
 
 /**
@@ -1231,17 +1199,6 @@ export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOp
 };
 
 /**
- * Adds support for Kubernetes alerting historian APIs
- *
- * **Details:**
- * - flag key: `kubernetesAlertingHistorian`
- * - default value: `true`
- */
-export const useFlagKubernetesAlertingHistorian = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("kubernetesAlertingHistorian", true, options).value;
-};
-
-/**
  * Enables team APIs in the app platform
  *
  * **Details:**
@@ -1393,28 +1350,6 @@ export const useFlagPluginsUseMTPluginSettings = (options?: ReactFlagEvaluationO
  */
 export const useFlagPluginsUseMTPlugins = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("plugins.useMTPlugins", false, options).value;
-};
-
-/**
- * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
- *
- * **Details:**
- * - flag key: `provisioning.gitConventions`
- * - default value: `true`
- */
-export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.gitConventions", true, options).value;
-};
-
-/**
- * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
- *
- * **Details:**
- * - flag key: `provisioning.readmes`
- * - default value: `true`
- */
-export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**
