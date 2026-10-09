@@ -6,8 +6,9 @@ plugin router uses it to mount routes. It is written to be copied into
 grafana-app-sdk unchanged, so that codegen can reject a bad manifest when it
 is generated instead of the router skipping routes when it is loaded.
 
-It imports only the standard library, `github.com/grafana/grafana-app-sdk/app`
-and `k8s.io/kube-openapi/pkg/spec3`.
+It imports only the standard library, `github.com/grafana/grafana-app-sdk/app`,
+`github.com/grafana/authlib/types` and `k8s.io/kube-openapi/pkg/spec3`, all of
+which app-sdk already depends on.
 
 ## API
 
@@ -34,6 +35,10 @@ A path is reported when it:
 - puts a kind route at the wrong scope;
 - has a parameter that is not a whole segment (`v{version}`), constrains its
   value (`{id:[0-9]+}`), or is not a clean path (`a//b`, `a/../b`);
+- differs from an earlier path only in parameter names (`/items/{id}` and
+  `/items/{name}`), which OpenAPI does not allow even when the methods differ.
+  A catch-all counts as an ordinary parameter here, since it is published as
+  one;
 - matches the same requests as an earlier path, in path order;
 - has no operation left once unserved methods are removed. An unserved method
   on a path that still has others is reported on its own.
@@ -52,6 +57,28 @@ spellings are accepted:
   app-sdk writes a catch-all in OpenAPI.
 
 OpenAPI has no catch-all syntax, so the published path is always `{path}`.
+
+## Declared access checks
+
+An operation can declare the access check a request must pass, with the
+extensions app-sdk codegen writes from a route's `authz` section:
+
+| Extension | Meaning |
+| --- | --- |
+| `x-grafana-declared-authz-resource` | the resource checked; required for a check |
+| `x-grafana-declared-authz-subresource` | the subresource checked, if any |
+| `x-grafana-declared-authz-verb` | the verb checked; without it, the request's own verb |
+
+`Route.Authz` holds the resulting `authlib.CheckRequest` for each operation, by
+HTTP method. Group, namespace and name come from the request, so the server
+fills them in, and it fills in the verb from the request when none is
+declared. The plugin router runs these checks before calling the plugin. An operation whose declaration cannot be read, such as a verb
+or subresource without a resource or an unknown verb, is reported and not
+served.
+
+The extensions must be on the operation. A path's own extensions are not
+available, because `ManifestVersionOpenAPI.Paths` holds `spec3.PathProps`,
+which has no extensions.
 
 ## Copying into app-sdk
 

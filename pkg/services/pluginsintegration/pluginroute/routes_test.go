@@ -361,7 +361,6 @@ func TestVersionRoutesDropUnservedMethods(t *testing.T) {
 // for matching; a path that still cannot be mounted is left out of the spec and
 // the authorizer too, so neither describes a route that answers 404.
 func TestVersionRoutesMuxPatterns(t *testing.T) {
-
 	op := spec3.PathProps{Get: &spec3.Operation{}}
 	manifest := testManifest(t)
 	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
@@ -398,7 +397,6 @@ func TestVersionRoutesMuxPatterns(t *testing.T) {
 // A final {name:*} or {name...} segment matches the rest of the path, and is
 // published as an ordinary parameter since OpenAPI has no catch-all syntax.
 func TestVersionRoutesCatchAll(t *testing.T) {
-
 	op := spec3.PathProps{Get: &spec3.Operation{}}
 	manifest := testManifest(t)
 	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{

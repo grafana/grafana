@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"testing"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
@@ -28,6 +29,14 @@ func byDeclared(routes []Route) map[string]Route {
 	out := map[string]Route{}
 	for _, r := range routes {
 		out[r.Declared] = r
+	}
+	return out
+}
+
+func declaredPaths(routes []Route) []string {
+	out := make([]string, 0, len(routes))
+	for _, r := range routes {
+		out = append(out, r.Declared)
 	}
 	return out
 }
@@ -93,13 +102,7 @@ func TestParseReportsPathsThatCannotBeServed(t *testing.T) {
 		"/files/{path:*}/more":  get(),
 		"/empty":                {},
 	}), Options{ReservedResources: []string{"app"}})
-	require.Equal(t, []string{"/ok"}, func() []string {
-		out := []string{}
-		for _, r := range routes {
-			out = append(out, r.Declared)
-		}
-		return out
-	}())
+	require.Equal(t, []string{"/ok"}, declaredPaths(routes))
 
 	require.Equal(t, map[string]string{
 		"/things":                                      "shadows the things resource; a kind route must be below things/{name}/",
@@ -185,8 +188,43 @@ func TestParseConflicts(t *testing.T) {
 	}), Options{})
 	require.Len(t, routes, 4)
 	require.Equal(t, map[string]string{
-		"/flags/{id}": "matches the same GET requests as /flags/{flag-key}",
+		"/flags/{id}": "differs from /flags/{flag-key} only in parameter names, which OpenAPI does not allow",
 	}, reasons(problems))
+}
+
+// OpenAPI does not allow two templated paths that differ only in parameter
+// names, even when ServeMux could tell their methods apart. A catch-all is
+// published as an ordinary parameter, so it counts as the same shape too.
+func TestParseRejectsEquivalentPaths(t *testing.T) {
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/items/{id}":         {Post: &spec3.Operation{}},
+		"/items/{name}":       get(),
+		"/files/{id}":         get(),
+		"/files/{path:*}":     {Put: &spec3.Operation{}},
+		"/items/{id}/history": get(),
+	}), Options{})
+	require.ElementsMatch(t, []string{"/files/{id}", "/items/{id}", "/items/{id}/history"}, declaredPaths(routes))
+	require.Equal(t, map[string]string{
+		"/files/{path:*}": "differs from /files/{id} only in parameter names, which OpenAPI does not allow",
+		"/items/{name}":   "differs from /items/{id} only in parameter names, which OpenAPI does not allow",
+	}, reasons(problems))
+}
+
+// A route rejected partway through registering its methods must not leave the
+// ones it registered behind to reject a later, valid route.
+func TestParseRollsBackRejectedRoutes(t *testing.T) {
+	// In path order: /x/{q}/b registers its GET, then its POST conflicts with
+	// /x/a/{p}. Its GET would in turn conflict with /x/~/{r}, which is valid
+	// once /x/{q}/b is gone.
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/x/a/{p}": {Post: &spec3.Operation{}},
+		"/x/{q}/b": {Get: &spec3.Operation{}, Post: &spec3.Operation{}},
+		"/x/~/{r}": get(),
+	}), Options{})
+	require.Equal(t, map[string]string{
+		"/x/{q}/b": "matches the same POST requests as /x/a/{p}",
+	}, reasons(problems))
+	require.Equal(t, []string{"/x/a/{p}", "/x/~/{r}"}, declaredPaths(routes))
 }
 
 func TestParseUnservedMethods(t *testing.T) {
@@ -225,7 +263,7 @@ func TestValidate(t *testing.T) {
 	}}
 	err := Validate(manifest, Options{})
 	require.EqualError(t, err, "v1 /things: shadows the things resource; a kind route must be below things/{name}/\n"+
-		"v2 /a/{y}: matches the same GET requests as /a/{x}")
+		"v2 /a/{y}: differs from /a/{x} only in parameter names, which OpenAPI does not allow")
 }
 
 // A path parameter declared on the operation is left alone; only the path is
@@ -238,4 +276,53 @@ func TestParseKeepsDeclaredOperations(t *testing.T) {
 	}}
 	routes, _ := Parse(testVersion(map[string]spec3.PathProps{"/flags/{flag-key}": {Get: op}}), Options{})
 	require.Same(t, op, routes[0].Operations.Get)
+}
+
+// An operation can declare the access check a request must pass. Without a
+// declared verb the check uses the request's, so Verb is left empty.
+func TestParseAuthz(t *testing.T) {
+	op := func(ext map[string]any) *spec3.Operation {
+		o := &spec3.Operation{}
+		for k, v := range ext {
+			o.AddExtension(k, v)
+		}
+		return o
+	}
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/namespaces/{namespace}/things/{name}/reconcile": {
+			Post: op(map[string]any{ExtensionAuthzResource: "things", ExtensionAuthzSubresource: "reconcile"}),
+			Get:  op(map[string]any{ExtensionAuthzResource: "things", ExtensionAuthzVerb: "list"}),
+			Put:  op(nil),
+		},
+		"/report": {
+			Get:    op(map[string]any{ExtensionAuthzResource: "reports"}),
+			Delete: op(map[string]any{ExtensionAuthzVerb: "delete"}),
+			Patch:  op(map[string]any{ExtensionAuthzResource: "reports", ExtensionAuthzVerb: "approve"}),
+			Post:   op(map[string]any{ExtensionAuthzResource: 42}),
+		},
+		"/trace": {Options: op(map[string]any{ExtensionAuthzResource: "reports"})}, // any method can use the request's verb
+	}), Options{})
+	got := byDeclared(routes)
+
+	require.Equal(t, map[string]authlib.CheckRequest{
+		http.MethodPost: {Resource: "things", Subresource: "reconcile"},
+		http.MethodGet:  {Verb: "list", Resource: "things"},
+	}, got["/namespaces/{namespace}/things/{name}/reconcile"].Authz, "an operation without a declaration needs no check")
+	require.NotNil(t, got["/namespaces/{namespace}/things/{name}/reconcile"].Operations.Put)
+
+	report := got["/report"]
+	require.Equal(t, map[string]authlib.CheckRequest{
+		http.MethodGet: {Resource: "reports"},
+	}, report.Authz)
+	require.Equal(t, map[string]authlib.CheckRequest{
+		http.MethodOptions: {Resource: "reports"},
+	}, got["/trace"].Authz)
+	require.Equal(t, spec3.PathProps{Get: report.Operations.Get}, report.Operations,
+		"an operation whose check cannot be read is not served without it")
+
+	require.Equal(t, map[string]string{
+		"DELETE /report": "an authz subresource or verb needs x-grafana-declared-authz-resource",
+		"PATCH /report":  `x-grafana-declared-authz-verb must be one of get, list, watch, create, update, patch, delete, deletecollection, get_permissions, set_permissions, not "approve"`,
+		"POST /report":   "x-grafana-declared-authz-resource must be a non-empty string",
+	}, reasons(problems))
 }

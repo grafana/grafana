@@ -48,6 +48,7 @@ type PluginDependencies struct {
 	PluginClient       plugins.Client
 	ContextProvider    appplugin.PluginContextWrapper
 	AccessControl      accesscontrol.AccessControl
+	AccessClient       types.AccessClient // runs the access checks manifest routes declare
 	DualWrite          dualwrite.Service
 	SecureValues       secret.InlineSecureValueSupport
 	MetricsRegister    prometheus.Registerer
@@ -100,6 +101,7 @@ func ProvidePluginLoaderDependencies(
 			PluginClient:       pluginClient,
 			ContextProvider:    contextProvider,
 			AccessControl:      accessControl,
+			AccessClient:       accessClient,
 			DualWrite:          dualWrite,
 			SecureValues:       secureValues,
 			MetricsRegister:    reg,
@@ -383,6 +385,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 		ClientV3:         clientV3,
 		ContextProvider:  b.deps.ContextProvider,
 		Decrypter:        b.deps.Decrypter,
+		AccessClient:     b.deps.AccessClient,
 		Search:           b.deps.Unified,
 		Store:            b.deps.Unified,
 		HybridAPIEnabled: apiserverSection.Key(searchapi.ConfigKeyHybrid).MustBool(true),

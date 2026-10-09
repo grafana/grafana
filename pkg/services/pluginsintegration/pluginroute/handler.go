@@ -10,6 +10,7 @@ import (
 	"strings"
 	"sync"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -53,13 +54,16 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
-	PluginInfo       plugins.Info
-	Storage          StorageProvider
-	PluginClient     appplugin.PluginClient
-	ClientV3         appclientv3.Client
-	ContextProvider  appplugin.PluginContextWrapper
-	Decrypter        decrypt.DecryptService
-	AccessChecker    appplugin.PluginAccessChecker
+	PluginInfo      plugins.Info
+	Storage         StorageProvider
+	PluginClient    appplugin.PluginClient
+	ClientV3        appclientv3.Client
+	ContextProvider appplugin.PluginContextWrapper
+	Decrypter       decrypt.DecryptService
+	AccessChecker   appplugin.PluginAccessChecker
+	// AccessClient runs the access checks a manifest declares on its routes.
+	// A route that declares one is refused without it.
+	AccessClient     authlib.AccessChecker
 	HybridAPIEnabled bool
 	KeysAPIEnabled   bool
 	Search           resourcepb.ResourceIndexClient
@@ -266,6 +270,7 @@ func newManifestBuilder(pluginID string, manifest *app.ManifestData, opts Option
 		clientV3:      opts.ClientV3,
 		decrypter:     newSecureValueLookup(opts.Decrypter),
 		accessChecker: opts.AccessChecker,
+		accessClient:  opts.AccessClient,
 		search:        opts.Search,
 		store:         opts.Store,
 		tracer:        opts.Tracer,

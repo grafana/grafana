@@ -3,14 +3,17 @@ package pluginroute
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"maps"
 	"net/http"
 	"slices"
 	"strings"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -325,9 +328,10 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+		ns := ""
 		if route.Namespaced {
-			// Read by the plugin's route info and by the storage lookup below.
-			ctx = request.WithNamespace(ctx, r.PathValue(namespaceParameter))
+			ns = r.PathValue(namespaceParameter)
+			ctx = request.WithNamespace(ctx, ns)
 			r = r.WithContext(ctx)
 		}
 
@@ -338,57 +342,131 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 		info := httpadapter.RouteInfo{
 			Group:     gv.Group,
 			Version:   gv.Version,
-			Namespace: request.NamespaceValue(ctx),
+			Namespace: ns,
 			Path:      path,
+		}
+
+		// Unified storage applies the resource level access control to reading the parent.
+		var parentMeta utils.GrafanaMetaAccessor
+		var parentObj runtime.Object
+		name := ""
+		if resource != "" {
+			name = r.PathValue(nameParameter)
+		}
+		if name != "" {
+			// The getter is wired in UpdateAPIGroupInfo; a route that somehow
+			// serves before then must not panic on the request path.
+			if b.getter == nil {
+				_ = errhttp.Write(ctx, apierrors.NewInternalError(
+					errors.New("plugin storage is not ready")), w)
+				return
+			}
+			obj, err := b.getter(ctx, gv.WithResource(resource), name)
+			if err != nil {
+				_ = errhttp.Write(ctx, err, w)
+				return
+			}
+			m, err := utils.MetaAccessor(obj)
+			if err != nil {
+				_ = errhttp.Write(ctx, err, w)
+				return
+			}
+			parentObj, parentMeta = obj, m
+		}
+
+		// Before the parent's secure values are decrypted, so a request the
+		// manifest refuses never decrypts them.
+		if err := b.checkDeclaredAccess(r, gv, route, ns, name, parentMeta); err != nil {
+			_ = errhttp.Write(ctx, err, w)
+			return
 		}
 
 		if resource != "" {
 			parent := &pluginv3.RouteResource{}
 			parent.SetResource(resource)
-
-			if name := r.PathValue(nameParameter); name != "" {
-				// The getter is wired in UpdateAPIGroupInfo; a route that somehow
-				// serves before then must not panic on the request path.
-				if b.getter == nil {
-					_ = errhttp.Write(ctx, apierrors.NewInternalError(
-						errors.New("plugin storage is not ready")), w)
-					return
-				}
-				// Unified storage will apply the resource level access control
-				obj, err := b.getter(ctx, gv.WithResource(resource), name)
+			if parentObj != nil {
+				raw, err := json.Marshal(parentObj)
 				if err != nil {
 					_ = errhttp.Write(ctx, err, w)
 					return
 				}
-				m, err := utils.MetaAccessor(obj)
-				if err != nil {
-					_ = errhttp.Write(ctx, err, w)
-					return
-				}
-				raw, err := json.Marshal(obj)
-				if err != nil {
-					_ = errhttp.Write(ctx, err, w)
-					return
-				}
-
-				sv, err := b.decrypter.get(ctx, m)
+				sv, err := b.decrypter.get(ctx, parentMeta)
 				if err != nil {
 					_ = errhttp.Write(ctx, err, w)
 					return
 				}
 				parent.SetName(name)
-				parent.SetRv(m.GetResourceVersion())
+				parent.SetRv(parentMeta.GetResourceVersion())
 				parent.SetRaw(raw)
 				parent.SetDecryptedSecureValues(sv)
 			}
 			info.Parent = parent
 		}
+
 		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
 		// The caller's identity reaches the plugin only as the access token the
 		// v3 client exchanges for it, never as an ID token in the HTTP headers.
 		req.Header.Del(proxyutil.IDHeaderName)
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
+}
+
+// declaredCheck returns the access check the manifest declares for a request's
+// method. A HEAD request is matched by a GET pattern, so without a HEAD
+// operation of its own it gets the GET operation's check.
+func declaredCheck(route manifestroutes.Route, method string) (authlib.CheckRequest, bool) {
+	check, ok := route.Authz[method]
+	if !ok && method == http.MethodHead && route.Operations.Head == nil {
+		check, ok = route.Authz[http.MethodGet]
+	}
+	return check, ok
+}
+
+// checkDeclaredAccess runs the access check the manifest declares for the
+// request, if any, filling in what only the request knows. The parent's name
+// and folder apply only when the check is for the parent's own resource.
+func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVersion, route manifestroutes.Route, namespace, name string, parent utils.GrafanaMetaAccessor) error {
+	check, ok := declaredCheck(route, r.Method)
+	if !ok {
+		return nil
+	}
+	ctx := r.Context()
+	forbidden := func(reason string) error {
+		return apierrors.NewForbidden(schema.GroupResource{Group: gv.Group, Resource: check.Resource}, check.Name, errors.New(reason))
+	}
+	if b.accessClient == nil {
+		return forbidden("the route declares an access check, and no access client is configured")
+	}
+	authInfo, ok := authlib.AuthInfoFrom(ctx)
+	if !ok {
+		return apierrors.NewUnauthorized("no identity found for the request")
+	}
+
+	check.Group = gv.Group
+	check.Namespace = namespace
+	folder := ""
+	if route.Kind != nil && check.Resource == strings.ToLower(route.Kind.Plural) {
+		check.Name = name
+		if parent != nil {
+			folder = parent.GetFolder()
+		}
+	}
+	if check.Verb == "" {
+		info, ok := request.RequestInfoFrom(ctx)
+		if !ok || info.Verb == "" {
+			return forbidden("the request has no verb to check")
+		}
+		check.Verb = info.Verb
+	}
+
+	res, err := b.accessClient.Check(ctx, authInfo, check, folder)
+	if err != nil {
+		return apierrors.NewInternalError(fmt.Errorf("access check: %w", err))
+	}
+	if !res.Allowed {
+		return forbidden(fmt.Sprintf("%s %s is not allowed", check.Verb, check.Resource))
+	}
+	return nil
 }
 
 // namespacePathParameter documents the {namespace} segment that namespaced

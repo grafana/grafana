@@ -128,7 +128,7 @@ func newRoutesOnlyHandler(b *manifestBuilder, reg prometheus.Registerer) (*Handl
 	longRunning := genericfilters.BasicLongRunningRequestCheck(sets.NewString("watch"), sets.NewString())
 	const requestTimeout = 60 * time.Second
 
-	var handler http.Handler = b.routeMux(documents, reg)
+	handler := b.routeMux(documents, reg)
 	handler = filters.WithRequester(handler)
 	handler = genericapifilters.WithAuthorization(handler, authz, codecs)
 	handler = genericapifilters.WithAuthentication(handler, apiserverauthenticator.NewAuthenticator(),

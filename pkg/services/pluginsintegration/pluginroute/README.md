@@ -107,6 +107,18 @@ Cluster-scoped kinds are reserved for service identities unless the manifest
 marks them `userReadable`. End users can only `get` or `list` a user-readable
 cluster-scoped kind; watching one is left to service identities.
 
+A manifest route can also declare an access check on each operation, with the
+`x-grafana-declared-authz-*` extensions (see
+[`manifestroutes`](manifestroutes/README.md#declared-access-checks)). The route
+handler runs it through the configured `AccessClient` before calling the
+plugin, and after reading the parent object, so a refused request never has
+the parent's secure values decrypted. The check's group is the manifest's, its
+namespace the request's, and its verb the declared one or else the request's.
+A check on the parent's own resource also names the parent and its folder. A
+HEAD request served by a GET operation gets that operation's check. A route
+that declares a check is refused when no access client is configured.
+
+
 ## Admission hooks
 
 A kind can declare mutation and validation operations in its `admission`

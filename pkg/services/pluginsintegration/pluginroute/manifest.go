@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -32,6 +33,7 @@ type manifestBuilder struct {
 	clientV3      appclientv3.Client
 	decrypter     *secureValueLookup
 	accessChecker appplugin.PluginAccessChecker
+	accessClient  authlib.AccessChecker
 	search        resourcepb.ResourceIndexClient
 	store         resourcepb.ResourceStoreClient
 	tracer        tracing.Tracer

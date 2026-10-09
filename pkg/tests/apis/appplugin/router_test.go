@@ -364,14 +364,14 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		t.Cleanup(func() { _ = things.Delete(context.Background(), "with-files", metav1.DeleteOptions{}) })
 
 		httpClient := &http.Client{Transport: pluginRouterTokenTransport{next: http.DefaultTransport, token: token}}
-		call := func(method, path string) *http.Response {
+		call := func(method, path string) (int, http.Header) {
 			t.Helper()
 			req, err := http.NewRequestWithContext(t.Context(), method, server.URL+"/apis/"+group+"/v1/"+path, nil)
 			require.NoError(t, err)
 			res, err := httpClient.Do(req)
 			require.NoError(t, err)
-			_ = res.Body.Close()
-			return res
+			require.NoError(t, res.Body.Close())
+			return res.StatusCode, res.Header
 		}
 
 		for _, tc := range []struct {
@@ -385,8 +385,8 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		} {
 			t.Run(tc.name, func(t *testing.T) {
 				before := routeCalls.Load()
-				res := call(tc.method, tc.path)
-				require.Equal(t, http.StatusOK, res.StatusCode)
+				code, _ := call(tc.method, tc.path)
+				require.Equal(t, http.StatusOK, code)
 				require.Equal(t, before+1, routeCalls.Load(), "the route reached the plugin")
 				info := receivedRoute.Load().(httpadapter.RouteInfo)
 				require.Equal(t, tc.route, info.Path)
@@ -396,9 +396,9 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 
 		t.Run("an undeclared method is refused", func(t *testing.T) {
 			before := routeCalls.Load()
-			res := call(http.MethodPost, "namespaces/"+namespace+"/files/a/b/c.json")
-			require.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
-			require.Equal(t, "GET, HEAD, PUT", res.Header.Get("Allow"))
+			code, header := call(http.MethodPost, "namespaces/"+namespace+"/files/a/b/c.json")
+			require.Equal(t, http.StatusMethodNotAllowed, code)
+			require.Equal(t, "GET, HEAD, PUT", header.Get("Allow"))
 			require.Equal(t, before, routeCalls.Load())
 		})
 	})

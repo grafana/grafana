@@ -4,8 +4,8 @@
 // The router serves these routes, but the rules for which paths are valid
 // belong to the manifest, so a manifest can be checked when it is generated
 // rather than when it is loaded. The package depends only on the standard
-// library, the app-sdk app package and kube-openapi, so it can be copied into
-// the app-sdk as is.
+// library, the app-sdk app package, authlib types and kube-openapi, so it can
+// be copied into the app-sdk as is.
 package manifestroutes
 
 import (
@@ -16,6 +16,7 @@ import (
 	"slices"
 	"strings"
 
+	authlib "github.com/grafana/authlib/types"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -34,6 +35,13 @@ const (
 	// matches the rest of the path, including slashes. It is how a catch-all is
 	// written in OpenAPI, which has no syntax for one.
 	CatchAllExtension = "x-grafana-catch-all"
+
+	// ExtensionAuthzResource, ExtensionAuthzSubresource and ExtensionAuthzVerb
+	// declare, on an operation, the access check a request must pass. They are
+	// written by app-sdk codegen from a route's authz section.
+	ExtensionAuthzResource    = "x-grafana-declared-authz-resource"
+	ExtensionAuthzSubresource = "x-grafana-declared-authz-subresource"
+	ExtensionAuthzVerb        = "x-grafana-declared-authz-verb"
 
 	// NamespacedPrefix is the version-relative path namespaced routes mount
 	// under.
@@ -85,6 +93,12 @@ type Route struct {
 
 	// Operations are the declared operations, without unserved methods.
 	Operations spec3.PathProps
+
+	// Authz holds the access check each operation declares, by method. Group,
+	// Namespace and Name are left for the server to fill in for each request,
+	// and so is Verb when the operation does not declare one: the check then
+	// uses the request's own verb.
+	Authz map[string]authlib.CheckRequest
 }
 
 // VersionPath is the route's path relative to the version.
@@ -152,16 +166,23 @@ func Parse(version app.ManifestVersion, opts Options) ([]Route, []Problem) {
 
 	declared := version.OpenAPI.Paths
 	routes := make([]Route, 0, len(declared))
+	// shapes holds each accepted route's published path with its parameter
+	// names blanked, since OpenAPI does not allow two templated paths that
+	// differ only in parameter names.
+	shapes := map[string]string{}
 	probe := http.NewServeMux()
 	for _, full := range slices.Sorted(maps.Keys(declared)) {
 		ops := withoutMethods(declared[full], opts.UnservedMethods, func(method string) {
 			report(full, method, "the method is not served")
 		})
+		authz := authzChecks(&ops, func(method, reason string) {
+			report(full, method, reason)
+		})
 		if len(Operations(&ops)) == 0 {
 			report(full, "", "no operation is served")
 			continue
 		}
-		route := Route{Declared: full, Path: strings.TrimPrefix(full, "/"), Operations: ops}
+		route := Route{Declared: full, Path: strings.TrimPrefix(full, "/"), Operations: ops, Authz: authz}
 		if rest, ok := strings.CutPrefix(route.Path, NamespacedPrefix+"/"); ok {
 			route.Path = rest
 			route.Namespaced = true
@@ -175,13 +196,115 @@ func Parse(version app.ManifestVersion, opts Options) ([]Route, []Problem) {
 			report(full, "", reason)
 			continue
 		}
-		if reason := mountable(probe, route, routes); reason != "" {
-			report(full, "", reason)
+		shape := pathShape(route.SpecPath)
+		if other, ok := shapes[shape]; ok {
+			report(full, "", "differs from "+other+" only in parameter names, which OpenAPI does not allow")
 			continue
 		}
+		if reason := mountable(probe, route, routes); reason != "" {
+			report(full, "", reason)
+			// The methods registered before the one that failed would otherwise
+			// stay on the probe and reject later routes that are valid.
+			probe = probeFor(routes)
+			continue
+		}
+		shapes[shape] = full
 		routes = append(routes, route)
 	}
 	return routes, problems
+}
+
+// authzVerbs are the verbs a declared check may use.
+var authzVerbs = []string{
+	// Standard verbs
+	"get", "list", "watch", "create", "update", "patch", "delete", "deletecollection",
+	// Custom admin verbs
+	"get_permissions", "set_permissions",
+}
+
+// authzChecks reads the access check each operation declares. An operation
+// whose declaration cannot be read is removed and reported, rather than served
+// without the check it asked for.
+func authzChecks(props *spec3.PathProps, drop func(method, reason string)) map[string]authlib.CheckRequest {
+	var checks map[string]authlib.CheckRequest
+	ops := Operations(props)
+	for _, method := range slices.Sorted(maps.Keys(ops)) {
+		check, declared, err := authzCheck(ops[method])
+		if err != nil {
+			drop(method, err.Error())
+			*props = withoutMethods(*props, []string{method}, func(string) {})
+			continue
+		}
+		if !declared {
+			continue
+		}
+		if checks == nil {
+			checks = map[string]authlib.CheckRequest{}
+		}
+		checks[method] = check
+	}
+	return checks
+}
+
+func authzCheck(op *spec3.Operation) (authlib.CheckRequest, bool, error) {
+	resource, hasResource, err := stringExtension(op, ExtensionAuthzResource)
+	if err != nil {
+		return authlib.CheckRequest{}, false, err
+	}
+	subresource, hasSubresource, err := stringExtension(op, ExtensionAuthzSubresource)
+	if err != nil {
+		return authlib.CheckRequest{}, false, err
+	}
+	verb, hasVerb, err := stringExtension(op, ExtensionAuthzVerb)
+	if err != nil {
+		return authlib.CheckRequest{}, false, err
+	}
+	if !hasResource {
+		if hasSubresource || hasVerb {
+			return authlib.CheckRequest{}, false, fmt.Errorf("an authz subresource or verb needs %s", ExtensionAuthzResource)
+		}
+		return authlib.CheckRequest{}, false, nil
+	}
+	if hasVerb && !slices.Contains(authzVerbs, verb) {
+		return authlib.CheckRequest{}, false, fmt.Errorf("%s must be one of %s, not %q",
+			ExtensionAuthzVerb, strings.Join(authzVerbs, ", "), verb)
+	}
+	return authlib.CheckRequest{Verb: verb, Resource: resource, Subresource: subresource}, true, nil
+}
+
+// stringExtension returns an extension that must be a non-empty string when set.
+func stringExtension(op *spec3.Operation, name string) (string, bool, error) {
+	value, ok := op.Extensions[name]
+	if !ok {
+		return "", false, nil
+	}
+	s, ok := value.(string)
+	if !ok || s == "" {
+		return "", false, fmt.Errorf("%s must be a non-empty string", name)
+	}
+	return s, true, nil
+}
+
+// pathShape blanks the parameter names in a published path.
+func pathShape(specPath string) string {
+	segments := strings.Split(specPath, "/")
+	for i, segment := range segments {
+		if _, ok := parameterName(segment); ok {
+			segments[i] = "{}"
+		}
+	}
+	return strings.Join(segments, "/")
+}
+
+// probeFor registers the accepted routes on a new probe.
+func probeFor(routes []Route) *http.ServeMux {
+	probe := http.NewServeMux()
+	for _, route := range routes {
+		for method := range Operations(&route.Operations) {
+			_ = handle(probe, method+" /"+route.Pattern)
+		}
+	}
+	return probe
 }
 
 // resolve decides what the route mounts under, returning why it cannot be
@@ -321,11 +444,7 @@ func mountable(probe *http.ServeMux, route Route, earlier []Route) string {
 			continue
 		}
 		for _, other := range earlier {
-			mux := http.NewServeMux()
-			for m := range Operations(&other.Operations) {
-				_ = handle(mux, m+" /"+other.Pattern)
-			}
-			if handle(mux, method+" /"+route.Pattern) != nil {
+			if handle(probeFor([]Route{other}), method+" /"+route.Pattern) != nil {
 				return "matches the same " + method + " requests as " + other.Declared
 			}
 		}
