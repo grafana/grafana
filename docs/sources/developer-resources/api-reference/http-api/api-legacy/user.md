@@ -39,7 +39,7 @@ To use these API endpoints you must have the Grafana server administrator permis
 
 In Grafana OSS, the default `admin` user has permissions to use these API endpoints. If you're running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
-Because Grafana Cloud stacks are multi-tenant, **no Grafana Cloud account is allowed to call these endpoints**. That level of access is reserved for Grafana's own platform operators. If you're a Grafana Cloud user, refer to the [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/http_api//api-legacy/org/) instead.
+Because Grafana Cloud stacks are multi-tenant, **no Grafana Cloud account is allowed to call these endpoints**. That level of access is reserved only for Grafana platform operators. If you're a Grafana Cloud user, refer to the [Organization HTTP API](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developer-resources/http_api//api-legacy/org/) instead.
 
 ## Authentication
 
