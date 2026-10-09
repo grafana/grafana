@@ -13,9 +13,6 @@ service LegacyAuthzService {
   rpc LegacyCheck(LegacyCheckRequest) returns (LegacyCheckResponse);
 
   // Deprecated: transitional compatibility API for legacy permission enumeration.
-  // Embedded-only: trusted assertions require the private transport guard and
-  // instance-scope validation. Network/standalone implementations must leave
-  // this method unimplemented. No HTTP route is exposed.
   rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse) {
     option deprecated = true;
   }

@@ -34,9 +34,6 @@ type LegacyAuthzServiceClient interface {
 	LegacyCheck(ctx context.Context, in *LegacyCheckRequest, opts ...grpc.CallOption) (*LegacyCheckResponse, error)
 	// Deprecated: Do not use.
 	// Deprecated: transitional compatibility API for legacy permission enumeration.
-	// Embedded-only: trusted assertions require the private transport guard and
-	// instance-scope validation. Network/standalone implementations must leave
-	// this method unimplemented. No HTTP route is exposed.
 	LegacyGetUserPermissions(ctx context.Context, in *LegacyGetUserPermissionsRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[LegacyGetUserPermissionsResponse], error)
 }
 
@@ -89,9 +86,6 @@ type LegacyAuthzServiceServer interface {
 	LegacyCheck(context.Context, *LegacyCheckRequest) (*LegacyCheckResponse, error)
 	// Deprecated: Do not use.
 	// Deprecated: transitional compatibility API for legacy permission enumeration.
-	// Embedded-only: trusted assertions require the private transport guard and
-	// instance-scope validation. Network/standalone implementations must leave
-	// this method unimplemented. No HTTP route is exposed.
 	LegacyGetUserPermissions(*LegacyGetUserPermissionsRequest, grpc.ServerStreamingServer[LegacyGetUserPermissionsResponse]) error
 }
 
