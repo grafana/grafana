@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { type MetricFindValue } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { CodeMirrorEditor } from '@grafana/ui/unstable';
+import { CodeMirrorEditor } from '@grafana/ui';
 import { useOptionsPaneReadOnly } from 'app/features/dashboard/components/PanelEditor/OptionsPaneReadOnlyContext';
 
 export function StaticOptionsEditor({

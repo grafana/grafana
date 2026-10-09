@@ -1,6 +1,5 @@
 import { t } from '@grafana/i18n';
-import { type ComboboxOption } from '@grafana/ui';
-import { CODE_MIRROR_LANGUAGES, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import { type ComboboxOption, CODE_MIRROR_LANGUAGES, type CodeMirrorEditorLanguage } from '@grafana/ui';
 
 // The spec stores `language` as a free-form string, so it is deliberately NOT narrowed to
 // CodeMirrorEditorLanguage anywhere: a notebook may legitimately arrive carrying a language the

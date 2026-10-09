@@ -24,8 +24,8 @@ jest.mock('@grafana/ui', () => ({
   CodeEditor: () => <div data-testid="monaco-editor" />,
 }));
 
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   __esModule: true,
   CodeMirrorEditor: ({
     value,

@@ -4,8 +4,20 @@ import { useDebounce } from 'react-use';
 
 import { type DataFrame, type GrafanaTheme2, type InterpolateFunction, type VariableSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Alert, Button, Dropdown, Icon, Menu, RadioButtonGroup, Stack, useStyles2, useTheme2 } from '@grafana/ui';
-import { CodeMirrorEditor, createCodeEditorTheme, type CodeMirrorEditorLanguage } from '@grafana/ui/unstable';
+import {
+  Alert,
+  Button,
+  Dropdown,
+  Icon,
+  Menu,
+  RadioButtonGroup,
+  Stack,
+  useStyles2,
+  useTheme2,
+  CodeMirrorEditor,
+  createCodeEditorTheme,
+  type CodeMirrorEditorLanguage,
+} from '@grafana/ui';
 import config from 'app/core/config';
 
 import { CodeLanguage, defaultCodeLanguage, type RenderMode, TextMode } from '../../panelcfg.gen';
