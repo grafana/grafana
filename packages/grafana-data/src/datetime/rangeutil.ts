@@ -11,7 +11,7 @@ import {
 
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
-import { isDateTime, type DateTime, dateTime, dateTimeForTimeZone } from './moment_wrapper';
+import { isDateTime, type DateTime, type DateTimeInput, dateTime, dateTimeForTimeZone } from './moment_wrapper';
 import { dateTimeParse } from './parser';
 
 // `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
@@ -508,10 +508,20 @@ export const convertRawToRange = (
   raw: RawTimeRange,
   timeZone?: TimeZone,
   fiscalYearStartMonth?: number,
-  format?: string
+  format?: string,
+  // Optional reference timestamp used by `now` math expressions. When the raw
+  // range contains relative endpoints, both `from` and `to` must be resolved
+  // against the same "now" — otherwise the duration of `now-Nh` to `now` drifts
+  // by a few milliseconds, and two `now/d` endpoints can describe different
+  // calendar days when the underlying read crosses midnight (#131634).
+  now?: DateTimeInput
 ): TimeRange => {
-  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
+  // Capture the wall clock at most once per call. If the caller already pinned
+  // `now` we use that; otherwise we read `Date.now()` a single time and pass it
+  // through so both endpoints share the same reference.
+  const referenceNow = now !== undefined ? now : dateTime();
+  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format, now: referenceNow });
+  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format, now: referenceNow });
 
   return {
     from,

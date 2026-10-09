@@ -21,6 +21,13 @@ export interface DateTimeOptionsWhenParsing extends DateTimeOptions {
    */
   roundUp?: boolean;
   fiscalYearStartMonth?: number;
+  /**
+   * Reference "now" to use when the input contains a `now` math expression. If
+   * unset, the parser falls back to the real wall clock. Callers that parse
+   * multiple relative expressions together should pass the same value to each
+   * call so the endpoints share a single reference timestamp (#131634).
+   */
+  now?: DateTimeInput;
 }
 
 type DateTimeParser<T extends DateTimeOptions = DateTimeOptions> = (value: DateTimeInput, options?: T) => DateTime;
@@ -55,10 +62,10 @@ export const dateTimeParse: DateTimeParser<DateTimeOptionsWhenParsing> = (value,
 const parseString = (value: string, options?: DateTimeOptionsWhenParsing): DateTime => {
   if (value.indexOf('now') !== -1) {
     if (!isValid(value)) {
-      return dateTime();
+      return options?.now !== undefined ? dateTime(options.now) : dateTime();
     }
 
-    const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth);
+    const parsed = parse(value, options?.roundUp, options?.timeZone, options?.fiscalYearStartMonth, options?.now);
     return parsed || dateTime();
   }
 
