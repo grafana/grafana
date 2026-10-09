@@ -25,7 +25,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     editview,
     body,
     editPanel,
-    isPanelEditorLoading,
+    loadingView,
     viewPanel,
     panelSearch,
     panelsPerRow,
@@ -69,6 +69,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       : getNavModel(navIndex, 'dashboards/browse');
   const isSettingsOpen = editview !== undefined;
   const soloPanelContext = useDefineSoloPanelContext(viewPanel);
+  const isPanelEditorLoading = loadingView === 'editPanel';
   const subViewOpen = useRef(false);
 
   // Remember scroll pos when going into view panel, edit panel or settings

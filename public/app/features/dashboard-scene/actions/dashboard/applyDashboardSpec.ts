@@ -42,11 +42,11 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
   const getPreviousSpecUrl = () => (previousSpecUrl ??= specUrlState(scene));
 
   // Keep sidebar alive - otherwise undo/redo stack would be wiped out
-  const { isOverlayLoading: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
+  const { loadingView: rebuiltLoading, ...newState } = sceneUtils.cloneSceneObjectState(rebuilt.state, {
     key: scene.state.key,
     sidebar: scene.state.sidebar,
   });
-  const { isOverlayLoading: previousLoading, ...previousState } = scene.state;
+  const { loadingView: previousLoading, ...previousState } = scene.state;
 
   // `setState` merges, so an open panel editor would survive the swap still driving the
   // VizPanel and layout item of the tree we just discarded: edits made through it never reach

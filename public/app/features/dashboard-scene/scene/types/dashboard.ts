@@ -36,9 +36,8 @@ export interface DashboardViewState {
 }
 
 interface DashboardLoadingState {
-  isPanelEditorLoading?: boolean;
-  /** A drawer's implementation is being loaded. */
-  isOverlayLoading?: boolean;
+  /** The view whose implementation is being loaded. */
+  loadingView?: keyof DashboardViewState;
 }
 
 export interface DashboardSceneState extends SceneObjectState, DashboardViewState, DashboardLoadingState {

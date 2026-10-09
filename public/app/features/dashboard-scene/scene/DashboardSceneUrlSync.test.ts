@@ -35,7 +35,7 @@ describe('DashboardSceneUrlSync', () => {
         const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
         try {
           scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
-          expect(scene.state.isPanelEditorLoading).toBe(true);
+          expect(scene.state.loadingView).toBe('editPanel');
           expect(fetchPanel).toHaveBeenCalledWith('library-a', true);
           if (outcome === 'cancelled') {
             scene.urlSync?.updateFromUrl({ editPanel: null });
@@ -52,7 +52,7 @@ describe('DashboardSceneUrlSync', () => {
               model: { type: 'text', title: 'Library A', options: {}, fieldConfig: { defaults: {}, overrides: [] } },
             });
           }
-          await waitFor(() => expect(scene.state.isPanelEditorLoading).toBe(false));
+          await waitFor(() => expect(scene.state.loadingView).toBeUndefined());
           if (outcome === 'loaded') {
             expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
           } else if (outcome === 'failed') {

@@ -2053,23 +2053,23 @@ describe('DashboardScene', () => {
     it('opens the filters overview through modal loading', async () => {
       const scene = buildTestScene();
       const opening = scene.openFiltersOverview();
-      expect(scene.state.isOverlayLoading).toBe(true);
+      expect(scene.state.loadingView).toBe('overlay');
 
       await opening;
 
       expect(scene.state.overlay).toBeInstanceOf(DashboardFiltersOverviewDrawer);
-      expect(scene.state.isOverlayLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
     });
 
     it('does not open the filters overview after closing its loading drawer', async () => {
       const scene = buildTestScene();
       const opening = scene.openFiltersOverview();
-      expect(scene.state.isOverlayLoading).toBe(true);
+      expect(scene.state.loadingView).toBe('overlay');
 
       scene.closeModal();
       await opening;
 
-      expect(scene.state.isOverlayLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
       expect(scene.state.overlay).toBeUndefined();
     });
 
@@ -2077,10 +2077,10 @@ describe('DashboardScene', () => {
       const scene = buildTestScene();
       const pending = createDeferred<SceneObject>();
       const opening = scene.showModalAsync(() => pending.promise);
-      expect(scene.state.isOverlayLoading).toBe(true);
+      expect(scene.state.loadingView).toBe('overlay');
       scene.onEnterEditMode();
       scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
-      expect(scene.state.isOverlayLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
 
       pending.resolve(new SceneGridLayout({ children: [] }));
       await opening;
@@ -2194,7 +2194,7 @@ describe('DashboardScene', () => {
 
       expect(scene.state.title).toBe('Restored dashboard');
       expect(scene.state.body).toBe(body);
-      expect(scene.state.isOverlayLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
       expect(scene.state.overlay).toBeUndefined();
     });
 
@@ -2259,7 +2259,7 @@ describe('DashboardScene', () => {
 
       scene.urlSync?.updateFromUrl({ editview: null });
 
-      expect(scene.state.isOverlayLoading).toBe(true);
+      expect(scene.state.loadingView).toBe('overlay');
       expect(paneRequest.aborted).toBe(false);
       await opening;
       expect(scene.state.overlay).toBe(modal);
@@ -2304,27 +2304,27 @@ describe('DashboardScene', () => {
       const newer = scene.loadView({ key: 'editPanel', load: () => second.promise });
       first.resolve(buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!));
       await older;
-      expect(scene.state.isPanelEditorLoading).toBe(true);
+      expect(scene.state.loadingView).toBe('editPanel');
       expect(scene.state.editPanel).toBeUndefined();
       const panel = findVizPanelByKey(scene, 'panel-2')!;
       second.resolve(buildPanelEditScene(panel));
       await newer;
       expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
-      expect(scene.state.isPanelEditorLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
     });
 
     it('clears panel editor loading after a failed import and allows another request', async () => {
       const scene = buildTestScene();
       const pending = createDeferred<never>();
       const opening = scene.loadView({ key: 'editPanel', load: () => pending.promise });
-      expect(scene.state.isPanelEditorLoading).toBe(true);
+      expect(scene.state.loadingView).toBe('editPanel');
       pending.reject(new Error('Chunk load failed'));
       await expect(opening).rejects.toThrow('Chunk load failed');
-      expect(scene.state.isPanelEditorLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
       const panel = findVizPanelByKey(scene, 'panel-1')!;
       await openPanelEditor(scene, panel);
       expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
-      expect(scene.state.isPanelEditorLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
     });
 
     it.each(
@@ -2345,7 +2345,7 @@ describe('DashboardScene', () => {
       const editing = openPanelEditor(scene, panel);
 
       run(scene, deactivate);
-      expect(scene.state.isPanelEditorLoading).toBe(false);
+      expect(scene.state.loadingView).toBeUndefined();
       await editing;
 
       expect(scene.state.editPanel).toBeUndefined();
@@ -2366,7 +2366,7 @@ describe('DashboardScene', () => {
 
       await editing;
 
-      expect(scene.state.isOverlayLoading).toBe(true);
+      expect(scene.state.loadingView).toBe('overlay');
       expect(scene.state.editPanel).toBeUndefined();
       const modal = new SceneGridLayout({ children: [] });
       pending.resolve(modal);
@@ -3995,7 +3995,7 @@ void ((scene: DashboardScene, snapshot: DashboardSceneState, panel: VizPanel) =>
   // @ts-expect-error Unregistered fields cannot own a view request.
   scene.loadView({ key: 'title', load: async () => 'Renamed' });
   // @ts-expect-error Loading bookkeeping cannot own a view request.
-  scene.loadView({ key: 'isOverlayLoading', load: async () => true });
+  scene.loadView({ key: 'loadingView', load: async () => true });
   // @ts-expect-error The result must match the registered target field.
   scene.loadView({ key: 'editPanel', load: async () => 'not a panel editor' });
   // @ts-expect-error Registered loaders retain their argument types.
