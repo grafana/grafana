@@ -37,7 +37,8 @@ type LayoutItemKind = GridLayoutItemKind | AutoGridLayoutItemKind;
 
 export interface PanelRuntimeError {
   // Where the error came from, so callers can tell a failed query from a broken plugin.
-  source: 'query' | 'plugin' | 'notice';
+  // `panel` errors are published by the panel plugin itself through `PanelContext.notices`.
+  source: 'query' | 'plugin' | 'notice' | 'panel';
   // A subset of `@grafana/data`'s `DataQueryError`; refId/type are set for query errors only.
   message?: string;
   refId?: string;

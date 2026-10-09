@@ -695,7 +695,7 @@ const listPanelsPayloadSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice, message, refId/type), and info/warning notices'
+      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice/panel, message, refId/type), and info/warning notices'
     ),
   includeSchema: z
     .boolean()

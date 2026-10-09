@@ -22,6 +22,7 @@ import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayo
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { PanelTimeRange } from '../../scene/panel-timerange/PanelTimeRange';
 import { getUpdatedHoverHeader } from '../../scene/panel-timerange/utils';
+import { setupPanelNotices } from '../../scene/setupPanelNotices';
 import { getQueryRunnerFor } from '../../utils/getQueryRunnerFor';
 import {
   EXTRACT_FIELDS_FIXTURE,
@@ -263,13 +264,19 @@ function outputFieldNames(transformer: SceneDataTransformer) {
   return transformer.state.data?.series[0]?.fields.map((f) => f.name);
 }
 
-// Attaches a live data provider to an already-added panel so LIST_PANELS can read its runtime status.
-function attachPanelData(scene: DashboardScene, title: string, data: PanelData) {
+function findPanel(scene: DashboardScene, title: string) {
   const panel = scene.state.body.getVizPanels().find((p) => p.state.title === title);
   if (!panel) {
     throw new Error(`panel not found: ${title}`);
   }
-  panel.setState({ $data: new SceneDataTransformer({ $data: new SceneDataNode({ data }), transformations: [] }) });
+  return panel;
+}
+
+// Attaches a live data provider to an already-added panel so LIST_PANELS can read its runtime status.
+function attachPanelData(scene: DashboardScene, title: string, data: PanelData) {
+  findPanel(scene, title).setState({
+    $data: new SceneDataTransformer({ $data: new SceneDataNode({ data }), transformations: [] }),
+  });
 }
 
 describe('Panel mutation commands', () => {
@@ -454,6 +461,68 @@ describe('Panel mutation commands', () => {
         panelsChecked: 1,
         uncheckedPanels: [],
       });
+    });
+
+    it('reports errors the panel published through PanelContext.notices once, next to query errors', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      const name = await addPanel(client, 'Custom drawing');
+      attachPanelData(
+        scene,
+        'Custom drawing',
+        makePanelData({ state: LoadingState.Error, errors: [{ message: 'Unknown column', refId: 'A' }] })
+      );
+      const panel = findPanel(scene, 'Custom drawing');
+      const context = panel.getPanelContext();
+      setupPanelNotices(panel, context);
+      // The host mirrors query errors into the same store; GET_PANEL_ERRORS must not report them twice.
+      const deactivate = context.activateNotices?.();
+      context.notices?.createSource().set([
+        { id: 'draw', severity: 'error', text: 'Draw failed: x is not defined' },
+        { id: 'hint', severity: 'warning', text: 'Some rows were skipped' },
+      ]);
+
+      const errors = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+      const list = await client.execute({ type: 'LIST_PANELS', payload: { elements: [name], includeStatus: true } });
+      deactivate?.();
+
+      expect(errors.data).toEqual({
+        errors: [
+          {
+            element: name,
+            title: 'Custom drawing',
+            errors: [
+              { source: 'query', message: 'Unknown column', refId: 'A' },
+              { source: 'panel', message: 'Draw failed: x is not defined' },
+            ],
+          },
+        ],
+        noDataPanels: [],
+        panelsChecked: 1,
+        uncheckedPanels: [],
+      });
+      expect((list.data as PanelElementsData).elements[0].status?.notices).toEqual([
+        { severity: 'warning', text: 'Some rows were skipped' },
+      ]);
+    });
+
+    it('stops reporting a panel error once the panel clears it', async () => {
+      const scene = buildPanelScene();
+      const client = new DashboardMutationClient(scene);
+      await addPanel(client, 'Custom drawing');
+      attachPanelData(
+        scene,
+        'Custom drawing',
+        makePanelData({ state: LoadingState.Done, series: [frameWithLabels()] })
+      );
+      const panel = findPanel(scene, 'Custom drawing');
+      const source = setupPanelNotices(panel, panel.getPanelContext()).createSource();
+      source.set([{ id: 'draw', severity: 'error', text: 'Draw failed' }]);
+      source.set([]);
+
+      const result = await client.execute({ type: 'GET_PANEL_ERRORS', payload: {} });
+
+      expect(result.data).toEqual({ errors: [], noDataPanels: [], panelsChecked: 1, uncheckedPanels: [] });
     });
   });
 
