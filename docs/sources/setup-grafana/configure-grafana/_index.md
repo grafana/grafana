@@ -3050,6 +3050,7 @@ Sets a soft memory limit for the plugin backend process.
 Grafana passes the value to the process as the Go runtime `GOMEMLIMIT` variable.
 The value is a byte count with a `B`, `KiB`, `MiB`, `GiB`, or `TiB` suffix, for example `512MiB` or `2GiB`.
 The value `off` removes the limit that `default_memory_limit` or a forwarded `GOMEMLIMIT` sets for this plugin.
+The plugin ID in the section name and the value are case-sensitive, so `off` is accepted and `OFF` is not.
 If the value has any other format, such as the decimal unit `12GB`, Grafana fails to start and reports the section, key, and value.
 The Go runtime aborts a process that starts with a malformed `GOMEMLIMIT`.
 
@@ -3063,8 +3064,8 @@ Set the limit above the plugin's working set for its largest queries.
 A limit below the working set makes the plugin spend its time in garbage collection, and queries slow down by an order of magnitude.
 For more information, refer to the [Go garbage collector guide](https://go.dev/doc/gc-guide#Memory_limit).
 
-The environment variable override `GF_PLUGIN_<PLUGIN_ID>_MEMORY_LIMIT` applies only when a configuration file contains the `[plugin.<plugin_id>]` section.
-The section can be empty.
+The environment variable override `GF_PLUGIN_<PLUGIN_ID>_MEMORY_LIMIT` applies only when a configuration file contains the `[plugin.<plugin_id>]` section with at least one key that has a value.
+Grafana drops an empty section, and a key with an empty value, when it reads the configuration file.
 To set a limit for every plugin from the environment, use `GF_PLUGINS_DEFAULT_MEMORY_LIMIT`.
 
 ### `as_external`
