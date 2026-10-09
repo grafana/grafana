@@ -500,6 +500,30 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       expect(scene.state.tags).toEqual(afterManualEdit);
       expect(scene.editHistory.state.canRedo).toBe(false);
     });
+
+    // Regression: onTitleChange used to write the title directly, with no editHistory entry of its
+    // own. Undoing the assistant write restores the whole previousState wholesale, so a rename that
+    // isn't itself a tracked step has nothing to protect it — it would be silently discarded instead
+    // of being the thing undo() undoes first.
+    it('does not discard a rename made after the assistant write when undoing it', async () => {
+      const scene = notebookScene();
+      const client = new NotebookMutationClient(scene);
+
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## After') }, cells: ['only'] }) },
+      });
+      const titleAfterApply = scene.state.title;
+
+      scene.onTitleChange('Renamed after the assistant edit');
+
+      scene.editHistory.undo(); // undoes the rename, not the assistant write
+      expect(scene.state.title).toBe(titleAfterApply);
+      expect(cellNamesOf(scene)).toEqual(['only']); // the assistant's write is still in place
+
+      scene.editHistory.redo();
+      expect(scene.state.title).toBe('Renamed after the assistant edit');
+    });
   });
 
   // The scene already shows the new document, but nothing durable happened. A caller told this succeeded

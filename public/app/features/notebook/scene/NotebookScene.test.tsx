@@ -755,5 +755,49 @@ describe('NotebookScene', () => {
 
       expect(scene.state.body.state.title).toBe('Rebuilt');
     });
+
+    it('records a title change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.state.body.state.title).toBe('My notebook');
+    });
+
+    it('does not record a no-op title change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the title change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
   });
 });

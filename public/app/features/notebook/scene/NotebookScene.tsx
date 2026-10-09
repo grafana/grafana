@@ -381,11 +381,28 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   };
 
   /**
-   * Single writer for the title, on the same terms as onTagsChange above. Nothing persists it here:
-   * the save model reads this state, and autosave writes on any change made while editing.
+   * Single writer for the title, on the same terms as onTagsChange above — including being
+   * recorded on editHistory. Without that, a rename made after an assistant write would be
+   * invisible to the undo stack, and undoing that write (which restores the whole prior state)
+   * would silently discard the rename instead of being undone itself first. Nothing persists it
+   * here: the save model reads this state, and autosave writes on any change made while editing.
    */
   public onTitleChange = (title: string) => {
-    this.setState({ title });
+    const previous = this.state.title;
+    if (previous === title) {
+      return;
+    }
+
+    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
+    // instead of being interrupted by it.
+    this.state.body.commitPendingEdits();
+
+    this.editHistory.execute({
+      label: t('notebooks.history.rename', 'Rename notebook'),
+      kind: NOTEBOOK_EDIT_KIND.TITLE,
+      perform: () => this.setState({ title }),
+      undo: () => this.setState({ title: previous }),
+    });
   };
 
   public showModal(modal: SceneObject) {
