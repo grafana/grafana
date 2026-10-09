@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/setting"
@@ -443,23 +444,36 @@ func TestIntegrationNatsWatchMaxAgeFollowsClientPhase(t *testing.T) {
 		EventPublisher:  pub,
 		NatsWatchMaxAge: maxAge,
 	})
-	user := newWatchTestUser()
 	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: watchTestNamespace}
 	req := &resourcepb.WatchRequest{Options: &resourcepb.ListOptions{Key: key}}
+	controller := func(uid string) authlib.AuthInfo {
+		u := newWatchTestUser()
+		u.UserUID = uid
+		return u
+	}
 
-	for _, host := range []string{"10.0.0.1", "10.0.0.2", "10.0.0.3"} {
-		t.Run(host, func(t *testing.T) {
+	// Every reconnect is relayed by another apiserver replica, with a new port.
+	clients := []struct {
+		name string
+		user authlib.AuthInfo
+	}{
+		{"controller a", controller("a")},
+		{"controller b", controller("b")},
+		{"service caller", &identity.StaticRequester{Type: authlib.TypeAccessPolicy, UserUID: "apiserver"}},
+	}
+	for _, c := range clients {
+		t.Run(c.name, func(t *testing.T) {
 			t.Parallel()
-			clientCtx := func(port int) context.Context {
-				return peer.NewContext(authlib.WithAuthInfo(t.Context(), user),
-					&peer.Peer{Addr: &net.TCPAddr{IP: net.ParseIP(host), Port: port}})
+			clientCtx := func(n int) context.Context {
+				return peer.NewContext(authlib.WithAuthInfo(t.Context(), c.user),
+					&peer.Peer{Addr: &net.TCPAddr{IP: net.ParseIP(fmt.Sprintf("10.0.0.%d", n%250+1)), Port: 40000 + n}})
 			}
-			phase := watchMaxAgePhase(clientCtx(0), user, key, maxAge)
+			phase := watchMaxAgePhase(c.user, key, maxAge)
 
-			// Each reconnect gets a new port and lasts a fifth of the max age.
+			// Each reconnect lasts a fifth of the max age.
 			deadline := time.Now().Add(2*maxAge + time.Second)
-			for port := 40000; time.Now().Before(deadline); port++ {
-				watchCtx, cancel := context.WithTimeout(clientCtx(port), maxAge/5)
+			for n := 0; time.Now().Before(deadline); n++ {
+				watchCtx, cancel := context.WithTimeout(clientCtx(n), maxAge/5)
 				err := srv.Watch(req, newMockWatchServer(watchCtx))
 				expiredAt := time.Now()
 				cancel()

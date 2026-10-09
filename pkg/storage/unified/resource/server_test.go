@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"maps"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -29,7 +28,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -2319,30 +2317,19 @@ func TestNextWatchMaxAgeExpiry(t *testing.T) {
 
 func TestWatchMaxAgePhase(t *testing.T) {
 	maxAge := 15 * time.Minute
-	user := newWatchTestUser()
 	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: "ns"}
-	fromPeer := func(addr string) context.Context {
-		return peer.NewContext(t.Context(), &peer.Peer{Addr: &net.TCPAddr{IP: net.ParseIP(addr), Port: 40000}})
-	}
-	phase := func(ctx context.Context, key *resourcepb.ResourceKey) time.Duration {
-		got := watchMaxAgePhase(ctx, user, key, maxAge)
-		require.GreaterOrEqual(t, got, time.Duration(0))
-		require.Less(t, got, maxAge)
-		return got
-	}
+	user := newWatchTestUser()
 
-	base := phase(fromPeer("10.0.0.1"), key)
+	base := watchMaxAgePhase(user, key, maxAge)
+	require.GreaterOrEqual(t, base, time.Duration(0))
+	require.Less(t, base, maxAge)
+	require.Equal(t, base, watchMaxAgePhase(user, key, maxAge))
 
-	// Reconnects use a new ephemeral port but must keep the phase.
-	reconnected := peer.NewContext(t.Context(), &peer.Peer{Addr: &net.TCPAddr{IP: net.ParseIP("10.0.0.1"), Port: 50000}})
-	require.Equal(t, base, phase(reconnected, key))
-
-	require.NotEqual(t, base, phase(fromPeer("10.0.0.2"), key), "replicas on different hosts should be spread")
+	other := newWatchTestUser()
+	other.UserUID = "u456"
+	require.NotEqual(t, base, watchMaxAgePhase(other, key, maxAge))
 	otherNS := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: "other"}
-	require.NotEqual(t, base, phase(fromPeer("10.0.0.1"), otherNS))
-
-	// In-process callers have no peer.
-	phase(t.Context(), key)
+	require.NotEqual(t, base, watchMaxAgePhase(user, otherNS, maxAge))
 }
 
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying

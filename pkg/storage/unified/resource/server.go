@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"iter"
-	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -21,7 +20,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -82,28 +80,16 @@ func (s *server) logIfServerError(ctx context.Context, op string, key *resourcep
 const defaultBookmarkFrequency = 10 * time.Second
 
 // watchMaxAgePhase spreads max-age expiry across clients. Clients reconnect
-// watches more often than the max age, so the phase must come from inputs that
-// survive a reconnect: the caller, the watched key and the peer host (the port
-// changes on every new connection).
-func watchMaxAgePhase(ctx context.Context, user claims.AuthInfo, key *resourcepb.ResourceKey, maxAge time.Duration) time.Duration {
+// watches more often than the max age, possibly through another apiserver
+// replica or to another storage server, so the phase comes only from inputs
+// that survive a reconnect: the caller and the watched key.
+func watchMaxAgePhase(user claims.AuthInfo, key *resourcepb.ResourceKey, maxAge time.Duration) time.Duration {
 	h := fnv.New64a()
-	for _, s := range []string{user.GetUID(), key.Group, key.Resource, key.Namespace, peerHost(ctx)} {
+	for _, s := range []string{user.GetUID(), key.Group, key.Resource, key.Namespace} {
 		_, _ = h.Write([]byte(s))
 		_, _ = h.Write([]byte{0})
 	}
 	return time.Duration(h.Sum64() % uint64(maxAge))
-}
-
-func peerHost(ctx context.Context) string {
-	p, ok := peer.FromContext(ctx)
-	if !ok || p.Addr == nil {
-		return ""
-	}
-	addr := p.Addr.String()
-	if host, _, err := net.SplitHostPort(addr); err == nil {
-		return host
-	}
-	return addr
 }
 
 // nextWatchMaxAgeExpiry returns the delay until the next wall-clock boundary at
@@ -2511,7 +2497,7 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	// starts; the reconnect then waits a full max age for its next boundary.
 	var maxAgeC <-chan time.Time
 	if s.natsWatchMaxAge > 0 {
-		phase := watchMaxAgePhase(ctx, user, key, s.natsWatchMaxAge)
+		phase := watchMaxAgePhase(user, key, s.natsWatchMaxAge)
 		timer := time.NewTimer(nextWatchMaxAgeExpiry(time.Now(), s.natsWatchMaxAge, phase))
 		defer timer.Stop()
 		maxAgeC = timer.C
