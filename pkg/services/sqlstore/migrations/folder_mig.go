@@ -91,6 +91,12 @@ func addFolderMigrations(mg *migrator.Migrator) {
 		Name: "IDX_folder_org_id_parent_uid",
 		Cols: []string{"org_id", "parent_uid"},
 	}))
+
+	mg.AddMigration("alter folder.id column to bigint", migrator.NewRawSQLMigration("").
+		Postgres("ALTER TABLE folder ALTER COLUMN id TYPE BIGINT;"))
+
+	mg.AddMigration("alter folder.id sequence to bigint", migrator.NewRawSQLMigration("").
+		Postgres(`DO $$ DECLARE seq_name TEXT; BEGIN seq_name := pg_get_serial_sequence('folder', 'id'); IF seq_name IS NOT NULL THEN EXECUTE format('ALTER SEQUENCE %s AS BIGINT', seq_name); END IF; END $$;`))
 }
 
 func folderv1() migrator.Table {
