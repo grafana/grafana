@@ -1,15 +1,14 @@
 import { Global } from '@emotion/react';
-import getDefaultMonacoLanguages from 'lib/monaco-languages';
 import { useState } from 'react';
 import { useAsync } from 'react-use';
 import SwaggerUI from 'swagger-ui-react';
 
-import { createTheme, monacoLanguageRegistry, ThemeContext, type SelectableValue } from '@grafana/data';
+import { createTheme, ThemeContext, type SelectableValue } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Alert, Button, Icon, Select, Stack, UserIcon, type UserView } from '@grafana/ui';
-import { setMonacoEnv } from 'app/core/monacoEnv';
 
-import { NamespaceContext, WrappedPlugins } from './plugins';
+import { NamespaceContext } from './contexts';
+import { WrappedPlugins } from './plugins';
 
 export const Page = () => {
   const theme = createTheme({ colors: { mode: 'light' } });
@@ -42,9 +41,6 @@ export const Page = () => {
         }
       });
     }
-
-    monacoLanguageRegistry.setInit(getDefaultMonacoLanguages);
-    setMonacoEnv();
 
     setURL(urls[idx]); // Remove to start at the generic landing page
     return urls;

@@ -73,19 +73,25 @@ func ToFolderErrorResponse(err error) response.Response {
 		return response.JSON(http.StatusNotFound, util.DynMap{"status": "not-found", "message": dashboards.ErrFolderNotFound.Error()})
 	}
 
+	statusErr := storageStatusError(err)
+
 	// --- 409 Conflict ---
-	if errors.Is(err, folder.ErrSameUIDExists) {
-		return response.Error(http.StatusConflict, err.Error(), nil)
+	if isFolderAlreadyExists(err, statusErr) {
+		return response.Error(http.StatusConflict, "a folder with the same UID already exists", err)
 	}
 
 	// --- 412 Precondition Failed ---
-	if errors.Is(err, folder.ErrVersionMismatch) ||
-		k8sErrors.IsAlreadyExists(err) {
+	if errors.Is(err, folder.ErrVersionMismatch) {
 		return response.JSON(http.StatusPreconditionFailed, util.DynMap{"status": "version-mismatch", "message": folder.ErrVersionMismatch.Error()})
 	}
 
+	// A storage conflict can be write contention rather than a confirmed duplicate UID.
+	if statusErr != nil && (statusErr.ErrStatus.Code == http.StatusConflict || k8sErrors.IsConflict(statusErr)) {
+		return response.Error(http.StatusConflict, "the folder operation conflicted with another request; please retry", err)
+	}
+
 	// --- Kubernetes status errors ---
-	if statusErr, ok := errors.AsType[*k8sErrors.StatusError](err); ok {
+	if statusErr != nil {
 		message := statusErr.ErrStatus.Message
 		if message == "" {
 			message = getDefaultMessageForStatus(int(statusErr.ErrStatus.Code))
@@ -94,6 +100,11 @@ func ToFolderErrorResponse(err error) response.Response {
 	}
 
 	return response.ErrOrFallback(http.StatusInternalServerError, fmt.Sprintf("Folder API error: %s", err.Error()), err)
+}
+
+func isFolderAlreadyExists(err error, statusErr *k8sErrors.StatusError) bool {
+	return errors.Is(err, folder.ErrSameUIDExists) ||
+		k8sErrors.IsAlreadyExists(err) || (statusErr != nil && k8sErrors.IsAlreadyExists(statusErr))
 }
 
 func ToFolderStatusError(err error) k8sErrors.StatusError {
@@ -130,6 +141,15 @@ func ToFolderStatusError(err error) k8sErrors.StatusError {
 			Message: message,
 			Code:    int32(normResp.Status()),
 		},
+	}
+
+	// folderStorage.Create wraps errors in a StatusError before the legacy API consumes them.
+	// Keep AlreadyExists distinct from other 409s so duplicates do not become retry conflicts.
+	if statusErr.ErrStatus.Code == http.StatusConflict {
+		statusErr.ErrStatus.Reason = metav1.StatusReasonConflict
+		if isFolderAlreadyExists(err, storageStatusError(err)) {
+			statusErr.ErrStatus.Reason = metav1.StatusReasonAlreadyExists
+		}
 	}
 
 	// Preserve the structured errutil message ID in Status.Details.UID so

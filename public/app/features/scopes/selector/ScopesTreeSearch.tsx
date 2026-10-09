@@ -93,9 +93,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     input: css({
       margin: theme.spacing(1, 0),
-      minHeight: theme.spacing(4),
-      height: theme.spacing(4),
-      maxHeight: theme.spacing(4),
+      minHeight: theme.spacing(theme.components.height.md),
+      height: theme.spacing(theme.components.height.md),
+      maxHeight: theme.spacing(theme.components.height.md),
       width: `calc(100% - ${theme.spacing(0.5)})`,
     }),
   };

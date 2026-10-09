@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"maps"
 	"net/http"
+	"slices"
 	"strings"
 	"sync"
 
@@ -25,13 +26,14 @@ import (
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
-	"github.com/grafana/grafana/pkg/plugins/definition"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
 	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
@@ -51,19 +53,22 @@ import (
 type StorageProvider func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error)
 
 type Options struct {
-	Storage         StorageProvider
-	PluginClient    appplugin.PluginClient
-	ClientV3        v3.ClientV3
-	ContextProvider appplugin.PluginContextWrapper
-	Decrypter       decrypt.DecryptService
-	AccessChecker   appplugin.PluginAccessChecker
-	Search          resourcepb.ResourceIndexClient
-	Store           resourcepb.ResourceStoreClient
-	Runner          appplugin.AppPluginRunnerOptions
-	Tracer          tracing.Tracer
-	Features        featuremgmt.FeatureToggles
-	BuildVersion    string
-	MetricsRegister prometheus.Registerer
+	PluginInfo       plugins.Info
+	Storage          StorageProvider
+	PluginClient     appplugin.PluginClient
+	ClientV3         appclientv3.Client
+	ContextProvider  appplugin.PluginContextWrapper
+	Decrypter        decrypt.DecryptService
+	AccessChecker    appplugin.PluginAccessChecker
+	HybridAPIEnabled bool
+	KeysAPIEnabled   bool
+	Search           resourcepb.ResourceIndexClient
+	Store            resourcepb.ResourceStoreClient
+	Runner           appplugin.AppPluginRunnerOptions
+	Tracer           tracing.Tracer
+	Features         featuremgmt.FeatureToggles
+	BuildVersion     string
+	MetricsRegister  prometheus.Registerer
 
 	// Legacy settings use the same migration policy as the embedded API server.
 	DualWrite      dualwrite.Service
@@ -82,40 +87,51 @@ func (h *Handler) Destroy() {
 	h.once.Do(h.destroy)
 }
 
-// APIGroup describes the versions actually served, including the settings API.
-func APIGroup(plugin definition.PluginDefinition, opts Options) (metav1.APIGroup, error) {
-	b, err := newBuilder(plugin, opts)
-	if err != nil {
-		return metav1.APIGroup{}, err
+func APIGroup(m *app.ManifestData) metav1.APIGroup {
+	g := metav1.APIGroup{Name: m.Group}
+	for _, v := range m.Versions {
+		if !v.Served {
+			continue
+		}
+		gv := metav1.GroupVersionForDiscovery{GroupVersion: fmt.Sprintf("%s/%s", g.Name, v.Name), Version: v.Name}
+		g.Versions = append(g.Versions, gv)
+		if v.Name == m.PreferredVersion {
+			g.PreferredVersion = gv
+		}
 	}
-	gvs := b.GetGroupVersions()
-	if len(gvs) == 0 {
-		return metav1.APIGroup{}, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+
+	// When the preferred version is not specified, pick the last non-alpha version
+	if g.PreferredVersion.Version == "" && len(g.Versions) > 0 {
+		for _, v := range slices.Backward(g.Versions) {
+			if !strings.Contains(v.Version, "alpha") {
+				g.PreferredVersion = v
+				break
+			}
+		}
+		if g.PreferredVersion.Version == "" {
+			g.PreferredVersion = g.Versions[len(g.Versions)-1]
+		}
 	}
-	group := metav1.APIGroup{Name: gvs[0].Group}
-	for _, gv := range gvs {
-		group.Versions = append(group.Versions, metav1.GroupVersionForDiscovery{
-			GroupVersion: gv.String(), Version: gv.Version,
-		})
+	if i := slices.Index(g.Versions, g.PreferredVersion); i > 0 {
+		g.Versions = append([]metav1.GroupVersionForDiscovery{g.PreferredVersion}, slices.Delete(g.Versions, i, i+1)...)
 	}
-	group.PreferredVersion = group.Versions[0]
-	return group, nil
+	return g
 }
 
 // NewHandler installs resources, admission, custom routes and OpenAPI without
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
-func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, error) {
-	b, err := newBuilder(plugin, opts)
+func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Handler, error) {
+	b, err := NewAPI(pluginID, manifest, opts)
 	if err != nil {
 		return nil, err
 	}
 	if opts.Storage == nil {
-		return nil, fmt.Errorf("plugin %q: a storage provider is required", plugin.JSONData.ID)
+		return nil, fmt.Errorf("plugin %q: a storage provider is required", pluginID)
 	}
 	gvs := b.GetGroupVersions()
 	if len(gvs) == 0 {
-		return nil, fmt.Errorf("plugin %q has no served versions", plugin.JSONData.ID)
+		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
 	}
 	group := gvs[0].Group
 	scheme := builder.ProvideScheme()
@@ -203,16 +219,28 @@ func NewHandler(plugin definition.PluginDefinition, opts Options) (*Handler, err
 	return &Handler{Handler: server.Handler, destroy: server.Destroy}, nil
 }
 
-func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.AppPluginAPIBuilder, error) {
-	if plugin.Manifest != nil {
-		if plugin.Manifest.IsEmpty() {
-			return nil, fmt.Errorf("plugin %q has an empty app manifest", plugin.JSONData.ID)
-		}
-		group := plugin.Manifest.Group
-		if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
-			return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", plugin.JSONData.ID, group)
-		}
+// PluginAPI supplies the schema and storage installation for a routed plugin.
+type PluginAPI interface {
+	builder.APIGroupBuilder
+	builder.APIGroupVersionsProvider
+	GetAuthorizer() authorizer.Authorizer
+}
+
+// NewAPI builds the API for one plugin manifest.
+// It is also used by offline OpenAPI generation so discovery matches the router.
+func NewAPI(pluginID string, manifest *app.ManifestData, opts Options) (PluginAPI, error) {
+	if manifest == nil {
+		return nil, fmt.Errorf("missing manifest")
 	}
+
+	if manifest.IsEmpty() {
+		return nil, fmt.Errorf("plugin %q has an empty app manifest", pluginID)
+	}
+	group := manifest.Group
+	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
+		return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
+	}
+
 	if opts.AccessChecker == nil {
 		opts.AccessChecker = func(context.Context, identity.Requester, string) (authorizer.Decision, string, error) {
 			return authorizer.DecisionDeny, "no plugin access checker is configured", nil
@@ -224,9 +252,19 @@ func newBuilder(plugin definition.PluginDefinition, opts Options) (*appplugin.Ap
 	if opts.Features == nil {
 		opts.Features = featuremgmt.WithFeatures()
 	}
-	return appplugin.NewAppPluginAPIBuilder(plugin, opts.PluginClient, opts.ClientV3,
-		opts.ContextProvider, opts.Decrypter, opts.AccessChecker, opts.Search, opts.Store,
-		opts.Runner, opts.Tracer, opts.Features)
+	return &manifestBuilder{
+		group:         manifest.Group,
+		manifest:      manifest,
+		pluginID:      pluginID,
+		clientV3:      opts.ClientV3,
+		decrypter:     newSecureValueLookup(opts.Decrypter),
+		accessChecker: opts.AccessChecker,
+		search:        opts.Search,
+		store:         opts.Store,
+		tracer:        opts.Tracer,
+		opts:          opts,
+		kindPolicies:  kindPolicies(manifest),
+	}, nil
 }
 
 func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport, configProvider apistore.RestConfigProvider) StorageProvider {

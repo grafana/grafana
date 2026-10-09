@@ -1276,6 +1276,7 @@ type DashboardRowsLayoutRowSpec struct {
 	Repeat               *DashboardRowRepeatOptions                                                  `json:"repeat,omitempty"`
 	Layout               DashboardGridLayoutKindOrAutoGridLayoutKindOrTabsLayoutKindOrRowsLayoutKind `json:"layout"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
 }
 
 // NewDashboardRowsLayoutRowSpec creates a new DashboardRowsLayoutRowSpec object.
@@ -1623,6 +1624,7 @@ type DashboardTabsLayoutTabSpec struct {
 	ConditionalRendering *DashboardConditionalRenderingGroupKind                                     `json:"conditionalRendering,omitempty"`
 	Repeat               *DashboardTabRepeatOptions                                                  `json:"repeat,omitempty"`
 	Variables            []DashboardVariableKind                                                     `json:"variables,omitempty"`
+	Annotations          []DashboardAnnotationQueryKind                                              `json:"annotations,omitempty"`
 }
 
 // NewDashboardTabsLayoutTabSpec creates a new DashboardTabsLayoutTabSpec object.
@@ -1847,6 +1849,7 @@ func (DashboardVariableSort) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardVariableSort"
 }
 
+// Source information for controls (e.g. variables or links)
 // +k8s:openapi-gen=true
 type DashboardControlSourceRef = DashboardDatasourceControlSourceRef
 
@@ -2912,6 +2915,8 @@ func (DashboardTimeSettingsSpecWeekStart) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2.DashboardTimeSettingsSpecWeekStart"
 }
 
+// Supported dashboard elements
+// |* more element types in the future
 // +k8s:openapi-gen=true
 type DashboardPanelKindOrLibraryPanelKind struct {
 	PanelKind        *DashboardPanelKind        `json:"PanelKind,omitempty"`

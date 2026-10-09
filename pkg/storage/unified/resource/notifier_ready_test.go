@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 type acknowledgedEventSubscriber struct {
@@ -37,7 +37,7 @@ func TestNATSCaptureReadinessFailure(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				subscriber := &acknowledgedEventSubscriber{established: make(chan struct{})}
 				expiry := NewWatchExpiry()
-				n := newNatsNotifier(subscriber, expiry, nil, log.NewNopLogger())
+				n := newNatsNotifier(subscriber, expiry, nil, &logging.NoOpLogger{})
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				if mode == "canceled" {
@@ -54,7 +54,7 @@ func TestNATSCaptureReadinessAcknowledgment(t *testing.T) {
 	synctest.Test(t, func(t *testing.T) {
 		subscriber := &acknowledgedEventSubscriber{established: make(chan struct{})}
 		expiry := NewWatchExpiry()
-		n := newNatsNotifier(subscriber, expiry, nil, log.NewNopLogger())
+		n := newNatsNotifier(subscriber, expiry, nil, &logging.NoOpLogger{})
 		ctx, cancel := context.WithCancel(t.Context())
 		defer cancel()
 		ready := make(chan error, 1)
@@ -95,7 +95,7 @@ func TestNATSInitialCaptureRecoveryInvalidatesWatches(t *testing.T) {
 					restore = func() { close(sub.established) }
 				}
 				expiry := NewWatchExpiry()
-				n := newNatsNotifier(subscriber, expiry, nil, log.NewNopLogger())
+				n := newNatsNotifier(subscriber, expiry, nil, &logging.NoOpLogger{})
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				ready := make(chan error, 1)
@@ -140,7 +140,7 @@ func TestNATSReconnectWaitsForRestoredCapture(t *testing.T) {
 			synctest.Test(t, func(t *testing.T) {
 				sub := &reconnectReadySubscriber{waiting: make(chan struct{}, 1), responses: make(chan error)}
 				expiry := NewWatchExpiry()
-				n := newNatsNotifier(sub, expiry, nil, log.NewNopLogger())
+				n := newNatsNotifier(sub, expiry, nil, &logging.NoOpLogger{})
 				ctx, cancel := context.WithCancel(t.Context())
 				defer cancel()
 				events := n.Watch(ctx, WatchOptions{})

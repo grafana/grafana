@@ -2,6 +2,7 @@ package resources
 
 import (
 	"errors"
+	"fmt"
 	"path"
 	"strings"
 
@@ -13,6 +14,24 @@ var (
 	ErrUnsupportedFileExtension = errors.New("unsupported file extension")
 	ErrNotRelative              = errors.New("path must be relative to the root")
 )
+
+// ErrUnsupportedPath is a sentinel for a repository path that fails path validation.
+var ErrUnsupportedPath = errors.New("unsupported path")
+
+// UnsupportedPathError reports a repository path that fails path validation.
+type UnsupportedPathError struct {
+	Path string
+	Err  error
+}
+
+func (e *UnsupportedPathError) Error() string {
+	return fmt.Sprintf("path %q is not supported: %v", e.Path, e.Err)
+}
+
+// Unwrap supports errors.Is for ErrUnsupportedPath and for the cause.
+func (e *UnsupportedPathError) Unwrap() []error {
+	return []error{ErrUnsupportedPath, e.Err}
+}
 
 const maxPathDepth = 8
 
@@ -61,6 +80,18 @@ func IsReadablePath(filePath string) error {
 	}
 
 	return nil
+}
+
+// HasResourceExtension reports whether filePath has a resource extension (yml,
+// yaml, json), whatever the rest of the path looks like. IsPathSupported checks
+// the path basics first, so its error alone does not tell a rejected resource
+// file from a rejected non-resource file.
+func HasResourceExtension(filePath string) bool {
+	if safepath.IsDir(filePath) {
+		return false
+	}
+	ext := strings.ToLower(path.Ext(filePath))
+	return resourceExtensions[ext]
 }
 
 // IsRawFile reports whether the file path points at a read-only raw file (not a k8s resource).

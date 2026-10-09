@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { shouldUseAlertingListViewV2 } from './featureToggles';
+import { isNotificationHistoryEnabled, shouldUseAlertingListViewV2 } from './featureToggles';
 import { mockLocalStorage } from './mocks';
 import { setPreviewToggle } from './previewToggles';
 
@@ -61,6 +61,24 @@ describe('featureToggles', () => {
 
         expect(shouldUseAlertingListViewV2()).toBe(false);
       });
+    });
+  });
+
+  describe('isNotificationHistoryEnabled', () => {
+    afterEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
+    });
+
+    it('should be enabled when the backend does not send the setting', () => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
+
+      expect(isNotificationHistoryEnabled()).toBe(true);
+    });
+
+    it.each([true, false])('should follow the backend setting when it is %s', (enabled) => {
+      config.unifiedAlerting.notificationHistoryEnabled = enabled;
+
+      expect(isNotificationHistoryEnabled()).toBe(enabled);
     });
   });
 });
