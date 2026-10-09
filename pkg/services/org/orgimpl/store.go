@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -20,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -59,6 +62,24 @@ type sqlStore struct {
 	log             log.Logger
 	deleteRenderers []orgdelete.Renderer
 	cfg             *setting.Cfg
+	// watch announces org membership changes; nil when publishing is disabled.
+	watch *legacywatch.Publisher
+}
+
+// queueUserNotification announces, once sess commits, a change to usr's User
+// resource in the org's namespace: the resource is a membership of that org.
+// Callers pass the user they already loaded in the transaction, so announcing
+// adds no queries.
+func (ss *sqlStore) queueUserNotification(sess *db.Session, t resourcepb.WatchNotification_Type, orgID int64, usr user.User) {
+	if !ss.watch.Enabled() || usr.IsServiceAccount || usr.UID == "" {
+		return
+	}
+	sess.PublishAfterCommit(&legacywatch.LegacyWatchNotification{
+		Type:     t,
+		Resource: iamv0alpha1.UserResourceInfo.GroupResource(),
+		OrgID:    orgID,
+		Name:     usr.UID,
+	})
 }
 
 // quoteTable resolves a table name and quotes it for use in raw SQL.
@@ -602,6 +623,9 @@ func (ss *sqlStore) AddOrgUser(ctx context.Context, cmd *org.AddOrgUserCommand) 
 		if err != nil {
 			return err
 		}
+		// This is how users created without an org (invite completion, login
+		// sync with org roles) first become visible.
+		ss.queueUserNotification(sess, legacywatch.Added, cmd.OrgID, usr)
 
 		var userOrgs []*org.UserOrgDTO
 		sess.Table(dbHelper.Table("org_user"))
@@ -766,7 +790,19 @@ func (ss *sqlStore) UpdateOrgUser(ctx context.Context, cmd *org.UpdateOrgUserCom
 			return err
 		}
 
-		return validateOneAdminLeftInOrg(dbHelper, cmd.OrgID, sess)
+		if err := validateOneAdminLeftInOrg(dbHelper, cmd.OrgID, sess); err != nil {
+			return err
+		}
+
+		// The role is part of the User resource. The notification needs the
+		// user's UID, which costs one lookup, so only when publishing; a failed
+		// lookup skips the notification rather than failing the update.
+		if ss.watch.Enabled() {
+			if usr, exists, err := getUserByID(dbHelper, sess, cmd.UserID, true); err == nil && exists {
+				ss.queueUserNotification(sess, legacywatch.Modified, cmd.OrgID, usr)
+			}
+		}
+		return nil
 	})
 }
 
@@ -1107,6 +1143,9 @@ func (ss *sqlStore) RemoveOrgUser(ctx context.Context, cmd *org.RemoveOrgUserCom
 		if err := validateOneAdminLeftInOrg(dbHelper, cmd.OrgID, sess); err != nil {
 			return err
 		}
+		// Whether or not the user is also deleted below, its User resource in this
+		// org is gone. The team_member rows removed above are not announced.
+		ss.queueUserNotification(sess, legacywatch.Deleted, cmd.OrgID, usr)
 
 		// check user other orgs and update user current org
 		var userOrgs []*org.UserOrgDTO

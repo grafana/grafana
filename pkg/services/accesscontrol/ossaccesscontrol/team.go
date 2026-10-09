@@ -112,17 +112,6 @@ func ProvideTeamPermissions(
 			if err != nil {
 				return err
 			}
-			// Read the membership's names before the change: a removal deletes them.
-			// Announcing is best effort, so a failed lookup skips it rather than
-			// failing the permission write.
-			announce := legacyWatch.Enabled()
-			var before teamimpl.TeamMemberRef
-			if announce {
-				var lookupErr error
-				if before, lookupErr = teamimpl.GetTeamMemberRef(dbHelper, session, orgID, teamId, user.ID); lookupErr != nil {
-					announce = false
-				}
-			}
 			switch permission {
 			case "Member":
 				err = teamimpl.AddOrUpdateTeamMemberHook(dbHelper, session, user.ID, orgID, teamId, user.IsExternal, team.PermissionTypeMember)
@@ -137,12 +126,12 @@ func ProvideTeamPermissions(
 			default:
 				return fmt.Errorf("invalid team permission type %s", permission)
 			}
-			if err != nil || !announce {
+			if err != nil || !legacyWatch.Enabled() {
 				return err
 			}
-			if after, lookupErr := teamimpl.GetTeamMemberRef(dbHelper, session, orgID, teamId, user.ID); lookupErr == nil {
-				teamimpl.QueueTeamMemberNotifications(session, orgID, before, after)
-			}
+			// Announcing is best effort: a failed lookup skips it rather than
+			// failing the permission write.
+			_ = teamimpl.QueueTeamMembershipChanged(dbHelper, session, orgID, teamId)
 			return nil
 		},
 		RestConfigProvider: directRestConfigProvider,

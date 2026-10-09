@@ -214,6 +214,41 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 		expect(t, resourcepb.WatchNotification_DELETED, gvrUsers, uid)
 	})
 
+	// The User resource is an org membership and exposes its role, so a role
+	// change is a modification and removing the membership is a deletion.
+	t.Run("legacy API org membership", func(t *testing.T) {
+		type createUserResponse struct {
+			ID  int64  `json:"id"`
+			UID string `json:"uid"`
+		}
+		created := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPost,
+			Path:   "/api/admin/users",
+			Body:   []byte(`{"name": "Watch Org Member", "email": "watch-org-member@example.com", "login": "watch-org-member", "password": "password123"}`),
+		}, &createUserResponse{})
+		require.Equal(t, http.StatusOK, created.Response.StatusCode, "body: %s", string(created.Body))
+		uid := created.Result.UID
+		expect(t, resourcepb.WatchNotification_ADDED, gvrUsers, uid)
+
+		updated := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodPatch,
+			Path:   fmt.Sprintf("/api/org/users/%d", created.Result.ID),
+			Body:   []byte(`{"role": "Editor"}`),
+		}, &struct{}{})
+		require.Equal(t, http.StatusOK, updated.Response.StatusCode, "body: %s", string(updated.Body))
+		expect(t, resourcepb.WatchNotification_MODIFIED, gvrUsers, uid)
+
+		removed := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodDelete,
+			Path:   fmt.Sprintf("/api/org/users/%d", created.Result.ID),
+		}, &struct{}{})
+		require.Equal(t, http.StatusOK, removed.Response.StatusCode, "body: %s", string(removed.Body))
+		expect(t, resourcepb.WatchNotification_DELETED, gvrUsers, uid)
+	})
+
 	viewerUID := helper.Org1.Viewer.Identity.GetIdentifier()
 	viewerID, err := helper.Org1.Viewer.Identity.GetInternalID()
 	require.NoError(t, err)

@@ -2,6 +2,20 @@
 // for resources that are not (or not yet only) stored in unified storage. Unified
 // storage announces its own writes on resourcewatch.Subject; these go to
 // resourcewatch.LegacySubject with the same WatchNotification payload.
+//
+// Coverage is deliberately incomplete: announcing must add little or no load to
+// the legacy database, so a change that would need extra queries to name its
+// subjects is skipped. Consumers must re-list periodically. Not announced:
+//   - lastSeenAt updates, which follow activity rather than edits.
+//   - Service accounts.
+//   - Namespaces other than the user's current org when a user in several orgs
+//     is updated or deleted (Grafana Cloud has one org per stack).
+//   - Cascades: memberships removed with a deleted team, user, or org
+//     membership, and everything removed with a deleted org.
+//
+// Some changes may be announced without changing anything, for example setting
+// a team member to the permission they already hold. Consumers re-fetch, so a
+// spurious MODIFIED is harmless.
 package legacywatch
 
 import (
