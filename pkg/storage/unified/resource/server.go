@@ -106,6 +106,7 @@ type ResourceServer interface {
 	resourcepb.ResourceStatsServer
 	resourcepb.BulkStoreServer
 	resourcepb.BlobStoreServer
+	resourcepb.BlobStoreStreamingServer
 	resourcepb.QuotasServer
 	// Deprecated: clients should use grpc.health.v1.Health with modules.StorageServer service name instead
 	resourcepb.DiagnosticsServer //nolint:staticcheck
@@ -328,12 +329,12 @@ type BlobSupport interface {
 	// Indicates if storage layer supports signed urls
 	SupportsSignedURLs() bool
 
-	// Get the raw blob bytes and metadata -- limited to protobuf message size
-	// For larger payloads, we should use presigned URLs to upload from the client
+	// Get the raw blob bytes and metadata -- limited to protobuf message size.
+	// Remote SQL-backed uploads can instead use StreamingBlobSupport.
 	PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error)
 
 	// Get blob contents.  When possible, this will return a signed URL
-	// For large payloads, signed URLs are required to avoid protobuf message size limits
+	// Remote SQL-backed downloads can instead use StreamingBlobSupport.
 	GetResourceBlob(ctx context.Context, resource *resourcepb.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resourcepb.GetBlobResponse, error)
 
 	// TODO? List+Delete?  This is for admin access
@@ -697,6 +698,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		vectorBackend:                  opts.VectorBackend,
 		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
+		blobTransfers:                  newBlobTransfers(),
 		diagnostics:                    opts.Diagnostics,
 		access:                         opts.AccessClient,
 		secure:                         opts.SecureValues,
@@ -809,6 +811,7 @@ type server struct {
 	vectorBackend             vector.VectorBackend
 	bulkBatchOptions          BulkBatchOptions
 	blob                      BlobSupport
+	blobTransfers             *blobTransfers
 	secure                    secrets.InlineSecureValueSupport
 	search                    *searchServer
 	searchClient              resourcepb.ResourceIndexClient
@@ -2829,22 +2832,27 @@ func (s *server) IsHealthy(ctx context.Context, req *resourcepb.HealthCheckReque
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
+	if failure := s.authorizeBlobPut(ctx, req); failure != nil {
+		return &resourcepb.PutBlobResponse{Error: failure}, nil
+	}
+	rsp, err := s.blob.PutResourceBlob(ctx, req)
+	if err != nil {
+		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	return rsp, nil
+}
+
+func (s *server) authorizeBlobPut(ctx context.Context, req *resourcepb.PutBlobRequest) *resourcepb.ErrorResult {
 	if r := verifyRequestKey(req.Resource); r != nil {
-		return &resourcepb.PutBlobResponse{Error: r}, nil
+		return r
 	}
 	if s.blob == nil {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "blob store not configured",
-			Code:    http.StatusNotImplemented,
-		}}, nil
+		return &resourcepb.ErrorResult{Message: "blob store not configured", Code: http.StatusNotImplemented}
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}}, nil
+		return &resourcepb.ErrorResult{Message: "no user found in context", Code: http.StatusUnauthorized}
 	}
 
 	// Load the parent to pick create vs update and to get its folder for
@@ -2861,7 +2869,7 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 	case parent.Error != nil:
 		// Surface backend status as-is; collapsing to 404 would hide
 		// transient 5xx as "not found".
-		return &resourcepb.PutBlobResponse{Error: parent.Error}, nil
+		return parent.Error
 	default:
 		folder = parent.Folder
 	}
@@ -2874,19 +2882,12 @@ func (s *server) PutBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*
 		Name:      name,
 	}, folder)
 	if err != nil {
-		return &resourcepb.PutBlobResponse{Error: AsErrorResult(err)}, nil
+		return AsErrorResult(err)
 	}
 	if !a.Allowed {
-		return &resourcepb.PutBlobResponse{Error: &resourcepb.ErrorResult{
-			Code: http.StatusForbidden,
-		}}, nil
+		return &resourcepb.ErrorResult{Code: http.StatusForbidden}
 	}
-
-	rsp, err := s.blob.PutResourceBlob(ctx, req)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
-	}
-	return rsp, nil
+	return nil
 }
 
 func (s *server) GetQuotaUsage(ctx context.Context, req *resourcepb.QuotaUsageRequest) (*resourcepb.QuotaUsageResponse, error) {
@@ -2953,20 +2954,29 @@ func (s *server) getPartialObject(ctx context.Context, key *resourcepb.ResourceK
 // NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
 // Do not route end-user traffic here directly.
 func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+	info, failure := s.resolveBlobGet(ctx, req)
+	if failure != nil {
+		return &resourcepb.GetBlobResponse{Error: failure}, nil
+	}
+	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
+	if err != nil {
+		return &resourcepb.GetBlobResponse{Error: AsErrorResult(err)}, nil
+	}
+	return rsp, nil
+}
+
+func (s *server) resolveBlobGet(ctx context.Context, req *resourcepb.GetBlobRequest) (*utils.BlobInfo, *resourcepb.ErrorResult) {
 	if req.Resource == nil {
-		return &resourcepb.GetBlobResponse{Error: NewBadRequestError("missing resource key")}, nil
+		return nil, NewBadRequestError("missing resource key")
 	}
 	if errRes := requireUserNamespace(ctx, req.Resource.Namespace); errRes != nil {
-		return &resourcepb.GetBlobResponse{Error: errRes}, nil
+		return nil, errRes
 	}
 	if r := verifyRequestKey(req.Resource); r != nil {
-		return &resourcepb.GetBlobResponse{Error: r}, nil
+		return nil, r
 	}
 	if s.blob == nil {
-		return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-			Message: "blob store not configured",
-			Code:    http.StatusNotImplemented,
-		}}, nil
+		return nil, &resourcepb.ErrorResult{Message: "blob store not configured", Code: http.StatusNotImplemented}
 	}
 
 	var info *utils.BlobInfo
@@ -2974,38 +2984,28 @@ func (s *server) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest) (*
 		// The linked blob is stored in the resource metadata attributes
 		obj, status := s.getPartialObject(ctx, req.Resource, req.ResourceVersion)
 		if status != nil {
-			return &resourcepb.GetBlobResponse{Error: status}, nil
+			return nil, status
 		}
 
 		info = obj.GetBlob()
 		if info == nil || info.UID == "" {
-			return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-				Message: "Resource does not have a linked blob",
-				Code:    404,
-			}}, nil
+			return nil, &resourcepb.ErrorResult{Message: "Resource does not have a linked blob", Code: 404}
 		}
 	} else {
 		refs, hasBlobs, err := s.getBlobReferences(ctx, req.Resource, req.ResourceVersion)
 		if err != nil {
-			return &resourcepb.GetBlobResponse{Error: err}, nil
+			return nil, err
 		}
 		info = refs[req.Uid]
 		if info == nil {
 			if hasBlobs {
-				return &resourcepb.GetBlobResponse{Error: &resourcepb.ErrorResult{
-					Message: "blob is not referenced by the resource",
-					Code:    http.StatusNotFound,
-				}}, nil
+				return nil, &resourcepb.ErrorResult{Message: "blob is not referenced by the resource", Code: http.StatusNotFound}
 			}
 			info = &utils.BlobInfo{UID: req.Uid}
 		}
 	}
 
-	rsp, err := s.blob.GetResourceBlob(ctx, req.Resource, info, req.MustProxyBytes)
-	if err != nil {
-		rsp.Error = AsErrorResult(err)
-	}
-	return rsp, nil
+	return info, nil
 }
 
 const BlobsField = "blobs"
