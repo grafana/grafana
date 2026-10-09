@@ -6,10 +6,16 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"math"
 	"strings"
 	"testing"
+	"testing/synctest"
 	"time"
 	"uuid"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	gocache "github.com/patrickmn/go-cache"
+	"github.com/prometheus/client_golang/prometheus"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -205,7 +211,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.Empty(t, listResp.Items)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // Everything eligible for deletion
-		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
 		// count how many history entries there are after GC runs - should be 0
@@ -259,7 +265,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", rv2+1)
-		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
 		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
@@ -334,7 +340,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
-		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
 		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
@@ -420,7 +426,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
 		b.garbageCollection.BatchSize = 1
-		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
 		trashResp, err = server.List(ctx, &resourcepb.ListRequest{
@@ -471,7 +477,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
-		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
 		historyResp, err := server.List(ctx, &resourcepb.ListRequest{
@@ -525,7 +531,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.NoError(t, err)
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro())
-		err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
 		// other-dash was deleted and not recreated: all of its history is removed.
@@ -598,7 +604,7 @@ func TestIntegrationGarbageCollectionGroupResource(t *testing.T) {
 		require.Equal(t, 7, countKeys(), "expected 7 revisions before GC")
 
 		cutoffTimestamp := b.garbageCollectionCutoffTimestamp("group", "resource", time.Now().Add(time.Hour).UnixMicro()) // everything eligible for deletion
-		err := b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
+		_, err := b.garbageCollectGroupResource(ctx, "group", "resource", cutoffTimestamp)
 		require.NoError(t, err)
 
 		require.Equal(t, 2, countKeys(), "expected only the recreated revisions to remain")
@@ -861,7 +867,7 @@ func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
 
 	// First pass fails mid-delete. It must delete something (partial progress) yet leave
 	// the deletion marker (deleted last) behind.
-	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
+	_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
 	require.Error(t, err)
 	require.True(t, wrapped.failedOnce, "partial delete was not exercised")
 	afterPartial := countHistory()
@@ -869,7 +875,7 @@ func TestIntegrationGarbageCollectionPartialDeleteConverges(t *testing.T) {
 	require.Greater(t, afterPartial, 0, "partial failure should leave the deletion marker behind")
 
 	// Second pass (no injected failure) re-finds the marker and finishes.
-	err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
+	_, err = b.garbageCollectGroupResource(ctx, "group", "resource", cutoff)
 	require.NoError(t, err)
 	require.Equal(t, 0, countHistory(), "GC did not converge after a partial delete")
 }
@@ -964,4 +970,120 @@ func TestIntegrationGarbageCollectionLoopGroupFailure(t *testing.T) {
 
 		require.Equal(t, 2, countKeys(t, context.Background(), b, "bgroup"), "shutdown should stop the cycle")
 	})
+}
+
+// gcCycleKV returns one key per page and can fail at a chosen stage of GC.
+type gcCycleKV struct {
+	KV
+	dataKeys   []string
+	failAt     string
+	cancelWait context.CancelFunc
+}
+
+func (k *gcCycleKV) Keys(_ context.Context, _ string, opts ListOptions) iter.Seq2[string, error] {
+	return func(yield func(string, error) bool) {
+		// Resource discovery requests one key; GC scans request a full batch.
+		listing := opts.Limit == 1
+		if (listing && k.failAt == "list") || (!listing && k.failAt == "scan") {
+			yield("", errors.New("scan failed"))
+			return
+		}
+		for _, key := range k.dataKeys {
+			if key < opts.StartKey || (opts.EndKey != "" && key >= opts.EndKey) {
+				continue
+			}
+			if !yield(key, nil) {
+				return
+			}
+			if !listing && k.failAt == "partial scan" {
+				yield("", errors.New("scan failed after one key"))
+			}
+			if !listing && k.cancelWait != nil {
+				// Interrupt the ten-second batch wait after one virtual second.
+				go func() {
+					<-time.After(time.Second)
+					k.cancelWait()
+				}()
+			}
+			return
+		}
+	}
+}
+
+func (k *gcCycleKV) BatchDelete(_ context.Context, _ string, _ []string) error {
+	if k.failAt == "delete" {
+		return errors.New("delete failed")
+	}
+	return nil
+}
+
+func TestGarbageCollectionCycleMetrics(t *testing.T) {
+	cases := []struct {
+		name       string
+		failAt     string
+		empty      bool
+		cancelWait bool
+		outcome    string
+		batches    float64
+		duration   float64
+	}{
+		{name: "success", outcome: "success", batches: 2, duration: 20},
+		{name: "empty", empty: true, outcome: "success"},
+		{name: "list error", failAt: "list", outcome: "error"},
+		{name: "scan error", failAt: "scan", outcome: "error"},
+		{name: "partial scan error", failAt: "partial scan", outcome: "error", batches: 2},
+		{name: "delete error", failAt: "delete", outcome: "error", batches: 2},
+		{name: "cancelled during wait", cancelWait: true, outcome: "cancelled", batches: 1, duration: 1},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Virtual time makes the batch waits instantaneous and duration assertions exact.
+			synctest.Test(t, func(t *testing.T) {
+				ctx, cancel := context.WithCancel(t.Context())
+				defer cancel()
+				store := &gcCycleKV{failAt: tc.failAt}
+				if tc.cancelWait {
+					store.cancelWait = cancel
+				}
+				// Two resources produce two nonempty batches; final empty pages do not count.
+				if !tc.empty {
+					for _, group := range []string{"agroup", "bgroup"} {
+						store.dataKeys = append(store.dataKeys, DataKey{Group: group, Resource: "resource", Namespace: "namespace", Name: "name", ResourceVersion: 1, Action: DataActionDeleted}.String())
+					}
+				}
+				reg := prometheus.NewRegistry()
+				b := &kvStorageBackend{
+					kv:                store,
+					dataStore:         &dataStore{kv: store, cache: gocache.New(gocache.NoExpiration, 0)},
+					metrics:           newKVBackendMetrics(reg),
+					log:               &logging.NoOpLogger{},
+					garbageCollection: GarbageCollectionConfig{BatchSize: 100, BatchWait: 10 * time.Second},
+				}
+				b.runGarbageCollection(ctx, math.MaxInt64)
+
+				// Each histogram records exactly one observation with the cycle's outcome.
+				expected := map[string]float64{
+					"grafana_storage_server_gc_cycle_duration_seconds": tc.duration,
+					"grafana_storage_server_gc_cycle_batches":          tc.batches,
+				}
+				families, err := reg.Gather()
+				require.NoError(t, err)
+				for _, family := range families {
+					want, ok := expected[family.GetName()]
+					if !ok {
+						continue
+					}
+					require.Len(t, family.Metric, 1)
+					metric := family.Metric[0]
+					require.Len(t, metric.Label, 1)
+					require.Equal(t, "outcome", metric.Label[0].GetName())
+					require.Equal(t, tc.outcome, metric.Label[0].GetValue())
+					require.Equal(t, uint64(1), metric.Histogram.GetSampleCount())
+					require.Equal(t, want, metric.Histogram.GetSampleSum(), family.GetName())
+					delete(expected, family.GetName())
+				}
+				require.Empty(t, expected, "both cycle histograms must be present")
+			})
+		})
+	}
 }

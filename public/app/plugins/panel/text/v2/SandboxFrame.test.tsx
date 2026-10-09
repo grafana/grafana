@@ -48,6 +48,19 @@ beforeEach(() => {
 });
 afterEach(() => jest.useRealTimers());
 
+it.each([
+  { name: 'protected', policy: textSandboxPolicy([], '/public/fonts/') },
+  { name: 'legacy', policy: undefined },
+])('disables DNS prefetch before loading the $name frame runtime', async ({ policy }) => {
+  render(<SandboxFrame {...props({ policy })} />);
+  const element = await frame();
+  const shell = new DOMParser().parseFromString(element.srcdoc, 'text/html');
+  const control = shell.head.querySelector('meta[http-equiv="x-dns-prefetch-control"]');
+  expect(control?.getAttribute('content')).toBe('off');
+  expect(shell.head.firstElementChild).toBe(control);
+  expect(control!.compareDocumentPosition(shell.querySelector('script')!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+});
+
 it('mounts visibly immediately but sends data only after the current runtime is ready', async () => {
   const options = props();
   render(
