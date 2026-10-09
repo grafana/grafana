@@ -12027,7 +12027,6 @@
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
-        "no-matching-results": "No matching results.",
         "no-results": "No matching results."
       },
       "search-placeholder": "Search field names and values",
