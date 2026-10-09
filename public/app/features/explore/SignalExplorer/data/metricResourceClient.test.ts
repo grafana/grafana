@@ -112,6 +112,18 @@ describe('metricResourceClient', () => {
       expect(lp.start).toHaveBeenCalledTimes(1);
     });
 
+    it('types a result from catalog names the term did not match', async () => {
+      const lp = makeLP();
+      lp.retrieveMetrics.mockReturnValue(['latency_seconds_bucket', 'latency_seconds_sum', 'latency_seconds_count']);
+      lp.retrieveMetricsMetadata.mockReturnValue({});
+      lp.queryLabelValues.mockResolvedValue(['latency_seconds_sum']);
+      (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
+
+      const [row] = await searchCatalog({ uid: 'p1' }, range, 'sum');
+
+      expect(row.type).toBe('histogram');
+    });
+
     it('serves a repeated term from cache until the datasource is invalidated', async () => {
       const lp = makeLP();
       (getDataSourceInstance as jest.Mock).mockResolvedValue({ languageProvider: lp });
@@ -239,6 +251,14 @@ describe('metricResourceClient', () => {
       } = await fetchCatalog({ uid: 'h6' }, range);
 
       expect(row.type).toBe('native histogram');
+    });
+
+    it('infers types from the catalog’s names when no metadata exists', async () => {
+      withMetadata(['app_requests_total', 'rpc_seconds', 'rpc_seconds_sum', 'rpc_seconds_count'], {});
+
+      const { metrics: rows } = await fetchCatalog({ uid: 'h7' }, range);
+
+      expect(rows.map((row) => row.type)).toEqual(['counter', 'summary', 'summary', 'summary']);
     });
 
     it('leaves a metric with no suffix and no metadata as unknown', async () => {

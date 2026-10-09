@@ -120,7 +120,7 @@ func (f *fakeStore) GetUserPermissions(ctx context.Context, namespace types.Name
 	}
 	var permissions []accesscontrol.Permission
 	for _, p := range f.userPermissions {
-		if p.Action == query.Action || slices.Contains(query.ActionSets, p.Action) {
+		if query.Action == "" || p.Action == query.Action || slices.Contains(query.ActionSets, p.Action) {
 			permissions = append(permissions, p)
 		}
 	}

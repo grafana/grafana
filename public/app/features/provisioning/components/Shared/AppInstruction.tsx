@@ -52,6 +52,11 @@ function OAuthAppInstruction({ type }: { type: OAuthConnectionType }) {
               View step-by-step instructions
             </TextLink>
           </Trans>
+        ) : type === 'gitOAuth' ? (
+          <Trans i18nKey="provisioning.oauth-app.help-instructions-git">
+            In your Git provider, create an OAuth application with the callback URL below, then paste its client ID,
+            client secret, and OAuth endpoints here. The access tokens it issues must be accepted for Git over HTTPS.
+          </Trans>
         ) : type === 'gitlabOAuth' ? (
           <Trans i18nKey="provisioning.oauth-app.help-instructions-gitlab">
             In GitLab, go to your user or group settings and create an application with the callback URL below, then
