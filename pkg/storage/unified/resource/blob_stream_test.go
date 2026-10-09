@@ -220,6 +220,36 @@ func TestBlobStreamLocalClient(t *testing.T) {
 	require.False(t, unary.getReached)
 }
 
+func TestBlobStreamLocalClientErrorResultConversion(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(map[bool]string{false: "disabled", true: "enabled"}[enabled], func(t *testing.T) {
+			srv, ac, _ := newBlobAuthzTestServer(t, nil)
+			srv.grpcErrorResultToStatus = enabled
+			srv.blob = &testStreamingBlob{stubBlobSupport: &stubBlobSupport{}}
+			ac.fn = func(authlib.CheckRequest, string) (authlib.CheckResponse, error) { return deny() }
+			client := NewLocalResourceClient(srv)
+			ctx := ctxWithUserInNs("default")
+			key := &resourcepb.ResourceKey{Group: "playlist.grafana.app", Resource: "playlists", Namespace: "default", Name: "missing"}
+			put, err := client.PutBlob(ctx, &resourcepb.PutBlobRequest{Resource: key, Value: []byte("data")})
+			if enabled {
+				require.Nil(t, put)
+				require.Equal(t, codes.PermissionDenied, status.Code(err))
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, int32(403), put.GetError().GetCode())
+			}
+			get, err := client.GetBlob(ctx, &resourcepb.GetBlobRequest{Resource: key, MustProxyBytes: true})
+			if enabled {
+				require.Nil(t, get)
+				require.Equal(t, codes.NotFound, status.Code(err))
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, int32(404), get.GetError().GetCode())
+			}
+		})
+	}
+}
+
 func TestBlobStreamLocalClientInterceptorWithErrorConversion(t *testing.T) {
 	srv, _, _ := newBlobAuthzTestServer(t, nil)
 	srv.grpcErrorResultToStatus = true
