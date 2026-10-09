@@ -54,7 +54,9 @@ export function applyDashboardSpec({ scene, spec, description, scope }: ApplyDas
   // sync, the same path `?editPanel=` takes, which resolves the id against the current tree,
   // waits for a library panel to load, and leaves the pane closed when the applied spec no
   // longer has the panel.
-  const editPanelKey = scene.state.editPanel?.getUrlKey();
+  const requestedPanel = scene.urlSync?.getUrlState().editPanel;
+  const editPanelKey =
+    scene.state.editPanel?.getUrlKey() ?? (typeof requestedPanel === 'string' ? requestedPanel : undefined);
   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- narrow the base handler to the dashboard's own, which owns the hold below
   const urlSync = scene.urlSync as DashboardUrlSync | undefined;
 

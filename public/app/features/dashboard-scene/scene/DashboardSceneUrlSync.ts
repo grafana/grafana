@@ -1,4 +1,4 @@
-import { type Unsubscribable } from 'rxjs';
+import { Subscription, type Unsubscribable } from 'rxjs';
 
 import { type SceneObjectUrlSyncHandler, type SceneObjectUrlValues, type VizPanel } from '@grafana/scenes';
 
@@ -200,29 +200,51 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
     this._libPanelSub?.unsubscribe();
     this._heldEditPanelId = panelId;
 
-    const sub = libPanel.subscribeToState((state) => {
-      if (state.isLoaded) {
-        sub.unsubscribe();
-        if (this._libPanelSub === sub) {
-          this._libPanelSub = undefined;
-          this._heldEditPanelId = undefined;
-        }
-        this._openPanelEditById(panelId);
-      }
+    void this._scene.loadView({
+      key: 'editPanel',
+      load: (signal) =>
+        new Promise<undefined>((resolve) => {
+          const sub = new Subscription(() => resolve(undefined));
+          this._libPanelSub = sub;
+          const cancel = () => sub.unsubscribe();
+          signal.addEventListener('abort', cancel, { once: true });
+          sub.add(() => signal.removeEventListener('abort', cancel));
+          sub.add(
+            libPanel.subscribeToState((state) => {
+              if (state.isLoaded) {
+                sub.unsubscribe();
+                if (this._libPanelSub === sub) {
+                  this._libPanelSub = undefined;
+                }
+                this._openPanelEditById(panelId);
+              }
+            })
+          );
+          const panel = findEditPanel(this._scene, panelId);
+          if (panel) {
+            sub.add(
+              panel.subscribeToState((state) => {
+                if (state._pluginLoadError) {
+                  sub.unsubscribe();
+                }
+              })
+            );
+          }
+          if (panel?.state._pluginLoadError) {
+            sub.unsubscribe();
+            return;
+          }
+          // The loading page does not mount the panel that normally activates this behavior.
+          sub.add(libPanel.activate());
+        }),
     });
-
-    this._libPanelSub = sub;
   }
 
   /**
    * Open panel edit for an id resolved against the CURRENT tree.
    *
-   * The wait above outlives the panel it was started for. A scene rebuild (APPLY_SPEC, the json and
-   * code editors) replaces the whole layout tree, and `state.editPanel` is unset for the duration of
-   * the wait, so nothing else can re-open the pane afterwards. Resolving the id again is what lets
-   * the wait survive that: opening the editor on the panel it captured would instead leave the pane
-   * driving a panel the dashboard no longer contains. If the panel it lands on is itself an unloaded
-   * library panel, it waits once more, on the behavior the live tree holds.
+   * Resolve again after loading so a replaced panel cannot leave the editor attached to an old
+   * tree. Rebuilds retain the requested id and start a new wait against the replacement tree.
    */
   private _openPanelEditById(panelId: string) {
     // The pane is closed for the whole wait, so anything the user does meanwhile is the newer

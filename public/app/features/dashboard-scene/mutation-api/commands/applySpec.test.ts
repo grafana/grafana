@@ -37,6 +37,11 @@ jest.mock('@grafana/runtime', () => ({
   getDataSourceSrv: () => ({ getInstanceSettings: jest.fn() }),
 }));
 
+jest.mock('app/features/library-panels/state/api', () => ({
+  ...jest.requireActual('app/features/library-panels/state/api'),
+  getLibraryPanel: jest.fn(() => new Promise(() => {})),
+}));
+
 /**
  * `handyTestingSchema` holds `panel-1` (a plain panel) and `panel-2` (a library panel). Its
  * variables are dropped: they are irrelevant here and some are behind a feature toggle.
@@ -157,11 +162,11 @@ describe('APPLY_SPEC with a panel open for editing', () => {
 
     await applySpec(scene, makeSpec());
     const stale = getLibraryPanelBehavior(findVizPanelByKey(scene, 'panel-2')!)!;
-    // `editPanel` is unset for the whole wait, so this rebuild has no key to re-open from.
+    // The pending editor's URL key must survive even though its pane is not available yet.
     await applySpec(scene, makeSpec());
     expect(editedPanelKey(scene)).toBeUndefined();
 
-    // The load the discarded tree started completes, and hands off to the live tree's own wait.
+    // Completing the discarded tree's load must not reopen an editor attached to it.
     stale.setState({ isLoaded: true });
     expect(editedPanelKey(scene)).toBeUndefined();
 

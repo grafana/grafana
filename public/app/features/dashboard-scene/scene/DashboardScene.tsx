@@ -1214,9 +1214,20 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this.cancelPendingViews();
     const request = new AbortController();
     this._viewRequest = request;
-    request.signal.addEventListener('abort', () => this.setOverlayLoading(false), { once: true });
+    request.signal.addEventListener(
+      'abort',
+      () => {
+        this.setOverlayLoading(false);
+        if (view.key === 'editPanel') {
+          super.setState({ isPanelEditorLoading: false });
+        }
+      },
+      { once: true }
+    );
     if (view.key === 'overlay') {
       this.setOverlayLoading(true);
+    } else if (view.key === 'editPanel') {
+      super.setState({ isPanelEditorLoading: true });
     }
     // Some overlays and editor transitions are applied directly through setState.
     const subscription = this.subscribeToState((state, previous) => {
@@ -1239,7 +1250,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       }
     });
     try {
-      const value = await view.load();
+      const value = await view.load(request.signal);
       if (value !== undefined && !request.signal.aborted) {
         this.setState({ [view.key]: value });
       }

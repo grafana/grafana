@@ -26,8 +26,9 @@ import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/das
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
+import { dashboardViews } from '../scene/dashboardViewRegistry';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
+import { createDeferred, setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
 
 import { DashboardScenePage, type Props } from './DashboardScenePage';
 import {
@@ -142,6 +143,7 @@ const panelPlugin = getPanelPlugin(
   },
   CustomVizPanel
 );
+panelPlugin.meta.info.logos.small = 'public/build/img/grafana_icon.svg';
 
 beforeEach(() => {
   setPanelPluginMetas({ 'custom-viz-panel': panelPlugin.meta });
@@ -205,6 +207,40 @@ describe('DashboardScenePage', () => {
 
     expect(await screen.findByTitle('Panel B')).toBeInTheDocument();
     expect(await screen.findByText('Content B')).toBeInTheDocument();
+  });
+
+  it('keeps the page loader visible until a directly requested panel editor is ready', async () => {
+    loadDashboardMock.mockResolvedValue({ dashboard: cloneDeep(simpleDashboard), meta: { slug: '123' } });
+    const pending = createDeferred<void>();
+    const original = dashboardViews.editPanel;
+    const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+      const view = original(...args);
+      return {
+        ...view,
+        load: async (signal) => {
+          await pending.promise;
+          return view.load(signal);
+        },
+      };
+    });
+    locationService.push('/d/my-dash-uid?editPanel=panel-1&from=now-6h&to=now&var-team=frontend');
+    try {
+      setup();
+      await waitFor(() => expect(loadEditor).toHaveBeenCalled());
+      expect(screen.getByText('Loading ...')).toBeInTheDocument();
+      expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+      await act(async () => pending.resolve());
+      expect(await screen.findByText('Panel options')).toBeInTheDocument();
+      expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
+      expect(locationService.getSearchObject()).toMatchObject({
+        editPanel: '1',
+        from: 'now-6h',
+        to: 'now',
+        'var-team': 'frontend',
+      });
+    } finally {
+      loadEditor.mockRestore();
+    }
   });
 
   it('shows Powered by footer in kiosk mode', async () => {

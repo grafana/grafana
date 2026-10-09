@@ -1,11 +1,16 @@
 import { waitFor } from '@testing-library/react';
 
-import { locationService } from '@grafana/runtime';
+import { getPanelPlugin } from '@grafana/data/test';
+import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
+import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
+import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
@@ -13,6 +18,56 @@ import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 describe('DashboardSceneUrlSync', () => {
+  describe('library panel editor loading', () => {
+    beforeAll(() => {
+      setPluginImportUtils({
+        importPanelPlugin: async () => getPanelPlugin({}),
+        getPanelPluginFromCache: () => undefined,
+      });
+    });
+    it.each(['loaded', 'failed', 'cancelled'] as const)(
+      'finishes loading when the library panel is %s',
+      async (outcome) => {
+        const pending = createDeferred<LibraryPanel>();
+        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
+        const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+        try {
+          scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+          expect(scene.state.isPanelEditorLoading).toBe(true);
+          expect(fetchPanel).toHaveBeenCalledWith('library-a', true);
+          if (outcome === 'cancelled') {
+            scene.urlSync?.updateFromUrl({ editPanel: null });
+            expect(behavior.isActive).toBe(false);
+          }
+          if (outcome === 'failed') {
+            pending.reject(new Error('Library panel unavailable'));
+          } else {
+            pending.resolve({
+              uid: 'library-a',
+              name: 'Library A',
+              type: 'text',
+              version: 1,
+              model: { type: 'text', title: 'Library A', options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            });
+          }
+          await waitFor(() => expect(scene.state.isPanelEditorLoading).toBe(false));
+          if (outcome === 'loaded') {
+            expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+          } else if (outcome === 'failed') {
+            expect(panel.state._pluginLoadError).toBe('Unable to load library panel: library-a');
+          } else {
+            expect(scene.state.editPanel).toBeUndefined();
+          }
+          expect(behavior.isActive).toBe(false);
+        } finally {
+          scene.cancelPendingViews();
+          fetchPanel.mockRestore();
+        }
+      }
+    );
+  });
   describe('Given a standard scene', () => {
     it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
       const scene = buildTestScene();

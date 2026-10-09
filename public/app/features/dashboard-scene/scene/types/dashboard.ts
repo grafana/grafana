@@ -36,6 +36,7 @@ export interface DashboardViewState {
 }
 
 interface DashboardLoadingState {
+  isPanelEditorLoading?: boolean;
   /** A drawer's implementation is being loaded. */
   isOverlayLoading?: boolean;
 }

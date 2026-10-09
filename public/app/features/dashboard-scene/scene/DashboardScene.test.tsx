@@ -2296,6 +2296,37 @@ describe('DashboardScene', () => {
       locationService.push('/d/dash-1/test?editPanel=panel-1');
     });
 
+    it('keeps the newer editor loading when a superseded request resolves', async () => {
+      const scene = buildTestScene();
+      const first = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+      const second = createDeferred<ReturnType<typeof buildPanelEditScene>>();
+      const older = scene.loadView({ key: 'editPanel', load: () => first.promise });
+      const newer = scene.loadView({ key: 'editPanel', load: () => second.promise });
+      first.resolve(buildPanelEditScene(findVizPanelByKey(scene, 'panel-1')!));
+      await older;
+      expect(scene.state.isPanelEditorLoading).toBe(true);
+      expect(scene.state.editPanel).toBeUndefined();
+      const panel = findVizPanelByKey(scene, 'panel-2')!;
+      second.resolve(buildPanelEditScene(panel));
+      await newer;
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      expect(scene.state.isPanelEditorLoading).toBe(false);
+    });
+
+    it('clears panel editor loading after a failed import and allows another request', async () => {
+      const scene = buildTestScene();
+      const pending = createDeferred<never>();
+      const opening = scene.loadView({ key: 'editPanel', load: () => pending.promise });
+      expect(scene.state.isPanelEditorLoading).toBe(true);
+      pending.reject(new Error('Chunk load failed'));
+      await expect(opening).rejects.toThrow('Chunk load failed');
+      expect(scene.state.isPanelEditorLoading).toBe(false);
+      const panel = findVizPanelByKey(scene, 'panel-1')!;
+      await openPanelEditor(scene, panel);
+      expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+      expect(scene.state.isPanelEditorLoading).toBe(false);
+    });
+
     it.each(
       Object.entries<(scene: DashboardScene, deactivate: () => void) => void>({
         close: (scene) => scene.cancelPendingViews(),
@@ -2314,6 +2345,7 @@ describe('DashboardScene', () => {
       const editing = openPanelEditor(scene, panel);
 
       run(scene, deactivate);
+      expect(scene.state.isPanelEditorLoading).toBe(false);
       await editing;
 
       expect(scene.state.editPanel).toBeUndefined();
