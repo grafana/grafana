@@ -353,6 +353,9 @@ describe('prepareConfig', () => {
 describe('prepareConfig hover', () => {
   const theme = createTheme();
 
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
   const makeHoverSparkline = (yConfig: Field['config'] = {}): FieldSparkline => ({
     x: { name: 'x', values: [0, 1, 2, 3, 4], type: FieldType.number, config: {} },
     y: { name: 'y', values: [10, 20, 30, 40, 50], type: FieldType.number, config: yConfig },
@@ -420,6 +423,7 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover, makeHoverSparkline({ decimals: 1 }));
 
     hook(makeU([null, 2]));
+    jest.advanceTimersByTime(16);
 
     expect(onHover).toHaveBeenCalledTimes(1);
     expect(onHover).toHaveBeenCalledWith({ index: 2, value: 30, display: '30.0', left: 140, top: 60 });
@@ -430,7 +434,9 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover);
 
     hook(makeU([null, 2]));
+    jest.advanceTimersByTime(16);
     hook(makeU([null, 2], { left: 41 }));
+    jest.advanceTimersByTime(16);
 
     expect(onHover).toHaveBeenCalledTimes(1);
   });
@@ -440,6 +446,7 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover);
 
     hook(makeU([null, 2]));
+    jest.advanceTimersByTime(16);
     onHover.mockClear();
     hook(makeU([null, null]));
     hook(makeU([null, null]));
@@ -462,6 +469,7 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover);
 
     hook(makeU([null, 2]));
+    jest.advanceTimersByTime(16);
     onHover.mockClear();
     hook(
       makeU([null, 3], {
@@ -474,5 +482,42 @@ describe('prepareConfig hover', () => {
 
     expect(onHover).toHaveBeenCalledTimes(1);
     expect(onHover).toHaveBeenCalledWith(null);
+  });
+
+  it('formats only the latest index in a frame and dedupes a return to the emitted index', () => {
+    const sparkline = makeHoverSparkline();
+    const display = jest.fn((value: unknown) => ({ numeric: Number(value), text: `${value} ms` }));
+    sparkline.y.display = display;
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover, sparkline);
+
+    hook(makeU([null, 1]));
+    hook(makeU([null, 2]));
+    hook(makeU([null, 3]));
+    expect(display).not.toHaveBeenCalled();
+    jest.advanceTimersByTime(16);
+
+    expect(display.mock.calls).toEqual([[40]]);
+    expect(onHover.mock.calls).toEqual([[{ index: 3, value: 40, display: '40 ms', left: 140, top: 60 }]]);
+
+    hook(makeU([null, 2]));
+    hook(makeU([null, 3]));
+    jest.advanceTimersByTime(16);
+    expect(display.mock.calls).toEqual([[40]]);
+    expect(onHover).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([null, 99])('cancels a pending point when the next index is invalid (%s)', (index) => {
+    const onHover = jest.fn();
+    const hook = getSetCursorHook(onHover);
+    hook(makeU([null, 1]));
+    jest.advanceTimersByTime(16);
+    expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20', left: 140, top: 60 });
+
+    hook(makeU([null, 2]));
+    hook(makeU([null, index]));
+    expect(onHover).toHaveBeenLastCalledWith(null);
+    jest.advanceTimersByTime(16);
+    expect(onHover).toHaveBeenCalledTimes(2);
   });
 });
