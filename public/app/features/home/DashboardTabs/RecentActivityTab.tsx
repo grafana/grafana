@@ -36,9 +36,7 @@ function EmptyStateCta() {
       <LinkButton
         icon="plus"
         href="/dashboard/new"
-        onClick={() =>
-          ctaClicked({ surface: 'recent_activity_tab', action: 'create_dashboard', placement: 'empty_state' })
-        }
+        onClick={() => ctaClicked({ surface: 'recent_tab', action: 'create_dashboard', placement: 'empty_state' })}
       >
         <Trans i18nKey="home.recent-activity-tab.create">Create your first dashboard</Trans>
       </LinkButton>
@@ -49,9 +47,7 @@ function EmptyStateCta() {
       icon="apps"
       href="/dashboards"
       variant="secondary"
-      onClick={() =>
-        ctaClicked({ surface: 'recent_activity_tab', action: 'browse_dashboards', placement: 'empty_state' })
-      }
+      onClick={() => ctaClicked({ surface: 'recent_tab', action: 'browse_dashboards', placement: 'empty_state' })}
     >
       <Trans i18nKey="home.recent-activity-tab.browse">Browse dashboards</Trans>
     </LinkButton>
@@ -117,7 +113,7 @@ export function RecentActivityTab({ items, counts, loading, error, retry, folder
               href={href}
               onClick={() =>
                 ctaClicked({
-                  surface: 'recent_activity_tab',
+                  surface: 'recent_tab',
                   action: 'open_page',
                   placement: 'list',
                   page_kind: item.kind,

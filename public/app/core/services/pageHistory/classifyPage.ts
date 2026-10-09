@@ -48,6 +48,25 @@ function exploreSession(search: string): string | undefined {
   }
 }
 
+/**
+ * Params that reopen a panel editor, settings view, inspect drawer, share drawer or kiosk mode; a row must bring
+ * the user back to the dashboard, not into one of those.
+ */
+const DASHBOARD_TRANSIENT_PARAMS = ['editPanel', 'editview', 'inspect', 'shareView', 'kiosk', 'drow'];
+
+/** The part of `search` a row stores for `page`: dashboards drop their transient UI params, other kinds keep everything. */
+export function recordableSearch(page: PageIdentity, search: string): string {
+  if (page.kind !== 'dashboard') {
+    return search;
+  }
+  const params = new URLSearchParams(search);
+  for (const key of DASHBOARD_TRANSIENT_PARAMS) {
+    params.delete(key);
+  }
+  const kept = params.toString();
+  return kept ? `?${kept}` : '';
+}
+
 /** Dedupe key: two URLs with the same key are the same history row. */
 export function pageKey(page: PageIdentity): string {
   switch (page.kind) {

@@ -33,13 +33,37 @@ function getQueryText(query: unknown): string {
   return '';
 }
 
+/**
+ * `<datasource name>: <text>`; the raw ref when the datasource no longer resolves; text alone when the query
+ * has no ref; `''` when it has no text.
+ */
+async function describeMixedQuery(query: unknown): Promise<string> {
+  const text = getQueryText(query);
+  if (!text) {
+    return '';
+  }
+  const ref = isRecord(query) ? query.datasource : undefined;
+  const refString = typeof ref === 'string' ? ref : isRecord(ref) && typeof ref.uid === 'string' ? ref.uid : undefined;
+  if (!refString) {
+    return text;
+  }
+  const name = (await getDataSourceInstanceSettings(typeof ref === 'string' ? ref : { uid: refString }))?.name;
+  return `${name ?? refString}: ${text}`;
+}
+
 async function describePane(pane: ExploreUrlState): Promise<ExplorePaneDescription> {
-  const datasource = pane.datasource
-    ? ((await getDataSourceInstanceSettings(pane.datasource))?.name ?? pane.datasource)
-    : undefined;
+  const settings = pane.datasource ? await getDataSourceInstanceSettings(pane.datasource) : undefined;
   // The v1 migrator keeps `null` query elements and the v0 parser can keep a non-array `queries`.
   const queries: unknown[] = Array.isArray(pane.queries) ? pane.queries : [];
-  return { datasource, queries: queries.map(getQueryText).filter(Boolean) };
+  if (settings?.meta.mixed) {
+    // The pane's "-- Mixed --" says nothing; each query names its own datasource.
+    const texts = await Promise.all(queries.map(describeMixedQuery));
+    return { datasource: undefined, queries: texts.filter(Boolean) };
+  }
+  return {
+    datasource: settings?.name ?? (pane.datasource || undefined),
+    queries: queries.map(getQueryText).filter(Boolean),
+  };
 }
 
 /**

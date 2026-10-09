@@ -7,7 +7,7 @@ import { AppChromeService } from 'app/core/components/AppChrome/AppChromeService
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { PAGE_HISTORY_MAX_ENTRY_CHARS, PageHistorySrv } from './pageHistorySrv';
+import { PAGE_HISTORY_MAX_ENTRY_CHARS, PAGE_HISTORY_PERSIST_MS, PageHistorySrv } from './pageHistorySrv';
 import { PAGE_HISTORY_MAX_PER_KIND, type PageHistoryEntry } from './types';
 
 /** UserStorage's localStorage fallback key for the anonymous user in org 1. */
@@ -21,6 +21,7 @@ const T3 = T0 + 180_000;
 let stop: (() => void) | undefined;
 const originalUser = { ...config.bootData.user };
 const originalOrgId = contextSrv.user.orgId;
+const originalAuthenticatedBy = contextSrv.user.authenticatedBy;
 
 let chrome: AppChromeService;
 
@@ -40,8 +41,12 @@ function renderPage(section: string, main: string, pageNav?: string) {
   });
 }
 
+/** The stored envelope for a never-cleared history. */
 function stored(entries: PageHistoryEntry[]) {
-  return entries.map(({ pathname, search, lastVisited }) => ({ pathname, search, lastVisited }));
+  return {
+    clearedAt: 0,
+    entries: entries.map(({ pathname, search, lastVisited }) => ({ pathname, search, lastVisited })),
+  };
 }
 
 /** Explore's v1 search for one session (the left pane's id), with any extra params appended. */
@@ -79,6 +84,7 @@ afterEach(() => {
   jest.restoreAllMocks();
   Object.assign(config.bootData.user, originalUser);
   contextSrv.user.orgId = originalOrgId;
+  contextSrv.user.authenticatedBy = originalAuthenticatedBy;
   Reflect.deleteProperty(document, 'visibilityState');
 });
 
@@ -101,6 +107,30 @@ describe('PageHistorySrv', () => {
     expect(await srv.getEntries()).toEqual([
       { kind: 'dashboard', uid: 'abc', pathname: '/d/abc', search: '?from=now-6h&to=now', lastVisited: T1 },
     ]);
+  });
+
+  it('records a dashboard without the params that reopen its editors', async () => {
+    const srv = startAt('/');
+    await srv.getEntries();
+
+    locationService.push('/d/abc?from=now-1h&to=now&editPanel=3');
+
+    expect(await srv.getEntries()).toEqual([
+      { kind: 'dashboard', uid: 'abc', pathname: '/d/abc', search: '?from=now-1h&to=now', lastVisited: T0 },
+    ]);
+  });
+
+  it('records nothing for a renderer session', async () => {
+    contextSrv.user.authenticatedBy = 'render';
+    const srv = startAt('/d/abc');
+
+    locationService.push('/d/def');
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    hideTab();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(await srv.getEntries()).toEqual([]);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
   });
 
   it('treats a flagged REPLACE as an in-place rewrite', async () => {
@@ -212,11 +242,14 @@ describe('PageHistorySrv', () => {
       expect.objectContaining({ pathname: '/alerting/list', title: 'Alert rules' }),
     ]);
 
-    await jest.advanceTimersByTimeAsync(1000);
-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual([
-      { pathname: '/alerting/grafana/abc/view', search: '', lastVisited: T0, title: 'High CPU' },
-      { pathname: '/alerting/list', search: '', lastVisited: T0, title: 'Alert rules' },
-    ]);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({
+      clearedAt: 0,
+      entries: [
+        { pathname: '/alerting/grafana/abc/view', search: '', lastVisited: T0, title: 'High CPU' },
+        { pathname: '/alerting/list', search: '', lastVisited: T0, title: 'Alert rules' },
+      ],
+    });
   });
 
   it('ignores the home dashboard rewrite', async () => {
@@ -246,14 +279,14 @@ describe('PageHistorySrv', () => {
   it('does not record a URL too large to store and leaves the rest of the history alone', async () => {
     const srv = startAt('/alerting/list');
     locationService.push('/d/abc?from=now-1h&to=now');
-    await jest.advanceTimersByTimeAsync(1000);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
     const before = await srv.getEntries();
 
     const filler = `&q=${'x'.repeat(PAGE_HISTORY_MAX_ENTRY_CHARS)}`;
     locationService.push(`/explore${exploreSearch('big', filler)}`);
     // Oversized churn on a recorded page keeps its earlier state rather than dropping the row.
     locationService.push(`/d/abc?${filler.slice(1)}`);
-    await jest.advanceTimersByTimeAsync(1000);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
 
     expect(await srv.getEntries()).toEqual(before);
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(before));
@@ -262,20 +295,105 @@ describe('PageHistorySrv', () => {
     expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/explore', '/d/abc', '/alerting/list']);
   });
 
-  it('persists once per debounce window', async () => {
+  it('persists 30s after the first change; later changes do not postpone it', async () => {
     const setSpy = jest.spyOn(store, 'set');
+    const writes = () => setSpy.mock.calls.filter(([key]) => key === STORAGE_KEY);
     const srv = startAt('/d/abc');
     await srv.getEntries();
 
     locationService.push('/d/def');
+    await jest.advanceTimersByTimeAsync(10_000);
     locationService.push('/d/ghi');
-    jest.advanceTimersByTime(999);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS - 10_000 - 1);
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
 
     await jest.advanceTimersByTimeAsync(1);
 
-    expect(setSpy.mock.calls.filter(([key]) => key === STORAGE_KEY)).toHaveLength(1);
+    expect(writes()).toHaveLength(1);
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(await srv.getEntries()));
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/d/ghi', '/d/def', '/d/abc']);
+
+    await jest.advanceTimersByTimeAsync(10_000);
+    expect(writes()).toHaveLength(1);
+  });
+
+  it('merges rows another tab stored before writing', async () => {
+    const srv = startAt('/alerting/list');
+    locationService.push('/d/a');
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ clearedAt: 0, entries: [{ pathname: '/d/b', search: '', lastVisited: T0 - 1 }] })
+    );
+
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+
+    const expected: PageHistoryEntry[] = [
+      { kind: 'dashboard', uid: 'a', pathname: '/d/a', search: '', lastVisited: T0 },
+      { kind: 'alerting', pathname: '/alerting/list', search: '', lastVisited: T0 },
+      { kind: 'dashboard', uid: 'b', pathname: '/d/b', search: '', lastVisited: T0 - 1 },
+    ];
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(expected));
+    expect(await srv.getEntries()).toEqual(expected);
+  });
+
+  it('adopts a clear from another tab, drops the rows it predates and resumes recording the page the user is on', async () => {
+    const srv = startAt('/d/a?from=now-1h&to=now');
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ clearedAt: T1, entries: [] }));
+
+    expect(await srv.getEntries()).toEqual([]);
+
+    jest.setSystemTime(T2);
+    locationService.partial({ from: 'now-6h' });
+
+    const row: PageHistoryEntry = {
+      kind: 'dashboard',
+      uid: 'a',
+      pathname: '/d/a',
+      search: '?from=now-6h&to=now',
+      lastVisited: T2,
+    };
+    expect(await srv.getEntries()).toEqual([row]);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({
+      clearedAt: T1,
+      entries: stored([row]).entries,
+    });
+  });
+
+  it('clears a stored visit at exactly the clear time', async () => {
+    const srv = startAt('/');
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ clearedAt: T1, entries: [{ pathname: '/d/x', search: '', lastVisited: T1 }] })
+    );
+
+    expect(await srv.getEntries()).toEqual([]);
+  });
+
+  it('retries a failed write on the next throttle window', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const srv = startAt('/d/abc');
+    await srv.getEntries();
+    jest.spyOn(UserStorage.prototype, 'updateItem').mockRejectedValueOnce(new Error('down'));
+
+    locationService.push('/d/def');
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(await srv.getEntries()));
+  });
+
+  it('skips the write when the stored copy already matches', async () => {
+    const srv = startAt('/d/a');
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored(await srv.getEntries())));
+    const updateSpy = jest.spyOn(UserStorage.prototype, 'updateItem');
+    const setSpy = jest.spyOn(store, 'set');
+
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+
+    expect(updateSpy).toHaveBeenCalled();
+    expect(setSpy.mock.calls.filter(([key]) => key === STORAGE_KEY)).toHaveLength(0);
   });
 
   it('flushes the pending write when the tab is hidden', async () => {
@@ -294,29 +412,41 @@ describe('PageHistorySrv', () => {
   it('loads the stored copy, deriving each page from its pathname and dropping bad rows', async () => {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify([
-        // A trailing slash is normalized away on load.
-        { pathname: '/d/old/', search: '', lastVisited: 100 },
-        { pathname: '/explore', search: exploreSearch('abc', '&a=1'), lastVisited: 300 },
-        // Same Explore session twice: the newer visit wins. Another session is another row.
-        { pathname: '/explore', search: exploreSearch('abc', '&a=2'), lastVisited: 200 },
-        { pathname: '/explore', search: exploreSearch('xyz'), lastVisited: 250 },
-        // Explore before it wrote its state.
-        { pathname: '/explore', search: '', lastVisited: 400 },
-        // Rows written by an earlier format still load; extra fields are ignored.
-        { key: 'dashboard:legacy', kind: 'dashboard', pathname: '/d/legacy', search: '', lastVisited: 150, visits: 3 },
-        { pathname: '/d/x', search: '' },
-        { pathname: '//evil.example/d/x', search: '', lastVisited: 400 },
-        { pathname: '/d/y', search: 'from=now-1h', lastVisited: 400 },
-        // Valid row that is not a page worth resuming.
-        { pathname: '/dashboards', search: '?query=x', lastVisited: 400 },
-        // Oversized rows written before the per-entry cap drop on load like any other bad row.
-        {
-          pathname: '/explore',
-          search: exploreSearch('big', `&q=${'x'.repeat(PAGE_HISTORY_MAX_ENTRY_CHARS)}`),
-          lastVisited: 500,
-        },
-      ])
+      JSON.stringify({
+        clearedAt: 0,
+        entries: [
+          // A trailing slash is normalized away on load.
+          { pathname: '/d/old/', search: '', lastVisited: 100 },
+          { pathname: '/explore', search: exploreSearch('abc', '&a=1'), lastVisited: 300 },
+          // Same Explore session twice: the newer visit wins. Another session is another row.
+          { pathname: '/explore', search: exploreSearch('abc', '&a=2'), lastVisited: 200 },
+          { pathname: '/explore', search: exploreSearch('xyz'), lastVisited: 250 },
+          // Explore before it wrote its state.
+          { pathname: '/explore', search: '', lastVisited: 400 },
+          // Rows written by an earlier format still load; extra fields are ignored.
+          {
+            key: 'dashboard:legacy',
+            kind: 'dashboard',
+            pathname: '/d/legacy',
+            search: '',
+            lastVisited: 150,
+            visits: 3,
+          },
+          { pathname: '/d/x', search: '', lastVisited: 'yesterday' },
+          // Seeded from the recently-viewed impressions: no visit time.
+          { pathname: '/d/seeded', search: '' },
+          { pathname: '//evil.example/d/x', search: '', lastVisited: 400 },
+          { pathname: '/d/y', search: 'from=now-1h', lastVisited: 400 },
+          // Valid row that is not a page worth resuming.
+          { pathname: '/dashboards', search: '?query=x', lastVisited: 400 },
+          // Oversized rows written before the per-entry cap drop on load like any other bad row.
+          {
+            pathname: '/explore',
+            search: exploreSearch('big', `&q=${'x'.repeat(PAGE_HISTORY_MAX_ENTRY_CHARS)}`),
+            lastVisited: 500,
+          },
+        ],
+      })
     );
 
     const srv = startAt('/alerting/list');
@@ -327,29 +457,38 @@ describe('PageHistorySrv', () => {
       { kind: 'explore', session: 'xyz', pathname: '/explore', search: exploreSearch('xyz'), lastVisited: 250 },
       { kind: 'dashboard', uid: 'legacy', pathname: '/d/legacy', search: '', lastVisited: 150 },
       { kind: 'dashboard', uid: 'old', pathname: '/d/old', search: '', lastVisited: 100 },
+      { kind: 'dashboard', uid: 'seeded', pathname: '/d/seeded', search: '' },
     ]);
   });
 
   it('keeps pages visited before the load finished and merges the stored copy underneath', async () => {
     const deferred = createDeferred<string | null>();
-    jest.spyOn(UserStorage.prototype, 'getItem').mockReturnValue(deferred.promise);
-    const setSpy = jest.spyOn(UserStorage.prototype, 'setItem').mockResolvedValue();
+    const writes: string[] = [];
+    jest.spyOn(UserStorage.prototype, 'updateItem').mockImplementation(async (_key, update) => {
+      const next = update(await deferred.promise);
+      if (next !== undefined) {
+        writes.push(next);
+      }
+    });
 
     const srv = startAt('/');
     jest.setSystemTime(T1);
     locationService.push('/d/a');
     jest.setSystemTime(T2);
     locationService.push('/d/b');
-    // The debounced write fires before the load resolves and must wait for it.
-    await jest.advanceTimersByTimeAsync(1000);
-    expect(setSpy).not.toHaveBeenCalled();
+    // The throttled write fires before the load resolves and must wait for it.
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    expect(writes).toEqual([]);
 
     jest.setSystemTime(T3);
     deferred.resolve(
-      JSON.stringify([
-        { pathname: '/d/a', search: '?from=now-7d', lastVisited: T0 },
-        { pathname: '/d/c', search: '', lastVisited: T0 },
-      ])
+      JSON.stringify({
+        clearedAt: 0,
+        entries: [
+          { pathname: '/d/a', search: '?from=now-7d', lastVisited: T0 },
+          { pathname: '/d/c', search: '', lastVisited: T0 },
+        ],
+      })
     );
 
     const entries = await srv.getEntries();
@@ -359,7 +498,67 @@ describe('PageHistorySrv', () => {
       { kind: 'dashboard', uid: 'c', pathname: '/d/c', search: '', lastVisited: T0 },
     ]);
     await jest.advanceTimersByTimeAsync(0);
-    expect(setSpy).toHaveBeenCalledWith('org-1', JSON.stringify(stored(entries)));
+    expect(writes.map((raw) => JSON.parse(raw))).toEqual([stored(entries)]);
+  });
+
+  describe('seeding from the recently-viewed impressions', () => {
+    const IMPRESSIONS_KEY = 'dashboard_impressions-1';
+    const uids = Array.from({ length: 12 }, (_, i) => `d${i + 1}`);
+    const seededRows = uids.slice(0, PAGE_HISTORY_MAX_PER_KIND).map((uid) => ({ pathname: `/d/${uid}`, search: '' }));
+    const seededEntries = seededRows.map((row) => ({ kind: 'dashboard', uid: row.pathname.slice(3), ...row }));
+
+    it('seeds the newest dashboards on first use, once', async () => {
+      window.localStorage.setItem(IMPRESSIONS_KEY, JSON.stringify(uids));
+
+      let srv = startAt('/');
+      expect(await srv.getEntries()).toEqual(seededEntries);
+      expect((await srv.getEntries()).every((e) => !('lastVisited' in e))).toBe(true);
+      await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+      expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({ clearedAt: 0, entries: seededRows });
+
+      // A stored envelope, whatever it holds, means seeding is over.
+      stop?.();
+      window.localStorage.setItem(IMPRESSIONS_KEY, JSON.stringify(['other']));
+      srv = startAt('/');
+      expect(await srv.getEntries()).toEqual(seededEntries);
+
+      jest.setSystemTime(T3);
+      await srv.clear();
+      expect(await srv.getEntries()).toEqual([]);
+      expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({ clearedAt: T3, entries: [] });
+
+      stop?.();
+      srv = startAt('/');
+      expect(await srv.getEntries()).toEqual([]);
+    });
+
+    it('does not seed from corrupt impressions and does not retry', async () => {
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      window.localStorage.setItem(IMPRESSIONS_KEY, '{not json');
+
+      let srv = startAt('/');
+      expect(await srv.getEntries()).toEqual([]);
+      await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+      expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({ clearedAt: 0, entries: [] });
+
+      stop?.();
+      window.localStorage.setItem(IMPRESSIONS_KEY, JSON.stringify(uids));
+      srv = startAt('/');
+      expect(await srv.getEntries()).toEqual([]);
+    });
+
+    it('sorts seeded rows after recorded pages and evicts them first', async () => {
+      window.localStorage.setItem(IMPRESSIONS_KEY, JSON.stringify(uids));
+      const srv = startAt('/');
+      await srv.getEntries();
+
+      locationService.push('/d/new');
+
+      const entries = await srv.getEntries();
+      expect(entries[0]).toEqual({ kind: 'dashboard', uid: 'new', pathname: '/d/new', search: '', lastVisited: T0 });
+      expect(entries).toHaveLength(PAGE_HISTORY_MAX_PER_KIND);
+      expect(entries.map((e) => e.pathname)).not.toContain('/d/d10');
+    });
   });
 
   it('stops recording and drops the pending write when stopped; returns nothing when never started', async () => {
@@ -371,7 +570,7 @@ describe('PageHistorySrv', () => {
     stop?.();
     locationService.push('/d/ghi');
     hideTab();
-    await jest.advanceTimersByTimeAsync(2000);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS * 2);
 
     expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/d/def', '/d/abc']);
     expect(setSpy.mock.calls.filter(([key]) => key === STORAGE_KEY)).toHaveLength(0);

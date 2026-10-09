@@ -42,7 +42,10 @@ export const formatDuration = deepMemoize(
   }
 );
 
-/** `formatRelativeTime(-11, 'minute', { style: 'narrow' })` → `11m ago` in the current language. */
+/**
+ * `formatRelativeTime(-11, 'minute', { style: 'narrow' })` → `11m ago` in the current language.
+ * @alpha
+ */
 export const formatRelativeTime = deepMemoize(
   (value: number, unit: Intl.RelativeTimeFormatUnit, options: Intl.RelativeTimeFormatOptions = {}): string => {
     return createRelativeTimeFormatter(getLanguage(), options).format(value, unit);

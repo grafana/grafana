@@ -1,4 +1,4 @@
-import { classifyPage, pageKey } from './classifyPage';
+import { classifyPage, pageKey, recordableSearch } from './classifyPage';
 
 /** Explore's v1 search for the given panes (left pane first), with any extra params appended. */
 function exploreSearch(panes: Record<string, unknown>, extra = '') {
@@ -87,5 +87,29 @@ describe('pageKey', () => {
       '/a/x/y',
     ].map((url) => pageKey(classify(url)!));
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+describe('recordableSearch', () => {
+  const dashboard = classify('/d/abc')!;
+
+  it('drops the params that reopen editors, drawers and kiosk mode on dashboards', () => {
+    expect(
+      recordableSearch(
+        dashboard,
+        '?from=now-1h&to=now&editPanel=3&editview=settings&inspect=2&shareView=link&kiosk&drow=r1&viewPanel=panel-4&var-a=b'
+      )
+    ).toBe('?from=now-1h&to=now&viewPanel=panel-4&var-a=b');
+    expect(recordableSearch(dashboard, '?editPanel=3')).toBe('');
+  });
+
+  it('keeps repeated and encoded values', () => {
+    expect(recordableSearch(dashboard, '?var-host=a&var-host=b&var-q=x%20y&editPanel=1')).toBe(
+      '?var-host=a&var-host=b&var-q=x+y'
+    );
+  });
+
+  it('leaves other kinds untouched', () => {
+    expect(recordableSearch(classify('/alerting/list')!, '?editPanel=3&search=x')).toBe('?editPanel=3&search=x');
   });
 });

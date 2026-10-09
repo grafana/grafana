@@ -117,7 +117,7 @@ export type CtaClicked = EventVariants<
         }
     ))
   | ({
-      surface: 'recent_activity_tab';
+      surface: 'recent_tab';
     } & (
       | {
           action: 'open_page';

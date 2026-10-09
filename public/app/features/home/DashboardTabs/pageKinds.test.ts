@@ -9,13 +9,20 @@ describe('describeDashboardState', () => {
     );
   });
 
-  it('formats absolute ranges in the URL timezone', () => {
+  it('formats absolute ranges in the URL timezone, whether epoch ms or ISO 8601', () => {
     expect(describeDashboardState('?from=1717000000000&to=1717003600000&timezone=utc')).toBe(
       '2024-05-29 16:26:40 to 2024-05-29 17:26:40'
     );
     expect(describeDashboardState('?from=1717000000000&to=1717003600000&timezone=Europe%2FBerlin')).toBe(
       '2024-05-29 18:26:40 to 2024-05-29 19:26:40'
     );
+    // What the dashboard scene writes after an absolute pick or a zoom.
+    expect(
+      describeDashboardState('?from=2024-05-29T16%3A26%3A40.000Z&to=2024-05-29T17%3A26%3A40.000Z&timezone=utc')
+    ).toBe('2024-05-29 16:26:40 to 2024-05-29 17:26:40');
+    expect(
+      describeDashboardState('?from=2024-05-29T16:26:40.000Z&to=2024-05-29T17:26:40.000Z&timezone=Europe%2FBerlin')
+    ).toBe('2024-05-29 18:26:40 to 2024-05-29 19:26:40');
   });
 
   it('joins multi-value variables', () => {

@@ -1,16 +1,19 @@
 import { css } from '@emotion/css';
 
-import { type GrafanaTheme2, dateTimeFormatTimeAgoShort } from '@grafana/data';
+import { type GrafanaTheme2 } from '@grafana/data';
+import { dateTimeFormatTimeAgoShort } from '@grafana/data/internal';
 import { Text, useStyles2 } from '@grafana/ui';
 
-/** Right-aligned fixed-width relative-time cell (`11m ago`) so times line up across rows. */
-export function TimeAgoCell({ date }: { date: Date | number }) {
+/** Right-aligned fixed-width relative-time cell (`11m ago`) so times line up across rows; blank without a date. */
+export function TimeAgoCell({ date }: { date?: Date | number }) {
   const styles = useStyles2(getStyles);
   return (
     <span className={styles.age}>
-      <Text color="secondary" variant="bodySmall">
-        {dateTimeFormatTimeAgoShort(date)}
-      </Text>
+      {date !== undefined && (
+        <Text color="secondary" variant="bodySmall">
+          {dateTimeFormatTimeAgoShort(date)}
+        </Text>
+      )}
     </span>
   );
 }

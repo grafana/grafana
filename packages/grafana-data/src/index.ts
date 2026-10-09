@@ -424,7 +424,6 @@ export {
   dateTimeFormat,
   dateTimeFormatISO,
   dateTimeFormatTimeAgo,
-  dateTimeFormatTimeAgoShort,
   dateTimeFormatWithAbbrevation,
   timeZoneAbbrevation,
 } from './datetime/formatter';

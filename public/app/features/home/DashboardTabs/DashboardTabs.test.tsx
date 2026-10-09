@@ -206,7 +206,7 @@ describe('DashboardTabs', () => {
       expect(create).toHaveAttribute('href', '/dashboard/new');
       await user.click(create);
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recent_activity_tab',
+        surface: 'recent_tab',
         action: 'create_dashboard',
         placement: 'empty_state',
       });
@@ -222,7 +222,7 @@ describe('DashboardTabs', () => {
       expect(screen.queryByRole('link', { name: /create your first dashboard/i })).not.toBeInTheDocument();
       await user.click(browse);
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recent_activity_tab',
+        surface: 'recent_tab',
         action: 'browse_dashboards',
         placement: 'empty_state',
       });
@@ -520,6 +520,23 @@ describe('DashboardTabs', () => {
       expect(screen.queryByRole('radiogroup', { name: /show only/i })).not.toBeInTheDocument();
     });
 
+    it('shows no age for a dashboard seeded without a visit time', async () => {
+      jest
+        .mocked(pageHistorySrv.getEntries)
+        .mockResolvedValue([
+          recentDashboardEntry,
+          { kind: 'dashboard', uid: 'recent-2', pathname: '/d/recent-2/x', search: '' },
+        ]);
+      server.use(getCustomSearchHandler(recentHits));
+
+      render(<DashboardTabs extensionComponents={[]} />);
+
+      const seeded = (await screen.findByRole('link', { name: /Recent Dashboard 2/ })).closest('li')!;
+      expect(within(seeded).queryByText(/ago/)).not.toBeInTheDocument();
+      const visited = screen.getByRole('link', { name: /Recent Dashboard 1/ }).closest('li')!;
+      expect(within(visited).getByText(/ago/)).toBeInTheDocument();
+    });
+
     it('drops dashboards the user can no longer see', async () => {
       const gone: PageHistoryEntry[] = Array.from({ length: 3 }, (_, i) => dashboardEntry(`gone-${i}`));
       jest.mocked(pageHistorySrv.getEntries).mockResolvedValue([...gone, exploreEntry]);
@@ -548,7 +565,7 @@ describe('DashboardTabs', () => {
 
       await user.click(screen.getByRole('link', { name: /^Explore/ }));
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
-        surface: 'recent_activity_tab',
+        surface: 'recent_tab',
         action: 'open_page',
         placement: 'list',
         page_kind: 'explore',

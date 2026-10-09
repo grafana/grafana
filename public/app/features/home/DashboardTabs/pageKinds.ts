@@ -1,4 +1,4 @@
-import { dateTime, locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
+import { dateMath, dateTime, type DateTime, ISO_8601, locationUtil, type NavModelItem, rangeUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type BadgeColor } from '@grafana/ui';
 import { findByUrl } from 'app/core/components/AppChrome/MegaMenu/utils';
@@ -87,8 +87,15 @@ function collectParams(search: string): PageParams {
   const to = params.get('to');
   // The URL's own timezone keeps the subtitle consistent with what the restored view shows.
   const timeZone = params.get('timezone') || undefined;
-  // Epoch-ms strings must become DateTime first, otherwise describeTimeRange echoes the raw numbers.
-  const toRawTime = (value: string) => (/^\d+$/.test(value) ? dateTime(Number(value)) : value);
+  // Relative expressions stay text so the quick-range names apply. Absolute values (epoch ms, or the ISO 8601
+  // the dashboard scene writes) must become DateTime first, otherwise describeTimeRange echoes them raw.
+  const toRawTime = (value: string): string | DateTime => {
+    if (dateMath.isMathString(value)) {
+      return value;
+    }
+    const parsed = /^\d+$/.test(value) ? dateTime(Number(value)) : dateTime(value, ISO_8601);
+    return parsed.isValid() ? parsed : value;
+  };
   const range = from && to ? rangeUtil.describeTimeRange({ from: toRawTime(from), to: toRawTime(to) }, timeZone) : '';
 
   const vars = new Map<string, string[]>();
