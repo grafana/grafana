@@ -298,15 +298,24 @@ export interface DataFrameSortField {
   desc?: boolean;
 }
 
+const comparableFieldTypes = new Set([FieldType.number, FieldType.string, FieldType.boolean, FieldType.time]);
+
 /**
  * Sorts by each field in order, later fields only break ties of earlier ones.
  * Fields that do not exist in the frame are ignored.
  */
 export function sortDataFrameByFields(data: DataFrame, sorts: DataFrameSortField[]): DataFrame {
-  const comparers = sorts.flatMap((s) => {
+  const candidates = sorts.flatMap((s) => {
     const field = data.fields[s.index];
-    return field ? [fieldIndexComparer(field, s.desc)] : [];
+    return field ? [{ field, desc: s.desc }] : [];
   });
+
+  // Types without a real comparer fall back to comparing row indexes, which never ties and so would
+  // swallow every field after it. They only get to order anything when nothing else can.
+  const comparable = candidates.filter(({ field }) => comparableFieldTypes.has(field.type));
+  const chained = comparable.length ? comparable : candidates.slice(0, 1);
+
+  const comparers = chained.map(({ field, desc }) => fieldIndexComparer(field, desc));
   if (!comparers.length) {
     return data;
   }

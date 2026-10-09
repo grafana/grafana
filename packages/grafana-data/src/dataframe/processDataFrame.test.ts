@@ -430,6 +430,31 @@ describe('sortDataFrameByFields', () => {
   it('returns the same frame when no field matches', () => {
     expect(sortDataFrameByFields(frame, [{ index: -1 }])).toBe(frame);
   });
+
+  describe('field types with no comparer', () => {
+    const withOther = toDataFrame({
+      fields: [
+        { name: 'json', type: FieldType.other, values: [{ a: 1 }, { a: 2 }, { a: 3 }] },
+        { name: 'other', type: FieldType.other, values: [{ b: 1 }, { b: 2 }, { b: 3 }] },
+        { name: 'score', type: FieldType.number, values: [30, 10, 20] },
+      ],
+    });
+
+    it('does not let them swallow the fields after them', () => {
+      const sorted = sortDataFrameByFields(withOther, [{ index: 0 }, { index: 2 }]);
+      expect(sorted.fields[2].values).toEqual([10, 20, 30]);
+    });
+
+    it('still reverses row order on their own, as sortDataFrame has always done', () => {
+      expect(sortDataFrameByFields(withOther, [{ index: 0, desc: true }]).fields[2].values).toEqual([20, 10, 30]);
+      expect(sortDataFrameByFields(withOther, [{ index: 0 }]).fields[2].values).toEqual([30, 10, 20]);
+    });
+
+    it('falls back to the first one when nothing else can be compared', () => {
+      const sorted = sortDataFrameByFields(withOther, [{ index: 0, desc: true }, { index: 1 }]);
+      expect(sorted.fields[2].values).toEqual([20, 10, 30]);
+    });
+  });
 });
 
 describe('reverse DataFrame', () => {
