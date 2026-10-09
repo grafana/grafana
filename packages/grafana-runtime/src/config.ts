@@ -205,7 +205,7 @@ export class GrafanaBootConfig {
       prometheusMetricName: undefined,
     },
     recordingRulesEnabled: false,
-    notificationHistoryEnabled: false,
+    notificationHistoryEnabled: undefined,
     defaultRecordingRulesTargetDatasourceUID: undefined,
 
     // Backward compatibility fields - populated by backend

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/plugindashboards"
@@ -37,6 +38,34 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationDashboardServiceValidation(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDashboardServiceValidation)
+}
+
+func TestIntegrationDashboardQuota(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDashboardQuota)
+}
+
+func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationUpdatingProvisionionedDashboards)
+}
+
+func TestIntegrationCreate(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationCreate)
+}
+
+func TestIntegrationPreserveSchemaVersion(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationPreserveSchemaVersion)
+}
+
+func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationImportDashboardWithLibraryPanels)
+}
+
+func TestIntegrationDashboardServicePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDashboardServicePermissions)
+}
+
+func testIntegrationDashboardServiceValidation(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	unifiedConfig := make(map[string]setting.UnifiedStorageConfig)
@@ -352,7 +381,7 @@ func TestIntegrationDashboardServiceValidation(t *testing.T) {
 	})
 }
 
-func TestIntegrationDashboardQuota(t *testing.T) {
+func testIntegrationDashboardQuota(t *testing.T) {
 	// enable quota and set low dashboard quota
 	// Setup Grafana and its Database
 	dashboardQuota := int64(1)
@@ -415,7 +444,7 @@ func TestIntegrationDashboardQuota(t *testing.T) {
 	})
 }
 
-func TestIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
+func testIntegrationUpdatingProvisionionedDashboards(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -568,7 +597,7 @@ providers:
 	})
 }
 
-func TestIntegrationCreate(t *testing.T) {
+func testIntegrationCreate(t *testing.T) {
 	// Setup Grafana and its Database
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
@@ -720,7 +749,7 @@ func createFolder(t *testing.T, grafanaListedAddr string, title string) *dtos.Fo
 	return f
 }
 
-func TestIntegrationPreserveSchemaVersion(t *testing.T) {
+func testIntegrationPreserveSchemaVersion(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -810,7 +839,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 	}
 }
 
-func TestIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
+func testIntegrationImportDashboardWithLibraryPanels(t *testing.T) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 	})
@@ -1063,7 +1092,7 @@ func postDashboard(t *testing.T, grafanaListedAddr, user, password string, paylo
 	return http.Post(u, "application/json", bytes.NewBuffer(payloadBytes)) // nolint:gosec
 }
 
-func TestIntegrationDashboardServicePermissions(t *testing.T) {
+func testIntegrationDashboardServicePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

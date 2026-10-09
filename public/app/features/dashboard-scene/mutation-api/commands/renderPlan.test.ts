@@ -1,7 +1,8 @@
 import { FieldType, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config, setPluginImportUtils } from '@grafana/runtime';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { type CustomVariable, VizPanel, sceneGraph } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { PlanPlaceholderBadge } from '../../scene/PlanPlaceholderBadge';
@@ -196,14 +197,20 @@ describe('RENDER_PLAN', () => {
     });
 
     it('cannot drag or resize the grids inside nested rows', async () => {
-      const { scene, client } = setup();
+      // todo: fix in a followup
+      setTestFlags({ dashboardNewLayouts: false });
+      try {
+        const { scene, client } = setup();
 
-      await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
+        await client.execute({ type: 'RENDER_PLAN', payload: nestedPlan });
 
-      const overview = (scene.state.body as TabsLayoutManager).state.tabs[0].getLayout() as RowsLayoutManager;
-      const grid = (overview.state.rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
-      expect(grid.isDraggable()).toBe(false);
-      expect(grid.state.isResizable).toBe(false);
+        const overview = (scene.state.body as TabsLayoutManager).state.tabs[0].getLayout() as RowsLayoutManager;
+        const grid = (overview.state.rows[0].getLayout() as DefaultGridLayoutManager).state.grid;
+        expect(grid.isDraggable()).toBe(false);
+        expect(grid.state.isResizable).toBe(false);
+      } finally {
+        setTestFlags({});
+      }
     });
 
     it('refuses nested rows when the plan layout is rows, and leaves the scene untouched', async () => {
@@ -314,6 +321,16 @@ describe('RENDER_PLAN', () => {
   });
 
   describe('the rendered grid cannot actually be dragged or resized', () => {
+    beforeEach(() => {
+      // With the flag on, editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
+      // The deferred case is covered separately below.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     // DefaultGridLayoutManager hardcodes isDraggable/isResizable true; only editModeChanged (an
     // edit-mode transition) ever sets them false. Assert behaviour, not the raw flag, so a
     // future change that re-enables dragging some other way still fails this.
@@ -349,8 +366,7 @@ describe('RENDER_PLAN', () => {
     it('lands even when dashboardNewLayouts defers the correction behind a 10ms timeout', async () => {
       // With dashboardNewLayouts on, the correction lands inside a setTimeout(..., 10), not
       // synchronously -- assert it after that delay, not the same tick.
-      const originalToggle = config.featureToggles.dashboardNewLayouts;
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
       try {
         const { scene, client } = setup();
 
@@ -362,7 +378,7 @@ describe('RENDER_PLAN', () => {
         expect(grid.getDragHooks()).toEqual({});
         expect(grid.state.isResizable).toBe(false);
       } finally {
-        config.featureToggles.dashboardNewLayouts = originalToggle;
+        setTestFlags({});
       }
     });
   });

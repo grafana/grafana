@@ -7,7 +7,7 @@ import { type GrafanaRouteComponent, type RouteDescriptor } from 'app/core/navig
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { evaluateAccess, evaluateAccessAll } from './routePermissions';
-import { shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
+import { isNotificationHistoryEnabled, shouldAllowRecoveringDeletedRules } from './unified/featureToggles';
 import { proxied } from './unified/plugin-proxy/withRouteProxy';
 import {
   PERMISSIONS_CONTACT_POINTS,
@@ -271,7 +271,7 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
     },
     {
       path: '/alerting/notifications-history/view/:uuid',
-      component: cfg.unifiedAlerting.notificationHistoryEnabled
+      component: isNotificationHistoryEnabled(cfg)
         ? importAlertingComponent(
             () =>
               import(

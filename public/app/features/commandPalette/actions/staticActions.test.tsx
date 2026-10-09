@@ -125,27 +125,18 @@ const getSavedQueriesAction = (actions: CommandPaletteAction[]) =>
 
 describe('useStaticActions - open saved queries action', () => {
   let originalPermissions: UserPermission | undefined;
-  let originalIsSignedIn: boolean;
-  let originalSavedQueriesRBAC: boolean | undefined;
 
   beforeEach(() => {
     mockQueryLibraryContext = { queryLibraryEnabled: true, openDrawer: jest.fn() };
     originalPermissions = contextSrv.user.permissions;
-    originalIsSignedIn = contextSrv.isSignedIn;
-    originalSavedQueriesRBAC = config.featureToggles.savedQueriesRBAC;
-    // Default: RBAC off, so read access falls back to being signed in.
-    config.featureToggles.savedQueriesRBAC = false;
-    contextSrv.isSignedIn = true;
-    contextSrv.user.permissions = {};
+    contextSrv.user.permissions = { [AccessControlAction.QueriesRead]: true };
   });
 
   afterEach(() => {
     contextSrv.user.permissions = originalPermissions;
-    contextSrv.isSignedIn = originalIsSignedIn;
-    config.featureToggles.savedQueriesRBAC = originalSavedQueriesRBAC;
   });
 
-  it('includes the action when the query library is enabled and the user is signed in', () => {
+  it('includes the action when the query library is enabled and the user has queries:read', () => {
     const { result } = renderStaticActions();
     expect(hasSavedQueriesAction(result.current)).toBe(true);
   });
@@ -156,21 +147,7 @@ describe('useStaticActions - open saved queries action', () => {
     expect(hasSavedQueriesAction(result.current)).toBe(false);
   });
 
-  it('does not include the action when the user is not signed in and RBAC is off', () => {
-    contextSrv.isSignedIn = false;
-    const { result } = renderStaticActions();
-    expect(hasSavedQueriesAction(result.current)).toBe(false);
-  });
-
-  it('includes the action when RBAC is on and the user has queries:read', () => {
-    config.featureToggles.savedQueriesRBAC = true;
-    contextSrv.user.permissions = { [AccessControlAction.QueriesRead]: true };
-    const { result } = renderStaticActions();
-    expect(hasSavedQueriesAction(result.current)).toBe(true);
-  });
-
-  it('does not include the action when RBAC is on and the user lacks queries:read', () => {
-    config.featureToggles.savedQueriesRBAC = true;
+  it('does not include the action when the user lacks queries:read', () => {
     contextSrv.user.permissions = {};
     const { result } = renderStaticActions();
     expect(hasSavedQueriesAction(result.current)).toBe(false);

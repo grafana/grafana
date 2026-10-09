@@ -91,10 +91,6 @@ const (
 	// Enable export functionality for provisioned resources
 	FlagProvisioningExport = "provisioningExport"
 
-	// FlagProvisioningGitConventions
-	// Enable configurable commit message, branch name, and pull request title conventions for Git Sync
-	FlagProvisioningGitConventions = "provisioning.gitConventions"
-
 	// FlagProvisioningUserAttribution
 	// Author Git Sync commits as the acting Grafana user
 	FlagProvisioningUserAttribution = "provisioning.userAttribution"
@@ -398,6 +394,10 @@ const (
 	// FlagAuthzUserPermissions
 	// Route user permission snapshots through the AuthZ service.
 	FlagAuthzUserPermissions = "authz.userPermissions"
+
+	// FlagAuthzUseLegacyCheck
+	// Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.
+	FlagAuthzUseLegacyCheck = "authz.useLegacyCheck"
 
 	// FlagZanzana
 	// Use openFGA as authorization engine.
@@ -961,6 +961,10 @@ const (
 	// FlagReportingLegacyServiceUsesK8SClient
 	// Redirect legacy report service to use the Kubernetes client wrapper
 	FlagReportingLegacyServiceUsesK8SClient = "reporting.legacyServiceUsesK8SClient"
+
+	// FlagReportingLegacySettingServiceUsesK8SClient
+	// Redirect legacy report setting service to use the Kubernetes client wrapper
+	FlagReportingLegacySettingServiceUsesK8SClient = "reporting.legacySettingServiceUsesK8SClient"
 
 	// FlagReportingRedirectReportsToK8SApi
 	// Redirect legacy report CRUD API endpoints to the Kubernetes reporting API

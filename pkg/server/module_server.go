@@ -516,6 +516,7 @@ func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 		resourcepb.ResourceIndex_ServiceDesc.ServiceName,
 		resourcepb.ManagedObjectIndex_ServiceDesc.ServiceName,
 		resourcepb.BlobStore_ServiceDesc.ServiceName,
+		resourcepb.BlobStoreStreaming_ServiceDesc.ServiceName,
 		resourcepb.BulkStore_ServiceDesc.ServiceName,
 		resourcepb.Diagnostics_ServiceDesc.ServiceName,
 		resourcepb.Quotas_ServiceDesc.ServiceName,
