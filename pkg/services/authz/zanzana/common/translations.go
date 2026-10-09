@@ -211,7 +211,7 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 		return nil, false
 	}
 
-	_, _, _, verb, ok := actionListParams(translation, m)
+	group, resource, subresource, verb, ok := actionListParams(translation, m)
 	if !ok {
 		return nil, false
 	}
@@ -219,10 +219,10 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 	req := &authlib.CheckRequest{
 		Namespace:   namespace,
 		Verb:        verb,
-		Group:       translation.group,
-		Resource:    translation.resource,
+		Group:       group,
+		Resource:    resource,
 		Name:        name,
-		Subresource: m.subresource,
+		Subresource: subresource,
 	}
 
 	return req, true
