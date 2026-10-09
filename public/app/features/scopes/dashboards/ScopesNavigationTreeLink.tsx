@@ -94,7 +94,7 @@ export function ScopesNavigationTreeLink({
       role="treeitem"
       key={id}
     >
-      <Icon name={linkIcon} /> {title}
+      <Icon name={linkIcon} className={styles.icon} /> {title}
     </Link>
   );
 }
@@ -127,6 +127,7 @@ const linkMap = new Map<string, IconName>([
 ]);
 
 const getStyles = (theme: GrafanaTheme2) => {
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   return {
     container: css({
       display: 'flex',
@@ -135,6 +136,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       padding: theme.spacing(0.75, 0),
       textAlign: 'left',
       paddingLeft: theme.spacing(1),
+      // Matches the regular nav items' base (non-active) text color (MegaMenuItemText.tsx) -
+      // independent of the visualRefreshEnabled accent styling below, same as the nav items.
+      color: theme.colors.text.secondary,
 
       wordBreak: 'break-word',
 
@@ -142,21 +146,37 @@ const getStyles = (theme: GrafanaTheme2) => {
         textDecoration: 'underline',
       }),
     }),
-    current: css({
-      position: 'relative',
-      background: theme.colors.action.selected,
-      borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
-      '&::before': {
-        backgroundImage: theme.colors.gradients.brandVertical,
-        borderRadius: theme.shape.radius.default,
-        content: '" "',
-        display: 'block',
-        height: '100%',
-        position: 'absolute',
-        width: theme.spacing(0.5),
-        top: 0,
-        left: 0,
-      },
+    // Matches the regular nav items' icon tint (MegaMenuItem.tsx) so this tree's links read as part
+    // of the same nav rather than a visually distinct drawer transplant.
+    icon: css({
+      color: visualRefreshEnabled ? theme.colors.accent.text : undefined,
     }),
+    // Matches the regular nav items' active-row treatment (MegaMenuItemText.tsx) for the same reason.
+    current: visualRefreshEnabled
+      ? css({
+          color: theme.colors.accent.text,
+          backgroundColor: theme.colors.accent.subtleBackground,
+          borderRadius: theme.shape.radius.default,
+          '&:hover': {
+            color: theme.colors.accent.textEmphasis,
+          },
+        })
+      : css({
+          position: 'relative',
+          color: theme.colors.text.primary,
+          background: theme.colors.action.selected,
+          borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
+          '&::before': {
+            backgroundImage: theme.colors.gradients.brandVertical,
+            borderRadius: theme.shape.radius.default,
+            content: '" "',
+            display: 'block',
+            height: '100%',
+            position: 'absolute',
+            width: theme.spacing(0.5),
+            top: 0,
+            left: 0,
+          },
+        }),
   };
 };
