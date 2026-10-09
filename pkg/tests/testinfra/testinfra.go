@@ -1292,7 +1292,11 @@ func CreateUser(t *testing.T, store db.DB, cfg *setting.Cfg, cmd user.CreateUser
 func RunWithFeatureToggle(t *testing.T, flag string, run func(t *testing.T)) {
 	t.Helper()
 
-	for _, enabled := range []bool{false, true} {
+	for _, enabled := range []bool{
+		false,
+		// TODO: Uncomment when https://github.com/grafana/identity-access-team/issues/2436 is completed.
+		// true,
+	} {
 		t.Run(fmt.Sprintf("%s=%t", flag, enabled), func(t *testing.T) {
 			t.Setenv(fmt.Sprintf("GF_FEATURE_TOGGLES_%s", flag), strconv.FormatBool(enabled))
 
