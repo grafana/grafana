@@ -67,7 +67,7 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
 			// Create checks use an empty Name. For a subfolder, Folder is the parent;
-			// permission must be evaluated on the parent folder (can_create), not on "general".
+			// permission must be evaluated on the parent folder, not on "general".
 			if resource.folder != "" {
 				resource.name = resource.folder
 				resource.folder = ""
@@ -171,31 +171,6 @@ type ResourceInfo struct {
 // UsesRootFolderPermissions identifies resources whose root objects use General-folder grants.
 func (r ResourceInfo) UsesRootFolderPermissions() bool {
 	return r.group == "dashboard.grafana.app" && (r.resource == "variables" || r.resource == "librarypanels")
-}
-
-var explicitCreateExceptions = map[string]bool{
-	// Folder Edit/Admin include creating subfolders.
-	"folder.grafana.app/folders": true,
-}
-
-// RequiresExplicitCreate prevents resource Edit/Admin from creating new resources.
-// Subresources retain their existing operation-specific action-set semantics.
-func (r ResourceInfo) RequiresExplicitCreate() bool {
-	return !r.HasSubresource() && !explicitCreateExceptions[r.GroupResource()]
-}
-
-func (r ResourceInfo) GroupResourcePermissionRelation(relation string) string {
-	if relation == RelationCreate && !r.RequiresExplicitCreate() {
-		return RelationCanCreate
-	}
-	return relation
-}
-
-func (r ResourceInfo) FolderResourcePermissionRelation(relation string) string {
-	if relation == RelationSubresourceCreate && r.RequiresExplicitCreate() {
-		return RelationSubresourceCreate
-	}
-	return SubresourcePermissionRelation(relation)
 }
 
 func (r ResourceInfo) GroupResource() string {

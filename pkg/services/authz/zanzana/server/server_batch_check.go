@@ -225,7 +225,7 @@ func (s *Server) runGroupResourcePhase(
 		checks = append(checks, &openfgav1.BatchCheckItem{
 			TupleKey: &openfgav1.CheckRequestTupleKey{
 				User:     subject,
-				Relation: item.resource.GroupResourcePermissionRelation(item.relation),
+				Relation: item.relation,
 				Object:   item.resource.GroupResourceIdent(),
 			},
 			CorrelationId: checkID,
@@ -306,11 +306,7 @@ func collectFolderSubresourceChecks(items map[string]*batchCheckItem) []folderCh
 		if !common.IsSubresourceRelation(folderRelation) {
 			continue
 		}
-		relations := expandedSubresourcePermissionRelations(folderRelation)
-		if folderRelation == common.RelationSubresourceCreate && item.resource.RequiresExplicitCreate() {
-			relations = []string{common.RelationSubresourceCreate}
-		}
-		for _, relation := range relations {
+		for _, relation := range expandedSubresourcePermissionRelations(folderRelation) {
 			entries = append(entries, folderCheckEntry{
 				correlationID: item.correlationID,
 				relation:      relation,
@@ -563,12 +559,6 @@ func expandedSubresourcePermissionRelations(relation string) []string {
 		return []string{
 			common.RelationSubresourceGet,
 			common.RelationSubresourceSetView,
-			common.RelationSubresourceSetEdit,
-			common.RelationSubresourceSetAdmin,
-		}
-	case common.RelationSubresourceCreate:
-		return []string{
-			common.RelationSubresourceCreate,
 			common.RelationSubresourceSetEdit,
 			common.RelationSubresourceSetAdmin,
 		}
