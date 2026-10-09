@@ -26,6 +26,12 @@ Grafana is a monitoring and observability platform. Go backend, TypeScript/React
 - Security: prevent XSS, SQL injection, command injection
 - Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
 
+## Code Review Rules
+
+### Metrics
+
+- Review metric changes against `contribute/backend/instrumentation.md`, especially registration, duplicate registration, label cardinality, and the impact of renames on dashboards and alerts.
+
 ## Comments
 
 - Only add a comment when it explains **why** something is done or reveals non-obvious logic that a reader must know to safely change the code. If the code is self-explanatory, no comment is needed.
@@ -147,7 +153,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 - **Config**: Defaults in `conf/defaults.ini`, overrides in `conf/custom.ini`.
 - **Database migrations**: Live in `pkg/services/sqlstore/migrations/`. Test with `make devenv sources=postgres_tests,mysql_tests` then `make test-go-integration-postgres`.
 - **CI sharding**: Backend tests use `SHARD`/`SHARDS` env vars for parallelization.
-- **Metrics**: Before adding, renaming or registering metrics, read `contribute/backend/instrumentation.md`. It covers naming (write the full `grafana_` name, no prefixes added by the registerer), which registerer to use, and how to handle duplicate registration.
+- **Metrics**: Before adding, renaming or registering metrics, read `contribute/backend/instrumentation.md` for naming and registration conventions.
 - **Service compatibility**: Unified storage/search (`pkg/storage/unified/`) can be deployed as separate services at a different cadence than the Grafana API layer. Changes spanning API-layer callers and `pkg/storage/unified/` must be backwards compatible in both directions — see `pkg/storage/unified/AGENTS.md`.
 
 ## Cursor Cloud specific instructions
