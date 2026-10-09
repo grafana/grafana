@@ -1,17 +1,18 @@
 import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { SceneDataTransformer, useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import { SceneDataTransformer, SceneReactObject, useSceneObjectState, type VizPanel } from '@grafana/scenes';
 import { Box, floatingUtils, Portal, Stack, useStyles2 } from '@grafana/ui';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
+import { NotebookPanelTitleEditor } from './NotebookPanelTitleEditor';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
@@ -106,6 +107,29 @@ function PanelCell({
   // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
   // where there is no query editor to be inline with.
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
+
+  // A SceneReactObject, not a plain element: titleItems also holds VizPanelLinks/PanelNotices,
+  // and replacing the array wholesale would drop a panel's configured links on the next save.
+  const titleEditor = useMemo(
+    () =>
+      new SceneReactObject({ reactNode: <NotebookPanelTitleEditor cell={cell} panel={panel} isEditing={isEditing} /> }),
+    [cell, panel, isEditing]
+  );
+
+  useEffect(() => {
+    panel.setState({
+      hoverHeader: false,
+      title: '',
+      titleItems: [titleEditor, ...(Array.isArray(panel.state.titleItems) ? panel.state.titleItems : [])],
+    });
+
+    return () => {
+      const titleItems = panel.state.titleItems;
+      if (Array.isArray(titleItems)) {
+        panel.setState({ titleItems: titleItems.filter((item) => item !== titleEditor) });
+      }
+    };
+  }, [panel, titleEditor]);
 
   return (
     <Stack direction="column" gap={1}>

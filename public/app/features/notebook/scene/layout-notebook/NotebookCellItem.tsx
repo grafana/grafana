@@ -23,6 +23,8 @@ export interface NotebookCellItemState extends SceneObjectState {
   // Absent means sceneGraph.getTimeRange() resolves up to the notebook's own range, same as no
   // override at all.
   $timeRange?: SceneTimeRangeLike;
+  // The real title; `body.state.title` stays '' (see NotebookCellRenderer).
+  panelTitle?: string;
 }
 
 export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> implements DashboardLayoutItem {
@@ -61,6 +63,14 @@ export class NotebookCellItem extends SceneObjectBase<NotebookCellItemState> imp
 
   public onTimeRangeChange(spec: CellTimeRangeSpec | undefined): void {
     this.getParentLayout().setCellTimeRange(this, spec);
+  }
+
+  public onPanelTitleChange(title: string): void {
+    this.getParentLayout().setPanelTitle(this, title);
+  }
+
+  public onPanelTitleCommit(): void {
+    this.getParentLayout().commitPanelTitleEdit();
   }
 
   /** Throws rather than returning undefined: a cell outside a layout is a wiring mistake. */

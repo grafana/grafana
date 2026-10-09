@@ -1640,6 +1640,77 @@ describe('NotebookLayoutManager', () => {
       history.redo();
       expect(manager.state.cells[1]).toBe(duplicate);
     });
+
+    it('renames a panel and supports undo and redo', () => {
+      const { cell } = panelCell('viz');
+      const { manager, history } = withHistory([cell]);
+
+      manager.setPanelTitle(cell, 'p95 latency');
+
+      expect(cell.state.panelTitle).toBe('p95 latency');
+      expect(history.state.undoLabel).toBe('Rename panel');
+
+      history.undo();
+      expect(cell.state.panelTitle).toBe('');
+
+      history.redo();
+      expect(cell.state.panelTitle).toBe('p95 latency');
+    });
+
+    // Typing is one undo step, the same way setCellContent coalesces a run of keystrokes.
+    it('coalesces a run of renames into one undo step', () => {
+      const { cell } = panelCell('viz');
+      const { manager, history } = withHistory([cell]);
+
+      manager.setPanelTitle(cell, 'p');
+      manager.setPanelTitle(cell, 'p95');
+      manager.setPanelTitle(cell, 'p95 latency');
+
+      expect(cell.state.panelTitle).toBe('p95 latency');
+      expect(history.state.undoLabel).toBe('Rename panel');
+
+      history.undo();
+      expect(cell.state.panelTitle).toBe('');
+      expect(history.state.undoLabel).toBeUndefined();
+    });
+
+    it('discards the rename if it lands back where it started', () => {
+      const { cell } = panelCell('viz');
+      const { manager, history } = withHistory([cell]);
+
+      manager.setPanelTitle(cell, 'p95 latency');
+      manager.setPanelTitle(cell, '');
+
+      expect(cell.state.panelTitle).toBe('');
+      expect(history.state.undoLabel).toBeUndefined();
+    });
+
+    // Two cells can legally reference one panel element - see applyPanelTitle's own doc comment.
+    it('keeps cells sharing one element name in sync', () => {
+      const first = panelCell('shared').cell;
+      const second = panelCell('shared').cell;
+      const { manager, history } = withHistory([first, second]);
+
+      manager.setPanelTitle(first, 'p95 latency');
+
+      expect(first.state.panelTitle).toBe('p95 latency');
+      expect(second.state.panelTitle).toBe('p95 latency');
+
+      history.undo();
+      expect(first.state.panelTitle).toBe('');
+      expect(second.state.panelTitle).toBe('');
+    });
+
+    it('does nothing when the title does not change', () => {
+      const { cell } = panelCell('viz');
+      const { manager, history } = withHistory([cell]);
+      manager.setPanelTitle(cell, 'p95 latency');
+      history.undo();
+
+      manager.setPanelTitle(cell, '');
+
+      expect(history.state.undoLabel).toBeUndefined();
+    });
   });
 
   /**

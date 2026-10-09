@@ -84,11 +84,14 @@ function buildScene(hideTimeControls: boolean, uid?: string) {
 }
 
 function buildSceneWithPanel() {
-  const panel = new VizPanel({ key: 'panel-4', title: 'Checkout latency', pluginId: 'timeseries' });
+  // Matches the real pipeline: the panel's own title stays blank, panelTitle is the real name.
+  const panel = new VizPanel({ key: 'panel-4', pluginId: 'timeseries' });
   const scene = new NotebookScene({
     title: 'My notebook',
     body: new NotebookLayoutManager({
-      cells: [new NotebookCellItem({ elementName: 'latency', source: 'user', body: panel })],
+      cells: [
+        new NotebookCellItem({ elementName: 'latency', source: 'user', panelTitle: 'Checkout latency', body: panel }),
+      ],
     }),
     $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
     timePicker: new SceneTimePicker({}),
