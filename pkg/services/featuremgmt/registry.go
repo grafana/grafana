@@ -1925,10 +1925,10 @@ var (
 		{
 			Name:        "otelLogsFormatting",
 			Description: "Applies OTel formatting templates to displayed logs",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
+			Expression:  "true",
 		},
 		{
 			Name:        "alertingNotificationHistory",
@@ -2596,9 +2596,9 @@ var (
 		{
 			Name:        "inlineLogDetailsNoScrolls",
 			Description: "Enables an inline version of Log Details that creates no new scrolls",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 		},
 		{
@@ -2639,9 +2639,9 @@ var (
 		{
 			Name:        "lokiAlignedQuerySplitting",
 			Description: "Aligns query splitting chunks with UTC midnight",
-			Stage:       FeatureStageExperimental,
+			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaObservabilityLogsSquad,
-			Expression:  "false",
+			Expression:  "true",
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
 		},
 		{
