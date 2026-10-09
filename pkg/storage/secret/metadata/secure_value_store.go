@@ -631,7 +631,10 @@ func (s *secureValueMetadataStorage) SetInactiveAllFromGroup(ctx context.Context
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueSetInactiveAllFromGroup.Name(), err)
 	}
 
-	if _, err := s.db.ExecContext(ctx, q, req.GetArgs()...); err != nil {
+	if err := retryTransientTransaction(ctx, func() error {
+		_, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
+		return err
+	}); err != nil {
 		return fmt.Errorf("setting inactive all secure values from group %q in namespace %q: %w", apiGroup, namespace, err)
 	}
 
