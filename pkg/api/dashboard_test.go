@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -502,6 +503,46 @@ func TestHTTPServer_GetDashboardVersions_AccessControl(t *testing.T) {
 
 		require.NoError(t, res.Body.Close())
 	})
+}
+
+func TestHTTPServer_DashboardVersions_Errors(t *testing.T) {
+	tests := []struct {
+		name           string
+		path           string
+		serviceErr     error
+		expectedStatus int
+	}{
+		{"get: version not found returns 404", "/api/dashboards/uid/1/versions/740", dashboards.ErrDashboardNotFound, http.StatusNotFound},
+		{"get: unexpected error returns 500", "/api/dashboards/uid/1/versions/740", errors.New("boom"), http.StatusInternalServerError},
+		{"list: not found returns 404", "/api/dashboards/uid/1/versions", dashboards.ErrDashboardNotFound, http.StatusNotFound},
+		{"list: unexpected error returns 500", "/api/dashboards/uid/1/versions", errors.New("boom"), http.StatusInternalServerError},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			server := SetupAPITestServer(t, func(hs *HTTPServer) {
+				dash := dashboards.NewDashboard("some dash")
+				dash.ID = 1
+				dash.UID = "1"
+
+				dashSvc := dashboards.NewFakeDashboardService(t)
+				dashSvc.On("GetDashboard", mock.Anything, mock.Anything).Return(dash, nil).Maybe()
+				hs.DashboardService = dashSvc
+
+				hs.Cfg = setting.NewCfg()
+				hs.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
+				hs.dashboardVersionService = &dashvertest.FakeDashboardVersionService{ExpectedError: tt.serviceErr}
+			})
+
+			permissions := []accesscontrol.Permission{
+				{Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:1"},
+			}
+			res, err := server.Send(webtest.RequestWithSignedInUser(server.NewGetRequest(tt.path), userWithPermissions(1, permissions)))
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedStatus, res.StatusCode)
+			require.NoError(t, res.Body.Close())
+		})
+	}
 }
 
 func TestIntegrationDashboardAPIEndpoint(t *testing.T) {
