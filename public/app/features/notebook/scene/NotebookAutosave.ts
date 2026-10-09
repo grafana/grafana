@@ -11,8 +11,8 @@ import {
 } from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
-import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { buildSceneTimeRange } from 'app/features/dashboard-scene/serialization/shared/timeSettings';
+import { vizPanelToSchemaV2 } from 'app/features/dashboard-scene/serialization/transformSceneToSaveModelSchemaV2';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { NotebookAnalytics } from '../analytics/main';
@@ -253,6 +253,21 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
+   * Records the time settings the notebook was loaded with, instead of letting `start()` read them off
+   * the scene — by then url sync has applied any `?from=&to=`, so the baseline would adopt a reader's
+   * deep link as the notebook's own range and put it back for everyone.
+   */
+  public recordLoadedTimeSettings(timeSettings: NotebookSpec['timeSettings']): void {
+    // Before the first baseline only, which also keeps the two in step: `buildSpecToSave` substitutes
+    // this, so `recordWritten` serializes the values it is recording.
+    if (this.baseline !== undefined) {
+      return;
+    }
+
+    this.savedTimeSettings = timeSettings;
+  }
+
+  /**
    * Marks the start of an editing session.
    *
    * A time range or a panel's look left behind by reading the notebook belongs to whoever was reading
@@ -394,34 +409,28 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   /**
    * Puts back the time settings and cell ranges a reader moved, so the notebook opens on its own range.
    *
-   * Saves already hold these back (see `buildSpecToSave`), so the server copy is right. This is the
-   * other half: the page caches the scene and hands the same one back on the next visit, so without
-   * this a reader's range outlives them. `NotebookScene`'s teardown resets `isEditing` for the same
-   * reason.
+   * Saves already hold these back (`buildSpecToSave`); this is the other half, because the page caches
+   * the scene and hands the same one back on the next visit.
    */
   public discardViewOnlyTimeChanges(): void {
-    // Replacing `$timeRange` under a live tree would orphan every cell range's ancestor subscription
-    // (SceneTimeRangeTransformerBase resolves it once, at activation), and the url sync manager would
-    // answer the change by rewriting the address bar. A notebook still open in an embed therefore keeps
-    // the reader's range, which is right: someone is reading it.
+    // Replacing `$timeRange` on a live tree would orphan every cell range's ancestor subscription
+    // (SceneTimeRangeTransformerBase resolves it once, at activation) and make url sync rewrite the
+    // address bar. So a notebook still open in an embed keeps the reader's range.
     if (this.scene.isActive) {
       return;
     }
 
     const saved = this.savedTimeSettings;
-    // Nothing has been recorded as saved yet, so there is nothing to go back to. `recordWritten` sets
-    // this alongside the cell baselines, so its absence covers those too.
+    // Set alongside the cell baselines in `recordWritten`, so its absence covers those too.
     if (!saved) {
       return;
     }
 
-    // Held back separately from the cell ranges below, because they are tracked separately: a notebook
-    // range edited this session is the notebook's own and may still be waiting on the debounce, on a
-    // retry after a failed save (`saveNow` puts the flag back), or in the request itself. That says
-    // nothing about what a reader did to a cell.
+    // Gated apart from the cell ranges below: an unsaved notebook range is the writer's own (debounced,
+    // in flight, or back on the flag after a failed save) and says nothing about what a reader did to a
+    // cell.
     if (!this.timeSettingsEdited && !this.inFlightTimeSettingsEdited) {
-      // Rebuilt rather than patched, so every time setting comes back together and `value` is
-      // re-evaluated. Panels re-query on their next activation, where they see data for another range.
+      // Rebuilt, not patched, so `value` is re-evaluated with the rest.
       this.scene.setState({ $timeRange: buildSceneTimeRange(saved) });
 
       const { refreshPicker } = this.scene.state;
@@ -729,9 +738,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
     for (const cell of cells) {
       const panel = cell.state.body;
       const carried = !cellTimeRangesEdited.has(cell) ? previous.get(cell) : undefined;
-      // Only the override is carried forward, never the panel, which has to keep tracking the scene: a
-      // cell converted to a panel since (`setElementBody`) is not in `cellTimeRangesEdited`, so a frozen
-      // entry would go on naming the panel it had before and the restore would skip that cell for good.
+      // The panel keeps tracking the scene; only the override is carried. A cell converted since
+      // (`setElementBody`) is not in `cellTimeRangesEdited`, so a frozen entry would name the old panel
+      // and the restore would skip that cell for good.
       const keepSaved = carried !== undefined && carried.panel === panel;
       ranges.set(cell, { panel, timeRange: keepSaved ? carried.timeRange : panel?.state.$timeRange });
     }

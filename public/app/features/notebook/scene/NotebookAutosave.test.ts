@@ -21,7 +21,8 @@ import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION, NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
-import { defaultVisualizationPanelKind } from '../types';
+import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
+import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
 
 import { changedCellTimeRange } from './NotebookAutosave';
 import { NotebookScene } from './NotebookScene';
@@ -1020,6 +1021,26 @@ describe('NotebookAutosave', () => {
       expect(cell.state.$timeRange).toBeUndefined();
       // The writer's own edit is still theirs, waiting to be written.
       expect(scene.state.$timeRange.state.from).toBe('now-12h');
+    });
+
+    // Url sync applies `?from=&to=` to the scene before the page activates it, so a baseline taken at
+    // activation would adopt the deep link as the notebook's own range and put it back for everyone.
+    it("baselines the notebook's own range, not one a deep link applied before activation", () => {
+      const scene = transformNotebookToScene({
+        apiVersion: 'notebook.grafana.app/v2beta1',
+        kind: 'Notebook',
+        metadata: { name: 'nb-1', resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
+        spec: { ...defaultNotebookSpec(), title: 'My notebook' },
+      });
+      expect(scene.state.$timeRange.state.from).toBe('now-6h');
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      readAndClose(scene);
+
+      scene.state.$timeRange.setState({ from: 'now-30m', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-6h');
     });
 
     // setCellTimeRange clears the panel's own one-sided override to make room for the cell range, so a
