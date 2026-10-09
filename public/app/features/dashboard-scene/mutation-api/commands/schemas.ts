@@ -680,6 +680,10 @@ const removePanelPayloadSchema = z.object({
   elements: z.array(elementReferenceSchema).max(10).describe('Panels to remove, identified by element name'),
 });
 
+// LIST_PANELS includeStatus and GET_PANEL_ERRORS explain each error source the same way.
+const PANEL_ERROR_SOURCES =
+  'Error sources: query = a query returned an error; plugin = the panel plugin failed to load (missing, disabled or broken module: change the panel type or install the plugin); notice = a data frame notice with error severity; render = the loaded panel reported an error while drawing (fix the panel options or code).';
+
 const listPanelsPayloadSchema = z.object({
   elements: z
     .array(z.string())
@@ -695,7 +699,7 @@ const listPanelsPayloadSchema = z.object({
     .optional()
     .default(false)
     .describe(
-      'When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source query/plugin/notice, message, refId/type), and info/warning notices'
+      `When true, include per-panel runtime status: loadingState, hasError, hasNoData, a structured errors array (source, message, refId/type), and info/warning notices. ${PANEL_ERROR_SOURCES}`
     ),
   includeSchema: z
     .boolean()
@@ -943,7 +947,7 @@ export const payloads = {
   removePanel: removePanelPayloadSchema.describe('Remove one or more panels from the dashboard'),
   getPanelErrors: listPanelsPayloadSchema
     .pick({ elements: true })
-    .describe('Read current panel errors without panel specifications'),
+    .describe(`Read current panel errors without panel specifications. ${PANEL_ERROR_SOURCES}`),
   listPanels: listPanelsPayloadSchema.describe('List all panels on the dashboard with their layout items'),
   movePanel: movePanelPayloadSchema.describe(
     'Move a panel to a different group or reposition within the current group'
