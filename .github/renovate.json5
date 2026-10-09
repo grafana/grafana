@@ -18,7 +18,7 @@
   ],
   includePaths: [
     "package.json", "packages/**", "public/app/plugins/**", "devenv/frontend-service/docker-compose.yaml",
-    "go.mod", "**/go.mod", ".citools/**/go.mod",
+    "go.mod",
     ".github/workflows/**", ".github/actions/**", "pkg/build/actions/**",
   ],
   ignorePaths: ["emails/**", "**/mocks/**"],
