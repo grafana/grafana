@@ -79,9 +79,11 @@ const meta: Meta = {
     disabled: false,
     isLoading: false,
     invalid: false,
+    size: 'md',
     icon: 'arrow-down',
   },
   argTypes: {
+    size: { control: { type: 'radio' }, options: ['sm', 'md'] },
     width: { control: { type: 'range', min: 1, max: 100 } },
     icon: {
       control: {
