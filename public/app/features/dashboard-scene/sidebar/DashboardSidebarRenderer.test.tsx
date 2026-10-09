@@ -29,13 +29,7 @@ jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
   useMediaQueryMinWidth: () => true,
 }));
 
-jest.mock('../utils/interactions', () => ({
-  DashboardInteractions: {
-    editSessionStarted: jest.fn(),
-    dashboardOutlineClicked: jest.fn(),
-    outlineItemClicked: jest.fn(),
-  },
-}));
+jest.mock('../utils/interactions');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
