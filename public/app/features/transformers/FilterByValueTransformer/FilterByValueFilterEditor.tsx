@@ -38,6 +38,7 @@ export const FilterByValueFilterEditor = (props: Props) => {
       onChange({
         ...filter,
         fieldName: selectable.value,
+        field: undefined,
       });
     },
     [onChange, filter]

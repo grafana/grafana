@@ -17,8 +17,10 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,6 +28,10 @@ import (
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelScopePermissions)
+}
 
 func TestIntegrationLibraryPanelConnections(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelConnections)
@@ -57,6 +63,95 @@ func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 
 func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryElementFolderHierarchy)
+}
+
+func testIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode5} {
+		t.Run(fmt.Sprintf("storage mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous:        true,
+				DisableAuthZClientCache: true,
+				EnableFeatureToggles:    []string{featuremgmt.FlagLibraryelementsKubernetesLibraryPanels},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"librarypanels.dashboard.grafana.app": {DualWriterMode: mode},
+				},
+			})
+			ctx := createTestContext(t, helper, helper.Org1)
+			allowedFolder, err := createFolder(t, helper, ctx.AdminUser, "Allowed panels")
+			require.NoError(t, err)
+
+			deniedFolder, err := createFolder(t, helper, ctx.AdminUser, "Denied panels")
+			require.NoError(t, err)
+
+			panel, err := createLibraryElement(t, ctx, ctx.AdminUser, "Allowed panel", allowedFolder.UID)
+			require.NoError(t, err)
+
+			other, err := createLibraryElement(t, ctx, ctx.AdminUser, "Other panel", deniedFolder.UID)
+			require.NoError(t, err)
+
+			cases := []struct {
+				name     string
+				resource string
+				uid      string
+			}{
+				{
+					name:     "direct panel grant",
+					resource: libraryelements.ScopeLibraryPanelsRoot,
+					uid:      panel,
+				},
+				{
+					name:     "folder grant",
+					resource: folder.ScopeFoldersRoot,
+					uid:      allowedFolder.UID,
+				},
+			}
+
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					grant := resourcepermissions.SetResourcePermissionCommand{
+						Actions:           []string{libraryelements.ActionLibraryPanelsRead},
+						Resource:          tc.resource,
+						ResourceAttribute: "uid",
+						ResourceID:        tc.uid,
+					}
+					caller := helper.CreateUser(
+						fmt.Sprintf("panel-reader-%s", tc.resource),
+						apis.Org1,
+						org.RoleNone,
+						[]resourcepermissions.SetResourcePermissionCommand{grant},
+					)
+
+					readCases := []struct {
+						uid        string
+						wantStatus int
+					}{
+						{uid: panel, wantStatus: http.StatusOK},
+						{uid: other, wantStatus: http.StatusForbidden},
+						{uid: panel, wantStatus: http.StatusOK},
+					}
+
+					for _, read := range readCases {
+						requireLibraryPanelRead(t, helper, caller, read.uid, read.wantStatus)
+					}
+
+					requireLibraryPanelWritesDenied(t, helper, caller, ctx.AdminUser, panel)
+
+					grant.Actions = nil
+					helper.SetPermissions(caller, []resourcepermissions.SetResourcePermissionCommand{grant})
+
+					reload := apis.DoRequest(helper, apis.RequestParams{
+						User: caller,
+						Path: "/api/access-control/user/permissions?reloadcache=true",
+					}, &map[string]interface{}{})
+					require.Equal(t, http.StatusOK, reload.Response.StatusCode)
+
+					requireLibraryPanelRead(t, helper, caller, panel, http.StatusForbidden)
+				})
+			}
+		})
+	}
 }
 
 // this tests the /api path still, but behind the scenes is using search to get the library connections
@@ -1069,4 +1164,61 @@ func createSubFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, t
 		Title:     meta.FindTitle(""),
 		ParentUID: parentUID,
 	}, nil
+}
+
+const libraryPanelPathFormat = "/api/library-elements/%s"
+
+func requireLibraryPanelRead(
+	t *testing.T, helper *apis.K8sTestHelper, caller apis.User, uid string, wantStatus int,
+) map[string]interface{} {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User:   caller,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
+	}, &map[string]interface{}{})
+	require.Equal(t, wantStatus, response.Response.StatusCode, string(response.Body))
+	if wantStatus != http.StatusOK {
+		return nil
+	}
+
+	result, ok := (*response.Result)["result"].(map[string]interface{})
+	require.True(t, ok, "response must contain a library panel")
+	return result
+}
+
+func requireLibraryPanelWritesDenied(
+	t *testing.T, helper *apis.K8sTestHelper, caller, admin apis.User, uid string,
+) {
+	t.Helper()
+
+	before := requireLibraryPanelRead(t, helper, admin, uid, http.StatusOK)
+	patch, err := json.Marshal(map[string]interface{}{
+		"name":    "Unauthorized rename",
+		"version": before["version"],
+		"model":   before["model"],
+	})
+	require.NoError(t, err)
+
+	requests := []struct {
+		method string
+		body   []byte
+	}{
+		{method: http.MethodPatch, body: patch},
+		{method: http.MethodDelete},
+	}
+
+	for _, request := range requests {
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   caller,
+			Method: request.method,
+			Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
+			Body:   request.body,
+		}, &struct{}{})
+		require.Equal(t, http.StatusForbidden, response.Response.StatusCode, string(response.Body))
+
+		after := requireLibraryPanelRead(t, helper, admin, uid, http.StatusOK)
+		require.Equal(t, before, after, "denied %s must not change the panel", request.method)
+	}
 }
