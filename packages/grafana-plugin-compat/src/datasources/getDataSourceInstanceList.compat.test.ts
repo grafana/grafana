@@ -36,7 +36,6 @@ describe('getDataSourceInstanceList', () => {
         type: 'loki',
         name: 'Loki',
         meta: {},
-        isDefault: false,
         apiVersion: undefined,
       },
     ]);
@@ -54,7 +53,6 @@ describe('getDataSourceInstanceList', () => {
     expect(mockFilter).toHaveBeenCalled();
     expect(mockFilter).toHaveBeenCalledWith({
       apiVersion: undefined,
-      isDefault: false,
       meta: {},
       name: 'Loki',
       type: 'loki',

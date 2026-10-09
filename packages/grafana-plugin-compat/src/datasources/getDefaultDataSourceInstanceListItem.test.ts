@@ -11,7 +11,7 @@ jest.mock('@grafana/runtime/unstable', () => ({
 
 const mockRuntimeGetDefaultDataSourceInstanceListItem = jest.mocked(rtGetDefaultDataSourceInstanceListItem);
 
-const flagged = getMockedListItem({ uid: 'ds-b', name: 'B', isDefault: true });
+const flagged = getMockedListItem({ uid: 'ds-b', name: 'B' });
 const notFlagged = getMockedListItem({ uid: 'ds-a', name: 'A' });
 const items = [notFlagged, flagged];
 
@@ -28,7 +28,6 @@ describe('getDefaultDataSourceInstanceListItem', () => {
   });
 
   it('should return the host answer rather than recomputing it locally', async () => {
-    // The local fallback would pick the flagged 'ds-b', so only the host can produce 'ds-a'.
     mockRuntimeGetDefaultDataSourceInstanceListItem.mockResolvedValue(notFlagged);
 
     expect((await getDefaultDataSourceInstanceListItem(items))?.uid).toBe('ds-a');

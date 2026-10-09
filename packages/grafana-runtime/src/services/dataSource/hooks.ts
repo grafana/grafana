@@ -114,10 +114,8 @@ export function useDataSourceInstanceSettings(
  * React hook wrapping {@link getDataSourceInstanceListItem}. Re-fetches when `ref`
  * changes (compared by value, so inline objects are safe) or when the data source cache changes.
  *
- * Prefer this over {@link useDataSourceInstanceSettings} whenever only identity or plugin
- * metadata is needed — `item` carries `uid`, `type`, `apiVersion`, `name`, `meta` and
- * `isDefault`, and avoids depending on per-instance settings that will later be fetched on
- * demand.
+ * Prefer this over {@link useDataSourceInstanceSettings} when identity and plugin metadata are enough:
+ * it avoids depending on per-instance settings that will later be fetched on demand.
  *
  * Resolves **by uid only**: a ref with no usable uid — including `'default'`, `undefined` and
  * type-only refs — yields `item: undefined` rather than the default data source. Template
@@ -176,17 +174,21 @@ export function useDataSourceInstance(ref?: DataSourceRef | string | null): UseD
 }
 
 /**
- * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the uid or
- * `isDefault` flag of any item changes, so passing an inline array is safe.
+ * React hook wrapping {@link getDefaultDataSourceInstanceListItem}. Re-resolves when the item uids
+ * (compared by value, so inline arrays are safe) or the data source cache change.
  *
  * @public
  */
 export function useDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): UseDefaultDataSourceInstanceListItemResult {
-  const itemsKey = stableKey(items.map((item) => [item.uid, item.isDefault]));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const { loading, error, value } = useAsync(() => getDefaultDataSourceInstanceListItem(items), [itemsKey]);
+  const itemsKey = stableKey(items.map((item) => item.uid));
+  const cacheGeneration = useDataSourceCacheGeneration();
+  const { loading, error, value } = useAsync(
+    () => getDefaultDataSourceInstanceListItem(items),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [itemsKey, cacheGeneration]
+  );
   return { isLoading: loading, error, item: value };
 }
 
