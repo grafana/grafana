@@ -67,7 +67,7 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
 });
 LogLineDetailsFields.displayName = 'LogLineDetailsFields';
 
-interface LinkModelWithIcon extends LinkModel<Field> {
+export interface LinkModelWithIcon extends LinkModel<Field> {
   icon?: IconName;
 }
 
