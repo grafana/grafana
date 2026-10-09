@@ -118,7 +118,7 @@ export const { useGetOverviewTeamsQuery } = overviewAPI;
 export function useUserOverview(uid: string) {
   // These flags are LegacyFrontend-only until their backend registry entries are migrated.
   // eslint-disable-next-line @grafana/no-config-feature-toggles
-  const enabled = config.featureToggles.kubernetesUsersApi;
+  const enabled = config.featureToggles.kubernetesUsersApi || config.featureToggles.kubernetesUsersReadApi;
   const discovery = discoveryAPI.useGetOverviewCapabilitiesQuery(enabled ? undefined : skipToken);
   const useIAM = enabled && discovery.currentData?.users;
   const iam = useGetUserQuery(useIAM ? { name: uid } : skipToken);
