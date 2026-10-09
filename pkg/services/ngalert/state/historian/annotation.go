@@ -153,7 +153,7 @@ func (h *AnnotationBackend) Query(ctx context.Context, query ngmodels.HistoryQue
 	}
 
 	q := annotations.ItemQuery{
-		AlertID:      rule.ID,
+		AlertUID:     rule.UID,
 		OrgID:        query.OrgID,
 		From:         query.From.UnixMilli(),
 		To:           query.To.UnixMilli(),
