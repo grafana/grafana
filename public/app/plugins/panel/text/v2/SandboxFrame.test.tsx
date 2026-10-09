@@ -213,6 +213,89 @@ it('fails closed if bootstrap or rendering never completes', async () => {
   expect(element).toBeInTheDocument();
 });
 
+it.each([
+  { name: 'Mermaid configuration', update: { mermaid: { securityLevel: 'strict' as const } } },
+  { name: 'diagram error message', update: { diagramError: 'Updated error' } },
+])('recreates the document when $name changes', async ({ update }) => {
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const previous = await frame();
+  rerender(<SandboxFrame {...options} {...update} />);
+  const current = await frame();
+  expect(current).not.toBe(previous);
+  const postMessage = jest.spyOn(current.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(current, 'ready');
+  expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'render', ...update }), '*');
+});
+
+it('retains the document on consumer changes and clears reports only on replacement or unmount', async () => {
+  const options = props();
+  const { rerender, unmount } = render(<SandboxFrame {...options} />);
+  const element = await frame();
+  notify(element, 'ready');
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+  expect(options.onState).not.toHaveBeenCalledWith(undefined);
+
+  const onState = jest.fn();
+  const onHeight = jest.fn();
+  rerender(<SandboxFrame {...options} title="Updated title" onState={onState} onHeight={onHeight} />);
+  expect(screen.getByTitle('Updated title')).toBe(element);
+  expect(options.onState).toHaveBeenLastCalledWith(undefined);
+  expect(onState).toHaveBeenLastCalledWith({ status: 'ready', resources: [] });
+  notify(element, 'resize', { height: 180, contentHeight: 160 });
+  expect(onHeight).toHaveBeenLastCalledWith(180, 160);
+  expect(onState).toHaveBeenCalledTimes(1);
+  unmount();
+  expect(onState.mock.calls).toEqual([[{ status: 'ready', resources: [] }], [undefined]]);
+});
+
+it('reports runtime loading failure without navigating the frame', async () => {
+  jest.mocked(loadSandboxRuntime).mockRejectedValueOnce(new Error('Chunk unavailable'));
+  const options = props();
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+  expect(element).not.toHaveAttribute('srcdoc');
+});
+
+it('discards bootstrap completion for a replaced document', async () => {
+  let resolve!: (source: string) => void;
+  jest.mocked(loadSandboxRuntime).mockReturnValueOnce(new Promise((done) => (resolve = done)));
+  const options = props();
+  const { rerender } = render(<SandboxFrame {...options} />);
+  const previous = screen.getByTitle<HTMLIFrameElement>('Text content');
+  rerender(<SandboxFrame {...options} html="<p>Updated content</p>" />);
+  const current = await frame();
+  await act(async () => resolve('stale runtime'));
+  expect(current.srcdoc).toContain('/* trusted runtime */');
+  expect(previous).not.toHaveAttribute('srcdoc');
+  expect(current.srcdoc).not.toContain('stale runtime');
+});
+
+it('escapes shell attributes and script terminators while reusing the deployment nonce', async () => {
+  const deploymentScript = document.createElement('script');
+  deploymentScript.nonce = 'server-nonce';
+  document.head.append(deploymentScript);
+  const policy = `script-src 'none'; img-src https://example.test/?q="quoted"&x=<value>`;
+  jest.mocked(loadSandboxRuntime).mockResolvedValueOnce('const closingTag = "</ScRiPt><script>unexpected()</script>";');
+  try {
+    render(<SandboxFrame {...props({ policy })} />);
+    const element = await frame();
+    const shell = new DOMParser().parseFromString(element.srcdoc, 'text/html');
+    const script = shell.querySelector('script')!;
+    const expectedPolicy = `script-src 'nonce-server-nonce'; img-src https://example.test/?q="quoted"&x=<value>`;
+    expect(script.getAttribute('nonce')).toBe('server-nonce');
+    expect(script.dataset.policy).toBe(expectedPolicy);
+    expect(shell.querySelector('meta')!.getAttribute('content')).toBe(expectedPolicy);
+    expect(script.dataset.parentOrigin).toBe(window.location.origin);
+    expect(shell.querySelectorAll('script')).toHaveLength(1);
+    expect(script.textContent).toBe('const closingTag = "<\\/script><script>unexpected()<\\/script>";');
+  } finally {
+    deploymentScript.remove();
+  }
+});
+
 it('ignores runtime loading after unmount and clears the watchdog', async () => {
   let resolve!: (source: string) => void;
   jest.mocked(loadSandboxRuntime).mockReturnValueOnce(
@@ -293,6 +376,27 @@ it('reports a Mermaid loading error without removing permitted content', async (
   await act(async () => {});
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
   expect(element).toBeInTheDocument();
+});
+
+it.each(['error', 'timeout'] as const)('discards pending Mermaid source after %s', async (failure) => {
+  let resolve!: (source: string) => void;
+  jest.mocked(loadSandboxMermaid).mockReturnValueOnce(new Promise((done) => (resolve = done)));
+  const options = props({ mermaid: {} });
+  render(<SandboxFrame {...options} />);
+  const element = await frame();
+  const postMessage = jest.spyOn(element.contentWindow!, 'postMessage').mockImplementation(() => {});
+  notify(element, 'ready');
+  notify(element, 'mermaid-needed');
+  if (failure === 'timeout') {
+    act(() => jest.advanceTimersByTime(15000));
+  } else {
+    notify(element, 'error');
+  }
+  await act(async () => resolve('late Mermaid source'));
+  notify(element, 'rendered');
+  expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
+  expect(postMessage).toHaveBeenCalledTimes(1);
+  expect(postMessage).toHaveBeenCalledWith(expect.objectContaining({ type: 'render' }), '*');
 });
 
 it('fails closed on a forbidden shell policy and preserves TrustedHTML branding when permitted', async () => {
