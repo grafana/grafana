@@ -3,13 +3,7 @@ import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
 import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  CoreApp,
-  type GrafanaTheme2,
-  type IconName,
-  type LogLabelStatsModel,
-  textUtil,
-} from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, type IconName, type LogLabelStatsModel, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
