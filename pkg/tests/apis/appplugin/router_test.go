@@ -93,7 +93,11 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 	pluginServer := grpc.NewServer()
 	var routeCalls atomic.Int32
 	var receivedSecureValues atomic.Value
+	var receivedRoute atomic.Value // httpadapter.RouteInfo
 	pluginv3.RegisterRouteServiceServer(pluginServer, httpadapter.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if info, ok := httpadapter.RouteInfoFromContext(r.Context()); ok {
+			receivedRoute.Store(info)
+		}
 		parent := httpadapter.ParentFromContext(r.Context())
 		secureValues := parent.GetDecryptedSecureValues()
 		if secureValues == nil {
@@ -122,9 +126,15 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
    "jsonData":{"id":"router-test-app","type":"app"},
    "manifest":{
     "appName":"router-test-app","group":"router-test.ext.grafana.app","preferredVersion":"v1",
-    "versions":[{"name":"v1","served":true,"kinds":[
+    "versions":[{"name":"v1","served":true,
+     "openapi":{"paths":{
+      "/namespaces/{namespace}/things/{name}/reload":{"get":{"responses":{"200":{"description":"OK"}}}},
+      "/files/{path:*}":{"get":{"responses":{"200":{"description":"OK"}}}},
+      "/namespaces/{namespace}/files/{path...}":{"get":{"responses":{"200":{"description":"OK"}}},"put":{"responses":{"200":{"description":"OK"}}}},
+      "/namespaces/{namespace}/things/{name}/files/{path:*}":{"get":{"responses":{"200":{"description":"OK"}}}}
+     }},
+     "kinds":[
      {"kind":"Thing","plural":"things","scope":"Namespaced","folderScoped":false,
-      "routes":{"reload":{"get":{"responses":{"200":{"description":"OK"}}}}},
       "schemas":{"Thing":{"type":"object","properties":{"secure":{"type":"object","additionalProperties":{"type":"object","properties":{"name":{"type":"string"}}}},"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}},
      {"kind":"Widget","plural":"widgets","scope":"Namespaced","folderScoped":true,
       "schemas":{"Widget":{"type":"object","properties":{"spec":{"type":"object","properties":{"value":{"type":"string"}}}}}}}
@@ -339,6 +349,58 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 				}
 			})
 		}
+	})
+
+	// A final {name:*} segment, or its {name...} alias, matches the rest of the
+	// path. The plugin is sent the route it declared, as for any other route.
+	t.Run("catch-all routes match the rest of the path", func(t *testing.T) {
+		things := client.Resource(schema.GroupVersionResource{Group: group, Version: "v1", Resource: "things"}).Namespace(namespace)
+		_, err := things.Create(t.Context(), &unstructured.Unstructured{Object: map[string]any{
+			"apiVersion": group + "/v1", "kind": "Thing",
+			"metadata": map[string]any{"name": "with-files"},
+			"spec":     map[string]any{"value": "files"},
+		}}, metav1.CreateOptions{})
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = things.Delete(context.Background(), "with-files", metav1.DeleteOptions{}) })
+
+		httpClient := &http.Client{Transport: pluginRouterTokenTransport{next: http.DefaultTransport, token: token}}
+		call := func(method, path string) *http.Response {
+			t.Helper()
+			req, err := http.NewRequestWithContext(t.Context(), method, server.URL+"/apis/"+group+"/v1/"+path, nil)
+			require.NoError(t, err)
+			res, err := httpClient.Do(req)
+			require.NoError(t, err)
+			_ = res.Body.Close()
+			return res
+		}
+
+		for _, tc := range []struct {
+			name, method, path string
+			route, namespace   string
+		}{
+			{"cluster", http.MethodGet, "files/reports/2026/q3.csv", "files/{path:*}", ""},
+			{"namespaced alias", http.MethodGet, "namespaces/" + namespace + "/files/a/b/c.json", "files/{path...}", namespace},
+			{"namespaced write", http.MethodPut, "namespaces/" + namespace + "/files/a/b/c.json", "files/{path...}", namespace},
+			{"below an object", http.MethodGet, "namespaces/" + namespace + "/things/with-files/files/logs/today.txt", "files/{path:*}", namespace},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				before := routeCalls.Load()
+				res := call(tc.method, tc.path)
+				require.Equal(t, http.StatusOK, res.StatusCode)
+				require.Equal(t, before+1, routeCalls.Load(), "the route reached the plugin")
+				info := receivedRoute.Load().(httpadapter.RouteInfo)
+				require.Equal(t, tc.route, info.Path)
+				require.Equal(t, tc.namespace, info.Namespace)
+			})
+		}
+
+		t.Run("an undeclared method is refused", func(t *testing.T) {
+			before := routeCalls.Load()
+			res := call(http.MethodPost, "namespaces/"+namespace+"/files/a/b/c.json")
+			require.Equal(t, http.StatusMethodNotAllowed, res.StatusCode)
+			require.Equal(t, "GET, HEAD, PUT", res.Header.Get("Allow"))
+			require.Equal(t, before, routeCalls.Load())
+		})
 	})
 
 	t.Run("an informer syncs and follows changes", func(t *testing.T) {

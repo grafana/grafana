@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
@@ -45,7 +46,7 @@ type stubIndexClient struct {
 func mountedRoutes(b *manifestBuilder, gv schema.GroupVersion) map[string]*spec3.PathProps {
 	out := map[string]*spec3.PathProps{}
 	for _, route := range b.versionRoutes(gv, ignoreSkipped) {
-		out[route.versionPath()] = route.spec()
+		out[route.VersionPath()] = routeSpec(route)
 	}
 	return out
 }
@@ -356,6 +357,143 @@ func TestVersionRoutesDropUnservedMethods(t *testing.T) {
 	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Trace) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 }
 
+// OpenAPI allows path parameter names ServeMux does not, so they are renamed
+// for matching; a path that still cannot be mounted is left out of the spec and
+// the authorizer too, so neither describes a route that answers 404.
+func TestVersionRoutesMuxPatterns(t *testing.T) {
+
+	op := spec3.PathProps{Get: &spec3.Operation{}}
+	manifest := testManifest(t)
+	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
+		"/flags/{flag-key}": op,
+		"/flags/{id}":       op, // same match as the path above, sorted after it
+		"/v{version}":       op, // ServeMux has no partial wildcards
+		"/namespaces/{namespace}/testkinds/{name}/a//b": op, // unclean, can never match
+	}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app"}
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
+
+	var skipped []string
+	routes := b.versionRoutes(gv, func(p manifestroutes.Problem) { skipped = append(skipped, p.Path) })
+	require.Len(t, routes, 1)
+	require.Equal(t, "flags/{flag-key}", routes[0].Path, "the declared path is kept for the spec and the plugin")
+	require.ElementsMatch(t, []string{
+		"/flags/{id}", "/v{version}", "/namespaces/{namespace}/testkinds/{name}/a//b",
+	}, skipped)
+	require.Empty(t, kindPolicies(manifest)["testkinds"].customRoutes)
+
+	oas := &spec3.OpenAPI{}
+	b.addRoutePaths(oas, "/apis/"+gv.String()+"/", gv.Version)
+	require.Equal(t, []string{"/apis/" + gv.String() + "/flags/{flag-key}"}, slices.Collect(maps.Keys(oas.Paths.Paths)))
+
+	client := &fakeRouteClient{}
+	b.clientV3 = client
+	handler := b.routeMux(http.NotFoundHandler(), prometheus.NewRegistry())
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/apis/"+gv.String()+"/flags/dark-mode", nil))
+	require.NotNil(t, client.req, "a renamed parameter still matches")
+	require.Equal(t, "flags/{flag-key}", client.req.GetPath())
+}
+
+// A final {name:*} or {name...} segment matches the rest of the path, and is
+// published as an ordinary parameter since OpenAPI has no catch-all syntax.
+func TestVersionRoutesCatchAll(t *testing.T) {
+
+	op := spec3.PathProps{Get: &spec3.Operation{}}
+	manifest := testManifest(t)
+	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
+		"/files/{path:*}":                                         op,
+		"/namespaces/{namespace}/files/{path...}":                 op,
+		"/namespaces/{namespace}/testkinds/{name}/files/{path:*}": op,
+		"/broken/{path:*}/more":                                   op, // only the last segment can catch all
+	}
+	client := &fakeRouteClient{}
+	get := &recordingGetter{obj: &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": "example.ext.grafana.app/v1alpha1", "kind": "TestKind",
+		"metadata": map[string]any{"name": "thing-1", "namespace": "org-2"},
+	}}}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app", clientV3: client, getter: get.get}
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
+
+	var skipped []string
+	b.versionRoutes(gv, func(p manifestroutes.Problem) { skipped = append(skipped, p.Path) })
+	require.Equal(t, []string{"/broken/{path:*}/more"}, skipped)
+
+	oas := &spec3.OpenAPI{}
+	root := "/apis/" + gv.String() + "/"
+	b.addRoutePaths(oas, root, gv.Version)
+	require.ElementsMatch(t, []string{
+		root + "files/{path}",
+		root + "namespaces/{namespace}/files/{path}",
+		root + "namespaces/{namespace}/testkinds/{name}/files/{path}",
+	}, slices.Collect(maps.Keys(oas.Paths.Paths)))
+
+	handler := b.routeMux(http.NotFoundHandler(), prometheus.NewRegistry())
+	serve := func(path string) int {
+		client.req = nil
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		return rec.Code
+	}
+
+	serve(root + "files/a/b/c.txt")
+	require.NotNil(t, client.req, "a cluster catch-all matches several segments")
+	require.Equal(t, "files/{path:*}", client.req.GetPath(), "the plugin is sent the declared route")
+	require.Contains(t, client.req.GetUrl(), "/files/a/b/c.txt", "and the URL it was called with")
+
+	serve(root + "namespaces/org-2/files/x/y")
+	require.NotNil(t, client.req)
+	require.Equal(t, "org-2", client.req.GetNamespace())
+
+	serve(root + "namespaces/org-2/testkinds/thing-1/files/deep/er")
+	require.NotNil(t, client.req, "a kind catch-all matches below the object")
+	require.Equal(t, "files/{path:*}", client.req.GetPath())
+	require.Equal(t, "thing-1", client.req.GetParent().GetName())
+
+	// ServeMux lets a catch-all match nothing, so the bare directory with a
+	// trailing slash reaches the route, and without one is redirected to it.
+	serve(root + "files/")
+	require.NotNil(t, client.req)
+	require.Equal(t, http.StatusTemporaryRedirect, serve(root+"files"))
+	require.Nil(t, client.req)
+}
+
+// A 405 is worked out from the mounted routes, so a declared path still gets
+// one when another route's wildcard covers it for a different method.
+func TestRouteMuxMethodNotAllowedBesideWildcard(t *testing.T) {
+	manifest := testManifest(t)
+	op := &spec3.Operation{}
+	manifest.Versions[1].OpenAPI.Paths = map[string]spec3.PathProps{
+		"/items/{id}":    {Get: op, Delete: op},
+		"/items/search":  {Post: op},
+		"/items/{id}/do": {Put: op},
+	}
+	client := &fakeRouteClient{}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app", clientV3: client}
+	require.Len(t, b.versionRoutes(schema.GroupVersion{Group: manifest.Group, Version: "v1alpha1"}, ignoreSkipped), 3,
+		"no route is dropped for overlapping another")
+
+	handler := b.routeMux(http.NotFoundHandler(), prometheus.NewRegistry())
+	root := "/apis/example.ext.grafana.app/v1alpha1/"
+	for _, tc := range []struct {
+		method, path string
+		code         int
+		allow        string
+	}{
+		{http.MethodPost, root + "items/search", http.StatusOK, ""},
+		{http.MethodGet, root + "items/search", http.StatusOK, ""}, // {id} matches it for GET
+		{http.MethodPut, root + "items/search", http.StatusMethodNotAllowed, "DELETE, GET, HEAD, POST"},
+		{http.MethodPost, root + "items/abc", http.StatusMethodNotAllowed, "DELETE, GET, HEAD"},
+		{http.MethodGet, root + "items/abc/do", http.StatusMethodNotAllowed, "PUT"},
+		{http.MethodGet, root + "items/abc/other", http.StatusNotFound, ""},
+	} {
+		rec := httptest.NewRecorder()
+		handler.ServeHTTP(rec, httptest.NewRequest(tc.method, tc.path, nil))
+		require.Equal(t, tc.code, rec.Code, "%s %s", tc.method, tc.path)
+		require.Equal(t, tc.allow, rec.Header().Get("Allow"), "%s %s", tc.method, tc.path)
+	}
+}
+
 // Without routes the apiserver handler is used as is.
 func TestRouteMuxWithoutRoutes(t *testing.T) {
 	next := http.NewServeMux()
@@ -364,12 +502,12 @@ func TestRouteMuxWithoutRoutes(t *testing.T) {
 }
 
 var (
-	testVersionRoute = manifestRoute{path: "foobar"}
-	testKindRoute    = manifestRoute{
-		path:        "testkinds/{name}/reload",
-		namespaced:  true,
-		kind:        &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds"},
-		subresource: "reload",
+	testVersionRoute = manifestroutes.Route{Path: "foobar"}
+	testKindRoute    = manifestroutes.Route{
+		Path:        "testkinds/{name}/reload",
+		Namespaced:  true,
+		Kind:        &app.ManifestVersionKind{Kind: "TestKind", Plural: "TestKinds"},
+		Subresource: "reload",
 	}
 )
 
@@ -397,7 +535,7 @@ func TestRouteHandlerRouteInfo(t *testing.T) {
 		req := withPathValues(httptest.NewRequest(http.MethodGet, "/foobar", nil),
 			namespaceParameter, "org-2")
 		route := testVersionRoute
-		route.namespaced = true
+		route.Namespaced = true
 
 		// A version route has no parent, so storage is never consulted.
 		newBuilder(client, nil).routeHandler(gv, route)(httptest.NewRecorder(), req)

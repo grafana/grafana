@@ -1,0 +1,241 @@
+package manifestroutes
+
+import (
+	"net/http"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
+
+	"github.com/grafana/grafana-app-sdk/app"
+)
+
+func get() spec3.PathProps { return spec3.PathProps{Get: &spec3.Operation{}} }
+
+func testVersion(paths map[string]spec3.PathProps) app.ManifestVersion {
+	return app.ManifestVersion{
+		Name: "v1",
+		Kinds: []app.ManifestVersionKind{
+			{Kind: "Thing", Plural: "Things", Scope: "Namespaced"},
+			{Kind: "Node", Plural: "Nodes", Scope: "Cluster"},
+		},
+		OpenAPI: app.ManifestVersionOpenAPI{Paths: paths},
+	}
+}
+
+func byDeclared(routes []Route) map[string]Route {
+	out := map[string]Route{}
+	for _, r := range routes {
+		out[r.Declared] = r
+	}
+	return out
+}
+
+func reasons(problems []Problem) map[string]string {
+	out := map[string]string{}
+	for _, p := range problems {
+		key := p.Path
+		if p.Method != "" {
+			key = p.Method + " " + key
+		}
+		out[key] = p.Reason
+	}
+	return out
+}
+
+func TestParseResolvesWhereRoutesMount(t *testing.T) {
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/foobar":                                 get(),
+		"/namespaces/{namespace}/foobar":          get(),
+		"/namespaces/{namespace}/things/{name}/a": get(),
+		"/nodes/{name}/rebuild":                   get(),
+	}), Options{})
+	require.Empty(t, problems)
+
+	got := byDeclared(routes)
+	require.Equal(t, Route{
+		Declared: "/foobar", Path: "foobar", Pattern: "foobar", SpecPath: "foobar", Operations: get(),
+	}, got["/foobar"])
+
+	namespaced := got["/namespaces/{namespace}/foobar"]
+	require.True(t, namespaced.Namespaced)
+	require.Equal(t, "foobar", namespaced.Path)
+	require.Equal(t, "namespaces/{namespace}/foobar", namespaced.VersionPath())
+	require.Nil(t, namespaced.Kind)
+
+	sub := got["/namespaces/{namespace}/things/{name}/a"]
+	require.Equal(t, "Thing", sub.Kind.Kind)
+	require.Equal(t, "a", sub.Subresource)
+	require.Equal(t, "namespaces/{namespace}/things/{name}/a", sub.Pattern)
+
+	cluster := got["/nodes/{name}/rebuild"]
+	require.False(t, cluster.Namespaced)
+	require.Equal(t, "Node", cluster.Kind.Kind)
+}
+
+func TestParseReportsPathsThatCannotBeServed(t *testing.T) {
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/ok":                                   get(),
+		"/things":                               get(),
+		"/namespaces/{namespace}/things/search": get(),
+		"/namespaces/{namespace}/things/{name}": get(),
+		"/namespaces/{namespace}/things/{name}/status": get(),
+		"/things/{name}/sub":                           get(),
+		"/namespaces/{namespace}/nodes/{name}/sub":     get(),
+		"/app/thing":            get(),
+		"/namespaces/{other}/x": get(),
+		"/":                     get(),
+		"/v{version}":           get(),
+		"/a//b":                 get(),
+		"/a/../b":               get(),
+		"/ids/{id:[0-9]+}":      get(),
+		"/files/{path:*}/more":  get(),
+		"/empty":                {},
+	}), Options{ReservedResources: []string{"app"}})
+	require.Equal(t, []string{"/ok"}, func() []string {
+		out := []string{}
+		for _, r := range routes {
+			out = append(out, r.Declared)
+		}
+		return out
+	}())
+
+	require.Equal(t, map[string]string{
+		"/things":                                      "shadows the things resource; a kind route must be below things/{name}/",
+		"/namespaces/{namespace}/things/search":        "shadows the things resource; a kind route must be below things/{name}/",
+		"/namespaces/{namespace}/things/{name}":        "shadows the things resource; a kind route must be below things/{name}/",
+		"/namespaces/{namespace}/things/{name}/status": "shadows the status subresource every kind has",
+		"/things/{name}/sub":                           "Thing is namespaced, so its routes must be under namespaces/{namespace}",
+		"/namespaces/{namespace}/nodes/{name}/sub":     "Node is cluster scoped, so its routes cannot be under namespaces/{namespace}",
+		"/app/thing":                                   "shadows the app resource",
+		"/namespaces/{other}/x":                        "only a route under namespaces/{namespace}/ may start with namespaces",
+		"/":                                            "shadows the version root",
+		"/v{version}":                                  "a parameter must be a whole path segment: v{version}",
+		"/a//b":                                        "is not a clean path",
+		"/a/../b":                                      "is not a clean path",
+		"/ids/{id:[0-9]+}":                             "a parameter cannot constrain its value: {id:[0-9]+}",
+		"/files/{path:*}/more":                         "only the last segment can match the rest of the path: {path:*}",
+		"/empty":                                       "no operation is served",
+	}, reasons(problems))
+}
+
+// OpenAPI allows parameter names ServeMux does not, so they are renamed for
+// matching and published as declared.
+func TestParseRenamesParameters(t *testing.T) {
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/flags/{flag-key}/eval":              get(),
+		"/namespaces/{namespace}/a/{x}/b/{x}": get(),
+		"/dir/":                               get(),
+	}), Options{})
+	require.Empty(t, problems)
+	got := byDeclared(routes)
+	require.Equal(t, "flags/{p1}/eval", got["/flags/{flag-key}/eval"].Pattern)
+	require.Equal(t, "flags/{flag-key}/eval", got["/flags/{flag-key}/eval"].SpecPath)
+	require.Equal(t, "namespaces/{namespace}/a/{p3}/b/{p5}", got["/namespaces/{namespace}/a/{x}/b/{x}"].Pattern)
+	require.Equal(t, "dir/{$}", got["/dir/"].Pattern, "a trailing slash does not match the subtree")
+}
+
+// A catch-all can be written in the go-restful form, the ServeMux form, or as
+// an ordinary parameter named by x-grafana-catch-all, which is how app-sdk
+// writes it in OpenAPI. All three publish the same path.
+func TestParseCatchAll(t *testing.T) {
+	marked := func(name string) spec3.PathProps {
+		op := &spec3.Operation{}
+		op.AddExtension(CatchAllExtension, name)
+		return spec3.PathProps{Get: op}
+	}
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/restful/{path:*}": get(),
+		"/mux/{path...}":    get(),
+		"/extension/{path}": marked("path"),
+		"/namespaces/{namespace}/things/{name}/files/{path:*}": get(),
+		"/misnamed/{path}":     marked("other"),
+		"/notlast/{path}/more": marked("path"),
+		"/empty/{path}":        marked(""),
+	}), Options{})
+
+	got := byDeclared(routes)
+	for _, declared := range []string{"/restful/{path:*}", "/mux/{path...}", "/extension/{path}"} {
+		route := got[declared]
+		require.Equal(t, "path", route.CatchAll, declared)
+		require.Regexp(t, `/\{p1\.\.\.\}$`, route.Pattern, declared)
+		require.Regexp(t, `/\{path\}$`, route.SpecPath, declared)
+	}
+	files := got["/namespaces/{namespace}/things/{name}/files/{path:*}"]
+	require.Equal(t, "files/{path:*}", files.Subresource)
+	require.Equal(t, "namespaces/{namespace}/things/{name}/files/{path}", files.SpecPath)
+
+	require.Equal(t, map[string]string{
+		"/misnamed/{path}":     "x-grafana-catch-all names other, which is not the last path segment",
+		"/notlast/{path}/more": "only the last segment can match the rest of the path: {path}",
+		"/empty/{path}":        "x-grafana-catch-all on GET must name a path parameter",
+	}, reasons(problems))
+}
+
+// Paths that match the same requests cannot both be served, so the later one
+// is reported against the one it conflicts with. Overlapping paths are fine.
+func TestParseConflicts(t *testing.T) {
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/flags/{flag-key}": get(),
+		"/flags/{id}":       get(),
+		"/items/{id}":       {Get: &spec3.Operation{}, Delete: &spec3.Operation{}},
+		"/items/search":     {Post: &spec3.Operation{}},
+		"/items/{id}/do":    {Put: &spec3.Operation{}},
+	}), Options{})
+	require.Len(t, routes, 4)
+	require.Equal(t, map[string]string{
+		"/flags/{id}": "matches the same GET requests as /flags/{flag-key}",
+	}, reasons(problems))
+}
+
+func TestParseUnservedMethods(t *testing.T) {
+	op := &spec3.Operation{}
+	version := testVersion(map[string]spec3.PathProps{
+		"/mixed":     {Get: op, Options: op, Trace: op},
+		"/traceonly": {Trace: op},
+	})
+	routes, problems := Parse(version, Options{UnservedMethods: []string{http.MethodTrace, http.MethodOptions}})
+	require.Len(t, routes, 1)
+	require.Equal(t, spec3.PathProps{Get: op}, routes[0].Operations)
+	require.Equal(t, map[string]string{
+		"TRACE /mixed":     "the method is not served",
+		"OPTIONS /mixed":   "the method is not served",
+		"TRACE /traceonly": "the method is not served",
+		"/traceonly":       "no operation is served",
+	}, reasons(problems))
+	require.NotNil(t, version.OpenAPI.Paths["/mixed"].Trace, "the manifest is not modified")
+
+	routes, problems = Parse(version, Options{})
+	require.Len(t, routes, 2, "without options every method is served")
+	require.Empty(t, problems)
+}
+
+func TestValidate(t *testing.T) {
+	require.NoError(t, Validate(nil, Options{}))
+	require.NoError(t, Validate(&app.ManifestData{Versions: []app.ManifestVersion{testVersion(map[string]spec3.PathProps{
+		"/ok": get(),
+	})}}, Options{}))
+
+	manifest := &app.ManifestData{Versions: []app.ManifestVersion{
+		testVersion(map[string]spec3.PathProps{"/things": get()}),
+		{Name: "v2", OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+			"/a/{x}": get(), "/a/{y}": get(),
+		}}},
+	}}
+	err := Validate(manifest, Options{})
+	require.EqualError(t, err, "v1 /things: shadows the things resource; a kind route must be below things/{name}/\n"+
+		"v2 /a/{y}: matches the same GET requests as /a/{x}")
+}
+
+// A path parameter declared on the operation is left alone; only the path is
+// rewritten for matching.
+func TestParseKeepsDeclaredOperations(t *testing.T) {
+	op := &spec3.Operation{OperationProps: spec3.OperationProps{
+		Parameters: []*spec3.Parameter{{ParameterProps: spec3.ParameterProps{
+			Name: "flag-key", In: "path", Required: true, Schema: spec.StringProperty(),
+		}}},
+	}}
+	routes, _ := Parse(testVersion(map[string]spec3.PathProps{"/flags/{flag-key}": {Get: op}}), Options{})
+	require.Same(t, op, routes[0].Operations.Get)
+}

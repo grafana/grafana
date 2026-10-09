@@ -1,11 +1,11 @@
 package pluginroute
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"slices"
 	"strings"
 
@@ -96,17 +96,42 @@ func BuildOpenAPI(pluginID string, manifest *app.ManifestData, version string, o
 
 	path := "/openapi/v3/apis/" + manifest.Group + "/" + version
 	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
-	req := httptest.NewRequestWithContext(ctx, http.MethodGet, path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, path, nil)
+	if err != nil {
+		return nil, err
+	}
 	req.Header.Set("Accept", "application/json")
-	res := httptest.NewRecorder()
+	res := &bufferedResponse{header: http.Header{}, code: http.StatusOK}
 	handler.ServeHTTP(res, req)
-	if res.Code != http.StatusOK {
-		return nil, fmt.Errorf("rendering %s: %d %s", path, res.Code, strings.TrimSpace(res.Body.String()))
+	if res.code != http.StatusOK {
+		return nil, fmt.Errorf("rendering %s: %d %s", path, res.code, strings.TrimSpace(res.body.String()))
 	}
 
 	oas := &spec3.OpenAPI{}
-	if err := json.Unmarshal(res.Body.Bytes(), oas); err != nil {
+	if err := json.Unmarshal(res.body.Bytes(), oas); err != nil {
 		return nil, fmt.Errorf("rendering %s: %w", path, err)
 	}
 	return oas, nil
+}
+
+// bufferedResponse holds the one response BuildOpenAPI reads back, without
+// pulling net/http/httptest into the server binary.
+type bufferedResponse struct {
+	header      http.Header
+	code        int
+	wroteHeader bool
+	body        bytes.Buffer
+}
+
+func (r *bufferedResponse) Header() http.Header { return r.header }
+
+func (r *bufferedResponse) WriteHeader(code int) {
+	if !r.wroteHeader {
+		r.code, r.wroteHeader = code, true
+	}
+}
+
+func (r *bufferedResponse) Write(b []byte) (int, error) {
+	r.wroteHeader = true
+	return r.body.Write(b)
 }

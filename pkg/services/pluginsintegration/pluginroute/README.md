@@ -70,10 +70,13 @@ same name.
 
 Paths under `namespaces/{namespace}/` are namespaced. A path of the form
 `{plural}/{name}/<subresource>` is a subresource of one object of that kind, and
-the plugin receives the stored object with the request. A path that would
-shadow a kind, its `status` subresource, the settings resource, or the
-namespace mount point is skipped with a warning, as are `TRACE` and `OPTIONS`
-operations.
+the plugin receives the stored object with the request. Which paths can be
+served, including catch-all segments, is decided by
+[`manifestroutes`](manifestroutes/README.md), which is written to be copied into
+app-sdk so a manifest can be checked when it is generated. A path it rejects is
+skipped with a warning, and left out of the spec and the authorizer as well.
+The router reserves the `app` settings resource and does not serve `TRACE` or
+`OPTIONS`.
 
 The routes are served by a `ServeMux` that wraps the API server's own handler,
 inside its filter chain, so a request reaching a route has already been

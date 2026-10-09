@@ -109,7 +109,7 @@ func (b *manifestBuilder) addRoutePaths(oas *spec3.OpenAPI, root string, version
 		oas.Paths.Paths = map[string]*spec3.Path{}
 	}
 	for _, route := range routes {
-		oas.Paths.Paths[root+route.versionPath()] = &spec3.Path{PathProps: *route.spec()}
+		oas.Paths.Paths[root+route.SpecPath] = &spec3.Path{PathProps: *routeSpec(route)}
 	}
 }
 

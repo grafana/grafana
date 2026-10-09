@@ -3,7 +3,6 @@ package pluginroute
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"maps"
 	"net/http"
 	"slices"
@@ -27,23 +26,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
-	// namespaceParameter is the path parameter carrying the namespace on routes
-	// mounted under /namespaces/{namespace}.
-	namespaceParameter = "namespace"
-
-	// nameParameter is the path parameter carrying the parent object's name on a
-	// kind subresource route.
-	nameParameter = "name"
+	namespaceParameter = manifestroutes.NamespaceParameter
+	nameParameter      = manifestroutes.NameParameter
 )
 
-// reservedSubresources are served by the kind store itself, so a manifest kind
-// route may not claim them.
-var reservedSubresources = map[string]bool{"status": true}
+// routeOptions are the parts of the manifest route rules that depend on this
+// server. The settings resource is served in every version. TRACE echoes the
+// request back, and OPTIONS keeps the 405 it always got.
+var routeOptions = manifestroutes.Options{
+	ReservedResources: []string{apppluginV0.APP_RESOURCE_NAME},
+	UnservedMethods:   []string{http.MethodTrace, http.MethodOptions},
+}
 
 // GetAPIRoutes returns the generic search and keys routes the apiserver mounts
 // for this version's kinds. The manifest's own routes are served by routeMux.
@@ -87,8 +86,8 @@ func (b *manifestBuilder) servedVersion(gv schema.GroupVersion) *app.ManifestVer
 }
 
 // versionRoutes returns the custom routes a served version mounts. skip is
-// told about each declared path that is not mounted.
-func (b *manifestBuilder) versionRoutes(gv schema.GroupVersion, skip func(path, reason string)) []manifestRoute {
+// told about each declared path, or method, that is not mounted.
+func (b *manifestBuilder) versionRoutes(gv schema.GroupVersion, skip func(manifestroutes.Problem)) []manifestroutes.Route {
 	version := b.servedVersion(gv)
 	if version == nil {
 		return nil
@@ -96,7 +95,18 @@ func (b *manifestBuilder) versionRoutes(gv schema.GroupVersion, skip func(path, 
 	return parseManifestRoutes(*version, skip)
 }
 
-func ignoreSkipped(string, string) {}
+// parseManifestRoutes resolves a version's custom routes, from its OpenAPI paths
+// or, for an older manifest, its deprecated routes.
+func parseManifestRoutes(version app.ManifestVersion, skip func(manifestroutes.Problem)) []manifestroutes.Route {
+	version.OpenAPI = versionOpenAPI(version)
+	routes, problems := manifestroutes.Parse(version, routeOptions)
+	for _, p := range problems {
+		skip(p)
+	}
+	return routes
+}
+
+func ignoreSkipped(manifestroutes.Problem) {}
 
 // routeMux serves the manifest's custom routes and hands every other request
 // to next. It wraps the apiserver's handler, inside the filter chain, so a
@@ -113,33 +123,18 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 			continue
 		}
 		gv := schema.GroupVersion{Group: b.group, Version: version.Name}
-		warn := func(path, reason string) {
+		warn := func(p manifestroutes.Problem) {
 			logging.DefaultLogger.Warn("skipping manifest route",
-				"group", gv.Group, "version", gv.Version, "path", path, "reason", reason)
+				"group", gv.Group, "version", gv.Version, "path", p.Path, "method", p.Method, "reason", p.Reason)
 		}
+		// manifestroutes.Parse has already registered every pattern on a scratch
+		// mux, so registering them again cannot fail.
+		root := "/apis/" + gv.String() + "/"
 		for _, route := range b.versionRoutes(gv, warn) {
-			handler := metrics.InstrumentHandler(gv.Group, gv.Version, route.path, b.routeHandler(gv, route))
-			pattern := "/apis/" + gv.String() + "/" + route.versionPath()
-			if strings.HasSuffix(pattern, "/") {
-				pattern += "{$}" // otherwise the pattern matches the whole subtree
-			}
-			var allowed []string
-			for method := range builder.GetPathOperations(&route.props) {
-				if err := handle(mux, method+" "+pattern, handler); err != nil {
-					warn(route.versionPath(), err.Error())
-					continue
-				}
-				allowed = append(allowed, method)
+			handler := metrics.InstrumentHandler(gv.Group, gv.Version, route.Path, b.routeHandler(gv, route))
+			for method := range manifestroutes.Operations(&route.Operations) {
+				mux.Handle(method+" "+root+route.Pattern, handler)
 				mounted++
-			}
-			if len(allowed) == 0 {
-				continue
-			}
-			// The path is the plugin's, since paths the apiserver serves are never
-			// mounted, so an undeclared method is refused here rather than passed
-			// on to answer 404.
-			if err := handle(mux, pattern, methodNotAllowed(allowed)); err != nil {
-				warn(route.versionPath(), err.Error())
 			}
 		}
 	}
@@ -149,82 +144,70 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Not mux.Handle("/", next): the mux would also clean and redirect paths
-		// meant for the apiserver, and answer 405 for its own paths that the
-		// apiserver might still serve.
+		// meant for the apiserver.
 		if _, pattern := mux.Handler(r); pattern != "" {
 			mux.ServeHTTP(w, r)
+			return
+		}
+		// The path is the plugin's, since paths the apiserver serves are never
+		// mounted, so an undeclared method is refused here rather than passed on
+		// to answer 404.
+		if allowed := allowedMethods(mux, r); len(allowed) > 0 {
+			methodNotAllowed(w, r, allowed)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
 }
 
+// servedMethods are the methods a manifest route can be mounted for. HEAD is
+// matched by a GET pattern too.
+var servedMethods = []string{
+	http.MethodDelete, http.MethodGet, http.MethodHead,
+	http.MethodPatch, http.MethodPost, http.MethodPut,
+}
+
+// allowedMethods returns the methods mux serves for r's path, the same lookup
+// ServeMux makes for its own 405s. Registering a method-less pattern per path
+// instead would conflict with another route's wildcard.
+func allowedMethods(mux *http.ServeMux, r *http.Request) []string {
+	var allowed []string
+	// A shallow copy is enough to look up a route, and this runs for every
+	// request the apiserver serves, so the headers are not cloned.
+	probe := *r
+	for _, method := range servedMethods {
+		probe.Method = method
+		if _, pattern := mux.Handler(&probe); pattern != "" {
+			allowed = append(allowed, method)
+		}
+	}
+	return allowed
+}
+
 // methodNotAllowed answers a method the route does not declare, listing the
 // ones it does.
-func methodNotAllowed(allowed []string) http.HandlerFunc {
-	// A GET pattern also serves HEAD.
-	if slices.Contains(allowed, http.MethodGet) && !slices.Contains(allowed, http.MethodHead) {
-		allowed = append(allowed, http.MethodHead)
-	}
-	slices.Sort(allowed)
-	header := strings.Join(allowed, ", ")
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Allow", header)
-		// Not apierrors.NewMethodNotSupported, which names a resource kind that a
-		// custom route does not have.
-		_ = errhttp.Write(r.Context(), &apierrors.StatusError{ErrStatus: metav1.Status{
-			Status:  metav1.StatusFailure,
-			Code:    http.StatusMethodNotAllowed,
-			Reason:  metav1.StatusReasonMethodNotAllowed,
-			Message: r.Method + " is not supported",
-		}}, w)
-	}
+func methodNotAllowed(w http.ResponseWriter, r *http.Request, allowed []string) {
+	w.Header().Set("Allow", strings.Join(allowed, ", "))
+	// Not apierrors.NewMethodNotSupported, which names a resource kind that a
+	// custom route does not have.
+	_ = errhttp.Write(r.Context(), &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status:  metav1.StatusFailure,
+		Code:    http.StatusMethodNotAllowed,
+		Reason:  metav1.StatusReasonMethodNotAllowed,
+		Message: r.Method + " is not supported",
+	}}, w)
 }
 
-// handle registers a pattern, returning the error ServeMux panics with for an
-// invalid or conflicting one, so one bad manifest path does not fail the plugin.
-func handle(mux *http.ServeMux, pattern string, handler http.Handler) (err error) {
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("invalid route pattern %q: %v", pattern, r)
-		}
-	}()
-	mux.Handle(pattern, handler)
-	return nil
-}
-
-// manifestRoute is one path of a version's OpenAPI, resolved to where it mounts.
-type manifestRoute struct {
-	// path is relative to the mount point: the group version root, or
-	// namespaces/{namespace} when namespaced.
-	path       string
-	namespaced bool
-	props      spec3.PathProps
-
-	// kind is set for a subresource route of a single object, with subresource
-	// the part of the path below {name}.
-	kind        *app.ManifestVersionKind
-	subresource string
-}
-
-// versionPath is the route's path relative to the group version root.
-func (r manifestRoute) versionPath() string {
-	if r.namespaced {
-		return namespacedPrefix + "/" + r.path
-	}
-	return r.path
-}
-
-// spec documents the path segments the route is mounted under.
-func (r manifestRoute) spec() *spec3.PathProps {
+// routeSpec documents the path segments a route is mounted under.
+func routeSpec(route manifestroutes.Route) *spec3.PathProps {
 	var params []*spec3.Parameter
-	if r.namespaced {
+	if route.Namespaced {
 		params = append(params, namespacePathParameter())
 	}
-	if r.kind == nil {
-		return withPathParameters(r.props, nil, params...)
+	if route.Kind == nil {
+		return withPathParameters(route.Operations, nil, params...)
 	}
-	return withPathParameters(r.props, []string{r.kind.Kind}, append(params, namePathParameter())...)
+	return withPathParameters(route.Operations, []string{route.Kind.Kind}, append(params, namePathParameter())...)
 }
 
 // versionOpenAPI returns the custom routes a version declares. Manifests built
@@ -244,11 +227,11 @@ func versionOpenAPI(version app.ManifestVersion) app.ManifestVersionOpenAPI {
 		}
 	}
 	add("", legacy.Cluster)
-	add("/"+namespacedPrefix, legacy.Namespaced)
+	add("/"+manifestroutes.NamespacedPrefix, legacy.Namespaced)
 	for _, kind := range version.Kinds {
 		prefix := "/" + strings.ToLower(kind.Plural) + "/{" + nameParameter + "}"
 		if kind.Scope != kindstore.ClusterScope {
-			prefix = "/" + namespacedPrefix + prefix
+			prefix = "/" + manifestroutes.NamespacedPrefix + prefix
 		}
 		add(prefix, kind.Routes)
 	}
@@ -261,87 +244,6 @@ func versionOpenAPI(version app.ManifestVersion) app.ManifestVersionOpenAPI {
 		out.Components.Schemas = schemas
 	}
 	return out
-}
-
-// namespacedPrefix is the version-relative path namespaced routes mount under.
-const namespacedPrefix = "namespaces/{" + namespaceParameter + "}"
-
-// withoutUnservedMethods removes the operations routeMux does not serve, so they
-// are answered 405 and left out of the spec. TRACE echoes the request back,
-// and OPTIONS keeps the 405 it always got. The returned props are a copy, so the
-// loaded manifest is untouched.
-func withoutUnservedMethods(props spec3.PathProps, skip func(method string)) (spec3.PathProps, bool) {
-	for _, m := range []struct {
-		method string
-		op     **spec3.Operation
-	}{
-		{http.MethodTrace, &props.Trace},
-		{http.MethodOptions, &props.Options},
-	} {
-		if *m.op != nil {
-			skip(m.method)
-			*m.op = nil
-		}
-	}
-	return props, len(builder.GetPathOperations(&props)) > 0
-}
-
-// parseManifestRoutes resolves each OpenAPI path of a version to a version
-// route or a kind subresource route, sorted by path. Paths that would shadow
-// resource storage, and methods that are not served, are reported to skip and
-// left out.
-func parseManifestRoutes(version app.ManifestVersion, skip func(path, reason string)) []manifestRoute {
-	reserved := reservedResourceNames(version)
-	kinds := map[string]*app.ManifestVersionKind{}
-	for i := range version.Kinds {
-		if plural := strings.ToLower(version.Kinds[i].Plural); plural != "" {
-			kinds[plural] = &version.Kinds[i]
-		}
-	}
-
-	declared := versionOpenAPI(version).Paths
-	routes := make([]manifestRoute, 0, len(declared))
-	for _, full := range slices.Sorted(maps.Keys(declared)) {
-		props, served := withoutUnservedMethods(declared[full], func(method string) {
-			skip(full, method+" is not served")
-		})
-		if !served {
-			continue
-		}
-		route := manifestRoute{
-			path:  strings.TrimPrefix(full, "/"),
-			props: props,
-		}
-		if rest, ok := strings.CutPrefix(route.path, namespacedPrefix+"/"); ok {
-			route.path = rest
-			route.namespaced = true
-		}
-
-		root, below, _ := strings.Cut(route.path, "/")
-		if kind := kinds[root]; kind != nil {
-			sub, ok := strings.CutPrefix(below, "{"+nameParameter+"}/")
-			first, _, _ := strings.Cut(sub, "/")
-			switch {
-			case !ok:
-				skip(full, "shadows a resource path")
-			case route.namespaced == (kind.Scope == kindstore.ClusterScope):
-				skip(full, "does not match the kind scope")
-			case first == "" || reservedSubresources[first]:
-				skip(full, "shadows a subresource")
-			default:
-				route.kind = kind
-				route.subresource = sub
-				routes = append(routes, route)
-			}
-			continue
-		}
-		if root == "" || reserved[root] || (!route.namespaced && root == "namespaces") {
-			skip(full, "shadows a resource path")
-			continue
-		}
-		routes = append(routes, route)
-	}
-	return routes
 }
 
 // searchRoutes builds the generic search, trash and hybrid endpoints for the kinds this
@@ -416,14 +318,14 @@ func (b *manifestBuilder) keysRoutes(gv schema.GroupVersion) *builder.APIRoutes 
 
 // routeHandler forwards a manifest route to the plugin's v3 route service. A
 // kind subresource route also carries the parent object, named by the path.
-func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestRoute) http.HandlerFunc {
-	path, resource := route.path, ""
-	if route.kind != nil {
-		path, resource = route.subresource, strings.ToLower(route.kind.Plural)
+func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestroutes.Route) http.HandlerFunc {
+	path, resource := route.Path, ""
+	if route.Kind != nil {
+		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
 	}
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		if route.namespaced {
+		if route.Namespaced {
 			// Read by the plugin's route info and by the storage lookup below.
 			ctx = request.WithNamespace(ctx, r.PathValue(namespaceParameter))
 			r = r.WithContext(ctx)
@@ -485,19 +387,6 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestRou
 		req.Header.Del(proxyutil.IDHeaderName)
 		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
 	}
-}
-
-// reservedResourceNames lists the path roots already claimed by resource storage
-// in this version. A custom route mounted there would shadow the resource, or its
-// generic subresources such as /search and /trash.
-func reservedResourceNames(version app.ManifestVersion) map[string]bool {
-	reserved := map[string]bool{apppluginV0.APP_RESOURCE_NAME: true}
-	for _, kind := range version.Kinds {
-		if kind.Plural != "" {
-			reserved[strings.ToLower(kind.Plural)] = true
-		}
-	}
-	return reserved
 }
 
 // namespacePathParameter documents the {namespace} segment that namespaced
