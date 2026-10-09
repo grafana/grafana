@@ -211,6 +211,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"org.users:read",                                           // accesscontrol.ActionOrgUsersRead,
 	"teams:read",                                               // accesscontrol.ActionTeamsRead,
 	"serviceaccounts:read",                                     // serviceaccounts.ActionRead,
+	"plugins.app:access",                                       // pluginaccesscontrol.ActionAppAccess
 )
 
 // Note: Any wildcard-prefixed permissions here must be whitelisted in authlib: https://github.com/grafana/authlib/blob/main/authz/service_permissions.go
