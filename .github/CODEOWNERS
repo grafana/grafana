@@ -375,7 +375,6 @@
 /scripts/releasefinder.sh @baldm0mma
 
 # OSS Plugin Partnerships backend code
-/pkg/tsdb/cloudwatch/ @grafana/data-sources-plugins
 /pkg/tsdb/azuremonitor/ @grafana/data-sources-plugins
 
 # Partner Datasources backend code
@@ -1202,7 +1201,6 @@ eslint-suppressions.json @grafanabot
 
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
-/public/app/plugins/datasource/cloudwatch/ @grafana/data-sources-plugins
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/grafana-catalog
 /public/app/plugins/datasource/azuremonitor/ @grafana/data-sources-plugins
