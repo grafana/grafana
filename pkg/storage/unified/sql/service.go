@@ -651,6 +651,7 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		&resourcepb.ResourceStats_ServiceDesc,
 		&resourcepb.BulkStore_ServiceDesc,
 		&resourcepb.BlobStore_ServiceDesc,
+		&resourcepb.BlobStoreStreaming_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 		&resourcepb.ResourceIndex_ServiceDesc,
@@ -659,6 +660,9 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		wrapped := s.withErrorResultConversion(desc)
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
 			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
+		}
+		if desc == &resourcepb.BlobStoreStreaming_ServiceDesc {
+			wrapped = grpchan.InterceptServer(wrapped, nil, resource.BlobStreamServerInterceptor(server))
 		}
 		srv.RegisterService(wrapped, handler)
 	}

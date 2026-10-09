@@ -1273,16 +1273,21 @@ func TestListWithSelectorsAuthorizesErroredRows(t *testing.T) {
 		require.Empty(t, resp.Items)
 	})
 
-	t.Run("not-found row surfaces without authorizing (not dropped on empty folder)", func(t *testing.T) {
+	t.Run("not-found row is left out without authorizing", func(t *testing.T) {
+		logger := &logtest.Fake{}
 		s := createTestServer(newSearch(), 1024)
 		s.backend = &batchFakeBackend{fakeBackend: &fakeBackend{}, notFound: map[string]struct{}{"b": {}}}
-		// Deny "b" too: a NotFound must still surface, not be hidden by the authz check.
+		// Allow only "a": "b" is skipped because storage does not have it, before
+		// any check could decide it.
 		s.access = denyByNameAccess{deny: map[string]struct{}{"b": {}}}
+		s.log = logger
 
 		resp, err := s.listWithSelectors(ctx, req())
 		require.NoError(t, err)
-		require.NotNil(t, resp.Error)
-		require.Equal(t, int32(http.StatusNotFound), resp.Error.Code)
+		require.Nil(t, resp.Error)
+		require.Len(t, resp.Items, 1)
+		require.Equal(t, int64(1), resp.Items[0].ResourceVersion)
+		require.Equal(t, 1, logger.WarnLogs.Calls)
 	})
 }
 
@@ -1598,4 +1603,43 @@ func TestDecodeListSearchRowsReadsTheFolderHint(t *testing.T) {
 	require.Len(t, rows, 2)
 	require.Equal(t, "folder-1", rows[0].folder)
 	require.Equal(t, "", rows[1].folder)
+}
+
+// The index can still hold a row for an object storage no longer has: deleted,
+// or that version pruned, before the index caught up. The store scan would not
+// list such an object, so the search-backed list leaves the row out instead of
+// failing the whole list with its NotFound.
+func TestListSkipsSearchRowsStorageNoLongerHas(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	first := seedResource(t, backend, ctx, "first", "folder-1")
+	created := seedResource(t, backend, ctx, "gone", "folder-1")
+	deleteResource(t, backend, ctx, "gone", "folder-1", created)
+	// The row points at the deletion, so storage has no live version at or below it.
+	gone, err := backend.latestResourceVersion(ctx)
+	require.NoError(t, err)
+	last := seedResource(t, backend, ctx, "last", "folder-1")
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(last, []*resourcepb.ResourceSearchRow{
+		folderSearchRow(appsKey("first"), first, "folder-1", "first"),
+		folderSearchRow(appsKey("gone"), gone, "folder-1", "gone"),
+		folderSearchRow(appsKey("last"), last, "folder-1", "last"),
+	})}, 1024)
+	s.backend = backend
+
+	resp, err := s.List(ctx, &resourcepb.ListRequest{
+		Source: resourcepb.ListRequest_STORE,
+		Options: &resourcepb.ListOptions{
+			Key:    appsKey(""),
+			Labels: []*resourcepb.Requirement{{Key: "team", Operator: "=", Values: []string{"a"}}},
+		},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	versions := make([]int64, 0, len(resp.Items))
+	for _, item := range resp.Items {
+		versions = append(versions, item.ResourceVersion)
+	}
+	require.Equal(t, []int64{first, last}, versions)
 }
