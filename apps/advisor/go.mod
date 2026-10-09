@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/advisor
 
-go 1.26.6
+go 1.27.2
 
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
@@ -358,3 +358,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	xorm.io/builder v0.3.13 // indirect
 )
+
+// This was retracted, but seems to be known by the Go module proxy,
+// and is otherwise pulled in as a transitive dependency.
+exclude k8s.io/client-go v12.0.0+incompatible

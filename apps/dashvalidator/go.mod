@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/dashvalidator
 
-go 1.26.6
+go 1.27.2
 
 require (
 	github.com/grafana/authlib/types v0.0.0-20260621220415-f6aaf60e82b2
@@ -350,3 +350,7 @@ replace (
 
 	github.com/prometheus/alertmanager => github.com/grafana/prometheus-alertmanager v0.25.1-0.20260225120258-18275ca76b0c
 )
+
+// This was retracted, but seems to be known by the Go module proxy,
+// and is otherwise pulled in as a transitive dependency.
+exclude k8s.io/client-go v12.0.0+incompatible

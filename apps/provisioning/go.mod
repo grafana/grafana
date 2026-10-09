@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/provisioning
 
-go 1.26.6
+go 1.27.2
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0

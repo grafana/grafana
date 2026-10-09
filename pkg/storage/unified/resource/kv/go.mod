@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource/kv
 
-go 1.26.6
+go 1.27.2
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2

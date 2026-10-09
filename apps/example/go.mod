@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/example
 
-go 1.26.6
+go 1.27.2
 
 require (
 	github.com/grafana/grafana-app-sdk v0.56.6

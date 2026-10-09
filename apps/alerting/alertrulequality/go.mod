@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/alerting/alertrulequality
 
-go 1.26.6
+go 1.27.2
 
 require (
 	k8s.io/apimachinery v0.36.2

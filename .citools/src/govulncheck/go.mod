@@ -1,6 +1,6 @@
 module govulncheck
 
-go 1.26.6
+go 1.27.2
 
 tool golang.org/x/vuln/cmd/govulncheck
 

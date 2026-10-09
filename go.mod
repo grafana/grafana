@@ -1,10 +1,47 @@
 module github.com/grafana/grafana
 
-go 1.26.6
+go 1.27.2
+
+// Replace references to internal workspaces
+replace (
+	github.com/grafana/grafana/apps/advisor => ./apps/advisor
+	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
+	github.com/grafana/grafana/apps/alerting/alertrulequality => ./apps/alerting/alertrulequality
+	github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
+	github.com/grafana/grafana/apps/alerting/rules => ./apps/alerting/rules
+	github.com/grafana/grafana/apps/annotation => ./apps/annotation
+	github.com/grafana/grafana/apps/collections => ./apps/collections
+	github.com/grafana/grafana/apps/correlations => ./apps/correlations
+	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
+	github.com/grafana/grafana/apps/dashvalidator => ./apps/dashvalidator
+	github.com/grafana/grafana/apps/example => ./apps/example
+	github.com/grafana/grafana/apps/folder => ./apps/folder
+	github.com/grafana/grafana/apps/iam => ./apps/iam
+	github.com/grafana/grafana/apps/live => ./apps/live
+	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
+	github.com/grafana/grafana/apps/playlist => ./apps/playlist
+	github.com/grafana/grafana/apps/plugins => ./apps/plugins
+	github.com/grafana/grafana/apps/preferences => ./apps/preferences
+	github.com/grafana/grafana/apps/provisioning => ./apps/provisioning
+	github.com/grafana/grafana/apps/quotas => ./apps/quotas
+	github.com/grafana/grafana/apps/scope => ./apps/scope
+	github.com/grafana/grafana/apps/secret => ./apps/secret
+	github.com/grafana/grafana/apps/shorturl => ./apps/shorturl
+
+	// Packages
+	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
+	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
+	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
+	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
+	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ./pkg/storage/unified/resource/kv
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ./pkg/storage/unified/resourcepb
+	github.com/grafana/grafana/pkg/util/sqlite => ./pkg/util/sqlite
+)
 
 // Direct requirements -- every entry needs an owner
 require (
 	cloud.google.com/go/aiplatform v1.125.0 // @grafana/grafana-search-and-storage
+	cloud.google.com/go/discoveryengine v1.32.0 // @grafana/grafana-search-and-storage
 	cloud.google.com/go/kms v1.31.0 // @grafana/grafana-backend-group
 	cloud.google.com/go/storage v1.63.0 // @grafana/grafana-backend-group
 	dario.cat/mergo v1.0.2 // @grafana/grafana-app-platform-squad
@@ -110,6 +147,36 @@ require (
 	github.com/grafana/grafana-google-sdk-go v0.4.2 // @grafana/data-sources-plugins
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20231213163343-bd475d63fb79 // @grafana/grafana-backend-group
 	github.com/grafana/grafana-plugin-sdk-go v0.296.2 // @grafana/grafana-catalog
+	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
+	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/annotation v0.0.0 // @grafana/grafana-backend-services-squad
+	github.com/grafana/grafana/apps/collections v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
+	github.com/grafana/grafana/apps/correlations v0.0.0 // @grafana/datapro
+	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
+	github.com/grafana/grafana/apps/dashvalidator v0.0.0 // @grafana/sharing-squad
+	github.com/grafana/grafana/apps/example v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/access-squad
+	github.com/grafana/grafana/apps/live v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // @grafana/observability-logs
+	github.com/grafana/grafana/apps/playlist v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/grafana-catalog
+	github.com/grafana/grafana/apps/preferences v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
+	github.com/grafana/grafana/apps/provisioning v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/apps/quotas v0.0.0 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/apps/scope v0.0.0 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana/apps/secret v0.0.0 // @grafana/grafana-operator-experience-squad
+	github.com/grafana/grafana/apps/shorturl v0.0.0 // @grafana/sharing-squad
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/apiserver v0.0.0 // @grafana/grafana-app-platform-squad
+	github.com/grafana/grafana/pkg/infra/features v0.0.0 // @grafana/grafana-backend-services-squad
+	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/grafana-catalog
+	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // @grafana/grafana-search-and-storage
+	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // @grafana/grafana-backend-group
 	github.com/grafana/loki/pkg/push v0.0.0-20250823105456-332df2b20000 // @grafana/alerting-backend
 	github.com/grafana/nanogit/gittest v1.7.0 // @grafana/grafana-git-ui-sync-team
 	github.com/grafana/otel-profiling-go v0.6.0 // @grafana/grafana-backend-group
@@ -133,6 +200,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0 // @grafana/grafana-backend-group
 	github.com/json-iterator/go v1.1.12 // @grafana/grafana-backend-group
 	github.com/klauspost/pgzip v1.2.6 // @grafana/grafana-backend-group
+	github.com/ktrysmt/go-bitbucket v0.10.0 // @grafana/grafana-app-platform-squad
 	github.com/lib/pq v1.12.3 // @grafana/grafana-backend-group
 	github.com/m3db/prometheus_remote_client_golang v0.4.4 // @grafana/grafana-backend-group
 	github.com/madflojo/testcerts v1.5.0 // @grafana/alerting-backend
@@ -182,6 +250,7 @@ require (
 	github.com/xlab/treeprint v1.2.0 // @grafana/observability-traces-and-profiling
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // @grafana/grafana-operator-experience-squad
 	github.com/yudai/gojsondiff v1.0.0 // @grafana/grafana-backend-group
+	gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
 	go.etcd.io/bbolt v1.4.3 // @grafana/grafana-search-and-storage
 	go.opentelemetry.io/collector/pdata v1.60.0 // @grafana/grafana-backend-group
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.70.0 // @grafana/grafana-catalog
@@ -231,76 +300,6 @@ require (
 	sigs.k8s.io/randfill v1.0.0 // @grafana/grafana-app-platform-squad
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // @grafana/grafana-app-platform-squad
 	xorm.io/builder v0.3.13 // @grafana/grafana-backend-group
-)
-
-// Internal module references (every entry should also have a replace in the section below)
-require (
-	github.com/grafana/grafana/apps/advisor v0.0.0 // @grafana/grafana-catalog
-	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/alerting/alertrulequality v0.0.0 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/alerting/rules v0.0.0 // @grafana/alerting-backend
-	github.com/grafana/grafana/apps/annotation v0.0.0 // @grafana/grafana-backend-services-squad
-	github.com/grafana/grafana/apps/collections v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
-	github.com/grafana/grafana/apps/correlations v0.0.0 // @grafana/datapro
-	github.com/grafana/grafana/apps/dashboard v0.0.0 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
-	github.com/grafana/grafana/apps/dashvalidator v0.0.0 // @grafana/sharing-squad
-	github.com/grafana/grafana/apps/example v0.0.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/folder v0.0.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/iam v0.0.0 // @grafana/access-squad
-	github.com/grafana/grafana/apps/live v0.0.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/logsdrilldown v0.0.0 // @grafana/observability-logs
-	github.com/grafana/grafana/apps/playlist v0.0.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/plugins v0.0.0 // @grafana/grafana-catalog
-	github.com/grafana/grafana/apps/preferences v0.0.0 // @grafana/grafana-app-platform-squad @grafana/grafana-frontend-platform
-	github.com/grafana/grafana/apps/provisioning v0.0.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/apps/quotas v0.0.0 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/apps/scope v0.0.0 // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana/apps/secret v0.0.0 // @grafana/grafana-operator-experience-squad
-	github.com/grafana/grafana/apps/shorturl v0.0.0 // @grafana/sharing-squad
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/apiserver v0.0.0 // @grafana/grafana-app-platform-squad
-	github.com/grafana/grafana/pkg/infra/features v0.0.0 // @grafana/grafana-backend-services-squad
-	github.com/grafana/grafana/pkg/plugins v0.0.0 // @grafana/grafana-catalog
-	github.com/grafana/grafana/pkg/storage/unified/resource/kv v0.0.0 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/storage/unified/resourcepb v0.0.0 // @grafana/grafana-search-and-storage
-	github.com/grafana/grafana/pkg/util/sqlite v0.0.0 // @grafana/grafana-backend-group
-)
-
-// Replace references to internal workspaces
-replace (
-	github.com/grafana/grafana/apps/advisor => ./apps/advisor
-	github.com/grafana/grafana/apps/alerting/alertenrichment => ./apps/alerting/alertenrichment
-	github.com/grafana/grafana/apps/alerting/alertrulequality => ./apps/alerting/alertrulequality
-	github.com/grafana/grafana/apps/alerting/notifications => ./apps/alerting/notifications
-	github.com/grafana/grafana/apps/alerting/rules => ./apps/alerting/rules
-	github.com/grafana/grafana/apps/annotation => ./apps/annotation
-	github.com/grafana/grafana/apps/collections => ./apps/collections
-	github.com/grafana/grafana/apps/correlations => ./apps/correlations
-	github.com/grafana/grafana/apps/dashboard => ./apps/dashboard
-	github.com/grafana/grafana/apps/dashvalidator => ./apps/dashvalidator
-	github.com/grafana/grafana/apps/example => ./apps/example
-	github.com/grafana/grafana/apps/folder => ./apps/folder
-	github.com/grafana/grafana/apps/iam => ./apps/iam
-	github.com/grafana/grafana/apps/live => ./apps/live
-	github.com/grafana/grafana/apps/logsdrilldown => ./apps/logsdrilldown
-	github.com/grafana/grafana/apps/playlist => ./apps/playlist
-	github.com/grafana/grafana/apps/plugins => ./apps/plugins
-	github.com/grafana/grafana/apps/preferences => ./apps/preferences
-	github.com/grafana/grafana/apps/provisioning => ./apps/provisioning
-	github.com/grafana/grafana/apps/quotas => ./apps/quotas
-	github.com/grafana/grafana/apps/scope => ./apps/scope
-	github.com/grafana/grafana/apps/secret => ./apps/secret
-	github.com/grafana/grafana/apps/shorturl => ./apps/shorturl
-
-	// Packages
-	github.com/grafana/grafana/pkg/apimachinery => ./pkg/apimachinery
-	github.com/grafana/grafana/pkg/apiserver => ./pkg/apiserver
-	github.com/grafana/grafana/pkg/infra/features => ./pkg/infra/features
-	github.com/grafana/grafana/pkg/plugins => ./pkg/plugins
-	github.com/grafana/grafana/pkg/storage/unified/resource/kv => ./pkg/storage/unified/resource/kv
-	github.com/grafana/grafana/pkg/storage/unified/resourcepb => ./pkg/storage/unified/resourcepb
-	github.com/grafana/grafana/pkg/util/sqlite => ./pkg/util/sqlite
 )
 
 // Indirect references
@@ -420,6 +419,7 @@ require (
 	github.com/dustin/go-humanize v1.0.1 // indirect; @grafana/observability-traces-and-profiling
 	github.com/ebitengine/purego v0.10.2 // indirect
 	github.com/edsrzf/mmap-go v1.2.1-0.20241212181136-fad1cd13edbd // indirect
+	github.com/efficientgo/core v1.0.0-rc.3 // indirect
 	github.com/elazarl/goproxy v1.8.4 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/envoyproxy/go-control-plane/envoy v1.37.0 // indirect
@@ -449,6 +449,7 @@ require (
 	github.com/go-openapi/swag/loading v0.28.0 // indirect
 	github.com/go-openapi/swag/mangling v0.28.0 // indirect
 	github.com/go-openapi/swag/netutils v0.28.0 // indirect
+	github.com/go-openapi/swag/pools v0.28.0 // indirect
 	github.com/go-openapi/swag/stringutils v0.28.0 // indirect
 	github.com/go-openapi/swag/typeutils v0.28.0 // indirect
 	github.com/go-openapi/swag/yamlutils v0.28.0 // indirect
@@ -624,10 +625,12 @@ require (
 	github.com/spiffe/go-spiffe/v2 v2.7.0 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
+	github.com/thanos-io/objstore v0.0.0-20250115091151-a54d0f04b42a // indirect
 	github.com/tidwall/gjson v1.19.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
+	github.com/tinylib/msgp v1.6.3 // indirect
 	github.com/tklauser/go-sysconf v0.4.0 // indirect
 	github.com/tklauser/numcpus v0.12.0 // indirect
 	github.com/uber/jaeger-client-go v2.30.0+incompatible // indirect
@@ -699,19 +702,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 	software.sslmate.com/src/go-pkcs12 v0.7.2 // indirect
-)
-
-require gitlab.com/gitlab-org/api/client-go v1.46.0 // @grafana/grafana-app-platform-squad
-
-require github.com/ktrysmt/go-bitbucket v0.10.0 // @grafana/grafana-app-platform-squad
-
-require cloud.google.com/go/discoveryengine v1.32.0 // @grafana/grafana-search-and-storage
-
-require (
-	github.com/efficientgo/core v1.0.0-rc.3 // indirect
-	github.com/go-openapi/swag/pools v0.28.0 // indirect
-	github.com/thanos-io/objstore v0.0.0-20250115091151-a54d0f04b42a // indirect
-	github.com/tinylib/msgp v1.6.3 // indirect
 )
 
 replace (
