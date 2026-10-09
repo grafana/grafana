@@ -1239,6 +1239,8 @@ func testIntegrationDashboardServicePermissions(t *testing.T) {
 	})
 
 	t.Run("move requires source write and destination create", func(t *testing.T) {
+		const movedDashboardTitle = "Moved dashboard"
+
 		for _, toRoot := range []bool{false, true} {
 			t.Run(fmt.Sprintf("to root=%t", toRoot), func(t *testing.T) {
 				cases := dashboardMovePermissionCases()
@@ -1255,7 +1257,10 @@ func testIntegrationDashboardServicePermissions(t *testing.T) {
 						createDashboardMoveUser(t, env, login, dashboard.UID, destinationFolder, tc)
 
 						payload := map[string]interface{}{
-							"dashboard": map[string]interface{}{"uid": dashboard.UID, "title": "Moved dashboard"},
+							"dashboard": map[string]interface{}{
+								"uid":   dashboard.UID,
+								"title": movedDashboardTitle,
+							},
 							"folderUid": destinationFolder,
 							"overwrite": true,
 						}
@@ -1266,7 +1271,7 @@ func testIntegrationDashboardServicePermissions(t *testing.T) {
 
 						expectedFolder, expectedTitle := sourceFolder, originalTitle
 						if tc.wantStatus == http.StatusOK {
-							expectedFolder, expectedTitle = destinationFolder, "Moved dashboard"
+							expectedFolder, expectedTitle = destinationFolder, movedDashboardTitle
 						}
 						requireDashboardLocationAndTitle(t, grafanaListedAddr, dashboard.UID, expectedFolder, expectedTitle)
 					})
@@ -1574,7 +1579,7 @@ func createDashboardMoveUser(
 	grants := []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions:           []string{folder.ActionFoldersRead},
-			Resource:          "folders",
+			Resource:          folder.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        "*",
 		},
@@ -1582,7 +1587,7 @@ func createDashboardMoveUser(
 	if tc.writeSource {
 		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
 			Actions:           []string{dashboards.ActionDashboardsRead, dashboards.ActionDashboardsWrite},
-			Resource:          "dashboards",
+			Resource:          dashboards.ScopeDashboardsRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        dashboardUID,
 		})
@@ -1597,7 +1602,7 @@ func createDashboardMoveUser(
 		}
 		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
 			Actions:           []string{dashboards.ActionDashboardsCreate},
-			Resource:          "folders",
+			Resource:          folder.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        scopeUID,
 		})

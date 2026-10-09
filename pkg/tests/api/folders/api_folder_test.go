@@ -867,13 +867,13 @@ func folderMovePermissionGrants(
 	grants := []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions:           sourceActions,
-			Resource:          "folders",
+			Resource:          foldermodel.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        sourceUID,
 		},
 		{
 			Actions:           []string{foldermodel.ActionFoldersRead},
-			Resource:          "folders",
+			Resource:          foldermodel.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        "*",
 		},
@@ -885,7 +885,7 @@ func folderMovePermissionGrants(
 		}
 		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
 			Actions:           destinationActions,
-			Resource:          "folders",
+			Resource:          foldermodel.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        destinationUID,
 		})
@@ -932,7 +932,7 @@ func folderAdminPermissionGrants(
 	grants := []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions:           actions,
-			Resource:          "folders",
+			Resource:          foldermodel.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        targetUID,
 		},
@@ -940,7 +940,7 @@ func folderAdminPermissionGrants(
 	if tc.otherWrite {
 		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
 			Actions:           []string{foldermodel.ActionFoldersPermissionsWrite},
-			Resource:          "folders",
+			Resource:          foldermodel.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        otherUID,
 		})

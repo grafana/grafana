@@ -69,6 +69,8 @@ func TestIntegrationProvisioningNotificationPoliciesAccessControl(t *testing.T) 
 func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	const otherReceiverUID = "another-receiver"
+
 	e := setupProvisioningAccessControlTest(t)
 
 	testCases := []provisioningTestCase{
@@ -82,7 +84,7 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 			name: "receivers create without provisioning set status",
 			permissions: []resourcepermissions.SetResourcePermissionCommand{{
 				Actions:           []string{accesscontrol.ActionAlertingReceiversCreate},
-				Resource:          "receivers",
+				Resource:          ngmodels.ScopeReceiversRoot,
 				ResourceAttribute: "uid",
 				ResourceID:        "*",
 			}},
@@ -92,7 +94,7 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 			canRead: true,
 			permissions: []resourcepermissions.SetResourcePermissionCommand{{
 				Actions:           []string{accesscontrol.ActionAlertingReceiversRead, accesscontrol.ActionAlertingReceiversUpdate},
-				Resource:          "receivers",
+				Resource:          ngmodels.ScopeReceiversRoot,
 				ResourceAttribute: "uid",
 				ResourceID:        "*",
 			}},
@@ -102,7 +104,7 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 			canRead: true,
 			permissions: []resourcepermissions.SetResourcePermissionCommand{{
 				Actions:           []string{accesscontrol.ActionAlertingReceiversRead, accesscontrol.ActionAlertingReceiversDelete},
-				Resource:          "receivers",
+				Resource:          ngmodels.ScopeReceiversRoot,
 				ResourceAttribute: "uid",
 				ResourceID:        "*",
 			}},
@@ -113,15 +115,15 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
 					Actions:           []string{accesscontrol.ActionAlertingReceiversRead},
-					Resource:          "receivers",
+					Resource:          ngmodels.ScopeReceiversRoot,
 					ResourceAttribute: "uid",
 					ResourceID:        "*",
 				},
 				{
 					Actions:           []string{accesscontrol.ActionAlertingReceiversUpdate},
-					Resource:          "receivers",
+					Resource:          ngmodels.ScopeReceiversRoot,
 					ResourceAttribute: "uid",
-					ResourceID:        "another-receiver",
+					ResourceID:        otherReceiverUID,
 				},
 				{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}},
 			},
@@ -132,15 +134,15 @@ func testIntegrationProvisioningContactPointsAccessControl(t *testing.T) {
 			permissions: []resourcepermissions.SetResourcePermissionCommand{
 				{
 					Actions:           []string{accesscontrol.ActionAlertingReceiversRead},
-					Resource:          "receivers",
+					Resource:          ngmodels.ScopeReceiversRoot,
 					ResourceAttribute: "uid",
 					ResourceID:        "*",
 				},
 				{
 					Actions:           []string{accesscontrol.ActionAlertingReceiversDelete},
-					Resource:          "receivers",
+					Resource:          ngmodels.ScopeReceiversRoot,
 					ResourceAttribute: "uid",
-					ResourceID:        "another-receiver",
+					ResourceID:        otherReceiverUID,
 				},
 				{Actions: []string{accesscontrol.ActionAlertingProvisioningSetStatus}},
 			},
@@ -764,14 +766,15 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 
 	const (
 		ruleGroupInterval = time.Minute
+		updatedRuleTitle  = "Updated rule"
 		// Keep two rules so one request can update a rule and delete another.
 		initialRuleCount = 2
 	)
 
 	e := setupProvisioningAccessControlTest(t)
 	orgID := e.env.Cfg.DefaultOrgID()
-	e.adminClient.CreateFolder(t, "rules-target", "Rules target")
-	e.adminClient.CreateFolder(t, "rules-other", "Rules other")
+	e.adminClient.CreateFolder(t, ruleGroupTargetFolderUID, "Rules target")
+	e.adminClient.CreateFolder(t, ruleGroupOtherFolderUID, "Rules other")
 
 	cases := ruleGroupPermissionCases()
 
@@ -779,7 +782,7 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			group := definitions.AlertRuleGroup{
 				Title:     fmt.Sprintf("permissions-%d", i),
-				FolderUID: "rules-target",
+				FolderUID: ruleGroupTargetFolderUID,
 				Interval:  int64(ruleGroupInterval / time.Second),
 			}
 			for j := range initialRuleCount {
@@ -790,7 +793,7 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 			var before definitions.AlertRuleGroup
 			var status int
 			var body string
-			if tc.operation != "create" {
+			if tc.operation != ruleGroupOperationCreate {
 				_, status, body = e.adminClient.CreateOrUpdateRuleGroupProvisioning(t, group)
 				require.Equal(t, http.StatusOK, status, body)
 				before, status, body = e.adminClient.GetRuleGroupProvisioning(t, group.FolderUID, group.Title)
@@ -800,24 +803,24 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 			grants := ruleGroupPermissionGrants(tc, group.FolderUID)
 			client := e.createUserAndClient(t, provisioningTestCase{permissions: grants})
 
-			if tc.operation != "create" {
+			if tc.operation != ruleGroupOperationCreate {
 				group = before
 				group.Rules = slices.Clone(before.Rules)
 			}
 
 			switch tc.operation {
-			case "update":
-				group.Rules[0].Title = "Updated rule"
-			case "update and create":
-				group.Rules[0].Title = "Updated rule"
+			case ruleGroupOperationUpdate:
+				group.Rules[0].Title = updatedRuleTitle
+			case ruleGroupOperationUpdateAndCreate:
+				group.Rules[0].Title = updatedRuleTitle
 				uid := fmt.Sprintf("new-rule-%d", i)
 				group.Rules = append(group.Rules, provisioningPermissionRule(uid, group.Title, orgID))
-			case "update and delete":
-				group.Rules[0].Title = "Updated rule"
+			case ruleGroupOperationUpdateAndDelete:
+				group.Rules[0].Title = updatedRuleTitle
 				group.Rules = group.Rules[:1]
 			}
 
-			if tc.operation == "delete" {
+			if tc.operation == ruleGroupOperationDelete {
 				status, body = client.DeleteRulesGroupProvisioning(t, group.FolderUID, group.Title)
 			} else {
 				_, status, body = client.CreateOrUpdateRuleGroupProvisioning(t, group)
@@ -825,7 +828,7 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 			require.Equal(t, tc.wantStatus, status, body)
 
 			after, status, body := e.adminClient.GetRuleGroupProvisioning(t, group.FolderUID, group.Title)
-			if tc.operation == "delete" {
+			if tc.operation == ruleGroupOperationDelete {
 				require.Equal(t, http.StatusNotFound, status, body)
 				return
 			}
@@ -847,17 +850,19 @@ func testIntegrationProvisioningRuleGroupPermissionCombinations(t *testing.T) {
 }
 
 func provisioningPermissionRule(uid, group string, orgID int64) definitions.ProvisionedAlertRule {
+	const queryRefID = "A"
+
 	return definitions.ProvisionedAlertRule{
 		UID:          uid,
 		Title:        uid,
 		OrgID:        orgID,
-		FolderUID:    "rules-target",
+		FolderUID:    ruleGroupTargetFolderUID,
 		RuleGroup:    group,
-		Condition:    "A",
+		Condition:    queryRefID,
 		NoDataState:  definitions.Alerting,
 		ExecErrState: definitions.AlertingErrState,
 		Data: []definitions.AlertQuery{{
-			RefID:         "A",
+			RefID:         queryRefID,
 			DatasourceUID: expr.DatasourceUID,
 			Model:         json.RawMessage(`{"type":"math","expression":"1"}`),
 		}},
@@ -915,6 +920,17 @@ func (e provisioningTestEnv) createUserAndClient(t *testing.T, tc provisioningTe
 	return client
 }
 
+const (
+	ruleGroupOperationCreate          = "create"
+	ruleGroupOperationUpdate          = "update"
+	ruleGroupOperationDelete          = "delete"
+	ruleGroupOperationUpdateAndCreate = "update and create"
+	ruleGroupOperationUpdateAndDelete = "update and delete"
+
+	ruleGroupTargetFolderUID = "rules-target"
+	ruleGroupOtherFolderUID  = "rules-other"
+)
+
 type ruleGroupPermissionCase struct {
 	name               string
 	operation          string
@@ -929,83 +945,83 @@ func ruleGroupPermissionCases() []ruleGroupPermissionCase {
 	return []ruleGroupPermissionCase{
 		{
 			name:           "update",
-			operation:      "update",
+			operation:      ruleGroupOperationUpdate,
 			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
 			wantStatus:     http.StatusOK,
 		},
 		{
 			name:           "create",
-			operation:      "create",
+			operation:      ruleGroupOperationCreate,
 			mutationAction: accesscontrol.ActionAlertingRuleCreate,
 			wantStatus:     http.StatusOK,
 		},
 		{
 			name:           "delete group",
-			operation:      "delete",
+			operation:      ruleGroupOperationDelete,
 			mutationAction: accesscontrol.ActionAlertingRuleDelete,
 			wantStatus:     http.StatusNoContent,
 		},
 		{
 			name:           "missing rule read",
-			operation:      "update",
+			operation:      ruleGroupOperationUpdate,
 			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
 			missingAction:  accesscontrol.ActionAlertingRuleRead,
 			wantStatus:     http.StatusForbidden,
 		},
 		{
 			name:           "missing folder read",
-			operation:      "update",
+			operation:      ruleGroupOperationUpdate,
 			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
 			missingAction:  folder.ActionFoldersRead,
 			wantStatus:     http.StatusForbidden,
 		},
 		{
 			name:           "missing set status",
-			operation:      "update",
+			operation:      ruleGroupOperationUpdate,
 			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
 			missingAction:  accesscontrol.ActionAlertingProvisioningSetStatus,
 			wantStatus:     http.StatusForbidden,
 		},
 		{
 			name:       "missing mutation permission",
-			operation:  "update",
+			operation:  ruleGroupOperationUpdate,
 			wantStatus: http.StatusForbidden,
 		},
 		{
 			name:             "update scoped to another folder",
-			operation:        "update",
+			operation:        ruleGroupOperationUpdate,
 			mutationAction:   accesscontrol.ActionAlertingRuleUpdate,
 			wrongScopeAction: accesscontrol.ActionAlertingRuleUpdate,
 			wantStatus:       http.StatusForbidden,
 		},
 		{
 			name:             "read scoped to another folder",
-			operation:        "update",
+			operation:        ruleGroupOperationUpdate,
 			mutationAction:   accesscontrol.ActionAlertingRuleUpdate,
 			wrongScopeAction: accesscontrol.ActionAlertingRuleRead,
 			wantStatus:       http.StatusForbidden,
 		},
 		{
 			name:           "update cannot also create",
-			operation:      "update and create",
+			operation:      ruleGroupOperationUpdateAndCreate,
 			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
 			wantStatus:     http.StatusForbidden,
 		},
 		{
 			name:           "update cannot also delete",
-			operation:      "update and delete",
+			operation:      ruleGroupOperationUpdateAndDelete,
 			mutationAction: accesscontrol.ActionAlertingRuleUpdate,
 			wantStatus:     http.StatusForbidden,
 		},
 		{
 			name:               "provisioning write alternative",
-			operation:          "update",
+			operation:          ruleGroupOperationUpdate,
 			provisioningAction: accesscontrol.ActionAlertingProvisioningWrite,
 			wantStatus:         http.StatusOK,
 		},
 		{
 			name:               "rules provisioning write alternative",
-			operation:          "update",
+			operation:          ruleGroupOperationUpdate,
 			provisioningAction: accesscontrol.ActionAlertingRulesProvisioningWrite,
 			wantStatus:         http.StatusOK,
 		},
@@ -1018,7 +1034,7 @@ func ruleGroupPermissionGrants(tc ruleGroupPermissionCase, folderUID string) []r
 			{Actions: []string{tc.provisioningAction}},
 			{
 				Actions:           []string{folder.ActionFoldersRead},
-				Resource:          "folders",
+				Resource:          folder.ScopeFoldersRoot,
 				ResourceAttribute: "uid",
 				ResourceID:        folderUID,
 			},
@@ -1036,7 +1052,7 @@ func ruleGroupPermissionGrants(tc ruleGroupPermissionCase, folderUID string) []r
 	grants := []resourcepermissions.SetResourcePermissionCommand{
 		{
 			Actions:           scopedActions,
-			Resource:          "folders",
+			Resource:          folder.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
 			ResourceID:        folderUID,
 		},
@@ -1049,9 +1065,9 @@ func ruleGroupPermissionGrants(tc ruleGroupPermissionCase, folderUID string) []r
 	if tc.wrongScopeAction != "" {
 		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
 			Actions:           []string{tc.wrongScopeAction},
-			Resource:          "folders",
+			Resource:          folder.ScopeFoldersRoot,
 			ResourceAttribute: "uid",
-			ResourceID:        "rules-other",
+			ResourceID:        ruleGroupOtherFolderUID,
 		})
 	}
 

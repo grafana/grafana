@@ -15,6 +15,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
+	annotationmodels "github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -356,7 +357,7 @@ func testIntegrationAnnotationScopePermissions(t *testing.T) {
 				},
 				{
 					Actions:           []string{dashboards.ActionDashboardsRead},
-					Resource:          "dashboards",
+					Resource:          dashboards.ScopeDashboardsRoot,
 					ResourceAttribute: "uid",
 					ResourceID:        "*",
 				},
@@ -376,7 +377,7 @@ func testIntegrationAnnotationScopePermissions(t *testing.T) {
 					if method == http.MethodPut || method == http.MethodPatch {
 						var err error
 						update, err = json.Marshal(map[string]interface{}{
-							"text": "Updated annotation",
+							"text": updatedAnnotationText,
 							"time": annotationTimeMillis,
 						})
 						require.NoError(t, err)
@@ -537,6 +538,11 @@ func createDashboard(t *testing.T, grafanaListedAddr string, title string, folde
 	}
 }
 
+const (
+	originalAnnotationText = "Original annotation"
+	updatedAnnotationText  = "Updated annotation"
+)
+
 type annotationScopePermissionCase struct {
 	name         string
 	resource     string
@@ -551,48 +557,48 @@ func annotationScopePermissionCases(dashboardUID, parentUID, otherUID string) []
 	return []annotationScopePermissionCase{
 		{
 			name:       "dashboard grant",
-			resource:   "dashboards",
+			resource:   dashboards.ScopeDashboardsRoot,
 			attribute:  "uid",
 			resourceID: dashboardUID,
 			allowed:    true,
 		},
 		{
 			name:       "ancestor folder grant",
-			resource:   "folders",
+			resource:   folder.ScopeFoldersRoot,
 			attribute:  "uid",
 			resourceID: parentUID,
 			allowed:    true,
 		},
 		{
 			name:       "different dashboard",
-			resource:   "dashboards",
+			resource:   dashboards.ScopeDashboardsRoot,
 			attribute:  "uid",
 			resourceID: otherUID,
 		},
 		{
 			name:       "organization grant cannot access dashboard annotation",
-			resource:   "annotations",
+			resource:   accesscontrol.ScopeAnnotationsRoot,
 			attribute:  "type",
-			resourceID: "organization",
+			resourceID: annotationmodels.Organization.String(),
 		},
 		{
 			name:         "organization grant",
-			resource:     "annotations",
+			resource:     accesscontrol.ScopeAnnotationsRoot,
 			attribute:    "type",
-			resourceID:   "organization",
+			resourceID:   annotationmodels.Organization.String(),
 			organization: true,
 			allowed:      true,
 		},
 		{
 			name:         "dashboard grant cannot access organization annotation",
-			resource:     "dashboards",
+			resource:     dashboards.ScopeDashboardsRoot,
 			attribute:    "uid",
 			resourceID:   dashboardUID,
 			organization: true,
 		},
 		{
 			name:       "read only dashboard",
-			resource:   "dashboards",
+			resource:   dashboards.ScopeDashboardsRoot,
 			attribute:  "uid",
 			resourceID: dashboardUID,
 			readOnly:   true,
@@ -608,7 +614,7 @@ func createScopedAnnotation(
 
 	body, err := json.Marshal(dtos.PostAnnotationsCmd{
 		Time:         timestampMillis,
-		Text:         "Original annotation",
+		Text:         originalAnnotationText,
 		DashboardUID: dashboardUID,
 	})
 	require.NoError(t, err)
@@ -643,9 +649,9 @@ func requireStoredAnnotation(t *testing.T, helper *apis.K8sTestHelper, path, met
 	}
 
 	require.Equal(t, http.StatusOK, stored.Response.StatusCode, string(stored.Body))
-	text := "Original annotation"
+	text := originalAnnotationText
 	if allowed && (method == http.MethodPut || method == http.MethodPatch) {
-		text = "Updated annotation"
+		text = updatedAnnotationText
 	}
 	require.Equal(t, text, stored.Result.Text)
 }

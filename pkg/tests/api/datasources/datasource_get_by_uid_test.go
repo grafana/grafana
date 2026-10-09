@@ -58,6 +58,11 @@ func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
 func testIntegrationDataSourceScopeResolution(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
+	const (
+		datasourceByUIDPath  = "/api/datasources/uid/%s"
+		datasourceByNamePath = "/api/datasources/name/%s"
+	)
+
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous:        true,
 		DisableAuthZClientCache: true,
@@ -89,8 +94,8 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 			},
 		}
 		paths := []string{
-			fmt.Sprintf("/api/datasources/uid/%s", ds.UID),
-			fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(ds.Name)),
+			fmt.Sprintf(datasourceByUIDPath, ds.UID),
+			fmt.Sprintf(datasourceByNamePath, url.PathEscape(ds.Name)),
 			fmt.Sprintf("/api/datasources/%d", ds.ID),
 		}
 
@@ -139,7 +144,7 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 			{caller: callerB, wantUID: second.UID, wantStatus: http.StatusOK},
 			{caller: callerA, wantUID: first.UID, wantStatus: http.StatusOK},
 		}
-		path := fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(name))
+		path := fmt.Sprintf(datasourceByNamePath, url.PathEscape(name))
 
 		for _, tc := range cases {
 			requireDataSourceRead(t, helper, tc.caller, path, tc.wantStatus, tc.wantUID)
@@ -149,13 +154,13 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 	t.Run("deleting and recreating a name invalidates its resolved UID", func(t *testing.T) {
 		original := createResolverDataSource(t, &env, "before-recreate", "Reused name", helper.Org1.OrgID)
 		caller := helper.CreateUser("before-recreate-user", apis.Org1, org.RoleNone, datasourceReadGrant(original.UID))
-		path := fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(original.Name))
+		path := fmt.Sprintf(datasourceByNamePath, url.PathEscape(original.Name))
 		requireDataSourceRead(t, helper, caller, path, http.StatusOK, original.UID)
 
 		removed := apis.DoRequest(helper, apis.RequestParams{
 			User:   helper.Org1.Admin,
 			Method: http.MethodDelete,
-			Path:   fmt.Sprintf("/api/datasources/uid/%s", original.UID),
+			Path:   fmt.Sprintf(datasourceByUIDPath, original.UID),
 		}, &struct{}{})
 		require.Equal(t, http.StatusOK, removed.Response.StatusCode, string(removed.Body))
 
@@ -1187,7 +1192,7 @@ func createUserWithPermissions(
 func datasourceReadGrant(uid string) []resourcepermissions.SetResourcePermissionCommand {
 	return []resourcepermissions.SetResourcePermissionCommand{{
 		Actions:           []string{datasources.ActionRead},
-		Resource:          "datasources",
+		Resource:          datasources.ScopeRoot,
 		ResourceAttribute: "uid",
 		ResourceID:        uid,
 	}}

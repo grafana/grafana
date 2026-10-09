@@ -932,13 +932,19 @@ func testIntegrationResourcePermissionSearch(t *testing.T) {
 
 func doResourcePermissionRevocationTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {
 	t.Run("resource permission changes affect folder access", func(t *testing.T) {
-		for _, kind := range []string{"User", "Team"} {
-			t.Run(kind, func(t *testing.T) {
+		kinds := []iamv0.ResourcePermissionSpecPermissionKind{
+			iamv0.ResourcePermissionSpecPermissionKindUser,
+			iamv0.ResourcePermissionSpecPermissionKindTeam,
+		}
+
+		for _, kind := range kinds {
+			t.Run(string(kind), func(t *testing.T) {
 				ctx := context.Background()
-				target := createTestFolder(t, helper, helper.Org1.Admin, fmt.Sprintf("revocation-%s", kind), parentUID)
-				caller := helper.CreateUser(fmt.Sprintf("revocation-%s", kind), apis.Org1, org.RoleNone, nil)
+				name := fmt.Sprintf("revocation-%s", kind)
+				target := createTestFolder(t, helper, helper.Org1.Admin, name, parentUID)
+				caller := helper.CreateUser(name, apis.Org1, org.RoleNone, nil)
 				principal := caller.Identity.GetIdentifier()
-				if kind == "Team" {
+				if kind == iamv0.ResourcePermissionSpecPermissionKindTeam {
 					membership := helper.CreateTeam("revocation-team", "", helper.Org1.OrgID)
 					helper.AddOrUpdateTeamMember(caller, membership.ID, team.PermissionTypeMember)
 					principal = membership.UID
@@ -947,7 +953,10 @@ func doResourcePermissionRevocationTests(t *testing.T, helper *apis.K8sTestHelpe
 				requireFolderAccessAfterReload(t, helper, caller, target.GetName(), http.StatusForbidden)
 
 				grant := createResourcePermissionObject(
-					target.GetName(), gvrFolders.Group, gvrFolders.Resource, newPermission(kind, principal, "view"),
+					target.GetName(),
+					gvrFolders.Group,
+					gvrFolders.Resource,
+					newPermission(string(kind), principal, "view"),
 				)
 				created, err := clients.rpAdmin.Resource.Create(ctx, grant, metav1.CreateOptions{})
 				require.NoError(t, err)

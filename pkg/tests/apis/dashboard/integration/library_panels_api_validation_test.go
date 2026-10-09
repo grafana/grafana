@@ -98,12 +98,12 @@ func testIntegrationLibraryPanelScopePermissions(t *testing.T) {
 			}{
 				{
 					name:     "direct panel grant",
-					resource: "library.panels",
+					resource: libraryelements.ScopeLibraryPanelsRoot,
 					uid:      panel,
 				},
 				{
 					name:     "folder grant",
-					resource: "folders",
+					resource: folder.ScopeFoldersRoot,
 					uid:      allowedFolder.UID,
 				},
 			}
@@ -1166,6 +1166,8 @@ func createSubFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, t
 	}, nil
 }
 
+const libraryPanelPathFormat = "/api/library-elements/%s"
+
 func requireLibraryPanelRead(
 	t *testing.T, helper *apis.K8sTestHelper, caller apis.User, uid string, wantStatus int,
 ) map[string]interface{} {
@@ -1174,7 +1176,7 @@ func requireLibraryPanelRead(
 	response := apis.DoRequest(helper, apis.RequestParams{
 		User:   caller,
 		Method: http.MethodGet,
-		Path:   fmt.Sprintf("/api/library-elements/%s", uid),
+		Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
 	}, &map[string]interface{}{})
 	require.Equal(t, wantStatus, response.Response.StatusCode, string(response.Body))
 	if wantStatus != http.StatusOK {
@@ -1211,7 +1213,7 @@ func requireLibraryPanelWritesDenied(
 		response := apis.DoRequest(helper, apis.RequestParams{
 			User:   caller,
 			Method: request.method,
-			Path:   fmt.Sprintf("/api/library-elements/%s", uid),
+			Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
 			Body:   request.body,
 		}, &struct{}{})
 		require.Equal(t, http.StatusForbidden, response.Response.StatusCode, string(response.Body))

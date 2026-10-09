@@ -542,6 +542,8 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 }
 
 func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
+	const updatedName = "Updated scoped resource"
+
 	t.Run("legacy API permissions are scoped to the target", func(t *testing.T) {
 		cases := serviceaccountPermissionCases()
 
@@ -556,7 +558,7 @@ func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHel
 				grants := []resourcepermissions.SetResourcePermissionCommand{
 					{
 						Actions:           tc.actions,
-						Resource:          "serviceaccounts",
+						Resource:          serviceaccounts.ScopeServiceAccountRoot,
 						ResourceAttribute: "id",
 						ResourceID:        grantedID,
 					},
@@ -573,7 +575,7 @@ func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHel
 				}
 				require.Equal(t, expected, get.Response.StatusCode, string(get.Body))
 
-				body, err := json.Marshal(map[string]interface{}{"name": "Updated scoped resource"})
+				body, err := json.Marshal(map[string]interface{}{"name": updatedName})
 				require.NoError(t, err)
 				update := apis.DoRequest(helper, apis.RequestParams{
 					User:   caller,
@@ -589,7 +591,7 @@ func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHel
 
 				after := readScopedServiceAccountAsAdmin(t, helper, path)
 				if tc.write {
-					require.Equal(t, "Updated scoped resource", after["name"])
+					require.Equal(t, updatedName, after["name"])
 				} else {
 					require.Equal(t, before, after)
 				}

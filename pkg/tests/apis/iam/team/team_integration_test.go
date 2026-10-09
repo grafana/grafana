@@ -1032,6 +1032,8 @@ func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper) 
 }
 
 func doTeamScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
+	const updatedName = "Updated scoped resource"
+
 	t.Run("legacy API permissions are scoped to the target", func(t *testing.T) {
 		cases := teamPermissionCases()
 
@@ -1063,7 +1065,7 @@ func doTeamScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
 				}
 				require.Equal(t, expected, get.Response.StatusCode, string(get.Body))
 
-				body, err := json.Marshal(map[string]interface{}{"name": "Updated scoped resource", "email": ""})
+				body, err := json.Marshal(map[string]interface{}{"name": updatedName, "email": ""})
 				require.NoError(t, err)
 				update := apis.DoRequest(helper, apis.RequestParams{
 					User:   caller,
@@ -1079,7 +1081,7 @@ func doTeamScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
 
 				after := readScopedTeamAsAdmin(t, helper, path)
 				if tc.write {
-					require.Equal(t, "Updated scoped resource", after["name"])
+					require.Equal(t, updatedName, after["name"])
 				} else {
 					require.Equal(t, before, after)
 				}
