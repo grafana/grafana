@@ -19,7 +19,6 @@ import {
 import { Box, ControlledCollapse, InlineField, InlineSwitch, Stack, useStyles2 } from '@grafana/ui';
 
 import { getLabelTypeFromRow } from '../../utils';
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLineLinks } from '../logParser';
 import { useAttributesExtensionLinks } from '../useAttributesExtensionLinks';
 
@@ -133,7 +132,6 @@ const LogLineDetailsLegacyComponent = memo(
     const labelsWithLinks: LabelWithLinks[] = useMemo(
       () =>
         Object.keys(log.labels)
-          .filter((label) => label !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)
           .sort()
           .map((label) => ({
             key: label,
