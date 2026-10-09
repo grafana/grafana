@@ -443,7 +443,7 @@ class DataSourceWithBackend<
       return false;
     }
     const pluginIds = allowedTypes[endpoint];
-    return Array.isArray(pluginIds) && pluginIds.includes(this.meta?.id ?? this.type);
+    return Array.isArray(pluginIds) && (pluginIds.includes('*') || pluginIds.includes(this.meta?.id ?? this.type));
   }
 
   /**
