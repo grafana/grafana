@@ -26,6 +26,8 @@ export const FlagKeys = {
   AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
+  /** Enables the new alert list view design */
+  AlertingListViewV2: "alertingListViewV2",
   /** Enables the new Alerting navigation structure with improved menu grouping */
   AlertingNavigationV2: "alertingNavigationV2",
   /** Enables the UI functionality to recover and view deleted alert rules */
@@ -42,10 +44,16 @@ export const FlagKeys = {
   AssistantFullscreenWorkspace: "assistant.fullscreenWorkspace",
   /** Generate a per-datasource external ID for Grafana Assume Role (jsonData.grafanaExternalId). When disabled, new datasources keep using the stack-level external ID. */
   AwsAssumeRolePerDatasourceExternalId: "awsAssumeRolePerDatasourceExternalId",
+  /** Enables user auth for Azure Monitor datasource only */
+  AzureMonitorEnableUserAuth: "azureMonitorEnableUserAuth",
+  /** Enables the updated Azure Monitor resource picker */
+  AzureResourcePickerUpdates: "azureResourcePickerUpdates",
   /** Allow elements nesting */
   CanvasPanelNesting: "canvasPanelNesting",
   /** Allow pan and zoom in canvas panel */
   CanvasPanelPanZoom: "canvasPanelPanZoom",
+  /** Enables cross-account querying in CloudWatch datasources */
+  CloudWatchCrossAccountQuerying: "cloudWatchCrossAccountQuerying",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
@@ -80,6 +88,8 @@ export const FlagKeys = {
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enables tabular numerals for visualization legend values */
   DatavizTabularNums: "dataviz.tabularNums",
+  /** Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them. */
+  DisableScriptedDashboards: "disableScriptedDashboards",
   /** Enables new colorblind safe palette and line fill patterns for panels */
   EnableColorblindSafePanelOptions: "enableColorblindSafePanelOptions",
   /** Enables the extension admin page regardless of development mode */
@@ -256,6 +266,8 @@ export const FlagKeys = {
   TableSharedCrosshair: "tableSharedCrosshair",
   /** Enables the new features in text panel */
   TextNewFeatures: "text.newFeatures",
+  /** Enables unified navbars */
+  UnifiedNavbars: "unifiedNavbars",
   /** Routes short URL requests from /api to the /apis endpoint in the frontend. Depends on kubernetesShortURLs */
   UseKubernetesShortURLsAPI: "useKubernetesShortURLsAPI",
   /** Allows authenticated API calls in actions */
@@ -326,6 +338,17 @@ export const useFlagAlertingRuleReviews = (options?: ReactFlagEvaluationOptions)
  */
 export const useFlagAlertingSyncExternalAlertmanager = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.syncExternalAlertmanager", false, options).value;
+};
+
+/**
+ * Enables the new alert list view design
+ *
+ * **Details:**
+ * - flag key: `alertingListViewV2`
+ * - default value: `true`
+ */
+export const useFlagAlertingListViewV2 = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alertingListViewV2", true, options).value;
 };
 
 /**
@@ -417,6 +440,28 @@ export const useFlagAwsAssumeRolePerDatasourceExternalId = (options?: ReactFlagE
 };
 
 /**
+ * Enables user auth for Azure Monitor datasource only
+ *
+ * **Details:**
+ * - flag key: `azureMonitorEnableUserAuth`
+ * - default value: `true`
+ */
+export const useFlagAzureMonitorEnableUserAuth = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureMonitorEnableUserAuth", true, options).value;
+};
+
+/**
+ * Enables the updated Azure Monitor resource picker
+ *
+ * **Details:**
+ * - flag key: `azureResourcePickerUpdates`
+ * - default value: `true`
+ */
+export const useFlagAzureResourcePickerUpdates = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("azureResourcePickerUpdates", true, options).value;
+};
+
+/**
  * Allow elements nesting
  *
  * **Details:**
@@ -436,6 +481,17 @@ export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("canvasPanelPanZoom", false, options).value;
+};
+
+/**
+ * Enables cross-account querying in CloudWatch datasources
+ *
+ * **Details:**
+ * - flag key: `cloudWatchCrossAccountQuerying`
+ * - default value: `true`
+ */
+export const useFlagCloudWatchCrossAccountQuerying = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("cloudWatchCrossAccountQuerying", true, options).value;
 };
 
 /**
@@ -623,6 +679,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
  */
 export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dataviz.tabularNums", false, options).value;
+};
+
+/**
+ * Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.
+ *
+ * **Details:**
+ * - flag key: `disableScriptedDashboards`
+ * - default value: `true`
+ */
+export const useFlagDisableScriptedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("disableScriptedDashboards", true, options).value;
 };
 
 /**
@@ -1591,6 +1658,17 @@ export const useFlagTableSharedCrosshair = (options?: ReactFlagEvaluationOptions
  */
 export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("text.newFeatures", false, options).value;
+};
+
+/**
+ * Enables unified navbars
+ *
+ * **Details:**
+ * - flag key: `unifiedNavbars`
+ * - default value: `false`
+ */
+export const useFlagUnifiedNavbars = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("unifiedNavbars", false, options).value;
 };
 
 /**

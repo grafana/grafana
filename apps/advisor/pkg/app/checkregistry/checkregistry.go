@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/instancechecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
+	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -95,4 +96,6 @@ type AdvisorAppConfig struct {
 	PluginConfig  map[string]string
 	StackID       string
 	OrgService    org.Service
+	// LeaderElector, when set check scheduler only runs on the replica holding the elector's lease
+	LeaderElector leaderelection.Elector
 }

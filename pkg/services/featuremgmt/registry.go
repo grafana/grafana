@@ -56,7 +56,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Expression:  "true", // enabled by default
 			Owner:       grafanaDataSourcesPlugins,
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:        "alertingBacktesting",
@@ -664,7 +664,7 @@ var (
 			Name:        "disableScriptedDashboards",
 			Description: "Disables legacy scripted dashboards, which are deprecated and will be removed in Grafana 14. Set to false to temporarily restore them.",
 			Stage:       FeatureStageDeprecated,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true", // enabled by default: scripted dashboards are disabled
 		},
@@ -1091,7 +1091,7 @@ var (
 			Description: "Enables the new alert list view design",
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaAlertingSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "true",
 		},
 		{
@@ -1374,7 +1374,7 @@ var (
 			Stage:       FeatureStageGeneralAvailability,
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true", // Enabled by default for now
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
+			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
 			Name:         "alertingAIGenAlertRules",
@@ -1692,8 +1692,8 @@ var (
 			Name:        "unifiedNavbars",
 			Description: "Enables unified navbars",
 			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Generate:    Generate{LegacyFrontend: true},
+			Owner:       grafanaFrontendNavigation,
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Expression:  "false", // enabled by default
 		},
 		{
@@ -2034,7 +2034,7 @@ var (
 			Name:        "azureResourcePickerUpdates",
 			Description: "Enables the updated Azure Monitor resource picker",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true},
+			Generate:    Generate{LegacyFrontend: true, React: true},
 			Owner:       grafanaDataSourcesPlugins,
 			Expression:  "true",
 		},
