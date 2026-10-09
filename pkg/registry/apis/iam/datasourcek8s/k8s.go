@@ -19,6 +19,7 @@ func DSTypeFromDatasourceAPIGroup(group string) string {
 
 // AuthorizationGroup resolves datasource API aliases after the client token check.
 // API routing and token grants must continue to use the original group.
+// New clients should use datasource.grafana.app; existing plugin-group requests remain supported.
 func AuthorizationGroup(group, resource string) string {
 	if resource == "datasources" && DSTypeFromDatasourceAPIGroup(group) != "" {
 		return Group

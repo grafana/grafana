@@ -34,7 +34,7 @@ func TestMapperRegistry_DatasourceWildcard(t *testing.T) {
 		assert.True(t, ok)
 		assert.Equal(t, "datasources:query", action)
 
-		// The group exposes the datasources resource plus its query and caching subresources.
+		// Plugin groups expose datasources and its two subresources, not the old query API alias.
 		all := reg.GetAll(group)
 		require.Len(t, all, 3)
 	}
@@ -684,6 +684,21 @@ func TestMapperRegistry_PermissionsDelegation(t *testing.T) {
 //     key deterministically (the regression this PR fixes). Each case is asserted repeatedly so a
 //     regression to Go's per-range map iteration order would eventually flip the result and fail.
 func TestGetAPIResourceName(t *testing.T) {
+	t.Run("datasource aliases use the shared registry", func(t *testing.T) {
+		registry := NewMapperRegistry()
+		require.NotContains(t, registry.GetGroups(), "*.datasource.grafana.app")
+		for _, resource := range []string{"datasources", "datasources/query", "datasources/caching"} {
+			name, ok := registry.GetAPIResourceName("loki.datasource.grafana.app", resource)
+			require.True(t, ok)
+			require.Equal(t, resource, name)
+		}
+		mappings := registry.ResourceMappings("loki.datasource.grafana.app")
+		require.Len(t, mappings, 3)
+		for _, mapping := range mappings {
+			_, ok := registry.GetAPIResourceName("loki.datasource.grafana.app", mapping.APIResource)
+			require.True(t, ok, mapping.APIResource)
+		}
+	})
 	// Synthetic group whose keys (in non-sorted literal order) all share one scope resource,
 	// so the only stable answer is the sorted-first key "aaa".
 	syntheticSharedScope := mapper{

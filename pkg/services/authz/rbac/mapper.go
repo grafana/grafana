@@ -799,12 +799,6 @@ func NewMapperRegistry() MapperRegistry {
 		},
 	})
 
-	mapper["*.datasource.grafana.app"] = map[string]translation{
-		"datasources":         mapper["datasource.grafana.app"]["datasources"],
-		"datasources/query":   mapper["datasource.grafana.app"]["datasources/query"],
-		"datasources/caching": mapper["datasource.grafana.app"]["datasources/caching"],
-	}
-
 	return mapper
 }
 
@@ -888,6 +882,8 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 }
 
 func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
+	baseResource, _, _ := strings.Cut(resource, "/")
+	group = datasourcek8s.AuthorizationGroup(group, baseResource)
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return "", false
@@ -914,22 +910,21 @@ func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
 }
 
 func (m mapper) GetAll(group string) []Mapping {
-	groupKey, ok := m.findGroupKey(group)
-	if !ok {
+	mappings := m.ResourceMappings(group)
+	if mappings == nil {
 		return nil
 	}
-
-	resources := m[groupKey]
-
-	translations := make([]Mapping, 0, len(resources))
-	for _, t := range resources {
-		translations = append(translations, &t)
+	translations := make([]Mapping, 0, len(mappings))
+	for _, mapping := range mappings {
+		translations = append(translations, mapping.Mapping)
 	}
 
 	return translations
 }
 
 func (m mapper) ResourceMappings(group string) []ResourceMapping {
+	originalGroup := group
+	group = datasourcek8s.AuthorizationGroup(group, "datasources")
 	groupKey, ok := m.findGroupKey(group)
 	if !ok {
 		return nil
@@ -938,6 +933,10 @@ func (m mapper) ResourceMappings(group string) []ResourceMapping {
 	resources := m[groupKey]
 	mappings := make([]ResourceMapping, 0, len(resources))
 	for apiResource, t := range resources {
+		baseResource, _, _ := strings.Cut(apiResource, "/")
+		if datasourcek8s.AuthorizationGroup(originalGroup, baseResource) != group {
+			continue
+		}
 		mapping := t
 		mappings = append(mappings, ResourceMapping{
 			APIResource: apiResource,
