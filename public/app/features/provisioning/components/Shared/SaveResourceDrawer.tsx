@@ -39,18 +39,11 @@ export function SaveResourceDrawer({
   const [pickedRepository, setPickedRepository] = useState<string>();
   const { isAvailable, repositories } = useResourceRepositorySelection(kind);
 
-  const { repository, folder, isLoading } = useGetResourceRepositoryView(
+  const { repository, folder } = useGetResourceRepositoryView(
     isNew
       ? { name: pickedRepository, folderName, skipQuery: !folderName && !pickedRepository }
       : { name: getManagerIdentity(resource) }
   );
-  if (isLoading) {
-    return null;
-  }
-  // A repository is required unless the caller can store the resource in Grafana.
-  if (!repository?.name && !onSave) {
-    return null;
-  }
 
   const folderPath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
   const directory = folderPath.slice(0, folderPath.lastIndexOf('/') + 1);

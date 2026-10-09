@@ -162,9 +162,10 @@ export function setComponents(impl: Components): void {
   components = impl;
 }
 
-function shell<K extends keyof Components>(name: K): Components[K] {
-  const Shell = (props: React.ComponentProps<Components[K]>) => {
-    const Impl = components[name] as React.ComponentType<typeof props> | undefined;
+function shell<P extends object>(name: keyof Components): React.ComponentType<P> {
+  const Shell = (props: P) => {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    const Impl = components[name] as React.ComponentType<P> | undefined;
     if (Impl) {
       return <Impl {...props} />;
     }
@@ -178,17 +179,17 @@ function shell<K extends keyof Components>(name: K): Components[K] {
 }
 
 /** A drawer that commits a resource to a Git Sync repository. */
-export const SaveResourceDrawer = shell('SaveResourceDrawer');
+export const SaveResourceDrawer = shell<SaveResourceDrawerProps>('SaveResourceDrawer');
 
 /** The badge that shows which system manages a resource. Renders nothing for an unmanaged resource. */
-export const ManagedBadge = shell('ManagedBadge');
+export const ManagedBadge = shell<ManagedBadgeProps>('ManagedBadge');
 
 /** The banner that dashboards show after a commit to a branch, with a link to open the pull request. */
-export const PullRequestBanner = shell('PullRequestBanner');
+export const PullRequestBanner = shell<PullRequestBannerProps>('PullRequestBanner');
 
 /**
  * A form field to pick the repository for a new resource. Put it in the create form of a folderless
  * kind; pass the value to `SaveResourceDrawer` as `repositoryName`. Renders nothing when provisioning
  * is off or no repository exists.
  */
-export const RepositorySelect = shell('RepositorySelect');
+export const RepositorySelect = shell<RepositorySelectProps>('RepositorySelect');
