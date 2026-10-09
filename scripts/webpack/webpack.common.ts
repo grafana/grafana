@@ -111,6 +111,11 @@ export default (env: Env = {}): Configuration => ({
   ],
   module: {
     rules: [
+      {
+        resourceQuery: /text-panel-runtime/,
+        type: 'javascript/auto',
+        use: path.resolve(grafanaRoot, 'scripts/webpack/loaders/textPanelRuntime.cjs'),
+      },
       esbuildRule,
       cssRule,
       {
