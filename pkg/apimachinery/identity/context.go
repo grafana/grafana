@@ -220,6 +220,7 @@ var serviceIdentityTokenPermissions = []string{
 	"playlist.grafana.app:*",
 	"secret.grafana.app:*",
 	"query.grafana.app:*",
+	"queries.grafana.app:*", // saved queries
 	"datasource.grafana.app:*",
 	"iam.grafana.app:*",
 	"provisioning.grafana.app:*",
