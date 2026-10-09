@@ -31,6 +31,9 @@ import { UserAccountActions } from '../UserAccountActions';
 import { UserLdapSyncInfo } from '../UserLdapSyncInfo';
 import { UserOrgs } from '../UserOrgs';
 import { UserSessions } from '../UserSessions';
+import { getBasicRoleDisabled } from '../Users/userRolePermissions';
+
+import { type OverviewUser } from './api';
 
 interface Props {
   user: UserDTO;
@@ -137,18 +140,11 @@ function isBasicRole(role: string): role is OrgRole {
   return Object.values(OrgRole).some((value) => value === role);
 }
 
-export function UserRolesEditor({
-  user,
-  basicRole,
-}: {
-  user: Pick<UserDTO, 'id' | 'uid' | 'isExternallySynced' | 'isProvisioned'>;
-  basicRole: string;
-}) {
+export function UserRolesEditor({ user, basicRole }: { user: OverviewUser; basicRole: string }) {
   const [editing, setEditing] = useState(false);
   const [updateBasicRole, { isError: failed, isLoading: pending }] = useUpdateOrgUserForCurrentOrgMutation();
   const licensed = contextSrv.licensedAccessControlEnabled();
-  const canEditBasic =
-    contextSrv.hasPermission(AccessControlAction.OrgUsersWrite) && !user.isExternallySynced && !user.isProvisioned;
+  const canEditBasic = !getBasicRoleDisabled({ ...user, accessControl: user.orgAccessControl });
   const canEditDirect =
     licensed &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) &&

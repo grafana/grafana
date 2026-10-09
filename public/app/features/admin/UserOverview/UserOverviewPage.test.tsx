@@ -378,6 +378,16 @@ it('updates the basic role from the Roles tab and refreshes the table', async ()
   let basicRole = 'Viewer';
   const updates = jest.fn();
   server.use(
+    http.get('/api/org/users', () =>
+      HttpResponse.json([
+        {
+          ...profile,
+          userId: profile.id,
+          role: basicRole,
+          accessControl: { [AccessControlAction.OrgUsersWrite]: true },
+        },
+      ])
+    ),
     http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice', () =>
       HttpResponse.json({ ...person, spec: { ...person.spec, role: basicRole } })
     ),
@@ -393,6 +403,18 @@ it('updates the basic role from the Roles tab and refreshes the table', async ()
   await user.click(screen.getByText('Editor'));
   await waitFor(() => expect(updates).toHaveBeenCalledWith({ role: 'Editor' }));
   await waitFor(() => expect(within(screen.getByRole('table')).getByText('Editor')).toBeInTheDocument());
+});
+
+it('does not offer basic-role editing when the specific org user lacks write permission', async () => {
+  jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(false);
+  server.use(
+    http.get('/api/org/users', () =>
+      HttpResponse.json([{ ...profile, userId: profile.id, role: 'Viewer', accessControl: {} }])
+    )
+  );
+  setup('roles');
+  await screen.findByText('Viewer');
+  expect(screen.queryByRole('button', { name: 'Edit roles' })).not.toBeInTheDocument();
 });
 
 it('does not offer role editing without write permissions', async () => {

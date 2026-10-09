@@ -31,15 +31,12 @@ import { type OrgUser } from 'app/types/user';
 
 import { OrgRolePicker } from '../OrgRolePicker';
 
+import { getBasicRoleDisabled } from './userRolePermissions';
+
 type Cell<T extends keyof OrgUser = keyof OrgUser> = CellProps<OrgUser, OrgUser[T]>;
 
 const disabledRoleMessage = `This user's role is not editable because it is synchronized from your auth provider.
 Refer to the Grafana authentication docs for details.`;
-
-const getBasicRoleDisabled = (user: OrgUser) => {
-  const isUserSynced = user?.isExternallySynced;
-  return !contextSrv.hasPermissionInMetadata(AccessControlAction.OrgUsersWrite, user) || isUserSynced;
-};
 
 const selectors = e2eSelectors.pages.UserListPage.UsersListPage;
 

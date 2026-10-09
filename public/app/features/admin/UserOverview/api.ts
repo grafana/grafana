@@ -21,6 +21,7 @@ export type OverviewUser = UserDTO & {
   createdAt?: string;
   lastSeenAt?: string;
   hasProfile: boolean;
+  orgAccessControl?: UserDTO['accessControl'];
 };
 
 export interface RoleAssignment {
@@ -155,6 +156,7 @@ export function useUserOverview(uid: string) {
           createdAt: resource?.metadata.creationTimestamp ?? profile?.createdAt ?? profile?.created,
           lastSeenAt: resource ? new Date((resource.status?.lastSeenAt ?? 0) * 1000).toISOString() : undefined,
           hasProfile: !!profile,
+          orgAccessControl: member?.accessControl,
         }
       : undefined;
   return {
