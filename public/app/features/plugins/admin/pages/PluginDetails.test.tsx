@@ -331,18 +331,20 @@ describe('Plugin details page', () => {
     });
 
     it('should display a banner for marketplace plugins', async () => {
-      const bannerText = 'This is a paid marketplace plugin. Support is provided by a Marketplace plugin partner.';
+      const { findByText, getByRole } = renderPluginDetails({ id, distributionType: 'marketplace' });
 
-      const { findByText } = renderPluginDetails({ id, distributionType: 'marketplace' });
-
-      expect(await findByText(bannerText)).toBeInTheDocument();
+      expect(await findByText(/marketplace plugin requiring a subscription/i)).toBeInTheDocument();
+      expect(getByRole('link', { name: /plugin partner/i })).toHaveAttribute(
+        'href',
+        'https://grafana.com/legal/plugins/'
+      );
     });
 
     it('should not display the marketplace banner for other plugins', async () => {
       const { findByRole, queryByText } = renderPluginDetails({ id });
 
       expect(await findByRole('tab', { name: /overview/i })).toBeInTheDocument();
-      expect(queryByText(/paid marketplace plugin/i)).not.toBeInTheDocument();
+      expect(queryByText(/marketplace plugin requiring a subscription/i)).not.toBeInTheDocument();
     });
 
     it('should not display install / uninstall buttons for core plugins', async () => {

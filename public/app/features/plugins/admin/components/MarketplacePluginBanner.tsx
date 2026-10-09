@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { Alert, useStyles2 } from '@grafana/ui';
+import { Alert, TextLink, useStyles2 } from '@grafana/ui';
 
 export const MarketplacePluginBanner = () => {
   const styles = useStyles2(getStyles);
@@ -10,7 +10,11 @@ export const MarketplacePluginBanner = () => {
   return (
     <Alert severity={'info'} title="" className={styles.alert}>
       <Trans i18nKey="plugins.marketplace-plugin-banner.info">
-        This is a marketplace plugin requiring a subscription. Support is provided by a marketplace [plugin partner](https://grafana.com/legal/plugins/).
+        This is a marketplace plugin requiring a subscription. Support is provided by a marketplace{' '}
+        <TextLink href="https://grafana.com/legal/plugins/" external>
+          plugin partner
+        </TextLink>
+        .
       </Trans>
     </Alert>
   );
