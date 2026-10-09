@@ -1,6 +1,6 @@
 import { type IconName } from '@grafana/data';
 
-export const OTHER_CATEGORY_ID = 'other' as const;
+const OTHER_CATEGORY_ID = 'other' as const;
 export const SERVICE_HEXAGON_CATEGORY_ICON = 'service-hexagon' as const;
 
 type AttributeCategoryIcon = IconName | typeof SERVICE_HEXAGON_CATEGORY_ICON;
@@ -239,12 +239,12 @@ function normalizeAttributeKey(key: string): string {
   return key.toLowerCase().replace(/[-.]/g, '_');
 }
 
-export function isStacktraceAttributeKey(key: string): boolean {
+function isStacktraceAttributeKey(key: string): boolean {
   const normalized = normalizeAttributeKey(key);
   return normalized.endsWith('stacktrace') || normalized.endsWith('stack_trace');
 }
 
-export function isErrorAttributeKey(key: string): boolean {
+function isErrorAttributeKey(key: string): boolean {
   if (isStacktraceAttributeKey(key)) {
     return true;
   }
@@ -252,9 +252,9 @@ export function isErrorAttributeKey(key: string): boolean {
   return ERROR_CATEGORY_IDS.has(findCategory(key).id);
 }
 
-export type ErrorAttributeKind = 'message' | 'stacktrace' | 'other';
+type ErrorAttributeKind = 'message' | 'stacktrace' | 'other';
 
-export function getErrorAttributeKind(key: string): ErrorAttributeKind | undefined {
+function getErrorAttributeKind(key: string): ErrorAttributeKind | undefined {
   if (isStacktraceAttributeKey(key)) {
     return 'stacktrace';
   }
