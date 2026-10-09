@@ -85,6 +85,16 @@ func listBodyStatsFromContext(ctx context.Context) *listBodyStats {
 	return stats
 }
 
+// withoutListBodyStats hides the list's body stats from work done on the list's
+// behalf that does not return bodies, such as an in-process search building a
+// missing index.
+func withoutListBodyStats(ctx context.Context) context.Context {
+	if listBodyStatsFromContext(ctx) == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, listBodyStatsKey{}, (*listBodyStats)(nil))
+}
+
 func setListStopReason(ctx context.Context, reason string) {
 	if stats := listBodyStatsFromContext(ctx); stats != nil {
 		stats.stopReason = reason

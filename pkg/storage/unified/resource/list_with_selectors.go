@@ -107,10 +107,13 @@ func (s *server) executeSearchListPage(
 
 	var searchResp *resourcepb.ResourceSearchResponse
 	var err error
+	// Reads an in-process search makes, such as building a missing index, are not
+	// the list's body reads.
+	searchCtx := withoutListBodyStats(ctx)
 	if s.search != nil {
-		searchResp, err = s.search.Search(ctx, searchReq)
+		searchResp, err = s.search.Search(searchCtx, searchReq)
 	} else {
-		searchResp, err = s.searchClient.Search(ctx, searchReq)
+		searchResp, err = s.searchClient.Search(searchCtx, searchReq)
 	}
 	if err != nil {
 		return nil, nil, err
