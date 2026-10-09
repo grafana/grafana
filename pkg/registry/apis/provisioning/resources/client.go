@@ -391,7 +391,7 @@ func (c *resourceClients) ForKind(ctx context.Context, gvk schema.GroupVersionKi
 			return info.client, info.gvr, nil
 		}
 	} else {
-		gvr, err = discovery.GetResourceForKind(gvk)
+		gvr, err = discovery.GetResourceForKindWithContext(ctx, gvk)
 		if err != nil {
 			return nil, schema.GroupVersionResource{}, err
 		}
