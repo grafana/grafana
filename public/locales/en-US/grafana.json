@@ -173,8 +173,7 @@
       "external-sync-label": "External sync",
       "next-sync-label": "Next scheduled synchronization",
       "not-enabled": "Not enabled",
-      "sync-button": "Sync user",
-      "title": "LDAP Synchronisation"
+      "sync-button": "Sync user"
     },
     "ldap-sync-info": {
       "title": "LDAP Synchronization"
@@ -273,8 +272,7 @@
       "change-role-button": "Change role",
       "external-user-tooltip": "This user's built-in role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
       "remove-button": "Remove from organization",
-      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details.",
-      "title": "Organizations"
+      "role-not-editable": "This user's role is not editable because it is synchronized from your auth provider. Refer to the <1>Grafana authentication docs</1> for details."
     },
     "user-orgs-modal": {
       "add-button": "Add to organization",
@@ -314,7 +312,6 @@
       "organizations": "Organizations",
       "orgs-error": "Unable to load organizations",
       "origin": "Origin",
-      "partial-roles": "Some team roles could not be loaded",
       "provisioned": "Provisioned",
       "role": "Role",
       "role-options-error": "Unable to load available roles",
@@ -351,8 +348,7 @@
       "ip-column": "IP address",
       "last-seen-column": "Last seen",
       "logged-on-column": "Logged on",
-      "now": "Now",
-      "title": "Sessions"
+      "now": "Now"
     },
     "users-create": {
       "create-button": "Create user"
