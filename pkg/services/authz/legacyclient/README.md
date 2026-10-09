@@ -2,7 +2,7 @@
 
 This package owns Grafana's compatibility client for legacy Access Control enumeration. It is not a general authorization interface: new consumers should use Check/List rather than enumerate legacy permissions.
 
-The deprecated `LegacyGetUserPermissions` RPC is declared alongside `LegacyCheck` in [`LegacyAuthzService`](../proto/v1/legacy_authz.proto), separate from `AuthzExtentionService`. Its messages remain in [`legacy_permissions.proto`](../proto/v1/legacy_permissions.proto): `LegacyUserPermission` carries a single enumerated scope, unlike `LegacyCheck`'s `LegacyPermission` expression with alternative scopes. The RPC's protobuf `deprecated` option is set; it remains available only for transitional compatibility.
+The deprecated `LegacyGetUserPermissions` RPC is declared alongside `LegacyCheck` in [`LegacyAuthzService`](../proto/v1/legacy_authz.proto), separate from `AuthzExtentionService`. Both RPCs and their messages are defined in that file: `LegacyUserPermission` carries a single enumerated scope, unlike `LegacyCheck`'s `LegacyPermission` expression with alternative scopes. The RPC's protobuf `deprecated` option is set; it remains available only for transitional compatibility.
 
 Do not implement permission enumeration on network/standalone AuthZ servers: their default implementation must return `Unimplemented`. Sharing the service descriptor does not share the handlers. The embedded provider in [`../rbac/legacypermissions/embedded.go`](../rbac/legacypermissions/embedded.go) constructs a private channel, authenticates the in-process transport, and validates the instance namespace independently of client preflight. Its `LegacyCheck` method remains unimplemented.
 
@@ -13,8 +13,8 @@ Both embedded permission RPCs share one AuthZ-owned `legacypermissions.Loader`. 
 ## Compatibility invariants
 
 - Caller service identity is separate from the target identity. Role, Grafana Admin status, team IDs, contextual groups, cache key, and original requester namespace are trusted Grafana assertions, not end-user overrides.
-- Request namespace identifies the instance and ordinary org. `GlobalOrg` selects org zero within that instance, never across tenants.
-- An explicitly empty original requester namespace differs from absence and preserves legacy Zanzana resolution. A nonempty value must match request namespace; the embedded server rejects conflicts.
+- Request namespace identifies the instance and ordinary org. `GlobalOrg` selects org zero; `NoOrgMembership` preserves org `-1`. The flags are mutually exclusive and never bypass tenant validation. Cloud keeps its stack namespace. Self-managed sentinel evaluations without a concrete namespace use `default` only as a private transport anchor, never as the evaluation org.
+- An explicitly empty original requester namespace differs from absence and preserves legacy Zanzana resolution. A nonempty value must match request namespace, except `org--1` for self-managed `NoOrgMembership` calls. Preserve that sentinel for the loader; do not make it a valid transport namespace.
 - Preserve the original requester cache key so existing Access Control invalidation reaches the loader's cache entry.
 - `ReloadCache` refreshes legacy caches; `SkipZanzanaCache` bypasses only Zanzana cache reads and writes. The client has no permission cache.
 - Preserve duplicate action/scope pairs and empty scopes. Publish only a complete snapshot after successful EOF; discard partial results on any error. Preserve cancellation and deadlines.

@@ -52,11 +52,11 @@ func TestClient_LegacyGetUserPermissionsEvaluationScope(t *testing.T) {
 		{"unknown namespace", "other-12", false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for _, global := range []bool{false, true} {
+			for _, evaluation := range []struct{ global, noOrgMembership bool }{{}, {global: true}, {noOrgMembership: true}} {
 				rpc := &legacyTestRPC{}
 				client := &LegacyClient{clientV1: rpc, tracer: noop.Tracer{}}
 				req := legacyRequest()
-				req.Namespace, req.GlobalOrg = tc.namespace, global
+				req.Namespace, req.GlobalOrg, req.NoOrgMembership = tc.namespace, evaluation.global, evaluation.noOrgMembership
 				_, err := client.LegacyGetUserPermissions(t.Context(), legacyCaller("*", "authz.grafana.app/legacyuserpermissions:get"), req)
 				if !tc.valid {
 					require.ErrorIs(t, err, ErrInvalidLegacyUserPermissionsRequest)
@@ -69,10 +69,33 @@ func TestClient_LegacyGetUserPermissionsEvaluationScope(t *testing.T) {
 				require.NoError(t, err)
 				decoded := &authzv1.LegacyGetUserPermissionsRequest{}
 				require.NoError(t, proto.Unmarshal(encoded, decoded))
-				require.Equal(t, global, decoded.GetGlobalOrg())
+				require.Equal(t, evaluation.global, decoded.GetGlobalOrg())
+				require.Equal(t, evaluation.noOrgMembership, decoded.GetNoOrgMembership())
 			}
 		})
 	}
+}
+
+func TestClient_LegacyGetUserPermissionsRejectsContradictoryScope(t *testing.T) {
+	rpc := &legacyTestRPC{}
+	client := &LegacyClient{clientV1: rpc, tracer: noop.Tracer{}}
+	req := legacyRequest()
+	req.GlobalOrg, req.NoOrgMembership = true, true
+	got, err := client.LegacyGetUserPermissions(t.Context(), legacyCaller("stacks-12", "authz.grafana.app/legacyuserpermissions:get"), req)
+	require.ErrorIs(t, err, ErrInvalidLegacyUserPermissionsRequest)
+	require.Empty(t, got.Permissions)
+	require.Zero(t, rpc.calls)
+}
+
+func TestClient_LegacyGetUserPermissionsNoOrgMembershipDoesNotBypassNamespace(t *testing.T) {
+	rpc := &legacyTestRPC{}
+	client := &LegacyClient{clientV1: rpc, tracer: noop.Tracer{}}
+	req := legacyRequest()
+	req.NoOrgMembership = true
+	got, err := client.LegacyGetUserPermissions(t.Context(), legacyCaller("stacks-13", "authz.grafana.app/legacyuserpermissions:get"), req)
+	require.ErrorIs(t, err, authzlib.ErrNamespaceMismatch)
+	require.Empty(t, got.Permissions)
+	require.Zero(t, rpc.calls)
 }
 
 func TestClient_LegacyGetUserPermissionsGlobalOrgDoesNotBypassNamespace(t *testing.T) {

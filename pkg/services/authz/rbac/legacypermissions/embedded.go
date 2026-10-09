@@ -61,6 +61,9 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	if req == nil || req.Identity == nil {
 		return status.Error(codes.InvalidArgument, "legacy identity is required")
 	}
+	if req.GlobalOrg && req.NoOrgMembership {
+		return status.Error(codes.InvalidArgument, "global org and no org membership are mutually exclusive")
+	}
 	ns, err := types.ParseNamespace(req.Namespace)
 	if err != nil || ns.OrgID < 1 {
 		return status.Error(codes.InvalidArgument, "concrete namespace required")
@@ -74,7 +77,8 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	}
 	namespace := req.Namespace
 	if original := req.Identity.RequesterNamespace; original != nil {
-		if *original != "" && *original != req.Namespace {
+		missingOrgNamespace := req.NoOrgMembership && s.cfg.StackID == "" && *original == types.OrgNamespaceFormatter(-1)
+		if *original != "" && *original != req.Namespace && !missingOrgNamespace {
 			return status.Error(codes.PermissionDenied, "requester namespace does not match tenant scope")
 		}
 		namespace = *original
@@ -82,6 +86,8 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	orgID := ns.OrgID
 	if req.GlobalOrg {
 		orgID = ac.GlobalOrgID
+	} else if req.NoOrgMembership {
+		orgID = -1
 	}
 	requester := &legacyRequester{
 		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: identity.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.

@@ -62,6 +62,9 @@ func (c *LegacyClient) LegacyGetUserPermissions(ctx context.Context, caller type
 	if !permission.ServiceCall || !permission.Allowed {
 		return LegacyGetUserPermissionsResponse{}, ErrLegacyUserPermissionsDenied
 	}
+	if req.GlobalOrg && req.NoOrgMembership {
+		return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: global org and no org membership are mutually exclusive", ErrInvalidLegacyUserPermissionsRequest)
+	}
 	if !types.NamespaceMatches(caller.GetNamespace(), req.Namespace) {
 		return LegacyGetUserPermissionsResponse{}, fmt.Errorf("%w: got %s but expected %s", authzlib.ErrNamespaceMismatch, caller.GetNamespace(), req.Namespace)
 	}
@@ -79,8 +82,9 @@ func (c *LegacyClient) LegacyGetUserPermissions(ctx context.Context, caller type
 	defer cancel()
 	//nolint:staticcheck // This adapter intentionally calls the deprecated embedded compatibility RPC.
 	stream, err := c.clientV1.LegacyGetUserPermissions(ctx, &authzv1.LegacyGetUserPermissionsRequest{
-		Namespace: req.Namespace,
-		GlobalOrg: req.GlobalOrg,
+		Namespace:       req.Namespace,
+		GlobalOrg:       req.GlobalOrg,
+		NoOrgMembership: req.NoOrgMembership,
 		Identity: &authzv1.LegacyPermissionIdentity{
 			Type: string(req.Identity.Type), Uid: req.Identity.UID, InternalId: internalID,
 			HasUniqueId: req.Identity.HasUniqueID, OrgRole: req.Identity.OrgRole, IsGrafanaAdmin: req.Identity.IsGrafanaAdmin,

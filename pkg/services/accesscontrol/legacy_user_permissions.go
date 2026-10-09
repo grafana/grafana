@@ -38,19 +38,25 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 	originalNamespace, cacheKey := usr.GetNamespace(), usr.GetCacheKey()
 	namespace := originalNamespace
 	global := usr.GetOrgID() == GlobalOrgID
+	noOrgMembership := usr.GetOrgID() == -1
+	// The self-managed missing-membership namespace is requester state, not a
+	// transport tenant. Preserve it in Identity while using an instance anchor.
+	if noOrgMembership && cfg.StackID == "" && namespace == authlib.OrgNamespaceFormatter(-1) {
+		namespace = ""
+	}
 	if namespace == "" {
 		if cfg.StackID != "" {
 			namespace = "stacks-" + cfg.StackID
 		} else {
 			orgID := usr.GetOrgID()
-			if global {
+			if global || noOrgMembership {
 				orgID = 1
 			}
 			namespace = authlib.OrgNamespaceFormatter(orgID)
 		}
 	}
 	ns, err := authlib.ParseNamespace(namespace)
-	if err != nil || ns.OrgID < 1 || (!global && ns.OrgID != usr.GetOrgID()) {
+	if err != nil || ns.OrgID < 1 || (!global && !noOrgMembership && ns.OrgID != usr.GetOrgID()) {
 		return nil, fmt.Errorf("legacy permission namespace does not match evaluation organization")
 	}
 	var internalID *int64
@@ -62,7 +68,11 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 		groups = usr.GetExternalGroups()
 	}
 	response, err := client.LegacyGetUserPermissions(ctx, LegacyPermissionCaller(namespace), legacyclient.LegacyGetUserPermissionsRequest{
-		Namespace: namespace, GlobalOrg: global, ReloadCache: options.ReloadCache, SkipZanzanaCache: options.SkipZanzanaCache,
+		Namespace:        namespace,
+		GlobalOrg:        global,
+		NoOrgMembership:  noOrgMembership,
+		ReloadCache:      options.ReloadCache,
+		SkipZanzanaCache: options.SkipZanzanaCache,
 		Identity: legacyclient.LegacyPermissionIdentity{
 			Type: usr.GetIdentityType(), UID: usr.GetIdentifier(), InternalID: internalID,
 			HasUniqueID: usr.HasUniqueId(), OrgRole: string(usr.GetOrgRole()), IsGrafanaAdmin: usr.GetIsGrafanaAdmin(),

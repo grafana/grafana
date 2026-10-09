@@ -43,20 +43,25 @@ type LegacyPermissionIdentity struct {
 	CacheKey *string
 	// RequesterNamespace preserves the original namespace used by legacy
 	// Zanzana resolution, including an explicit empty value. It does not select
-	// tenant scope; a nonempty value must match the request Namespace.
+	// tenant scope; a nonempty value must match the request Namespace, except
+	// org--1 for self-managed NoOrgMembership evaluation.
 	RequesterNamespace *string
 }
 
 type LegacyGetUserPermissionsRequest struct {
 	Identity LegacyPermissionIdentity
-	// Namespace identifies the tenant even for global-only evaluation; neither
-	// a wildcard nor a fabricated org-0 namespace represents global scope.
+	// Namespace is a concrete transport scope, independent of the evaluation
+	// org sentinel. Self-managed global/no-membership calls with no concrete
+	// namespace use default as an instance-local anchor, never for evaluation.
 	Namespace string
-	// GlobalOrg selects instance-global legacy grants (org zero). When false,
-	// including when omitted, evaluation uses the namespace's organization.
+	// GlobalOrg selects instance-global legacy grants (org zero).
 	// It never authorizes cross-tenant access.
-	GlobalOrg   bool
-	ReloadCache bool
+	GlobalOrg bool
+	// NoOrgMembership preserves the authenticated legacy OrgID=-1 state.
+	// It is mutually exclusive with GlobalOrg. When neither flag is set,
+	// evaluation uses the namespace's organization.
+	NoOrgMembership bool
+	ReloadCache     bool
 	// SkipZanzanaCache bypasses reading and writing the Zanzana cache only.
 	// It does not imply ReloadCache.
 	SkipZanzanaCache bool
