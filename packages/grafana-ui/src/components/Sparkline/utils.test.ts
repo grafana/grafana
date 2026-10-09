@@ -423,7 +423,7 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover, makeHoverSparkline({ decimals: 1 }));
 
     hook(makeU([null, 2]));
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
 
     expect(onHover).toHaveBeenCalledTimes(1);
     expect(onHover).toHaveBeenCalledWith({ index: 2, value: 30, display: '30.0', left: 140, top: 60 });
@@ -434,9 +434,9 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover);
 
     hook(makeU([null, 2]));
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
     hook(makeU([null, 2], { left: 41 }));
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
 
     expect(onHover).toHaveBeenCalledTimes(1);
   });
@@ -446,7 +446,7 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover);
 
     hook(makeU([null, 2]));
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
     onHover.mockClear();
     hook(makeU([null, null]));
     hook(makeU([null, null]));
@@ -469,7 +469,7 @@ describe('prepareConfig hover', () => {
     const hook = getSetCursorHook(onHover);
 
     hook(makeU([null, 2]));
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
     onHover.mockClear();
     hook(
       makeU([null, 3], {
@@ -495,14 +495,14 @@ describe('prepareConfig hover', () => {
     hook(makeU([null, 2]));
     hook(makeU([null, 3]));
     expect(display).not.toHaveBeenCalled();
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
 
     expect(display.mock.calls).toEqual([[40]]);
     expect(onHover.mock.calls).toEqual([[{ index: 3, value: 40, display: '40 ms', left: 140, top: 60 }]]);
 
     hook(makeU([null, 2]));
     hook(makeU([null, 3]));
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
     expect(display.mock.calls).toEqual([[40]]);
     expect(onHover).toHaveBeenCalledTimes(1);
   });
@@ -511,13 +511,13 @@ describe('prepareConfig hover', () => {
     const onHover = jest.fn();
     const hook = getSetCursorHook(onHover);
     hook(makeU([null, 1]));
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
     expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20', left: 140, top: 60 });
 
     hook(makeU([null, 2]));
     hook(makeU([null, index]));
     expect(onHover).toHaveBeenLastCalledWith(null);
-    jest.advanceTimersByTime(16);
+    jest.advanceTimersToNextTimer();
     expect(onHover).toHaveBeenCalledTimes(2);
   });
 });
