@@ -144,7 +144,8 @@ To turn on column filtering, follow these steps:
 1. In the panel editor pane, expand the **Table** options section.
 1. Toggle on the [**Column filter** switch](#table-options).
 
-A filter icon (funnel) appears next to each column title.
+A menu icon appears on the right side of the column header.
+Click the icon to access filtering options.
 
 {{< figure src="/static/img/docs/tables/column-filter-with-icon.png" max-width="350px" alt="Column filtering turned on" class="docs-image--no-shadow" >}}
 
@@ -152,7 +153,7 @@ A filter icon (funnel) appears next to each column title.
 
 To filter column values, follow these steps:
 
-1. Click the filter icon (funnel) next to a column title.
+1. Click the menu icon on the right side of the column header and select **Filter values**.
 
    Grafana displays the filter options for that column.
 
@@ -169,11 +170,12 @@ To filter column values, follow these steps:
 
 ### Clear column filters
 
-Columns with filters applied have a blue filter displayed next to the title.
+Columns with filters applied have a filter icon displayed next to the title.
 
 {{< figure src="/static/img/docs/tables/filtered-column.png" max-width="100px" alt="Filtered column" class="docs-image--no-shadow" >}}
 
-To remove the filter, click the blue filter icon and then click **Clear filter**.
+To remove the filter, click the filter icon and then click **Clear filter**.
+The icon no longer displays.
 
 <!-- vale Grafana.WordList = NO -->
 <!-- vale Grafana.Spelling = NO -->
