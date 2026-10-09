@@ -188,6 +188,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/infra/localcache"
 	_ "github.com/grafana/grafana/pkg/infra/log"
 	_ "github.com/grafana/grafana/pkg/infra/metrics"
+	_ "github.com/grafana/grafana/pkg/infra/metrics/metricutil"
 	_ "github.com/grafana/grafana/pkg/infra/metricsservice"
 	_ "github.com/grafana/grafana/pkg/infra/nats"
 	_ "github.com/grafana/grafana/pkg/infra/network"
