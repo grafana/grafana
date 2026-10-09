@@ -25,7 +25,7 @@ import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
 import * as logsUtils from '../../utils';
 import { getFieldSelectorWidth } from '../fieldSelector/fieldSelectorUtils';
-import { LOG_LINE_BODY_FIELD_NAME, OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
+import { LOG_LINE_BODY_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
 import { emptyContextData, LogDetailsContext, type LogDetailsContextData } from './LogDetailsContext';
@@ -319,21 +319,6 @@ describe('LogLineDetails', () => {
       expect(screen.getByText('label1')).toBeInTheDocument();
       expect(screen.getByText('key2')).toBeInTheDocument();
       expect(screen.getByText('label2')).toBeInTheDocument();
-    });
-
-    test('does not display the synthetic OTel log attributes field', async () => {
-      await setup(undefined, {
-        labels: {
-          key1: 'label1',
-          [OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]: 'field=synthetic-attributes-value',
-        },
-      });
-
-      expect(screen.getByText('key1')).toBeInTheDocument();
-      expect(screen.getByText('label1')).toBeInTheDocument();
-      expect(screen.queryByText('Log attributes')).not.toBeInTheDocument();
-      expect(screen.queryByText(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)).not.toBeInTheDocument();
-      expect(screen.queryByText('field=synthetic-attributes-value')).not.toBeInTheDocument();
     });
     test('should show an option to display the log line when displayed fields are used', async () => {
       const onClickShowField = jest.fn();

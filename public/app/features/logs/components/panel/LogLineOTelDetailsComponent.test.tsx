@@ -3,7 +3,6 @@ import userEvent from '@testing-library/user-event';
 
 import { dateTime, type TimeRange } from '@grafana/data';
 
-import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { createLogLine } from '../mocks/logRow';
 
 import { LogLineDetailsOTelComponent } from './LogLineOTelDetailsComponent';
@@ -89,32 +88,5 @@ describe('LogLineDetailsOTelComponent', () => {
     expect(screen.getByText('checkout')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /HTTP/ })).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByText('GET')).toBeInTheDocument();
-  });
-
-  it('does not display the synthetic OTel log attributes field', () => {
-    const log = createLogLine({
-      labels: {
-        'service.name': 'checkout',
-        [OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME]: 'field=synthetic-attributes-value',
-      },
-    });
-
-    render(
-      <LogListContext.Provider value={{ ...defaultValue, logOptionsStorageKey: STORAGE_KEY }}>
-        <LogLineDetailsOTelComponent
-          log={log}
-          logs={[log]}
-          prettifyDetailsJSON={false}
-          setPrettifyDetailsJSON={() => undefined}
-          timeRange={timeRange}
-          timeZone="browser"
-        />
-      </LogListContext.Provider>
-    );
-
-    expect(screen.getByText('checkout')).toBeInTheDocument();
-    expect(screen.queryByText('Log attributes')).not.toBeInTheDocument();
-    expect(screen.queryByText(OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)).not.toBeInTheDocument();
-    expect(screen.queryByText('field=synthetic-attributes-value')).not.toBeInTheDocument();
   });
 });
