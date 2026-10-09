@@ -6,15 +6,17 @@ import {
   type DataQueryError,
   type GrafanaTheme2,
   type QueryResultMetaNotice,
+  type PanelStatusItem,
   renderMarkdown,
   textUtil,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2 } from '@grafana/ui';
+import { ClipboardButton, Icon, type IconName, Stack, TextLink, useStyles2, PanelStatusActions } from '@grafana/ui';
 
 export interface StandardErrorsAndNoticesInspectorProps {
   data?: DataFrame[];
   errors?: DataQueryError[];
+  statusItems?: readonly PanelStatusItem[];
 }
 
 type Severity = QueryResultMetaNotice['severity'];
@@ -26,6 +28,7 @@ export interface InspectableEntry {
   link?: string;
   // Errors are raw payloads shown verbatim in a code block; notices are rendered as markdown.
   isCode?: boolean;
+  statusItem?: PanelStatusItem;
 }
 
 // Higher number = higher priority, used to sort cards error > warning > info.
@@ -88,14 +91,29 @@ export function buildEntries(data: DataFrame[] | undefined, errors: DataQueryErr
   return entries.sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 }
 
-export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErrorsAndNoticesInspectorProps) {
+export function StandardErrorsAndNoticesInspector({
+  data,
+  errors,
+  statusItems,
+}: StandardErrorsAndNoticesInspectorProps) {
   const styles = useStyles2(getStyles);
-  const entries = buildEntries(data, errors);
+  const entries: InspectableEntry[] = statusItems
+    ? statusItems.map((statusItem) => ({
+        severity: statusItem.severity,
+        title: statusItem.text,
+        content: statusItem.detail ?? statusItem.text,
+        isCode: statusItem.origin === 'query',
+        link: statusItem.link,
+        statusItem,
+      }))
+    : buildEntries(data, errors);
 
   if (entries.length === 0) {
     return (
       <div className={styles.empty}>
-        {t('dashboard-scene.errors-and-notices-inspector.no-issues', 'No errors or notices for this query.')}
+        {statusItems
+          ? t('dashboard-scene.errors-and-notices-inspector.no-panel-issues', 'No errors or notices for this panel.')
+          : t('dashboard-scene.errors-and-notices-inspector.no-issues', 'No errors or notices for this query.')}
       </div>
     );
   }
@@ -103,7 +121,7 @@ export function StandardErrorsAndNoticesInspector({ data, errors }: StandardErro
   return (
     <Stack direction="column" gap={1}>
       {entries.map((entry, index) => (
-        <EntryCard key={`${entry.severity}-${index}`} entry={entry} />
+        <EntryCard key={entry.statusItem?.id ?? `${entry.severity}-${index}`} entry={entry} />
       ))}
     </Stack>
   );
@@ -148,6 +166,7 @@ function EntryCard({ entry }: { entry: InspectableEntry }) {
               {t('dashboard-scene.errors-and-notices-inspector.learn-more', 'Learn more')}
             </TextLink>
           )}
+          {entry.statusItem && <PanelStatusActions statusItem={entry.statusItem} />}
         </div>
       )}
     </div>

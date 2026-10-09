@@ -918,6 +918,41 @@ describe('setDashboardPanelContext', () => {
       expect(forceRenderSpy).toHaveBeenCalledTimes(1);
     });
 
+    it('sends a selected panel notice to Assistant and rejects hidden or removed entries', () => {
+      mockIsAssistantAvailable.mockReturnValue(of(true));
+      const { context } = buildTestScene({});
+      const source = context.notices!.createSource();
+      source.set([
+        { id: 'field', severity: 'warning', text: 'Choose a numeric field' },
+        { id: 'secret', severity: 'error', text: 'Manual repair required', assistant: 'hidden' },
+      ]);
+      const entries = context.notices!.getSnapshot().items;
+      const warning = entries.find((entry) => entry.severity === 'warning')!;
+      const hidden = entries.find((entry) => entry.severity === 'error')!;
+      context.onInvestigateStatusItem!(warning.id);
+      expect(mockCreateAssistantContextItem).toHaveBeenCalledWith('structured', {
+        data: expect.objectContaining({
+          panelId: '4',
+          statusItem: {
+            severity: 'warning',
+            text: 'Choose a numeric field',
+            origin: 'panel',
+            refId: undefined,
+            datasourceUid: undefined,
+          },
+        }),
+      });
+      expect(mockOpenAssistant).toHaveBeenCalledWith(
+        expect.objectContaining({
+          prompt: 'Explain the selected error or notice for this panel and what I should do about it.',
+        })
+      );
+      context.onInvestigateStatusItem!(hidden.id);
+      source.dispose();
+      context.onInvestigateStatusItem!(warning.id);
+      expect(mockOpenAssistant).toHaveBeenCalledTimes(1);
+    });
+
     it('does nothing when the panel currently has no errors or notices', async () => {
       mockIsAssistantAvailable.mockReturnValue(of(true));
 

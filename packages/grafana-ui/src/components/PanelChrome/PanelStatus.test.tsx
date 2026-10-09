@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { type ReactElement } from 'react';
 
-import { EventBusSrv } from '@grafana/data';
+import { EventBusSrv, PanelStatusStore } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { type PanelContext, PanelContextProvider } from './PanelContext';
@@ -152,46 +152,54 @@ describe('PanelStatus', () => {
       expect(screen.queryByRole('button', { name: 'Inspect' })).not.toBeInTheDocument();
     });
 
-    it('renders a single Fix with Assistant button and calls onInvestigateErrors when clicked', async () => {
-      const onInvestigateErrors = jest.fn();
+    it('keeps legacy Assistant actions out of the popover', async () => {
       renderWithPanelContext(
         <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />,
-        { onInvestigateErrors }
-      );
-
-      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
-      const button = await screen.findByRole('button', { name: 'Fix with Assistant' });
-
-      await userEvent.click(button);
-      expect(onInvestigateErrors).toHaveBeenCalledTimes(1);
-    });
-
-    it('offers to explain rather than fix when there are no errors to fix', async () => {
-      // `items` here is warning + info only, which is the case where the dashboard side asks the
-      // assistant to explain the notices instead of fixing anything.
-      renderWithPanelContext(<PanelStatus items={items} />, { onInvestigateErrors: jest.fn() });
-
-      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
-
-      expect(await screen.findByRole('button', { name: 'Explain with Assistant' })).toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Fix with Assistant' })).not.toBeInTheDocument();
-    });
-
-    it('places the assistant button before the Inspect button', async () => {
-      renderWithPanelContext(
-        <PanelStatus
-          items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
-          onClick={jest.fn()}
-        />,
         { onInvestigateErrors: jest.fn() }
       );
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+      expect(await screen.findByText('Preparing expression failed')).toBeVisible();
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
+    });
 
-      const assistantButton = await screen.findByRole('button', { name: 'Fix with Assistant' });
+    it('keeps legacy Assistant actions out of the notices popover', async () => {
+      renderWithPanelContext(<PanelStatus items={items} />, { onInvestigateErrors: jest.fn() });
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
+
+      expect(await screen.findByText('Query marked as big')).toBeVisible();
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
+    });
+
+    it('shows runtime notices and Inspect navigation without custom or Assistant actions', async () => {
+      const notices = new PanelStatusStore();
+      notices.createSource().set([
+        {
+          id: 'error',
+          severity: 'error',
+          text: 'Choose a field',
+          actions: [{ id: 'choose', label: 'Choose field', onClick: jest.fn() }],
+        },
+        { id: 'warning', severity: 'warning', text: 'Partial data' },
+      ]);
+      const onOpenInspector = jest.fn();
+      renderWithPanelContext(<PanelStatus />, {
+        notices,
+        onOpenInspector,
+        onInvestigateStatusItem: jest.fn(),
+        onInvestigateErrors: jest.fn(),
+      });
+
+      await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
+
+      expect(await screen.findByText('Choose a field')).toBeVisible();
+      expect(screen.getByText('Partial data')).toBeVisible();
+      expect(screen.queryByRole('button', { name: 'Choose field' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /with Assistant$/ })).not.toBeInTheDocument();
       const inspectButton = screen.getByRole('button', { name: 'Inspect' });
-
-      expect(assistantButton.compareDocumentPosition(inspectButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      await userEvent.click(inspectButton);
+      expect(onOpenInspector).toHaveBeenCalledTimes(1);
     });
 
     it('traps focus within the popover and returns it to the trigger on Escape', async () => {

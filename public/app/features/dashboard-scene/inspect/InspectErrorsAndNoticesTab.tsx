@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+
 import { type DataSourceApi } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
@@ -8,6 +10,7 @@ import {
   type SceneObjectRef,
   type VizPanel,
 } from '@grafana/scenes';
+import { PanelContextProvider, usePanelStatusSnapshot } from '@grafana/ui';
 import { InspectTab } from 'app/features/inspector/types';
 
 import { StandardErrorsAndNoticesInspector } from './StandardErrorsAndNoticesInspector';
@@ -28,22 +31,34 @@ export class InspectErrorsAndNoticesTab extends SceneObjectBase<InspectErrorsAnd
     return InspectTab.ErrorsAndNotices;
   }
 
-  static Component = ({ model }: SceneComponentProps<InspectErrorsAndNoticesTab>) => {
-    const { panelRef, dataSource } = model.state;
-    const data = sceneGraph.getData(panelRef.resolve());
+  static Component = InspectErrorsAndNoticesTabRenderer;
+}
 
-    if (!data.state.data) {
-      return null;
-    }
+function InspectErrorsAndNoticesTabRenderer({ model }: SceneComponentProps<InspectErrorsAndNoticesTab>) {
+  const { panelRef, dataSource } = model.useState();
+  const panel = panelRef.resolve();
+  const context = panel.getPanelContext();
+  const { activateNotices } = context;
+  useEffect(() => activateNotices?.(), [activateNotices]);
+  const snapshot = usePanelStatusSnapshot(context.notices);
+  const { data: panelData } = sceneGraph.getData(panel).useState();
+  const errors = panelData?.errors ?? (panelData?.error ? [panelData.error] : []);
 
-    const panelData = data.state.data;
-    const errors = panelData.errors ?? (panelData.error ? [panelData.error] : []);
-
-    const CustomInspector = dataSource?.components?.ErrorsAndNoticesInspector;
-    if (CustomInspector) {
-      return <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} />;
-    }
-
-    return <StandardErrorsAndNoticesInspector data={panelData.series} errors={errors} />;
-  };
+  const CustomInspector = dataSource?.components?.ErrorsAndNoticesInspector;
+  if (context.notices) {
+    return (
+      <PanelContextProvider value={context}>
+        <StandardErrorsAndNoticesInspector statusItems={snapshot.items} />
+        {CustomInspector && <CustomInspector datasource={dataSource} data={panelData?.series ?? []} errors={errors} />}
+      </PanelContextProvider>
+    );
+  }
+  if (!panelData) {
+    return null;
+  }
+  return CustomInspector ? (
+    <CustomInspector datasource={dataSource} data={panelData.series} errors={errors} />
+  ) : (
+    <StandardErrorsAndNoticesInspector data={panelData.series} errors={errors} />
+  );
 }
