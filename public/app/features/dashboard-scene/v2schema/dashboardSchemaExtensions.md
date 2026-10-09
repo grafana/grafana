@@ -25,10 +25,13 @@ parse errors from schema errors and provides JSON only for parseable buffers. Va
 does not rewrite the buffer, fill defaults, or strip plugin fields. Keep the consumer's
 local YAML draft so comments and formatting survive edits and rerenders.
 
-The existing `codemirror-json-schema` completion source supports Draft 7, but its bundled
-validator uses Draft 4. Dashboard schemas use `const` and `if/then` for discriminated unions,
-so validation uses `json-schema-library`'s Draft 7 engine directly. This adds a direct
-dependency on the already-resolved version, with no new packages in the lockfile.
+Dashboard schemas use `const` and `if/then` for discriminated unions. Validation and
+completion use `json-schema-library`'s Draft 7 engine directly. Completion compiles its
+schema before editing and resolves only the schema at the cursor. The package completion
+source resolves every sibling schema on each request, which stalls typing with the full
+Dashboard schema. Property names, enum/constant/default values, and boolean/null values
+come from the same fetched schema. This adds a direct dependency on the already-resolved
+version, with no new packages in the lockfile.
 
 ## Consumer inventory and migration boundaries
 

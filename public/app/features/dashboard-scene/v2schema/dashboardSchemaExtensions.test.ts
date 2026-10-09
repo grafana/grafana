@@ -123,6 +123,32 @@ describe('Dashboard schema extensions', () => {
     expect(onParseErrorChange).toHaveBeenLastCalledWith(false);
   });
 
+  it('shows and clears schema diagnostics within 100ms of an edit', async () => {
+    jest.useFakeTimers();
+    try {
+      const view = createView('{"kind":"Dashboard","spec":{"title":"Example"}}');
+      await jest.advanceTimersByTimeAsync(1000);
+
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: '{"kind":"Dashboard","spec":{"title":123}}' },
+      });
+      await jest.advanceTimersByTimeAsync(100);
+      const messages: string[] = [];
+      forEachDiagnostic(view.state, (diagnostic) => messages.push(diagnostic.message));
+      expect(messages).toEqual([expect.stringContaining('string')]);
+
+      view.dispatch({
+        changes: { from: 0, to: view.state.doc.length, insert: '{"kind":"Dashboard","spec":{"title":"Example"}}' },
+      });
+      await jest.advanceTimersByTimeAsync(100);
+      const corrected: string[] = [];
+      forEachDiagnostic(view.state, (diagnostic) => corrected.push(diagnostic.message));
+      expect(corrected).toEqual([]);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('reports YAML schema errors, syntax errors, and recovery from the current buffer', async () => {
     const onValidationChange = jest.fn();
     const onParseErrorChange = jest.fn();
@@ -162,6 +188,11 @@ describe('Dashboard schema extensions', () => {
     });
     const propertyResult = await complete(properties, properties.doc.toString().indexOf('ti') + 2);
     expect(propertyResult?.options.map((option) => option.label)).toContain('title');
+    const title = propertyResult!.options.find((option) => option.label === 'title')!;
+    const edited = properties.update({
+      changes: { from: propertyResult!.from, to: propertyResult!.to, insert: title.apply as string },
+    }).state;
+    expect(JSON.parse(edited.doc.toString())).toEqual({ kind: 'Dashboard', spec: { title: '' } });
 
     const values = EditorState.create({
       doc: '{"kind":"Dashboard","spec":{"theme":""}}',
@@ -169,6 +200,25 @@ describe('Dashboard schema extensions', () => {
     });
     const valueResult = await complete(values, values.doc.toString().indexOf('""') + 1);
     expect(valueResult?.options.map((option) => option.label)).toEqual(['light', 'dark']);
+  });
+
+  it.each([
+    [{ type: 'boolean' }, ['false', 'true']],
+    [{ type: 'null' }, ['null']],
+    [{ type: 'string', default: 'quoted "value"' }, ['quoted "value"']],
+  ])('completes missing values and inserts valid JSON for schema %j', async (property, labels) => {
+    const state = EditorState.create({
+      doc: '{"value": }',
+      extensions: createDashboardSchemaExtensions({ type: 'object', properties: { value: property } }),
+    });
+    const result = await complete(state, state.doc.length - 1);
+    expect(result?.options.map((option) => option.label).sort()).toEqual(labels);
+    const option = result!.options[0];
+    expect(typeof option.apply).toBe('string');
+    const edited = state.update({
+      changes: { from: result!.from, to: result!.to, insert: option.apply as string },
+    }).state;
+    expect(() => JSON.parse(edited.doc.toString())).not.toThrow();
   });
 
   it('updates completion and validation together without affecting another editor', async () => {
