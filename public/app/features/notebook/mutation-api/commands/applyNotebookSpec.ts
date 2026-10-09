@@ -134,8 +134,6 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // instead of being folded into (or lost under) the whole-document swap.
       scene.state.body.commitPendingEdits();
 
-      // Captured after entering edit mode, so undoing this write later restores the content without
-      // also flipping the toggle back to View — the edit session itself isn't part of what's undone.
       const previousState = scene.state;
       const newState = {
         ...sceneUtils.cloneSceneObjectState(rebuilt.state, { key: scene.state.key }),
