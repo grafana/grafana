@@ -95,6 +95,16 @@ func withoutListBodyStats(ctx context.Context) context.Context {
 	return context.WithValue(ctx, listBodyStatsKey{}, (*listBodyStats)(nil))
 }
 
+// reportSearchListBodies opts a search-backed list into the body stats when its
+// bodies are read from a KV backend, as a KV-backed store list is. It is marked
+// when the path is chosen rather than on the first read, so a list whose search
+// returns no rows is still counted.
+func (s *server) reportSearchListBodies(ctx context.Context) {
+	if stats := listBodyStatsFromContext(ctx); stats != nil && supportsDeletedBatchReads(s.backend) {
+		stats.supported = true
+	}
+}
+
 func setListStopReason(ctx context.Context, reason string) {
 	if stats := listBodyStatsFromContext(ctx); stats != nil {
 		stats.stopReason = reason

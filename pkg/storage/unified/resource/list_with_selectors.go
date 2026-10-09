@@ -24,6 +24,7 @@ var errSearchCannotAnswerList = errors.New("search cannot answer this list")
 func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
 	defer span.End()
+	s.reportSearchListBodies(ctx)
 
 	if req.Options.Key.Namespace == "" {
 		return &resourcepb.ListResponse{
