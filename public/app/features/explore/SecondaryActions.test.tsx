@@ -35,6 +35,10 @@ jest.mock('app/core/services/context_srv', () => ({
 const mockContextSrv = contextSrv as jest.Mocked<typeof contextSrv>;
 
 describe('SecondaryActions', () => {
+  beforeEach(() => {
+    mockContextSrv.hasPermission.mockReturnValue(true);
+  });
+
   afterEach(() => {
     act(() => {
       setTestFlags({});

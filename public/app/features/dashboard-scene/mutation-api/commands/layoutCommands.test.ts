@@ -1,5 +1,5 @@
-import { config } from '@grafana/runtime';
 import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -227,15 +227,12 @@ function buildSceneWithLayoutParent(
 }
 
 describe('Layout mutation commands', () => {
-  let originalToggle: boolean | undefined;
-
   beforeEach(() => {
-    originalToggle = config.featureToggles.dashboardNewLayouts;
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
   });
 
   afterEach(() => {
-    config.featureToggles.dashboardNewLayouts = originalToggle;
+    setTestFlags({});
   });
 
   describe('ADD_ROW', () => {
@@ -750,7 +747,7 @@ describe('Layout mutation commands', () => {
     });
 
     it('is rejected when feature toggle is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildRowsScene(['Row']);
       const executor = new DashboardMutationClient(scene);
 
@@ -2426,7 +2423,7 @@ describe('Layout mutation commands', () => {
 
   describe('feature toggle gate', () => {
     it('rejects layout commands when dashboardNewLayouts is disabled', async () => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({ dashboardNewLayouts: false });
       const scene = buildRowsScene(['A']);
       const executor = new DashboardMutationClient(scene);
 

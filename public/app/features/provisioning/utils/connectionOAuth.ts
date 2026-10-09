@@ -9,7 +9,7 @@ import { type OAuthConnectionType } from '../types';
 
 import { getServerOrigin } from './git';
 
-const AUTHORIZE_URLS: Record<Exclude<OAuthConnectionType, 'githubEnterpriseOAuth'>, string> = {
+const AUTHORIZE_URLS: Record<Exclude<OAuthConnectionType, 'githubEnterpriseOAuth' | 'gitOAuth'>, string> = {
   githubOAuth: 'https://github.com/login/oauth/authorize',
   gitlabOAuth: 'https://gitlab.com/oauth/authorize',
   bitbucketOAuth: 'https://bitbucket.org/site/oauth2/authorize',
@@ -43,16 +43,21 @@ const OAUTH_TO_PROVIDER = {
   githubEnterpriseOAuth: 'githubEnterprise',
   gitlabOAuth: 'gitlab',
   bitbucketOAuth: 'bitbucket',
+  gitOAuth: 'git',
 } as const;
 
 export function isOAuthConnectionType(type?: string): type is OAuthConnectionType {
   return type != null && type in OAUTH_TO_PROVIDER;
 }
 
+export function canListRepositories(type?: ConnectionSpec['type']): boolean {
+  return type !== 'gitOAuth';
+}
+
 // OAuth app connections talk to the same provider as their app-based counterparts
 export function connectionProviderType(
   type?: ConnectionSpec['type']
-): 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | undefined {
+): 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git' | undefined {
   return isOAuthConnectionType(type) ? OAUTH_TO_PROVIDER[type] : type;
 }
 
@@ -61,7 +66,7 @@ export function buildOAuthAuthorizeUrl(
   clientID: string,
   connectionName: string,
   serverUrl?: string,
-  opts?: { popup?: boolean }
+  opts?: { popup?: boolean; authURL?: string; scopes?: string[] }
 ) {
   const state = generateUUID();
   const redirectUri = getOAuthCallbackUri();
@@ -84,14 +89,19 @@ export function buildOAuthAuthorizeUrl(
   if (type === 'githubOAuth' || type === 'githubEnterpriseOAuth') {
     params.set('scope', 'repo');
   }
+  if (type === 'gitOAuth' && opts?.scopes?.length) {
+    params.set('scope', opts.scopes.join(' '));
+  }
 
   const authorizeUrl =
     type === 'githubEnterpriseOAuth'
       ? // GHES hosts its OAuth endpoints at the server root; drop any path (e.g. /api/v3)
         `${getServerOrigin(serverUrl) || (serverUrl ?? '').replace(/\/+$/, '')}/login/oauth/authorize`
-      : type === 'gitlabOAuth' && serverUrl
-        ? `${serverUrl.replace(/\/+$/, '')}/oauth/authorize`
-        : AUTHORIZE_URLS[type];
+      : type === 'gitOAuth'
+        ? (opts?.authURL ?? '')
+        : type === 'gitlabOAuth' && serverUrl
+          ? `${serverUrl.replace(/\/+$/, '')}/oauth/authorize`
+          : AUTHORIZE_URLS[type];
 
   return textUtil.sanitizeUrl(`${authorizeUrl}?${params.toString()}`);
 }

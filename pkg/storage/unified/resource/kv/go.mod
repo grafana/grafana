@@ -1,12 +1,12 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource/kv
 
-go 1.27.1
+go 1.27.2
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/dgraph-io/badger/v4 v4.9.6
 	github.com/go-sql-driver/mysql v1.10.0
-	github.com/grafana/grafana-app-sdk/logging v0.60.8
+	github.com/grafana/grafana-app-sdk/logging v0.60.12
 	github.com/grafana/grafana/pkg/util/sqlite v0.0.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/lib/pq v1.12.3
@@ -31,9 +31,10 @@ require (
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.46.0 // indirect
-	go.opentelemetry.io/otel/metric v1.46.0 // indirect
-	go.opentelemetry.io/otel/trace v1.46.0 // indirect
+	go.opentelemetry.io/otel v1.47.0 // indirect
+	go.opentelemetry.io/otel/log v1.47.0 // indirect
+	go.opentelemetry.io/otel/metric v1.47.0 // indirect
+	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect

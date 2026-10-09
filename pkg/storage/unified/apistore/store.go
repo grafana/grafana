@@ -42,11 +42,11 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
-	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/apiserver/versionpolicy"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore/versionpolicy"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 var updateRetryConfig = backoff.Config{
@@ -94,6 +94,11 @@ type StorageOptions struct {
 	// through it unless GVK is declared, in which case writes preserve the object's GVK.
 	Serializer Serializer
 
+	// SharedStorage persists this resource in a collection shared with other API groups,
+	// for example every datasource type is stored under datasource.grafana.app.
+	// Unless Serializer is set, shared storage uses [JSONSerializer].
+	SharedStorage *SharedStorage
+
 	// Required to force unique constraints
 	Index resourcepb.ResourceIndexClient
 
@@ -134,7 +139,7 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store          resource.ResourceClient
+	store          resourceclient.ResourceClient
 	getKey         func(string) (*resourcepb.ResourceKey, error)
 	snowflake      *snowflake.Node    // used to enforce internal ids
 	configProvider RestConfigProvider // used for provisioning
@@ -164,7 +169,7 @@ type RestConfigProvider interface {
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
-	store resource.ResourceClient,
+	store resourceclient.ResourceClient,
 	keyFunc func(obj runtime.Object) (string, error),
 	keyParser func(key string) (*resourcepb.ResourceKey, error),
 	newFunc func() runtime.Object,
@@ -264,6 +269,32 @@ func NewStorage(
 				Resource:  k.Resource,
 				Name:      k.Name,
 			}, err
+		}
+	}
+
+	if shared := opts.SharedStorage; shared != nil {
+		if err := shared.validate(); err != nil {
+			return nil, nil, fmt.Errorf("invalid shared storage for %s: %w", s.gr.String(), err)
+		}
+		parseKey := s.getKey
+		s.getKey = func(key string) (*resourcepb.ResourceKey, error) {
+			k, err := parseKey(key)
+			if err != nil {
+				return nil, err
+			}
+			k.Group = shared.Group
+			k.Name, err = shared.storedName(k.Name)
+			return k, err
+		}
+		// The codec cannot decode the shared group, which the scheme does not register
+		inner := opts.Serializer
+		if inner == nil {
+			inner = JSONSerializer()
+		}
+		s.serializer = &sharedSerializer{
+			inner:  inner,
+			shared: *shared,
+			served: s.gr.Group,
 		}
 	}
 
@@ -398,11 +429,11 @@ func (s *Storage) createWithRetry(ctx context.Context, key string, req *resource
 	var lastErr error
 	for bo.Ongoing() {
 		rsp, err := s.store.Create(ctx, req)
-		err = resource.ErrorFromResponse(rsp.GetError(), err)
+		err = resourceutil.ErrorFromResponse(rsp.GetError(), err)
 		if err == nil {
 			return rsp, nil
 		}
-		resErr := resource.AsErrorResult(err)
+		resErr := resourceutil.AsErrorResult(err)
 		if resErr.Reason == string(metaV1.StatusReasonAlreadyExists) {
 			return nil, storage.NewKeyExistsError(key, 0)
 		}
@@ -411,7 +442,7 @@ func (s *Storage) createWithRetry(ctx context.Context, key string, req *resource
 			bo.Wait()
 			continue
 		}
-		return nil, resource.StatusError(resErr)
+		return nil, resourceutil.StatusError(resErr)
 	}
 	return nil, retriesExhausted(ctx, bo, lastErr)
 }
@@ -484,13 +515,13 @@ func (s *Storage) Delete(
 
 		cmd.ResourceVersion, err = meta.GetResourceVersionInt64()
 		if err != nil {
-			return resource.StatusError(resource.AsErrorResult(err))
+			return resourceutil.StatusError(resourceutil.AsErrorResult(err))
 		}
 		rsp, err := s.store.Delete(ctx, cmd)
-		if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		if err := resourceutil.ErrorFromResponse(rsp.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.StatusError(resource.AsErrorResult(err))
+			err = resourceutil.StatusError(resourceutil.AsErrorResult(err))
 			if retryable {
 				lastErr = err
 				bo.Wait()
@@ -499,7 +530,7 @@ func (s *Storage) Delete(
 			return err
 		}
 
-		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta); err != nil {
+		if err = handleSecureValuesDelete(ctx, s.opts.SecureValues, meta, s.ownerReference(meta)); err != nil {
 			logging.FromContext(ctx).Warn("failed to delete inline secure values", "err", err)
 		}
 
@@ -521,6 +552,9 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 	req, predicate, err := toListRequest(k, opts)
 	if err != nil {
 		return watch.NewEmptyWatch(), nil
+	}
+	if err := s.restrictSharedList(req); err != nil {
+		return nil, err
 	}
 
 	cmd := &resourcepb.WatchRequest{
@@ -544,7 +578,7 @@ func (s *Storage) Watch(ctx context.Context, key string, opts storage.ListOption
 			return watch.NewEmptyWatch(), nil
 		}
 
-		return nil, resource.StatusError(resource.AsErrorResult(err))
+		return nil, resourceutil.StatusError(resourceutil.AsErrorResult(err))
 	}
 
 	reporter := apierrors.NewClientErrorReporter(500, "WATCH", "")
@@ -579,18 +613,24 @@ func (s *Storage) Get(ctx context.Context, key string, opts storage.GetOptions, 
 	}
 
 	rsp, err := s.store.Read(ctx, req)
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
-		resErr := resource.AsErrorResult(err)
+	if err := resourceutil.ErrorFromResponse(rsp.GetError(), err); err != nil {
+		resErr := resourceutil.AsErrorResult(err)
 		if resErr.Code == http.StatusNotFound {
 			if opts.IgnoreNotFound {
 				return runtime.SetZeroValue(objPtr)
 			}
 			return storage.NewKeyNotFoundError(key, req.ResourceVersion)
 		}
-		return resource.StatusError(resErr)
+		return resourceutil.StatusError(resErr)
 	}
 
 	_, err = s.convertToObject(ctx, rsp.Value, objPtr)
+	if errors.Is(err, errSharedMismatch) {
+		if opts.IgnoreNotFound {
+			return runtime.SetZeroValue(objPtr)
+		}
+		return storage.NewKeyNotFoundError(key, req.ResourceVersion)
+	}
 	if err != nil {
 		return err
 	}
@@ -615,13 +655,16 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	if err != nil {
 		return err
 	}
+	if err := s.restrictSharedList(req); err != nil {
+		return err
+	}
 
 	rsp, err := s.store.List(ctx, req)
 	if err != nil {
-		return resource.StatusError(resource.AsErrorResult(err))
+		return resourceutil.StatusError(resourceutil.AsErrorResult(err))
 	}
 	if rsp.Error != nil {
-		return resource.StatusError(rsp.Error)
+		return resourceutil.StatusError(rsp.Error)
 	}
 
 	if err := s.validateMinimumResourceVersion(opts.ResourceVersion, uint64(rsp.ResourceVersion)); err != nil {
@@ -649,18 +692,50 @@ func (s *Storage) GetList(ctx context.Context, key string, opts storage.ListOpti
 	}
 	results := make([]resultSlot, len(rsp.Items))
 
-	// Concurrently process items as some may be large and take a while to process.
-	err = concurrency.ForEachJob(ctx, len(rsp.Items), 10, func(ctx context.Context, idx int) error {
-		item := rsp.Items[idx]
-		obj, shouldAppend, err := s.processItem(ctx, item, opts, predicate)
-		if err != nil {
+	if decoder, ok := s.serializer.(BatchDecoder); ok {
+		if err := ctx.Err(); err != nil {
 			return err
 		}
-		if shouldAppend {
-			results[idx] = resultSlot{obj: obj, shouldAppend: true}
+		if len(rsp.Items) > 0 {
+			data := make([][]byte, len(rsp.Items))
+			for i, item := range rsp.Items {
+				data[i] = item.Value
+			}
+			objects, err := decoder.DecodeBatch(ctx, data)
+			if err != nil {
+				return err
+			}
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			if len(objects) != len(data) {
+				return fmt.Errorf("batch decoder returned %d objects, expected %d", len(objects), len(data))
+			}
+			for idx, obj := range objects {
+				if obj == nil {
+					return fmt.Errorf("batch decoder returned nil object at index %d", idx)
+				}
+				obj, appendItem, err := s.processDecodedItem(obj, rsp.Items[idx].ResourceVersion, opts, predicate)
+				if err != nil {
+					return err
+				}
+				results[idx] = resultSlot{obj: obj, shouldAppend: appendItem}
+			}
 		}
-		return nil
-	})
+	} else {
+		// Concurrently process items as some may be large and take a while to process.
+		err = concurrency.ForEachJob(ctx, len(rsp.Items), 10, func(ctx context.Context, idx int) error {
+			item := rsp.Items[idx]
+			obj, shouldAppend, err := s.processItem(ctx, item, opts, predicate)
+			if err != nil {
+				return err
+			}
+			if shouldAppend {
+				results[idx] = resultSlot{obj: obj, shouldAppend: true}
+			}
+			return nil
+		})
+	}
 	if err != nil {
 		return err
 	}
@@ -689,10 +764,17 @@ func (s *Storage) processItem(ctx context.Context, item *resourcepb.ResourceWrap
 	defer span.End()
 
 	obj, err := s.convertToObject(ctx, item.Value, s.newFunc())
+	if errors.Is(err, errSharedMismatch) {
+		return nil, false, nil
+	}
 	if err != nil {
 		return nil, false, err
 	}
-	if err := s.versioner.UpdateObject(obj, uint64(item.ResourceVersion)); err != nil {
+	return s.processDecodedItem(obj, item.ResourceVersion, opts, predicate)
+}
+
+func (s *Storage) processDecodedItem(obj runtime.Object, resourceVersion int64, opts storage.ListOptions, predicate storage.SelectionPredicate) (runtime.Object, bool, error) {
+	if err := s.versioner.UpdateObject(obj, uint64(resourceVersion)); err != nil {
 		return nil, false, err
 	}
 
@@ -780,10 +862,10 @@ func (s *Storage) GuaranteedUpdate(
 	for bo.Ongoing() {
 		// Read the latest value
 		readResponse, err := s.store.Read(ctx, &resourcepb.ReadRequest{Key: req.Key})
-		if err := resource.ErrorFromResponse(readResponse.GetError(), err); err != nil {
-			resErr := resource.AsErrorResult(err)
+		if err := resourceutil.ErrorFromResponse(readResponse.GetError(), err); err != nil {
+			resErr := resourceutil.AsErrorResult(err)
 			if resErr.Code != http.StatusNotFound {
-				return resource.StatusError(resErr)
+				return resourceutil.StatusError(resErr)
 			}
 			if !ignoreNotFound {
 				return apierrors.NewNotFound(s.gr, req.Key.Name)
@@ -818,6 +900,13 @@ func (s *Storage) GuaranteedUpdate(
 		}
 
 		existingObj, err = s.convertToObject(ctx, readResponse.Value, s.newFunc())
+		if errors.Is(err, errSharedMismatch) {
+			// The name is taken by another group in the shared collection
+			if ignoreNotFound {
+				return apierrors.NewAlreadyExists(s.gr, req.Key.Name)
+			}
+			return apierrors.NewNotFound(s.gr, req.Key.Name)
+		}
 		if err != nil {
 			return err
 		}
@@ -848,10 +937,10 @@ func (s *Storage) GuaranteedUpdate(
 		req.Value = v.raw
 		req.ResourceVersion = readResponse.ResourceVersion
 		updateResponse, err := s.store.Update(ctx, req) // Also does RBAC check
-		if err = resource.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
+		if err = resourceutil.ErrorFromResponse(updateResponse.GetError(), err); err != nil {
 			// Classify before normalization so attached gRPC status details remain available.
 			retryable := isRetryableStorageError(err)
-			err = resource.StatusError(resource.AsErrorResult(err))
+			err = resourceutil.StatusError(resourceutil.AsErrorResult(err))
 			if retryable {
 				// Delete the secure values this attempt created; the next attempt recreates them.
 				// finish only echoes the conflict back and logs any cleanup failure itself, so we
@@ -884,7 +973,7 @@ func (s *Storage) GuaranteedUpdate(
 }
 
 func isRetryableStorageError(err error) bool {
-	return resource.IsConflict(err)
+	return resourceutil.IsConflict(err)
 }
 
 func retriesExhausted(ctx context.Context, bo *backoff.Backoff, lastErr error) error {
@@ -941,12 +1030,12 @@ func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, 
 	// RVs may be in either snowflake or microsecond format depending
 	// on which backend produced them.
 	rvMin := int64(minimumRV)
-	if !resource.IsSnowflake(rvMin) {
-		rvMin = rvmanager.SnowflakeFromRV(rvMin)
+	if !resourceutil.IsSnowflake(rvMin) {
+		rvMin = resourceutil.SnowflakeFromRV(rvMin)
 	}
 	rvActual := int64(actualRevision)
-	if !resource.IsSnowflake(rvActual) {
-		rvActual = rvmanager.SnowflakeFromRV(rvActual)
+	if !resourceutil.IsSnowflake(rvActual) {
+		rvActual = resourceutil.SnowflakeFromRV(rvActual)
 	}
 
 	// Enforce the storage.Interface guarantee that the resource version of the returned data

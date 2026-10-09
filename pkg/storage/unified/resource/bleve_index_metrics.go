@@ -19,6 +19,7 @@ type BleveIndexMetrics struct {
 	UpdatedDocuments     prometheus.Histogram
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
+	ReconcileQueueLength prometheus.Gauge
 
 	GlobalReconcileDuration *prometheus.HistogramVec
 
@@ -34,9 +35,10 @@ type BleveIndexMetrics struct {
 	IndexDiskCleanupRuns        *prometheus.CounterVec
 	IndexDiskCleanupDirsDeleted *prometheus.CounterVec
 
-	SearchCapabilityViolations      *prometheus.CounterVec
-	SearchResultFormats             *prometheus.CounterVec
-	SearchServicePermissionFailures *prometheus.CounterVec
+	SearchCapabilityViolations        *prometheus.CounterVec
+	SearchResultFormats               *prometheus.CounterVec
+	SearchServicePermissionFailures   *prometheus.CounterVec
+	SearchServicePermissionExemptions *prometheus.CounterVec
 
 	BuildPhaseSeconds *prometheus.CounterVec
 	BuildDocuments    *prometheus.CounterVec
@@ -138,6 +140,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
 		}),
+		ReconcileQueueLength: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_index_server_global_reconcile_queue_length",
+			Help: "Number of global search indexes waiting to be compared with storage",
+		}),
 		GlobalReconcileDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_index_server_global_reconcile_duration_seconds",
 			Help:                            "Time to compare one global search index with storage and repair what differs",
@@ -217,6 +223,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 			Name: "grafana_index_server_search_service_permission_failures_total",
 			Help: "Search requests rejected before scanning because the service token lacks a required direct or delegated permission.",
 		}, []string{"mode"}),
+		SearchServicePermissionExemptions: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_service_permission_exemptions_total",
+			Help: "Service token permission failures ignored before scanning because the resource is exempt from RBAC.",
+		}, []string{"group", "resource", "mode"}),
 		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
 			Name: "grafana_index_server_search_result_format_total",
 			Help: "Number of search responses by result format.",

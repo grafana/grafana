@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Réinitialiser"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Auxiliary Logs",
+      "description-auxiliary-logs": "L’activation de cette fonctionnalité entraîne des coûts Azure Monitor par requête sur les panneaux de tableau de bord qui interrogent des tables configurées pour les <2>Auxiliary Logs</2>. Les Auxiliary Logs n’ont pas de SLA de temps de réponse, sont uniquement destinés aux requêtes ad-hoc et à l’exploration de données, et ne doivent pas être utilisés pour des tableaux de bord nécessitant des données en temps réel ou pour les alertes.",
+      "label-enable-auxiliary-logs": "Activer Auxiliary Logs"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Requête brute : {{queryDisplayName}}",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Limitez le nombre de lignes renvoyées (la valeur par défaut est 1 000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Voulez-vous vraiment passer aux Auxiliary Logs ?",
       "body-basic-logs-queries": "Voulez-vous vraiment passer aux journaux de base ?",
       "confirmText-confirm": "Confirmer",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Les requêtes d’Auxiliary Logs entraînent des coûts basés sur la quantité de données analysées. Les Auxiliary Logs n’ont pas de SLA de temps de réponse et ne doivent pas être utilisés pour des tableaux de bord nécessitant des données en temps réel ou pour les alertes.",
       "description-basic-logs-queries": "Les requêtes de journaux de base entraînent des coûts en fonction de la quantité de données analysées.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analytics",
+      "label-auxiliary": "Auxiliary",
+      "label-basic": "Basic",
       "label-logs": "Journaux",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Requêtes d’Auxiliary Logs",
       "title-basic-logs-queries": "Requêtes de journaux de base",
       "tooltip-logs": "Spécifie s’il faut exécuter une requête de journaux de base ou d’analyse.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Spécifie s’il faut exécuter une requête de type Analytics, Basic ou Auxiliary Logs.",
+      "tooltip-logs-aux": "Spécifie s’il faut exécuter une requête de type Analytics ou Auxiliary Logs."
     },
     "logs-query-builder": {
       "title-no-tables": "Ressource chargée avec succès, mais sans tableaux"
     },
     "logs-query-editor": {
       "learn-more": "En savoir plus",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Lorsque vous utilisez les Auxiliary Logs, vous ne pouvez sélectionner qu’une seule ressource à la fois.",
+      "notice-basic-single-resource": "Lorsque vous utilisez les Basic Logs, vous ne pouvez sélectionner qu’une seule ressource à la fois.",
+      "notice-same-resource-type": "Vous ne pouvez choisir que des éléments du même type de ressource.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> est une table Analytics.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> est une table d’Auxiliary Logs : elle entraîne des coûts par Gio analysé, n’a pas de SLA de temps de réponse et ne convient pas aux scénarios en temps réel ou d’alertes.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> est une table de Basic Logs : elle entraîne des coûts par Gio analysé.",
+      "tier-switch-revert": "Revenir à {{fromTier}}",
+      "tier-switch-title": "Palier de requête défini sur {{toTier}}",
       "view-query": "Afficher la requête dans Azure Portal",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Cette requête d’Auxiliary Logs traite {{dataIngested}} Gio lors de son exécution. Les Auxiliary Logs n’ont pas de SLA de temps de réponse et ne conviennent pas aux scénarios en temps réel ou d’alerte. ",
+      "warning-auxiliary-raw": "Il s’agit d’une requête d’Auxiliary Logs : elle utilise le point de terminaison de recherche, entraîne des coûts par Gio analysé, n’a pas de SLA de temps de réponse et ne convient pas aux scénarios en temps réel ou d’alerte. Les tables du plan Analytics ne peuvent pas être interrogées dans ce mode (utilisez le palier Analytics pour celles-ci). ",
+      "warning-basic-raw": "Il s’agit d’une requête de Basic Logs : elle utilise le point de terminaison de recherche et entraîne des coûts par Gio analysé. Les tables du plan Analytics ne peuvent pas être interrogées dans ce mode (utilisez le palier Analytics pour celles-ci). ",
+      "warning-data-ingested": "Cette requête traite {{dataIngested}} Gio lors de son exécution. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Cette table dépend du plan d’Auxiliary Logs. Activez « Auxiliary Logs » dans les paramètres de la source de données pour l’interroger.",
+      "description-auxiliary-enabled": "Sélectionner cette table fera passer le mode de requête en Auxiliary Logs",
+      "description-basic-disabled": "Cette table dépend du plan de Basic Logs. Activez « Basic Logs » dans les paramètres de la source de données pour l’interroger.",
+      "description-basic-enabled": "Sélectionner cette table fera passer le mode de requête en Basic Logs",
+      "description-plan-unavailable": "Cette table ne peut pas être sélectionnée, car son plan de journaux (Logs) n’a pas pu être déterminé.",
+      "label-all-columns": "Toutes les colonnes"
     },
     "metric-name-field": {
       "label-metric": "Métrique"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Sélectionner un espace de noms personnalisé",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Sélectionner le nom de la dimension",
+      "aria-label-select-metric-name": "Sélectionner le nom de la métrique",
       "aria-label-select-namespace": "Sélectionner le namespace",
       "aria-label-select-query-type": "Sélectionner un type de requête",
       "aria-label-select-region": "Sélectionner une région",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Sélectionner un groupe de ressources",
       "aria-label-select-subscription": "Sélectionner un abonnement",
       "label-custom-namespace": "Espace de noms personnalisé",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Nom de la dimension",
+      "label-metric-name": "Nom de la métrique",
       "label-namespace": "Namespace",
       "label-query-type": "Type de requête",
       "label-region": "Région",
