@@ -159,6 +159,23 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleReviews",
+        "resourceVersion": "1791369430263",
+        "creationTimestamp": "2026-10-07T09:54:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-07 10:37:10.26353 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable assistant reviews on the alert quality page.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleStatusSync",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-11T20:29:50Z"

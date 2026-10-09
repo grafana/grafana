@@ -54,6 +54,7 @@ declare module "@openfeature/core" {
     | "enableExtensionsAdminPage"
     | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
+    | "alerting.ruleReviews"
     | "alerting.ruleQuality"
     | "alertRuleRestore"
     | "datasources.azureMonitorBatchAPI"
