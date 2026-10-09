@@ -274,11 +274,6 @@ func translateActionToKubernetesAttributes(translation resourceTranslation, acti
 		return "", "", "", "", false
 	}
 
-	// Datasource GET/LIST also accepts query permission. WATCH requires read
-	// permission, so use it when resolving legacy configuration-read grants.
-	if group == "datasource.grafana.app" && resource == "datasources" && subresource == "" && m.relation == RelationGet {
-		verb = "watch"
-	}
 	return group, resource, subresource, verb, true
 }
 

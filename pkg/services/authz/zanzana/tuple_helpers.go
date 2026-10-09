@@ -248,40 +248,41 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 }
 
 // Datasource action sets and caching writes each grant multiple operations.
-// Use granular relations: generic edit/admin also grants datasource creation.
+// Expand these when writing roles so ordinary resource checks are sufficient.
 func datasourceRolePermissionTuples(subject string, perm RolePermission) []*openfgav1.TupleKey {
 	if perm.Kind != "datasources" || perm.Identifier == "" {
 		return nil
 	}
-	var relations []string
-	var subresource string
+	type grant struct {
+		relation    string
+		subresource string
+	}
+	var grants []grant
 	switch perm.Action {
-	case "datasources.caching:write":
-		relations = []string{RelationCreate, RelationUpdate, RelationDelete}
-		subresource = "caching"
+	case "datasources:query":
+		grants = []grant{{RelationSetView, ""}, {RelationCreate, "query"}}
 	case "datasources:edit":
-		relations = []string{RelationGet, RelationUpdate, RelationDelete}
+		grants = []grant{{RelationSetEdit, ""}, {RelationCreate, "query"}}
 	case "datasources:admin":
-		relations = []string{RelationGet, RelationUpdate, RelationDelete, RelationGetPermissions, RelationSetPermissions}
+		grants = []grant{
+			{RelationSetAdmin, ""},
+			{RelationCreate, "query"},
+			{RelationGet, "caching"},
+			{RelationCreate, "caching"},
+			{RelationUpdate, "caching"},
+			{RelationDelete, "caching"},
+		}
+	case "datasources.caching:write":
+		grants = []grant{{RelationCreate, "caching"}, {RelationUpdate, "caching"}, {RelationDelete, "caching"}}
 	default:
 		return nil
 	}
-	newTuple := func(relation, subresource string) *openfgav1.TupleKey {
+	tuples := make([]*openfgav1.TupleKey, 0, len(grants))
+	for _, g := range grants {
 		if perm.Identifier == "*" {
-			return NewGroupResourceTuple(subject, relation, "datasource.grafana.app", "datasources", subresource)
-		}
-		return common.NewResourceTuple(subject, relation, "datasource.grafana.app", "datasources", subresource, perm.Identifier)
-	}
-	tuples := make([]*openfgav1.TupleKey, 0, len(relations)+1)
-	for _, relation := range relations {
-		tuples = append(tuples, newTuple(relation, subresource))
-	}
-	if subresource == "" {
-		tuples = append(tuples, newTuple(RelationCreate, "query"))
-	}
-	if perm.Action == "datasources:admin" {
-		for _, relation := range []string{RelationGet, RelationCreate, RelationUpdate, RelationDelete} {
-			tuples = append(tuples, newTuple(relation, "caching"))
+			tuples = append(tuples, NewGroupResourceTuple(subject, g.relation, datasourcek8s.Group, "datasources", g.subresource))
+		} else {
+			tuples = append(tuples, common.NewResourceTuple(subject, g.relation, datasourcek8s.Group, "datasources", g.subresource, perm.Identifier))
 		}
 	}
 	return tuples

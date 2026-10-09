@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
@@ -13,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/ossaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -144,17 +147,17 @@ func (c datasourcePermissionClient) List(ctx context.Context, req *authzv1.ListR
 	return c.server.List(ctx, req)
 }
 
-func TestIntegrationDatasourceQueryDoesNotGrantLegacyRead(t *testing.T) {
+func TestIntegrationDatasourceQueryMatchesRBACActionSet(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	for _, withRead := range []bool{false, true} {
 		for _, scope := range []string{"datasources:uid:ds1", "datasources:*"} {
 			t.Run(fmt.Sprintf("%s/read=%t", scope, withRead), func(t *testing.T) {
 				srv := setupOpenFGAServer(t)
 				permissions := []*v1.RolePermission{{Action: "datasources:query", Scope: scope}}
-				expected := []accesscontrol.Permission{{Action: "datasources:query", Scope: scope}}
+				legacy := []accesscontrol.Permission{{Action: "datasources:query", Scope: scope}}
 				if withRead {
 					permissions = append(permissions, &v1.RolePermission{Action: "datasources:read", Scope: "datasources:uid:ds2"})
-					expected = append(expected, accesscontrol.Permission{Action: "datasources:read", Scope: "datasources:uid:ds2"})
+					legacy = append(legacy, accesscontrol.Permission{Action: "datasources:read", Scope: "datasources:uid:ds2"})
 				}
 				tuples, err := zanzana.RoleToTuples("query-role", permissions)
 				require.NoError(t, err)
@@ -162,12 +165,23 @@ func TestIntegrationDatasourceQueryDoesNotGrantLegacyRead(t *testing.T) {
 				setupOpenFGADatabase(t, srv, tuples)
 				resolver := acimpl.NewZanzanaPermissionResolver(datasourcePermissionClient{server: srv}, nil, nil, false)
 				usr := &identity.StaticRequester{Type: "user", UserUID: "datasource-user", OrgID: 1, Namespace: namespace}
-				legacy := []accesscontrol.Permission{{Action: "datasources:query", Scope: scope}}
+				actions := resourcepermissions.NewInMemoryActionSetStore()
+				actions.StoreActionSet("datasources:query", ossaccesscontrol.DatasourceQueryActions)
+				expected := actions.ExpandActionSetsWithFilter(legacy, func(string) bool { return true })
+				if scope == "datasources:*" {
+					// A wildcard read grant already includes the explicit ds2 grant.
+					expected = slices.DeleteFunc(expected, func(p accesscontrol.Permission) bool { return p.Scope == "datasources:uid:ds2" })
+				}
 				resolved, err := resolver.ResolveCurrentUserPermissions(newContextWithNamespace(), usr)
 				require.NoError(t, err)
 				require.ElementsMatch(t, expected, resolved)
 				perms := resolver.MergeCurrentUser(newContextWithNamespace(), usr, legacy, log.NewNopLogger())
-				require.ElementsMatch(t, expected, perms)
+				for _, action := range []string{"datasources:read", "datasources:query", "datasources:write"} {
+					for _, uid := range []string{"ds1", "ds2", "ds3"} {
+						evaluator := accesscontrol.EvalPermission(action, "datasources:uid:"+uid)
+						require.Equal(t, evaluator.Evaluate(accesscontrol.GroupScopesByAction(expected)), evaluator.Evaluate(accesscontrol.GroupScopesByAction(perms)), "%s on %s", action, uid)
+					}
+				}
 			})
 		}
 	}
@@ -187,17 +201,14 @@ func TestIntegrationDatasourceQueryKubernetesRead(t *testing.T) {
 					t.Run(group+"/"+verb, func(t *testing.T) {
 						listed, err := srv.List(newContextWithNamespace(), &authzv1.ListRequest{Namespace: namespace, Subject: "user:datasource-user", Group: group, Resource: "datasources", Verb: verb})
 						require.NoError(t, err)
-						if verb == "watch" {
-							require.False(t, listed.All)
-							require.Empty(t, listed.Items)
-						} else if scope == "datasources:*" {
+						if scope == "datasources:*" {
 							require.True(t, listed.All)
 						} else {
 							require.False(t, listed.All)
 							require.Equal(t, []string{"ds1"}, listed.Items)
 						}
 						for _, uid := range []string{"ds1", "ds2"} {
-							expected := verb != "watch" && (uid == "ds1" || scope == "datasources:*")
+							expected := uid == "ds1" || scope == "datasources:*"
 							checked, err := srv.Check(newContextWithNamespace(), &authzv1.CheckRequest{Namespace: namespace, Subject: "user:datasource-user", Group: group, Resource: "datasources", Verb: verb, Name: uid})
 							require.NoError(t, err)
 							require.Equal(t, expected, checked.Allowed)

@@ -87,27 +87,7 @@ func (s *Server) list(ctx context.Context, r *authzv1.ListRequest) (*authzv1.Lis
 	}
 
 	if resource.IsGeneric() {
-		listed, err := s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
-		if err != nil {
-			return nil, err
-		}
-		if query, ok := resource.DatasourceQueryAccess(r.GetVerb()); ok {
-			queryGroup, err := s.checkGroupResource(ctx, r.GetSubject(), common.RelationCreate, query, contextuals, store)
-			if err != nil {
-				return nil, err
-			}
-			if queryGroup.GetAllowed() {
-				return &authzv1.ListResponse{All: true}, nil
-			}
-			queried, err := s.listGeneric(ctx, r.GetSubject(), common.RelationCreate, query, contextuals, store)
-			if err != nil {
-				return nil, err
-			}
-			listed.Items = append(listed.Items, queried.Items...)
-			slices.Sort(listed.Items)
-			listed.Items = slices.Compact(listed.Items)
-		}
-		return listed, nil
+		return s.listGeneric(ctx, r.GetSubject(), relation, resource, contextuals, store)
 	}
 
 	return s.listTyped(ctx, r.GetSubject(), relation, resource, contextuals, store)
