@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/alerting/notifications
 
-go 1.26.6
+go 1.26.9
 
 require (
 	github.com/grafana/grafana-app-sdk v0.56.2
