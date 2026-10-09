@@ -955,17 +955,18 @@ func TestIntegrationZanzanaCreatePolicy(t *testing.T) {
 				srv := setupOpenFGAServer(t)
 				tuple := common.NewGroupResourceTuple(paritySubject, tc.relation, dashboardGroup, tc.resource, tc.subresource)
 				expectedList := parityListResult{}
-				if scope == "folder" {
+				switch scope {
+				case "folder":
 					tuple = common.NewFolderResourceTuple(paritySubject, tc.relation, dashboardGroup, tc.resource, tc.subresource, "parent")
 					if tc.allowed {
 						expectedList.Folders = []string{"parent", "child"}
 					}
-				} else if scope == "resource" {
+				case "resource":
 					tuple = common.NewResourceTuple(paritySubject, tc.relation, dashboardGroup, tc.resource, tc.subresource, "target")
 					if tc.allowed {
 						expectedList.Items = []string{"target"}
 					}
-				} else {
+				default:
 					expectedList.All = tc.allowed
 				}
 				setupOpenFGADatabase(t, srv, []*openfgav1.TupleKey{

@@ -360,7 +360,8 @@ func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1
 	if !ok {
 		return nil, false
 	}
-	tuples := []*openfgav1.TupleKey{translateResourceTuple(subject, translation, m, name)}
+	tuples := make([]*openfgav1.TupleKey, 1, 2)
+	tuples[0] = translateResourceTuple(subject, translation, m, name)
 	switch action {
 	case "folders:edit", "folders:admin":
 		m.relation = RelationCreate
