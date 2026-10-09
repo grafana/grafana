@@ -79,9 +79,10 @@ func (b *DataSourceAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 		return nil
 	}
 
-	// The stored object has Team LBAC rules, but the proposed object does not.
-	// PATCH starts from the stored object, so this difference means the patch
-	// removed the field (possibly by replacing all of jsonData).
+	// The proposed object is the result after applying the PATCH to the stored
+	// object, not the fields sent in the PATCH body. An unrelated PATCH retains
+	// the stored rules; if they are absent here, the PATCH removed them (possibly
+	// by replacing all of jsonData).
 	requestInfo, hasRequestInfo := request.RequestInfoFrom(ctx)
 	if hasRequestInfo && requestInfo.Verb == "patch" {
 		return invalidTeamHTTPHeadersUpdate(proposed, &b.datasourceResourceInfo)
