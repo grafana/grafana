@@ -1,5 +1,5 @@
 /**
- * Provisioning (Git Sync) support for app plugins. See `public/app/features/provisioning/SDK.md`.
+ * Provisioning (Git Sync) support for app plugins. See `public/app/features/provisioning/README.md`.
  *
  * @public
  */
