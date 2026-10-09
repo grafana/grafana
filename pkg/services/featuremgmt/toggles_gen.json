@@ -1614,6 +1614,20 @@
     },
     {
       "metadata": {
+        "name": "dashboards.publicDashboardBadgeFromApi",
+        "resourceVersion": "1791322319214",
+        "creationTimestamp": "2026-10-06T21:31:59Z"
+      },
+      "spec": {
+        "description": "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasource.useNewCRUDAPIs",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-17T14:59:26Z"
@@ -2168,7 +2182,8 @@
       "metadata": {
         "name": "experimentRecentlyViewedDashboards",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-13T15:22:20Z"
+        "creationTimestamp": "2026-01-13T15:22:20Z",
+        "deletionTimestamp": "2026-10-08T15:34:53Z"
       },
       "spec": {
         "description": "A/A test for recently viewed dashboards feature",
@@ -4585,7 +4600,8 @@
       "metadata": {
         "name": "provisioning.readmes",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-08T12:52:21Z"
+        "creationTimestamp": "2026-05-08T12:52:21Z",
+        "deletionTimestamp": "2026-10-08T09:32:09Z"
       },
       "spec": {
         "description": "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
@@ -4986,6 +5002,20 @@
       },
       "spec": {
         "description": "Redirect legacy report service to use the Kubernetes client wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.legacySettingServiceUsesK8SClient",
+        "resourceVersion": "1790956413548",
+        "creationTimestamp": "2026-10-02T15:53:33Z"
+      },
+      "spec": {
+        "description": "Redirect legacy report setting service to use the Kubernetes client wrapper",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
