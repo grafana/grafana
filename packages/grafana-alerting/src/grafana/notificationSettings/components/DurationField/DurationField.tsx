@@ -15,6 +15,8 @@ export interface DurationFieldProps {
   placeholder: string;
   /** Set to false for durations the backend requires to be greater than zero. Defaults to true. */
   allowZero?: boolean;
+  /** Set to false for durations whose API schema has no `ms` unit. Defaults to true. */
+  allowMilliseconds?: boolean;
   disabled?: boolean;
 }
 
@@ -27,11 +29,12 @@ export function DurationField({
   onChange,
   placeholder,
   allowZero = true,
+  allowMilliseconds = true,
   disabled,
 }: DurationFieldProps) {
   const [touched, setTouched] = useState(false);
 
-  const error = touched ? getError(value, allowZero) : undefined;
+  const error = touched ? getError(value, { allowZero, allowMilliseconds }) : undefined;
 
   return (
     <Field label={label} description={description} invalid={Boolean(error)} error={error} disabled={disabled} noMargin>
@@ -46,14 +49,14 @@ export function DurationField({
   );
 }
 
-function getError(value: string, allowZero: boolean): string | undefined {
-  if (!isValidPromDuration(value)) {
+function getError(value: string, options: { allowZero: boolean; allowMilliseconds: boolean }): string | undefined {
+  if (!isValidPromDuration(value, { allowMilliseconds: options.allowMilliseconds })) {
     return t(
       'alerting.duration-field.invalid',
       'Invalid duration format. Use a number followed by a time unit, for example 30s or 5m.'
     );
   }
-  if (!isValidPromDuration(value, { allowZero })) {
+  if (!isValidPromDuration(value, options)) {
     return t('alerting.duration-field.zero', 'Duration must be greater than zero.');
   }
   return undefined;

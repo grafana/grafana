@@ -49,6 +49,7 @@ export function TimingsOverride({ value, defaults, onChange, disabled }: Timings
           value={value.groupWait ?? ''}
           placeholder={inherited.groupWait}
           onChange={(groupWait) => onChange({ ...value, groupWait })}
+          allowMilliseconds={false}
           disabled={disabled}
         />
         <DurationField
@@ -57,6 +58,7 @@ export function TimingsOverride({ value, defaults, onChange, disabled }: Timings
           placeholder={inherited.groupInterval}
           allowZero={false}
           onChange={(groupInterval) => onChange({ ...value, groupInterval })}
+          allowMilliseconds={false}
           disabled={disabled}
         />
         <DurationField
@@ -65,6 +67,7 @@ export function TimingsOverride({ value, defaults, onChange, disabled }: Timings
           placeholder={inherited.repeatInterval}
           allowZero={false}
           onChange={(repeatInterval) => onChange({ ...value, repeatInterval })}
+          allowMilliseconds={false}
           disabled={disabled}
         />
       </Stack>
