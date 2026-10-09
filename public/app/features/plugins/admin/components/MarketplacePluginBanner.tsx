@@ -10,7 +10,7 @@ export const MarketplacePluginBanner = () => {
   return (
     <Alert severity={'info'} title="" className={styles.alert}>
       <Trans i18nKey="plugins.marketplace-plugin-banner.info">
-        This is a paid marketplace plugin. Support is provided by a Marketplace plugin partner.
+        This is a marketplace plugin requiring a subscription. Support is provided by a marketplace [plugin partner](https://grafana.com/legal/plugins/).
       </Trans>
     </Alert>
   );
