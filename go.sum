@@ -1574,6 +1574,7 @@ github.com/gorilla/mux v1.8.1/go.mod h1:AKf9I4AEqPTmMytcMc0KkNouC66V3BtZ4qD5fmWS
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5THxAzdVpqr6/geYxZytqFMBCOtn/ujyeo=
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20261007180837-e51b976f5df2 h1:r176pzeW3mZ35L1Qh9WkAnQwN6HTcNbmXWOCI0UzuaU=
+github.com/grafana/alerting v0.0.0-20261007180837-e51b976f5df2/go.mod h1:cECSzNeeD3uMKn0/3hN4TUHL6NUVJRgYKLgHBmthS0E=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c h1:Pky+hqnm0GSA9NGMDN+E1GDBc4SaJDGNCrMjtctAavg=
 github.com/grafana/alerting/apps/historian v0.0.0-20260729133334-340f1168af6c/go.mod h1:VeTh5j/IeWxbj5v1itvbbH6wt+nYH7qF0/BwH7GpK+U=
 github.com/grafana/authlib v0.0.0-20260930185708-1712fc9b273a h1:OXeToFvpXSHzjffeOsazUtT/DohERRNWx2ZUuBbja4w=
@@ -1627,6 +1628,7 @@ github.com/grafana/nanogit/gittest v1.7.0/go.mod h1:Uxt+zhWIEoopbCsgvDk+FXSGT7X3
 github.com/grafana/otel-profiling-go v0.6.0 h1:W7lOZaJj4IJISXMcM1UBk3fJF3tzF2OD6MJBJaQp1H8=
 github.com/grafana/otel-profiling-go v0.6.0/go.mod h1:cqLIDgNXlnzknJ0WLiEe+JPjZk2MZ4ftMdqRJRWj1ZM=
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33 h1:ER9rMe2u+GhpTunXHZBIABONphXPyi8BfTLy8l3fdMs=
+github.com/grafana/prometheus-alertmanager v0.25.1-0.20260925150512-27a6d009fb33/go.mod h1:sWX4vzxYuH91qFCd2Khubo61VjbksxRcb7SDHs5SDig=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12 h1:X6OemT2WcLtxdmNukEQuIp0c+efWVI/tBTd0oeWeDHI=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.12/go.mod h1:aNSXN1bn1VHAd06EiepmwhAabHsMc67gx8itecdF2c8=
 github.com/grafana/regexp v0.0.0-20250905093917-f7b3be9d1853 h1:cLN4IBkmkYZNnk7EAJ0BHIethd+J6LqxFNw5mSiI2bM=
