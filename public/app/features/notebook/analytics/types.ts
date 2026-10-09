@@ -80,14 +80,14 @@ export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTE
  * How an edit session began. `TOGGLE` is the Edit control inside an open notebook. `NAVIGATION` is
  * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
  * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
- * the more useful fact.
- *
- * Nothing sends an assistant value. The assistant writes cells without entering edit mode.
+ * the more useful fact. `ASSISTANT` is the mutation API rewriting the open document, same as
+ * DashboardScene's own `'assistant'` edit source.
  */
 export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   TOGGLE: 'toggle',
   NAVIGATION: 'navigation',
   NEW: 'new',
+  ASSISTANT: 'assistant',
 } as const;
 
 export type NotebookEditSessionSource =
@@ -359,4 +359,18 @@ export interface NotebookAddFailedProperties extends EventProperty {
   target: NotebookAddTarget;
   /** Why the attempt failed. */
   reason: NotebookAddFailedReason;
+}
+
+export const NOTEBOOK_INCIDENT_ACTION = {
+  DECLARE: 'declare',
+  ATTACH: 'attach',
+} as const;
+
+export type NotebookIncidentAction = (typeof NOTEBOOK_INCIDENT_ACTION)[keyof typeof NOTEBOOK_INCIDENT_ACTION];
+
+export interface NotebookIncidentActionClickedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which IRM action was picked: declaring an incident, or attaching to an existing one. */
+  action: NotebookIncidentAction;
 }

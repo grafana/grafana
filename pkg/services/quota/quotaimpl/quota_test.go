@@ -569,6 +569,7 @@ func setupEnv(t *testing.T, sqlStore db.DB, cfg *setting.Cfg, b bus.Bus, quotaSe
 		secretsService, nil, m, &foldertest.FakeService{}, &acmock.Mock{}, &dashboards.FakeDashboardService{}, nil, b, &acmock.Mock{},
 		annotationstest.NewFakeAnnotationsRepo(), &pluginstore.FakePluginStore{}, tracer, alertingStore, ruleStore, provenanceStore, httpclient.NewProvider(), nil, ngalertfakes.NewFakeReceiverPermissionsService(), ngalertfakes.NewFakeRoutePermissionsService(), ngalertfakes.NewFakeFolderPermissionsService(), usertest.NewUserServiceFake(), orgtest.NewOrgServiceFake(),
 		nil, // clientGenerator
+		nil, // cfgProvider
 	)
 	require.NoError(t, err)
 }

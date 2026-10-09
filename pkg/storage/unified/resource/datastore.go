@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/validation"
 	kvpkg "github.com/grafana/grafana/pkg/storage/unified/resource/kv"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -514,6 +515,7 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 	))
 	return func(yield func(DataObj, error) bool) {
 		defer span.End()
+		stats := listBodyStatsFromContext(ctx)
 		// Validate all keys first
 		for _, key := range keys {
 			if err := validateDataKey(key); err != nil {
@@ -536,6 +538,9 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 				keyMap[strKey] = key
 			}
 
+			if stats != nil {
+				stats.bodyKeysRequested += len(stringKeys)
+			}
 			// Call kv.BatchGet for this batch
 			for kv, err := range d.kv.BatchGet(ctx, dataSection, stringKeys) {
 				if err != nil {
@@ -550,6 +555,9 @@ func (d *dataStore) BatchGet(ctx context.Context, keys []DataKey) iter.Seq2[Data
 					return
 				}
 
+				if stats != nil {
+					stats.bodiesConsumed++
+				}
 				// Yield the DataObj
 				if !yield(DataObj{
 					Key:   dataKey,
@@ -1263,19 +1271,6 @@ func (d *dataStore) lookupCanonicalName(
 	return res[0].Name, nil
 }
 
-// snowflakeRVThreshold separates snowflake RVs (new) from legacy microsecond-timestamp
-// RVs (old). The two encodings occupy disjoint numeric bands for any realistic resource
-// timestamp: a snowflake is (ms_since_2010_epoch << 22), so its <<22 shift lifts it ~150x
-// above the microsecond form of the same instant. For resources dated 2013–2030, micro-RVs
-// span ~1.4e15–1.9e15 while snowflakes span ~2.9e17–2.5e18, leaving an empty gap between them.
-//
-// The cut sits in that gap. 1e17 as a UnixMicros timestamp is year ~5138, so no real
-// micro-RV reaches it; the smallest snowflake we can emit is ~1e16 (epoch + a few days),
-// and any snowflake from a post-2011 timestamp is well above 1e17.
-const snowflakeRVThreshold = int64(1e17)
-
-// IsSnowflake returns whether the argument is a snowflake ID (new) or a microsecond
-// timestamp (old).
 func IsSnowflake(rv int64) bool {
-	return rv >= snowflakeRVThreshold
+	return resourceutil.IsSnowflake(rv)
 }

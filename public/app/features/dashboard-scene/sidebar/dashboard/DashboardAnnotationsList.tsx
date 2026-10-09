@@ -82,6 +82,7 @@ export function DashboardAnnotationsList({ dataLayerSet }: { dataLayerSet: Dashb
       };
 
       edit({
+        meta: { actionId: 'annotation.reorder' },
         source: dataLayerSet,
         description: t('dashboard.sidebar.annotations.reorder-description', 'Reorder annotations list'),
         perform: () => {

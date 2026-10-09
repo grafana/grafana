@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
@@ -10,11 +9,6 @@ import {
 
 import { ResourceTreeView } from './ResourceTreeView';
 
-jest.mock('@openfeature/react-sdk', () => ({
-  ...jest.requireActual('@openfeature/react-sdk'),
-  useBooleanFlagValue: jest.fn(),
-}));
-
 jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
   ...jest.requireActual('app/api/clients/provisioning/v0alpha1'),
   useGetRepositoryFilesQuery: jest.fn(),
@@ -23,7 +17,6 @@ jest.mock('app/api/clients/provisioning/v0alpha1', () => ({
 
 const mockUseGetRepositoryFilesQuery = jest.mocked(useGetRepositoryFilesQuery);
 const mockUseGetRepositoryResourcesQuery = jest.mocked(useGetRepositoryResourcesQuery);
-const mockUseBooleanFlagValue = jest.mocked(useBooleanFlagValue);
 
 const repo: Repository = {
   metadata: { name: 'test-repo' },
@@ -48,7 +41,6 @@ function setupQueries(files: unknown[], resources: unknown[] = []) {
 describe('ResourceTreeView', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseBooleanFlagValue.mockReturnValue(false);
   });
 
   describe('folding', () => {
@@ -178,8 +170,7 @@ describe('ResourceTreeView', () => {
       expect(screen.queryByText('folder')).not.toBeInTheDocument();
     });
 
-    it('should expose the Warnings filter when the folder metadata flag is on', async () => {
-      mockUseBooleanFlagValue.mockReturnValue(true);
+    it('should expose the Warnings filter', async () => {
       const { user } = render(<ResourceTreeView repo={repo} />);
       expect(await screen.findByText('folder')).toBeInTheDocument();
 

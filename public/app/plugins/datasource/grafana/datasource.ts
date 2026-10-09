@@ -17,7 +17,13 @@ import {
   dataFrameFromJSON,
   LoadingState,
 } from '@grafana/data';
-import { DataSourceWithBackend, getGrafanaLiveSrv, getTemplateSrv, type StreamingFrameOptions } from '@grafana/runtime';
+import {
+  DataSourceWithBackend,
+  getGrafanaLiveSrv,
+  getTemplateSrv,
+  locationService,
+  type StreamingFrameOptions,
+} from '@grafana/runtime';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataSourceRef } from '@grafana/schema';
 import { annotationServer } from 'app/features/annotations/api';
@@ -247,6 +253,11 @@ export class GrafanaDatasource extends DataSourceWithBackend<GrafanaQuery> {
         }
       }
       params.tags = tags;
+    }
+
+    // Keep manual annotations when alert state history is explicitly disabled.
+    if (locationService.getSearch().get('disableAlertHistory') === 'true') {
+      params.type = 'annotation';
     }
 
     const df = await annotationServer().query(

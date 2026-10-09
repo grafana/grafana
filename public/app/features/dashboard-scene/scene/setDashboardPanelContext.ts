@@ -49,6 +49,8 @@ export function setDashboardPanelContext(vizPanel: VizPanel, context: PanelConte
     get: () => (dashboard.state.editPanel ? CoreApp.PanelEditor : CoreApp.Dashboard),
   });
 
+  context.adHocTransformations = vizPanel.getRuntimeTransformations();
+
   context.canAddAnnotations = () => {
     const dashboard = getDashboardSceneFor(vizPanel);
     const builtInLayer = getBuiltInAnnotationsLayer(dashboard);

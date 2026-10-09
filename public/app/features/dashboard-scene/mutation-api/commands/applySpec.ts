@@ -67,6 +67,7 @@ export const applySpecCommand: MutationCommand<ApplySpecPayload> = {
         scene,
         spec,
         description: t('dashboard.mutation-api.apply-spec.undo-title', 'Assistant schema edit'),
+        scope: 'mutation-api',
       });
 
       // Return the re-serialized spec so the caller gets the rekeyed element

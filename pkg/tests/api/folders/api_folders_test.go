@@ -29,6 +29,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationGetFolders(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationGetFolders)
+}
+
+func testIntegrationGetFolders(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Setup Grafana and its Database

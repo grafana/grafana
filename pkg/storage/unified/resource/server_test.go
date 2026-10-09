@@ -23,6 +23,7 @@ import (
 	dto "github.com/prometheus/client_model/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/blob/memblob"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -1441,6 +1442,10 @@ type watchTestServerOpts struct {
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
 	NatsWatchMaxAge   time.Duration
+	// WrapKV wraps the backing store, e.g. to stall reads.
+	WrapKV func(KV) KV
+	// NotifierBufferSize overrides the notifier's buffer; zero keeps the default.
+	NotifierBufferSize int
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1451,14 +1456,18 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	var kvStore KV = NewBadgerKV(db)
+	if opts.WrapKV != nil {
+		kvStore = opts.WrapKV(kvStore)
+	}
 	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:            NewBadgerKV(db),
+		KvStore:            kvStore,
 		EventSubscriber:    opts.EventSubscriber,
 		EventPublisher:     opts.EventPublisher,
 		EnableNatsNotifier: opts.EventSubscriber != nil,
 		WatchInvalidator:   watchExpiry,
-		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond, BufferSize: opts.NotifierBufferSize},
 	})
 	require.NoError(t, err)
 
@@ -2290,15 +2299,37 @@ func TestWatchMaxAgeExpiry(t *testing.T) {
 	})
 }
 
-func TestJitteredWatchMaxAge(t *testing.T) {
-	base := 5 * time.Minute
-	lower := time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction))
-	upper := time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction))
-	for i := 0; i < 1000; i++ {
-		got := jitteredWatchMaxAge(t.Context(), base)
-		require.GreaterOrEqual(t, got, lower)
-		require.LessOrEqual(t, got, upper)
+func TestNextWatchMaxAgeExpiry(t *testing.T) {
+	maxAge := 15 * time.Minute
+	now := time.Unix(1_700_000_000, 123)
+	for _, phase := range []time.Duration{0, time.Nanosecond, 7 * time.Minute, maxAge - time.Nanosecond} {
+		d := nextWatchMaxAgeExpiry(now, maxAge, phase)
+		require.Greater(t, d, time.Duration(0))
+		require.LessOrEqual(t, d, maxAge)
+		require.Equal(t, phase, time.Duration(now.Add(d).UnixNano())%maxAge, "expiry must land on the phase")
 	}
+
+	// A watch started exactly at its boundary, e.g. right after being expired,
+	// waits a full period.
+	boundary := time.Unix(0, int64(3*maxAge+7*time.Minute))
+	require.Equal(t, maxAge, nextWatchMaxAgeExpiry(boundary, maxAge, 7*time.Minute))
+}
+
+func TestWatchMaxAgePhase(t *testing.T) {
+	maxAge := 15 * time.Minute
+	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: "ns"}
+	user := newWatchTestUser()
+
+	base := watchMaxAgePhase(user, key, maxAge)
+	require.GreaterOrEqual(t, base, time.Duration(0))
+	require.Less(t, base, maxAge)
+	require.Equal(t, base, watchMaxAgePhase(user, key, maxAge))
+
+	other := newWatchTestUser()
+	other.UserUID = "u456"
+	require.NotEqual(t, base, watchMaxAgePhase(other, key, maxAge))
+	otherNS := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: "other"}
+	require.NotEqual(t, base, watchMaxAgePhase(user, otherNS, maxAge))
 }
 
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying
@@ -3575,6 +3606,28 @@ func TestGetBlobReferenceChecks(t *testing.T) {
 		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: "blob-a"})
 		require.Nil(t, rsp.Error)
 		require.True(t, blob.getReached)
+	})
+
+	t.Run("reads a referenced blob from object storage using its content type", func(t *testing.T) {
+		srv, _, _ := newBlobAuthzTestServer(t, nil)
+		bucket := memblob.OpenBucket(nil)
+		t.Cleanup(func() { require.NoError(t, bucket.Close()) })
+		blob, err := NewCDKBlobSupport(ctx, CDKBlobSupportOptions{Bucket: bucket})
+		require.NoError(t, err)
+		srv.blob = blob
+
+		value := []byte(`{"title":"test"}`)
+		put, err := blob.PutResourceBlob(ctx, &resourcepb.PutBlobRequest{
+			Resource: key, Method: resourcepb.PutBlobRequest_GRPC,
+			ContentType: "application/json; charset=utf-8", Value: value,
+		})
+		require.NoError(t, err)
+		create(t, srv, fmt.Sprintf(`,"blobs":{"dashboard":{"uid":%q,"contentType":"application/json; charset=utf-8"}}`, put.Uid))
+
+		rsp := getBlob(t, srv, &resourcepb.GetBlobRequest{Resource: key, Uid: put.Uid, MustProxyBytes: true})
+		require.Nil(t, rsp.Error)
+		require.Equal(t, value, rsp.Value)
+		require.Equal(t, "application/json; charset=utf-8", rsp.ContentType)
 	})
 
 	t.Run("rejects a blob the resource does not reference", func(t *testing.T) {

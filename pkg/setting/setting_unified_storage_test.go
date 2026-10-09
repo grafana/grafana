@@ -95,6 +95,33 @@ func TestUnifiedStorageGRPCErrorResultToStatusDefaultsOff(t *testing.T) {
 	require.True(t, cfg.UnifiedStorageGRPCErrorResultToStatus)
 }
 
+func TestSearchClientForwardAuthEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		value string
+		env   bool
+		want  bool
+	}{
+		{name: "default"},
+		{name: "enabled", value: "true", want: true},
+		{name: "disabled", value: "false"},
+		{name: "environment override", value: "false", env: true, want: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			require.NoError(t, cfg.Load(CommandLineArgs{HomePath: "../../", Config: "../../conf/defaults.ini"}))
+			if tc.value != "" {
+				cfg.Raw.Section("unified_storage").Key("search_client_forward_auth_enabled").SetValue(tc.value)
+			}
+			if tc.env {
+				t.Setenv("GF_UNIFIED_STORAGE_SEARCH_CLIENT_FORWARD_AUTH_ENABLED", "true")
+			}
+			cfg.setUnifiedStorageConfig()
+			require.Equal(t, tc.want, cfg.SearchClientForwardAuthEnabled)
+		})
+	}
+}
+
 func TestCfg_setUnifiedStorageConfig(t *testing.T) {
 	t.Run("read unified_storage configs", func(t *testing.T) {
 		cfg := NewCfg()

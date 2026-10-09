@@ -1,6 +1,6 @@
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { SceneGridRow, VizPanel, sceneGraph, sceneUtils } from '@grafana/scenes';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { type DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
@@ -54,7 +54,7 @@ export function duplicateDefaultGridPanel(layout: DefaultGridLayoutManager, vizP
   });
 
   // No undo/redo support in legacy edit mode
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     if (gridItem.parent instanceof SceneGridRow) {
       const row = gridItem.parent;
 
@@ -70,6 +70,7 @@ export function duplicateDefaultGridPanel(layout: DefaultGridLayoutManager, vizP
 
   const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
   edit({
+    meta: { actionId: 'panel.duplicate', scope: 'custom-grid' },
     description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
     addedObject: newGridItem.state.body,
     source: layout,

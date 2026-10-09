@@ -208,6 +208,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.VectorEmbeddingCountInterval = section.Key("vector_embedding_count_interval").MustDuration(time.Hour)
 	cfg.applyMigrationEnforcements()
 	cfg.EnableSearchClient = section.Key("enable_search_client").MustBool(false)
+	cfg.SearchClientForwardAuthEnabled = section.Key("search_client_forward_auth_enabled").MustBool(false)
 	cfg.MaxPageSizeBytes = section.Key("max_page_size_bytes").MustInt(0)
 	cfg.AuthorizeBeforeFetchEnabled = section.Key("authorize_before_fetch_enabled").MustBool(false)
 	cfg.IndexPath = section.Key("index_path").String()
