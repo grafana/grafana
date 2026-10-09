@@ -5,6 +5,8 @@
 package provider
 
 import (
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"context"
 	"fmt"
 
@@ -13,7 +15,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank/bedrock"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank/vertex"
@@ -26,9 +27,9 @@ import (
 //
 // Each provider call is timed. Nil vectorMetrics means unregistered metrics,
 // for callers without a registry.
-func ProvideReranker(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*rerank.Reranker, error) {
+func ProvideReranker(cfg *setting.Cfg, vectorMetrics *searchmetrics.VectorMetrics) (*rerank.Reranker, error) {
 	if vectorMetrics == nil {
-		vectorMetrics = resource.ProvideVectorMetrics(nil)
+		vectorMetrics = searchmetrics.ProvideVectorMetrics(nil)
 	}
 	hist := vectorMetrics.RerankDuration
 	switch cfg.RerankProvider {

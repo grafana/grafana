@@ -1,18 +1,19 @@
 package search
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 )
 
 func TestBleveSearchBackend(t *testing.T) {
 	// Run the search backend test suite
-	unitest.RunSearchBackendTest(t, func(ctx context.Context) resource.SearchBackend {
+	unitest.RunSearchBackendTest(t, func(ctx context.Context) searchmodel.SearchBackend {
 		tempDir := t.TempDir()
 
 		// Create a new bleve backend

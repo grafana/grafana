@@ -1,6 +1,8 @@
 package search_test
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"fmt"
 	"strings"
 	"testing"
@@ -14,14 +16,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 func TestDocumentMapping(t *testing.T) {
 	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
-	data := resource.IndexableDocument{
+	data := searchmodel.IndexableDocument{
 		Title:       "title",
 		Description: "descr",
 		Tags:        []string{"a", "b"},
@@ -67,7 +68,7 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 	mappings, err := search.GetBleveMappings(nil, "", "", nil)
 	require.NoError(t, err)
 
-	data := resource.IndexableDocument{
+	data := searchmodel.IndexableDocument{
 		Title:       "title",
 		Description: "descr",
 		Tags:        []string{"a", "b"},
@@ -89,25 +90,25 @@ func TestTermVectorsAndFreqNorm(t *testing.T) {
 	// description is in this bucket because the field is not scored today; the
 	// SkipFreqNorm:true on its text mapping is an index-size optimization.
 	mustSkipFreqNorm := map[string]bool{
-		resource.SEARCH_FIELD_NAME:             true,
-		resource.SEARCH_FIELD_TITLE_PHRASE:     true,
-		resource.SEARCH_FIELD_DESCRIPTION:      true,
-		resource.SEARCH_FIELD_TAGS:             true,
-		resource.SEARCH_FIELD_OWNER_REFERENCES: true,
-		resource.SEARCH_FIELD_CREATED_BY:       true,
-		resource.SEARCH_FIELD_FOLDER:           true,
-		resource.SEARCH_FIELD_MANAGED_BY:       true,
-		"manager.kind":                         true,
-		"manager.id":                           true,
-		"source.path":                          true,
-		"source.checksum":                      true,
-		"source.timestampMillis":               true,
+		searchmodel.SEARCH_FIELD_NAME:             true,
+		searchmodel.SEARCH_FIELD_TITLE_PHRASE:     true,
+		searchmodel.SEARCH_FIELD_DESCRIPTION:      true,
+		searchmodel.SEARCH_FIELD_TAGS:             true,
+		searchmodel.SEARCH_FIELD_OWNER_REFERENCES: true,
+		searchmodel.SEARCH_FIELD_CREATED_BY:       true,
+		searchmodel.SEARCH_FIELD_FOLDER:           true,
+		searchmodel.SEARCH_FIELD_MANAGED_BY:       true,
+		"manager.kind":                            true,
+		"manager.id":                              true,
+		"source.path":                             true,
+		"source.checksum":                         true,
+		"source.timestampMillis":                  true,
 	}
 
 	// Text fields that use MatchQuery with BM25 scoring must NOT skip freq/norm.
 	mustNotSkipFreqNorm := map[string]bool{
-		resource.SEARCH_FIELD_TITLE:       true,
-		resource.SEARCH_FIELD_TITLE_NGRAM: true,
+		searchmodel.SEARCH_FIELD_TITLE:       true,
+		searchmodel.SEARCH_FIELD_TITLE_NGRAM: true,
 	}
 
 	// Fields excluded from SkipFreqNorm check:
@@ -144,12 +145,12 @@ func TestTagsFacetPreservesMultiWordValues(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, idx.Close()) })
 
-	doc := resource.IndexableDocument{Tags: []string{"US West"}}
+	doc := searchmodel.IndexableDocument{Tags: []string{"US West"}}
 	require.NoError(t, idx.Index("a", doc))
 
 	req := bleve.NewSearchRequest(bleve.NewMatchAllQuery())
 	req.Size = 0
-	req.AddFacet("tags", bleve.NewFacetRequest(resource.SEARCH_FIELD_TAGS, 10))
+	req.AddFacet("tags", bleve.NewFacetRequest(searchmodel.SEARCH_FIELD_TAGS, 10))
 	result, err := idx.Search(req)
 	require.NoError(t, err)
 
@@ -172,7 +173,7 @@ func TestStandardCreatedUpdatedAreNumeric(t *testing.T) {
 	t.Cleanup(func() { require.NoError(t, idx.Close()) })
 
 	const created, updated = int64(1700000000123), int64(1700000009456)
-	doc := resource.IndexableDocument{Title: "a", Created: created, Updated: updated}
+	doc := searchmodel.IndexableDocument{Title: "a", Created: created, Updated: updated}
 	doc.UpdateCopyFields()
 	require.NoError(t, idx.Index("a", doc))
 
@@ -207,7 +208,7 @@ func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
 	batch := idx.NewBatch()
 	for i := range docCount {
 		title := fmt.Sprintf("Dashboard title %04d", i)
-		doc := resource.IndexableDocument{
+		doc := searchmodel.IndexableDocument{
 			Name:        fmt.Sprintf("dash-%05d", i),
 			Title:       title,
 			Description: "description",
@@ -237,9 +238,9 @@ func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
 	require.NoError(t, advanced.ForceMerge(t.Context(), &mergeplan.SingleSegmentMergePlanOptions))
 
 	query := bleve.NewMatchQuery("dashboard")
-	query.SetField(resource.SEARCH_FIELD_TITLE)
+	query.SetField(searchmodel.SEARCH_FIELD_TITLE)
 	req := bleve.NewSearchRequestOptions(query, docCount, 0, false)
-	req.Fields = []string{resource.SEARCH_FIELD_TITLE}
+	req.Fields = []string{searchmodel.SEARCH_FIELD_TITLE}
 
 	result, err := idx.Search(req)
 	require.NoError(t, err)
@@ -248,7 +249,7 @@ func TestStoredTitleSurvivesMergeAfterDelete(t *testing.T) {
 	missingTitles := 0
 	missingTitleExamples := make([]string, 0, 10)
 	for _, hit := range result.Hits {
-		title, ok := hit.Fields[resource.SEARCH_FIELD_TITLE].(string)
+		title, ok := hit.Fields[searchmodel.SEARCH_FIELD_TITLE].(string)
 		if !ok || title == "" {
 			missingTitles++
 			if len(missingTitleExamples) < cap(missingTitleExamples) {
@@ -276,7 +277,7 @@ func TestDocValuesConfiguration(t *testing.T) {
 		mappings, err := search.GetBleveMappings(nil, "", "", nil)
 		require.NoError(t, err)
 
-		data := resource.IndexableDocument{
+		data := searchmodel.IndexableDocument{
 			Title:       "title",
 			Description: "descr",
 			Tags:        []string{"a", "b"},
@@ -295,9 +296,9 @@ func TestDocValuesConfiguration(t *testing.T) {
 		require.NoError(t, err)
 
 		fieldsWithDocValues := map[string]bool{
-			resource.SEARCH_FIELD_NAME:         true,
-			resource.SEARCH_FIELD_FOLDER:       true,
-			resource.SEARCH_FIELD_TITLE_PHRASE: true,
+			searchmodel.SEARCH_FIELD_NAME:         true,
+			searchmodel.SEARCH_FIELD_FOLDER:       true,
+			searchmodel.SEARCH_FIELD_TITLE_PHRASE: true,
 		}
 
 		for _, f := range doc.Fields {

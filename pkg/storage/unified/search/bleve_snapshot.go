@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"errors"
 	"fmt"
@@ -19,7 +23,6 @@ import (
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const zapSegmentType = "zap"
@@ -117,7 +120,7 @@ const maxSnapshotDownloadAttempts = 3
 // Metric recording happens here so callers only need to handle the returned values.
 func (b *bleveBackend) tryDownloadRemoteSnapshot(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	logger log.Logger,
 ) (bleve.Index, string, int64, error) {
@@ -153,7 +156,7 @@ func (b *bleveBackend) tryDownloadRemoteSnapshot(
 // lastImportTime (which itself may be zero, meaning no floor at all).
 func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	lastImportTime time.Time,
 	maxAge time.Duration,
@@ -196,7 +199,7 @@ func (b *bleveBackend) tryDownloadFreshSameVersionSnapshot(
 // counts one attempt, not one call.
 func (b *bleveBackend) downloadSelectedSnapshot(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	policy string,
 	spanName string,
@@ -303,7 +306,7 @@ func (b *bleveBackend) downloadSelectedSnapshot(
 // before returning an error, so the caller can try the next candidate.
 func (b *bleveBackend) downloadSnapshotCandidate(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	snapKey ulid.ULID,
 	meta *IndexMeta,
@@ -386,7 +389,7 @@ func (b *bleveBackend) rankSnapshots(all map[ulid.ULID]*IndexMeta, notOlderThan 
 		}
 		// Hard filter: needs a feature this instance cannot read. Dropped here rather
 		// than after download so an older snapshot can be used instead.
-		if unknown := resource.UnknownIndexRequirements(m.ReaderRequirements); len(unknown) > 0 {
+		if unknown := searchmodel.UnknownIndexRequirements(m.ReaderRequirements); len(unknown) > 0 {
 			droppedUnknownRequirements++
 			logger.Debug("index snapshot candidate dropped: unknown reader requirements",
 				"key", k.String(),
@@ -399,7 +402,7 @@ func (b *bleveBackend) rankSnapshots(all map[ulid.ULID]*IndexMeta, notOlderThan 
 		// after download anyway. Snapshots that recorded no features are kept, since
 		// their contents are unknown rather than known to be unusable.
 		if m.FeaturesRecorded {
-			if missing := resource.MissingFeatures(m.Features, b.requiredFeatures); len(missing) > 0 {
+			if missing := searchmodel.MissingFeatures(m.Features, b.requiredFeatures); len(missing) > 0 {
 				droppedMissingFeatures++
 				logger.Debug("index snapshot candidate dropped: missing required features",
 					"key", k.String(),
@@ -521,10 +524,10 @@ func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 	if err != nil {
 		return 0, fmt.Errorf("reading build info: %w", err)
 	}
-	if unknown := resource.UnknownIndexRequirements(bi.ReaderRequirements); len(unknown) > 0 {
+	if unknown := searchmodel.UnknownIndexRequirements(bi.ReaderRequirements); len(unknown) > 0 {
 		return 0, fmt.Errorf("snapshot requires index features this instance does not understand %v", unknown)
 	}
-	if missing := resource.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
+	if missing := searchmodel.MissingIndexFeatures(bi.resourceBuildInfo(), b.requiredFeatures); len(missing) > 0 {
 		return 0, fmt.Errorf("snapshot is missing required index features %v", missing)
 	}
 	return rv, nil
@@ -548,7 +551,7 @@ func (b *bleveBackend) validateDownloadedIndex(idx bleve.Index) (int64, error) {
 func findFreshSnapshotByUploadTime(
 	ctx context.Context,
 	store RemoteIndexStore,
-	ns resource.NamespacedResource,
+	ns resourcecontract.NamespacedResource,
 	notOlderThan time.Time,
 	runningVersion string,
 	maxSupportedIndexFormat string,
@@ -574,7 +577,7 @@ func findFreshSnapshotByUploadTime(
 func findFreshSnapshotByBuildStart(
 	ctx context.Context,
 	store RemoteIndexStore,
-	ns resource.NamespacedResource,
+	ns resourcecontract.NamespacedResource,
 	notOlderThan time.Time,
 	runningVersion string,
 	maxSupportedIndexFormat string,
@@ -588,7 +591,7 @@ func findFreshSnapshotByBuildStart(
 func findFreshSnapshot(
 	ctx context.Context,
 	store RemoteIndexStore,
-	ns resource.NamespacedResource,
+	ns resourcecontract.NamespacedResource,
 	notOlderThan time.Time,
 	runningVersion string,
 	maxSupportedIndexFormat string,
@@ -718,7 +721,7 @@ type snapshotBuildCoordinationOpts struct {
 // work. ULID-keyed snapshots are immutable and cleanup reaps duplicates.
 func (b *bleveBackend) coordinateSnapshotBuild(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	opts snapshotBuildCoordinationOpts,
 	logger log.Logger,
 ) (_ bleve.Index, _ string, _ int64, _ IndexStoreLock, retErr error) {
@@ -809,7 +812,7 @@ func (b *bleveBackend) coordinateSnapshotBuild(
 // and the tiered remote selection found nothing.
 func (b *bleveBackend) coordinateColdStartBuild(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	lastImportTime time.Time,
 	logger log.Logger,
@@ -848,7 +851,7 @@ func (b *bleveBackend) coordinateColdStartBuild(
 // and accepts any same-version snapshot.
 func (b *bleveBackend) tryDownloadColdStartSnapshot(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	lastImportTime time.Time,
 	probeMaxAge time.Duration,
@@ -880,7 +883,7 @@ func (b *bleveBackend) tryDownloadColdStartSnapshot(
 // leader is preferable to running a duplicate rebuild.
 func (b *bleveBackend) coordinateRebuild(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,
@@ -905,7 +908,7 @@ func (b *bleveBackend) coordinateRebuild(
 // only context cancellation aborts the loop.
 func (b *bleveBackend) tryDownloadRebuildSnapshot(
 	ctx context.Context,
-	key resource.NamespacedResource,
+	key resourcecontract.NamespacedResource,
 	resourceDir string,
 	lastImportTime time.Time,
 	maxFreshSnapshotAge time.Duration,

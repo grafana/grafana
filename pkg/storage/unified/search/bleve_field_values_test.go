@@ -1,43 +1,46 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"testing"
 
 	blevesearch "github.com/blevesearch/bleve/v2/search"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 func TestHitsToFieldValuesUsesZeroForMalformedLegacyID(t *testing.T) {
 	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-1"}
 	match := &blevesearch.DocumentMatch{
-		ID: resource.SearchID(key),
+		ID: resourcecontract.SearchID(key),
 		Fields: map[string]any{
-			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID: "not-an-integer",
-			resource.SEARCH_FIELD_TITLE: "Dashboard",
+			searchmodel.SEARCH_FIELD_LABELS + "." + searchmodel.SEARCH_FIELD_LEGACY_ID: "not-an-integer",
+			searchmodel.SEARCH_FIELD_TITLE:                                             "Dashboard",
 		},
 	}
 	hits := blevesearch.DocumentMatchCollection{match}
-	index := &bleveIndex{standard: resource.StandardSearchFields(), logger: log.NewNopLogger()}
+	index := &bleveIndex{standard: searchmodel.StandardSearchFields(), logger: log.NewNopLogger()}
 
-	table, err := index.hitsToTable(t.Context(), []string{resource.SEARCH_FIELD_LEGACY_ID, resource.SEARCH_FIELD_TITLE}, hits, nil, false)
+	table, err := index.hitsToTable(t.Context(), []string{searchmodel.SEARCH_FIELD_LEGACY_ID, searchmodel.SEARCH_FIELD_TITLE}, hits, nil, false)
 	require.NoError(t, err)
 	require.Len(t, table.Rows, 1)
-	legacyID, err := resource.DecodeCell(table.Columns[0], 0, table.Rows[0].Cells[0])
+	legacyID, err := searchmodel.DecodeCell(table.Columns[0], 0, table.Rows[0].Cells[0])
 	require.NoError(t, err)
 	require.Equal(t, int64(0), legacyID)
 
 	schema := &fieldValueResultSchema{
 		fields: []*resourcepb.ResourceSearchField{
-			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
-			{Name: resource.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
+			{Name: searchmodel.SEARCH_FIELD_LEGACY_ID, Type: resourcepb.ResourceSearchField_INT64},
+			{Name: searchmodel.SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
 		},
-		definitions: []resource.SearchFieldDefinition{
-			{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resource.SearchFieldTypeInt64},
-			{Name: resource.SEARCH_FIELD_TITLE, Type: resource.SearchFieldTypeString},
+		definitions: []searchmodel.SearchFieldDefinition{
+			{Name: searchmodel.SEARCH_FIELD_LEGACY_ID, Type: searchmodel.SearchFieldTypeInt64},
+			{Name: searchmodel.SEARCH_FIELD_TITLE, Type: searchmodel.SearchFieldTypeString},
 		},
 	}
 	fields, rows, err := index.hitsToFieldValues(schema, hits, nil)
@@ -54,8 +57,8 @@ func TestHitsToFieldValuesUsesZeroForMalformedLegacyID(t *testing.T) {
 func TestHitsToFieldValuesUsesZeroForInvalidResourceVersion(t *testing.T) {
 	key := &resourcepb.ResourceKey{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-1"}
 	hits := blevesearch.DocumentMatchCollection{{
-		ID:     resource.SearchID(key),
-		Fields: map[string]any{resource.SEARCH_FIELD_RV_STRING: "not-an-integer"},
+		ID:     resourcecontract.SearchID(key),
+		Fields: map[string]any{searchmodel.SEARCH_FIELD_RV_STRING: "not-an-integer"},
 	}}
 	index := &bleveIndex{logger: log.NewNopLogger()}
 
@@ -76,22 +79,22 @@ func TestHitsToFieldValuesRejectsInvalidResourceIdentity(t *testing.T) {
 
 func TestNewSearchResultValue(t *testing.T) {
 	t.Run("scalar zero values remain present", func(t *testing.T) {
-		boolean, err := newSearchResultValue(1, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeBoolean}, false)
+		boolean, err := newSearchResultValue(1, searchmodel.SearchFieldDefinition{Type: searchmodel.SearchFieldTypeBoolean}, false)
 		require.NoError(t, err)
 		require.Equal(t, []bool{false}, boolean.BooleanValues)
 
-		integer, err := newSearchResultValue(2, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeInt64}, float64(0))
+		integer, err := newSearchResultValue(2, searchmodel.SearchFieldDefinition{Type: searchmodel.SearchFieldTypeInt64}, float64(0))
 		require.NoError(t, err)
 		require.Equal(t, []int64{0}, integer.Int64Values)
 
-		text, err := newSearchResultValue(3, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeString}, "")
+		text, err := newSearchResultValue(3, searchmodel.SearchFieldDefinition{Type: searchmodel.SearchFieldTypeString}, "")
 		require.NoError(t, err)
 		require.Equal(t, []string{""}, text.StringValues)
 	})
 
 	t.Run("array values", func(t *testing.T) {
-		value, err := newSearchResultValue(4, resource.SearchFieldDefinition{
-			Type:  resource.SearchFieldTypeString,
+		value, err := newSearchResultValue(4, searchmodel.SearchFieldDefinition{
+			Type:  searchmodel.SearchFieldTypeString,
 			Array: true,
 		}, []any{"one", "two"})
 		require.NoError(t, err)
@@ -100,16 +103,16 @@ func TestNewSearchResultValue(t *testing.T) {
 	})
 
 	t.Run("other scalar types", func(t *testing.T) {
-		double, err := newSearchResultValue(5, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeDouble}, float64(1.5))
+		double, err := newSearchResultValue(5, searchmodel.SearchFieldDefinition{Type: searchmodel.SearchFieldTypeDouble}, float64(1.5))
 		require.NoError(t, err)
 		require.Equal(t, []float64{1.5}, double.DoubleValues)
 
-		date, err := newSearchResultValue(6, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeDate}, float64(1234))
+		date, err := newSearchResultValue(6, searchmodel.SearchFieldDefinition{Type: searchmodel.SearchFieldTypeDate}, float64(1234))
 		require.NoError(t, err)
 		require.Equal(t, []int64{1234}, date.Int64Values)
 
-		booleans, err := newSearchResultValue(7, resource.SearchFieldDefinition{
-			Type:  resource.SearchFieldTypeBoolean,
+		booleans, err := newSearchResultValue(7, searchmodel.SearchFieldDefinition{
+			Type:  searchmodel.SearchFieldTypeBoolean,
 			Array: true,
 		}, []any{true, false})
 		require.NoError(t, err)
@@ -117,8 +120,8 @@ func TestNewSearchResultValue(t *testing.T) {
 	})
 
 	t.Run("empty array remains present", func(t *testing.T) {
-		value, err := newSearchResultValue(8, resource.SearchFieldDefinition{
-			Type:  resource.SearchFieldTypeInt64,
+		value, err := newSearchResultValue(8, searchmodel.SearchFieldDefinition{
+			Type:  searchmodel.SearchFieldTypeInt64,
 			Array: true,
 		}, []int64{})
 		require.NoError(t, err)
@@ -127,10 +130,10 @@ func TestNewSearchResultValue(t *testing.T) {
 	})
 
 	t.Run("invalid values", func(t *testing.T) {
-		_, err := newSearchResultValue(0, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeString}, []string{"one", "two"})
+		_, err := newSearchResultValue(0, searchmodel.SearchFieldDefinition{Type: searchmodel.SearchFieldTypeString}, []string{"one", "two"})
 		require.ErrorContains(t, err, "scalar field has 2 values")
 
-		_, err = newSearchResultValue(0, resource.SearchFieldDefinition{Type: resource.SearchFieldTypeInt64}, "not a number")
+		_, err = newSearchResultValue(0, searchmodel.SearchFieldDefinition{Type: searchmodel.SearchFieldTypeInt64}, "not a number")
 		require.ErrorContains(t, err, "expected int64-compatible number")
 	})
 }
@@ -155,7 +158,7 @@ func TestHitResourceVersion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			match := &blevesearch.DocumentMatch{ID: "default/group/resource/name"}
 			if tc.value != nil {
-				match.Fields = map[string]any{resource.SEARCH_FIELD_RV_STRING: tc.value}
+				match.Fields = map[string]any{searchmodel.SEARCH_FIELD_RV_STRING: tc.value}
 			}
 			require.Equal(t, tc.want, idx.hitResourceVersion(match))
 		})

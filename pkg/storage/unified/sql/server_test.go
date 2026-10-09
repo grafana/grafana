@@ -175,7 +175,7 @@ func TestWithAccessClientValidatesAuthzConfig(t *testing.T) {
 			err := withAccessClient(&ServerOptions{
 				Cfg:          cfg,
 				AccessClient: types.FixedAccessClient(true),
-			}, &resource.ResourceServerOptions{})
+			}, &assembledServerOptions{})
 			if tt.wantError != "" {
 				require.ErrorContains(t, err, tt.wantError)
 				return
@@ -188,7 +188,7 @@ func TestWithAccessClientValidatesAuthzConfig(t *testing.T) {
 func TestWithAuthorizeBeforeFetch(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.AuthorizeBeforeFetchEnabled = true
-	resourceOpts := &resource.ResourceServerOptions{}
+	resourceOpts := &assembledServerOptions{}
 	require.NoError(t, withAuthorizeBeforeFetch(&ServerOptions{Cfg: cfg}, resourceOpts))
 	require.True(t, resourceOpts.AuthorizeBeforeFetchEnabled)
 }
@@ -226,7 +226,7 @@ func TestWithNatsWatchMaxAge(t *testing.T) {
 			cfg.NATS.Notifier = tt.notifier
 			cfg.NATS.NotifierWatchMaxAge = tt.maxAge
 
-			resourceOpts := &resource.ResourceServerOptions{}
+			resourceOpts := &assembledServerOptions{}
 			require.NoError(t, withNatsWatchMaxAge(&ServerOptions{Cfg: cfg}, resourceOpts))
 			require.Equal(t, tt.want, resourceOpts.NatsWatchMaxAge)
 		})
@@ -235,7 +235,7 @@ func TestWithNatsWatchMaxAge(t *testing.T) {
 
 func TestWithBackendSharesWatchExpiry(t *testing.T) {
 	expiry := resource.NewWatchExpiry()
-	resourceOpts := &resource.ResourceServerOptions{}
+	resourceOpts := &assembledServerOptions{}
 	require.NoError(t, withBackend(&ServerOptions{
 		Backend: &resource.UnimplementedStorageBackend{}, WatchExpiry: expiry,
 	}, resourceOpts))

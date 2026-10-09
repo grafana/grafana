@@ -42,7 +42,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config, sec
 	}
 
 	return apistore.NewRESTOptionsGetterForClient(
-		resource.NewLocalResourceClient(server),
+		resource.NewLocalResourceClient(server, nil),
 		secrets,
 		originalStorageConfig,
 		nil,

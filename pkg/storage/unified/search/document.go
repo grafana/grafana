@@ -1,8 +1,9 @@
 package search
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
@@ -13,19 +14,19 @@ type StandardDocumentBuilders struct {
 	sprinkles builders.DashboardStats
 }
 
-func ProvideDocumentBuilders(sql db.DB, sprinkles builders.DashboardStats) resource.DocumentBuilderSupplier {
+func ProvideDocumentBuilders(sql db.DB, sprinkles builders.DashboardStats) searchmodel.DocumentBuilderSupplier {
 	return &StandardDocumentBuilders{sql, sprinkles}
 }
 
-func (s *StandardDocumentBuilders) GetDocumentBuilders(registry *resource.SearchFieldsRegistry) ([]resource.DocumentBuilderInfo, error) {
+func (s *StandardDocumentBuilders) GetDocumentBuilders(registry *searchmodel.SearchFieldsRegistry) ([]searchmodel.DocumentBuilderInfo, error) {
 	all, err := builders.All(registry, s.sql, s.sprinkles)
 	if err != nil {
 		return nil, err
 	}
 
-	result := []resource.DocumentBuilderInfo{ //nolint:prealloc
+	result := []searchmodel.DocumentBuilderInfo{ //nolint:prealloc
 		{
-			Builder: resource.StandardDocumentBuilder(registry),
+			Builder: searchmodel.StandardDocumentBuilder(registry),
 		},
 	}
 	return append(result, all...), nil

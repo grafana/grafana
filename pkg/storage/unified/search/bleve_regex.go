@@ -1,6 +1,8 @@
 package search
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"errors"
 	"fmt"
@@ -35,7 +37,7 @@ func (b *bleveIndex) regexRequirementQuery(req *resourcepb.Requirement, negate b
 		return nil, resource.NewBadRequestError(fmt.Sprintf("field %s does not support regex filtering because it does not preserve original case", req.Key))
 	}
 
-	filter, err := parseRegexFilter(req.Key, req.Values[0], kf.name == resource.SEARCH_FIELD_PREFIX+resource.SEARCH_FIELD_LABELS)
+	filter, err := parseRegexFilter(req.Key, req.Values[0], kf.name == searchmodel.SEARCH_FIELD_PREFIX+searchmodel.SEARCH_FIELD_LABELS)
 	if err != nil {
 		return nil, resource.NewBadRequestError(err.Error())
 	}

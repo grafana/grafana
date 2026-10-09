@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"strconv"
 	"testing"
 	"time"
@@ -10,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -96,12 +99,12 @@ func TestRemoveExpiredTrashDrainsMoreThanOneBatch(t *testing.T) {
 
 	key := trashCleanupKey(dashboardGroup, dashboardResource)
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "ns"})
-	index, err := backend.BuildIndex(ctx, key, int64(total), "test", func(i resource.ResourceIndex) (int64, error) {
-		items := make([]*resource.BulkIndexItem, 0, total)
+	index, err := backend.BuildIndex(ctx, key, int64(total), "test", func(i searchmodel.ResourceIndex) (int64, error) {
+		items := make([]*searchmodel.BulkIndexItem, 0, total)
 		for n := range total {
 			items = append(items, deletedTrashItem(key, "trash-"+strconv.Itoa(n), &expired, int64(n+1)))
 		}
-		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		return 1, i.BulkIndex(&searchmodel.BulkIndexRequest{Items: items})
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
@@ -113,7 +116,7 @@ func TestRemoveExpiredTrashDrainsMoreThanOneBatch(t *testing.T) {
 // newTrashCleanupIndex builds an index holding two live documents, one older than
 // any window used here, and three deleted ones: expired, recent, and one with no
 // deletion time, as written before that field existed.
-func newTrashCleanupIndex(t testing.TB, key resource.NamespacedResource, retention TrashRetentionConfig, old, recent int64) (*bleveBackend, resource.ResourceIndex) {
+func newTrashCleanupIndex(t testing.TB, key resourcecontract.NamespacedResource, retention TrashRetentionConfig, old, recent int64) (*bleveBackend, searchmodel.ResourceIndex) {
 	t.Helper()
 
 	backend, err := NewBleveBackend(BleveOptions{
@@ -125,8 +128,8 @@ func newTrashCleanupIndex(t testing.TB, key resource.NamespacedResource, retenti
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	live := func(name string, rv int64) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+	live := func(name string, rv int64) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{
 			Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
 			Name:  name,
 			Title: name,
@@ -135,8 +138,8 @@ func newTrashCleanupIndex(t testing.TB, key resource.NamespacedResource, retenti
 	}
 
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "ns"})
-	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i resource.ResourceIndex) (int64, error) {
-		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i searchmodel.ResourceIndex) (int64, error) {
+		return 1, i.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			deletedTrashItem(key, "old", &old, 10),
 			deletedTrashItem(key, "recent", &recent, 20),
 			deletedTrashItem(key, "no-timestamp", nil, 30),
@@ -150,20 +153,20 @@ func newTrashCleanupIndex(t testing.TB, key resource.NamespacedResource, retenti
 	return backend, index
 }
 
-func trashCleanupKey(group, res string) resource.NamespacedResource {
-	return resource.NamespacedResource{Namespace: "default", Group: group, Resource: res}
+func trashCleanupKey(group, res string) resourcecontract.NamespacedResource {
+	return resourcecontract.NamespacedResource{Namespace: "default", Group: group, Resource: res}
 }
 
-func trashCleanupSearchFields(group, res string) *resource.SearchFieldsRegistry {
-	return resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-		resource.NewLowerGroupResource(group, res): DashboardSearchFieldsProviderForTest(),
+func trashCleanupSearchFields(group, res string) *searchmodel.SearchFieldsRegistry {
+	return searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+		resourcecontract.NewLowerGroupResource(group, res): DashboardSearchFieldsProviderForTest(),
 	})
 }
 
-func deletedTrashItem(key resource.NamespacedResource, name string, deletedAt *int64, rv int64) *resource.BulkIndexItem {
+func deletedTrashItem(key resourcecontract.NamespacedResource, name string, deletedAt *int64, rv int64) *searchmodel.BulkIndexItem {
 	rvs := strconv.FormatInt(rv, 10)
 	deleted := true
-	return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+	return &searchmodel.BulkIndexItem{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{
 		Key:          &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
 		Name:         name,
 		Title:        name,
@@ -176,7 +179,7 @@ func deletedTrashItem(key resource.NamespacedResource, name string, deletedAt *i
 
 // allDocumentIDs returns every document in the index, trash included, so a test
 // can tell removal from the read path merely hiding something.
-func allDocumentIDs(t testing.TB, index resource.ResourceIndex) []string {
+func allDocumentIDs(t testing.TB, index searchmodel.ResourceIndex) []string {
 	t.Helper()
 
 	idx, ok := index.(*bleveIndex)
@@ -193,7 +196,7 @@ func allDocumentIDs(t testing.TB, index resource.ResourceIndex) []string {
 	require.NoError(t, err)
 	for _, hit := range res.Hits {
 		k := &resourcepb.ResourceKey{}
-		require.NoError(t, resource.ReadSearchID(k, hit.ID))
+		require.NoError(t, resourcecontract.ReadSearchID(k, hit.ID))
 		names = append(names, k.Name)
 	}
 	return names

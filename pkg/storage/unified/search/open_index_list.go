@@ -1,6 +1,8 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"cmp"
 	"context"
 	"encoding/json"
@@ -12,8 +14,6 @@ import (
 	"path/filepath"
 	"slices"
 	"time"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const (
@@ -37,7 +37,7 @@ type openIndexListEntry struct {
 	DocCount  int64  `json:"docCount"`
 }
 
-func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]resource.ResourceStats, error) {
+func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) ([]resourcecontract.ResourceStats, error) {
 	root, err := os.OpenRoot(b.opts.Root)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func (b *bleveBackend) LoadOpenIndexStats(now time.Time, maxAge time.Duration) (
 }
 
 // readOpenIndexList validates an open index list and returns error if invalid.
-func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([]resource.ResourceStats, error) {
+func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([]resourcecontract.ResourceStats, error) {
 	var list openIndexListFile
 	if err := json.NewDecoder(reader).Decode(&list); err != nil {
 		return nil, fmt.Errorf("invalid open index list JSON: %w", err)
@@ -77,8 +77,8 @@ func readOpenIndexList(reader io.Reader, now time.Time, maxAge time.Duration) ([
 		return nil, fmt.Errorf("open index list has no indexes")
 	}
 
-	stats := make([]resource.ResourceStats, 0, len(list.Indexes))
-	seen := map[resource.NamespacedResource]bool{}
+	stats := make([]resourcecontract.ResourceStats, 0, len(list.Indexes))
+	seen := map[resourcecontract.NamespacedResource]bool{}
 	for i, entry := range list.Indexes {
 		stat, ok := openIndexListStat(entry)
 		if !ok {
@@ -110,12 +110,12 @@ func validateOpenIndexListTimestamp(writtenAtValue string, now time.Time, maxAge
 	return nil
 }
 
-func openIndexListStat(entry openIndexListEntry) (resource.ResourceStats, bool) {
+func openIndexListStat(entry openIndexListEntry) (resourcecontract.ResourceStats, bool) {
 	if entry.Namespace == "" || entry.Group == "" || entry.Resource == "" || entry.DocCount <= 0 {
-		return resource.ResourceStats{}, false
+		return resourcecontract.ResourceStats{}, false
 	}
-	return resource.ResourceStats{
-		NamespacedResource: resource.NamespacedResource{
+	return resourcecontract.ResourceStats{
+		NamespacedResource: resourcecontract.NamespacedResource{
 			Namespace: entry.Namespace,
 			Group:     entry.Group,
 			Resource:  entry.Resource,
@@ -213,7 +213,7 @@ func (b *bleveBackend) WriteOpenIndexStats(now time.Time) error {
 	return nil
 }
 
-func compareNamespacedResource(a, b resource.NamespacedResource) int {
+func compareNamespacedResource(a, b resourcecontract.NamespacedResource) int {
 	if c := cmp.Compare(a.Namespace, b.Namespace); c != 0 {
 		return c
 	}

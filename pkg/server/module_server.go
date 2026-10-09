@@ -1,6 +1,12 @@
 package server
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"net"
@@ -45,6 +51,7 @@ import (
 	embedderprovider "github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/provider"
 	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
 	rerankprovider "github.com/grafana/grafana/pkg/storage/unified/search/rerank/provider"
+	searchservice "github.com/grafana/grafana/pkg/storage/unified/search/service"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 )
@@ -53,7 +60,7 @@ import (
 // stats instance it was built from, so both can be shared by the
 // storage-server module.
 type SearchSupport struct {
-	DocBuilders    resource.DocumentBuilderSupplier
+	DocBuilders    searchmodel.DocumentBuilderSupplier
 	DashboardStats builders.DashboardStats
 }
 
@@ -64,8 +71,8 @@ func NewModule(opts Options,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics,
-	vectorMetrics *resource.VectorMetrics,
+	indexMetrics *searchmetrics.IndexMetrics,
+	vectorMetrics *searchmetrics.VectorMetrics,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
 	tracer tracing.Tracer, // Ensures tracing is initialized
@@ -95,8 +102,8 @@ func newModuleServer(opts Options,
 	features featuremgmt.FeatureToggles,
 	cfg *setting.Cfg,
 	storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics,
-	vectorMetrics *resource.VectorMetrics,
+	indexMetrics *searchmetrics.IndexMetrics,
+	vectorMetrics *searchmetrics.VectorMetrics,
 	reg prometheus.Registerer,
 	promGatherer prometheus.Gatherer,
 	tracer tracing.Tracer,
@@ -171,7 +178,7 @@ type ModuleServer struct {
 	kvStore          resourcekv.KV
 	experimentalKV   *resource.ExperimentalKVOptions
 	watchExpiry      resource.WatchExpiry
-	blobBackend      resource.BlobSupport
+	blobBackend      resourcecontract.BlobSupport
 	natsPublisher    nats.Publisher
 	natsSubscriber   nats.Subscriber
 	vectorBackend    vector.VectorBackend
@@ -179,8 +186,8 @@ type ModuleServer struct {
 	reranker         *rerank.Reranker
 	searchClient     resourcepb.ResourceIndexClient
 	storageMetrics   *resource.StorageMetrics
-	indexMetrics     *resource.BleveIndexMetrics
-	vectorMetrics    *resource.VectorMetrics
+	indexMetrics     *searchmetrics.IndexMetrics
+	vectorMetrics    *searchmetrics.VectorMetrics
 	license          licensing.Licensing
 
 	pidFile     string
@@ -282,7 +289,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.SearchServerRing, s.initSearchServerRing)
 	m.RegisterModule(modules.SearchServerDistributor, func() (services.Service, error) {
-		svc, err := resource.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.cfg, s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
+		svc, err := searchservice.ProvideSearchDistributorServer(otel.Tracer("index-server-distributor"), s.cfg, s.searchServerRing, s.searchServerRingClientPool, s.grpcService)
 		if err != nil {
 			return nil, err
 		}
@@ -474,9 +481,9 @@ func (s *ModuleServer) initUnifiedBackendModule(storageServicesEnabled bool) fun
 
 func (s *ModuleServer) initStorageServerModule() (services.Service, error) {
 	// Only set docBuilders and indexMetrics if enable_search is true
-	var docBuilders resource.DocumentBuilderSupplier
+	var docBuilders searchmodel.DocumentBuilderSupplier
 	var dashboardStats builders.DashboardStats
-	var indexMetrics *resource.BleveIndexMetrics
+	var indexMetrics *searchmetrics.IndexMetrics
 	if s.cfg.EnableSearch {
 		s.log.Warn("Support for 'enable_search' config with 'storage-server' target is deprecated and will be removed in a future release. Please use the 'search-server' target instead.")
 		// The document builders and the vector backfiller share one

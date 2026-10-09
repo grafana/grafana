@@ -1,6 +1,10 @@
 package builders
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -15,11 +19,10 @@ import (
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string, key *resourcepb.ResourceKey, names []string) {
+func doSnapshotTests(t *testing.T, builder searchmodel.DocumentBuilder, kind string, key *resourcepb.ResourceKey, names []string) {
 	t.Helper()
 
 	for _, name := range names {
@@ -50,11 +53,11 @@ func doSnapshotTests(t *testing.T, builder resource.DocumentBuilder, kind string
 
 // iamTestRegistry seeds a registry with the IAM kinds' fields so the
 // registry-backed builders extract them, as they do in production.
-func iamTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
+func iamTestRegistry(t *testing.T) *searchmodel.SearchFieldsRegistry {
 	t.Helper()
-	sel, hashes, providers, err := resource.SearchFieldsForManifests(iam.LocalManifest().ManifestData)
+	sel, hashes, providers, err := searchmodel.SearchFieldsForManifests(iam.LocalManifest().ManifestData)
 	require.NoError(t, err)
-	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
+	return searchmodel.NewSearchFieldsRegistry(sel, hashes, providers)
 }
 
 func TestUserDocumentBuilder(t *testing.T) {
@@ -115,7 +118,7 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 		Resource:  "dashboards",
 	}
 
-	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resourcecontract.BlobSupport) (searchmodel.DocumentBuilder, error) {
 		return &DashboardDocumentBuilder{
 			Namespace: namespace,
 			Blob:      blob,
@@ -141,7 +144,7 @@ func TestDashboardDocumentBuilder(t *testing.T) {
 		"aaa",
 	})
 
-	builder = resource.StandardDocumentBuilder(nil)
+	builder = searchmodel.StandardDocumentBuilder(nil)
 	doSnapshotTests(t, builder, "folder", &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "folder.grafana.app",
@@ -174,7 +177,7 @@ func BenchmarkDashboardBuildDocument(b *testing.B) {
 		Name:      "aaa",
 	}
 
-	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+	info, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resourcecontract.BlobSupport) (searchmodel.DocumentBuilder, error) {
 		return &DashboardDocumentBuilder{
 			Namespace:        namespace,
 			Blob:             blob,

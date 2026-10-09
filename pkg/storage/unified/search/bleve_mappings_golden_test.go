@@ -1,6 +1,8 @@
 package search_test
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"encoding/json"
 	"flag"
 	"os"
@@ -51,42 +53,42 @@ var updateGolden = flag.Bool("update-golden", false, "regenerate bleve mapping g
 func TestBleveMappingsGoldenJSON(t *testing.T) {
 	// builderInfoFor returns the DocumentBuilderInfo for an in-tree kind, used
 	// for its Group and Resource.
-	builderInfoFor := func(t *testing.T, fn func() (resource.DocumentBuilderInfo, error)) resource.DocumentBuilderInfo {
+	builderInfoFor := func(t *testing.T, fn func() (searchmodel.DocumentBuilderInfo, error)) searchmodel.DocumentBuilderInfo {
 		t.Helper()
 		info, err := fn()
 		require.NoError(t, err)
 		return info
 	}
-	dashboardInfo := func(t *testing.T) resource.DocumentBuilderInfo {
-		return builderInfoFor(t, func() (resource.DocumentBuilderInfo, error) { return builders.DashboardBuilder(nil) })
+	dashboardInfo := func(t *testing.T) searchmodel.DocumentBuilderInfo {
+		return builderInfoFor(t, func() (searchmodel.DocumentBuilderInfo, error) { return builders.DashboardBuilder(nil) })
 	}
-	userInfo := func(t *testing.T) resource.DocumentBuilderInfo {
-		return builderInfoFor(t, func() (resource.DocumentBuilderInfo, error) { return builders.GetUserBuilder(nil) })
+	userInfo := func(t *testing.T) searchmodel.DocumentBuilderInfo {
+		return builderInfoFor(t, func() (searchmodel.DocumentBuilderInfo, error) { return builders.GetUserBuilder(nil) })
 	}
-	teamInfo := func(t *testing.T) resource.DocumentBuilderInfo {
-		return builderInfoFor(t, func() (resource.DocumentBuilderInfo, error) { return builders.GetTeamSearchBuilder(nil) })
+	teamInfo := func(t *testing.T) searchmodel.DocumentBuilderInfo {
+		return builderInfoFor(t, func() (searchmodel.DocumentBuilderInfo, error) { return builders.GetTeamSearchBuilder(nil) })
 	}
-	teamBindingInfo := func(t *testing.T) resource.DocumentBuilderInfo {
-		return builderInfoFor(t, func() (resource.DocumentBuilderInfo, error) { return builders.GetTeamBindingBuilder(nil) })
+	teamBindingInfo := func(t *testing.T) searchmodel.DocumentBuilderInfo {
+		return builderInfoFor(t, func() (searchmodel.DocumentBuilderInfo, error) { return builders.GetTeamBindingBuilder(nil) })
 	}
-	externalGroupMappingInfo := func(t *testing.T) resource.DocumentBuilderInfo {
-		return builderInfoFor(t, func() (resource.DocumentBuilderInfo, error) { return builders.GetExternalGroupMappingBuilder(nil) })
+	externalGroupMappingInfo := func(t *testing.T) searchmodel.DocumentBuilderInfo {
+		return builderInfoFor(t, func() (searchmodel.DocumentBuilderInfo, error) { return builders.GetExternalGroupMappingBuilder(nil) })
 	}
 
 	// In production the mapping's provider comes from the shared registry, built
 	// from the app manifests, not from the builder. Mirror that here.
-	manifestProvider := resource.NewManifestBackedProvider(resource.AppManifests()...)
+	manifestProvider := searchmodel.NewManifestBackedProvider(resource.AppManifests()...)
 
 	cases := []struct {
 		name string
 		// builder returns the DocumentBuilderInfo for a real in-tree kind. When
 		// set, the test takes Group/Resource from it and the provider from the
 		// shared manifest provider, matching production.
-		builder func(t *testing.T) resource.DocumentBuilderInfo
+		builder func(t *testing.T) searchmodel.DocumentBuilderInfo
 		// providerExpected, when true, asserts the manifest provider declares
 		// fields for the kind, so a regression that drops them is caught here.
 		providerExpected bool
-		provider         func(t *testing.T) (resource.SearchFieldsProvider, string, string)
+		provider         func(t *testing.T) (searchmodel.SearchFieldsProvider, string, string)
 		selectableFields []string
 		path             string
 	}{
@@ -135,16 +137,16 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 			// mapping, non-string+filter falls back to dynamic) on
 			// declarations that no in-tree builder produces.
 			name: "provider_driven",
-			provider: func(t *testing.T) (resource.SearchFieldsProvider, string, string) {
+			provider: func(t *testing.T) (searchmodel.SearchFieldsProvider, string, string) {
 				t.Helper()
 				gvr := schema.GroupVersionResource{Group: "example.test", Version: "v0", Resource: "widgets"}
-				p := resource.NewMapProvider(
-					map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+				p := searchmodel.NewMapProvider(
+					map[schema.GroupVersionResource][]searchmodel.SearchFieldDefinition{
 						gvr: {
-							{Name: "label", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-							{Name: "count", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-							{Name: "active", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-							{Name: "description", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityText, resource.SearchCapabilityRetrieve}},
+							{Name: "label", Type: searchmodel.SearchFieldTypeString, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
+							{Name: "count", Type: searchmodel.SearchFieldTypeInt64, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
+							{Name: "active", Type: searchmodel.SearchFieldTypeBoolean, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
+							{Name: "description", Type: searchmodel.SearchFieldTypeString, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityText, searchmodel.SearchCapabilityRetrieve}},
 						},
 					},
 					map[schema.GroupResource]string{
@@ -159,7 +161,7 @@ func TestBleveMappingsGoldenJSON(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			var provider resource.SearchFieldsProvider
+			var provider searchmodel.SearchFieldsProvider
 			var group, kindResource string
 
 			switch {

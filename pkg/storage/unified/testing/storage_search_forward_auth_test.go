@@ -77,15 +77,14 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 	t.Cleanup(index.Stop)
 	// Keep the production service-permission guard in front of the test's folder policy.
 	// This exercises both delegated grants and filtering of individual search hits.
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+	server, err := newResourceServerWithSearch(resource.ResourceServerOptions{
 		Backend: backend,
 		AccessClient: resource.NewAuthzLimitedClient(denyFolderAccess{denied: "denied"}, resource.AuthzOptions{
 			Registry: prometheus.NewRegistry(),
 		}),
-		Search: resource.SearchOptions{
-			Backend:   index,
-			Resources: labelFolderBuilderSupplier{},
-		},
+	}, resource.SearchOptions{
+		Backend:   index,
+		Resources: labelFolderBuilderSupplier{},
 	})
 	require.NoError(t, err)
 	t.Cleanup(func() {
@@ -127,7 +126,7 @@ func TestStorageSearchForwardAuth(t *testing.T) {
 			return handler(ctx, req)
 		},
 	))
-	resourcepb.RegisterResourceIndexServer(grpcServer, server)
+	resourcepb.RegisterResourceIndexServer(grpcServer, server.SearchHandler())
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	require.NoError(t, err)
 	go func() { _ = grpcServer.Serve(listener) }()

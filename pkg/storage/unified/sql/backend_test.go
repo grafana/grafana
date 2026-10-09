@@ -1,6 +1,8 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"database/sql/driver"
 	"errors"
@@ -771,7 +773,7 @@ func TestBackend_getHistory(t *testing.T) {
 				}
 
 				// Callback that tracks returned items
-				callback := func(iter resource.ListIterator) error {
+				callback := func(iter resourcecontract.ListIterator) error {
 					count := 0
 					var seenVersions []int64
 					for iter.Next() {
@@ -825,7 +827,7 @@ func TestBackend_getHistory(t *testing.T) {
 				require.Equal(t, tc.expectedListRv, listRv)
 			} else {
 				// For error cases, we use a simple empty callback
-				callback := func(iter resource.ListIterator) error { return nil }
+				callback := func(iter resourcecontract.ListIterator) error { return nil }
 
 				// Execute the test expecting an error
 				listRv, err := b.getHistory(ctx, req, callback)
@@ -905,7 +907,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 
 			expectedLatestDeletionAsMinRV := false
 			items := make([]int64, 0)
-			callback := func(iter resource.ListIterator) error {
+			callback := func(iter resourcecontract.ListIterator) error {
 				for iter.Next() {
 					items = append(items, iter.ResourceVersion())
 				}
@@ -947,7 +949,7 @@ func TestBackend_getHistoryPagination(t *testing.T) {
 		expectedVersions := []int64{rv51, rv52, rv53, rv54}
 		items := make([]int64, 0)
 
-		callback := func(iter resource.ListIterator) error {
+		callback := func(iter resourcecontract.ListIterator) error {
 			for iter.Next() {
 				items = append(items, iter.ResourceVersion())
 			}

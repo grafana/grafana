@@ -1,6 +1,10 @@
 package search_test
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"strconv"
 	"testing"
@@ -10,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
@@ -114,24 +117,24 @@ func TestTrashRetentionLeavesLiveSearchAlone(t *testing.T) {
 // newTrashRetentionIndex builds an index holding one live document and three
 // deleted ones: expired, recent, and one with no deletion time at all, which is
 // what a marker without a deletion timestamp produces.
-func newTrashRetentionIndex(t testing.TB, group, res string, retention search.TrashRetentionConfig, old, recent int64) resource.ResourceIndex {
+func newTrashRetentionIndex(t testing.TB, group, res string, retention search.TrashRetentionConfig, old, recent int64) searchmodel.ResourceIndex {
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: 5,
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource(group, res): search.DashboardSearchFieldsProviderForTest(),
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource(group, res): search.DashboardSearchFieldsProviderForTest(),
 		}),
 		TrashRetention: retention,
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	key := resource.NamespacedResource{Namespace: "default", Group: group, Resource: res}
-	deleted := func(name string, at *int64, rv int64) *resource.BulkIndexItem {
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: group, Resource: res}
+	deleted := func(name string, at *int64, rv int64) *searchmodel.BulkIndexItem {
 		rvs := strconv.FormatInt(rv, 10)
-		doc := &resource.IndexableDocument{
+		doc := &searchmodel.IndexableDocument{
 			Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
 			Name:      name,
 			Title:     name,
@@ -140,16 +143,16 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 			DeletedRV: &rvs,
 		}
 		doc.DeletionTime = at
-		return &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc}
+		return &searchmodel.BulkIndexItem{Action: searchmodel.ActionIndex, Doc: doc}
 	}
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i resource.ResourceIndex) (int64, error) {
-		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i searchmodel.ResourceIndex) (int64, error) {
+		return 1, i.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			deleted("old", &old, 10),
 			deleted("recent", &recent, 20),
 			deleted("no-timestamp", nil, 30),
-			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+			{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{
 				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live"},
 				Name:  "live",
 				Title: "live",

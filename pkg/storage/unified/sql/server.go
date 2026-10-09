@@ -1,6 +1,12 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"os"
@@ -12,10 +18,13 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
+	searchservice "github.com/grafana/grafana/pkg/storage/unified/search/service"
+	unifiedserver "github.com/grafana/grafana/pkg/storage/unified/server"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+
 	inlinesecurevalue "github.com/grafana/grafana/pkg/registry/apis/secret/inline"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -39,7 +48,7 @@ type QOSEnqueueDequeuer interface {
 type ServerOptions struct {
 	WatchExpiry      resource.WatchExpiry
 	Backend          resource.StorageBackend
-	BlobBackend      resource.BlobSupport
+	BlobBackend      resourcecontract.BlobSupport
 	VectorBackend    vector.VectorBackend
 	Embedder         *embedder.Embedder
 	Reranker         *rerank.Reranker
@@ -48,15 +57,15 @@ type ServerOptions struct {
 	Tracer           trace.Tracer
 	Reg              prometheus.Registerer
 	AccessClient     types.AccessClient
-	SearchOptions    resource.SearchOptions
+	SearchOptions    searchmodel.SearchOptions
 	SearchClient     resourcepb.ResourceIndexClient
 	StorageMetrics   *resource.StorageMetrics
-	IndexMetrics     *resource.BleveIndexMetrics
-	VectorMetrics    *resource.VectorMetrics
+	IndexMetrics     *searchmetrics.IndexMetrics
+	VectorMetrics    *searchmetrics.VectorMetrics
 	Features         featuremgmt.FeatureToggles
 	QOSQueue         QOSEnqueueDequeuer
 	SecureValues     secrets.InlineSecureValueSupport
-	OwnsIndexFn      func(key resource.NamespacedResource) (bool, error)
+	OwnsIndexFn      func(key resourcecontract.NamespacedResource) (bool, error)
 
 	// DashboardStats is optional; nil disables the backfill views filter.
 	DashboardStats builders.DashboardStats
@@ -67,7 +76,7 @@ type ServerOptions struct {
 
 // NewUninitializedResourceServer creates a new ResourceServer without calling Init.
 // The caller must call Init on the returned server before it handles requests.
-func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
+func NewUninitializedResourceServer(opts ServerOptions) (*unifiedserver.Server, error) {
 	if opts.DisableStorageServices {
 		return nil, fmt.Errorf("cannot create ResourceServer with storage services disabled")
 	}
@@ -97,11 +106,33 @@ func NewUninitializedResourceServer(opts ServerOptions) (resource.ResourceServer
 	if err != nil {
 		return nil, err
 	}
-	return resource.NewUninitializedResourceServer(*resourceOpts)
+	if resourceOpts.AccessClient == nil {
+		resourceOpts.AccessClient = types.FixedAccessClient(true)
+	}
+	// Resolve once so storage and search share the backend and register its metrics once.
+	resourceOpts.Blob.Backend, err = resource.InitializeBlobStorage(resourceOpts.ResourceServerOptions)
+	if err != nil {
+		return nil, err
+	}
+	var searchServer searchmodel.SearchServer
+	if resourceOpts.Search.Resources != nil && resourceOpts.Search.Backend != nil {
+		searchServer, err = searchservice.NewUninitializedSearchServer(resourceOpts.searchOptions())
+		if err != nil {
+			return nil, err
+		}
+	}
+	resourceOpts.SearchFields = resourceOpts.Search.SearchFields
+	resourceOpts.SuccessfulWriteDelay = resourceOpts.Search.IndexMinUpdateInterval
+	resourceOpts.IndexQueries = searchServer
+	storageServer, err := resource.NewUninitializedResourceServer(resourceOpts.ResourceServerOptions)
+	if err != nil {
+		return nil, err
+	}
+	return unifiedserver.New(storageServer, searchServer, resourceOpts.Search.EmbeddingBuilders, resourceOpts.VectorReconciler), nil
 }
 
 // NewResourceServer creates a new ResourceServer with support for both storage and search capabilities.
-func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
+func NewResourceServer(opts ServerOptions) (*unifiedserver.Server, error) {
 	server, err := NewUninitializedResourceServer(opts)
 	if err != nil {
 		return nil, err
@@ -114,7 +145,7 @@ func NewResourceServer(opts ServerOptions) (resource.ResourceServer, error) {
 
 // NewUninitializedSearchServer creates a new SearchServer without calling Init.
 // The caller must call Init on the returned server before it handles requests.
-func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, error) {
+func NewUninitializedSearchServer(opts ServerOptions) (searchmodel.SearchServer, error) {
 	opts.DisableStorageServices = true
 	resourceOpts, err := buildResourceServerOptions(&opts,
 		withBlobConfig,
@@ -129,22 +160,51 @@ func NewUninitializedSearchServer(opts ServerOptions) (resource.SearchServer, er
 	if err != nil {
 		return nil, err
 	}
-	return resource.NewUninitializedSearchServer(*resourceOpts)
+	resourceOpts.Blob.Backend, err = resource.InitializeBlobStorage(resourceOpts.ResourceServerOptions)
+	if err != nil {
+		return nil, err
+	}
+	return searchservice.NewUninitializedSearchServer(resourceOpts.searchOptions())
 }
 
-type buildResourceServerOpts func(*ServerOptions, *resource.ResourceServerOptions) error
+type assembledServerOptions struct {
+	resource.ResourceServerOptions
+	Search           searchmodel.SearchOptions
+	IndexMetrics     *searchmetrics.IndexMetrics
+	VectorMetrics    *searchmetrics.VectorMetrics
+	OwnsIndexFn      func(resourcecontract.NamespacedResource) (bool, error)
+	VectorBackend    vector.VectorBackend
+	Embedder         *embedder.Embedder
+	Reranker         *rerank.Reranker
+	VectorReconciler resource.BroadcasterConsumer
+}
+
+func (o *assembledServerOptions) searchOptions() searchservice.Options {
+	var metrics *searchmetrics.ServiceMetrics
+	if o.IndexMetrics != nil {
+		metrics = o.IndexMetrics.ServiceMetrics
+	}
+	return searchservice.Options{
+		Backend: o.Backend, Search: o.Search, Blob: o.Blob.Backend,
+		Diagnostics: o.Diagnostics, AccessClient: o.AccessClient,
+		IndexMetrics: metrics, VectorMetrics: o.VectorMetrics, OwnsIndexFn: o.OwnsIndexFn,
+		VectorBackend: o.VectorBackend, Embedder: o.Embedder, Reranker: o.Reranker,
+	}
+}
+
+type buildResourceServerOpts func(*ServerOptions, *assembledServerOptions) error
 
 // buildResourceServerOptions builds the resource.ResourceServerOptions from sql.ServerOptions.
-func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*resource.ResourceServerOptions, error) {
+func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceServerOpts) (*assembledServerOptions, error) {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
-	serverOptions := &resource.ResourceServerOptions{
+	serverOptions := &assembledServerOptions{ResourceServerOptions: resource.ResourceServerOptions{
 		Blob: resource.BlobConfig{
 			URL: apiserverCfg.Key("blob_url").MustString(""),
 		},
 		Reg:                     opts.Reg,
 		SecureValues:            opts.SecureValues,
 		GRPCErrorResultToStatus: opts.Cfg != nil && opts.Cfg.UnifiedStorageGRPCErrorResultToStatus,
-	}
+	}}
 	for _, optFn := range withOpts {
 		if err := optFn(opts, serverOptions); err != nil {
 			return nil, err
@@ -153,7 +213,7 @@ func buildResourceServerOptions(opts *ServerOptions, withOpts ...buildResourceSe
 	return serverOptions, nil
 }
 
-func withSecureValueService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withSecureValueService(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	if opts.SecureValues != nil || opts.Cfg == nil || !opts.Cfg.SecretsManagement.GrpcClientEnable {
 		return nil
 	}
@@ -170,7 +230,7 @@ func withSecureValueService(opts *ServerOptions, resourceOpts *resource.Resource
 	return nil
 }
 
-func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withAccessClient(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	authzOpts := resource.AuthzOptions{
 		Registry:         opts.Reg,
 		ExemptionEnabled: opts.Cfg.UnifiedStorageAuthzExemptionEnabled,
@@ -185,7 +245,7 @@ func withAccessClient(opts *ServerOptions, resourceOpts *resource.ResourceServer
 	return nil
 }
 
-func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withBlobConfig(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	apiserverCfg := opts.Cfg.SectionWithEnvOverrides("grafana-apiserver")
 	resourceOpts.Blob = resource.BlobConfig{
 		URL: apiserverCfg.Key("blob_url").MustString(""),
@@ -205,30 +265,30 @@ func withBlobConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOp
 	return nil
 }
 
-func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withMaxPageSizeBytes(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	maxPageSizeBytes := unifiedStorageCfg.Key("max_page_size_bytes")
 	resourceOpts.MaxPageSizeBytes = maxPageSizeBytes.MustInt(0)
 	return nil
 }
 
-func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withAuthorizeBeforeFetch(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.AuthorizeBeforeFetchEnabled = opts.Cfg.AuthorizeBeforeFetchEnabled
 	return nil
 }
 
-func withUsageStats(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withUsageStats(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	unifiedStorageCfg := opts.Cfg.SectionWithEnvOverrides("unified_storage")
 	resourceOpts.UsageStatsEnabled = unifiedStorageCfg.Key("usage_stats_enabled").MustBool(false)
 	return nil
 }
 
-func withSeededWatches(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withSeededWatches(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.SeededWatchesEnabled = opts.Cfg.SeededWatchesEnabled
 	return nil
 }
 
-func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	if opts.Cfg == nil || !opts.Cfg.NATS.Enabled || !opts.Cfg.NATS.Notifier {
 		return nil
 	}
@@ -236,7 +296,7 @@ func withNatsWatchMaxAge(opts *ServerOptions, resourceOpts *resource.ResourceSer
 	return nil
 }
 
-func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withBackend(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.WatchExpiry = opts.WatchExpiry
 	if opts.Backend == nil {
 		return fmt.Errorf("missing storage backend")
@@ -252,28 +312,28 @@ func withBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptio
 
 // withVectorBackend propagates the optional VectorBackend through. nil is
 // allowed; callers fall back to non-vector search paths when it's absent.
-func withVectorBackend(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withVectorBackend(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.VectorBackend = opts.VectorBackend
 	return nil
 }
 
 // withEmbedder propagates the optional Embedder through. nil is allowed;
 // the VectorSearch handler returns Unimplemented when it's absent.
-func withEmbedder(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withEmbedder(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.Embedder = opts.Embedder
 	return nil
 }
 
 // withReranker propagates the optional Reranker through. nil is allowed;
 // HybridSearch then returns RRF ordering and min_relevance is a no-op.
-func withReranker(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withReranker(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.Reranker = opts.Reranker
 	return nil
 }
 
 // withVectorIndexers runs after withSearch so generation and queries share the
 // same enrollment provider. Workers snapshot it after initial manifests load.
-func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withVectorIndexers(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	if !opts.Cfg.VectorIndexingEnabled ||
 		len(opts.Cfg.VectorAllowedInternalCollections) == 0 ||
 		opts.Cfg.EmbeddingProvider == "" ||
@@ -314,12 +374,12 @@ func withVectorIndexers(opts *ServerOptions, resourceOpts *resource.ResourceServ
 	return nil
 }
 
-func withSearchClient(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withSearchClient(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.SearchClient = opts.SearchClient
 	return nil
 }
 
-func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withSearch(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.Search = opts.SearchOptions
 	resourceOpts.IndexMetrics = opts.IndexMetrics
 	resourceOpts.OwnsIndexFn = opts.OwnsIndexFn
@@ -330,7 +390,7 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 		if resourceOpts.Search.EmbeddingBuilders == nil && (opts.Cfg.EnableSearch || opts.Cfg.VectorIndexingEnabled) {
 			configs := resourceOpts.Search.EmbeddingConfig
 			if configs == nil {
-				configs = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
+				configs = searchmodel.NewEmbeddingConfigRegistry(resource.AppManifests())
 				resourceOpts.Search.EmbeddingConfig = configs
 			}
 			registry, err := enrollment.New(configs, opts.Cfg.VectorAllowedInternalCollections, []embed.Builder{dashboard.New()}, resourceOpts.VectorMetrics.EmbedSkippedVersionsTotal)
@@ -356,17 +416,17 @@ func withSearch(opts *ServerOptions, resourceOpts *resource.ResourceServerOption
 	return nil
 }
 
-func withQOSQueue(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withQOSQueue(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.QOSQueue = opts.QOSQueue
 	return nil
 }
 
-func withOverridesService(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withOverridesService(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.OverridesService = opts.OverridesService
 	return nil
 }
 
-func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withQuotaConfig(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	enforced := make(map[string]bool, len(opts.Cfg.EnforcedQuotaResources))
 	for _, r := range opts.Cfg.EnforcedQuotaResources {
 		enforced[r] = true
@@ -378,7 +438,7 @@ func withQuotaConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerO
 	return nil
 }
 
-func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	allowed := make(map[string]bool, len(opts.Cfg.SearchBackedListResources))
 	for _, r := range opts.Cfg.SearchBackedListResources {
 		allowed[r] = true
@@ -389,16 +449,16 @@ func withSearchBackedListConfig(opts *ServerOptions, resourceOpts *resource.Reso
 	return nil
 }
 
-func withStorageMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withStorageMetrics(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.StorageMetrics = opts.StorageMetrics
 	return nil
 }
 
-func withVectorMetrics(opts *ServerOptions, resourceOpts *resource.ResourceServerOptions) error {
+func withVectorMetrics(opts *ServerOptions, resourceOpts *assembledServerOptions) error {
 	resourceOpts.VectorMetrics = opts.VectorMetrics
 	// Recording sites should not have to check for nil.
 	if resourceOpts.VectorMetrics == nil {
-		resourceOpts.VectorMetrics = resource.ProvideVectorMetrics(nil)
+		resourceOpts.VectorMetrics = searchmetrics.ProvideVectorMetrics(nil)
 	}
 	return nil
 }

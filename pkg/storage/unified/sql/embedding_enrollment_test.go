@@ -1,6 +1,10 @@
 package sql
 
 import (
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -17,7 +21,7 @@ import (
 )
 
 func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
-	configs := resource.NewEmbeddingConfigRegistry()
+	configs := searchmodel.NewEmbeddingConfigRegistry()
 	opts := &ServerOptions{
 		Cfg: &setting.Cfg{
 			EnableSearch:                     true,
@@ -28,9 +32,9 @@ func TestEmbeddingEnrollmentUsesInitialAndReloadedManifests(t *testing.T) {
 		Backend:       struct{ resource.StorageBackend }{},
 		VectorBackend: struct{ vector.VectorBackend }{},
 		Embedder:      &embedder.Embedder{},
-		SearchOptions: resource.SearchOptions{EmbeddingConfig: configs},
+		SearchOptions: searchmodel.SearchOptions{EmbeddingConfig: configs},
 	}
-	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
+	serverOpts := assembledServerOptions{VectorMetrics: searchmetrics.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts), "live declarations are not required during construction")
 	require.NoError(t, withVectorIndexers(opts, &serverOpts))
 	require.NotNil(t, serverOpts.VectorReconciler)
@@ -73,7 +77,7 @@ func TestEmbeddingEnrollmentUsesBuiltinDeclarations(t *testing.T) {
 		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 	}
-	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
+	serverOpts := assembledServerOptions{VectorMetrics: searchmetrics.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts))
 	provider := serverOpts.Search.EmbeddingBuilders
 	require.NoError(t, provider.Validate())
@@ -99,7 +103,7 @@ func TestEmbeddingEnrollmentDisabledWithoutSearchOrIndexing(t *testing.T) {
 		},
 		VectorBackend: struct{ vector.VectorBackend }{},
 	}
-	serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
+	serverOpts := assembledServerOptions{VectorMetrics: searchmetrics.ProvideVectorMetrics(nil)}
 	require.NoError(t, withSearch(opts, &serverOpts))
 	require.Nil(t, serverOpts.Search.EmbeddingBuilders, "disabled consumers must not validate unavailable live declarations at startup")
 	require.Nil(t, serverOpts.Search.EmbeddingConfig)
@@ -132,7 +136,7 @@ func TestVectorIndexersRespectSharedAllowlistAndGlobalControls(t *testing.T) {
 				VectorBackend: struct{ vector.VectorBackend }{},
 				Embedder:      &embedder.Embedder{},
 			}
-			serverOpts := resource.ResourceServerOptions{VectorMetrics: resource.ProvideVectorMetrics(nil)}
+			serverOpts := assembledServerOptions{VectorMetrics: searchmetrics.ProvideVectorMetrics(nil)}
 			require.NoError(t, withSearch(opts, &serverOpts))
 			require.NoError(t, withVectorIndexers(opts, &serverOpts))
 			if tc.active {
@@ -156,7 +160,7 @@ func TestVectorIndexersDeferBuilderSelectionUntilAfterConstruction(t *testing.T)
 		Backend:       struct{ resource.StorageBackend }{},
 		VectorBackend: struct{ vector.VectorBackend }{},
 		Embedder:      &embedder.Embedder{},
-		SearchOptions: resource.SearchOptions{EmbeddingBuilders: provider},
+		SearchOptions: searchmodel.SearchOptions{EmbeddingBuilders: provider},
 	})
 	require.NoError(t, err)
 }

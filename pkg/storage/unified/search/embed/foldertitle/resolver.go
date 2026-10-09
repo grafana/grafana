@@ -1,5 +1,5 @@
 // Package foldertitle resolves folder UIDs to display titles from storage.
-// Separate from embed because importing resource.StorageBackend there would cycle (resource -> embedder -> embed).
+// Separate from embed because importing resource.StorageReader there would cycle (resource -> embedder -> embed).
 package foldertitle
 
 import (
@@ -18,10 +18,10 @@ const (
 
 // Resolver resolves folder UIDs to display titles; embed-time results go stale on rename until re-embed.
 type Resolver struct {
-	storage resource.StorageBackend
+	storage resource.StorageReader
 }
 
-func NewResolver(storage resource.StorageBackend) *Resolver {
+func NewResolver(storage resource.StorageReader) *Resolver {
 	return &Resolver{storage: storage}
 }
 

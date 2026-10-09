@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
@@ -136,7 +137,7 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
-		client := resource.NewAuthlessResourceClient(conn)
+		client := resourceclient.NewSearchClientFromConn(conn)
 
 		return &resource.RingClient{
 			Client:       client,

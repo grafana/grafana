@@ -1,6 +1,8 @@
 package sql
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"net"
@@ -8,7 +10,10 @@ import (
 	"sync/atomic"
 	"testing"
 
+	searchservice "github.com/grafana/grafana/pkg/storage/unified/search/service"
+
 	badger "github.com/dgraph-io/badger/v4"
+
 	authnlib "github.com/grafana/authlib/authn"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/assert"
@@ -20,7 +25,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
@@ -30,6 +34,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/lease"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // mockSearchServer is a no-op implementation of resource.SearchServer for testing.
@@ -45,7 +50,7 @@ func (m *mockSearchServer) IsHealthy(_ context.Context, _ *resourcepb.HealthChec
 	return &resourcepb.HealthCheckResponse{Status: resourcepb.HealthCheckResponse_SERVING}, nil
 }
 
-var _ resource.SearchServer = (*mockSearchServer)(nil)
+var _ searchmodel.SearchServer = (*mockSearchServer)(nil)
 
 // mockResourceServer is a no-op implementation of resource.ResourceServer for testing.
 type mockResourceServer struct {
@@ -86,7 +91,7 @@ func TestEmbeddedErrorConversionOnRemoteServers(t *testing.T) {
 				if standalone {
 					require.NoError(t, s.registerSearchServer(provider, server))
 				} else {
-					s.registerUnifiedResourceServer(provider, server, nil)
+					s.registerUnifiedResourceServer(provider, server, server, nil)
 				}
 				conn := startAndConnect(t, provider.GetServer())
 				check := func(respError *resourcepb.ErrorResult, err error) {
@@ -219,8 +224,8 @@ func TestRegisterUnifiedResourceServerWithAuth(t *testing.T) {
 	s := &service{authenticator: testAuth}
 	provider := newDenyAllProvider(t)
 
-	vs := resource.NewVectorStoreServer(nil, nil, nil, nil, nil)
-	s.registerUnifiedResourceServer(provider, &mockResourceServer{}, vs)
+	vs := searchservice.NewVectorStoreServer(nil, nil, nil, nil, nil)
+	s.registerUnifiedResourceServer(provider, &mockResourceServer{}, &mockSearchServer{}, vs)
 
 	conn := startAndConnect(t, provider.GetServer())
 	ctx := context.Background()

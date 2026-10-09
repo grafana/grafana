@@ -1,6 +1,8 @@
 package search
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"strings"
 
 	"github.com/blevesearch/bleve/v2"
@@ -9,8 +11,6 @@ import (
 	"github.com/blevesearch/bleve/v2/mapping"
 	index "github.com/blevesearch/bleve_index_api"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // kindSearchFields is what the query and indexing paths need to know about a
@@ -35,12 +35,12 @@ type kindSearchFields struct {
 	variants []fieldVariant
 
 	// resultFields maps request field names to their declared response shape.
-	resultFields map[string]resource.SearchFieldDefinition
+	resultFields map[string]searchmodel.SearchFieldDefinition
 	// allResultFields is the curated default response field list.
-	allResultFields []resource.SearchFieldDefinition
+	allResultFields []searchmodel.SearchFieldDefinition
 }
 
-func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
+func newKindSearchFields(provider searchmodel.SearchFieldsProvider, group, kindResource string, selectableFields []string) kindSearchFields {
 	resultFields, allResultFields := fieldValueDefinitions(provider, group, kindResource)
 	return kindSearchFields{
 		keywordFields:      keywordFieldsForMapping(provider, group, kindResource, selectableFields),
@@ -57,7 +57,7 @@ func newKindSearchFields(provider resource.SearchFieldsProvider, group, kindReso
 type declaredField struct {
 	key    string
 	prefix string // "fields." for a per-kind field, empty for a standard one
-	def    resource.SearchFieldDefinition
+	def    searchmodel.SearchFieldDefinition
 }
 
 // declaredFields lists every search field a kind has, each under the name it is
@@ -65,8 +65,8 @@ type declaredField struct {
 // an alert rule's paused is listed as "fields.paused".
 //
 // Use this to build a map that is looked up by index field name.
-func declaredFields(provider resource.SearchFieldsProvider, group, kindResource string) []declaredField {
-	standard, trash := resource.IndexFieldDefinitions(group, kindResource)
+func declaredFields(provider searchmodel.SearchFieldsProvider, group, kindResource string) []declaredField {
+	standard, trash := searchmodel.IndexFieldDefinitions(group, kindResource)
 	perKind := fieldDefinitionsForMapping(provider, group, kindResource)
 
 	out := make([]declaredField, 0, len(standard)+len(trash)+len(perKind))
@@ -77,7 +77,7 @@ func declaredFields(provider resource.SearchFieldsProvider, group, kindResource 
 		out = append(out, declaredField{key: def.Name, def: def})
 	}
 	for _, def := range perKind {
-		out = append(out, declaredField{key: resource.SEARCH_FIELD_PREFIX + def.Name, prefix: resource.SEARCH_FIELD_PREFIX, def: def})
+		out = append(out, declaredField{key: searchmodel.SEARCH_FIELD_PREFIX + def.Name, prefix: searchmodel.SEARCH_FIELD_PREFIX, def: def})
 	}
 	return out
 }
@@ -91,11 +91,11 @@ func declaredFields(provider resource.SearchFieldsProvider, group, kindResource 
 // per-kind field would search the wrong one.
 //
 // Use this to build a map that is looked up with a name from a request.
-func requestableFields(provider resource.SearchFieldsProvider, group, kindResource string) []declaredField {
+func requestableFields(provider searchmodel.SearchFieldsProvider, group, kindResource string) []declaredField {
 	out := declaredFields(provider, group, kindResource)
 	for _, def := range fieldDefinitionsForMapping(provider, group, kindResource) {
 		if !isReservedTopLevelField(def.Name) {
-			out = append(out, declaredField{key: def.Name, prefix: resource.SEARCH_FIELD_PREFIX, def: def})
+			out = append(out, declaredField{key: def.Name, prefix: searchmodel.SEARCH_FIELD_PREFIX, def: def})
 		}
 	}
 	return out
@@ -105,7 +105,7 @@ func requestableFields(provider resource.SearchFieldsProvider, group, kindResour
 // drives the per-kind fields.* sub-document mapping. The provider is the
 // only source of truth: a kind that wants per-kind bleve mappings must
 // register a SearchFieldsProvider.
-func fieldDefinitionsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) []resource.SearchFieldDefinition {
+func fieldDefinitionsForMapping(provider searchmodel.SearchFieldsProvider, group, kindResource string) []searchmodel.SearchFieldDefinition {
 	if provider == nil {
 		return nil
 	}
@@ -129,14 +129,14 @@ const (
 // textQueryKindsForMapping derives the query kind of every physical index field
 // from the same declarations that produced the mapping, so the two cannot drift
 // apart (see addCapabilityFieldMappings).
-func textQueryKindsForMapping(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]textQueryKind {
+func textQueryKindsForMapping(provider searchmodel.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]textQueryKind {
 	kinds := map[string]textQueryKind{}
-	add := func(def resource.SearchFieldDefinition, prefix string) {
+	add := func(def searchmodel.SearchFieldDefinition, prefix string) {
 		// Non-string fields are never analyzed.
-		if def.Type != resource.SearchFieldTypeString {
+		if def.Type != searchmodel.SearchFieldTypeString {
 			return
 		}
-		if def.HasCapability(resource.SearchCapabilityText) {
+		if def.HasCapability(searchmodel.SearchCapabilityText) {
 			kinds[prefix+def.Name] = textQueryStandard
 		}
 		if name, ok := ngramVariant(def); ok {
@@ -160,7 +160,7 @@ func textQueryKindsForMapping(provider resource.SearchFieldsProvider, group, kin
 	}
 	// Selectable fields are keyword-mapped (see getBleveDocMappings).
 	for _, name := range selectableFields {
-		kinds[resource.SEARCH_SELECTABLE_FIELDS_PREFIX+name] = textQueryTerm
+		kinds[searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX+name] = textQueryTerm
 	}
 	for _, name := range keywordSubDocumentFields {
 		kinds[name] = textQueryTerm
@@ -196,13 +196,13 @@ func (k keywordField) term(value string) string {
 // Keys are the names filters, sorts and facets arrive with. Label keys are
 // absent because they are dynamic; a label filter is exact anyway, because bleve
 // analyzes it with the label sub-document's keyword analyzer.
-func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]keywordField {
+func keywordFieldsForMapping(provider searchmodel.SearchFieldsProvider, group, kindResource string, selectableFields []string) map[string]keywordField {
 	fields := map[string]keywordField{}
 	for _, f := range requestableFields(provider, group, kindResource) {
 		// This is backend support only: the public field declaration deliberately
 		// does not advertise sorting until its callers have an old-server fallback.
-		if f.prefix == "" && f.def.Name == resource.SEARCH_FIELD_DELETED_RV {
-			fields[f.key] = keywordField{name: resource.SEARCH_FIELD_DELETED_RV_SORT}
+		if f.prefix == "" && f.def.Name == searchmodel.SEARCH_FIELD_DELETED_RV {
+			fields[f.key] = keywordField{name: searchmodel.SEARCH_FIELD_DELETED_RV_SORT}
 			continue
 		}
 
@@ -214,14 +214,14 @@ func keywordFieldsForMapping(provider resource.SearchFieldsProvider, group, kind
 			name: f.prefix + name,
 			// A keyword form under a different name is a lowercased copy.
 			lowered:    name != f.def.Name,
-			filterable: f.def.HasCapability(resource.SearchCapabilityFilter),
-			facetable:  f.def.HasCapability(resource.SearchCapabilityFacet),
+			filterable: f.def.HasCapability(searchmodel.SearchCapabilityFilter),
+			facetable:  f.def.HasCapability(searchmodel.SearchCapabilityFacet),
 		}
 	}
 	// Selectable fields and the keyword sub-documents exist to be filtered on,
 	// but declare no capabilities (see getBleveDocMappings).
 	for _, name := range selectableFields {
-		key := resource.SEARCH_SELECTABLE_FIELDS_PREFIX + name
+		key := searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX + name
 		fields[key] = keywordField{name: key, filterable: true}
 	}
 	for _, name := range keywordSubDocumentFields {
@@ -238,21 +238,21 @@ var standardKeywordFields = keywordFieldsForMapping(nil, "", "", nil)
 //
 // Keys are the names sorts arrive with. Labels and selectable fields are absent
 // because they declare no capabilities and exist to be filtered on.
-func sortableFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]bool {
+func sortableFieldsForMapping(provider searchmodel.SearchFieldsProvider, group, kindResource string) map[string]bool {
 	fields := map[string]bool{}
 	for _, f := range requestableFields(provider, group, kindResource) {
 		// Kept backend-only for mixed-version rollout; see keywordFieldsForMapping.
-		if f.prefix == "" && f.def.Name == resource.SEARCH_FIELD_DELETED_RV {
+		if f.prefix == "" && f.def.Name == searchmodel.SEARCH_FIELD_DELETED_RV {
 			fields[f.key] = true
 			continue
 		}
-		if !f.def.HasCapability(resource.SearchCapabilitySort) {
+		if !f.def.HasCapability(searchmodel.SearchCapabilitySort) {
 			continue
 		}
 		fields[f.key] = true
 		// Callers that name a physical title variant directly still mean title.
-		if f.key == resource.SEARCH_FIELD_TITLE {
-			fields[resource.SEARCH_FIELD_TITLE_PHRASE] = true
+		if f.key == searchmodel.SEARCH_FIELD_TITLE {
+			fields[searchmodel.SEARCH_FIELD_TITLE_PHRASE] = true
 		}
 	}
 	return fields
@@ -265,14 +265,14 @@ var standardSortableFields = sortableFieldsForMapping(nil, "", "")
 // sorting alone, or only stored.
 type numberOrBoolField struct {
 	name       string
-	fieldType  resource.SearchFieldType
+	fieldType  searchmodel.SearchFieldType
 	filterable bool
 }
 
 // isBoolean splits the two shapes nonStringFieldMapping emits, so a query
 // cannot disagree with what was indexed.
 func (f numberOrBoolField) isBoolean() bool {
-	return f.fieldType == resource.SearchFieldTypeBoolean
+	return f.fieldType == searchmodel.SearchFieldTypeBoolean
 }
 
 // Derived from the declarations that produced the mapping, so the query side
@@ -280,21 +280,21 @@ func (f numberOrBoolField) isBoolean() bool {
 //
 // Keys are the names filters arrive with. Fields that cannot be filtered are
 // listed too, so a filter on one is refused rather than matching nothing.
-func numberOrBoolFieldsForMapping(provider resource.SearchFieldsProvider, group, kindResource string) map[string]numberOrBoolField {
+func numberOrBoolFieldsForMapping(provider searchmodel.SearchFieldsProvider, group, kindResource string) map[string]numberOrBoolField {
 	fields := map[string]numberOrBoolField{}
 	for _, f := range requestableFields(provider, group, kindResource) {
 		// date is left out because no kind declares one and whether its values are
 		// RFC3339 or unix millis is still open. An unrecognised type stays on the
 		// string path rather than being guessed at.
 		switch f.def.Type {
-		case resource.SearchFieldTypeBoolean, resource.SearchFieldTypeInt64, resource.SearchFieldTypeDouble:
+		case searchmodel.SearchFieldTypeBoolean, searchmodel.SearchFieldTypeInt64, searchmodel.SearchFieldTypeDouble:
 		default:
 			continue
 		}
 		fields[f.key] = numberOrBoolField{
 			name:       f.prefix + f.def.Name,
 			fieldType:  f.def.Type,
-			filterable: f.def.HasCapability(resource.SearchCapabilityFilter),
+			filterable: f.def.HasCapability(searchmodel.SearchCapabilityFilter),
 		}
 	}
 	return fields
@@ -308,10 +308,10 @@ var standardNumberOrBoolFields = numberOrBoolFieldsForMapping(nil, "", "")
 // managerSubDocumentMapping and sourceSubDocumentMapping). The labels and
 // reference sub-documents are absent because their keys are dynamic.
 var keywordSubDocumentFields = []string{
-	resource.SEARCH_FIELD_MANAGER_KIND,
-	resource.SEARCH_FIELD_MANAGER_ID,
-	resource.SEARCH_FIELD_SOURCE_PATH,
-	resource.SEARCH_FIELD_SOURCE_CHECKSUM,
+	searchmodel.SEARCH_FIELD_MANAGER_KIND,
+	searchmodel.SEARCH_FIELD_MANAGER_ID,
+	searchmodel.SEARCH_FIELD_SOURCE_PATH,
+	searchmodel.SEARCH_FIELD_SOURCE_CHECKSUM,
 }
 
 // referenceFieldPrefix is the keyword-analyzed reference sub-document. Its keys
@@ -320,7 +320,7 @@ const referenceFieldPrefix = "reference."
 
 // labelFieldPrefix is the keyword-analyzed labels sub-document. Its keys are
 // label names, so they cannot be enumerated up front.
-const labelFieldPrefix = resource.SEARCH_FIELD_LABELS + "."
+const labelFieldPrefix = searchmodel.SEARCH_FIELD_LABELS + "."
 
 // storedFacetField is the keyword form even for a field that also declares text,
 // because that is what preserves Bleve's facet casing and term boundaries. Empty
@@ -364,20 +364,20 @@ func (k kindSearchFields) storedFacetField(name string) string {
 // composite "_all" sub-document is disabled at the index level (see
 // getBleveDocMappings), so IncludeInAll has no runtime effect; setting it
 // false keeps the emitted JSON consistent.
-func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.SearchFieldDefinition) {
-	hasFilter := def.HasCapability(resource.SearchCapabilityFilter)
-	hasText := def.HasCapability(resource.SearchCapabilityText)
-	hasPartial := def.HasCapability(resource.SearchCapabilityPartial)
-	hasSort := def.HasCapability(resource.SearchCapabilitySort)
-	hasFacet := def.HasCapability(resource.SearchCapabilityFacet)
-	hasRetrieve := def.HasCapability(resource.SearchCapabilityRetrieve)
-	hasUnranked := def.HasCapability(resource.SearchCapabilityUnranked)
+func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def searchmodel.SearchFieldDefinition) {
+	hasFilter := def.HasCapability(searchmodel.SearchCapabilityFilter)
+	hasText := def.HasCapability(searchmodel.SearchCapabilityText)
+	hasPartial := def.HasCapability(searchmodel.SearchCapabilityPartial)
+	hasSort := def.HasCapability(searchmodel.SearchCapabilitySort)
+	hasFacet := def.HasCapability(searchmodel.SearchCapabilityFacet)
+	hasRetrieve := def.HasCapability(searchmodel.SearchCapabilityRetrieve)
+	hasUnranked := def.HasCapability(searchmodel.SearchCapabilityUnranked)
 
 	// Non-string fields (int64, double, boolean) must be mapped to their own
 	// type: bleve silently drops a numeric or boolean value fed through a
 	// keyword mapping. Text, partial and facet are validated as string-only, so
 	// only filter, sort and retrieve reach here for non-strings.
-	if def.Type != resource.SearchFieldTypeString {
+	if def.Type != searchmodel.SearchFieldTypeString {
 		if hasFilter || hasSort || hasRetrieve {
 			m := nonStringFieldMapping(def.Type)
 			// bleve can sort an indexed numeric field even without doc values, so
@@ -446,11 +446,11 @@ func addCapabilityFieldMappings(parent *mapping.DocumentMapping, def resource.Se
 // non-string search field's type, so the value is indexed and stored in its
 // native form instead of being coerced through keyword analysis (which drops
 // it).
-func nonStringFieldMapping(t resource.SearchFieldType) *mapping.FieldMapping {
+func nonStringFieldMapping(t searchmodel.SearchFieldType) *mapping.FieldMapping {
 	switch t {
-	case resource.SearchFieldTypeBoolean:
+	case searchmodel.SearchFieldTypeBoolean:
 		return bleve.NewBooleanFieldMapping()
-	case resource.SearchFieldTypeInt64, resource.SearchFieldTypeDouble:
+	case searchmodel.SearchFieldTypeInt64, searchmodel.SearchFieldTypeDouble:
 		return bleve.NewNumericFieldMapping()
 	default:
 		// SearchFieldTypeDate and SearchFieldTypeUnknown do not appear as
@@ -467,8 +467,8 @@ func nonStringFieldMapping(t resource.SearchFieldType) *mapping.FieldMapping {
 // analyzed form already occupies the bare name. Everything else keeps the bare
 // name, so filter-only fields hold their current on-disk shape.
 func keywordVariantName(name string, hasText bool) string {
-	if name == resource.SEARCH_FIELD_TITLE {
-		return resource.SEARCH_FIELD_TITLE_PHRASE
+	if name == searchmodel.SEARCH_FIELD_TITLE {
+		return searchmodel.SEARCH_FIELD_TITLE_PHRASE
 	}
 	if hasText {
 		return name + "_keyword"
@@ -479,22 +479,22 @@ func keywordVariantName(name string, hasText bool) string {
 // keywordVariant returns the field def's keyword form is mapped to, and false
 // when def gets no keyword mapping. The mapping builder and the index-time
 // copy both call this, so a mapped variant cannot end up unwritten.
-func keywordVariant(def resource.SearchFieldDefinition) (string, bool) {
-	if def.Type != resource.SearchFieldTypeString {
+func keywordVariant(def searchmodel.SearchFieldDefinition) (string, bool) {
+	if def.Type != searchmodel.SearchFieldTypeString {
 		return "", false
 	}
-	if !def.HasCapability(resource.SearchCapabilityFilter) &&
-		!def.HasCapability(resource.SearchCapabilityFacet) &&
-		!def.HasCapability(resource.SearchCapabilitySort) {
+	if !def.HasCapability(searchmodel.SearchCapabilityFilter) &&
+		!def.HasCapability(searchmodel.SearchCapabilityFacet) &&
+		!def.HasCapability(searchmodel.SearchCapabilitySort) {
 		return "", false
 	}
-	return keywordVariantName(def.Name, def.HasCapability(resource.SearchCapabilityText)), true
+	return keywordVariantName(def.Name, def.HasCapability(searchmodel.SearchCapabilityText)), true
 }
 
 // ngramVariant returns the field def's ngram form is mapped to, and false when
 // def gets no ngram mapping.
-func ngramVariant(def resource.SearchFieldDefinition) (string, bool) {
-	if def.Type != resource.SearchFieldTypeString || !def.HasCapability(resource.SearchCapabilityPartial) {
+func ngramVariant(def searchmodel.SearchFieldDefinition) (string, bool) {
+	if def.Type != searchmodel.SearchFieldTypeString || !def.HasCapability(searchmodel.SearchCapabilityPartial) {
 		return "", false
 	}
 	return def.Name + "_ngram", true
@@ -510,7 +510,7 @@ type fieldVariant struct {
 
 // fieldVariantsOf lists the copies a kind's declarations call for. Without the
 // copy the mapped variant stays empty and queries against it match nothing.
-func fieldVariantsOf(defs []resource.SearchFieldDefinition) []fieldVariant {
+func fieldVariantsOf(defs []searchmodel.SearchFieldDefinition) []fieldVariant {
 	var out []fieldVariant
 	for _, def := range defs {
 		v := fieldVariant{field: def.Name}
@@ -533,7 +533,7 @@ func fieldVariantsOf(defs []resource.SearchFieldDefinition) []fieldVariant {
 //
 // TODO: fold this together with UpdateCopyFields, so title and per-kind fields
 // get their variants from one declaration-driven pass.
-func populateFieldVariants(doc *resource.IndexableDocument, variants []fieldVariant) {
+func populateFieldVariants(doc *searchmodel.IndexableDocument, variants []fieldVariant) {
 	for _, v := range variants {
 		value, ok := doc.Fields[v.field]
 		if !ok {
@@ -587,7 +587,7 @@ func lowerStrings(value any) (any, bool) {
 // When provider is nil, no per-kind explicit mappings are emitted and
 // every field under fields.* reaches the index through bleve's dynamic
 // mapping.
-func GetBleveMappings(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) (mapping.IndexMapping, error) {
+func GetBleveMappings(provider searchmodel.SearchFieldsProvider, group, kindResource string, selectableFields []string) (mapping.IndexMapping, error) {
 	mapper := bleve.NewIndexMapping()
 	mapper.DocValuesDynamic = false // only explicitly sortable fields need DocValues
 	mapper.ScoringModel = index.BM25Scoring
@@ -601,10 +601,10 @@ func GetBleveMappings(provider resource.SearchFieldsProvider, group, kindResourc
 	return mapper, nil
 }
 
-func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindResource string, selectableFields []string) *mapping.DocumentMapping {
+func getBleveDocMappings(provider searchmodel.SearchFieldsProvider, group, kindResource string, selectableFields []string) *mapping.DocumentMapping {
 	mapper := bleve.NewDocumentStaticMapping()
 
-	standard, trash := resource.IndexFieldDefinitions(group, kindResource)
+	standard, trash := searchmodel.IndexFieldDefinitions(group, kindResource)
 
 	// Standard top-level search fields are declared as SearchFieldDefinitions
 	// and emitted through the capability helper.
@@ -612,10 +612,10 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 		addCapabilityFieldMappings(mapper, def)
 	}
 
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_DELETED, internalBoolField())
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_RV_STRING, internalStoredStringField())
-	mapper.AddFieldMappingsAt(resource.SEARCH_FIELD_DELETED_RV_SORT, internalSortableStringField())
+	mapper.AddFieldMappingsAt(searchmodel.SEARCH_FIELD_IS_DELETED, internalBoolField())
+	mapper.AddFieldMappingsAt(searchmodel.SEARCH_FIELD_IS_PROVISIONED, internalBoolField())
+	mapper.AddFieldMappingsAt(searchmodel.SEARCH_FIELD_RV_STRING, internalStoredStringField())
+	mapper.AddFieldMappingsAt(searchmodel.SEARCH_FIELD_DELETED_RV_SORT, internalSortableStringField())
 
 	// Trash fields sit at the top level next to the standard ones, so /trash reads
 	// them by the names the API layer already uses.
@@ -638,7 +638,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 	// cannot match one word of a multi-word value.
 	labelMapper := bleve.NewDocumentMapping()
 	labelMapper.DefaultAnalyzer = keyword.Name
-	mapper.AddSubDocumentMapping(resource.SEARCH_FIELD_LABELS, labelMapper)
+	mapper.AddSubDocumentMapping(searchmodel.SEARCH_FIELD_LABELS, labelMapper)
 
 	// Static so undeclared keys are dropped rather than dynamically indexed
 	// (BulkIndex warns when a document carries one).
@@ -647,7 +647,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 		addCapabilityFieldMappings(fieldMapper, def)
 	}
 
-	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_FIELD_PREFIX, "."), fieldMapper)
+	mapper.AddSubDocumentMapping(strings.TrimSuffix(searchmodel.SEARCH_FIELD_PREFIX, "."), fieldMapper)
 
 	// Disable bleve's internal "_all" composite field. By default bleve merges
 	// terms from all fields with IncludeInAll:true into a synthetic "_all"
@@ -668,7 +668,7 @@ func getBleveDocMappings(provider resource.SearchFieldsProvider, group, kindReso
 			SkipFreqNorm:       true,
 		})
 	}
-	mapper.AddSubDocumentMapping(strings.TrimSuffix(resource.SEARCH_SELECTABLE_FIELDS_PREFIX, "."), selectableFieldsMapper)
+	mapper.AddSubDocumentMapping(strings.TrimSuffix(searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX, "."), selectableFieldsMapper)
 
 	return mapper
 }

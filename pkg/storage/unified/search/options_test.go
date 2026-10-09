@@ -1,6 +1,10 @@
 package search
 
 import (
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"path/filepath"
 	"testing"
 	"time"
@@ -29,7 +33,7 @@ func TestNewSearchOptionsEmbeddingConfig(t *testing.T) {
 			cfg := snapshotOptionsTestCfg(t)
 			cfg.EnableSearch = tc.search
 			cfg.VectorIndexingEnabled = tc.indexing
-			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			opts, err := NewSearchOptions(cfg, nil, searchmetrics.ProvideBleveMetrics(prometheus.NewRegistry(), nil), nil, nil)
 			require.NoError(t, err)
 			if opts.Backend != nil {
 				t.Cleanup(opts.Backend.(*bleveBackend).Stop)
@@ -42,7 +46,7 @@ func TestNewSearchOptionsEmbeddingConfig(t *testing.T) {
 			for _, manifest := range resource.AppManifests() {
 				for _, version := range manifest.Versions {
 					for _, kind := range version.Kinds {
-						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: resource.ManifestResourceName(kind)}
+						gvr := schema.GroupVersionResource{Group: manifest.Group, Version: version.Name, Resource: searchmodel.ManifestResourceName(kind)}
 						config, ok := opts.EmbeddingConfig.For(gvr)
 						require.Equal(t, kind.Embed != nil, ok, "%s", gvr)
 						if kind.Embed != nil {
@@ -142,7 +146,7 @@ func TestNewSearchOptionsPassesSnapshotStoreToBleveBackend(t *testing.T) {
 	cfg.IndexSnapshotEnabled = true
 
 	store := newTestKVRemoteIndexStore(t)
-	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	metrics := searchmetrics.ProvideBleveMetrics(prometheus.NewRegistry(), nil)
 	opts, err := NewSearchOptions(cfg, nil, metrics, nil, store)
 	require.NoError(t, err)
 
@@ -188,7 +192,7 @@ func TestNewSearchOptionsTrashRetentionFollowsGarbageCollection(t *testing.T) {
 			cfg.GarbageCollectionDryRun = tc.dryRun
 			cfg.GarbageCollectionMaxAge = time.Hour
 
-			opts, err := NewSearchOptions(cfg, nil, resource.ProvideIndexMetrics(prometheus.NewRegistry()), nil, nil)
+			opts, err := NewSearchOptions(cfg, nil, searchmetrics.ProvideBleveMetrics(prometheus.NewRegistry(), nil), nil, nil)
 			require.NoError(t, err)
 
 			backend, ok := opts.Backend.(*bleveBackend)

@@ -1,6 +1,10 @@
 package backfill
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"context"
 	"errors"
 	"fmt"
@@ -14,7 +18,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	"go.opentelemetry.io/otel/sdk/trace/tracetest"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
@@ -50,7 +53,7 @@ func recordPageOutcomes(t *testing.T, b *VectorBackfiller) func(map[string]strin
 		tracer = previousTracer
 		require.NoError(t, provider.Shutdown(context.Background()))
 	})
-	b.metrics = resource.ProvideVectorMetrics(prometheus.NewRegistry())
+	b.metrics = searchmetrics.ProvideVectorMetrics(prometheus.NewRegistry())
 	return func(want map[string]string) {
 		t.Helper()
 		spans := recorder.Ended()
@@ -259,7 +262,7 @@ func TestRunBackfillPage_CanceledAfterEmbeddingDoesNotWriteOrCheckpoint(t *testi
 }
 
 type pageIteratorError struct {
-	resource.ListIterator
+	resourcecontract.ListIterator
 	err  error
 	done bool
 }
@@ -281,8 +284,8 @@ type pageIteratorErrorStorage struct {
 	err error
 }
 
-func (s *pageIteratorErrorStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
-	return s.fakeStorage.ListIterator(ctx, req, func(iter resource.ListIterator) error {
+func (s *pageIteratorErrorStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
+	return s.fakeStorage.ListIterator(ctx, req, func(iter resourcecontract.ListIterator) error {
 		return cb(&pageIteratorError{ListIterator: iter, err: s.err})
 	})
 }

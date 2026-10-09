@@ -1,6 +1,8 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"crypto/md5"
 	"encoding/hex"
@@ -18,7 +20,7 @@ import (
 )
 
 var (
-	_ resource.BlobSupport = (*backend)(nil)
+	_ resourcecontract.BlobSupport = (*backend)(nil)
 )
 
 func (b *backend) SupportsSignedURLs() bool {

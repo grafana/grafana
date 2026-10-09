@@ -1,0 +1,289 @@
+package service
+
+import (
+	"context"
+	"errors"
+	"strings"
+	"testing"
+	"time"
+
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/stretchr/testify/require"
+)
+
+func TestBuildPhaseRecorder(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	m := searchmetrics.ProvideIndexMetrics(reg)
+
+	nsr := resourcecontract.NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	rec := newBuildPhaseRecorder(m.ServiceMetrics, searchmetrics.IndexPathBuild, nsr)
+
+	// Two documents read, one of which could not be converted.
+	rec.recordFetch(time.Second, 100)
+	rec.recordConvert(time.Second, true)
+	rec.recordFetch(time.Second, 50)
+	rec.recordConvert(time.Second, false)
+	rec.flush()
+
+	require.NoError(t, testutil.GatherAndCompare(reg, strings.NewReader(`
+# HELP grafana_index_server_build_documents_total Documents reaching each phase of building or updating an index. Fetched minus converted is how many produced nothing to give the index, and fetched minus committed is how many did not reach it.
+# TYPE grafana_index_server_build_documents_total counter
+grafana_index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 1
+grafana_index_server_build_documents_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
+# HELP grafana_index_server_build_source_bytes_total Bytes of stored objects read while building or updating an index.
+# TYPE grafana_index_server_build_source_bytes_total counter
+grafana_index_server_build_source_bytes_total{group="dashboard.grafana.app",path="build",resource="dashboards"} 150
+# HELP grafana_index_server_build_phase_seconds_total Seconds spent building or updating an index, by phase: fetch reads the stored object, convert turns it into a search document, map adds it to an index batch, commit writes the batch, promote moves an index that outgrew memory onto disk.
+# TYPE grafana_index_server_build_phase_seconds_total counter
+grafana_index_server_build_phase_seconds_total{group="dashboard.grafana.app",path="build",phase="convert",resource="dashboards"} 2
+grafana_index_server_build_phase_seconds_total{group="dashboard.grafana.app",path="build",phase="fetch",resource="dashboards"} 2
+`),
+		"grafana_index_server_build_documents_total",
+		"grafana_index_server_build_source_bytes_total",
+		"grafana_index_server_build_phase_seconds_total"))
+
+	// A second flush must not double count.
+	rec.flush()
+	require.Equal(t, 2.0, testutil.ToFloat64(m.BuildDocuments.WithLabelValues(searchmetrics.IndexPhaseFetch, searchmetrics.IndexPathBuild, nsr.Group, nsr.Resource)))
+}
+
+type docListIterator struct {
+	values [][]byte
+	pos    int
+}
+
+func (i *docListIterator) Next() bool {
+	i.pos++
+	return i.pos <= len(i.values)
+}
+
+func (i *docListIterator) Error() error { return nil }
+
+func (i *docListIterator) ContinueToken() string { return "" }
+
+func (i *docListIterator) ResourceVersion() int64 { return int64(i.pos) }
+
+func (i *docListIterator) Namespace() string { return "ns" }
+
+func (i *docListIterator) Name() string { return "name" }
+
+func (i *docListIterator) Folder() string { return "" }
+
+func (i *docListIterator) Value() []byte { return i.values[i.pos-1] }
+
+type docStorageBackend struct {
+	mockStorageBackend
+	values  [][]byte
+	listErr error
+}
+
+func (m *docStorageBackend) ListIterator(_ context.Context, _ *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
+	if m.listErr != nil {
+		time.Sleep(time.Millisecond)
+		return 0, m.listErr
+	}
+	return 1, cb(&docListIterator{values: m.values})
+}
+
+func TestBuildRecordsPhaseMetrics(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := searchmetrics.ProvideIndexMetrics(reg)
+
+	nsr := resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	doc := []byte(`{"apiVersion":"v1","kind":"Test","metadata":{"name":"aaa","namespace":"ns"},"spec":{}}`)
+
+	storage := &docStorageBackend{values: [][]byte{doc, doc, doc}}
+	search := &mockSearchBackend{}
+	opts := searchmodel.SearchOptions{
+		Backend:      search,
+		Resources:    &searchmodel.TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+		InitMinCount: 1,
+	}
+
+	server, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, metrics.ServiceMetrics, nil, nil)
+	require.NoError(t, err)
+
+	_, err = server.build(t.Context(), nsr, 3, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	labels := []string{searchmetrics.IndexPathBuild, nsr.Group, nsr.Resource}
+
+	require.Equal(t, 3.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseFetch}, labels...)...)),
+		"every document read is counted")
+	require.Equal(t, 3.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseConvert}, labels...)...)),
+		"every document converted is counted")
+	require.Equal(t, float64(3*len(doc)), testutil.ToFloat64(metrics.BuildSourceBytes.WithLabelValues(labels...)),
+		"bytes read are the sizes of the stored objects")
+
+	// Durations are real measurements, so only their presence is asserted.
+	require.GreaterOrEqual(t, testutil.ToFloat64(metrics.BuildPhaseSeconds.WithLabelValues(append([]string{searchmetrics.IndexPhaseConvert}, labels...)...)), 0.0)
+}
+
+func TestUpdateRecordsPhaseMetrics(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := searchmetrics.ProvideIndexMetrics(reg)
+
+	key := resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	modified := func(name string, rv int64) *resourcecontract.ModifiedResource {
+		return &resourcecontract.ModifiedResource{
+			Action:          resourcepb.WatchEvent_MODIFIED,
+			Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
+			ResourceVersion: rv,
+			Value:           testObjectJSON(name, name),
+		}
+	}
+
+	storage := &trashStorageBackend{modified: []*resourcecontract.ModifiedResource{modified("one", 10), modified("two", 11)}}
+	search := &mockSearchBackend{}
+	server, err := newSearchServer(trashSearchOptions(search), storage, nil, nil, nil, nil, nil, metrics.ServiceMetrics, nil, nil)
+	require.NoError(t, err)
+
+	_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	search.mu.Lock()
+	updater := search.lastUpdater
+	search.mu.Unlock()
+	require.NotNil(t, updater)
+
+	index := &MockResourceIndex{buildInfo: searchmodel.IndexBuildInfo{Features: searchmodel.CurrentIndexFeatures()}}
+	_, docs, err := updater(t.Context(), index, 1)
+	require.NoError(t, err)
+	require.Equal(t, 2, docs)
+
+	labels := []string{searchmetrics.IndexPathUpdate, key.Group, key.Resource}
+	require.Equal(t, 2.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseFetch}, labels...)...)))
+	require.Equal(t, 2.0, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseConvert}, labels...)...)))
+	require.Positive(t, testutil.ToFloat64(metrics.BuildSourceBytes.WithLabelValues(labels...)))
+}
+
+// Storage that fails before handing over an iterator still spent time doing so,
+// and that time is the fetch phase.
+func TestBuildRecordsFetchWhenStorageFailsEarly(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := searchmetrics.ProvideIndexMetrics(reg)
+
+	nsr := resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	storage := &docStorageBackend{listErr: errors.New("storage is down")}
+	opts := searchmodel.SearchOptions{
+		Backend:      &mockSearchBackend{},
+		Resources:    &searchmodel.TestDocumentBuilderSupplier{GroupsResources: map[string]string{"group": "resource"}},
+		InitMinCount: 1,
+	}
+
+	server, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, metrics.ServiceMetrics, nil, nil)
+	require.NoError(t, err)
+
+	_, err = server.build(t.Context(), nsr, 1, "test", false, time.Time{})
+	require.Error(t, err)
+
+	labels := []string{searchmetrics.IndexPhaseFetch, searchmetrics.IndexPathBuild, nsr.Group, nsr.Resource}
+	require.Positive(t, testutil.ToFloat64(metrics.BuildPhaseSeconds.WithLabelValues(labels...)),
+		"the failed list still took time, and it belongs to fetch")
+	require.Zero(t, testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(labels...)),
+		"no documents arrived")
+}
+
+// An event the dedup cache has already seen needs no conversion, so it must not
+// look like a dropped document.
+func TestUpdateCountsDeduplicatedEventsAsConverted(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := searchmetrics.ProvideIndexMetrics(reg)
+
+	key := resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	event := &resourcecontract.ModifiedResource{
+		Action:          resourcepb.WatchEvent_MODIFIED,
+		Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "one"},
+		ResourceVersion: 10,
+		Value:           testObjectJSON("one", "One"),
+	}
+	storage := &trashStorageBackend{modified: []*resourcecontract.ModifiedResource{event}}
+
+	search := &mockSearchBackend{}
+	opts := trashSearchOptions(search)
+	opts.IndexModificationCacheTTL = time.Minute
+	server, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, metrics.ServiceMetrics, nil, nil)
+	require.NoError(t, err)
+
+	_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+	require.NoError(t, err)
+
+	search.mu.Lock()
+	updater := search.lastUpdater
+	search.mu.Unlock()
+
+	index := &MockResourceIndex{buildInfo: searchmodel.IndexBuildInfo{Features: searchmodel.CurrentIndexFeatures()}}
+
+	_, docs, err := updater(t.Context(), index, 1)
+	require.NoError(t, err)
+	require.Equal(t, 1, docs)
+
+	// The lookback window hands the same event to the next update, where the
+	// cache skips it.
+	_, docs, err = updater(t.Context(), index, 1)
+	require.NoError(t, err)
+	require.Zero(t, docs, "the duplicate is skipped")
+
+	labels := []string{searchmetrics.IndexPathUpdate, key.Group, key.Resource}
+	fetched := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseFetch}, labels...)...))
+	converted := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseConvert}, labels...)...))
+	require.Equal(t, 2.0, fetched, "the event was read by both updates")
+	require.Equal(t, fetched, converted, "a skipped duplicate must not look like a dropped document")
+}
+
+// A delete gives the index something whether its trash marker was built, the
+// marker could not be built, or the index does not keep them, so none of the
+// three may look like a document that produced nothing.
+func TestUpdateCountsDeletesAsConverted(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		keepDeleted bool
+		value       []byte
+	}{
+		{name: "trash kept", keepDeleted: true, value: testObjectJSON("gone", "Gone")},
+		{name: "trash off", keepDeleted: false, value: testObjectJSON("gone", "Gone")},
+		{name: "trash kept but body unusable", keepDeleted: true, value: []byte("not json")},
+	} {
+		keepDeleted, value := tc.keepDeleted, tc.value
+		t.Run(tc.name, func(t *testing.T) {
+			reg := prometheus.NewPedanticRegistry()
+			metrics := searchmetrics.ProvideIndexMetrics(reg)
+
+			key := resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+			storage := &trashStorageBackend{modified: []*resourcecontract.ModifiedResource{{
+				Action:          resourcepb.WatchEvent_DELETED,
+				Key:             resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "gone"},
+				ResourceVersion: 10,
+				Value:           value,
+			}}}
+
+			search := &mockSearchBackend{}
+			opts := trashSearchOptions(search)
+			search.keepsDeletedDocuments = keepDeleted
+			server, err := newSearchServer(opts, storage, nil, nil, nil, nil, nil, metrics.ServiceMetrics, nil, nil)
+			require.NoError(t, err)
+
+			_, err = server.build(t.Context(), key, 1, "test", false, time.Time{})
+			require.NoError(t, err)
+
+			search.mu.Lock()
+			updater := search.lastUpdater
+			search.mu.Unlock()
+
+			index := &MockResourceIndex{buildInfo: searchmodel.IndexBuildInfo{Features: featuresForTestIndex(keepDeleted)}}
+			_, _, err = updater(t.Context(), index, 1)
+			require.NoError(t, err)
+
+			labels := []string{searchmetrics.IndexPathUpdate, key.Group, key.Resource}
+			fetched := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseFetch}, labels...)...))
+			converted := testutil.ToFloat64(metrics.BuildDocuments.WithLabelValues(append([]string{searchmetrics.IndexPhaseConvert}, labels...)...))
+			require.Equal(t, 1.0, fetched)
+			require.Equal(t, fetched, converted, "a delete always gives the index something")
+		})
+	}
+}

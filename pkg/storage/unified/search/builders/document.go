@@ -1,6 +1,10 @@
 package builders
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"bytes"
 	"context"
 	"encoding/json"
@@ -12,14 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // All returns all document builders from this package.
 // These builders have dependencies on Grafana apps (dashboard and user).
-func All(registry *resource.SearchFieldsRegistry, sql db.DB, sprinkles DashboardStats) ([]resource.DocumentBuilderInfo, error) {
-	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+func All(registry *searchmodel.SearchFieldsRegistry, sql db.DB, sprinkles DashboardStats) ([]searchmodel.DocumentBuilderInfo, error) {
+	dashboards, err := DashboardBuilder(func(ctx context.Context, namespace string, blob resourcecontract.BlobSupport) (searchmodel.DocumentBuilder, error) {
 		logger := log.New("dashboard_builder", "namespace", namespace)
 		dsinfo := []*dashboard.DatasourceQueryResult{{}}
 		ns, err := claims.ParseNamespace(namespace)
@@ -93,21 +96,21 @@ func All(registry *resource.SearchFieldsRegistry, sql db.DB, sprinkles Dashboard
 		return nil, err
 	}
 
-	return []resource.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules}, nil
+	return []searchmodel.DocumentBuilderInfo{dashboards, users, extGroupMappings, teams, teamBindings, alertRules, recordingRules}, nil
 }
 
 // iamBuilder assembles the DocumentBuilderInfo for an IAM kind. Every IAM kind
 // is extracted by the standard builder, which reads its search fields from the
 // shared registry, so only the resource differs per kind.
-func iamBuilder(registry *resource.SearchFieldsRegistry, ri utils.ResourceInfo) (resource.DocumentBuilderInfo, error) {
-	return resource.DocumentBuilderInfo{
+func iamBuilder(registry *searchmodel.SearchFieldsRegistry, ri utils.ResourceInfo) (searchmodel.DocumentBuilderInfo, error) {
+	return searchmodel.DocumentBuilderInfo{
 		GroupResource: ri.GroupResource(),
-		Builder:       resource.StandardDocumentBuilder(registry),
+		Builder:       searchmodel.StandardDocumentBuilder(registry),
 	}, nil
 }
 
 // NewIndexableDocumentFromValue parses provided bytes value into object, and initializes IndexableDocument from it.
-func NewIndexableDocumentFromValue(key *resourcepb.ResourceKey, rv int64, value []byte, resObj sdkResource.Object, kind sdkResource.Kind) (*resource.IndexableDocument, error) {
+func NewIndexableDocumentFromValue(key *resourcepb.ResourceKey, rv int64, value []byte, resObj sdkResource.Object, kind sdkResource.Kind) (*searchmodel.IndexableDocument, error) {
 	err := json.NewDecoder(bytes.NewReader(value)).Decode(resObj)
 	if err != nil {
 		return nil, err
@@ -118,7 +121,7 @@ func NewIndexableDocumentFromValue(key *resourcepb.ResourceKey, rv int64, value 
 		return nil, err
 	}
 
-	doc := resource.NewIndexableDocument(key, rv, obj, "")
+	doc := searchmodel.NewIndexableDocument(key, rv, obj, "")
 	doc.Fields = make(map[string]any)
 	doc.SelectableFields, err = BuildSelectableFields(resObj, kind)
 	return doc, err

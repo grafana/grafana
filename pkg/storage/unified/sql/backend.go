@@ -1,6 +1,8 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"database/sql"
 	"errors"
@@ -761,7 +763,7 @@ func (b *backend) Stop(_ context.Context) error {
 }
 
 // GetResourceStats implements Backend.
-func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedResource, minCount int) ([]resource.ResourceStats, error) {
+func (b *backend) GetResourceStats(ctx context.Context, nsr resourcecontract.NamespacedResource, minCount int) ([]resourcecontract.ResourceStats, error) {
 	b.logCall("GetResourceStats")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceStats", trace.WithAttributes(
 		attribute.String("namespace", nsr.Namespace),
@@ -778,14 +780,14 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 		MinCount:    minCount, // not used in query... yet?
 	}
 
-	res := make([]resource.ResourceStats, 0, 100)
+	res := make([]resourcecontract.ResourceStats, 0, 100)
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStats, req)
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
-			row := resource.ResourceStats{}
+			row := resourcecontract.ResourceStats{}
 			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.Count, &row.ResourceVersion)
 			if err != nil {
 				return err
@@ -805,12 +807,12 @@ func (b *backend) GetResourceStats(ctx context.Context, nsr resource.NamespacedR
 // GetResourceStatsWithLimit ignores countLimit and returns exact counts. The SQL
 // backend's stats query is not a history scan, so early exit is not needed here;
 // exact counts are valid for callers that only compare against thresholds.
-func (b *backend) GetResourceStatsWithLimit(ctx context.Context, nsr resource.NamespacedResource, minCount, _ int) ([]resource.ResourceStats, error) {
+func (b *backend) GetResourceStatsWithLimit(ctx context.Context, nsr resourcecontract.NamespacedResource, minCount, _ int) ([]resourcecontract.ResourceStats, error) {
 	return b.GetResourceStats(ctx, nsr, minCount)
 }
 
 // ListStoredResources implements Backend.
-func (b *backend) ListStoredResources(ctx context.Context, filter resource.NamespacedResource) ([]resource.NamespacedResource, error) {
+func (b *backend) ListStoredResources(ctx context.Context, filter resourcecontract.NamespacedResource) ([]resourcecontract.NamespacedResource, error) {
 	b.logCall("ListStoredResources")
 	ctx, span := tracer.Start(ctx, "sql.backend.ListStoredResources", trace.WithAttributes(
 		attribute.String("namespace", filter.Namespace),
@@ -830,14 +832,14 @@ func (b *backend) ListStoredResources(ctx context.Context, filter resource.Names
 		Resource:    filter.Resource,
 	}
 
-	res := make([]resource.NamespacedResource, 0, 100)
+	res := make([]resourcecontract.NamespacedResource, 0, 100)
 	err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
 		rows, err := dbutil.QueryRows(ctx, tx, sqlResourceStoredList, req)
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
-			row := resource.NamespacedResource{}
+			row := resourcecontract.NamespacedResource{}
 			if err := rows.Scan(&row.Namespace, &row.Group, &row.Resource); err != nil {
 				return err
 			}
@@ -1103,11 +1105,11 @@ func (b *backend) checkConflict(res db.Result, key *resourcepb.ResourceKey, rv i
 
 // BatchReadResource is unsupported: the SQL backend is retiring, so batched
 // search-list reads live only on the KV backend.
-func (*backend) BatchReadResource(context.Context, []resource.BatchReadRequest, bool) (iter.Seq[*resource.BackendReadResponse], error) {
-	return nil, resource.ErrBatchReadUnsupported
+func (*backend) BatchReadResource(context.Context, []resource.BatchReadRequest, bool) (iter.Seq[*resourcecontract.BackendReadResponse], error) {
+	return nil, resourcecontract.ErrBatchReadUnsupported
 }
 
-func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resourcecontract.BackendReadResponse {
 	b.logCall("ReadResource")
 	_, span := tracer.Start(ctx, "sql.backend.ReadResource")
 	defer span.End()
@@ -1116,7 +1118,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 
 	// TODO: validate key ?
 
-	var res *resource.BackendReadResponse
+	var res *resourcecontract.BackendReadResponse
 	if req.ResourceVersion > 0 {
 		res = b.readHistory(ctx, req.Key, req.ResourceVersion)
 	} else {
@@ -1133,9 +1135,9 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 
 		switch {
 		case errors.Is(err, sql.ErrNoRows):
-			res = &resource.BackendReadResponse{Error: resource.NewNotFoundError(req.Key)}
+			res = &resourcecontract.BackendReadResponse{Error: resource.NewNotFoundError(req.Key)}
 		case err != nil:
-			res = &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+			res = &resourcecontract.BackendReadResponse{Error: resource.AsErrorResult(err)}
 		}
 	}
 
@@ -1151,7 +1153,7 @@ func (b *backend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest)
 	return res
 }
 
-func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
 	b.logCall("ListIterator")
 	ctx, span := tracer.Start(ctx, "sql.backend.ListIterator")
 	defer span.End()
@@ -1176,7 +1178,7 @@ func (b *backend) ListIterator(ctx context.Context, req *resourcepb.ListRequest,
 	return b.listLatest(ctx, req, cb)
 }
 
-func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
 	b.logCall("ListHistory")
 	ctx, span := tracer.Start(ctx, "sql.backend.ListHistory")
 	defer span.End()
@@ -1186,7 +1188,7 @@ func (b *backend) ListHistory(ctx context.Context, req *resourcepb.ListRequest, 
 }
 
 // listLatest fetches the resources from the resource table.
-func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.listLatest")
 	defer span.End()
 
@@ -1236,13 +1238,13 @@ func (b *backend) listLatest(ctx context.Context, req *resourcepb.ListRequest, c
 
 // ListModifiedSince will return all resources that have changed since the given resource version.
 // If a resource has changes, only the latest change will be returned.
-func (b *backend) ListModifiedSince(ctx context.Context, key resource.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (b *backend) ListModifiedSince(ctx context.Context, key resourcecontract.NamespacedResource, sinceRv int64, _ *time.Time) (int64, iter.Seq2[*resourcecontract.ModifiedResource, error]) {
 	b.logCall("ListModifiedSince")
 	sinceRv = toMicrosecondRV(sinceRv)
 
 	// Validate key before doing latest RV check
 	if key.Group == "" || key.Resource == "" {
-		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		return 0, func(yield func(*resourcecontract.ModifiedResource, error) bool) {
 			yield(nil, fmt.Errorf("group and resource are required"))
 		}
 	}
@@ -1253,18 +1255,18 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 	// Fetch latest RV.
 	latestRv, err := b.fetchLatestRV(ctx, b.db, b.dialect, key.Group, key.Resource)
 	if err != nil {
-		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		return 0, func(yield func(*resourcecontract.ModifiedResource, error) bool) {
 			yield(nil, err)
 		}
 	}
 
 	// If latest RV equal or older than request RV, there's nothing to report, and we can avoid running another query.
 	if latestRv <= sinceRv {
-		return latestRv, func(yield func(*resource.ModifiedResource, error) bool) { /* nothing to return */ }
+		return latestRv, func(yield func(*resourcecontract.ModifiedResource, error) bool) { /* nothing to return */ }
 	}
 
 	seen := make(map[string]struct{})
-	seq := func(yield func(*resource.ModifiedResource, error) bool) {
+	seq := func(yield func(*resourcecontract.ModifiedResource, error) bool) {
 		query := sqlResourceListModifiedSinceRequest{
 			SQLTemplate: sqltemplate.New(b.dialect),
 			Namespace:   key.Namespace,
@@ -1288,7 +1290,7 @@ func (b *backend) ListModifiedSince(ctx context.Context, key resource.Namespaced
 		}
 
 		for rows.Next() {
-			mr := &resource.ModifiedResource{}
+			mr := &resourcecontract.ModifiedResource{}
 			if err := rows.Scan(&mr.Key.Namespace, &mr.Key.Group, &mr.Key.Resource, &mr.Key.Name, &mr.ResourceVersion, &mr.Action, &mr.Value); err != nil {
 				if !yield(nil, err) {
 					return
@@ -1328,7 +1330,7 @@ func continueTokenMatchesListRequest(token *ContinueToken, req *resourcepb.ListR
 }
 
 // listAtRevision fetches the resources from the resource_history table at a specific revision.
-func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.listAtRevision")
 	defer span.End()
 
@@ -1397,7 +1399,7 @@ func (b *backend) listAtRevision(ctx context.Context, req *resourcepb.ListReques
 }
 
 // readHistory fetches the resource history from the resource_history table.
-func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, rv int64) *resource.BackendReadResponse {
+func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, rv int64) *resourcecontract.BackendReadResponse {
 	_, span := tracer.Start(ctx, "sql.backend.readHistory")
 	defer span.End()
 
@@ -1418,20 +1420,20 @@ func (b *backend) readHistory(ctx context.Context, key *resourcepb.ResourceKey, 
 	})
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return &resource.BackendReadResponse{Error: resource.NewNotFoundError(key)}
+		return &resourcecontract.BackendReadResponse{Error: resource.NewNotFoundError(key)}
 	}
 	if err != nil {
-		return &resource.BackendReadResponse{Error: resource.AsErrorResult(err)}
+		return &resourcecontract.BackendReadResponse{Error: resource.AsErrorResult(err)}
 	}
 	if res.Action == int(resourcepb.WatchEvent_DELETED) {
-		return &resource.BackendReadResponse{Error: resource.NewNotFoundError(key)}
+		return &resourcecontract.BackendReadResponse{Error: resource.NewNotFoundError(key)}
 	}
 
 	return res.ReadResponse()
 }
 
 // getHistory fetches the resource history from the resource_history table.
-func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (b *backend) getHistory(ctx context.Context, req *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
 	ctx, span := tracer.Start(ctx, "sql.backend.getHistory")
 	defer span.End()
 	listReq := sqlGetHistoryRequest{
@@ -1619,7 +1621,7 @@ func (b *backend) lastImportTimeDB(ctx context.Context) db.ContextExecer {
 	return b.db
 }
 
-func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.NamespacedResource) (time.Time, error) {
+func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resourcecontract.NamespacedResource) (time.Time, error) {
 	for importTime, err := range b.GetResourceLastImportTimes(ctx) {
 		if err != nil {
 			return time.Time{}, err
@@ -1631,8 +1633,8 @@ func (b *backend) GetResourceLastImportTime(ctx context.Context, nsr resource.Na
 	return time.Time{}, nil
 }
 
-func (b *backend) ListResourceLastImportTimes(ctx context.Context) (map[resource.NamespacedResource]time.Time, error) {
-	result := make(map[resource.NamespacedResource]time.Time)
+func (b *backend) ListResourceLastImportTimes(ctx context.Context) (map[resourcecontract.NamespacedResource]time.Time, error) {
+	result := make(map[resourcecontract.NamespacedResource]time.Time)
 	for entry, err := range b.GetResourceLastImportTimes(ctx) {
 		if err != nil {
 			return result, err
@@ -1644,7 +1646,7 @@ func (b *backend) ListResourceLastImportTimes(ctx context.Context) (map[resource
 	return result, nil
 }
 
-func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resource.ResourceLastImportTime, error] {
+func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[resourcecontract.ResourceLastImportTime, error] {
 	b.logCall("GetResourceLastImportTimes")
 	ctx, span := tracer.Start(ctx, "sql.backend.GetResourceLastImportTimes")
 	defer span.End()
@@ -1662,8 +1664,8 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		})
 
 		if err != nil {
-			return func(yield func(resource.ResourceLastImportTime, error) bool) {
-				yield(resource.ResourceLastImportTime{}, err)
+			return func(yield func(resourcecontract.ResourceLastImportTime, error) bool) {
+				yield(resourcecontract.ResourceLastImportTime{}, err)
 			}
 		}
 
@@ -1679,12 +1681,12 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		SQLTemplate: sqltemplate.New(b.dialect),
 	})
 	if err != nil {
-		return func(yield func(resource.ResourceLastImportTime, error) bool) {
-			yield(resource.ResourceLastImportTime{}, err)
+		return func(yield func(resourcecontract.ResourceLastImportTime, error) bool) {
+			yield(resourcecontract.ResourceLastImportTime{}, err)
 		}
 	}
 
-	return func(yield func(resource.ResourceLastImportTime, error) bool) {
+	return func(yield func(resourcecontract.ResourceLastImportTime, error) bool) {
 		closeOnDefer := true
 		defer func() {
 			if closeOnDefer {
@@ -1695,14 +1697,14 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		for rows.Next() {
 			// If context has finished, return early.
 			if ctx.Err() != nil {
-				yield(resource.ResourceLastImportTime{}, ctx.Err())
+				yield(resourcecontract.ResourceLastImportTime{}, ctx.Err())
 				return
 			}
 
-			row := resource.ResourceLastImportTime{}
+			row := resourcecontract.ResourceLastImportTime{}
 			err = rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.LastImportTime)
 			if err != nil {
-				yield(resource.ResourceLastImportTime{}, err)
+				yield(resourcecontract.ResourceLastImportTime{}, err)
 				return
 			}
 
@@ -1716,7 +1718,7 @@ func (b *backend) GetResourceLastImportTimes(ctx context.Context) iter.Seq2[reso
 		// Close and report error, if any.
 		err := rows.Close()
 		if err != nil {
-			yield(resource.ResourceLastImportTime{}, err)
+			yield(resourcecontract.ResourceLastImportTime{}, err)
 		}
 	}
 }

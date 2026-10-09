@@ -1,11 +1,12 @@
 package sql
 
 import (
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
-var _ resource.ListIterator = (*listIter)(nil)
+var _ resourcecontract.ListIterator = (*listIter)(nil)
 
 type listIter struct {
 	rows         db.Rows

@@ -1,6 +1,8 @@
 package reconciler
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -27,7 +29,7 @@ import (
 type fakeStorage struct {
 	resource.UnimplementedStorageBackend
 	mu       sync.Mutex
-	changes  []*resource.ModifiedResource
+	changes  []*resourcecontract.ModifiedResource
 	listErr  error
 	watchErr error
 	watchCh  chan *resource.WrittenEvent
@@ -67,23 +69,23 @@ func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, e
 // ReadResource backs FolderTitleResolver.Title. Titles are seeded via
 // setFolderTitle; anything else reads as NotFound, matching a folder that
 // doesn't exist rather than a real storage fault (use readErr for that).
-func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resourcecontract.BackendReadResponse {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.readErr != nil {
-		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: f.readErr.Error()}}
+		return &resourcecontract.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: f.readErr.Error()}}
 	}
 	title, ok := f.folders[req.Key.Namespace+"/"+req.Key.Name]
 	if !ok {
-		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
+		return &resourcecontract.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: http.StatusNotFound}}
 	}
 	value, _ := json.Marshal(map[string]any{"spec": map[string]any{"title": title}})
-	return &resource.BackendReadResponse{Value: value}
+	return &resourcecontract.BackendReadResponse{Value: value}
 }
-func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
+func (f *fakeStorage) ListIterator(context.Context, *resourcepb.ListRequest, func(resourcecontract.ListIterator) error) (int64, error) {
 	panic("not implemented")
 }
-func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
+func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func(resourcecontract.ListIterator) error) (int64, error) {
 	panic("not implemented")
 }
 
@@ -105,10 +107,10 @@ func (f *fakeStorage) WatchWriteEvents(ctx context.Context) (<-chan *resource.Wr
 // GetResourceStats returns one ResourceStats per distinct
 // (namespace, group, resource) seen in `changes`. Used elsewhere in
 // the codebase; the reconciler doesn't call it directly post-refactor.
-func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.NamespacedResource, _ int) ([]resource.ResourceStats, error) {
+func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resourcecontract.NamespacedResource, _ int) ([]resourcecontract.ResourceStats, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	seen := map[string]resource.ResourceStats{}
+	seen := map[string]resourcecontract.ResourceStats{}
 	for _, c := range f.changes {
 		if c.Key.Group != nsr.Group || c.Key.Resource != nsr.Resource {
 			continue
@@ -116,8 +118,8 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 		k := c.Key.Namespace
 		s, ok := seen[k]
 		if !ok {
-			s = resource.ResourceStats{
-				NamespacedResource: resource.NamespacedResource{
+			s = resourcecontract.ResourceStats{
+				NamespacedResource: resourcecontract.NamespacedResource{
 					Namespace: c.Key.Namespace,
 					Group:     c.Key.Group,
 					Resource:  c.Key.Resource,
@@ -130,20 +132,20 @@ func (f *fakeStorage) GetResourceStats(_ context.Context, nsr resource.Namespace
 		}
 		seen[k] = s
 	}
-	out := make([]resource.ResourceStats, 0, len(seen))
+	out := make([]resourcecontract.ResourceStats, 0, len(seen))
 	for _, s := range seen {
 		out = append(out, s)
 	}
 	return out, nil
 }
 
-func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (f *fakeStorage) ListModifiedSince(_ context.Context, key resourcecontract.NamespacedResource, sinceRv int64, lastCalledWithSinceRv *time.Time) (int64, iter.Seq2[*resourcecontract.ModifiedResource, error]) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.lastCalledWith = append(f.lastCalledWith, lastCalledWithSinceRv)
 	if f.listErr != nil {
 		err := f.listErr
-		return 0, func(yield func(*resource.ModifiedResource, error) bool) {
+		return 0, func(yield func(*resourcecontract.ModifiedResource, error) bool) {
 			yield(nil, err)
 		}
 	}
@@ -151,7 +153,7 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	// closes over a stable view. The reconciler runs the iter outside the
 	// lock, and the test may mutate state afterwards. Empty namespace
 	// runs cross-namespace, mirroring the real backends.
-	matches := make([]*resource.ModifiedResource, 0, len(f.changes))
+	matches := make([]*resourcecontract.ModifiedResource, 0, len(f.changes))
 	var latestRv int64
 	for _, c := range f.changes {
 		// latestRv mirrors the KV backend: the latest event RV in the
@@ -183,7 +185,7 @@ func (f *fakeStorage) ListModifiedSince(_ context.Context, key resource.Namespac
 	itemErr := f.itemErr
 	itemErrI := f.itemErrI
 	onYield := f.onYield
-	return latestRv, func(yield func(*resource.ModifiedResource, error) bool) {
+	return latestRv, func(yield func(*resourcecontract.ModifiedResource, error) bool) {
 		for i, c := range matches {
 			if itemErr != nil && i == itemErrI {
 				if !yield(nil, itemErr) {

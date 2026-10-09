@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"crypto/rand"
 	"encoding/base64"
@@ -108,7 +112,7 @@ type IndexMeta struct {
 	// Features are the index features the snapshot was built with, letting selection
 	// skip a snapshot missing a feature this instance requires instead of finding out
 	// after downloading it. Only meaningful when FeaturesRecorded is set.
-	Features []resource.IndexFeature `json:"features,omitempty"`
+	Features []searchmodel.IndexFeature `json:"features,omitempty"`
 	// FeaturesRecorded distinguishes "no features" from "not recorded", which the
 	// Features field alone cannot. False for a snapshot uploaded before this field
 	// existed, and for one whose index predates index features.
@@ -116,7 +120,7 @@ type IndexMeta struct {
 	// ReaderRequirements are the features an instance must understand before using
 	// this snapshot. Selection skips a snapshot declaring one it does not recognise.
 	// Empty on snapshots uploaded before this field existed.
-	ReaderRequirements []resource.IndexFeature `json:"reader_requirements,omitempty"`
+	ReaderRequirements []searchmodel.IndexFeature `json:"reader_requirements,omitempty"`
 	// LatestResourceVersion is the latest resource version included in the index.
 	LatestResourceVersion int64 `json:"latest_resource_version"`
 	// DocCount is the number of documents in the index at upload time. Recorded
@@ -151,7 +155,7 @@ type RemoteIndexStore interface {
 	// buildVersion scopes contention to replicas running the same exact Grafana version.
 	// When another replica holds the lock, the returned error must match errLockHeld:
 	// build coordination relies on that to keep waiting instead of building alone.
-	LockBuildIndex(ctx context.Context, nsResource resource.NamespacedResource, buildVersion string) (IndexStoreLock, error)
+	LockBuildIndex(ctx context.Context, nsResource resourcecontract.NamespacedResource, buildVersion string) (IndexStoreLock, error)
 
 	// LockNamespaceForCleanup acquires a distributed cleanup lock for a namespace.
 	// Uses a different lock key than LockBuildIndex so cleanup never blocks an
@@ -164,7 +168,7 @@ type RemoteIndexStore interface {
 	// (e.g. to plan chunked writes) can obtain it via src.Stat(). The
 	// manifest is not written through this method — use
 	// WriteSnapshotManifest, whose presence is the completion signal.
-	WriteSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error
+	WriteSnapshotFile(ctx context.Context, nsResource resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error
 
 	// ReadSnapshotFile streams the contents of one data file in the snapshot
 	// at (nsResource, indexKey) into dst. expectedSize is the size declared
@@ -172,20 +176,20 @@ type RemoteIndexStore interface {
 	// so a misadvertised or grown-out-of-band object cannot transfer
 	// unbounded data to disk. Returns ErrSnapshotNotFound if the snapshot
 	// or file does not exist.
-	ReadSnapshotFile(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error
+	ReadSnapshotFile(ctx context.Context, nsResource resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error
 
 	// WriteSnapshotManifest writes the snapshot manifest for
 	// (nsResource, indexKey). It is written last during upload and serves as
 	// the completion signal: a snapshot is considered complete once its
 	// manifest exists. The well-known filename used for storage is a backend
 	// detail and callers never name it.
-	WriteSnapshotManifest(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID, manifest []byte) error
+	WriteSnapshotManifest(ctx context.Context, nsResource resourcecontract.NamespacedResource, indexKey ulid.ULID, manifest []byte) error
 
 	// ReadSnapshotManifest returns the raw manifest bytes for
 	// (nsResource, indexKey). Returns ErrSnapshotNotFound if the manifest
 	// does not exist, or an error wrapping ErrInvalidManifest if the stored
 	// manifest exceeds the backend's enforced size cap.
-	ReadSnapshotManifest(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) ([]byte, error)
+	ReadSnapshotManifest(ctx context.Context, nsResource resourcecontract.NamespacedResource, indexKey ulid.ULID) ([]byte, error)
 
 	// ListNamespaces returns the namespaces currently known to the store.
 	ListNamespaces(ctx context.Context) ([]string, error)
@@ -194,7 +198,7 @@ type RemoteIndexStore interface {
 	// given namespace. It does not list the snapshots themselves; callers
 	// follow up with ListIndexKeys (or the ListIndexSnapshots helper) for each
 	// returned NamespacedResource.
-	ListNamespaceResources(ctx context.Context, namespace string) ([]resource.NamespacedResource, error)
+	ListNamespaceResources(ctx context.Context, namespace string) ([]resourcecontract.NamespacedResource, error)
 
 	// ListIndexKeys returns the ULID keys of all index snapshots known
 	// under nsResource. Implementations may include or exclude incomplete
@@ -204,17 +208,17 @@ type RemoteIndexStore interface {
 	// Callers that must see incomplete uploads — notably
 	// CleanupIncompleteIndexSnapshots — use ListIndexKeysIncludingIncomplete
 	// instead. Ordering is unspecified.
-	ListIndexKeys(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
+	ListIndexKeys(ctx context.Context, nsResource resourcecontract.NamespacedResource) ([]ulid.ULID, error)
 
 	// ListIndexKeysIncludingIncomplete is like ListIndexKeys but is
 	// required to include incomplete uploads (snapshots that have data
 	// files on storage but no manifest). May be more expensive than
 	// ListIndexKeys on backends that must scan extra storage to detect
 	// partial uploads. Ordering is unspecified.
-	ListIndexKeysIncludingIncomplete(ctx context.Context, nsResource resource.NamespacedResource) ([]ulid.ULID, error)
+	ListIndexKeysIncludingIncomplete(ctx context.Context, nsResource resourcecontract.NamespacedResource) ([]ulid.ULID, error)
 
 	// DeleteIndex deletes all files for an index snapshot.
-	DeleteIndex(ctx context.Context, nsResource resource.NamespacedResource, indexKey ulid.ULID) error
+	DeleteIndex(ctx context.Context, nsResource resourcecontract.NamespacedResource, indexKey ulid.ULID) error
 }
 
 // LockOptions controls the timing and shutdown behaviour of a lock created by
@@ -306,7 +310,7 @@ func versionLockSegment(buildVersion string) string {
 // — but the lock avoids wasted CPU and store writes. logger is used to
 // warn if the partial-upload cleanup itself fails; the caller's logger
 // context (namespace, resource, etc.) is preserved on those logs.
-func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, localDir string, meta IndexMeta, logger log.Logger) (_ ulid.ULID, retErr error) {
+func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource resourcecontract.NamespacedResource, localDir string, meta IndexMeta, logger log.Logger) (_ ulid.ULID, retErr error) {
 	indexKey, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
 	if err != nil {
 		return ulid.ULID{}, fmt.Errorf("generating index key: %w", err)
@@ -395,7 +399,7 @@ func UploadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource
 	return indexKey, nil
 }
 
-func uploadSnapshotFileFromDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relSlash string, root *os.Root, logger log.Logger) error {
+func uploadSnapshotFileFromDisk(ctx context.Context, store RemoteIndexStore, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, relSlash string, root *os.Root, logger log.Logger) error {
 	return retryRemoteIndexStore(ctx, snapshotStoreOpUploadFile, logger, func() error {
 		f, err := root.Open(filepath.FromSlash(relSlash))
 		if err != nil {
@@ -409,7 +413,7 @@ func uploadSnapshotFileFromDisk(ctx context.Context, store RemoteIndexStore, ns 
 // DownloadIndexSnapshot downloads an existing snapshot to destDir, which must not
 // exist. Streams files into a staging directory and atomic-renames into
 // destDir on success; cleans up the staging directory on error.
-func DownloadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error) {
+func DownloadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResource resourcecontract.NamespacedResource, indexKey ulid.ULID, destDir string) (*IndexMeta, error) {
 	meta, err := ReadIndexSnapshotManifest(ctx, store, nsResource, indexKey)
 	if err != nil {
 		return nil, err
@@ -481,7 +485,7 @@ func DownloadIndexSnapshot(ctx context.Context, store RemoteIndexStore, nsResour
 // expectedSize and must refuse to transfer more than that). The post-write
 // Stat check in DownloadIndexSnapshot still verifies the final on-disk size
 // as belt-and-braces.
-func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, root *os.Root, expectedSize int64) error {
+func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, root *os.Root, expectedSize int64) error {
 	return retryRemoteIndexStore(ctx, snapshotStoreOpDownloadFile, nil, func() error {
 		f, err := root.Create(filepath.FromSlash(relPath))
 		if err != nil {
@@ -499,7 +503,7 @@ func downloadSnapshotFileToDisk(ctx context.Context, store RemoteIndexStore, ns 
 // Returns ErrSnapshotNotFound if the manifest does not exist, or an error
 // wrapping ErrInvalidManifest if the manifest is structurally invalid
 // (oversized, unparseable, empty file list, or non-canonical paths).
-func ReadIndexSnapshotManifest(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
+func ReadIndexSnapshotManifest(ctx context.Context, store RemoteIndexStore, nsResource resourcecontract.NamespacedResource, indexKey ulid.ULID) (*IndexMeta, error) {
 	manifest, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpReadManifest, nil, func() ([]byte, error) {
 		return store.ReadSnapshotManifest(ctx, nsResource, indexKey)
 	})
@@ -548,7 +552,7 @@ func ValidateIndexSnapshotManifest(meta *IndexMeta) error {
 // Note: snapshots may be deleted between listing and subsequent operations
 // (e.g. by a concurrent cleanup pass); callers acting on the returned
 // snapshots must handle ErrSnapshotNotFound from follow-up calls.
-func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, logger log.Logger) (map[ulid.ULID]*IndexMeta, error) {
+func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resourcecontract.NamespacedResource, logger log.Logger) (map[ulid.ULID]*IndexMeta, error) {
 	keys, err := retryMetadataRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeys, logger, func() ([]ulid.ULID, error) {
 		return store.ListIndexKeys(ctx, nsResource)
 	})
@@ -587,7 +591,7 @@ func ListIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource 
 // Caller should hold a namespace-level cleanup lock
 // (store.LockNamespaceForCleanup) to avoid concurrent cleanup by different
 // instances.
-func CleanupIncompleteIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resource.NamespacedResource, olderThan time.Time, logger log.Logger) (int, error) {
+func CleanupIncompleteIndexSnapshots(ctx context.Context, store RemoteIndexStore, nsResource resourcecontract.NamespacedResource, olderThan time.Time, logger log.Logger) (int, error) {
 	keys, err := retryRemoteIndexStoreValue(ctx, snapshotStoreOpListIndexKeysIncludingIncomplete, logger, func() ([]ulid.ULID, error) {
 		return store.ListIndexKeysIncludingIncomplete(ctx, nsResource)
 	})

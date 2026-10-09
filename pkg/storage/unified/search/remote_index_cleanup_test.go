@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"context"
 	"errors"
 	"os"
@@ -17,7 +21,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Default retention values used by the pure tests below. Tests that need a
@@ -295,7 +298,7 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 				MaxIndexAge:        7 * 24 * time.Hour,
 				CleanupGracePeriod: 30 * time.Minute,
 			},
-		}, resource.ProvideIndexMetrics(prometheus.NewRegistry()))
+		}, searchmetrics.ProvideBleveMetrics(prometheus.NewRegistry(), nil))
 		require.NoError(t, err)
 		t.Cleanup(be.Stop)
 
@@ -316,7 +319,7 @@ func TestRunCleanup_ReplicaVersionAgnostic(t *testing.T) {
 // --- end-to-end runCleanup tests against a KV store ---
 
 // listSeededIndexKeys returns the index keys still present at ns in the store.
-func listSeededIndexKeys(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource) []ulid.ULID {
+func listSeededIndexKeys(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resourcecontract.NamespacedResource) []ulid.ULID {
 	t.Helper()
 	got, err := ListIndexSnapshots(ctx, store, ns, testLogger)
 	require.NoError(t, err)
@@ -327,7 +330,7 @@ func listSeededIndexKeys(t *testing.T, ctx context.Context, store RemoteIndexSto
 	return keys
 }
 
-func newCleanupTestBackend(t *testing.T, store RemoteIndexStore, ownsFn func(resource.NamespacedResource) (bool, error)) (*bleveBackend, *resource.BleveIndexMetrics) {
+func newCleanupTestBackend(t *testing.T, store RemoteIndexStore, ownsFn func(resourcecontract.NamespacedResource) (bool, error)) (*bleveBackend, *searchmetrics.BleveMetrics) {
 	t.Helper()
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
 		Store:              store,
@@ -350,13 +353,13 @@ func TestRunCleanup_LockContentionSkipsNamespace(t *testing.T) {
 	storeA := newTestKVRemoteIndexStoreOn(t, backing, "instance-A")
 	storeB := newTestKVRemoteIndexStoreOn(t, backing, "instance-B")
 
-	nsA := resource.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	nsB := resource.NamespacedResource{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	nsA := resourcecontract.NamespacedResource{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	nsB := resourcecontract.NamespacedResource{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"}
 
 	now := time.Now()
 	old := makeULID(t, now.Add(-2*time.Hour))
 	fresh := makeULID(t, now.Add(-time.Hour))
-	for _, ns := range []resource.NamespacedResource{nsA, nsB} {
+	for _, ns := range []resourcecontract.NamespacedResource{nsA, nsB} {
 		seedSnapshot(t, ctx, storeB, ns, old, mkMeta("11.5.0", 100, now.Add(-2*time.Hour)))
 		seedSnapshot(t, ctx, storeB, ns, fresh, mkMeta("11.5.0", 200, now.Add(-time.Hour)))
 	}
@@ -454,7 +457,7 @@ func (s *recordingStore) ListNamespaces(ctx context.Context) ([]string, error) {
 	s.mu.Unlock()
 	return s.inner.ListNamespaces(ctx)
 }
-func (s *recordingStore) ListNamespaceResources(ctx context.Context, ns string) ([]resource.NamespacedResource, error) {
+func (s *recordingStore) ListNamespaceResources(ctx context.Context, ns string) ([]resourcecontract.NamespacedResource, error) {
 	s.mu.Lock()
 	s.listNamespaceResources[ns]++
 	s.mu.Unlock()
@@ -466,37 +469,37 @@ func (s *recordingStore) LockNamespaceForCleanup(ctx context.Context, ns string)
 	s.mu.Unlock()
 	return s.inner.LockNamespaceForCleanup(ctx, ns)
 }
-func (s *recordingStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+func (s *recordingStore) ListIndexKeys(ctx context.Context, r resourcecontract.NamespacedResource) ([]ulid.ULID, error) {
 	s.mu.Lock()
 	s.listIndexKeys[r.Namespace]++
 	s.mu.Unlock()
 	return s.inner.ListIndexKeys(ctx, r)
 }
-func (s *recordingStore) ListIndexKeysIncludingIncomplete(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+func (s *recordingStore) ListIndexKeysIncludingIncomplete(ctx context.Context, r resourcecontract.NamespacedResource) ([]ulid.ULID, error) {
 	s.mu.Lock()
 	s.listIndexKeys[r.Namespace]++
 	s.mu.Unlock()
 	return s.inner.ListIndexKeysIncludingIncomplete(ctx, r)
 }
-func (s *recordingStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
+func (s *recordingStore) DeleteIndex(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID) error {
 	s.mu.Lock()
 	s.deleteIndex[r.Namespace]++
 	s.mu.Unlock()
 	return s.inner.DeleteIndex(ctx, r, k)
 }
-func (s *recordingStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+func (s *recordingStore) LockBuildIndex(ctx context.Context, r resourcecontract.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
-func (s *recordingStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
+func (s *recordingStore) WriteSnapshotFile(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
 	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, src)
 }
-func (s *recordingStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+func (s *recordingStore) ReadSnapshotFile(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, dst, expectedSize)
 }
-func (s *recordingStore) WriteSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, manifest []byte) error {
+func (s *recordingStore) WriteSnapshotManifest(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID, manifest []byte) error {
 	return s.inner.WriteSnapshotManifest(ctx, r, k, manifest)
 }
-func (s *recordingStore) ReadSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) ([]byte, error) {
+func (s *recordingStore) ReadSnapshotManifest(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID) ([]byte, error) {
 	return s.inner.ReadSnapshotManifest(ctx, r, k)
 }
 
@@ -505,19 +508,19 @@ func TestRunCleanup_OwnershipFilter_NamespaceLevel(t *testing.T) {
 	inner := newTestKVRemoteIndexStore(t)
 	store := newRecordingStore(inner)
 
-	ownedNs := resource.NamespacedResource{Namespace: "ownedNs", Group: "dashboard.grafana.app", Resource: "dashboards"}
-	unownedNs := resource.NamespacedResource{Namespace: "unownedNs", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	ownedNs := resourcecontract.NamespacedResource{Namespace: "ownedNs", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	unownedNs := resourcecontract.NamespacedResource{Namespace: "unownedNs", Group: "dashboard.grafana.app", Resource: "dashboards"}
 
 	now := time.Now()
 	old := makeULID(t, now.Add(-3*time.Hour))
 	fresh := makeULID(t, now.Add(-2*time.Hour))
-	for _, ns := range []resource.NamespacedResource{ownedNs, unownedNs} {
+	for _, ns := range []resourcecontract.NamespacedResource{ownedNs, unownedNs} {
 		seedSnapshot(t, ctx, inner, ns, old, mkMeta("11.5.0", 100, now.Add(-3*time.Hour)))
 		seedSnapshot(t, ctx, inner, ns, fresh, mkMeta("11.5.0", 200, now.Add(-2*time.Hour)))
 	}
 
 	var ownsCalls atomic.Int32
-	ownsFn := func(key resource.NamespacedResource) (bool, error) {
+	ownsFn := func(key resourcecontract.NamespacedResource) (bool, error) {
 		ownsCalls.Add(1)
 		// Pin down the contract: cleanup must call OwnsIndex with empty group/resource
 		// because the production implementation hashes on Namespace alone. If a
@@ -577,13 +580,13 @@ type controllableLockStore struct {
 	// made observable progress, and the next interface call (in
 	// CleanupIncompleteIndexSnapshots, or in the next resource's runResourceCleanup)
 	// will see the cancelled per-namespace context.
-	onDeleteIndex func(ctx context.Context, r resource.NamespacedResource)
+	onDeleteIndex func(ctx context.Context, r resourcecontract.NamespacedResource)
 }
 
 func (s *controllableLockStore) ListNamespaces(ctx context.Context) ([]string, error) {
 	return s.inner.ListNamespaces(ctx)
 }
-func (s *controllableLockStore) ListNamespaceResources(ctx context.Context, ns string) ([]resource.NamespacedResource, error) {
+func (s *controllableLockStore) ListNamespaceResources(ctx context.Context, ns string) ([]resourcecontract.NamespacedResource, error) {
 	return s.inner.ListNamespaceResources(ctx, ns)
 }
 func (s *controllableLockStore) LockNamespaceForCleanup(_ context.Context, ns string) (IndexStoreLock, error) {
@@ -596,32 +599,32 @@ func (s *controllableLockStore) LockNamespaceForCleanup(_ context.Context, ns st
 	s.locks[ns] = l
 	return l, nil
 }
-func (s *controllableLockStore) ListIndexKeys(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+func (s *controllableLockStore) ListIndexKeys(ctx context.Context, r resourcecontract.NamespacedResource) ([]ulid.ULID, error) {
 	return s.inner.ListIndexKeys(ctx, r)
 }
-func (s *controllableLockStore) ListIndexKeysIncludingIncomplete(ctx context.Context, r resource.NamespacedResource) ([]ulid.ULID, error) {
+func (s *controllableLockStore) ListIndexKeysIncludingIncomplete(ctx context.Context, r resourcecontract.NamespacedResource) ([]ulid.ULID, error) {
 	return s.inner.ListIndexKeysIncludingIncomplete(ctx, r)
 }
-func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) error {
+func (s *controllableLockStore) DeleteIndex(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID) error {
 	err := s.inner.DeleteIndex(ctx, r, k)
 	if s.onDeleteIndex != nil {
 		s.onDeleteIndex(ctx, r)
 	}
 	return err
 }
-func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+func (s *controllableLockStore) LockBuildIndex(ctx context.Context, r resourcecontract.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	return s.inner.LockBuildIndex(ctx, r, buildVersion)
 }
-func (s *controllableLockStore) WriteSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
+func (s *controllableLockStore) WriteSnapshotFile(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID, relPath string, src *os.File) error {
 	return s.inner.WriteSnapshotFile(ctx, r, k, relPath, src)
 }
-func (s *controllableLockStore) ReadSnapshotFile(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+func (s *controllableLockStore) ReadSnapshotFile(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	return s.inner.ReadSnapshotFile(ctx, r, k, relPath, dst, expectedSize)
 }
-func (s *controllableLockStore) WriteSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID, manifest []byte) error {
+func (s *controllableLockStore) WriteSnapshotManifest(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID, manifest []byte) error {
 	return s.inner.WriteSnapshotManifest(ctx, r, k, manifest)
 }
-func (s *controllableLockStore) ReadSnapshotManifest(ctx context.Context, r resource.NamespacedResource, k ulid.ULID) ([]byte, error) {
+func (s *controllableLockStore) ReadSnapshotManifest(ctx context.Context, r resourcecontract.NamespacedResource, k ulid.ULID) ([]byte, error) {
 	return s.inner.ReadSnapshotManifest(ctx, r, k)
 }
 
@@ -632,8 +635,8 @@ func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
 	// Two resources in one namespace. Lose the lock after the first ListIndexSnapshots
 	// call; the second resource must be untouched.
 	ns := "stack-1"
-	resA := resource.NamespacedResource{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"}
-	resB := resource.NamespacedResource{Namespace: ns, Group: "folder.grafana.app", Resource: "folders"}
+	resA := resourcecontract.NamespacedResource{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"}
+	resB := resourcecontract.NamespacedResource{Namespace: ns, Group: "folder.grafana.app", Resource: "folders"}
 
 	now := time.Now()
 	oldA := makeULID(t, now.Add(-3*time.Hour))
@@ -641,7 +644,7 @@ func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
 	oldB := makeULID(t, now.Add(-3*time.Hour))
 	freshB := makeULID(t, now.Add(-2*time.Hour))
 
-	for _, r := range []resource.NamespacedResource{resA, resB} {
+	for _, r := range []resourcecontract.NamespacedResource{resA, resB} {
 		var oldKey, freshKey ulid.ULID
 		if r == resA {
 			oldKey, freshKey = oldA, freshA
@@ -654,7 +657,7 @@ func TestRunCleanup_LockLossAbortsNamespace(t *testing.T) {
 
 	store := &controllableLockStore{inner: inner}
 	var processed atomic.Int32
-	store.onDeleteIndex = func(hookCtx context.Context, r resource.NamespacedResource) {
+	store.onDeleteIndex = func(hookCtx context.Context, r resourcecontract.NamespacedResource) {
 		// Fire lock loss after the first resource has fully completed. Then wait
 		// for the watcher goroutine to propagate cancellation through nsCtx, so
 		// the next resource deterministically observes a cancelled context
@@ -746,7 +749,7 @@ type deleteFailingStore struct {
 	err error
 }
 
-func (s *deleteFailingStore) DeleteIndex(context.Context, resource.NamespacedResource, ulid.ULID) error {
+func (s *deleteFailingStore) DeleteIndex(context.Context, resourcecontract.NamespacedResource, ulid.ULID) error {
 	return s.err
 }
 

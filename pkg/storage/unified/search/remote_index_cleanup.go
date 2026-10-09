@@ -1,6 +1,8 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"errors"
 	"fmt"
@@ -16,7 +18,6 @@ import (
 	oteltrace "go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // snapshotNamespaceCleanupStatus values are used for namespace cleanup logs,
@@ -175,7 +176,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 	// implementation hashes on Namespace alone, so calling it with an empty
 	// Group/Resource is the contract. A future change to that semantics will
 	// trip the assertion in TestRunCleanup_OwnershipFilter_NamespaceLevel.
-	owned, err := b.ownsIndexFn(resource.NamespacedResource{Namespace: namespace})
+	owned, err := b.ownsIndexFn(resourcecontract.NamespacedResource{Namespace: namespace})
 	if err != nil {
 		return snapshotNamespaceCleanupStatusError, fmt.Errorf("ownership check failed during cleanup: %w", err)
 	}
@@ -229,7 +230,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 		span.AddEvent("snapshot.lock.release.completed", oteltrace.WithAttributes(lockAttrs...))
 	}()
 
-	resources, err := retryRemoteIndexStoreValue(nsCtx, snapshotStoreOpListNamespaceResources, nsLogger, func() ([]resource.NamespacedResource, error) {
+	resources, err := retryRemoteIndexStoreValue(nsCtx, snapshotStoreOpListNamespaceResources, nsLogger, func() ([]resourcecontract.NamespacedResource, error) {
 		return store.ListNamespaceResources(nsCtx, namespace)
 	})
 	if err != nil {
@@ -279,7 +280,7 @@ func (b *bleveBackend) runNamespaceCleanup(ctx context.Context, namespace string
 // runResourceCleanup applies the retention rules to one resource and sweeps any
 // stale partial uploads. Returns the first error encountered; per-snapshot
 // delete failures are logged but do not abort the resource (best effort).
-func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resource.NamespacedResource, logger log.Logger) error {
+func (b *bleveBackend) runResourceCleanup(ctx context.Context, res resourcecontract.NamespacedResource, logger log.Logger) error {
 	store := b.opts.Snapshot.Store
 
 	metas, err := ListIndexSnapshots(ctx, store, res, logger)

@@ -1,15 +1,16 @@
 package test
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -42,9 +43,9 @@ func TestIntegrationBenchmarkSQLStorageAndSearch(t *testing.T) {
 	for i := 0; i < opts.NumResourceTypes; i++ {
 		groupsResources[fmt.Sprintf("group-%d", i)] = fmt.Sprintf("resource-%d", i)
 	}
-	searchOpts := resource.SearchOptions{
+	searchOpts := searchmodel.SearchOptions{
 		Backend: searchBackend,
-		Resources: &resource.TestDocumentBuilderSupplier{
+		Resources: &searchmodel.TestDocumentBuilderSupplier{
 			GroupsResources: groupsResources,
 		},
 	}

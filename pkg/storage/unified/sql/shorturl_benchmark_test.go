@@ -70,7 +70,7 @@ func BenchmarkShortURLBulkProcessBatching(b *testing.B) {
 			require.NoError(b, server.Stop(context.Background()))
 		})
 
-		client := resource.NewLocalResourceClient(server)
+		client := resource.NewLocalResourceClient(server, nil)
 		b.ReportAllocs()
 		b.ResetTimer()
 

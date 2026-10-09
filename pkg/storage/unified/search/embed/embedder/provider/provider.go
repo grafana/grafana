@@ -5,6 +5,8 @@
 package provider
 
 import (
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"context"
 	"fmt"
 	"os"
@@ -15,7 +17,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/azure"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder/bedrock"
@@ -33,9 +34,9 @@ import (
 // + credentials for Bedrock, endpoint + AZURE_OPENAI_API_KEY for Azure) must
 // be present when the provider is set; missing required fields return an error
 // so misconfiguration fails at startup, not at first request.
-func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*embedder.Embedder, error) {
+func ProvideEmbedder(cfg *setting.Cfg, vectorMetrics *searchmetrics.VectorMetrics) (*embedder.Embedder, error) {
 	if vectorMetrics == nil {
-		vectorMetrics = resource.ProvideVectorMetrics(nil)
+		vectorMetrics = searchmetrics.ProvideVectorMetrics(nil)
 	}
 	hist := vectorMetrics.EmbedDuration
 	tokensTotal := vectorMetrics.EmbedTokensTotal

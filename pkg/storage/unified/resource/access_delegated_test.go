@@ -3,7 +3,6 @@ package resource
 import (
 	"context"
 	"errors"
-	"net/http"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -21,8 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
-	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // userWithDelegatedPermissions mirrors what search-api sees when storage-api
@@ -254,126 +251,6 @@ func TestAuthzLimitedClient_BatchCheckReturnsItemErrors(t *testing.T) {
 	require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)
 }
 
-func TestSearchServicePermissions(t *testing.T) {
-	for name, tc := range map[string]struct {
-		permissions    []string
-		mutate         func(*resourcepb.ResourceSearchRequest)
-		wantPermission string
-	}{
-		"read":         {permissions: []string{"dashboard.grafana.app:get"}},
-		"missing read": {wantPermission: "dashboard.grafana.app/dashboards:get"},
-		"edit requires update": {
-			permissions:    []string{"dashboard.grafana.app:get"},
-			mutate:         func(req *resourcepb.ResourceSearchRequest) { req.Permission = int64(dashboardaccess.PERMISSION_EDIT) },
-			wantPermission: "dashboard.grafana.app/dashboards:update",
-		},
-		"trash requires folder admin check": {
-			permissions:    []string{"dashboard.grafana.app:get"},
-			mutate:         func(req *resourcepb.ResourceSearchRequest) { req.IsDeleted = true },
-			wantPermission: "dashboard.grafana.app/dashboards:set_permissions",
-		},
-		"trash valid grants": {
-			permissions: []string{"dashboard.grafana.app:set_permissions"},
-			mutate:      func(req *resourcepb.ResourceSearchRequest) { req.IsDeleted = true },
-		},
-		"federated requires both resources": {
-			permissions: []string{"dashboard.grafana.app:get"},
-			mutate: func(req *resourcepb.ResourceSearchRequest) {
-				req.Federated = []*resourcepb.ResourceKey{{Group: "folder.grafana.app", Resource: "folders"}}
-			},
-			wantPermission: "folder.grafana.app/folders:get",
-		},
-		"global requires underlying resource grants": {
-			permissions: []string{"dashboard.grafana.app:get"},
-			mutate: func(req *resourcepb.ResourceSearchRequest) {
-				req.Options.Key.Group = GlobalSearchGroup
-				req.Options.Key.Resource = GlobalSearchResource
-			},
-			wantPermission: "folder.grafana.app/folders:get",
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}}
-			if tc.mutate != nil {
-				tc.mutate(req)
-			}
-			s := newPermissionTestSearchServer(newLimitedClient(t))
-			ctx := authlib.WithAuthInfo(t.Context(), serviceWithPermissions(tc.permissions...))
-			if tc.wantPermission == "" {
-				require.NoError(t, s.checkSearchServicePermissions(ctx, req))
-				return
-			}
-			// No index is configured: the failure must precede any index lookup.
-			resp, err := s.Search(ctx, req)
-			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-			require.Contains(t, resp.Error.GetMessage(), tc.wantPermission)
-		})
-	}
-}
-
-func TestSearchServicePermissionExemptions(t *testing.T) {
-	const group, resource = "playlist.grafana.app", "playlists"
-	for mode, id := range map[string]authlib.AuthInfo{
-		"direct":    serviceWithPermissions(),
-		"delegated": tokenWithoutDelegation(),
-	} {
-		for _, tc := range []struct {
-			name            string
-			opts            AuthzOptions
-			requestGroup    string
-			requestResource string
-			federated       bool
-			namespace       string
-			wantErr         error
-			wantExempt      float64
-		}{
-			{name: "exempt", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, wantExempt: 1},
-			{name: "legacy bypass", wantExempt: 1},
-			{name: "not exempt", opts: AuthzOptions{ExemptionEnabled: true}, wantErr: ErrServicePermissionMissing},
-			{name: "sibling resource", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/other"}}, wantErr: ErrServicePermissionMissing},
-			{name: "always enforced", requestGroup: "dashboard.grafana.app", requestResource: "dashboards", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, wantErr: ErrServicePermissionMissing},
-			{name: "federated enforced resource", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, federated: true, wantExempt: 1, wantErr: ErrServicePermissionMissing},
-			{name: "namespace mismatch", opts: AuthzOptions{ExemptionEnabled: true, ExemptResources: []string{group + "/" + resource}}, namespace: "stacks-2", wantErr: authlib.ErrNamespaceMismatch},
-		} {
-			t.Run(mode+"/"+tc.name, func(t *testing.T) {
-				requestGroup, requestResource := tc.requestGroup, tc.requestResource
-				if requestGroup == "" {
-					requestGroup, requestResource = group, resource
-				}
-				namespace := tc.namespace
-				if namespace == "" {
-					namespace = "stacks-1"
-				}
-				logger := &permissionTestLogger{}
-				s := newPermissionTestSearchServer(NewAuthzLimitedClient(authlib.FixedAccessClient(false), tc.opts))
-				s.log = logger
-				req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-					Namespace: namespace, Group: requestGroup, Resource: requestResource,
-				}}}
-				if tc.federated {
-					req.Federated = []*resourcepb.ResourceKey{{Group: "folder.grafana.app", Resource: "folders"}}
-				}
-				wantErr := tc.wantErr
-				if mode == "delegated" && errors.Is(wantErr, ErrServicePermissionMissing) {
-					wantErr = ErrServiceCannotDelegate
-				}
-				err := s.checkSearchServicePermissions(authlib.WithAuthInfo(t.Context(), id), req)
-				require.ErrorIs(t, err, wantErr)
-				require.Equal(t, tc.wantExempt, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionExemptions.WithLabelValues(group, resource, mode)))
-				wantFailures := 0
-				if wantErr != nil && !errors.Is(wantErr, authlib.ErrNamespaceMismatch) {
-					wantFailures = 1
-				}
-				require.Equal(t, float64(wantFailures), testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode)))
-				require.Equal(t, wantFailures, logger.ErrorLogs.Calls)
-			})
-		}
-	}
-}
-
 func TestAuthzLimitedClient_UserDenialRemainsDenial(t *testing.T) {
 	c := NewAuthzLimitedClient(authlib.FixedAccessClient(false), AuthzOptions{})
 	id := userWithDelegatedPermissions("dashboard.grafana.app:get")
@@ -384,29 +261,6 @@ func TestAuthzLimitedClient_UserDenialRemainsDenial(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, resp.Results, "1")
 	require.False(t, resp.Results["1"].Allowed)
-}
-
-func TestSearchServicePermissionsIdentityErrors(t *testing.T) {
-	for name, tc := range map[string]struct {
-		id       authlib.AuthInfo
-		wantCode int32
-	}{
-		"missing identity": {wantCode: http.StatusUnauthorized},
-		"wrong namespace":  {id: &identity.StaticRequester{Namespace: "stacks-2"}, wantCode: http.StatusForbidden},
-	} {
-		t.Run(name, func(t *testing.T) {
-			ctx := t.Context()
-			if tc.id != nil {
-				ctx = authlib.WithAuthInfo(ctx, tc.id)
-			}
-			s := newPermissionTestSearchServer(newLimitedClient(t))
-			resp, err := s.Search(ctx, &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}})
-			require.NoError(t, err)
-			require.Equal(t, tc.wantCode, resp.Error.GetCode())
-		})
-	}
 }
 
 type incompleteAccessClient struct{ authlib.AccessClient }
@@ -433,10 +287,6 @@ func TestAuthzLimitedClient_BatchCheckReturnsMissingResultError(t *testing.T) {
 	require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)
 }
 
-func newPermissionTestSearchServer(client authlib.AccessClient) *searchServer {
-	return &searchServer{access: client, indexMetrics: ProvideIndexMetrics(nil), log: log.NewNopLogger()}
-}
-
 type permissionTestLogger struct{ logtest.Fake }
 
 func (l *permissionTestLogger) FromContext(context.Context) log.Logger { return l }
@@ -449,58 +299,4 @@ func recordPermissionSpans(t *testing.T) *tracetest.SpanRecorder {
 	tracer = provider.Tracer("permissions-test")
 	t.Cleanup(func() { tracer = original })
 	return recorder
-}
-
-func TestSearchPermissionFailureMonitoring(t *testing.T) {
-	for mode, id := range map[string]authlib.AuthInfo{
-		"direct":    serviceWithPermissions("folder.grafana.app:get"),
-		"delegated": tokenWithoutDelegation(),
-	} {
-		t.Run(mode, func(t *testing.T) {
-			recorder := recordPermissionSpans(t)
-			logger := &permissionTestLogger{}
-			s := newPermissionTestSearchServer(authlib.FixedAccessClient(true))
-			s.log = logger
-			resp, err := s.Search(authlib.WithAuthInfo(t.Context(), id), &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}})
-			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-			require.Equal(t, 1.0, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode)))
-			require.Equal(t, 1, logger.ErrorLogs.Calls)
-			require.Contains(t, logger.ErrorLogs.Ctx, "dashboard.grafana.app/dashboards:get")
-			require.Equal(t, 1, logger.DebugLogs.Calls, "rejected searches still report their stats")
-			require.Len(t, recorder.Ended(), 1)
-			require.Equal(t, otelcodes.Error, recorder.Ended()[0].Status().Code)
-		})
-	}
-}
-
-func TestSearchServicePermissionsDoesNotDependOnClient(t *testing.T) {
-	for name, client := range map[string]authlib.AccessClient{
-		"limited client":   newLimitedClient(t),
-		"fixed client":     authlib.FixedAccessClient(true),
-		"decorated client": struct{ authlib.AccessClient }{newLimitedClient(t)},
-		"no client":        nil,
-	} {
-		t.Run(name, func(t *testing.T) {
-			s := newPermissionTestSearchServer(client)
-			req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
-				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
-			}}}
-			for mode, id := range map[string]authlib.AuthInfo{
-				"direct":    serviceWithPermissions("folder.grafana.app:get"),
-				"delegated": tokenWithoutDelegation(),
-			} {
-				t.Run(mode, func(t *testing.T) {
-					resp, err := s.Search(authlib.WithAuthInfo(t.Context(), id), req)
-					require.NoError(t, err)
-					require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
-					require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:get")
-				})
-			}
-			// Local callers without tokens still use their access client's rules.
-			require.NoError(t, s.checkSearchServicePermissions(authlib.WithAuthInfo(t.Context(), userWithDelegatedPermissions()), req))
-		})
-	}
 }

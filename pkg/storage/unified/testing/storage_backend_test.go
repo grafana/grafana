@@ -1,6 +1,8 @@
 package test
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"errors"
 	"fmt"
@@ -17,22 +19,24 @@ import (
 	"go.opentelemetry.io/otel"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/grpcserver"
 	"github.com/grafana/grafana/pkg/setting"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+
 	unified "github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
@@ -266,7 +270,7 @@ func newLocalClient(t *testing.T, backend resource.KVBackend) resource.ResourceC
 	require.NoError(t, err)
 	_, err = server.IsHealthy(t.Context(), &resourcepb.HealthCheckRequest{}) //nolint:staticcheck
 	require.NoError(t, err)
-	return resource.NewLocalResourceClient(server)
+	return resource.NewLocalResourceClient(server, nil)
 }
 
 func newRemoteClient(t *testing.T, backend resource.KVBackend) resource.ResourceClient {
@@ -561,7 +565,7 @@ func TestIntegrationBenchmarkSQLKVStorageAndSearch(t *testing.T) {
 			}
 			searchOpts := resource.SearchOptions{
 				Backend: searchBackend,
-				Resources: &resource.TestDocumentBuilderSupplier{
+				Resources: &searchmodel.TestDocumentBuilderSupplier{
 					GroupsResources: groupsResources,
 				},
 				IndexModificationCacheTTL: 5 * time.Minute,

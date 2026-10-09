@@ -264,13 +264,12 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		write(fmt.Sprintf("other-%02d", i), otherTeam, okFolder, "other")
 	}
 
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+	server, err := newResourceServerWithSearch(resource.ResourceServerOptions{
 		Backend:      counting,
 		AccessClient: denyFolderAccess{denied: deniedFolder},
-		Search: resource.SearchOptions{
-			Backend:   searchBackend,
-			Resources: labelFolderBuilderSupplier{},
-		},
+	}, resource.SearchOptions{
+		Backend:   searchBackend,
+		Resources: labelFolderBuilderSupplier{},
 	})
 	require.NoError(t, err)
 	// The server runs watcher/search-maintenance goroutines; stop it before the
@@ -305,7 +304,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		pages := 0
 		assertNoKeyScans(t, opts, func() {
 			for {
-				resp, err := server.List(ctx, newReq(pageSize, token))
+				resp, err := server.StorageHandler().List(ctx, newReq(pageSize, token))
 				require.NoError(t, err)
 				require.Nil(t, resp.Error)
 				require.Greater(t, resp.ResourceVersion, int64(0))
@@ -347,7 +346,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 
 		var resp *resourcepb.ListResponse
 		var err error
-		assertNoKeyScans(t, opts, func() { resp, err = server.List(ctx, newReq(1000, "")) })
+		assertNoKeyScans(t, opts, func() { resp, err = server.StorageHandler().List(ctx, newReq(1000, "")) })
 		require.NoError(t, err)
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.NextPageToken, "the whole set fits on one page")
@@ -446,19 +445,18 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 				Resources: labelFolderBuilderSupplier{},
 			}
 		}
-		server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		server, err := newResourceServerWithSearch(resource.ResourceServerOptions{
 			Backend:                counting,
 			AccessClient:           access,
 			SearchBackedListConfig: config,
-			Search:                 searchOptions,
-		})
+		}, searchOptions)
 		require.NoError(t, err)
 		t.Cleanup(func() {
 			stopCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 			_ = server.Stop(stopCtx)
 		})
-		return server
+		return server.StorageHandler()
 	}
 
 	searchServer := newServer(true)

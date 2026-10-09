@@ -1,8 +1,9 @@
 package builders
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 const (
@@ -29,6 +30,6 @@ var TeamSearchFields = iamProvider.Fields(
 	v0alpha1.TeamResourceInfo.GroupVersionResource(),
 )
 
-func GetTeamSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+func GetTeamSearchBuilder(registry *searchmodel.SearchFieldsRegistry) (searchmodel.DocumentBuilderInfo, error) {
 	return iamBuilder(registry, v0alpha1.TeamResourceInfo)
 }

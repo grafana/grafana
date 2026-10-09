@@ -7,6 +7,16 @@ It provides generic storage for k8s objects, and can store data either within de
 
 By default it runs in-process within Grafana, but it can also be run as a standalone GRPC service (`storage-server`).
 
+## Package ownership
+
+- `resource/` owns authoritative reads, writes, history, notifications, blobs, quotas, and storage metrics. It receives only query/statistics capabilities for filtered lists and quotas, plus field definitions and the successful-write delay.
+- `search/service/` owns search RPC handlers, query orchestration, reconciliation, vector-store handlers, and embedding workers. Its storage dependency is read-only.
+- `search/` owns Bleve and other index implementations; `search/model/` owns search contracts and document/field definitions; `search/metrics/` separates Bleve, search-service, and vector metrics; build-phase counters are shared between the service and backend.
+- `resource/contract/` owns resource identities and read contracts; `resourceclient/` provides independent storage and search clients and an explicit combined facade.
+- `server/` owns embedded composition and lifecycle but implements no RPC services. `sql/` supplies configuration and shared dependencies. Storage and search register separate RPC handlers; local clients receive both handlers explicitly.
+
+Shutdown drains accepted writes before stopping embedding workers and search, then closes storage. Existing RPC names, payloads, and metrics are unchanged. Compatibility aliases in `resource/` retain existing Go callers; new search code uses its owning packages directly.
+
 ## Storage Overview
 
 There are 2 main tables, the `resource` table stores a "current" view of the objects, and the `resource_history` table stores a record of each revision of a given object.

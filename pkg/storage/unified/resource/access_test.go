@@ -323,9 +323,6 @@ func TestAuthzLimitedClientExemptionGate(t *testing.T) {
 }
 
 func TestBatchSizeBucket(t *testing.T) {
-	// Ranges below assume this chunk size; revisit them before changing it.
-	require.Equal(t, 50, batchCheckChunkSize)
-
 	for _, tt := range []struct {
 		size int
 		want string

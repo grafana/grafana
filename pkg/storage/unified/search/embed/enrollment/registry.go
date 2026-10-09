@@ -1,6 +1,8 @@
 package enrollment
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"fmt"
 	"slices"
 	"strings"
@@ -10,14 +12,13 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/generic"
 	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 )
 
 type Registry struct {
-	configs         *resource.EmbeddingConfigRegistry
+	configs         *searchmodel.EmbeddingConfigRegistry
 	allowed         []schema.GroupResource
 	custom          map[schema.GroupResource]embed.Builder
 	skippedVersions *prometheus.CounterVec
@@ -28,9 +29,9 @@ var _ embed.BuilderProvider = (*Registry)(nil)
 
 // New defers declaration lookup until Validate so the initial live manifest
 // snapshot can load before enrollment is checked.
-func New(configs *resource.EmbeddingConfigRegistry, allowed []string, custom []embed.Builder, skippedVersions *prometheus.CounterVec) (*Registry, error) {
+func New(configs *searchmodel.EmbeddingConfigRegistry, allowed []string, custom []embed.Builder, skippedVersions *prometheus.CounterVec) (*Registry, error) {
 	if configs == nil {
-		configs = resource.NewEmbeddingConfigRegistry()
+		configs = searchmodel.NewEmbeddingConfigRegistry()
 	}
 	r := &Registry{
 		configs:         configs,

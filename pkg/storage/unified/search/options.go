@@ -1,6 +1,12 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"os"
 	"path/filepath"
 	"time"
@@ -35,23 +41,23 @@ const (
 // downloaded when it is non-nil and cfg.IndexSnapshotEnabled is set.
 func NewSearchOptions(
 	cfg *setting.Cfg,
-	docs resource.DocumentBuilderSupplier,
-	indexMetrics *resource.BleveIndexMetrics,
-	ownsIndexFn func(key resource.NamespacedResource) (bool, error),
+	docs searchmodel.DocumentBuilderSupplier,
+	indexMetrics *searchmetrics.BleveMetrics,
+	ownsIndexFn func(key resourcecontract.NamespacedResource) (bool, error),
 	snapshotStore RemoteIndexStore,
-) (resource.SearchOptions, error) {
-	var embeddingConfig *resource.EmbeddingConfigRegistry
+) (searchmodel.SearchOptions, error) {
+	var embeddingConfig *searchmodel.EmbeddingConfigRegistry
 	if cfg.EnableSearch || cfg.VectorIndexingEnabled {
-		embeddingConfig = resource.NewEmbeddingConfigRegistry(resource.AppManifests())
+		embeddingConfig = searchmodel.NewEmbeddingConfigRegistry(resource.AppManifests())
 	}
 
 	// Built here rather than inside the search branch below, because a server that
 	// delegates search to another process still decides which selectors it can push
 	// into an index, and that decision reads these declarations.
-	manifests := resource.MergeManifestsByKind(resource.AppManifests())
-	selectableFields, searchFieldsHashes, searchFieldsProviders, err := resource.SearchFieldsForManifests(manifests...)
+	manifests := searchmodel.MergeManifestsByKind(resource.AppManifests())
+	selectableFields, searchFieldsHashes, searchFieldsProviders, err := searchmodel.SearchFieldsForManifests(manifests...)
 	if err != nil {
-		return resource.SearchOptions{}, err
+		return searchmodel.SearchOptions{}, err
 	}
 	// Without a document supplier (some tests) the index has nothing to map, so
 	// leave out the mappings and their hashes; the selectable fields stay.
@@ -61,7 +67,7 @@ func NewSearchOptions(
 	// One registry holds selectable fields, hashes, and providers, shared by the
 	// index backend and the search server so a future live-manifest source can
 	// swap them consistently.
-	searchFields := resource.NewSearchFieldsRegistry(selectableFields, searchFieldsHashes, searchFieldsProviders)
+	searchFields := searchmodel.NewSearchFieldsRegistry(selectableFields, searchFieldsHashes, searchFieldsProviders)
 
 	if cfg.EnableSearch {
 		root := cfg.IndexPath
@@ -70,7 +76,7 @@ func NewSearchOptions(
 		}
 		err := os.MkdirAll(root, 0750)
 		if err != nil {
-			return resource.SearchOptions{}, err
+			return searchmodel.SearchOptions{}, err
 		}
 
 		var minVersion *semver.Version
@@ -127,10 +133,10 @@ func NewSearchOptions(
 		}, indexMetrics)
 
 		if err != nil {
-			return resource.SearchOptions{}, err
+			return searchmodel.SearchOptions{}, err
 		}
 
-		return resource.SearchOptions{
+		return searchmodel.SearchOptions{
 			Backend:                   bleve,
 			Resources:                 docs,
 			InitWorkerThreads:         cfg.IndexWorkers,
@@ -158,7 +164,7 @@ func NewSearchOptions(
 			EmbeddingConfig:                 embeddingConfig,
 		}, nil
 	}
-	return resource.SearchOptions{
+	return searchmodel.SearchOptions{
 		EmbeddingConfig: embeddingConfig,
 		SearchFields:    searchFields,
 		// it is used for search after write and throttles index updates

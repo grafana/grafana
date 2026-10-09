@@ -1,6 +1,8 @@
 package search_test
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"errors"
 	"fmt"
@@ -91,10 +93,10 @@ func (c *trashAccessClient) Write(context.Context, *authzextv1.WriteRequest) err
 // adminCheckCount is how many set_permissions calls were made.
 func (c *trashAccessClient) adminCheckCount() int { return len(c.adminCheckFolders) }
 
-func trashDoc(name, folder, deletedBy string) *resource.BulkIndexItem {
-	return &resource.BulkIndexItem{
-		Action: resource.ActionIndex,
-		Doc: &resource.IndexableDocument{
+func trashDoc(name, folder, deletedBy string) *searchmodel.BulkIndexItem {
+	return &searchmodel.BulkIndexItem{
+		Action: searchmodel.ActionIndex,
+		Doc: &searchmodel.IndexableDocument{
 			RV:    1,
 			Name:  name,
 			Title: name,
@@ -111,7 +113,7 @@ func trashDoc(name, folder, deletedBy string) *resource.BulkIndexItem {
 	}
 }
 
-func liveDoc(name, folder string) *resource.BulkIndexItem {
+func liveDoc(name, folder string) *searchmodel.BulkIndexItem {
 	d := trashDoc(name, folder, "")
 	d.Doc.IsDeleted = nil
 	d.Doc.DeletedBy = nil
@@ -123,16 +125,16 @@ func liveDoc(name, folder string) *resource.BulkIndexItem {
 // revert to the read check when that happens.
 func trashIndexBuilders() []struct {
 	name  string
-	build func(t *testing.T) resource.ResourceIndex
+	build func(t *testing.T) searchmodel.ResourceIndex
 } {
 	return []struct {
 		name  string
-		build func(t *testing.T) resource.ResourceIndex
+		build func(t *testing.T) searchmodel.ResourceIndex
 	}{
-		{"in-searcher", func(t *testing.T) resource.ResourceIndex {
-			return newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
+		{"in-searcher", func(t *testing.T) searchmodel.ResourceIndex {
+			return newTestDashboardsIndex(t, threshold, 20, func(searchmodel.ResourceIndex) (int64, error) { return 1, nil })
 		}},
-		{"post-rank", func(t *testing.T) resource.ResourceIndex {
+		{"post-rank", func(t *testing.T) searchmodel.ResourceIndex {
 			return newTestDashboardsIndexPostRank(t, 20)
 		}},
 	}
@@ -160,7 +162,7 @@ func trashQueryFor(mutate func(*resourcepb.ResourceSearchRequest)) *resourcepb.R
 // "user:alice" that GetUID reports and deleted_by holds.
 func runTrashSearch(
 	t *testing.T,
-	index resource.ResourceIndex,
+	index searchmodel.ResourceIndex,
 	ac authlib.AccessClient,
 	uid string,
 	q *resourcepb.ResourceSearchRequest,
@@ -189,7 +191,7 @@ func TestTrashAuthz_ReaderCannotSeeAnotherUsersDeletion(t *testing.T) {
 	for _, path := range trashIndexBuilders() {
 		t.Run(path.name, func(t *testing.T) {
 			index := path.build(t)
-			indexDocs(t, index, []*resource.BulkIndexItem{
+			indexDocs(t, index, []*searchmodel.BulkIndexItem{
 				trashDoc("alices-dash", "folder-1", trashAlice),
 			})
 
@@ -207,7 +209,7 @@ func TestTrashAuthz_FolderAdminSeesOtherUsersDeletions(t *testing.T) {
 	for _, path := range trashIndexBuilders() {
 		t.Run(path.name, func(t *testing.T) {
 			index := path.build(t)
-			indexDocs(t, index, []*resource.BulkIndexItem{
+			indexDocs(t, index, []*searchmodel.BulkIndexItem{
 				trashDoc("alices-dash", "folder-1", trashAlice),
 				trashDoc("elsewhere", "folder-2", trashAlice),
 			})
@@ -226,7 +228,7 @@ func TestTrashAuthz_DeleterSeesTheirOwnDeletionWithoutBeingAdmin(t *testing.T) {
 	for _, path := range trashIndexBuilders() {
 		t.Run(path.name, func(t *testing.T) {
 			index := path.build(t)
-			indexDocs(t, index, []*resource.BulkIndexItem{
+			indexDocs(t, index, []*searchmodel.BulkIndexItem{
 				trashDoc("alices-dash", "folder-1", trashAlice),
 				trashDoc("bobs-dash", "folder-1", trashBob),
 			})
@@ -251,7 +253,7 @@ func TestTrashAuthz_ProvisionedObjectIsNeverVisible(t *testing.T) {
 			index := path.build(t)
 			provisioned := trashDoc("provisioned-dash", "folder-1", trashAlice)
 			provisioned.Doc.IsProvisioned = new(true)
-			indexDocs(t, index, []*resource.BulkIndexItem{provisioned})
+			indexDocs(t, index, []*searchmodel.BulkIndexItem{provisioned})
 
 			for _, who := range []struct {
 				name string
@@ -279,7 +281,7 @@ func TestTrashAuthz_FolderAdminCheckIsCachedPerFolder(t *testing.T) {
 			index := path.build(t)
 			folders := []string{"folder-1", "folder-2"}
 			names := []string{"a", "b", "c", "d"}
-			docs := make([]*resource.BulkIndexItem, 0, len(folders)*len(names))
+			docs := make([]*searchmodel.BulkIndexItem, 0, len(folders)*len(names))
 			for _, folder := range folders {
 				for _, name := range names {
 					docs = append(docs, trashDoc(folder+"-"+name, folder, trashAlice))
@@ -304,7 +306,7 @@ func TestTrashAuthz_FolderChecksForAPageCostOneRoundTrip(t *testing.T) {
 		t.Run(path.name, func(t *testing.T) {
 			index := path.build(t)
 			const folderCount = 40
-			docs := make([]*resource.BulkIndexItem, 0, folderCount)
+			docs := make([]*searchmodel.BulkIndexItem, 0, folderCount)
 			admin := map[string]bool{}
 			for i := range folderCount {
 				folder := fmt.Sprintf("folder-%02d", i)
@@ -328,7 +330,7 @@ func TestTrashAuthz_LiveSearchIsUnchanged(t *testing.T) {
 	for _, path := range trashIndexBuilders() {
 		t.Run(path.name, func(t *testing.T) {
 			index := path.build(t)
-			indexDocs(t, index, []*resource.BulkIndexItem{
+			indexDocs(t, index, []*searchmodel.BulkIndexItem{
 				liveDoc("live-dash", "folder-1"),
 				trashDoc("deleted-dash", "folder-1", trashAlice),
 			})
@@ -360,8 +362,8 @@ func TestTrashAuthz_LiveSearchIsUnchanged(t *testing.T) {
 
 // Falling back to the read check would be more permissive, so the request is refused.
 func TestTrashAuthz_RefusesWhenThereIsNoUser(t *testing.T) {
-	index := newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
-	indexDocs(t, index, []*resource.BulkIndexItem{trashDoc("alices-dash", "folder-1", trashAlice)})
+	index := newTestDashboardsIndex(t, threshold, 20, func(searchmodel.ResourceIndex) (int64, error) { return 1, nil })
+	indexDocs(t, index, []*searchmodel.BulkIndexItem{trashDoc("alices-dash", "folder-1", trashAlice)})
 
 	res, err := index.Search(context.Background(), &trashAccessClient{readAll: true}, trashQueryFor(nil), nil, nil)
 	require.NoError(t, err)
@@ -373,13 +375,13 @@ func TestTrashAuthz_RefusesWhenThereIsNoUser(t *testing.T) {
 // facet scan. Dropping deleted_by there raises no error: the deleter simply stops
 // seeing their own objects.
 func TestTrashAuthz_PostRankNarrowedFieldListsKeepDeletedBy(t *testing.T) {
-	withTags := func(item *resource.BulkIndexItem, tags ...string) *resource.BulkIndexItem {
+	withTags := func(item *searchmodel.BulkIndexItem, tags ...string) *searchmodel.BulkIndexItem {
 		item.Doc.Tags = tags
 		return item
 	}
-	build := func(t *testing.T) resource.ResourceIndex {
+	build := func(t *testing.T) searchmodel.ResourceIndex {
 		index := newTestDashboardsIndexPostRank(t, 20)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			withTags(trashDoc("alices-1", "folder-1", trashAlice), "shared"),
 			withTags(trashDoc("alices-2", "folder-1", trashAlice), "shared"),
 			withTags(trashDoc("bobs-1", "folder-1", trashBob), "shared"),
@@ -404,7 +406,7 @@ func TestTrashAuthz_PostRankNarrowedFieldListsKeepDeletedBy(t *testing.T) {
 		index := build(t)
 		q := trashQueryFor(func(q *resourcepb.ResourceSearchRequest) {
 			q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"tags": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
+				"tags": {Field: searchmodel.SEARCH_FIELD_TAGS, Limit: 10},
 			}
 		})
 
@@ -424,7 +426,7 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 		t.Run(path.name, func(t *testing.T) {
 			index := path.build(t)
 			const pairs = 10
-			docs := make([]*resource.BulkIndexItem, 0, pairs*2)
+			docs := make([]*searchmodel.BulkIndexItem, 0, pairs*2)
 			for i := range pairs {
 				suffix := string(rune('a' + i))
 				docs = append(docs, trashDoc(suffix+"-alice", "folder-1", trashAlice))
@@ -465,15 +467,15 @@ func TestTrashAuthz_AppliesOnEveryPage(t *testing.T) {
 // deletions off the total, which no "inexact" flag prevents.
 func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
 	// Alice owns one; Bob owns four that match the same query.
-	build := func(t *testing.T, postRank bool) resource.ResourceIndex {
-		var index resource.ResourceIndex
+	build := func(t *testing.T, postRank bool) searchmodel.ResourceIndex {
+		var index searchmodel.ResourceIndex
 		if postRank {
 			index = newTestDashboardsIndexPostRank(t, 20)
 		} else {
-			index = newTestDashboardsIndex(t, threshold, 20, func(resource.ResourceIndex) (int64, error) { return 1, nil })
+			index = newTestDashboardsIndex(t, threshold, 20, func(searchmodel.ResourceIndex) (int64, error) { return 1, nil })
 		}
 		bobs := []string{"bob-1", "bob-2", "bob-3", "bob-4"}
-		docs := make([]*resource.BulkIndexItem, 0, len(bobs)+1)
+		docs := make([]*searchmodel.BulkIndexItem, 0, len(bobs)+1)
 		docs = append(docs, trashDoc("alice-1", "folder-1", trashAlice))
 		for _, name := range bobs {
 			docs = append(docs, trashDoc(name, "folder-1", trashBob))
@@ -512,7 +514,7 @@ func TestTrashAuthz_TotalHitsCountOnlyAuthorizedHits(t *testing.T) {
 // that reach it directly.
 func TestTrashAuthz_CountOnlyTotalIsAuthorized(t *testing.T) {
 	index := newTestDashboardsIndexPostRank(t, 20)
-	indexDocs(t, index, []*resource.BulkIndexItem{
+	indexDocs(t, index, []*searchmodel.BulkIndexItem{
 		trashDoc("alice-1", "folder-1", trashAlice),
 		trashDoc("bob-1", "folder-1", trashBob),
 		trashDoc("bob-2", "folder-1", trashBob),
@@ -530,7 +532,7 @@ func TestTrashAuthz_CountOnlyTotalIsAuthorized(t *testing.T) {
 // rather than being topped up from the unfiltered count.
 func TestTrashAuthz_CursorPageTotalIsInexactNotUnfiltered(t *testing.T) {
 	index := newTestDashboardsIndexPostRank(t, 20)
-	docs := make([]*resource.BulkIndexItem, 0, 8)
+	docs := make([]*searchmodel.BulkIndexItem, 0, 8)
 	for i := range 4 {
 		suffix := string(rune('a' + i))
 		docs = append(docs, trashDoc(suffix+"-alice", "folder-1", trashAlice))
@@ -578,7 +580,7 @@ func TestSearchMissingServicePermissionsReturnsError(t *testing.T) {
 						doc = trashDoc("dash-1", "folder-1", trashAlice)
 						verb = "set_permissions"
 					}
-					indexDocs(t, index, []*resource.BulkIndexItem{doc})
+					indexDocs(t, index, []*searchmodel.BulkIndexItem{doc})
 					for _, outcome := range []struct {
 						name        string
 						granted     bool
@@ -661,7 +663,7 @@ func TestSearchAuthorizationFailureReturnsError(t *testing.T) {
 			for name, folder := range map[string]string{"batch": "folder-1", "single check": "k6-app", "item error": "folder-2"} {
 				t.Run(name, func(t *testing.T) {
 					index := path.build(t)
-					indexDocs(t, index, []*resource.BulkIndexItem{trashDoc("dash-1", folder, trashAlice)})
+					indexDocs(t, index, []*searchmodel.BulkIndexItem{trashDoc("dash-1", folder, trashAlice)})
 					ac := &failingTrashAccessClient{trashAccessClient: &trashAccessClient{}, err: boom, itemError: name == "item error"}
 					id := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "carol", Namespace: "default"}
 					res, err := index.Search(authlib.WithAuthInfo(t.Context(), id), ac, trashQueryFor(nil), nil, nil)

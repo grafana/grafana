@@ -286,7 +286,7 @@ func newSharedTestClient(t *testing.T) resource.ResourceClient {
 	require.NoError(t, err)
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{Backend: backend})
 	require.NoError(t, err)
-	return resource.NewLocalResourceClient(server)
+	return resource.NewLocalResourceClient(server, nil)
 }
 
 func newSharedTestStorage(t *testing.T, client resource.ResourceClient, prefix string) storage.Interface {

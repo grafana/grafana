@@ -2145,7 +2145,7 @@ func createStorageServer(t *testing.T, backend resource.StorageBackend) resource
 }
 
 // verifySearchServerStats verifies GetStats returns expected count from search server
-func verifySearchServerStats(t *testing.T, searchServer resource.ResourceServer, namespace string, expectedCount int64) {
+func verifySearchServerStats(t *testing.T, searchServer resource.SearchServer, namespace string, expectedCount int64) {
 	t.Helper()
 	ctx := testutil.NewDefaultTestContext(t)
 
@@ -2164,7 +2164,7 @@ func verifySearchServerStats(t *testing.T, searchServer resource.ResourceServer,
 }
 
 // verifySearchServerResults verifies Search returns expected results from search server
-func verifySearchServerResults(t *testing.T, searchServer resource.ResourceServer, namespace string, query string, expectedHits int, expectedNames []string) {
+func verifySearchServerResults(t *testing.T, searchServer resource.SearchServer, namespace string, query string, expectedHits int, expectedNames []string) {
 	t.Helper()
 	ctx := claims.WithAuthInfo(testutil.NewDefaultTestContext(t), &identity.StaticRequester{
 		Type:      claims.TypeUser,
@@ -2424,7 +2424,7 @@ func runTestClusterScopedResources(t *testing.T, sqlBackend, kvBackend resource.
 }
 
 // SearchServerFactory is a function that creates a ResourceServer with search enabled
-type SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.ResourceServer
+type SearchServerFactory func(t *testing.T, backend resource.StorageBackend) resource.SearchServer
 
 // runTestSearchOperationsCompatibility tests search-api with different backend combinations
 // Simulates production rollout: Phase 1 (search=sql, storage=mixed) -> Phase 2 (search=kv, storage=kv)
@@ -2479,7 +2479,7 @@ func numberToWord(n int) string {
 // searchCompatibilityTestConfig defines configuration for a search compatibility test scenario
 type searchCompatibilityTestConfig struct {
 	namespace    string                  // namespace for test isolation
-	searchServer resource.ResourceServer // search server (with search enabled)
+	searchServer resource.SearchServer   // search handler
 	alphaStorage resource.ResourceServer // storage server for Alpha resources
 	betaStorage  resource.ResourceServer // storage server for Beta resources
 	alphaPrefix  string                  // prefix for Alpha resource names (e.g., "sql", "kv1")

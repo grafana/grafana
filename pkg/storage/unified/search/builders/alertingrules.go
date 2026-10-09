@@ -1,6 +1,8 @@
 package builders
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"encoding/json"
 	"slices"
@@ -9,7 +11,6 @@ import (
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/apps/alerting/rules/pkg/searchencoding"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -24,25 +25,25 @@ const (
 	ruleSearchDatasourceUIDs = "datasourceUIDs"
 )
 
-func GetAlertRuleSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+func GetAlertRuleSearchBuilder(registry *searchmodel.SearchFieldsRegistry) (searchmodel.DocumentBuilderInfo, error) {
 	gr := rulesv0alpha1.AlertRuleKind().GroupVersionResource().GroupResource()
-	return resource.DocumentBuilderInfo{
+	return searchmodel.DocumentBuilderInfo{
 		GroupResource: gr,
-		Builder:       &alertRuleSearchBuilder{declared: resource.StandardDocumentBuilder(registry)},
+		Builder:       &alertRuleSearchBuilder{declared: searchmodel.StandardDocumentBuilder(registry)},
 	}, nil
 }
 
-func GetRecordingRuleSearchBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+func GetRecordingRuleSearchBuilder(registry *searchmodel.SearchFieldsRegistry) (searchmodel.DocumentBuilderInfo, error) {
 	gr := rulesv0alpha1.RecordingRuleKind().GroupVersionResource().GroupResource()
-	return resource.DocumentBuilderInfo{
+	return searchmodel.DocumentBuilderInfo{
 		GroupResource: gr,
-		Builder:       &recordingRuleSearchBuilder{declared: resource.StandardDocumentBuilder(registry)},
+		Builder:       &recordingRuleSearchBuilder{declared: searchmodel.StandardDocumentBuilder(registry)},
 	}, nil
 }
 
 var (
-	_ resource.DocumentBuilder = (*alertRuleSearchBuilder)(nil)
-	_ resource.DocumentBuilder = (*recordingRuleSearchBuilder)(nil)
+	_ searchmodel.DocumentBuilder = (*alertRuleSearchBuilder)(nil)
+	_ searchmodel.DocumentBuilder = (*recordingRuleSearchBuilder)(nil)
 )
 
 // alertRuleSearchBuilder builds an AlertRule search document. It delegates the
@@ -52,10 +53,10 @@ var (
 // (the path extractor has no map support), and datasourceUIDs must exclude
 // server-side expression datasources and deduplicate across the expression map.
 type alertRuleSearchBuilder struct {
-	declared resource.DocumentBuilder
+	declared searchmodel.DocumentBuilder
 }
 
-func (b *alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+func (b *alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*searchmodel.IndexableDocument, error) {
 	doc, err := b.declared.BuildDocument(ctx, key, rv, value)
 	if err != nil {
 		return nil, err
@@ -92,10 +93,10 @@ func (b *alertRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourc
 // recordingRuleSearchBuilder builds a RecordingRule search document. See
 // alertRuleSearchBuilder for the delegate-then-compute pattern.
 type recordingRuleSearchBuilder struct {
-	declared resource.DocumentBuilder
+	declared searchmodel.DocumentBuilder
 }
 
-func (b *recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+func (b *recordingRuleSearchBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*searchmodel.IndexableDocument, error) {
 	doc, err := b.declared.BuildDocument(ctx, key, rv, value)
 	if err != nil {
 		return nil, err

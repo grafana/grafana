@@ -1,11 +1,12 @@
 package search
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -14,7 +15,7 @@ import (
 // broken as a guard that never fires.
 func TestValidateTrashRequest(t *testing.T) {
 	trashField := func(q *resourcepb.ResourceSearchRequest) {
-		q.Fields = []string{resource.SEARCH_FIELD_DELETED_BY}
+		q.Fields = []string{searchmodel.SEARCH_FIELD_DELETED_BY}
 	}
 	federated := func(q *resourcepb.ResourceSearchRequest) {
 		q.Federated = []*resourcepb.ResourceKey{{

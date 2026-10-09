@@ -1,6 +1,12 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -24,7 +30,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -43,7 +48,7 @@ func writeFakeSnapshot(dir string, meta *IndexMeta) error {
 	features := meta.Features
 	if features == nil {
 		// Otherwise the index is rejected after download for missing a required feature.
-		features = resource.CurrentIndexFeatures()
+		features = searchmodel.CurrentIndexFeatures()
 	}
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:          meta.UploadTimestamp.Unix(),
@@ -57,9 +62,9 @@ func writeFakeSnapshot(dir string, meta *IndexMeta) error {
 	return idx.SetInternal([]byte(internalBuildInfoKey), bi)
 }
 
-func newTestBleveBackend(t *testing.T, snapshot SnapshotOptions) (*bleveBackend, *resource.BleveIndexMetrics) {
+func newTestBleveBackend(t *testing.T, snapshot SnapshotOptions) (*bleveBackend, *searchmetrics.BleveMetrics) {
 	t.Helper()
-	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	metrics := searchmetrics.ProvideBleveMetrics(prometheus.NewRegistry(), nil)
 	be, err := NewBleveBackend(BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: 5,
@@ -171,7 +176,7 @@ func TestPickBestSnapshot(t *testing.T) {
 		assert.False(t, ok)
 	})
 
-	requiring := func(ver string, rv int64, age time.Duration, requirements ...resource.IndexFeature) *IndexMeta {
+	requiring := func(ver string, rv int64, age time.Duration, requirements ...searchmodel.IndexFeature) *IndexMeta {
 		m := snap(ver, rv, age)
 		m.ReaderRequirements = requirements
 		return m
@@ -185,18 +190,18 @@ func TestPickBestSnapshot(t *testing.T) {
 
 	t.Run("requirements this instance understands are accepted", func(t *testing.T) {
 		key := makeULID(t, now)
-		all := map[ulid.ULID]*IndexMeta{key: requiring("11.5.0", 100, time.Minute, resource.IndexFeatureDeletedMarker)}
+		all := map[ulid.ULID]*IndexMeta{key: requiring("11.5.0", 100, time.Minute, searchmodel.IndexFeatureDeletedMarker)}
 		c, ok := newBackend(minV).pickBestSnapshot(all, cutoff(24*time.Hour), log.New("bleve-snapshot-test"))
 		require.True(t, ok)
 		assert.Equal(t, key, c.key)
 	})
 
-	requiringFeatures := func(features ...resource.IndexFeature) *bleveBackend {
+	requiringFeatures := func(features ...searchmodel.IndexFeature) *bleveBackend {
 		be := newBackend(minV)
 		be.requiredFeatures = features
 		return be
 	}
-	having := func(ver string, rv int64, age time.Duration, features ...resource.IndexFeature) *IndexMeta {
+	having := func(ver string, rv int64, age time.Duration, features ...searchmodel.IndexFeature) *IndexMeta {
 		m := snap(ver, rv, age)
 		m.Features = features
 		m.FeaturesRecorded = true
@@ -343,9 +348,9 @@ func TestPickBestSnapshot(t *testing.T) {
 // downloadTest bundles the shared setup used by the tryDownloadRemoteSnapshot tests.
 type downloadTest struct {
 	be          *bleveBackend
-	metrics     *resource.BleveIndexMetrics
+	metrics     *searchmetrics.BleveMetrics
 	store       *hookableStore
-	ns          resource.NamespacedResource
+	ns          resourcecontract.NamespacedResource
 	resourceDir string
 }
 
@@ -458,7 +463,7 @@ func TestTryDownloadRemoteSnapshot_Success(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_FallsBackToNextCandidate(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newDownloadTest(t, store)
-	dt.be.requiredFeatures = []resource.IndexFeature{"alpha"}
+	dt.be.requiredFeatures = []searchmodel.IndexFeature{"alpha"}
 
 	// Ranked first on RV, but its index lacks the required feature — which selection
 	// cannot see, because the manifest recorded no features.
@@ -471,7 +476,7 @@ func TestTryDownloadRemoteSnapshot_FallsBackToNextCandidate(t *testing.T) {
 		BuildVersion:          "11.5.0",
 		LatestResourceVersion: 50,
 		UploadTimestamp:       time.Now().Add(-time.Minute),
-		Features:              []resource.IndexFeature{"alpha"},
+		Features:              []searchmodel.IndexFeature{"alpha"},
 	})
 
 	idx, rv, err := dt.run(t)
@@ -487,7 +492,7 @@ func TestTryDownloadRemoteSnapshot_FallsBackToNextCandidate(t *testing.T) {
 func TestTryDownloadRemoteSnapshot_StopsAtAttemptCap(t *testing.T) {
 	store := newHookableStore(t)
 	dt := newDownloadTest(t, store)
-	dt.be.requiredFeatures = []resource.IndexFeature{"alpha"}
+	dt.be.requiredFeatures = []searchmodel.IndexFeature{"alpha"}
 
 	for i := range maxSnapshotDownloadAttempts + 2 {
 		age := time.Duration(i) * time.Minute
@@ -546,9 +551,9 @@ func TestTryDownloadRemoteSnapshot_NoAgeLimitWhenZero(t *testing.T) {
 // tryDownloadFreshSameVersionSnapshot tests on the rebuild policy.
 type freshDownloadTest struct {
 	be          *bleveBackend
-	metrics     *resource.BleveIndexMetrics
+	metrics     *searchmetrics.BleveMetrics
 	store       *hookableStore
-	ns          resource.NamespacedResource
+	ns          resourcecontract.NamespacedResource
 	resourceDir string
 }
 
@@ -750,7 +755,7 @@ func TestBuildIndex_RebuildUsesFreshSnapshot(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	idx, err := be.BuildIndex(context.Background(), ns, 10, "rebuild",
-		func(resource.ResourceIndex) (int64, error) {
+		func(searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
@@ -783,7 +788,7 @@ func TestBuildIndex_RebuildFallsBackToBuilder(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	idx, err := be.BuildIndex(context.Background(), ns, 10, "rebuild",
-		func(index resource.ResourceIndex) (int64, error) {
+		func(index searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
@@ -809,7 +814,7 @@ func TestBuildIndex_RebuildLeaderUploads(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	idx, err := be.BuildIndex(t.Context(), ns, 10, "rebuild",
-		func(index resource.ResourceIndex) (int64, error) {
+		func(index searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 7, nil
 		},
@@ -839,7 +844,7 @@ func TestBuildIndex_RebuildLeaderLockLostDuringBuild(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	idx, err := be.BuildIndex(t.Context(), ns, 10, "rebuild",
-		func(resource.ResourceIndex) (int64, error) {
+		func(searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			store.signalLockLost()
 			return 7, nil
@@ -874,13 +879,13 @@ func TestBuildIndex_RebuildWaiterDownloadsFreshSnapshot(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	type buildResult struct {
-		idx resource.ResourceIndex
+		idx searchmodel.ResourceIndex
 		err error
 	}
 	resultCh := make(chan buildResult, 1)
 	go func() {
 		idx, err := be.BuildIndex(ctx, ns, 10, "rebuild",
-			func(resource.ResourceIndex) (int64, error) {
+			func(searchmodel.ResourceIndex) (int64, error) {
 				builderCalled.Add(1)
 				return 1, nil
 			},
@@ -926,13 +931,13 @@ func TestBuildIndex_RebuildWaiterRecordsDownloadedAfterWait(t *testing.T) {
 	defer cancel()
 
 	type buildResult struct {
-		idx resource.ResourceIndex
+		idx searchmodel.ResourceIndex
 		err error
 	}
 	resultCh := make(chan buildResult, 1)
 	go func() {
 		idx, err := be.BuildIndex(ctx, ns, 10, "rebuild",
-			func(resource.ResourceIndex) (int64, error) { return 1, nil },
+			func(searchmodel.ResourceIndex) (int64, error) { return 1, nil },
 			nil, true /*rebuild*/, time.Time{}, time.Hour /*maxFreshSnapshotAge*/)
 		resultCh <- buildResult{idx: idx, err: err}
 	}()
@@ -968,7 +973,7 @@ func TestBuildIndex_RebuildSkipsFastPathWhenDisabled(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	idx, err := be.BuildIndex(context.Background(), ns, 10, "rebuild",
-		func(resource.ResourceIndex) (int64, error) {
+		func(searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
@@ -991,7 +996,7 @@ func TestBuildIndex_SkipsDownloadBelowMinDocCount(t *testing.T) {
 	})
 
 	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 1, "test",
-		func(resource.ResourceIndex) (int64, error) { return 1, nil },
+		func(searchmodel.ResourceIndex) (int64, error) { return 1, nil },
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	require.NotNil(t, idx)
@@ -1102,10 +1107,10 @@ func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), count)
 
-	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	err = idx.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 		{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Name:  "dash-2",
 				Title: "dash-2",
 				Key: &resourcepb.ResourceKey{
@@ -1117,7 +1122,7 @@ func TestBulkIndexTracksSnapshotMutations(t *testing.T) {
 			},
 		},
 		{
-			Action: resource.ActionDelete,
+			Action: searchmodel.ActionDelete,
 			Key: &resourcepb.ResourceKey{
 				Name:      "dash-1",
 				Namespace: key.Namespace,
@@ -1172,11 +1177,11 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 			beA.Stop()
 		}
 	})
-	idxA, err := beA.BuildIndex(ctx, key, 10, "startup", func(index resource.ResourceIndex) (int64, error) {
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	idxA, err := beA.BuildIndex(ctx, key, 10, "startup", func(index searchmodel.ResourceIndex) (int64, error) {
+		require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					RV:    1,
 					Name:  "dash-prod",
 					Title: "Production Overview",
@@ -1189,8 +1194,8 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 				},
 			},
 			{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					RV:    2,
 					Name:  "dash-api",
 					Title: "API Latency",
@@ -1221,7 +1226,7 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 	beB, metricsB := newConfiguredSnapshotBackend(t, store)
 	t.Cleanup(beB.Stop)
 	var builderCalled atomic.Bool
-	idxB, err := beB.BuildIndex(ctx, key, 10, "startup", func(resource.ResourceIndex) (int64, error) {
+	idxB, err := beB.BuildIndex(ctx, key, 10, "startup", func(searchmodel.ResourceIndex) (int64, error) {
 		builderCalled.Store(true)
 		return 0, fmt.Errorf("builder should not be called when a remote snapshot is available")
 	}, nil, false, time.Time{}, 0)
@@ -1245,14 +1250,14 @@ func TestBleveSnapshotLifecycleWithSharedStore(t *testing.T) {
 	require.Equal(t, "dash-prod", res.Results.Rows[0].Key.Name)
 }
 
-func newConfiguredSnapshotBackend(t *testing.T, store RemoteIndexStore) (*bleveBackend, *resource.BleveIndexMetrics) {
+func newConfiguredSnapshotBackend(t *testing.T, store RemoteIndexStore) (*bleveBackend, *searchmetrics.BleveMetrics) {
 	t.Helper()
 	cfg := snapshotOptionsTestCfg(t)
 	cfg.EnableSearch = true
 	cfg.BuildVersion = "11.5.0"
 	cfg.IndexSnapshotEnabled = true
 
-	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	metrics := searchmetrics.ProvideBleveMetrics(prometheus.NewRegistry(), nil)
 	opts, err := NewSearchOptions(cfg, nil, metrics, nil, store)
 	require.NoError(t, err)
 	be, ok := opts.Backend.(*bleveBackend)
@@ -1281,7 +1286,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	expectedUploadedAt := ulid.Time(uploadedKey.Time())
 
 	// Fresh backend pointing at the same store should download instead of building.
-	metrics := resource.ProvideIndexMetrics(prometheus.NewRegistry())
+	metrics := searchmetrics.ProvideBleveMetrics(prometheus.NewRegistry(), nil)
 	be, err := NewBleveBackend(BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: 5,
@@ -1296,7 +1301,7 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 	t.Cleanup(be.Stop)
 
 	var builderCalled atomic.Bool
-	idx, err := be.BuildIndex(ctx, key, 10, "startup", func(resource.ResourceIndex) (int64, error) {
+	idx, err := be.BuildIndex(ctx, key, 10, "startup", func(searchmodel.ResourceIndex) (int64, error) {
 		builderCalled.Store(true)
 		return 0, nil
 	}, nil, false, time.Time{}, 0)
@@ -1329,11 +1334,11 @@ func TestIntegrationBleveSnapshotRoundTrip(t *testing.T) {
 // error-path cases; when set, the probe is expected to return an error.
 type probeCase struct {
 	name    string
-	setup   func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID
+	setup   func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID
 	wantErr string
 }
 
-type probeFn func(ctx context.Context, s RemoteIndexStore, ns resource.NamespacedResource, notOlderThan time.Time, v string, f string, logger log.Logger) (ulid.ULID, *IndexMeta, error)
+type probeFn func(ctx context.Context, s RemoteIndexStore, ns resourcecontract.NamespacedResource, notOlderThan time.Time, v string, f string, logger log.Logger) (ulid.ULID, *IndexMeta, error)
 
 func runProbeCases(t *testing.T, probe probeFn, cases []probeCase) {
 	t.Helper()
@@ -1367,7 +1372,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 	runProbeCases(t, findFreshSnapshotByUploadTime, []probeCase{
 		{
 			name: "homogeneous cluster: newest same-version returned",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				seedSnapshot(t, t.Context(), s.inner, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				k := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, k, &IndexMeta{BuildVersion: "11.5.0"})
@@ -1376,7 +1381,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0"})
 				match := mk(-30 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
@@ -1386,7 +1391,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "uses same index format",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				format := testIndexFormat(t)
 				match := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: format})
@@ -1395,7 +1400,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "uses older index format",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				match := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, -1)})
 				return match
@@ -1403,7 +1408,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "skips newer index format",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				format := testIndexFormat(t)
 				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", IndexFormat: testIndexFormatDelta(t, 1)})
 				match := mk(-10 * time.Minute)
@@ -1413,7 +1418,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "uses legacy empty index format",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				match := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0"})
 				return match
@@ -1421,11 +1426,11 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name:  "no candidates",
-			setup: func(*testing.T, *hookableStore, resource.NamespacedResource) ulid.ULID { return ulid.ULID{} },
+			setup: func(*testing.T, *hookableStore, resourcecontract.NamespacedResource) ulid.ULID { return ulid.ULID{} },
 		},
 		{
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, nf, &IndexMeta{BuildVersion: "11.5.0"})
 				s.setReadManifestErr(nf, ErrSnapshotNotFound)
@@ -1439,7 +1444,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "surfaces list error",
-			setup: func(t *testing.T, s *hookableStore, _ resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, _ resourcecontract.NamespacedResource) ulid.ULID {
 				s.setListKeysErr(errors.New("boom"))
 				return ulid.ULID{}
 			},
@@ -1447,7 +1452,7 @@ func TestFindFreshSnapshotByUploadTime(t *testing.T) {
 		},
 		{
 			name: "surfaces unexpected GET error",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, bad, &IndexMeta{BuildVersion: "11.5.0"})
 				s.setReadManifestErr(bad, errors.New("transport boom"))
@@ -1465,7 +1470,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 	runProbeCases(t, findFreshSnapshotByBuildStart, []probeCase{
 		{
 			name: "homogeneous cluster: newest same-version returned",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				seedSnapshot(t, t.Context(), s.inner, ns, mk(-30*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
 				k := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, k, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
@@ -1474,7 +1479,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		},
 		{
 			name: "mixed version: walks past newer wrong-version",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.4.0", BuildTime: now.Add(-10 * time.Minute)})
 				match := mk(-30 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, match, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-35 * time.Minute)})
@@ -1487,7 +1492,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 			// recent ULID + matching version + old BuildTime (a periodic
 			// re-upload of a long-lived index) must be rejected.
 			name: "skips recent re-upload of old build",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-3 * time.Hour)})
 				return ulid.ULID{}
 			},
@@ -1495,18 +1500,18 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		{
 			// Zero-value BuildTime carries no freshness signal.
 			name: "skips zero BuildTime",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				seedSnapshot(t, t.Context(), s.inner, ns, mk(-5*time.Minute), &IndexMeta{BuildVersion: "11.5.0"})
 				return ulid.ULID{}
 			},
 		},
 		{
 			name:  "no candidates",
-			setup: func(*testing.T, *hookableStore, resource.NamespacedResource) ulid.ULID { return ulid.ULID{} },
+			setup: func(*testing.T, *hookableStore, resourcecontract.NamespacedResource) ulid.ULID { return ulid.ULID{} },
 		},
 		{
 			name: "tolerates ErrSnapshotNotFound and ErrInvalidManifest mid-walk",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				nf := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, nf, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				s.setReadManifestErr(nf, ErrSnapshotNotFound)
@@ -1520,7 +1525,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		},
 		{
 			name: "surfaces list error",
-			setup: func(t *testing.T, s *hookableStore, _ resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, _ resourcecontract.NamespacedResource) ulid.ULID {
 				s.setListKeysErr(errors.New("boom"))
 				return ulid.ULID{}
 			},
@@ -1528,7 +1533,7 @@ func TestFindFreshSnapshotByBuildStart(t *testing.T) {
 		},
 		{
 			name: "surfaces unexpected GET error",
-			setup: func(t *testing.T, s *hookableStore, ns resource.NamespacedResource) ulid.ULID {
+			setup: func(t *testing.T, s *hookableStore, ns resourcecontract.NamespacedResource) ulid.ULID {
 				bad := mk(-5 * time.Minute)
 				seedSnapshot(t, t.Context(), s.inner, ns, bad, &IndexMeta{BuildVersion: "11.5.0", BuildTime: now.Add(-10 * time.Minute)})
 				s.setReadManifestErr(bad, errors.New("transport boom"))
@@ -1565,9 +1570,9 @@ func withColdStartTimings(t *testing.T, poll, total time.Duration) {
 // coldStartTest bundles common setup for coordinateColdStartBuild tests.
 type coldStartTest struct {
 	be          *bleveBackend
-	metrics     *resource.BleveIndexMetrics
+	metrics     *searchmetrics.BleveMetrics
 	store       *hookableStore
-	ns          resource.NamespacedResource
+	ns          resourcecontract.NamespacedResource
 	resourceDir string
 }
 
@@ -1750,7 +1755,7 @@ func TestColdStart_ContextCancelInWaitLoop(t *testing.T) {
 // rebuild=false, maxFreshSnapshotAge=0 (rebuild-path knob doesn't affect
 // cold-start).
 func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra func()) (
-	*resource.BleveIndexMetrics, *atomic.Int32, resource.ResourceIndex, error,
+	*searchmetrics.BleveMetrics, *atomic.Int32, searchmodel.ResourceIndex, error,
 ) {
 	t.Helper()
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{
@@ -1760,7 +1765,7 @@ func runBuildIndexColdStart(t *testing.T, store RemoteIndexStore, builderExtra f
 	})
 	builderCalled := &atomic.Int32{}
 	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, "startup",
-		func(resource.ResourceIndex) (int64, error) {
+		func(searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			if builderExtra != nil {
 				builderExtra()
@@ -1855,7 +1860,7 @@ func TestBuildIndex_ColdStartRunsWhenMaxIndexAgeZero(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	idx, err := be.BuildIndex(context.Background(), newTestNsResource(), 10, "startup",
-		func(resource.ResourceIndex) (int64, error) {
+		func(searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
 		},
@@ -1892,7 +1897,7 @@ func TestBuildIndex_ColdStartContextCancelPropagates(t *testing.T) {
 
 	builderCalled := atomic.Int32{}
 	idx, err := be.BuildIndex(ctx, newTestNsResource(), 10, "startup",
-		func(resource.ResourceIndex) (int64, error) {
+		func(searchmodel.ResourceIndex) (int64, error) {
 			builderCalled.Add(1)
 			return 1, nil
 		},

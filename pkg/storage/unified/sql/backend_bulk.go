@@ -1,6 +1,8 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"database/sql"
 	"errors"
@@ -1015,7 +1017,7 @@ func (w *bulkWroker) collectStats(key *resourcepb.ResourceKey, summary *resource
 		}()
 	}
 	if rows.Next() {
-		row := resource.ResourceStats{}
+		row := resourcecontract.ResourceStats{}
 		return rows.Scan(&row.Namespace, &row.Group, &row.Resource,
 			&summary.Count,
 			&summary.ResourceVersion)

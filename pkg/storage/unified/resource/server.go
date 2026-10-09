@@ -13,7 +13,6 @@ import (
 	"time"
 	"uuid"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -37,10 +36,6 @@ import (
 	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/usagestats"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
-	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
-	"github.com/grafana/grafana/pkg/storage/unified/search/rerank"
-	"github.com/grafana/grafana/pkg/storage/unified/search/vector"
 	"github.com/grafana/grafana/pkg/util/scheduler"
 )
 
@@ -99,9 +94,10 @@ const filteredBookmarkDelay = time.Minute
 // several times larger than intended.
 const maxKeysPageSize = 10000
 
-// ResourceServer implements all gRPC services
+// ResourceServer implements the authoritative storage services.
 type ResourceServer interface {
-	SearchServer
+	Init(ctx context.Context) error
+	StatsGetter
 	resourcepb.ResourceStoreServer
 	resourcepb.ResourceStatsServer
 	resourcepb.BulkStoreServer
@@ -112,14 +108,10 @@ type ResourceServer interface {
 	ResourceServerStopper
 }
 
-// SearchServer implements the search-related gRPC services
-type SearchServer interface {
-	resourcepb.ResourceIndexServer
-	resourcepb.ManagedObjectIndexServer
-	// Deprecated: clients should use grpc.health.v1.Health with modules.SearchServer service name instead
-	resourcepb.DiagnosticsServer //nolint:staticcheck
-	ResourceServerStopper
-	Init(ctx context.Context) error
+// IndexQueries is the search dependency used by filtered lists and quotas.
+type IndexQueries interface {
+	StatsGetter
+	Search(context.Context, *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error)
 }
 
 type ResourceServerStopper interface {
@@ -152,56 +144,6 @@ type KeyListBackend interface {
 	FetchValues(context.Context, []BackendListKey) (iter.Seq2[*BackendReadResponse, error], error)
 }
 
-type ListIterator interface {
-	// Next advances iterator and returns true if there is next value is available from the iterator.
-	// Error() should be checked after every call of Next(), even when Next() returns true.
-	Next() bool // sql.Rows
-
-	// Error returns iterator error, if any. This should be checked after any Next() call.
-	// (Some iterator implementations return true from Next, but also set the error at the same time).
-	Error() error
-
-	// ContinueToken returns the token that can be used to start iterating *after* this item
-	ContinueToken() string
-
-	// ResourceVersion of the current item
-	ResourceVersion() int64
-
-	// Namespace of the current item
-	// Used for fast(er) authz filtering
-	Namespace() string
-
-	// Name of the current item
-	// Used for fast(er) authz filtering
-	Name() string
-
-	// Folder of the current item
-	// Used for fast(er) authz filtering
-	Folder() string
-
-	// Value for the current item
-	Value() []byte
-}
-
-type BackendReadResponse struct {
-	// Metadata
-	Key    *resourcepb.ResourceKey
-	Folder string
-
-	// GUID that is used internally
-	GUID string
-	// The new resource version
-	ResourceVersion int64
-	// The properties
-	Value []byte
-	// Error details
-	Error *resourcepb.ErrorResult
-}
-
-// ErrBatchReadUnsupported signals the caller to fall back to per-resource reads.
-// On the base interface, not a type assertion, so a wrapped backend keeps advertising it.
-var ErrBatchReadUnsupported = errors.New("batch read not supported by this backend")
-
 type deletedBatchReadSupport interface {
 	SupportsDeletedBatchReads() bool
 }
@@ -209,11 +151,6 @@ type deletedBatchReadSupport interface {
 func supportsDeletedBatchReads(backend StorageBackend) bool {
 	support, ok := backend.(deletedBatchReadSupport)
 	return ok && support.SupportsDeletedBatchReads()
-}
-
-type ResourceLastImportTime struct {
-	NamespacedResource
-	LastImportTime time.Time
 }
 
 // BatchReadRequest is one object of a batch read.
@@ -308,37 +245,6 @@ type StorageBackend interface {
 	ListResourceLastImportTimes(ctx context.Context) (map[NamespacedResource]time.Time, error)
 }
 
-type ModifiedResource struct {
-	Action          resourcepb.WatchEvent_Type
-	Key             resourcepb.ResourceKey
-	Value           []byte
-	ResourceVersion int64
-}
-
-type ResourceStats struct {
-	NamespacedResource
-
-	Count           int64
-	ResourceVersion int64
-}
-
-// This interface is not exposed to end users directly
-// Access to this interface is already gated by access control
-type BlobSupport interface {
-	// Indicates if storage layer supports signed urls
-	SupportsSignedURLs() bool
-
-	// Get the raw blob bytes and metadata -- limited to protobuf message size
-	// For larger payloads, we should use presigned URLs to upload from the client
-	PutResourceBlob(context.Context, *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error)
-
-	// Get blob contents.  When possible, this will return a signed URL
-	// For large payloads, signed URLs are required to avoid protobuf message size limits
-	GetResourceBlob(ctx context.Context, resource *resourcepb.ResourceKey, info *utils.BlobInfo, mustProxy bool) (*resourcepb.GetBlobResponse, error)
-
-	// TODO? List+Delete?  This is for admin access
-}
-
 type QOSEnqueuer interface {
 	Enqueue(ctx context.Context, tenantID string, runnable func()) error
 }
@@ -358,103 +264,6 @@ type BlobConfig struct {
 	Backend BlobSupport
 }
 
-// Passed as input to the constructor
-type SearchOptions struct {
-	// The raw index backend (eg, bleve, frames, parquet, etc)
-	Backend SearchBackend
-
-	// The supported resource types
-	Resources DocumentBuilderSupplier
-
-	// How many threads should build indexes
-	InitWorkerThreads int
-
-	// Skip building index on startup for small indexes
-	InitMinCount int
-
-	// How often to rebuild dashboard index. 0 disables periodic rebuilds.
-	DashboardIndexMaxAge time.Duration
-
-	// Maximum age of file-based index that can be reused. Ignored if zero.
-	MaxIndexAge time.Duration
-
-	// Minimum build version for reusing file-based indexes. Ignored if nil.
-	MinBuildVersion *semver.Version
-
-	// Running Grafana build version. Used to detect if index was built by a newer version.
-	BuildVersion *semver.Version
-
-	// Number of workers to use for index rebuilds.
-	IndexRebuildWorkers int
-
-	// Minimum time between index updates. This is also used as a delay after a successful write operation, to guarantee
-	// that subsequent search will observe the effect of the writing.
-	IndexMinUpdateInterval time.Duration
-
-	// TTL for the dedup cache used in ListModifiedSince updates. 0 disables the cache.
-	IndexModificationCacheTTL time.Duration
-
-	// Percentage of search requests that should fail immediately (0-100). 0 = disabled, 100 = all requests fail.
-	InjectFailuresPercent int
-
-	// PostRankAuthzEnabled mirrors the index backend's post-rank authorization
-	// setting. It selects the index features this server requires, so an index
-	// that predates them is rebuilt before that path serves a query.
-	PostRankAuthzEnabled bool
-
-	// GlobalIndexEnabled builds one index per namespace covering several resource
-	// types, alongside the per-resource indexes.
-	GlobalIndexEnabled bool
-
-	// SearchFields holds the per-kind search-field wiring shared with the index
-	// backend. The search server reads the selectable fields and the definition
-	// hash from it and triggers a rebuild when either differs from the values
-	// stored in an index's IndexBuildInfo. May be nil.
-	SearchFields *SearchFieldsRegistry
-
-	// EmbeddingConfig is shared with the manifest watcher; consumers must read
-	// it after the initial poll and retain the registry to observe later reloads.
-	EmbeddingConfig *EmbeddingConfigRegistry
-
-	// EmbeddingBuilders is evaluated after the initial manifest load and again
-	// for queries, so a catalog row alone cannot enroll an internal collection.
-	EmbeddingBuilders embed.BuilderProvider
-
-	// Index snapshot settings — enable downloading pre-built search indexes from the storage KV on startup.
-	// IndexSnapshotEnabled gates the entire snapshot feature.
-	IndexSnapshotEnabled bool
-	// IndexSnapshotThreshold is the minimum document count to use remote snapshots (must be >= IndexFileThreshold).
-	IndexSnapshotThreshold int
-	// IndexSnapshotMaxAge is the maximum age of a snapshot before it is deleted during cleanup.
-	IndexSnapshotMaxAge time.Duration
-	// IndexSnapshotMinDocChanges is the minimum number of document changes since the last
-	// snapshot before a new upload is triggered.
-	IndexSnapshotMinDocChanges int
-	// IndexSnapshotUploadInterval is the minimum time between consecutive snapshot uploads.
-	IndexSnapshotUploadInterval time.Duration
-	// IndexSnapshotLockTTL is the TTL for the distributed lock used to coordinate uploads/cleanup.
-	IndexSnapshotLockTTL time.Duration
-	// IndexSnapshotCleanupInterval is how often snapshot cleanup runs.
-	IndexSnapshotCleanupInterval time.Duration
-	// IndexSnapshotCleanupGracePeriod is the time a newly uploaded snapshot must
-	// have existed before its predecessor in the same Grafana-version group is
-	// considered eligible for cleanup.
-	IndexSnapshotCleanupGracePeriod time.Duration
-
-	// VectorSearch query-embedding cache. nil disables the cache path.
-	QueryCache             vector.QueryEmbeddingCache
-	QueryCacheMaxPerTenant int
-
-	// VectorSearch per-tenant rate limiter. nil disables rate limiting.
-	RateLimiter        vector.RateLimiter
-	RateLimitPerTenant int
-	RateLimitWindow    time.Duration
-
-	// Vector API collection allowlists: "group/resource" entries; empty allows nothing.
-	AllowedInternalCollections []string
-	AllowedExternalCollections []string
-}
-
 type ResourceServerOptions struct {
 	// Real storage backend
 	Backend StorageBackend
@@ -466,8 +275,11 @@ type ResourceServerOptions struct {
 	// The blob configuration
 	Blob BlobConfig
 
-	// Search options
-	Search SearchOptions
+	SearchFields *SearchFieldsRegistry
+	// Delay successful writes until the local index can observe them.
+	SuccessfulWriteDelay time.Duration
+
+	IndexQueries IndexQueries
 
 	// Search client for the storage api
 	SearchClient resourcepb.ResourceIndexClient
@@ -500,10 +312,6 @@ type ResourceServerOptions struct {
 	// GRPCErrorResultToStatus enables conversion of embedded ErrorResults on in-process calls.
 	GRPCErrorResultToStatus bool
 
-	IndexMetrics *BleveIndexMetrics
-
-	VectorMetrics *VectorMetrics
-
 	// MaxPageSizeBytes is the maximum size of a page in bytes.
 	MaxPageSizeBytes int
 
@@ -514,8 +322,6 @@ type ResourceServerOptions struct {
 	// QOSQueue is the quality of service queue used to enqueue
 	QOSQueue  QOSEnqueuer
 	QOSConfig QueueConfig
-
-	OwnsIndexFn func(key NamespacedResource) (bool, error)
 
 	QuotasConfig QuotasConfig
 
@@ -535,28 +341,6 @@ type ResourceServerOptions struct {
 
 	// WatchExpiry is shared with notification producers. Nil creates a local expiry.
 	WatchExpiry WatchExpiry
-
-	// VectorBackend is the optional pgvector-backed store for semantic search.
-	// nil when the [unified_storage] vector_backend flag is off. When present,
-	// the resource and search servers hold a reference for use by future
-	// write and query paths.
-	VectorBackend vector.VectorBackend
-
-	// Embedder is the optional text-to-vector embedder used by the
-	// VectorSearch RPC. nil when no [vector_embedder] provider is configured;
-	// the RPC then returns Unimplemented.
-	Embedder *embedder.Embedder
-
-	// Reranker is the optional cross-encoder used by the HybridSearch RPC's
-	// rerank stage. nil when no [vector_reranker] provider is configured;
-	// HybridSearch then returns RRF ordering and min_relevance is a no-op.
-	Reranker *rerank.Reranker
-
-	// VectorReconciler, when non-nil, is launched after Init; the server
-	// attaches its own broadcaster to it before starting Run so the
-	// reconciler's watch path lights up. The reconciler owns the
-	// backfiller and runs it. nil = reconciler feature off.
-	VectorReconciler BroadcasterConsumer
 
 	// UsageStatsEnabled turns on the usage stats ingestion path (RecordEvent /
 	// GetResourceDailyStats). It requires a KV-backed StorageBackend so the
@@ -588,50 +372,10 @@ func (opts ResourceServerOptions) bulkBatchOptions() BulkBatchOptions {
 	return *opts.BulkBatchOptions
 }
 
-// NewUninitializedSearchServer creates a standalone search server without calling Init.
-// The caller must call Init on the returned server before it handles requests.
-// This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
-func NewUninitializedSearchServer(opts ResourceServerOptions) (SearchServer, error) {
-	if opts.Backend == nil {
-		return nil, fmt.Errorf("missing backend implementation")
-	}
-	if opts.Diagnostics == nil {
-		opts.Diagnostics = &noopService{}
-	}
-
-	// Initialize the blob storage
-	blobstore, err := initializeBlobStorage(opts)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create the search server using the search.go factory
-	searchServer, err := newSearchServer(opts.Search, opts.Backend, opts.VectorBackend, opts.Embedder, opts.Reranker, opts.AccessClient, blobstore, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
-	if err != nil || searchServer == nil {
-		return nil, fmt.Errorf("search server could not be created: %w", err)
-	}
-	searchServer.backendDiagnostics = opts.Diagnostics
-
-	return searchServer, nil
-}
-
-// NewSearchServer creates a standalone search server and initializes it immediately.
-func NewSearchServer(opts ResourceServerOptions) (SearchServer, error) {
-	searchServer, err := NewUninitializedSearchServer(opts)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := searchServer.Init(context.Background()); err != nil {
-		return nil, fmt.Errorf("failed to initialize search server: %w", err)
-	}
-
-	return searchServer, nil
-}
-
 // NewUninitializedResourceServer creates a resource server without calling Init.
 // The caller must call Init on the returned server before it handles requests.
 // This is useful when initialization must be deferred (e.g., until a ring reaches Running state).
+// Local search is initialized and stopped by the composition owner.
 func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error) {
 	if opts.Backend == nil {
 		return nil, fmt.Errorf("missing Backend implementation")
@@ -683,7 +427,7 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	}
 
 	// Initialize the blob storage
-	blobstore, err := initializeBlobStorage(opts)
+	blobstore, err := InitializeBlobStorage(opts)
 	if err != nil {
 		return nil, err
 	}
@@ -694,7 +438,6 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 	s := &server{
 		log:                            logger,
 		backend:                        opts.Backend,
-		vectorBackend:                  opts.VectorBackend,
 		bulkBatchOptions:               opts.bulkBatchOptions(),
 		blob:                           blobstore,
 		diagnostics:                    opts.Diagnostics,
@@ -713,28 +456,19 @@ func NewUninitializedResourceServer(opts ResourceServerOptions) (*server, error)
 		queueConfig:                    opts.QOSConfig,
 		overridesService:               opts.OverridesService,
 		storageEnabled:                 true,
+		search:                         opts.IndexQueries,
 		searchClient:                   opts.SearchClient,
 		quotasConfig:                   opts.QuotasConfig,
 		searchBackedListResources:      opts.SearchBackedListConfig,
-		manifestSearchFields:           opts.Search.SearchFields,
-		artificialSuccessfulWriteDelay: opts.Search.IndexMinUpdateInterval,
+		manifestSearchFields:           opts.SearchFields,
+		artificialSuccessfulWriteDelay: opts.SuccessfulWriteDelay,
 		bookmarkFrequency:              opts.BookmarkFrequency,
 		seededWatchesEnabled:           opts.SeededWatchesEnabled,
 		natsWatchMaxAge:                opts.NatsWatchMaxAge,
 		watchExpiry:                    opts.WatchExpiry,
-		vectorWriteReconciler:          opts.VectorReconciler,
-		embeddingBuilders:              opts.Search.EmbeddingBuilders,
 	}
 	if s.watchExpiry == nil {
 		s.watchExpiry = NewWatchExpiry()
-	}
-
-	if opts.Search.Resources != nil {
-		var err error
-		s.search, err = newSearchServer(opts.Search, s.backend, opts.VectorBackend, opts.Embedder, opts.Reranker, s.access, s.blob, opts.IndexMetrics, opts.VectorMetrics, opts.OwnsIndexFn)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// Access to search is required when checking quotas.
@@ -778,8 +512,8 @@ func NewResourceServer(opts ResourceServerOptions) (*server, error) {
 	return s, nil
 }
 
-// initializeBlobStorage initializes blob storage from the provided options.
-func initializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
+// InitializeBlobStorage lets storage and search share one blob backend and its metrics.
+func InitializeBlobStorage(opts ResourceServerOptions) (BlobSupport, error) {
 	if opts.Blob.Backend != nil {
 		return opts.Blob.Backend, nil
 	}
@@ -806,11 +540,10 @@ var _ ResourceServer = (*server)(nil)
 type server struct {
 	log                       log.Logger
 	backend                   StorageBackend
-	vectorBackend             vector.VectorBackend
 	bulkBatchOptions          BulkBatchOptions
 	blob                      BlobSupport
 	secure                    secrets.InlineSecureValueSupport
-	search                    *searchServer
+	search                    IndexQueries
 	searchClient              resourcepb.ResourceIndexClient
 	diagnostics               resourcepb.DiagnosticsServer //nolint:staticcheck
 	access                    claims.AccessClient
@@ -853,7 +586,6 @@ type server struct {
 
 	// This value is used by storage server to artificially delay returning response after successful
 	// write operations to make sure that subsequent search by the same client will return up-to-date results.
-	// Set from SearchOptions.IndexMinUpdateInterval.
 	artificialSuccessfulWriteDelay time.Duration
 	storageEnabled                 bool
 
@@ -862,12 +594,6 @@ type server struct {
 
 	natsWatchMaxAge time.Duration
 	watchExpiry     WatchExpiry
-
-	// Vector reconciler (which owns the backfiller). Started in Init,
-	// joined in Stop via indexersWG.
-	vectorWriteReconciler BroadcasterConsumer
-	embeddingBuilders     embed.BuilderProvider
-	indexersWG            sync.WaitGroup
 
 	// statsIngester buffers and flushes usage stats events. nil when the
 	// usage stats feature is off or the backend is not KV-backed.
@@ -882,26 +608,9 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.overridesService.init(ctx)
 		}
 
-		// initialize the search index
-		if s.initErr == nil && s.search != nil {
-			s.initErr = s.search.init(ctx)
-		} else if s.initErr == nil && s.embeddingBuilders != nil {
-			// Storage-only servers also validate after the initial manifest poll.
-			if err := s.embeddingBuilders.Validate(); err != nil {
-				s.initErr = fmt.Errorf("embedding enrollment: %w", err)
-			}
-		}
-
 		// Start watching for changes
 		if s.initErr == nil && s.storageEnabled {
 			s.initErr = s.initWatcher()
-		}
-
-		// Launch async vector indexers (backfiller + reconciler) once
-		// the broadcaster is up. They run for the server's lifetime
-		// and Stop() joins them via indexersWG.
-		if s.initErr == nil {
-			s.startVectorIndexers()
 		}
 
 		if s.initErr == nil && s.statsIngester != nil {
@@ -932,21 +641,8 @@ func (s *server) runNatsWatchExpiry() {
 	}
 }
 
-// startVectorIndexers launches the vector reconciler (which owns and runs
-// the backfiller). Optional: nil = feature off. The reconciler gets the
-// server's broadcaster via UseBroadcaster before Run so its watch path
-// lights up.
-func (s *server) startVectorIndexers() {
-	if s.vectorWriteReconciler != nil {
-		if s.broadcaster != nil {
-			s.vectorWriteReconciler.UseBroadcaster(s.broadcaster)
-		}
-		s.indexersWG.Go(func() {
-			if err := s.vectorWriteReconciler.Run(s.ctx); err != nil && !errors.Is(err, context.Canceled) {
-				s.log.Error("vector reconciler stopped", "err", err)
-			}
-		})
-	}
+func (s *server) WriteEvents() Broadcaster[*WrittenEvent] {
+	return s.broadcaster
 }
 
 // trackWrite atomically checks the stopping flag and increments the in-flight
@@ -962,7 +658,8 @@ func (s *server) trackWrite() bool {
 	return true
 }
 
-func (s *server) Stop(ctx context.Context) error {
+// BeginShutdown drains writes before composition stops search and closes the backend.
+func (s *server) BeginShutdown(ctx context.Context) {
 	s.initErr = fmt.Errorf("service is stopping")
 
 	// Signal that no new write operations should be accepted.
@@ -995,30 +692,16 @@ func (s *server) Stop(ctx context.Context) error {
 		s.log.Warn("timed out waiting for in-flight write operations to complete")
 	}
 
-	// Wait for async vector indexers (backfiller, reconciler) to wind
-	// down. They observe s.ctx, so the cancel above unblocks them.
-	indexersDone := make(chan struct{})
-	go func() {
-		s.indexersWG.Wait()
-		close(indexersDone)
-	}()
-	select {
-	case <-indexersDone:
-		s.log.Debug("vector indexers stopped")
-	case <-ctx.Done():
-		s.log.Warn("timed out waiting for vector indexers to stop")
-	}
+}
 
+func (s *server) Stop(ctx context.Context) error {
+	s.BeginShutdown(ctx)
 	var stopFailed bool
 
 	if s.statsIngester != nil {
 		if err := services.StopAndAwaitTerminated(ctx, s.statsIngester); err != nil {
 			s.log.Warn("usage stats ingester failed to stop cleanly", "error", err)
 		}
-	}
-
-	if s.search != nil {
-		s.search.stop()
 	}
 
 	if s.overridesService != nil {
@@ -2714,35 +2397,6 @@ func (s *server) Watch(req *resourcepb.WatchRequest, srv resourcepb.ResourceStor
 	}
 }
 
-func (s *server) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest) (*resourcepb.ResourceSearchResponse, error) {
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.Search(ctx, req)
-}
-
-// VectorSearch delegates to the embedded searchServer; the searchServer is
-// where the vector backend and embedder live and where the actual handler
-// is implemented.
-func (s *server) VectorSearch(ctx context.Context, req *resourcepb.VectorSearchRequest) (*resourcepb.VectorSearchResponse, error) {
-	if s.search == nil {
-		return nil, fmt.Errorf("vector search is not configured")
-	}
-	return s.search.VectorSearch(ctx, req)
-}
-
-// HybridSearch delegates to the embedded searchServer, where both the
-// search backend and the vector backend live.
-func (s *server) HybridSearch(ctx context.Context, req *resourcepb.HybridSearchRequest) (*resourcepb.HybridSearchResponse, error) {
-	// Unimplemented (not a bare error) so API-layer callers can map a
-	// search-disabled server to 501.
-	if s.search == nil {
-		return nil, status.Error(codes.Unimplemented, "search index not configured")
-	}
-	return s.search.HybridSearch(ctx, req)
-}
-
 // StatsGetter provides resource statistics (via search index or backend).
 type StatsGetter interface {
 	GetStats(ctx context.Context, req *resourcepb.ResourceStatsRequest) (*resourcepb.ResourceStatsResponse, error)
@@ -2790,34 +2444,6 @@ func requireUserNamespace(ctx context.Context, namespace string) *resourcepb.Err
 		}
 	}
 	return nil
-}
-
-// ListManagedObjects implements ManagedObjectIndexServer.
-// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
-// Do not route end-user traffic here directly.
-func (s *server) ListManagedObjects(ctx context.Context, req *resourcepb.ListManagedObjectsRequest) (*resourcepb.ListManagedObjectsResponse, error) {
-	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return &resourcepb.ListManagedObjectsResponse{Error: errRes}, nil
-	}
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.ListManagedObjects(ctx, req)
-}
-
-// CountManagedObjects implements ManagedObjectIndexServer.
-// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
-// Do not route end-user traffic here directly.
-func (s *server) CountManagedObjects(ctx context.Context, req *resourcepb.CountManagedObjectsRequest) (*resourcepb.CountManagedObjectsResponse, error) {
-	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return &resourcepb.CountManagedObjectsResponse{Error: errRes}, nil
-	}
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.CountManagedObjects(ctx, req)
 }
 
 // IsHealthy implements ResourceServer.
@@ -3104,20 +2730,6 @@ func (s *server) runInQueue(ctx context.Context, tenantID string, runnable func(
 	case <-queueCtx.Done():
 		return queueCtx.Err() // Timed out or canceled while waiting for execution.
 	}
-}
-
-// RebuildIndexes implements ResourceIndexServer.
-// NOTE: Internal RPC -- callers are responsible for authorizing the originating user request.
-// Do not route end-user traffic here directly.
-func (s *server) RebuildIndexes(ctx context.Context, req *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {
-	if errRes := requireUserNamespace(ctx, req.Namespace); errRes != nil {
-		return &resourcepb.RebuildIndexesResponse{Error: errRes}, nil
-	}
-	if s.search == nil {
-		return nil, fmt.Errorf("search index not configured")
-	}
-
-	return s.search.RebuildIndexes(ctx, req)
 }
 
 func (s *server) checkQuota(ctx context.Context, nsr NamespacedResource) error {

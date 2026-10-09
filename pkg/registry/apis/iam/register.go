@@ -1357,7 +1357,7 @@ func NewLocalStore(resourceInfo utils.ResourceInfo, scheme *runtime.Scheme, defa
 		vp = g.VersionPolicy()
 	}
 
-	client := resource.NewLocalResourceClient(server)
+	client := resource.NewLocalResourceClient(server, nil)
 	optsGetter := apistore.NewRESTOptionsGetterForClient(client, nil, defaultOpts.StorageConfig.Config, nil, vp)
 
 	store, err := grafanaregistry.NewRegistryStoreWithSelectableFields(scheme, resourceInfo, optsGetter, selectableFieldsOpts)

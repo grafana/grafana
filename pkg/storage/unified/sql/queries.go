@@ -1,6 +1,8 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"database/sql"
 	"embed"
 	"fmt"
@@ -245,8 +247,8 @@ func (r *sqlResourceHistoryPollRequest) Results() (*historyPollResponse, error) 
 }
 
 // sqlResourceReadRequest can be used to retrieve a row fromthe "resource" tables.
-func NewReadResponse() *resource.BackendReadResponse {
-	return &resource.BackendReadResponse{
+func NewReadResponse() *resourcecontract.BackendReadResponse {
+	return &resourcecontract.BackendReadResponse{
 		Key: &resourcepb.ResourceKey{},
 	}
 }
@@ -254,14 +256,14 @@ func NewReadResponse() *resource.BackendReadResponse {
 type sqlResourceReadRequest struct {
 	sqltemplate.SQLTemplate
 	Request  *resourcepb.ReadRequest
-	Response *resource.BackendReadResponse
+	Response *resourcecontract.BackendReadResponse
 }
 
 func (r *sqlResourceReadRequest) Validate() error {
 	return nil // TODO
 }
 
-func (r *sqlResourceReadRequest) Results() (*resource.BackendReadResponse, error) {
+func (r *sqlResourceReadRequest) Results() (*resourcecontract.BackendReadResponse, error) {
 	return r.Response, nil
 }
 
@@ -295,8 +297,8 @@ func NewHistoryReadResponse() *historyReadResponse {
 	}
 }
 
-func (r *historyReadResponse) ReadResponse() *resource.BackendReadResponse {
-	return &resource.BackendReadResponse{
+func (r *historyReadResponse) ReadResponse() *resourcecontract.BackendReadResponse {
+	return &resourcecontract.BackendReadResponse{
 		Key:             r.Key,
 		Folder:          r.Folder,
 		GUID:            r.GUID,

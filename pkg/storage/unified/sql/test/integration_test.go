@@ -1,6 +1,8 @@
 package test
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"strconv"
 	"sync"
@@ -8,15 +10,9 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/require"
-	"go.opentelemetry.io/otel"
-	"google.golang.org/grpc"
-
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -25,11 +21,18 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc"
+
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
+
 	sqldb "github.com/grafana/grafana/pkg/storage/unified/sql/db"
+
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
@@ -154,7 +157,7 @@ func TestIntegrationSQLStorageAndSQLKVCompatibilityTests(t *testing.T) {
 }
 
 // newTestResourceServerWithSearch creates a ResourceServer with search enabled for testing
-func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.ResourceServer {
+func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) resource.SearchServer {
 	t.Helper()
 
 	// Create test config
@@ -164,7 +167,7 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 	cfg.IndexPath = t.TempDir()   // Temporary directory for indexes
 
 	// Initialize document builders for playlists
-	docBuilders := &resource.TestDocumentBuilderSupplier{
+	docBuilders := &searchmodel.TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"playlist.grafana.app": "playlists",
 		},
@@ -175,15 +178,15 @@ func newTestResourceServerWithSearch(t *testing.T, backend resource.StorageBacke
 	require.NoError(t, err)
 
 	// Create ResourceServer with search enabled
-	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      backend,
-		AccessClient: types.FixedAccessClient(true), // Allow all operations for testing
-		Search:       searchOpts,
-		Reg:          nil,
+	server, err := sql.NewResourceServer(sql.ServerOptions{
+		Cfg:           cfg,
+		Backend:       backend,
+		AccessClient:  types.FixedAccessClient(true), // Allow all operations for testing
+		SearchOptions: searchOpts,
 	})
 	require.NoError(t, err)
 
-	return server
+	return server.SearchHandler()
 }
 
 func TestIntegrationSearchAndStorage(t *testing.T) {
@@ -216,7 +219,7 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 func TestIntegrationSearchBackedList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	newBleve := func(t *testing.T) resource.SearchBackend {
+	newBleve := func(t *testing.T) searchmodel.SearchBackend {
 		sb, err := search.NewBleveBackend(search.BleveOptions{FileThreshold: 0, Root: t.TempDir()}, nil)
 		require.NoError(t, err)
 		t.Cleanup(sb.Stop)
@@ -239,7 +242,7 @@ func TestIntegrationSearchBackedList(t *testing.T) {
 func TestIntegrationSearchBackedTrashList(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	newBleve := func(t *testing.T) resource.SearchBackend {
+	newBleve := func(t *testing.T) searchmodel.SearchBackend {
 		sb, err := search.NewBleveBackend(search.BleveOptions{
 			FileThreshold:         0,
 			Root:                  t.TempDir(),
@@ -383,7 +386,7 @@ func TestIntegrationSearchClientServer(t *testing.T) {
 	features := featuremgmt.WithFeatures()
 
 	// Initialize document builders for search
-	docBuilders := &resource.TestDocumentBuilderSupplier{
+	docBuilders := &searchmodel.TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"playlist.grafana.app": "playlists",
 		},

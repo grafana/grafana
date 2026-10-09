@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"strings"
 	"testing"
 	"time"
@@ -8,7 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -49,13 +52,13 @@ func TestUpdateIndexedKindsMetric(t *testing.T) {
 	require.Equal(t, 0, testutil.CollectAndCount(metrics.IndexedKinds))
 }
 
-func buildIndexedKindsTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedResource) {
+func buildIndexedKindsTestIndex(t *testing.T, be *bleveBackend, key resourcecontract.NamespacedResource) {
 	t.Helper()
 
-	doc := func(name string, deleted *bool) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(name string, deleted *bool) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key:       &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
 				Title:     name,
 				IsDeleted: deleted,
@@ -63,9 +66,9 @@ func buildIndexedKindsTestIndex(t *testing.T, be *bleveBackend, key resource.Nam
 		}
 	}
 
-	_, err := be.BuildIndex(t.Context(), key, 2, "test", func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
+	_, err := be.BuildIndex(t.Context(), key, 2, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{
+			Items: []*searchmodel.BulkIndexItem{
 				doc("live", nil),
 				doc("trashed", new(true)),
 			},

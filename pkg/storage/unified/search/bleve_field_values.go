@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"math"
@@ -11,7 +15,6 @@ import (
 
 	blevesearch "github.com/blevesearch/bleve/v2/search"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -19,7 +22,7 @@ import (
 // internal definitions used to encode each row value at the same index.
 type fieldValueResultSchema struct {
 	fields                 []*resourcepb.ResourceSearchField
-	definitions            []resource.SearchFieldDefinition
+	definitions            []searchmodel.SearchFieldDefinition
 	includeScore           bool
 	includeResourceVersion bool
 }
@@ -38,27 +41,27 @@ func selectedResultFormat(format resourcepb.ResourceSearchRequest_ResultFormat) 
 // fieldValueDefinitions keeps result types on the same manifest-backed source
 // as indexing. The map resolves explicit request names; the slice preserves the
 // curated field set returned when a request does not select fields.
-func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindResource string) (map[string]resource.SearchFieldDefinition, []resource.SearchFieldDefinition) {
-	fields := make(map[string]resource.SearchFieldDefinition)
+func fieldValueDefinitions(provider searchmodel.SearchFieldsProvider, group, kindResource string) (map[string]searchmodel.SearchFieldDefinition, []searchmodel.SearchFieldDefinition) {
+	fields := make(map[string]searchmodel.SearchFieldDefinition)
 	for _, field := range requestableFields(provider, group, kindResource) {
 		fields[field.key] = field.def
 	}
 
 	// These fields predate manifest search fields or are derived while building a
 	// result. Keep their response shape here until they have first-class definitions.
-	for _, field := range []resource.SearchFieldDefinition{
-		{Name: resource.SEARCH_FIELD_ID, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_GROUP_RESOURCE, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_NAMESPACE, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_RV, Type: resource.SearchFieldTypeInt64},
-		{Name: resource.SEARCH_FIELD_SCORE, Type: resource.SearchFieldTypeDouble},
-		{Name: resource.SEARCH_FIELD_EXPLAIN, Type: resource.SearchFieldTypeUnknown},
-		{Name: resource.SEARCH_FIELD_LEGACY_ID, Type: resource.SearchFieldTypeInt64},
-		{Name: resource.SEARCH_FIELD_MANAGER_KIND, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_MANAGER_ID, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_SOURCE_TIME, Type: resource.SearchFieldTypeInt64},
-		{Name: resource.SEARCH_FIELD_SOURCE_PATH, Type: resource.SearchFieldTypeString},
-		{Name: resource.SEARCH_FIELD_SOURCE_CHECKSUM, Type: resource.SearchFieldTypeString},
+	for _, field := range []searchmodel.SearchFieldDefinition{
+		{Name: searchmodel.SEARCH_FIELD_ID, Type: searchmodel.SearchFieldTypeString},
+		{Name: searchmodel.SEARCH_FIELD_GROUP_RESOURCE, Type: searchmodel.SearchFieldTypeString},
+		{Name: searchmodel.SEARCH_FIELD_NAMESPACE, Type: searchmodel.SearchFieldTypeString},
+		{Name: searchmodel.SEARCH_FIELD_RV, Type: searchmodel.SearchFieldTypeInt64},
+		{Name: searchmodel.SEARCH_FIELD_SCORE, Type: searchmodel.SearchFieldTypeDouble},
+		{Name: searchmodel.SEARCH_FIELD_EXPLAIN, Type: searchmodel.SearchFieldTypeUnknown},
+		{Name: searchmodel.SEARCH_FIELD_LEGACY_ID, Type: searchmodel.SearchFieldTypeInt64},
+		{Name: searchmodel.SEARCH_FIELD_MANAGER_KIND, Type: searchmodel.SearchFieldTypeString},
+		{Name: searchmodel.SEARCH_FIELD_MANAGER_ID, Type: searchmodel.SearchFieldTypeString},
+		{Name: searchmodel.SEARCH_FIELD_SOURCE_TIME, Type: searchmodel.SearchFieldTypeInt64},
+		{Name: searchmodel.SEARCH_FIELD_SOURCE_PATH, Type: searchmodel.SearchFieldTypeString},
+		{Name: searchmodel.SEARCH_FIELD_SOURCE_CHECKSUM, Type: searchmodel.SearchFieldTypeString},
 	} {
 		fields[field.Name] = field
 	}
@@ -70,7 +73,7 @@ func fieldValueDefinitions(provider resource.SearchFieldsProvider, group, kindRe
 	for _, field := range mappingFields {
 		allNames = append(allNames, field.Name)
 	}
-	allFields := make([]resource.SearchFieldDefinition, 0, len(allNames))
+	allFields := make([]searchmodel.SearchFieldDefinition, 0, len(allNames))
 	for _, name := range allNames {
 		allFields = append(allFields, fields[name])
 	}
@@ -110,17 +113,17 @@ func (b *bleveIndex) setSearchResults(
 // resolveFieldValueSchema validates the response fields before running the
 // query, so an expensive search cannot finish with an unusable result shape.
 func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValueResultSchema, error) {
-	definitions := make([]resource.SearchFieldDefinition, 0, len(selectFields))
-	if slices.Contains(selectFields, resource.SEARCH_FIELD_ALL_FIELDS) {
+	definitions := make([]searchmodel.SearchFieldDefinition, 0, len(selectFields))
+	if slices.Contains(selectFields, searchmodel.SEARCH_FIELD_ALL_FIELDS) {
 		definitions = append(definitions, b.searchFields.allResultFields...)
 	}
 	for _, name := range selectFields {
-		if name == resource.SEARCH_FIELD_ALL_FIELDS {
+		if name == searchmodel.SEARCH_FIELD_ALL_FIELDS {
 			continue
 		}
 		definition, ok := b.searchFields.resultFields[name]
-		if !ok && strings.HasPrefix(name, resource.SEARCH_FIELD_LABELS+".") {
-			definition = resource.SearchFieldDefinition{Name: name, Type: resource.SearchFieldTypeString}
+		if !ok && strings.HasPrefix(name, searchmodel.SEARCH_FIELD_LABELS+".") {
+			definition = searchmodel.SearchFieldDefinition{Name: name, Type: searchmodel.SearchFieldTypeString}
 			ok = true
 		}
 		if !ok {
@@ -131,7 +134,7 @@ func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValue
 
 	schema := &fieldValueResultSchema{
 		fields:      make([]*resourcepb.ResourceSearchField, 0, len(definitions)),
-		definitions: make([]resource.SearchFieldDefinition, 0, len(definitions)),
+		definitions: make([]searchmodel.SearchFieldDefinition, 0, len(definitions)),
 	}
 	seen := make(map[string]struct{}, len(definitions))
 	for _, definition := range definitions {
@@ -141,19 +144,19 @@ func (b *bleveIndex) resolveFieldValueSchema(selectFields []string) (*fieldValue
 		seen[definition.Name] = struct{}{}
 
 		switch definition.Name {
-		case resource.SEARCH_FIELD_SCORE:
+		case searchmodel.SEARCH_FIELD_SCORE:
 			schema.includeScore = true
 			continue
-		case resource.SEARCH_FIELD_EXPLAIN:
+		case searchmodel.SEARCH_FIELD_EXPLAIN:
 			// The new format does not expose engine-specific explanations.
 			continue
-		case resource.SEARCH_FIELD_ID,
-			resource.SEARCH_FIELD_NAMESPACE,
-			resource.SEARCH_FIELD_GROUP_RESOURCE,
-			resource.SEARCH_FIELD_NAME:
+		case searchmodel.SEARCH_FIELD_ID,
+			searchmodel.SEARCH_FIELD_NAMESPACE,
+			searchmodel.SEARCH_FIELD_GROUP_RESOURCE,
+			searchmodel.SEARCH_FIELD_NAME:
 			// ResourceSearchRow.key already carries the resource identity.
 			continue
-		case resource.SEARCH_FIELD_RV:
+		case searchmodel.SEARCH_FIELD_RV:
 			schema.includeResourceVersion = true
 			continue
 		}
@@ -184,7 +187,7 @@ func (b *bleveIndex) hitsToFieldValues(
 			SortFields: hitSortFields(match, sort),
 			Values:     make([]*resourcepb.ResourceSearchValue, 0, len(schema.definitions)),
 		}
-		if err := resource.ReadSearchID(row.Key, match.ID); err != nil {
+		if err := resourcecontract.ReadSearchID(row.Key, match.ID); err != nil {
 			return nil, nil, err
 		}
 		if schema.includeScore {
@@ -197,7 +200,7 @@ func (b *bleveIndex) hitsToFieldValues(
 		for fieldIndex, definition := range schema.definitions {
 			value, ok, err := searchHitFieldValue(match, definition.Name)
 			if err != nil {
-				if definition.Name != resource.SEARCH_FIELD_LEGACY_ID {
+				if definition.Name != searchmodel.SEARCH_FIELD_LEGACY_ID {
 					return nil, nil, fmt.Errorf("row %d field %q: %w", rowIndex, definition.Name, err)
 				}
 				// Table results ignore legacy ID conversion errors, so keep that compatibility.
@@ -217,17 +220,17 @@ func (b *bleveIndex) hitsToFieldValues(
 	return schema.fields, rows, nil
 }
 
-func fieldValueType(fieldType resource.SearchFieldType) (resourcepb.ResourceSearchField_Type, error) {
+func fieldValueType(fieldType searchmodel.SearchFieldType) (resourcepb.ResourceSearchField_Type, error) {
 	switch fieldType {
-	case resource.SearchFieldTypeString:
+	case searchmodel.SearchFieldTypeString:
 		return resourcepb.ResourceSearchField_STRING, nil
-	case resource.SearchFieldTypeBoolean:
+	case searchmodel.SearchFieldTypeBoolean:
 		return resourcepb.ResourceSearchField_BOOLEAN, nil
-	case resource.SearchFieldTypeInt64:
+	case searchmodel.SearchFieldTypeInt64:
 		return resourcepb.ResourceSearchField_INT64, nil
-	case resource.SearchFieldTypeDouble:
+	case searchmodel.SearchFieldTypeDouble:
 		return resourcepb.ResourceSearchField_DOUBLE, nil
-	case resource.SearchFieldTypeDate:
+	case searchmodel.SearchFieldTypeDate:
 		return resourcepb.ResourceSearchField_DATE, nil
 	default:
 		return resourcepb.ResourceSearchField_UNSPECIFIED, fmt.Errorf("unsupported field type %q", fieldType)
@@ -241,7 +244,7 @@ func fieldValueType(fieldType resource.SearchFieldType) (resourcepb.ResourceSear
 // Returns 0 when the value is absent, which is the case for every document in an
 // index built before the field existed.
 func (b *bleveIndex) hitResourceVersion(match *blevesearch.DocumentMatch) int64 {
-	value, ok := match.Fields[resource.SEARCH_FIELD_RV_STRING]
+	value, ok := match.Fields[searchmodel.SEARCH_FIELD_RV_STRING]
 	if !ok || value == nil {
 		return 0
 	}
@@ -259,13 +262,13 @@ func (b *bleveIndex) hitResourceVersion(match *blevesearch.DocumentMatch) int64 
 }
 
 func searchHitFieldValue(match *blevesearch.DocumentMatch, name string) (any, bool, error) {
-	if name == resource.SEARCH_FIELD_LEGACY_ID {
+	if name == searchmodel.SEARCH_FIELD_LEGACY_ID {
 		return searchHitLegacyID(match)
 	}
 
 	value, ok := match.Fields[name]
 	if !ok {
-		value, ok = match.Fields[resource.SEARCH_FIELD_PREFIX+name]
+		value, ok = match.Fields[searchmodel.SEARCH_FIELD_PREFIX+name]
 	}
 	return value, ok, nil
 }
@@ -273,7 +276,7 @@ func searchHitFieldValue(match *blevesearch.DocumentMatch, name string) (any, bo
 // Dashboard callers still use the numeric legacy ID while the index stores
 // its source label as a string.
 func searchHitLegacyID(match *blevesearch.DocumentMatch) (any, bool, error) {
-	value, ok := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
+	value, ok := match.Fields[searchmodel.SEARCH_FIELD_LABELS+"."+searchmodel.SEARCH_FIELD_LEGACY_ID]
 	if !ok || value == nil {
 		return nil, false, nil
 	}
@@ -290,7 +293,7 @@ func searchHitLegacyID(match *blevesearch.DocumentMatch) (any, bool, error) {
 
 func newSearchResultValue(
 	fieldIndex uint32,
-	definition resource.SearchFieldDefinition,
+	definition searchmodel.SearchFieldDefinition,
 	value any,
 ) (*resourcepb.ResourceSearchValue, error) {
 	values := flattenSearchResultValue(value)
@@ -301,25 +304,25 @@ func newSearchResultValue(
 	result := &resourcepb.ResourceSearchValue{FieldIndex: fieldIndex}
 	for _, value := range values {
 		switch definition.Type {
-		case resource.SearchFieldTypeString:
+		case searchmodel.SearchFieldTypeString:
 			v, ok := value.(string)
 			if !ok {
 				return nil, fmt.Errorf("expected string, got %T", value)
 			}
 			result.StringValues = append(result.StringValues, v)
-		case resource.SearchFieldTypeBoolean:
+		case searchmodel.SearchFieldTypeBoolean:
 			v, ok := value.(bool)
 			if !ok {
 				return nil, fmt.Errorf("expected boolean, got %T", value)
 			}
 			result.BooleanValues = append(result.BooleanValues, v)
-		case resource.SearchFieldTypeInt64, resource.SearchFieldTypeDate:
+		case searchmodel.SearchFieldTypeInt64, searchmodel.SearchFieldTypeDate:
 			v, err := searchResultInt64(value)
 			if err != nil {
 				return nil, err
 			}
 			result.Int64Values = append(result.Int64Values, v)
-		case resource.SearchFieldTypeDouble:
+		case searchmodel.SearchFieldTypeDouble:
 			v, err := searchResultFloat64(value)
 			if err != nil {
 				return nil, err

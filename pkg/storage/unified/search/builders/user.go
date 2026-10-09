@@ -1,14 +1,15 @@
 package builders
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	iam "github.com/grafana/grafana/apps/iam/pkg/apis"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // iamProvider is shared by all IAM builders and their exported field sets, so
 // the manifest is parsed once.
-var iamProvider = resource.NewManifestBackedProvider(iam.LocalManifest().ManifestData)
+var iamProvider = searchmodel.NewManifestBackedProvider(iam.LocalManifest().ManifestData)
 
 const (
 	USER_EMAIL                 = "email"
@@ -42,6 +43,6 @@ var UserSortableExtraFields = []string{
 // Exported for the IAM legacy SQL search backend; do not mutate.
 var UserSearchFields = iamProvider.Fields(iamv0.UserResourceInfo.GroupVersionResource())
 
-func GetUserBuilder(registry *resource.SearchFieldsRegistry) (resource.DocumentBuilderInfo, error) {
+func GetUserBuilder(registry *searchmodel.SearchFieldsRegistry) (searchmodel.DocumentBuilderInfo, error) {
 	return iamBuilder(registry, iamv0.UserResourceInfo)
 }

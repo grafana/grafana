@@ -1,6 +1,8 @@
 package backfill
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -73,7 +75,7 @@ type fakeStorage struct {
 	// pulling everything in a single call.
 	listCalls  []string
 	listLimits []int64
-	listKeys   []resource.NamespacedResource
+	listKeys   []resourcecontract.NamespacedResource
 }
 
 type listItem struct {
@@ -122,18 +124,18 @@ func (f *fakeStorage) markNotFound(ns, group, res, name string) {
 	f.notFound[storeKey(ns, group, res, name)] = struct{}{}
 }
 
-func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resourcecontract.BackendReadResponse {
 	if f.readErr != nil {
-		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: f.readErr.Error()}}
+		return &resourcecontract.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 500, Message: f.readErr.Error()}}
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	k := storeKey(req.Key.Namespace, req.Key.Group, req.Key.Resource, req.Key.Name)
 	if _, nf := f.notFound[k]; nf {
-		return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
+		return &resourcecontract.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
 	}
 	if r, ok := f.resources[k]; ok {
-		return &resource.BackendReadResponse{
+		return &resourcecontract.BackendReadResponse{
 			Key:             req.Key,
 			Value:           r.Value,
 			ResourceVersion: r.RV,
@@ -147,10 +149,10 @@ func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadReques
 			group, res = "dashboard.grafana.app", "dashboards"
 		}
 		if it.Namespace == req.Key.Namespace && it.Name == req.Key.Name && group == req.Key.Group && res == req.Key.Resource {
-			return &resource.BackendReadResponse{Key: req.Key, Value: it.Value, ResourceVersion: it.RV}
+			return &resourcecontract.BackendReadResponse{Key: req.Key, Value: it.Value, ResourceVersion: it.RV}
 		}
 	}
-	return &resource.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
+	return &resourcecontract.BackendReadResponse{Error: &resourcepb.ErrorResult{Code: 404, Message: "not found"}}
 }
 
 // Unused methods of StorageBackend — panic so a test that hits them is
@@ -163,11 +165,11 @@ func (f *fakeStorage) WriteEvent(context.Context, resource.WriteEvent) (int64, e
 // to yield this call. The fake yields up to Limit+1 items so the
 // resourceembedder's "peek for next page" logic exercises correctly.
 // req.NextPageToken is parsed as "tok-<index>" pointing at the next item.
-func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListRequest, cb func(resourcecontract.ListIterator) error) (int64, error) {
 	f.mu.Lock()
 	f.listCalls = append(f.listCalls, req.NextPageToken)
 	f.listLimits = append(f.listLimits, req.Limit)
-	f.listKeys = append(f.listKeys, resource.NamespacedResource{
+	f.listKeys = append(f.listKeys, resourcecontract.NamespacedResource{
 		Namespace: req.Options.Key.Namespace,
 		Group:     req.Options.Key.Group,
 		Resource:  req.Options.Key.Resource,
@@ -195,16 +197,16 @@ func (f *fakeStorage) ListIterator(_ context.Context, req *resourcepb.ListReques
 	return 1, cb(iter)
 }
 
-func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func(resource.ListIterator) error) (int64, error) {
+func (f *fakeStorage) ListHistory(context.Context, *resourcepb.ListRequest, func(resourcecontract.ListIterator) error) (int64, error) {
 	panic("not implemented")
 }
-func (f *fakeStorage) ListModifiedSince(context.Context, resource.NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*resource.ModifiedResource, error]) {
+func (f *fakeStorage) ListModifiedSince(context.Context, resourcecontract.NamespacedResource, int64, *time.Time) (int64, iter.Seq2[*resourcecontract.ModifiedResource, error]) {
 	panic("not implemented")
 }
 func (f *fakeStorage) WatchWriteEvents(context.Context) (<-chan *resource.WrittenEvent, error) {
 	panic("not implemented")
 }
-func (f *fakeStorage) GetResourceStats(context.Context, resource.NamespacedResource, int) ([]resource.ResourceStats, error) {
+func (f *fakeStorage) GetResourceStats(context.Context, resourcecontract.NamespacedResource, int) ([]resourcecontract.ResourceStats, error) {
 	panic("not implemented")
 }
 

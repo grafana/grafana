@@ -1,6 +1,8 @@
 package test
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"io"
 	"net/http"
@@ -123,8 +125,8 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 type kvBlobTestEnv struct {
 	ctx      context.Context
 	kv       kv.KV
-	kvBlobs  resource.BlobSupport
-	sqlBlobs resource.BlobSupport
+	kvBlobs  resourcecontract.BlobSupport
+	sqlBlobs resourcecontract.BlobSupport
 }
 
 func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
@@ -144,7 +146,7 @@ func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
 	require.True(t, ok)
 	require.NoError(t, services.StartAndAwaitRunning(ctx, svc))
 	t.Cleanup(func() { _ = services.StopAndAwaitTerminated(context.Background(), svc) })
-	sqlBlobs, ok := sqlBackend.(resource.BlobSupport)
+	sqlBlobs, ok := sqlBackend.(resourcecontract.BlobSupport)
 	require.True(t, ok)
 
 	return &kvBlobTestEnv{ctx: ctx, kv: sqlKV, kvBlobs: resource.NewKVBlobSupport(sqlKV), sqlBlobs: sqlBlobs}
@@ -152,7 +154,7 @@ func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
 
 type namedBlobStore struct {
 	name  string
-	store resource.BlobSupport
+	store resourcecontract.BlobSupport
 }
 
 func (e *kvBlobTestEnv) stores() []namedBlobStore {
@@ -170,7 +172,7 @@ func (e *kvBlobTestEnv) newResource(t *testing.T, namespace string) *resourcepb.
 	return key
 }
 
-func (e *kvBlobTestEnv) put(t *testing.T, store resource.BlobSupport, key *resourcepb.ResourceKey, contentType, value string) *resourcepb.PutBlobResponse {
+func (e *kvBlobTestEnv) put(t *testing.T, store resourcecontract.BlobSupport, key *resourcepb.ResourceKey, contentType, value string) *resourcepb.PutBlobResponse {
 	t.Helper()
 	rsp, err := store.PutResourceBlob(e.ctx, &resourcepb.PutBlobRequest{
 		Resource:    key,
@@ -183,7 +185,7 @@ func (e *kvBlobTestEnv) put(t *testing.T, store resource.BlobSupport, key *resou
 	return rsp
 }
 
-func (e *kvBlobTestEnv) get(t *testing.T, store resource.BlobSupport, key *resourcepb.ResourceKey, uid string) *resourcepb.GetBlobResponse {
+func (e *kvBlobTestEnv) get(t *testing.T, store resourcecontract.BlobSupport, key *resourcepb.ResourceKey, uid string) *resourcepb.GetBlobResponse {
 	t.Helper()
 	rsp, err := store.GetResourceBlob(e.ctx, key, &utils.BlobInfo{UID: uid}, true)
 	require.NoError(t, err)

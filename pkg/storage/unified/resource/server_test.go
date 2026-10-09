@@ -3487,7 +3487,7 @@ func TestRequireUserNamespace(t *testing.T) {
 }
 
 // TestDelegatedRPCsNamespaceGate exercises requireUserNamespace through each
-// of the four delegated-only RPCs. Backends are intentionally unconfigured
+// of the delegated blob RPC. Backends are intentionally unconfigured
 // so a request that should be rejected must be rejected before delegation.
 func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 	rpcs := []struct {
@@ -3498,18 +3498,6 @@ func TestDelegatedRPCsNamespaceGate(t *testing.T) {
 			rsp, _ := srv.GetBlob(ctx, &resourcepb.GetBlobRequest{
 				Resource: &resourcepb.ResourceKey{Namespace: ns, Group: "g", Resource: "r", Name: "n"},
 			})
-			return rsp.Error
-		}},
-		{"ListManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.ListManagedObjects(ctx, &resourcepb.ListManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
-		}},
-		{"CountManagedObjects", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.CountManagedObjects(ctx, &resourcepb.CountManagedObjectsRequest{Namespace: ns})
-			return rsp.Error
-		}},
-		{"RebuildIndexes", func(ctx context.Context, srv *server, ns string) *resourcepb.ErrorResult {
-			rsp, _ := srv.RebuildIndexes(ctx, &resourcepb.RebuildIndexesRequest{Namespace: ns})
 			return rsp.Error
 		}},
 	}

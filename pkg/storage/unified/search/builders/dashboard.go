@@ -1,6 +1,10 @@
 package builders
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"bytes"
 	"context"
 	"encoding/json"
@@ -46,13 +50,13 @@ const DASHBOARD_ERRORS_TODAY = "errors_today"
 // they are declared in apps/dashboard/kinds/manifest.cue. They are all computed
 // fields (no resource path); DashboardDocumentBuilder fills them in from the
 // parsed spec and the usage-insights stats.
-var DashboardSearchFields = resource.NewManifestBackedProvider(
+var DashboardSearchFields = searchmodel.NewManifestBackedProvider(
 	dashboardapp.LocalManifest().ManifestData,
 ).Fields(dashV1.DashboardResourceInfo.GroupVersionResource())
 
-func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.DocumentBuilderInfo, error) {
+func DashboardBuilder(namespaced searchmodel.NamespacedDocumentSupplier) (searchmodel.DocumentBuilderInfo, error) {
 	if namespaced == nil {
-		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
+		namespaced = func(ctx context.Context, namespace string, blob resourcecontract.BlobSupport) (searchmodel.DocumentBuilder, error) {
 			return &DashboardDocumentBuilder{
 				Namespace:        namespace,
 				Blob:             blob,
@@ -64,7 +68,7 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 		}
 	}
 	gr := dashV1.DashboardResourceInfo.GroupResource()
-	return resource.DocumentBuilderInfo{
+	return searchmodel.DocumentBuilderInfo{
 		GroupResource: gr,
 		Namespaced:    namespaced,
 	}, nil
@@ -82,7 +86,7 @@ type DashboardDocumentBuilder struct {
 	DatasourceLookup dashboard.DatasourceLookup
 
 	// For large dashboards we will need to load them from blob store
-	Blob resource.BlobSupport
+	Blob resourcecontract.BlobSupport
 }
 
 type DashboardStats interface {
@@ -92,9 +96,9 @@ type DashboardStats interface {
 
 type DashboardStatsLookup = func(ctx context.Context, uid string) map[string]int64
 
-var _ resource.DocumentBuilder = (*DashboardDocumentBuilder)(nil)
+var _ searchmodel.DocumentBuilder = (*DashboardDocumentBuilder)(nil)
 
-func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resourcepb.ResourceKey, rv int64, value []byte) (*searchmodel.IndexableDocument, error) {
 	if s.Namespace != "" && s.Namespace != key.Namespace {
 		return nil, fmt.Errorf("invalid namespace")
 	}
@@ -129,7 +133,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	// metadata name is the dashboard uid
 	summary.UID = obj.GetName()
 
-	doc := resource.NewIndexableDocument(key, rv, obj, summary.Title)
+	doc := searchmodel.NewIndexableDocument(key, rv, obj, summary.Title)
 	// TODO: add selectable fields
 	doc.Description = summary.Description
 	doc.Tags = summary.Tags
@@ -154,7 +158,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 			transformations = append(transformations, p.Transformer...)
 		}
 		if p.LibraryPanel != "" {
-			doc.References = append(doc.References, resource.ResourceReference{
+			doc.References = append(doc.References, searchmodel.ResourceReference{
 				Group:    "dashboard.grafana.app",
 				Kind:     "LibraryPanel",
 				Name:     p.LibraryPanel,
@@ -165,7 +169,7 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 	for _, ds := range summary.Datasource {
 		dsTypes = append(dsTypes, ds.Type)
-		doc.References = append(doc.References, resource.ResourceReference{
+		doc.References = append(doc.References, searchmodel.ResourceReference{
 			Group:    ds.Type,
 			Kind:     "DataSource",
 			Name:     ds.UID,

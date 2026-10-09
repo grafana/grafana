@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"testing"
 	"time"
 
@@ -10,7 +14,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -20,7 +23,7 @@ var (
 )
 
 // collectRefs reads the whole enumeration into a name to version map.
-func collectRefs(t *testing.T, seq func(func(resource.DocumentRef, error) bool)) map[string]int64 {
+func collectRefs(t *testing.T, seq func(func(searchmodel.DocumentRef, error) bool)) map[string]int64 {
 	t.Helper()
 	out := map[string]int64{}
 	for ref, err := range seq {
@@ -30,22 +33,22 @@ func collectRefs(t *testing.T, seq func(func(resource.DocumentRef, error) bool))
 	return out
 }
 
-func buildRefsIndex(t *testing.T, key resource.NamespacedResource, docs ...*resource.BulkIndexItem) resource.ResourceIndex {
+func buildRefsIndex(t *testing.T, key resourcecontract.NamespacedResource, docs ...*searchmodel.BulkIndexItem) searchmodel.ResourceIndex {
 	t.Helper()
 	backend, _ := setupBleveBackend(t)
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
 
-	index, err := backend.BuildIndex(ctx, key, int64(len(docs)), "test", func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: docs})
+	index, err := backend.BuildIndex(ctx, key, int64(len(docs)), "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: docs})
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	return index
 }
 
-func refDoc(gr schema.GroupResource, namespace, name string, rv int64) *resource.BulkIndexItem {
-	return &resource.BulkIndexItem{
-		Action: resource.ActionIndex,
-		Doc: &resource.IndexableDocument{
+func refDoc(gr schema.GroupResource, namespace, name string, rv int64) *searchmodel.BulkIndexItem {
+	return &searchmodel.BulkIndexItem{
+		Action: searchmodel.ActionIndex,
+		Doc: &searchmodel.IndexableDocument{
 			RV:    rv,
 			Name:  name,
 			Title: name,
@@ -55,7 +58,7 @@ func refDoc(gr schema.GroupResource, namespace, name string, rv int64) *resource
 }
 
 func TestListDocumentRefsOfGlobalIndex(t *testing.T) {
-	key := resource.GlobalSearchKey("ns")
+	key := resourcecontract.GlobalSearchKey("ns")
 	index := buildRefsIndex(t, key,
 		refDoc(dashboardsGR, "ns", "dash-a", 11),
 		refDoc(dashboardsGR, "ns", "dash-b", 12),
@@ -74,7 +77,7 @@ func TestListDocumentRefsOfGlobalIndex(t *testing.T) {
 // can be removed.
 func TestListDocumentRefsOfATypeNoLongerCovered(t *testing.T) {
 	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
-	index := buildRefsIndex(t, resource.GlobalSearchKey("ns"),
+	index := buildRefsIndex(t, resourcecontract.GlobalSearchKey("ns"),
 		refDoc(dashboardsGR, "ns", "dash-a", 11),
 		refDoc(playlists, "ns", "playlist-a", 12),
 	)
@@ -84,7 +87,7 @@ func TestListDocumentRefsOfATypeNoLongerCovered(t *testing.T) {
 }
 
 func TestListDocumentRefsOfPerResourceIndex(t *testing.T) {
-	key := resource.NamespacedResource{Namespace: "ns", Group: dashboardsGR.Group, Resource: dashboardsGR.Resource}
+	key := resourcecontract.NamespacedResource{Namespace: "ns", Group: dashboardsGR.Group, Resource: dashboardsGR.Resource}
 	index := buildRefsIndex(t, key,
 		refDoc(dashboardsGR, "ns", "dash-a", 11),
 		refDoc(dashboardsGR, "ns", "dash-b", 12),
@@ -107,7 +110,7 @@ func TestListDocumentRefsPages(t *testing.T) {
 	listDocumentRefsPageSize = 2
 	t.Cleanup(func() { listDocumentRefsPageSize = original })
 
-	docs := make([]*resource.BulkIndexItem, 0, 5)
+	docs := make([]*searchmodel.BulkIndexItem, 0, 5)
 	want := map[string]int64{}
 	for i, name := range []string{"a", "b", "c", "d", "e"} {
 		rv := int64(10 + i)
@@ -115,7 +118,7 @@ func TestListDocumentRefsPages(t *testing.T) {
 		want[name] = rv
 	}
 
-	index := buildRefsIndex(t, resource.GlobalSearchKey("ns"), docs...)
+	index := buildRefsIndex(t, resourcecontract.GlobalSearchKey("ns"), docs...)
 
 	got := map[string]int64{}
 	count := 0
@@ -131,7 +134,7 @@ func TestListDocumentRefsPages(t *testing.T) {
 // Stopping early has to stop the reads too, so a caller that has seen enough
 // does not pay for the rest.
 func TestListDocumentRefsStopsWhenTheCallerDoes(t *testing.T) {
-	index := buildRefsIndex(t, resource.GlobalSearchKey("ns"),
+	index := buildRefsIndex(t, resourcecontract.GlobalSearchKey("ns"),
 		refDoc(dashboardsGR, "ns", "dash-a", 11),
 		refDoc(dashboardsGR, "ns", "dash-b", 12),
 	)

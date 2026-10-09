@@ -1,6 +1,8 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"io/fs"
 	"math/rand/v2"
@@ -11,8 +13,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/attribute"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // Disk cleanup outcomes and kinds. Mirror the snapshot cleanup labels so
@@ -250,7 +250,7 @@ func (b *bleveBackend) sweepNamespace(ctx context.Context, root *os.Root, namesp
 			continue
 		}
 		resGroupRel := path.Join(namespace, resName)
-		key := resource.NamespacedResource{Namespace: namespace, Resource: res, Group: group}
+		key := resourcecontract.NamespacedResource{Namespace: namespace, Resource: res, Group: group}
 		b.sweepResource(ctx, root, resGroupRel, key, stats)
 		b.tryRemoveIfEmpty(root, resGroupRel, stats)
 	}
@@ -287,7 +287,7 @@ func splitResourceGroup(name string) (string, string, bool) {
 //
 // Failures are best-effort: we log and continue so one bad directory doesn't
 // block the rest of the sweep.
-func (b *bleveBackend) sweepResource(ctx context.Context, root *os.Root, resourceRel string, key resource.NamespacedResource, stats *diskCleanupStats) {
+func (b *bleveBackend) sweepResource(ctx context.Context, root *os.Root, resourceRel string, key resourcecontract.NamespacedResource, stats *diskCleanupStats) {
 	entries := b.iterDirs(root, resourceRel, stats)
 	if len(entries) == 0 {
 		return
@@ -351,7 +351,7 @@ func (b *bleveBackend) sweepResource(ctx context.Context, root *os.Root, resourc
 // index directory for key, or "" if no file-based index is cached. The bleve
 // Index.Name() returns the absolute path passed to NewUsing/OpenUsing, which
 // we slice down to the timestamp leaf.
-func (b *bleveBackend) cachedFileIndexName(key resource.NamespacedResource) string {
+func (b *bleveBackend) cachedFileIndexName(key resourcecontract.NamespacedResource) string {
 	b.cacheMx.RLock()
 	defer b.cacheMx.RUnlock()
 	idx := b.cache[key]

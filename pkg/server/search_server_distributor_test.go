@@ -42,6 +42,7 @@ import (
 	resourcegrpc "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	unifiedserver "github.com/grafana/grafana/pkg/storage/unified/server"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
@@ -166,7 +167,7 @@ func TestIntegrationDistributor(t *testing.T) {
 			req := &resourcepb.ResourceStatsRequest{
 				Namespace: ns,
 			}
-			baselineRes := getBaselineResponse(t, req, baselineServer.GetStats)
+			baselineRes := getBaselineResponse(t, req, baselineServer.SearchHandler().GetStats)
 			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.GetStats, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
@@ -183,7 +184,7 @@ func TestIntegrationDistributor(t *testing.T) {
 			req := &resourcepb.CountManagedObjectsRequest{
 				Namespace: ns,
 			}
-			baselineRes := getBaselineResponse(t, req, baselineServer.CountManagedObjects)
+			baselineRes := getBaselineResponse(t, req, baselineServer.SearchHandler().CountManagedObjects)
 			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.CountManagedObjects, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
@@ -200,7 +201,7 @@ func TestIntegrationDistributor(t *testing.T) {
 			req := &resourcepb.ListManagedObjectsRequest{
 				Namespace: ns,
 			}
-			baselineRes := getBaselineResponse(t, req, baselineServer.ListManagedObjects)
+			baselineRes := getBaselineResponse(t, req, baselineServer.SearchHandler().ListManagedObjects)
 			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.ListManagedObjects, instanceResponseCount)
 			require.Equal(t, baselineRes.String(), distributorRes.String())
 		}
@@ -223,7 +224,7 @@ func TestIntegrationDistributor(t *testing.T) {
 					},
 				},
 			}
-			baselineRes := getBaselineResponse(t, req, baselineServer.Search)
+			baselineRes := getBaselineResponse(t, req, baselineServer.SearchHandler().Search)
 			distributorRes := getDistributorResponse(t, req, distributorServer.resourceClient.Search, instanceResponseCount)
 			// sometimes the querycost is different between the two. Happens randomly and we don't have control over it
 			// as it comes from bleve. Since we are not testing search functionality we hard-set this to 0 to avoid
@@ -453,7 +454,7 @@ func initModuleServerForTest(
 	}
 }
 
-func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) resource.ResourceServer {
+func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces []string) *unifiedserver.Server {
 	cfg := setting.NewCfg()
 	section, err := cfg.Raw.NewSection("database")
 	require.NoError(t, err)
@@ -503,7 +504,7 @@ func createBaselineServer(t *testing.T, dbType, dbConnStr string, testNamespaces
 
 	for _, ns := range testNamespaces {
 		for range rand.Intn(maxPlaylistPerNamespace) + 1 {
-			_, err = server.Create(ctx, generatePlaylistPayload(ns))
+			_, err = server.StorageHandler().Create(ctx, generatePlaylistPayload(ns))
 			require.NoError(t, err)
 		}
 	}

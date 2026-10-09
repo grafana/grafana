@@ -159,7 +159,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 	default:
 		t.Fatalf("unsupported storage type: %s", setupOpts.storageType)
 	}
-	client := resource.NewLocalResourceClient(server)
+	client := resource.NewLocalResourceClient(server, nil)
 	if setupOpts.storageType == StorageTypeFile {
 		waitForWatchReady(t, ctx, client, setupOpts.groupResource)
 	}

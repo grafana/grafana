@@ -1,6 +1,12 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"hash/fnv"
@@ -12,17 +18,19 @@ import (
 
 	"github.com/fullstorydev/grpchan"
 	"github.com/gorilla/mux"
-	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
-	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc"
+	searchservice "github.com/grafana/grafana/pkg/storage/unified/search/service"
 
 	"github.com/grafana/authlib/grpcutils"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/services"
+	grpcauth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc"
+
 	appsdk "github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/modules"
@@ -56,7 +64,7 @@ type service struct {
 
 	// -- Shared Components
 	watchExpiry   resource.WatchExpiry
-	blobBackend   resource.BlobSupport
+	blobBackend   resourcecontract.BlobSupport
 	backend       resource.StorageBackend
 	vectorBackend vector.VectorBackend
 	embedder      *embedder.Embedder
@@ -71,22 +79,22 @@ type service struct {
 	// -- Storage Services
 	queue          QOSEnqueueDequeuer
 	storageMetrics *resource.StorageMetrics
-	vectorMetrics  *resource.VectorMetrics
+	vectorMetrics  *searchmetrics.VectorMetrics
 	scheduler      *scheduler.Scheduler
 	searchClient   resourcepb.ResourceIndexClient
 
 	// -- Search Services
-	docBuilders      resource.DocumentBuilderSupplier
+	docBuilders      searchmodel.DocumentBuilderSupplier
 	dashboardStats   builders.DashboardStats
-	indexMetrics     *resource.BleveIndexMetrics
+	indexMetrics     *searchmetrics.IndexMetrics
 	searchRing       *ring.Ring
 	ringLifecycler   *ring.BasicLifecycler // Ring state for sharding
 	searchStandalone bool
 	authenticator    interceptors.AuthenticatorFunc
 
-	// uninitializedSearchServer holds the server created during module init, whose Init() is
-	// deferred to starting() so the ring is Running when search indexes are built.
-	uninitializedSearchServer resource.SearchServer
+	// The server's Init() is
+	// deferred until the ring is running so index ownership is available during initialization.
+	uninitializedServer interface{ Init(context.Context) error }
 }
 
 // ProvideSearchGRPCService provides a gRPC service that only serves search requests.
@@ -106,7 +114,7 @@ func WithAuthenticator(authn func(ctx context.Context) (context.Context, error))
 	}
 }
 
-func WithBlobBackend(blob resource.BlobSupport) ServiceOption {
+func WithBlobBackend(blob resourcecontract.BlobSupport) ServiceOption {
 	return func(s *service) { s.blobBackend = blob }
 }
 
@@ -122,9 +130,9 @@ func ProvideSearchGRPCService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	log log.Logger,
 	reg prometheus.Registerer,
-	docBuilders resource.DocumentBuilderSupplier,
-	indexMetrics *resource.BleveIndexMetrics,
-	vectorMetrics *resource.VectorMetrics,
+	docBuilders searchmodel.DocumentBuilderSupplier,
+	indexMetrics *searchmetrics.IndexMetrics,
+	vectorMetrics *searchmetrics.VectorMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
@@ -164,10 +172,10 @@ func ProvideUnifiedStorageGrpcService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	log log.Logger,
 	reg prometheus.Registerer,
-	docBuilders resource.DocumentBuilderSupplier,
+	docBuilders searchmodel.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics,
-	vectorMetrics *resource.VectorMetrics,
+	indexMetrics *searchmetrics.IndexMetrics,
+	vectorMetrics *searchmetrics.VectorMetrics,
 	searchRing *ring.Ring,
 	memberlistKVConfig kv.Config,
 	httpServerRouter *mux.Router,
@@ -230,10 +238,10 @@ func newService(
 	log log.Logger,
 	reg prometheus.Registerer,
 	tracer trace.Tracer,
-	docBuilders resource.DocumentBuilderSupplier,
+	docBuilders searchmodel.DocumentBuilderSupplier,
 	storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics,
-	vectorMetrics *resource.VectorMetrics,
+	indexMetrics *searchmetrics.IndexMetrics,
+	vectorMetrics *searchmetrics.VectorMetrics,
 	searchRing *ring.Ring,
 	backend resource.StorageBackend,
 	vectorBackend vector.VectorBackend,
@@ -339,7 +347,7 @@ var (
 	searchOwnerRead = ring.NewOp([]ring.InstanceState{ring.JOINING, ring.ACTIVE, ring.LEAVING}, nil)
 )
 
-func (s *service) OwnsIndex(key resource.NamespacedResource) (bool, error) {
+func (s *service) OwnsIndex(key resourcecontract.NamespacedResource) (bool, error) {
 	if s.searchRing == nil {
 		return true, nil
 	}
@@ -384,7 +392,7 @@ func (s *service) starting(ctx context.Context) error {
 	// Initialize the server (builds search indexes) while in JOINING state.
 	// The ring is Running so OwnsIndex checks work, but this instance won't
 	// receive ring-routed queries until it switches to ACTIVE below.
-	if err := s.uninitializedSearchServer.Init(ctx); err != nil {
+	if err := s.uninitializedServer.Init(ctx); err != nil {
 		return fmt.Errorf("failed to initialize server: %w", err)
 	}
 
@@ -413,7 +421,7 @@ func (s *service) registerServer(provider grpcserver.Provider) error {
 		}
 	}
 
-	searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics, s.OwnsIndex, snapshotStore)
+	searchOptions, err := search.NewSearchOptions(s.cfg, s.docBuilders, s.indexMetrics.Bleve(), s.OwnsIndex, snapshotStore)
 	if err != nil {
 		return err
 	}
@@ -577,7 +585,7 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 			return err
 		}
 		s.serverStopper = server
-		s.uninitializedSearchServer = server
+		s.uninitializedServer = server
 		return s.registerSearchServer(provider, server)
 	}
 	server, err := NewUninitializedResourceServer(opts)
@@ -585,25 +593,25 @@ func (s *service) createAndRegisterServer(provider grpcserver.Provider, opts Ser
 		return err
 	}
 	s.serverStopper = server
-	s.uninitializedSearchServer = server
+	s.uninitializedServer = server
 
-	var vs *resource.VectorStoreServer
+	var vs *searchservice.VectorStoreServer
 	if opts.Cfg.EnableVectorStore && opts.VectorBackend != nil && opts.Embedder != nil {
-		vs = resource.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.VectorMetrics)
+		vs = searchservice.NewVectorStoreServer(opts.VectorBackend, opts.Embedder, opts.Cfg.VectorAllowedExternalCollections, opts.Cfg.VectorAllowedWriteServices, opts.VectorMetrics)
 	}
-	s.registerUnifiedResourceServer(provider, server, vs)
+	s.registerUnifiedResourceServer(provider, server.StorageHandler(), server.SearchHandler(), vs)
 	return nil
 }
 
 // searchServerWithAuth wraps a SearchServer with per-service authentication.
 type searchServerWithAuth struct {
-	resource.SearchServer
+	searchmodel.SearchServer
 	*interceptors.ServiceWithAuth
 }
 
 var _ grpcauth.ServiceAuthFuncOverride = (*searchServerWithAuth)(nil)
 
-func (s *service) registerSearchServer(provider grpcserver.Provider, server resource.SearchServer) error {
+func (s *service) registerSearchServer(provider grpcserver.Provider, server searchmodel.SearchServer) error {
 	var handler = server
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &searchServerWithAuth{SearchServer: server, ServiceWithAuth: sa}
@@ -631,16 +639,18 @@ var _ grpcauth.ServiceAuthFuncOverride = (*resourceServerWithAuth)(nil)
 // vectorStoreWithAuth wraps the VectorStore write service with per-service
 // authentication.
 type vectorStoreWithAuth struct {
-	*resource.VectorStoreServer
+	*searchservice.VectorStoreServer
 	*interceptors.ServiceWithAuth
 }
 
 var _ grpcauth.ServiceAuthFuncOverride = (*vectorStoreWithAuth)(nil)
 
-func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer, vs *resource.VectorStoreServer) {
+func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, server resource.ResourceServer, search searchmodel.SearchServer, vs *searchservice.VectorStoreServer) {
 	var handler = server
+	var indexHandler = search
 	if sa := interceptors.NewServiceAuth(s.authenticator); sa != nil {
 		handler = &resourceServerWithAuth{ResourceServer: server, ServiceWithAuth: sa}
+		indexHandler = &searchServerWithAuth{SearchServer: search, ServiceWithAuth: sa}
 	}
 	srv := provider.GetServer()
 	// Storage services. ResourceStore is wrapped with the request-duration interceptor
@@ -653,14 +663,18 @@ func (s *service) registerUnifiedResourceServer(provider grpcserver.Provider, se
 		&resourcepb.BlobStore_ServiceDesc,
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
-		&resourcepb.ResourceIndex_ServiceDesc,
-		&resourcepb.ManagedObjectIndex_ServiceDesc,
 	} {
 		wrapped := s.withErrorResultConversion(desc)
 		if desc == &resourcepb.ResourceStore_ServiceDesc {
 			wrapped = grpchan.InterceptServer(wrapped, metricsInt, nil)
 		}
 		srv.RegisterService(wrapped, handler)
+	}
+	for _, desc := range []*grpc.ServiceDesc{
+		&resourcepb.ResourceIndex_ServiceDesc,
+		&resourcepb.ManagedObjectIndex_ServiceDesc,
+	} {
+		srv.RegisterService(s.withErrorResultConversion(desc), indexHandler)
 	}
 	_, _ = grpcserver.ProvideReflectionService(s.cfg, provider)
 

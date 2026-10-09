@@ -1,6 +1,8 @@
 package sql
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"slices"
 
@@ -57,7 +59,7 @@ func (b *backend) GetStats(ctx context.Context, req *resourcepb.ResourceStatsReq
 				return err
 			}
 			for rows.Next() {
-				row := resource.ResourceStats{}
+				row := resourcecontract.ResourceStats{}
 				if err := rows.Scan(&row.Namespace, &row.Group, &row.Resource, &row.Count, &row.ResourceVersion); err != nil {
 					return err
 				}

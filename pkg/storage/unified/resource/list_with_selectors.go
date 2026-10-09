@@ -345,7 +345,7 @@ func searchRowReads(rows []listSearchRow) []BatchReadRequest {
 // read per object on a backend without batch reads. A backend that answers a
 // chunk with the wrong number of responses is reported as an error, because the
 // responses could no longer be matched to what was asked.
-func readResourcesInChunks(ctx context.Context, backend StorageBackend, requests []BatchReadRequest, chunkSize int) iter.Seq[*BackendReadResponse] {
+func readResourcesInChunks(ctx context.Context, backend StorageReader, requests []BatchReadRequest, chunkSize int) iter.Seq[*BackendReadResponse] {
 	return func(yield func(*BackendReadResponse) bool) {
 		batchSupported := true
 		for chunk := range slices.Chunk(requests, chunkSize) {

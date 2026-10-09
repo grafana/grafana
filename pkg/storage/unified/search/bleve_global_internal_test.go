@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"errors"
 	"testing"
 	"time"
@@ -13,7 +17,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -24,12 +27,12 @@ import (
 func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
-	key := resource.GlobalSearchKey("default")
+	key := resourcecontract.GlobalSearchKey("default")
 
-	doc := func(group, res, name string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(group, res, name string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:    1,
 				Name:  name,
 				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: res, Name: name},
@@ -38,8 +41,8 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 		}
 	}
 
-	index, err := backend.BuildIndex(ctx, key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
-		err := index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	index, err := backend.BuildIndex(ctx, key, 3, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		err := index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			doc("dashboard.grafana.app", "dashboards", "dash-a"),
 			doc("dashboard.grafana.app", "dashboards", "dash-b"),
 			doc("folder.grafana.app", "folders", "folder-a"),
@@ -73,7 +76,7 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 
 	t.Run("a request can narrow to one type", func(t *testing.T) {
 		assert.ElementsMatch(t, []string{"folder-a"}, search(&resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_GROUP_RESOURCE,
+			Key:      searchmodel.SEARCH_FIELD_GROUP_RESOURCE,
 			Operator: string(selection.Equals),
 			Values:   []string{"folder.grafana.app/folders"},
 		}))
@@ -81,7 +84,7 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 
 	t.Run("a request can name several exact types", func(t *testing.T) {
 		assert.ElementsMatch(t, []string{"dash-a", "dash-b", "folder-a"}, search(&resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_GROUP_RESOURCE,
+			Key:      searchmodel.SEARCH_FIELD_GROUP_RESOURCE,
 			Operator: string(selection.In),
 			Values:   []string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"},
 		}))
@@ -126,7 +129,7 @@ func TestGlobalIndexHoldsSeveralResourceTypes(t *testing.T) {
 }
 
 func TestVerifyKeyPerResourceIndex(t *testing.T) {
-	idx := &bleveIndex{key: resource.NamespacedResource{
+	idx := &bleveIndex{key: resourcecontract.NamespacedResource{
 		Namespace: "ns",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -154,7 +157,7 @@ func TestVerifyKeyPerResourceIndex(t *testing.T) {
 }
 
 func TestVerifyKeyGlobalIndex(t *testing.T) {
-	idx := &bleveIndex{key: resource.GlobalSearchKey("ns")}
+	idx := &bleveIndex{key: resourcecontract.GlobalSearchKey("ns")}
 	require.True(t, idx.key.IsGlobal())
 
 	// A namespace-wide index holds several resource types, so a request only has to
@@ -166,7 +169,7 @@ func TestVerifyKeyGlobalIndex(t *testing.T) {
 		{"namespace only", &resourcepb.ResourceKey{Namespace: "ns"}},
 		{"dashboards", &resourcepb.ResourceKey{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}},
 		{"folders", &resourcepb.ResourceKey{Namespace: "ns", Group: "folder.grafana.app", Resource: "folders"}},
-		{"the global pair itself", &resourcepb.ResourceKey{Namespace: "ns", Group: resource.GlobalSearchGroup, Resource: resource.GlobalSearchResource}},
+		{"the global pair itself", &resourcepb.ResourceKey{Namespace: "ns", Group: resourcecontract.GlobalSearchGroup, Resource: resourcecontract.GlobalSearchResource}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			assert.Nil(t, idx.verifyKey(tc.key))
@@ -178,27 +181,27 @@ func TestVerifyKeyGlobalIndex(t *testing.T) {
 }
 
 func TestGlobalIndexSearchFields(t *testing.T) {
-	global := newKindSearchFields(nil, resource.GlobalSearchGroup, resource.GlobalSearchResource, nil)
+	global := newKindSearchFields(nil, resourcecontract.GlobalSearchGroup, resourcecontract.GlobalSearchResource, nil)
 	perResource := newKindSearchFields(nil, "dashboard.grafana.app", "dashboards", nil)
 
 	// The resource type is filterable, under the one name it has.
-	f, ok := global.keywordFields[resource.SEARCH_FIELD_GROUP_RESOURCE]
+	f, ok := global.keywordFields[searchmodel.SEARCH_FIELD_GROUP_RESOURCE]
 	require.True(t, ok)
 	assert.True(t, f.filterable)
-	assert.Equal(t, resource.SEARCH_FIELD_GROUP_RESOURCE, f.name)
+	assert.Equal(t, searchmodel.SEARCH_FIELD_GROUP_RESOURCE, f.name)
 
-	_, ok = perResource.keywordFields[resource.SEARCH_FIELD_GROUP_RESOURCE]
+	_, ok = perResource.keywordFields[searchmodel.SEARCH_FIELD_GROUP_RESOURCE]
 	assert.False(t, ok, "the resource type must stay unavailable to per-resource search")
 
 	// Timestamps are sortable here and nowhere else.
-	for _, name := range []string{resource.SEARCH_FIELD_CREATED, resource.SEARCH_FIELD_UPDATED} {
+	for _, name := range []string{searchmodel.SEARCH_FIELD_CREATED, searchmodel.SEARCH_FIELD_UPDATED} {
 		assert.True(t, global.sortableFields[name], name)
 		assert.False(t, perResource.sortableFields[name], name)
 	}
 
 	// A namespace-wide index holds no deleted documents, so it does not offer the
 	// fields only a deleted document carries.
-	for _, def := range resource.TrashSearchFieldDefinitions() {
+	for _, def := range searchmodel.TrashSearchFieldDefinitions() {
 		_, ok := global.resultFields[def.Name]
 		assert.False(t, ok, def.Name)
 		_, ok = perResource.resultFields[def.Name]
@@ -207,10 +210,10 @@ func TestGlobalIndexSearchFields(t *testing.T) {
 }
 
 func TestGlobalSearchKeyIsDistinct(t *testing.T) {
-	global := resource.GlobalSearchKey("ns")
+	global := resourcecontract.GlobalSearchKey("ns")
 	require.True(t, global.Valid(), "the reserved pair must be non-empty to work as a cache key")
 
-	dashboards := resource.NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	dashboards := resourcecontract.NamespacedResource{Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	assert.False(t, dashboards.IsGlobal())
 	assert.NotEqual(t, global, dashboards)
 
@@ -225,12 +228,12 @@ func TestGlobalSearchKeyIsDistinct(t *testing.T) {
 func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 	backend, _ := setupBleveBackend(t)
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
-	key := resource.GlobalSearchKey("default")
+	key := resourcecontract.GlobalSearchKey("default")
 
-	doc := func(group, res, name string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(group, res, name string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:    1,
 				Name:  name,
 				Title: name,
@@ -238,8 +241,8 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 			},
 		}
 	}
-	index, err := backend.BuildIndex(ctx, key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	index, err := backend.BuildIndex(ctx, key, 3, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			doc("dashboard.grafana.app", "dashboards", "shared"),
 			doc("folder.grafana.app", "folders", "shared"),
 			doc("dashboard.grafana.app", "dashboards", "zzz"),
@@ -253,7 +256,7 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 	for range 5 {
 		rsp, err := index.Search(ctx, access, &resourcepb.ResourceSearchRequest{
 			Options:     &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: key.Namespace}},
-			SortBy:      []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+			SortBy:      []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_NAME}},
 			Limit:       1,
 			SearchAfter: after,
 		}, nil, nil)
@@ -276,7 +279,7 @@ func TestGlobalIndexPagesThroughSameNamedDocuments(t *testing.T) {
 }
 
 var (
-	typeBuildsKey = resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
+	typeBuildsKey = resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "resource"}
 	importedA     = schema.GroupResource{Group: "a.grafana.app", Resource: "as"}
 	importedB     = schema.GroupResource{Group: "b.grafana.app", Resource: "bs"}
 	importMonday  = time.Date(2026, 9, 28, 10, 0, 0, 123456789, time.UTC)
@@ -298,13 +301,13 @@ func TestCompletedTypeBuildsAreRecordedPerType(t *testing.T) {
 	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday}))
-	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, resource.TypeBuild{StorageImportTime: importMonday.Add(time.Hour)}))
-	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday.Add(2 * time.Hour)}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, searchmodel.TypeBuild{StorageImportTime: importMonday}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, searchmodel.TypeBuild{StorageImportTime: importMonday.Add(time.Hour)}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, searchmodel.TypeBuild{StorageImportTime: importMonday.Add(2 * time.Hour)}))
 
 	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{
+	assert.Equal(t, map[schema.GroupResource]searchmodel.TypeBuild{
 		importedA: {StorageImportTime: importMonday.Add(2 * time.Hour)},
 		importedB: {StorageImportTime: importMonday.Add(time.Hour)},
 	}, builds)
@@ -317,16 +320,16 @@ func TestCompletedTypeBuildsRecordNeverImportedAndForgottenTypes(t *testing.T) {
 	idx, err := backend.BuildIndex(t.Context(), typeBuildsKey, 1, "test", indexTestDocs(typeBuildsKey, 1, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, resource.TypeBuild{}))
-	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, resource.TypeBuild{StorageImportTime: importMonday}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedA, searchmodel.TypeBuild{}))
+	require.NoError(t, idx.RecordCompletedTypeBuild(importedB, searchmodel.TypeBuild{StorageImportTime: importMonday}))
 	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {}, importedB: {StorageImportTime: importMonday}}, builds)
+	assert.Equal(t, map[schema.GroupResource]searchmodel.TypeBuild{importedA: {}, importedB: {StorageImportTime: importMonday}}, builds)
 
 	require.NoError(t, idx.ForgetType(importedB))
 	builds, err = idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {}}, builds)
+	assert.Equal(t, map[schema.GroupResource]searchmodel.TypeBuild{importedA: {}}, builds)
 }
 
 // A type is recorded as it is first written, and a delete does not forget it:
@@ -334,30 +337,30 @@ func TestCompletedTypeBuildsRecordNeverImportedAndForgottenTypes(t *testing.T) {
 // so a restarted server still finds a type written in part.
 func TestDocumentTypesAreRecordedAsTheyAreWritten(t *testing.T) {
 	dir := t.TempDir()
-	key := resource.GlobalSearchKey("ns")
+	key := resourcecontract.GlobalSearchKey("ns")
 	playlists := schema.GroupResource{Group: "playlist.grafana.app", Resource: "playlists"}
-	docs := []*resource.BulkIndexItem{
+	docs := []*searchmodel.BulkIndexItem{
 		refDoc(dashboardsGR, "ns", "dash-a", 11),
 		refDoc(foldersGR, "ns", "folder-a", 12),
 		refDoc(playlists, "ns", "playlist-a", 13),
 	}
 	{
 		backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
-		idx, err := backend.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(index resource.ResourceIndex) (int64, error) {
-			return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: docs})
+		idx, err := backend.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(index searchmodel.ResourceIndex) (int64, error) {
+			return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: docs})
 		}, nil, false, time.Time{}, 0)
 		require.NoError(t, err)
-		require.NoError(t, idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
-			Action: resource.ActionDelete,
+		require.NoError(t, idx.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{{
+			Action: searchmodel.ActionDelete,
 			Key:    &resourcepb.ResourceKey{Namespace: "ns", Group: foldersGR.Group, Resource: foldersGR.Resource, Name: "folder-a"},
 		}}}))
-		require.NoError(t, idx.RecordCompletedTypeBuild(playlists, resource.TypeBuild{StorageImportTime: importMonday}))
+		require.NoError(t, idx.RecordCompletedTypeBuild(playlists, searchmodel.TypeBuild{StorageImportTime: importMonday}))
 		require.NoError(t, idx.ForgetType(playlists))
 		backend.Stop()
 	}
 
 	reopened, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
-	idx, err := reopened.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(resource.ResourceIndex) (int64, error) {
+	idx, err := reopened.BuildIndex(t.Context(), key, int64(len(docs)), "test", func(searchmodel.ResourceIndex) (int64, error) {
 		return 0, errors.New("the index on disk should have been reused, not built again")
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
@@ -393,12 +396,12 @@ func TestCompletedTypeBuildsSurviveReopening(t *testing.T) {
 	const docs = 10
 	{
 		backend, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
-		build := func(index resource.ResourceIndex) (int64, error) {
+		build := func(index searchmodel.ResourceIndex) (int64, error) {
 			rv, err := indexTestDocs(typeBuildsKey, docs, 100)(index)
 			if err != nil {
 				return rv, err
 			}
-			return rv, index.RecordCompletedTypeBuild(importedA, resource.TypeBuild{StorageImportTime: importMonday})
+			return rv, index.RecordCompletedTypeBuild(importedA, searchmodel.TypeBuild{StorageImportTime: importMonday})
 		}
 		_, err := backend.BuildIndex(t.Context(), typeBuildsKey, docs, "test", build, nil, false, time.Time{}, 0)
 		require.NoError(t, err)
@@ -406,14 +409,14 @@ func TestCompletedTypeBuildsSurviveReopening(t *testing.T) {
 	}
 
 	reopened, _ := setupBleveBackend(t, withFileThreshold(5), withRootDir(dir))
-	idx, err := reopened.BuildIndex(t.Context(), typeBuildsKey, docs, "test", func(resource.ResourceIndex) (int64, error) {
+	idx, err := reopened.BuildIndex(t.Context(), typeBuildsKey, docs, "test", func(searchmodel.ResourceIndex) (int64, error) {
 		return 0, errors.New("the index on disk should have been reused, not built again")
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
 	builds, err := idx.CompletedTypeBuilds()
 	require.NoError(t, err)
-	assert.Equal(t, map[schema.GroupResource]resource.TypeBuild{importedA: {StorageImportTime: importMonday}}, builds)
+	assert.Equal(t, map[schema.GroupResource]searchmodel.TypeBuild{importedA: {StorageImportTime: importMonday}}, builds)
 }
 
 // Notifications write to a global index outside its updater, so an index closed
@@ -421,13 +424,13 @@ func TestCompletedTypeBuildsSurviveReopening(t *testing.T) {
 // panic.
 func TestWritingToAClosedGlobalIndexFails(t *testing.T) {
 	backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(t.TempDir()))
-	key := resource.GlobalSearchKey("ns")
-	idx, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(dashboardsGR, "ns", "dash-a", 11)}})
+	key := resourcecontract.GlobalSearchKey("ns")
+	idx, err := backend.BuildIndex(t.Context(), key, 1, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{refDoc(dashboardsGR, "ns", "dash-a", 11)}})
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	backend.Stop()
 
-	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(foldersGR, "ns", "folder-a", 12)}})
+	err = idx.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{refDoc(foldersGR, "ns", "folder-a", 12)}})
 	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
 }

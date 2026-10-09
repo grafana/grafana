@@ -1,6 +1,8 @@
 package foldertitle
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"net/http"
 	"testing"
@@ -15,11 +17,11 @@ import (
 // fakeStorage stubs just the ReadResource method the resolver uses.
 type fakeStorage struct {
 	resource.UnimplementedStorageBackend
-	resp    *resource.BackendReadResponse
+	resp    *resourcecontract.BackendReadResponse
 	reqSeen *resourcepb.ReadRequest
 }
 
-func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
+func (f *fakeStorage) ReadResource(_ context.Context, req *resourcepb.ReadRequest) *resourcecontract.BackendReadResponse {
 	f.reqSeen = req
 	return f.resp
 }
@@ -36,7 +38,7 @@ func TestResolver_Title(t *testing.T) {
 	})
 
 	t.Run("NotFound returns empty, no error", func(t *testing.T) {
-		storage := &fakeStorage{resp: &resource.BackendReadResponse{
+		storage := &fakeStorage{resp: &resourcecontract.BackendReadResponse{
 			Error: &resourcepb.ErrorResult{Code: http.StatusNotFound, Message: "not found"},
 		}}
 		resolver := NewResolver(storage)
@@ -47,7 +49,7 @@ func TestResolver_Title(t *testing.T) {
 	})
 
 	t.Run("other storage error is returned", func(t *testing.T) {
-		storage := &fakeStorage{resp: &resource.BackendReadResponse{
+		storage := &fakeStorage{resp: &resourcecontract.BackendReadResponse{
 			Error: &resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "boom"},
 		}}
 		resolver := NewResolver(storage)
@@ -58,7 +60,7 @@ func TestResolver_Title(t *testing.T) {
 	})
 
 	t.Run("parses spec.title from the raw value", func(t *testing.T) {
-		storage := &fakeStorage{resp: &resource.BackendReadResponse{
+		storage := &fakeStorage{resp: &resourcecontract.BackendReadResponse{
 			Value: []byte(`{"metadata":{"name":"folder-uid"},"spec":{"title":"Production"}}`),
 		}}
 		resolver := NewResolver(storage)
@@ -69,7 +71,7 @@ func TestResolver_Title(t *testing.T) {
 	})
 
 	t.Run("reads the folder resource by group/resource/namespace/name", func(t *testing.T) {
-		storage := &fakeStorage{resp: &resource.BackendReadResponse{
+		storage := &fakeStorage{resp: &resourcecontract.BackendReadResponse{
 			Value: []byte(`{"spec":{"title":"Production"}}`),
 		}}
 		resolver := NewResolver(storage)
@@ -84,7 +86,7 @@ func TestResolver_Title(t *testing.T) {
 	})
 
 	t.Run("malformed value returns an error", func(t *testing.T) {
-		storage := &fakeStorage{resp: &resource.BackendReadResponse{
+		storage := &fakeStorage{resp: &resourcecontract.BackendReadResponse{
 			Value: []byte(`{not json`),
 		}}
 		resolver := NewResolver(storage)

@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"errors"
 	"os"
@@ -14,11 +18,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
-func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedResource, rv int64) *bleveIndex {
+func newUploadTestIndex(t *testing.T, be *bleveBackend, key resourcecontract.NamespacedResource, rv int64) *bleveIndex {
 	t.Helper()
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
@@ -35,7 +38,7 @@ func newUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedR
 	return wrapped
 }
 
-func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resource.NamespacedResource, rv int64) *bleveIndex {
+func newCachedUploadTestIndex(t *testing.T, be *bleveBackend, key resourcecontract.NamespacedResource, rv int64) *bleveIndex {
 	t.Helper()
 	resourceDir := be.getResourceDir(key)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
@@ -92,7 +95,7 @@ func TestUploadSnapshot_Success(t *testing.T) {
 	// Recorded so selection can skip a snapshot missing a feature this instance
 	// requires, without downloading it first.
 	assert.True(t, uploadedMeta.FeaturesRecorded)
-	assert.Equal(t, resource.CurrentIndexFeatures(), uploadedMeta.Features)
+	assert.Equal(t, searchmodel.CurrentIndexFeatures(), uploadedMeta.Features)
 	// The test index holds a single document; DocCount is recorded for
 	// debugging only, but verify it reflects the index contents.
 	assert.Equal(t, uint64(1), uploadedMeta.DocCount)
@@ -214,19 +217,19 @@ func TestRunUploadSnapshots_SkipNoChanges(t *testing.T) {
 func TestRunUploadSnapshots_OwnershipCheck(t *testing.T) {
 	tests := []struct {
 		name         string
-		ownsIndexFn  func(resource.NamespacedResource) (bool, error)
+		ownsIndexFn  func(resourcecontract.NamespacedResource) (bool, error)
 		wantStatus   string
 		probeMessage string
 	}{
 		{
 			name:         "skip not owner",
-			ownsIndexFn:  func(resource.NamespacedResource) (bool, error) { return false, nil },
+			ownsIndexFn:  func(resourcecontract.NamespacedResource) (bool, error) { return false, nil },
 			wantStatus:   snapshotUploadStatusSkipNotOwner,
 			probeMessage: "remote probe must not run for non-owned indexes",
 		},
 		{
 			name:         "ownership check error",
-			ownsIndexFn:  func(resource.NamespacedResource) (bool, error) { return false, errors.New("ring unavailable") },
+			ownsIndexFn:  func(resourcecontract.NamespacedResource) (bool, error) { return false, errors.New("ring unavailable") },
 			wantStatus:   snapshotUploadStatusError,
 			probeMessage: "remote probe must not run when ownership check fails",
 		},
@@ -272,9 +275,9 @@ func TestRunUploadSnapshots_PreservesConcurrentMutations(t *testing.T) {
 	idx := newCachedUploadTestIndex(t, be, key, 42)
 	require.NoError(t, writeSnapshotMutationCount(idx.index, 3))
 	store.setOnUpload(func() error {
-		return idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+		return idx.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Name:  "dash-2",
 				Title: "dash-2",
 				Key: &resourcepb.ResourceKey{

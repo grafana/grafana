@@ -35,14 +35,20 @@ const (
 	FlagUnifiedStorageClientOnBehalfOf            = "unifiedStorageClient.onBehalfOf"
 )
 
-//go:generate mockery --name ResourceClient --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
 type ResourceClient interface {
-	SearchClient
 	resourcepb.ResourceStoreClient
 	resourcepb.ResourceStatsClient
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
 	resourcepb.QuotasClient
+}
+
+// Client is the combined facade for callers that need both storage and search.
+//
+//go:generate mockery --name Client --structname MockResourceClient --inpackage --filename client_mock.go --with-expecter
+type Client interface {
+	ResourceClient
+	SearchClient
 }
 
 type SearchClient interface {
@@ -51,34 +57,59 @@ type SearchClient interface {
 	resourcepb.DiagnosticsClient //nolint:staticcheck
 }
 
-// Internal implementation
 type resourceClient struct {
 	resourcepb.ResourceStoreClient
 	resourcepb.ResourceStatsClient
-	resourcepb.ResourceIndexClient
-	resourcepb.ManagedObjectIndexClient
 	resourcepb.BulkStoreClient
 	resourcepb.BlobStoreClient
-	resourcepb.DiagnosticsClient
 	resourcepb.QuotasClient
+}
+
+type searchClient struct {
+	resourcepb.ResourceIndexClient
+	resourcepb.ManagedObjectIndexClient
+	resourcepb.DiagnosticsClient
+}
+
+type client struct {
+	ResourceClient
+	SearchClient
+}
+
+func NewResourceClientFromConn(cc grpc.ClientConnInterface) ResourceClient {
+	return &resourceClient{
+		ResourceStoreClient: resourcepb.NewResourceStoreClient(cc),
+		ResourceStatsClient: resourcepb.NewResourceStatsClient(cc),
+		BulkStoreClient:     resourcepb.NewBulkStoreClient(cc),
+		BlobStoreClient:     resourcepb.NewBlobStoreClient(cc),
+		QuotasClient:        resourcepb.NewQuotasClient(cc),
+	}
+}
+
+func NewSearchClientFromConn(cc grpc.ClientConnInterface) SearchClient {
+	return &searchClient{
+		ResourceIndexClient:      resourcepb.NewResourceIndexClient(cc),
+		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(cc),
+		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(cc),
+	}
 }
 
 // NewResourceClientFromConns sends store calls over storageCc and index calls over indexCc.
 // Interceptors must already be applied to both connections.
-func NewResourceClientFromConns(storageCc grpc.ClientConnInterface, indexCc grpc.ClientConnInterface) ResourceClient {
-	return &resourceClient{
-		ResourceStoreClient:      resourcepb.NewResourceStoreClient(storageCc),
-		ResourceStatsClient:      resourcepb.NewResourceStatsClient(storageCc),
+func NewResourceClientFromConns(storageCc grpc.ClientConnInterface, indexCc grpc.ClientConnInterface) Client {
+	search := &searchClient{
 		ResourceIndexClient:      resourcepb.NewResourceIndexClient(indexCc),
 		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(indexCc),
-		BulkStoreClient:          resourcepb.NewBulkStoreClient(storageCc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(storageCc),
-		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(storageCc),
-		QuotasClient:             resourcepb.NewQuotasClient(storageCc),
+		// Existing combined clients use storage health checks.
+		DiagnosticsClient: resourcepb.NewDiagnosticsClient(storageCc),
+	}
+	return &client{
+		ResourceClient: NewResourceClientFromConn(storageCc),
+		SearchClient:   search,
 	}
 }
 
-func NewAuthlessResourceClient(cc grpc.ClientConnInterface) ResourceClient {
+func NewAuthlessResourceClient(cc grpc.ClientConnInterface) Client {
 	return NewResourceClientFromConns(cc, cc)
 }
 
@@ -119,7 +150,7 @@ func (cfg RemoteResourceClientConfig) onBehalfOfPolicy() func(context.Context) b
 	return onBehalfOfFlag
 }
 
-func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (ResourceClient, error) {
+func NewRemoteResourceClient(tracer trace.Tracer, conn grpc.ClientConnInterface, indexConn grpc.ClientConnInterface, cfg RemoteResourceClientConfig) (Client, error) {
 	clientInt, err := NewAuthnGrpcClientInterceptor(tracer, cfg)
 	if err != nil {
 		return nil, err

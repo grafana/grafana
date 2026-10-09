@@ -64,7 +64,7 @@ func (s *ModuleServer) routerStorageClient(accessClient types.AccessClient) (res
 	if err != nil {
 		return nil, err
 	}
-	return resource.NewLocalResourceClient(resourceServer), nil
+	return resource.NewLocalResourceClient(resourceServer.StorageHandler(), resourceServer.SearchHandler()), nil
 }
 
 func routerUsesLocalStorage(cfg *setting.Cfg) bool {

@@ -23,11 +23,12 @@ import (
 	grpcUtils "github.com/grafana/grafana/pkg/storage/unified/resource/grpc"
 	"github.com/grafana/grafana/pkg/storage/unified/resourceclient"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
 )
 
 // The client lives in pkg/storage/unified/resourceclient. These aliases keep existing callers compiling.
 type (
-	ResourceClient             = resourceclient.ResourceClient
+	ResourceClient             = resourceclient.Client
 	SearchClient               = resourceclient.SearchClient
 	RemoteResourceClientConfig = resourceclient.RemoteResourceClientConfig
 )
@@ -74,7 +75,10 @@ func NewLegacyResourceClient(channel grpc.ClientConnInterface, indexChannel grpc
 	return resourceclient.NewResourceClientFromConns(cc, cci)
 }
 
-func NewLocalResourceClient(srv ResourceServer) ResourceClient {
+func NewLocalResourceClient(srv ResourceServer, search SearchServer) ResourceClient {
+	if search == nil {
+		search = &searchmodel.DisabledServer{Stats: srv}
+	}
 	// scenario: local in-proc
 	channel := &inprocgrpc.Channel{}
 	tracer := otel.Tracer("github.com/grafana/grafana/pkg/storage/unified/resource")
@@ -98,6 +102,10 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 		&resourcepb.Diagnostics_ServiceDesc,
 		&resourcepb.Quotas_ServiceDesc,
 	} {
+		var handler any = srv
+		if desc == &resourcepb.ResourceIndex_ServiceDesc || desc == &resourcepb.ManagedObjectIndex_ServiceDesc {
+			handler = search
+		}
 		isResourceStore := desc == &resourcepb.ResourceStore_ServiceDesc
 		if convertErrors {
 			desc = grpchan.InterceptServer(desc, UnaryErrorResultInterceptor(), nil)
@@ -121,7 +129,7 @@ func NewLocalResourceClient(srv ResourceServer) ResourceClient {
 					grpcAuth.StreamServerInterceptor(grpcAuthInt),
 				),
 			),
-			srv,
+			handler,
 		)
 	}
 

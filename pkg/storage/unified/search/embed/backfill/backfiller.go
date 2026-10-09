@@ -1,6 +1,10 @@
 package backfill
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"context"
 	"errors"
 	"fmt"
@@ -40,7 +44,7 @@ const (
 const viewsLast30DaysKey = "views_last_30_days"
 
 type Options struct {
-	Storage       resource.StorageBackend
+	Storage       resource.StorageReader
 	VectorBackend vector.VectorBackend
 	BatchEmbedder *embedder.BatchEmbedder
 	Builders      []embed.Builder
@@ -51,7 +55,7 @@ type Options struct {
 	DashboardStats builders.DashboardStats
 	// Metrics are always recorded. Nil means unregistered metrics, for
 	// callers without a registry.
-	Metrics *resource.VectorMetrics
+	Metrics *searchmetrics.VectorMetrics
 	// Interval is how often Run re-scans for incomplete jobs (jobs are
 	// created lazily by the reconciler's write path). Defaults to 1m.
 	Interval time.Duration
@@ -60,14 +64,14 @@ type Options struct {
 }
 
 type VectorBackfiller struct {
-	storage         resource.StorageBackend
+	storage         resource.StorageReader
 	vectorBackend   vector.VectorBackend
 	batchEmbedder   *embedder.BatchEmbedder
 	builders        embed.BuilderSnapshot
 	builderProvider embed.BuilderProvider
 	dashboardStats  builders.DashboardStats
 	log             log.Logger
-	metrics         *resource.VectorMetrics
+	metrics         *searchmetrics.VectorMetrics
 	interval        time.Duration
 	pageSize        int
 
@@ -111,7 +115,7 @@ func NewVectorBackfiller(opts Options) (*VectorBackfiller, error) {
 	// Recording sites should not have to check for nil.
 	metrics := opts.Metrics
 	if metrics == nil {
-		metrics = resource.ProvideVectorMetrics(nil)
+		metrics = searchmetrics.ProvideVectorMetrics(nil)
 	}
 
 	return &VectorBackfiller{
@@ -370,7 +374,7 @@ func (b *VectorBackfiller) runBackfillPage(ctx context.Context, job vector.Backf
 		}
 	}()
 	var pendingTok, nextToken string
-	_, err := b.storage.ListIterator(ctx, req, func(iter resource.ListIterator) error {
+	_, err := b.storage.ListIterator(ctx, req, func(iter resourcecontract.ListIterator) error {
 		for iter.Next() {
 			if iterErr := iter.Error(); iterErr != nil {
 				return iterErr
@@ -492,7 +496,7 @@ type preparedBackfillItem struct {
 
 // Preparation only reads storage. Writes wait until the page's provider calls
 // succeed, then commit in scan order so a failed object remains retryable.
-func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, iter resource.ListIterator) (*preparedBackfillItem, error) {
+func (b *VectorBackfiller) prepareBackfillItem(ctx context.Context, job vector.BackfillJob, builder collectionBuilder, iter resourcecontract.ListIterator) (*preparedBackfillItem, error) {
 	ctx, span := tracer.Start(ctx, "unified.backfill.processBackfillItem")
 	namespace := iter.Namespace()
 	name := iter.Name()

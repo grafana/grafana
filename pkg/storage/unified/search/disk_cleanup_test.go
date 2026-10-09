@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -9,8 +13,6 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // setupDiskCleanupBackend wires a minimal bleveBackend that runDiskCleanup can
@@ -18,7 +20,7 @@ import (
 // to "everything owned" when nil. The unopened-grace defaults to the same
 // value as grace; tests that exercise the longer-grace branch override
 // b.opts.DiskCleanupUnopenedGracePeriod explicitly.
-func setupDiskCleanupBackend(t *testing.T, grace time.Duration, ownsFn func(resource.NamespacedResource) (bool, error)) (*bleveBackend, *resource.BleveIndexMetrics) {
+func setupDiskCleanupBackend(t *testing.T, grace time.Duration, ownsFn func(resourcecontract.NamespacedResource) (bool, error)) (*bleveBackend, *searchmetrics.BleveMetrics) {
 	t.Helper()
 	opts := []setupOption{
 		withFileThreshold(5),
@@ -85,7 +87,7 @@ func writeFileOld(t *testing.T, dir, name string) {
 }
 
 func TestRunDiskCleanup_UnownedResource_OldDirsDeleted(t *testing.T) {
-	owns := func(_ resource.NamespacedResource) (bool, error) { return false, nil }
+	owns := func(_ resourcecontract.NamespacedResource) (bool, error) { return false, nil }
 	b, metrics := setupDiskCleanupBackend(t, time.Minute, owns)
 
 	root := b.opts.Root
@@ -104,7 +106,7 @@ func TestRunDiskCleanup_UnownedResource_OldDirsDeleted(t *testing.T) {
 }
 
 func TestRunDiskCleanup_UnownedResource_FreshDirKept(t *testing.T) {
-	owns := func(_ resource.NamespacedResource) (bool, error) { return false, nil }
+	owns := func(_ resourcecontract.NamespacedResource) (bool, error) { return false, nil }
 	b, metrics := setupDiskCleanupBackend(t, time.Hour, owns)
 
 	root := b.opts.Root
@@ -119,7 +121,7 @@ func TestRunDiskCleanup_UnownedResource_FreshDirKept(t *testing.T) {
 func TestRunDiskCleanup_OwnedResource_KeepsCachedActive(t *testing.T) {
 	b, _ := setupDiskCleanupBackend(t, time.Minute, nil)
 
-	ns := resource.NamespacedResource{Namespace: "ns1", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	ns := resourcecontract.NamespacedResource{Namespace: "ns1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	resourceDir := b.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
@@ -161,10 +163,10 @@ func TestRunDiskCleanup_UnownedResource_KeepsCachedActive(t *testing.T) {
 	// cleanup sweep must keep the on-disk directory until the eviction loop
 	// closes the index; otherwise the live scorch persister fails on its
 	// next segment write with "persist err: ... no such file or directory".
-	owns := func(_ resource.NamespacedResource) (bool, error) { return false, nil }
+	owns := func(_ resourcecontract.NamespacedResource) (bool, error) { return false, nil }
 	b, metrics := setupDiskCleanupBackend(t, time.Minute, owns)
 
-	ns := resource.NamespacedResource{Namespace: "ns1", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	ns := resourcecontract.NamespacedResource{Namespace: "ns1", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	resourceDir := b.getResourceDir(ns)
 	require.NoError(t, os.MkdirAll(resourceDir, 0o750))
 
@@ -237,7 +239,7 @@ func TestRunDiskCleanup_OwnedResource_NewestSiblingDeletedWhenUnopenedGraceExpir
 }
 
 func TestRunDiskCleanup_InFlightBuildDirNeverDeleted(t *testing.T) {
-	owns := func(_ resource.NamespacedResource) (bool, error) { return false, nil }
+	owns := func(_ resourcecontract.NamespacedResource) (bool, error) { return false, nil }
 	b, _ := setupDiskCleanupBackend(t, time.Minute, owns)
 	root := b.opts.Root
 
@@ -251,7 +253,7 @@ func TestRunDiskCleanup_InFlightBuildDirNeverDeleted(t *testing.T) {
 }
 
 func TestRunDiskCleanup_EmptyParentDirsRemoved(t *testing.T) {
-	owns := func(_ resource.NamespacedResource) (bool, error) { return false, nil }
+	owns := func(_ resourcecontract.NamespacedResource) (bool, error) { return false, nil }
 	b, _ := setupDiskCleanupBackend(t, time.Minute, owns)
 	root := b.opts.Root
 
@@ -295,7 +297,7 @@ func TestRunDiskCleanup_SnapshotStaging_FreshKept(t *testing.T) {
 }
 
 func TestRunDiskCleanup_OwnershipErrorFailsSafe(t *testing.T) {
-	owns := func(_ resource.NamespacedResource) (bool, error) {
+	owns := func(_ resourcecontract.NamespacedResource) (bool, error) {
 		return false, fs.ErrInvalid
 	}
 	b, metrics := setupDiskCleanupBackend(t, time.Minute, owns)
@@ -312,7 +314,7 @@ func TestRunDiskCleanup_OwnershipErrorFailsSafe(t *testing.T) {
 }
 
 func TestRunDiskCleanup_UnknownNamespaceLayoutIgnored(t *testing.T) {
-	owns := func(_ resource.NamespacedResource) (bool, error) { return false, nil }
+	owns := func(_ resourcecontract.NamespacedResource) (bool, error) { return false, nil }
 	b, _ := setupDiskCleanupBackend(t, time.Minute, owns)
 	root := b.opts.Root
 

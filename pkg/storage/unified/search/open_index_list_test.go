@@ -1,6 +1,8 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"encoding/json"
 	"os"
@@ -9,8 +11,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 func TestOpenIndexListWriteAndLoad(t *testing.T) {
@@ -21,8 +21,8 @@ func TestOpenIndexListWriteAndLoad(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	first := resource.NamespacedResource{Namespace: "ns-a", Group: "group-a", Resource: "resource-a"}
-	second := resource.NamespacedResource{Namespace: "ns-b", Group: "group-b", Resource: "resource-b"}
+	first := resourcecontract.NamespacedResource{Namespace: "ns-a", Group: "group-a", Resource: "resource-a"}
+	second := resourcecontract.NamespacedResource{Namespace: "ns-b", Group: "group-b", Resource: "resource-b"}
 
 	_, err = backend.BuildIndex(context.Background(), second, 2, "test", indexTestDocs(second, 2, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
@@ -34,7 +34,7 @@ func TestOpenIndexListWriteAndLoad(t *testing.T) {
 
 	stats, err := backend.LoadOpenIndexStats(now.Add(time.Minute), time.Hour)
 	require.NoError(t, err)
-	require.Equal(t, []resource.ResourceStats{
+	require.Equal(t, []resourcecontract.ResourceStats{
 		{NamespacedResource: first, Count: 3},
 		{NamespacedResource: second, Count: 2},
 	}, stats)

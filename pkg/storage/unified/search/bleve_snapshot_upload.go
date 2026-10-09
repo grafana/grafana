@@ -1,6 +1,8 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"context"
 	"encoding/binary"
 	"errors"
@@ -16,8 +18,6 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	oteltrace "go.opentelemetry.io/otel/trace"
-
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // errSkipRecentRemote is returned by uploadSnapshot when the cross-instance
@@ -25,7 +25,7 @@ import (
 // UploadInterval. Callers treat this as a non-error skip.
 var errSkipRecentRemote = errors.New("skipping upload: recent remote snapshot exists")
 
-func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex) (retErr error) {
+func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resourcecontract.NamespacedResource, idx *bleveIndex) (retErr error) {
 	ctx, span := tracer.Start(ctx, "search.remote_index_snapshot.upload")
 	start := time.Now()
 	logger := b.log.New("namespace", key.Namespace, "group", key.Group, "resource", key.Resource)
@@ -113,7 +113,7 @@ func (b *bleveBackend) uploadSnapshot(ctx context.Context, key resource.Namespac
 // and uploads it to the remote index store. The caller acquires and
 // releases the build lock; this helper only re-checks it between steps.
 // Returns the uploaded snapshot key and the RV read from the staged copy.
-func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resource.NamespacedResource, idx *bleveIndex, lock IndexStoreLock) (ulid.ULID, int64, error) {
+func (b *bleveBackend) snapshotCopyAndUpload(ctx context.Context, key resourcecontract.NamespacedResource, idx *bleveIndex, lock IndexStoreLock) (ulid.ULID, int64, error) {
 	stagingDir, err := b.newSnapshotStagingDir(key)
 	if err != nil {
 		return ulid.ULID{}, 0, fmt.Errorf("creating snapshot staging dir: %w", err)
@@ -264,7 +264,7 @@ func readSnapshotIndexFormat(indexDir string) (string, error) {
 // rename of one side can't drift from the other.
 const snapshotsDirName = "snapshots"
 
-func (b *bleveBackend) newSnapshotStagingDir(key resource.NamespacedResource) (string, error) {
+func (b *bleveBackend) newSnapshotStagingDir(key resourcecontract.NamespacedResource) (string, error) {
 	parent := filepath.Join(b.opts.Root, snapshotsDirName, resourceSubPath(key))
 	if !isPathWithinRoot(parent, b.opts.Root) {
 		return "", fmt.Errorf("invalid path %s", parent)

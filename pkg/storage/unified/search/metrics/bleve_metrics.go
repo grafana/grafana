@@ -1,0 +1,209 @@
+package metrics
+
+import (
+	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+const (
+	IndexedDocumentsLive    = "live"
+	IndexedDocumentsDeleted = "deleted"
+)
+
+var IndexCreationBuckets = []float64{1, 5, 10, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000}
+
+type BleveMetrics struct {
+	*BuildMetrics
+	IndexSize                             prometheus.Gauge
+	IndexedKinds                          *prometheus.GaugeVec
+	IndexCreationTime                     *prometheus.HistogramVec
+	OpenIndexes                           *prometheus.GaugeVec
+	IndexBuilds                           *prometheus.CounterVec
+	IndexBuildFailures                    prometheus.Counter
+	IndexBuildSkipped                     prometheus.Counter
+	UpdateLatency                         prometheus.Histogram
+	UpdatedDocuments                      prometheus.Histogram
+	IndexSnapshotDownloadAttempts         *prometheus.CounterVec
+	IndexSnapshotDownloadDuration         prometheus.Histogram
+	IndexSnapshotUploads                  *prometheus.CounterVec
+	IndexSnapshotUploadDuration           prometheus.Histogram
+	IndexSnapshotBuildCoordinations       *prometheus.CounterVec
+	IndexSnapshotNamespaceCleanups        *prometheus.CounterVec
+	IndexSnapshotDeleted                  *prometheus.CounterVec
+	IndexSnapshotIncompleteUploadsCleaned prometheus.Counter
+	IndexDiskCleanupRuns                  *prometheus.CounterVec
+	IndexDiskCleanupDirsDeleted           *prometheus.CounterVec
+	SearchCapabilityViolations            *prometheus.CounterVec
+	SearchResultFormats                   *prometheus.CounterVec
+	BuildIndexedBytes                     *prometheus.CounterVec
+}
+
+func ProvideBleveMetrics(reg prometheus.Registerer, build *BuildMetrics) *BleveMetrics {
+	if build == nil {
+		build = ProvideBuildMetrics(reg)
+	}
+	m := &BleveMetrics{
+		BuildMetrics: build,
+		IndexSize: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_index_server_index_size_bytes",
+			Help: "Size of the index in bytes - only for file-based indices",
+		}),
+		IndexedKinds: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_index_server_indexed_kinds",
+			Help: "Number of indexed documents by kind. Live documents and deleted ones the index keeps so they can be found in trash are reported separately.",
+		}, []string{"kind", "state"}),
+		IndexCreationTime: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_index_build_time_seconds",
+			Help:                            "Time it takes to successfully build an index. Failed or skipped builds are not counted.",
+			Buckets:                         IndexCreationBuckets,
+			NativeHistogramBucketFactor:     1.1, // enable native histograms
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}, []string{}),
+		OpenIndexes: promauto.With(reg).NewGaugeVec(prometheus.GaugeOpts{
+			Name: "grafana_index_server_open_indexes",
+			Help: "Number of open indexes per storage type. An open index corresponds to single resource group.",
+		}, []string{"index_storage"}),
+		IndexBuilds: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_index_build_total",
+			Help: "Number of times index build was attempted due to specific reason",
+		}, []string{"reason"}),
+		IndexBuildFailures: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "grafana_index_server_index_build_failures_total",
+			Help: "Number of times index build failed",
+		}),
+		IndexBuildSkipped: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "grafana_index_server_index_build_skipped_total",
+			Help: "Number of times index build has been skipped due to existing valid index being found on disk",
+		}),
+		UpdateLatency: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_update_latency_seconds",
+			Help:                            "Time to execute index update with latest modifications",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+		UpdatedDocuments: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_update_documents",
+			Help:                            "Number of documents indexed during index update",
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+		IndexSnapshotDownloadAttempts: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_snapshot_download_attempts_total",
+			Help: "Number of remote index snapshot download attempts at index build time, by selection policy and outcome.",
+		}, []string{"policy", "status"}),
+		IndexSnapshotDownloadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_snapshot_download_duration_seconds",
+			Help:                            "Duration of successful remote index snapshot downloads, including open and validation.",
+			Buckets:                         IndexCreationBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+		IndexSnapshotUploads: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_snapshot_uploads_total",
+			Help: "Number of remote index snapshot upload attempts, by outcome.",
+		}, []string{"status"}),
+		IndexSnapshotUploadDuration: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
+			Name:                            "grafana_index_server_snapshot_upload_duration_seconds",
+			Help:                            "Duration of successful remote index snapshot uploads, including snapshot creation.",
+			Buckets:                         IndexCreationBuckets,
+			NativeHistogramBucketFactor:     1.1,
+			NativeHistogramMaxBucketNumber:  160,
+			NativeHistogramMinResetDuration: time.Hour,
+		}),
+		IndexSnapshotBuildCoordinations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_snapshot_build_coordinations_total",
+			Help: "Number of snapshot build coordination outcomes, by flow and outcome.",
+		}, []string{"flow", "outcome"}),
+		IndexSnapshotNamespaceCleanups: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_snapshot_namespace_cleanups_total",
+			Help: "Number of namespace-level remote index snapshot cleanup attempts, by outcome.",
+		}, []string{"status"}),
+		IndexSnapshotDeleted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_snapshot_deleted_total",
+			Help: "Number of remote index snapshot delete attempts by cleanup, by outcome.",
+		}, []string{"outcome"}),
+		IndexSnapshotIncompleteUploadsCleaned: promauto.With(reg).NewCounter(prometheus.CounterOpts{
+			Name: "grafana_index_server_snapshot_incomplete_uploads_cleaned_total",
+			Help: "Number of incomplete (partial) index snapshots deleted by cleanup.",
+		}),
+		IndexDiskCleanupRuns: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_disk_cleanup_runs_total",
+			Help: "Number of on-disk index cleanup pass attempts, by outcome.",
+		}, []string{"outcome"}),
+		IndexDiskCleanupDirsDeleted: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_disk_cleanup_dirs_deleted_total",
+			Help: "Number of on-disk directories the disk cleanup pass attempted to delete, by kind and outcome.",
+		}, []string{"kind", "outcome"}),
+		BuildIndexedBytes: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_build_indexed_bytes_total",
+			Help: "Bytes the index reports for the documents it was given. Compare with source bytes to see how much bigger or smaller search documents are.",
+		}, []string{"path", "group", "resource"}),
+		SearchCapabilityViolations: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_capability_violations_total",
+			Help: "Number of search requests that used a field in a way its declaration does not allow. Counted whether or not the request was rejected.",
+		}, []string{"resource", "capability"}),
+		SearchResultFormats: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+			Name: "grafana_index_server_search_result_format_total",
+			Help: "Number of search responses by result format.",
+		}, []string{"format"}),
+	}
+	m.OpenIndexes.WithLabelValues("file").Set(0)
+	m.OpenIndexes.WithLabelValues("memory").Set(0)
+	m.SearchResultFormats.WithLabelValues("resource_table").Add(0)
+	m.SearchResultFormats.WithLabelValues("field_values").Add(0)
+	return m
+}
+
+// InitSnapshotMetrics zero-initialises the per-status label series of the
+// snapshot-related counters. Call once at startup only when the snapshot
+// feature is configured to run on this instance, so disabled instances don't
+// emit permanently-zero `index_server_snapshot_*` series. Registration of
+// the CounterVecs themselves stays unconditional in ProvideIndexMetrics.
+func (m *BleveMetrics) InitSnapshotMetrics() {
+	for _, policy := range []string{"tiered", "same_version", "cold_start"} {
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "success").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "empty").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "download_error").Add(0)
+		m.IndexSnapshotDownloadAttempts.WithLabelValues(policy, "validate_error").Add(0)
+	}
+	m.IndexSnapshotUploads.WithLabelValues("success").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_no_changes").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_lock_contention").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_lock_lost").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_recent_remote").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("skip_not_owner").Add(0)
+	m.IndexSnapshotUploads.WithLabelValues("error").Add(0)
+	for _, flow := range []string{"cold_start", "rebuild"} {
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "acquired_lock").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "downloaded_after_wait").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "wait_timed_out").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "lock_error").Add(0)
+		m.IndexSnapshotBuildCoordinations.WithLabelValues(flow, "context_canceled").Add(0)
+	}
+	m.IndexSnapshotNamespaceCleanups.WithLabelValues("success").Add(0)
+	m.IndexSnapshotNamespaceCleanups.WithLabelValues("error").Add(0)
+	m.IndexSnapshotNamespaceCleanups.WithLabelValues("skip_lock_held").Add(0)
+	m.IndexSnapshotNamespaceCleanups.WithLabelValues("skip_unowned").Add(0)
+	m.IndexSnapshotDeleted.WithLabelValues("success").Add(0)
+	m.IndexSnapshotDeleted.WithLabelValues("error").Add(0)
+	m.IndexSnapshotIncompleteUploadsCleaned.Add(0)
+}
+
+// InitDiskCleanupMetrics zero-initialises the per-label series of the disk
+// cleanup counters. Call once at startup only when the disk cleanup loop is
+// configured to run on this instance, so disabled instances don't emit
+// permanently-zero `index_server_disk_cleanup_*` series.
+func (m *BleveMetrics) InitDiskCleanupMetrics() {
+	m.IndexDiskCleanupRuns.WithLabelValues("success").Add(0)
+	m.IndexDiskCleanupRuns.WithLabelValues("error").Add(0)
+	for _, kind := range []string{"index", "snapshot_staging"} {
+		m.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, "success").Add(0)
+		m.IndexDiskCleanupDirsDeleted.WithLabelValues(kind, "error").Add(0)
+	}
+}

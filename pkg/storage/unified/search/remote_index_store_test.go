@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"crypto/rand"
 	"encoding/json"
@@ -19,7 +23,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 // testLogger is the logger passed to package-level helpers from tests. Tests
@@ -61,8 +64,8 @@ func TestMetadataRetriesOutlastFileRetries(t *testing.T) {
 	require.Equal(t, snapshotStoreMetadataRetryBackoffConfig.MaxRetries+1, attempts)
 }
 
-func newTestNsResource() resource.NamespacedResource {
-	return resource.NamespacedResource{
+func newTestNsResource() resourcecontract.NamespacedResource {
+	return resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -89,7 +92,7 @@ func createTestBleveIndex(t *testing.T) string {
 
 // writeTestSnapshotFile writes data as relPath of the snapshot at indexKey.
 // It takes no testing.T so it can run on a helper goroutine.
-func writeTestSnapshotFile(ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, data []byte) error {
+func writeTestSnapshotFile(ctx context.Context, store RemoteIndexStore, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, data []byte) error {
 	f, err := os.CreateTemp("", "snapshot-file-*")
 	if err != nil {
 		return err
@@ -290,7 +293,7 @@ type errorStore struct {
 	readManifestErr  error
 }
 
-func (e *errorStore) WriteSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
+func (e *errorStore) WriteSnapshotFile(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
 	if e.writeFileFn != nil {
 		if err := e.writeFileFn(); err != nil {
 			return err
@@ -299,14 +302,14 @@ func (e *errorStore) WriteSnapshotFile(ctx context.Context, ns resource.Namespac
 	return e.RemoteIndexStore.WriteSnapshotFile(ctx, ns, indexKey, relPath, src)
 }
 
-func (e *errorStore) WriteSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, manifest []byte) error {
+func (e *errorStore) WriteSnapshotManifest(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, manifest []byte) error {
 	if e.writeManifestErr != nil {
 		return e.writeManifestErr
 	}
 	return e.RemoteIndexStore.WriteSnapshotManifest(ctx, ns, indexKey, manifest)
 }
 
-func (e *errorStore) ReadSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+func (e *errorStore) ReadSnapshotFile(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	if e.readFileFn != nil {
 		if err := e.readFileFn(); err != nil {
 			return err
@@ -315,7 +318,7 @@ func (e *errorStore) ReadSnapshotFile(ctx context.Context, ns resource.Namespace
 	return e.RemoteIndexStore.ReadSnapshotFile(ctx, ns, indexKey, relPath, dst, expectedSize)
 }
 
-func (e *errorStore) ReadSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) ([]byte, error) {
+func (e *errorStore) ReadSnapshotManifest(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID) ([]byte, error) {
 	if e.readManifestErr != nil {
 		return nil, e.readManifestErr
 	}
@@ -607,7 +610,7 @@ func newHookableStore(t *testing.T) *hookableStore {
 	return &hookableStore{inner: newTestKVRemoteIndexStore(t)}
 }
 
-func (s *hookableStore) LockBuildIndex(ctx context.Context, ns resource.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
+func (s *hookableStore) LockBuildIndex(ctx context.Context, ns resourcecontract.NamespacedResource, buildVersion string) (IndexStoreLock, error) {
 	s.lockAcquireCalls.Add(1)
 	s.mu.Lock()
 	s.lastLockBuildVersion = buildVersion
@@ -637,7 +640,7 @@ func (s *hookableStore) LockNamespaceForCleanup(ctx context.Context, namespace s
 	return s.inner.LockNamespaceForCleanup(ctx, namespace)
 }
 
-func (s *hookableStore) WriteSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
+func (s *hookableStore) WriteSnapshotFile(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, src *os.File) error {
 	s.mu.Lock()
 	// Reset per-upload captures when we see a write for a new key.
 	if s.lastUploadedKey != indexKey {
@@ -655,7 +658,7 @@ func (s *hookableStore) WriteSnapshotFile(ctx context.Context, ns resource.Names
 	return s.inner.WriteSnapshotFile(ctx, ns, indexKey, relPath, src)
 }
 
-func (s *hookableStore) WriteSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, manifest []byte) error {
+func (s *hookableStore) WriteSnapshotManifest(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, manifest []byte) error {
 	s.mu.Lock()
 	if s.lastUploadedKey != indexKey {
 		s.lastUploadedKey = indexKey
@@ -687,7 +690,7 @@ func (s *hookableStore) WriteSnapshotManifest(ctx context.Context, ns resource.N
 	return nil
 }
 
-func (s *hookableStore) ReadSnapshotFile(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
+func (s *hookableStore) ReadSnapshotFile(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, relPath string, dst *os.File, expectedSize int64) error {
 	s.mu.Lock()
 	injected := s.readSnapshotFileErr
 	s.mu.Unlock()
@@ -700,7 +703,7 @@ func (s *hookableStore) ReadSnapshotFile(ctx context.Context, ns resource.Namesp
 	return s.inner.ReadSnapshotFile(ctx, ns, indexKey, relPath, dst, expectedSize)
 }
 
-func (s *hookableStore) ReadSnapshotManifest(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) ([]byte, error) {
+func (s *hookableStore) ReadSnapshotManifest(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID) ([]byte, error) {
 	s.mu.Lock()
 	injected := s.readManifestErrs[indexKey]
 	s.mu.Unlock()
@@ -717,11 +720,11 @@ func (s *hookableStore) ListNamespaces(ctx context.Context) ([]string, error) {
 	return s.inner.ListNamespaces(ctx)
 }
 
-func (s *hookableStore) ListNamespaceResources(ctx context.Context, namespace string) ([]resource.NamespacedResource, error) {
+func (s *hookableStore) ListNamespaceResources(ctx context.Context, namespace string) ([]resourcecontract.NamespacedResource, error) {
 	return s.inner.ListNamespaceResources(ctx, namespace)
 }
 
-func (s *hookableStore) ListIndexKeys(ctx context.Context, ns resource.NamespacedResource) ([]ulid.ULID, error) {
+func (s *hookableStore) ListIndexKeys(ctx context.Context, ns resourcecontract.NamespacedResource) ([]ulid.ULID, error) {
 	s.listKeyCalls.Add(1)
 	s.mu.Lock()
 	injected := s.listKeysErr
@@ -732,11 +735,11 @@ func (s *hookableStore) ListIndexKeys(ctx context.Context, ns resource.Namespace
 	return s.inner.ListIndexKeys(ctx, ns)
 }
 
-func (s *hookableStore) ListIndexKeysIncludingIncomplete(ctx context.Context, ns resource.NamespacedResource) ([]ulid.ULID, error) {
+func (s *hookableStore) ListIndexKeysIncludingIncomplete(ctx context.Context, ns resourcecontract.NamespacedResource) ([]ulid.ULID, error) {
 	return s.inner.ListIndexKeysIncludingIncomplete(ctx, ns)
 }
 
-func (s *hookableStore) DeleteIndex(ctx context.Context, ns resource.NamespacedResource, indexKey ulid.ULID) error {
+func (s *hookableStore) DeleteIndex(ctx context.Context, ns resourcecontract.NamespacedResource, indexKey ulid.ULID) error {
 	return s.inner.DeleteIndex(ctx, ns, indexKey)
 }
 
@@ -876,7 +879,7 @@ func (l *hookableLock) markLost() {
 //
 // Manifest fields (UploadTimestamp, BuildTime, etc.) are written as-is, so
 // callers can pin arbitrary values independent of indexKey's ULID time.
-func seedSnapshot(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
+func seedSnapshot(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
 	t.Helper()
 	require.NoError(t, writeTestSnapshotFile(ctx, store, ns, indexKey, "store/data.bin", []byte("x")))
 	if meta.Files == nil {
@@ -893,7 +896,7 @@ func seedSnapshot(t *testing.T, ctx context.Context, store RemoteIndexStore, ns 
 // without violating the testing.TB rule that FailNow must run on the test
 // goroutine.
 type downloadableSnapshot struct {
-	ns       resource.NamespacedResource
+	ns       resourcecontract.NamespacedResource
 	indexKey ulid.ULID
 	files    map[string][]byte
 	manifest []byte
@@ -908,7 +911,7 @@ type downloadableSnapshot struct {
 // real snapshots derive manifest BuildTime from the index's internal
 // buildInfo (see bleve_snapshot_upload.go), so the two stay consistent
 // when readers (local reuse vs fresh-remote selection) compare them.
-func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) *downloadableSnapshot {
+func buildDownloadableSnapshot(t *testing.T, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) *downloadableSnapshot {
 	t.Helper()
 	srcDir := filepath.Join(t.TempDir(), "idx")
 	idx, err := bleve.New(srcDir, bleve.NewIndexMapping())
@@ -923,7 +926,7 @@ func buildDownloadableSnapshot(t *testing.T, ns resource.NamespacedResource, ind
 	// The manifest keeps meta as given, so "features not recorded" stays testable.
 	indexFeatures := meta.Features
 	if indexFeatures == nil {
-		indexFeatures = resource.CurrentIndexFeatures()
+		indexFeatures = searchmodel.CurrentIndexFeatures()
 	}
 	bi, err := json.Marshal(buildInfo{
 		BuildTime:    buildTime.Unix(),
@@ -988,7 +991,7 @@ func (s *downloadableSnapshot) publish(ctx context.Context, store RemoteIndexSto
 // need to publish from a helper goroutine, call buildDownloadableSnapshot
 // on the test goroutine and publish from the goroutine via the returned
 // snapshot.
-func seedDownloadableSnapshot(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resource.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
+func seedDownloadableSnapshot(t *testing.T, ctx context.Context, store RemoteIndexStore, ns resourcecontract.NamespacedResource, indexKey ulid.ULID, meta *IndexMeta) {
 	t.Helper()
 	require.NoError(t, buildDownloadableSnapshot(t, ns, indexKey, meta).publish(ctx, store))
 }

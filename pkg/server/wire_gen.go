@@ -43,7 +43,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	featureToggles := featuremgmt.ProvideToggles(featureManager)
 	registerer := metrics.ProvideRegisterer()
 	storageMetrics := resource.ProvideStorageMetrics(registerer)
-	bleveIndexMetrics := resource.ProvideIndexMetrics(registerer)
+	indexMetrics := resource.ProvideIndexMetrics(registerer)
 	vectorMetrics := resource.ProvideVectorMetrics(registerer)
 	gatherer := metrics.ProvideGatherer()
 	configProvider, err := configprovider.ProvideService(cfg)
@@ -72,7 +72,7 @@ func InitializeModuleServer(cfg *setting.Cfg, opts Options, apiOpts api.ServerOp
 	storeProvider := store.ProvideDefaultStoreProvider()
 	v := authz.ProvideReconcileCRDs()
 	stateStore := authz.ProvideDeferredZanzanaReconcilerState()
-	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, bleveIndexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, experimentalKVOptions, hooksService, storeProvider, v, stateStore)
+	moduleServer, err := NewModule(opts, apiOpts, featureToggles, cfg, storageMetrics, indexMetrics, vectorMetrics, registerer, gatherer, tracingService, ossLicensingService, moduleRegisterer, kv, experimentalKVOptions, hooksService, storeProvider, v, stateStore)
 	if err != nil {
 		return nil, err
 	}

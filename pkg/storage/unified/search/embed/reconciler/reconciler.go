@@ -6,6 +6,10 @@
 package reconciler
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"context"
 	"errors"
 	"fmt"
@@ -69,7 +73,7 @@ func retryKey(group, resource, namespace, name string) string {
 }
 
 type Options struct {
-	Storage       resource.StorageBackend
+	Storage       resource.StorageReader
 	VectorBackend vector.VectorBackend
 	BatchEmbedder *embedder.BatchEmbedder
 	Builders      []embed.Builder
@@ -85,7 +89,7 @@ type Options struct {
 	EmbeddingCountInterval time.Duration
 	// Metrics are always recorded. Nil means unregistered metrics, for
 	// callers without a registry.
-	Metrics *resource.VectorMetrics
+	Metrics *searchmetrics.VectorMetrics
 }
 
 // Reconciler keeps the vector index in sync with ongoing writes. The
@@ -93,7 +97,7 @@ type Options struct {
 // only one replica sweeps at a time. Connection-bound pg
 // session locks release naturally if the pod crashes.
 type Reconciler struct {
-	storage                resource.StorageBackend
+	storage                resource.StorageReader
 	vectorBackend          vector.VectorBackend
 	batchEmbedder          *embedder.BatchEmbedder
 	builders               embed.BuilderSnapshot
@@ -103,7 +107,7 @@ type Reconciler struct {
 	lockRetryInterval      time.Duration
 	embeddingCountInterval time.Duration
 	log                    log.Logger
-	metrics                *resource.VectorMetrics
+	metrics                *searchmetrics.VectorMetrics
 
 	// folderTitleResolver is uncached: event rate is low and fresh titles beat cache staleness.
 	folderTitleResolver *foldertitle.Resolver
@@ -156,7 +160,7 @@ func New(opts Options) (*Reconciler, error) {
 	}
 	// Recording sites should not have to check for nil.
 	if opts.Metrics == nil {
-		opts.Metrics = resource.ProvideVectorMetrics(nil)
+		opts.Metrics = searchmetrics.ProvideVectorMetrics(nil)
 	}
 	return &Reconciler{
 		storage:                opts.Storage,
@@ -467,7 +471,7 @@ func (s *Reconciler) sweep(ctx context.Context) {
 // would claim rows the walk has not reached, and an interrupted walk
 // would leave them un-embedded with the cursor already past them.
 func (s *Reconciler) reconcileSince(ctx context.Context, builder embed.Builder, sinceRv int64, lastCalledAt *time.Time) (proven int64, complete, failed bool) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Group:    builder.Group(),
 		Resource: builder.Resource(),
 		// Empty namespace → cross-namespace listing.

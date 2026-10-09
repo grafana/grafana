@@ -36,7 +36,7 @@ func TestLocalResourceClientRetryCodes(t *testing.T) {
 			st, err := status.New(code, "failure").WithDetails(&resourcepb.ErrorResult{Code: http.StatusConflict, Message: "conflict"})
 			require.NoError(t, err)
 			srv := &retryTestResourceServer{failure: st.Err()}
-			client := NewLocalResourceClient(srv)
+			client := NewLocalResourceClient(srv, nil)
 			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
 			_, err = client.Update(ctx, &resourcepb.UpdateRequest{})
 			if code == codes.Unavailable || code == codes.ResourceExhausted {
@@ -64,7 +64,7 @@ func TestLocalResourceClientErrorConversion(t *testing.T) {
 			})
 			require.NoError(t, err)
 			t.Cleanup(func() { require.NoError(t, srv.Stop(context.Background())) })
-			client := NewLocalResourceClient(srv)
+			client := NewLocalResourceClient(srv, nil)
 			ctx, _ := identity.WithServiceIdentity(t.Context(), 1)
 			resp, err := client.Read(ctx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
 				Namespace: "default", Group: "example.grafana.app", Resource: "widgets", Name: "missing",

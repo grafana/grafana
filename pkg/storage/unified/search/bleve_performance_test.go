@@ -1,6 +1,10 @@
 package search_test
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"runtime"
@@ -9,14 +13,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
 
 	"github.com/stretchr/testify/require"
 )
 
-func setupIndex(b testing.TB) resource.ResourceIndex {
+func setupIndex(b testing.TB) searchmodel.ResourceIndex {
 	// size := 1000000  // TODO: 200k documents standard size?
 	size := 200000
 	// batchSize := 1000 slower 8s (for 200k documents) - 34s (for 1M documents)
@@ -61,15 +64,15 @@ func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {
 		Root:          b.TempDir(),
 		FileThreshold: fileThreshold,
 		BuildVersion:  "12.3.45-789",
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(b, err)
 	defer backend.Stop()
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -90,7 +93,7 @@ func benchmarkBuildIndex(b *testing.B, docs int, fileThreshold int64) {
 	}
 }
 
-func runBenchmark(b *testing.B, testIndex resource.ResourceIndex) {
+func runBenchmark(b *testing.B, testIndex searchmodel.ResourceIndex) {
 	var memStatsStart runtime.MemStats
 	var memStatsAfterIndex runtime.MemStats
 	runtime.ReadMemStats(&memStatsStart)
@@ -136,25 +139,25 @@ func runBenchmark(b *testing.B, testIndex resource.ResourceIndex) {
 	}
 }
 
-func newTestWriter(size int, batchSize int) resource.BuildFn {
+func newTestWriter(size int, batchSize int) searchmodel.BuildFn {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
 
-	return func(index resource.ResourceIndex) (int64, error) {
+	return func(index searchmodel.ResourceIndex) (int64, error) {
 		total := time.Now()
 		start := time.Now()
 
 		// Create a batch of items
-		batch := make([]*resource.BulkIndexItem, 0, batchSize)
+		batch := make([]*searchmodel.BulkIndexItem, 0, batchSize)
 
 		for i := range size {
 			name := fmt.Sprintf("name%d", i)
-			item := &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			item := &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					RV:   int64(i),
 					Name: name,
 					Key: &resourcepb.ResourceKey{
@@ -171,7 +174,7 @@ func newTestWriter(size int, batchSize int) resource.BuildFn {
 
 			// When batch is full or this is the last item, process the batch
 			if len(batch) == batchSize || i == size-1 {
-				err := index.BulkIndex(&resource.BulkIndexRequest{
+				err := index.BulkIndex(&searchmodel.BulkIndexRequest{
 					Items: batch,
 				})
 				if err != nil {
@@ -186,7 +189,7 @@ func newTestWriter(size int, batchSize int) resource.BuildFn {
 				}
 
 				// Reset batch for next iteration
-				batch = make([]*resource.BulkIndexItem, 0, batchSize)
+				batch = make([]*searchmodel.BulkIndexItem, 0, batchSize)
 			}
 		}
 

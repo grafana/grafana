@@ -1,6 +1,8 @@
 package enrollment
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"encoding/json"
 	"strings"
@@ -12,7 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
@@ -37,7 +38,7 @@ func testManifest(group, plural string, revision int, versions map[string][]app.
 
 func TestRegistrySelection(t *testing.T) {
 	fields := []app.ManifestVersionKindEmbedField{{Name: "title", Path: "spec.title"}}
-	configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{
+	configs := searchmodel.NewEmbeddingConfigRegistry([]*app.ManifestData{
 		testManifest("widgets.example.test", "widgets", 5, map[string][]app.ManifestVersionKindEmbedField{"v1": fields}),
 		testManifest("dashboard.grafana.app", "dashboards", 99, map[string][]app.ManifestVersionKindEmbedField{"v1": fields}),
 	})
@@ -91,7 +92,7 @@ func TestRegistryValidatesConfiguration(t *testing.T) {
 }
 
 func TestRegistryDefersUnsupportedUntilValidation(t *testing.T) {
-	configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{
+	configs := searchmodel.NewEmbeddingConfigRegistry([]*app.ManifestData{
 		testManifest("widgets.example.test", "widgets", 3, nil),
 	})
 	registry, err := New(configs, []string{"widgets.example.test/widgets"}, nil, nil)
@@ -127,7 +128,7 @@ func TestRegistrySnapshotsIsolateRemovedDeclarations(t *testing.T) {
 		testManifest("widgets.example.test", "gadgets", 3, map[string][]app.ManifestVersionKindEmbedField{"v1": {}}),
 		testManifest("widgets.example.test", "excluded", 3, map[string][]app.ManifestVersionKindEmbedField{"v1": {}}),
 	}
-	configs := resource.NewEmbeddingConfigRegistry(manifests)
+	configs := searchmodel.NewEmbeddingConfigRegistry(manifests)
 	registry, err := New(configs, []string{"dashboard.grafana.app/dashboards", "widgets.example.test/widgets", "widgets.example.test/gadgets"}, []embed.Builder{
 		dashboard.New(), &testCustomBuilder{group: "widgets.example.test", resource: "custom"},
 	}, nil)
@@ -178,7 +179,7 @@ func TestRegistryReloadsImmutableBuilders(t *testing.T) {
 		"v1": {{Name: "old", Path: "spec.old"}},
 		"v2": {{Name: "new", Path: "spec.new"}},
 	})
-	configs := resource.NewEmbeddingConfigRegistry([]*app.ManifestData{initial})
+	configs := searchmodel.NewEmbeddingConfigRegistry([]*app.ManifestData{initial})
 	allowed := []string{"widgets.example.test/widgets"}
 	skips := prometheus.NewCounterVec(prometheus.CounterOpts{Name: "enrollment_skipped_versions_total"}, []string{"group", "resource", "version"})
 	registry, err := New(configs, allowed, nil, skips)

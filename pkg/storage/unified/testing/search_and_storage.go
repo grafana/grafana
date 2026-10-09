@@ -5,17 +5,51 @@ import (
 	"testing"
 	"uuid"
 
+	unifiedserver "github.com/grafana/grafana/pkg/storage/unified/server"
+
+	searchservice "github.com/grafana/grafana/pkg/storage/unified/search/service"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
+
+func newResourceServerWithSearch(opts resource.ResourceServerOptions, searchOptions resource.SearchOptions) (*unifiedserver.Server, error) {
+	if opts.AccessClient == nil {
+		opts.AccessClient = claims.FixedAccessClient(true)
+	}
+	var err error
+	opts.Blob.Backend, err = resource.InitializeBlobStorage(opts)
+	if err != nil {
+		return nil, err
+	}
+	var searchServer resource.SearchServer
+	if searchOptions.Resources != nil && searchOptions.Backend != nil {
+		searchServer, err = searchservice.NewUninitializedSearchServer(searchservice.Options{
+			Backend: opts.Backend, Search: searchOptions, Blob: opts.Blob.Backend,
+			AccessClient: opts.AccessClient, Diagnostics: opts.Diagnostics,
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	opts.IndexQueries = searchServer
+	opts.SearchFields = searchOptions.SearchFields
+	opts.SuccessfulWriteDelay = searchOptions.IndexMinUpdateInterval
+	storage, err := resource.NewUninitializedResourceServer(opts)
+	if err != nil {
+		return nil, err
+	}
+	server := unifiedserver.New(storage, searchServer, searchOptions.EmbeddingBuilders, nil)
+	if err := server.Init(context.Background()); err != nil {
+		return nil, err
+	}
+	return server, nil
+}
 
 func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend) {
 	const nsPrefix = "test-ns"
@@ -32,7 +66,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	}
 	ctx = claims.WithAuthInfo(ctx, testUser)
 
-	var server resource.ResourceServer
+	var server *unifiedserver.Server
 
 	t.Run("Create initial resources in storage", func(t *testing.T) {
 		initialResources := []struct {
@@ -99,14 +133,13 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	t.Run("Create a resource server with both backends", func(t *testing.T) {
 		// Create a resource server with both backends
 		var err error
-		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
+		server, err = newResourceServerWithSearch(resource.ResourceServerOptions{
 			Backend: backend,
-			Search: resource.SearchOptions{
-				Backend: searchBackend,
-				Resources: &resource.TestDocumentBuilderSupplier{
-					GroupsResources: map[string]string{
-						"test.grafana.app": "testresources",
-					},
+		}, resource.SearchOptions{
+			Backend: searchBackend,
+			Resources: &resource.TestDocumentBuilderSupplier{
+				GroupsResources: map[string]string{
+					"test.grafana.app": "testresources",
 				},
 			},
 		})
@@ -115,7 +148,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 
 	t.Run("Search for initial resources", func(t *testing.T) {
 		// Test 1: Search for initial resources
-		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchResp, err := server.SearchHandler().Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
@@ -184,7 +217,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			require.NoError(t, err)
 
 			// Create document
-			createResp, err := server.Create(ctx, &resourcepb.CreateRequest{
+			createResp, err := server.StorageHandler().Create(ctx, &resourcepb.CreateRequest{
 				Key:   key,
 				Value: value,
 			})
@@ -195,7 +228,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	})
 
 	t.Run("Search for documents", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchResp, err := server.SearchHandler().Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
@@ -213,7 +246,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	})
 
 	t.Run("Search with tags", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchResp, err := server.SearchHandler().Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
@@ -232,7 +265,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		require.Equal(t, int64(0), searchResp.TotalHits)
 
 		// this is the correct way of searching by tag
-		searchResp, err = server.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchResp, err = server.SearchHandler().Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
@@ -254,7 +287,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 	})
 
 	t.Run("Search with specific tag", func(t *testing.T) {
-		searchResp, err := server.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchResp, err := server.SearchHandler().Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",
@@ -273,7 +306,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		require.Equal(t, int64(0), searchResp.TotalHits)
 
 		// this is the correct way of searching by tag
-		searchResp, err = server.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchResp, err = server.SearchHandler().Search(ctx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Group:     "test.grafana.app",

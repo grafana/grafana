@@ -1,6 +1,12 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"bytes"
 	"context"
 	"encoding/json"
@@ -39,7 +45,6 @@ import (
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	foldermodel "github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
@@ -63,8 +68,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -82,8 +87,8 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5,
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -98,10 +103,10 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 
 	// Index three dashboards: one at the root using the legacy empty sentinel,
 	// one at the root using the canonical "general" sentinel, and one nested.
-	doc := func(name, folder string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(name, folder string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:     1,
 				Name:   name,
 				Key:    &resourcepb.ResourceKey{Name: name, Namespace: "ns", Group: key.Group, Resource: key.Resource},
@@ -111,13 +116,13 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 			},
 		}
 	}
-	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+	index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
-	}, 3, "test", func(index resource.ResourceIndex) (int64, error) {
-		if err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
+	}, 3, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		if err := index.BulkIndex(&searchmodel.BulkIndexRequest{
+			Items: []*searchmodel.BulkIndexItem{
 				doc("legacy-root", ""),
 				doc("general-root", foldermodel.GeneralFolderUID),
 				doc("nested", "other"),
@@ -134,7 +139,7 @@ func TestBleveSearchRootFolderExpansion(t *testing.T) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_FOLDER,
+					Key:      searchmodel.SEARCH_FIELD_FOLDER,
 					Operator: operator,
 					Values:   values,
 				}},
@@ -185,22 +190,22 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 
 	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	var dashboardsIndex resource.ResourceIndex
-	var foldersIndex resource.ResourceIndex
+	var dashboardsIndex searchmodel.ResourceIndex
+	var foldersIndex searchmodel.ResourceIndex
 
 	t.Run("build dashboards", func(t *testing.T) {
 		key := dashboardskey
 
-		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, "test", func(index resource.ResourceIndex) (int64, error) {
-			err := index.BulkIndex(&resource.BulkIndexRequest{
-				Items: []*resource.BulkIndexItem{
+		}, 2, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+			err := index.BulkIndex(&searchmodel.BulkIndexRequest{
+				Items: []*searchmodel.BulkIndexItem{
 					{
-						Action: resource.ActionIndex,
-						Doc: &resource.IndexableDocument{
+						Action: searchmodel.ActionIndex,
+						Doc: &searchmodel.IndexableDocument{
 							RV:   1,
 							Name: "aaa",
 							Key: &resourcepb.ResourceKey{
@@ -233,8 +238,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 						},
 					},
 					{
-						Action: resource.ActionIndex,
-						Doc: &resource.IndexableDocument{
+						Action: searchmodel.ActionIndex,
+						Doc: &searchmodel.IndexableDocument{
 							RV:   2,
 							Name: "bbb",
 							Key: &resourcepb.ResourceKey{
@@ -268,8 +273,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 						},
 					},
 					{
-						Action: resource.ActionIndex,
-						Doc: &resource.IndexableDocument{
+						Action: searchmodel.ActionIndex,
+						Doc: &searchmodel.IndexableDocument{
 							RV: 3,
 							Key: &resourcepb.ResourceKey{
 								Name:      "ccc",
@@ -311,7 +316,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 			Limit: 100000,
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
-				{Field: resource.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
+				{Field: searchmodel.SEARCH_FIELD_TITLE, Desc: true}, // ccc,bbb,aaa
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
@@ -325,7 +330,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		require.NotNil(t, rsp.Results)
 		require.NotNil(t, rsp.Facet)
 
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
+		searchmodel.AssertTableSnapshot(t, filepath.Join("testdata", "manual-dashboard.json"), rsp.Results)
 
 		// Get the tags facets
 		facet, ok := rsp.Facet["tags"]
@@ -377,7 +382,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Key:      searchmodel.SEARCH_FIELD_OWNER_REFERENCES,
 					Operator: "=",
 					Values:   []string{"iam.grafana.app/Team/engineering"},
 				}},
@@ -392,7 +397,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Key:      searchmodel.SEARCH_FIELD_OWNER_REFERENCES,
 					Operator: "=",
 					Values:   []string{"iam.grafana.app/Team/marketing"},
 				}},
@@ -408,7 +413,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Key:      searchmodel.SEARCH_FIELD_OWNER_REFERENCES,
 					Operator: "=",
 					Values:   []string{"iam.grafana.app/Team/marketing", "iam.grafana.app/User/admin"},
 				}},
@@ -424,7 +429,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_OWNER_REFERENCES,
+					Key:      searchmodel.SEARCH_FIELD_OWNER_REFERENCES,
 					Operator: "in",
 					Values:   []string{"iam.grafana.app/Team/engineering", "iam.grafana.app/User/admin"},
 				}},
@@ -453,7 +458,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		require.Equal(t, builders.DASHBOARD_ERRORS_TODAY, rsp.Results.Columns[0].Name)
 		require.Equal(t, builders.DASHBOARD_VIEWS_LAST_1_DAYS, rsp.Results.Columns[1].Name)
 		// sorted descending so should start with highest dashboard_views_last_1_days (100)
-		val, err := resource.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
+		val, err := searchmodel.DecodeCell(rsp.Results.Columns[1], 0, rsp.Results.Rows[0].Cells[1])
 		require.NoError(t, err)
 		require.Equal(t, int64(100), val)
 
@@ -538,16 +543,16 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 	t.Run("build folders", func(t *testing.T) {
 		key := folderKey
 
-		index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+		index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
-		}, 2, "test", func(index resource.ResourceIndex) (int64, error) {
-			err := index.BulkIndex(&resource.BulkIndexRequest{
-				Items: []*resource.BulkIndexItem{
+		}, 2, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+			err := index.BulkIndex(&searchmodel.BulkIndexRequest{
+				Items: []*searchmodel.BulkIndexItem{
 					{
-						Action: resource.ActionIndex,
-						Doc: &resource.IndexableDocument{
+						Action: searchmodel.ActionIndex,
+						Doc: &searchmodel.IndexableDocument{
 							RV:   1,
 							Name: "zzz",
 							Key: &resourcepb.ResourceKey{
@@ -572,8 +577,8 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 						},
 					},
 					{
-						Action: resource.ActionIndex,
-						Doc: &resource.IndexableDocument{
+						Action: searchmodel.ActionIndex,
+						Doc: &searchmodel.IndexableDocument{
 							RV:   2,
 							Name: "yyy",
 							Key: &resourcepb.ResourceKey{
@@ -611,7 +616,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 		require.NotNil(t, rsp.Results)
 		require.Nil(t, rsp.Facet)
 
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp.Results)
+		searchmodel.AssertTableSnapshot(t, filepath.Join("testdata", "manual-folder.json"), rsp.Results)
 	})
 
 	t.Run("folder NotIn field filter excludes matching names", func(t *testing.T) {
@@ -623,7 +628,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			Options: &resourcepb.ListOptions{
 				Key: key,
 				Fields: []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_NAME,
+					Key:      searchmodel.SEARCH_FIELD_NAME,
 					Operator: string(selection.NotIn),
 					Values:   []string{"zzz"},
 				}},
@@ -647,12 +652,12 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 				Key: key,
 				Fields: []*resourcepb.Requirement{
 					{
-						Key:      resource.SEARCH_FIELD_NAME,
+						Key:      searchmodel.SEARCH_FIELD_NAME,
 						Operator: string(selection.In),
 						Values:   []string{"zzz", "yyy"},
 					},
 					{
-						Key:      resource.SEARCH_FIELD_NAME,
+						Key:      searchmodel.SEARCH_FIELD_NAME,
 						Operator: string(selection.NotIn),
 						Values:   []string{"zzz"},
 					},
@@ -687,11 +692,11 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
-					Field: resource.SEARCH_FIELD_TAGS,
+					Field: searchmodel.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, []searchmodel.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 		require.NoError(t, err)
 		require.Nil(t, rsp.Error)
 		require.NotNil(t, rsp.Results)
@@ -710,7 +715,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			"zzz (folder)",
 		}, sorted)
 
-		resource.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
+		searchmodel.AssertTableSnapshot(t, filepath.Join("testdata", "manual-federated.json"), rsp.Results)
 
 		facet, ok := rsp.Facet["tags"]
 		require.True(t, ok)
@@ -749,11 +754,11 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
-					Field: resource.SEARCH_FIELD_TAGS,
+					Field: searchmodel.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, []searchmodel.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 3, len(rsp.Results.Rows))
@@ -778,11 +783,11 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
-					Field: resource.SEARCH_FIELD_TAGS,
+					Field: searchmodel.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, []searchmodel.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 2, len(rsp.Results.Rows))
@@ -806,11 +811,11 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 			},
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
 				"tags": {
-					Field: resource.SEARCH_FIELD_TAGS,
+					Field: searchmodel.SEARCH_FIELD_TAGS,
 					Limit: 100,
 				},
 			},
-		}, []resource.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
+		}, []searchmodel.ResourceIndex{foldersIndex}, nil) // << note the folder index matches the federation request
 
 		require.NoError(t, err)
 		require.Equal(t, 0, len(rsp.Results.Rows))
@@ -818,7 +823,7 @@ func testBleveBackend(t *testing.T, backend *bleveBackend) {
 }
 
 func TestGetSortFields(t *testing.T) {
-	dashboardFields, err := resource.SearchableFieldsFromProvider(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards")
+	dashboardFields, err := searchmodel.SearchableFieldsFromProvider(DashboardSearchFieldsProviderForTest(), "dashboard.grafana.app", "dashboards")
 	require.NoError(t, err)
 	idx := &bleveIndex{
 		fields:       dashboardFields,
@@ -832,7 +837,7 @@ func TestGetSortFields(t *testing.T) {
 			},
 		}
 		sortFields := idx.getSortFields(searchReq)
-		assert.Equal(t, []string{"fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
+		assert.Equal(t, []string{"fields.views_total", searchmodel.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will prepend sort fields with a '-' when sort is Desc", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
@@ -841,7 +846,7 @@ func TestGetSortFields(t *testing.T) {
 			},
 		}
 		sortFields := idx.getSortFields(searchReq)
-		assert.Equal(t, []string{"-fields.views_total", resource.SEARCH_FIELD_NAME}, sortFields)
+		assert.Equal(t, []string{"-fields.views_total", searchmodel.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will not prepend 'fields.' to common fields", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
@@ -850,31 +855,31 @@ func TestGetSortFields(t *testing.T) {
 			},
 		}
 		sortFields := idx.getSortFields(searchReq)
-		assert.Equal(t, []string{"description", resource.SEARCH_FIELD_NAME}, sortFields)
+		assert.Equal(t, []string{"description", searchmodel.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will use title_phrase for title and append name as tie-breaker", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
-				{Field: resource.SEARCH_FIELD_TITLE, Desc: false},
+				{Field: searchmodel.SEARCH_FIELD_TITLE, Desc: false},
 			},
 		}
 		sortFields := idx.getSortFields(searchReq)
-		assert.Equal(t, []string{resource.SEARCH_FIELD_TITLE_PHRASE, resource.SEARCH_FIELD_NAME}, sortFields)
+		assert.Equal(t, []string{searchmodel.SEARCH_FIELD_TITLE_PHRASE, searchmodel.SEARCH_FIELD_NAME}, sortFields)
 	})
 	t.Run("will not append a duplicate name sort", func(t *testing.T) {
 		searchReq := &resourcepb.ResourceSearchRequest{
 			SortBy: []*resourcepb.ResourceSearchRequest_Sort{
-				{Field: resource.SEARCH_FIELD_NAME, Desc: true},
+				{Field: searchmodel.SEARCH_FIELD_NAME, Desc: true},
 			},
 		}
 		sortFields := idx.getSortFields(searchReq)
-		assert.Equal(t, []string{"-" + resource.SEARCH_FIELD_NAME}, sortFields)
+		assert.Equal(t, []string{"-" + searchmodel.SEARCH_FIELD_NAME}, sortFields)
 	})
 }
 
 func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 	idx := &bleveIndex{
-		fields:       resource.StandardSearchFields(),
+		fields:       searchmodel.StandardSearchFields(),
 		searchFields: newKindSearchFields(nil, "", "", nil),
 	}
 
@@ -888,12 +893,12 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 
 		titleSort, ok := searchReq.Sort[0].(*blevesearch.SortField)
 		require.True(t, ok)
-		assert.Equal(t, resource.SEARCH_FIELD_TITLE_PHRASE, titleSort.Field)
+		assert.Equal(t, searchmodel.SEARCH_FIELD_TITLE_PHRASE, titleSort.Field)
 		assert.False(t, titleSort.Desc)
 
 		nameSort, ok := searchReq.Sort[1].(*blevesearch.SortField)
 		require.True(t, ok)
-		assert.Equal(t, resource.SEARCH_FIELD_NAME, nameSort.Field)
+		assert.Equal(t, searchmodel.SEARCH_FIELD_NAME, nameSort.Field)
 		assert.False(t, nameSort.Desc)
 	})
 
@@ -910,7 +915,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 
 		nameSort, ok := searchReq.Sort[1].(*blevesearch.SortField)
 		require.True(t, ok)
-		assert.Equal(t, resource.SEARCH_FIELD_NAME, nameSort.Field)
+		assert.Equal(t, searchmodel.SEARCH_FIELD_NAME, nameSort.Field)
 		assert.False(t, nameSort.Desc)
 	})
 
@@ -919,12 +924,12 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 			Options: &resourcepb.ListOptions{},
 			Limit:   10,
 			Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-				"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: 10},
+				"tagValues": {Field: searchmodel.SEARCH_FIELD_TAGS, Limit: 10},
 			},
 		}, nil, false, nil)
 		require.Nil(t, errResult)
 		require.Contains(t, searchReq.Facets, "tagValues")
-		assert.Equal(t, resource.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
+		assert.Equal(t, searchmodel.SEARCH_FIELD_TAGS, searchReq.Facets["tagValues"].Field)
 	})
 
 	t.Run("rejects fields without facet capability", func(t *testing.T) {
@@ -948,7 +953,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 				Options: &resourcepb.ListOptions{},
 				Limit:   10,
 				Facet: map[string]*resourcepb.ResourceSearchRequest_Facet{
-					"tagValues": {Field: resource.SEARCH_FIELD_TAGS, Limit: -1},
+					"tagValues": {Field: searchmodel.SEARCH_FIELD_TAGS, Limit: -1},
 				},
 			}, nil, postRankAuthz, nil)
 			require.Nil(t, searchReq)
@@ -962,7 +967,7 @@ func TestBleveSearchRequestDefaultSortIncludesNameTieBreaker(t *testing.T) {
 // from one it never indexed, so the search fails instead of returning nothing.
 func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
 	idx := &bleveIndex{
-		fields:       resource.StandardSearchFields(),
+		fields:       searchmodel.StandardSearchFields(),
 		searchFields: newKindSearchFields(nil, "", "", nil),
 	}
 	searchReq, errResult := idx.toBleveSearchRequest(t.Context(), &resourcepb.ResourceSearchRequest{
@@ -979,15 +984,15 @@ func TestBleveTrashSearchFailsWhenDeletedDocumentsAreNotIndexed(t *testing.T) {
 
 // TestBleveSortCapabilityCheck covers both the counting and the rejecting mode.
 func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
-	oldFeatures := []resource.IndexFeature{
-		resource.IndexFeatureDeletedMarker,
-		resource.IndexFeatureHoldsDeletedDocuments,
-		resource.IndexFeatureTrashFields,
+	oldFeatures := []searchmodel.IndexFeature{
+		searchmodel.IndexFeatureDeletedMarker,
+		searchmodel.IndexFeatureHoldsDeletedDocuments,
+		searchmodel.IndexFeatureTrashFields,
 	}
-	newIndex := func(features []resource.IndexFeature) *bleveIndex {
+	newIndex := func(features []searchmodel.IndexFeature) *bleveIndex {
 		return &bleveIndex{
 			features:              features,
-			fields:                resource.StandardSearchFields(),
+			fields:                searchmodel.StandardSearchFields(),
 			searchFields:          newKindSearchFields(nil, "", "", nil),
 			keepsDeletedDocuments: true,
 		}
@@ -999,7 +1004,7 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 			IsDeleted: true,
 		}
 		if sort {
-			req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+			req.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_DELETED_RV}}
 		}
 		return req
 	}
@@ -1019,7 +1024,7 @@ func TestBleveTrashResourceVersionSortRequiresIndexFeature(t *testing.T) {
 	})
 
 	t.Run("a rebuilt index accepts the new sort", func(t *testing.T) {
-		features := append(slices.Clone(oldFeatures), resource.IndexFeatureSortableTrashResourceVersion)
+		features := append(slices.Clone(oldFeatures), searchmodel.IndexFeatureSortableTrashResourceVersion)
 		searchReq, errResult := newIndex(features).toBleveSearchRequest(t.Context(), request(true), nil, false, nil)
 		require.NotNil(t, searchReq)
 		require.Nil(t, errResult)
@@ -1030,36 +1035,36 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	const group, kindResource = "example.grafana.app", "widgets"
 	// v1 and v2 declare different fields on purpose: a request naming no version
 	// is validated against the union.
-	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+	provider := searchmodel.NewMapProvider(map[schema.GroupVersionResource][]searchmodel.SearchFieldDefinition{
 		{Group: group, Version: "v1", Resource: kindResource}: {
 			{
 				Name:         "note",
-				Type:         resource.SearchFieldTypeString,
-				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilitySort},
+				Type:         searchmodel.SearchFieldTypeString,
+				Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilitySort},
 			},
 			{
 				Name:         "category",
-				Type:         resource.SearchFieldTypeString,
-				Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve},
+				Type:         searchmodel.SearchFieldTypeString,
+				Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve},
 			},
 		},
 		{Group: group, Version: "v2", Resource: kindResource}: {
 			{
 				Name:         "weight",
-				Type:         resource.SearchFieldTypeInt64,
-				Capabilities: []resource.SearchCapability{resource.SearchCapabilitySort, resource.SearchCapabilityRetrieve},
+				Type:         searchmodel.SearchFieldTypeInt64,
+				Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilitySort, searchmodel.SearchCapabilityRetrieve},
 			},
 		},
 	}, map[schema.GroupResource]string{{Group: group, Resource: kindResource}: "v1"})
 
 	newIndex := func(enforce bool) *bleveIndex {
 		return &bleveIndex{
-			key:                   resource.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
-			fields:                resource.StandardSearchFields(),
+			key:                   resourcecontract.NamespacedResource{Namespace: "ns", Group: group, Resource: kindResource},
+			fields:                searchmodel.StandardSearchFields(),
 			searchFields:          newKindSearchFields(provider, group, kindResource, []string{"spec.slug"}),
 			enforceSortCapability: enforce,
 			logger:                log.NewNopLogger(),
-			indexMetrics:          resource.ProvideIndexMetrics(nil),
+			indexMetrics:          searchmetrics.ProvideBleveMetrics(nil, nil),
 		}
 	}
 
@@ -1075,14 +1080,14 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		name  string
 		field string
 	}{
-		{"standard sortable field", resource.SEARCH_FIELD_TITLE},
-		{"physical title variant", resource.SEARCH_FIELD_TITLE_PHRASE},
-		{"name", resource.SEARCH_FIELD_NAME},
-		{"folder", resource.SEARCH_FIELD_FOLDER},
+		{"standard sortable field", searchmodel.SEARCH_FIELD_TITLE},
+		{"physical title variant", searchmodel.SEARCH_FIELD_TITLE_PHRASE},
+		{"name", searchmodel.SEARCH_FIELD_NAME},
+		{"folder", searchmodel.SEARCH_FIELD_FOLDER},
 		{"per-kind field, bare name", "note"},
-		{"per-kind field, prefixed name", resource.SEARCH_FIELD_PREFIX + "note"},
+		{"per-kind field, prefixed name", searchmodel.SEARCH_FIELD_PREFIX + "note"},
 		// Declared by v2 only.
-		{"field declared by another version", resource.SEARCH_FIELD_PREFIX + "weight"},
+		{"field declared by another version", searchmodel.SEARCH_FIELD_PREFIX + "weight"},
 	}
 	for _, tc := range accepted {
 		t.Run("accepts "+tc.name, func(t *testing.T) {
@@ -1096,15 +1101,15 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		name  string
 		field string
 	}{
-		{"standard retrieve-only field", resource.SEARCH_FIELD_CREATED},
+		{"standard retrieve-only field", searchmodel.SEARCH_FIELD_CREATED},
 		{"per-kind field without sort", "category"},
-		{"per-kind field without sort, prefixed", resource.SEARCH_FIELD_PREFIX + "category"},
+		{"per-kind field without sort, prefixed", searchmodel.SEARCH_FIELD_PREFIX + "category"},
 		{"undeclared field", "nonexistent"},
 		{"label", "labels.region"},
 		// A standard field lives top-level, so nothing is indexed under this path.
-		{"standard field under the per-kind prefix", resource.SEARCH_FIELD_PREFIX + resource.SEARCH_FIELD_TITLE},
+		{"standard field under the per-kind prefix", searchmodel.SEARCH_FIELD_PREFIX + searchmodel.SEARCH_FIELD_TITLE},
 		// Selectable fields exist to be filtered on; nothing sorts on them.
-		{"selectable field", resource.SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.slug"},
+		{"selectable field", searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX + "spec.slug"},
 	}
 	for _, tc := range rejected {
 		t.Run("rejects "+tc.name, func(t *testing.T) {
@@ -1117,7 +1122,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 		t.Run("counts but allows "+tc.name+" with enforcement off", func(t *testing.T) {
 			idx := newIndex(false)
 			reg := prometheus.NewPedanticRegistry()
-			idx.indexMetrics = resource.ProvideIndexMetrics(reg)
+			idx.indexMetrics = searchmetrics.ProvideBleveMetrics(reg, nil)
 
 			searchReq, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(tc.field), nil, false, nil)
 			require.Nil(t, errResult)
@@ -1130,7 +1135,7 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 	t.Run("accepts a trash field when searching deleted resources", func(t *testing.T) {
 		idx := newIndex(true)
 		idx.keepsDeletedDocuments = true
-		req := sortBy(resource.SEARCH_FIELD_DELETION_TIME)
+		req := sortBy(searchmodel.SEARCH_FIELD_DELETION_TIME)
 		req.IsDeleted = true
 		_, errResult := idx.toBleveSearchRequest(t.Context(), req, nil, false, nil)
 		require.Nil(t, errResult)
@@ -1138,15 +1143,15 @@ func TestBleveSortCapabilityCheck(t *testing.T) {
 
 	t.Run("an index without declarations still allows standard sortable fields", func(t *testing.T) {
 		idx := &bleveIndex{
-			fields:                resource.StandardSearchFields(),
+			fields:                searchmodel.StandardSearchFields(),
 			enforceSortCapability: true,
 			logger:                log.NewNopLogger(),
-			indexMetrics:          resource.ProvideIndexMetrics(nil),
+			indexMetrics:          searchmetrics.ProvideBleveMetrics(nil, nil),
 		}
-		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_TITLE), nil, false, nil)
+		_, errResult := idx.toBleveSearchRequest(t.Context(), sortBy(searchmodel.SEARCH_FIELD_TITLE), nil, false, nil)
 		require.Nil(t, errResult)
 
-		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(resource.SEARCH_FIELD_CREATED), nil, false, nil)
+		_, errResult = idx.toBleveSearchRequest(t.Context(), sortBy(searchmodel.SEARCH_FIELD_CREATED), nil, false, nil)
 		require.NotNil(t, errResult)
 	})
 }
@@ -1300,7 +1305,7 @@ const (
 
 func setupBleveBackend(t *testing.T, options ...setupOption) (*bleveBackend, prometheus.Gatherer) {
 	reg := prometheus.NewRegistry()
-	metrics := resource.ProvideIndexMetrics(reg)
+	metrics := searchmetrics.ProvideBleveMetrics(reg, nil)
 
 	opts := BleveOptions{
 		FileThreshold: defaultFileThreshold,
@@ -1342,7 +1347,7 @@ func withRootDir(root string) setupOption {
 	}
 }
 
-func withOwnsIndexFn(fn func(key resource.NamespacedResource) (bool, error)) setupOption {
+func withOwnsIndexFn(fn func(key resourcecontract.NamespacedResource) (bool, error)) setupOption {
 	return func(options *BleveOptions) {
 		options.OwnsIndex = fn
 	}
@@ -1354,13 +1359,13 @@ func withIndexMinUpdateInterval(d time.Duration) setupOption {
 	}
 }
 
-func withSearchFields(reg *resource.SearchFieldsRegistry) setupOption {
+func withSearchFields(reg *searchmodel.SearchFieldsRegistry) setupOption {
 	return func(options *BleveOptions) {
 		options.SearchFields = reg
 	}
 }
 
-func withRequiredIndexFeatures(features ...resource.IndexFeature) setupOption {
+func withRequiredIndexFeatures(features ...searchmodel.IndexFeature) setupOption {
 	return func(options *BleveOptions) {
 		options.RequiredIndexFeatures = features
 	}
@@ -1376,17 +1381,17 @@ func withPostRankAuthzEnabled() setupOption {
 // stored facet mapping from rebuilding indexes that serve facets from bleve.
 func TestRequiredIndexFeaturesFollowPostRankAuthz(t *testing.T) {
 	nativeFacets, _ := setupBleveBackend(t)
-	require.NotContains(t, nativeFacets.requiredFeatures, resource.IndexFeatureStoredFacets)
+	require.NotContains(t, nativeFacets.requiredFeatures, searchmodel.IndexFeatureStoredFacets)
 
 	postRank, _ := setupBleveBackend(t, withPostRankAuthzEnabled())
-	require.Contains(t, postRank.requiredFeatures, resource.IndexFeatureStoredFacets)
+	require.Contains(t, postRank.requiredFeatures, searchmodel.IndexFeatureStoredFacets)
 }
 
 // TestBuildIndexReuseChecksRequiredFeatures covers an on-disk index built before
 // a mapping change: a binary requiring an index feature the index lacks rebuilds
 // rather than serve wrong answers, and reuses the index when it requires none.
 func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
-	ns := resource.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
+	ns := resourcecontract.NamespacedResource{Namespace: "test", Group: "group", Resource: "resource"}
 
 	const (
 		firstIndexDocsCount  = 10
@@ -1395,7 +1400,7 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 
 	for _, tc := range []struct {
 		name             string
-		required         []resource.IndexFeature
+		required         []searchmodel.IndexFeature
 		expectedDocCount int64
 	}{
 		{
@@ -1404,7 +1409,7 @@ func TestBuildIndexReuseChecksRequiredFeatures(t *testing.T) {
 		},
 		{
 			name:             "newly required feature rebuilds the index",
-			required:         []resource.IndexFeature{"beta"},
+			required:         []searchmodel.IndexFeature{"beta"},
 			expectedDocCount: secondIndexDocsCount,
 		},
 	} {
@@ -1465,9 +1470,9 @@ func TestNewBleveIndexRecordsKeepsDeletedDocuments(t *testing.T) {
 
 	bi, err := getBuildInfo(idx)
 	require.NoError(t, err)
-	require.Contains(t, bi.Features, resource.IndexFeatureHoldsDeletedDocuments)
-	require.Contains(t, bi.resourceBuildInfo().Features, resource.IndexFeatureHoldsDeletedDocuments)
-	require.Equal(t, []resource.IndexFeature{resource.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
+	require.Contains(t, bi.Features, searchmodel.IndexFeatureHoldsDeletedDocuments)
+	require.Contains(t, bi.resourceBuildInfo().Features, searchmodel.IndexFeatureHoldsDeletedDocuments)
+	require.Equal(t, []searchmodel.IndexFeature{searchmodel.IndexFeatureHoldsDeletedDocuments}, bi.ReaderRequirements)
 }
 
 // An in-memory index keeps every segment until it is evicted, so a segment
@@ -1598,7 +1603,7 @@ func TestReuseFileIndexRequiresBuildAfterLastImport(t *testing.T) {
 }
 
 // Stands in for an index written by a newer binary.
-func newIndexDeclaringRequirements(t *testing.T, requirements ...resource.IndexFeature) bleve.Index {
+func newIndexDeclaringRequirements(t *testing.T, requirements ...searchmodel.IndexFeature) bleve.Index {
 	t.Helper()
 	idx, err := newBleveIndex("", bleve.NewIndexMapping(), time.Now(), buildVersion, nil, "")
 	require.NoError(t, err)
@@ -1625,7 +1630,7 @@ func TestValidateDownloadedIndexChecksReaderRequirements(t *testing.T) {
 	})
 
 	t.Run("accepted when every requirement is understood", func(t *testing.T) {
-		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, resource.IndexFeatureDeletedMarker))
+		rv, err := backend.validateDownloadedIndex(newIndexDeclaringRequirements(t, searchmodel.IndexFeatureDeletedMarker))
 		require.NoError(t, err)
 		require.Equal(t, int64(42), rv)
 	})
@@ -1653,18 +1658,18 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 		Name:      "dash-1",
 	}
 	wrapped := &bleveIndex{index: source}
-	require.NoError(t, wrapped.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	require.NoError(t, wrapped.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 		{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key:   key,
 				Name:  key.Name,
 				Title: "Production Overview",
 			},
 		},
 		{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace,
 					Group:     key.Group,
@@ -1693,11 +1698,11 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 	assert.Equal(t, uint64(2), count)
 
 	query := bleve.NewTermQuery("production overview")
-	query.SetField(resource.SEARCH_FIELD_TITLE_PHRASE)
+	query.SetField(searchmodel.SEARCH_FIELD_TITLE_PHRASE)
 	result, err := copied.Search(bleve.NewSearchRequest(query))
 	require.NoError(t, err)
 	require.Len(t, result.Hits, 1)
-	assert.Equal(t, resource.SearchID(key), result.Hits[0].ID)
+	assert.Equal(t, resourcecontract.SearchID(key), result.Hits[0].ID)
 
 	rv, err := getRV(copied)
 	require.NoError(t, err)
@@ -1715,7 +1720,7 @@ func TestMemoryBleveIndexCanBeCopiedToFilesystem(t *testing.T) {
 }
 
 func TestBuildIndexExpiration(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -1763,7 +1768,7 @@ func TestBuildIndexExpiration(t *testing.T) {
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
-			backend, reg := setupBleveBackend(t, withIndexCacheTTL(cacheTTL), withOwnsIndexFn(func(key resource.NamespacedResource) (bool, error) {
+			backend, reg := setupBleveBackend(t, withIndexCacheTTL(cacheTTL), withOwnsIndexFn(func(key resourcecontract.NamespacedResource) (bool, error) {
 				return tc.owned, tc.ownedCheckError
 			}))
 
@@ -1806,12 +1811,12 @@ func TestBuildIndexExpiration(t *testing.T) {
 }
 
 func TestCloseAllIndexes(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
 	}
-	ns2 := resource.NamespacedResource{
+	ns2 := resourcecontract.NamespacedResource{
 		Namespace: "test2",
 		Group:     "group",
 		Resource:  "resource",
@@ -1833,7 +1838,7 @@ func TestCloseAllIndexes(t *testing.T) {
 }
 
 func TestBuildIndex(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -1883,7 +1888,7 @@ func TestBuildIndex(t *testing.T) {
 }
 
 func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -1903,7 +1908,7 @@ func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
 	require.NoError(t, unfinished.Close())
 
 	buildCalls := 0
-	builder := func(index resource.ResourceIndex) (int64, error) {
+	builder := func(index searchmodel.ResourceIndex) (int64, error) {
 		buildCalls++
 		return indexTestDocs(ns, 10, 100)(index)
 	}
@@ -1919,7 +1924,7 @@ func TestBuildIndexDoesNotReuseFileIndexWithoutResourceVersion(t *testing.T) {
 }
 
 func TestBuildIndexAdaptivePromotion(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -1995,7 +2000,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	t.Run("build failure before promotion leaves no filesystem directory", func(t *testing.T) {
 		backend, _ := setupBleveBackend(t, withFileThreshold(5))
 
-		idx, err := backend.BuildIndex(t.Context(), ns, 100, "test", func(resource.ResourceIndex) (int64, error) {
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, "test", func(searchmodel.ResourceIndex) (int64, error) {
 			return 0, errors.New("fail before promotion")
 		}, nil, false, time.Time{}, 0)
 		require.Error(t, err)
@@ -2007,7 +2012,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 	t.Run("build failure after promotion removes filesystem directory", func(t *testing.T) {
 		backend, _ := setupBleveBackend(t, withFileThreshold(5))
 
-		idx, err := backend.BuildIndex(t.Context(), ns, 100, "test", func(index resource.ResourceIndex) (int64, error) {
+		idx, err := backend.BuildIndex(t.Context(), ns, 100, "test", func(index searchmodel.ResourceIndex) (int64, error) {
 			_, buildErr := indexTestDocs(ns, 5, 100)(index)
 			require.NoError(t, buildErr)
 			return 0, errors.New("fail after promotion")
@@ -2020,7 +2025,7 @@ func TestBuildIndexAdaptivePromotion(t *testing.T) {
 }
 
 func TestRebuildingIndexClosesPreviousCachedIndex(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2104,13 +2109,13 @@ func verifyDirEntriesCount(t *testing.T, dir string, count int) {
 	require.Len(t, ents, count)
 }
 
-func indexTestDocs(ns resource.NamespacedResource, docs int, listRV int64) resource.BuildFn {
-	return func(index resource.ResourceIndex) (int64, error) {
-		items := make([]*resource.BulkIndexItem, 0, docs)
+func indexTestDocs(ns resourcecontract.NamespacedResource, docs int, listRV int64) searchmodel.BuildFn {
+	return func(index searchmodel.ResourceIndex) (int64, error) {
+		items := make([]*searchmodel.BulkIndexItem, 0, docs)
 		for i := range docs {
-			items = append(items, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			items = append(items, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					Key: &resourcepb.ResourceKey{
 						Namespace: ns.Namespace,
 						Group:     ns.Group,
@@ -2122,22 +2127,22 @@ func indexTestDocs(ns resource.NamespacedResource, docs int, listRV int64) resou
 			})
 		}
 
-		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		err := index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items})
 		return listRV, err
 	}
 }
 
-func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn {
+func updateTestDocs(ns resourcecontract.NamespacedResource, docs int) searchmodel.UpdateFn {
 	cnt := 0
 
-	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
+	return func(context context.Context, index searchmodel.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		cnt++
 
-		items := make([]*resource.BulkIndexItem, 0, docs)
+		items := make([]*searchmodel.BulkIndexItem, 0, docs)
 		for i := range docs {
-			items = append(items, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			items = append(items, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					Key: &resourcepb.ResourceKey{
 						Namespace: ns.Namespace,
 						Group:     ns.Group,
@@ -2149,27 +2154,27 @@ func updateTestDocs(ns resource.NamespacedResource, docs int) resource.UpdateFn 
 			})
 		}
 
-		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		err := index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items})
 		// Simulate RV increase
 		return sinceRV + int64(docs), docs, err
 	}
 }
 
-func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs int) (resource.UpdateFn, *atomic.Int64) {
+func updateTestDocsReturningMillisTimestamp(ns resourcecontract.NamespacedResource, docs int) (searchmodel.UpdateFn, *atomic.Int64) {
 	cnt := 0
 	var updateCalls atomic.Int64
 
-	return func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
+	return func(context context.Context, index searchmodel.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		now := time.Now()
 		updateCalls.Add(1)
 
 		cnt++
 
-		items := make([]*resource.BulkIndexItem, 0, docs)
+		items := make([]*searchmodel.BulkIndexItem, 0, docs)
 		for i := range docs {
-			items = append(items, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			items = append(items, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					Key: &resourcepb.ResourceKey{
 						Namespace: ns.Namespace,
 						Group:     ns.Group,
@@ -2181,7 +2186,7 @@ func updateTestDocsReturningMillisTimestamp(ns resource.NamespacedResource, docs
 			})
 		}
 
-		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		err := index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items})
 		return now.UnixMilli(), docs, err
 	}, &updateCalls
 }
@@ -2274,7 +2279,7 @@ func dirEntryNames(t *testing.T, dir string) []string {
 // with ENOENT.
 func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testing.T) {
 	backend, _ := setupBleveBackend(t, withFileThreshold(1))
-	ns := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+	ns := resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
 	resourceDir := backend.getResourceDir(ns)
 
 	// Seed the cache with a file-based index so the subsequent rebuilds skip
@@ -2295,10 +2300,10 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 	go func() {
 		defer close(aDone)
 		_, _ = backend.BuildIndex(t.Context(), ns, 100, "build-a",
-			func(index resource.ResourceIndex) (int64, error) {
-				if err := index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
-					Action: resource.ActionIndex,
-					Doc: &resource.IndexableDocument{
+			func(index searchmodel.ResourceIndex) (int64, error) {
+				if err := index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{{
+					Action: searchmodel.ActionIndex,
+					Doc: &searchmodel.IndexableDocument{
 						Key:   &resourcepb.ResourceKey{Namespace: ns.Namespace, Group: ns.Group, Resource: ns.Resource, Name: "doc-a"},
 						Title: "Document A",
 					},
@@ -2347,11 +2352,11 @@ func TestBuildIndexConcurrentBuildsForSameKeyDoNotDeleteEachOthersDirs(t *testin
 // causing cleanOldIndexes to skip it forever.
 func TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir(t *testing.T) {
 	backend, _ := setupBleveBackend(t, withFileThreshold(1))
-	ns := resource.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
+	ns := resourcecontract.NamespacedResource{Namespace: "ns", Group: "group", Resource: "res"}
 
 	// Build an initial file-based index so a directory exists on disk.
 	_, err := backend.BuildIndex(t.Context(), ns, 100, "init",
-		func(_ resource.ResourceIndex) (int64, error) { return 1, nil },
+		func(_ searchmodel.ResourceIndex) (int64, error) { return 1, nil },
 		nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
@@ -2368,7 +2373,7 @@ func TestBuildIndexColdStartReuseRejectionDoesNotLeakInFlightDir(t *testing.T) {
 	// tryReuseFileIndex opens the on-disk dir, sees the build is stale, and
 	// closes + rejects it; createEmptyFileIndex then builds a fresh one.
 	_, err = backend.BuildIndex(t.Context(), ns, 100, "rebuild-after-import",
-		func(_ resource.ResourceIndex) (int64, error) { return 2, nil },
+		func(_ searchmodel.ResourceIndex) (int64, error) { return 2, nil },
 		nil, false, time.Now().Add(time.Hour), 0)
 	require.NoError(t, err)
 
@@ -2388,7 +2393,7 @@ func TestBleveIndexWithFailures(t *testing.T) {
 func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 	backend, _ := setupBleveBackend(t)
 
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2398,7 +2403,7 @@ func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 	if fileBased {
 		docs = defaultFileThreshold
 	}
-	_, err := backend.BuildIndex(context.Background(), ns, int64(docs), "test", func(index resource.ResourceIndex) (int64, error) {
+	_, err := backend.BuildIndex(context.Background(), ns, int64(docs), "test", func(index searchmodel.ResourceIndex) (int64, error) {
 		if fileBased {
 			_, buildErr := indexTestDocs(ns, docs, 100)(index)
 			require.NoError(t, buildErr)
@@ -2413,7 +2418,7 @@ func testBleveIndexWithFailures(t *testing.T, fileBased bool) {
 }
 
 func TestIndexUpdate(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2444,7 +2449,7 @@ func TestIndexUpdate(t *testing.T) {
 }
 
 func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2452,12 +2457,12 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 
 	be, _ := setupBleveBackend(t)
 
-	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
-		items := make([]*resource.BulkIndexItem, 0, 5)
+	updaterFn := func(context context.Context, index searchmodel.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
+		items := make([]*searchmodel.BulkIndexItem, 0, 5)
 		for i := range 5 {
-			items = append(items, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			items = append(items, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					Key: &resourcepb.ResourceKey{
 						Namespace: ns.Namespace,
 						Group:     ns.Group,
@@ -2469,7 +2474,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 			})
 		}
 
-		err := index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		err := index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items})
 		// Simulate RV increase
 		return sinceRV + int64(5), 5, err
 	}
@@ -2489,7 +2494,7 @@ func TestConcurrentIndexUpdateAndBuildIndex(t *testing.T) {
 }
 
 func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2566,7 +2571,7 @@ func TestConcurrentIndexUpdateSearchAndRebuild(t *testing.T) {
 
 // Verify concurrent updates and searches work as expected.
 func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2621,7 +2626,7 @@ func TestConcurrentIndexUpdateAndSearch(t *testing.T) {
 }
 
 func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2683,7 +2688,7 @@ func TestConcurrentIndexUpdateAndSearchWithIndexMinUpdateInterval(t *testing.T) 
 }
 
 func TestIndexUpdateWithErrors(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2692,7 +2697,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 	be, _ := setupBleveBackend(t)
 
 	updateErr := fmt.Errorf("failed to update index")
-	updaterFn := func(context context.Context, index resource.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
+	updaterFn := func(context context.Context, index searchmodel.ResourceIndex, sinceRV int64) (newRV int64, updatedDocs int, _ error) {
 		time.Sleep(100 * time.Millisecond)
 		return 0, 0, updateErr
 	}
@@ -2723,7 +2728,7 @@ func TestIndexUpdateWithErrors(t *testing.T) {
 }
 
 func TestIndexBuildInfo(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2741,17 +2746,17 @@ func TestIndexBuildInfo(t *testing.T) {
 }
 
 func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
 	}
 	hash := "deadbeefcafef00d"
-	hashes := map[resource.LowerGroupResource]string{
-		resource.NewLowerGroupResource(ns.Group, ns.Resource): hash,
+	hashes := map[resourcecontract.LowerGroupResource]string{
+		resourcecontract.NewLowerGroupResource(ns.Group, ns.Resource): hash,
 	}
 
-	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFields(resource.NewSearchFieldsRegistry(nil, hashes, nil)))
+	be, _ := setupBleveBackend(t, withFileThreshold(100), withSearchFields(searchmodel.NewSearchFieldsRegistry(nil, hashes, nil)))
 	index, err := be.BuildIndex(t.Context(), ns, 10, "test", indexTestDocs(ns, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
@@ -2760,7 +2765,7 @@ func TestIndexBuildInfoSearchFieldsHashRoundTrip(t *testing.T) {
 	assert.Equal(t, hash, buildInfo.SearchFieldsHash)
 
 	// Indexes built without a registered hash record an empty string.
-	nsOther := resource.NamespacedResource{Namespace: "test", Group: "other", Resource: "things"}
+	nsOther := resourcecontract.NamespacedResource{Namespace: "test", Group: "other", Resource: "things"}
 	indexOther, err := be.BuildIndex(t.Context(), nsOther, 10, "test", indexTestDocs(nsOther, 10, 100), nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
@@ -2778,7 +2783,7 @@ func TestInvalidBuildVersion(t *testing.T) {
 	require.ErrorContains(t, err, "cannot parse build version")
 }
 
-func searchTitle(t *testing.T, idx resource.ResourceIndex, query string, limit int, ns resource.NamespacedResource) *resourcepb.ResourceSearchResponse {
+func searchTitle(t *testing.T, idx searchmodel.ResourceIndex, query string, limit int, ns resourcecontract.NamespacedResource) *resourcepb.ResourceSearchResponse {
 	resp, err := idx.Search(t.Context(), nil, &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
@@ -2795,14 +2800,14 @@ func searchTitle(t *testing.T, idx resource.ResourceIndex, query string, limit i
 	return resp
 }
 
-func docCount(t *testing.T, idx resource.ResourceIndex) int {
+func docCount(t *testing.T, idx searchmodel.ResourceIndex) int {
 	cnt, err := idx.DocCount(context.Background(), "", nil)
 	require.NoError(t, err)
 	return int(cnt)
 }
 
 func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
-	ns := resource.NamespacedResource{
+	ns := resourcecontract.NamespacedResource{
 		Namespace: "test",
 		Group:     "group",
 		Resource:  "resource",
@@ -2846,14 +2851,14 @@ func TestBuildIndexReturnsErrorWhenIndexLocked(t *testing.T) {
 func TestBleveTextFieldFilterAndSort(t *testing.T) {
 	group, kindResource := "example.grafana.app", "widgets"
 	gvr := schema.GroupVersionResource{Group: group, Version: "v1", Resource: kindResource}
-	provider := resource.NewMapProvider(map[schema.GroupVersionResource][]resource.SearchFieldDefinition{
+	provider := searchmodel.NewMapProvider(map[schema.GroupVersionResource][]searchmodel.SearchFieldDefinition{
 		gvr: {{
 			Name: "note",
-			Type: resource.SearchFieldTypeString,
-			Capabilities: []resource.SearchCapability{
-				resource.SearchCapabilityText,
-				resource.SearchCapabilityFilter,
-				resource.SearchCapabilitySort,
+			Type: searchmodel.SearchFieldTypeString,
+			Capabilities: []searchmodel.SearchCapability{
+				searchmodel.SearchCapabilityText,
+				searchmodel.SearchCapabilityFilter,
+				searchmodel.SearchCapabilitySort,
 			},
 		}},
 	}, nil)
@@ -2861,8 +2866,8 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: 5,
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource(group, kindResource): provider,
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource(group, kindResource): provider,
 		}),
 	}, nil)
 	require.NoError(t, err)
@@ -2871,10 +2876,10 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 	key := &resourcepb.ResourceKey{Namespace: "ns", Group: group, Resource: kindResource}
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	doc := func(name, note string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(name, note string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:     1,
 				Name:   name,
 				Key:    &resourcepb.ResourceKey{Name: name, Namespace: "ns", Group: group, Resource: kindResource},
@@ -2883,11 +2888,11 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 			},
 		}
 	}
-	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+	index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
-	}, 3, "test", func(index resource.ResourceIndex) (int64, error) {
-		if err := index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
+	}, 3, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		if err := index.BulkIndex(&searchmodel.BulkIndexRequest{
+			Items: []*searchmodel.BulkIndexItem{
 				doc("one", "Zeta Apple"),
 				doc("two", "beta gamma"),
 				doc("three", "Cherry Tart"),
@@ -2955,7 +2960,7 @@ func TestBleveTextFieldFilterAndSort(t *testing.T) {
 // lets documents written before the marker existed count as live.
 func TestIsDeletedMarkerIndexing(t *testing.T) {
 	const group, kindResource = "example.test", "widgets"
-	key := resource.NamespacedResource{Namespace: "default", Group: group, Resource: kindResource}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: group, Resource: kindResource}
 
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          t.TempDir(),
@@ -2964,10 +2969,10 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	doc := func(name string, deleted, provisioned *bool) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(name string, deleted, provisioned *bool) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key:           &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: kindResource, Name: name},
 				Title:         name,
 				IsDeleted:     deleted,
@@ -2976,9 +2981,9 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 		}
 	}
 
-	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{
+			Items: []*searchmodel.BulkIndexItem{
 				doc("live-unset", nil, nil),
 				doc("live-explicit", new(false), nil),
 				doc("trashed", new(true), new(true)),
@@ -3004,14 +3009,14 @@ func TestIsDeletedMarkerIndexing(t *testing.T) {
 		return names
 	}
 
-	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, resource.SEARCH_FIELD_IS_DELETED, true))
-	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, resource.SEARCH_FIELD_IS_PROVISIONED, true))
-	assert.Equal(t, []string{"default/example.test/widgets/live-explicit"}, markerHits(t, resource.SEARCH_FIELD_IS_DELETED, false))
+	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, searchmodel.SEARCH_FIELD_IS_DELETED, true))
+	assert.Equal(t, []string{"default/example.test/widgets/trashed"}, markerHits(t, searchmodel.SEARCH_FIELD_IS_PROVISIONED, true))
+	assert.Equal(t, []string{"default/example.test/widgets/live-explicit"}, markerHits(t, searchmodel.SEARCH_FIELD_IS_DELETED, false))
 
 	// The marker is not a declared field, so callers cannot ask for it and it
 	// stays out of the hash that forces reindexing.
-	for _, field := range []string{resource.SEARCH_FIELD_IS_DELETED, resource.SEARCH_FIELD_IS_PROVISIONED} {
-		assert.Nil(t, resource.StandardSearchFields().Field(field))
+	for _, field := range []string{searchmodel.SEARCH_FIELD_IS_DELETED, searchmodel.SEARCH_FIELD_IS_PROVISIONED} {
+		assert.Nil(t, searchmodel.StandardSearchFields().Field(field))
 		assert.False(t, bi.isDeclaredField(field))
 	}
 }
@@ -3028,21 +3033,21 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T
 	t.Cleanup(func() { _ = raw.Close() })
 
 	key := &resourcepb.ResourceKey{Namespace: "default", Group: "g", Resource: "r", Name: "dash-1"}
-	doc := func(deleted *bool) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc:    &resource.IndexableDocument{Key: key, Title: "Production Overview", IsDeleted: deleted},
+	doc := func(deleted *bool) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc:    &searchmodel.IndexableDocument{Key: key, Title: "Production Overview", IsDeleted: deleted},
 		}
 	}
 
 	// features left empty: an index whose mapping predates the marker.
 	legacy := &bleveIndex{index: raw, logger: log.NewNopLogger()}
-	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(nil)}}))
+	require.NoError(t, legacy.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{doc(nil)}}))
 	count, err := raw.DocCount()
 	require.NoError(t, err)
 	require.Equal(t, uint64(1), count)
 
-	require.NoError(t, legacy.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	require.NoError(t, legacy.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{doc(new(true))}}))
 	count, err = raw.DocCount()
 	require.NoError(t, err)
 	assert.Equal(t, uint64(0), count, "marked document should be removed, not indexed as live")
@@ -3050,15 +3055,15 @@ func TestBulkIndexRemovesMarkedDocumentsWhenTrashFieldsAreNotMapped(t *testing.T
 	// An index mapping the markers but not the trash fields is no better: the
 	// document would be served without a deleter and in arbitrary order. The
 	// producer refuses such an index too, so both writers agree.
-	partial := &bleveIndex{index: raw, features: []resource.IndexFeature{resource.IndexFeatureDeletedMarker}, logger: log.NewNopLogger()}
-	require.NoError(t, partial.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	partial := &bleveIndex{index: raw, features: []searchmodel.IndexFeature{searchmodel.IndexFeatureDeletedMarker}, logger: log.NewNopLogger()}
+	require.NoError(t, partial.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{doc(new(true))}}))
 	count, err = raw.DocCount()
 	require.NoError(t, err)
 	assert.Equal(t, uint64(0), count, "a partially mapped index should not keep the document either")
 
 	// An index that maps everything a deleted document needs keeps it.
-	current := &bleveIndex{index: raw, features: resource.CurrentIndexFeatures(), logger: log.NewNopLogger()}
-	require.NoError(t, current.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{doc(new(true))}}))
+	current := &bleveIndex{index: raw, features: searchmodel.CurrentIndexFeatures(), logger: log.NewNopLogger()}
+	require.NoError(t, current.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{doc(new(true))}}))
 	count, err = raw.DocCount()
 	require.NoError(t, err)
 	assert.Equal(t, uint64(1), count)
@@ -3072,9 +3077,9 @@ func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
 	scoped, ok := scopeQuery(bleve.NewMatchAllQuery(), true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
 
-	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
+	assert.Equal(t, []string{searchmodel.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Must),
 		"the marker has to drive iteration, not sit in Filter")
-	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
+	assert.Equal(t, []string{searchmodel.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
 	assert.Nil(t, scoped.Filter)
 
 	// A real query drives iteration itself, so the marker moves to Filter where it
@@ -3082,13 +3087,13 @@ func TestScopeQueryTrashBrowseDrivesOffTheMarker(t *testing.T) {
 	textQuery := bleve.NewMatchQuery("hello")
 	scoped, ok = scopeQuery(textQuery, true, 0).(*query.BooleanQuery)
 	require.True(t, ok)
-	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
-	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
+	assert.Equal(t, []string{searchmodel.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.Filter))
+	assert.Equal(t, []string{searchmodel.SEARCH_FIELD_IS_PROVISIONED}, boolFieldsOf(t, scoped.MustNot))
 
 	// Live searches only exclude the marker; provisioning is irrelevant to them.
 	scoped, ok = scopeQuery(bleve.NewMatchAllQuery(), false, 0).(*query.BooleanQuery)
 	require.True(t, ok)
-	assert.Equal(t, []string{resource.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
+	assert.Equal(t, []string{searchmodel.SEARCH_FIELD_IS_DELETED}, boolFieldsOf(t, scoped.MustNot))
 	assert.Nil(t, scoped.Filter)
 }
 
@@ -3120,7 +3125,7 @@ func boolFieldsOf(t *testing.T, clause query.Query) []string {
 // marker has to sit in a non-scoring position, or absolute scores move with the
 // amount of trash in the index.
 func TestScopeQueryKeepsScores(t *testing.T) {
-	key := resource.NamespacedResource{Namespace: "default", Group: "example.test", Resource: "widgets"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "example.test", Resource: "widgets"}
 
 	backend, err := NewBleveBackend(BleveOptions{Root: t.TempDir(), FileThreshold: 5}, nil)
 	require.NoError(t, err)
@@ -3136,26 +3141,26 @@ func TestScopeQueryKeepsScores(t *testing.T) {
 		{name: "trashed-1", title: "hello there", deleted: true},
 		{name: "trashed-2", title: "hello hello there", deleted: true},
 	}
-	index, err := backend.BuildIndex(t.Context(), key, 5, "test", func(index resource.ResourceIndex) (int64, error) {
-		items := make([]*resource.BulkIndexItem, 0, len(docs))
+	index, err := backend.BuildIndex(t.Context(), key, 5, "test", func(index searchmodel.ResourceIndex) (int64, error) {
+		items := make([]*searchmodel.BulkIndexItem, 0, len(docs))
 		for _, d := range docs {
-			doc := &resource.IndexableDocument{
+			doc := &searchmodel.IndexableDocument{
 				Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: d.name},
 				Title: d.title,
 			}
 			if d.deleted {
 				doc.IsDeleted = new(true)
 			}
-			items = append(items, &resource.BulkIndexItem{Action: resource.ActionIndex, Doc: doc})
+			items = append(items, &searchmodel.BulkIndexItem{Action: searchmodel.ActionIndex, Doc: doc})
 		}
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: items})
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items})
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 	bi, ok := index.(*bleveIndex)
 	require.True(t, ok)
 
 	textQuery := bleve.NewMatchQuery("hello")
-	textQuery.SetField(resource.SEARCH_FIELD_TITLE)
+	textQuery.SetField(searchmodel.SEARCH_FIELD_TITLE)
 
 	scores := func(q query.Query) map[string]float64 {
 		req := bleve.NewSearchRequest(q)

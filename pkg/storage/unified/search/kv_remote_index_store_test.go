@@ -1,6 +1,8 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
 	"bytes"
 	"context"
 	"encoding/json"
@@ -291,7 +293,7 @@ func TestKVRemoteIndexStore_ListNamespaces(t *testing.T) {
 	ctx := t.Context()
 
 	for _, ns := range []string{"stack-1", "stack-2", "stack-3"} {
-		nsRes := resource.NamespacedResource{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"}
+		nsRes := resourcecontract.NamespacedResource{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"}
 		_, err := UploadIndexSnapshot(ctx, store, nsRes, createTestBleveIndex(t),
 			IndexMeta{BuildVersion: "11.0.0", LatestResourceVersion: 1}, testLogger)
 		require.NoError(t, err)
@@ -313,7 +315,7 @@ func TestKVRemoteIndexStore_ListNamespaceResources(t *testing.T) {
 	store := newTestKVRemoteIndexStore(t)
 	ctx := t.Context()
 
-	resources := []resource.NamespacedResource{
+	resources := []resourcecontract.NamespacedResource{
 		{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
 		{Namespace: "stack-1", Group: "folder.grafana.app", Resource: "folders"},
 		{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"},
@@ -326,14 +328,14 @@ func TestKVRemoteIndexStore_ListNamespaceResources(t *testing.T) {
 
 	got, err := store.ListNamespaceResources(ctx, "stack-1")
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []resource.NamespacedResource{
+	assert.ElementsMatch(t, []resourcecontract.NamespacedResource{
 		{Namespace: "stack-1", Group: "dashboard.grafana.app", Resource: "dashboards"},
 		{Namespace: "stack-1", Group: "folder.grafana.app", Resource: "folders"},
 	}, got)
 
 	got, err = store.ListNamespaceResources(ctx, "stack-2")
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []resource.NamespacedResource{
+	assert.ElementsMatch(t, []resourcecontract.NamespacedResource{
 		{Namespace: "stack-2", Group: "dashboard.grafana.app", Resource: "dashboards"},
 	}, got)
 }
@@ -377,7 +379,7 @@ func TestKVRemoteIndexStore_ListingSemantics(t *testing.T) {
 	incompleteMixedKey := ulid.Make()
 	seedIncompleteSnapshot(t, store, nsMixed, incompleteMixedKey)
 
-	nsOrphansOnly := resource.NamespacedResource{
+	nsOrphansOnly := resourcecontract.NamespacedResource{
 		Namespace: "orphans-only",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -676,12 +678,12 @@ func TestKVLeaseNames_Valid(t *testing.T) {
 
 	buildTests := []struct {
 		name         string
-		ns           resource.NamespacedResource
+		ns           resourcecontract.NamespacedResource
 		buildVersion string
 	}{
 		{"plain", newTestNsResource(), "11.5.0"},
 		{"semver with plus and slash", newTestNsResource(), "v11.5.0+security/branch"},
-		{"dotted group", resource.NamespacedResource{
+		{"dotted group", resourcecontract.NamespacedResource{
 			Namespace: "stack-1",
 			Group:     "alerting.notifications.grafana.app",
 			Resource:  "templates",
@@ -724,16 +726,16 @@ func TestKVRemoteIndexStore_RejectsInvalidNsResource(t *testing.T) {
 	valid := newTestNsResource()
 	bad := []struct {
 		name string
-		ns   resource.NamespacedResource
+		ns   resourcecontract.NamespacedResource
 	}{
-		{"empty namespace", resource.NamespacedResource{Namespace: "", Group: valid.Group, Resource: valid.Resource}},
-		{"slash in namespace", resource.NamespacedResource{Namespace: "ns/x", Group: valid.Group, Resource: valid.Resource}},
-		{"tilde in namespace", resource.NamespacedResource{Namespace: "ns~x", Group: valid.Group, Resource: valid.Resource}},
-		{"empty resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: ""}},
-		{"slash in resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a/b"}},
-		{"dot in resource", resource.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a.b"}},
-		{"empty group", resource.NamespacedResource{Namespace: valid.Namespace, Group: "", Resource: valid.Resource}},
-		{"slash in group", resource.NamespacedResource{Namespace: valid.Namespace, Group: "grp/x", Resource: valid.Resource}},
+		{"empty namespace", resourcecontract.NamespacedResource{Namespace: "", Group: valid.Group, Resource: valid.Resource}},
+		{"slash in namespace", resourcecontract.NamespacedResource{Namespace: "ns/x", Group: valid.Group, Resource: valid.Resource}},
+		{"tilde in namespace", resourcecontract.NamespacedResource{Namespace: "ns~x", Group: valid.Group, Resource: valid.Resource}},
+		{"empty resource", resourcecontract.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: ""}},
+		{"slash in resource", resourcecontract.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a/b"}},
+		{"dot in resource", resourcecontract.NamespacedResource{Namespace: valid.Namespace, Group: valid.Group, Resource: "a.b"}},
+		{"empty group", resourcecontract.NamespacedResource{Namespace: valid.Namespace, Group: "", Resource: valid.Resource}},
+		{"slash in group", resourcecontract.NamespacedResource{Namespace: valid.Namespace, Group: "grp/x", Resource: valid.Resource}},
 	}
 	for _, tt := range bad {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1038,7 +1040,7 @@ var orphanedSnapshotFiles = []string{"store/root.bolt", "store/00000001.zap"}
 // seedIncompleteSnapshot writes a few fake data files (no manifest) under
 // the given (ns, key) prefix, simulating an upload that crashed before the
 // completion signal was written. Returns the relative paths planted.
-func seedIncompleteSnapshot(t *testing.T, s *KVRemoteIndexStore, ns resource.NamespacedResource, key ulid.ULID) []string {
+func seedIncompleteSnapshot(t *testing.T, s *KVRemoteIndexStore, ns resourcecontract.NamespacedResource, key ulid.ULID) []string {
 	t.Helper()
 	for _, rel := range orphanedSnapshotFiles {
 		writeKVValue(t, s.store, IndexSnapshotDataSection, s.dataChunkKey(ns, key, rel, 0), []byte("orphaned"))
@@ -1048,7 +1050,7 @@ func seedIncompleteSnapshot(t *testing.T, s *KVRemoteIndexStore, ns resource.Nam
 
 // collectDataKeys returns every key remaining under the given snapshot's
 // data-section prefix.
-func collectDataKeys(t *testing.T, s *KVRemoteIndexStore, ns resource.NamespacedResource, key ulid.ULID) []string {
+func collectDataKeys(t *testing.T, s *KVRemoteIndexStore, ns resourcecontract.NamespacedResource, key ulid.ULID) []string {
 	t.Helper()
 	prefix := kvDataPrefix(ns, key)
 	var got []string
@@ -1064,7 +1066,7 @@ func collectDataKeys(t *testing.T, s *KVRemoteIndexStore, ns resource.Namespaced
 
 // assertNoDataKeys fails the test if any key remains under the snapshot's
 // data-section prefix.
-func assertNoDataKeys(t *testing.T, s *KVRemoteIndexStore, ns resource.NamespacedResource, key ulid.ULID) {
+func assertNoDataKeys(t *testing.T, s *KVRemoteIndexStore, ns resourcecontract.NamespacedResource, key ulid.ULID) {
 	t.Helper()
 	if got := collectDataKeys(t, s, ns, key); len(got) > 0 {
 		t.Fatalf("unexpected leftover data keys: %v", got)
@@ -1073,7 +1075,7 @@ func assertNoDataKeys(t *testing.T, s *KVRemoteIndexStore, ns resource.Namespace
 
 // assertNoManifestKey fails the test if the manifest for the given snapshot
 // is still present.
-func assertNoManifestKey(t *testing.T, s *KVRemoteIndexStore, ns resource.NamespacedResource, key ulid.ULID) {
+func assertNoManifestKey(t *testing.T, s *KVRemoteIndexStore, ns resourcecontract.NamespacedResource, key ulid.ULID) {
 	t.Helper()
 	_, err := s.store.Get(t.Context(), IndexSnapshotManifestSection, s.manifestKey(ns, key))
 	require.ErrorIs(t, err, kv.ErrNotFound, "manifest still present for %s", key)

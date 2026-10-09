@@ -1,6 +1,8 @@
 package builders
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"testing"
@@ -12,7 +14,6 @@ import (
 	rulesv0alpha1 "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/alerting/v0alpha1"
 	rulesmanifest "github.com/grafana/grafana/apps/alerting/rules/pkg/apis/manifestdata"
 	"github.com/grafana/grafana/pkg/expr"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -20,7 +21,7 @@ import (
 // search fields from it the way the shared registry does in production.
 var rulesManifestData = rulesmanifest.LocalManifest().ManifestData
 
-var rulesSearchFieldsProvider = resource.NewManifestBackedProvider(rulesManifestData)
+var rulesSearchFieldsProvider = searchmodel.NewManifestBackedProvider(rulesManifestData)
 
 // Field names as declared in apps/alerting/rules/kinds/{alertRule,recordingRule}.cue.
 // Only type, labels, annotations and datasourceUIDs remain as Go constants in
@@ -66,14 +67,14 @@ func recordingRuleKey(name string) *resourcepb.ResourceKey {
 
 // rulesTestRegistry seeds a registry with the rule kinds' fields so the
 // registry-backed builders extract them, as they do in production.
-func rulesTestRegistry(t *testing.T) *resource.SearchFieldsRegistry {
+func rulesTestRegistry(t *testing.T) *searchmodel.SearchFieldsRegistry {
 	t.Helper()
-	sel, hashes, providers, err := resource.SearchFieldsForManifests(rulesManifestData)
+	sel, hashes, providers, err := searchmodel.SearchFieldsForManifests(rulesManifestData)
 	require.NoError(t, err)
-	return resource.NewSearchFieldsRegistry(sel, hashes, providers)
+	return searchmodel.NewSearchFieldsRegistry(sel, hashes, providers)
 }
 
-func buildAlertRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
+func buildAlertRuleDoc(t *testing.T, value string) *searchmodel.IndexableDocument {
 	t.Helper()
 	info, err := GetAlertRuleSearchBuilder(rulesTestRegistry(t))
 	require.NoError(t, err)
@@ -82,7 +83,7 @@ func buildAlertRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
 	return doc
 }
 
-func buildRecordingRuleDoc(t *testing.T, value string) *resource.IndexableDocument {
+func buildRecordingRuleDoc(t *testing.T, value string) *searchmodel.IndexableDocument {
 	t.Helper()
 	info, err := GetRecordingRuleSearchBuilder(rulesTestRegistry(t))
 	require.NoError(t, err)
@@ -253,7 +254,7 @@ func TestRuleSearchFields_derivedFromManifest(t *testing.T) {
 	fields := rulesSearchFieldsProvider.Fields(gvr)
 	require.NotEmpty(t, fields, "alert rule search fields should be declared in the manifest")
 
-	cols := resource.SearchFieldDefinitionsToTableColumns(fields)
+	cols := searchmodel.SearchFieldDefinitionsToTableColumns(fields)
 	byName := make(map[string]*resourcepb.ResourceTableColumnDefinition, len(cols))
 	for _, c := range cols {
 		byName[c.Name] = c
@@ -303,7 +304,7 @@ func TestRuleBuilders_extract_status_fields(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		build       func(*testing.T, string) *resource.IndexableDocument
+		build       func(*testing.T, string) *searchmodel.IndexableDocument
 		kind        string
 		duration    float64
 		alertStatus string
@@ -361,7 +362,7 @@ func TestRuleBuilders_omit_missing_status_fields(t *testing.T) {
 
 	tests := []struct {
 		name  string
-		build func(*testing.T, string) *resource.IndexableDocument
+		build func(*testing.T, string) *searchmodel.IndexableDocument
 		kind  string
 	}{
 		{name: "alert rule", build: buildAlertRuleDoc, kind: "AlertRule"},

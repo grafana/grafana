@@ -1,6 +1,10 @@
 package search
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"fmt"
 	"math/rand"
 	"os"
@@ -14,7 +18,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/user"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -27,7 +30,7 @@ type expectedDashboardSearchFields struct {
 }
 
 func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -58,7 +61,7 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 	nameFor := func(i int) string {
 		return fmt.Sprintf("dash-%05d", i)
 	}
-	docFor := func(op int, name string, title string) (*resource.IndexableDocument, expectedDashboardSearchFields) {
+	docFor := func(op int, name string, title string) (*searchmodel.IndexableDocument, expectedDashboardSearchFields) {
 		expected := expectedDashboardSearchFields{
 			title:       title,
 			folder:      fmt.Sprintf("folder-%02d", op%17),
@@ -66,7 +69,7 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 			createdBy:   fmt.Sprintf("user:%d", op%23),
 			tags:        []string{"lifecycle", fmt.Sprintf("bucket-%02d", op%7)},
 		}
-		return &resource.IndexableDocument{
+		return &searchmodel.IndexableDocument{
 			RV:          int64(op + 1),
 			Name:        name,
 			Key:         keyFor(name),
@@ -78,18 +81,18 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 		}, expected
 	}
 
-	batch := make([]*resource.BulkIndexItem, 0, batchSize)
+	batch := make([]*searchmodel.BulkIndexItem, 0, batchSize)
 	batchTouched := make(map[string]struct{}, batchSize)
 	flushBatch := func() {
 		t.Helper()
 		if len(batch) == 0 {
 			return
 		}
-		require.NoError(t, idx.BulkIndex(&resource.BulkIndexRequest{Items: batch}))
+		require.NoError(t, idx.BulkIndex(&searchmodel.BulkIndexRequest{Items: batch}))
 		batch = batch[:0]
 		clear(batchTouched)
 	}
-	addToBatch := func(name string, item *resource.BulkIndexItem) {
+	addToBatch := func(name string, item *searchmodel.BulkIndexItem) {
 		t.Helper()
 		if _, ok := batchTouched[name]; ok {
 			flushBatch()
@@ -127,8 +130,8 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 			expectedDocs[name] = expected
 			delete(deletedNames, name)
 			liveNames = append(liveNames, name)
-			addToBatch(name, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
+			addToBatch(name, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
 				Doc:    doc,
 			})
 			adds++
@@ -139,8 +142,8 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 			title := fmt.Sprintf("Lifecycle dashboard updated op-%05d %s", op, name)
 			doc, expected := docFor(op, name, title)
 			expectedDocs[name] = expected
-			addToBatch(name, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
+			addToBatch(name, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
 				Doc:    doc,
 			})
 			updates++
@@ -151,8 +154,8 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 			delete(expectedDocs, name)
 			deletedNames[name] = struct{}{}
 			removeLiveName(liveIdx)
-			addToBatch(name, &resource.BulkIndexItem{
-				Action: resource.ActionDelete,
+			addToBatch(name, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionDelete,
 				Key:    keyFor(name),
 			})
 			deletes++
@@ -178,11 +181,11 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 		Limit: operationCount,
 		Query: "lifecycle dashboard",
 		Fields: []string{
-			resource.SEARCH_FIELD_TITLE,
-			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_DESCRIPTION,
-			resource.SEARCH_FIELD_CREATED_BY,
-			resource.SEARCH_FIELD_TAGS,
+			searchmodel.SEARCH_FIELD_TITLE,
+			searchmodel.SEARCH_FIELD_FOLDER,
+			searchmodel.SEARCH_FIELD_DESCRIPTION,
+			searchmodel.SEARCH_FIELD_CREATED_BY,
+			searchmodel.SEARCH_FIELD_TAGS,
 		},
 	}, nil, nil)
 	require.NoError(t, err)
@@ -194,11 +197,11 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 	for i, column := range res.Results.Columns {
 		columnIndexes[column.Name] = i
 	}
-	titleColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_TITLE)
-	folderColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_FOLDER)
-	descriptionColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_DESCRIPTION)
-	createdByColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_CREATED_BY)
-	tagsColumn := requireColumn(t, columnIndexes, resource.SEARCH_FIELD_TAGS)
+	titleColumn := requireColumn(t, columnIndexes, searchmodel.SEARCH_FIELD_TITLE)
+	folderColumn := requireColumn(t, columnIndexes, searchmodel.SEARCH_FIELD_FOLDER)
+	descriptionColumn := requireColumn(t, columnIndexes, searchmodel.SEARCH_FIELD_DESCRIPTION)
+	createdByColumn := requireColumn(t, columnIndexes, searchmodel.SEARCH_FIELD_CREATED_BY)
+	tagsColumn := requireColumn(t, columnIndexes, searchmodel.SEARCH_FIELD_TAGS)
 
 	seen := make(map[string]struct{}, len(res.Results.Rows))
 	for _, row := range res.Results.Rows {
@@ -213,7 +216,7 @@ func TestDashboardSearchStoredFieldsSurviveFileIndexMutationsAndMerge(t *testing
 		require.Equal(t, expected.description, string(row.Cells[descriptionColumn]), "stored description should match latest indexed description for %q", name)
 		require.Equal(t, expected.createdBy, string(row.Cells[createdByColumn]), "stored createdBy should match latest indexed createdBy for %q", name)
 
-		storedTags, err := resource.DecodeCell(res.Results.Columns[tagsColumn], tagsColumn, row.Cells[tagsColumn])
+		storedTags, err := searchmodel.DecodeCell(res.Results.Columns[tagsColumn], tagsColumn, row.Cells[tagsColumn])
 		require.NoError(t, err)
 		require.Equal(t, expected.tags, stringsFromAnySlice(t, storedTags), "stored tags should match latest indexed tags for %q", name)
 		seen[name] = struct{}{}
@@ -260,15 +263,15 @@ func dashboardSearchLifecycleSeed(t *testing.T) int64 {
 	return time.Now().UnixNano()
 }
 
-func newFileBackedDashboardIndex(t *testing.T, key resource.NamespacedResource, docCount int64) *bleveIndex {
+func newFileBackedDashboardIndex(t *testing.T, key resourcecontract.NamespacedResource, docCount int64) *bleveIndex {
 	t.Helper()
 
-	backend, _ := setupBleveBackend(t, withFileThreshold(0), withSearchFields(resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-		resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
+	backend, _ := setupBleveBackend(t, withFileThreshold(0), withSearchFields(searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+		resourcecontract.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): DashboardSearchFieldsProviderForTest(),
 	})))
 	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: key.Namespace})
 
-	resourceIndex, err := backend.BuildIndex(ctx, key, docCount, "test", func(index resource.ResourceIndex) (int64, error) {
+	resourceIndex, err := backend.BuildIndex(ctx, key, docCount, "test", func(index searchmodel.ResourceIndex) (int64, error) {
 		return 0, nil
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)

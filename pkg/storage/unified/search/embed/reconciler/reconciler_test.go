@@ -1,6 +1,12 @@
 package reconciler
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -122,7 +128,7 @@ func addStoredEvent(t *testing.T, s *Reconciler, ev *reconcileEvent) {
 	t.Helper()
 	st := s.storage.(*fakeStorage)
 	st.mu.Lock()
-	stored := &resource.ModifiedResource{
+	stored := &resourcecontract.ModifiedResource{
 		Key:    resourcepb.ResourceKey{Group: ev.group, Resource: ev.resource, Namespace: ev.namespace, Name: ev.name},
 		Action: ev.action, ResourceVersion: ev.rv, Value: ev.value,
 	}
@@ -153,8 +159,8 @@ func retryCount(s *Reconciler) int {
 	return n
 }
 
-func dashChange(action resourcepb.WatchEvent_Type, ns, name string, rv int64, value []byte) *resource.ModifiedResource {
-	return &resource.ModifiedResource{
+func dashChange(action resourcepb.WatchEvent_Type, ns, name string, rv int64, value []byte) *resourcecontract.ModifiedResource {
+	return &resourcecontract.ModifiedResource{
 		Action: action,
 		Key: resourcepb.ResourceKey{
 			Group: dashGroup, Resource: dashRes, Namespace: ns, Name: name,
@@ -166,8 +172,8 @@ func dashChange(action resourcepb.WatchEvent_Type, ns, name string, rv int64, va
 
 // change builds a ModifiedResource for a group/resource without a
 // dedicated helper.
-func change(group, res, ns, name string, rv int64, value []byte) *resource.ModifiedResource {
-	return &resource.ModifiedResource{
+func change(group, res, ns, name string, rv int64, value []byte) *resourcecontract.ModifiedResource {
+	return &resourcecontract.ModifiedResource{
 		Action:          resourcepb.WatchEvent_ADDED,
 		Key:             resourcepb.ResourceKey{Group: group, Resource: res, Namespace: ns, Name: name},
 		ResourceVersion: rv,
@@ -215,7 +221,7 @@ func TestReconciler_UnseededSweep_NoOp(t *testing.T) {
 // between processEvent and VectorMetrics is broken.
 func TestReconciler_ObservesProcessDuration(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	m := resource.ProvideVectorMetrics(reg)
+	m := searchmetrics.ProvideVectorMetrics(reg)
 
 	text := &fakeText{dim: 4}
 	s, err := New(Options{
@@ -237,7 +243,7 @@ func TestReconciler_ObservesProcessDuration(t *testing.T) {
 }
 
 func TestReconciler_RecordEmbeddingCounts(t *testing.T) {
-	m := resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+	m := searchmetrics.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
 	vec := newFakeVector()
 	vec.counts = []vector.EmbeddingCount{
 		{Resource: "dashboards", Model: testModel, Count: 7},
@@ -328,7 +334,7 @@ func TestReconciler_DeleteEvent_CallsVectorDelete(t *testing.T) {
 }
 
 func TestReconciler_SkipExtract_PreservesVectorsAndAdvancesCursor(t *testing.T) {
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), dashboardInFolder("skip", "Skip", "folder-b")),
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "good", snowflakeRV(200), minimalDashboard("good", "Good")),
 	}}
@@ -361,7 +367,7 @@ func TestReconciler_SkipExtract_PreservesVectorsAndAdvancesCursor(t *testing.T) 
 }
 
 func TestReconciler_SkipExtract_FolderUpdateErrorRetries(t *testing.T) {
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "skip", snowflakeRV(100), minimalDashboard("skip", "Skip")),
 	}}
 	vec := newFakeVector()
@@ -651,7 +657,7 @@ func TestReconciler_UnknownAction_BlocksAdvance(t *testing.T) {
 
 func TestReconciler_Sweep_SkipsWhenCursorIsZero(t *testing.T) {
 	st := &fakeStorage{}
-	st.changes = []*resource.ModifiedResource{
+	st.changes = []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", 100, minimalDashboard("dash-1", "Dash 1")),
 	}
 	vec := newFakeVector() // latestRV stays 0
@@ -669,7 +675,7 @@ func TestReconciler_Sweep_PullsCrossNamespaceEvents(t *testing.T) {
 	// cross-namespace ListModifiedSince, processes each event,
 	// them per-dashboard.
 	st := &fakeStorage{}
-	st.changes = []*resource.ModifiedResource{
+	st.changes = []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns-a", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
 		dashChange(resourcepb.WatchEvent_ADDED, "ns-b", "dash-2", snowflakeRV(200), minimalDashboard("dash-2", "Dash 2")),
 	}
@@ -687,7 +693,7 @@ func TestReconciler_Sweep_PullsCrossNamespaceEvents(t *testing.T) {
 
 func TestReconciler_Sweep_FiltersBelowCursor(t *testing.T) {
 	st := &fakeStorage{}
-	st.changes = []*resource.ModifiedResource{
+	st.changes = []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "old", snowflakeRV(100), minimalDashboard("old", "Old")),
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "new", snowflakeRV(200), minimalDashboard("new", "New")),
 	}
@@ -858,7 +864,7 @@ func TestReconciler_Sweep_DescOrderDoesNotDropEvents(t *testing.T) {
 // put and the next sweep re-lists from it. Nothing is re-enqueued: only
 // a re-walk can prove the RV again.
 func TestReconciler_Sweep_CheckpointWriteFailure_RetriesNextRun(t *testing.T) {
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
 	}}
 	vec := newFakeVector()
@@ -1028,7 +1034,7 @@ func TestReconciler_Run_ContextCancelDuringLockWait(t *testing.T) {
 
 func TestReconciler_Run_RunsStartupAndCycles(t *testing.T) {
 	st := &fakeStorage{}
-	st.changes = []*resource.ModifiedResource{
+	st.changes = []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "startup-1", snowflakeRV(100), minimalDashboard("startup-1", "Startup 1")),
 	}
 	vec := newFakeVector()
@@ -1118,7 +1124,7 @@ func TestReconciler_PendingDeleteLabel_RestoreReembeds(t *testing.T) {
 // queue, and the next cycle drains them.
 func TestReconciler_Run_BroadcasterSeedsSweep(t *testing.T) {
 	vec := newFakeVector()
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_MODIFIED, "ns", "watched", snowflakeRV(500), minimalDashboard("watched", "Watched")),
 	}}
 	s, _ := newRunnable(t, st, vec)
@@ -1281,14 +1287,14 @@ func TestReconciler_EnsureResourceInitialized_CreateError(t *testing.T) {
 // scan.
 func TestReconciler_Sweep_AdvancesCursor(t *testing.T) {
 	widgets := fakeBuilder{group: "test.grafana.app", resource: "widgets"}
-	dashAt := func(rv int64, name string) *resource.ModifiedResource {
+	dashAt := func(rv int64, name string) *resourcecontract.ModifiedResource {
 		return dashChange(resourcepb.WatchEvent_ADDED, "ns", name, rv, minimalDashboard(name, name))
 	}
 
 	tests := []struct {
 		name        string
 		builders    []embed.Builder
-		changes     []*resource.ModifiedResource
+		changes     []*resourcecontract.ModifiedResource
 		itemErr     error
 		snapshotRv  int64
 		cursor      int64
@@ -1298,7 +1304,7 @@ func TestReconciler_Sweep_AdvancesCursor(t *testing.T) {
 	}{
 		{
 			name: "a write landing mid-walk does not lift the listing ceiling",
-			changes: []*resource.ModifiedResource{
+			changes: []*resourcecontract.ModifiedResource{
 				dashAt(snowflakeRV(200), "dash-1"),
 				dashAt(snowflakeRV(300), "dash-2"),
 			},
@@ -1309,7 +1315,7 @@ func TestReconciler_Sweep_AdvancesCursor(t *testing.T) {
 		},
 		{
 			name: "no changes for this builder still rides the store's latest RV",
-			changes: []*resource.ModifiedResource{
+			changes: []*resourcecontract.ModifiedResource{
 				dashAt(snowflakeRV(100), "dash-1"), // at the cursor, so skipped
 				change("other.grafana.app", "others", "ns", "other-1", snowflakeRV(300), nil),
 			},
@@ -1318,7 +1324,7 @@ func TestReconciler_Sweep_AdvancesCursor(t *testing.T) {
 		},
 		{
 			name:        "interrupted walk proves nothing",
-			changes:     []*resource.ModifiedResource{dashAt(snowflakeRV(100), "dash-1"), dashAt(snowflakeRV(200), "dash-2")},
+			changes:     []*resourcecontract.ModifiedResource{dashAt(snowflakeRV(100), "dash-1"), dashAt(snowflakeRV(200), "dash-2")},
 			itemErr:     errBoom,
 			cursor:      snowflakeRV(50),
 			wantCursor:  snowflakeRV(50),
@@ -1327,7 +1333,7 @@ func TestReconciler_Sweep_AdvancesCursor(t *testing.T) {
 		{
 			name:     "one builder's failure holds the cursor for all of them",
 			builders: []embed.Builder{dashboard.New(), widgets},
-			changes: []*resource.ModifiedResource{
+			changes: []*resourcecontract.ModifiedResource{
 				dashAt(snowflakeRV(200), "dash-1"),
 				change(widgets.group, widgets.resource, "ns", "widget-1", snowflakeRV(150), []byte("boom")),
 			},
@@ -1363,7 +1369,7 @@ func TestReconciler_Sweep_AdvancesCursor(t *testing.T) {
 // walk has to embed it: nothing else ever will.
 func TestReconciler_Sweep_EmbedsWriteRecoveredByLookback(t *testing.T) {
 	st := &fakeStorage{
-		changes:  []*resource.ModifiedResource{dashChange(resourcepb.WatchEvent_ADDED, "ns", "late", snowflakeRV(95), minimalDashboard("late", "Late"))},
+		changes:  []*resourcecontract.ModifiedResource{dashChange(resourcepb.WatchEvent_ADDED, "ns", "late", snowflakeRV(95), minimalDashboard("late", "Late"))},
 		lookback: 10,
 	}
 	vec := newFakeVector()
@@ -1379,7 +1385,7 @@ func TestReconciler_Sweep_EmbedsWriteRecoveredByLookback(t *testing.T) {
 // A failed lookback write must remain visible to the next sweep.
 func TestReconciler_Sweep_RetriesFailedLookbackWrite(t *testing.T) {
 	st := &fakeStorage{
-		changes:  []*resource.ModifiedResource{dashChange(resourcepb.WatchEvent_ADDED, "ns", "late", snowflakeRV(95), minimalDashboard("late", "Late"))},
+		changes:  []*resourcecontract.ModifiedResource{dashChange(resourcepb.WatchEvent_ADDED, "ns", "late", snowflakeRV(95), minimalDashboard("late", "Late"))},
 		lookback: 10,
 	}
 	vec := newFakeVector()
@@ -1425,7 +1431,7 @@ func TestReconciler_Sweep_EmbedsEventWithheldFromWatch(t *testing.T) {
 // A repeat sweep at an unchanged cursor passes the previous call's
 // timestamp, so the backend can skip its lookback window.
 func TestReconciler_Sweep_SkipsLookbackOnRepeatSinceRv(t *testing.T) {
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
 	}}
 	vec := newFakeVector()
@@ -1443,7 +1449,7 @@ func TestReconciler_Sweep_SkipsLookbackOnRepeatSinceRv(t *testing.T) {
 // A failed seed leaves the cursor at 0, where the sweep cannot run at
 // all, so its seed RV is retained until the write succeeds.
 func TestReconciler_Sweep_RetriesFailedSeed(t *testing.T) {
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash-1", snowflakeRV(100), minimalDashboard("dash-1", "Dash 1")),
 	}}
 	vec := newFakeVector() // latestRV stays 0
@@ -1466,7 +1472,7 @@ func TestReconciler_Sweep_RetriesFailedSeed(t *testing.T) {
 // cursor. The sweep re-lists that resource from storage every interval,
 // so it must not hand it a fresh retry budget each time.
 func TestReconciler_Sweep_DoesNotResetExhaustedRetries(t *testing.T) {
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "boom", snowflakeRV(100), minimalDashboard("boom", "Boom")),
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "ok", snowflakeRV(200), minimalDashboard("ok", "OK")),
 	}}
@@ -1494,7 +1500,7 @@ func TestReconciler_Sweep_DoesNotResetExhaustedRetries(t *testing.T) {
 
 func setupEmbeddingRetry(t *testing.T, cursor int64) (*Reconciler, *fakeStorage, *fakeVector, *fakeText) {
 	t.Helper()
-	st := &fakeStorage{changes: []*resource.ModifiedResource{
+	st := &fakeStorage{changes: []*resourcecontract.ModifiedResource{
 		dashChange(resourcepb.WatchEvent_ADDED, "ns", "dash", snowflakeRV(100), minimalDashboard("dash", "Dash")),
 	}}
 	vec := newFakeVector()
@@ -1747,7 +1753,7 @@ func TestReconciler_EmbeddingRetryCap(t *testing.T) {
 			}
 			s, st, vec, text := setupEmbeddingRetry(t, cursor)
 			st.lookback, st.latestRvOverride = 10, snowflakeRV(110)
-			s.metrics = resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+			s.metrics = searchmetrics.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
 			key := retryKey(dashGroup, dashRes, "ns", "dash")
 			for attempt := range maxEventAttempts {
 				s.embedRetryAt = time.Time{}
@@ -1835,15 +1841,15 @@ type runtimeReconcilerTest struct {
 	reconciler *Reconciler
 	storage    *fakeStorage
 	vectors    *fakeVector
-	configs    *resource.EmbeddingConfigRegistry
+	configs    *searchmodel.EmbeddingConfigRegistry
 	provider   *enrollment.Registry
-	metrics    *resource.VectorMetrics
+	metrics    *searchmetrics.VectorMetrics
 }
 
 func setupRuntimeReconciler(t *testing.T, customBuilders ...embed.Builder) *runtimeReconcilerTest {
 	t.Helper()
-	configs := resource.NewEmbeddingConfigRegistry()
-	metrics := resource.ProvideVectorMetrics(prometheus.NewRegistry())
+	configs := searchmodel.NewEmbeddingConfigRegistry()
+	metrics := searchmetrics.ProvideVectorMetrics(prometheus.NewRegistry())
 	allowed := make([]string, 0, len(customBuilders)+1)
 	for _, builder := range customBuilders {
 		allowed = append(allowed, builder.Group()+"/"+builder.Resource())
@@ -1941,7 +1947,7 @@ func TestReconciler_SweepKeepsManifestSnapshotAcrossResources(t *testing.T) {
 	configs.Reload([]*app.ManifestData{foldermanifest.LocalManifest().ManifestData})
 	first := folderEvent(t, "first", "v1", "First title", "First description", "", 100)
 	second := folderEvent(t, "second", "v1beta1", "Second title", "Second description", "", 200)
-	env.storage.changes = []*resource.ModifiedResource{
+	env.storage.changes = []*resourcecontract.ModifiedResource{
 		change(folderGR.Group, folderGR.Resource, "ns", first.name, first.rv, first.value),
 		change(folderGR.Group, folderGR.Resource, "ns", second.name, second.rv, second.value),
 	}
@@ -2000,7 +2006,7 @@ func TestReconciler_NewlyEnrolledResourceKeepsSweepLookback(t *testing.T) {
 	env := setupRuntimeReconciler(t, fakeBuilder{group: dashGroup, resource: dashRes})
 	s, st, vec := env.reconciler, env.storage, env.vectors
 	folder := folderEvent(t, "folder", "v1", "Recently written", "", "", 95)
-	st.changes = []*resource.ModifiedResource{change(folder.group, folder.resource, folder.namespace, folder.name, folder.rv, folder.value)}
+	st.changes = []*resourcecontract.ModifiedResource{change(folder.group, folder.resource, folder.namespace, folder.name, folder.rv, folder.value)}
 	st.lookback = 10
 	st.latestRvOverride = snowflakeRV(100)
 	vec.latestRV = snowflakeRV(100)

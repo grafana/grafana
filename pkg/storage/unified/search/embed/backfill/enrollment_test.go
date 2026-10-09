@@ -1,6 +1,10 @@
 package backfill
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"errors"
 	"testing"
@@ -9,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed/embedder"
@@ -41,7 +44,7 @@ func folderManifest(revision int, fields ...app.ManifestVersionKindEmbedField) *
 }
 
 type enrollmentBackfillTest struct {
-	configs    *resource.EmbeddingConfigRegistry
+	configs    *searchmodel.EmbeddingConfigRegistry
 	provider   *countingProvider
 	storage    *fakeStorage
 	vec        *fakeVector
@@ -51,7 +54,7 @@ type enrollmentBackfillTest struct {
 
 func setupEnrollmentBackfillTest(t *testing.T, allowed []string, custom []embed.Builder) *enrollmentBackfillTest {
 	t.Helper()
-	configs := resource.NewEmbeddingConfigRegistry(nil)
+	configs := searchmodel.NewEmbeddingConfigRegistry(nil)
 	registry, err := enrollment.New(configs, allowed, custom, nil)
 	require.NoError(t, err)
 	f := &enrollmentBackfillTest{
@@ -121,7 +124,7 @@ func TestRuntimeEnrollmentAndCatalogPartition(t *testing.T) {
 	assert.Equal(t, "folder_partition", vec.upserts[0][0].Resource)
 	assert.Equal(t, "title: Operations", vec.upserts[0][0].Content)
 	assert.Equal(t, 1, vec.upserts[0][0].ContentVersion)
-	assert.Equal(t, []resource.NamespacedResource{{Group: "folder.grafana.app", Resource: "folders"}}, f.storage.listKeys)
+	assert.Equal(t, []resourcecontract.NamespacedResource{{Group: "folder.grafana.app", Resource: "folders"}}, f.storage.listKeys)
 	require.NotEmpty(t, vec.checkpoints)
 	cursor, err := decodeCursor(vec.checkpoints[0].LastSeenKey)
 	require.NoError(t, err)
@@ -236,7 +239,7 @@ func TestBackfillRemovedDeclarationLeavesOtherResourcesAvailable(t *testing.T) {
 	}
 	f.configs.Reload(nil)
 	f.run(t, backfillIteration{completedJobs: []int64{1}})
-	assert.Equal(t, []resource.NamespacedResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, f.storage.listKeys)
+	assert.Equal(t, []resourcecontract.NamespacedResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, f.storage.listKeys)
 	assert.False(t, vec.jobs[1].IsComplete)
 	f.configs.Reload([]*app.ManifestData{folderManifest(1)})
 	f.run(t, backfillIteration{completedJobs: []int64{2}})

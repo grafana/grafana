@@ -191,7 +191,7 @@ func newClient(opts options.StorageOptions,
 		if err != nil {
 			return nil, err
 		}
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server, nil), nil
 
 	case options.StorageTypeUnifiedGrpc:
 		if opts.Address == "" {
@@ -243,7 +243,7 @@ func newClient(opts options.StorageOptions,
 			}
 		}
 
-		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics, nil, snapshotStore)
+		searchOptions, err := search.NewSearchOptions(cfg, docs, indexMetrics.Bleve(), nil, snapshotStore)
 		if err != nil {
 			return nil, err
 		}
@@ -333,7 +333,7 @@ func newClient(opts options.StorageOptions,
 			return nil, err
 		}
 
-		return resource.NewLocalResourceClient(server), nil
+		return resource.NewLocalResourceClient(server.StorageHandler(), server.SearchHandler()), nil
 	}
 }
 

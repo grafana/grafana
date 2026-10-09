@@ -1,6 +1,8 @@
 package search
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"fmt"
 	"iter"
@@ -134,11 +136,11 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 		if err != nil {
 			return err
 		}
-		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
+		searchrequest.Fields = append(f, searchmodel.SEARCH_FIELD_ALL_FIELDS)
 		return nil
 	}
-	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING) {
-		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING)
+	if !slices.Contains(searchrequest.Fields, searchmodel.SEARCH_FIELD_RV_STRING) {
+		searchrequest.Fields = append(searchrequest.Fields, searchmodel.SEARCH_FIELD_RV_STRING)
 	}
 	return nil
 }
@@ -151,7 +153,7 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest, trash bool) {
 	for _, f := range authzLoadFields(trash) {
 		if !slices.Contains(searchrequest.Fields, f) &&
-			!slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_ALL_FIELDS) {
+			!slices.Contains(searchrequest.Fields, searchmodel.SEARCH_FIELD_ALL_FIELDS) {
 			searchrequest.Fields = append(searchrequest.Fields, f)
 		}
 	}
@@ -162,9 +164,9 @@ func (b *bleveIndex) ensureAuthzFields(searchrequest *bleve.SearchRequest, trash
 // deleted_by raises no error, it just stops the deleter seeing their own objects.
 func authzLoadFields(trash bool) []string {
 	if trash {
-		return []string{resource.SEARCH_FIELD_FOLDER, resource.SEARCH_FIELD_DELETED_BY}
+		return []string{searchmodel.SEARCH_FIELD_FOLDER, searchmodel.SEARCH_FIELD_DELETED_BY}
 	}
-	return []string{resource.SEARCH_FIELD_FOLDER}
+	return []string{searchmodel.SEARCH_FIELD_FOLDER}
 }
 
 // authzResources builds the resource-type -> verb map used to authorize hits.
@@ -181,7 +183,7 @@ func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[s
 	}
 	resources := map[string]string{}
 	if b.key.IsGlobal() {
-		for _, gr := range resource.GlobalSearchResourceTypes() {
+		for _, gr := range searchmodel.GlobalSearchResourceTypes() {
 			resources[gr.Resource] = verb
 		}
 	} else {
@@ -210,11 +212,11 @@ func parseHitDocInfo(doc *search.DocumentMatch, resources map[string]string) (do
 	}
 
 	folder := ""
-	if v, ok := doc.Fields[resource.SEARCH_FIELD_FOLDER].(string); ok {
+	if v, ok := doc.Fields[searchmodel.SEARCH_FIELD_FOLDER].(string); ok {
 		folder = v
 	}
 	deletedBy := ""
-	if v, ok := doc.Fields[resource.SEARCH_FIELD_DELETED_BY].(string); ok {
+	if v, ok := doc.Fields[searchmodel.SEARCH_FIELD_DELETED_BY].(string); ok {
 		deletedBy = v
 	}
 
@@ -252,7 +254,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 	firstReq *bleve.SearchRequest,
 	selectFields []string,
 	fieldValueSchema *fieldValueResultSchema,
-	stats *resource.SearchStats,
+	stats *searchmodel.SearchStats,
 	response *resourcepb.ResourceSearchResponse,
 	trashAuthz *resource.TrashAuthorizer,
 ) (*resourcepb.ResourceSearchResponse, error) {
@@ -449,7 +451,7 @@ func (b *bleveIndex) prepareFacetAggregation(
 	index bleve.Index,
 	firstReq *bleve.SearchRequest,
 	resources map[string]string,
-	stats *resource.SearchStats,
+	stats *searchmodel.SearchStats,
 	trashAuthz *resource.TrashAuthorizer,
 ) (*facetAggregator, int64, bool, error) {
 	if len(req.Facet) == 0 {
@@ -496,7 +498,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 	resources map[string]string,
 	extractFn func(docInfo) authz.BatchCheckItem,
 	facets map[string]*resourcepb.ResourceSearchRequest_Facet,
-	stats *resource.SearchStats,
+	stats *searchmodel.SearchStats,
 	trashAuthz *resource.TrashAuthorizer,
 ) (*facetAggregator, int64, bool, error) {
 	agg := newFacetAggregator(facets, b.searchFields.storedFacetField)
@@ -598,7 +600,7 @@ func (b *bleveIndex) finalizePostFilter(
 	authorized int64,
 	exhausted, reverseSort, wantFacets, trash bool,
 	agg *facetAggregator,
-	stats *resource.SearchStats,
+	stats *searchmodel.SearchStats,
 ) error {
 	fromTop := len(req.SearchAfter) == 0 && len(req.SearchBefore) == 0
 	exact := exhausted

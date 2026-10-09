@@ -1,6 +1,8 @@
 package backfill
 
 import (
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
 	"context"
 	"encoding/json"
 	"errors"
@@ -22,7 +24,6 @@ import (
 	grpccodes "google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 	"github.com/grafana/grafana/pkg/storage/unified/search/embed"
@@ -201,7 +202,7 @@ func TestRun_LockAcquired_ReleasedOnReturn(t *testing.T) {
 // wiring between processBackfillItem and VectorMetrics is broken.
 func TestBackfill_ObservesItemDuration(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	m := resource.ProvideVectorMetrics(reg)
+	m := searchmetrics.ProvideVectorMetrics(reg)
 
 	storage := newFakeStorage()
 	storage.listItems = []listItem{makeListItem("ns-1", "dash-a", 50)}
@@ -552,7 +553,7 @@ func TestRunBackfillJob_SkipExtract_PreservesVectorsAndCompletes(t *testing.T) {
 	before.Metadata = json.RawMessage(`{"custom":"preserved"}`)
 	before.Embedding = []float32{0.1, 0.2}
 	vec.rows[key]["panel/1"] = before
-	metrics := resource.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
+	metrics := searchmetrics.ProvideVectorMetrics(prometheus.NewPedanticRegistry())
 	text := &fakeText{dim: 4}
 	b, err := NewVectorBackfiller(Options{
 		Storage:       storage,
@@ -815,7 +816,7 @@ func TestRunBackfillJob_VersionStale_IdenticalContent_SkipsEmbedAndTouchesVersio
 	vec.seedStoredContent("ns", "test-model", "dashboards", "dash-a", items[0].Subresource, items[0].Content, 1)
 
 	reg := prometheus.NewPedanticRegistry()
-	m := resource.ProvideVectorMetrics(reg)
+	m := searchmetrics.ProvideVectorMetrics(reg)
 	text := &fakeText{dim: 4}
 	emb := newFakeEmbedder(text)
 	o, err := NewVectorBackfiller(Options{

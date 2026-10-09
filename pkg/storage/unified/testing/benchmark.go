@@ -13,9 +13,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"golang.org/x/sync/errgroup"
-
+	searchservice "github.com/grafana/grafana/pkg/storage/unified/search/service"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/errgroup"
 )
 
 // BenchmarkOptions configures the benchmark parameters
@@ -502,7 +502,7 @@ func runStorageAndSearchBenchmark(
 		pairs[i] = groupResource{group: b.GroupResource.Group, resource: b.GroupResource.Resource}
 	}
 
-	searchServer, err := resource.NewSearchServer(resource.ResourceServerOptions{
+	searchServer, err := searchservice.NewSearchServer(searchservice.Options{
 		Backend: backend,
 		Search:  searchOpts,
 	})

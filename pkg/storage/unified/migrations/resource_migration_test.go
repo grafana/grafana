@@ -1,6 +1,8 @@
 package migrations
 
 import (
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,10 +16,6 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -29,6 +27,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search"
+	unifiedserver "github.com/grafana/grafana/pkg/storage/unified/server"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	sqlBackend "github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
@@ -639,7 +642,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	})
 
 	client := &recordingRetryResourceClient{
-		ResourceClient: resource.NewLocalResourceClient(server),
+		ResourceClient: resource.NewLocalResourceClient(server.StorageHandler(), server.SearchHandler()),
 	}
 
 	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
@@ -708,7 +711,7 @@ func testSQLiteRetryReleasesLock(t *testing.T, env testEnv, backend resource.Sto
 	}
 }
 
-func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) (resource.ResourceServer, error) {
+func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.StorageBackend) (*unifiedserver.Server, error) {
 	t.Helper()
 
 	cfg := setting.NewCfg()
@@ -716,7 +719,7 @@ func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.Storage
 	cfg.IndexFileThreshold = 1000
 	cfg.IndexPath = t.TempDir()
 
-	docBuilders := &resource.TestDocumentBuilderSupplier{
+	docBuilders := &searchmodel.TestDocumentBuilderSupplier{
 		GroupsResources: map[string]string{
 			"folder.grafana.app": "folders",
 		},
@@ -725,10 +728,11 @@ func newRetryTestResourceServerWithSearch(t *testing.T, backend resource.Storage
 	searchOpts, err := search.NewSearchOptions(cfg, docBuilders, nil, nil, nil)
 	require.NoError(t, err)
 
-	return resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      backend,
-		AccessClient: authlib.FixedAccessClient(true),
-		Search:       searchOpts,
+	return sqlBackend.NewResourceServer(sqlBackend.ServerOptions{
+		Cfg:           cfg,
+		Backend:       backend,
+		AccessClient:  authlib.FixedAccessClient(true),
+		SearchOptions: searchOpts,
 	})
 }
 
@@ -821,7 +825,7 @@ func TestIntegrationRun_SQLiteLargeMigrationRebuildUsesMigrationTransaction(t *t
 	})
 
 	client := &recordingRetryResourceClient{
-		ResourceClient: resource.NewLocalResourceClient(server),
+		ResourceClient: resource.NewLocalResourceClient(server.StorageHandler(), server.SearchHandler()),
 	}
 
 	gr := schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}

@@ -1,6 +1,12 @@
 package search_test
 
 import (
+	resourcecontract "github.com/grafana/grafana/pkg/storage/unified/resource/contract"
+
+	searchmetrics "github.com/grafana/grafana/pkg/storage/unified/search/metrics"
+
+	searchmodel "github.com/grafana/grafana/pkg/storage/unified/search/model"
+
 	"context"
 	"encoding/binary"
 	"encoding/json"
@@ -31,12 +37,12 @@ import (
 
 const threshold = 9999
 
-func indexDocumentsWithTitles(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithTitles map[string]string) {
-	items := make([]*resource.BulkIndexItem, 0, len(docsWithTitles))
+func indexDocumentsWithTitles(t *testing.T, index searchmodel.ResourceIndex, key resourcecontract.NamespacedResource, docsWithTitles map[string]string) {
+	items := make([]*searchmodel.BulkIndexItem, 0, len(docsWithTitles))
 	for name, title := range docsWithTitles {
-		items = append(items, &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+		items = append(items, &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:   1,
 				Name: name,
 				Key: &resourcepb.ResourceKey{
@@ -49,11 +55,11 @@ func indexDocumentsWithTitles(t *testing.T, index resource.ResourceIndex, key re
 			},
 		})
 	}
-	req := &resource.BulkIndexRequest{Items: items}
+	req := &searchmodel.BulkIndexRequest{Items: items}
 	require.NoError(t, index.BulkIndex(req))
 }
 
-func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, orderedExpectedNames []string) {
+func checkSearchQuery(t *testing.T, index searchmodel.ResourceIndex, query *resourcepb.ResourceSearchRequest, orderedExpectedNames []string) {
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, int64(len(orderedExpectedNames)), res.TotalHits)
@@ -67,7 +73,7 @@ func checkSearchQuery(t *testing.T, index resource.ResourceIndex, query *resourc
 // trailing fragment (e.g. "ma" in "users-service-ma") is shorter than the
 // ngram minimum.
 func TestHyphenatedTitlePartialMatch(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -88,7 +94,7 @@ func TestHyphenatedTitlePartialMatch(t *testing.T) {
 }
 
 func TestCanSearchByTitle(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -328,8 +334,8 @@ func TestCanSearchByTitle(t *testing.T) {
 			cols = append(cols, c.Name)
 		}
 		require.Greater(t, len(cols), 1, "expected all-fields column set, got %v", cols)
-		require.Contains(t, cols, resource.SEARCH_FIELD_TITLE, "expected title column, got %v", cols)
-		require.NotContains(t, cols, resource.SEARCH_FIELD_SCORE, "all-fields default must not return the _score column")
+		require.Contains(t, cols, searchmodel.SEARCH_FIELD_TITLE, "expected title column, got %v", cols)
+		require.NotContains(t, cols, searchmodel.SEARCH_FIELD_SCORE, "all-fields default must not return the _score column")
 	})
 }
 
@@ -337,7 +343,7 @@ func TestCanSearchByTitle(t *testing.T) {
 // (via explicit QueryFields) to prove partial/prefix matching works without
 // relying on the title field mapping.
 func TestTitleNgramFieldSearch(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -356,7 +362,7 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 			Query: q,
 			QueryFields: []*resourcepb.ResourceSearchRequest_QueryField{
 				{
-					Name:  resource.SEARCH_FIELD_TITLE_NGRAM,
+					Name:  searchmodel.SEARCH_FIELD_TITLE_NGRAM,
 					Boost: 1,
 				},
 			},
@@ -407,7 +413,7 @@ func TestTitleNgramFieldSearch(t *testing.T) {
 }
 
 func TestWildcardQuery(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -434,7 +440,7 @@ func TestWildcardQuery(t *testing.T) {
 
 		req := newTestQuery("hell*")
 		req.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-			{Name: resource.SEARCH_FIELD_TITLE},
+			{Name: searchmodel.SEARCH_FIELD_TITLE},
 		}
 		res, err := index.Search(context.Background(), nil, req, nil, nil)
 		require.NoError(t, err)
@@ -443,7 +449,7 @@ func TestWildcardQuery(t *testing.T) {
 		// QueryFields pointing at a non-matching field should return no results
 		req2 := newTestQuery("hell*")
 		req2.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-			{Name: resource.SEARCH_FIELD_FOLDER},
+			{Name: searchmodel.SEARCH_FIELD_FOLDER},
 		}
 		res2, err := index.Search(context.Background(), nil, req2, nil, nil)
 		require.NoError(t, err)
@@ -487,14 +493,14 @@ func TestWildcardQuery(t *testing.T) {
 			{Name: "email", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
 			{Name: "login", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
 		})
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{
-			Items: []*resource.BulkIndexItem{
-				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+		require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{
+			Items: []*searchmodel.BulkIndexItem{
+				{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{
 					RV: 1, Name: "user1", Title: "First User",
 					Key:    &resourcepb.ResourceKey{Name: "user1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 					Fields: map[string]any{"email": "uniquemail@grafana.com", "login": "firstlogin"},
 				}},
-				{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+				{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{
 					RV: 1, Name: "user2", Title: "Second User",
 					Key:    &resourcepb.ResourceKey{Name: "user2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 					Fields: map[string]any{"email": "othermail@grafana.com", "login": "secondlogin"},
@@ -502,8 +508,8 @@ func TestWildcardQuery(t *testing.T) {
 			},
 		}))
 
-		emailField := resource.SEARCH_FIELD_PREFIX + "email"
-		loginField := resource.SEARCH_FIELD_PREFIX + "login"
+		emailField := searchmodel.SEARCH_FIELD_PREFIX + "email"
+		loginField := searchmodel.SEARCH_FIELD_PREFIX + "login"
 
 		// Default wildcard (no QueryFields) searches title only, so email/login queries don't match.
 		checkSearchQuery(t, index, newTestQuery("*uniquemail@grafana.com*"), nil)
@@ -537,7 +543,7 @@ func TestWildcardQuery(t *testing.T) {
 		// work because title is auto-expanded to title + title_phrase.
 		req := newTestQuery("*grafana dev overview*")
 		req.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{
-			{Name: resource.SEARCH_FIELD_TITLE},
+			{Name: searchmodel.SEARCH_FIELD_TITLE},
 		}
 		res, err := index.Search(context.Background(), nil, req, nil, nil)
 		require.NoError(t, err)
@@ -546,7 +552,7 @@ func TestWildcardQuery(t *testing.T) {
 }
 
 func TestScoringHierarchy(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -588,22 +594,22 @@ func newTestQuery(query string) *resourcepb.ResourceSearchRequest {
 }
 
 func TestFieldValueSearchResults(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
 	index := newTestDashboardsIndex(t, threshold, 1, noop)
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
-		Action: resource.ActionIndex,
-		Doc: &resource.IndexableDocument{
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{{
+		Action: searchmodel.ActionIndex,
+		Doc: &searchmodel.IndexableDocument{
 			RV:      1,
 			Name:    "dashboard-1",
 			Title:   "Hello dashboard",
 			Folder:  "folder-1",
 			Tags:    []string{"production", "overview"},
 			Created: 1234,
-			References: resource.ResourceReferences{{
+			References: searchmodel.ResourceReferences{{
 				Group:    "dashboard.grafana.app",
 				Kind:     "LibraryPanel",
 				Name:     "library-panel-1",
@@ -621,7 +627,7 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 	t.Run("field values", func(t *testing.T) {
 		req := newTestQuery("Hello")
-		req.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_TAGS, resource.SEARCH_FIELD_CREATED}
+		req.Fields = []string{searchmodel.SEARCH_FIELD_TITLE, searchmodel.SEARCH_FIELD_TAGS, searchmodel.SEARCH_FIELD_CREATED}
 		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
@@ -638,9 +644,9 @@ func TestFieldValueSearchResults(t *testing.T) {
 			require.Less(t, int(value.FieldIndex), len(res.Fields))
 			fields[res.Fields[value.FieldIndex].Name] = value
 		}
-		require.Equal(t, []string{"Hello dashboard"}, fields[resource.SEARCH_FIELD_TITLE].StringValues)
-		require.Equal(t, []string{"production", "overview"}, fields[resource.SEARCH_FIELD_TAGS].StringValues)
-		require.Equal(t, []int64{1234}, fields[resource.SEARCH_FIELD_CREATED].Int64Values)
+		require.Equal(t, []string{"Hello dashboard"}, fields[searchmodel.SEARCH_FIELD_TITLE].StringValues)
+		require.Equal(t, []string{"production", "overview"}, fields[searchmodel.SEARCH_FIELD_TAGS].StringValues)
+		require.Equal(t, []int64{1234}, fields[searchmodel.SEARCH_FIELD_CREATED].Int64Values)
 	})
 
 	t.Run("library panel search", func(t *testing.T) {
@@ -651,9 +657,9 @@ func TestFieldValueSearchResults(t *testing.T) {
 			Values:   []string{"library-panel-1"},
 		}}
 		req.Fields = []string{
-			resource.SEARCH_FIELD_FOLDER,
-			resource.SEARCH_FIELD_LEGACY_ID,
-			resource.SEARCH_FIELD_LABELS + "." + resource.SEARCH_FIELD_LEGACY_ID,
+			searchmodel.SEARCH_FIELD_FOLDER,
+			searchmodel.SEARCH_FIELD_LEGACY_ID,
+			searchmodel.SEARCH_FIELD_LABELS + "." + searchmodel.SEARCH_FIELD_LEGACY_ID,
 		}
 		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
@@ -663,16 +669,16 @@ func TestFieldValueSearchResults(t *testing.T) {
 		require.Len(t, res.Rows, 1)
 		require.Equal(t, "dashboard-1", res.Rows[0].Key.Name)
 
-		values, err := resource.DecodeSearchValues(res.Fields, res.Rows[0])
+		values, err := searchmodel.DecodeSearchValues(res.Fields, res.Rows[0])
 		require.NoError(t, err)
-		require.Equal(t, "folder-1", values[resource.SEARCH_FIELD_FOLDER])
-		require.Equal(t, int64(42), values[resource.SEARCH_FIELD_LEGACY_ID])
-		require.Equal(t, "42", values[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID])
+		require.Equal(t, "folder-1", values[searchmodel.SEARCH_FIELD_FOLDER])
+		require.Equal(t, int64(42), values[searchmodel.SEARCH_FIELD_LEGACY_ID])
+		require.Equal(t, "42", values[searchmodel.SEARCH_FIELD_LABELS+"."+searchmodel.SEARCH_FIELD_LEGACY_ID])
 	})
 
 	t.Run("explicit score with free-text query", func(t *testing.T) {
 		req := newTestQuery("Hello")
-		req.Fields = []string{resource.SEARCH_FIELD_TITLE, resource.SEARCH_FIELD_SCORE}
+		req.Fields = []string{searchmodel.SEARCH_FIELD_TITLE, searchmodel.SEARCH_FIELD_SCORE}
 		req.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
@@ -696,7 +702,7 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 	t.Run("legacy remains default", func(t *testing.T) {
 		req := newTestQuery("")
-		req.Fields = []string{resource.SEARCH_FIELD_TITLE}
+		req.Fields = []string{searchmodel.SEARCH_FIELD_TITLE}
 
 		res, err := index.Search(t.Context(), nil, req, nil, nil)
 		require.NoError(t, err)
@@ -731,7 +737,7 @@ func TestFieldValueSearchResults(t *testing.T) {
 
 func TestSearchResultFormatMetric(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
-	metrics := resource.ProvideIndexMetrics(reg)
+	metrics := searchmetrics.ProvideBleveMetrics(reg, nil)
 	index := newTestDashboardsIndexWithMetrics(t, threshold, 0, noop, metrics)
 
 	for _, tc := range []struct {
@@ -792,7 +798,7 @@ func newExactQueryByTitle(query string) *resourcepb.ResourceSearchRequest {
 }
 
 func TestDoubleEqualsExactMatch(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -890,7 +896,7 @@ func titleFilterQuery(operator string, values ...string) *resourcepb.ResourceSea
 		},
 		// Sort by name so multi-hit expectations are deterministic (filters alone
 		// impose no order).
-		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_NAME}},
 		Limit:  100000,
 	}
 }
@@ -899,12 +905,12 @@ func titleFilterQuery(operator string, values ...string) *resourcepb.ResourceSea
 // search API emits: set membership is exact (whole title, case-insensitive via
 // title_phrase), unlike the fuzzy "=" filter.
 func TestTitleSetFilterExactMatch(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	seed := func(t *testing.T) resource.ResourceIndex {
+	seed := func(t *testing.T) searchmodel.ResourceIndex {
 		index := newTestDashboardsIndex(t, threshold, 3, noop)
 		indexDocumentsWithTitles(t, index, key, map[string]string{
 			"name1": "Test",
@@ -935,12 +941,12 @@ func TestTitleSetFilterExactMatch(t *testing.T) {
 // case-sensitively. /search does not re-apply the selector to the resource, so
 // whatever the index returns is the answer.
 func TestLabelFilterExactMatch(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	seed := func(t *testing.T) resource.ResourceIndex {
+	seed := func(t *testing.T) searchmodel.ResourceIndex {
 		index := newTestDashboardsIndex(t, threshold, 3, noop)
 		indexDocumentsWithLabels(t, index, key, map[string]map[string]string{
 			"name1": {"team": "Team Alpha"},
@@ -1013,7 +1019,7 @@ func TestLabelFilterExactMatch(t *testing.T) {
 }
 
 func TestRegexLabelFilter(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -1029,12 +1035,12 @@ func TestRegexLabelFilter(t *testing.T) {
 	checkSearchQuery(t, index, labelFilterQuery("notregex", "team", "Team.*"), []string{"name2"})
 }
 
-func indexDocumentsWithLabels(t *testing.T, index resource.ResourceIndex, key resource.NamespacedResource, docsWithLabels map[string]map[string]string) {
-	items := make([]*resource.BulkIndexItem, 0, len(docsWithLabels))
+func indexDocumentsWithLabels(t *testing.T, index searchmodel.ResourceIndex, key resourcecontract.NamespacedResource, docsWithLabels map[string]map[string]string) {
+	items := make([]*searchmodel.BulkIndexItem, 0, len(docsWithLabels))
 	for name, labels := range docsWithLabels {
-		items = append(items, &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+		items = append(items, &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:   1,
 				Name: name,
 				Key: &resourcepb.ResourceKey{
@@ -1048,7 +1054,7 @@ func indexDocumentsWithLabels(t *testing.T, index resource.ResourceIndex, key re
 			},
 		})
 	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items}))
 }
 
 func labelFilterQuery(operator, key string, values ...string) *resourcepb.ResourceSearchRequest {
@@ -1063,7 +1069,7 @@ func labelFilterQuery(operator, key string, values ...string) *resourcepb.Resour
 		},
 		// Sort by name so multi-hit expectations are deterministic (filters alone
 		// impose no order).
-		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_NAME}},
 		Limit:  100000,
 	}
 }
@@ -1071,15 +1077,15 @@ func labelFilterQuery(operator, key string, values ...string) *resourcepb.Resour
 // TestPublicFieldNameFilter checks the filter path resolves a public field name
 // to its physical fields.* location, so callers don't supply the prefix.
 func TestPublicFieldNameFilter(t *testing.T) {
-	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
 		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
 	})
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
-		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
+		{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{RV: 1, Name: "d1", Title: "One",
 			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "red"}}},
-		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+		{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
 			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "blue"}}},
 	}}))
@@ -1097,7 +1103,7 @@ func TestPublicFieldNameFilter(t *testing.T) {
 	// Public name resolves to the fields.* sub-document.
 	checkSearchQuery(t, index, filter("team"), []string{"d1"})
 	// An explicitly prefixed name still works (passthrough).
-	checkSearchQuery(t, index, filter(resource.SEARCH_FIELD_PREFIX+"team"), []string{"d1"})
+	checkSearchQuery(t, index, filter(searchmodel.SEARCH_FIELD_PREFIX+"team"), []string{"d1"})
 }
 
 func TestRegexFilterOnKeywordField(t *testing.T) {
@@ -1109,11 +1115,11 @@ func TestRegexFilterOnKeywordField(t *testing.T) {
 		expression string
 		want       []string
 	}{
-		{name: "greedy quantifier", operator: string(resource.OperatorRegex), expression: "red.*", want: []string{"d1", "d5", "d6"}},
-		{name: "exact term", operator: string(resource.OperatorRegex), expression: "red-team", want: []string{"d1"}},
-		{name: "no matching term", operator: string(resource.OperatorRegex), expression: "green.*", want: nil},
-		{name: "negation includes missing field", operator: string(resource.OperatorNotRegex), expression: "red.*", want: []string{"d2", "d3", "d4"}},
-		{name: "original-case standard name", field: resource.SEARCH_FIELD_NAME, operator: string(resource.OperatorRegex), expression: "d.*", want: []string{"d1", "d2", "d3", "d4", "d5", "d6"}},
+		{name: "greedy quantifier", operator: string(searchmodel.OperatorRegex), expression: "red.*", want: []string{"d1", "d5", "d6"}},
+		{name: "exact term", operator: string(searchmodel.OperatorRegex), expression: "red-team", want: []string{"d1"}},
+		{name: "no matching term", operator: string(searchmodel.OperatorRegex), expression: "green.*", want: nil},
+		{name: "negation includes missing field", operator: string(searchmodel.OperatorNotRegex), expression: "red.*", want: []string{"d2", "d3", "d4"}},
+		{name: "original-case standard name", field: searchmodel.SEARCH_FIELD_NAME, operator: string(searchmodel.OperatorRegex), expression: "d.*", want: []string{"d1", "d2", "d3", "d4", "d5", "d6"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			field := tc.field
@@ -1140,7 +1146,7 @@ func TestRegexFilterWholeValueSemantics(t *testing.T) {
 		{name: "dotall any string includes empty and missing fields", expression: ".*", want: []string{"d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorRegex), tc.expression), tc.want)
+			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(searchmodel.OperatorRegex), tc.expression), tc.want)
 		})
 	}
 }
@@ -1158,7 +1164,7 @@ func TestNotRegexFilterHandlesEmptyMatches(t *testing.T) {
 		{name: "prefix regex includes empty and missing fields", expression: "crit.*", want: []string{"d2", "d3", "d4", "d5", "d6", "d7", "d8", "d9"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(resource.OperatorNotRegex), tc.expression), tc.want)
+			checkSearchQuery(t, index, regexFieldQuery(key, "team", string(searchmodel.OperatorNotRegex), tc.expression), tc.want)
 		})
 	}
 }
@@ -1167,7 +1173,7 @@ func TestRegexFilterIncludesDictionaryReadCost(t *testing.T) {
 	key, index := newRegexKeywordFieldIndex(t)
 	// No term matches this prefix, so the query cost comes from expanding the
 	// dictionary rather than reading matching postings.
-	res := searchResponse(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "green.*"))
+	res := searchResponse(t, index, nil, regexFieldQuery(key, "team", string(searchmodel.OperatorRegex), "green.*"))
 	require.Greater(t, res.QueryCost, float64(0))
 }
 
@@ -1181,11 +1187,11 @@ func TestRegexFilterRejectsUnsupportedPattern(t *testing.T) {
 	}{
 		{name: "invalid syntax", field: "team", expression: "red("},
 		{name: "mixed case behavior", field: "team", expression: "red-(?i:team)"},
-		{name: "lowercased title has no cased variant", field: resource.SEARCH_FIELD_TITLE, expression: "T.*", message: "does not preserve original case"},
-		{name: "text-only description", field: resource.SEARCH_FIELD_DESCRIPTION, expression: "D.*"},
+		{name: "lowercased title has no cased variant", field: searchmodel.SEARCH_FIELD_TITLE, expression: "T.*", message: "does not preserve original case"},
+		{name: "text-only description", field: searchmodel.SEARCH_FIELD_DESCRIPTION, expression: "D.*"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			errorResult := requireBadRequestSearch(t, index, regexFieldQuery(key, tc.field, string(resource.OperatorRegex), tc.expression))
+			errorResult := requireBadRequestSearch(t, index, regexFieldQuery(key, tc.field, string(searchmodel.OperatorRegex), tc.expression))
 			require.NotEmpty(t, errorResult.Message)
 			if tc.message != "" {
 				require.Contains(t, errorResult.Message, tc.message)
@@ -1197,14 +1203,14 @@ func TestRegexFilterRejectsUnsupportedPattern(t *testing.T) {
 func TestRegexFilterRejectsExpansionBeyondLimit(t *testing.T) {
 	key, index := newRegexKeywordFieldIndex(t)
 	indexRegexKeywordValues(t, index, key, 10001)
-	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "red-.*"))
+	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(searchmodel.OperatorRegex), "red-.*"))
 	require.Contains(t, errorResult.Message, "10000-term expansion limit")
 }
 
 func TestRegexFilterRejectsPrefixlessDictionaryScanBeyondLimit(t *testing.T) {
 	key, index := newRegexKeywordFieldIndex(t)
 	indexRegexKeywordValues(t, index, key, 10001)
-	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(resource.OperatorRegex), "x|y"))
+	errorResult := requireBadRequestSearchError(t, index, nil, regexFieldQuery(key, "team", string(searchmodel.OperatorRegex), "x|y"))
 	require.Contains(t, errorResult.Message, "10000-term dictionary scan limit")
 }
 
@@ -1223,23 +1229,23 @@ func TestRegexFilterOnAlertRuleKeywordFields(t *testing.T) {
 		want   []string
 		negate bool
 	}{
-		{name: "flattened label alternation", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(critical|warning)", want: []string{"critical", "warning"}},
-		{name: "flattened label suffix", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*critical", want: []string{"critical", "suffix"}},
-		{name: "flattened label case insensitive", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)CRITICAL", want: []string{"critical"}},
-		{name: "flattened label regex includes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
-		{name: "case insensitive flattened label regex includes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i).*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
-		{name: "empty-matching value regex includes missing severity but not nonmatching values", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"team-only", "upper"}},
-		{name: "case-insensitive empty-matching value regex recognizes the label key", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)a*", want: []string{"team-only", "upper"}},
-		{name: "negated empty-matching value regex excludes missing severity", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"critical", "warning", "suffix"}, negate: true},
-		{name: "negated case-insensitive empty-matching value regex recognizes the label key", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)a*", want: []string{"critical", "warning", "suffix"}, negate: true},
+		{name: "flattened label alternation", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(critical|warning)", want: []string{"critical", "warning"}},
+		{name: "flattened label suffix", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*critical", want: []string{"critical", "suffix"}},
+		{name: "flattened label case insensitive", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)CRITICAL", want: []string{"critical"}},
+		{name: "flattened label regex includes a missing label", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
+		{name: "case insensitive flattened label regex includes a missing label", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i).*", want: []string{"critical", "team-only", "upper", "warning", "suffix"}},
+		{name: "empty-matching value regex includes missing severity but not nonmatching values", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"team-only", "upper"}},
+		{name: "case-insensitive empty-matching value regex recognizes the label key", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)a*", want: []string{"team-only", "upper"}},
+		{name: "negated empty-matching value regex excludes missing severity", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=a*", want: []string{"critical", "warning", "suffix"}, negate: true},
+		{name: "negated case-insensitive empty-matching value regex recognizes the label key", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=(?i)a*", want: []string{"critical", "warning", "suffix"}, negate: true},
 		{name: "datasource UIDs", field: "datasourceUIDs", regex: "prom.*", want: []string{"critical", "upper"}},
 		{name: "receiver", field: "receiver", regex: "Pager.*", want: []string{"critical", "upper"}},
-		{name: "flattened label negated regex excludes a missing label", field: resource.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", negate: true},
+		{name: "flattened label negated regex excludes a missing label", field: searchmodel.SEARCH_FIELD_PREFIX + "labels", regex: "severity=.*", negate: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			operator := string(resource.OperatorRegex)
+			operator := string(searchmodel.OperatorRegex)
 			if tc.negate {
-				operator = string(resource.OperatorNotRegex)
+				operator = string(searchmodel.OperatorNotRegex)
 			}
 			checkSearchQueryUnordered(t, index, regexFieldQuery(key, tc.field, operator, tc.regex), tc.want)
 		})
@@ -1248,7 +1254,7 @@ func TestRegexFilterOnAlertRuleKeywordFields(t *testing.T) {
 
 func TestFlattenedLabelRegexConformance(t *testing.T) {
 	key, index := newAlertRegexFieldIndex(t)
-	items := []*resource.BulkIndexItem{
+	items := []*searchmodel.BulkIndexItem{
 		alertRegexRule(key, "crit", []string{"severity=CRIT"}, nil, ""),
 		alertRegexRule(key, "fatal", []string{"severity=fatal"}, nil, ""),
 		alertRegexRule(key, "unrelated", []string{"priority=crit"}, nil, ""),
@@ -1260,7 +1266,7 @@ func TestFlattenedLabelRegexConformance(t *testing.T) {
 		alertRegexRule(key, "plus-key", []string{"service+name=API"}, nil, ""),
 		alertRegexRule(key, "bracket-key", []string{"service[name]=API"}, nil, ""),
 	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items}))
 	for _, tc := range []struct {
 		expression string
 		want       []string
@@ -1276,23 +1282,23 @@ func TestFlattenedLabelRegexConformance(t *testing.T) {
 		{expression: "(?i)severity=critical"},
 	} {
 		t.Run(tc.expression, func(t *testing.T) {
-			checkSearchQueryUnordered(t, index, regexFieldQuery(key, "labels", string(resource.OperatorRegex), tc.expression), tc.want)
+			checkSearchQueryUnordered(t, index, regexFieldQuery(key, "labels", string(searchmodel.OperatorRegex), tc.expression), tc.want)
 		})
 	}
 	for _, expression := range []string{"severity", "=critical"} {
 		t.Run(expression, func(t *testing.T) {
-			requireBadRequestSearch(t, index, regexFieldQuery(key, "labels", string(resource.OperatorRegex), expression))
+			requireBadRequestSearch(t, index, regexFieldQuery(key, "labels", string(searchmodel.OperatorRegex), expression))
 		})
 	}
 }
 
-func newRegexKeywordFieldIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+func newRegexKeywordFieldIndex(t testing.TB) (resourcecontract.NamespacedResource, searchmodel.ResourceIndex) {
 	t.Helper()
-	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
 	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
 		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
 	})
-	items := []*resource.BulkIndexItem{
+	items := []*searchmodel.BulkIndexItem{
 		regexTestDocument(key, "d1", map[string]any{"team": "red-team"}),
 		regexTestDocument(key, "d2", map[string]any{"team": "blue-team"}),
 		regexTestDocument(key, "d3", map[string]any{"team": "Red-team"}),
@@ -1300,17 +1306,17 @@ func newRegexKeywordFieldIndex(t testing.TB) (resource.NamespacedResource, resou
 		regexTestDocument(key, "d5", map[string]any{"team": "red-(?i)"}),
 		regexTestDocument(key, "d6", map[string]any{"team": "red-$"}),
 	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items}))
 	return key, index
 }
 
-func newRegexSyntaxIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+func newRegexSyntaxIndex(t testing.TB) (resourcecontract.NamespacedResource, searchmodel.ResourceIndex) {
 	t.Helper()
-	key := resource.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "test.grafana.app", Resource: "items"}
 	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
 		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
 	})
-	items := []*resource.BulkIndexItem{
+	items := []*searchmodel.BulkIndexItem{
 		regexTestDocument(key, "d1", map[string]any{"team": "critical"}),
 		regexTestDocument(key, "d2", map[string]any{"team": "warning"}),
 		regexTestDocument(key, "d3", map[string]any{"team": "warn"}),
@@ -1321,14 +1327,14 @@ func newRegexSyntaxIndex(t testing.TB) (resource.NamespacedResource, resource.Re
 		regexTestDocument(key, "d8", nil),
 		regexTestDocument(key, "d9", map[string]any{"team": ""}),
 	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items}))
 	return key, index
 }
 
-func regexTestDocument(key resource.NamespacedResource, name string, fields map[string]any) *resource.BulkIndexItem {
-	return &resource.BulkIndexItem{
-		Action: resource.ActionIndex,
-		Doc: &resource.IndexableDocument{
+func regexTestDocument(key resourcecontract.NamespacedResource, name string, fields map[string]any) *searchmodel.BulkIndexItem {
+	return &searchmodel.BulkIndexItem{
+		Action: searchmodel.ActionIndex,
+		Doc: &searchmodel.IndexableDocument{
 			RV:     1,
 			Name:   name,
 			Title:  name,
@@ -1338,28 +1344,28 @@ func regexTestDocument(key resource.NamespacedResource, name string, fields map[
 	}
 }
 
-func regexFieldQuery(key resource.NamespacedResource, field, operator, expression string) *resourcepb.ResourceSearchRequest {
+func regexFieldQuery(key resourcecontract.NamespacedResource, field, operator, expression string) *resourcepb.ResourceSearchRequest {
 	return &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: []*resourcepb.Requirement{{Key: field, Operator: operator, Values: []string{expression}}},
 		},
-		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}},
+		SortBy: []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_NAME}},
 		Limit:  100000,
 	}
 }
 
-func indexRegexKeywordValues(t testing.TB, index resource.ResourceIndex, key resource.NamespacedResource, count int) {
+func indexRegexKeywordValues(t testing.TB, index searchmodel.ResourceIndex, key resourcecontract.NamespacedResource, count int) {
 	t.Helper()
-	items := make([]*resource.BulkIndexItem, count)
+	items := make([]*searchmodel.BulkIndexItem, count)
 	for i := range items {
 		name := fmt.Sprintf("generated-%05d", i)
 		items[i] = regexTestDocument(key, name, map[string]any{"team": fmt.Sprintf("red-%05d", i)})
 	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items}))
 }
 
-func requireBadRequestSearch(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+func requireBadRequestSearch(t *testing.T, index searchmodel.ResourceIndex, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
 	t.Helper()
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
@@ -1368,7 +1374,7 @@ func requireBadRequestSearch(t *testing.T, index resource.ResourceIndex, query *
 	return res.Error
 }
 
-func requireBadRequestSearchError(t *testing.T, index resource.ResourceIndex, access authlib.AccessClient, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
+func requireBadRequestSearchError(t *testing.T, index searchmodel.ResourceIndex, access authlib.AccessClient, query *resourcepb.ResourceSearchRequest) *resourcepb.ErrorResult {
 	t.Helper()
 	res, err := index.Search(context.Background(), access, query, nil, nil)
 	require.Error(t, err)
@@ -1379,26 +1385,26 @@ func requireBadRequestSearchError(t *testing.T, index resource.ResourceIndex, ac
 	return errorResult
 }
 
-func newAlertRegexFieldIndex(t testing.TB) (resource.NamespacedResource, resource.ResourceIndex) {
+func newAlertRegexFieldIndex(t testing.TB) (resourcecontract.NamespacedResource, searchmodel.ResourceIndex) {
 	t.Helper()
-	key := resource.NamespacedResource{Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "rules"}
-	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{
-		{Name: "labels", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-		{Name: "datasourceUIDs", Type: resource.SearchFieldTypeString, Array: true, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-		{Name: "receiver", Type: resource.SearchFieldTypeString, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "rules.alerting.grafana.app", Resource: "rules"}
+	index := newTestIndexWithTypedFields(t, key, []searchmodel.SearchFieldDefinition{
+		{Name: "labels", Type: searchmodel.SearchFieldTypeString, Array: true, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
+		{Name: "datasourceUIDs", Type: searchmodel.SearchFieldTypeString, Array: true, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
+		{Name: "receiver", Type: searchmodel.SearchFieldTypeString, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
 	})
-	items := []*resource.BulkIndexItem{
+	items := []*searchmodel.BulkIndexItem{
 		alertRegexRule(key, "critical", []string{"severity=critical"}, []string{"prometheus"}, "PagerDuty"),
 		alertRegexRule(key, "warning", []string{"severity=warning"}, []string{"loki"}, "email"),
 		alertRegexRule(key, "upper", []string{"Severity=critical"}, []string{"prometheus"}, "PagerDuty"),
 		alertRegexRule(key, "suffix", []string{"severity=very-critical"}, []string{"loki"}, "email"),
 		alertRegexRule(key, "team-only", []string{"team=platform"}, []string{"loki"}, "email"),
 	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items}))
 	return key, index
 }
 
-func alertRegexRule(key resource.NamespacedResource, name string, labels, datasourceUIDs []string, receiver string) *resource.BulkIndexItem {
+func alertRegexRule(key resourcecontract.NamespacedResource, name string, labels, datasourceUIDs []string, receiver string) *searchmodel.BulkIndexItem {
 	return regexTestDocument(key, name, map[string]any{
 		"labels":         labels,
 		"datasourceUIDs": datasourceUIDs,
@@ -1409,18 +1415,18 @@ func alertRegexRule(key resource.NamespacedResource, name string, labels, dataso
 // TestPublicFieldNameTextQuery checks a free-text query resolves a public
 // QueryField name to its physical fields.* location.
 func TestPublicFieldNameTextQuery(t *testing.T) {
-	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	index := newTestIndexWithFields(t, key, []*resourcepb.ResourceTableColumnDefinition{
 		{Name: "team", Type: resourcepb.ResourceTableColumnDefinition_STRING, Properties: &resourcepb.ResourceTableColumnDefinition_Properties{Filterable: true}},
 	})
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
-		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d1", Title: "One",
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
+		{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{RV: 1, Name: "d1", Title: "One",
 			Key:    &resourcepb.ResourceKey{Name: "d1", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "redteam"}}},
-		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
+		{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{RV: 1, Name: "d2", Title: "Two",
 			Key:    &resourcepb.ResourceKey{Name: "d2", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "blueteam"}}},
-		{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{RV: 1, Name: "d3", Title: "Three",
+		{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{RV: 1, Name: "d3", Title: "Three",
 			Key:    &resourcepb.ResourceKey{Name: "d3", Namespace: key.Namespace, Group: key.Group, Resource: key.Resource},
 			Fields: map[string]any{"team": "GreenTeam"}}},
 	}}))
@@ -1440,11 +1446,11 @@ func TestPublicFieldNameTextQuery(t *testing.T) {
 	checkSearchQuery(t, index, query("GreenTeam"), []string{"d3"})
 }
 
-func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer resource.BuildFn) resource.ResourceIndex {
+func newTestDashboardsIndex(t testing.TB, threshold int64, size int64, writer searchmodel.BuildFn) searchmodel.ResourceIndex {
 	return newTestDashboardsIndexWithMetrics(t, threshold, size, writer, nil)
 }
 
-func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64, writer resource.BuildFn, metrics *resource.BleveIndexMetrics) resource.ResourceIndex {
+func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64, writer searchmodel.BuildFn, metrics *searchmetrics.BleveMetrics) searchmodel.ResourceIndex {
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
@@ -1453,8 +1459,8 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
 	}, metrics)
 	require.NoError(t, err)
@@ -1463,7 +1469,7 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+	index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -1478,26 +1484,26 @@ func newTestDashboardsIndexWithMetrics(t testing.TB, threshold int64, size int64
 // becomes a SearchFieldDefinition declaring [filter, retrieve] when the
 // column carries Properties.Filterable, otherwise [retrieve] only; the
 // provider drives the per-kind bleve mapping.
-func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, columns []*resourcepb.ResourceTableColumnDefinition) resource.ResourceIndex {
+func newTestIndexWithFields(t testing.TB, key resourcecontract.NamespacedResource, columns []*resourcepb.ResourceTableColumnDefinition) searchmodel.ResourceIndex {
 	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
-	sfds := make([]resource.SearchFieldDefinition, 0, len(columns))
+	sfds := make([]searchmodel.SearchFieldDefinition, 0, len(columns))
 	for _, c := range columns {
-		caps := []resource.SearchCapability{resource.SearchCapabilityRetrieve}
+		caps := []searchmodel.SearchCapability{searchmodel.SearchCapabilityRetrieve}
 		if c.Properties != nil && c.Properties.Filterable && c.Type == resourcepb.ResourceTableColumnDefinition_STRING {
-			caps = []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}
+			caps = []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}
 		}
-		sfds = append(sfds, resource.SearchFieldDefinition{Name: c.Name, Type: resource.SearchFieldTypeString, Array: c.IsArray, Capabilities: caps})
+		sfds = append(sfds, searchmodel.SearchFieldDefinition{Name: c.Name, Type: searchmodel.SearchFieldTypeString, Array: c.IsArray, Capabilities: caps})
 	}
-	provider := resource.NewMapProvider(
-		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
+	provider := searchmodel.NewMapProvider(
+		map[apischema.GroupVersionResource][]searchmodel.SearchFieldDefinition{gvr: sfds},
 		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
 	)
-	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
+	sfKey := resourcecontract.NewLowerGroupResource(key.Group, key.Resource)
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold,
-		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider}),
+		SearchFields:  searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{sfKey: provider}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -1509,7 +1515,7 @@ func newTestIndexWithFields(t testing.TB, key resource.NamespacedResource, colum
 	return index
 }
 
-var noop resource.BuildFn = func(index resource.ResourceIndex) (int64, error) {
+var noop searchmodel.BuildFn = func(index searchmodel.ResourceIndex) (int64, error) {
 	return 0, nil
 }
 
@@ -1561,8 +1567,8 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold, // use in-memory for tests
-		SearchFields: resource.NewSearchFieldsRegistry(map[resource.LowerGroupResource][]string{
-			resource.NewLowerGroupResource(key.Group, key.Resource): {"spec.some.field", "spec.some.other.field"},
+		SearchFields: searchmodel.NewSearchFieldsRegistry(map[resourcecontract.LowerGroupResource][]string{
+			resourcecontract.NewLowerGroupResource(key.Group, key.Resource): {"spec.some.field", "spec.some.other.field"},
 		}, nil, nil),
 	}, nil)
 	require.NoError(t, err)
@@ -1570,18 +1576,18 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 
-	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+	index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
 	}, 10, "test", noop, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
 
-	err = index.BulkIndex(&resource.BulkIndexRequest{
-		Items: []*resource.BulkIndexItem{
+	err = index.BulkIndex(&searchmodel.BulkIndexRequest{
+		Items: []*searchmodel.BulkIndexItem{
 			{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc1"},
 					Title: "Document 1",
 					Fields: map[string]interface{}{
@@ -1596,8 +1602,8 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 				},
 			},
 			{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc2"},
 					Title: "Document 2",
 					Tags:  []string{"tag2", "tag3"},
@@ -1613,8 +1619,8 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 				},
 			},
 			{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "doc3"},
 					Title: "Document with field values with token terminating characters",
 					SelectableFields: map[string]string{
@@ -1627,17 +1633,17 @@ func TestIndexAndSearchSelectableFields(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc1_field_value"), []string{"doc1"})
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc2_field_value"), []string{"doc2"})
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "other_field_value"), []string{"doc1", "doc2"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc1_field_value"), []string{"doc1"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc2_field_value"), []string{"doc2"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "other_field_value"), []string{"doc1", "doc2"})
 
 	// tests for doc3 with token-terminating characters
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc3-field#value!"), []string{"doc3"})
-	checkSearchQuery(t, index, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "some other.field>value"), []string{"doc3"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.field", "doc3-field#value!"), []string{"doc3"})
+	checkSearchQuery(t, index, selectableFieldQuery(key, searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX+"spec.some.other.field", "some other.field>value"), []string{"doc3"})
 
 	// A field the index was not built with is refused, rather than answered with an
 	// empty result that reads as "nothing matches".
-	res, err := index.Search(context.Background(), nil, selectableFieldQuery(key, resource.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil, nil)
+	res, err := index.Search(context.Background(), nil, selectableFieldQuery(key, searchmodel.SEARCH_SELECTABLE_FIELDS_PREFIX+"unknown.field", "another_value"), nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, res.Error)
 	require.True(t, resource.IsSelectableFieldNotIndexed(res.Error))
@@ -1677,7 +1683,7 @@ func (c *testAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo, req
 	return authlib.BatchCheckResponse{Results: results}, nil
 }
 
-func checkSearchQueryWithAccess(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
+func checkSearchQueryWithAccess(t *testing.T, index searchmodel.ResourceIndex, ac authlib.AccessClient, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
 	t.Helper()
 	user := &identity.StaticRequester{
 		Type:      authlib.TypeUser,
@@ -1695,19 +1701,19 @@ func checkSearchQueryWithAccess(t *testing.T, index resource.ResourceIndex, ac a
 }
 
 func TestSearchPermissionFiltering(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
 
-	indexDocumentsWithFolders := func(t *testing.T, index resource.ResourceIndex, docs map[string]string) {
+	indexDocumentsWithFolders := func(t *testing.T, index searchmodel.ResourceIndex, docs map[string]string) {
 		t.Helper()
-		items := make([]*resource.BulkIndexItem, 0, len(docs))
+		items := make([]*searchmodel.BulkIndexItem, 0, len(docs))
 		for name, folder := range docs {
-			items = append(items, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			items = append(items, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					RV:    1,
 					Name:  name,
 					Title: name,
@@ -1721,7 +1727,7 @@ func TestSearchPermissionFiltering(t *testing.T) {
 				},
 			})
 		}
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: items}))
+		require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: items}))
 	}
 
 	query := &resourcepb.ResourceSearchRequest{
@@ -1779,14 +1785,14 @@ func TestSearchPermissionFiltering(t *testing.T) {
 
 // newTestDashboardsIndexPostRank builds a dashboards index with the
 // post-rank-authz path enabled and default tunables.
-func newTestDashboardsIndexPostRank(t testing.TB, size int64) resource.ResourceIndex {
+func newTestDashboardsIndexPostRank(t testing.TB, size int64) searchmodel.ResourceIndex {
 	return newTestDashboardsIndexPostRankWithConfig(t, size, search.PostRankAuthzConfig{})
 }
 
 // newTestDashboardsIndexPostRankWithConfig builds a dashboards index with the
 // post-rank-authz path enabled and the given tunables (zero values fall back to
 // the bleve defaults).
-func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
+func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg search.PostRankAuthzConfig) searchmodel.ResourceIndex {
 	t.Helper()
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -1798,15 +1804,15 @@ func newTestDashboardsIndexPostRankWithConfig(t testing.TB, size int64, cfg sear
 		FileThreshold:        threshold, // use in-memory for tests
 		PostRankAuthzEnabled: true,
 		PostRankAuthz:        cfg,
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource("dashboard.grafana.app", "dashboards"): search.DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+	index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -1856,7 +1862,7 @@ func (c *countingAccessClient) BatchCheck(_ context.Context, _ authlib.AuthInfo,
 }
 
 // postRankKey is the resource key shared by the post-rank authz tests.
-var postRankKey = resource.NamespacedResource{
+var postRankKey = resourcecontract.NamespacedResource{
 	Namespace: "default",
 	Group:     "dashboard.grafana.app",
 	Resource:  "dashboards",
@@ -1866,15 +1872,15 @@ var postRankKey = resource.NamespacedResource{
 // TestSearchPostRankAuthz) so their bodies don't roll up into that test's
 // cyclomatic complexity.
 
-func indexDocs(t *testing.T, index resource.ResourceIndex, docs []*resource.BulkIndexItem) {
+func indexDocs(t *testing.T, index searchmodel.ResourceIndex, docs []*searchmodel.BulkIndexItem) {
 	t.Helper()
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: docs}))
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: docs}))
 }
 
-func newDoc(name, folder string) *resource.BulkIndexItem {
-	return &resource.BulkIndexItem{
-		Action: resource.ActionIndex,
-		Doc: &resource.IndexableDocument{
+func newDoc(name, folder string) *searchmodel.BulkIndexItem {
+	return &searchmodel.BulkIndexItem{
+		Action: searchmodel.ActionIndex,
+		Doc: &searchmodel.IndexableDocument{
 			RV:    1,
 			Name:  name,
 			Title: name,
@@ -1889,10 +1895,10 @@ func newDoc(name, folder string) *resource.BulkIndexItem {
 	}
 }
 
-func newPostRankRegexExpansionIndex(t *testing.T) resource.ResourceIndex {
+func newPostRankRegexExpansionIndex(t *testing.T) searchmodel.ResourceIndex {
 	t.Helper()
 	index := newTestDashboardsIndexPostRank(t, 2)
-	docs := make([]*resource.BulkIndexItem, 10001)
+	docs := make([]*searchmodel.BulkIndexItem, 10001)
 	for i := range docs {
 		doc := newDoc(fmt.Sprintf("doc-%05d", i), "allowed")
 		doc.Doc.Labels = map[string]string{"team": fmt.Sprintf("team-%05d", i)}
@@ -1902,7 +1908,7 @@ func newPostRankRegexExpansionIndex(t *testing.T) resource.ResourceIndex {
 	return index
 }
 
-func newDocWithTags(name, folder string, tags []string) *resource.BulkIndexItem {
+func newDocWithTags(name, folder string, tags []string) *searchmodel.BulkIndexItem {
 	d := newDoc(name, folder)
 	d.Doc.Tags = tags
 	return d
@@ -1921,7 +1927,7 @@ func listQuery(limit int64) *resourcepb.ResourceSearchRequest {
 	}
 }
 
-func searchNames(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([]string, *resourcepb.ResourceSearchResponse) {
+func searchNames(t *testing.T, index searchmodel.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([]string, *resourcepb.ResourceSearchResponse) {
 	t.Helper()
 	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
 	ctx := authlib.WithAuthInfo(context.Background(), requester)
@@ -1948,7 +1954,7 @@ func columnNames(res *resourcepb.ResourceSearchResponse) []string {
 
 // searchResponse runs a search and returns the raw response (without asserting
 // on res.Error), so tests can assert on error/bad-request behavior.
-func searchResponse(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
+func searchResponse(t *testing.T, index searchmodel.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) *resourcepb.ResourceSearchResponse {
 	t.Helper()
 	requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: postRankKey.Namespace}
 	ctx := authlib.WithAuthInfo(context.Background(), requester)
@@ -1959,7 +1965,7 @@ func searchResponse(t *testing.T, index resource.ResourceIndex, ac authlib.Acces
 
 // pageAll walks SearchAfter cursors until a short/empty page, returning the
 // names in the order they were returned across pages.
-func pageAll(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, limit int64) []string {
+func pageAll(t *testing.T, index searchmodel.ResourceIndex, ac authlib.AccessClient, limit int64) []string {
 	t.Helper()
 	var all []string
 	var after []string
@@ -1995,7 +2001,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("stops checking once the page is full", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// More than one BatchCheck batch (500) worth of docs, all authorized.
-		docs := make([]*resource.BulkIndexItem, 0, 700)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 700)
 		for i := range 700 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%04d", i), "folder-a"))
 		}
@@ -2023,7 +2029,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// match set, so fewer windows = less total scoring work.
 		cfg := search.PostRankAuthzConfig{OverFetchFactor: 1, MaxWindow: 40}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
-		docs := make([]*resource.BulkIndexItem, 0, 200)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 200)
 		for i := range 200 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%03d", i), "denied"))
 		}
@@ -2049,7 +2055,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// Interleave allowed/denied folders; default list sort is by title asc,
 		// and titles equal the (zero-padded) names, so order is deterministic.
-		docs := make([]*resource.BulkIndexItem, 0, 20)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 20)
 		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
@@ -2068,7 +2074,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("relevance query runs through postFilter path", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("alpha", "allowed"),
 			newDoc("beta", "denied"),
 		})
@@ -2086,7 +2092,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// The first window is sized to limit (50); score-sorted SearchAfter
 		// must still reach authorized hits in later windows.
 		index := newTestDashboardsIndexPostRank(t, 2)
-		docs := make([]*resource.BulkIndexItem, 0, 80)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 80)
 		want := make([]string, 0, 6)
 		for i := range 80 {
 			name := fmt.Sprintf("doc-%03d", i)
@@ -2097,9 +2103,9 @@ func TestSearchPostRankAuthz(t *testing.T) {
 				title = fmt.Sprintf("Abdomen Allowed %03d", i)
 				want = append(want, name)
 			}
-			docs = append(docs, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			docs = append(docs, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					RV:    1,
 					Name:  name,
 					Title: title,
@@ -2126,7 +2132,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("fewer authorized than limit returns all authorized", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "denied"),
 			newDoc("doc-2", "allowed"),
@@ -2143,7 +2149,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("no authorized documents returns empty", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "denied"),
 			newDoc("doc-1", "denied"),
 		})
@@ -2154,7 +2160,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("count-only request returns an exact authorized total", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "denied"),
 			newDoc("doc-2", "allowed"),
@@ -2172,7 +2178,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("count-only request approximates once the budget is hit", func(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 40}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
-		docs := make([]*resource.BulkIndexItem, 0, 200)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 200)
 		for i := range 200 {
 			folder := "denied"
 			if i%2 == 0 {
@@ -2195,7 +2201,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// match set, so nothing is left unseen.
 		cfg := search.PostRankAuthzConfig{MaxWindow: 10, MaxCandidates: 20}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
-		docs := make([]*resource.BulkIndexItem, 0, 20)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 20)
 		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
@@ -2215,7 +2221,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("limit larger than total returns everything authorized", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "allowed"),
 		})
@@ -2226,7 +2232,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("SearchAfter pages contiguously when all authorized", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		docs := make([]*resource.BulkIndexItem, 0, 25)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 25)
 		want := make([]string, 0, 25)
 		for i := range 25 {
 			name := fmt.Sprintf("doc-%02d", i)
@@ -2243,7 +2249,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("SearchAfter pages over authorized hits only", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		docs := make([]*resource.BulkIndexItem, 0, 30)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 30)
 		want := make([]string, 0, 15)
 		for i := range 30 {
 			name := fmt.Sprintf("doc-%02d", i)
@@ -2265,7 +2271,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("offset skips authorized hits on postFilter path", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "allowed"),
 			newDoc("doc-2", "allowed"),
@@ -2284,7 +2290,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// UI keep requesting offset=1 forever; the exhausted scan must report
 		// the exact authorized total (1) instead.
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "denied"),
 		})
@@ -2308,7 +2314,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// short cursor page must fall back to firstRes.Total (unfiltered).
 		index := newTestDashboardsIndexPostRank(t, 2)
 		const n = 25
-		docs := make([]*resource.BulkIndexItem, 0, n)
+		docs := make([]*searchmodel.BulkIndexItem, 0, n)
 		for i := range n {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
@@ -2342,7 +2348,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// keep going until it finds that hit, then stop short of the full index.
 		cfg := search.PostRankAuthzConfig{MaxWindow: 20, MaxCandidates: 50}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
-		docs := make([]*resource.BulkIndexItem, 0, 2000)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 2000)
 		for i := range 2000 {
 			folder := "denied"
 			if i == 120 {
@@ -2373,13 +2379,13 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 7}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		const n = 60
-		docs := make([]*resource.BulkIndexItem, 0, n)
+		docs := make([]*searchmodel.BulkIndexItem, 0, n)
 		want := make([]string, 0, n)
 		for i := range n {
 			name := fmt.Sprintf("doc-%02d", i)
-			docs = append(docs, &resource.BulkIndexItem{
-				Action: resource.ActionIndex,
-				Doc: &resource.IndexableDocument{
+			docs = append(docs, &searchmodel.BulkIndexItem{
+				Action: searchmodel.ActionIndex,
+				Doc: &searchmodel.IndexableDocument{
 					RV:    1,
 					Name:  name,
 					Title: "same-title", // identical sort key for every doc
@@ -2407,7 +2413,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		cfg := search.PostRankAuthzConfig{MaxWindow: 100}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		const n = 500
-		docs := make([]*resource.BulkIndexItem, 0, n)
+		docs := make([]*searchmodel.BulkIndexItem, 0, n)
 		want := make([]string, 0, n)
 		for i := range n {
 			name := fmt.Sprintf("doc-%03d", i)
@@ -2428,7 +2434,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// returned only folder (ensureSearchFields skipped the all-fields
 		// sentinel because folder was already appended).
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "denied"),
 		})
@@ -2452,13 +2458,13 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("field-value results", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("allowed", "allowed"),
 			newDoc("denied", "denied"),
 		})
 		ac := &countingAccessClient{allowedFolders: map[string]bool{"allowed": true}}
 		q := listQuery(10)
-		q.Fields = []string{resource.SEARCH_FIELD_TITLE}
+		q.Fields = []string{searchmodel.SEARCH_FIELD_TITLE}
 		q.ResultFormat = resourcepb.ResourceSearchRequest_FIELD_VALUES
 
 		res := searchResponse(t, index, ac, q)
@@ -2474,7 +2480,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// (no SortDocID tie-breaker). The post-rank path must fall back to the
 		// in-searcher path instead of feeding bleve a mismatched cursor.
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-a", "allowed"),
 			newDoc("doc-b", "allowed"),
 			newDoc("doc-c", "allowed"),
@@ -2495,7 +2501,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("SearchAfter cursor matching neither sort order is rejected", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{newDoc("doc-a", "allowed")})
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{newDoc("doc-a", "allowed")})
 		ac := &countingAccessClient{allowAll: true}
 		// len 4 matches neither the post-rank order (3: [title, name, _id]) nor
 		// the in-searcher order (2: [title, name]) -> bad request rather than a
@@ -2519,7 +2525,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			FacetSampleSize: 10,
 		}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
-		docs := make([]*resource.BulkIndexItem, 0, 30)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 30)
 		for i := range 30 {
 			folder := "denied"
 			if i >= 20 {
@@ -2553,7 +2559,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 			FacetSampleSize: 10,
 		}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
-		docs := make([]*resource.BulkIndexItem, 0, 30)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 30)
 		for i := range 30 {
 			folder := "denied"
 			if i >= 20 {
@@ -2586,7 +2592,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("exhausted tag facets match the in-searcher path", func(t *testing.T) {
 		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
-		docs := []*resource.BulkIndexItem{
+		docs := []*searchmodel.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod east", "latency"}),
 			newDocWithTags("doc-1", "denied", []string{"secret"}),
 			newDocWithTags("doc-2", "allowed", []string{"prod east"}),
@@ -2615,7 +2621,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// can disagree.
 		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
-		docs := []*resource.BulkIndexItem{
+		docs := []*searchmodel.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod", "prod"}),
 			newDocWithTags("doc-1", "allowed", []string{"prod", "latency"}),
 			newDocWithTags("doc-2", "denied", []string{"prod", "prod"}),
@@ -2643,7 +2649,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// post-rank path aggregates it app-side like any other facet field.
 		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
-		docs := []*resource.BulkIndexItem{
+		docs := []*searchmodel.BulkIndexItem{
 			newDoc("doc-0", "allowed"),
 			newDoc("doc-1", "allowed"),
 			newDoc("doc-2", "denied"),
@@ -2676,7 +2682,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("zero facet limit matches the in-searcher path", func(t *testing.T) {
 		legacyIndex := newTestDashboardsIndex(t, threshold, 2, noop)
 		postRankIndex := newTestDashboardsIndexPostRank(t, 2)
-		docs := []*resource.BulkIndexItem{
+		docs := []*searchmodel.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
 			newDocWithTags("doc-1", "allowed", nil),
 		}
@@ -2697,7 +2703,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("facet aliases targeting the same field do not double-count", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
 			newDocWithTags("doc-1", "allowed", []string{"prod"}),
 		})
@@ -2721,7 +2727,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("facets split multi-value tag fields into individual terms", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod", "latency"}),
 			newDocWithTags("doc-1", "denied", []string{"prod", "secrets"}),
 			newDocWithTags("doc-2", "allowed", []string{"prod"}),
@@ -2752,7 +2758,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("facets are independent of forward and backward cursors", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		docs := make([]*resource.BulkIndexItem, 0, 10)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 10)
 		for i := range 10 {
 			tag := "even"
 			if i%2 != 0 {
@@ -2794,7 +2800,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
 			FacetSampleSize: 20,
 		})
-		docs := make([]*resource.BulkIndexItem, 0, 100)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 100)
 		for i := range 100 {
 			docs = append(docs, newDocWithTags(fmt.Sprintf("doc-%03d", i), "allowed", []string{"sampled"}))
 		}
@@ -2824,7 +2830,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, search.PostRankAuthzConfig{
 			FacetSampleSize: 100, MaxCandidates: 100,
 		})
-		docs := make([]*resource.BulkIndexItem, 0, 200)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 200)
 		for i := range 200 {
 			folder := "denied"
 			if i < 4 { // 4 allowed of 200 -> 2% authorized fraction
@@ -2855,7 +2861,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// match set, so no authorized document went uncounted.
 		cfg := search.PostRankAuthzConfig{MaxWindow: 10, FacetSampleSize: 20, MaxCandidates: 100}
 		index := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
-		docs := make([]*resource.BulkIndexItem, 0, 20)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 20)
 		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
@@ -2880,7 +2886,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("exhausted facet-only query reports an exact authorized total", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod"}),
 			newDocWithTags("doc-1", "denied", []string{"secret"}),
 			newDocWithTags("doc-2", "allowed", []string{"latency"}),
@@ -2907,7 +2913,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		}{
 			{"f1", 4}, {"f2", 3}, {"f3", 2}, {"f4", 1},
 		}
-		docs := make([]*resource.BulkIndexItem, 0, 10)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 10)
 		for _, tag := range tags {
 			for i := 0; i < tag.count; i++ {
 				docs = append(docs, newDocWithTags(fmt.Sprintf("%s-%d", tag.name, i), "allowed", []string{tag.name}))
@@ -2936,7 +2942,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// but they must not become response columns (mirrors the folder authz
 		// field leak guard).
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDocWithTags("doc-0", "allowed", []string{"prod"}),
 			newDoc("doc-1", "allowed"),
 		})
@@ -2955,7 +2961,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	// backwardNames runs a SearchBefore query with the given cursor and returns
 	// the names in the returned (forward-ordered) page, plus the response.
-	backwardNames := func(t *testing.T, index resource.ResourceIndex, ac authlib.AccessClient, cursor []string, limit int64) ([]string, *resourcepb.ResourceSearchResponse) {
+	backwardNames := func(t *testing.T, index searchmodel.ResourceIndex, ac authlib.AccessClient, cursor []string, limit int64) ([]string, *resourcepb.ResourceSearchResponse) {
 		t.Helper()
 		q := listQuery(limit)
 		q.SearchBefore = cursor
@@ -2964,7 +2970,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("SearchBefore returns the previous page in forward order", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		docs := make([]*resource.BulkIndexItem, 0, 30)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 30)
 		for i := range 30 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
@@ -2986,7 +2992,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 	t.Run("SearchBefore pages backwards contiguously with no dupes or skips", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
-		docs := make([]*resource.BulkIndexItem, 0, 30)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 30)
 		for i := range 30 {
 			docs = append(docs, newDoc(fmt.Sprintf("doc-%02d", i), "allowed"))
 		}
@@ -3031,7 +3037,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 	t.Run("SearchBefore respects authorization", func(t *testing.T) {
 		index := newTestDashboardsIndexPostRank(t, 2)
 		// Even-indexed docs authorized; titles equal names so order is stable.
-		docs := make([]*resource.BulkIndexItem, 0, 20)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 20)
 		for i := range 20 {
 			folder := "denied"
 			if i%2 == 0 {
@@ -3061,7 +3067,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 		// fall back to the in-searcher path instead of feeding bleve a
 		// mismatched cursor.
 		index := newTestDashboardsIndexPostRank(t, 2)
-		indexDocs(t, index, []*resource.BulkIndexItem{
+		indexDocs(t, index, []*searchmodel.BulkIndexItem{
 			newDoc("doc-a", "allowed"),
 			newDoc("doc-b", "allowed"),
 			newDoc("doc-c", "allowed"),
@@ -3082,7 +3088,7 @@ func TestSearchPostRankAuthz(t *testing.T) {
 
 // newTestFoldersIndexPostRank builds a folders index with the post-rank-authz
 // path enabled and the given tunables (zero values fall back to bleve defaults).
-func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAuthzConfig) resource.ResourceIndex {
+func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAuthzConfig) searchmodel.ResourceIndex {
 	t.Helper()
 	key := &resourcepb.ResourceKey{
 		Namespace: "default",
@@ -3100,7 +3106,7 @@ func newTestFoldersIndexPostRank(t testing.TB, size int64, cfg search.PostRankAu
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
 	// Folders use the default (empty) searchable field set, matching bleve_test.go.
-	index, err := backend.BuildIndex(ctx, resource.NamespacedResource{
+	index, err := backend.BuildIndex(ctx, resourcecontract.NamespacedResource{
 		Namespace: key.Namespace,
 		Group:     key.Group,
 		Resource:  key.Resource,
@@ -3121,15 +3127,15 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		Resource:  "folders",
 	}
 
-	indexDashboards := func(t *testing.T, index resource.ResourceIndex, docs []*resource.BulkIndexItem) {
+	indexDashboards := func(t *testing.T, index searchmodel.ResourceIndex, docs []*searchmodel.BulkIndexItem) {
 		t.Helper()
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: docs}))
+		require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: docs}))
 	}
 
-	newDash := func(name, title, folder string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	newDash := func(name, title, folder string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:    1,
 				Name:  name,
 				Title: title,
@@ -3144,10 +3150,10 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		}
 	}
 
-	newFolder := func(name, title string, labels map[string]string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	newFolder := func(name, title string, labels map[string]string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				RV:    1,
 				Name:  name,
 				Title: title,
@@ -3179,11 +3185,11 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 
 	// searchFederated runs a federated query against the dashboards index with the
 	// folders index joined in, returning (resource, name) pairs in result order.
-	searchFederated := func(t *testing.T, dash, folderIdx resource.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([][2]string, *resourcepb.ResourceSearchResponse) {
+	searchFederated := func(t *testing.T, dash, folderIdx searchmodel.ResourceIndex, ac authlib.AccessClient, q *resourcepb.ResourceSearchRequest) ([][2]string, *resourcepb.ResourceSearchResponse) {
 		t.Helper()
 		requester := &identity.StaticRequester{Type: authlib.TypeUser, UserID: 1, Namespace: dashKey.Namespace}
 		ctx := authlib.WithAuthInfo(context.Background(), requester)
-		res, err := dash.Search(ctx, ac, q, []resource.ResourceIndex{folderIdx}, nil)
+		res, err := dash.Search(ctx, ac, q, []searchmodel.ResourceIndex{folderIdx}, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		out := make([][2]string, 0, len(res.Results.GetRows()))
@@ -3193,7 +3199,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		return out, res
 	}
 
-	pageAllFederated := func(t *testing.T, dash, folderIdx resource.ResourceIndex, ac authlib.AccessClient, limit int64) [][2]string {
+	pageAllFederated := func(t *testing.T, dash, folderIdx searchmodel.ResourceIndex, ac authlib.AccessClient, limit int64) [][2]string {
 		t.Helper()
 		var all [][2]string
 		var after []string
@@ -3228,11 +3234,11 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 	t.Run("returns dashboards + folders merged in sort order", func(t *testing.T) {
 		dash := newTestDashboardsIndexPostRank(t, 2)
 		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
-		indexDashboards(t, dash, []*resource.BulkIndexItem{
+		indexDashboards(t, dash, []*searchmodel.BulkIndexItem{
 			newDash("d-bbb", "bbb", "allowed"),
 			newDash("d-aaa", "aaa", "allowed"),
 		})
-		indexDashboards(t, folder, []*resource.BulkIndexItem{
+		indexDashboards(t, folder, []*searchmodel.BulkIndexItem{
 			newFolder("f-zzz", "zzz", nil),
 			newFolder("f-mmm", "mmm", nil),
 		})
@@ -3252,10 +3258,10 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 	t.Run("respects permissions per resource type", func(t *testing.T) {
 		dash := newTestDashboardsIndexPostRank(t, 2)
 		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
-		indexDashboards(t, dash, []*resource.BulkIndexItem{
+		indexDashboards(t, dash, []*searchmodel.BulkIndexItem{
 			newDash("d-aaa", "aaa", "any"),
 		})
-		indexDashboards(t, folder, []*resource.BulkIndexItem{
+		indexDashboards(t, folder, []*searchmodel.BulkIndexItem{
 			newFolder("f-zzz", "zzz", nil),
 		})
 
@@ -3278,7 +3284,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 	t.Run("SearchAfter pages across dashboards + folders with no dupes or skips", func(t *testing.T) {
 		dash := newTestDashboardsIndexPostRank(t, 2)
 		folder := newTestFoldersIndexPostRank(t, 2, search.PostRankAuthzConfig{})
-		docs := make([]*resource.BulkIndexItem, 0, 30)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 30)
 		want := make([][2]string, 0, 30)
 		// Interleave titles so the merged sort alternates resources. Titles are
 		// zero-padded so the global title order is deterministic.
@@ -3290,7 +3296,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		}
 		indexDashboards(t, dash, docs)
 
-		fdocs := make([]*resource.BulkIndexItem, 0, 15)
+		fdocs := make([]*searchmodel.BulkIndexItem, 0, 15)
 		for i := range 15 {
 			name := fmt.Sprintf("f-%02d", i)
 			title := fmt.Sprintf("t-%02d", i*2+1)
@@ -3326,8 +3332,8 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		dash := newTestDashboardsIndexPostRankWithConfig(t, 2, cfg)
 		folder := newTestFoldersIndexPostRank(t, 2, cfg)
 		const n = 12
-		docs := make([]*resource.BulkIndexItem, 0, n)
-		fdocs := make([]*resource.BulkIndexItem, 0, n)
+		docs := make([]*searchmodel.BulkIndexItem, 0, n)
+		fdocs := make([]*searchmodel.BulkIndexItem, 0, n)
 		// Every doc shares the same title; the _id (resource/name) breaks ties.
 		// dashboards sort before folders because "dashboard.grafana.app/dashboards"
 		// < "folder.grafana.app/folders" lexicographically in the doc id.
@@ -3363,8 +3369,8 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		westFolder.Doc.Tags = []string{"west"}
 		eastFolder := newFolder("f-mmm", "mmm", nil)
 		eastFolder.Doc.Tags = []string{"east"}
-		indexDashboards(t, dash, []*resource.BulkIndexItem{dashboardDoc})
-		indexDashboards(t, folder, []*resource.BulkIndexItem{westFolder, eastFolder})
+		indexDashboards(t, dash, []*searchmodel.BulkIndexItem{dashboardDoc})
+		indexDashboards(t, folder, []*searchmodel.BulkIndexItem{westFolder, eastFolder})
 
 		ac := search.NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true})
 		q := federatedQuery(100)
@@ -3394,12 +3400,12 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 		folder := newTestFoldersIndexPostRank(t, 2, cfg)
 		// 6 dashboards (t-00,t-02,...,t-10) and 6 folders (t-01,t-03,...,t-11),
 		// interleaved by title so the merged sort alternates resources.
-		docs := make([]*resource.BulkIndexItem, 0, 6)
+		docs := make([]*searchmodel.BulkIndexItem, 0, 6)
 		for i := range 6 {
 			docs = append(docs, newDash(fmt.Sprintf("d-%02d", i), fmt.Sprintf("t-%02d", i*2), "allowed"))
 		}
 		indexDashboards(t, dash, docs)
-		fdocs := make([]*resource.BulkIndexItem, 0, 6)
+		fdocs := make([]*searchmodel.BulkIndexItem, 0, 6)
 		for i := range 6 {
 			fdocs = append(fdocs, newFolder(fmt.Sprintf("f-%02d", i), fmt.Sprintf("t-%02d", i*2+1), nil))
 		}
@@ -3437,7 +3443,7 @@ func TestSearchPostRankAuthzFederated(t *testing.T) {
 // a side. These cover each path that builds its own query, plus the document with
 // no marker at all, which must stay live without a reindex.
 func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -3445,10 +3451,10 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	const folder = "folder-1"
 	manager := utils.ManagerProperties{Kind: utils.ManagerKindRepo, Identity: "repo-x"}
 
-	doc := func(name, title string, deleted *bool) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(name, title string, deleted *bool) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace,
 					Group:     key.Group,
@@ -3464,8 +3470,8 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 		}
 	}
 
-	index := newTestDashboardsIndex(t, threshold, 3, func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	index := newTestDashboardsIndex(t, threshold, 3, func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			// What every document written before the marker looks like.
 			doc("no-marker", "Alpha one", nil),
 			doc("live", "Alpha two", new(false)),
@@ -3498,7 +3504,7 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	t.Run("filter-only search leaves deleted documents out", func(t *testing.T) {
 		q := newTestQuery("")
 		q.Options.Fields = []*resourcepb.Requirement{{
-			Key:      resource.SEARCH_FIELD_TAGS,
+			Key:      searchmodel.SEARCH_FIELD_TAGS,
 			Operator: string(selection.In),
 			Values:   []string{"tag-a"},
 		}}
@@ -3511,7 +3517,7 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	t.Run("facets and total hits ignore deleted documents", func(t *testing.T) {
 		q := newTestQuery("")
 		q.Facet = map[string]*resourcepb.ResourceSearchRequest_Facet{
-			"tags": {Field: resource.SEARCH_FIELD_TAGS, Limit: 100},
+			"tags": {Field: searchmodel.SEARCH_FIELD_TAGS, Limit: 100},
 		}
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
@@ -3540,9 +3546,9 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	// An object that was provisioned when it was deleted comes back from its
 	// repository, not from trash, so trash must not return it.
 	t.Run("trash leaves out objects that were provisioned when deleted", func(t *testing.T) {
-		provisioned := &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+		provisioned := &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key:           &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed-from-repo"},
 				Title:         "Alpha four",
 				Folder:        folder,
@@ -3550,7 +3556,7 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 				IsProvisioned: new(true),
 			},
 		}
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{provisioned}}))
+		require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{provisioned}}))
 
 		trashQuery := newTestQuery("Alpha")
 		trashQuery.IsDeleted = true
@@ -3563,19 +3569,19 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	// Restoring an object reindexes it without the marker, which has to put it back
 	// into live results and take it out of trash.
 	t.Run("reindexing without the marker restores the document", func(t *testing.T) {
-		restored := &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+		restored := &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "trashed"},
 				Title:  "Alpha three",
 				Folder: folder,
 			},
 		}
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+		require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{restored}}))
 		t.Cleanup(func() {
 			// Put it back in the trash for the other subtests.
 			restored.Doc.IsDeleted = new(true)
-			require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{restored}}))
+			require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{restored}}))
 		})
 
 		checkSearchQueryUnordered(t, index, newTestQuery("Alpha"), append(slices.Clone(liveNames), "trashed"))
@@ -3591,7 +3597,7 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 			Namespace: key.Namespace,
 			Kind:      string(manager.Kind),
 			Id:        manager.Identity,
-		}, &resource.SearchStats{})
+		}, &searchmodel.SearchStats{})
 		require.NoError(t, err)
 		require.Nil(t, listed.Error)
 
@@ -3601,7 +3607,7 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 		}
 		require.ElementsMatch(t, liveNames, names)
 
-		counts, err := index.CountManagedObjects(context.Background(), &resource.SearchStats{})
+		counts, err := index.CountManagedObjects(context.Background(), &searchmodel.SearchStats{})
 		require.NoError(t, err)
 		require.Len(t, counts, 1)
 		require.Equal(t, int64(len(liveNames)), counts[0].Count)
@@ -3613,10 +3619,10 @@ func TestSearchSeparatesDeletedFromLiveDocuments(t *testing.T) {
 func TestSearchPostRankAuthzSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	index := newTestDashboardsIndexPostRank(t, 3)
 
-	doc := func(name, folder string, deleted *bool, tags ...string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	doc := func(name, folder string, deleted *bool, tags ...string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: postRankKey.Namespace,
 					Group:     postRankKey.Group,
@@ -3632,7 +3638,7 @@ func TestSearchPostRankAuthzSeparatesDeletedFromLiveDocuments(t *testing.T) {
 	}
 	// The trashed document sits in an authorized folder, so anything that lets
 	// it through is the deleted scope failing, not authorization.
-	indexDocs(t, index, []*resource.BulkIndexItem{
+	indexDocs(t, index, []*searchmodel.BulkIndexItem{
 		doc("no-marker", "allowed", nil, "shared"),
 		doc("live", "allowed", new(false), "shared", "live-only"),
 		doc("denied", "denied", new(false), "shared", "denied-only"),
@@ -3701,7 +3707,7 @@ func facetTermCounts(f *resourcepb.ResourceSearchResponse_Facet) map[string]int6
 
 // checkSearchQueryUnordered asserts on the set of names, where order is not under
 // test.
-func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
+func checkSearchQueryUnordered(t *testing.T, index searchmodel.ResourceIndex, query *resourcepb.ResourceSearchRequest, expectedNames []string) {
 	t.Helper()
 	res, err := index.Search(context.Background(), nil, query, nil, nil)
 	require.NoError(t, err)
@@ -3721,7 +3727,7 @@ func checkSearchQueryUnordered(t *testing.T, index resource.ResourceIndex, query
 // missing column definition is dropped without an error — so this drives all
 // three through a real index.
 func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
@@ -3729,11 +3735,11 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 	const alice, bob = "user:alice", "user:bob"
 	// Deliberately indexed out of order, so a passing sort cannot be the order the
 	// documents happened to arrive in.
-	deleted := func(name, title, by string, deletedAt int64, rv int64) *resource.BulkIndexItem {
+	deleted := func(name, title, by string, deletedAt int64, rv int64) *searchmodel.BulkIndexItem {
 		deletedRV := strconv.FormatInt(rv, 10)
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace,
 					Group:     key.Group,
@@ -3751,12 +3757,12 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		}
 	}
 
-	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	index := newTestDashboardsIndex(t, threshold, 4, func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			deleted("middle", "Alpha middle", alice, 2000, 20),
 			deleted("newest", "Alpha newest", bob, 3000, 100),
 			deleted("oldest", "Alpha oldest", alice, 1000, 3),
-			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+			{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
 				},
@@ -3769,7 +3775,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
 		q.Options.Fields = []*resourcepb.Requirement{{
-			Key:      resource.SEARCH_FIELD_DELETED_BY,
+			Key:      searchmodel.SEARCH_FIELD_DELETED_BY,
 			Operator: string(selection.In),
 			Values:   []string{alice},
 		}}
@@ -3782,7 +3788,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
 		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{
-			Field: resource.SEARCH_FIELD_DELETION_TIME,
+			Field: searchmodel.SEARCH_FIELD_DELETION_TIME,
 			Desc:  true,
 		}}
 		checkSearchQuery(t, index, q, []string{"newest", "middle", "oldest"})
@@ -3796,7 +3802,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 	t.Run("sorting by deleted resource version", func(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
-		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_DELETED_RV}}
 		checkSearchQuery(t, index, q, []string{"oldest", "middle", "newest"})
 
 		q.SortBy[0].Desc = true
@@ -3807,7 +3813,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
 		q.Limit = 1
-		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETED_RV}}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_DELETED_RV}}
 		// A List(TRASH) caller only persists the last RV, not the resource name.
 		// Starting after the RV plus the minimum name keeps that RV inclusive.
 		q.SearchAfter = []string{"0000000000000000003", ""}
@@ -3828,16 +3834,16 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
 		q.Fields = []string{
-			resource.SEARCH_FIELD_DELETED_BY,
-			resource.SEARCH_FIELD_DELETION_TIME,
-			resource.SEARCH_FIELD_DELETED_RV,
+			searchmodel.SEARCH_FIELD_DELETED_BY,
+			searchmodel.SEARCH_FIELD_DELETION_TIME,
+			searchmodel.SEARCH_FIELD_DELETED_RV,
 		}
-		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETION_TIME}}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_DELETION_TIME}}
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, res.Results.Columns, 3, "a field without a column definition is dropped silently")
-		require.Equal(t, resource.SEARCH_FIELD_DELETED_BY, res.Results.Columns[0].Name)
+		require.Equal(t, searchmodel.SEARCH_FIELD_DELETED_BY, res.Results.Columns[0].Name)
 
 		rows := res.Results.Rows
 		require.Len(t, rows, 3)
@@ -3855,9 +3861,9 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 	// submit the wrong revision.
 	t.Run("a large resource version comes back exactly", func(t *testing.T) {
 		const rv = "1856241819843796993"
-		require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+		require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "snowflake",
 				},
@@ -3868,7 +3874,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 
 		q := newTestQuery("snowflake")
 		q.IsDeleted = true
-		q.Fields = []string{resource.SEARCH_FIELD_DELETED_RV}
+		q.Fields = []string{searchmodel.SEARCH_FIELD_DELETED_RV}
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
 		require.Len(t, res.Results.Rows, 1)
@@ -3884,14 +3890,14 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 			mutate func(*resourcepb.ResourceSearchRequest)
 		}{
 			{"retrieve", func(q *resourcepb.ResourceSearchRequest) {
-				q.Fields = []string{resource.SEARCH_FIELD_DELETED_BY}
+				q.Fields = []string{searchmodel.SEARCH_FIELD_DELETED_BY}
 			}},
 			{"sort", func(q *resourcepb.ResourceSearchRequest) {
-				q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_DELETION_TIME}}
+				q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_DELETION_TIME}}
 			}},
 			{"filter", func(q *resourcepb.ResourceSearchRequest) {
 				q.Options.Fields = []*resourcepb.Requirement{{
-					Key:      resource.SEARCH_FIELD_DELETED_BY,
+					Key:      searchmodel.SEARCH_FIELD_DELETED_BY,
 					Operator: string(selection.In),
 					Values:   []string{alice},
 				}}
@@ -3902,7 +3908,7 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 			{"query fields", func(q *resourcepb.ResourceSearchRequest) {
 				q.Query = "alice"
 				q.QueryFields = []*resourcepb.ResourceSearchRequest_QueryField{{
-					Name: resource.SEARCH_FIELD_DELETED_BY,
+					Name: searchmodel.SEARCH_FIELD_DELETED_BY,
 				}}
 			}},
 		} {
@@ -3930,15 +3936,15 @@ func TestTrashFieldsAreFilterableSortableAndReturned(t *testing.T) {
 // index already has, so the round trip is what needs proving: a field with no
 // column definition is dropped from the response without complaint.
 func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "dashboard.grafana.app",
 		Resource:  "dashboards",
 	}
-	deleted := func(name, title string, tags []string) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	deleted := func(name, title string, tags []string) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name,
 				},
@@ -3948,13 +3954,13 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 		}
 	}
 
-	index := newTestDashboardsIndex(t, threshold, 4, func(index resource.ResourceIndex) (int64, error) {
-		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	index := newTestDashboardsIndex(t, threshold, 4, func(index searchmodel.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 			deleted("prod-only", "Alpha one", []string{"prod"}),
 			deleted("prod-and-team", "Alpha two", []string{"prod", "team-a"}),
 			deleted("untagged", "Alpha three", nil),
 			// A live document with the same tag, to prove the trash scope still applies.
-			{Action: resource.ActionIndex, Doc: &resource.IndexableDocument{
+			{Action: searchmodel.ActionIndex, Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: "live",
 				},
@@ -3967,7 +3973,7 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 		q := newTestQuery("")
 		q.IsDeleted = true
 		q.Options.Fields = []*resourcepb.Requirement{{
-			Key:      resource.SEARCH_FIELD_TAGS,
+			Key:      searchmodel.SEARCH_FIELD_TAGS,
 			Operator: string(op),
 			Values:   values,
 		}}
@@ -3990,14 +3996,14 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 
 	t.Run("returning the values", func(t *testing.T) {
 		q := tagFilter(selection.In, "prod", "team-a")
-		q.Fields = []string{resource.SEARCH_FIELD_TAGS}
-		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: resource.SEARCH_FIELD_NAME}}
+		q.Fields = []string{searchmodel.SEARCH_FIELD_TAGS}
+		q.SortBy = []*resourcepb.ResourceSearchRequest_Sort{{Field: searchmodel.SEARCH_FIELD_NAME}}
 
 		res, err := index.Search(context.Background(), nil, q, nil, nil)
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Results.Columns, 1, "a field without a column definition is dropped silently")
-		require.Equal(t, resource.SEARCH_FIELD_TAGS, res.Results.Columns[0].Name)
+		require.Equal(t, searchmodel.SEARCH_FIELD_TAGS, res.Results.Columns[0].Name)
 
 		rows := res.Results.Rows
 		require.Len(t, rows, 2)
@@ -4020,20 +4026,20 @@ func TestTrashSearchFiltersAndReturnsTags(t *testing.T) {
 // fails loudly when they don't, so these filters run against a real index
 // instead of asserting on query shapes.
 func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
-	key := resource.NamespacedResource{
+	key := resourcecontract.NamespacedResource{
 		Namespace: "default",
 		Group:     "rules.alerting.grafana.app",
 		Resource:  "rules",
 	}
-	index := newTestIndexWithTypedFields(t, key, []resource.SearchFieldDefinition{
-		{Name: "paused", Type: resource.SearchFieldTypeBoolean, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
-		{Name: "panelID", Type: resource.SearchFieldTypeInt64, Capabilities: []resource.SearchCapability{resource.SearchCapabilityFilter, resource.SearchCapabilityRetrieve}},
+	index := newTestIndexWithTypedFields(t, key, []searchmodel.SearchFieldDefinition{
+		{Name: "paused", Type: searchmodel.SearchFieldTypeBoolean, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
+		{Name: "panelID", Type: searchmodel.SearchFieldTypeInt64, Capabilities: []searchmodel.SearchCapability{searchmodel.SearchCapabilityFilter, searchmodel.SearchCapabilityRetrieve}},
 	})
 
-	rule := func(name string, paused bool, panelID int64) *resource.BulkIndexItem {
-		return &resource.BulkIndexItem{
-			Action: resource.ActionIndex,
-			Doc: &resource.IndexableDocument{
+	rule := func(name string, paused bool, panelID int64) *searchmodel.BulkIndexItem {
+		return &searchmodel.BulkIndexItem{
+			Action: searchmodel.ActionIndex,
+			Doc: &searchmodel.IndexableDocument{
 				Key: &resourcepb.ResourceKey{
 					Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name,
 				},
@@ -4044,7 +4050,7 @@ func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
 			},
 		}
 	}
-	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+	require.NoError(t, index.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
 		rule("rule-paused", true, 10),
 		rule("rule-active", false, 20),
 	}}))
@@ -4088,7 +4094,7 @@ func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
 		{"boolean value that is not true or false", filter("paused", "=", "yes")},
 		{"boolean compared with a range", filter("paused", "gt", "true")},
 		{"number value that is not a number", filter("panelID", "=", "ten")},
-		{"filter on a field that only declares retrieve", filter(resource.SEARCH_FIELD_CREATED, "gt", "0")},
+		{"filter on a field that only declares retrieve", filter(searchmodel.SEARCH_FIELD_CREATED, "gt", "0")},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			res, err := index.Search(context.Background(), nil, tc.query, nil, nil)
@@ -4101,18 +4107,18 @@ func TestFilteringOnBooleanAndNumericFields(t *testing.T) {
 
 // newTestIndexWithTypedFields creates a test index whose kind declares the
 // given search fields, so non-string types keep their declared mapping.
-func newTestIndexWithTypedFields(t testing.TB, key resource.NamespacedResource, sfds []resource.SearchFieldDefinition) resource.ResourceIndex {
+func newTestIndexWithTypedFields(t testing.TB, key resourcecontract.NamespacedResource, sfds []searchmodel.SearchFieldDefinition) searchmodel.ResourceIndex {
 	gvr := apischema.GroupVersionResource{Group: key.Group, Version: "v0", Resource: key.Resource}
-	provider := resource.NewMapProvider(
-		map[apischema.GroupVersionResource][]resource.SearchFieldDefinition{gvr: sfds},
+	provider := searchmodel.NewMapProvider(
+		map[apischema.GroupVersionResource][]searchmodel.SearchFieldDefinition{gvr: sfds},
 		map[apischema.GroupResource]string{gvr.GroupResource(): gvr.Version},
 	)
-	sfKey := resource.NewLowerGroupResource(key.Group, key.Resource)
+	sfKey := resourcecontract.NewLowerGroupResource(key.Group, key.Resource)
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:          t.TempDir(),
 		FileThreshold: threshold,
-		SearchFields:  resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{sfKey: provider}),
+		SearchFields:  searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{sfKey: provider}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
@@ -4137,7 +4143,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 	require.NotEqual(t, rvLower, rvUpper)
 	require.Equal(t, float64(rvLower), float64(rvUpper))
 
-	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	index := newResourceVersionIndex(t, key, false)
 	opts := &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 		Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
@@ -4147,7 +4153,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 	t.Run("table format serves the rv column and the row resource version", func(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
 			Options: opts,
-			Fields:  []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+			Fields:  []string{searchmodel.SEARCH_FIELD_RV, searchmodel.SEARCH_FIELD_TITLE},
 			Limit:   10,
 		}, nil, nil)
 		require.NoError(t, err)
@@ -4156,7 +4162,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 
 		column := -1
 		for i, col := range res.Results.Columns {
-			if col.Name == resource.SEARCH_FIELD_RV {
+			if col.Name == searchmodel.SEARCH_FIELD_RV {
 				column = i
 			}
 		}
@@ -4180,7 +4186,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
 			Options:      opts,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			Fields:       []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+			Fields:       []string{searchmodel.SEARCH_FIELD_RV, searchmodel.SEARCH_FIELD_TITLE},
 			Limit:        10,
 		}, nil, nil)
 		require.NoError(t, err)
@@ -4214,7 +4220,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 		res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
 			Options:      opts,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-			Fields:       []string{resource.SEARCH_FIELD_RV_STRING},
+			Fields:       []string{searchmodel.SEARCH_FIELD_RV_STRING},
 			Limit:        10,
 		}, nil, nil)
 		require.NoError(t, err)
@@ -4225,7 +4231,7 @@ func TestSearchReturnsExactResourceVersion(t *testing.T) {
 // The post-rank authz path runs its own bleve searches and builds results from
 // the hits those return, so it needs the stored field loaded too.
 func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
-	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	index := newResourceVersionIndex(t, key, true)
 
 	ctx := authlib.WithAuthInfo(context.Background(),
@@ -4234,7 +4240,7 @@ func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
 		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
 		}},
-		Fields: []string{resource.SEARCH_FIELD_RV, resource.SEARCH_FIELD_TITLE},
+		Fields: []string{searchmodel.SEARCH_FIELD_RV, searchmodel.SEARCH_FIELD_TITLE},
 		Limit:  10,
 	}, nil, nil)
 	require.NoError(t, err)
@@ -4250,7 +4256,7 @@ func TestPostRankAuthzSearchReturnsExactResourceVersion(t *testing.T) {
 // Deleted documents carry a resource version too, and trash search reads it
 // through the same path.
 func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
-	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	index := newResourceVersionIndex(t, key, false)
 
 	res, err := index.Search(context.Background(), nil, &resourcepb.ResourceSearchRequest{
@@ -4258,7 +4264,7 @@ func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
 			Namespace: key.Namespace, Group: key.Group, Resource: key.Resource,
 		}},
 		IsDeleted: true,
-		Fields:    []string{resource.SEARCH_FIELD_DELETED_RV},
+		Fields:    []string{searchmodel.SEARCH_FIELD_DELETED_RV},
 		Limit:     10,
 	}, nil, nil)
 	require.NoError(t, err)
@@ -4270,22 +4276,22 @@ func TestTrashSearchReturnsExactResourceVersion(t *testing.T) {
 
 // newResourceVersionIndex holds three live documents — two with resource versions
 // that collide as float64, one with none — and one deleted document.
-func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, postRankAuthz bool) resource.ResourceIndex {
+func newResourceVersionIndex(t testing.TB, key resourcecontract.NamespacedResource, postRankAuthz bool) searchmodel.ResourceIndex {
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
 		Root:                 t.TempDir(),
 		FileThreshold:        threshold,
 		PostRankAuthzEnabled: postRankAuthz,
-		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
-			resource.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
+		SearchFields: searchmodel.NewSearchFieldsRegistry(nil, nil, map[resourcecontract.LowerGroupResource]searchmodel.SearchFieldsProvider{
+			resourcecontract.NewLowerGroupResource(key.Group, key.Resource): search.DashboardSearchFieldsProviderForTest(),
 		}),
 	}, nil)
 	require.NoError(t, err)
 	t.Cleanup(backend.Stop)
 
-	doc := func(name string, rv int64) *resource.IndexableDocument {
-		return &resource.IndexableDocument{
+	doc := func(name string, rv int64) *searchmodel.IndexableDocument {
+		return &searchmodel.IndexableDocument{
 			Key:   &resourcepb.ResourceKey{Namespace: key.Namespace, Group: key.Group, Resource: key.Resource, Name: name},
 			Name:  name,
 			Title: name,
@@ -4298,12 +4304,12 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 	deleted.DeletedRV = &deletedRV
 
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
-	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i resource.ResourceIndex) (int64, error) {
-		return 1, i.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
-			{Action: resource.ActionIndex, Doc: doc("lower", rvLower)},
-			{Action: resource.ActionIndex, Doc: doc("upper", rvUpper)},
-			{Action: resource.ActionIndex, Doc: doc("no-rv", 0)},
-			{Action: resource.ActionIndex, Doc: deleted},
+	index, err := backend.BuildIndex(ctx, key, 4, "test", func(i searchmodel.ResourceIndex) (int64, error) {
+		return 1, i.BulkIndex(&searchmodel.BulkIndexRequest{Items: []*searchmodel.BulkIndexItem{
+			{Action: searchmodel.ActionIndex, Doc: doc("lower", rvLower)},
+			{Action: searchmodel.ActionIndex, Doc: doc("upper", rvUpper)},
+			{Action: searchmodel.ActionIndex, Doc: doc("no-rv", 0)},
+			{Action: searchmodel.ActionIndex, Doc: deleted},
 		}})
 	}, nil, false, time.Time{}, 0)
 	require.NoError(t, err)
@@ -4314,7 +4320,7 @@ func newResourceVersionIndex(t testing.TB, key resource.NamespacedResource, post
 // Before this check a filter on one matched nothing and a sort on one ordered by
 // nothing, with no sign the field was never usable.
 func TestSearchRejectsInternalFields(t *testing.T) {
-	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	key := resourcecontract.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
 	index := newResourceVersionIndex(t, key, false)
 	newRequest := func() *resourcepb.ResourceSearchRequest {
 		return &resourcepb.ResourceSearchRequest{
@@ -4332,10 +4338,10 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 	}
 
 	internal := []string{
-		resource.SEARCH_FIELD_RV_STRING,
-		resource.SEARCH_FIELD_IS_DELETED,
-		resource.SEARCH_FIELD_IS_PROVISIONED,
-		resource.SEARCH_FIELD_DELETED_RV_SORT,
+		searchmodel.SEARCH_FIELD_RV_STRING,
+		searchmodel.SEARCH_FIELD_IS_DELETED,
+		searchmodel.SEARCH_FIELD_IS_PROVISIONED,
+		searchmodel.SEARCH_FIELD_DELETED_RV_SORT,
 	}
 	for _, field := range internal {
 		t.Run(field, func(t *testing.T) {
@@ -4374,10 +4380,10 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 	// catch them.
 	t.Run("request API fields stay usable", func(t *testing.T) {
 		for _, field := range []string{
-			resource.SEARCH_FIELD_ID,
-			resource.SEARCH_FIELD_SCORE,
-			resource.SEARCH_FIELD_EXPLAIN,
-			resource.SEARCH_FIELD_ALL_FIELDS,
+			searchmodel.SEARCH_FIELD_ID,
+			searchmodel.SEARCH_FIELD_SCORE,
+			searchmodel.SEARCH_FIELD_EXPLAIN,
+			searchmodel.SEARCH_FIELD_ALL_FIELDS,
 		} {
 			req := newRequest()
 			req.Fields = []string{field}
@@ -4390,7 +4396,7 @@ func TestSearchRejectsInternalFields(t *testing.T) {
 	t.Run("a label named like an internal field is allowed", func(t *testing.T) {
 		req := newRequest()
 		req.Options.Labels = []*resourcepb.Requirement{
-			{Key: resource.SEARCH_FIELD_RV_STRING, Operator: string(selection.Equals), Values: []string{"1"}},
+			{Key: searchmodel.SEARCH_FIELD_RV_STRING, Operator: string(selection.Equals), Values: []string{"1"}},
 		}
 		require.Nil(t, search(t, req).Error)
 	})
