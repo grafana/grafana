@@ -161,7 +161,7 @@ function FormContent({
 
   const templateVars: CommitTemplateVars = {
     action,
-    resourceKind: resourceType,
+    resourceKind: kind.getLabel(),
     resourceID: resourceName,
     title,
     ...getCurrentCommitUser(),

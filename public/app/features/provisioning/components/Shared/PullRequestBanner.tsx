@@ -3,12 +3,10 @@ import { type provisioning } from '@grafana/runtime';
 import { PreviewBannerViewPR } from './PreviewBannerViewPR';
 
 /**
- * EXPOSED COMPONENT: grafana/provisioning/pull-request-banner/v1
- *
- * Props are `provisioning.PullRequestBannerProps` from `@grafana/runtime`, the data that the save
- * drawer passes to `onBranchSuccess`.
+ * `provisioning.PullRequestBanner` in `@grafana/runtime`. Takes the data that the save drawer passes
+ * to `onBranchSuccess`.
  */
-export function PullRequestBannerExposedComponent({
+export function PullRequestBanner({
   ref,
   pullRequestUrl,
   repositoryUrl,

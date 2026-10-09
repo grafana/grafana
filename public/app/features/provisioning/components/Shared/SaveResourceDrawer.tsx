@@ -8,23 +8,23 @@ import { addResourceKinds, getKindInfoByGroupKind } from '../../utils/resourceKi
 import { SaveProvisionedResourceDrawer } from './SaveProvisionedResourceDrawer';
 
 /**
- * EXPOSED COMPONENT: grafana/provisioning/save-resource-drawer/v1
- *
- * Props are `provisioning.SaveResourceDrawerProps` from `@grafana/runtime`. For `create`, the
- * repository comes from `folderName`; for `update` and `delete`, from the resource annotations.
+ * `provisioning.SaveResourceDrawer` in `@grafana/runtime`. For `create`, the repository comes from
+ * `folderName` (folder-scoped kinds) or `repositoryName` (folderless kinds); for `update` and
+ * `delete`, from the resource annotations.
  */
-export function ProvisionedResourceDrawerExposedComponent({
+export function SaveResourceDrawer({
   resource,
   action,
   title,
   folderName,
+  repositoryName,
   onDismiss,
   onWriteSuccess,
   onBranchSuccess,
 }: provisioning.SaveResourceDrawerProps) {
   const isNew = action === 'create';
   const { repository, folder, isLoading } = useGetResourceRepositoryView(
-    isNew ? { folderName } : { name: getManagerIdentity(resource) }
+    isNew ? { name: repositoryName, folderName } : { name: getManagerIdentity(resource) }
   );
   if (isLoading || !repository?.name) {
     return null;
