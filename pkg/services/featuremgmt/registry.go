@@ -2568,15 +2568,6 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:            "datasourcesApiServerEnableHealthEndpointFrontend",
-			Description:     "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
-			Stage:           FeatureStageExperimental,
-			Owner:           grafanaDatasourcesCoreServicesSquad,
-			RequiresRestart: false,
-			Expression:      "false",
-			Generate:        Generate{LegacyFrontend: true, React: true},
-		},
-		{
 			Name:            "datasourcesApiServerEnableHealthEndpointRedirect",
 			Description:     "Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.",
 			Stage:           FeatureStageExperimental,
@@ -2730,14 +2721,6 @@ var (
 		{
 			Name:        "datasources.config.ui.useNewDatasourceCRUDAPIs",
 			Description: "Use the new datasource API groups for datasource CRUD requests, frontend flag",
-			Stage:       FeatureStageExperimental,
-			Generate:    Generate{React: true},
-			Owner:       grafanaDatasourcesCoreServicesSquad,
-			Expression:  "false",
-		},
-		{
-			Name:        "datasources.apiserver.useNewAPIsForDatasourceResources",
-			Description: "Use the new datasource API groups for datasource resource requests, frontend flag",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDatasourcesCoreServicesSquad,

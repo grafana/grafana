@@ -582,7 +582,9 @@ describe('DataSourceWithBackend', () => {
 
   describe('callHealthCheck', () => {
     beforeEach(() => {
-      mockGetObjectValue.mockReturnValue({ health: ['dummy', 'canonical-id'] });
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { health: [], resources: [] } : defaultValue
+      );
     });
 
     afterEach(() => {
@@ -606,8 +608,10 @@ describe('DataSourceWithBackend', () => {
       });
     });
 
-    test('uses the new URL when feature toggle is enabled', () => {
-      mockGetBooleanValue.mockReturnValueOnce(true);
+    test('uses the new URL when the plugin is in the health list', () => {
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
+      );
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -617,7 +621,7 @@ describe('DataSourceWithBackend', () => {
       );
     });
 
-    test('uses the legacy URL when feature toggle is disabled', () => {
+    test('uses the legacy URL when the health list is empty', () => {
       const { mock, ds } = createMockDatasource();
       ds.callHealthCheck();
 
@@ -625,8 +629,21 @@ describe('DataSourceWithBackend', () => {
       expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
     });
 
+    test.each([{ health: ['prometheus'] }, { resources: ['dummy'] }, { health: 'dummy' }, {}, null])(
+      'keeps health calls on the legacy API when the plugin is not allowed: %j',
+      (allowedTypes) => {
+        mockGetObjectValue.mockReturnValue(allowedTypes);
+        const { mock, ds } = createMockDatasource();
+        ds.callHealthCheck();
+
+        expect(mock.calls[0][0].url).toEqual('/api/datasources/uid/abc/health');
+      }
+    );
+
     test('uses meta.id over type in the new URL when meta is present', () => {
-      mockGetBooleanValue.mockReturnValueOnce(true);
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
+      );
       const { mock, ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
       ds.callHealthCheck();
 
@@ -637,7 +654,9 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('falls back to type in the new URL when meta is not present', () => {
-      mockGetBooleanValue.mockReturnValueOnce(true);
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
+      );
       const { mock, ds } = createMockDatasource({ meta: undefined });
       ds.callHealthCheck();
 
@@ -681,7 +700,9 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response via toHealthCheckResult (OK)', async () => {
-      mockGetBooleanValue.mockReturnValueOnce(true);
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
+      );
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -703,7 +724,9 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('parses new API response and maps unknown status to HealthStatus.Unknown', async () => {
-      mockGetBooleanValue.mockReturnValueOnce(true);
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
+      );
       const { ds } = createMockDatasource();
       mockDatasourceRequest.mockResolvedValueOnce({
         data: {
@@ -737,7 +760,9 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('returns err.data when new API fetch rejects', async () => {
-      mockGetBooleanValue.mockReturnValueOnce(true);
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { health: ['dummy', 'canonical-id'] } : defaultValue
+      );
       const errorData = {
         status: HealthStatus.Error,
         message: 'Service unavailable',
@@ -865,31 +890,40 @@ describe('DataSourceWithBackend', () => {
 
   describe('buildResourcesDatasourceUrl', () => {
     beforeEach(() => {
-      mockGetObjectValue.mockReturnValue({ resources: ['dummy', 'canonical-id'] });
+      mockGetObjectValue.mockImplementation((key, defaultValue) =>
+        key === 'datasources.apiserver.fe-allowed-types' ? { resources: ['dummy', 'canonical-id'] } : defaultValue
+      );
     });
 
     afterEach(() => {
-      mockGetBooleanValue.mockReset().mockReturnValue(false);
       mockGetObjectValue.mockReturnValue({ types: ['prometheus'] });
     });
 
-    test('check that buildResourcesDatasourceUrl uses the new URL when feature flag is enabled', () => {
-      mockGetBooleanValue.mockReturnValue(true);
+    test('uses the new URL when the plugin is in the resources list', () => {
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
-      expect(mockGetBooleanValue).toHaveBeenCalledWith('datasources.apiserver.useNewAPIsForDatasourceResources', false);
       expect(url).toBe(
         '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
       );
     });
 
-    test('check that buildResourcesDatasourceUrl uses the legacy URL when feature flag is disabled', () => {
-      mockGetBooleanValue.mockReturnValue(false);
+    test('uses the legacy URL when the resources list is empty', () => {
+      mockGetObjectValue.mockReturnValue({ resources: [] });
       const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
     });
 
+    test.each([{ resources: ['prometheus'] }, { health: ['dummy'] }, { resources: 'dummy' }, {}, null])(
+      'keeps resource calls on the legacy API when the plugin is not allowed: %j',
+      (allowedTypes) => {
+        mockGetObjectValue.mockReturnValue(allowedTypes);
+        const url = createMockDatasource().ds.buildResourcesDatasourceUrl('api/v1/labels');
+
+        expect(url).toBe('/api/datasources/uid/abc/resources/api/v1/labels');
+      }
+    );
+
     test.each([true, false])('strips leading slashes from the path (new APIs: %s)', (enabled) => {
-      mockGetBooleanValue.mockReturnValue(enabled);
+      mockGetObjectValue.mockReturnValue({ resources: enabled ? ['dummy'] : [] });
       const { ds } = createMockDatasource();
       const expectedUrl = enabled
         ? '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
@@ -899,7 +933,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('prefers meta.id over type when meta is present', () => {
-      mockGetBooleanValue.mockReturnValue(true);
       const { ds } = createMockDatasource({ meta: { id: 'canonical-id' } as DataSourcePluginMeta });
       const url = ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe(
@@ -908,7 +941,6 @@ describe('DataSourceWithBackend', () => {
     });
 
     test('falls back to type when meta is not present', () => {
-      mockGetBooleanValue.mockReturnValue(true);
       const url = createMockDatasource({ meta: undefined }).ds.buildResourcesDatasourceUrl('api/v1/labels');
       expect(url).toBe(
         '/apis/dummy.datasource.grafana.app/v0alpha1/namespaces/default/datasources/abc/resources/api/v1/labels'
