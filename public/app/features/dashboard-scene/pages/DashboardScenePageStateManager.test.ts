@@ -236,6 +236,57 @@ beforeEach(() => {
   testStore = createTestStore();
 });
 
+describe.each([
+  { version: 'v1', Manager: DashboardScenePageStateManager },
+  { version: 'v2', Manager: DashboardScenePageStateManagerV2 },
+])('embedded mode with the $version cache', ({ version, Manager }) => {
+  it.each([true, false])(
+    'updates embedded mode when switching routes with a cached scene (response cached: %s)',
+    async (cacheResponse) => {
+      const fetchSpy = jest.fn();
+      if (version === 'v1') {
+        setupLoadDashboardMock({ dashboard: { uid: 'fake-dash', version: 1 }, meta: { canEdit: true } }, fetchSpy);
+      } else {
+        setupDashboardAPI(
+          {
+            access: { canEdit: true },
+            apiVersion: 'v2beta1',
+            kind: 'DashboardWithAccessInfo',
+            metadata: { name: 'fake-dash', creationTimestamp: '', generation: 1, resourceVersion: '1' },
+            spec: defaultDashboardV2Spec(),
+          },
+          fetchSpy
+        );
+      }
+      const loader = new Manager({});
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+      const scene = loader.state.dashboard!;
+      expect(scene.state.meta.isEmbedded).toBeFalsy();
+
+      loader.clearState();
+      if (!cacheResponse) {
+        loader.clearDashboardCache();
+      }
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Embedded });
+
+      expect(loader.state.dashboard).toBe(scene);
+      expect(scene.state.meta.isEmbedded).toBe(true);
+      expect(scene.state.meta.canEdit).toBe(true);
+
+      loader.clearState();
+      if (!cacheResponse) {
+        loader.clearDashboardCache();
+      }
+      await loader.loadDashboard({ uid: 'fake-dash', route: DashboardRoutes.Normal });
+
+      expect(loader.state.dashboard).toBe(scene);
+      expect(scene.state.meta.isEmbedded).toBe(false);
+      expect(scene.state.meta.canEdit).toBe(true);
+      expect(fetchSpy).toHaveBeenCalledTimes(cacheResponse ? 1 : 3);
+    }
+  );
+});
+
 describe('DashboardScenePageStateManager v1', () => {
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
