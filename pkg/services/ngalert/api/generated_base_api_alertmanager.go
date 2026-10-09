@@ -50,7 +50,7 @@ func (f *AlertmanagerApiHandler) RouteCreateGrafanaSilence(ctx *contextmodel.Req
 	// Parse Request Body
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRouteCreateGrafanaSilence(ctx, conf)
 }
@@ -60,7 +60,7 @@ func (f *AlertmanagerApiHandler) RouteCreateSilence(ctx *contextmodel.ReqContext
 	// Parse Request Body
 	conf := apimodels.PostableSilence{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRouteCreateSilence(ctx, conf, datasourceUIDParam)
 }
@@ -143,7 +143,7 @@ func (f *AlertmanagerApiHandler) RoutePostAMAlerts(ctx *contextmodel.ReqContext)
 	// Parse Request Body
 	conf := apimodels.PostableAlerts{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRoutePostAMAlerts(ctx, conf, datasourceUIDParam)
 }
@@ -153,7 +153,7 @@ func (f *AlertmanagerApiHandler) RoutePostAlertingConfig(ctx *contextmodel.ReqCo
 	// Parse Request Body
 	conf := apimodels.ExternalAlertmanagerConfig{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRoutePostAlertingConfig(ctx, conf, datasourceUIDParam)
 }
@@ -169,7 +169,7 @@ func (f *AlertmanagerApiHandler) RoutePostTestGrafanaTemplates(ctx *contextmodel
 	// Parse Request Body
 	conf := apimodels.TestTemplatesConfigBodyParams{}
 	if err := web.Bind(ctx.Req, &conf); err != nil {
-		return response.Error(http.StatusBadRequest, "bad request data", err)
+		return response.Error(http.StatusBadRequest, err.Error(), err)
 	}
 	return f.handleRoutePostTestGrafanaTemplates(ctx, conf)
 }
