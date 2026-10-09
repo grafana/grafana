@@ -3,9 +3,11 @@ package authinfo
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -330,8 +332,10 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, m
 		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
 		if mode >= rest.Mode1 {
 			// Dual-write modes write to unified storage in the background.
-			require.Eventually(t, func() bool {
-				return authInfoExistsInUnified(t, helper, created.GetName())
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				exists, err := authInfoExistsInUnified(helper, created.GetName())
+				require.NoError(c, err)
+				assert.True(c, exists)
 			}, 5*time.Second, 50*time.Millisecond, "sanity check: the object should reach unified storage")
 		}
 
@@ -358,15 +362,16 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, m
 
 		// Reads in dual-write modes are served from legacy, so check unified storage directly.
 		if mode >= rest.Mode1 {
-			require.Eventually(t, func() bool {
-				return !authInfoExistsInUnified(t, helper, created.GetName())
+			require.EventuallyWithT(t, func(c *assert.CollectT) {
+				exists, err := authInfoExistsInUnified(helper, created.GetName())
+				require.NoError(c, err)
+				assert.False(c, exists)
 			}, 5*time.Second, 50*time.Millisecond, "AuthInfo object should be gone from unified storage")
 		}
 	})
 }
 
-func authInfoExistsInUnified(t *testing.T, helper *apis.K8sTestHelper, name string) bool {
-	t.Helper()
+func authInfoExistsInUnified(helper *apis.K8sTestHelper, name string) (bool, error) {
 	ns := helper.Namespacer(helper.Org1.Admin.Identity.GetOrgID())
 	svcCtx := identity.WithServiceIdentityForSingleNamespaceContext(context.Background(), ns)
 	rsp, err := helper.GetEnv().ResourceClient.Read(svcCtx, &resourcepb.ReadRequest{Key: &resourcepb.ResourceKey{
@@ -375,12 +380,16 @@ func authInfoExistsInUnified(t *testing.T, helper *apis.K8sTestHelper, name stri
 		Resource:  gvrAuthInfo.Resource,
 		Name:      name,
 	}})
-	require.NoError(t, err)
-	if rsp.Error != nil {
-		require.Equal(t, int32(404), rsp.Error.Code, "unexpected unified read error: %v", rsp.Error)
-		return false
+	if err != nil {
+		return false, err
 	}
-	return true
+	if rsp.Error != nil {
+		if rsp.Error.Code == http.StatusNotFound {
+			return false, nil
+		}
+		return false, fmt.Errorf("unexpected unified read error: %v", rsp.Error)
+	}
+	return true, nil
 }
 
 func countUserAuthRowsByAuthID(t *testing.T, helper *apis.K8sTestHelper, authID string) int64 {
