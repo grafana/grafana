@@ -788,6 +788,12 @@ func createGrafDir(t *testing.T, tmpDir string, opts GrafanaOpts) (string, strin
 			require.NoError(t, err)
 		}
 	}
+	{
+		section, err := getOrCreateSection("unified_storage")
+		require.NoError(t, err)
+		_, err = section.NewKey("grpc_error_result_to_status", "true")
+		require.NoError(t, err)
+	}
 	if opts.UnifiedStorageDisableSearch {
 		section, err := getOrCreateSection("unified_storage")
 		require.NoError(t, err)

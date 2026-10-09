@@ -139,6 +139,7 @@ Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
 
 ## Key Notes
 
+- When calling a unified storage gRPC client, handle both error forms (transport `err` and response `Error`) with the helpers described in `pkg/storage/unified/resource/doc.go`; never check only one of them.
 - **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
 - **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
 - **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.
