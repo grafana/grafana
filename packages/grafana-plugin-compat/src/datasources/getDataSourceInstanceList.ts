@@ -29,7 +29,6 @@ async function backwardsCompatibleGetDataSourceInstanceList(
 
 function toDataSourceInstanceListItem(item: DataSourceInstanceSettings): DataSourceInstanceListItem {
   return {
-    isDefault: item.isDefault ?? false,
     meta: { ...item.meta },
     name: item.name,
     type: item.type,
