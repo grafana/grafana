@@ -165,8 +165,10 @@ func TestLegacyAuthzServiceIsSeparate(t *testing.T) {
 	modern := modernv1.File_proto_v1_authz_proto.Services().ByName("AuthzService")
 	require.Nil(t, modern.Methods().ByName("LegacyGetUserPermissions"))
 	legacy := authzv1.File_legacy_permissions_proto.Services().ByName("LegacyAuthzService")
-	require.Equal(t, 1, legacy.Methods().Len())
-	require.Equal(t, "LegacyGetUserPermissions", string(legacy.Methods().Get(0).Name()))
+	require.Equal(t, 2, legacy.Methods().Len())
+	require.NotNil(t, legacy.Methods().ByName("LegacyGetUserPermissions"))
+	require.NotNil(t, legacy.Methods().ByName("LegacySearchUsersPermissions"))
+	require.Nil(t, modern.Methods().ByName("LegacySearchUsersPermissions"))
 }
 
 type oldPermissionsServer struct {

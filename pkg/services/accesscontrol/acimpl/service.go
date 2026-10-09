@@ -758,6 +758,21 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.SearchUsersPermissions")
 	defer span.End()
 
+	if accesscontrol.LegacyUserPermissionsSearchEnabled(ctx) {
+		observer := metrics.MAccessSearchPermissionsSummary
+		if options.UserID > 0 {
+			observer = metrics.MAccessPermissionsSummary
+		}
+		timer := prometheus.NewTimer(observer)
+		defer timer.ObserveDuration()
+		client, _ := s.legacyClient.(legacyclient.SearchService)
+		permissions, err := accesscontrol.GetLegacySearchUsersPermissions(ctx, client, usr, options, s.cfg)
+		if err != nil {
+			return nil, err
+		}
+		return s.zanzanaResolver.MergeSearch(ctx, usr, usr.GetOrgID(), options, permissions, s.log), nil
+	}
+
 	// Limit roles to available in OSS
 	options.RolePrefixes = OSSRolesPrefixes
 

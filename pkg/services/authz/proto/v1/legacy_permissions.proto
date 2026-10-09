@@ -11,6 +11,7 @@ option go_package = "github.com/grafana/grafana/pkg/services/authz/proto/v1";
 service LegacyAuthzService {
   // No HTTP route is exposed.
   rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse);
+  rpc LegacySearchUsersPermissions(LegacySearchUsersPermissionsRequest) returns (stream LegacySearchUsersPermissionsResponse);
 }
 
 // Trusted assertions from Grafana authentication, not end-user input. The caller
@@ -53,4 +54,18 @@ message LegacyPermission {
 message LegacyGetUserPermissionsResponse {
   // Preserve duplicates. Clients publish results only after successful EOF.
   repeated LegacyPermission permissions = 1;
+}
+
+message LegacySearchUsersPermissionsRequest {
+  string namespace = 1;
+  LegacyPermissionIdentity caller = 2;
+  string action = 3;
+  string action_prefix = 4;
+  string scope = 5;
+  int64 user_id = 6;
+}
+
+message LegacySearchUsersPermissionsResponse {
+  int64 user_id = 1;
+  repeated LegacyPermission permissions = 2;
 }
