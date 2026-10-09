@@ -1,6 +1,7 @@
 import { locationService } from '@grafana/runtime';
 import { payloads } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import { setPendingPlanBuild } from 'app/features/dashboard-scene/scene/pendingPlanBuild';
 
 interface PreviewSession {
   planId: string;
@@ -43,6 +44,10 @@ export class DashboardPlanPreview {
 
     try {
       if (!session.client) {
+        // Lets the new scene open on the building screen; see pendingPlanBuild.ts.
+        setPendingPlanBuild(
+          parsed.data.phase === 'building' ? { planId: parsed.data.planId, planTitle: parsed.data.title } : undefined
+        );
         locationService.replace(
           `${previewPath}?title=${encodeURIComponent(parsed.data.title)}&editSource=plan-preview`
         );
@@ -64,6 +69,9 @@ export class DashboardPlanPreview {
     } catch (error) {
       this.restoreAfterFailure(session);
       return { success: false, error: error instanceof Error ? error.message : String(error), changes: [] };
+    } finally {
+      // Unclaimed when no new scene mounted, e.g. the navigation was cancelled.
+      setPendingPlanBuild(undefined);
     }
   }
 

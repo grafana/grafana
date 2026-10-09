@@ -484,7 +484,7 @@ describe('setDashboardPanelContext', () => {
         canDelete: true,
       });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       await context.onAnnotationCreate!({ from: 100, to: 200, description: 'save it', tags: [] });
@@ -507,7 +507,7 @@ describe('setDashboardPanelContext', () => {
       );
       const { scene, context } = buildTestScene({ dashboardCanEdit: true });
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Plan', onBuild: () => {}, onDismiss: () => {} },
       });
 
       expect(context.onOpenInspector).toBeDefined();

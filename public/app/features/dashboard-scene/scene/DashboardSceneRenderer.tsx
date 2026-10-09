@@ -15,6 +15,7 @@ import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/Sol
 import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
+import { PlanBuildingOverlay } from './PlanBuildingOverlay';
 import { PlanningControls } from './new-toolbar/PlanningControls';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
@@ -91,6 +92,11 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
   }
 
   function renderBody() {
+    // The body is empty until the builder's first write, so the loading screen takes its place.
+    if (planning?.phase === 'building') {
+      return <PlanBuildingOverlay />;
+    }
+
     if (!viewPanel && (panelSearch || panelsPerRow)) {
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
@@ -113,7 +119,9 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
    */
   function renderControls() {
     if (planning) {
-      return isDashboardNewLayoutsEnabled() ? <PlanningControls dashboard={model} planning={planning} /> : null;
+      return isDashboardNewLayoutsEnabled() && planning.phase === 'preview' ? (
+        <PlanningControls dashboard={model} planning={planning} />
+      ) : null;
     }
 
     return controls && <controls.Component model={controls} />;
@@ -128,7 +136,8 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           <DashboardSidebarSplitter
             dashboard={model}
             isEditing={isEditing}
-            isPlanning={Boolean(planning)}
+            // Only the preview gets the planning canvas; the building screen sits on a plain one.
+            isPlanning={planning?.phase === 'preview'}
             controls={renderControls()}
             body={renderBody()}
           />

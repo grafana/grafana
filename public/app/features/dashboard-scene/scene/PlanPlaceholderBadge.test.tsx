@@ -95,6 +95,7 @@ function setup($data?: SceneDataProvider) {
     meta: {},
     body: new DefaultGridLayoutManager({ grid: new SceneGridLayout({ children: [] }) }),
     planning: {
+      phase: 'preview',
       planId: 'plan-1',
       planTitle: 'Plan',
       onBuild: jest.fn(),

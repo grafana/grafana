@@ -1,5 +1,6 @@
 import { locationService } from '@grafana/runtime';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import { takePendingPlanBuild } from 'app/features/dashboard-scene/scene/pendingPlanBuild';
 
 import { DashboardPlanPreview } from './DashboardPlanPreview';
 
@@ -40,6 +41,25 @@ describe('DashboardPlanPreview', () => {
     return mounted;
   }
 
+  it('leaves a building screen for the new dashboard to open on, and clears it once rendered', async () => {
+    const rendering = preview.render({ ...plan, phase: 'building' });
+    expect(takePendingPlanBuild()).toEqual({ planId: 'plan-1', planTitle: 'Service overview' });
+
+    client = createClient();
+    await jest.advanceTimersByTimeAsync(50);
+    expect(await rendering).toEqual(success);
+    expect(takePendingPlanBuild()).toBeUndefined();
+  });
+
+  it('clears an unclaimed building screen when the render fails', async () => {
+    const rendering = preview.render({ ...plan, phase: 'building' });
+    locationService.replace('/explore');
+    await jest.advanceTimersByTimeAsync(50);
+
+    expect((await rendering).success).toBe(false);
+    expect(takePendingPlanBuild()).toBeUndefined();
+  });
+
   it('opens a new dashboard and waits for its client before rendering', async () => {
     const previous = createClient();
     client = previous;
@@ -57,7 +77,7 @@ describe('DashboardPlanPreview', () => {
     client = mounted;
     await jest.advanceTimersByTimeAsync(50);
     expect(await rendering).toEqual(success);
-    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: plan });
+    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'preview' } });
   });
 
   it('reuses an already mounted new dashboard', async () => {
@@ -66,7 +86,7 @@ describe('DashboardPlanPreview', () => {
     client = mounted;
 
     expect(await preview.render(plan)).toEqual(success);
-    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: plan });
+    expect(mounted.execute).toHaveBeenCalledWith({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'preview' } });
   });
 
   it('returns to the original page including query and hash when dismissed', async () => {

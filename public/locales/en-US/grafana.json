@@ -6104,6 +6104,17 @@
       "placeholder-search-options": "Search options",
       "visualization-button-tooltip": "Search options"
     },
+    "plan-building-overlay": {
+      "quip-blue": "Picking a nice shade of blue…",
+      "quip-corners": "Polishing the panel corners…",
+      "quip-gridlines": "Lining up the gridlines…",
+      "quip-legend": "Teaching the legend to behave…",
+      "quip-metrics": "Asking the metrics nicely…",
+      "quip-pie-charts": "Arguing about pie charts…",
+      "quip-points": "Rounding up the data points…",
+      "quip-series": "Untangling the time series…",
+      "title": "Preparing to build your dashboard"
+    },
     "plan-placeholder-badge": {
       "text": "Sample data",
       "tooltip": "The numbers shown are sample data for illustration and do not come from real queries."

@@ -126,6 +126,7 @@ import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutMana
 import { addNewRowTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { getUpdatedHoverHeader } from './panel-timerange/utils';
+import { takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './types/DashboardLayoutManager';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
@@ -271,7 +272,13 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       // instead. This is a withhold-from-URL check (a missing/forged marker just degrades to
       // the normal edit-mode behaviour below), unlike a grant-from-URL check such as ?editview=,
       // which is why this is safe where that one was not.
-      if (editSource !== 'plan-preview') {
+      if (editSource === 'plan-preview') {
+        // Opened to show a plan's building screen: start on it rather than the empty state.
+        const pendingBuild = takePendingPlanBuild();
+        if (pendingBuild) {
+          this.setState({ planning: { phase: 'building', ...pendingBuild } });
+        }
+      } else {
         // Silent CUJ signal so the dashboard_edit journey starts on /dashboard/new
         // (the regular `dashboards_edit_button_clicked` doesn't fire here — auto-edit
         // mode bypasses the button).

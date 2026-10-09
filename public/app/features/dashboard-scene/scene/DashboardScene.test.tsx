@@ -67,6 +67,7 @@ import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowActions } from './layout-default/row-actions/RowActions';
 import { PanelTimeRange } from './panel-timerange/PanelTimeRange';
+import { setPendingPlanBuild, takePendingPlanBuild } from './pendingPlanBuild';
 import { DashboardPlanningEvent } from './planningEvents';
 import { type DashboardSceneLike, type DashboardSceneState } from './types/dashboard';
 
@@ -277,6 +278,28 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBeFalsy();
         expect(scene.state.isDirty).toBeFalsy();
         expect(scene.getEditSessionSource()).toBeUndefined();
+      });
+
+      it('opens a plan preview page straight onto a pending building screen, at most once', () => {
+        setPendingPlanBuild({ planId: 'plan-1', planTitle: 'Kafka overview' });
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new?editSource=plan-preview');
+
+        scene.activate();
+
+        expect(scene.state.planning).toEqual({ phase: 'building', planId: 'plan-1', planTitle: 'Kafka overview' });
+        expect(takePendingPlanBuild()).toBeUndefined();
+      });
+
+      it('ignores a pending building screen on a new dashboard that is not a plan preview', () => {
+        setPendingPlanBuild({ planId: 'plan-1', planTitle: 'Kafka overview' });
+        const scene = buildTestScene();
+        locationService.push('/dashboard/new');
+
+        scene.activate();
+
+        expect(scene.state.planning).toBeUndefined();
+        setPendingPlanBuild(undefined);
       });
     });
 
@@ -3700,7 +3723,7 @@ describe('DashboardScene', () => {
       const onBuild = jest.fn();
       const onDismiss = jest.fn();
       scene.setState({
-        planning: { planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss },
+        planning: { phase: 'preview', planId: 'plan-1', planTitle: 'Kafka overview', onBuild, onDismiss },
       });
       const events: unknown[] = [];
       const sub = appEvents.subscribe(DashboardPlanningEvent, (event) => events.push(event.payload));
