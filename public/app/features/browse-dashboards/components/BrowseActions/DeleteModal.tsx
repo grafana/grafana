@@ -5,10 +5,10 @@ import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space } from '@grafana/ui';
 
 import { type DashboardTreeSelection } from '../../types';
+import { getSelectedUIDs } from '../../utils/dashboards';
 import { DeletedDashboardsInfo } from '../DeletedDashboardsInfo';
 
 import { AffectedFolderContents } from './AffectedFolderContents';
-import { getSelectedFolderUIDs } from './utils';
 
 export interface Props {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export interface Props {
 export const DeleteModal = ({ onConfirm, onDismiss, selectedItems, ...props }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const selectedFolders = getSelectedFolderUIDs(selectedItems);
+  const selectedFolders = getSelectedUIDs(selectedItems, 'folder');
 
   const onDelete = async () => {
     reportInteraction('grafana_manage_dashboards_delete_clicked', {

@@ -48,11 +48,5 @@ func (l *Service) ContentDeliveryPrefix() string {
 }
 
 func (l *Service) HasValidLicense() bool {
-	if l == nil || l.license == nil {
-		return false
-	}
-
-	// Enterprise and Pro expose license validity, but the lower-level OSS-compatible interface does not.
-	validLicense, ok := l.license.(interface{ HasValidLicense() bool })
-	return ok && validLicense.HasValidLicense()
+	return l != nil && l.license != nil && l.license.HasValidLicense()
 }

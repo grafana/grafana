@@ -439,6 +439,31 @@ describe('browse-dashboards reducers', () => {
       });
     });
 
+    it('applies the folder exclude list to folders only', () => {
+      const state = createInitialState();
+      const excludedFolder = wellFormedFolder(seed++, {}, { uid: 'shared-uid' }).item;
+      const sameUidDashboard = wellFormedDashboard(
+        seed++,
+        {},
+        { uid: 'shared-uid', parentUID: topLevelFolder.uid }
+      ).item;
+
+      state.rootItems = fullyLoadedViewItemCollection([excludedFolder, topLevelFolder]);
+      state.childrenByParentUID[topLevelFolder.uid] = fullyLoadedViewItemCollection([sameUidDashboard]);
+
+      setAllSelection(state, {
+        type: 'setAllSelection',
+        payload: { isSelected: true, folderUID: undefined, excludeFolderUIDs: [excludedFolder.uid] },
+      });
+
+      expect(state.selectedItems).toEqual({
+        $all: true,
+        dashboard: { [sameUidDashboard.uid]: true },
+        folder: { [topLevelFolder.uid]: true },
+        panel: {},
+      });
+    });
+
     it('deselects all items', () => {
       const state = createInitialState();
 

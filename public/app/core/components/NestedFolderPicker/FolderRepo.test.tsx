@@ -55,12 +55,20 @@ describe('FolderRepo', () => {
 
   it.each([
     { name: 'no folder', folder: undefined },
-    { name: 'a nested tree row', folder: { ...ROOT_FOLDER, parentUID: 'parent-folder' } },
     { name: 'an unmanaged folder', folder: { ...ROOT_FOLDER, managedBy: undefined, managerId: undefined } },
   ])('renders nothing for $name', ({ folder }) => {
     render(<FolderRepo folder={folder} canEdit />);
 
     expect(screen.queryByTestId('icon-exchange-alt')).not.toBeInTheDocument();
+  });
+
+  it('renders the resolved repository badge for a managed folder', async () => {
+    mockRepositories([REPOSITORY]);
+
+    const { user } = render(<FolderRepo folder={ROOT_FOLDER} />);
+    await user.hover(await screen.findByTestId('icon-exchange-alt'));
+
+    expect(await screen.findByText('Managed by: Repository My Repo')).toBeInTheDocument();
   });
 
   it.each([

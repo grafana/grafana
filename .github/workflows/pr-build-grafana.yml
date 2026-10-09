@@ -134,16 +134,38 @@ jobs:
     name: build docker
     runs-on: ubuntu-x64-large
     needs:
+      - detect-changes
       - setup
       - build-targz
     permissions:
+      actions: write
       contents: read
       id-token: write
+      issues: write
+      pull-requests: write
+      statuses: read
     steps:
       - uses: grafana/shared-workflows/actions/dockerhub-login@dockerhub-login/v1.0.2
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+      - name: Check whether Meticulous should run
+        if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-src == 'true'
+        id: meticulous-eligibility
+        continue-on-error: true
+        uses: actions/github-script@v8
+        with:
+          script: |
+            let run = true;
+            if (context.payload.pull_request.user.login === 'renovate-sh-app[bot]') {
+              // Renovate applies labels after opening the PR, so read the current labels.
+              const { data: pullRequest } = await github.rest.pulls.get({
+                ...context.repo,
+                pull_number: context.issue.number,
+              });
+              run = pullRequest.labels.some((label) => label.name === 'ci/meticulous');
+            }
+            core.setOutput('run', run);
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: pr-targz
@@ -151,6 +173,7 @@ jobs:
       - name: Set up Docker Buildx
         run: docker buildx create --use
       - name: Build docker image
+        id: build-image
         env:
           GOOS: linux
           GOARCH: amd64
@@ -164,6 +187,33 @@ jobs:
             BUILD_VERSION="$BUILD_VERSION" \
             BUILD_NUMBER="$BUILD_NUMBER" \
             DOCKER_TAG="grafana/grafana-image-tags:${TAG_VERSION}-amd64"
+          echo "image-tag=grafana/grafana-image-tags:${TAG_VERSION}-amd64" >> "$GITHUB_OUTPUT"
+      - name: Load Docker image for Meticulous
+        if: steps.meticulous-eligibility.outputs.run == 'true'
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          for IMAGE_ARCHIVE in dist/*.docker.tar.gz; do break; done
+          docker load -i "$IMAGE_ARCHIVE"
+      - name: Get vault secrets
+        if: steps.meticulous-eligibility.outputs.run == 'true'
+        id: vault-secrets
+        continue-on-error: true
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          repo_secrets: |
+            METICULOUS_API_TOKEN=meticulous-ui:api-token
+      - name: Run Meticulous tests
+        if: steps.meticulous-eligibility.outputs.run == 'true'
+        continue-on-error: true
+        uses: alwaysmeticulous/report-diffs-action/upload-container@739cb7bd62805f98f3c8749f8149ba4ecd86725d # v1
+        with:
+          api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
+          image-tag: ${{ steps.build-image.outputs.image-tag }}
+          container-port: 3000
+          container-env: |
+            GF_AUTH_ANONYMOUS_ENABLED=true
+            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - name: Stage docker artifact
         run: |
           mkdir -p upload
@@ -210,50 +260,3 @@ jobs:
           docker push "${DOCKER_IMAGE}"
           echo "IMAGE=${DOCKER_IMAGE}" >> "$GITHUB_ENV"
           echo "IMAGE=${DOCKER_IMAGE}" | tee -a "$GITHUB_OUTPUT"
-
-  run-meticulous-tests:
-    if: github.repository == 'grafana/grafana' && needs.detect-changes.outputs.frontend-src == 'true'
-    needs: [push-docker-image, detect-changes]
-    name: Run Meticulous tests
-    runs-on: ubuntu-x64-small
-    continue-on-error: true
-    env:
-      IMAGE_TAG: ${{ needs.push-docker-image.outputs.IMAGE }}
-    permissions:
-      actions: write
-      contents: read
-      id-token: write
-      issues: write
-      pull-requests: write
-      statuses: read
-
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-
-      - uses: grafana/shared-workflows/actions/login-to-gar@main
-        id: login-to-gar
-        with:
-          registry: 'us-docker.pkg.dev'
-          environment: 'dev'
-
-      - name: Pull image from GAR
-        run: docker pull "$IMAGE_TAG"
-
-      - name: Get vault secrets
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          repo_secrets: |
-            METICULOUS_API_TOKEN=meticulous-ui:api-token
-
-      - name: Run Meticulous tests
-        uses: alwaysmeticulous/report-diffs-action/upload-container@739cb7bd62805f98f3c8749f8149ba4ecd86725d # v1
-        with:
-          api-token: ${{ fromJSON(steps.vault-secrets.outputs.secrets).METICULOUS_API_TOKEN }}
-          image-tag: ${{ env.IMAGE_TAG }}
-          container-port: 3000
-          container-env: |
-            GF_AUTH_ANONYMOUS_ENABLED=true
-            GF_AUTH_ANONYMOUS_ORG_ROLE=Admin

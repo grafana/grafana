@@ -5,6 +5,8 @@ import { locationSearchToObject, locationService } from '@grafana/runtime';
 import { useFlagAssistantFullscreenWorkspace } from '@grafana/runtime/internal';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
+import { setFullscreenWorkspaceActive } from './fullscreenWorkspaceState';
+
 export interface FullscreenWorkspaceState {
   fullscreenWorkspaceFeatureFlagEnabled: boolean;
   /** Whether fullscreen workspace is currently active (flag enabled AND the chrome state is on). */
@@ -35,8 +37,15 @@ export function useFullscreenWorkspace(): FullscreenWorkspaceState {
     return () => sub.unsubscribe();
   }, [chrome, fullscreenWorkspaceFeatureFlagEnabled]);
 
+  const fullscreenWorkspaceActive = fullscreenWorkspaceFeatureFlagEnabled && Boolean(state.fullscreenWorkspace);
+
+  // Mirror it for imperative callers that can't use this hook.
+  useEffect(() => {
+    setFullscreenWorkspaceActive(fullscreenWorkspaceActive);
+  }, [fullscreenWorkspaceActive]);
+
   return {
     fullscreenWorkspaceFeatureFlagEnabled,
-    fullscreenWorkspaceActive: fullscreenWorkspaceFeatureFlagEnabled && Boolean(state.fullscreenWorkspace),
+    fullscreenWorkspaceActive,
   };
 }

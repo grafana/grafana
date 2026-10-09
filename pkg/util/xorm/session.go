@@ -411,7 +411,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 		}
 
 		if fieldValue.CanAddr() {
-			if structConvert, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+			if structConvert, ok := reflect.TypeAssert[core.Conversion](fieldValue.Addr()); ok {
 				if data, err := value2Bytes(&rawValue); err == nil {
 					if err := structConvert.FromDB(data); err != nil {
 						return nil, err
@@ -595,7 +595,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 					t := time.Unix(vv.Int(), 0).In(session.engine.TZLocation)
 					fieldValue.Set(reflect.ValueOf(t).Convert(fieldType))
 				} else {
-					if d, ok := vv.Interface().([]uint8); ok {
+					if d, ok := reflect.TypeAssert[[]uint8](vv); ok {
 						hasAssigned = true
 						t, err := session.byte2Time(col, d)
 						if err != nil {
@@ -604,7 +604,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 						} else {
 							fieldValue.Set(reflect.ValueOf(t).Convert(fieldType))
 						}
-					} else if d, ok := vv.Interface().(string); ok {
+					} else if d, ok := reflect.TypeAssert[string](vv); ok {
 						hasAssigned = true
 						t, err := session.str2Time(col, d)
 						if err != nil {
@@ -617,7 +617,7 @@ func (session *Session) slice2Bean(scanResults []any, fields []string, bean any,
 						return nil, fmt.Errorf("rawValueType is %v, value is %v", rawValueType, vv.Interface())
 					}
 				}
-			} else if nulVal, ok := fieldValue.Addr().Interface().(sql.Scanner); ok {
+			} else if nulVal, ok := reflect.TypeAssert[sql.Scanner](fieldValue.Addr()); ok {
 				// !<winxxp>! 增加支持sql.Scanner接口的结构，如sql.NullString
 				hasAssigned = true
 				if err := nulVal.Scan(vv.Interface()); err != nil {

@@ -14,9 +14,12 @@ import { createAddedLinkConfig } from '../../plugins/extensions/utils';
 import { changeCorrelationEditorDetails } from '../state/main';
 import { runQueries } from '../state/query';
 
-import { ExploreToDashboardPanel } from './AddToDashboard/ExploreToDashboardPanel';
 import { getAddToDashboardTitle } from './AddToDashboard/getAddToDashboardTitle';
 import { type PluginExtensionExploreContext } from './ToolbarExtensionPoint';
+
+const ExploreToDashboardPanel = lazy(() =>
+  import('./AddToDashboard/ExploreToDashboardPanel').then((module) => ({ default: module.ExploreToDashboardPanel }))
+);
 
 // This module is evaluated at startup, so the notebook picker and the panel builder it pulls in
 // (dashboard-scene serialization, PanelModel) are split out behind this boundary rather than at the
@@ -52,7 +55,11 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         onClick: (_, { context, openModal }) => {
           openModal({
             title: getAddToDashboardTitle(),
-            body: ({ onDismiss }) => <ExploreToDashboardPanel onClose={onDismiss!} exploreId={context?.exploreId!} />,
+            body: ({ onDismiss }) => (
+              <Suspense fallback={<Spinner />}>
+                <ExploreToDashboardPanel onClose={onDismiss!} exploreId={context?.exploreId!} />
+              </Suspense>
+            ),
           });
         },
       }),
@@ -79,7 +86,7 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
         description: 'Add the query and panel from explore to a notebook',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
-        icon: 'search',
+        icon: 'book',
         category: 'Dashboards',
         configure: () => {
           // Returning undefined when notebooks are off matters beyond hiding the item: BasicExtensions

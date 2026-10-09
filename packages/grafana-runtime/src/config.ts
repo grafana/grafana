@@ -205,6 +205,7 @@ export class GrafanaBootConfig {
       prometheusMetricName: undefined,
     },
     recordingRulesEnabled: false,
+    notificationHistoryEnabled: undefined,
     defaultRecordingRulesTargetDatasourceUID: undefined,
 
     // Backward compatibility fields - populated by backend
@@ -216,9 +217,6 @@ export class GrafanaBootConfig {
   applicationInsightsAutoRouteTracking?: boolean;
   recordedQueries = {
     enabled: true,
-  };
-  featureHighlights = {
-    enabled: false,
   };
   reporting = {
     enabled: true,
@@ -236,6 +234,7 @@ export class GrafanaBootConfig {
   rudderstackV3SdkUrl?: string;
   rudderstackConfigUrl?: string;
   rudderstackIntegrationsUrl?: string;
+  rudderstackBatchInterval?: number;
   postHogToken?: string;
   postHogHost?: string;
   analyticsConsoleReporting = false;

@@ -1,7 +1,7 @@
 import { type Solution, type SolutionOffer } from '../solutions/types';
 
 export type OverviewCard =
-  | { solution: Solution; kind: 'live'; needsAttention: boolean }
+  | { solution: Solution; kind: 'live'; needsAttention: boolean; refreshing?: boolean }
   | { solution: Solution; kind: 'offer'; offer: SolutionOffer };
 
 export interface OverviewSolutionGroups {

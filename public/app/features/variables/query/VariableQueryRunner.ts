@@ -33,7 +33,7 @@ interface UpdateOptionsArgs {
 export interface UpdateOptionsResults {
   state: LoadingState;
   identifier: KeyedVariableIdentifier;
-  error?: any;
+  error?: unknown;
   cancelled?: boolean;
 }
 
@@ -180,7 +180,7 @@ export class VariableQueryRunner {
     const variableAsVars = { variable: { text: variable.current.text, value: variable.current.value } };
     const searchFilterScope = { searchFilter: { text: searchFilter, value: searchFilter } };
     const searchFilterAsVars = searchFilter ? searchFilterScope : {};
-    const scopedVars = { ...searchFilterAsVars, ...variableAsVars } as ScopedVars;
+    const scopedVars: ScopedVars = { ...searchFilterAsVars, ...variableAsVars };
     const range = this.dependencies.getTimeSrv().timeRange();
 
     const request: DataQueryRequest = {

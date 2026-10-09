@@ -857,6 +857,41 @@ func TestIntegrationProvisioning_IncrementalSync_GracefulFolderRename(t *testing
 			"gr-nometa-001": {Title: "No Meta Dashboard", SourcePath: "new-team/dashboard1.json"},
 		})
 	})
+
+	t.Run("rename with an edited dashboard reported as delete and create keeps the folder", func(t *testing.T) {
+		helper := sharedGitHelper(t)
+
+		const repoName = "incr-graceful-rename-delete-create"
+		const folderUID = "gr-delete-create-uid"
+
+		_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+			"old-team/_folder.json": folderMetadataJSON(folderUID, "My Team"),
+			"old-team/renamed.json": common.DashboardJSON("gr-dc-renamed", "Renamed Dashboard", 1),
+			"old-team/edited.json":  common.DashboardJSON("gr-dc-edited", "Edited Dashboard", 1),
+		})
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Succeeded())
+		common.RequireFolderState(t, helper.Folders, folderUID, "My Team", "old-team", "")
+
+		_, err := local.Git("mv", "old-team", "new-team")
+		require.NoError(t, err)
+		require.NoError(t, local.UpdateFile("new-team/edited.json", string(common.DashboardJSON("gr-dc-edited", "Edited Dashboard v2", 2))))
+		_, err = local.Git("add", ".")
+		require.NoError(t, err)
+		_, err = local.Git("commit", "-m", "rename old-team to new-team and edit a dashboard")
+		require.NoError(t, err)
+		_, err = local.Git("push")
+		require.NoError(t, err)
+
+		common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, common.Succeeded())
+
+		common.RequireFolderState(t, helper.Folders, folderUID, "My Team", "new-team", "")
+		common.RequireRepoFolders(t, helper.Folders, repoName, []string{"new-team"})
+		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+			"gr-dc-renamed": {Title: "Renamed Dashboard", SourcePath: "new-team/renamed.json", Folder: folderUID},
+			"gr-dc-edited":  {Title: "Edited Dashboard v2", SourcePath: "new-team/edited.json", Folder: folderUID},
+		})
+	})
 }
 
 // TestIntegrationProvisioning_IncrementalSync_FolderUIDChange verifies that
@@ -1947,5 +1982,76 @@ func TestIntegrationProvisioning_IncrementalSync_NestedFolderRenameWithStableUID
 		common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
 			"3l-dash": {Title: "Deep Dashboard", SourcePath: "corp/team/project/dash.json", Folder: childUID},
 		})
+	})
+}
+
+// Renaming a _folder.json to a file that is not a resource removes the metadata like deleting it
+// does: the folder goes back to a hash-derived UID and its dashboard is re-parented.
+func TestIntegrationProvisioning_IncrementalSync_FolderMetadataRenamedAway(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedGitHelper(t)
+
+	const repoName = "incr-meta-renamed-away"
+	const stableUID = "stable-renamed-away-uid"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"alpha/_folder.json": folderMetadataJSON(stableUID, "Alpha"),
+		"alpha/dash.json":    common.DashboardJSON("meta-renamed-001", "Alpha Dashboard", 1),
+	})
+	helper.SyncAndWait(t, repoName)
+	_, err := helper.Folders.Resource.Get(t.Context(), stableUID, metav1.GetOptions{})
+	require.NoError(t, err, "folder with stable UID should exist after full sync")
+
+	_, err = local.Git("mv", "alpha/_folder.json", "alpha/README.md")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename folder metadata to a readme")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+
+	helper.RequireFoldersNotFound(t, stableUID)
+	newFolderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "alpha")
+	require.NotEqual(t, stableUID, newFolderUID, "the folder gets a hash-derived UID again")
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+		"meta-renamed-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: newFolderUID},
+	})
+}
+
+// The same, onto a path that cannot sync: the folder reverts, and the new path is only reported.
+func TestIntegrationProvisioning_IncrementalSync_FolderMetadataRenamedOntoUnsupportedPath(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	helper := sharedGitHelper(t)
+
+	const repoName = "incr-meta-renamed-unsupported"
+	const stableUID = "stable-renamed-unsupported-uid"
+
+	_, local := helper.CreateGitRepo(t, repoName, map[string][]byte{
+		"alpha/_folder.json": folderMetadataJSON(stableUID, "Alpha"),
+		"alpha/dash.json":    common.DashboardJSON("meta-renamed-unsup-001", "Alpha Dashboard", 1),
+	})
+	helper.SyncAndWait(t, repoName)
+
+	_, err := local.Git("mv", "alpha/_folder.json", "alpha/Backend & UI.json")
+	require.NoError(t, err)
+	_, err = local.Git("commit", "-m", "rename folder metadata onto a path that cannot sync")
+	require.NoError(t, err)
+	_, err = local.Git("push")
+	require.NoError(t, err)
+
+	helper.TriggerJobAndWaitForComplete(t, repoName, provisioning.JobSpec{
+		Action: provisioning.JobActionPull,
+		Pull:   &provisioning.SyncJobOptions{Incremental: true},
+	})
+
+	helper.RequireFoldersNotFound(t, stableUID)
+	newFolderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "alpha")
+	require.NotEqual(t, stableUID, newFolderUID, "the folder gets a hash-derived UID again")
+	common.RequireDashboards(t, helper.DashboardsV1, map[string]common.ExpectedDashboard{
+		"meta-renamed-unsup-001": {Title: "Alpha Dashboard", SourcePath: "alpha/dash.json", Folder: newFolderUID},
 	})
 }

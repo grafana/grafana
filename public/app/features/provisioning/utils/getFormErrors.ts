@@ -170,6 +170,8 @@ export const getConnectionFormErrors = (data: ErrorDetails[] | Status): Connecti
     clientSecret: 'clientSecret',
     'bitbucket.workspace': 'workspace',
     workspace: 'workspace',
+    'gitOAuth.authURL': 'authURL',
+    'gitOAuth.tokenURL': 'tokenURL',
     'webhook.disabled': 'webhookDisabled',
   };
 

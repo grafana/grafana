@@ -30,6 +30,15 @@ func TestCfg_ReadUnifiedAlertingSettings(t *testing.T) {
 		require.Equal(t, alertingDefaultInitializationTimeout, cfg.UnifiedAlerting.InitializationTimeout)
 	}
 
+	t.Run("screenshot include_alert_history", func(t *testing.T) {
+		require.True(t, cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory)
+		for _, value := range []bool{false, true} {
+			cfg.Raw.Section("unified_alerting.screenshots").Key("include_alert_history").SetValue(strconv.FormatBool(value))
+			require.NoError(t, cfg.ReadUnifiedAlertingSettings(cfg.Raw))
+			require.Equal(t, value, cfg.UnifiedAlerting.Screenshots.IncludeAlertHistory)
+		}
+	})
+
 	// With peers set, it correctly parses them.
 	{
 		require.Len(t, cfg.UnifiedAlerting.HAPeers, 0)

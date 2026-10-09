@@ -8,10 +8,10 @@ import (
 )
 
 var (
-	_ AngularDetector = &ContainsBytesDetector{}
-	_ AngularDetector = &RegexDetector{}
+	_ AngularDetector = (*ContainsBytesDetector)(nil)
+	_ AngularDetector = (*RegexDetector)(nil)
 
-	_ DetectorsProvider = &StaticDetectorsProvider{}
+	_ DetectorsProvider = (*StaticDetectorsProvider)(nil)
 	_ DetectorsProvider = SequenceDetectorsProvider{}
 )
 

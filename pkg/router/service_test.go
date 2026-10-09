@@ -2,8 +2,10 @@ package router
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -26,6 +28,8 @@ func (n *testReadyNotifier) SetNotReady() { n.ready.Store(false) }
 func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Target = []string{"router"}
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 	httpRouter := mux.NewRouter()
 	ready := &testReadyNotifier{}
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware)
@@ -44,12 +48,12 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 	}, readinessPollInterval, readinessPollInterval/10)
 
 	recorder := httptest.NewRecorder()
-	httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/apis", nil))
+	httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/apis", nil))
 	require.Equal(t, http.StatusOK, recorder.Code)
 	require.JSONEq(t, `{"kind":"APIGroupList","apiVersion":"v1","groups":[]}`, recorder.Body.String())
 
 	recorder = httptest.NewRecorder()
-	httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/not-owned", nil))
+	httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/not-owned", nil))
 	require.Equal(t, http.StatusNotFound, recorder.Code)
 
 	for _, path := range []string{
@@ -57,7 +61,7 @@ func TestServiceRunsRouterAndRegistersRoutes(t *testing.T) {
 		"/openapi/v3/apis/unknown.grafana.app/v1",
 	} {
 		recorder = httptest.NewRecorder()
-		httpRouter.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, path, nil))
 		require.Equal(t, http.StatusNotFound, recorder.Code, path)
 	}
 }
@@ -72,6 +76,8 @@ func TestProvideServiceRequiresCollaborators(t *testing.T) {
 func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.Target = []string{"router"}
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
 	httpRouter := mux.NewRouter()
 	features := featuremgmt.WithFeatures()
 
@@ -86,7 +92,7 @@ func TestServiceRegistersTargetPathPrefixes(t *testing.T) {
 	} {
 		t.Run(path, func(t *testing.T) {
 			var match mux.RouteMatch
-			require.True(t, httpRouter.Match(httptest.NewRequest(http.MethodGet, path, nil), &match))
+			require.True(t, httpRouter.Match(newAuthenticatedRequest(http.MethodGet, path, nil), &match))
 			require.NoError(t, match.MatchErr)
 		})
 	}
@@ -115,7 +121,7 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 
 	t.Run("router-only group", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		svc.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), httpRouter)
+		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), httpRouter)
 
 		require.Equal(t, http.StatusOK, recorder.Code)
 		require.Equal(t, "dummy backend for group: dummy-backend-1.ext.grafana.app", recorder.Body.String())
@@ -123,14 +129,14 @@ func TestServiceRoutesUnmatchedRequestsThroughHandler(t *testing.T) {
 
 	t.Run("existing route falls through", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		svc.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
+		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/legacy.grafana.app/v1", nil), httpRouter)
 
 		require.Equal(t, http.StatusNoContent, recorder.Code)
 	})
 
 	t.Run("unknown route preserves not found handler", func(t *testing.T) {
 		recorder := httptest.NewRecorder()
-		svc.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil), httpRouter)
+		svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown.grafana.app/v1", nil), httpRouter)
 
 		require.Equal(t, http.StatusTeapot, recorder.Code)
 	})
@@ -149,8 +155,77 @@ func TestProvideServiceHonorsFeatureToggle(t *testing.T) {
 	require.True(t, disabled.IsDisabled())
 
 	recorder := httptest.NewRecorder()
-	disabled.HandleFunc(recorder, httptest.NewRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	disabled.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/dummy-backend-1.ext.grafana.app/v0alpha1", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusNoContent)
 	}))
 	require.Equal(t, http.StatusNoContent, recorder.Code)
+}
+
+func TestRouterTargetCloudFallback(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		cfg := setting.NewCfg()
+		cfg.Target = []string{"router"}
+		cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+		cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+		loader := &cloudLoader{}
+		if enabled {
+			loader.singleTenantFallback = newTestSingleTenantFallback(t)
+			loader.singleTenantFallback.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+				return singleTenantStack{URL: "https://tenant.example.com"}, nil
+			}
+			loader.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+				require.Equal(t, "tenant.example.com", req.URL.Host)
+				return &http.Response{StatusCode: http.StatusNoContent, Header: make(http.Header), Body: http.NoBody}, nil
+			})
+		}
+		svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+		require.NoError(t, err)
+		httpRouter := mux.NewRouter()
+		httpRouter.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+		require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
+		recorder := httptest.NewRecorder()
+		httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/example/v1/namespaces/stacks-123/widgets", nil))
+		if enabled {
+			require.Equal(t, http.StatusNoContent, recorder.Code)
+		} else {
+			require.Equal(t, http.StatusTeapot, recorder.Code)
+		}
+	}
+}
+
+func TestRouterTargetServesRegisteredSingleTenantDiscovery(t *testing.T) {
+	cfg := cfgWithCloudRouterSection(t, map[string]string{"st_discovery_url": "https://discovery.example.com"})
+	cfg.Target = []string{"router"}
+	cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
+	cfg.ExtJWTAuth.Audiences = []string{"grafana"}
+	loader, err := ProvideRoutesLoader(cfg, PluginLoaderDependencies{})
+	require.NoError(t, err)
+	cloud := loader.(*cloudLoader)
+	cloud.singleTenantFallback.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+		require.Equal(t, "https://discovery.example.com/apis", req.URL.String())
+		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(`{"kind":"APIGroupList","apiVersion":"v1","groups":[{"name":"fallback.example.com","versions":[],"preferredVersion":{"groupVersion":"","version":""}}]}`))}, nil
+	})
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(), loader, prometheus.NewRegistry())
+	require.NoError(t, err)
+	httpRouter := mux.NewRouter()
+	require.NoError(t, svc.RegisterTargetRoutes(httpRouter, nil))
+	pollDiscovery(t, cloud.singleTenantFallback)
+	require.NoError(t, svc.router.reconcile(t.Context()))
+	recorder := httptest.NewRecorder()
+	httpRouter.ServeHTTP(recorder, newAuthenticatedRequest(http.MethodGet, "/apis", nil))
+	require.Equal(t, http.StatusOK, recorder.Code)
+	require.Contains(t, recorder.Body.String(), "fallback.example.com")
+}
+
+func TestRouterMiddlewarePreservesDelegateWithSTLoader(t *testing.T) {
+	cfg := setting.NewCfg()
+	loader := &cloudLoader{singleTenantFallback: newTestSingleTenantFallback(t)}
+	svc, err := ProvideService(cfg, featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	require.NoError(t, err)
+	require.NoError(t, svc.RegisterTargetRoutes(mux.NewRouter(), nil))
+	recorder := httptest.NewRecorder()
+	svc.HandleFunc(recorder, newAuthenticatedRequest(http.MethodGet, "/apis/unknown/v1/namespaces/stacks-123/widgets", nil), http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusTeapot)
+	}))
+	require.Equal(t, http.StatusTeapot, recorder.Code)
 }

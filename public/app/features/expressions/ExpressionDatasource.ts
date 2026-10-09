@@ -27,7 +27,7 @@ import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type DataQuery } from '@grafana/schema';
 import icnDatasourceSvg from 'img/icn-datasource.svg';
 
-import { ExpressionQueryEditor } from './ExpressionQueryEditor';
+import { ExpressionQueryEditorLazy } from './ExpressionQueryEditorLazy';
 import { ExpressionDatasourceUID, type ExpressionQuery, ExpressionQueryType } from './types';
 
 const SQL_DISPLAY_NAME_FIELD = '__display_name__';
@@ -211,5 +211,5 @@ dataSource.meta = {
   },
 } as DataSourcePluginMeta;
 dataSource.components = {
-  QueryEditor: ExpressionQueryEditor,
+  QueryEditor: ExpressionQueryEditorLazy,
 };

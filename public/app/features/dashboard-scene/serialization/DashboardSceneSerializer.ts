@@ -71,7 +71,7 @@ export interface DashboardTrackingInfo {
   schemaVersion: number;
   panels_count: number;
   rowCount?: number;
-  settings_nowdelay?: number;
+  settings_nowdelay?: string;
   settings_livenow?: boolean;
 }
 

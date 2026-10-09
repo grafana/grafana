@@ -1,17 +1,15 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
 import { config } from '@grafana/runtime';
-import {
-  type RepositoryView,
-  type RepositoryViewList,
-  useGetFrontendSettingsQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { type RepositoryView, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { type NestedFolderPickerProps } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { getCustomRootFolderItem } from 'app/core/components/NestedFolderPicker/utils';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
 import { ManagerKind } from 'app/features/apiserver/types';
+import { type DashboardViewItem } from 'app/features/search/types';
 
 import { useIsProvisionedInstance } from '../../hooks/useIsProvisionedInstance';
+import { isItemManagedByRepository } from '../../utils/managedResource';
 
 interface Props extends NestedFolderPickerProps {
   /* Repository name (uid) or undefined (when it's non-provisioned folder). This decides when to show only one provisioned folder */
@@ -19,102 +17,48 @@ interface Props extends NestedFolderPickerProps {
   showAllFolders?: boolean;
 }
 
+type Scope = Pick<NestedFolderPickerProps, 'rootFolderUID' | 'rootFolderItem' | 'folderFilter'>;
+
 export function ProvisioningAwareFolderPicker({ repositoryName, showAllFolders, ...props }: Props) {
   const isProvisionedInstance = useIsProvisionedInstance();
   const provisioningEnabled = config.provisioningEnabled;
   const { data: settingsData } = useGetFrontendSettingsQuery(provisioningEnabled ? undefined : skipToken);
-  const isNonProvisionedResource = !repositoryName;
+  const repositories = settingsData?.items;
 
-  const rootFolderUID = getRootFolderUID({
-    isProvisionedInstance,
-    provisioningEnabled,
-    repositoryName,
-  });
-  const excludeUIDs = getExcludeUIDs({
-    isProvisionedInstance,
-    isNonProvisionedResource,
-    provisioningEnabled,
-    settingsData,
-  });
-  const rootFolderDisplayItem = getRootFolderDisplayItem({
-    isProvisionedInstance,
-    rootFolderUID,
-    settingsDataItem: settingsData?.items,
-  });
+  const repositoryScope: Scope =
+    provisioningEnabled && !isProvisionedInstance && !showAllFolders
+      ? getRepositoryScope(repositoryName, repositories ?? [])
+      : {};
 
-  return (
-    <FolderPicker
-      {...props}
-      rootFolderUID={showAllFolders ? undefined : rootFolderUID}
-      excludeUIDs={showAllFolders ? undefined : [...excludeUIDs, ...(props.excludeUIDs || [])]}
-      rootFolderItem={showAllFolders ? undefined : rootFolderDisplayItem}
-    />
-  );
+  return <FolderPicker {...props} {...repositoryScope} />;
 }
 
-function getRootFolderUID({
-  isProvisionedInstance,
-  provisioningEnabled,
-  repositoryName,
-}: {
-  isProvisionedInstance?: boolean;
-  provisioningEnabled?: boolean;
-  repositoryName?: string;
-}) {
-  if (isProvisionedInstance) {
-    return undefined;
+function getRepositoryScope(repositoryName: string | undefined, repositories: RepositoryView[]): Scope {
+  if (!repositoryName) {
+    // Local resources move only between local folders.
+    return { folderFilter: (folder) => !isItemManagedByRepository(folder) };
   }
 
-  if (provisioningEnabled && repositoryName) {
-    return repositoryName;
+  const repository = repositories.find((item) => item.name === repositoryName);
+  if (!repository) {
+    return { rootFolderUID: repositoryName };
   }
 
-  return undefined;
-}
-
-function getExcludeUIDs({
-  isProvisionedInstance,
-  isNonProvisionedResource,
-  provisioningEnabled,
-  settingsData,
-}: {
-  isProvisionedInstance?: boolean;
-  isNonProvisionedResource?: boolean;
-  provisioningEnabled?: boolean;
-  settingsData?: RepositoryViewList;
-}) {
-  if (isProvisionedInstance) {
-    return [];
-  }
-
-  if (isNonProvisionedResource) {
-    // If provisioning is disabled, we don't want to exclude any folders
-    if (!provisioningEnabled) {
-      return [];
-    }
-    // If provisioning is enabled, we want to exclude all provisioned folders
-    return settingsData?.items.map((repo) => repo.name) || [];
-  }
-
-  return [];
-}
-
-function getRootFolderDisplayItem({
-  isProvisionedInstance,
-  rootFolderUID,
-  settingsDataItem,
-}: {
-  isProvisionedInstance?: boolean;
-  rootFolderUID?: string;
-  settingsDataItem?: RepositoryView[];
-}) {
-  if (isProvisionedInstance) {
-    // If it's a provisioned instance, we use default root display ("Dashboards")
-    return undefined;
-  }
-
-  const repoFolder = settingsDataItem?.find((item: RepositoryView) => item.name === rootFolderUID);
-  return repoFolder
-    ? getCustomRootFolderItem({ title: repoFolder.title, uid: repoFolder.name, managedBy: ManagerKind.Repo })
-    : undefined;
+  const isFolderless = repository.target === 'folderless';
+  const ownsFolder = (folder: DashboardViewItem) =>
+    isItemManagedByRepository(folder) && folder.managerId === repository.name;
+  // Inside the repository folder every managed row is its own, so a row with no id (legacy folder
+  // list API) is accepted. Search rows always carry the id, so foreign hits still fail.
+  const notForeign = (folder: DashboardViewItem) =>
+    isItemManagedByRepository(folder) && (folder.managerId ?? repository.name) === repository.name;
+  return {
+    rootFolderUID: isFolderless ? undefined : repository.name,
+    rootFolderItem: getCustomRootFolderItem({
+      title: repository.title,
+      managedBy: ManagerKind.Repo,
+      managerId: repository.name,
+      uid: isFolderless ? '' : repository.name,
+    }),
+    folderFilter: isFolderless ? ownsFolder : notForeign,
+  };
 }

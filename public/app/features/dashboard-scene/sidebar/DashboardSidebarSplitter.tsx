@@ -5,7 +5,6 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -17,6 +16,7 @@ import {
 } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
@@ -27,6 +27,7 @@ import { NavToolbarActions } from '../scene/NavToolbarActions';
 import { EditActionsLayoutProvider } from '../scene/edit-actions-popover/EditActionsLayoutContext';
 import { PublicDashboardBadge } from '../scene/new-toolbar/actions/PublicDashboardBadge';
 import { StarButton } from '../scene/new-toolbar/actions/StarButton';
+import { getPlanningGround } from '../scene/planningGround';
 import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { DashboardSidebarRenderer } from './DashboardSidebarRenderer';
@@ -35,19 +36,21 @@ import { type DashboardSidebarPane } from './types';
 interface Props {
   dashboard: DashboardScene;
   isEditing?: boolean;
+  isPlanning?: boolean;
   body?: React.ReactNode;
   controls?: React.ReactNode;
 }
 
 export function DashboardSidebarSplitter(props: Props) {
-  if (config.featureToggles.dashboardNewLayouts) {
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  if (dashboardNewLayoutsEnabled) {
     return <DashboardSidebarSplitterNewLayouts {...props} />;
   } else {
     return <DashboardSidebarSplitterLegacy {...props} />;
   }
 }
 
-function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
+function DashboardSidebarSplitterLegacy({ dashboard, isPlanning, body, controls }: Props) {
   const styles = useStyles2(getStyles);
 
   return (
@@ -55,13 +58,13 @@ function DashboardSidebarSplitterLegacy({ dashboard, body, controls }: Props) {
       <div className={styles.canvasWrappperOld}>
         <NavToolbarActions dashboard={dashboard} />
         <DashboardControlsChrome>{controls}</DashboardControlsChrome>
-        <div className={styles.body}>{body}</div>
+        <div className={cx(styles.body, isPlanning && styles.planningCanvas)}>{body}</div>
       </div>
     </NativeScrollbar>
   );
 }
 
-function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, controls }: Props) {
+function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, body, controls }: Props) {
   const { sidebar } = dashboard.state;
   const styles = useStyles2(getStyles);
   const { chrome } = useGrafana();
@@ -74,7 +77,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane, previousState } = useSceneObjectState(sidebar, {
+  const { selectionContext, openPane, previousState, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
 
@@ -90,7 +93,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane),
+    hasOpenPane: Boolean(openPane) || Boolean(isLoading),
     contentMargin: 1,
     position: 'right',
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',
@@ -132,7 +135,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
     if (renderWithoutSidebar) {
       return (
         <div
-          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk)}
+          className={cx(styles.bodyWrapper, styles.bodyWrapperKiosk, isPlanning && styles.planningCanvas)}
           data-testid={selectors.components.DashboardSidebarSplitter.primaryBody}
         >
           <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>{body}</NativeScrollbar>
@@ -147,7 +150,11 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, body, contro
         {...sidebarContext.outerWrapperProps}
       >
         <div
-          className={cx(styles.scrollContainer, sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar)}
+          className={cx(
+            styles.scrollContainer,
+            sidebarContext.isHiddenPreference && styles.scrollContainerNoSidebar,
+            isPlanning && styles.planningCanvas
+          )}
           ref={onBodyRef}
           onPointerDown={onClearSelection}
           data-testid={selectors.components.DashboardSidebarSplitter.bodyContainer}
@@ -280,6 +287,7 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     bodyWrapperKiosk: css({
+      flex: 1,
       padding: theme.spacing(0, 2, 2, 2),
     }),
     scrollContainer: css({
@@ -321,6 +329,23 @@ function getStyles(theme: GrafanaTheme2) {
       scrollbarGutter: 'stable',
       // Because the sidebar splitter handle area adds padding we can reduce it here
       paddingRight: theme.spacing(1),
+    }),
+    /**
+     * Dashed borders distinguish placeholder panels while preserving the layout.
+     * Target PanelChrome through the stable data-viz-panel-key wrapper; Emotion class
+     * labels are stripped in production.
+     */
+    planningCanvas: css({
+      // The shared background identifies the preview even when no panels or badges are visible.
+      ...getPlanningGround(theme),
+      boxShadow: `inset 0 0 0 1px ${theme.colors.primary.borderTransparent}`,
+      '[data-viz-panel-key] section': {
+        // Both halves matter. Grafana's panel border is border.weak — 12% opacity — and simply
+        // switching that to dashed is imperceptible, so the planning border also steps up to
+        // border.strong to carry the signal.
+        borderStyle: 'dashed',
+        borderColor: theme.colors.border.strong,
+      },
     }),
   };
 }

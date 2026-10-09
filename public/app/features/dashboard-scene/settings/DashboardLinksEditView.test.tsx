@@ -229,39 +229,54 @@ describe('DashboardLinksEditView', () => {
       settings = result.settings;
     });
 
-    it('should render with no errors', () => {
-      expect(() => render(<settings.Component model={settings} />)).not.toThrow();
-    });
-
-    it('should render the empty state when no links', () => {
-      dashboard.setState({ links: [] });
-      const { getByText } = render(<settings.Component model={settings} />);
-
-      expect(getByText('Add dashboard link')).toBeInTheDocument();
-    });
-
-    it('should render the empty state when no links', () => {
-      dashboard.setState({ links: [] });
-      const { getByText } = render(<settings.Component model={settings} />);
-
-      expect(getByText('Add dashboard link')).toBeInTheDocument();
-    });
-
-    it('should render the list of link when there are links', () => {
+    it('preserves URL-selected link state before loading the settings renderers', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
           { ...NEW_LINK, title: 'link-2' },
         ],
       });
-      const { getByText } = render(<settings.Component model={settings} />);
+      settings.urlSync!.updateFromUrl({ editIndex: '1' });
 
-      expect(getByText('link-1')).toBeInTheDocument();
+      expect(settings.state.editIndex).toBe(1);
+      expect(settings.urlSync!.getUrlState()).toEqual({ editIndex: '1' });
+      expect(require.cache[require.resolve('./SettingsRenderers')]).toBeUndefined();
+
+      const { findByDisplayValue } = render(<settings.Component model={settings} />);
+
+      expect(await findByDisplayValue('link-2')).toBeInTheDocument();
+      expect(dashboard.state.editview).toBe(settings);
+    });
+
+    it('should render the empty state when no links', async () => {
+      dashboard.setState({ links: [] });
+      const { findByText } = render(<settings.Component model={settings} />);
+
+      expect(await findByText('Add dashboard link')).toBeInTheDocument();
+    });
+
+    it('should render the empty state when no links', async () => {
+      dashboard.setState({ links: [] });
+      const { findByText } = render(<settings.Component model={settings} />);
+
+      expect(await findByText('Add dashboard link')).toBeInTheDocument();
+    });
+
+    it('should render the list of link when there are links', async () => {
+      dashboard.setState({
+        links: [
+          { ...NEW_LINK, title: 'link-1' },
+          { ...NEW_LINK, title: 'link-2' },
+        ],
+      });
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
+
+      expect(await findByText('link-1')).toBeInTheDocument();
       expect(getByText('link-2')).toBeInTheDocument();
       expect(getByText('New link')).toBeInTheDocument();
     });
 
-    it('should render the list of link when the editing link does not exist', () => {
+    it('should render the list of link when the editing link does not exist', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
@@ -269,14 +284,14 @@ describe('DashboardLinksEditView', () => {
         ],
       });
       settings.setState({ editIndex: 2 });
-      const { getByText } = render(<settings.Component model={settings} />);
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
 
-      expect(getByText('link-1')).toBeInTheDocument();
+      expect(await findByText('link-1')).toBeInTheDocument();
       expect(getByText('link-2')).toBeInTheDocument();
       expect(getByText('New link')).toBeInTheDocument();
     });
 
-    it('should render the link form when the editing link does exist', () => {
+    it('should render the link form when the editing link does exist', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
@@ -284,34 +299,35 @@ describe('DashboardLinksEditView', () => {
         ],
       });
       settings.setState({ editIndex: 1 });
-      const { getByText } = render(<settings.Component model={settings} />);
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
 
-      expect(getByText('Edit link')).toBeInTheDocument();
+      expect(await findByText('Edit link')).toBeInTheDocument();
       expect(getByText('Back to list')).toBeInTheDocument();
     });
 
-    it('should not show Provisioned by data source section when no links have origin', () => {
+    it('should not show Provisioned by data source section when no links have origin', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'link-1' },
           { ...NEW_LINK, title: 'link-2' },
         ],
       });
-      const { queryByText } = render(<settings.Component model={settings} />);
+      const { findByText, queryByText } = render(<settings.Component model={settings} />);
 
+      expect(await findByText('link-1')).toBeInTheDocument();
       expect(queryByText('Provisioned by data source')).not.toBeInTheDocument();
     });
 
-    it('should show Provisioned by data source section when links have origin', () => {
+    it('should show Provisioned by data source section when links have origin', async () => {
       dashboard.setState({
         links: [
           { ...NEW_LINK, title: 'ds-link', origin: { type: 'datasource', group: 'test' } },
           { ...NEW_LINK, title: 'user-link' },
         ],
       });
-      const { getByText } = render(<settings.Component model={settings} />);
+      const { findByText, getByText } = render(<settings.Component model={settings} />);
 
-      expect(getByText('Provisioned by data source')).toBeInTheDocument();
+      expect(await findByText('Provisioned by data source')).toBeInTheDocument();
       expect(getByText('user-link')).toBeInTheDocument();
     });
   });

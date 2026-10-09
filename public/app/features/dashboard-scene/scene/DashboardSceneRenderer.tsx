@@ -5,19 +5,21 @@ import { PageLayoutType } from '@grafana/data';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Page } from 'app/core/components/Page/Page';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
 import { DashboardSidebarSplitter } from '../sidebar/DashboardSidebarSplitter';
 import { SoloPanelContextProvider, useDefineSoloPanelContext } from '../solo/SoloPanelContext';
 
+import { DashboardOverlay } from './DashboardOverlay';
 import { type DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
+import { PlanningControls } from './new-toolbar/PlanningControls';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
     controls,
-    overlay,
     editview,
     body,
     editPanel,
@@ -26,6 +28,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     panelsPerRow,
     isEditing,
     layoutOrchestrator,
+    planning,
   } = model.useState();
 
   const scopesServices = useScopesServices();
@@ -82,7 +85,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return (
       <>
         <editview.Component model={editview} />
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </>
     );
   }
@@ -103,6 +106,19 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     return <body.Component model={body} />;
   }
 
+  /**
+   * PlanningControls exposes the plan actions and variables without save/settings/share
+   * or a time picker, since placeholders have no queries. The legacy toolbar supplies
+   * plan actions through NavToolbarActions in app chrome.
+   */
+  function renderControls() {
+    if (planning) {
+      return isDashboardNewLayoutsEnabled() ? <PlanningControls dashboard={model} planning={planning} /> : null;
+    }
+
+    return controls && <controls.Component model={controls} />;
+  }
+
   return (
     <>
       {layoutOrchestrator && <layoutOrchestrator.Component model={layoutOrchestrator} />}
@@ -112,11 +128,12 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
           <DashboardSidebarSplitter
             dashboard={model}
             isEditing={isEditing}
-            controls={controls && <controls.Component model={controls} />}
+            isPlanning={Boolean(planning)}
+            controls={renderControls()}
             body={renderBody()}
           />
         )}
-        {overlay && <overlay.Component model={overlay} />}
+        <DashboardOverlay dashboard={model} />
       </Page>
     </>
   );

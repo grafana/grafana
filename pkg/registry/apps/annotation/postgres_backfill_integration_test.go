@@ -37,7 +37,7 @@ func textAt(t *testing.T, store *PostgreSQLStore, ns, name string, at int64) str
 	t.Helper()
 	var text string
 	require.NoError(t, store.pool.QueryRow(t.Context(),
-		`SELECT text FROM annotations WHERE namespace = $1 AND name = $2 AND time = $3`,
+		`SELECT text FROM annotations WHERE namespace = $1 AND name = $2 AND time_end = $3`,
 		ns, name, at).Scan(&text))
 	return text
 }
@@ -58,8 +58,8 @@ func xminOf(t *testing.T, store *PostgreSQLStore, ns, name string) int64 {
 func insertNativeRow(t *testing.T, store *PostgreSQLStore, ns, name string, at int64, text string, legacyID int64) {
 	t.Helper()
 	_, err := store.pool.Exec(t.Context(),
-		`INSERT INTO annotations (namespace, name, time, text, created_at, legacy_id)
-		 VALUES ($1, $2, $3, $4, $5, $6)`,
+		`INSERT INTO annotations (namespace, name, time, time_end, text, created_at, legacy_id)
+		 VALUES ($1, $2, $3, $3, $4, $5, $6)`,
 		ns, name, at, text, time.UnixMilli(week(0)).UTC(), legacyID)
 	require.NoError(t, err)
 }
@@ -105,6 +105,18 @@ func TestIntegrationBackfill(t *testing.T) {
 		require.ElementsMatch(t, []string{"team:ops", "prod"}, got.Spec.Tags)
 	})
 
+	t.Run("a range spanning weeks lands in the partition of its end", func(t *testing.T) {
+		ctx, ns := t.Context(), "stacks-itest-range-partition"
+		at, end := week(0), week(2)
+
+		_, err := store.InsertBatch(ctx, []migrator.BackfillRecord{{
+			Namespace: ns, Name: "legacy-1", Time: at, TimeEnd: &end,
+			Text: "outage", CreatedAt: time.UnixMilli(at).UTC(), LegacyID: 1,
+		}})
+		require.NoError(t, err)
+		require.Equal(t, getPartitionName(end), partitionOf(t, store.pool, ns, "legacy-1"))
+	})
+
 	// A native write can carry a legacy_id inside the legacy autoincrement range,
 	// so provenance has to key on legacy_migrated.
 	t.Run("migrated count keys on provenance, not legacy id", func(t *testing.T) {
@@ -120,7 +132,7 @@ func TestIntegrationBackfill(t *testing.T) {
 		require.Equal(t, int64(1), migrated, "native row must not inflate the migrated count")
 	})
 
-	// Time is in the primary key, so an edit that moves it moves the row between
+	// time_end is in the primary key, so an edit that moves it moves the row between
 	// weekly partitions.
 	t.Run("resync moves a row across partitions in place", func(t *testing.T) {
 		ctx, ns := t.Context(), "stacks-itest-move"
@@ -142,12 +154,13 @@ func TestIntegrationBackfill(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, moved, got.Spec.Time, "time moved to the edited value")
 		require.Equal(t, "deploy-edited", got.Spec.Text)
-		require.Nil(t, got.Spec.TimeEnd, "edit cleared the region end")
+		require.NotNil(t, got.Spec.TimeEnd)
+		require.Equal(t, moved, *got.Spec.TimeEnd, "edit cleared the region end, back to a point (time_end = time)")
 		require.Equal(t, int64(1), rowsNamed(t, store, ns, "legacy-1"), "the move must not leave a copy")
 	})
 
 	// One name, one row is an invariant the primary key cannot enforce, since it
-	// carries time. This pins what happens if it is ever broken.
+	// carries time_end. This pins what happens if it is ever broken.
 	t.Run("a name holding two rows breaks the resync loudly", func(t *testing.T) {
 		ctx, ns := t.Context(), "stacks-itest-duplicate"
 		stale, current := week(0), week(0)+5_000
@@ -163,7 +176,7 @@ func TestIntegrationBackfill(t *testing.T) {
 		for range 5 {
 			got, err := store.Get(ctx, ns, "legacy-1")
 			require.NoError(t, err)
-			require.Equal(t, stale, got.Spec.Time, "Get must be deterministic under a duplicate")
+			require.Equal(t, current, got.Spec.Time, "Get must be deterministic under a duplicate")
 		}
 
 		// The resync would have to collapse both onto one time. It fails instead.

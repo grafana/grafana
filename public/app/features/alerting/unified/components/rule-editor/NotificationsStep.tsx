@@ -3,18 +3,17 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
 import { type KBObjectArray, RuleFormType, type RuleFormValues } from '../../types/rule-form';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { DOCS_URL_NOTIFICATIONS, DOCS_URL_NOTIFICATION_POLICIES } from '../../utils/docs';
+import { arrayToRecord } from '../../utils/misc';
 import { isGrafanaManagedRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
-import { NAMED_ROOT_LABEL_NAME } from '../notification-policies/useNotificationPolicyRoute';
+import { resolveNamedPolicyName } from '../notification-policies/useNotificationPolicyRoute';
 
 import { NeedHelpInfo } from './NeedHelpInfo';
 import { RuleEditorSection } from './RuleEditorSection';
@@ -27,11 +26,6 @@ import { PolicyTreeSelector } from './notificaton-preview/PolicyTreeSelector';
 type NotificationsStepProps = {
   alertUid?: string;
 };
-
-enum RoutingOptions {
-  NotificationPolicy = 'notification policy',
-  ContactPoint = 'contact point',
-}
 
 function useHasInternalAlertmanagerEnabled() {
   const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
@@ -51,7 +45,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const isGrafanaManaged = isGrafanaManagedRuleByType(type);
-  const simplifiedModeInNotificationsStepEnabled = config.featureToggles.alertingNotificationsStepMode ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
 
@@ -70,16 +63,15 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const step = !isGrafanaManaged ? 4 : 5;
 
-  const switchMode =
-    isGrafanaManaged && simplifiedModeInNotificationsStepEnabled
-      ? {
-          isAdvancedMode: !manualRouting,
-          setAdvancedMode: (isAdvanced: boolean) => {
-            setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
-            setValue('manualRouting', !isAdvanced);
-          },
-        }
-      : undefined;
+  const switchMode = isGrafanaManaged
+    ? {
+        isAdvancedMode: !manualRouting,
+        setAdvancedMode: (isAdvanced: boolean) => {
+          setValue('editorSettings.simplifiedNotificationEditor', !isAdvanced);
+          setValue('manualRouting', !isAdvanced);
+        },
+      }
+    : undefined;
 
   const title = (() => {
     if (isRecordingRuleByType(type)) {
@@ -135,12 +127,7 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           </Text>
         </div>
       )}
-      {shouldAllowSimplifiedRouting && simplifiedModeInNotificationsStepEnabled && (
-        <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
-      )}
-      {shouldAllowSimplifiedRouting && !simplifiedModeInNotificationsStepEnabled && (
-        <ManualAndAutomaticRouting alertUid={alertUid} />
-      )}
+      {shouldAllowSimplifiedRouting && <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />}
       {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
     </RuleEditorSection>
   );
@@ -148,65 +135,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
 /**
  * Preconditions:
- * - the alert rule is a grafana rule
- *
- * This component will render the switch between the select contact point routing and the notification policy routing.
- * It also renders the section body of the NotificationsStep, depending on the routing option selected.
- * If select contact point routing is selected, it will render the SimplifiedRouting component.
- * If notification policy routing is selected, it will render the AutomaticRouting component.
- *
- */
-function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
-  const { watch, setValue } = useFormContext<RuleFormValues>();
-  const styles = useStyles2(getStyles);
-
-  const [manualRouting] = watch(['manualRouting']);
-
-  const routingOptions = [
-    {
-      label: t(
-        'alerting.manual-and-automatic-routing.routing-options.label.select-contact-point',
-        'Select contact point'
-      ),
-      value: RoutingOptions.ContactPoint,
-    },
-    {
-      label: t(
-        'alerting.manual-and-automatic-routing.routing-options.label.use-notification-policy',
-        'Use notification policy'
-      ),
-      value: RoutingOptions.NotificationPolicy,
-    },
-  ];
-
-  const onRoutingOptionChange = (option: RoutingOptions) => {
-    setValue('manualRouting', option === RoutingOptions.ContactPoint);
-  };
-
-  return (
-    <Stack direction="column" gap={2}>
-      <Stack direction="column">
-        <RadioButtonGroup
-          data-testid={selectors.components.AlertRules.routingOptions(
-            manualRouting ? 'contact-point' : 'notification-policy'
-          )}
-          options={routingOptions}
-          value={manualRouting ? RoutingOptions.ContactPoint : RoutingOptions.NotificationPolicy}
-          onChange={onRoutingOptionChange}
-          className={styles.routingOptions}
-        />
-      </Stack>
-
-      <RoutingOptionDescription manualRouting={manualRouting} />
-
-      {manualRouting ? <SimplifiedRouting /> : <AutomaticRooting alertUid={alertUid} />}
-    </Stack>
-  );
-}
-
-/**
- * Preconditions:
- * - simple mode for notifications step is enabled
  * - the alert rule is a grafana rule
  *
  * This component will render the switch between the select contact point routing and the notification policy routing.
@@ -245,10 +173,12 @@ function AutomaticRooting({ alertUid }: AutomaticRootingProps) {
   ]);
   const selectedPolicy = watch('selectedPolicy');
 
-  // Prefer the policy field (notification_settings.policy — canonical and honored by the backend),
-  // falling back to the legacy __grafana_managed_route__ label, so the notification preview fetches
-  // the correct routing tree instead of always defaulting to root.
-  const policyNameForPreview = selectedPolicy || labels.find((l) => l.key === NAMED_ROOT_LABEL_NAME)?.value;
+  // Forwards the active policy to the preview so it fetches the correct routing tree instead of
+  // always defaulting to root.
+  const policyNameForPreview = resolveNamedPolicyName(
+    selectedPolicy ? { policy: selectedPolicy } : undefined,
+    arrayToRecord(labels)
+  );
 
   return (
     <Stack direction="column" gap={2}>
@@ -349,9 +279,6 @@ const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDescriptio
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  routingOptions: css({
-    width: 'fit-content',
-  }),
   configureNotifications: css({
     display: 'flex',
     flexDirection: 'column',

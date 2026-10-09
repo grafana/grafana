@@ -17,7 +17,6 @@ export function getGrafanaContextMock(overrides: Partial<GrafanaContextType> = {
     // eslint-disable-next-line
     keybindings: {
       clearAndInitGlobalBindings: jest.fn(),
-      setupDashboardBindings: jest.fn(),
       setupTimeRangeBindings: jest.fn(),
       bind: jest.fn(),
       unbind: jest.fn(),

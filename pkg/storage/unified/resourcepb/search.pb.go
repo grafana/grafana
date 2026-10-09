@@ -1187,12 +1187,12 @@ type HybridSearchRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Resource type to search (namespace + group + resource).
 	Key *ResourceKey `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// Required. Feeds the lexical leg verbatim; also embedded for the
-	// semantic leg unless semantic_query is set. Max 1000 bytes. Put
+	// Required. Feeds the lexical leg verbatim; also used for semantic search
+	// and reranking unless semantic_query is set. Max 1000 bytes. Put
 	// extracted keywords here and natural language in semantic_query.
 	Query string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
-	// Optional richer phrasing embedded for the semantic leg instead of
-	// query. Max 1000 bytes.
+	// Optional richer phrasing used for semantic search and reranking instead
+	// of query. Also used for reranking in lexical-only mode. Max 1000 bytes.
 	SemanticQuery string `protobuf:"bytes,3,opt,name=semantic_query,json=semanticQuery,proto3" json:"semantic_query,omitempty"`
 	// Top-k: maximum results. Defaults to 50 when zero, capped at 200.
 	Limit int64 `protobuf:"varint,4,opt,name=limit,proto3" json:"limit,omitempty"`
@@ -1200,7 +1200,7 @@ type HybridSearchRequest struct {
 	// most once, max 1000 values total. Internal collections allow only
 	// "uid" and "folder" (all kinds), "datasource_uid" and "language"
 	// (dashboards; values: promql, logql, traceql, sql) — enforced
-	// natively by BOTH legs. External collections: "uid" and "folder"
+	// natively by each active leg. External collections: "uid" and "folder"
 	// match the row's identity and folder, any other key matches the
 	// metadata JSON (containment).
 	Filters []*Requirement `protobuf:"bytes,5,rep,name=filters,proto3" json:"filters,omitempty"`
@@ -1213,10 +1213,9 @@ type HybridSearchRequest struct {
 	// INVALID_ARGUMENT.
 	MinRelevance string `protobuf:"bytes,6,opt,name=min_relevance,json=minRelevance,proto3" json:"min_relevance,omitempty"`
 	// Skip the reranking stage even when the server has a reranker
-	// configured, returning RRF-fused ordering directly. For callers that
-	// prefer fusion latency over cross-encoder quality. Setting this
-	// together with min_relevance is INVALID_ARGUMENT (thresholds are
-	// meaningless without reranking).
+	// configured, returning RRF ordering (lexical order in lexical-only mode).
+	// Setting this together with min_relevance is INVALID_ARGUMENT (thresholds
+	// are meaningless without reranking).
 	SkipRerank    bool `protobuf:"varint,7,opt,name=skip_rerank,json=skipRerank,proto3" json:"skip_rerank,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -1303,7 +1302,8 @@ func (x *HybridSearchRequest) GetSkipRerank() bool {
 
 type HybridSearchResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Top-k fused results, descending score, one row per resource.
+	// Top-k ranked results from lexical and, when configured, semantic search.
+	// Results may be reranked; descending score, one row per resource.
 	// Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
 	// bad filters), never payload-embedded errors.
 	Results       []*HybridSearchResult `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`

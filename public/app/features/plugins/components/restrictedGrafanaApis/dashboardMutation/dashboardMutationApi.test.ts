@@ -1,3 +1,4 @@
+import { locationService } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardMutationClient } from 'app/features/dashboard-scene/mutation-api/DashboardMutationClient';
@@ -34,6 +35,34 @@ describe('dashboardMutationApi', () => {
       await expect(dashboardMutationApi.execute({ type: 'LIST_VARIABLES', payload: {} })).rejects.toThrow(
         'Dashboard Mutation API is not available'
       );
+    });
+
+    it('opens and renders a preview from outside a dashboard, then returns on dismissal', async () => {
+      locationService.replace('/explore?orgId=1');
+      expect(dashboardMutationApi.getAvailableCommands()).toContain('RENDER_PLAN');
+      const rendering = dashboardMutationApi.execute({
+        type: 'RENDER_PLAN',
+        payload: { planId: 'navigation-plan', title: 'Service health', sections: [] },
+      });
+      expect(locationService.getLocation().pathname).toBe('/dashboard/new');
+
+      const scene = new DashboardScene({ title: 'New dashboard', meta: { canEdit: true } });
+      const deactivate = scene.activate();
+      try {
+        expect((await rendering).success).toBe(true);
+        expect(scene.state.planning).toMatchObject({ planId: 'navigation-plan', planTitle: 'Service health' });
+        expect(scene.state.isEditing).toBeFalsy();
+
+        const ended = await dashboardMutationApi.execute({
+          type: 'END_PLANNING',
+          payload: { planId: 'navigation-plan', restoreUserLocation: true },
+        });
+        expect(ended.success).toBe(true);
+        expect(scene.state.planning).toBeUndefined();
+        expect(locationService.getLocation()).toMatchObject({ pathname: '/explore', search: '?orgId=1' });
+      } finally {
+        deactivate();
+      }
     });
 
     it('delegates to the registered client', async () => {
@@ -190,7 +219,7 @@ describe('dashboardMutationApi', () => {
       unmountNotebook();
       unmountDashboard();
 
-      expect(dashboardMutationApi.getAvailableCommands()).toEqual([]);
+      expect(dashboardMutationApi.getAvailableCommands()).toEqual(['RENDER_PLAN']);
     });
   });
 

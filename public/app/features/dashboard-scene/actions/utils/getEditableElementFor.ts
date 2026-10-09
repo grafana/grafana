@@ -13,13 +13,15 @@ import { SceneGridRowEditableElement } from '../../scene/layout-default/SceneGri
 import { type EditableDashboardElement, isEditableDashboardElement } from '../../scene/types/EditableDashboardElement';
 import { AnnotationEditableElement } from '../../settings/annotations/AnnotationEditableElement';
 import { AnnotationSetEditableElement } from '../../settings/annotations/AnnotationSetEditableElement';
-import { LinkEdit, LinkEditEditableElement } from '../../settings/links/LinkAddEditableElement';
+import { LinkEditEditableElement } from '../../settings/links/LinkAddEditableElement';
+import { LinkEdit } from '../../settings/links/LinkEdit';
 import { LocalVariableEditableElement } from '../../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../../settings/variables/VariableSetEditableElement';
 import { isSceneVariable, isVariableEditable } from '../../settings/variables/utils';
 import { VizPanelEditableElement } from '../../sidebar/VizPanelEditableElement';
 import { DashboardEditableElement } from '../../sidebar/dashboard/DashboardEditableElement';
+import { getPredefinedOrigin } from '../../utils/predefinedVariables';
 
 export function getEditableElementFor(sceneObj: SceneObject | undefined | null): EditableDashboardElement | undefined {
   if (!sceneObj) {
@@ -51,7 +53,8 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined | null):
   }
 
   if (isSceneVariable(sceneObj)) {
-    if (!isVariableEditable(sceneObj)) {
+    // Predefined variables are not dashboard-owned, but selecting one opens a read-only editor.
+    if (!isVariableEditable(sceneObj) && !getPredefinedOrigin(sceneObj.state.origin)) {
       return undefined;
     }
     return new VariableEditableElement(sceneObj);

@@ -5,6 +5,8 @@ import {
   DataTransformerID,
   type Field,
   FieldType,
+  getTransformationDynamicRefId,
+  applyStaticRefId,
   type SynchronousDataTransformerInfo,
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -14,6 +16,7 @@ import { getDistinctLabels } from '../utils';
 export interface JoinByLabelsTransformOptions {
   value: string; // something must be defined
   join?: string[];
+  refId?: string;
 }
 
 export const getJoinByLabelsTransformer: () => SynchronousDataTransformerInfo<JoinByLabelsTransformOptions> = () => ({
@@ -33,9 +36,12 @@ export const getJoinByLabelsTransformer: () => SynchronousDataTransformerInfo<Jo
       if (!data || !data.length) {
         return data;
       }
-      return [joinByLabels(options, data)];
+      // Covers the error frames too: without the static refId a downstream byRefId filter drops
+      // them, so a misconfiguration here surfaces as "no data" further down instead of the error.
+      return applyStaticRefId([joinByLabels(options, data)], options.refId);
     };
   },
+  usesDynamicRefId: true,
 });
 
 interface JoinValues {
@@ -117,7 +123,7 @@ export function joinByLabels(options: JoinByLabelsTransformOptions, data: DataFr
   const frame: DataFrame = {
     fields: [],
     length: nameValues[0].length,
-    refId: `${DataTransformerID.joinByLabels}-${data.map((frame) => frame.refId).join('-')}`,
+    refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.joinByLabels, data),
   };
   for (let i = 0; i < join.length; i++) {
     frame.fields.push({

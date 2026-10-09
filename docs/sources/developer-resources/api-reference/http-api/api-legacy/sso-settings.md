@@ -36,6 +36,10 @@ Therefore, every time settings for a specific provider are removed or reset to t
 the settings are inherited from the other sources in the reverse order of precedence
 (`arguments > environment variables > settings file`).
 
+The `source` field on the `GET` endpoints is `database` when this API stores settings for the provider, and `system` otherwise. Stored settings keep overriding the configuration file until you remove them, which most often surprises people during credential rotation.
+
+Use `DELETE` to discard a provider's stored settings. `PUT` replaces the whole record, so keys you leave out are deleted, and `PATCH` can't remove a key. A `system` source doesn't rule out a value stored by [settings updates at runtime](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/); refer to [Check for stored settings](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+
 ## List SSO Settings
 
 `GET /api/v1/sso-settings`

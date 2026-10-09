@@ -1,4 +1,5 @@
 import { ConstantVariable, LocalValueVariable, SceneGridLayout, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -159,6 +160,10 @@ describe('TabsLayoutManager', () => {
       lastUndo = undefined;
     });
 
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     it('should add a new tab with default title when no title is provided', () => {
       const tabsLayoutManager = buildTabsLayoutManager([]);
       const newTab = tabsLayoutManager.addNewTab();
@@ -218,6 +223,8 @@ describe('TabsLayoutManager', () => {
     });
 
     it('should sync edit mode to a new tab inner layout when the dashboard is already editing', () => {
+      // editModeChanged applies isDraggable/isResizable inside a 10ms timeout when new layouts are on.
+      setTestFlags({ dashboardNewLayouts: false });
       // New tabs use getDefaultLayout() (clone of preferences.defaultLayoutTemplate). Without a template,
       // TabItem falls back to AutoGridLayoutManager.createEmpty(), which already has isDraggable true, so a
       // missing edit-mode sync would not fail the test. A template with interaction disabled forces the sync.

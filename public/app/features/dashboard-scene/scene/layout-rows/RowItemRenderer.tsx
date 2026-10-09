@@ -42,7 +42,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
   const contentId = useId();
   const isCollapsed = collapse && !isHeaderHidden; // never allow a row without a header to be collapsed
   const isClone = isRepeatCloneOrChildOf(model);
-  const { isEditing } = useDashboardState(model);
+  const { isEditing, planning } = useDashboardState(model);
   const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] = useIsConditionallyHidden(
     model.state.conditionalRendering
   );
@@ -173,7 +173,7 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                 {!isEditing && titleElement}
               </button>
               {isEditing && titleElement}
-              {!isEditing && (
+              {!isEditing && !planning && (
                 <ClipboardButton
                   icon="link"
                   size="sm"

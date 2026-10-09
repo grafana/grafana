@@ -18,6 +18,7 @@ import {
   toDataFrame,
 } from '@grafana/data';
 import { mockTransformationsRegistry, organizeFieldsTransformer } from '@grafana/data/internal';
+import { FlagKeys } from '@grafana/runtime/internal';
 import { defaultTableOptions } from '@grafana/schema';
 import { mockClientSize } from '@grafana/test-utils';
 import { PanelContextProvider, type PanelContext } from '@grafana/ui';
@@ -76,7 +77,8 @@ const setUp = (
   props?: Partial<React.ComponentProps<typeof LogsTable>>,
   options?: Partial<Options>,
   app = CoreApp.Dashboard,
-  panelContext?: Partial<PanelContext>
+  panelContext?: Partial<PanelContext>,
+  flagValueMap: Record<string, boolean> = {}
 ) => {
   const store = configureStore();
   return render(
@@ -124,7 +126,7 @@ const setUp = (
     {
       wrapper: ({ children }) => (
         <Provider store={store}>
-          <OpenFeatureTestProvider>{children}</OpenFeatureTestProvider>
+          <OpenFeatureTestProvider flagValueMap={flagValueMap}>{children}</OpenFeatureTestProvider>
         </Provider>
       ),
     }
@@ -168,6 +170,33 @@ describe('LogsTable', () => {
     expect(headers[1].textContent).toEqual('level');
     expect(headers[2].textContent).toEqual('body');
   });
+
+  it.each([CoreApp.Dashboard, CoreApp.Explore])(
+    'keeps JSON fields plain in %s with new table features enabled',
+    async (app) => {
+      const data = getPanelData();
+      const frame = toDataFrame({
+        ...data.series[0],
+        fields: [
+          ...data.series[0].fields,
+          { name: 'payload', type: FieldType.other, config: {}, values: [{ count: 42 }, [1, 2, 3]] },
+        ],
+      });
+      setUp(
+        { data: getPanelData({ series: [frame] }) },
+        { displayedFields: [LOGS_DATAPLANE_TIMESTAMP_NAME, 'payload'], showControls: false },
+        app,
+        undefined,
+        { [FlagKeys.TableRefreshNewFeatures]: true }
+      );
+      const objectCell = await screen.findByRole('gridcell', { name: /count/ });
+      const arrayCell = await screen.findByRole('gridcell', { name: /\[\s*1,\s*2,\s*3\s*\]/ });
+      expect(objectCell).toHaveTextContent(/\{\s*"count":\s*42\s*\}/);
+      expect(arrayCell).toHaveTextContent(/\[\s*1,\s*2,\s*3\s*\]/);
+      expect(objectCell.querySelector('span[style*="color"]')).not.toBeInTheDocument();
+      expect(arrayCell.querySelector('span[style*="color"]')).not.toBeInTheDocument();
+    }
+  );
 
   describe('Panel controls', () => {
     it('should display', async () => {

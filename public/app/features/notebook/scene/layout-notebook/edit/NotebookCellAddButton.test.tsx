@@ -1,24 +1,25 @@
 import { render, screen } from 'test/test-utils';
 
 import { NotebookCellAddButton } from './NotebookCellAddButton';
+import { NOTEBOOK_CELL_CONTROLS_PINNED_CLASS } from './cellClassNames';
 
 describe('NotebookCellAddButton', () => {
   it('renders an accessible add-block trigger', () => {
     render(<NotebookCellAddButton index={1} />);
 
-    expect(screen.getByRole('button', { name: 'Click to add below' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Click to add above' })).toBeInTheDocument();
   });
 
   // The only behavioural pin on the insertion index. The button at position i always inserts at
-  // i + 1 — an off-by-one here would silently insert blocks in the wrong place.
-  it('inserts below its own cell', async () => {
+  // i — an off-by-one here would silently insert blocks in the wrong place.
+  it('inserts above its own cell', async () => {
     const onAdd = jest.fn();
     const { user } = render(<NotebookCellAddButton index={1} onAdd={onAdd} />);
 
-    await user.click(screen.getByRole('button', { name: 'Click to add below' }));
+    await user.click(screen.getByRole('button', { name: 'Click to add above' }));
     await user.click(screen.getByRole('menuitem', { name: 'Heading' }));
 
-    expect(onAdd).toHaveBeenCalledWith('heading', 2);
+    expect(onAdd).toHaveBeenCalledWith('heading', 1);
   });
 
   // Opening the menu moves focus into its own Portal (see Dropdown's FloatingFocusManager), which
@@ -29,11 +30,14 @@ describe('NotebookCellAddButton', () => {
     const { user } = render(<NotebookCellAddButton index={1} />);
     // Grabbed before opening: once the menu is open, Dropdown's FloatingFocusManager marks the
     // trigger aria-hidden (correct modal behaviour), so it's no longer findable by role afterwards.
-    const addButton = screen.getByRole('button', { name: 'Click to add below' });
+    const addButton = screen.getByRole('button', { name: 'Click to add above' });
     const wrapper = addButton.closest('div');
 
     await user.click(addButton);
 
     expect(getComputedStyle(wrapper!).opacity).toBe('1');
+    // The cell list hides the controls on every cell the pointer is not over. This class is how the
+    // trigger opts out of that rule for as long as its menu is open.
+    expect(wrapper).toHaveClass(NOTEBOOK_CELL_CONTROLS_PINNED_CLASS);
   });
 });

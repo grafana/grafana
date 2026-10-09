@@ -2,6 +2,7 @@ package annotation
 
 import (
 	"context"
+	"database/sql"
 	"embed"
 	"errors"
 	"fmt"
@@ -113,26 +114,25 @@ func listPartitions(ctx context.Context, pool *pgxpool.Pool) ([]PartitionInfo, e
 	return partitions, nil
 }
 
-// runMigrations executes database migrations using goose
-func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) error {
+// newMigrationProvider builds the goose migration provider.
+// It returns the goose provider, the underlying *sql.DB, and any error encountered.
+// The caller is responsible for closing the *sql.DB when done.
+func newMigrationProvider(pool *pgxpool.Pool) (*goose.Provider, *sql.DB, error) {
 	// goose operates on *sql.DB, so we need to create one from our pgxpool
 	db := stdlib.OpenDBFromPool(pool)
-	defer func() {
-		if err := db.Close(); err != nil {
-			logger.Error("failed to close database connection", "error", err)
-		}
-	}()
 
 	// The provider reads from the root of the fs, so re-root onto the migrations dir.
 	migrationsFS, err := fs.Sub(embedMigrations, "migrations")
 	if err != nil {
-		return fmt.Errorf("failed to sub migrations fs: %w", err)
+		_ = db.Close()
+		return nil, nil, fmt.Errorf("failed to sub migrations fs: %w", err)
 	}
 
 	// Use Postgres advisory locks to prevent multiple instances from running migrations concurrently
 	locker, err := lock.NewPostgresSessionLocker()
 	if err != nil {
-		return fmt.Errorf("failed to create session locker: %w", err)
+		_ = db.Close()
+		return nil, nil, fmt.Errorf("failed to create session locker: %w", err)
 	}
 
 	provider, err := goose.NewProvider(
@@ -142,10 +142,25 @@ func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) e
 		goose.WithSessionLocker(locker),
 	)
 	if err != nil {
-		return fmt.Errorf("failed to create goose provider: %w", err)
+		_ = db.Close()
+		return nil, nil, fmt.Errorf("failed to create goose provider: %w", err)
 	}
 
-	// Run all pending migrations
+	return provider, db, nil
+}
+
+// runMigrations executes pending database migrations.
+func runMigrations(ctx context.Context, pool *pgxpool.Pool, logger log.Logger) error {
+	provider, db, err := newMigrationProvider(pool)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if err := db.Close(); err != nil {
+			logger.Error("failed to close database connection", "error", err)
+		}
+	}()
+
 	results, err := provider.Up(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to run migrations: %w", err)

@@ -179,7 +179,6 @@ func (r *ZanzanaPermissionResolver) searchAllUsers(ctx context.Context, signedIn
 		g, gctx := errgroup.WithContext(ctx)
 		g.SetLimit(maxConcurrentRequests)
 		for _, userHit := range searchResult.Users {
-			userHit := userHit
 			g.Go(func() error {
 				var userPerms map[int64][]ac.Permission
 				var err error

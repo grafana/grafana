@@ -16,9 +16,11 @@ import {
   type VariableValueOption,
   PanelBuilders,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { ALL_VARIABLE_TEXT, ALL_VARIABLE_VALUE } from 'app/features/variables/constants';
 import { TextMode } from 'app/plugins/panel/text/panelcfg.gen';
 
+import { DashboardStateChangedEvent } from '../../sidebar/events';
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from '../layout-auto-grid/AutoGridLayout';
@@ -45,6 +47,17 @@ describe('RowItemRepeater', () => {
   });
 
   describe('Given scene with variable with 3 values', () => {
+    beforeEach(() => {
+      // New layouts mount the sidebar extension point, which calls usePluginLinks. renderScene does not start that hook.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      act(() => {
+        setTestFlags({});
+      });
+    });
+
     it('Should repeat row', async () => {
       const { rowToRepeat } = renderScene({ variableQueryTime: 0 });
 
@@ -129,6 +142,24 @@ describe('RowItemRepeater', () => {
       expect(rowToRepeat.state.repeatByVariable).toBe(undefined);
     });
 
+    it('keeps row repeats and local variables cleared when an edit event follows disabling', async () => {
+      const { rowToRepeat } = renderScene({ variableQueryTime: 0 });
+
+      await waitFor(() => {
+        expect(screen.queryByText('Row C')).toBeInTheDocument();
+      });
+
+      act(() => {
+        rowToRepeat.onChangeRepeat(undefined);
+        rowToRepeat.publishEvent(new DashboardStateChangedEvent({ source: rowToRepeat }), true);
+      });
+
+      expect(screen.queryByText('Row C')).not.toBeInTheDocument();
+      expect(rowToRepeat.state.$variables?.state.variables.map((variable) => variable.state.name) ?? []).toEqual([]);
+      expect(rowToRepeat.state.repeatedRows?.length ?? 0).toBe(0);
+      expect(rowToRepeat.state.repeatByVariable).toBe(undefined);
+    });
+
     it('Should preserve section variable with duplicate name when removing repeats', () => {
       const sectionScopedVariable = new CustomVariable({
         name: 'server',
@@ -185,9 +216,17 @@ describe('RowItemRepeater', () => {
   });
 
   describe('render-before-activation race', () => {
+    beforeEach(() => {
+      // The deferred-mount test renders the scene. New layouts then call usePluginLinks.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
     afterEach(() => {
       jest.restoreAllMocks();
       jest.useRealTimers();
+      act(() => {
+        setTestFlags({});
+      });
     });
 
     it('does not initialize repeats when deps are loading, and stays stuck if the repeat variable never notifies again', () => {

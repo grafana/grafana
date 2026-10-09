@@ -19,8 +19,8 @@ func TestRepositoryDeletionMetrics_ObservePending(t *testing.T) {
 	reg := prometheus.NewPedanticRegistry()
 	metrics := registerRepositoryDeletionMetrics(reg)
 
-	metrics.observePending(90 * time.Minute)
-	metrics.observePending(-time.Minute) // clamped to 0
+	metrics.observePending(90*time.Minute, "system")
+	metrics.observePending(-time.Minute, "system") // clamped to 0
 
 	family := gatherMetrics(t, reg)[repositoryDeletionPendingMetric]
 	require.NotNil(t, family)
@@ -28,6 +28,29 @@ func TestRepositoryDeletionMetrics_ObservePending(t *testing.T) {
 	histogram := family.GetMetric()[0].GetHistogram()
 	assert.Equal(t, uint64(2), histogram.GetSampleCount())
 	assert.InDelta(t, (90 * time.Minute).Seconds(), histogram.GetSampleSum(), 0.001)
+}
+
+func TestRepositoryDeletionMetrics_ObservePending_Cause(t *testing.T) {
+	reg := prometheus.NewPedanticRegistry()
+	metrics := registerRepositoryDeletionMetrics(reg)
+
+	metrics.observePending(90*time.Minute, "user")
+	metrics.observePending(45*time.Minute, "system")
+	metrics.observePending(10*time.Minute, "")
+
+	family := gatherMetrics(t, reg)[repositoryDeletionPendingMetric]
+	require.NotNil(t, family)
+	require.Len(t, family.GetMetric(), 3)
+
+	seen := map[string]uint64{}
+	for _, m := range family.GetMetric() {
+		for _, l := range m.GetLabel() {
+			if l.GetName() == "cause" {
+				seen[l.GetValue()] = m.GetHistogram().GetSampleCount()
+			}
+		}
+	}
+	assert.Equal(t, map[string]uint64{"user": 1, "system": 1, "": 1}, seen)
 }
 
 func TestRepositoryDeletionMetrics_RecordDeletion(t *testing.T) {
@@ -55,7 +78,7 @@ func TestRepositoryDeletionMetrics_RecordError(t *testing.T) {
 func TestRepositoryDeletionMetrics_NilSafe(t *testing.T) {
 	var metrics *repositoryDeletionMetrics
 	assert.NotPanics(t, func() {
-		metrics.observePending(time.Minute)
+		metrics.observePending(time.Minute, "user")
 		metrics.recordDeletion()
 		metrics.recordError(deletionStageFinalizers)
 	})

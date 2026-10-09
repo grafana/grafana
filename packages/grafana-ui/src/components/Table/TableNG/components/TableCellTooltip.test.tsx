@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type DataGridHandle } from '@grafana/react-data-grid';
 import { TableCellDisplayMode } from '@grafana/schema';
 
+import { JsonCell } from '../Cells/JsonCell';
 import { type TableCellRenderer } from '../types';
 
 import { TableCellTooltip, type TableCellTooltipProps } from './TableCellTooltip';
@@ -63,6 +64,22 @@ function renderInRdgCell(overrides: Record<string, unknown> = {}) {
 const CARET_LABEL = 'Toggle tooltip';
 
 describe('TableCellTooltip', () => {
+  it('passes JSON highlighting through to tooltip content', async () => {
+    const field = makeField(['{"active":true}']);
+    field.display = () => ({ text: '{"active":true}', numeric: NaN });
+    renderInRdgCell({
+      field,
+      cellOptions: { type: TableCellDisplayMode.JSONView },
+      renderer: JsonCell,
+      jsonSyntaxHighlightingEnabled: true,
+    });
+    await userEvent.click(screen.getByRole('button', { name: CARET_LABEL }));
+    expect(await screen.findByText('true')).toHaveStyle({ color: theme.components.codeEditor.number });
+    expect(screen.getByTestId(selectors.components.Panels.Visualization.TableNG.Tooltip.Wrapper)).toHaveTextContent(
+      '{"active":true}'
+    );
+  });
+
   describe('null / undefined rawValue', () => {
     it('renders only children for a null value and omits the caret trigger', () => {
       render(

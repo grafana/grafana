@@ -42,12 +42,14 @@ const (
 	annotationQuery = "annotationQuery"
 	logAction       = "logAction"
 	timeSeriesQuery = "timeSeriesQuery"
+	promqlQuery     = "promqlQuery"
 )
 
 type DataQueryJson struct {
 	dataquery.CloudWatchAnnotationQuery
-	Type     string             `json:"type,omitempty"`
-	LogsMode dataquery.LogsMode `json:"logsMode,omitempty"`
+	Type            string                     `json:"type,omitempty"`
+	LogsMode        dataquery.LogsMode         `json:"logsMode,omitempty"`
+	MetricQueryType *dataquery.MetricQueryType `json:"metricQueryType,omitempty"`
 }
 
 type DataSource struct {
@@ -59,6 +61,7 @@ type DataSource struct {
 	tagValueCache          *cache.Cache
 	resourceHandler        backend.CallResourceHandler
 	monitoringAccountCache sync.Map
+	promqlClients          sync.Map
 }
 
 func (ds *DataSource) newAWSConfig(ctx context.Context, region string) (aws.Config, error) {
@@ -176,13 +179,19 @@ func (ds *DataSource) QueryData(ctx context.Context, req *backend.QueryDataReque
 		return executeLogAnomaliesQuery(ctx, ds, req)
 	}
 
+	// Alert, expression, and public dashboard requests never carry `model.Type`, so a PromQL query
+	// arriving through one of those paths has to be identified by its persisted `metricQueryType` instead.
+	isPromQLQuery := fromPublicDashboard && model.MetricQueryType != nil && *model.MetricQueryType == dataquery.MetricQueryTypePromQL
+
 	var result *backend.QueryDataResponse
-	switch model.Type {
-	case annotationQuery:
+	switch {
+	case model.Type == annotationQuery:
 		result, err = ds.executeAnnotationQuery(ctx, model, q)
-	case logAction:
+	case model.Type == logAction:
 		result, err = ds.executeLogActions(ctx, req)
-	case timeSeriesQuery:
+	case model.Type == promqlQuery, isPromQLQuery:
+		result, err = ds.executePromQLQuery(ctx, req)
+	case model.Type == timeSeriesQuery:
 		fallthrough
 	default:
 		result, err = ds.executeTimeSeriesQuery(ctx, req)

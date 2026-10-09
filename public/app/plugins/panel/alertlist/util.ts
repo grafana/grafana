@@ -11,6 +11,8 @@ import {
   type ValueMapping,
 } from '@grafana/data';
 import { BigValueColorMode } from '@grafana/ui';
+import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
+import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { labelsMatchMatchers } from 'app/features/alerting/unified/utils/alertmanager';
 import { parsePromQLStyleMatcherLooseSafe } from 'app/features/alerting/unified/utils/matchers';
 import { createListFilterLink } from 'app/features/alerting/unified/utils/navigation';
@@ -87,7 +89,19 @@ export function getStatDisplayValue(
   return displayValue;
 }
 
-export function buildAlertingListUrl(options: UnifiedAlertListOptions, dashboardUid?: string): string {
+/**
+ * Builds the link behind the Stat view. The filter terms are the same either way — Grafana's rule
+ * list and the plugin's speak the same search grammar — only the page they land on differs.
+ *
+ * Pass `openInPlugin` when the panel is pointed at a data source the Prometheus Alerting plugin now
+ * owns: Grafana's own rule list no longer shows those rules, so linking there would land on an
+ * empty page.
+ */
+export function buildAlertingListUrl(
+  options: UnifiedAlertListOptions,
+  dashboardUid?: string,
+  openInPlugin = false
+): string {
   const filters: Array<[string, string]> = [];
 
   if (options.alertName) {
@@ -127,6 +141,11 @@ export function buildAlertingListUrl(options: UnifiedAlertListOptions, dashboard
 
   if (options.dashboardAlerts && dashboardUid) {
     filters.push(['dashboard', dashboardUid]);
+  }
+
+  if (openInPlugin) {
+    const search = filters.map(([key, value]) => `${key}:"${value}"`).join(' ');
+    return createBridgeURL(SupportedPlugin.PrometheusAlerting, '/rules', search ? { search } : {});
   }
 
   return createListFilterLink(filters);

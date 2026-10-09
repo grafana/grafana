@@ -29,7 +29,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel that exists, it should succeed",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_NewFolder",
 				Title: "NewFolder",
@@ -103,7 +103,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with folder only, it should change folder successfully and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_NewFolder",
 				Title: "NewFolder",
@@ -355,7 +355,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to patch a library panel with a folder where a library panel with the same name already exists, it should pass",
 		func(t *testing.T, sc scenarioContext) {
 			newFolder := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_NewFolder",
 				Title: "NewFolder",
@@ -419,7 +419,7 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin moves a library panel to another folder, the list endpoint reflects the new folder",
 		func(t *testing.T, sc scenarioContext) {
 			destFolder := &folder.Folder{
-				ID:    2,
+				ID:    2, //nolint:staticcheck // Exercise legacy field compatibility.
 				OrgID: 1,
 				UID:   "uid_for_DestFolder",
 				Title: "DestFolder",

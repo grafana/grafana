@@ -213,12 +213,17 @@ func (s *Syncer) syncAlertRule(ctx context.Context, orgID int64, rule *v0alpha1.
 
 	key := ngmodels.AlertRuleKey{OrgID: orgID, UID: rule.Name}
 	states := s.states.GetStatesForRuleUID(ctx, orgID, rule.Name)
-	newStatus := toAlertRuleStatus(rule.Status, states, isPaused(rule.Spec.Paused))
+	execErrState, err := execErrStateFromSpec(rule.Spec)
+	if err != nil {
+		s.log.Warn("Invalid execErrState, using default", "org_id", orgID, "uid", rule.Name, "exec_err_state", rule.Spec.ExecErrState, "error", err)
+		execErrState = ngmodels.ErrorErrState
+	}
+	newStatus := toAlertRuleStatus(rule.Status, states, execErrState, isPaused(rule.Spec.Paused))
 
 	s.persist(ctx, key, newStatus, func(ctx context.Context) error {
 		rule.Status = newStatus
-		_, err := s.alertRuleClient.Update(ctx, rule, resource.UpdateOptions{
-			Subresource: "status",
+		_, err := s.alertRuleClient.UpdateStatus(ctx, rule.GetStaticMetadata().Identifier(), newStatus, resource.UpdateOptions{
+			ResourceVersion: rule.GetResourceVersion(),
 		})
 		return err
 	})
@@ -234,8 +239,8 @@ func (s *Syncer) syncRecordingRule(ctx context.Context, orgID int64, rule *v0alp
 
 	s.persist(ctx, key, newStatus, func(ctx context.Context) error {
 		rule.Status = newStatus
-		_, err := s.recordingRuleClient.Update(ctx, rule, resource.UpdateOptions{
-			Subresource: "status",
+		_, err := s.recordingRuleClient.UpdateStatus(ctx, rule.GetStaticMetadata().Identifier(), newStatus, resource.UpdateOptions{
+			ResourceVersion: rule.GetResourceVersion(),
 		})
 		return err
 	})

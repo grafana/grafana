@@ -144,28 +144,19 @@ function createFlatTree(
   rootCollection: BrowseDashboardsState['rootItems'],
   childrenByUID: BrowseDashboardsState['childrenByParentUID'],
   openFolders: Record<string, boolean>,
-  level = 0,
-  excludeKinds: Array<DashboardViewItemWithUIItems['kind'] | UIDashboardViewItem['uiKind']> = [],
-  excludeUIDs: string[] = []
+  level = 0
 ): DashboardsTreeItem[] {
   function mapItem(item: DashboardViewItem, parentUID: string | undefined, level: number): DashboardsTreeItem[] {
-    if (excludeKinds.includes(item.kind) || excludeUIDs.includes(item.uid)) {
-      return [];
+    // Only folders have children
+    if (item.kind !== 'folder') {
+      return [{ item, parentUID, level, isOpen: false }];
     }
 
-    const mappedChildren = createFlatTree(
-      item.uid,
-      rootCollection,
-      childrenByUID,
-      openFolders,
-      level + 1,
-      excludeKinds,
-      excludeUIDs
-    );
+    const mappedChildren = createFlatTree(item.uid, rootCollection, childrenByUID, openFolders, level + 1);
 
     const isOpen = Boolean(openFolders[item.uid]);
     const emptyFolder = childrenByUID[item.uid]?.items.length === 0;
-    if (isOpen && emptyFolder && !excludeKinds.includes('empty-folder')) {
+    if (isOpen && emptyFolder) {
       mappedChildren.push({
         isOpen: false,
         level: level + 1,
@@ -216,14 +207,7 @@ function createFlatTree(
     return mapItem(item, folderUID, level);
   });
 
-  // this is very custom to the folder picker right now
-  // we exclude dashboards, but if you have more than 1 page of dashboards collection.isFullyLoaded is false
-  // so we need to check that we're ignoring dashboards and we've fetched all the folders
-  // TODO generalize this properly (e.g. split state by kind?)
-  const isConsideredLoaded = excludeKinds.includes('dashboard') && collection?.lastFetchedKind === 'dashboard';
-
-  const showPlaceholders =
-    (level === 0 && !collection) || (isOpen && collection && !(collection.isFullyLoaded || isConsideredLoaded));
+  const showPlaceholders = (level === 0 && !collection) || (isOpen && collection && !collection.isFullyLoaded);
 
   if (showPlaceholders) {
     children = children.concat(getPaginationPlaceholders(PAGE_SIZE, folderUID, level));

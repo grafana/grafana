@@ -2289,6 +2289,24 @@
         "subformOptions": null
       },
       {
+        "element": "checkbox",
+        "inputType": "",
+        "label": "Upload image",
+        "description": "Upload an image with the notification.",
+        "placeholder": "",
+        "propertyName": "uploadImage",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
+      },
+      {
         "element": "textarea",
         "inputType": "text",
         "label": "Title",
@@ -4392,6 +4410,25 @@
           "is": ""
         },
         "required": false,
+        "validationRule": "",
+        "secure": false,
+        "dependsOn": "",
+        "subformOptions": null
+      },
+      {
+        "element": "input",
+        "inputType": "text",
+        "label": "Endpoint URL",
+        "description": "Override the default WeCom API endpoint",
+        "placeholder": "https://qyapi.weixin.qq.com",
+        "propertyName": "endpointUrl",
+        "selectOptions": null,
+        "showWhen": {
+          "field": "",
+          "is": ""
+        },
+        "required": false,
+        "protected": true,
         "validationRule": "",
         "secure": false,
         "dependsOn": "",

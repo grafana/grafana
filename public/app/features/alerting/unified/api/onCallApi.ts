@@ -1,4 +1,4 @@
-import { type FetchError, isFetchError } from '@grafana/runtime';
+import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 
 import { GRAFANA_ONCALL_INTEGRATION_TYPE } from '../components/receivers/grafanaAppReceivers/onCall/onCall';
 
@@ -12,7 +12,7 @@ export interface NewOnCallIntegrationDTO {
   verbal_name: string;
 }
 
-export interface OnCallPaginatedResult<T> {
+interface OnCallPaginatedResult<T> {
   results: T[];
 }
 
@@ -41,26 +41,25 @@ export function getProxyApiUrl(path: string, pluginId: string) {
   return `/api/plugins/${pluginId}/resources${path}`;
 }
 
+function grafanaOnCallIntegrationsRequest(pluginId: string) {
+  return {
+    url: getProxyApiUrl('/alert_receive_channels/', pluginId),
+    // legacy_grafana_alerting is necessary for OnCall.
+    // We do NOT need to differentiate between these two on our side
+    params: {
+      filters: true,
+      integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
+      skip_pagination: true,
+    },
+    showErrorAlert: false,
+  };
+}
+
 export const onCallApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     grafanaOnCallIntegrations: build.query<OnCallIntegrationDTO[], { pluginId: string }>({
-      query: ({ pluginId }) => ({
-        url: getProxyApiUrl('/alert_receive_channels/', pluginId),
-        // legacy_grafana_alerting is necessary for OnCall.
-        // We do NOT need to differentiate between these two on our side
-        params: {
-          filters: true,
-          integration: [GRAFANA_ONCALL_INTEGRATION_TYPE, 'legacy_grafana_alerting'],
-          skip_pagination: true,
-        },
-        showErrorAlert: false,
-      }),
-      transformResponse: (response: AlertReceiveChannelsResult) => {
-        if (isPaginatedResponse(response)) {
-          return response.results;
-        }
-        return response;
-      },
+      query: ({ pluginId }) => grafanaOnCallIntegrationsRequest(pluginId),
+      transformResponse: readOnCallIntegrations,
       providesTags: ['OnCallIntegrations'],
     }),
     validateIntegrationName: build.query<boolean, { name: string; pluginId: string }>({
@@ -98,6 +97,24 @@ function isPaginatedResponse(
   response: AlertReceiveChannelsResult
 ): response is OnCallPaginatedResult<OnCallIntegrationDTO> {
   return 'results' in response && Array.isArray(response.results);
+}
+
+// OnCall returns the integration list bare or paginated depending on version; read both shapes.
+function readOnCallIntegrations(response: AlertReceiveChannelsResult): OnCallIntegrationDTO[] {
+  return isPaginatedResponse(response) ? response.results : response;
+}
+
+/** The Grafana Alerting integrations configured in OnCall/IRM. */
+export async function fetchGrafanaOnCallIntegrations(
+  pluginId: string,
+  abortSignal?: AbortSignal
+): Promise<OnCallIntegrationDTO[]> {
+  const { url, params, showErrorAlert } = grafanaOnCallIntegrationsRequest(pluginId);
+  const response = await getBackendSrv().get<AlertReceiveChannelsResult>(url, params, undefined, {
+    showErrorAlert,
+    abortSignal,
+  });
+  return readOnCallIntegrations(response);
 }
 
 export const {} = onCallApi;

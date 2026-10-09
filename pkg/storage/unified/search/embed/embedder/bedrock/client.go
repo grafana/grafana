@@ -125,8 +125,7 @@ func inputTokensFromMetadata(md smithymiddleware.Metadata) int {
 func retryableError(err error) error {
 	var netErr net.Error
 	retryable := errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout())
-	var apiErr smithy.APIError
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[smithy.APIError](err); ok {
 		switch apiErr.(type) {
 		case *types.ThrottlingException, *types.ServiceQuotaExceededException, *types.ServiceUnavailableException, *types.InternalServerException, *types.ModelTimeoutException, *types.ModelNotReadyException:
 			retryable = true

@@ -73,8 +73,8 @@ export function CallTreeTable({
 
   return (
     <div style={{ width, height, display: 'flex', flexDirection: 'column' }}>
-      <table {...getTableProps()} className={styles.table} style={{ flexShrink: 0 }}>
-        <thead className={styles.thead}>
+      <table {...getTableProps()} className={cx(styles.table, styles.headerTable)} style={{ flexShrink: 0 }}>
+        <thead>
           {headerGroups.map((headerGroup) => {
             const { key, ...headerGroupProps } = headerGroup.getHeaderGroupProps();
             return (
@@ -194,10 +194,23 @@ function getStyles(theme: GrafanaTheme2) {
       fontSize: theme.typography.fontSize,
       color: theme.colors.text.primary,
     }),
-    thead: css({
-      backgroundColor: theme.colors.background.secondary,
+    // The body table keeps the collapsed border model because the row highlights paint their stripe as a
+    // border on the tr, which the separate model would drop. The header has no row borders, so it can use
+    // the separate model - the only one where border-radius on cells is honoured.
+    headerTable: css({
+      borderCollapse: 'separate',
+      borderSpacing: 0,
     }),
     th: css({
+      // Painted per cell rather than on thead so the outer cells can round the top of the pane without a
+      // square-cornered strip showing through behind them.
+      backgroundColor: theme.colors.background.secondary,
+      '&:first-of-type': {
+        borderStartStartRadius: theme.shape.radius.default,
+      },
+      '&:last-of-type': {
+        borderStartEndRadius: theme.shape.radius.default,
+      },
       padding: '4px 6px',
       height: '36px',
       textAlign: 'left',
@@ -219,7 +232,7 @@ function getStyles(theme: GrafanaTheme2) {
     }),
     focusedRow: css({
       backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.08),
-      borderLeft: `3px solid ${theme.colors.primary.main}`,
+      borderLeft: `3px solid ${theme.colors.accent.main}`,
       fontWeight: theme.typography.fontWeightMedium,
       '&:hover': {
         backgroundColor: theme.colors.emphasize(theme.colors.background.primary, 0.1),

@@ -12,7 +12,7 @@ import (
 // NoopAlwaysAllowedAuthorizer is a no-op implementation of the DecryptAuthorizer which always returns `allowed=true`.
 type NoopAlwaysAllowedAuthorizer struct{}
 
-var _ contracts.DecryptAuthorizer = &NoopAlwaysAllowedAuthorizer{}
+var _ contracts.DecryptAuthorizer = (*NoopAlwaysAllowedAuthorizer)(nil)
 
 func (a *NoopAlwaysAllowedAuthorizer) Authorize(context.Context, xkube.Namespace, string, []string, []metav1.OwnerReference) (string, bool, string) {
 	return "", true, ""

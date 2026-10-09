@@ -72,8 +72,7 @@ export function ReceiverForm<R extends ChannelValues>({
   // normalize deprecated and new config values
   const normalizedConfig = normalizeFormValues(initialValues);
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  const defaultValues = (normalizedConfig ?? {
+  const defaultValues: ReceiverFormValues<R> = normalizedConfig ?? {
     name: '',
     items: [
       {
@@ -81,7 +80,7 @@ export function ReceiverForm<R extends ChannelValues>({
         __id: String(Math.random()),
       },
     ],
-  }) as ReceiverFormValues<R>;
+  };
 
   const formAPI = useForm<ReceiverFormValues<R>>({
     // making a copy here beacuse react-hook-form will mutate these, and break if the object is frozen. for real.

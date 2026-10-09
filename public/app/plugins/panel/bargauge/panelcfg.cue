@@ -39,6 +39,7 @@ composableKinds: PanelCfg: {
 					valueMode:     common.BarGaugeValueMode & (*"color" | _)
 					namePlacement: common.BarGaugeNamePlacement & (*"auto" | _)
 					showUnfilled:  bool | *true
+					textMode:      common.BigValueTextMode & (*"auto" | _)
 					sizing:        common.BarGaugeSizing & (*"auto" | _)
 					minVizWidth:   uint32 | *8
 					minVizHeight:  uint32 | *16

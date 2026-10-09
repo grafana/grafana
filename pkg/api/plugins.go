@@ -81,8 +81,8 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 			if embeddedFilter == "0" {
 				continue
 			}
-			if strings.HasPrefix(embeddedFilter, "include-") {
-				allowedType := strings.TrimPrefix(embeddedFilter, "include-")
+			if after, ok := strings.CutPrefix(embeddedFilter, "include-"); ok {
+				allowedType := after
 				if string(pluginDef.Type) != allowedType {
 					continue
 				}

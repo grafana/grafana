@@ -33,6 +33,7 @@ import (
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/fieldselectors"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -142,6 +143,7 @@ func (b *FolderAPIBuilder) variableClient(ctx context.Context) (*dynamic.Namespa
 
 func RegisterAPIService(cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
+	iamFeatures iamapi.Features,
 	apiregistration builder.APIRegistrar,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessClient authlib.AccessClient,
@@ -163,7 +165,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 
 	// With the flag on, use the App Platform permission path and leave the legacy folderPermissionsSvc
 	// unwired (so its folderStorage wrapper isn't installed); otherwise keep the legacy path.
-	if features.IsEnabledGlobally(featuremgmt.FlagKubernetesAuthzResourcePermissionApis) { //nolint:staticcheck
+	if iamFeatures.ResourcePermissionsAPI {
 		builder.restConfigProvider = restConfigProvider
 	} else {
 		builder.folderPermissionsSvc = folderPermissionsSvc
@@ -261,7 +263,11 @@ func (b *FolderAPIBuilder) storageForVersion(
 	selectableFieldsOpts := grafanaregistry.SelectableFieldsOptions{
 		GetAttrs: fieldselectors.BuildGetAttrsFn(folderKind),
 	}
-	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, folders, opts.OptsGetter, selectableFieldsOpts)
+	// Scoped to this version, so the GVK it persists under is the one being
+	// installed rather than whichever registration the scheme reports first
+	// (v1 and v1beta1 share one Go type).
+	optsGetter := opts.StorageOptsGetterFor(folders, b.folderStorageOpts())
+	unified, err := grafanaregistry.NewRegistryStoreWithSelectableFields(opts.Scheme, folders, optsGetter, selectableFieldsOpts)
 	if err != nil {
 		return err
 	}
@@ -310,17 +316,20 @@ func (b *FolderAPIBuilder) storageForVersion(
 	return nil
 }
 
-func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
-	opts.StorageOptsRegister(foldersv1.FolderResourceInfo.GroupResource(), apistore.StorageOptions{
-		// Preserve apiVersion/kind from the client on write. Without Scheme, apistore.encode
-		// uses the global LegacyCodec and converts to a single preferred external version.
-		Scheme:               opts.Scheme,
+// folderStorageOpts are the unified storage options every folder version shares.
+// storageForVersion pairs them with the GVK of the version it installs, which is
+// what preserves the client's apiVersion/kind on write: without it apistore.encode
+// falls back to the global LegacyCodec and converts to a single preferred version.
+func (b *FolderAPIBuilder) folderStorageOpts() apistore.StorageOptions {
+	return apistore.StorageOptions{
 		Index:                b.searcher,
 		EnableFolderSupport:  true,
 		DeprecatedInternalID: apistore.DeprecatedID_Required,
 		Permissions:          b.setDefaultFolderPermissions,
-	})
+	}
+}
 
+func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupInfo, opts builder.APIGroupOptions) error {
 	// v1
 	if err := b.storageForVersion(
 		apiGroupInfo,

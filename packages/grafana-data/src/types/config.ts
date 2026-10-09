@@ -9,7 +9,13 @@ import { type IconName } from './icon';
 import { type NavLinkDTO } from './navModel';
 import { type OrgRole } from './orgs';
 import { type PanelPluginMeta } from './panel';
-import { type AngularMeta, type PluginDependencies, type PluginExtensions, type PluginLoadingStrategy } from './plugin';
+import {
+  type AngularMeta,
+  type PluginDependencies,
+  type PluginExtensions,
+  type PluginInclude,
+  type PluginLoadingStrategy,
+} from './plugin';
 import { type TimeOption } from './time';
 
 export interface AzureSettings {
@@ -39,6 +45,17 @@ export type AppPluginConfig = {
   extensions: PluginExtensions;
   moduleHash?: string;
   buildMode?: string;
+  // Display and navigation fields, absent from the bootdata-sourced configs and
+  // populated only when these come from the plugins.grafana.app metas API
+  name?: string;
+  includes?: PluginInclude[];
+  info?: {
+    description?: string;
+    logos?: {
+      small: string;
+      large: string;
+    };
+  };
 };
 
 export type PreinstalledPlugin = {
@@ -120,6 +137,7 @@ export interface UnifiedAlertingConfig {
   minInterval: string;
   stateHistory?: UnifiedAlertingStateHistoryConfig;
   recordingRulesEnabled?: boolean;
+  notificationHistoryEnabled?: boolean;
   defaultRecordingRulesTargetDatasourceUID?: string;
 
   // Backward compatibility aliases - deprecated
@@ -296,6 +314,7 @@ export interface GrafanaConfig {
   rudderstackV3SdkUrl: string;
   rudderstackConfigUrl: string;
   rudderstackIntegrationsUrl: string;
+  rudderstackBatchInterval: number;
   applicationInsightsConnectionString: string;
   applicationInsightsEndpointUrl: string;
   applicationInsightsAutoRouteTracking: boolean;

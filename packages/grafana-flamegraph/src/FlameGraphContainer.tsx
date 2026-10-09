@@ -463,7 +463,8 @@ function getStyles(theme: GrafanaTheme2, fillHeight: boolean) {
       label: 'horizontalPaneContainer',
       flexBasis: '50%',
       minWidth: 0,
-      overflow: 'auto',
+      overflowX: 'hidden',
+      overflowY: 'auto',
       ...(fillHeight ? { height: '100%', minHeight: 0 } : { maxHeight: FLAMEGRAPH_CONTAINER_HEIGHT }),
     }),
 

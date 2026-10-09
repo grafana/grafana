@@ -38,7 +38,7 @@ func NewReverseProxy(logger glog.Logger, director func(*http.Request), opts ...R
 		FlushInterval: time.Millisecond * 200,
 		ErrorHandler:  errorHandler(logger),
 		ErrorLog:      log.New(&logWrapper{logger: logger}, "", 0),
-		Director:      director,
+		Director:      director, // nolint:staticcheck // Preserve the director-based API until callers migrate to Rewrite.
 	}
 
 	for _, opt := range opts {

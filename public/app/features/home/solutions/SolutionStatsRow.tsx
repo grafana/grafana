@@ -1,12 +1,12 @@
 import { css } from '@emotion/css';
 import { type ComponentProps } from 'react';
 import Skeleton from 'react-loading-skeleton';
-import { useAsync } from 'react-use';
 
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { SolutionSparkline, type SolutionSparklineData } from './SolutionSparkline';
 import { type SolutionStats } from './types';
+import { useFact } from './useFact';
 
 interface SolutionStatsRowProps {
   stats: () => Promise<SolutionStats | null>;
@@ -31,10 +31,10 @@ export function SolutionStatsRow({
 }: SolutionStatsRowProps) {
   const styles = useStyles2(getStyles);
   // Refinement is optional; only the base stats control the loading state.
-  const { value: base = null, loading: statsPending } = useAsync(stats, [stats]);
-  const { value: refined = null } = useAsync(refinedStats, [refinedStats]);
+  const { value: base, loading: statsPending } = useFact(stats);
+  const { value: refined } = useFact(refinedStats);
   const resolvedStats = refined ?? base;
-  const { value: trend = null, loading: sparklinePending } = useAsync(sparkline, [sparkline]);
+  const { value: trend, loading: sparklinePending } = useFact(sparkline);
 
   const showStats = statsPending || resolvedStats !== null;
   const showSparkline = sparklinePending || trend !== null;

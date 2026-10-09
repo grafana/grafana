@@ -74,7 +74,7 @@ type SimpleLogger struct {
 	showSQL bool
 }
 
-var _ core.ILogger = &SimpleLogger{}
+var _ core.ILogger = (*SimpleLogger)(nil)
 
 // NewSimpleLogger use a special io.Writer as logger output
 func NewSimpleLogger(out io.Writer) *SimpleLogger {

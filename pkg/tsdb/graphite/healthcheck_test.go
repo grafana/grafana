@@ -113,7 +113,7 @@ func Test_CheckHealth(t *testing.T) {
 
 func getPluginContext() backend.PluginContext {
 	return backend.PluginContext{
-		OrgID:               0,
+		OrgID:               0, //nolint:staticcheck // Exercise the legacy plugin context.
 		PluginID:            "graphite",
 		User:                nil,
 		AppInstanceSettings: nil,

@@ -1,5 +1,4 @@
-import { customAlphabet } from 'nanoid';
-
+import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -10,6 +9,7 @@ import { dispatch } from 'app/store/store';
 import { NotebookAnalytics } from '../analytics/main';
 import { notebookResourceFor } from '../api/notebookResource';
 import { type NotebookScene } from '../scene/NotebookScene';
+import { NotebookDeletedEvent } from '../scene/events';
 import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
 import { type Spec as NotebookSpec, defaultSpec as defaultNotebookSpec } from '../types';
 
@@ -25,14 +25,15 @@ export interface NotebookLoadError {
 }
 
 /**
- * Names a new notebook something you can tell apart from the last one, because autosave creates them
- * without asking for a name and a library of identical titles is unreadable.
+ * Names a new notebook after the moment it was created, because autosave creates them without asking
+ * for a name and a library of identical titles is unreadable.
  *
- * The token is invented here and is not the notebook's uid. It cannot be: the title is part of the
- * spec that creates the notebook, and the apiserver does not pick a name until it has created it.
- * Alphabet and length copied from the provisioning drawer, which already needed a short readable one.
+ * The format is pinned rather than left to the user's date settings so that sorting the list by title
+ * still puts these in the order they were made. Minute precision, so two notebooks created in the same
+ * minute do share a title — titles are not unique (the uid comes from the apiserver's generateName),
+ * and the seconds are noise the rest of the time.
  */
-const generateTitleToken = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
+const NEW_TITLE_DATE_FORMAT = 'YYYY-MM-DD HH:mm';
 
 export interface NotebookPageState {
   scene?: NotebookScene;
@@ -128,7 +129,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
       // Cache even when superseded: the work is already paid for, so a later visit to this uid can
       // reuse it. Only the state write has to be suppressed.
-      this.cache.set(uid, { generation: notebook.metadata.generation, scene });
+      this.cacheScene(uid, notebook.metadata.generation, scene);
 
       if (this.isSuperseded(seq)) {
         return;
@@ -167,7 +168,9 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
     const spec: NotebookSpec = {
       ...defaultNotebookSpec(),
-      title: t('notebooks.new.default-title', 'Notebook #{{token}}', { token: generateTitleToken() }),
+      title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
+        date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
+      }),
     };
 
     // Held so the page can keep this exact scene once its first save gives it a uid.
@@ -192,7 +195,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
     this.unsavedScene = undefined;
     // Into the keyed cache, so coming back to this notebook later reuses it too rather than rebuilding
     // it from a fetch. The generation is the one its create returned.
-    this.cache.set(uid, { generation: scene.autosave.state.savedGeneration, scene });
+    this.cacheScene(uid, scene.autosave.state.savedGeneration, scene);
     this.setState({ scene, isLoading: false, loadError: undefined });
 
     return true;
@@ -201,6 +204,12 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
   /** Whether a newer load (or a page teardown) has taken over since the given one started. */
   private isSuperseded(seq: number): boolean {
     return seq !== this.requestSeq;
+  }
+
+  /** Caches a scene by uid and wires it to evict itself once deleted. */
+  private cacheScene(uid: string, generation: number | undefined, scene: NotebookScene): void {
+    this.cache.set(uid, { generation, scene });
+    scene.subscribeToEvent(NotebookDeletedEvent, () => this.removeSceneCache(uid));
   }
 
   public clearState(): void {
@@ -218,7 +227,7 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
    * cache went back to being per instance, which is the regression it exists to catch.
    */
   public setSceneCacheForTests(uid: string, scene: NotebookScene): void {
-    this.cache.set(uid, { generation: undefined, scene });
+    this.cacheScene(uid, undefined, scene);
   }
 
   /** @internal -- test seam, as above. */

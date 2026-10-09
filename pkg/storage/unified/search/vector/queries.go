@@ -41,6 +41,7 @@ var (
 	sqlVectorCollectionExists            = mustTemplate("vector_collection_exists.sql")
 	sqlVectorCollectionContentVersion    = mustTemplate("vector_collection_content_version.sql")
 	sqlVectorCollectionUpdateVersion     = mustTemplate("vector_collection_update_version.sql")
+	sqlVectorCollectionUpdateFolder      = mustTemplate("vector_collection_update_folder.sql")
 	sqlVectorCollectionSearch            = mustTemplate("vector_collection_search.sql")
 	sqlVectorCollectionLexicalSearch     = mustTemplate("vector_collection_lexical_search.sql")
 	sqlVectorBackfillJobsList            = mustTemplate("vector_backfill_jobs_list.sql")
@@ -249,6 +250,22 @@ type sqlVectorCollectionUpdateVersionRequest struct {
 	Version   int
 }
 
+type sqlVectorCollectionUpdateFolderRequest struct {
+	sqltemplate.SQLTemplate
+	Resource  string
+	Namespace string
+	Model     string
+	UID       string
+	Folder    string
+}
+
+func (r *sqlVectorCollectionUpdateFolderRequest) Validate() error {
+	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
+		return fmt.Errorf("missing required fields")
+	}
+	return nil
+}
+
 func (r *sqlVectorCollectionUpdateVersionRequest) Validate() error {
 	if r.Resource == "" || r.Namespace == "" || r.Model == "" || r.UID == "" {
 		return fmt.Errorf("missing required fields")
@@ -260,13 +277,14 @@ func (r *sqlVectorCollectionUpdateVersionRequest) Validate() error {
 }
 
 type sqlVectorBackfillJobsListResponse struct {
-	ID          int64
-	Model       string
-	Resource    string
-	StoppingRV  int64
-	LastSeenKey sql.NullString
-	IsComplete  bool
-	LastError   sql.NullString
+	ID             int64
+	Model          string
+	Resource       string
+	StoppingRV     int64
+	ContentVersion int
+	LastSeenKey    sql.NullString
+	IsComplete     bool
+	LastError      sql.NullString
 }
 
 type sqlVectorBackfillJobsListRequest struct {

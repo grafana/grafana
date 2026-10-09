@@ -57,6 +57,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
 
   const savingWouldBreakSync = slotBlocksSyncFrom(selectedUid);
   const runningSyncIsBroken = Boolean(savedUid) && slotBlocksSyncFrom(savedUid);
+  const hasStagedConflict = runningSyncIsBroken || (showSave && savingWouldBreakSync);
 
   const saveDisabledReason = getSaveDisabledReason({ notReadyMessage, selectedUid, savedUid, savingWouldBreakSync });
 
@@ -131,7 +132,7 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
               </Trans>
             </Alert>
           )}
-          {(runningSyncIsBroken || (showSave && savingWouldBreakSync)) && (
+          {hasStagedConflict && (
             <StagedConflictAlert identifier={stagedConfigIdentifier} isRunningSyncBroken={runningSyncIsBroken} />
           )}
           <div className={styles.formRow}>
@@ -163,9 +164,10 @@ export function AutoSyncConfiguration({ stagedConfigIdentifier }: AutoSyncConfig
                   aria-label={t('alerting.settings.auto-sync.picker-label', 'Datasource')}
                   options={options}
                   value={selectedUid || null}
-                  // Stays selectable during a conflict: picking the staged identifier's datasource resolves it.
                   onChange={(option) => option?.value && setSelectedUid(option.value)}
-                  disabled={operatorManaged || isLoading}
+                  // Locked during a conflict too: resolving it means promoting or reverting the staged
+                  // config below, not repointing the slot from here.
+                  disabled={operatorManaged || isLoading || hasStagedConflict}
                   isLoading={isLoading}
                   width={50}
                   placeholder={t(

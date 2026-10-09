@@ -10,6 +10,8 @@ import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { type Dashboard, DashboardCursorSync, ThresholdsMode } from '@grafana/schema';
 import {
+  type DataQueryKind,
+  type Spec as DashboardV2Spec,
   type DatasourceVariableKind,
   type LibraryPanelKind,
   type PanelKind,
@@ -20,7 +22,9 @@ import {
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import config from 'app/core/config';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
+import { getLibraryPanel } from 'app/features/library-panels/state/api';
 import { createAdHocVariableAdapter } from 'app/features/variables/adhoc/adapter';
+import { SHARED_DASHBOARD_QUERY } from 'app/plugins/datasource/dashboard/constants';
 
 import { LibraryElementKind } from '../../../library-panels/types';
 import { type DashboardJson } from '../../../manage-dashboards/types';
@@ -28,6 +32,7 @@ import { variableAdapters } from '../../../variables/adapters';
 import { createConstantVariableAdapter } from '../../../variables/constant/adapter';
 import { createDataSourceVariableAdapter } from '../../../variables/datasource/adapter';
 import { createQueryVariableAdapter } from '../../../variables/query/adapter';
+import { getPanelDataSource, panelQueryKindToSceneQuery } from '../../serialization/layoutSerializers/utils';
 
 import {
   makeExportableV1,
@@ -709,6 +714,170 @@ describe('dashboard exporter v1', () => {
 });
 
 describe('dashboard exporter v2', () => {
+  it.each(['datasource', 'dashboard'])(
+    'preserves a Dashboard query with group %s through export and reload',
+    async (group) => {
+      const schemaCopy: DashboardV2Spec = JSON.parse(JSON.stringify(handyTestingSchema));
+      const sourcePanel = schemaCopy.elements['panel-1'];
+      if (sourcePanel.kind !== 'Panel') {
+        throw new Error('Expected a panel fixture');
+      }
+      sourcePanel.spec.data.spec.queries = [
+        {
+          kind: 'PanelQuery',
+          spec: {
+            refId: 'A',
+            hidden: false,
+            query: {
+              kind: 'DataQuery',
+              version: 'v0',
+              group,
+              datasource: { name: SHARED_DASHBOARD_QUERY },
+              spec: { panelId: 8 },
+            },
+          },
+        },
+      ];
+
+      const exported = await makeExportableV2(schemaCopy, true);
+      const reloaded: DashboardV2Spec = JSON.parse(JSON.stringify(exported));
+      const panel = reloaded.elements['panel-1'];
+      if (panel.kind !== 'Panel') {
+        throw new Error('Expected an exported panel');
+      }
+      expect(panel.spec.data.spec.queries[0].spec.query).toEqual({
+        kind: 'DataQuery',
+        version: 'v0',
+        group,
+        datasource: { name: '-- Dashboard --' },
+        spec: { panelId: 8 },
+      });
+      expect(getPanelDataSource(panel)).toEqual({ type: 'datasource', uid: '-- Dashboard --' });
+      expect(panelQueryKindToSceneQuery(panel.spec.data.spec.queries[0])).toEqual({
+        refId: 'A',
+        hide: false,
+        datasource: { type: group, uid: '-- Dashboard --' },
+        panelId: 8,
+      });
+    }
+  );
+
+  it('preserves Dashboard references in mixed queries while anonymizing other datasource instances', async () => {
+    const schemaCopy: DashboardV2Spec = JSON.parse(JSON.stringify(handyTestingSchema));
+    const panel = schemaCopy.elements['panel-1'];
+    if (panel.kind !== 'Panel') {
+      throw new Error('Expected a panel fixture');
+    }
+    const queries: DataQueryKind[] = [
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'datasource',
+        datasource: { name: SHARED_DASHBOARD_QUERY },
+        spec: { panelId: 8 },
+      },
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'prometheus',
+        datasource: { name: 'datasource1' },
+        spec: { expr: 'up' },
+      },
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'prometheus',
+        datasource: { name: 'datasource2' },
+        spec: { expr: 'up' },
+      },
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'grafana',
+        datasource: { name: 'grafana' },
+        spec: { queryType: 'randomWalk' },
+      },
+    ];
+    panel.spec.data.spec.queries = queries.map((query, i) => ({
+      kind: 'PanelQuery',
+      spec: { refId: String.fromCharCode(65 + i), hidden: false, query },
+    }));
+
+    const exported = await makeExportableV2(schemaCopy, true);
+    const reloaded: DashboardV2Spec = JSON.parse(JSON.stringify(exported));
+    const exportedPanel = reloaded.elements['panel-1'];
+    if (exportedPanel.kind !== 'Panel') {
+      throw new Error('Expected an exported panel');
+    }
+    expect(exportedPanel.spec.data.spec.queries.map(({ spec }) => spec.query)).toEqual([
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'datasource',
+        datasource: { name: '-- Dashboard --' },
+        spec: { panelId: 8 },
+      },
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'prometheus',
+        labels: { [ExportLabel]: 'prometheus-1', [ExportDatasourceName]: 'Production Prometheus' },
+        spec: { expr: 'up' },
+      },
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'prometheus',
+        labels: { [ExportLabel]: 'prometheus-2', [ExportDatasourceName]: 'Staging Prometheus' },
+        spec: { expr: 'up' },
+      },
+      {
+        kind: 'DataQuery',
+        version: 'v0',
+        group: 'grafana',
+        labels: { [ExportLabel]: 'grafana-1' },
+        spec: { queryType: 'randomWalk' },
+      },
+    ]);
+    expect(getPanelDataSource(exportedPanel)).toEqual({ type: 'mixed', uid: '-- Mixed --' });
+  });
+
+  it('preserves Dashboard references when inlining a library panel for external export', async () => {
+    const libraryPanel = await getLibraryPanel('test-library-panel-uid', true);
+    libraryPanel.model.datasource = { type: 'datasource', uid: SHARED_DASHBOARD_QUERY };
+    libraryPanel.model.targets = [
+      { refId: 'A', panelId: 8, datasource: { type: 'datasource', uid: SHARED_DASHBOARD_QUERY } },
+    ];
+    jest.mocked(getLibraryPanel).mockResolvedValueOnce(libraryPanel);
+    const schemaCopy: DashboardV2Spec = JSON.parse(JSON.stringify(handyTestingSchema));
+    schemaCopy.elements = {
+      library: {
+        kind: 'LibraryPanel',
+        spec: {
+          id: 123,
+          title: 'Dashboard query',
+          libraryPanel: { uid: 'test-library-panel-uid', name: 'Test Library Panel' },
+        },
+      },
+    };
+
+    const exported = await makeExportableV2(schemaCopy, true);
+    const reloaded: DashboardV2Spec = JSON.parse(JSON.stringify(exported));
+    const panel = reloaded.elements.library;
+    expect(panel.kind).toBe('Panel');
+    if (panel.kind !== 'Panel') {
+      throw new Error('Expected an inlined library panel');
+    }
+    expect(panel.spec.id).toBe(123);
+    expect(panel.spec.data.spec.queries[0].spec.query).toMatchObject({
+      group: 'datasource',
+      datasource: { name: '-- Dashboard --' },
+      spec: { panelId: 8 },
+    });
+    expect(panel.spec.data.spec.queries[0].spec.query.labels).toBeUndefined();
+    expect(getPanelDataSource(panel)).toEqual({ type: 'datasource', uid: '-- Dashboard --' });
+  });
+
   const setup = async () => {
     // Making a deep copy here because original JSON is mutated by the exporter
     const schemaCopy = JSON.parse(JSON.stringify(handyTestingSchema));

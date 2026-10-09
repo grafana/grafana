@@ -92,9 +92,8 @@ func (c *restClient) EmbedTexts(ctx context.Context, texts []string, dimensions 
 func retryableError(err error, now time.Time) error {
 	var netErr net.Error
 	retryable := errors.Is(err, context.DeadlineExceeded) || (errors.As(err, &netErr) && netErr.Timeout())
-	var apiErr *openai.Error
 	var delay time.Duration
-	if errors.As(err, &apiErr) {
+	if apiErr, ok := errors.AsType[*openai.Error](err); ok {
 		switch apiErr.StatusCode {
 		case http.StatusRequestTimeout, http.StatusConflict, http.StatusTooManyRequests,
 			http.StatusInternalServerError, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:

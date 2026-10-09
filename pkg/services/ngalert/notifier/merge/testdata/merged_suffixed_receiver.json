@@ -119,21 +119,10 @@
         ]
       },
       {
-        "name": "test-webhook",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "12345",
-            "name": "",
-            "type": "webhook",
-            "disableResolveMessage": false,
-            "settings": {
-              "url": "http://localhost/api/v1/alerts"
-            }
-          }
-        ]
+        "name": "grafana-default-email_mimir-12345"
       },
       {
-        "name": "grafana-default-email_mimir-12345"
+        "name": "grafana-default-email_mimir-12345_01"
       },
       {
         "name": "recv",
@@ -186,7 +175,18 @@
         ]
       },
       {
-        "name": "grafana-default-email_mimir-12345_01"
+        "name": "test-webhook",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "12345",
+            "name": "",
+            "type": "webhook",
+            "disableResolveMessage": false,
+            "settings": {
+              "url": "http://localhost/api/v1/alerts"
+            }
+          }
+        ]
       }
     ]
   },

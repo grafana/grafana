@@ -14,7 +14,7 @@ type LocalDecryptClient struct {
 	decryptStorage contracts.DecryptStorage
 }
 
-var _ decrypt.DecryptService = &LocalDecryptClient{}
+var _ decrypt.DecryptService = (*LocalDecryptClient)(nil)
 
 func NewLocalDecryptClient(decryptStorage contracts.DecryptStorage) (*LocalDecryptClient, error) {
 	return &LocalDecryptClient{

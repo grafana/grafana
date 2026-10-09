@@ -118,9 +118,8 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         5,
-		IndexDeletedDocuments: true,
+		Root:          t.TempDir(),
+		FileThreshold: 5,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource(group, res): search.DashboardSearchFieldsProviderForTest(),
 		}),

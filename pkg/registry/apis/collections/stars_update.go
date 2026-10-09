@@ -28,8 +28,8 @@ type starsREST struct {
 }
 
 var (
-	_ = rest.Connecter(&starsREST{})
-	_ = rest.StorageMetadata(&starsREST{})
+	_ rest.Connecter       = (*starsREST)(nil)
+	_ rest.StorageMetadata = (*starsREST)(nil)
 )
 
 func (r *starsREST) New() runtime.Object {

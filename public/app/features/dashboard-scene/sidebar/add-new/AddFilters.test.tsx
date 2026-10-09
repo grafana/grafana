@@ -15,6 +15,10 @@ jest.mock('../../actions/variable/addVariable', () => ({
 const addVariableMock = jest.mocked(addVariable);
 
 describe('openAddFilterForm', () => {
+  let deactivate: (() => void) | undefined;
+
+  afterEach(() => deactivate?.());
+
   beforeEach(() => {
     addVariableMock.mockClear();
   });
@@ -22,6 +26,7 @@ describe('openAddFilterForm', () => {
   it('adds an adhoc filter to the dashboard variable set', async () => {
     const variableSet = new SceneVariableSet({ variables: [] });
     const dashboard = new DashboardScene({ $variables: variableSet, isEditing: true });
+    deactivate = dashboard.state.sidebar.activate();
     jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     await openAddFilterForm(dashboard, dashboard);
@@ -43,6 +48,7 @@ describe('openAddFilterForm', () => {
       body: new RowsLayoutManager({ rows: [row] }),
       isEditing: true,
     });
+    deactivate = dashboard.state.sidebar.activate();
     jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     await openAddFilterForm(dashboard, row);
@@ -60,6 +66,7 @@ describe('openAddFilterForm', () => {
       body: new RowsLayoutManager({ rows: [row] }),
       isEditing: true,
     });
+    deactivate = dashboard.state.sidebar.activate();
     jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     expect(row.state.$variables).toBeUndefined();
@@ -84,11 +91,31 @@ describe('openAddFilterForm', () => {
       body: new RowsLayoutManager({ rows: [row] }),
       isEditing: true,
     });
+    deactivate = dashboard.state.sidebar.activate();
     jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     await openAddFilterForm(dashboard, row);
 
     const { addedObject } = addVariableMock.mock.calls[0][0];
     expect(addedObject.state.name).not.toBe('filter0');
+  });
+
+  it('does not add a filter or variable set after a newer selection during variable creation', async () => {
+    const row = new RowItem({ layout: AutoGridLayoutManager.createEmpty() });
+    const dashboard = new DashboardScene({
+      body: new RowsLayoutManager({ rows: [row] }),
+      isEditing: true,
+    });
+    const sidebar = dashboard.state.sidebar;
+    deactivate = sidebar.activate();
+
+    const pending = openAddFilterForm(dashboard, row);
+    sidebar.selectObject(dashboard);
+    await pending;
+
+    expect(sidebar.getSelectedObject()).toBe(dashboard);
+    expect(sidebar.state.openPane?.getId()).toBe('element');
+    expect(row.state.$variables).toBeUndefined();
+    expect(addVariableMock).not.toHaveBeenCalled();
   });
 });

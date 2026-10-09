@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apiserver/pkg/admission"
 
+	provisioningadmission "github.com/grafana/grafana/apps/provisioning/pkg/apis/admission"
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -33,6 +34,10 @@ func (m *AdmissionMutator) Mutate(ctx context.Context, a admission.Attributes, o
 	obj := a.GetObject()
 	if obj == nil {
 		return nil
+	}
+
+	if a.GetSubresource() != "" && !provisioningadmission.SpecAndSecureChanged(a) {
+		return nil // pure status patch: spec/secure untouched, nothing to (re)mutate
 	}
 
 	r, ok := obj.(*provisioning.Repository)

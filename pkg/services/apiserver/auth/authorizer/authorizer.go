@@ -9,6 +9,8 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/authorization/authorizerfactory"
 	"k8s.io/apiserver/pkg/authorization/union"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // NewAllowAuthorizer returns an authorizer that systematically allows access for resource requests.
@@ -87,11 +89,22 @@ func (a *GrafanaAuthorizer) Unregister(gv schema.GroupVersion) {
 	delete(a.apis, gv.String())
 }
 
+// IsListKeysRequest reports whether attr is a call to a kind's list-keys endpoint.
+//
+// Exported because the multi-tenant apiserver has its own chain and has to apply
+// the same rule.
+func IsListKeysRequest(attr authorizer.Attributes) bool {
+	if !attr.IsResourceRequest() || attr.GetVerb() != "create" || attr.GetSubresource() != "" {
+		return false
+	}
+	return attr.GetName() == utils.ListKeysPathSegment
+}
+
 // Authorize implements authorizer.Authorizer.
 func (a *GrafanaAuthorizer) Authorize(ctx context.Context, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
 	// Restated before the chain, not inside one link: the org role authorizer
 	// allows a viewer to list but not to create.
-	if IsSearchRequest(attr) {
+	if IsSearchRequest(attr) || IsListKeysRequest(attr) {
 		attr = AsReadAttributes(attr)
 	}
 	return a.auth.Authorize(ctx, attr)

@@ -48,6 +48,14 @@ describe('getParsedCounts', () => {
     });
   });
 
+  it('passes variable counts through unchanged', () => {
+    const counts: ResourceStats[] = [{ group: 'dashboard.grafana.app', resource: 'variables', count: 4 }];
+
+    expect(getParsedCounts(counts)).toEqual({
+      variables: 4,
+    });
+  });
+
   it('passes recording rule counts through unchanged', () => {
     const counts: ResourceStats[] = [
       { group: 'rules.alerting.grafana.app', resource: 'alertrules', count: 2 },

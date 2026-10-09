@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Controller, FormProvider, type SubmitHandler, useForm, useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
+import {
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isValidRecordingRulesTarget,
+} from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   Box,
   Button,
@@ -26,11 +29,7 @@ import { ProvisioningAwareFolderPicker } from 'app/features/provisioning/compone
 
 import { getAlertRulesNavId } from '../../navigation/useAlertRulesNav';
 import { type Folder } from '../../types/rule-form';
-import {
-  DataSourceType,
-  isSupportedExternalPrometheusFlavoredRulesSourceType,
-  isValidRecordingRulesTarget,
-} from '../../utils/datasource';
+import { DataSourceType } from '../../utils/datasource';
 import { DOCS_URL_ALERTING_MIGRATION } from '../../utils/docs';
 import { stringifyErrorLike } from '../../utils/misc';
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
@@ -86,7 +85,6 @@ const ImportToGMARules = () => {
   const [selectedDatasourceName, importSource] = watch(['selectedDatasourceName', 'importSource']);
 
   const [formImportPayload, setFormImportPayload] = useState<ImportFormValues | null>(null);
-  const isImportYamlEnabled = config.featureToggles.alertingImportYAMLUI;
 
   const onSubmit: SubmitHandler<ImportFormValues> = async (formData) => {
     setFormImportPayload(formData);
@@ -98,15 +96,12 @@ const ImportToGMARules = () => {
       description: t('alerting.import-to-gma.source.datasource-description', 'Import rules from existing data sources'),
       value: 'datasource',
     },
-  ];
-
-  if (isImportYamlEnabled) {
-    importSourceOptions.push({
+    {
       label: t('alerting.import-to-gma.source.yaml', 'Prometheus YAML file'),
       description: t('alerting.import-to-gma.source.yaml-description', 'Import rules from a Prometheus YAML file.'),
       value: 'yaml',
-    });
-  }
+    },
+  ];
 
   return (
     <AlertingPageWrapper
@@ -141,7 +136,7 @@ const ImportToGMARules = () => {
 
               {importSource === 'datasource' && <DataSourceField />}
 
-              {isImportYamlEnabled && importSource === 'yaml' && (
+              {importSource === 'yaml' && (
                 <>
                   <YamlFileUpload />
                   <YamlTargetDataSourceField />

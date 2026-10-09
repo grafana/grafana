@@ -536,11 +536,11 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 		} else {
 			var sqlType core.SQLType
 			if fieldValue.CanAddr() {
-				if _, ok := fieldValue.Addr().Interface().(core.Conversion); ok {
+				if _, ok := reflect.TypeAssert[core.Conversion](fieldValue.Addr()); ok {
 					sqlType = core.SQLType{Name: core.Text}
 				}
 			}
-			if _, ok := fieldValue.Interface().(core.Conversion); ok {
+			if _, ok := reflect.TypeAssert[core.Conversion](fieldValue); ok {
 				sqlType = core.SQLType{Name: core.Text}
 			} else {
 				sqlType = core.Type2SQLType(fieldType)

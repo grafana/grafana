@@ -3,9 +3,9 @@ import { memo, type ReactNode, useCallback, useMemo, useState } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import {
-  ClipboardButton,
   type Column,
   Dropdown,
   IconButton,
@@ -18,12 +18,11 @@ import {
   useStyles2,
 } from '@grafana/ui';
 
-import { NotebookAnalytics } from '../analytics/main';
-import { NOTEBOOK_DELETE_SOURCE, NOTEBOOK_LINK_COPY_SOURCE } from '../analytics/types';
+import { NOTEBOOK_DELETE_SOURCE } from '../analytics/types';
 import { DeleteNotebookModal } from '../delete/DeleteNotebookModal';
 import { useDeleteNotebook } from '../delete/useDeleteNotebook';
 import { canEditNotebooks } from '../permissions';
-import { notebookEditHref, notebookShareUrl, notebookViewUrl } from '../urls';
+import { notebookEditHref, notebookViewUrl } from '../urls';
 
 import { NotebookRowMenu } from './NotebookRowMenu';
 import { type NotebookRow } from './useNotebooksList';
@@ -123,7 +122,17 @@ export function NotebooksTable({ notebooks, onTagClick }: Props) {
         ...withoutSkeleton(layout.title),
         sortType: 'string',
         cell: ({ row: { original } }) => (
-          <TextLink color="primary" inline={false} href={notebookViewUrl(original.uid)} title={original.title}>
+          <TextLink
+            color="primary"
+            inline={false}
+            href={notebookViewUrl(original.uid)}
+            title={original.title}
+            // This is the title cell, not the row - InteractiveTable gives no per-row prop to
+            // attach a testid to the actual <tr>. Fine for the visibility checks this is used for
+            // today, but a test that needs to scope off "the row" to reach a sibling cell won't
+            // be able to from this locator.
+            data-testid={selectors.pages.Notebooks.List.table.row(original.uid)}
+          >
             {original.title}
           </TextLink>
         ),
@@ -280,15 +289,6 @@ const NotebookRowActions = memo(function NotebookRowActions({
           {t('notebooks.list.table.edit', 'Edit')}
         </LinkButton>
       )}
-      <ClipboardButton
-        variant="secondary"
-        size="sm"
-        icon="link"
-        getText={() => notebookShareUrl(uid)}
-        onClipboardCopy={() => NotebookAnalytics.linkCopied(uid, NOTEBOOK_LINK_COPY_SOURCE.NOTEBOOK_LIST)}
-      >
-        {t('notebooks.list.table.copy-link', 'Copy link')}
-      </ClipboardButton>
       <Dropdown overlay={<NotebookRowMenu uid={uid} onDelete={() => onDelete(uid, title)} />} placement="bottom-end">
         <IconButton
           name="ellipsis-v"
@@ -298,6 +298,7 @@ const NotebookRowActions = memo(function NotebookRowActions({
           aria-haspopup="menu"
           // No aria-label alongside: IconButton uses a string tooltip as the accessible name.
           tooltip={t('notebooks.list.table.more-actions', 'More actions')}
+          data-testid={selectors.pages.Notebooks.List.table.rowMenuButton(uid)}
         />
       </Dropdown>
     </Stack>

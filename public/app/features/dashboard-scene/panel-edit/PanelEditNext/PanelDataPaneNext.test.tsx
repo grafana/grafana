@@ -485,6 +485,38 @@ describe('PanelDataPaneNext', () => {
         expect(mockTransformer.setState).not.toHaveBeenCalled();
       });
     });
+
+    describe('transformations with a static refId', () => {
+      const named: DataTransformerConfig = { id: 'reduce', refId: 'T-A', options: {} };
+      const unnamed: DataTransformerConfig = { id: 'groupBy', options: {} };
+
+      let namedTransformer: SceneDataTransformer;
+
+      beforeEach(() => {
+        namedTransformer = new SceneDataTransformer({
+          transformations: [named, unnamed],
+          $data: mockQueryRunner,
+        });
+
+        jest.spyOn(namedTransformer, 'setState');
+        jest.spyOn(namedTransformer, 'reprocessTransformations').mockImplementation(() => {});
+        mockPanel.state.$data = namedTransformer;
+      });
+
+      it('should keep the named transformation when another one is added', () => {
+        dataPane.addTransformation('limit');
+
+        expect(namedTransformer.setState).toHaveBeenCalledWith({
+          transformations: [named, unnamed, { id: 'limit', options: {} }],
+        });
+      });
+
+      it('should delete by an index that counts the named transformation', () => {
+        dataPane.deleteTransformation(1);
+
+        expect(namedTransformer.setState).toHaveBeenCalledWith({ transformations: [named] });
+      });
+    });
   });
 
   describe('addQuery', () => {
@@ -1727,6 +1759,22 @@ describe('PanelDataPaneNext', () => {
         ],
       });
       expect(mockQueryRunner.runQueries).toHaveBeenCalled();
+    });
+
+    it('bulkToggleTransformationsDisabled leaves a transformation with a static refId in place', () => {
+      const named: DataTransformerConfig = { id: 'reduce', refId: 'T-A', options: {} };
+      const namedTransformer = new SceneDataTransformer({
+        transformations: [named, { id: 'groupBy', options: {} }],
+        $data: mockQueryRunner,
+      });
+      jest.spyOn(namedTransformer, 'setState');
+      mockPanel.state.$data = namedTransformer;
+
+      dataPane.bulkToggleTransformationsDisabled([1], true);
+
+      expect(namedTransformer.setState).toHaveBeenCalledWith({
+        transformations: [named, { id: 'groupBy', options: {}, disabled: true }],
+      });
     });
   });
 });

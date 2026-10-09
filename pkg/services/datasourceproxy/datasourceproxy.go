@@ -138,8 +138,10 @@ func (p *DataSourceProxyService) proxyDatasourceRequest(c *contextmodel.ReqConte
 	}
 
 	proxyPath := getProxyPath(c)
+	// Single-tenant Grafana mints its own id token at the edge, so requester always carries one
+	// and the derive fallback is never needed on this classic monolith path.
 	proxy, err := pluginproxy.NewDataSourceProxy(loader, plugin.Routes, hc, proxyPath, p.proxyCfg,
-		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features)
+		p.HTTPClientProvider, p.OAuthTokenService, p.tracer, p.features, nil)
 	if err != nil {
 		if _, ok := errors.AsType[validation.URLValidationError](err); ok {
 			c.JsonApiErr(http.StatusBadRequest, fmt.Sprintf("Invalid data source URL: %q", ds.URL), err)

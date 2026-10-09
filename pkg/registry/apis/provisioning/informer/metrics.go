@@ -9,6 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/cache"
 
 	usinformer "github.com/grafana/grafana/pkg/storage/unified/informer"
@@ -211,4 +212,23 @@ func objectRV(obj any) int64 {
 		return 0
 	}
 	return rv
+}
+
+// newRelistProjectionRecorder returns a recorder for which projection served a
+// re-list. Its own collector rather than a field on informerMetrics, because the
+// delivery metrics there are registered by whichever delta source owns them and
+// this measures something only the connection re-list reports.
+func newRelistProjectionRecorder(reg prometheus.Registerer, gvr schema.GroupVersionResource) func(keysOnly bool) {
+	counter := promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		Name: "grafana_provisioning_informer_relist_projection_total",
+		Help: "Re-lists by what the server returned: keys is the keys-only projection (identities, no object bodies), objects is the full list. Reports whether keys_only_relist took effect, and shows the fallback when a server does not serve the projection.",
+	}, []string{"group", "resource", "projection"})
+
+	return func(keysOnly bool) {
+		projection := "objects"
+		if keysOnly {
+			projection = "keys"
+		}
+		counter.WithLabelValues(gvr.Group, gvr.Resource, projection).Inc()
+	}
 }

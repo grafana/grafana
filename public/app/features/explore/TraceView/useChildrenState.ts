@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 
 import { type TraceSpan } from './components/types/trace';
+import spanAncestorIds from './components/utils/span-ancestor-ids';
 
 /**
  * Children state means whether spans are collapsed or not. Also provides some functions to manipulate that state.
@@ -91,6 +92,21 @@ export function useChildrenState() {
     [childrenHiddenIDs]
   );
 
+  const revealSpan = useCallback(
+    function revealSpan(span: TraceSpan) {
+      const ancestorIds = spanAncestorIds(span);
+      if (!ancestorIds.some((id) => childrenHiddenIDs.has(id))) {
+        return;
+      }
+      const next = new Set(childrenHiddenIDs);
+      for (const id of ancestorIds) {
+        next.delete(id);
+      }
+      setChildrenHiddenIDs(next);
+    },
+    [childrenHiddenIDs]
+  );
+
   return {
     childrenHiddenIDs,
     expandOne,
@@ -98,6 +114,7 @@ export function useChildrenState() {
     expandAll,
     collapseAll,
     childrenToggle,
+    revealSpan,
   };
 }
 

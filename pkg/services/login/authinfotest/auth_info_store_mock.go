@@ -14,6 +14,24 @@ type MockAuthInfoStore struct {
 	mock.Mock
 }
 
+// DeleteAuthInfo provides a mock function with given fields: ctx, cmd
+func (_m *MockAuthInfoStore) DeleteAuthInfo(ctx context.Context, cmd *login.DeleteAuthInfoCommand) error {
+	ret := _m.Called(ctx, cmd)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAuthInfo")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *login.DeleteAuthInfoCommand) error); ok {
+		r0 = rf(ctx, cmd)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // DeleteUserAuthInfo provides a mock function with given fields: ctx, userID
 func (_m *MockAuthInfoStore) DeleteUserAuthInfo(ctx context.Context, userID int64) error {
 	ret := _m.Called(ctx, userID)

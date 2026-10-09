@@ -1,5 +1,6 @@
 import { type VariableType } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 import { type GroupConditionConditionType } from '../conditional-rendering/group/types';
 import {
@@ -32,6 +33,16 @@ export const DashboardInteractions = {
       Partial<{ version_before_migration: number | undefined }>
   ) => {
     reportDashboardInteraction('init_dashboard_completed', properties);
+  },
+
+  textPanelUsage: (properties: {
+    mermaid_count: number;
+    handlebars_count: number;
+    data_macro_count: number;
+    per_row_count: number;
+    dashboard_uid?: string;
+  }) => {
+    reportDashboardInteraction('text_panel_usage', properties);
   },
 
   dashboardCopied: (properties: { name: string; url: string; diff_count?: number }) => {
@@ -184,7 +195,16 @@ export const DashboardInteractions = {
   },
 
   panelActionClicked(
-    item: 'configure' | 'configure_dropdown' | 'edit' | 'copy' | 'duplicate' | 'delete' | 'view' | 'use_library_panel',
+    item:
+      | 'configure'
+      | 'configure_dropdown'
+      | 'edit'
+      | 'settings'
+      | 'copy'
+      | 'duplicate'
+      | 'delete'
+      | 'view'
+      | 'use_library_panel',
     id: number,
     source: 'panel' | 'edit_pane' | 'edit_popover' | 'keyboard',
     panelType?: string
@@ -207,11 +227,11 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'add_panel', source, target, action });
   },
-  trackGroupRowClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_row' });
+  trackGroupRowClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_row', source });
   },
-  trackGroupTabClick() {
-    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab' });
+  trackGroupTabClick(source: 'canvas' | 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: 'group_tab', source });
   },
   trackUngroupClick() {
     reportDashboardInteraction('edit_action_clicked', { item: 'ungroup' });
@@ -223,8 +243,8 @@ export const DashboardInteractions = {
   ) {
     reportDashboardInteraction('edit_action_clicked', { item: 'paste_panel', source, target, action });
   },
-  trackDeleteDashboardElement(elementType: string) {
-    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}` });
+  trackDeleteDashboardElement(elementType: string, source: 'edit_pane' | 'edit_popover') {
+    reportDashboardInteraction('edit_action_clicked', { item: `remove_${elementType.toLowerCase()}`, source });
   },
   panelLinkClicked: (properties?: Record<string, unknown>) => {
     reportDashboardInteraction('panelheader_datalink_clicked', properties);
@@ -292,12 +312,6 @@ export const DashboardInteractions = {
   },
   exportCopyJsonClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_export_copy_json_clicked', properties);
-  },
-  exportSaveJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_save_json_clicked', properties);
-  },
-  exportViewJsonClicked: (properties?: Record<string, unknown>) => {
-    reportSharingInteraction('sharing_export_view_json_clicked', properties);
   },
   generatePublicDashboardUrlClicked: (properties?: Record<string, unknown>) => {
     reportSharingInteraction('sharing_public_generate_url_clicked', properties);
@@ -412,7 +426,7 @@ const reportDashboardInteraction = (
   interactionPrefix = 'dashboards'
 ) => {
   const meta = isScenesContextSet ? { scenesView: true } : {};
-  const isDynamicDashboard = config.featureToggles?.dashboardNewLayouts ?? false;
+  const isDynamicDashboard = isDashboardNewLayoutsEnabled();
 
   if (properties) {
     reportInteraction(`${interactionPrefix}_${name}`, { ...properties, ...meta, isDynamicDashboard });

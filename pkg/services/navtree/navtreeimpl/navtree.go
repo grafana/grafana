@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/notebooks"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -307,15 +308,14 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 }
 
 // buildNotebooksNavLink returns the top-level Notebooks section, or nil when the feature is off
-// or the user cannot read dashboards. Notebooks reuse dashboard RBAC actions, so an unscoped
-// dashboards:read is what grants access to the list page; the apiserver then filters the list
-// down to the notebooks the user may actually see.
+// or the user cannot read notebooks. An unscoped notebooks:read is what grants access to the list
+// page; the apiserver then filters the list down to the notebooks the user may actually see.
 func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree.NavLink {
 	if !c.IsSignedIn {
 		return nil
 	}
 
-	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(dashboards.ActionDashboardsRead)) {
+	if !ac.HasAccess(s.accessControl, c)(ac.EvalPermission(notebooks.ActionNotebooksRead)) {
 		return nil
 	}
 
@@ -331,7 +331,7 @@ func (s *ServiceImpl) buildNotebooksNavLink(c *contextmodel.ReqContext) *navtree
 	return &navtree.NavLink{
 		Text:       "Notebooks",
 		Id:         navtree.NavIDNotebooks,
-		SubTitle:   "Investigation notebooks created from workspaces, dashboards, alerts, and incidents.",
+		SubTitle:   "Create and manage notebooks to tell a story with your data",
 		Icon:       "book",
 		SortWeight: navtree.WeightNotebooks,
 		Url:        s.cfg.AppSubURL + "/notebooks",
@@ -379,7 +379,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 		if openfeature.NewDefaultClient().Boolean(c.Req.Context(), featuremgmt.FlagGrafanaDashboardGlobalVariables, false, openfeature.TransactionContext(c.Req.Context())) &&
 			hasAccess(ac.EvalPermission(ac.ActionVariablesRead)) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Variables",
+				Text:     "Cross-dashboard variables",
 				SubTitle: "Template variables shared across dashboards, globally or per folder",
 				Id:       "dashboards/variables",
 				Url:      s.cfg.AppSubURL + "/dashboards/variables",

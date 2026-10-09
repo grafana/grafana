@@ -22,17 +22,6 @@ labels:
 title: Manage notification templates
 menuTitle: Manage templates
 weight: 101
-refs:
-  notification-template-reference:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/reference/
-  notification-template-examples:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/examples/
 ---
 
 # Manage notification templates
@@ -95,7 +84,7 @@ To create a notification template group that contains more than one notification
 
 1. Save your changes.
 
-For more details on how to write notification templates, refer to the [template reference](ref:notification-template-reference) and [examples](ref:notification-template-examples).
+For more details on how to write notification templates, refer to the [template reference](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/reference/) and [examples](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/).
 
 ## Preview a notification template
 

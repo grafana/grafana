@@ -1,7 +1,6 @@
 import { css, cx } from '@emotion/css';
 import { type PropsWithChildren, useEffect, useMemo, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { useCopyToClipboard } from 'react-use';
 
 import { type TemplateGroupTemplateKind } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
@@ -16,6 +15,7 @@ import {
   Stack,
   Text,
   TextArea,
+  copyTextToClipboard,
   useStyles2,
 } from '@grafana/ui';
 import {
@@ -142,7 +142,6 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
   const [templateOption, setTemplateOption] = useState<TemplateFieldOption | undefined>(
     valueInFormIsCustom ? 'Custom' : 'Existing'
   );
-  const [_, copyToClipboard] = useCopyToClipboard();
 
   const templateOptions: Array<SelectableValue<TemplateFieldOption>> = [
     {
@@ -254,7 +253,9 @@ export function TemplateSelector({ onSelect, onClose, option, valueInForm, filte
                   'alerting.template-selector.tooltip-copy',
                   'Copy selected notification template to clipboard. You can use it in the custom tab.'
                 )}
-                onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
+                onClick={() =>
+                  copyTextToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '').catch()
+                }
                 name="copy"
               />
             </Stack>

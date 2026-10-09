@@ -3,11 +3,14 @@ package usage
 import (
 	"context"
 	"errors"
+	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
@@ -26,6 +29,44 @@ func managedCount(kind string, count int64) *resourcepb.CountManagedObjectsRespo
 		Items: []*resourcepb.CountManagedObjectsResponse_ResourceCount{
 			{Kind: kind, Count: count},
 		},
+	}
+}
+
+func TestMetricCollector_CountManagedObjectsErrors(t *testing.T) {
+	result := &resourcepb.ErrorResult{
+		Code: http.StatusNotFound, Reason: string(metav1.StatusReasonNotFound), Message: "namespace not found",
+		Details: &resourcepb.ErrorDetails{
+			Kind: "namespaces", Name: "default", Uid: "uid",
+			Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueNotFound", Field: "namespace", Message: "not found"}},
+		},
+	}
+	st, err := status.New(codes.NotFound, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	transportErr := errors.New("transport failed")
+	for _, tc := range []struct {
+		name     string
+		response *resourcepb.CountManagedObjectsResponse
+		err      error
+	}{
+		{name: "embedded", response: &resourcepb.CountManagedObjectsResponse{Error: result}},
+		{name: "grpc details", err: st.Err()},
+		{name: "ordinary transport", err: transportErr},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			unified := resource.NewMockResourceClient(t)
+			unified.EXPECT().CountManagedObjects(mock.Anything, &resourcepb.CountManagedObjectsRequest{Namespace: "default"}).Return(tc.response, tc.err).Once()
+			repoLister := func(context.Context) ([]provisioning.Repository, error) {
+				t.Fatal("must not list repositories after count failure")
+				return nil, nil
+			}
+			fn := MetricCollector(tracing.NewNoopTracerService(), nil, repoLister, nil, unified)
+			metrics, err := fn(context.Background())
+			require.ErrorContains(t, err, "count managed objects on namespace default:")
+			require.Empty(t, metrics)
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			}
+		})
 	}
 }
 

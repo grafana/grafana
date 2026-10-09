@@ -533,7 +533,6 @@ func TestUpdateMuteTimings(t *testing.T) {
 						},
 					},
 				},
-				Receivers: nil,
 			},
 		}
 	}
@@ -1071,7 +1070,6 @@ func TestDeleteMuteTimings(t *testing.T) {
 						ActiveTimeIntervals: []string{usedActiveTiming},
 					},
 				},
-				Receivers: nil,
 			},
 			ManagedRoutes: map[string]*v1.Route{
 				"managed-route": {

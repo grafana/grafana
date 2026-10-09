@@ -3,7 +3,7 @@
 package v0alpha1
 
 // Exactly one key must be set. The compatibility handler accepts only a
-// text/filter leaf or a top-level "and" of those leaves.
+// text/filter/regex leaf or a top-level "and" of those leaves.
 type ListRecordingRuleSearchRulesV0alpha1RequestSearchWhereNode struct {
 	And    []ListRecordingRuleSearchRulesV0alpha1RequestSearchWhereNode `json:"and,omitempty"`
 	Or     []ListRecordingRuleSearchRulesV0alpha1RequestSearchWhereNode `json:"or,omitempty"`
@@ -11,6 +11,7 @@ type ListRecordingRuleSearchRulesV0alpha1RequestSearchWhereNode struct {
 	Text   *ListRecordingRuleSearchRulesV0alpha1RequestSearchTextLeaf   `json:"text,omitempty"`
 	Filter *ListRecordingRuleSearchRulesV0alpha1RequestSearchFilterLeaf `json:"filter,omitempty"`
 	Range  *ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf  `json:"range,omitempty"`
+	Regex  *ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf  `json:"regex,omitempty"`
 	Exists *ListRecordingRuleSearchRulesV0alpha1RequestSearchExistsLeaf `json:"exists,omitempty"`
 }
 
@@ -78,6 +79,25 @@ func NewListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf() *ListRecord
 // OpenAPIModelName returns the OpenAPI model name for ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf.
 func (ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf) OpenAPIModelName() string {
 	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestSearchRangeLeaf"
+}
+
+// Supported on the "labels" field only, as "key=<value regex>": the key is
+// literal, and the value regex matches the whole label value, case-sensitively
+// unless it starts with (?i). A missing label is matched as an empty value.
+type ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf struct {
+	Field   string `json:"field"`
+	Pattern string `json:"pattern"`
+	Negate  *bool  `json:"negate,omitempty"`
+}
+
+// NewListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf creates a new ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf object.
+func NewListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf() *ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf {
+	return &ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf{}
+}
+
+// OpenAPIModelName returns the OpenAPI model name for ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf.
+func (ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf) OpenAPIModelName() string {
+	return "com.github.grafana.grafana.apps.alerting.rules.pkg.apis.alerting.v0alpha1.ListRecordingRuleSearchRulesV0alpha1RequestSearchRegexLeaf"
 }
 
 // Retained for generic schema compatibility; rejected by the compatibility handler.

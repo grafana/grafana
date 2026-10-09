@@ -1,45 +1,35 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
-import { type SelectableValue } from '@grafana/data';
+import {
+  RoutingTreeSelector,
+  findRoutingTreeByName,
+  isDefaultRoutingTree,
+  useRoutingTrees,
+} from '@grafana/alerting/unstable';
+import { type RoutingTree } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { Badge, Box, Button, Field, Select, Stack, Text, TextLink } from '@grafana/ui';
-import { type Route } from 'app/plugins/datasource/alertmanager/types';
+import { Badge, Box, Button, Field, Icon, Stack, Text, TextLink } from '@grafana/ui';
 
 import { type RuleFormValues } from '../../../types/rule-form';
 import { ALERTING_PATHS } from '../../../utils/navigation';
-import {
-  NAMED_ROOT_LABEL_NAME,
-  useListNotificationPolicyRoutes,
-} from '../../notification-policies/useNotificationPolicyRoute';
-
-/**
- * Check if a policy is the default policy by looking at its object_matchers.
- * The default policy has a matcher for __grafana_managed_route__ with an empty value.
- */
-function isDefaultPolicy(policy: Route): boolean {
-  return policy.object_matchers?.some(([label, , value]) => label === NAMED_ROOT_LABEL_NAME && value === '') ?? false;
-}
+import { createRelativeUrl } from '../../../utils/url';
 
 /**
  * PolicyTreeSelector - A component to select the notification policy tree for an alert rule.
  *
  * When multiple policies are enabled, this component allows users to select which policy tree
- * should handle the routing for the alert rule. The selection is stored as a label
- * `__grafana_managed_route__` on the rule.
+ * should handle the routing for the alert rule. The selection is stored via the `selectedPolicy`
+ * form field, which is saved to the rule's dedicated notification_settings.policy field.
  *
  * UX behavior:
  * - For new rules or rules using the default policy: shows a collapsed view with a "Change" button
  * - For existing rules with a custom policy: shows the dropdown directly
- * - A "Reset to default" button allows quickly returning to the default policy
+ * - A policy that isn't in the dropdown's list is kept and flagged with a warning, rather than
+ *   being silently replaced
  */
 export function PolicyTreeSelector() {
-  const usePolicyRoutingSettings = config.featureToggles.alertingPolicyRoutingSettings;
-
-  const { watch, setValue, getValues, control } = useFormContext<RuleFormValues>();
-
-  const labels = watch('labels');
+  const { control } = useFormContext<RuleFormValues>();
 
   const { field: selectedPolicyField } = useController({
     name: 'selectedPolicy',
@@ -47,28 +37,21 @@ export function PolicyTreeSelector() {
     defaultValue: '',
   });
 
-  const { currentData: policies, isLoading, error } = useListNotificationPolicyRoutes();
+  // RoutingTreeSelector calls this same hook, so both share a single request.
+  const { trees: policies, isLoading, isError } = useRoutingTrees();
 
-  // A rule routed via notification_settings.policy carries a selectedPolicy value but no legacy label.
-  // They must keep editing through the policy field even when the toggle is OFF, so the two routing mechanisms never coexist.
-  const [isPolicyFieldRule] = useState(
-    () =>
-      usePolicyRoutingSettings ||
-      (Boolean(selectedPolicyField.value) && !labels.some((label) => label.key === NAMED_ROOT_LABEL_NAME))
-  );
-
-  // Resolve the current value from the routing mechanism this rule actually uses. Policy-field rules
-  // must read selectedPolicy only: the legacy label can linger in form state (it is stripped at DTO
-  // time, not on edit), so falling back to it would mask a reset-to-default with the stale value.
-  const currentPolicyValue = useMemo(() => {
-    if (isPolicyFieldRule) {
-      return selectedPolicyField.value || '';
-    }
-    const legacyLabelValue = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME)?.value;
-    return legacyLabelValue || '';
-  }, [isPolicyFieldRule, selectedPolicyField.value, labels]);
+  // The legacy label is migrated into selectedPolicy (and stripped from labels) at read time
+  // (see resolveSelectedPolicyAndLabels in rule-form.ts), so editing always goes through the field.
+  const currentPolicyValue = selectedPolicyField.value || '';
 
   const isUsingDefaultPolicy = currentPolicyValue === '';
+
+  // The rule can name a tree the list doesn't contain. The combobox still shows the name, which on
+  // its own is indistinguishable from a valid pick, so warn instead of quietly replacing it - we
+  // can't tell a deleted tree from one this user isn't allowed to read, and guessing either way
+  // would mean rewriting someone's routing behind their back.
+  const isPolicyMissingFromList =
+    !isLoading && policies.length > 0 && !isUsingDefaultPolicy && !findRoutingTreeByName(policies, currentPolicyValue);
 
   // Expanded state: collapsed when using default policy, expanded when custom policy is selected
   const [isExpanded, setIsExpanded] = useState(!isUsingDefaultPolicy);
@@ -80,126 +63,26 @@ export function PolicyTreeSelector() {
     }
   }, [isUsingDefaultPolicy, isLoading]);
 
-  // Build options from available policies, filtering out duplicate defaults
-  const policyOptions: Array<SelectableValue<string>> = useMemo(() => {
-    if (!policies) {
-      return [];
-    }
+  const handlePolicyChange = (tree: RoutingTree) => {
+    const isDefault = isDefaultRoutingTree(tree);
+    // Pass '' (not undefined) for the default policy: react-hook-form's controller onChange ignores
+    // undefined, leaving the previous policy in place. '' is the field's default and reads as the
+    // default policy.
+    selectedPolicyField.onChange(isDefault ? '' : (tree.metadata.name ?? ''));
 
-    let defaultPolicyAdded = false;
-    const options: Array<SelectableValue<string>> = [];
-
-    for (const policy of policies) {
-      const isDefault = isDefaultPolicy(policy);
-
-      if (isDefault && defaultPolicyAdded) {
-        continue;
-      }
-
-      if (isDefault) {
-        defaultPolicyAdded = true;
-      }
-
-      options.push({
-        label: isDefault ? t('alerting.policy-tree-selector.default-policy', 'Default policy') : (policy.name ?? ''),
-        value: isDefault ? '' : (policy.name ?? ''),
-        description: isDefault
-          ? t(
-              'alerting.policy-tree-selector.default-policy-desc',
-              'Routes alerts using the default notification policy tree'
-            )
-          : t('alerting.policy-tree-selector.custom-policy-desc', 'Route alerts through the {{name}} policy tree', {
-              name: policy.name,
-            }),
-      });
-    }
-
-    return options;
-  }, [policies]);
-
-  // Validate that existing label value is still valid when policies load (legacy label path only)
-  useEffect(() => {
-    if (isPolicyFieldRule) {
-      return;
-    }
-    if (isLoading || !policies || policies.length === 0) {
-      return;
-    }
-
-    const existingLabel = labels.find((label) => label.key === NAMED_ROOT_LABEL_NAME);
-
-    if (!existingLabel) {
-      return;
-    }
-
-    const labelValue = existingLabel.value;
-    const policyExists = policies.some((p) => {
-      if (isDefaultPolicy(p)) {
-        return labelValue === '';
-      }
-      return p.name === labelValue;
-    });
-
-    // Policy no longer exists, reset to default by removing the label
-    if (!policyExists) {
-      const newLabels = labels.filter((label) => label.key !== NAMED_ROOT_LABEL_NAME);
-      setValue('labels', newLabels);
-    }
-  }, [isPolicyFieldRule, isLoading, policies, labels, setValue]);
-
-  const updatePolicyValue = useCallback(
-    (newValue: string) => {
-      if (isPolicyFieldRule) {
-        // Pass '' (not undefined) on reset: react-hook-form's controller onChange ignores undefined,
-        // leaving the previous policy in place. '' is the field's default and reads as the default policy.
-        selectedPolicyField.onChange(newValue);
-        return;
-      }
-
-      const currentLabels = getValues('labels');
-      const existingLabelIndex = currentLabels.findIndex((label) => label.key === NAMED_ROOT_LABEL_NAME);
-
-      let newLabels = [...currentLabels];
-
-      if (newValue === '') {
-        // If selecting default policy (empty value), remove the label entirely
-        if (existingLabelIndex !== -1) {
-          newLabels.splice(existingLabelIndex, 1);
-        }
-      } else {
-        // Add or update the label
-        if (existingLabelIndex !== -1) {
-          newLabels[existingLabelIndex] = { key: NAMED_ROOT_LABEL_NAME, value: newValue };
-        } else {
-          newLabels = [...newLabels, { key: NAMED_ROOT_LABEL_NAME, value: newValue }];
-        }
-      }
-
-      setValue('labels', newLabels);
-    },
-    [isPolicyFieldRule, selectedPolicyField, getValues, setValue]
-  );
-
-  const handlePolicyChange = (option: SelectableValue<string>) => {
-    const newValue = option.value ?? '';
-
-    updatePolicyValue(newValue);
-
-    if (newValue === '') {
+    if (isDefault) {
       setIsExpanded(false);
     }
-  };
-
-  const handleResetToDefault = () => {
-    updatePolicyValue('');
-    setIsExpanded(false);
   };
 
   const handleChangeClick = () => {
     setIsExpanded(true);
   };
 
-  if (error) {
+  // Only hide the section when we have no list at all. RoutingTreeSelector refetches this same
+  // query on mount and on window focus, and a failed refetch sets error while the last good list is
+  // still cached - bailing out then would make the whole policy section vanish mid-edit.
+  if (isError && policies.length === 0) {
     return null; // Silently fail - the user can still use the form without this feature
   }
 
@@ -216,39 +99,35 @@ export function PolicyTreeSelector() {
             </Text>
             <Stack direction="row" gap={1} alignItems="center">
               <Field noMargin>
-                <Select
-                  inputId="policy-tree-selector"
+                <RoutingTreeSelector
+                  id="policy-tree-selector"
                   aria-label={t('alerting.policy-tree-selector.aria-label', 'Select notification policy')}
-                  options={policyOptions}
                   value={currentPolicyValue}
                   onChange={handlePolicyChange}
-                  isLoading={isLoading}
                   disabled={isLoading}
                   width={40}
                   placeholder={t('alerting.policy-tree-selector.placeholder', 'Select a policy...')}
                 />
               </Field>
-              {!isUsingDefaultPolicy && (
-                <Button
-                  variant="secondary"
-                  fill="text"
-                  size="sm"
-                  icon="history"
-                  type="button"
-                  onClick={handleResetToDefault}
-                  aria-label={t('alerting.policy-tree-selector.reset-aria', 'Reset to default policy')}
-                >
-                  <Trans i18nKey="alerting.policy-tree-selector.reset">Reset to default</Trans>
-                </Button>
-              )}
               <TextLink
-                href={ALERTING_PATHS.ROUTES}
+                href={createRelativeUrl(ALERTING_PATHS.ROUTES)}
                 external
                 aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
               >
                 <Trans i18nKey="alerting.policy-tree-selector.view-policies">View policies</Trans>
               </TextLink>
             </Stack>
+            {isPolicyMissingFromList && (
+              <Stack direction="row" gap={0.5} alignItems="center">
+                <Icon name="exclamation-triangle" size="sm" />
+                <Text color="warning" variant="bodySmall">
+                  <Trans i18nKey="alerting.policy-tree-selector.missing-policy">
+                    This policy tree is not in your list. It may have been deleted, or you may not have permission to
+                    view it. It stays assigned to this rule unless you pick a different one.
+                  </Trans>
+                </Text>
+              </Stack>
+            )}
           </>
         ) : (
           // Collapsed: show default policy info with a change button
@@ -276,7 +155,7 @@ export function PolicyTreeSelector() {
                 <Trans i18nKey="alerting.policy-tree-selector.change">Change</Trans>
               </Button>
               <TextLink
-                href={ALERTING_PATHS.ROUTES}
+                href={createRelativeUrl(ALERTING_PATHS.ROUTES)}
                 external
                 aria-label={t('alerting.policy-tree-selector.view-policies-aria', 'View notification policies')}
               >

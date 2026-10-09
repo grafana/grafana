@@ -36,9 +36,17 @@ jest.mock('@grafana/scenes', () => ({
 // Mocked to prevent the real component's collapse behavior and hook dependencies (useLocalStorage,
 // useQueryParams) from interfering with the tests
 jest.mock('app/features/dashboard/components/PanelEditor/OptionsPaneCategory', () => ({
-  OptionsPaneCategory: ({ children, renderTitle }: { children: ReactNode; renderTitle?: () => ReactNode }) => (
+  OptionsPaneCategory: ({
+    children,
+    title,
+    renderTitle,
+  }: {
+    children: ReactNode;
+    title?: string;
+    renderTitle?: () => ReactNode;
+  }) => (
     <div>
-      <div data-testid="category-title">{renderTitle?.()}</div>
+      <div data-testid="category-title">{renderTitle?.() ?? title}</div>
       {children}
     </div>
   ),

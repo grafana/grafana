@@ -389,14 +389,15 @@ type OAuth2Config struct {
 type WecomIntegration struct {
 	DisableResolveMessage *bool `json:"-" yaml:"-" hcl:"disable_resolve_message"`
 
-	URL     *Secret `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
-	Secret  *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
-	AgentID *string `json:"agent_id,omitempty" yaml:"agent_id,omitempty" hcl:"agent_id"`
-	CorpID  *string `json:"corp_id,omitempty" yaml:"corp_id,omitempty" hcl:"corp_id"`
-	Message *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
-	Title   *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
-	MsgType *string `json:"msgtype,omitempty" yaml:"msgtype,omitempty" hcl:"msg_type"`
-	ToUser  *string `json:"touser,omitempty" yaml:"touser,omitempty" hcl:"to_user"`
+	EndpointURL *string `json:"endpointUrl,omitempty" yaml:"endpointUrl,omitempty" hcl:"endpoint_url"`
+	URL         *Secret `json:"url,omitempty" yaml:"url,omitempty" hcl:"url"`
+	Secret      *Secret `json:"secret,omitempty" yaml:"secret,omitempty" hcl:"secret"`
+	AgentID     *string `json:"agent_id,omitempty" yaml:"agent_id,omitempty" hcl:"agent_id"`
+	CorpID      *string `json:"corp_id,omitempty" yaml:"corp_id,omitempty" hcl:"corp_id"`
+	Message     *string `json:"message,omitempty" yaml:"message,omitempty" hcl:"message"`
+	Title       *string `json:"title,omitempty" yaml:"title,omitempty" hcl:"title"`
+	MsgType     *string `json:"msgtype,omitempty" yaml:"msgtype,omitempty" hcl:"msg_type"`
+	ToUser      *string `json:"touser,omitempty" yaml:"touser,omitempty" hcl:"to_user"`
 }
 
 type ContactPoint struct {

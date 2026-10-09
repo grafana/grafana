@@ -257,4 +257,70 @@ func TestContextHandler(t *testing.T) {
 		require.NoError(t, err)
 		require.NoError(t, res.Body.Close())
 	})
+
+	t.Run("openfeature evaluation context does not widen scope with a wildcard identity namespace", func(t *testing.T) {
+		tests := []struct {
+			name              string
+			identityNamespace string
+			stackID           string
+			expectedNamespace string
+		}{
+			{
+				name:              "wildcard identity namespace falls back to stack namespace",
+				identityNamespace: "*",
+				stackID:           "5395",
+				expectedNamespace: "stacks-5395",
+			},
+			{
+				name:              "wildcard identity namespace falls back to default when stack id is unset",
+				identityNamespace: "*",
+				stackID:           "",
+				expectedNamespace: "default",
+			},
+			{
+				name:              "empty identity namespace falls back to stack namespace",
+				identityNamespace: "",
+				stackID:           "5395",
+				expectedNamespace: "stacks-5395",
+			},
+			{
+				name:              "concrete identity namespace is kept even with a stack id set",
+				identityNamespace: "stacks-1234",
+				stackID:           "5395",
+				expectedNamespace: "stacks-1234",
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				cfg := setting.NewCfg()
+				cfg.StackID = tt.stackID
+
+				handler := contexthandler.ProvideService(
+					cfg,
+					&authntest.FakeService{
+						ExpectedIdentity: &authn.Identity{
+							ID:        "1",
+							Type:      claims.TypeUser,
+							Namespace: tt.identityNamespace,
+						},
+					},
+					featuremgmt.WithFeatures(),
+				)
+
+				server := webtest.NewServer(t, routing.NewRouteRegister())
+				server.Mux.Use(handler.Middleware)
+				server.Mux.Get("/api/handler", func(c *contextmodel.ReqContext) {
+					evalCtx := openfeature.TransactionContext(c.Req.Context())
+					require.NotNil(t, evalCtx)
+					require.Equal(t, tt.expectedNamespace, evalCtx.Attribute("namespace"))
+					require.Equal(t, tt.expectedNamespace, evalCtx.TargetingKey())
+				})
+
+				res, err := server.Send(server.NewGetRequest("/api/handler"))
+				require.NoError(t, err)
+				require.NoError(t, res.Body.Close())
+			})
+		}
+	})
 }

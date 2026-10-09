@@ -234,6 +234,22 @@ describe('prepConfig', () => {
     };
   }
 
+  function createSparseHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
+    const heatmap = createDataFrame({
+      meta: { type: DataFrameType.HeatmapCells },
+      fields: [
+        { name: 'x', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
+        { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
+        { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
+        { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
+      ],
+    });
+    return {
+      heatmap,
+      ...overrides,
+    };
+  }
+
   it('builds a mode-2 config with a bottom x axis, a left y axis and the heatmap + exemplar layers', () => {
     const dataRef = { current: createMinimalHeatmapData() };
 
@@ -265,6 +281,142 @@ describe('prepConfig', () => {
       ['x', yScaleKey],
       ['x', yScaleKey],
     ]);
+  });
+
+  it('keeps exemplar geometry and hover aligned across pixel ratio changes without rebuilding the config', () => {
+    const originalRatio = uPlot.pxRatio;
+    const config = prepConfig({
+      dataRef: { current: createMinimalHeatmapData() },
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'magenta',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+    const drawClear = config.hooks?.drawClear?.[0];
+    const paths = config.series?.[2]?.paths;
+    const cursor = config.cursor;
+    if (!drawClear || !paths || !cursor?.dataIdx || !cursor.points?.bbox) {
+      throw new Error('Expected exemplar paths and cursor callbacks');
+    }
+    const points: PointsData = [[20], [30]];
+    const rect = jest.fn();
+    const mockU = createMockU(points);
+    Object.assign(mockU, { series: [{}, {}, {}], cursor: { left: 20, top: 30 } });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(points, {
+        rect,
+        valToPosX: (v) => v * uPlot.pxRatio,
+        valToPosY: (v) => v * uPlot.pxRatio,
+      })
+    );
+    try {
+      for (const [ratio, left, top, size] of [
+        [1, 17, 27, 6],
+        [1.5, 25.5, 40.5, 9],
+        [2, 34, 54, 12],
+        [3, 51, 81, 18],
+        [1, 17, 27, 6],
+      ]) {
+        uPlot.pxRatio = ratio;
+        drawClear(mockU);
+        paths(mockU, 2, 0, 0);
+        expect(rect).toHaveBeenLastCalledWith(expect.anything(), left, top, size, size);
+        mockU.cursor.left = 22.5;
+        cursor.dataIdx(mockU, 1, 0, 20);
+        expect(cursor.dataIdx(mockU, 2, 0, 20)).toBe(0);
+        expect(cursor.points.bbox(mockU, 2)).toEqual({ left: 17, top: 27, width: 6, height: 6 });
+        mockU.cursor.left = 23.5;
+        cursor.dataIdx(mockU, 1, 0, 20);
+        expect(cursor.dataIdx(mockU, 2, 0, 20)).toBeNull();
+      }
+    } finally {
+      uPlot.pxRatio = originalRatio;
+      orientSpy.mockRestore();
+    }
+  });
+
+  it.each([
+    { ordinal: false, layout: HeatmapCellLayout.ge, value: 0.032, expectedY: 32 },
+    { ordinal: false, layout: HeatmapCellLayout.le, value: 0.032, expectedY: 32 },
+    { ordinal: true, layout: HeatmapCellLayout.ge, value: 1, expectedY: 1500 },
+    { ordinal: true, layout: HeatmapCellLayout.le, value: 1, expectedY: 500 },
+  ])('positions exemplars with ordinal=$ordinal and layout=$layout', ({ ordinal, layout, value, expectedY }) => {
+    const data = createMinimalHeatmapData({ yLayout: layout });
+    if (ordinal) {
+      data.heatmap!.meta!.custom = { yOrdinalDisplay: ['0', '1', '2'] };
+    }
+    const config = prepConfig({
+      dataRef: { current: data },
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'magenta',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+    }).getConfig();
+
+    const drawClear = config.hooks?.drawClear?.[0];
+    const exemplarPaths = config.series?.[2]?.paths;
+    if (!drawClear || !exemplarPaths) {
+      throw new Error('Expected drawClear and exemplar paths');
+    }
+    const points: PointsData = [[100], [value]];
+    const rect = jest.fn();
+    const mockU = createMockU(points);
+    Object.assign(mockU, { series: [{}, {}, {}] });
+    const orientSpy = jest
+      .spyOn(uPlot, 'orient')
+      .mockImplementation(createOrientMock(points, { rect, valToPosY: (v) => v * 1000 }));
+    try {
+      drawClear(mockU);
+      exemplarPaths(mockU, 2, 0, 0);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 97, expectedY - 3, 6, 6);
+    } finally {
+      orientSpy.mockRestore();
+    }
+  });
+
+  it.each([2, 10])('centers sparse le heatmap exemplars at their numeric values on a log-%s scale', (log) => {
+    const builder = prepConfig({
+      dataRef: { current: createSparseHeatmapData({ yLayout: HeatmapCellLayout.le }) },
+      theme,
+      timeZone: 'utc',
+      getTimeRange: () => timeRange,
+      exemplarColor: 'magenta',
+      yAxisConfig: { axisPlacement: AxisPlacement.Left },
+      rowsFrame: { yBucketScale: { type: ScaleDistribution.Log, log } },
+    });
+    const config = builder.getConfig();
+    const { scaleKey } = getYScaleRangeInfo(builder);
+    const scaleY = config.scales?.[scaleKey];
+    expect(scaleY).toMatchObject({ distr: 3, log });
+
+    const drawClear = config.hooks?.drawClear?.[0];
+    const exemplarPaths = config.series?.[2]?.paths;
+    if (!drawClear || !exemplarPaths) {
+      throw new Error('Expected drawClear and exemplar paths');
+    }
+    const points: PointsData = [[1500], [2]];
+    const rect = jest.fn();
+    const valToPosY = jest.fn((v: number) => 100 - 25 * Math.log2(v));
+    const mockU = createMockU(points);
+    Object.assign(mockU, { series: [{}, {}, {}] });
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(points, {
+        rect,
+        scaleY: { ...scaleY, min: 1, max: 16 },
+        valToPosX: (v) => v / 100,
+        valToPosY,
+      })
+    );
+    try {
+      drawClear(mockU);
+      exemplarPaths(mockU, 2, 0, 0);
+      expect(valToPosY).toHaveBeenCalledWith(2, expect.objectContaining({ distr: 3, log }), 100, 0);
+      expect(rect).toHaveBeenCalledWith(expect.anything(), 12, 72, 6, 6);
+    } finally {
+      orientSpy.mockRestore();
+    }
   });
 
   it('aborts after the x scale and axis, adding no y scale and no layers, when the heatmap has no y field', () => {
@@ -511,25 +663,6 @@ describe('prepConfig', () => {
   });
 
   describe('y-scale range callback', () => {
-    /**
-     * Creates minimal sparse HeatmapData (yMin + yMax fields) for range callback tests.
-     */
-    function createSparseHeatmapData(overrides?: Partial<HeatmapData>): HeatmapData {
-      const heatmap = createDataFrame({
-        meta: { type: DataFrameType.HeatmapCells },
-        fields: [
-          { name: 'x', type: FieldType.time, values: [1000, 1000, 2000, 2000] },
-          { name: 'yMin', type: FieldType.number, values: [1, 4, 1, 4] },
-          { name: 'yMax', type: FieldType.number, values: [4, 16, 4, 16] },
-          { name: 'count', type: FieldType.number, values: [5, 10, 15, 20] },
-        ],
-      });
-      return {
-        heatmap,
-        ...overrides,
-      };
-    }
-
     describe('sparse heatmap', () => {
       const sparseData: uPlot.AlignedData = [
         [0, 1, 2],
@@ -1261,6 +1394,94 @@ describe('prepConfig', () => {
   });
 });
 
+describe.each([
+  {
+    name: 'dense',
+    build: heatmapPathsDense,
+    data: [
+      [0, 0, 10, 10],
+      [0, 10, 0, 10],
+      [1, 1, 1, 1],
+    ] as DenseHeatmap,
+  },
+  {
+    name: 'sparse',
+    build: heatmapPathsSparse,
+    data: [
+      [10, 20],
+      [0, 0],
+      [10, 10],
+      [1, 1],
+    ] as SparseHeatmap,
+  },
+])('$name cell gaps across pixel ratio changes', ({ name, build, data }) => {
+  it.each([
+    {
+      gap: 1,
+      draws: [
+        { ratio: 1, dense: [0, 11, 9, 9], sparse: [0.5, 10.5, 9, 9] },
+        { ratio: 1.5, dense: [0, 17, 13, 13], sparse: [1, 16, 13, 13] },
+        { ratio: 2, dense: [0, 22, 18, 18], sparse: [1, 21, 18, 18] },
+        { ratio: 3, dense: [0, 33, 27, 27], sparse: [1.5, 31.5, 27, 27] },
+        { ratio: 1, dense: [0, 11, 9, 9], sparse: [0.5, 10.5, 9, 9] },
+      ],
+    },
+    {
+      gap: 0,
+      draws: [
+        { ratio: 1, dense: [0, 10, 10, 10], sparse: [0, 10, 10, 10] },
+        { ratio: 1.5, dense: [0, 15, 15, 15], sparse: [0, 15, 15, 15] },
+      ],
+    },
+    {
+      gap: 4,
+      draws: [
+        { ratio: 1, dense: [0, 14, 6, 6], sparse: [2, 12, 6, 6] },
+        { ratio: 1.5, dense: [0, 21, 9, 9], sparse: [3, 18, 9, 9] },
+      ],
+    },
+    {
+      gap: 50,
+      draws: [
+        { ratio: 1, dense: [0, 19, 1, 1], sparse: [-16, 35, 1, 1] },
+        { ratio: 1.5, dense: [0, 29, 1, 1], sparse: [-23.5, 52.5, 1, 1] },
+      ],
+    },
+  ])('updates rectangles and hitboxes without rebuilding for gap=$gap', ({ gap, draws }) => {
+    const originalRatio = uPlot.pxRatio;
+    const rect = jest.fn();
+    const each = jest.fn();
+    const mockU = createMockU(data);
+    const orientSpy = jest.spyOn(uPlot, 'orient').mockImplementation(
+      createOrientMock(data, {
+        rect,
+        valToPosX: (v) => v * uPlot.pxRatio,
+        valToPosY: (v) => (20 - v) * uPlot.pxRatio,
+      })
+    );
+    try {
+      uPlot.pxRatio = 1;
+      const paths = build({
+        gap,
+        each,
+        disp: { fill: { values: () => data[0].map(() => 0), index: ['#000'] } },
+      });
+      for (const draw of draws) {
+        uPlot.pxRatio = draw.ratio;
+        rect.mockClear();
+        each.mockClear();
+        paths(mockU, 1);
+        const bounds = name === 'dense' ? draw.dense : draw.sparse;
+        expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), ...bounds);
+        expect(each).toHaveBeenNthCalledWith(1, mockU, 1, 0, ...bounds);
+      }
+    } finally {
+      uPlot.pxRatio = originalRatio;
+      orientSpy.mockRestore();
+    }
+  });
+});
+
 describe('heatmapPathsDense', () => {
   const fillIndex: Array<CanvasRenderingContext2D['fillStyle']> = ['#000'];
   const minimalPathbuilderOpts = {
@@ -1514,22 +1735,22 @@ describe('heatmapPathsPoints', () => {
       const { rect, each } = invokePointsPathBuilder(minimalPointsOpts, 'rgba(255,0,255,0.7)');
 
       // rect
-      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 96, -3, 8, 8);
-      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 196, -2, 8, 8);
-      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 296, -1, 8, 8);
+      expect(rect).toHaveBeenNthCalledWith(1, expect.anything(), 97, -2, 6, 6);
+      expect(rect).toHaveBeenNthCalledWith(2, expect.anything(), 197, -1, 6, 6);
+      expect(rect).toHaveBeenNthCalledWith(3, expect.anything(), 297, 0, 6, 6);
 
       //each
-      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 97, -2, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 197, -1, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 297, 0, 6, 6);
     });
 
     it('calls each with correct (u, seriesIdx, dataIdx, lft, top, wid, hgt)', () => {
       const { each } = invokePointsPathBuilder(minimalPointsOpts, 'magenta');
 
-      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 96, -3, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 196, -2, 8, 8);
-      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 296, -1, 8, 8);
+      expect(each).toHaveBeenNthCalledWith(1, expect.anything(), 1, 0, 97, -2, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(2, expect.anything(), 1, 1, 197, -1, 6, 6);
+      expect(each).toHaveBeenNthCalledWith(3, expect.anything(), 1, 2, 297, 0, 6, 6);
     });
 
     it('applies yShift -0.5 when yLayout is le (ordinal)', () => {
@@ -1558,6 +1779,7 @@ describe('heatmapPathsPoints', () => {
       expect(spy).toHaveBeenNthCalledWith(3, 3.5, expect.anything(), 100, 0);
     });
 
+    // TODO: Remove if the prepConfig sparse exemplar tests supersede this direct path-builder regression test.
     it('skips yShift when scaleY is sparse heatmap (distr 3, log 2)', () => {
       const valToPosY = jest.fn((v: number) => v);
       const { valToPosY: spy } = invokePointsPathBuilder(minimalPointsOpts, 'red', {
