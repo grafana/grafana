@@ -74,6 +74,9 @@ func (s *embeddedErrorServer) Search(context.Context, *resourcepb.ResourceSearch
 }
 
 func (s *embeddedErrorServer) PutBlobStream(stream resourcepb.BlobStoreStreaming_PutBlobStreamServer) error {
+	if _, err := stream.Recv(); err != nil {
+		return err
+	}
 	return stream.SendAndClose(&resourcepb.PutBlobResponse{Error: s.failure})
 }
 
