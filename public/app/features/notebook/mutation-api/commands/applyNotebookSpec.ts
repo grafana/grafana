@@ -149,8 +149,8 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         // rather than done here. For now this just undercounts cellsAdded/cellsRemoved/cellsMoved
         // for an assistant-written session; editCount itself is still right.
         kind: NOTEBOOK_EDIT_KIND.EDIT,
-        perform: () => scene.setState(newState),
-        undo: () => scene.setState(previousState),
+        perform: () => scene.setState({ ...newState, uid: scene.state.uid }),
+        undo: () => scene.setState({ ...previousState, uid: scene.state.uid }),
       });
 
       let appliedNotebook: NotebookSpec | undefined;

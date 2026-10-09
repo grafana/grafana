@@ -4,7 +4,7 @@ import { SceneObjectBase, type VizPanel } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 
-import { notebookResourceFor, updateNotebook } from '../../api/notebookResource';
+import { createNotebook, notebookResourceFor, updateNotebook } from '../../api/notebookResource';
 import { NOTEBOOK_EDIT_KIND } from '../../scene/NotebookEditHistory';
 import { NotebookLayoutManager } from '../../scene/layout-notebook/NotebookLayoutManager';
 import { transformNotebookToScene } from '../../serialization/transformNotebookToScene';
@@ -24,6 +24,7 @@ import {
 jest.mock('../../api/notebookResource', () => ({
   ...jest.requireActual('../../api/notebookResource'),
   updateNotebook: jest.fn(),
+  createNotebook: jest.fn(),
 }));
 
 setPluginImportUtils({
@@ -39,6 +40,7 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
     jest.mocked(updateNotebook).mockReset().mockResolvedValue({ generation: 2 });
+    jest.mocked(createNotebook).mockReset();
   });
 
   afterEach(() => {
@@ -396,6 +398,37 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       // Undoing the content doesn't flip the toggle back to View: entering edit mode isn't part of
       // what this undo step is undoing.
       expect(scene.state.isEditing).toBe(true);
+    });
+
+    it('keeps the uid autosave adopted on create after that write is undone, and saves to it rather than creating a second notebook', async () => {
+      jest.mocked(createNotebook).mockResolvedValue({ uid: 'created-1', url: '/notebooks/created-1' });
+      const scene = transformNotebookToScene(notebookResourceFor(undefined, notebookSpec()));
+      scene.activate();
+      const client = new NotebookMutationClient(scene);
+      const before = cellNamesOf(scene);
+
+      await client.execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: notebookSpec({ elements: { only: markdownCell('## First') }, cells: ['only'] }) },
+      });
+
+      expect(scene.state.uid).toBe('created-1');
+
+      scene.editHistory.undo();
+
+      expect(scene.state.uid).toBe('created-1');
+      expect(cellNamesOf(scene)).toEqual(before);
+
+      jest.mocked(updateNotebook).mockClear();
+      await scene.autosave.saveDocumentChange();
+
+      const [calledUid] = jest.mocked(updateNotebook).mock.calls[0];
+      expect(calledUid).toBe('created-1');
+      expect(createNotebook).toHaveBeenCalledTimes(1);
+
+      scene.editHistory.redo();
+
+      expect(scene.state.uid).toBe('created-1');
     });
 
     it('records the write under NOTEBOOK_EDIT_KIND.EDIT', async () => {
