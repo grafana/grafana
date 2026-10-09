@@ -38,6 +38,7 @@ import { getConfig } from 'app/core/config';
 import { getSessionExpiry, hasRotatableSession } from 'app/core/utils/auth';
 import { loadUrlToken } from 'app/core/utils/urlToken';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { ManagedFolderWriteDrawer } from 'app/features/provisioning/components/Shared/ManagedFolderWriteDrawer';
 import { type DashboardSearchItem } from 'app/features/search/types';
 import { TokenRevokedModal } from 'app/features/users/TokenRevokedModal';
 import { type DashboardDTO } from 'app/types/dashboard';
@@ -463,6 +464,64 @@ export class BackendSrv implements BackendService {
     return err;
   }
 
+  /**
+   * A write into a repository-managed folder is rejected with a 403 that names the repository and
+   * folder. Offer to commit the resource to the repository instead. The returned stream completes
+   * the original request: it emits the stored resource (201) after a commit to the configured
+   * branch, the submitted resource (202) after a commit to another branch, and fails as cancelled
+   * when the user closes the drawer.
+   */
+  private offerRepositoryWrite<T>(options: BackendSrvRequest, err: FetchError): Observable<FetchResponse<T>> | undefined {
+    if (err.status !== 403 || options.method !== 'POST' || !options.url.replace(/^\//, '').startsWith('apis/')) {
+      return undefined;
+    }
+    const cause = err.data?.details?.causes?.find(
+      (c: { reason?: string }) => c.reason === 'FolderManagedByRepository'
+    );
+    if (!cause?.message || !cause.field || !options.data || typeof options.data !== 'object') {
+      return undefined;
+    }
+    const response = {
+      ok: true,
+      headers: new Headers(),
+      redirected: false,
+      type: 'basic' as const,
+      url: options.url,
+      config: options,
+    };
+    return new Observable<FetchResponse<T>>((subscriber) => {
+      this.dependencies.appEvents.publish(
+        new ShowModalReactEvent({
+          component: ManagedFolderWriteDrawer,
+          props: {
+            resource: options.data,
+            repositoryName: cause.message,
+            folderName: cause.field,
+            onWritten: (data: T) => {
+              subscriber.next({ ...response, data, status: 201, statusText: 'Created' });
+              subscriber.complete();
+            },
+            onBranched: () => {
+              // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+              subscriber.next({ ...response, data: options.data as T, status: 202, statusText: 'Accepted' });
+              subscriber.complete();
+            },
+            onCancelled: () =>
+              subscriber.error({
+                type: DataQueryErrorType.Cancelled,
+                cancelled: true,
+                isHandled: true,
+                data: null,
+                status: this.HTTP_REQUEST_CANCELED,
+                statusText: 'Request was aborted',
+                config: options,
+              }),
+          },
+        })
+      );
+    });
+  }
+
   private handleStreamResponse<T>(options: BackendSrvRequest): MonoTypeOperatorFunction<FetchResponse<T>> {
     return (inputStream) =>
       inputStream.pipe(
@@ -540,7 +599,7 @@ export class BackendSrv implements BackendService {
             })
           )
         ),
-        catchError((err: FetchError) => throwError(() => this.processRequestError(options, err)))
+        catchError((err: FetchError) => this.offerRepositoryWrite<T>(options, err) ?? throwError(() => this.processRequestError(options, err)))
       );
   }
 
