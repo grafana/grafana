@@ -261,8 +261,6 @@ func datasourceRolePermissionTuples(subject string, perm RolePermission) []*open
 	case "datasources.caching:write":
 		relations = []string{RelationCreate, RelationUpdate, RelationDelete}
 		subresource = "caching"
-	case "datasources:query":
-		relations = []string{RelationGet}
 	case "datasources:edit":
 		relations = []string{RelationGet, RelationUpdate, RelationDelete}
 	case "datasources:admin":

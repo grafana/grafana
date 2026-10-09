@@ -87,6 +87,26 @@ func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 		if err != nil {
 			return nil, fmt.Errorf("failed to check generic resource: %w", err)
 		}
+		if res.GetAllowed() {
+			return res, nil
+		}
+		if query, ok := resource.DatasourceQueryAccess(r.GetVerb()); ok {
+			queryResult, err := s.checkGroupResource(ctx, r.GetSubject(), common.RelationCreate, query, contextuals, store)
+			if err != nil {
+				return nil, err
+			}
+			if queryResult.GetAllowed() {
+				return queryResult, nil
+			}
+			queryResult, err = s.checkGeneric(ctx, r.GetSubject(), common.RelationCreate, query, contextuals, store)
+			if err != nil {
+				return nil, err
+			}
+			if queryResult.GetAllowed() {
+				return queryResult, nil
+			}
+		}
+
 		return res, nil
 	}
 

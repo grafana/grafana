@@ -38,7 +38,7 @@ func TestSupportedActions_DeterministicAndUnique(t *testing.T) {
 
 func TestDatasourceLegacyActionsUseSharedResource(t *testing.T) {
 	for action, verb := range map[string]string{
-		"datasources:read":              "get",
+		"datasources:read":              "watch",
 		"datasources:write":             "update",
 		"datasources:delete":            "delete",
 		"datasources:query":             "create",

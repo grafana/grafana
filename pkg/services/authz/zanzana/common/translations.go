@@ -211,7 +211,7 @@ func TranslateToCheckRequest(namespace, action, kind, name string) (*authlib.Che
 		return nil, false
 	}
 
-	verb, ok := RelationToVerbMapping[m.relation]
+	_, _, _, verb, ok := actionListParams(translation, m)
 	if !ok {
 		return nil, false
 	}
@@ -275,6 +275,11 @@ func actionListParams(translation resourceTranslation, m actionMapping) (group, 
 		return "", "", "", "", false
 	}
 
+	// Datasource GET/LIST also accepts query permission. WATCH requires read
+	// permission, so use it when resolving legacy configuration-read grants.
+	if group == "datasource.grafana.app" && resource == "datasources" && subresource == "" && m.relation == RelationGet {
+		verb = "watch"
+	}
 	return group, resource, subresource, verb, true
 }
 

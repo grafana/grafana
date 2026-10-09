@@ -256,3 +256,13 @@ func (r ResourceInfo) HasFolderSupport() bool {
 func (r ResourceInfo) IsFolderResource() bool {
 	return r.group == folders.FolderResourceInfo.GroupResource().Group
 }
+
+// DatasourceQueryAccess supplies the additional grant accepted for Kubernetes
+// GET/LIST. WATCH and legacy configuration-read lookups require a read grant.
+func (r ResourceInfo) DatasourceQueryAccess(verb string) (ResourceInfo, bool) {
+	if r.group != "datasource.grafana.app" || r.resource != "datasources" || r.subresource != "" || (verb != "get" && verb != "list") {
+		return ResourceInfo{}, false
+	}
+	r.subresource = "query"
+	return r, true
+}

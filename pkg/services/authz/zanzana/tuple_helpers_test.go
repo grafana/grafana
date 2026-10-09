@@ -697,13 +697,6 @@ func TestSharedDatasourceRolePermissions(t *testing.T) {
 				expected = NewGroupResourceTuple("role:role1#assignee", tc.relation, "datasource.grafana.app", "datasources", tc.sub)
 			}
 			expectedTuples := []*openfgav1.TupleKey{expected}
-			if tc.action == "datasources:query" {
-				read := common.NewResourceTuple("role:role1#assignee", "get", "datasource.grafana.app", "datasources", "", uid)
-				if uid == "*" {
-					read = NewGroupResourceTuple("role:role1#assignee", "get", "datasource.grafana.app", "datasources", "")
-				}
-				expectedTuples = append(expectedTuples, read)
-			}
 			if tc.action == "datasources.caching:write" {
 				for _, relation := range []string{"create", "delete"} {
 					write := common.NewResourceTuple("role:role1#assignee", relation, "datasource.grafana.app", "datasources", "caching", uid)

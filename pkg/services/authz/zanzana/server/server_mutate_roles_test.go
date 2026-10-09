@@ -1,12 +1,18 @@
 package server
 
 import (
+	"context"
+	"fmt"
 	"testing"
 
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	v1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
@@ -125,5 +131,84 @@ func TestIntegrationDatasourceRolePermissions(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// Forward List calls to the real server while satisfying the resolver's client interface.
+type datasourcePermissionClient struct {
+	zanzana.Client
+	server *Server
+}
+
+func (c datasourcePermissionClient) List(ctx context.Context, req *authzv1.ListRequest) (*authzv1.ListResponse, error) {
+	return c.server.List(ctx, req)
+}
+
+func TestIntegrationDatasourceQueryDoesNotGrantLegacyRead(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, withRead := range []bool{false, true} {
+		for _, scope := range []string{"datasources:uid:ds1", "datasources:*"} {
+			t.Run(fmt.Sprintf("%s/read=%t", scope, withRead), func(t *testing.T) {
+				srv := setupOpenFGAServer(t)
+				permissions := []*v1.RolePermission{{Action: "datasources:query", Scope: scope}}
+				expected := []accesscontrol.Permission{{Action: "datasources:query", Scope: scope}}
+				if withRead {
+					permissions = append(permissions, &v1.RolePermission{Action: "datasources:read", Scope: "datasources:uid:ds2"})
+					expected = append(expected, accesscontrol.Permission{Action: "datasources:read", Scope: "datasources:uid:ds2"})
+				}
+				tuples, err := zanzana.RoleToTuples("query-role", permissions)
+				require.NoError(t, err)
+				tuples = append(tuples, common.NewTuple("user:datasource-user", "assignee", "role:query-role"))
+				setupOpenFGADatabase(t, srv, tuples)
+				resolver := acimpl.NewZanzanaPermissionResolver(datasourcePermissionClient{server: srv}, nil, nil, false)
+				usr := &identity.StaticRequester{Type: "user", UserUID: "datasource-user", OrgID: 1, Namespace: namespace}
+				legacy := []accesscontrol.Permission{{Action: "datasources:query", Scope: scope}}
+				resolved, err := resolver.ResolveCurrentUserPermissions(newContextWithNamespace(), usr)
+				require.NoError(t, err)
+				require.ElementsMatch(t, expected, resolved)
+				perms := resolver.MergeCurrentUser(newContextWithNamespace(), usr, legacy, log.NewNopLogger())
+				require.ElementsMatch(t, expected, perms)
+			})
+		}
+	}
+}
+
+func TestIntegrationDatasourceQueryKubernetesRead(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, scope := range []string{"datasources:uid:ds1", "datasources:*"} {
+		t.Run(scope, func(t *testing.T) {
+			srv := setupOpenFGAServer(t)
+			tuples, err := zanzana.RoleToTuples("query-role", []*v1.RolePermission{{Action: "datasources:query", Scope: scope}})
+			require.NoError(t, err)
+			tuples = append(tuples, common.NewTuple("user:datasource-user", "assignee", "role:query-role"))
+			setupOpenFGADatabase(t, srv, tuples)
+			for _, group := range []string{"datasource.grafana.app", "loki.datasource.grafana.app"} {
+				for _, verb := range []string{"get", "list", "watch"} {
+					t.Run(group+"/"+verb, func(t *testing.T) {
+						listed, err := srv.List(newContextWithNamespace(), &authzv1.ListRequest{Namespace: namespace, Subject: "user:datasource-user", Group: group, Resource: "datasources", Verb: verb})
+						require.NoError(t, err)
+						if verb == "watch" {
+							require.False(t, listed.All)
+							require.Empty(t, listed.Items)
+						} else if scope == "datasources:*" {
+							require.True(t, listed.All)
+						} else {
+							require.False(t, listed.All)
+							require.Equal(t, []string{"ds1"}, listed.Items)
+						}
+						for _, uid := range []string{"ds1", "ds2"} {
+							expected := verb != "watch" && (uid == "ds1" || scope == "datasources:*")
+							checked, err := srv.Check(newContextWithNamespace(), &authzv1.CheckRequest{Namespace: namespace, Subject: "user:datasource-user", Group: group, Resource: "datasources", Verb: verb, Name: uid})
+							require.NoError(t, err)
+							require.Equal(t, expected, checked.Allowed)
+							batch, err := srv.BatchCheck(newContextWithNamespace(), &authzv1.BatchCheckRequest{Namespace: namespace, Subject: "user:datasource-user", Checks: []*authzv1.BatchCheckItem{{CorrelationId: "ds", Group: group, Resource: "datasources", Verb: verb, Name: uid}}})
+							require.NoError(t, err)
+							require.Empty(t, batch.Results["ds"].Error)
+							require.Equal(t, expected, batch.Results["ds"].Allowed)
+						}
+					})
+				}
+			}
+		})
 	}
 }

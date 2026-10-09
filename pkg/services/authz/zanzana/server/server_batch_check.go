@@ -145,6 +145,30 @@ func (s *Server) batchCheck(ctx context.Context, r *authzv1.BatchCheckRequest, n
 		return nil, err
 	}
 
+	// Query permission also allows Kubernetes datasource GET/LIST. Keep these
+	// checks separate so WATCH (used for legacy read grants) stays read-only.
+	queryItems := make(map[string]*batchCheckItem)
+	for _, check := range checks {
+		item := items[check.GetCorrelationId()]
+		if item.allowed || item.err != "" {
+			continue
+		}
+		if query, ok := item.resource.DatasourceQueryAccess(check.GetVerb()); ok {
+			queryItems[item.correlationID] = &batchCheckItem{correlationID: item.correlationID, resource: query, relation: common.RelationCreate}
+		}
+	}
+	if len(queryItems) > 0 {
+		if err := s.runPhase(ctx, "group_resource", namespace, store, subject, queryItems, contextuals, s.runGroupResourcePhase); err != nil {
+			return nil, err
+		}
+		if err := s.runPhase(ctx, "direct_resource", namespace, store, subject, queryItems, contextuals, s.runDirectResourcePhase); err != nil {
+			return nil, err
+		}
+		for id, item := range queryItems {
+			items[id] = item
+		}
+	}
+
 	// Build final results
 	results := make(map[string]*authzv1.BatchCheckResult, len(items))
 	for correlationID, item := range items {

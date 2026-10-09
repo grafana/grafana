@@ -999,7 +999,7 @@ func (c *datasourceSubresourceZanzanaClient) List(_ context.Context, req *authzv
 	}
 	switch req.Subresource {
 	case "":
-		if req.Verb == "get" || req.Verb == "update" {
+		if req.Verb == "watch" || req.Verb == "update" {
 			return &authzv1.ListResponse{Items: []string{"base-only"}}, nil
 		}
 	case "caching":

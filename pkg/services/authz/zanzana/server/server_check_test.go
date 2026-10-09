@@ -406,9 +406,9 @@ func TestIntegrationServerCheckGenericDatasourceCreate(t *testing.T) {
 		assert.False(t, res.GetAllowed())
 	})
 
-	t.Run("subresource query tuple does not grant reading the datasource", func(t *testing.T) {
+	t.Run("subresource query tuple does not grant legacy configuration read", func(t *testing.T) {
 		res, err := server.Check(newContextWithNamespace(), newReq(
-			utils.VerbGet, datasourceGroup, datasourceResource, "", "ds-1",
+			utils.VerbWatch, datasourceGroup, datasourceResource, "", "ds-1",
 		))
 		require.NoError(t, err)
 		assert.False(t, res.GetAllowed())
