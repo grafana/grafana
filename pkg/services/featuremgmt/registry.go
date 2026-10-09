@@ -255,14 +255,6 @@ var (
 			Generate:        Generate{LegacyGo: true, React: true},
 		},
 		{
-			Name:        "provisioning.readmes",
-			Description: "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
-			Stage:       FeatureStagePublicPreview,
-			Owner:       grafanaAppPlatformSquad,
-			Expression:  "true", // enabled by default
-			Generate:    Generate{React: true},
-		},
-		{
 			Name:        "provisioning.userAttribution",
 			Description: "Author Git Sync commits as the acting Grafana user",
 			Stage:       FeatureStagePublicPreview,
@@ -648,13 +640,21 @@ var (
 			Name:        "dashboardNewLayouts",
 			Description: "Enables new dashboard layouts",
 			Stage:       FeatureStageGeneralAvailability,
-			Generate:    Generate{LegacyFrontend: true, React: true},
+			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "true",
 		},
 		{
 			Name:        "dashboards.libraryPanelRepeatFromServerResolution",
 			Description: "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
+			Stage:       FeatureStageExperimental,
+			Generate:    Generate{React: true},
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+		},
+		{
+			Name:        "dashboards.publicDashboardBadgeFromApi",
+			Description: "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,
@@ -1165,6 +1165,15 @@ var (
 		{
 			Name:         "authz.userPermissions",
 			Description:  "Route user permission snapshots through the AuthZ service.",
+			Stage:        FeatureStageExperimental,
+			Owner:        identityAccessTeam,
+			HideFromDocs: true,
+			Expression:   "false",
+			Generate:     Generate{Go: true},
+		},
+		{
+			Name:         "authz.useLegacyCheck",
+			Description:  "Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.",
 			Stage:        FeatureStageExperimental,
 			Owner:        identityAccessTeam,
 			HideFromDocs: true,
@@ -1815,15 +1824,6 @@ var (
 			Owner:       grafanaFrontendNavigation,
 			Generate:    Generate{LegacyFrontend: true, React: true}, // legacy frontend for old naming convention
 			Expression:  "false",
-		},
-		{
-			Name:         "experimentRecentlyViewedDashboards",
-			Description:  "A/A test for recently viewed dashboards feature",
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaFrontendNavigation,
-			Generate:     Generate{LegacyFrontend: true, React: true},
-			HideFromDocs: true,
-			Expression:   "false",
 		},
 		{
 			Name:         "alertEnrichment",
@@ -3071,6 +3071,15 @@ var (
 		{
 			Name:            "reporting.legacyServiceUsesK8SClient",
 			Description:     "Redirect legacy report service to use the Kubernetes client wrapper",
+			Stage:           FeatureStageExperimental,
+			Owner:           grafanaOperatorExperienceSquad,
+			Expression:      "false",
+			RequiresRestart: true,
+			Generate:        Generate{Go: true},
+		},
+		{
+			Name:            "reporting.legacySettingServiceUsesK8SClient",
+			Description:     "Redirect legacy report setting service to use the Kubernetes client wrapper",
 			Stage:           FeatureStageExperimental,
 			Owner:           grafanaOperatorExperienceSquad,
 			Expression:      "false",

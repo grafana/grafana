@@ -131,6 +131,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 
 	backends := make([]Backend, 0, len(deployment.Plugins))
 	keys := make(map[string]struct{}, len(deployment.Plugins))
+	skipped := 0
 	for _, entry := range deployment.Plugins {
 		for _, manifest := range entry.Definition.Manifests {
 			if manifest == nil || !matchesAnyPattern(manifest.Group, t.patterns) {
@@ -154,6 +155,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 
 			if err != nil {
 				logging.FromContext(ctx).Warn("router: skipping plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", err)
+				skipped++
 				continue
 			}
 
@@ -163,6 +165,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 			key, keyErr := pluginDeploymentKey(entry, manifest)
 			if keyErr != nil {
 				logging.FromContext(ctx).Warn("router: skipping unfingerprintable plugin entry", "pluginId", entry.Definition.JSONData.ID, "err", keyErr)
+				skipped++
 				continue
 			}
 			deploymentBackend := &pluginDeploymentBackend{Backend: backend, key: key}
@@ -172,6 +175,7 @@ func (t *pluginManifestsTarget) poll(ctx context.Context, dirty chan<- struct{})
 	}
 
 	t.snapshot.Store(&backends)
+	t.status.recordSkipped(skipped)
 
 	lastKeys := *t.lastKeys.Load()
 	if !sameKeySet(lastKeys, keys) {
