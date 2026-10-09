@@ -1794,3 +1794,62 @@ func TestListWithSelectorsWithoutIndexedFoldersAuthorizesAfterReading(t *testing
 		})
 	}
 }
+
+// k6Access behaves like authlib for a user: the single Check hides the k6 folder,
+// BatchCheck has no such rule and allows it.
+type k6Access struct {
+	checked []string
+	batches int
+}
+
+func (a *k6Access) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	a.checked = append(a.checked, req.Name)
+	return claims.CheckResponse{Allowed: req.Name != k6FolderUID && folder != k6FolderUID}, nil
+}
+
+func (a *k6Access) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	a.batches++
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		results[c.CorrelationID] = claims.BatchCheckResult{Allowed: true}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func (a *k6Access) Compile(context.Context, claims.AuthInfo, claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(string, string) bool { return true }, nil, nil
+}
+
+// Until authlib's BatchCheck hides the k6 folder, rows in it or naming it keep
+// the single check that does.
+func TestListWithSelectorsKeepsTheSingleCheckForTheK6Folder(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	inK6 := seedResource(t, backend, ctx, "perf-dash", k6FolderUID)
+	named := seedResource(t, backend, ctx, k6FolderUID, "open")
+	open := seedResource(t, backend, ctx, "team-dash", "open")
+	moved := seedResource(t, backend, ctx, "moved-dash", k6FolderUID)
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(moved, []*resourcepb.ResourceSearchRow{
+		folderSearchRow(appsKey("perf-dash"), inK6, k6FolderUID, "s1"),
+		folderSearchRow(appsKey(k6FolderUID), named, "open", "s2"),
+		folderSearchRow(appsKey("team-dash"), open, "open", "s3"),
+		// The index still has it where it was before it moved into the k6 folder.
+		folderSearchRow(appsKey("moved-dash"), moved, "open", "s4"),
+	})}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	s.backend = backend
+	access := &k6Access{}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, open, resp.Items[0].ResourceVersion)
+	require.Equal(t, 1, access.batches)
+	require.Equal(t, []string{"perf-dash", k6FolderUID, "moved-dash"}, access.checked, "only the k6 rows take the single check")
+}

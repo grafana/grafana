@@ -361,18 +361,43 @@ func (s *server) consumeSearchRows(
 
 // authorizeSearchRows uses indexed folders; consumeSearchRows checks again if
 // storage resolves a different folder. The caller must require the folder column.
+//
+// A row naming the k6 folder is left unauthorized, so it takes the single check
+// after the read: that check hides the k6 folder from anyone but a service
+// account and BatchCheck does not.
 func (s *server) authorizeSearchRows(ctx context.Context, rows []listSearchRow) ([]listSearchRow, *resourcepb.ErrorResult) {
-	kept := make([]listSearchRow, 0, len(rows))
-	for row, err := range authz.FilterAuthorized(ctx, s.access, slices.Values(rows), func(row listSearchRow) authz.BatchCheckItem {
+	batched := func(yield func(int) bool) {
+		for i, row := range rows {
+			if !isK6Row(row) && !yield(i) {
+				return
+			}
+		}
+	}
+	allowed := make(map[int]bool, len(rows))
+	for i, err := range authz.FilterAuthorized(ctx, s.access, batched, func(i int) authz.BatchCheckItem {
+		row := rows[i]
 		return listAuthorizationItem(row.key, row.key.Name, row.folder, row.resourceVersion)
 	}, authz.WithTracer(tracer)) {
 		if err != nil {
 			return nil, AsErrorResult(err)
 		}
-		row.authorized = true
-		kept = append(kept, row)
+		allowed[i] = true
+	}
+
+	kept := make([]listSearchRow, 0, len(rows))
+	for i, row := range rows {
+		if isK6Row(row) {
+			kept = append(kept, row)
+		} else if allowed[i] {
+			row.authorized = true
+			kept = append(kept, row)
+		}
 	}
 	return kept, nil
+}
+
+func isK6Row(row listSearchRow) bool {
+	return row.folder == k6FolderUID || row.key.Name == k6FolderUID
 }
 
 // readChunkSize is how many objects one batch read asks storage for, which
