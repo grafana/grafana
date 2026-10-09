@@ -7,9 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/modules"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util/testutil"
 	"github.com/stretchr/testify/require"
@@ -17,6 +19,103 @@ import (
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)
+}
+
+type moduleRegistererFunc func(modules.Registry)
+
+func (f moduleRegistererFunc) RegisterModules(registry modules.Registry) {
+	f(registry)
+}
+
+func TestModuleServerRunWaitsForModulesToStopDuringStartup(t *testing.T) {
+	const (
+		fastModuleName = "test-fast-shutdown-module"
+		slowModuleName = "test-slow-startup-module"
+	)
+
+	fastRunning := make(chan struct{})
+	slowStarted := make(chan struct{})
+	stopping := make(chan struct{})
+	releaseStopping := make(chan struct{})
+
+	cfg := setting.NewCfg()
+	cfg.Target = []string{fastModuleName, slowModuleName}
+	ms, err := InitializeModuleServer(cfg, Options{}, api.ServerOptions{})
+	require.NoError(t, err)
+
+	ms.moduleRegisterer = moduleRegistererFunc(func(registry modules.Registry) {
+		registry.RegisterModule(fastModuleName, func() (services.Service, error) {
+			return services.NewBasicService(
+				nil,
+				func(ctx context.Context) error {
+					close(fastRunning)
+					<-ctx.Done()
+					return nil
+				},
+				func(error) error {
+					close(stopping)
+					<-releaseStopping
+					return nil
+				},
+			).WithName(fastModuleName), nil
+		})
+		registry.RegisterModule(slowModuleName, func() (services.Service, error) {
+			return services.NewBasicService(
+				func(ctx context.Context) error {
+					close(slowStarted)
+					<-ctx.Done()
+					return ctx.Err()
+				},
+				nil,
+				nil,
+			).WithName(slowModuleName), nil
+		})
+	})
+
+	runErr := make(chan error, 1)
+	go func() {
+		runErr <- ms.Run()
+	}()
+
+	select {
+	case <-fastRunning:
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for fast module to run")
+	}
+	select {
+	case <-slowStarted:
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for slow module startup")
+	}
+
+	shutdownErr := make(chan error, 1)
+	go func() {
+		shutdownErr <- ms.Shutdown(context.Background(), "test shutdown")
+	}()
+
+	select {
+	case <-stopping:
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for module stopping")
+	}
+
+	select {
+	case err := <-runErr:
+		t.Fatalf("module server returned before module stopping completed: %v", err)
+	case <-time.After(100 * time.Millisecond):
+	}
+
+	close(releaseStopping)
+
+	select {
+	case err := <-runErr:
+		require.Error(t, err)
+		require.ErrorContains(t, err, context.Canceled.Error())
+	case <-time.After(10 * time.Second):
+		t.Fatal("timed out waiting for module server to stop")
+	}
+
+	require.NoError(t, <-shutdownErr)
 }
 
 func TestIntegrationWillRunInstrumentationServerWhenTargetHasNoHttpServer(t *testing.T) {
