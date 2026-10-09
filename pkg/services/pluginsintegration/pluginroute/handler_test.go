@@ -133,16 +133,22 @@ func TestHandlerServesManifestRoutes(t *testing.T) {
 func TestHandlerDeniesUnauthenticatedRequests(t *testing.T) {
 	handler := loadHandler(t, testPlugin(), testOptions())
 
-	res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds")
-	require.Equal(t, http.StatusUnauthorized, res.Code, res.Body.String())
+	// Manifest routes are matched inside the apiserver chain, so they are
+	// authenticated like the resources are.
+	for _, path := range []string{"namespaces/default/testkinds", "namespaces/default/widgets", "things"} {
+		res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/"+path)
+		require.Equal(t, http.StatusUnauthorized, res.Code, "%s: %s", path, res.Body.String())
+	}
 }
 
 func TestHandlerDeniesCallerWithoutPluginAccess(t *testing.T) {
 	handler := withRequester(loadHandler(t, testPlugin(), testOptions()))
 
-	res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/namespaces/default/testkinds")
-	require.Equal(t, http.StatusForbidden, res.Code, res.Body.String())
-	require.Contains(t, res.Body.String(), "no plugin access checker is configured")
+	for _, path := range []string{"namespaces/default/testkinds", "namespaces/default/widgets", "things"} {
+		res := get(t, handler, "/apis/example.ext.grafana.app/v1alpha1/"+path)
+		require.Equal(t, http.StatusForbidden, res.Code, "%s: %s", path, res.Body.String())
+		require.Contains(t, res.Body.String(), "no plugin access checker is configured")
+	}
 }
 
 func TestHandlerSharesOneMetricsRegistry(t *testing.T) {
@@ -324,6 +330,25 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 			handler, err := NewHandler(plugin.JSONData.ID, plugin.Manifests[0], opts)
 			require.ErrorContains(t, err, tc.want)
 			require.Nil(t, handler)
+		})
+	}
+}
+
+func TestValidateManifest(t *testing.T) {
+	require.NoError(t, ValidateManifest("example-app", testPlugin().Manifests[0]))
+
+	for _, tc := range []struct {
+		name     string
+		manifest *app.ManifestData
+		want     string
+	}{
+		{"nil manifest", nil, "missing manifest"},
+		{"empty manifest", &app.ManifestData{}, "empty app manifest"},
+		{"group outside the plugin domain", &app.ManifestData{Group: "example.com", Versions: testPlugin().Manifests[0].Versions}, "invalid manifest group"},
+		{"group that is not a DNS name", &app.ManifestData{Group: "Bad_Group.ext.grafana.app", Versions: testPlugin().Manifests[0].Versions}, "invalid manifest group"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			require.ErrorContains(t, ValidateManifest("example-app", tc.manifest), tc.want)
 		})
 	}
 }

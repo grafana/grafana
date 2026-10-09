@@ -309,7 +309,7 @@ func newPluginBackend(pluginID string, manifest *app.ManifestData, client Plugin
 	if !isPluginAPIGroup(manifest.Group) {
 		return nil, fmt.Errorf("plugin %q: API group %q is not a plugin group", pluginID, manifest.Group)
 	}
-	if _, err := pluginroute.NewAPI(pluginID, manifest, pluginroute.Options{}); err != nil {
+	if err := pluginroute.ValidateManifest(pluginID, manifest); err != nil {
 		return nil, err
 	}
 	group := pluginroute.APIGroup(manifest)

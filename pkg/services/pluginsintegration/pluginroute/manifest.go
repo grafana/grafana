@@ -44,10 +44,9 @@ type manifestBuilder struct {
 // GetGroupVersions returns the served versions, preferred version first.
 func (b *manifestBuilder) GetGroupVersions() []schema.GroupVersion {
 	group := APIGroup(b.manifest)
-	gvs := make([]schema.GroupVersion, 0, len(group.Versions))
-	for _, v := range group.Versions {
-		gv := schema.GroupVersion{Group: group.Name, Version: v.Version}
-		gvs = append(gvs, gv)
+	gvs := make([]schema.GroupVersion, len(group.Versions))
+	for i, v := range group.Versions {
+		gvs[i] = schema.GroupVersion{Group: group.Name, Version: v.Version}
 	}
 	return gvs
 }
@@ -160,8 +159,8 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 		}
 
 		// Checked against the mounted routes rather than the manifest, since
-		// routes that shadow a resource or use unservable methods are dropped.
-		if len(storage) == 0 && hasRoutes(b.GetAPIRoutes(gv)) {
+		// routes that shadow a resource are dropped.
+		if len(storage) == 0 && (hasRoutes(b.GetAPIRoutes(gv)) || len(b.versionRoutes(gv, ignoreSkipped)) > 0) {
 			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
 		}
 

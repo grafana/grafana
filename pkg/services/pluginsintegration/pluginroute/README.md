@@ -6,9 +6,8 @@ to Grafana's API server, storage, and access control. These dependencies belong 
 the main Grafana module, outside the standalone `pkg/plugins` module and `pkg/router`.
 
 Manifest kinds, custom v3 routes, admission, kind authorization, secret caching,
-and manifest OpenAPI processing live in this package. `NewAPI` takes a plugin ID
-and one manifest. Offline OpenAPI generation uses this builder for manifests and
-`appplugin.AppPluginAPIBuilder` for settings-only plugins.
+and manifest OpenAPI processing live in this package. `BuildOpenAPI` renders the
+same API's spec offline; see [Rendering the spec offline](#rendering-the-spec-offline).
 
 Manifest handlers serve only the manifest's declared kinds, routes, and served
 versions. Settings and their subresources are served exclusively at
@@ -55,9 +54,33 @@ The registration honors:
 - manifest-declared version routes and kind subresource routes, forwarded to
   the plugin's v3 route service.
 
-The manifest group must be a DNS name ending in `.ext.grafana.app`. Only served
-versions are exposed, with the preferred version first. The generated OpenAPI
-document uses each kind's schema for request bodies, responses, and examples.
+The manifest group must be a DNS name ending in `.ext.grafana.app`
+(`ValidateManifest`). Only served versions are exposed, with the preferred
+version first. The generated OpenAPI document uses each kind's schema for
+request bodies, responses, and examples.
+
+## Custom routes
+
+A version's custom routes are the paths in its manifest `openapi` section,
+relative to the version root. A manifest from before app-sdk published routes
+there only has the deprecated `routes` and per-kind `routes`, which are
+converted to the same paths first. The components in the `openapi` section are
+published in the spec and replace any component already published under the
+same name.
+
+Paths under `namespaces/{namespace}/` are namespaced. A path of the form
+`{plural}/{name}/<subresource>` is a subresource of one object of that kind, and
+the plugin receives the stored object with the request. A path that would
+shadow a kind, its `status` subresource, the settings resource, or the
+namespace mount point is skipped with a warning, as are `TRACE` and `OPTIONS`
+operations.
+
+The routes are served by a `ServeMux` that wraps the API server's own handler,
+inside its filter chain, so a request reaching a route has already been
+authenticated and authorized. A request for any other path goes to the API
+server. A declared path called with an undeclared method is answered `405`
+with an `Allow` header. The generic search, trash, hybrid, and list-keys routes
+are mounted on the API server like any other builder's routes.
 
 ## Authorization
 
@@ -87,3 +110,32 @@ fields.
 
 Schema validation runs after mutation. A mutation that produces an object that
 does not match the manifest schema is rejected before it is stored.
+
+## Rendering the spec offline
+
+`BuildOpenAPI` renders the OpenAPI v3 spec for one served version of a manifest
+without storage or a running plugin backend. `grafana cli write-openapi` is
+built on it; see the [command's README](../../../cmd/grafana-cli/commands/README.md).
+
+It builds the handler with `NewHandler`, using a no-op REST options getter and
+offline stand-ins for the plugin, search, and resource store clients, and then
+requests `/openapi/v3/apis/<group>/<version>` from it as a service identity.
+The spec is therefore produced by the same code that serves it, rather than by
+a separate pipeline that has to be kept in step.
+
+The rendered spec always registers search, trash, hybrid, and list-keys
+routes, since it describes every route a plugin can get. The usual per-kind
+eligibility rules still apply: trash is limited to dashboards, and hybrid
+requires `search.hybrid: true` on a namespaced kind.
+
+To compare with a running server:
+
+```sh
+curl -s -u admin:admin \
+  http://localhost:3000/openapi/v3/apis/<group>/<version> | python3 -m json.tool --indent 2 > server.json
+grafana cli write-openapi ./dist/app-sdk-manifest.json --api-version <version> -o cli.json
+diff <(python3 -m json.tool --indent 2 cli.json) server.json
+```
+
+Expect differences only where the server's configuration disables the generic
+routes the rendered spec always includes.

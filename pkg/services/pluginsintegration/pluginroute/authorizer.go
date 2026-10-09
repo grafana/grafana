@@ -60,7 +60,7 @@ func kindPolicies(manifest *app.ManifestData) map[string]kindPolicy {
 		}
 
 		// Only the first segment can be a subresource.
-		for _, route := range parseManifestRoutes(version, func(string, string) {}) {
+		for _, route := range parseManifestRoutes(version, ignoreSkipped) {
 			if route.kind == nil {
 				continue
 			}

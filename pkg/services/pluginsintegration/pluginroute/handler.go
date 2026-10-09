@@ -112,6 +112,7 @@ func APIGroup(m *app.ManifestData) metav1.APIGroup {
 			g.PreferredVersion = g.Versions[len(g.Versions)-1]
 		}
 	}
+	// Make it first
 	if i := slices.Index(g.Versions, g.PreferredVersion); i > 0 {
 		g.Versions = append([]metav1.GroupVersionForDiscovery{g.PreferredVersion}, slices.Delete(g.Versions, i, i+1)...)
 	}
@@ -122,7 +123,7 @@ func APIGroup(m *app.ManifestData) metav1.APIGroup {
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
 func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Handler, error) {
-	b, err := NewAPI(pluginID, manifest, opts)
+	b, err := newManifestBuilder(pluginID, manifest, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -170,7 +171,7 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	}
 	config.Authentication.Authenticator = apiserverauthenticator.NewAuthenticator()
 	if err := builder.SetupConfig(scheme, config, builders, opts.BuildVersion,
-		builder.GetDefaultBuildHandlerChainFunc, gvs,
+		b.buildHandlerChain, gvs,
 		[]common.GetOpenAPIDefinitions{appsdkapiserver.GetCommonOpenAPIDefinitions}, reg, resources); err != nil {
 		return nil, fmt.Errorf("%s: setup config: %w", group, err)
 	}
@@ -219,26 +220,31 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	return &Handler{Handler: server.Handler, destroy: server.Destroy}, nil
 }
 
-// PluginAPI supplies the schema and storage installation for a routed plugin.
-type PluginAPI interface {
-	builder.APIGroupBuilder
-	builder.APIGroupVersionsProvider
-	GetAuthorizer() authorizer.Authorizer
-}
+var (
+	_ builder.APIGroupBuilder          = (*manifestBuilder)(nil)
+	_ builder.APIGroupVersionsProvider = (*manifestBuilder)(nil)
+	_ builder.APIGroupRouteProvider    = (*manifestBuilder)(nil)
+	_ builder.OpenAPIPostProcessor     = (*manifestBuilder)(nil)
+)
 
-// NewAPI builds the API for one plugin manifest.
-// It is also used by offline OpenAPI generation so discovery matches the router.
-func NewAPI(pluginID string, manifest *app.ManifestData, opts Options) (PluginAPI, error) {
+// ValidateManifest reports whether a manifest can be served for a plugin.
+func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 	if manifest == nil {
-		return nil, fmt.Errorf("missing manifest")
+		return fmt.Errorf("missing manifest")
 	}
-
 	if manifest.IsEmpty() {
-		return nil, fmt.Errorf("plugin %q has an empty app manifest", pluginID)
+		return fmt.Errorf("plugin %q has an empty app manifest", pluginID)
 	}
 	group := manifest.Group
 	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
-		return nil, fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
+		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
+	}
+	return nil
+}
+
+func newManifestBuilder(pluginID string, manifest *app.ManifestData, opts Options) (*manifestBuilder, error) {
+	if err := ValidateManifest(pluginID, manifest); err != nil {
+		return nil, err
 	}
 
 	if opts.AccessChecker == nil {
@@ -265,6 +271,16 @@ func NewAPI(pluginID string, manifest *app.ManifestData, opts Options) (PluginAP
 		opts:          opts,
 		kindPolicies:  kindPolicies(manifest),
 	}, nil
+}
+
+// buildHandlerChain is the default apiserver chain with the manifest's routes
+// mounted ahead of the apiserver's own handlers. They sit inside the chain so
+// they are authenticated and authorized like any other request.
+func (b *manifestBuilder) buildHandlerChain(builders []builder.APIGroupBuilder, reg prometheus.Registerer) builder.BuildHandlerChainFunc {
+	chain := builder.GetDefaultBuildHandlerChainFunc(builders, reg)
+	return func(delegate http.Handler, c *genericapiserver.Config) http.Handler {
+		return chain(b.routeMux(delegate, reg), c)
+	}
 }
 
 func UnifiedStorage(client resource.ResourceClient, secrets secret.InlineSecureValueSupport, configProvider apistore.RestConfigProvider) StorageProvider {

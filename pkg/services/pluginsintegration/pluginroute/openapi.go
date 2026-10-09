@@ -78,6 +78,7 @@ func (b *manifestBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI
 		info["build"] = b.opts.PluginInfo.Build.Time
 	}
 	oas.Info.AddExtension("x-grafana-plugin", info)
+	b.addRoutePaths(oas, root, version)
 	b.postProcessManifestKinds(oas, root, version)
 	b.dropUnstructuredModels(oas, version)
 	b.addRouteComponents(oas, version)
@@ -92,6 +93,24 @@ func (b *manifestBuilder) specVersion(oas *spec3.OpenAPI) string {
 		}
 	}
 	return apppluginV0.VERSION
+}
+
+// addRoutePaths publishes the manifest's custom routes. They are served by
+// routeMux rather than the apiserver, so nothing else adds them to the spec.
+func (b *manifestBuilder) addRoutePaths(oas *spec3.OpenAPI, root string, version string) {
+	routes := b.versionRoutes(schema.GroupVersion{Group: b.group, Version: version}, ignoreSkipped)
+	if len(routes) == 0 {
+		return
+	}
+	if oas.Paths == nil {
+		oas.Paths = &spec3.Paths{}
+	}
+	if oas.Paths.Paths == nil {
+		oas.Paths.Paths = map[string]*spec3.Path{}
+	}
+	for _, route := range routes {
+		oas.Paths.Paths[root+route.versionPath()] = &spec3.Path{PathProps: *route.spec()}
+	}
 }
 
 // addRouteComponents publishes the components the version's custom routes

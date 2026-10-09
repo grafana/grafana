@@ -124,7 +124,7 @@ func writeOpenAPIContext(t *testing.T, args []string) *cli.Context {
 }
 
 func TestWriteOpenAPICommand(t *testing.T) {
-	raw, err := os.ReadFile("../../../registry/apis/appplugin/pluginopenapi/testdata/standalone/app-sdk-manifest.json")
+	raw, err := os.ReadFile("testdata/write-openapi/standalone/app-sdk-manifest.json")
 	require.NoError(t, err)
 	var manifest map[string]any
 	require.NoError(t, json.Unmarshal(raw, &manifest))

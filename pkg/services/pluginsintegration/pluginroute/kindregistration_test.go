@@ -145,10 +145,10 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		require.Equal(t, map[string]rest.Storage{routesOnlyStorageKey: &routesOnlyStorage{}},
 			info.VersionedResourcesStorageMap["v1"])
 
-		// A route that is dropped at mount time serves nothing, so the version
-		// has nothing to install.
+		// A route that is dropped at mount time, here for shadowing the settings
+		// resource, serves nothing, so the version has nothing to install.
 		b = routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-			"ping": {Head: ping.Get},
+			"app": ping,
 		}})
 		info, opts = testAPIGroupOptions(t, b)
 		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
