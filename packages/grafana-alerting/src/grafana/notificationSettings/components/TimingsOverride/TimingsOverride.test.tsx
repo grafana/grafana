@@ -136,4 +136,13 @@ describe('TimingsOverride', () => {
 
     expect(screen.queryByText(/greater than zero/i)).not.toBeInTheDocument();
   });
+
+  it.each([/^group wait$/i, /^group interval$/i, /^repeat interval$/i])('rejects milliseconds in %s', async (name) => {
+    const { user } = render(<StatefulTimings initial={{ groupWait: '1m' }} />);
+
+    await user.type(screen.getByLabelText(name), '500ms');
+    await user.tab();
+
+    expect(await screen.findByText(/invalid duration format/i)).toBeInTheDocument();
+  });
 });
