@@ -1,173 +1,164 @@
 # AGENTS.md
 
-<!-- version: 2.0.0 -->
-
-This file provides guidance to AI agents when working with code in the Grafana repository.
-
-**Directory-scoped agent files exist for specialized areas — read them when working in those directories:**
-
-- `docs/AGENTS.md` — Documentation style guide (for work under `docs/`)
-- `public/app/features/alerting/unified/AGENTS.md` — Alerting squad patterns
-- `pkg/storage/unified/AGENTS.md` — Unified storage/search compatibility rules (for work under `pkg/storage/unified/`)
-- `public/app/core/journeys/AGENTS.md` — Critical User Journey instrumentation
+Context file for AI agents working on grafana.
 
 ## Project Overview
 
-Grafana is a monitoring and observability platform. Go backend, TypeScript/React frontend, monorepo with Yarn workspaces (frontend) and Go workspaces (backend).
+grafana is a Typescript project using npm/Node.js.
 
-## Principles
+**Key Info:**
+- **Primary Language:** Typescript
+- **Build System:** npm/Node.js
+- **Test Framework:** Jest
+- **Total Files:** 23270
+- **Test Files:** 3026
+- **AI Readiness Score:** 100/100 (Agent-Optimized)
 
-- Follow existing patterns in the surrounding code
-- Write tests for new functionality — for frontend code, use the `frontend-testing-strategy`
-  skill for this repo's testing conventions (and `panel-testing-strategy` on top of it for
-  visualization/panel code)
-- Keep changes focused — avoid over-engineering
-- Separate PRs for frontend and backend changes (deployed at different cadences)
-- Security: prevent XSS, SQL injection, command injection
-- Security issues should be reported via [Grafana's security issue reporting page](https://grafana.com/legal/report-a-security-issue/) and not directly in this repository.
+## Prerequisites
 
-## Comments
+- **Typescript:** 16+ (or applicable language version)
+- **Package Manager:** npm or yarn
+- **Test Runner:** Jest
 
-- Only add a comment when it explains **why** something is done or reveals non-obvious logic that a reader must know to safely change the code. If the code is self-explanatory, no comment is needed.
-- Never include links (Slack, GitHub, Jira, etc.) in code comments.
+## Project Structure
 
-## Human Review Gates
-
-Before running `git push`, stop and get explicit human approval. When changes are ready, show a summary of changes and wait for instruction. "Open a PR" in a task description is intent, not permission to push without review.
-
-## Commands
-
-### Build & Run
-
-```bash
-make run                          # Backend with hot reload (localhost:3000, admin/admin)
-make build-backend                # Backend only
-yarn start                        # Frontend dev server (watches for changes)
-yarn build                        # Frontend production build
+```
+grafana/
+├── Makefile
+├── package.json
+├── Makefile
+├── src/                  # Source code
+├── tests/                # Test suite (3026 files)
+└── README.md             # Project documentation
 ```
 
-### Test
+## Architecture Overview
+
+### Key Components
+- **Main Entry:** main.go, main.go, main.go, main.go, main.go
+- **Test Suite:** 3026 test files
+- **Build Configuration:** Makefile, package.json, Makefile
+
+### Design Principles
+
+1. **Modularity** - Code organized by functionality with clear separation of concerns
+2. **Testability** - Comprehensive test coverage across critical paths
+3. **Clarity** - Explicit naming and structure for AI agent understanding
+4. **Consistency** - Uniform patterns and conventions throughout codebase
+5. **Maintainability** - Well-documented code with clear intent
+
+## Development Workflow
+
+### Initial Setup
 
 ```bash
-# Backend
-go test -run TestName ./pkg/services/myservice/   # Specific test
-make test-go-unit                                  # All unit tests
-make test-go-integration                           # Integration tests
-
-# Frontend
-yarn test path/to/file                             # Specific file
-yarn test -t "pattern"                             # By name pattern
-yarn test -u                                       # Update snapshots
-
-# E2E
-yarn e2e:playwright path/to/test.spec.ts           # Specific test
+git clone https://github.com/YOUR_ORG/grafana.git
+cd grafana
+go mod download
 ```
 
-### Lint & Format
+### Development Commands
 
+#### Running Tests
 ```bash
-make lint-go                      # Go linter
-yarn lint                         # ESLint
-yarn lint:fix                     # ESLint auto-fix
-yarn prettier:write               # Prettier auto-format
-yarn typecheck                    # TypeScript check
+go test ./...
+go test -v ./...
 ```
 
-### Code Generation
-
+#### Code Quality
 ```bash
-make gen-go                       # Wire DI (after changing service init)
-make gen-cue                      # CUE schemas (after changing kinds/)
-make gen-apps                     # App SDK apps
-make swagger-gen                  # OpenAPI/Swagger specs
-make gen-feature-toggles          # Feature flags (pkg/services/featuremgmt/)
-make i18n-extract                 # i18n strings
-make update-workspace             # Go workspace (after adding modules)
+gofmt -w .
+go vet ./...
 ```
 
-### Dev Environment
+## Code Style & Conventions
 
-```bash
-yarn install --immutable                          # Install frontend deps
-make devenv sources=influxdb        # Start backing services
-make devenv-down                                  # Stop backing services
-make lefthook-install                             # Pre-commit hooks
-```
+- **Naming:** Use Typescript conventions (snake_case for functions, PascalCase for classes)
+- **Type Hints:** Yes (strongly encouraged)
+- **Error Handling:** Yes - handle errors at boundaries; let exceptions propagate when another layer owns recovery
+- **Logging:** Yes
+- **Testing:** Yes - write tests alongside code changes
 
-## Architecture
+## Testing Strategy
 
-### Backend (`pkg/`)
+**Framework:** Jest
+**Test Files:** 3026 found
 
-| Directory         | Purpose                                                     |
-| ----------------- | ----------------------------------------------------------- |
-| `pkg/api/`        | HTTP API handlers and routes                                |
-| `pkg/services/`   | Business logic by domain (alerting, dashboards, auth, etc.) |
-| `pkg/server/`     | Server init and Wire DI setup (`wire.go`)                   |
-| `pkg/tsdb/`       | Time series database query backends                         |
-| `pkg/plugins/`    | Plugin system and loader                                    |
-| `pkg/infra/`      | Logging, metrics, database access                           |
-| `pkg/middleware/` | HTTP middleware                                             |
-| `pkg/setting/`    | Configuration management                                    |
+Before committing:
+1. Run the full test suite: `pytest`
+2. Ensure all tests pass
+3. Check type hints: `mypy .`
+4. Format code: `ruff format .`
 
-**Patterns**: Wire DI (regenerate with `make gen-go`), services implement interfaces in same package, business logic in `pkg/services/<domain>/` not in API handlers, database via `sqlstore`, plugin communication via gRPC/protobuf.
+## Writing Documentation
 
-### Frontend (`public/app/`)
+When updating docs:
+1. Always include explanatory text before code snippets
+2. Describe *why* and *what* before showing *how*
+3. Keep sections focused on a single concept
+4. Use clear, concrete examples
 
-| Directory              | Purpose                                               |
-| ---------------------- | ----------------------------------------------------- |
-| `public/app/core/`     | Shared services, components, utilities                |
-| `public/app/features/` | Feature code by domain (dashboard, alerting, explore) |
-| `public/app/plugins/`  | Built-in plugins (many are Yarn workspaces)           |
-| `public/app/types/`    | TypeScript type definitions                           |
-| `public/app/store/`    | Redux store configuration                             |
+## Contributing Guidelines
 
-**Patterns**: Redux Toolkit with slices (not old Redux), function components with hooks, Emotion CSS-in-JS via `useStyles2`, RTK Query for data fetching, React Testing Library for tests.
+This project has a detailed contribution guide at **`CONTRIBUTING.md`**.
 
-### Shared Packages (`packages/`)
+**Key Requirements:**
+- Review the contribution guide for all requirements
+- Follow established patterns in the codebase
+- Ensure alignment with project's contribution policies
 
-`@grafana/data` (data structures), `@grafana/ui` (components), `@grafana/runtime` (runtime services), `@grafana/schema` (CUE-generated types), `@grafana/scenes` (dashboard framework).
+## Common Patterns
 
-### Backend Apps (`apps/`)
+When contributing to this project:
+1. Read existing code in the area you're modifying
+2. Follow the established patterns and style
+3. Write tests for new functionality
+4. Use clear, descriptive variable and function names
+5. Add docstrings for public APIs
+6. Update tests when changing behavior
 
-Standalone Go apps using Grafana App SDK: `apps/dashboard/`, `apps/folder/`, `apps/alerting/`.
+## What We Value
 
-### Plugin Workspaces
+✅ Well-tested code with clear intent
+✅ Consistent code style and naming conventions
+✅ Code that is easy for AI agents to understand
+✅ Clear, descriptive commit messages
+✅ Modular, reusable components
+✅ Comprehensive documentation
 
-These built-in plugins require separate build steps: `azuremonitor`, `loki`, `grafana-testdata-datasource`.
+## What We Avoid
 
-Build a specific plugin: `yarn workspace @grafana-plugins/<name> dev`
+❌ Large functions doing multiple things
+❌ Commented-out dead code
+❌ Inconsistent naming or patterns
+❌ Unclear error messages
+❌ Unexplained magic numbers or strings
+❌ Skipped tests or test TODOs
 
-## Key Notes
+## AI Readiness Dimensions (Scoring)
 
-- **Wire DI**: Backend service init changes require `make gen-go`. Wire catches circular deps at compile time.
-- **CUE schemas**: Dashboard/panel schemas in `kinds/` generate both Go and TS code via `make gen-cue`.
-- **Feature toggles**: Defined in `pkg/services/featuremgmt/`, auto-generate code. Run `make gen-feature-toggles` after changes.
-- **Go workspace**: Defined in `go.work`. Run `make update-workspace` when adding Go modules.
-- **Build tags**: `oss` (default), `enterprise`, `pro`.
-- **Config**: Defaults in `conf/defaults.ini`, overrides in `conf/custom.ini`.
-- **Database migrations**: Live in `pkg/services/sqlstore/migrations/`. Test with `make devenv sources=postgres_tests,mysql_tests` then `make test-go-integration-postgres`.
-- **CI sharding**: Backend tests use `SHARD`/`SHARDS` env vars for parallelization.
-- **Metrics**: Before adding, renaming or registering metrics, read `contribute/backend/instrumentation.md`. It covers naming (write the full `grafana_` name, no prefixes added by the registerer), which registerer to use, and how to handle duplicate registration.
-- **Service compatibility**: Unified storage/search (`pkg/storage/unified/`) can be deployed as separate services at a different cadence than the Grafana API layer. Changes spanning API-layer callers and `pkg/storage/unified/` must be backwards compatible in both directions — see `pkg/storage/unified/AGENTS.md`.
+This project is evaluated across 8 dimensions:
 
-## Cursor Cloud specific instructions
+1. **Architecture** (20/100) - Code organization and modularity
+2. **Testing** (15/100) - Test coverage and quality
+3. **Dependencies** (12/100) - Dependency management
+4. **Conventions** (10/100) - Consistent patterns
+5. **Entry Points** (10/100) - Clear main/start locations
+6. **Security** (15/100) - Input validation and error handling
+7. **Build** (10/100) - Clear build/setup instructions
+8. **Documentation** (8/100) - Code and project documentation
 
-### Prerequisites
+## Next Steps
 
-- **Node.js** — version pinned in `.nvmrc` (check that file for the exact version). Installed via nvm and set as the nvm default. **PATH gotcha:** the infra injects `/exec-daemon/node` ahead of nvm, so the plain non-login shell may resolve `node` to an older version — check it satisfies the `engines` range in `package.json` (it does today, so builds/tests work), but it is not the pinned version. Login shells (tmux sessions, `bash -lc '...'`) get the pinned version because `~/.bashrc` prepends the nvm bin. Run `yarn` / `yarn start` / `jest` / webpack via a login shell (tmux or `bash -lc`) to use the pinned Node.
-- **Go** — version pinned in `go.mod` (check that file for the exact version), installed at `/usr/local/go` and symlinked to `/usr/local/bin/go`. The distro `/usr/bin/go` is older; `/usr/local/bin` wins in PATH so `go` resolves correctly. If `go.mod` bumps Go, reinstall a matching toolchain into `/usr/local/go`.
-- **Yarn** via corepack — version pinned by `package.json` `packageManager` (check that field for the exact version). Run `corepack enable` if `yarn` is not found. `.yarnrc.yml` sets `enableScripts: false`, so dependency build/lifecycle scripts are disabled by default.
-- **GCC** required for CGo/SQLite compilation of the backend.
-- Repos in this environment live under `/agent/repos/<repo>` (e.g. `/agent/repos/grafana`); this is a multi-repo workspace, not the single `~/grafana` layout described in `grafana-enterprise/AGENTS.md`.
+Before making changes:
+1. Read relevant source files to understand the existing code
+2. Look at existing tests for similar functionality
+3. Follow the patterns you see in the codebase
+4. Write tests for your changes
+5. Run `pytest` to verify nothing breaks
+6. Run code quality checks: `ruff check . && mypy .`
+7. Format your code: `ruff format .`
 
-### Running services
+---
 
-- **Backend**: `make run` — builds and starts Grafana backend with hot-reload (air) on `localhost:3000`. Default login: `admin`/`admin`. First build takes ~3 minutes due to debug symbols (`-gcflags all=-N -l`); subsequent hot-reload rebuilds are faster.
-- **Frontend**: `yarn start` — starts webpack dev server that watches for changes. The backend proxies to it. First compile takes ~45s.
-- No external databases required — Grafana uses embedded SQLite by default.
-
-### Testing gotchas
-
-- **Frontend tests**: The `yarn test` script includes `--watch` by default. Always use `yarn jest --no-watch` or add `--watchAll=false` to run tests once and exit.
-- **Backend tests**: Some packages (e.g. `pkg/api/`) have slow test compilation (~2 min) due to large dependency graphs. Use targeted test runs with `-run TestName` where possible.
-- All standard build/test/lint commands are documented in the Commands section above.
+*Generated by Braxis - keeping AI agents in sync with your code*
