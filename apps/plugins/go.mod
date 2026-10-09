@@ -10,6 +10,8 @@ replace github.com/grafana/grafana/pkg/apiserver => ../../pkg/apiserver
 
 replace github.com/grafana/grafana/pkg/infra/features => ../../pkg/infra/features
 
+replace github.com/grafana/grafana/pkg/infra/metrics => ../../pkg/infra/metrics
+
 replace github.com/grafana/grafana/pkg/plugins => ../../pkg/plugins
 
 require (
