@@ -103,7 +103,14 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 
 			tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 			require.NoError(t, err)
-			require.Len(t, tuples, 1)
+			if tt.verb == "edit" || tt.verb == "admin" {
+				require.Len(t, tuples, 2)
+				assert.Equal(t, tt.expectedUser, tuples[1].GetUser())
+				assert.Equal(t, "create", tuples[1].GetRelation())
+				assert.Equal(t, "resource:dashboard.grafana.app/dashboards/annotations/dash1", tuples[1].GetObject())
+			} else {
+				require.Len(t, tuples, 1)
+			}
 
 			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
 			assert.Equal(t, tt.expectedRelation, tuples[0].GetRelation())

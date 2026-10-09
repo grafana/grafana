@@ -203,29 +203,27 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
-		// Convert RBAC action/kind to Zanzana tuple
-		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
+		// Convert RBAC action/kind to Zanzana tuples.
+		translated, ok := TranslateToResourceTuples(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
 			// Skip permissions that can't be translated
 			log.New("zanzana").Debug("skipping permission that can't be translated", "permission", perm)
 			continue
 		}
 
-		// Handle folder resource tuples specially - they need to be merged
-		if IsFolderResourceTuple(tuple) {
-			// Create a key without the condition for deduplication
-			key := TupleStringWithoutCondition(tuple)
-			if existing, exists := folderResourceTuples[key]; exists {
-				// Merge this tuple with the existing one
-				MergeFolderResourceTuples(existing, tuple)
-			} else {
-				folderResourceTuples[key] = tuple
+		for _, tuple := range translated {
+			// Folder resource tuples share a relation and merge their filters.
+			if IsFolderResourceTuple(tuple) {
+				key := TupleStringWithoutCondition(tuple)
+				if existing, exists := folderResourceTuples[key]; exists {
+					MergeFolderResourceTuples(existing, tuple)
+				} else {
+					folderResourceTuples[key] = tuple
+				}
+				continue
 			}
-			continue
+			tupleMap[tuple.String()] = tuple
 		}
-
-		// For non-folder resource tuples, just add to the map
-		tupleMap[tuple.String()] = tuple
 	}
 
 	// Collect all tuples
@@ -501,9 +499,16 @@ func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authz
 		return datasourcePermissionToTuples(subject, relation, resource), nil
 	}
 
-	return []*openfgav1.TupleKey{
-		newResourcePermissionTuple(subject, relation, resource, ""),
-	}, nil
+	tuples := []*openfgav1.TupleKey{newResourcePermissionTuple(subject, relation, resource, "")}
+	if relation == RelationSetEdit || relation == RelationSetAdmin {
+		switch resource.GetGroup() + "/" + resource.GetResource() {
+		case "folder.grafana.app/folders":
+			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, ""))
+		case "dashboard.grafana.app/dashboards":
+			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, "annotations"))
+		}
+	}
+	return tuples, nil
 }
 
 func datasourcePermissionToTuples(subject, relation string, resource *authzextv1.Resource) []*openfgav1.TupleKey {
