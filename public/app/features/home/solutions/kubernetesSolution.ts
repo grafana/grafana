@@ -15,7 +15,7 @@ import {
 import { type KubernetesFilter } from './kubernetesFilter';
 import { accessibleAppPage, exploreFallbackCta, openAppLabel } from './pluginPages';
 import { datasourceFact } from './probeUtils';
-import { scopeFor } from './solutionFilter';
+import { noMatchStats, scopeFor } from './solutionFilter';
 import { solutionOffer } from './solutionOffer';
 import { detectSignal, type SignalDetection } from './solutionState';
 import { type Solution } from './types';
@@ -137,14 +137,7 @@ export function kubernetesSolution(
       const clusterCount = Math.ceil(counts.clusters);
       const podCount = Math.ceil(counts.pods);
       if (clusterCount <= 0 && podCount <= 0) {
-        // A scoped empty result must not leave a blank card under a Filtered badge.
-        const ds = await datasource();
-        return ds && scopeFor(filter, ds)
-          ? {
-              primary: t('home.solutions.kubernetes.filter.no-match', 'No matching data'),
-              secondary: t('home.solutions.kubernetes.filter.no-match-hint', 'Adjust the filters'),
-            }
-          : null;
+        return noMatchStats(filter, datasource, t('home.solutions.kubernetes.filter.no-match', 'No matching data'));
       }
       return {
         primary: t('home.solutions.kubernetes.clusters', '', {

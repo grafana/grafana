@@ -24,6 +24,8 @@ export const FlagKeys = {
   AlertingManualAssistantInvestigation: "alerting.manualAssistantInvestigation",
   /** Enable the alert quality tab, which surfaces the health of your alert rules and recommends actions to improve them. */
   AlertingRuleQuality: "alerting.ruleQuality",
+  /** Enable assistant reviews on the alert quality page. */
+  AlertingRuleReviews: "alerting.ruleReviews",
   /** Automatically keeps imported notification configuration up to date with a Mimir or Cortex Alertmanager data source */
   AlertingSyncExternalAlertmanager: "alerting.syncExternalAlertmanager",
   /** Enables enhanced stat mode for the Alert List panel with thresholds, value mappings, and linking */
@@ -100,6 +102,10 @@ export const FlagKeys = {
   DashboardUndoRedo: "dashboardUndoRedo",
   /** Enables dashboard validator app to run compatibility checks between a dashboard and data source */
   DashboardValidatorApp: "dashboardValidatorApp",
+  /** Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state */
+  DashboardsLibraryPanelRepeatFromServerResolution: "dashboards.libraryPanelRepeatFromServerResolution",
+  /** Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto */
+  DashboardsPublicDashboardBadgeFromApi: "dashboards.publicDashboardBadgeFromApi",
   /** Shows defined connections for a data source in the plugins detail page */
   DatasourceConnectionsTab: "datasourceConnectionsTab",
   /** Use the new datasource API groups for datasource resource requests, frontend flag */
@@ -118,6 +124,8 @@ export const FlagKeys = {
   DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
+  /** Enables tabular numerals for visualization legend values */
+  DatavizTabularNums: "dataviz.tabularNums",
   /** Set this to true to enable all app chrome extensions registered by plugins. */
   EnableAppChromeExtensions: "enableAppChromeExtensions",
   /** Enables new colorblind safe palette and line fill patterns for panels */
@@ -126,8 +134,6 @@ export const FlagKeys = {
   EnableDashboardEmptyExtensions: "enableDashboardEmptyExtensions",
   /** Enables the extension admin page regardless of development mode */
   EnableExtensionsAdminPage: "enableExtensionsAdminPage",
-  /** A/A test for recently viewed dashboards feature */
-  ExperimentRecentlyViewedDashboards: "experimentRecentlyViewedDashboards",
   /** Automatic service account and token setup for plugins */
   ExternalServiceAccounts: "externalServiceAccounts",
   /** Enable Faro session replay for Grafana */
@@ -164,6 +170,8 @@ export const FlagKeys = {
   GrafanaExploreMetricsSidebar: "grafana.exploreMetricsSidebar",
   /** Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels */
   GrafanaFilterablePanels: "grafana.filterablePanels",
+  /** Offers the reserved Grafana home option in the home dashboard preference */
+  GrafanaGlobalHomePreference: "grafana.globalHomePreference",
   /** Enables PLG-focused growth redesign of the unified homepage */
   GrafanaGrowthHomepage: "grafana.growthHomepage",
   /** Enables usage of the new annotations API client */
@@ -198,6 +206,8 @@ export const FlagKeys = {
   GrafanaSavedQueriesPage: "grafana.savedQueriesPage",
   /** Prevents flickering in dashboards */
   GrafanaScenesFlickeringFix: "grafana.scenesFlickeringFix",
+  /** Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer */
+  GrafanaScopesDashboardsMegaMenu: "grafana.scopesDashboardsMegaMenu",
   /** Enable referencing an existing secret in an active keeper when creating a secure value */
   GrafanaSecretsReferenceValueUI: "grafana.secretsReferenceValueUI",
   /** Enables starring folders and a virtual Starred folders folder in the dashboards list and folder picker */
@@ -266,10 +276,6 @@ export const FlagKeys = {
   PreferLibraryPanelTitle: "preferLibraryPanelTitle",
   /** Enables possibility to preserve dashboard variables and time range when navigating between dashboards */
   PreserveDashboardStateWhenNavigating: "preserveDashboardStateWhenNavigating",
-  /** Enable configurable commit message, branch name, and pull request title conventions for Git Sync */
-  ProvisioningGitConventions: "provisioning.gitConventions",
-  /** Render the README.md of a Git Sync provisioned folder inline below its dashboards list */
-  ProvisioningReadmes: "provisioning.readmes",
   /** Author Git Sync commits as the acting Grafana user */
   ProvisioningUserAttribution: "provisioning.userAttribution",
   /** Enable export functionality for provisioned resources */
@@ -413,6 +419,17 @@ export const useFlagAlertingManualAssistantInvestigation = (options?: ReactFlagE
  */
 export const useFlagAlertingRuleQuality = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("alerting.ruleQuality", false, options).value;
+};
+
+/**
+ * Enable assistant reviews on the alert quality page.
+ *
+ * **Details:**
+ * - flag key: `alerting.ruleReviews`
+ * - default value: `false`
+ */
+export const useFlagAlertingRuleReviews = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("alerting.ruleReviews", false, options).value;
 };
 
 /**
@@ -739,10 +756,10 @@ export const useFlagDashboardNotebooks = (options?: ReactFlagEvaluationOptions):
  *
  * **Details:**
  * - flag key: `dashboard.recentlyDeletedViaTrash`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagDashboardRecentlyDeletedViaTrash = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("dashboard.recentlyDeletedViaTrash", false, options).value;
+  return useFlag("dashboard.recentlyDeletedViaTrash", true, options).value;
 };
 
 /**
@@ -831,6 +848,28 @@ export const useFlagDashboardUndoRedo = (options?: ReactFlagEvaluationOptions): 
  */
 export const useFlagDashboardValidatorApp = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("dashboardValidatorApp", false, options).value;
+};
+
+/**
+ * Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state
+ *
+ * **Details:**
+ * - flag key: `dashboards.libraryPanelRepeatFromServerResolution`
+ * - default value: `false`
+ */
+export const useFlagDashboardsLibraryPanelRepeatFromServerResolution = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.libraryPanelRepeatFromServerResolution", false, options).value;
+};
+
+/**
+ * Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto
+ *
+ * **Details:**
+ * - flag key: `dashboards.publicDashboardBadgeFromApi`
+ * - default value: `false`
+ */
+export const useFlagDashboardsPublicDashboardBadgeFromApi = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboards.publicDashboardBadgeFromApi", false, options).value;
 };
 
 /**
@@ -933,6 +972,17 @@ export const useFlagDatavizExperimentalColorSchemes = (options?: ReactFlagEvalua
 };
 
 /**
+ * Enables tabular numerals for visualization legend values
+ *
+ * **Details:**
+ * - flag key: `dataviz.tabularNums`
+ * - default value: `false`
+ */
+export const useFlagDatavizTabularNums = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dataviz.tabularNums", false, options).value;
+};
+
+/**
  * Set this to true to enable all app chrome extensions registered by plugins.
  *
  * **Details:**
@@ -974,17 +1024,6 @@ export const useFlagEnableDashboardEmptyExtensions = (options?: ReactFlagEvaluat
  */
 export const useFlagEnableExtensionsAdminPage = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("enableExtensionsAdminPage", false, options).value;
-};
-
-/**
- * A/A test for recently viewed dashboards feature
- *
- * **Details:**
- * - flag key: `experimentRecentlyViewedDashboards`
- * - default value: `false`
- */
-export const useFlagExperimentRecentlyViewedDashboards = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("experimentRecentlyViewedDashboards", false, options).value;
 };
 
 /**
@@ -1186,6 +1225,17 @@ export const useFlagGrafanaFilterablePanels = (options?: ReactFlagEvaluationOpti
 };
 
 /**
+ * Offers the reserved Grafana home option in the home dashboard preference
+ *
+ * **Details:**
+ * - flag key: `grafana.globalHomePreference`
+ * - default value: `false`
+ */
+export const useFlagGrafanaGlobalHomePreference = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.globalHomePreference", false, options).value;
+};
+
+/**
  * Enables PLG-focused growth redesign of the unified homepage
  *
  * **Details:**
@@ -1370,6 +1420,17 @@ export const useFlagGrafanaSavedQueriesPage = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagGrafanaScenesFlickeringFix = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("grafana.scenesFlickeringFix", true, options).value;
+};
+
+/**
+ * Renders the scopes-suggested dashboards tree inside the navigation mega menu instead of the standalone docked drawer
+ *
+ * **Details:**
+ * - flag key: `grafana.scopesDashboardsMegaMenu`
+ * - default value: `false`
+ */
+export const useFlagGrafanaScopesDashboardsMegaMenu = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("grafana.scopesDashboardsMegaMenu", false, options).value;
 };
 
 /**
@@ -1619,10 +1680,10 @@ export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions):
  *
  * **Details:**
  * - flag key: `panelTimeSettings`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagPanelTimeSettings = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("panelTimeSettings", false, options).value;
+  return useFlag("panelTimeSettings", true, options).value;
 };
 
 /**
@@ -1744,28 +1805,6 @@ export const useFlagPreferLibraryPanelTitle = (options?: ReactFlagEvaluationOpti
  */
 export const useFlagPreserveDashboardStateWhenNavigating = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("preserveDashboardStateWhenNavigating", false, options).value;
-};
-
-/**
- * Enable configurable commit message, branch name, and pull request title conventions for Git Sync
- *
- * **Details:**
- * - flag key: `provisioning.gitConventions`
- * - default value: `true`
- */
-export const useFlagProvisioningGitConventions = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.gitConventions", true, options).value;
-};
-
-/**
- * Render the README.md of a Git Sync provisioned folder inline below its dashboards list
- *
- * **Details:**
- * - flag key: `provisioning.readmes`
- * - default value: `true`
- */
-export const useFlagProvisioningReadmes = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("provisioning.readmes", true, options).value;
 };
 
 /**
@@ -2191,10 +2230,10 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  *
  * **Details:**
  * - flag key: `timeComparison`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("timeComparison", false, options).value;
+  return useFlag("timeComparison", true, options).value;
 };
 
 /**

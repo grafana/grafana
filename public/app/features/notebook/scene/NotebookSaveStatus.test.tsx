@@ -124,4 +124,14 @@ describe('NotebookSaveStatus', () => {
 
     expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
   });
+
+  it('offers no retry on a conflict, since resending the same revision would only fail the same way', () => {
+    const autosave = buildAutosave();
+    autosave.setState({ status: 'error', isConflict: true });
+
+    render(<NotebookSaveStatus autosave={autosave} />);
+
+    expect(screen.getByText('Save failed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+  });
 });

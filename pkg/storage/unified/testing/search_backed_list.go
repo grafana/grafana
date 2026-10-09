@@ -9,6 +9,8 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -18,14 +20,18 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/rvmanager"
 )
 
 // The test selects on labels only, which any group may do, so the group here is
 // just a realistic one.
 const (
-	searchBackedListGroup    = "playlist.grafana.app"
-	searchBackedListResource = "playlists"
+	searchBackedListGroup     = "playlist.grafana.app"
+	searchBackedListResource  = "playlists"
+	searchBackedTrashGroup    = "dashboard.grafana.app"
+	searchBackedTrashResource = "dashboards"
 )
 
 // SearchBackedListOptions tunes assertions that only hold for some backends.
@@ -33,6 +39,47 @@ type SearchBackedListOptions struct {
 	// ExpectBatchReads asserts the read used BatchReadResource (KV backends)
 	// rather than the per-resource fallback.
 	ExpectBatchReads bool
+	// DataKeyScans, when set, reports how many data key scans storage has made.
+	// Search-backed reads must make none: search gives the exact version and
+	// folder of every row, so no storage key has to be resolved.
+	DataKeyScans func() int64
+}
+
+// DataKeyScanCounter counts key scans of the data section, which is what
+// resolving a storage key costs.
+type DataKeyScanCounter struct {
+	resource.KV
+	scans atomic.Int64
+}
+
+// Wrap makes the counter observe store; pass it to NewTestSqlKvBackendWithKV.
+func (c *DataKeyScanCounter) Wrap(store resource.KV) resource.KV {
+	c.KV = store
+	return c
+}
+
+func (c *DataKeyScanCounter) Keys(ctx context.Context, section string, opt resource.ListOptions) iter.Seq2[string, error] {
+	if section == kv.DataSection {
+		c.scans.Add(1)
+	}
+	return c.KV.Keys(ctx, section, opt)
+}
+
+// Scans reports the data key scans seen so far.
+func (c *DataKeyScanCounter) Scans() int64 {
+	return c.scans.Load()
+}
+
+// assertNoKeyScans fails if read made a data key scan.
+func assertNoKeyScans(t *testing.T, opts SearchBackedListOptions, read func()) {
+	t.Helper()
+	if opts.DataKeyScans == nil {
+		read()
+		return
+	}
+	before := opts.DataKeyScans()
+	read()
+	require.Equal(t, before, opts.DataKeyScans(), "search-backed reads should read rows by exact key, without resolving storage keys")
 }
 
 // labelFolderBuilder indexes the fields this test selects and authorizes on:
@@ -63,10 +110,16 @@ func (labelFolderBuilder) BuildDocument(_ context.Context, key *resourcepb.Resou
 type labelFolderBuilderSupplier struct{}
 
 func (labelFolderBuilderSupplier) GetDocumentBuilders(_ *resource.SearchFieldsRegistry) ([]resource.DocumentBuilderInfo, error) {
-	return []resource.DocumentBuilderInfo{{
-		GroupResource: schema.GroupResource{Group: searchBackedListGroup, Resource: searchBackedListResource},
-		Builder:       labelFolderBuilder{},
-	}}, nil
+	return []resource.DocumentBuilderInfo{
+		{
+			GroupResource: schema.GroupResource{Group: searchBackedListGroup, Resource: searchBackedListResource},
+			Builder:       labelFolderBuilder{},
+		},
+		{
+			GroupResource: schema.GroupResource{Group: searchBackedTrashGroup, Resource: searchBackedTrashResource},
+			Builder:       labelFolderBuilder{},
+		},
+	}, nil
 }
 
 // countingBackend counts the read paths a search-backed LIST takes so a test can
@@ -78,13 +131,18 @@ type countingBackend struct {
 	reads           atomic.Int64
 }
 
-func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []*resourcepb.ReadRequest, includeDeleted bool) (iter.Seq[*resource.BackendReadResponse], error) {
+func (c *countingBackend) BatchReadResource(ctx context.Context, reqs []resource.BatchReadRequest, includeDeleted bool) (iter.Seq[*resource.BackendReadResponse], error) {
 	if includeDeleted {
 		c.trashBatchReads.Add(1)
 	} else {
 		c.batchReads.Add(1)
 	}
 	return c.StorageBackend.BatchReadResource(ctx, reqs, includeDeleted)
+}
+
+func (c *countingBackend) SupportsDeletedBatchReads() bool {
+	support, ok := c.StorageBackend.(interface{ SupportsDeletedBatchReads() bool })
+	return ok && support.SupportsDeletedBatchReads()
 }
 
 func (c *countingBackend) ReadResource(ctx context.Context, req *resourcepb.ReadRequest) *resource.BackendReadResponse {
@@ -121,14 +179,6 @@ func (a denyFolderAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req c
 // without a batched read returns ErrBatchReadUnsupported and takes the
 // per-resource fallback, which this still checks for correctness.
 func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts SearchBackedListOptions) {
-	ctx = claims.WithAuthInfo(ctx, &identity.StaticRequester{
-		Type:           claims.TypeUser,
-		UserID:         1,
-		UserUID:        "u1",
-		OrgRole:        identity.RoleAdmin,
-		IsGrafanaAdmin: true,
-	})
-
 	const (
 		ns           = "search-list-ns"
 		okFolder     = "folder-ok"
@@ -140,6 +190,15 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		otherLabel   = 3
 	)
 
+	ctx = claims.WithAuthInfo(ctx, &identity.StaticRequester{
+		Type:           claims.TypeUser,
+		UserID:         1,
+		UserUID:        "u1",
+		Namespace:      ns,
+		OrgRole:        identity.RoleAdmin,
+		IsGrafanaAdmin: true,
+	})
+
 	counting := &countingBackend{StorageBackend: backend}
 
 	type want struct {
@@ -148,13 +207,13 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 	}
 	wantByName := map[string]want{}
 
-	write := func(name, team, folder, title string) int64 {
+	writeIn := func(namespace, name, team, folder, title string) int64 {
 		obj := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": searchBackedListGroup + "/v0alpha1",
 			"kind":       "Playlist",
 			"metadata": map[string]any{
 				"name":      name,
-				"namespace": ns,
+				"namespace": namespace,
 				"labels":    map[string]any{"team": team},
 			},
 			"spec": map[string]any{"title": title},
@@ -165,7 +224,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		value, err := obj.MarshalJSON()
 		require.NoError(t, err)
 
-		key := &resourcepb.ResourceKey{Group: searchBackedListGroup, Resource: searchBackedListResource, Namespace: ns, Name: name}
+		key := &resourcepb.ResourceKey{Group: searchBackedListGroup, Resource: searchBackedListResource, Namespace: namespace, Name: name}
 		prev := int64(0)
 		if existing := backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key}); existing != nil && existing.Error == nil {
 			prev = existing.ResourceVersion
@@ -185,6 +244,9 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		require.NoError(t, err)
 		require.Greater(t, rv, int64(0))
 		return rv
+	}
+	write := func(name, team, folder, title string) int64 {
+		return writeIn(ns, name, team, folder, title)
 	}
 
 	for i := 0; i < authorized; i++ {
@@ -207,9 +269,11 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		write(fmt.Sprintf("other-%02d", i), otherTeam, okFolder, "other")
 	}
 
+	metrics := resource.ProvideStorageMetrics(prometheus.NewRegistry())
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend:      counting,
-		AccessClient: denyFolderAccess{denied: deniedFolder},
+		StorageMetrics: metrics,
+		Backend:        counting,
+		AccessClient:   denyFolderAccess{denied: deniedFolder},
 		Search: resource.SearchOptions{
 			Backend:   searchBackend,
 			Resources: labelFolderBuilderSupplier{},
@@ -246,33 +310,35 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		var token string
 		var listRV int64
 		pages := 0
-		for {
-			resp, err := server.List(ctx, newReq(pageSize, token))
-			require.NoError(t, err)
-			require.Nil(t, resp.Error)
-			require.Greater(t, resp.ResourceVersion, int64(0))
-			if listRV == 0 {
-				listRV = resp.ResourceVersion
-			}
-			require.Equal(t, listRV, resp.ResourceVersion, "list resource version must be stable across pages")
+		assertNoKeyScans(t, opts, func() {
+			for {
+				resp, err := server.List(ctx, newReq(pageSize, token))
+				require.NoError(t, err)
+				require.Nil(t, resp.Error)
+				require.Greater(t, resp.ResourceVersion, int64(0))
+				if listRV == 0 {
+					listRV = resp.ResourceVersion
+				}
+				require.Equal(t, listRV, resp.ResourceVersion, "list resource version must be stable across pages")
 
-			for _, item := range resp.Items {
-				obj := &unstructured.Unstructured{}
-				require.NoError(t, obj.UnmarshalJSON(item.Value))
-				name := obj.GetName()
-				_, dup := got[name]
-				require.False(t, dup, "duplicate across pages: %s", name)
-				title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
-				got[name] = want{title: title, rv: item.ResourceVersion}
-			}
+				for _, item := range resp.Items {
+					obj := &unstructured.Unstructured{}
+					require.NoError(t, obj.UnmarshalJSON(item.Value))
+					name := obj.GetName()
+					_, dup := got[name]
+					require.False(t, dup, "duplicate across pages: %s", name)
+					title, _, _ := unstructured.NestedString(obj.Object, "spec", "title")
+					got[name] = want{title: title, rv: item.ResourceVersion}
+				}
 
-			pages++
-			require.LessOrEqual(t, pages, authorized, "pagination did not terminate")
-			token = resp.NextPageToken
-			if token == "" {
-				break
+				pages++
+				require.LessOrEqual(t, pages, authorized, "pagination did not terminate")
+				token = resp.NextPageToken
+				if token == "" {
+					break
+				}
 			}
-		}
+		})
 
 		require.Equal(t, 2, pages, "expected two pages")
 		require.Equal(t, wantByName, got, "exact names, bodies, and updated resource versions")
@@ -286,7 +352,9 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		counting.batchReads.Store(0)
 		counting.reads.Store(0)
 
-		resp, err := server.List(ctx, newReq(1000, ""))
+		var resp *resourcepb.ListResponse
+		var err error
+		assertNoKeyScans(t, opts, func() { resp, err = server.List(ctx, newReq(1000, "")) })
 		require.NoError(t, err)
 		require.Nil(t, resp.Error)
 		require.Empty(t, resp.NextPageToken, "the whole set fits on one page")
@@ -298,6 +366,32 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			require.Equal(t, int64(6), counting.batchReads.Load())
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
+	})
+
+	// An in-process search that has to build the index first reads every object of
+	// the namespace on the list's behalf. Those reads build the index; they are not
+	// bodies the list read and dropped.
+	t.Run("an index built during the list does not count as list body reads", func(t *testing.T) {
+		if !opts.ExpectBatchReads {
+			t.Skip("only KV-backed lists report body reads")
+		}
+		const coldNS = "search-list-cold"
+		coldCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{
+			Type: claims.TypeUser, UserID: 1, UserUID: "u1", Namespace: coldNS, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+		})
+		for i := range 100 {
+			writeIn(coldNS, fmt.Sprintf("cold-%03d", i), matchTeam, okFolder, "cold")
+		}
+		req := newReq(1, "")
+		req.Options.Key.Namespace = coldNS
+		requested := metrics.ListBodyKeysRequested.WithLabelValues("search", "count_limit")
+		before := promtestutil.ToFloat64(requested)
+
+		resp, err := server.List(coldCtx, req)
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.Len(t, resp.Items, 1)
+		require.Equal(t, float64(1), promtestutil.ToFloat64(requested)-before, "only the returned row's body counts")
 	})
 }
 
@@ -320,8 +414,8 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 
 	writeObject := func(name, folder, deletedBy string, provisioned, deleted bool) int64 {
 		obj := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": searchBackedListGroup + "/v0alpha1",
-			"kind":       "Playlist",
+			"apiVersion": searchBackedTrashGroup + "/v0alpha1",
+			"kind":       "Dashboard",
 			"metadata": map[string]any{
 				"name":      name,
 				"namespace": ns,
@@ -336,7 +430,7 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		}
 		value, err := obj.MarshalJSON()
 		require.NoError(t, err)
-		key := &resourcepb.ResourceKey{Group: searchBackedListGroup, Resource: searchBackedListResource, Namespace: ns, Name: name}
+		key := &resourcepb.ResourceKey{Group: searchBackedTrashGroup, Resource: searchBackedTrashResource, Namespace: ns, Name: name}
 		rv, err := backend.WriteEvent(ctx, resource.WriteEvent{
 			Type:   resourcepb.WatchEvent_ADDED,
 			Key:    key,
@@ -366,8 +460,9 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 	}
 
 	wantRV := map[string]int64{
-		"own":   writeObject("own", deniedFolder, user.GetUID(), false, true),
-		"admin": writeObject("admin", adminFolder, "user:other", false, true),
+		"before": writeObject("before", adminFolder, "user:other", false, true),
+		"own":    writeObject("own", deniedFolder, user.GetUID(), false, true),
+		"admin":  writeObject("admin", adminFolder, "user:other", false, true),
 	}
 	writeObject("denied", deniedFolder, "user:other", false, true)
 	writeObject("provisioned", adminFolder, "user:other", true, true)
@@ -378,7 +473,7 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		config := resource.SearchBackedListConfig{}
 		searchOptions := resource.SearchOptions{}
 		if allowSearch {
-			config.AllowedResources = map[string]bool{searchBackedListGroup + "/" + searchBackedListResource: true}
+			config.AllowedResources = map[string]bool{searchBackedTrashGroup + "/" + searchBackedTrashResource: true}
 			searchOptions = resource.SearchOptions{
 				Backend:   searchBackend,
 				Resources: labelFolderBuilderSupplier{},
@@ -408,8 +503,8 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 			NextPageToken: token,
 			Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{
 				Namespace: ns,
-				Group:     searchBackedListGroup,
-				Resource:  searchBackedListResource,
+				Group:     searchBackedTrashGroup,
+				Resource:  searchBackedTrashResource,
 			}},
 		}
 	}
@@ -441,11 +536,56 @@ func RunTestSearchBackedTrashList(t *testing.T, ctx context.Context, backend res
 		}
 	}
 
-	searchItems := collect(t, searchServer, opts.ExpectBatchReads)
+	var searchItems map[string]int64
+	assertNoKeyScans(t, opts, func() { searchItems = collect(t, searchServer, opts.ExpectBatchReads) })
 	storeItems := collect(t, storeServer, false)
 	require.Equal(t, wantRV, searchItems)
 	require.Equal(t, storeItems, searchItems)
 	if opts.ExpectBatchReads {
 		require.Greater(t, counting.trashBatchReads.Load(), int64(0))
 	}
+	if !opts.ExpectBatchReads {
+		return
+	}
+
+	t.Run("not older than converts a legacy SQL checkpoint", func(t *testing.T) {
+		before := counting.trashBatchReads.Load()
+		checkpointRV := rvmanager.RVFromSnowflake(wantRV["own"])
+		collectNotOlderThan := func(t *testing.T, server resource.ResourceServer) ([]string, int) {
+			t.Helper()
+			names := []string{}
+			token := ""
+			for pages := 0; ; pages++ {
+				require.Less(t, pages, 10, "pagination must terminate")
+				req := newReq(token)
+				if token == "" {
+					req.ResourceVersion = checkpointRV
+					req.VersionMatchV2 = resourcepb.ResourceVersionMatchV2_NotOlderThan
+				}
+
+				resp, err := server.List(ctx, req)
+				require.NoError(t, err)
+				require.Nil(t, resp.Error)
+				for _, item := range resp.Items {
+					obj := &unstructured.Unstructured{}
+					require.NoError(t, obj.UnmarshalJSON(item.Value))
+					names = append(names, obj.GetName())
+				}
+				token = resp.NextPageToken
+				if token == "" {
+					return names, pages + 1
+				}
+			}
+		}
+
+		storeNames, storePages := collectNotOlderThan(t, storeServer)
+		var searchNames []string
+		var searchPages int
+		assertNoKeyScans(t, opts, func() { searchNames, searchPages = collectNotOlderThan(t, searchServer) })
+		require.Equal(t, []string{"own", "admin"}, storeNames)
+		require.Equal(t, storeNames, searchNames)
+		require.Greater(t, storePages, 1)
+		require.Greater(t, searchPages, 1)
+		require.Greater(t, counting.trashBatchReads.Load(), before, "NotOlderThan should use trash search")
+	})
 }

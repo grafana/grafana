@@ -189,6 +189,7 @@ describe('InfiniteScroll', () => {
           {
             from: logs[logs.length - 1].timeEpochMs,
             to: absoluteRange.to,
+            startNs: '1702578898000000001',
           },
           order === LogsSortOrder.Descending ? -1 : 1
         );
@@ -210,6 +211,7 @@ describe('InfiniteScroll', () => {
           {
             from: absoluteRange.from,
             to: logs[0].timeEpochMs,
+            endNs: '1702578602000000000',
           },
           order === LogsSortOrder.Ascending ? -1 : 1
         );
@@ -542,8 +544,10 @@ function createLogs(from: number, to: number) {
   // Time field
   rows[0].dataFrame.fields[0].values = [from, to];
   rows[0].timeEpochMs = from;
+  rows[0].timeEpochNs = `${from}000000`;
   rows[1].dataFrame.fields[0].values = [from, to];
   rows[1].timeEpochMs = to;
+  rows[1].timeEpochNs = `${to}000000`;
   return rows;
 }
 

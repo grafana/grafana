@@ -3,6 +3,7 @@ package oauthtoken
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -498,6 +499,54 @@ func TestTokenRefreshDurationMetricReusesRegisteredCollector(t *testing.T) {
 	second := newTokenRefreshDurationMetric(registry)
 
 	assert.Same(t, first, second)
+}
+
+func TestIntegration_TryTokenRefresh_LockWaitBudget(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, minWaitMs := range []int64{0, 20, 150} {
+		t.Run(fmt.Sprintf("min wait %dms", minWaitMs), func(t *testing.T) {
+			store := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+			sessionService := authtest.NewMockUserAuthTokenService(t)
+			sessionService.On("GetExternalSession", mock.Anything, int64(1)).Return(&auth.ExternalSession{
+				ID:           1,
+				UserID:       1234,
+				AccessToken:  expiredToken.AccessToken,
+				RefreshToken: expiredToken.RefreshToken,
+				ExpiresAt:    expiredToken.Expiry,
+			}, nil).Once()
+
+			_ = store.WithDbSession(context.Background(), func(sess *db.Session) error {
+				_, err := sess.Exec(`INSERT INTO server_lock (operation_uid, last_execution, version) VALUES (?, ?, ?)`, "oauth-refresh-token-1234-1", time.Now().Add(2*time.Second).Unix(), 0)
+				return err
+			})
+
+			cfg := setting.NewCfg()
+			cfg.OAuthRefreshTokenServerLockMinWaitMs = minWaitMs
+			cfg.OAuthRefreshTokenServerLockWaitBudgetMs = 300
+
+			service := ProvideService(
+				&socialtest.FakeSocialService{ExpectedAuthInfoProvider: &social.OAuthInfo{UseRefreshToken: true}},
+				authinfotest.NewMockAuthInfoService(t),
+				mustConfigProvider(t, cfg),
+				prometheus.NewRegistry(),
+				serverlock.ProvideService(legacysql.NewDatabaseProvider(store), tracing.InitializeTracerForTest()),
+				tracing.InitializeTracerForTest(),
+				sessionService,
+				featuremgmt.WithFeatures(),
+			)
+
+			start := time.Now()
+			_, err := service.TryTokenRefresh(context.Background(),
+				&authn.Identity{ID: "1234", Type: claims.TypeUser, AuthenticatedBy: login.GenericOAuthModule},
+				&TokenRefreshMetadata{ExternalSessionID: 1, AuthModule: login.GenericOAuthModule})
+			elapsed := time.Since(start)
+
+			require.ErrorIs(t, err, ErrRetriesExhausted)
+			assert.GreaterOrEqual(t, elapsed, 300*time.Millisecond)
+			assert.Less(t, elapsed, time.Second)
+		})
+	}
 }
 
 func TestIntegration_GetCurrentOAuthToken(t *testing.T) {

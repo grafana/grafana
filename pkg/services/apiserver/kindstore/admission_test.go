@@ -479,7 +479,7 @@ func TestNewAdmissionCapabilities(t *testing.T) {
 		opts, _ := newStoreOpts(t, gvk)
 		s, err := New(gvk, app.ManifestVersionKind{
 			Kind: "TestKind", Plural: "testkinds", Scope: "Namespaced", Admission: capabilities,
-		}, client, opts, nil)
+		}, client, nil, opts, nil)
 		require.NoError(t, err)
 		return s
 	}
@@ -528,12 +528,12 @@ func TestNewRequiresClientForAdmission(t *testing.T) {
 	}
 
 	opts, _ := newStoreOpts(t, gvk)
-	_, err := New(gvk, kind, nil, opts, nil)
+	_, err := New(gvk, kind, nil, nil, opts, nil)
 	require.ErrorContains(t, err, "no plugin client")
 
 	// An admission block that declares nothing needs no client.
 	kind.Admission = &app.AdmissionCapabilities{Validation: &app.ValidationCapability{}}
 	opts, _ = newStoreOpts(t, gvk)
-	_, err = New(gvk, kind, nil, opts, nil)
+	_, err = New(gvk, kind, nil, nil, opts, nil)
 	require.NoError(t, err)
 }

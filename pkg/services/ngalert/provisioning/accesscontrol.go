@@ -6,14 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 type RuleAccessControlService interface {
 	HasAccess(ctx context.Context, user identity.Requester, evaluator ac.Evaluator) (bool, error)
 	AuthorizeAccessToRuleGroup(ctx context.Context, user identity.Requester, rules models.RulesGroup) error
 	AuthorizeAccessInFolder(ctx context.Context, user identity.Requester, namespaced models.Namespaced) error
-	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *store.GroupDelta) error
+	AuthorizeRuleChanges(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error
 	HasAccessInFolder(ctx context.Context, user identity.Requester, folder models.Namespaced) (bool, error)
 }
 
@@ -63,7 +63,7 @@ func (p *provisioningRuleAccessControl) AuthorizeRuleGroupRead(ctx context.Conte
 // It first checks if the user has permission to write all rules. If yes, it bypasses the authorization.
 // If not, it calls the RuleAccessControlService to authorize the rule changes.
 // It returns an error if the authorization fails or if there is an error during permission check.
-func (p *provisioningRuleAccessControl) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *store.GroupDelta) error {
+func (p *provisioningRuleAccessControl) AuthorizeRuleGroupWrite(ctx context.Context, user identity.Requester, change *rulestore.GroupDelta) error {
 	can, err := p.CanWriteAllRules(ctx, user)
 	if err != nil {
 		return err

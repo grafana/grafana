@@ -48,6 +48,7 @@ var validSaveSections = map[string]bool{
 	StatsAggregatesSection:        true,
 	NATSPeersSection:              true,
 	VersionPolicySection:          true,
+	BlobDataSection:               true,
 }
 
 var _ KV = (*SqlKV)(nil)
@@ -291,6 +292,10 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 			k.lastImportTimeKeys(ctx, opt, yield)
 			return
 		}
+		if section == BlobDataSection {
+			k.blobKeys(ctx, opt, yield)
+			return
+		}
 
 		qb, err := k.getQueryBuilder(section)
 		if err != nil {
@@ -338,6 +343,9 @@ func (k *SqlKV) Keys(ctx context.Context, section string, opt ListOptions) iter.
 func (k *SqlKV) Get(ctx context.Context, section string, key string) (io.ReadCloser, error) {
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
+	}
+	if section == BlobDataSection {
+		return k.getBlob(ctx, key)
 	}
 
 	qb, err := k.getQueryBuilder(section)
@@ -457,6 +465,9 @@ func (w *sqlWriteCloser) Close() error {
 	if w.section == LastImportTimeSection {
 		return w.kv.saveLastImportTime(w.ctx, w.key)
 	}
+	if w.section == BlobDataSection {
+		return w.kv.saveBlob(w.ctx, w.key, value)
+	}
 
 	qb, err := w.kv.getQueryBuilder(w.section)
 	if err != nil {
@@ -538,6 +549,9 @@ func (k *SqlKV) Delete(ctx context.Context, section string, key string) error {
 
 	if section == LastImportTimeSection {
 		return k.deleteLastImportTime(ctx, key)
+	}
+	if section == BlobDataSection {
+		return k.deleteBlob(ctx, key)
 	}
 
 	qb, err := k.getQueryBuilder(section)

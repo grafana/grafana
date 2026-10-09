@@ -78,7 +78,7 @@ type SearchFunc func(ctx context.Context, orgID int64, request *resourcepb.Resou
 
 // SearchAll executes a search request and paginates through all results by incrementing the offset until the offset is greater than total hits
 // or it hits an empty page.
-// Callers that use searchFn directly must call ParseResults, or embedded errors are silently dropped.
+// Callers that use searchFn directly must check RPC errors with resource.ErrorFromResponse before calling ParseResults.
 func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSearchRequest, searchFn SearchFunc) (v0alpha1.SearchResults, error) {
 	if request.Limit == 0 {
 		request.Limit = 100000
@@ -87,7 +87,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Offset = int64(0)
 
 	res, err := searchFn(ctx, orgID, request)
-	if err != nil {
+	if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 		return v0alpha1.SearchResults{}, err
 	}
 	results, err := ParseResults(res, 0)
@@ -99,7 +99,7 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	request.Page++
 	for request.Offset < res.TotalHits {
 		res, err = searchFn(ctx, orgID, request)
-		if err != nil {
+		if err := resource.ErrorFromResponse(res.GetError(), err); err != nil {
 			return v0alpha1.SearchResults{}, err
 		}
 
@@ -120,13 +120,15 @@ func SearchAll(ctx context.Context, orgID int64, request *resourcepb.ResourceSea
 	return results, nil
 }
 
+// ParseResults decodes a search response. Callers must still check the RPC outcome
+// with a resource response-error helper before calling it.
 func ParseResults(result *resourcepb.ResourceSearchResponse, offset int64) (v0alpha1.SearchResults, error) {
 	if result == nil {
 		return v0alpha1.SearchResults{}, nil
 	} else if result.Error != nil {
-		// Return the status error directly because Kubernetes response writers
-		// do not unwrap errors when determining the HTTP status.
-		return v0alpha1.SearchResults{}, resource.GetError(result.Error)
+		// Keep this check until the response error field is removed.
+		// After removal, ParseResults will only decode results and report decoding errors.
+		return v0alpha1.SearchResults{}, resource.StatusError(result.Error)
 	}
 
 	switch result.ResultFormat {

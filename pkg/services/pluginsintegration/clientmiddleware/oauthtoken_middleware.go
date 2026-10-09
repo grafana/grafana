@@ -61,21 +61,33 @@ func (m *OAuthTokenMiddleware) applyToken(ctx context.Context, pCtx backend.Plug
 
 			switch t := req.(type) {
 			case *backend.QueryDataRequest:
+				if t.Headers == nil {
+					t.Headers = map[string]string{}
+				}
 				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
 					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
 			case *backend.QueryChunkedDataRequest:
+				if t.Headers == nil {
+					t.Headers = map[string]string{}
+				}
 				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
 					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CheckHealthRequest:
+				if t.Headers == nil {
+					t.Headers = map[string]string{}
+				}
 				t.Headers[backend.OAuthIdentityTokenHeaderName] = authorizationHeader
 				if idTokenHeader != "" {
 					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = idTokenHeader
 				}
 			case *backend.CallResourceRequest:
+				if t.Headers == nil {
+					t.Headers = map[string][]string{}
+				}
 				t.Headers[backend.OAuthIdentityTokenHeaderName] = []string{authorizationHeader}
 				if idTokenHeader != "" {
 					t.Headers[backend.OAuthIdentityIDTokenHeaderName] = []string{idTokenHeader}

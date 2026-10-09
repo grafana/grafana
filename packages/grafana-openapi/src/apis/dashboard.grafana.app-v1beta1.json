@@ -279,6 +279,44 @@
         }
       }
     },
+    "/dashboards/search/hybrid": {
+      "post": {
+        "tags": ["Search"],
+        "description": "Hybrid lexical and semantic search for Dashboard resources in a namespace. Returns top-k results with opaque scores meaningful only for ordering within this response. No pagination, totals, sorting or facets.",
+        "operationId": "listDashboardHybridSearchV1beta1",
+        "parameters": [],
+        "requestBody": {
+          "description": "A HybridSearchQuery describing what to match and return.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HybridSearchQuery"
+              },
+              "example": {
+                "kind": "HybridSearchQuery",
+                "apiVersion": "search.grafana.app/v0alpha1",
+                "query": "production",
+                "limit": 10,
+                "skipRerank": false
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "A HybridSearchResults envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HybridSearchResults"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/dashboards/trash": {
       "post": {
         "tags": ["Search"],
@@ -999,6 +1037,166 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "HybridSearchChunk": {
+        "description": "HybridSearchChunk is matching text from an embedded resource or subresource.",
+        "type": "object",
+        "required": ["subresource", "content"],
+        "properties": {
+          "content": {
+            "type": "string",
+            "default": ""
+          },
+          "subresource": {
+            "description": "Subresource identifies a chunk, for example panel/5. Empty means the whole resource, or a synthesized chunk for a lexical-only hit.",
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchFilter": {
+        "description": "HybridSearchFilter matches any of Values against Field (IN semantics). Unlike lexical search filters, no other operators are supported.",
+        "type": "object",
+        "required": ["field", "values"],
+        "properties": {
+          "field": {
+            "description": "Field is uid or folder for all resources. Dashboards additionally support datasource_uid and language (promql, logql, traceql or sql).",
+            "type": "string",
+            "default": ""
+          },
+          "values": {
+            "description": "Values must contain at least one value. Values containing '*' are rejected. An empty folder value matches resources in the root folder.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "x-kubernetes-list-type": "atomic"
+          }
+        }
+      },
+      "HybridSearchManagedBy": {
+        "description": "HybridSearchManagedBy identifies the manager of a returned resource.",
+        "type": "object",
+        "required": ["kind", "id"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchQuery": {
+        "description": "HybridSearchQuery is the request body for POST .../{resource}/search/hybrid. It returns the top matching resources, with no pagination, sorting or facets.",
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "filters": {
+            "description": "Filters are ANDed together. Each field may appear once, with at most 1000 values across all filters. Embedding fields supply text only and do not make additional fields available for filtering.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchFilter"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Limit is the maximum number of results. Zero uses the default of 50, values above 200 are clamped, and negative values are rejected.",
+            "type": "integer",
+            "format": "int64"
+          },
+          "minRelevance": {
+            "description": "MinRelevance is lowest, low, medium, high or highest. Empty keeps every result. Filtering is best-effort: no results are dropped when reranking is unavailable or fails. It cannot be combined with SkipRerank.",
+            "type": "string"
+          },
+          "query": {
+            "description": "Query supplies the lexical query and, unless SemanticQuery is set, the text embedded for semantic search. Required, with a maximum of 1000 bytes.",
+            "type": "string",
+            "default": ""
+          },
+          "semanticQuery": {
+            "description": "SemanticQuery supplies optional richer phrasing for semantic search. When provided, it must not be whitespace and must fit within 1000 bytes.",
+            "type": "string"
+          },
+          "skipRerank": {
+            "description": "SkipRerank returns the fused lexical and semantic ordering without reranking, even when a reranker is configured.",
+            "type": "boolean"
+          }
+        }
+      },
+      "HybridSearchResultItem": {
+        "description": "HybridSearchResultItem is one matching resource, with its matching chunks.",
+        "type": "object",
+        "required": ["resource", "score", "title", "folder", "chunks"],
+        "properties": {
+          "chunks": {
+            "description": "Chunks contains matching text, best first. A lexical-only hit has a synthesized chunk containing the resource's title.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchChunk"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "folder": {
+            "description": "Folder is the containing folder's UID. Empty and \"general\" denote the root folder.",
+            "type": "string",
+            "default": ""
+          },
+          "folderTitle": {
+            "description": "FolderTitle is best-effort display data and can be absent.",
+            "type": "string"
+          },
+          "managedBy": {
+            "description": "ManagedBy is absent for unmanaged resources or when lookup fails.",
+            "$ref": "#/components/schemas/HybridSearchManagedBy"
+          },
+          "resource": {
+            "default": {},
+            "$ref": "#/components/schemas/ResourceRef"
+          },
+          "score": {
+            "description": "Score is opaque: higher scores rank first, but scores are meaningful only for ordering within this response. Do not compare scores across queries or treat them as probabilities or distances.",
+            "type": "number",
+            "format": "double",
+            "default": 0
+          },
+          "title": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "HybridSearchResults": {
+        "description": "HybridSearchResults is the response body for POST .../{resource}/search/hybrid. Items are ordered by relevance. They are a bounded top-k result set, not an exhaustive list, so the response carries no total count or pagination token.",
+        "type": "object",
+        "required": ["items"],
+        "properties": {
+          "apiVersion": {
+            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HybridSearchResultItem"
+            },
+            "x-kubernetes-list-type": "atomic"
+          },
+          "kind": {
+            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+            "type": "string"
           }
         }
       },

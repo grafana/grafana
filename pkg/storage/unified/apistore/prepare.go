@@ -25,9 +25,8 @@ import (
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	secrets "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	secrets "github.com/grafana/grafana/pkg/storage/unified/apistore/securevalue"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -124,7 +123,7 @@ func (s *Storage) verifyFolder(obj utils.GrafanaMetaAccessor) error {
 			},
 		)
 	}
-	if folder.IsRootFolderUID(folderUID) {
+	if isRootFolderUID(folderUID) {
 		return apierrors.NewInvalid(
 			obj.GetGroupVersionKind().GroupKind(),
 			obj.GetName(),
@@ -212,7 +211,7 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 	obj.SetCreatedBy(createdBy)
 	obj.SetGeneration(1) // the first time we write
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, nil, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -235,11 +234,11 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 	rsp, err := s.opts.Index.Search(ctx, &resourcepb.ResourceSearchRequest{
 		Limit: 1, // we only need to know if any match exists
 		// An empty projection returns every field; name keeps this key-only.
-		Fields:       []string{resource.SEARCH_FIELD_NAME},
+		Fields:       []string{resourceutil.SEARCH_FIELD_NAME},
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Options: &resourcepb.ListOptions{
 			Key: &resourcepb.ResourceKey{
-				Group:     s.gr.Group,
+				Group:     s.storageGroup(),
 				Resource:  s.gr.Resource,
 				Namespace: obj.GetNamespace(),
 			},
@@ -251,7 +250,7 @@ func (s *Storage) ensureSingleDeprecatedInternalID(ctx context.Context, id int64
 		},
 	})
 	// A failed search returns no rows, which would otherwise pass as "the ID is free".
-	if err := resource.ErrorFromResponse(rsp.GetError(), err); err != nil {
+	if err := resourceutil.StatusErrorFromResponse(rsp.GetError(), err); err != nil {
 		return err
 	}
 	hasResults, err := searchResponseHasRows(rsp)
@@ -324,7 +323,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	// Make sure the deprecated internalID does not change
 	obj.SetDeprecatedInternalID(previous.GetDeprecatedInternalID()) // nolint:staticcheck
 
-	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, &v)
+	err = prepareSecureValues(ctx, s.opts.SecureValues, obj, previous, s.ownerReference(obj), &v)
 	if err != nil {
 		return v, err
 	}
@@ -391,7 +390,7 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 }
 
 func (s *Storage) ensureRepoManagedByParentFolder(ctx context.Context, obj utils.GrafanaMetaAccessor) error {
-	if !s.opts.EnableFolderSupport || folder.IsRootFolderUID(obj.GetFolder()) {
+	if !s.opts.EnableFolderSupport || isRootFolderUID(obj.GetFolder()) {
 		return nil
 	}
 	folder, err := s.getParentFolder(ctx, obj)
@@ -468,9 +467,9 @@ func (s *Storage) encode(ctx context.Context, obj runtime.Object, enforceCap boo
 	gv := persistedVersion(raw, obj)
 	// A custom serializer may pick a GVK outside this resource's group. Such a version cannot be ranked
 	// against the group's cap (it would look unregistered and slip through), so reject rather than store it.
-	if gv.Group != s.gr.Group {
+	if gv.Group != s.storageGroup() {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf(
-			"%s: encoded apiVersion group %q does not match resource group %q", s.gr.String(), gv.Group, s.gr.Group))
+			"%s: encoded apiVersion group %q does not match storage group %q", s.gr.String(), gv.Group, s.storageGroup()))
 	}
 	if err := s.enforceMaxAllowedVersion(gv.Version); err != nil {
 		return nil, err
@@ -506,4 +505,10 @@ func persistedVersion(encoded []byte, obj runtime.Object) schema.GroupVersion {
 		}
 	}
 	return obj.GetObjectKind().GroupVersionKind().GroupVersion()
+}
+
+// isRootFolderUID matches folder.IsRootFolderUID ("" is the legacy root, "general" the canonical
+// one). apistore cannot import pkg/services/folder, which is in the core module.
+func isRootFolderUID(uid string) bool {
+	return uid == "" || uid == "general"
 }

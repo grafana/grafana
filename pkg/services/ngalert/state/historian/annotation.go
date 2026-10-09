@@ -25,6 +25,7 @@ import (
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 )
 
 const (
@@ -57,7 +58,7 @@ type AnnotationBackend struct {
 type RuleStore interface {
 	GetAlertRuleByUID(ctx context.Context, query *ngmodels.GetAlertRuleByUIDQuery) (*ngmodels.AlertRule, error)
 	GetUserVisibleNamespaces(ctx context.Context, orgID int64, user identity.Requester) (map[string]*folder.Folder, error)
-	GetAlertRuleVersionFolders(ctx context.Context, orgID int64, guid string) ([]string, error)
+	rulestore.RuleVersionFolderReader
 }
 
 type AnnotationStore interface {

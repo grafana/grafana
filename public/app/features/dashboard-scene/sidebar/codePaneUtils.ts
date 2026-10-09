@@ -103,6 +103,7 @@ export function applyJsonToDashboard(
       scene: dashboard,
       spec,
       description: t('dashboard.sidebar.edit-schema.undo-title', 'Schema edit'),
+      scope: 'code-pane',
     });
 
     return { success: true };

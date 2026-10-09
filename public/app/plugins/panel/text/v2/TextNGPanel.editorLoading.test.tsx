@@ -35,3 +35,4 @@ describe('TextNGPanel edit mode', () => {
     expect(screen.queryByTestId('TextNGPanel-converted-content')).not.toBeInTheDocument();
   });
 });
+jest.mock('./SandboxFrame');

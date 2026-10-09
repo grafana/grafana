@@ -42,6 +42,9 @@ message Annotation {
 message AnnotationSpec {
   string text = 1;
   int64 time = 2;
+  // TimeEnd is optional, but the Grafana API will always normalize it to the
+  // same value as Time for point annotations, so in practice it is never omitted.
+  // Future versions of the proto may make this field explicitly required.
   optional int64 time_end = 3;
   optional string dashboard_uid = 4;
   optional int64 panel_id = 5;

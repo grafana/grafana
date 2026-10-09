@@ -23,8 +23,6 @@ declare module "@openfeature/core" {
     | "grafanaAPIServerWithExperimentalAPIs"
     | "provisioningFolderMetadata"
     | "provisioningExport"
-    | "provisioning.readmes"
-    | "provisioning.gitConventions"
     | "provisioning.userAttribution"
     | "reportingHeaderSettings"
     | "reportingFooterSettings"
@@ -41,6 +39,8 @@ declare module "@openfeature/core" {
     | "alertingUIUseFullyCompatBackendFilters"
     | "createAlertRuleFromPanel"
     | "dashboardNewLayouts"
+    | "dashboards.libraryPanelRepeatFromServerResolution"
+    | "dashboards.publicDashboardBadgeFromApi"
     | "dashboard.notebooks"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
@@ -85,6 +85,7 @@ declare module "@openfeature/core" {
     | "alertingEnrichmentAssistantInvestigations"
     | "alerting.dataSourceManagedRouteProxy"
     | "alerting.manualAssistantInvestigation"
+    | "alerting.ruleReviews"
     | "alerting.ruleQuality"
     | "datasourceConnectionsTab"
     | "connectionsFilterSidebar"
@@ -98,7 +99,6 @@ declare module "@openfeature/core" {
     | "alertingRuleRecoverDeleted"
     | "alertingListViewV2PreviewToggle"
     | "recentlyViewedDashboards"
-    | "experimentRecentlyViewedDashboards"
     | "alertEnrichment"
     | "preferLibraryPanelTitle"
     | "enableAppChromeExtensions"
@@ -143,6 +143,7 @@ declare module "@openfeature/core" {
     | "alerting.syncExternalAlertmanager"
     | "grafana.enableScopesFirstMode"
     | "grafana.useDefaultScopesEndpoint"
+    | "grafana.scopesDashboardsMegaMenu"
     | "grafana.logLevelInference"
     | "plugins.initDataSourcesAsync"
     | "paneledit.buttonLabels"
@@ -159,6 +160,7 @@ declare module "@openfeature/core" {
     | "table.refreshNewFeatures"
     | "table.inspectDataTableNG"
     | "dataviz.experimentalColorSchemes"
+    | "dataviz.tabularNums"
     | "grafana.customizableMegaMenu"
     | "cujTracking"
     | "grafana.dashboardSettingsRedesign"
@@ -180,7 +182,8 @@ declare module "@openfeature/core" {
     | "grafana.multiTenantUserPermissions"
     | "datasources.gatewayGuardrails"
     | "grafana.pluginExtensionReactElementProps"
-    | "grafana.logDetailsDisplayedFieldControls";
+    | "grafana.logDetailsDisplayedFieldControls"
+    | "grafana.globalHomePreference";
   export type NumberFlagKey = never;
   export type StringFlagKey = never;
   export type ObjectFlagKey =

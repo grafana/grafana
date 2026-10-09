@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { formatDistanceToNowStrict } from 'date-fns/formatDistanceToNowStrict';
 import { type ReactNode } from 'react';
 import Skeleton from 'react-loading-skeleton';
 
@@ -130,18 +129,6 @@ export function SummaryCardPrefix({ children }: { children: ReactNode }) {
   return <span className={styles.prefix}>{children}</span>;
 }
 
-/** Right-aligned relative-time cell shared by both cards. */
-export function SummaryCardAge({ date }: { date: Date | number }) {
-  const styles = useStyles2(getStyles);
-  return (
-    <span className={styles.age}>
-      <Text color="secondary" variant="bodySmall">
-        {formatDistanceToNowStrict(date, { addSuffix: true })}
-      </Text>
-    </span>
-  );
-}
-
 const getStyles = (theme: GrafanaTheme2) => ({
   list: css({
     listStyle: 'none',
@@ -160,13 +147,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
   rowPadding: css({
     gap: theme.spacing(1),
     padding: theme.spacing(0.5, 0),
-  }),
-  age: css({
-    marginLeft: 'auto',
-    flexShrink: 0,
-    minWidth: theme.spacing(10),
-    display: 'inline-flex',
-    justifyContent: 'flex-end',
   }),
   prefix: css({
     display: 'inline-flex',

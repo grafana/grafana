@@ -136,6 +136,10 @@
     "z3": "0px 8px 24px hsl(from palette.neutral350 h s l)"
   },
   "components": {
+    "height": {
+      "md": 3.5,
+      "lg": 4.5
+    },
     "table": {
       "headerBackground": "palette.neutral150",
       "border": "palette.neutral250",

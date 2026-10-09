@@ -19,7 +19,7 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
   // schemas, so it satisfies the shared builder's dashboard-typed signature directly.
   const timeSettings = spec.timeSettings;
 
-  return new NotebookScene({
+  const scene = new NotebookScene({
     title: spec.title,
     description: spec.description,
     tags: spec.tags,
@@ -37,4 +37,17 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
     }),
     hideTimeControls: spec.timeSettings.hideTimepicker,
   });
+
+  // A freshly built scene's autosave has never saved anything through this instance, so without this
+  // its first write would carry no resourceVersion precondition at all — not "the precondition we
+  // have is stale", but no precondition whatsoever, overwriting blind. Seeding it from the resource
+  // this scene was built from closes that gap for every real load. A notebook with no resource yet
+  // (`notebookResourceFor(undefined, spec)`, used for a blank/draft notebook) has no resourceVersion
+  // to seed, which is correct: there is nothing to protect before the first create lands.
+  scene.autosave.setState({
+    savedResourceVersion: resource.metadata.resourceVersion,
+    savedGeneration: resource.metadata.generation,
+  });
+
+  return scene;
 }
