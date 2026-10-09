@@ -46,6 +46,10 @@ const updateAppPluginSettingsMock = jest.mocked(updateAppPluginSettings);
 
 jest.mock('../hooks/usePluginConfig.tsx', () => ({ usePluginConfig: jest.fn(() => ({ value: { meta: {} } })) }));
 
+jest.mock('../hooks/usePluginEntitlement', () => ({
+  usePluginEntitlement: jest.fn(() => ({ entitled: false, isLoading: false })),
+}));
+
 jest.mock('app/core/services/context_srv', () => ({
   contextSrv: {
     ...jest.requireActual('app/core/services/context_srv').contextSrv,
@@ -324,6 +328,21 @@ describe('Plugin details page', () => {
       expect(await queryByRole('button', { name: /Uninstall/ })).toBeInTheDocument();
       expect(queryByText(bannerText)).toBeInTheDocument();
       expect(queryByRole('link', { name: /learn more/i })).toBeInTheDocument();
+    });
+
+    it('should display a banner for marketplace plugins', async () => {
+      const bannerText = 'This is a paid marketplace plugin. Support is provided by a Marketplace plugin partner.';
+
+      const { findByText } = renderPluginDetails({ id, distributionType: 'marketplace' });
+
+      expect(await findByText(bannerText)).toBeInTheDocument();
+    });
+
+    it('should not display the marketplace banner for other plugins', async () => {
+      const { findByRole, queryByText } = renderPluginDetails({ id });
+
+      expect(await findByRole('tab', { name: /overview/i })).toBeInTheDocument();
+      expect(queryByText(/paid marketplace plugin/i)).not.toBeInTheDocument();
     });
 
     it('should not display install / uninstall buttons for core plugins', async () => {

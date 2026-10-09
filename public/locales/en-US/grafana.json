@@ -13860,6 +13860,9 @@
       "label-plugin-id": "Plugin Id",
       "label-severity": "Severity"
     },
+    "marketplace-plugin-banner": {
+      "info": "This is a paid marketplace plugin. Support is provided by a Marketplace plugin partner."
+    },
     "no-updates-available": {
       "message": "All plugins are up to date"
     },
