@@ -38,7 +38,7 @@ import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
 import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
-import { NOTEBOOK_EDIT_KIND, NotebookEditHistory } from './NotebookEditHistory';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from './NotebookEditHistory';
 import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
@@ -95,6 +95,17 @@ export interface NotebookSceneState extends SceneObjectState {
 const sceneContextStack: NotebookScene[] = [];
 let beforeFirstSceneContext: SceneObject | undefined;
 
+// Matches CONTENT_EDIT_COALESCE_MS in NotebookLayoutManager: the same run-of-keystrokes-into-one-step
+// coalescing, for the title instead of a cell's content.
+const TITLE_EDIT_COALESCE_MS = 800;
+
+interface PendingTitleEdit {
+  before: string;
+  after: string;
+  action: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
 function claimSceneContext(scene: NotebookScene): void {
   if (sceneContextStack.length === 0) {
     beforeFirstSceneContext = window.__grafanaSceneContext;
@@ -120,6 +131,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   // Declared before `editHistory`, which is handed it: class fields initialise in order.
   public readonly editSession = new NotebookEditSession();
   public readonly editHistory = new NotebookEditHistory(this.editSession);
+  private pendingTitleEdit?: PendingTitleEdit;
   // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;
@@ -386,6 +398,11 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
    * invisible to the undo stack, and undoing that write (which restores the whole prior state)
    * would silently discard the rename instead of being undone itself first. Nothing persists it
    * here: the save model reads this state, and autosave writes on any change made while editing.
+   *
+   * NotebookTitleEditor reports every keystroke, not just the closing one (edit mode can be left
+   * without a blur), so a run of keystrokes coalesces into one undo step the same way cell content
+   * typing does (NotebookLayoutManager.setCellContent) — otherwise undo would walk a rename back
+   * one character at a time instead of reverting it as a whole.
    */
   public onTitleChange = (title: string) => {
     const previous = this.state.title;
@@ -397,13 +414,64 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     // instead of being interrupted by it.
     this.state.body.commitPendingEdits();
 
-    this.editHistory.execute({
-      label: t('notebooks.history.rename', 'Rename notebook'),
-      kind: NOTEBOOK_EDIT_KIND.TITLE,
-      perform: () => this.setState({ title }),
-      undo: () => this.setState({ title: previous }),
-    });
+    const pending = this.pendingTitleEdit;
+    if (pending) {
+      this.extendTitleEdit(pending, title);
+    } else {
+      this.startTitleEdit(previous, title);
+    }
   };
+
+  private startTitleEdit(before: string, title: string): void {
+    // perform and undo read `edit` when they run, not now — see NotebookLayoutManager's
+    // startContentEdit for why: extendTitleEdit keeps changing `after` while typing continues.
+    const edit: PendingTitleEdit = {
+      before,
+      after: title,
+      action: {
+        label: t('notebooks.history.rename', 'Rename notebook'),
+        kind: NOTEBOOK_EDIT_KIND.TITLE,
+        perform: () => {
+          this.finishTitleEdit(edit);
+          this.setState({ title: edit.after });
+        },
+        undo: () => {
+          this.finishTitleEdit(edit);
+          this.setState({ title: edit.before });
+        },
+      },
+    };
+
+    this.pendingTitleEdit = edit;
+    this.setState({ title });
+    this.editHistory.record(edit.action);
+    this.scheduleTitleEditCommit(edit);
+  }
+
+  private extendTitleEdit(edit: PendingTitleEdit, title: string): void {
+    this.setState({ title });
+    edit.after = title;
+
+    if (edit.before === edit.after) {
+      this.editHistory.discard(edit.action);
+      this.finishTitleEdit(edit);
+      return;
+    }
+
+    this.scheduleTitleEditCommit(edit);
+  }
+
+  private scheduleTitleEditCommit(edit: PendingTitleEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishTitleEdit(edit), TITLE_EDIT_COALESCE_MS);
+  }
+
+  private finishTitleEdit(edit: PendingTitleEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingTitleEdit === edit) {
+      this.pendingTitleEdit = undefined;
+    }
+  }
 
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });

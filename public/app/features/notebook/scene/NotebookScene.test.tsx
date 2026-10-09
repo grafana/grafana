@@ -771,6 +771,54 @@ describe('NotebookScene', () => {
       expect(scene.state.body.state.title).toBe('My notebook');
     });
 
+    it('coalesces rapid title changes into one undo action', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q'));
+      act(() => scene.onTitleChange('Q3'));
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      // One undo reverts the whole rename, not just the last keystroke.
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('drops a title edit that returns to its starting value', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const scene = buildScene(false);
+        act(() => scene.activate());
+
+        act(() => scene.onTitleChange('Q3 latency regression'));
+        act(() => jest.advanceTimersByTime(801));
+        act(() => scene.onTitleChange('Q4 latency regression'));
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('Q3 latency regression');
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('My notebook');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
     it('does not record a no-op title change', () => {
       const scene = buildScene(false);
       act(() => scene.activate());
