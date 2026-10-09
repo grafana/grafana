@@ -90,7 +90,7 @@ To create a dashboard, follow these steps:
 1. Click **New** and select **New dashboard**.
 1. Click the **Add new element** icon (blue plus sign) and click or drag a panel onto the dashboard.
 
-   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.1.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-empty-dashboard-v13.2.png" max-width="750px" alt="Empty dashboard with sidebar open" >}}
 
 {{< /shared >}}
 
