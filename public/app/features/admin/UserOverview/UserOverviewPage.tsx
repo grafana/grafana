@@ -7,6 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Stack, Tab, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { useListTeamsRolesQuery } from 'app/api/clients/legacy';
 import { useListUserRolesQuery } from 'app/api/clients/roles';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -22,7 +23,6 @@ import {
   useGetOverviewProfileQuery,
   useGetOverviewUserQuery,
   useGetOverviewOrgUsersQuery,
-  useGetOverviewTeamRolesQuery,
   useGetOverviewTeamsQuery,
 } from './api';
 
@@ -200,9 +200,12 @@ function UserRoles({ user, profile, onUpdated }: { user: User; profile?: Overvie
       ? { userId, targetOrgId: contextSrv.user.orgId, includeMapped: true }
       : skipToken
   );
-  const roles = useGetOverviewTeamRolesQuery(
-    licensed && canReadTeamRoles && teams.currentData
-      ? { teams: teams.currentData, orgId: contextSrv.user.orgId! }
+  const teamIds = (teams.currentData ?? [])
+    .map((team) => Number(team.metadata.labels?.['grafana.app/deprecatedInternalID']))
+    .filter((id) => id > 0);
+  const roles = useListTeamsRolesQuery(
+    licensed && canReadTeamRoles && teamIds.length
+      ? { rolesSearchQuery: { teamIds } }
       : skipToken
   );
   const basic: RoleAssignment = {
@@ -223,7 +226,17 @@ function UserRoles({ user, profile, onUpdated }: { user: User; profile?: Overvie
         type: 'direct',
       })
     ),
-    ...(roles.currentData?.assignments ?? []),
+    ...(teams.currentData ?? []).flatMap((team) =>
+      (roles.currentData?.[Number(team.metadata.labels?.['grafana.app/deprecatedInternalID'])] ?? []).map(
+        (role): RoleAssignment => ({
+          id: `${team.metadata.name}:${role.uid}`,
+          role: role.displayName || role.name || '',
+          description: role.description,
+          type: 'team',
+          team,
+        })
+      )
+    ),
   ];
   const assignmentType = (assignment: RoleAssignment) =>
     assignment.id === 'basic'
@@ -258,11 +271,6 @@ function UserRoles({ user, profile, onUpdated }: { user: User; profile?: Overvie
         <LoadError error={teams.error || roles.error || directRoles.error} />
       )}
       {licensed && canReadUserRoles && !userId && <LoadError error={{ status: 404 }} />}
-      {!!roles.currentData?.unavailableTeams.length && (
-        <Alert severity="warning" title={t('admin.user-overview.partial-roles', 'Some team roles could not be loaded')}>
-          {roles.currentData.unavailableTeams.join(', ')}
-        </Alert>
-      )}
       {(teams.isFetching || roles.isFetching || directRoles.isFetching) && (
         <Text>{t('admin.user-overview.loading', 'Loading…')}</Text>
       )}

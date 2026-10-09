@@ -3,7 +3,6 @@ import { dateTimeFormatTimeAgo, type OrgRole } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { legacyAPI } from 'app/api/clients/legacy';
-import { rolesAPI } from 'app/api/clients/roles';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
@@ -296,47 +295,4 @@ const overviewAPI = generatedAPI.injectEndpoints({
   }),
 });
 
-const assignmentsAPI = rolesAPI.injectEndpoints({
-  endpoints: (build) => ({
-    getOverviewTeamRoles: build.query<
-      { assignments: RoleAssignment[]; unavailableTeams: string[] },
-      { teams: Team[]; orgId: number }
-    >({
-      async queryFn({ teams, orgId }, api) {
-        const results = await Promise.all(
-          teams.map(async (team) => {
-            const teamId = Number(team.metadata.labels?.['grafana.app/deprecatedInternalID']);
-            if (!teamId) {
-              return { team, roles: undefined };
-            }
-            const result = await api.dispatch(
-              rolesAPI.endpoints.listTeamRoles.initiate(
-                { teamId, targetOrgId: orgId },
-                { subscribe: false, forceRefetch: true }
-              )
-            );
-            return { team, roles: result.data };
-          })
-        );
-        return {
-          data: {
-            unavailableTeams: results.filter(({ roles }) => !roles).map(({ team }) => team.spec.title),
-            assignments: results.flatMap(({ team, roles }) =>
-              (roles ?? []).map((role) => ({
-                id: `${team.metadata.name}:${role.uid}`,
-                role: role.displayName || role.name,
-                description: role.description,
-                type: 'team' as const,
-                team,
-              }))
-            ),
-          },
-        };
-      },
-      providesTags: ['access_control', 'enterprise'],
-    }),
-  }),
-});
-
 export const { useGetOverviewUserQuery, useGetOverviewTeamsQuery } = overviewAPI;
-export const { useGetOverviewTeamRolesQuery } = assignmentsAPI;

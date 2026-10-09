@@ -91,7 +91,7 @@ beforeEach(() => {
     ),
     http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/teams/platform', () => HttpResponse.json(team)),
     http.get('/api/access-control/users/12/roles', () => HttpResponse.json([role])),
-    http.get('/api/access-control/teams/21/roles', () => HttpResponse.json([role]))
+    http.post('/api/access-control/teams/roles/search', () => HttpResponse.json({ 21: [role] }))
   );
 });
 
@@ -208,6 +208,32 @@ it('loads all membership pages', async () => {
   expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
 });
 
+it('loads inherited roles for all teams in one request and preserves their sources', async () => {
+  const search = jest.fn();
+  server.use(
+    http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice/teams', () =>
+      HttpResponse.json({ items: [{ team: 'platform' }, { team: 'operations' }], metadata: {} })
+    ),
+    http.get('/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/teams/operations', () =>
+      HttpResponse.json({
+        ...team,
+        metadata: { name: 'operations', labels: { 'grafana.app/deprecatedInternalID': '22' } },
+        spec: { ...team.spec, title: 'Operations' },
+      })
+    ),
+    http.post('/api/access-control/teams/roles/search', async ({ request }) => {
+      search(await request.json());
+      return HttpResponse.json({ 21: [role], 22: [role] });
+    })
+  );
+  setup('roles');
+  expect(await screen.findByRole('link', { name: 'Operations' })).toHaveAttribute('href', '/org/teams/edit/operations');
+  expect(screen.getByRole('link', { name: 'Platform' })).toBeInTheDocument();
+  expect(screen.getAllByText('Dashboard reader')).toHaveLength(3);
+  expect(search).toHaveBeenCalledTimes(1);
+  expect(search).toHaveBeenCalledWith({ teamIds: [22, 21] });
+});
+
 it('keeps basic and direct roles visible when team role access is denied', async () => {
   jest
     .spyOn(contextSrv, 'hasPermission')
@@ -219,9 +245,9 @@ it('keeps basic and direct roles visible when team role access is denied', async
 });
 
 it('reports a failed team-role request without hiding direct assignments', async () => {
-  server.use(http.get('/api/access-control/teams/21/roles', () => new HttpResponse(null, { status: 403 })));
+  server.use(http.post('/api/access-control/teams/roles/search', () => new HttpResponse(null, { status: 403 })));
   setup('roles');
-  expect(await screen.findByText('Some team roles could not be loaded')).toBeInTheDocument();
+  expect(await screen.findByText('You do not have permission to view this information')).toBeInTheDocument();
   expect(screen.getByText('Dashboard reader')).toBeInTheDocument();
 });
 
