@@ -989,7 +989,7 @@ func TestFilterQueries_LabelsUseAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "in", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	mq, ok := queries[0].(*query.MatchQuery)
@@ -1005,7 +1005,7 @@ func TestFilterQueries_LabelNotInUsesAnalyzedPath(t *testing.T) {
 	req := &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: "login", Operator: "notin", Values: []string{"foo-bar"}}},
 	}}
-	queries, e := b.filterQueries(req)
+	queries, e := b.filterQueries(t.Context(), req)
 	require.Nil(t, e)
 	require.Len(t, queries, 1)
 	bq, ok := queries[0].(*query.BooleanQuery)
@@ -1043,7 +1043,7 @@ func labelIndex(t *testing.T, keywordLabels bool, key string, values ...string) 
 func labelFilterHits(t *testing.T, idx bleve.Index, key, operator string, values ...string) []string {
 	t.Helper()
 	b := &bleveIndex{index: idx, labelsAreKeyword: labelAnalyzerIsKeyword(idx), standard: resource.StandardSearchFields()}
-	queries, errRes := b.filterQueries(&resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
+	queries, errRes := b.filterQueries(t.Context(), &resourcepb.ResourceSearchRequest{Options: &resourcepb.ListOptions{
 		Labels: []*resourcepb.Requirement{{Key: key, Operator: operator, Values: values}},
 	}})
 	require.Nil(t, errRes)
@@ -1117,7 +1117,7 @@ func TestFilterQueries_DoesNotMutateRequest(t *testing.T) {
 	// Search can re-run the builder on the post-rank authz cursor fallback, so
 	// two passes must leave the shared requirements untouched (no double-prefix).
 	for range 2 {
-		_, e := b.filterQueries(req)
+		_, e := b.filterQueries(t.Context(), req)
 		require.Nil(t, e)
 	}
 	assert.Equal(t, "team", req.Options.Labels[0].Key)

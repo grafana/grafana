@@ -1790,6 +1790,10 @@ type bleveIndex struct {
 	// them from the index each time.
 	documentTypes map[schema.GroupResource]struct{}
 
+	// The folder tree of a global index, for searches of a folder and everything
+	// below it.
+	folders folderTree
+
 	// RV returned by last List/ListModifiedSince operation. Updated when updating index.
 	resourceVersion atomic.Int64
 
@@ -1914,7 +1918,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	// index's own data, so it belongs to the commit phase. Its failure does not
 	// unmake the write, so the bytes are reported on the batch alone.
 	commitStart := time.Now()
-	commitErr := b.index.Batch(batch)
+	commitErr := b.folders.commit(req.Items, func() error { return b.index.Batch(batch) })
 	err := commitErr
 	if err == nil {
 		err = b.addSnapshotMutationCount(int64(len(req.Items)))
@@ -2998,7 +3002,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 	// Label/field filters are constraints, not relevance signals, so they go into
 	// the boolean Filter clause (scored "none" by bleve) while the free-text query
 	// scores in Must. This keeps ranking driven by text relevance alone.
-	filters, errResult := b.filterQueries(req)
+	filters, errResult := b.filterQueries(ctx, req)
 	if errResult != nil {
 		return nil, errResult
 	}
@@ -3455,7 +3459,7 @@ var declaredTopLevelNames = func() map[string]bool {
 
 // filterQueries builds the label and field filter clauses (the AND terms that
 // are not the free-text query) for a search request.
-func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
+func (b *bleveIndex) filterQueries(ctx context.Context, req *resourcepb.ResourceSearchRequest) ([]query.Query, *resourcepb.ErrorResult) {
 	queries := []query.Query{}
 	if len(req.Options.Labels) > 0 {
 		for _, v := range req.Options.Labels {
@@ -3476,6 +3480,16 @@ func (b *bleveIndex) filterQueries(req *resourcepb.ResourceSearchRequest) ([]que
 	}
 	if len(req.Options.Fields) > 0 {
 		for _, v := range req.Options.Fields {
+			if v.Key == resource.SEARCH_FIELD_FOLDER_TREE {
+				q, err := b.folderTreeQuery(ctx, v)
+				if err != nil {
+					return nil, err
+				}
+				if q != nil {
+					queries = append(queries, q)
+				}
+				continue
+			}
 			// Fresh requirement (not a proto value copy, which trips the lock check)
 			// so re-running the builder stays idempotent.
 			rq := &resourcepb.Requirement{

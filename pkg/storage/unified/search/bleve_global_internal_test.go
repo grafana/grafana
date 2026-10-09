@@ -2,6 +2,7 @@ package search
 
 import (
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -430,4 +431,275 @@ func TestWritingToAClosedGlobalIndexFails(t *testing.T) {
 
 	err = idx.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{refDoc(foldersGR, "ns", "folder-a", 12)}})
 	require.ErrorIs(t, err, bleve.ErrorIndexClosed)
+}
+
+// folderTreeDoc is a folder or dashboard document in the folder given.
+func folderTreeDoc(key resource.NamespacedResource, res, name, folder string) *resource.BulkIndexItem {
+	group := "dashboard.grafana.app"
+	if res == "folders" {
+		group = "folder.grafana.app"
+	}
+	return &resource.BulkIndexItem{
+		Action: resource.ActionIndex,
+		Doc: &resource.IndexableDocument{
+			RV:     1,
+			Name:   name,
+			Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: group, Resource: res, Name: name},
+			Title:  name,
+			Folder: folder,
+		},
+	}
+}
+
+// searchFolderTree returns the names a folderTree filter on folders finds.
+func searchFolderTree(t *testing.T, index resource.ResourceIndex, folders ...string) []string {
+	t.Helper()
+	ctx := identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"})
+	rsp, err := index.Search(ctx, NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Namespace: "default"},
+			Fields: []*resourcepb.Requirement{{
+				Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: string(selection.In), Values: folders,
+			}},
+		},
+		Limit: 100,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.Nil(t, rsp.Error)
+	names := make([]string, 0, len(rsp.Results.Rows))
+	for _, row := range rsp.Results.Rows {
+		names = append(names, row.Key.Name)
+	}
+	return names
+}
+
+// A folderTree filter finds what is in a folder and everything below it, and
+// follows folder moves and deletes at once, without rewriting what is below.
+func TestGlobalIndexSearchesAFolderAndEverythingBelowIt(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	key := resource.GlobalSearchKey("default")
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			folderTreeDoc(key, "folders", "top", ""),
+			folderTreeDoc(key, "folders", "mid", "top"),
+			folderTreeDoc(key, "folders", "leaf", "mid"),
+			folderTreeDoc(key, "folders", "other", "general"),
+			folderTreeDoc(key, "dashboards", "dash-top", "top"),
+			folderTreeDoc(key, "dashboards", "dash-mid", "mid"),
+			folderTreeDoc(key, "dashboards", "dash-leaf", "leaf"),
+			folderTreeDoc(key, "dashboards", "dash-root", ""),
+			folderTreeDoc(key, "dashboards", "dash-other", "other"),
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []string{"mid", "leaf", "dash-top", "dash-mid", "dash-leaf"}, searchFolderTree(t, index, "top"),
+		"what is below top, but not top itself")
+	assert.ElementsMatch(t, []string{"leaf", "dash-mid", "dash-leaf"}, searchFolderTree(t, index, "mid"))
+	assert.ElementsMatch(t, []string{"dash-leaf", "dash-other"}, searchFolderTree(t, index, "leaf", "other"),
+		"several folders at once")
+	assert.Len(t, searchFolderTree(t, index, "general"), 9, "everything is below the top")
+
+	// Moving mid under other moves everything below it, though only mid is written.
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+		folderTreeDoc(key, "folders", "mid", "other"),
+	}}))
+	assert.ElementsMatch(t, []string{"dash-top"}, searchFolderTree(t, index, "top"))
+	assert.ElementsMatch(t, []string{"mid", "leaf", "dash-mid", "dash-leaf", "dash-other"}, searchFolderTree(t, index, "other"))
+
+	// A deleted folder no longer leads to what was below it.
+	require.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{{
+		Action: resource.ActionDelete,
+		Key:    &resourcepb.ResourceKey{Namespace: key.Namespace, Group: "folder.grafana.app", Resource: "folders", Name: "mid"},
+	}}}))
+	assert.ElementsMatch(t, []string{"dash-other"}, searchFolderTree(t, index, "other"))
+}
+
+// A loop in the folder tree ends the search below a folder rather than hanging.
+func TestGlobalIndexFolderTreeSearchEndsAtALoop(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	key := resource.GlobalSearchKey("default")
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			folderTreeDoc(key, "folders", "loop-a", "loop-b"),
+			folderTreeDoc(key, "folders", "loop-b", "loop-a"),
+			folderTreeDoc(key, "dashboards", "dash-a", "loop-a"),
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	assert.ElementsMatch(t, []string{"loop-a", "loop-b", "dash-a"}, searchFolderTree(t, index, "loop-a"))
+}
+
+// The tree is read from the index, so an index reopened from disk answers too.
+func TestGlobalIndexFolderTreeSurvivesReopening(t *testing.T) {
+	dir := t.TempDir()
+	key := resource.GlobalSearchKey("default")
+	{
+		backend, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
+		_, err := backend.BuildIndex(t.Context(), key, 10, "test", func(index resource.ResourceIndex) (int64, error) {
+			return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+				folderTreeDoc(key, "folders", "top", ""),
+				folderTreeDoc(key, "folders", "mid", "top"),
+				folderTreeDoc(key, "dashboards", "dash-mid", "mid"),
+			}})
+		}, nil, false, time.Time{}, 0)
+		require.NoError(t, err)
+		backend.Stop()
+	}
+
+	reopened, _ := setupBleveBackend(t, withFileThreshold(1), withRootDir(dir))
+	index, err := reopened.BuildIndex(t.Context(), key, 10, "test", func(resource.ResourceIndex) (int64, error) {
+		return 0, errors.New("the index on disk should have been reused, not built again")
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"mid", "dash-mid"}, searchFolderTree(t, index, "top"))
+}
+
+// Only a global index holds folders together with what is in them.
+func TestPerResourceIndexRefusesFolderTreeSearches(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	key := resource.NamespacedResource{Namespace: "default", Group: "dashboard.grafana.app", Resource: "dashboards"}
+	index, err := backend.BuildIndex(t.Context(), key, 1, "test", func(resource.ResourceIndex) (int64, error) { return 1, nil }, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	rsp, err := index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}), NewStubAccessClient(map[string]bool{"dashboards": true}), &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Namespace: "default", Group: key.Group, Resource: key.Resource},
+			Fields: []*resourcepb.Requirement{{
+				Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: string(selection.In), Values: []string{"top"},
+			}},
+		},
+		Limit: 10,
+	}, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, rsp.Error)
+	assert.Equal(t, int32(400), rsp.Error.Code)
+}
+
+// Writes while the tree is loading or being searched are not lost: the last move
+// is what a search sees afterwards.
+func TestGlobalIndexFolderTreeKeepsUpWithConcurrentMoves(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	key := resource.GlobalSearchKey("default")
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			folderTreeDoc(key, "folders", "a", ""),
+			folderTreeDoc(key, "folders", "b", ""),
+			folderTreeDoc(key, "folders", "mid", "a"),
+			folderTreeDoc(key, "dashboards", "dash-mid", "mid"),
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		for i := range 50 {
+			parent := "a"
+			if i%2 == 0 {
+				parent = "b"
+			}
+			assert.NoError(t, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+				folderTreeDoc(key, "folders", "mid", parent),
+			}}))
+		}
+	})
+	for range 20 {
+		searchFolderTree(t, index, "a")
+	}
+	wg.Wait()
+
+	// The last move, i == 49, put mid under a.
+	assert.ElementsMatch(t, []string{"mid", "dash-mid"}, searchFolderTree(t, index, "a"))
+	assert.Empty(t, searchFolderTree(t, index, "b"))
+}
+
+// A batch writing a folder commits and changes the tree as one step, so two
+// writers cannot leave the tree in a different order from the index. Other
+// batches do not wait for the tree.
+func TestFolderTreeChangesInTheOrderTheIndexCommits(t *testing.T) {
+	key := resource.GlobalSearchKey("default")
+	tree := &folderTree{loaded: true, parent: map[string]string{}, children: map[string]map[string]struct{}{}}
+
+	require.NoError(t, tree.commit([]*resource.BulkIndexItem{folderTreeDoc(key, "folders", "mid", "top")}, func() error {
+		assert.False(t, tree.mu.TryLock(), "a folder write holds the tree while it commits")
+		return nil
+	}))
+	assert.Equal(t, map[string]string{"mid": "top"}, tree.parent)
+
+	require.NoError(t, tree.commit([]*resource.BulkIndexItem{folderTreeDoc(key, "dashboards", "dash", "mid")}, func() error {
+		require.True(t, tree.mu.TryLock(), "a write of no folders leaves the tree alone")
+		tree.mu.Unlock()
+		return nil
+	}))
+
+	// A failed commit changes nothing.
+	require.Error(t, tree.commit([]*resource.BulkIndexItem{folderTreeDoc(key, "folders", "mid", "other")}, func() error {
+		return errors.New("commit failed")
+	}))
+	assert.Equal(t, map[string]string{"mid": "top"}, tree.parent)
+}
+
+// Memory follows the tree as it is, not every folder it ever held.
+func TestFolderTreeForgetsFoldersWithNothingBelowThem(t *testing.T) {
+	tree := &folderTree{parent: map[string]string{}, children: map[string]map[string]struct{}{}}
+	tree.set("top", "")
+	tree.set("mid", "top")
+	tree.set("leaf", "mid")
+
+	tree.set("mid", "other")
+	assert.NotContains(t, tree.children, "top", "nothing is below top any more")
+
+	tree.remove("leaf")
+	tree.remove("mid")
+	tree.remove("top")
+	assert.Empty(t, tree.parent)
+	assert.Empty(t, tree.children)
+}
+
+// = names one folder and in several, as on other fields, rather than = quietly
+// meaning in.
+func TestFolderTreeSearchOperators(t *testing.T) {
+	backend, _ := setupBleveBackend(t)
+	key := resource.GlobalSearchKey("default")
+	index, err := backend.BuildIndex(t.Context(), key, 3, "test", func(index resource.ResourceIndex) (int64, error) {
+		return 1, index.BulkIndex(&resource.BulkIndexRequest{Items: []*resource.BulkIndexItem{
+			folderTreeDoc(key, "folders", "top", ""),
+			folderTreeDoc(key, "dashboards", "dash-top", "top"),
+		}})
+	}, nil, false, time.Time{}, 0)
+	require.NoError(t, err)
+
+	search := func(operator string, values ...string) *resourcepb.ResourceSearchResponse {
+		rsp, err := index.Search(identity.WithRequester(t.Context(), &user.SignedInUser{Namespace: "default"}),
+			NewStubAccessClient(map[string]bool{"dashboards": true, "folders": true}), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{
+					Key:    &resourcepb.ResourceKey{Namespace: "default"},
+					Fields: []*resourcepb.Requirement{{Key: resource.SEARCH_FIELD_FOLDER_TREE, Operator: operator, Values: values}},
+				},
+				Limit: 10,
+			}, nil, nil)
+		require.NoError(t, err)
+		return rsp
+	}
+
+	rsp := search(string(selection.Equals), "top")
+	require.Nil(t, rsp.Error)
+	assert.Len(t, rsp.Results.Rows, 1)
+	rsp = search(string(selection.Equals), "general")
+	require.Nil(t, rsp.Error)
+	assert.Len(t, rsp.Results.Rows, 2, "everything is below the top")
+
+	for _, tc := range []struct {
+		operator string
+		values   []string
+	}{
+		{string(selection.Equals), []string{"top", "general"}},
+		{string(selection.DoubleEquals), []string{"top", "other"}},
+		{string(selection.NotIn), []string{"top"}},
+	} {
+		rsp := search(tc.operator, tc.values...)
+		require.NotNil(t, rsp.Error, "%s %v", tc.operator, tc.values)
+		assert.Equal(t, int32(400), rsp.Error.Code)
+	}
 }
