@@ -374,12 +374,9 @@ describe('<ContentOutline />', () => {
       expect(screen.getByRole('button', { name: 'Jump to query A (gdev-prometheus)' })).toBeInTheDocument();
     });
 
-    it('renders the metrics explorer once a Prometheus card is expanded', async () => {
+    it('renders the metrics explorer of a leading Prometheus card, which opens by default', async () => {
       useBooleanFlagValueMock.mockReturnValue(true);
       await setup(false, true, promQueries);
-      expect(screen.queryByPlaceholderText('Search metrics')).not.toBeInTheDocument();
-
-      await userEvent.click(screen.getByRole('button', { name: 'Expand datasource explorer for query A' }));
 
       // Only that the list mounted: its contents come from the datasource now, which this test does
       // not stand up. `MetricsList.test.tsx` covers what the list does with a catalog.

@@ -24,6 +24,7 @@ var errSearchCannotAnswerList = errors.New("search cannot answer this list")
 func (s *server) listWithSelectors(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListWithFieldSelectors")
 	defer span.End()
+	s.reportSearchListBodies(ctx)
 
 	if req.Options.Key.Namespace == "" {
 		return &resourcepb.ListResponse{
@@ -107,10 +108,13 @@ func (s *server) executeSearchListPage(
 
 	var searchResp *resourcepb.ResourceSearchResponse
 	var err error
+	// Reads an in-process search makes, such as building a missing index, are not
+	// the list's body reads.
+	searchCtx := withoutListBodyStats(ctx)
 	if s.search != nil {
-		searchResp, err = s.search.Search(ctx, searchReq)
+		searchResp, err = s.search.Search(searchCtx, searchReq)
 	} else {
-		searchResp, err = s.searchClient.Search(ctx, searchReq)
+		searchResp, err = s.searchClient.Search(searchCtx, searchReq)
 	}
 	if err != nil {
 		return nil, nil, err
@@ -266,10 +270,22 @@ func (s *server) consumeSearchRows(
 				Message: "empty resource read response",
 			}}
 		}
+		// The index can return a row storage no longer has, deleted or pruned before
+		// the index caught up. The store scan would not list it either, so it is left
+		// out rather than failing the list. It needs no authorization: storage has
+		// nothing to reveal and no folder to check.
+		if val.Error.GetCode() == http.StatusNotFound {
+			s.log.Warn("Search returned an object storage does not have, skipping it",
+				"group", row.key.GetGroup(),
+				"resource", row.key.GetResource(),
+				"namespace", row.key.GetNamespace(),
+				"name", row.key.GetName(),
+				"resourceVersion", row.resourceVersion,
+			)
+			continue
+		}
 		// The storage reads do no authorization, so authorize each row before
 		// surfacing a row-scoped error. An unauthorized row must not reveal details.
-		// authorizeRead surfaces a stale NotFound (pruned/GC'd between search and
-		// read) without authorizing, like server.read.
 		if row.key != nil {
 			if errRes := s.authorizeRead(ctx, user, row.key, val); errRes != nil {
 				if errRes.Code == http.StatusForbidden {
@@ -304,7 +320,8 @@ func (s *server) consumeSearchRows(
 			Value:           val.Value,
 			ResourceVersion: val.ResourceVersion,
 		})
-		if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+		if reason := s.listLimitStopReason(req, rsp, pageBytes); reason != "" {
+			setListStopReason(ctx, reason)
 			token, err := NewSearchContinueToken(row.sortFields, listRV)
 			if err != nil {
 				return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}

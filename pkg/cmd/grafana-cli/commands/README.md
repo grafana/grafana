@@ -40,10 +40,10 @@ the mounted host directory.
 
 ## Output
 
-JSON is indented two spaces, with `<`, `>`, and `&` left unescaped. The command
-uses the same rendering pipeline as `/openapi/v3/apis/<group>/<version>`.
+JSON is indented two spaces, with `<`, `>`, and `&` left unescaped. The spec is
+requested from the same handler that serves `/openapi/v3/apis/<group>/<version>`.
 Generated specs enable search, trash, and hybrid route registration; per-kind
 eligibility rules still apply.
 
-See [pluginopenapi](../../../registry/apis/appplugin/pluginopenapi/README.md) for
-the rendering pipeline and comparison with a running server.
+See [pluginroute](../../../services/pluginsintegration/pluginroute/README.md#rendering-the-spec-offline)
+for how the spec is rendered and how to compare it with a running server.

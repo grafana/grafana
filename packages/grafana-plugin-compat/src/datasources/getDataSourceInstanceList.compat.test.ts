@@ -10,6 +10,11 @@ jest.mock('@grafana/runtime/unstable', () => ({
   getDataSourceInstanceList: undefined,
 }));
 
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstanceList: undefined,
+}));
+
 const mockDatasourceSrv = getMockedDatasourceSrv();
 const mockData = { uid: 'ds-logs', type: 'loki', name: 'Loki' } as DataSourceInstanceSettings;
 
@@ -36,7 +41,6 @@ describe('getDataSourceInstanceList', () => {
         type: 'loki',
         name: 'Loki',
         meta: {},
-        isDefault: false,
         apiVersion: undefined,
       },
     ]);
@@ -54,7 +58,6 @@ describe('getDataSourceInstanceList', () => {
     expect(mockFilter).toHaveBeenCalled();
     expect(mockFilter).toHaveBeenCalledWith({
       apiVersion: undefined,
-      isDefault: false,
       meta: {},
       name: 'Loki',
       type: 'loki',
