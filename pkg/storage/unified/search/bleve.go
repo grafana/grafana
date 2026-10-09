@@ -2356,7 +2356,7 @@ func (b *bleveIndex) Search(
 	req *resourcepb.ResourceSearchRequest,
 	federate []resource.ResourceIndex, // For federated queries, these will match the values in req.federate
 	stats *resource.SearchStats,
-) (response *resourcepb.ResourceSearchResponse, _ error) {
+) (response *resourcepb.ResourceSearchResponse, resultErr error) {
 	ctx, span := tracer.Start(ctx, "search.bleveIndex.Search")
 	defer span.End()
 
@@ -2383,6 +2383,8 @@ func (b *bleveIndex) Search(
 	// the match set, otherwise Bleve's unfiltered count with
 	// TotalHitsExact=false.
 	postRank := b.postRankAuthzEnabled && access != nil
+	access, authMetrics := withSearchAuthObservation(access, b.indexMetrics)
+	cursorFallback := false
 
 	// A trash search replaces the read check with the trash rule on whichever authz
 	// path runs. Built once per request, because it caches folder-admin results.
@@ -2440,6 +2442,7 @@ func (b *bleveIndex) Search(
 	}
 	if postRank && cursorLen > 0 && cursorLen != len(searchrequest.Sort) {
 		postRank = false
+		cursorFallback = true
 		searchrequest, e = b.toBleveSearchRequest(ctx, req, access, postRank, trashAuthz)
 		if e != nil {
 			response.Error = e
@@ -2463,6 +2466,8 @@ func (b *bleveIndex) Search(
 			}, nil
 		}
 	}
+	observeAuth := authMetrics.start(req, access, postRank, cursorFallback)
+	defer func() { observeAuth(response, resultErr) }()
 	if postRank {
 		b.ensureAuthzFields(searchrequest, trashAuthz != nil)
 	}
