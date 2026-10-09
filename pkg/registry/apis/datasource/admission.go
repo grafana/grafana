@@ -36,6 +36,11 @@ func (b *DataSourceAPIBuilder) Validate(ctx context.Context, a admission.Attribu
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected DataSource object, got %T", a.GetObject()))
 	}
+	// The update guard already checked these rules against SQL. Skip the
+	// client-create LBAC restriction for the internal mirror write.
+	if dualwrite.IsMirroredUpdate(ctx) {
+		return nil
+	}
 	return validateNoTeamHTTPHeadersOnCreate(ctx, ds, &b.datasourceResourceInfo)
 }
 

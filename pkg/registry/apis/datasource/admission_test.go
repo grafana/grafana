@@ -3,6 +3,7 @@ package datasource
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -391,6 +392,71 @@ func TestDataSourceUpdateGuardDryRunUsesSQLState(t *testing.T) {
 	}
 }
 
+func TestDataSourceUpdateGuardAllowsStoredRulesDuringMirrorCreate(t *testing.T) {
+	for _, tc := range []struct {
+		verb   string
+		dryRun bool
+	}{
+		{verb: "update"},
+		{verb: "update", dryRun: true},
+		{verb: "patch"},
+		{verb: "patch", dryRun: true},
+	} {
+		t.Run(fmt.Sprintf("%s/dryRun=%t", tc.verb, tc.dryRun), func(t *testing.T) {
+			featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
+			resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
+			apiBuilder := &DataSourceAPIBuilder{datasourceResourceInfo: resourceInfo}
+			admissionPlugin := builder.NewAdmissionFromBuilders([]builder.APIGroupBuilder{apiBuilder})
+			header := map[string]any{"team-1": "sensitive-value"}
+			stored := updateGuardDataSource("example", map[string]any{"teamHttpHeaders": header})
+			provider := &countingUpdateDatasourceProvider{stored: stored.DeepCopy()}
+			legacy := &legacyStorage{datasources: provider, resourceInfo: &resourceInfo}
+			mirror := &updateGuardMirrorStorage{done: make(chan error, 1)}
+			cfg := dualwrite.NewFakeConfig()
+			cfg.UnifiedStorage[resourceInfo.GroupResource().String()] = setting.UnifiedStorageConfig{DualWriterMode: grafanarest.Mode1}
+			store, err := dualwrite.ProvideServiceForTests(cfg).NewStorage(resourceInfo.GroupResource(), legacy, mirror)
+			require.NoError(t, err)
+
+			requestedJSONData := map[string]any{"httpMethod": "POST"}
+			if tc.verb == "patch" {
+				requestedJSONData["teamHttpHeaders"] = header
+			}
+			requested := updateGuardDataSource("example", requestedJSONData)
+			objInfo := admittedUpdateInfo(requested, resourceInfo, admissionPlugin)
+			createValidationCalled := false
+			createValidation := func(ctx context.Context, obj runtime.Object) error {
+				createValidationCalled = true
+				ds := obj.(*datasourceV0.DataSource)
+				attrs := admission.NewAttributesRecord(ds, nil, resourceInfo.GroupVersionKind(), ds.Namespace, ds.Name,
+					resourceInfo.GroupVersionResource(), "", admission.Create, &metav1.CreateOptions{}, tc.dryRun, nil)
+				return admissionPlugin.Validate(ctx, attrs, nil)
+			}
+			ctx := request.WithRequestInfo(context.Background(), &request.RequestInfo{Verb: tc.verb})
+			options := &metav1.UpdateOptions{}
+			if tc.dryRun {
+				options.DryRun = []string{metav1.DryRunAll}
+			}
+			obj, created, err := store.Update(ctx, "example", objInfo, createValidation, nil, false, options)
+			require.NoError(t, err)
+			if tc.dryRun {
+				require.True(t, created)
+			} else {
+				require.False(t, created)
+			}
+			require.NoError(t, <-mirror.done)
+			require.True(t, createValidationCalled)
+			jsonData, _ := obj.(*datasourceV0.DataSource).Spec.JSONData().(map[string]any)
+			require.Equal(t, header, jsonData["teamHttpHeaders"])
+			if tc.dryRun {
+				require.Zero(t, provider.updates)
+				require.Equal(t, stored, provider.stored)
+			} else {
+				require.Equal(t, 1, provider.updates)
+			}
+		})
+	}
+}
+
 func TestDataSourceUpdateGuardUnifiedPrimary(t *testing.T) {
 	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagDatasourcesTeamHttpHeadersWriteGuard)
 	resourceInfo := datasourceV0.DataSourceResourceInfo.WithGroupAndShortName("prometheus.datasource.grafana.app", "prometheus")
@@ -425,12 +491,19 @@ type updateGuardMirrorStorage struct {
 	dryRun []string
 }
 
-func (s *updateGuardMirrorStorage) Update(ctx context.Context, _ string, info rest.UpdatedObjectInfo, _ rest.ValidateObjectFunc,
-	_ rest.ValidateObjectUpdateFunc, _ bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
-	obj, err := info.UpdatedObject(ctx, s.old.DeepCopy())
+func (s *updateGuardMirrorStorage) Update(ctx context.Context, _ string, info rest.UpdatedObjectInfo, createValidation rest.ValidateObjectFunc,
+	_ rest.ValidateObjectUpdateFunc, forceAllowCreate bool, options *metav1.UpdateOptions) (runtime.Object, bool, error) {
+	var old runtime.Object
+	if s.old != nil {
+		old = s.old.DeepCopy()
+	}
+	obj, err := info.UpdatedObject(ctx, old)
+	if err == nil && s.old == nil && forceAllowCreate && createValidation != nil {
+		err = createValidation(ctx, obj)
+	}
 	s.dryRun = append([]string(nil), options.DryRun...)
 	s.done <- err
-	return obj, false, err
+	return obj, s.old == nil, err
 }
 
 func updateGuardDataSource(name string, jsonData map[string]any) *datasourceV0.DataSource {
