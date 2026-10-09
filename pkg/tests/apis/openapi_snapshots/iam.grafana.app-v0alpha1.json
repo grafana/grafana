@@ -5838,6 +5838,10 @@
           "displayName"
         ],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -5846,6 +5850,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "identity": {
             "allOf": [
@@ -6006,6 +6014,10 @@
           "displayName"
         ],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -6014,6 +6026,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
@@ -6568,6 +6584,10 @@
           "displayName"
         ],
         "properties": {
+          "authenticatedBy": {
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
+          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -6576,6 +6596,10 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
+          },
+          "email": {
+            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
