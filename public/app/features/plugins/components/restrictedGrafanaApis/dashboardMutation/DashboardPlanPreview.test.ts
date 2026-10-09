@@ -51,6 +51,20 @@ describe('DashboardPlanPreview', () => {
     expect(takePendingPlanBuild()).toBeUndefined();
   });
 
+  it('keeps a newer building screen when the preview it replaced gives up', async () => {
+    // A preview still opening /dashboard/new when Build is clicked.
+    const previewing = preview.render(plan);
+    const building = preview.render({ ...plan, phase: 'building' });
+
+    await jest.advanceTimersByTimeAsync(50);
+    expect((await previewing).success).toBe(false);
+    expect(takePendingPlanBuild()).toEqual({ planId: 'plan-1', planTitle: 'Service overview' });
+
+    client = createClient();
+    await jest.advanceTimersByTimeAsync(50);
+    expect(await building).toEqual(success);
+  });
+
   it('clears an unclaimed building screen when the render fails', async () => {
     const rendering = preview.render({ ...plan, phase: 'building' });
     locationService.replace('/explore');
