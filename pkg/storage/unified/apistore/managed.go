@@ -23,6 +23,11 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// CauseFolderManagedByRepository marks a 403 for a write into a repository-managed folder. The cause
+// message is the repository name and the field is the folder name, so a client can offer to commit
+// the resource to the repository instead.
+const CauseFolderManagedByRepository metav1.CauseType = "FolderManagedByRepository"
+
 var (
 	errResourceIsManagedInRepository = fmt.Errorf("this resource is managed by a repository")
 
@@ -161,6 +166,13 @@ func ensureSameRepoManager(folder utils.GrafanaMetaAccessor, resource utils.Graf
 			Code:    http.StatusForbidden,
 			Reason:  metav1.StatusReasonForbidden,
 			Message: fmt.Sprintf("folder is managed by %s:%s, but the resource is not managed", folderManager.Kind, folderManager.Identity),
+			Details: &metav1.StatusDetails{
+				Causes: []metav1.StatusCause{{
+					Type:    CauseFolderManagedByRepository,
+					Message: folderManager.Identity,
+					Field:   folder.GetName(),
+				}},
+			},
 		}}
 	}
 
