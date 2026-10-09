@@ -57,7 +57,7 @@ import {
 import { type DashboardDataDTO, type DashboardDTO } from 'app/types/dashboard';
 
 import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from './types';
-import { isDashboardResource, isDashboardV0Spec, isDashboardV2Resource, isDashboardV2Spec } from './utils';
+import { isDashboardResource, isDashboardV2Resource, isDashboardV2Spec } from './utils';
 
 export function ensureV2Response(
   dto: DashboardDTO | DashboardWithAccessInfo<DashboardDataDTO> | DashboardWithAccessInfo<DashboardV2Spec>

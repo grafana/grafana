@@ -7,6 +7,7 @@ import {
   type RowsLayoutRowKind,
   type VariableKind,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
