@@ -55,15 +55,9 @@ async function describePane(pane: ExploreUrlState): Promise<ExplorePaneDescripti
   const settings = pane.datasource ? await getDataSourceInstanceSettings(pane.datasource) : undefined;
   // The v1 migrator keeps `null` query elements and the v0 parser can keep a non-array `queries`.
   const queries: unknown[] = Array.isArray(pane.queries) ? pane.queries : [];
-  if (settings?.meta.mixed) {
-    // The pane's "-- Mixed --" says nothing; each query names its own datasource.
-    const texts = await Promise.all(queries.map(describeMixedQuery));
-    return { datasource: undefined, queries: texts.filter(Boolean) };
-  }
-  return {
-    datasource: settings?.name ?? (pane.datasource || undefined),
-    queries: queries.map(getQueryText).filter(Boolean),
-  };
+  // In a mixed pane each query names its own datasource; the pane's name alone would not say which.
+  const texts = settings?.meta.mixed ? await Promise.all(queries.map(describeMixedQuery)) : queries.map(getQueryText);
+  return { datasource: settings?.name ?? (pane.datasource || undefined), queries: texts.filter(Boolean) };
 }
 
 /**

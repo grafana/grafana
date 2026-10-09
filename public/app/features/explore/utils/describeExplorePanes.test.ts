@@ -51,7 +51,7 @@ describe('describeExplorePanes', () => {
     });
 
     expect(await describeExplorePanes(search)).toEqual([
-      { datasource: undefined, queries: ['Prom: up', 'Ops Logs: {a="b"}', 'gone: rate', 'x'] },
+      { datasource: '-- Mixed --', queries: ['Prom: up', 'Ops Logs: {a="b"}', 'gone: rate', 'x'] },
     ]);
   });
 

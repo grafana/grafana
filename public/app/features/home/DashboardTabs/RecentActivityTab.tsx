@@ -16,7 +16,7 @@ import { ctaClicked, recentActivityShown } from '../analytics/main';
 
 import { DashboardTabEmptyState } from './DashboardTabEmptyState';
 import { DashboardTabError } from './DashboardTabError';
-import { type PageKindCounts, type RecentActivityItem, getPageKindMeta, toRow } from './pageKinds';
+import { type PageKindCounts, type RecentActivityItem, getPageKindMeta, toRow } from './recentActivityRows';
 
 interface Props {
   items: RecentActivityItem[];

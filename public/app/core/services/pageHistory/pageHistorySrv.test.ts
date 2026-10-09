@@ -370,18 +370,29 @@ describe('PageHistorySrv', () => {
     expect(await srv.getEntries()).toEqual([]);
   });
 
-  it('retries a failed write on the next throttle window', async () => {
+  it('keeps a failed write in memory and retries it with the next change or when the tab is hidden', async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
     const srv = startAt('/d/abc');
     await srv.getEntries();
-    jest.spyOn(UserStorage.prototype, 'updateItem').mockRejectedValueOnce(new Error('down'));
+    const updateSpy = jest.spyOn(UserStorage.prototype, 'updateItem').mockRejectedValue(new Error('down'));
 
     locationService.push('/d/def');
-    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS * 3);
+    // One attempt: a window that failed does not re-arm itself while storage is down.
+    expect(updateSpy).toHaveBeenCalledTimes(1);
     expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
 
+    locationService.push('/d/ghi');
     await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(await srv.getEntries()));
+    expect(updateSpy).toHaveBeenCalledTimes(2);
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBeNull();
+
+    updateSpy.mockRestore();
+    hideTab();
+    await jest.advanceTimersByTimeAsync(0);
+    const entries = await srv.getEntries();
+    expect(entries.map((e) => e.pathname)).toEqual(['/d/ghi', '/d/def', '/d/abc']);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual(stored(entries));
   });
 
   it('skips the write when the stored copy already matches', async () => {

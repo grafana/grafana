@@ -116,31 +116,6 @@ function collectParams(search: string): PageParams {
   return { range, vars: format(vars), others: format(others) };
 }
 
-/** Time range and variables, e.g. `Last 90 days · Plugin=finnhub`. */
-export function describeDashboardState(search: string): string {
-  const { range, vars } = collectParams(search);
-  return [range, ...vars].filter(Boolean).join(SEPARATOR);
-}
-
-/** Time range, variables and every other filter, e.g. `search=state:firing · view=list`. */
-export function describeAppState(search: string): string {
-  const { range, vars, others } = collectParams(search);
-  return [range, ...vars, ...others].filter(Boolean).join(SEPARATOR);
-}
-
-/** Datasource and queries per pane, panes separated by ` | `, e.g. `Ops Logs · {service_name="api"}`. */
-export function describeExploreState(panes: ExplorePaneDescription[]): string {
-  return panes
-    .map(({ datasource, queries }) => [datasource, queries.join('; ')].filter(Boolean).join(SEPARATOR))
-    .filter(Boolean)
-    .join(' | ');
-}
-
-/** Nav label for an exact nav-tree url match; deep links return undefined. */
-export function getNavTitle(navTree: NavModelItem[], pathname: string): string | undefined {
-  return findByUrl(navTree, locationUtil.assureBaseUrl(pathname))?.text;
-}
-
 export interface Row {
   title: string;
   /** What the link restores (folder and time range, datasource and query, filters); absent when there is nothing to say. */
@@ -151,6 +126,8 @@ function row(title: string, details: Array<string | undefined>): Row {
   return { title, subtitle: details.filter(Boolean).join(SEPARATOR) || undefined };
 }
 
+/** Between the panes of a split Explore view, in both the title and the subtitle. */
+const PANE_SEPARATOR = ' | ';
 /** The badge already names the area, so a shown path drops its `/alerting` or `/a` prefix. */
 const AREA_PREFIX = { alerting: /^\/alerting\/?/, app: /^\/a\/?/ };
 
@@ -161,23 +138,38 @@ export function toRow(
   foldersByUid: Record<string, LocationInfo>
 ): Row {
   switch (item.kind) {
-    case 'dashboard':
-      return row(item.dashboard.name, [
-        foldersByUid[item.dashboard.location]?.name,
-        describeDashboardState(item.search),
-      ]);
-    case 'explore':
-      return row(t('home.recent-activity-tab.kind-explore', 'Explore'), [describeExploreState(item.panes)]);
+    case 'dashboard': {
+      // Time range and variables only; the other params (viewPanel, refresh) are not worth a line.
+      const { range, vars } = collectParams(item.search);
+      return row(item.dashboard.name, [foldersByUid[item.dashboard.location]?.name, range, ...vars]);
+    }
+    case 'explore': {
+      // The datasource names the page, the query text is what it restores. A pane without a datasource has
+      // no name to show; "Explore" stands in when none has.
+      const datasources = item.panes
+        .map((pane) => pane.datasource)
+        .filter(Boolean)
+        .join(PANE_SEPARATOR);
+      const queries = item.panes
+        .map((pane) => pane.queries.join('; '))
+        .filter(Boolean)
+        .join(PANE_SEPARATOR);
+      return row(datasources || t('home.recent-activity-tab.kind-explore', 'Explore'), [queries]);
+    }
     case 'alerting':
     case 'app': {
-      // Pages in the nav tree use their nav label. Deep links use the title the page set, which
-      // often is just the section's ("Incidents" for every incident), so the path tells them apart.
-      const navTitle = getNavTitle(navTree, item.pathname);
+      // Pages in the nav tree use their nav label (exact url match; deep links have none). Deep links use the
+      // title the page set, which often is just the section's ("Incidents" for every incident), so the path
+      // tells them apart.
+      const navTitle = findByUrl(navTree, locationUtil.assureBaseUrl(item.pathname))?.text;
       const title = navTitle ?? item.title ?? item.pathname;
       const showPath = !navTitle && title !== item.pathname;
+      const { range, vars, others } = collectParams(item.search);
       return row(title, [
         showPath ? item.pathname.replace(AREA_PREFIX[item.kind], '') : undefined,
-        describeAppState(item.search),
+        range,
+        ...vars,
+        ...others,
       ]);
     }
   }

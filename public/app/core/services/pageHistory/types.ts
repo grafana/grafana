@@ -24,9 +24,6 @@ export type PageHistoryEntry = PageIdentity & {
    * impressions, which carry no time.
    */
   lastVisited?: number;
-  /**
-   * The title the page gave the chrome (its `pageNav` text, else its section's); absent until the page sets its nav.
-   * Only alerting and app deep links show it, so a rule or incident page reads as its name instead of its path.
-   */
+  /** The title the page gave the chrome (its `pageNav` text, else its section's); absent until the page sets its nav. */
   title?: string;
 };

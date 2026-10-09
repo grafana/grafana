@@ -1,10 +1,12 @@
 import { http, HttpResponse } from 'msw';
 import { useEffect, type ReactNode } from 'react';
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
 import { render, screen, within } from 'test/test-utils';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { type ComponentTypeWithExtensionMeta, PluginExtensionPoints } from '@grafana/data';
 import { config, reportInteraction, setBackendSrv } from '@grafana/runtime';
+import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 import { getCustomSearchHandler, searchRoute } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setMockStarredDashboards } from '@grafana/test-utils/unstable';
@@ -398,6 +400,10 @@ describe('DashboardTabs', () => {
   });
 
   describe('Recent activity', () => {
+    beforeEach(() => {
+      setDataSourceInstanceSettings({ loki: makeDataSourceSettings('loki-uid', 'Ops Logs', 'loki') });
+    });
+
     const exploreSearch = `?schemaVersion=1&panes=${encodeURIComponent(
       JSON.stringify({
         abc: {
@@ -453,7 +459,8 @@ describe('DashboardTabs', () => {
 
       const dashboardLink = screen.getByRole('link', { name: /Recent Dashboard 1/ });
       expect(dashboardLink).toHaveTextContent('Last 90 days · Plugin=finnhub');
-      expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
+      // An Explore row is named after its datasource and shows the query it restores.
+      expect(screen.getByRole('link', { name: /^Ops Logs/ })).toHaveTextContent('{service_name="api"}');
       // Nav-tree pages use the nav label alone; deep links show the page's own title with the path under it.
       expect(screen.getByRole('link', { name: /Alert rules/ })).toHaveTextContent('search=firing');
       expect(screen.getByRole('link', { name: /Alert rules/ })).not.toHaveTextContent('/alerting/list');
@@ -465,7 +472,7 @@ describe('DashboardTabs', () => {
       expect(list.getByText('Dashboard')).toBeInTheDocument();
       expect(list.getByText('Alerting')).toBeInTheDocument();
       expect(list.getByText('App')).toBeInTheDocument();
-      expect(list.getAllByText('Explore')).toHaveLength(2);
+      expect(list.getByText('Explore')).toBeInTheDocument();
 
       // The kind filter covers the whole history; "All" is active until one is picked.
       const filter = within(screen.getByRole('radiogroup', { name: /show only/i }));
@@ -501,7 +508,7 @@ describe('DashboardTabs', () => {
       await user.click(filter.getByRole('radio', { name: 'Explore' }));
 
       expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(1);
-      expect(screen.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /^Ops Logs/ })).toBeInTheDocument();
       expect(window.localStorage.getItem(FILTER_KEY)).toBe('explore');
       expect(jest.mocked(recentActivityFilterChanged)).toHaveBeenCalledWith({ filter: 'explore' });
       expect(jest.mocked(pageHistorySrv.getEntries)).toHaveBeenCalledTimes(1);
@@ -546,7 +553,7 @@ describe('DashboardTabs', () => {
 
       expect(await screen.findByRole('tab', { name: /recent activity.*1/i, selected: true })).toBeInTheDocument();
       const rows = within(screen.getByRole('list'));
-      expect(rows.getByRole('link', { name: /^Explore/ })).toBeInTheDocument();
+      expect(rows.getByRole('link', { name: /^Ops Logs/ })).toBeInTheDocument();
       expect(rows.getAllByRole('link')).toHaveLength(1);
     });
 
@@ -563,7 +570,7 @@ describe('DashboardTabs', () => {
       // Shown again: the user came back to it.
       expect(jest.mocked(recentActivityShown)).toHaveBeenCalledTimes(2);
 
-      await user.click(screen.getByRole('link', { name: /^Explore/ }));
+      await user.click(screen.getByRole('link', { name: /^Ops Logs/ }));
       expect(jest.mocked(ctaClicked)).toHaveBeenCalledWith({
         surface: 'recent_tab',
         action: 'open_page',

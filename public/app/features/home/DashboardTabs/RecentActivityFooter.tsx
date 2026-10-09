@@ -5,7 +5,7 @@ import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
 import { FooterAction, FooterActions } from '../FooterActions';
 import { clearHistoryClicked, recentActivityFilterChanged } from '../analytics/main';
 
-import { PAGE_KINDS, type PageKindCounts, getPageKindMeta } from './pageKinds';
+import { PAGE_KINDS, type PageKindCounts, getPageKindMeta } from './recentActivityRows';
 import { type RecentActivityFilter } from './useRecentActivity';
 
 interface Props {
@@ -22,6 +22,10 @@ interface Props {
  */
 export function RecentActivityFooter({ counts, total, filter, onFilterChange, onClear }: Props) {
   const kinds = PAGE_KINDS.filter((kind) => counts[kind] > 0);
+  const options: Array<SelectableValue<RecentActivityFilter>> = [
+    { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
+    ...kinds.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
+  ];
 
   const handleClear = () => {
     clearHistoryClicked({ dashboard_count: counts.dashboard, page_count: total });
@@ -33,38 +37,26 @@ export function RecentActivityFooter({ counts, total, filter, onFilterChange, on
     onFilterChange(filter);
   };
 
-  const clear = (
-    <FooterActions>
-      <FooterAction onClick={handleClear}>
-        <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
-      </FooterAction>
-    </FooterActions>
-  );
-
-  if (kinds.length < 2) {
-    return (
-      <Box padding={1} paddingTop={1.5}>
-        {clear}
-      </Box>
-    );
-  }
-
-  const options: Array<SelectableValue<RecentActivityFilter>> = [
-    { value: '', label: t('home.recent-activity-tab.filter-all', 'All') },
-    ...kinds.map((kind) => ({ value: kind, label: getPageKindMeta(kind).filterLabel })),
-  ];
-
   return (
     <Box padding={1} paddingTop={1.5}>
-      <Stack direction="row" wrap="wrap" alignItems="center" justifyContent="space-between" gap={1}>
-        <RadioButtonGroup<RecentActivityFilter>
-          size="sm"
-          aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
-          options={options}
-          value={filter}
-          onChange={handleFilterChange}
-        />
-        {clear}
+      <Stack direction="row" wrap="wrap" alignItems="center" gap={1}>
+        {kinds.length > 1 && (
+          <RadioButtonGroup<RecentActivityFilter>
+            size="sm"
+            aria-label={t('home.recent-activity-tab.filter-label', 'Show only')}
+            options={options}
+            value={filter}
+            onChange={handleFilterChange}
+          />
+        )}
+        {/* Grows so the action stays on the right with or without the filter, and when the row wraps. */}
+        <Box grow={1}>
+          <FooterActions>
+            <FooterAction onClick={handleClear}>
+              <Trans i18nKey="home.recent-activity-tab.clear">Clear recent activity</Trans>
+            </FooterAction>
+          </FooterActions>
+        </Box>
       </Stack>
     </Box>
   );

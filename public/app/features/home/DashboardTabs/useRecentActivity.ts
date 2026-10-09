@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useAsyncRetry } from 'react-use';
 
 import { useStoredString } from 'app/core/hooks/useStored';
@@ -6,10 +7,11 @@ import { type PageHistoryKind } from 'app/core/services/pageHistory/types';
 import { searchDashboardsByUid } from 'app/features/browse-dashboards/api/searchDashboardsByUid';
 import { describeExplorePanes } from 'app/features/explore/utils/describeExplorePanes';
 
-import { countByKind, PAGE_KINDS, type RecentActivityItem } from './pageKinds';
+import { countByKind, PAGE_KINDS, type RecentActivityItem } from './recentActivityRows';
 
 /** Last chosen kind filter; remembered per browser. */
 const FILTER_KEY = 'grafana.home.recentActivity.filter';
+const NO_ITEMS: RecentActivityItem[] = [];
 
 /** `''` shows every kind. */
 export type RecentActivityFilter = PageHistoryKind | '';
@@ -44,8 +46,9 @@ export function useRecentActivity() {
   const { value, loading, error, retry } = useAsyncRetry(getRecentActivity, []);
   const [storedFilter, setStoredFilter] = useStoredString(FILTER_KEY, '');
 
-  const all = value ?? [];
-  const counts = countByKind(all);
+  const all = value ?? NO_ITEMS;
+  // Stable per fetch, so the tab's "shown" effect keys on the data and not on every render.
+  const counts = useMemo(() => countByKind(all), [all]);
   // localStorage is untrusted and a filter can outlive its rows (history cleared elsewhere, dashboards
   // deleted); anything but a kind that has rows shows every kind.
   const filter: RecentActivityFilter = PAGE_KINDS.find((kind) => kind === storedFilter && counts[kind] > 0) ?? '';

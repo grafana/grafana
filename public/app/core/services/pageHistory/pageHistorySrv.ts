@@ -116,23 +116,25 @@ function serialize(clearedAt: number, entries: PageHistoryEntry[]): string {
  *
  * Request policy: ordinary URL changes coalesce into one write at most every `PAGE_HISTORY_PERSIST_MS` per tab;
  * hiding the tab and `clear()` write immediately; every `getEntries()` and the startup load each cost one read.
- * A write is one read plus one write, plus one more pair per version conflict. Overlapping operations in one tab
- * serialize on `UserStorage`'s lock; a change made while a write is in flight is picked up by the next one.
+ * A write is one read plus one write, plus one more pair per version conflict. A failed write is retried by the
+ * next change or tab hide, never on a timer. Overlapping operations in one tab serialize on `UserStorage`'s
+ * lock; a change made while a write is in flight is picked up by the next one.
  */
 export class PageHistorySrv {
   /** Newest first by construction; `lastVisited` is only used for merging and display. */
   private entries: PageHistoryEntry[] = [];
-  /** Key of the page the user is on, listed or not, so a change of page is told apart from churn on it. */
-  private locationKey: string | null = null;
-  /** Key of the recorded page the user is on; titles from the chrome are stamped onto it. */
-  private currentKey: string | undefined;
   /** Epoch ms of the last clear seen from any tab; rows visited at or before it are dropped. */
   private clearedAt = 0;
+  /** Memory holds a change that storage has not confirmed. */
+  private dirty = false;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
   private readonly key = `org-${contextSrv.user.orgId}`;
   private ready: Promise<void> | undefined;
 
-  private persist = throttle(() => this.write(), PAGE_HISTORY_PERSIST_MS, { leading: false, trailing: true });
+  private readonly scheduleWrite = throttle(() => this.write(), PAGE_HISTORY_PERSIST_MS, {
+    leading: false,
+    trailing: true,
+  });
 
   /** Starts recording. Returns a function that stops it and drops any pending write. Renderer sessions record nothing. */
   start(chrome: AppChromeService): () => void {
@@ -145,15 +147,14 @@ export class PageHistorySrv {
     // `history.listen` never emits the landing page.
     this.apply(locationService.getLocation(), false);
 
-    const unlisten = locationService.getHistory().listen((location, action) =>
-      // A flagged REPLACE corrects the current page's URL in place and is never a navigation.
-      this.apply(location, action === 'REPLACE' && isUrlRewrite(location.state))
-    );
+    const unlisten = locationService
+      .getHistory()
+      .listen((location, action) => this.apply(location, action === 'REPLACE' && isUrlRewrite(location.state)));
     // Pages set their nav after they render, so the title arrives after the navigation was recorded.
     const chromeSubscription = chrome.state.subscribe((state) => this.setTitle(getPageTitle(state)));
     const onVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') {
-        this.persist.flush();
+      if (document.visibilityState === 'hidden' && this.dirty) {
+        void this.writeNow();
       }
     };
     document.addEventListener('visibilitychange', onVisibilityChange);
@@ -162,7 +163,7 @@ export class PageHistorySrv {
       unlisten();
       chromeSubscription.unsubscribe();
       document.removeEventListener('visibilitychange', onVisibilityChange);
-      this.persist.cancel();
+      this.scheduleWrite.cancel();
     };
   }
 
@@ -178,7 +179,7 @@ export class PageHistorySrv {
 
   /**
    * Forgets every recorded page, in every tab and browser, and persists right away. Resolves after the first
-   * attempt whether or not it reached storage; a failed attempt is retried on the next write.
+   * attempt whether or not it reached storage; a failed attempt is retried like any other change.
    */
   async clear(): Promise<void> {
     if (!this.ready) {
@@ -187,14 +188,13 @@ export class PageHistorySrv {
     await this.ready;
     this.clearedAt = Date.now();
     this.entries = [];
-    this.currentKey = undefined;
-    this.persist.cancel();
-    await this.write();
+    this.persist();
+    await this.writeNow();
   }
 
   private async load(): Promise<void> {
-    // `null` means nothing was ever stored for this user and org; an unreadable store must not seed.
-    if ((await this.sync(false)) === null) {
+    // An unreachable store must not seed: it may well hold a history already.
+    if ((await this.sync(false)) === 'empty') {
       await this.seed();
     }
   }
@@ -226,49 +226,39 @@ export class PageHistorySrv {
         (entry) => this.clearedAt === 0 || (entry.lastVisited ?? 0) > this.clearedAt
       )
     );
-    // The page the user is on may have been cleared elsewhere; its next URL change must record it again.
-    if (this.currentKey && !this.entries.some((entry) => pageKey(entry) === this.currentKey)) {
-      this.currentKey = undefined;
-      this.locationKey = null;
-    }
   }
 
   /**
-   * Merges the stored copy into memory and, with `persist`, stores the result when it differs. Resolves with the
-   * stored string as read (`null` when nothing is stored), or `undefined` when storage was unreachable.
+   * Merges the stored copy into memory and, with `persist`, stores the result when it differs. `empty`: nothing
+   * has ever been stored for this user and org. `unreachable`: a request failed and nothing was stored.
    */
-  private async sync(persist: boolean): Promise<string | null | undefined> {
-    let read: string | null | undefined;
+  private async sync(persist: boolean): Promise<'merged' | 'empty' | 'unreachable'> {
+    let outcome: 'merged' | 'empty' = 'empty';
     try {
       await this.storage.updateItem(this.key, (raw) => {
-        read = raw;
+        outcome = raw === null ? 'empty' : 'merged';
         // Runs again after a version conflict, so this must stay idempotent: `absorb` merges by key.
         this.absorb(parseStored(raw));
         const next = serialize(this.clearedAt, this.entries);
         return persist && next !== raw ? next : undefined;
       });
-      return read;
+      return outcome;
     } catch (e) {
       console.warn('Page history: storage unavailable', e);
-      return undefined;
+      return 'unreachable';
     }
   }
 
   private apply(location: Location, isRewrite: boolean): void {
     const page = classifyPage(location.pathname, location.search);
-    const key = page && pageKey(page);
-    // Query churn keeps the key, so only a key change is a navigation. Explore writes its state with a plain
-    // REPLACE on the same pathname, which is how its sessions come to exist.
-    const isNavigation = !isRewrite && key !== this.locationKey;
-    this.locationKey = key;
-    this.currentKey = undefined;
-    if (!page || !key) {
+    if (!page) {
       return;
     }
-
+    const key = pageKey(page);
     const existing = this.entries.find((entry) => pageKey(entry) === key);
-    // Churn or rewrite onto a page never navigated to (e.g. `/` → home dashboard rewrite).
-    if (!existing && !isNavigation) {
+    // A flagged REPLACE corrects the URL of the page the user is on: it refreshes that page's row but never
+    // adds one, so the `/` → home dashboard rewrite does not list the home dashboard.
+    if (isRewrite && !existing) {
       return;
     }
 
@@ -285,15 +275,18 @@ export class PageHistorySrv {
       return;
     }
     this.entries = capEntries([entry, ...this.entries.filter((other) => other !== existing)]);
-    this.currentKey = key;
     this.persist();
   }
 
+  /** Stamps the chrome's title onto the row of the page the user is on, if that page has one. */
   private setTitle(title: string | undefined): void {
-    if (!title || !this.currentKey) {
+    if (!title) {
       return;
     }
-    const index = this.entries.findIndex((entry) => pageKey(entry) === this.currentKey);
+    const { pathname, search } = locationService.getLocation();
+    const page = classifyPage(pathname, search);
+    const key = page && pageKey(page);
+    const index = key ? this.entries.findIndex((entry) => pageKey(entry) === key) : -1;
     if (index === -1 || this.entries[index].title === title) {
       return;
     }
@@ -301,12 +294,25 @@ export class PageHistorySrv {
     this.persist();
   }
 
+  /** Something changed: written at the end of the current window. */
+  private persist(): void {
+    this.dirty = true;
+    this.scheduleWrite();
+  }
+
+  /** Writes now instead of at the end of the window. */
+  private writeNow(): Promise<void> {
+    this.scheduleWrite.cancel();
+    return this.write();
+  }
+
   private async write(): Promise<void> {
     // Never overwrite the stored copy before it has been merged in.
     await this.ready;
-    // Memory stays as it is on failure; the next window retries while the tab lives.
-    if ((await this.sync(true)) === undefined) {
-      this.persist();
+    // Cleared first so a change made while this write is in flight stays pending.
+    this.dirty = false;
+    if ((await this.sync(true)) === 'unreachable') {
+      this.dirty = true;
     }
   }
 }
