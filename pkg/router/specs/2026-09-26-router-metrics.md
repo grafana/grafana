@@ -41,6 +41,7 @@ Every label has a bounded set of values, so no request can create new series:
 | --- | --- | --- | --- |
 | `grafana_router_groups` | gauge | `source` | API groups served, per route source |
 | `grafana_router_shadowed_groups` | gauge | `source` | Groups a source offered that a higher-priority source serves instead |
+| `grafana_router_skipped_backends` | gauge | `source` | Backends a source skipped in its latest successful load or poll |
 | `grafana_router_source_last_success_timestamp_seconds` | gauge | `source` | When each source last loaded successfully |
 | `grafana_router_source_polls_total` | counter | `source`, `result` | Load or poll attempts: `success` or `failure` (for `routebackend`, direct lists, informer events and informer errors) |
 | `grafana_router_stack_lookups_total` | counter | `result` | Single-tenant stack lookups: `cache_hit`, `resolved`, `not_found`, `throttled`, `error` |
@@ -53,6 +54,20 @@ stale last success means the source is failing. `routebackend` is watched by inf
 records a success when it lists directly (before the informers sync) or an informer receives an
 event, and a failure on each informer list or watch error. Its last success doesn't move while
 nothing changes, so watch its failures rather than its staleness.
+
+A skipped backend is not served, and its group falls back to a lower-priority source if one offers
+it. Each skip is logged with its error, which says why. Backends are skipped by:
+
+- `routebackend`: a RouteBackend with no matching AppManifest (often transient, when a RouteBackend
+  is applied before its AppManifest), no forward block, invalid TLS settings, or a URL
+  `NewForwardBackend` rejects;
+- `plugins_url`: a manifest `NewPluginBackend` rejects, such as for a group that isn't a plugin
+  group, or one with no served versions;
+- `plugins_url` and `aggregate:<target>`: a backend whose key could not be computed, which is not
+  expected to happen.
+
+A backend whose `Load` fails in `reconcile` is not counted here. Its group keeps its last-known-good
+backend, and the failure counts in `grafana_router_reconcile_errors_total`.
 
 ## Backends
 
@@ -142,6 +157,7 @@ sum by (plugin_id) (
 | Reconcile error ratio | `rate(grafana_router_reconcile_errors_total[5m]) / rate(grafana_router_reconciles_total[5m])` |
 | Groups by source | `sum by (source) (grafana_router_groups)` |
 | Shadowed groups | `sum by (source) (grafana_router_shadowed_groups)` |
+| Skipped backends | `sum by (source) (grafana_router_skipped_backends) > 0` |
 | Stale polled sources | `time() - grafana_router_source_last_success_timestamp_seconds{source!="routebackend"}` |
 | Poll and watch failure rate | `sum by (source) (rate(grafana_router_source_polls_total{result="failure"}[5m]))` |
 | Open breakers | `grafana_router_breaker_state{state!="closed"} == 1` |
