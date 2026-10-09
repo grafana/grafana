@@ -5,6 +5,9 @@ import { type GrafanaTheme2, PageLayoutType } from '@grafana/data';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { useUrlParams } from 'app/core/navigation/hooks';
+import { PreviewBannerViewPR } from 'app/features/provisioning/components/Shared/PreviewBannerViewPR';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 
 import NativeScrollbar from '../NativeScrollbar';
 
@@ -55,6 +58,9 @@ export const Page: PageType = ({
   }, [navModel, pageNav, chrome, layout]);
 
   const resolvedBg = background ?? getDefaultBackgroundForLayout(layout, visualRefreshEnabled);
+  const [urlParams] = useUrlParams();
+  const { newPrURL, repoURL } = usePullRequestParam();
+  const interceptedWrite = urlParams.get('intercepted_write') && newPrURL;
 
   return (
     <div
@@ -73,6 +79,18 @@ export const Page: PageType = ({
           onSetScrollRef={onSetScrollRef}
         >
           <div className={cx(styles.pageInner, layout === PageLayoutType.Home && styles.homeInner)}>
+            {interceptedWrite && (
+              <PreviewBannerViewPR
+                prURL={newPrURL}
+                isNewPr
+                repoUrl={repoURL}
+                branchInfo={{
+                  targetBranch: urlParams.get('ref') || undefined,
+                  configuredBranch: urlParams.get('repo_branch') || undefined,
+                  repoBaseUrl: repoURL,
+                }}
+              />
+            )}
             {pageHeaderNav && (
               <PageHeader
                 actions={actions}
