@@ -12,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 var (
@@ -543,6 +544,10 @@ func toZanzanaType(apiGroup string) string {
 }
 
 func newResourcePermissionTuple(subject, relation string, resource *authzextv1.Resource, subresource string) *openfgav1.TupleKey {
+	if resource.GetGroup() == iamv0.ServiceAccountResourceInfo.GroupResource().Group &&
+		resource.GetResource() == iamv0.ServiceAccountResourceInfo.GroupResource().Resource && subresource == "" {
+		return common.NewTypedTuple(TypeServiceAccount, subject, relation, resource.GetName())
+	}
 	typ := toZanzanaType(resource.GetGroup())
 
 	key := &openfgav1.TupleKey{
