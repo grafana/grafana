@@ -114,9 +114,9 @@ func apiGroupDiscoveryListToGroups(list apidiscoveryv2.APIGroupDiscoveryList) []
 	return groups
 }
 
-// aggregateBackend is a Backend for one group discovered on a fixed
-// aggregate target (baas_apiserver or cloud_app_platform_apiserver). Its
-// Load proxies to the target's own host.
+// aggregateBackend is a Backend for one group discovered on a configured
+// aggregate target ([router.aggregate.<name>]). Its Load proxies to the
+// target's own host.
 type aggregateBackend struct {
 	targetName string
 	group      metav1.APIGroup

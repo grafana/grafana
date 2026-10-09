@@ -171,9 +171,8 @@ type cloudLoader struct {
 
 	dirty chan struct{} // buffered 1; pure coalescing wake signal, no payload
 
-	// aggregateTargets are the fixed upstream apiservers (baas_apiserver,
-	// cloud_app_platform_apiserver) this loader actively polls for API
-	// groups.
+	// aggregateTargets are the configured upstream apiservers this loader
+	// polls for API groups, in priority order: the first wins a shared group.
 	aggregateTargets []*aggregateTarget
 
 	// pluginsTarget serves managed plugins: nil unless plugins_url is

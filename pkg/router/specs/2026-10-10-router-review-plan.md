@@ -189,7 +189,8 @@ branch to merge.
 
 ## C: Cleanup
 
-- [ ] **C6. Stale comments after #134652 and #134381:**
+- [x] **C6. Stale comments after #134652 and #134381:** Done, except the `Notify` TODO, which
+  is kept: verifying config before applying it is open work, not a stale note.
   - `reconcile` (`router.go`) says "a later wake retries" in two places. P9's retry backoff is now
     what guarantees the retry.
   - `reconcile` says connection pools survive "through the loader's shared transports". There is
