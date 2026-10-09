@@ -1,5 +1,6 @@
 import { memo, useRef, useState } from 'react';
 
+import { dateTimeFormatTimeAgo } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { ConfirmButton, ConfirmModal, Button, Stack } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
@@ -11,17 +12,15 @@ import { type UserSession } from 'app/types/user';
 import { UserSortableHeader, useUserTableSort } from './UserTableSorting';
 
 interface Props {
-  sessions: Array<UserSession & { seenAtTimestamp?: number }>;
-  showHeading?: boolean;
+  sessions: UserSession[];
 
   onSessionRevoke: (id: number) => void;
   onAllSessionsRevoke: () => void;
 }
 
-export const UserSessions = memo(({ sessions, onSessionRevoke, onAllSessionsRevoke, showHeading = true }: Props) => {
+export const UserSessions = memo(({ sessions, onSessionRevoke, onAllSessionsRevoke }: Props) => {
   const { sortedRows, headerProps } = useUserTableSort(sessions, {
-    seenAt: (session) =>
-      session.isActive ? Number.MAX_SAFE_INTEGER : (session.seenAtTimestamp ?? (Date.parse(session.seenAt) || 0)),
+    seenAt: (session) => (session.isActive ? Number.MAX_SAFE_INTEGER : Date.parse(session.seenAt) || 0),
     createdAt: (session) => Date.parse(session.createdAt) || 0,
     clientIp: (session) => session.clientIp,
     browser: (session) => `${session.browser} on ${session.os} ${session.osVersion}`,
@@ -55,11 +54,6 @@ export const UserSessions = memo(({ sessions, onSessionRevoke, onAllSessionsRevo
 
   return (
     <div>
-      {showHeading && (
-        <h3 className="page-heading">
-          <Trans i18nKey="admin.user-sessions.title">Sessions</Trans>
-        </h3>
-      )}
       <Stack direction="column" gap={1.5}>
         <div>
           <table className="filter-table form-inline">
@@ -86,7 +80,9 @@ export const UserSessions = memo(({ sessions, onSessionRevoke, onAllSessionsRevo
             <tbody>
               {sortedRows.map((session, index) => (
                 <tr key={`${session.id}-${index}`}>
-                  <td>{session.isActive ? t('admin.user-sessions.now', 'Now') : session.seenAt}</td>
+                  <td>
+                    {session.isActive ? t('admin.user-sessions.now', 'Now') : dateTimeFormatTimeAgo(session.seenAt)}
+                  </td>
                   <td>{formatDate(session.createdAt, { dateStyle: 'long' })}</td>
                   <td>{session.clientIp}</td>
                   <td>{`${session.browser} on ${session.os} ${session.osVersion}`}</td>

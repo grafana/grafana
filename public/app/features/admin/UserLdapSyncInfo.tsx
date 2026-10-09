@@ -14,13 +14,12 @@ interface Props {
   ldapSyncInfo: SyncInfo;
   user: UserDTO;
   onUserSync: () => void;
-  showHeading?: boolean;
 }
 
 const format = 'dddd YYYY-MM-DD HH:mm zz';
 const debugLDAPMappingBaseURL = '/admin/authentication/ldap';
 
-export const UserLdapSyncInfo = memo(({ ldapSyncInfo, user, onUserSync, showHeading = true }: Props) => {
+export const UserLdapSyncInfo = memo(({ ldapSyncInfo, user, onUserSync }: Props) => {
   const nextSyncSuccessful = ldapSyncInfo && ldapSyncInfo.nextSync;
   const nextSyncTime = nextSyncSuccessful ? dateTimeFormat(ldapSyncInfo.nextSync, { format }) : '';
   const debugLDAPMappingURL = `${debugLDAPMappingBaseURL}?username=${user && user.login}`;
@@ -29,11 +28,6 @@ export const UserLdapSyncInfo = memo(({ ldapSyncInfo, user, onUserSync, showHead
 
   return (
     <>
-      {showHeading && (
-        <h3 className="page-heading">
-          <Trans i18nKey="admin.ldap-sync.title">LDAP Synchronisation</Trans>
-        </h3>
-      )}
       <div className="gf-form-group">
         <div className="gf-form">
           <table className="filter-table form-inline">

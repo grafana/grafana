@@ -1,5 +1,5 @@
 import { generatedAPI, type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-import { dateTimeFormatTimeAgo, type OrgRole } from '@grafana/data';
+import { type OrgRole } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { legacyAPI } from 'app/api/clients/legacy';
@@ -27,14 +27,9 @@ const managementAPI = legacyAPI.injectEndpoints({
       query: (login) => ({ url: '/org/users', params: { query: login, accesscontrol: true } }),
       providesTags: ['org'],
     }),
-    getOverviewSessions: build.query<Array<UserSession & { seenAtTimestamp: number }>, string>({
+    getOverviewSessions: build.query<UserSession[], string>({
       query: (uid) => ({ url: `/admin/users/${uid}/auth-tokens` }),
-      transformResponse: (sessions: UserSession[]) =>
-        [...sessions].reverse().map((session) => ({
-          ...session,
-          seenAtTimestamp: new Date(session.seenAt).getTime(),
-          seenAt: dateTimeFormatTimeAgo(session.seenAt),
-        })),
+      transformResponse: (sessions: UserSession[]) => [...sessions].reverse(),
     }),
     getOverviewLdapStatus: build.query<SyncInfo, void>({
       query: () => ({ url: '/admin/ldap-sync-status' }),

@@ -91,7 +91,7 @@ export function OrganizationsTab({ user, onUpdated }: Props) {
   const [addOrgUser] = useAddOverviewOrgUserMutation();
   const [removeOrgUser] = useRemoveOverviewOrgUserMutation();
   const [updateOrgRole] = useUpdateOverviewOrgRoleMutation();
-  const { currentData: orgs, isFetching, error, refetch } = useGetOverviewOrgsQuery(user.uid);
+  const { currentData: orgs, error, refetch } = useGetOverviewOrgsQuery(user.uid);
   const { run, failed } = useUserAction(() => {
     refetch();
     onUpdated();
@@ -106,8 +106,6 @@ export function OrganizationsTab({ user, onUpdated }: Props) {
     <Stack direction="column" gap={2}>
       {failed && <ActionError />}
       <UserOrgs
-        showHeading={false}
-        key={isFetching ? 'loading' : 'loaded'}
         user={user}
         orgs={orgs}
         isExternalUser={user.isExternallySynced || user.isProvisioned}
@@ -134,7 +132,6 @@ export function SessionsTab({ uid }: { uid: string }) {
     <Stack direction="column" gap={2}>
       {failed && <ActionError />}
       <UserSessions
-        showHeading={false}
         sessions={sessions}
         onSessionRevoke={(authTokenId) => run(() => revokeSession({ uid, authTokenId }).unwrap())}
         onAllSessionsRevoke={() => run(() => revokeSessions(uid).unwrap())}
@@ -164,12 +161,7 @@ export function AuthenticationTab({ user, onUpdated }: Props) {
   return (
     <Stack direction="column" gap={2}>
       {failed && <ActionError />}
-      <UserLdapSyncInfo
-        showHeading={false}
-        user={user}
-        ldapSyncInfo={status}
-        onUserSync={() => run(() => syncUser(user.id).unwrap())}
-      />
+      <UserLdapSyncInfo user={user} ldapSyncInfo={status} onUserSync={() => run(() => syncUser(user.id).unwrap())} />
     </Stack>
   );
 }
