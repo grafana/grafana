@@ -1192,10 +1192,10 @@ export const useFlagGrafanaVisualDesignRefresh = (options?: ReactFlagEvaluationO
  *
  * **Details:**
  * - flag key: `inlineLogDetailsNoScrolls`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagInlineLogDetailsNoScrolls = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("inlineLogDetailsNoScrolls", false, options).value;
+  return useFlag("inlineLogDetailsNoScrolls", true, options).value;
 };
 
 /**
@@ -1269,10 +1269,10 @@ export const useFlagNewSavedQueriesExperience = (options?: ReactFlagEvaluationOp
  *
  * **Details:**
  * - flag key: `otelLogsFormatting`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagOtelLogsFormatting = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("otelLogsFormatting", false, options).value;
+  return useFlag("otelLogsFormatting", true, options).value;
 };
 
 /**

@@ -947,7 +947,7 @@ export interface FeatureToggles {
   foldersAppPlatformAPI?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
-  * @default false
+  * @default true
   */
   otelLogsFormatting?: boolean;
   /**
@@ -1223,7 +1223,7 @@ export interface FeatureToggles {
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
-  * @default false
+  * @default true
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
@@ -1243,7 +1243,7 @@ export interface FeatureToggles {
   streamingForwardTeamHeadersTempo?: boolean;
   /**
   * Aligns query splitting chunks with UTC midnight
-  * @default false
+  * @default true
   */
   lokiAlignedQuerySplitting?: boolean;
   /**
