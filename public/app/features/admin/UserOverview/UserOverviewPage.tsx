@@ -7,7 +7,7 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
 import { Alert, Stack, Tab, TabsBar, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { useListTeamsRolesQuery } from 'app/api/clients/legacy';
+import { useListTeamsRolesQuery, useGetUserByIdQuery, useGetOrgUsersForCurrentOrgQuery } from 'app/api/clients/legacy';
 import { useListUserRolesQuery } from 'app/api/clients/roles';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -17,14 +17,7 @@ import { UserSortableHeader, useUserTableSort } from '../UserTableSorting';
 
 import { UserDetails } from './UserDetails';
 import { OrganizationsTab, SessionsTab, AuthenticationTab, UserRolesEditor } from './UserManagement';
-import {
-  type RoleAssignment,
-  type OverviewProfile,
-  useGetOverviewProfileQuery,
-  useGetOverviewUserQuery,
-  useGetOverviewOrgUsersQuery,
-  useGetOverviewTeamsQuery,
-} from './api';
+import { type RoleAssignment, type OverviewProfile, useGetOverviewUserQuery, useGetOverviewTeamsQuery } from './api';
 
 export default function UserOverviewPage() {
   const styles = useStyles2(getStyles);
@@ -33,7 +26,7 @@ export default function UserOverviewPage() {
   const tab = params.get('tab') ?? 'details';
   const overview = useGetOverviewUserQuery(uid);
   const canReadProfile = contextSrv.hasPermission(AccessControlAction.UsersRead);
-  const profileQuery = useGetOverviewProfileQuery(canReadProfile ? uid : skipToken);
+  const profileQuery = useGetUserByIdQuery(canReadProfile ? { userId: uid } : skipToken);
   const profile = profileQuery.currentData;
   const user = overview.currentData?.user;
   const onUpdated = () => {
@@ -178,8 +171,8 @@ function UserTeams({ uid }: { uid: string }) {
 }
 
 function UserRoles({ user, profile, onUpdated }: { user: User; profile?: OverviewProfile; onUpdated: () => void }) {
-  const orgUsers = useGetOverviewOrgUsersQuery(
-    contextSrv.hasPermission(AccessControlAction.OrgUsersRead) ? user.spec.login : skipToken
+  const orgUsers = useGetOrgUsersForCurrentOrgQuery(
+    contextSrv.hasPermission(AccessControlAction.OrgUsersRead) ? { query: user.spec.login } : skipToken
   );
   const orgUser = orgUsers.currentData?.find((member) => member.uid === user.metadata.name);
   const editableUser = orgUser
@@ -204,9 +197,7 @@ function UserRoles({ user, profile, onUpdated }: { user: User; profile?: Overvie
     .map((team) => Number(team.metadata.labels?.['grafana.app/deprecatedInternalID']))
     .filter((id) => id > 0);
   const roles = useListTeamsRolesQuery(
-    licensed && canReadTeamRoles && teamIds.length
-      ? { rolesSearchQuery: { teamIds } }
-      : skipToken
+    licensed && canReadTeamRoles && teamIds.length ? { rolesSearchQuery: { teamIds } } : skipToken
   );
   const basic: RoleAssignment = {
     id: 'basic',

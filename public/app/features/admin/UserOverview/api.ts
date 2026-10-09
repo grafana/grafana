@@ -1,5 +1,4 @@
 import { generatedAPI, type Team, type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
-import { type OrgRole } from '@grafana/data';
 import { getBackendSrv, isFetchError } from '@grafana/runtime';
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { legacyAPI } from 'app/api/clients/legacy';
@@ -7,107 +6,10 @@ import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { discoveryResources, getAPIGroupDiscoveryList } from 'app/features/apiserver/discovery';
 import { AccessControlAction } from 'app/types/accessControl';
-import { type SyncInfo } from 'app/types/ldap';
 import { type Team as LegacyTeam } from 'app/types/teams';
-import { type OrgUser, type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
+import { type UserDTO } from 'app/types/user';
 
 export type OverviewProfile = UserDTO & { createdAt?: string };
-
-const managementAPI = legacyAPI.injectEndpoints({
-  endpoints: (build) => ({
-    getOverviewProfile: build.query<OverviewProfile, string>({
-      query: (uid) => ({ url: `/users/${uid}`, params: { accesscontrol: true } }),
-      providesTags: ['users'],
-    }),
-    getOverviewOrgs: build.query<UserOrg[], string>({
-      query: (uid) => ({ url: `/users/${uid}/orgs` }),
-      providesTags: ['users'],
-    }),
-    getOverviewOrgUsers: build.query<OrgUser[], string>({
-      query: (login) => ({ url: '/org/users', params: { query: login, accesscontrol: true } }),
-      providesTags: ['org'],
-    }),
-    getOverviewSessions: build.query<UserSession[], string>({
-      query: (uid) => ({ url: `/admin/users/${uid}/auth-tokens` }),
-      transformResponse: (sessions: UserSession[]) => [...sessions].reverse(),
-    }),
-    getOverviewLdapStatus: build.query<SyncInfo, void>({
-      query: () => ({ url: '/admin/ldap-sync-status' }),
-    }),
-    updateOverviewProfile: build.mutation<void, { uid: string; profile: Pick<UserDTO, 'name' | 'email' | 'login'> }>({
-      query: ({ uid, profile }) => ({ url: `/users/${uid}`, method: 'PUT', body: profile }),
-    }),
-    updateOverviewPassword: build.mutation<void, { uid: string; password: string }>({
-      query: ({ uid, password }) => ({ url: `/admin/users/${uid}/password`, method: 'PUT', body: { password } }),
-    }),
-    updateOverviewAdmin: build.mutation<void, { uid: string; isGrafanaAdmin: boolean }>({
-      query: ({ uid, isGrafanaAdmin }) => ({
-        url: `/admin/users/${uid}/permissions`,
-        method: 'PUT',
-        body: { isGrafanaAdmin },
-      }),
-    }),
-    deleteOverviewUser: build.mutation<void, string>({
-      query: (uid) => ({ url: `/admin/users/${uid}`, method: 'DELETE' }),
-    }),
-    disableOverviewUser: build.mutation<void, string>({
-      query: (uid) => ({ url: `/admin/users/${uid}/disable`, method: 'POST' }),
-    }),
-    enableOverviewUser: build.mutation<void, string>({
-      query: (uid) => ({ url: `/admin/users/${uid}/enable`, method: 'POST' }),
-    }),
-    addOverviewOrgUser: build.mutation<void, { orgId: number; loginOrEmail: string; role: OrgRole }>({
-      query: ({ orgId, loginOrEmail, role }) => ({
-        url: `/orgs/${orgId}/users/`,
-        method: 'POST',
-        body: { loginOrEmail, role },
-      }),
-    }),
-    removeOverviewOrgUser: build.mutation<void, { orgId: number; uid: string }>({
-      query: ({ orgId, uid }) => ({ url: `/orgs/${orgId}/users/${uid}`, method: 'DELETE' }),
-    }),
-    updateOverviewOrgRole: build.mutation<void, { orgId: number; uid: string; role: OrgRole }>({
-      query: ({ orgId, uid, role }) => ({ url: `/orgs/${orgId}/users/${uid}`, method: 'PATCH', body: { role } }),
-    }),
-    updateOverviewBasicRole: build.mutation<void, { userId: number; role: OrgRole }>({
-      query: ({ userId, role }) => ({ url: `/org/users/${userId}`, method: 'PATCH', body: { role } }),
-    }),
-    revokeOverviewSession: build.mutation<void, { uid: string; authTokenId: number }>({
-      query: ({ uid, authTokenId }) => ({
-        url: `/admin/users/${uid}/revoke-auth-token`,
-        method: 'POST',
-        body: { authTokenId },
-      }),
-    }),
-    revokeOverviewSessions: build.mutation<void, string>({
-      query: (uid) => ({ url: `/admin/users/${uid}/logout`, method: 'POST' }),
-    }),
-    syncOverviewLdapUser: build.mutation<void, number>({
-      query: (userId) => ({ url: `/admin/ldap/sync/${userId}`, method: 'POST' }),
-    }),
-  }),
-});
-
-export const {
-  useGetOverviewProfileQuery,
-  useGetOverviewOrgsQuery,
-  useGetOverviewOrgUsersQuery,
-  useGetOverviewSessionsQuery,
-  useGetOverviewLdapStatusQuery,
-  useUpdateOverviewProfileMutation,
-  useUpdateOverviewPasswordMutation,
-  useUpdateOverviewAdminMutation,
-  useDeleteOverviewUserMutation,
-  useDisableOverviewUserMutation,
-  useEnableOverviewUserMutation,
-  useAddOverviewOrgUserMutation,
-  useRemoveOverviewOrgUserMutation,
-  useUpdateOverviewOrgRoleMutation,
-  useUpdateOverviewBasicRoleMutation,
-  useRevokeOverviewSessionMutation,
-  useRevokeOverviewSessionsMutation,
-  useSyncOverviewLdapUserMutation,
-} = managementAPI;
 
 export interface RoleAssignment {
   id: string;
@@ -175,17 +77,20 @@ const overviewAPI = generatedAPI.injectEndpoints({
           const profile = canReadProfile
             ? await api
                 .dispatch(
-                  managementAPI.endpoints.getOverviewProfile.initiate(uid, { subscribe: false, forceRefetch: true })
+                  legacyAPI.endpoints.getUserById.initiate({ userId: uid }, { subscribe: false, forceRefetch: true })
                 )
                 .unwrap()
             : undefined;
           const members = contextSrv.hasPermission(AccessControlAction.OrgUsersRead)
             ? await api
                 .dispatch(
-                  managementAPI.endpoints.getOverviewOrgUsers.initiate(profile?.login ?? '', {
-                    subscribe: false,
-                    forceRefetch: true,
-                  })
+                  legacyAPI.endpoints.getOrgUsersForCurrentOrg.initiate(
+                    { query: profile?.login ?? '' },
+                    {
+                      subscribe: false,
+                      forceRefetch: true,
+                    }
+                  )
                 )
                 .unwrap()
             : [];
@@ -197,7 +102,10 @@ const overviewAPI = generatedAPI.injectEndpoints({
             profile && !member
               ? await api
                   .dispatch(
-                    managementAPI.endpoints.getOverviewOrgs.initiate(uid, { subscribe: false, forceRefetch: true })
+                    legacyAPI.endpoints.getUserOrgList.initiate(
+                      { userId: uid },
+                      { subscribe: false, forceRefetch: true }
+                    )
                   )
                   .unwrap()
               : [];

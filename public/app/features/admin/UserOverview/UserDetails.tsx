@@ -5,16 +5,16 @@ import { type User } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { Button, Input, RadioButtonGroup, Stack } from '@grafana/ui';
+import {
+  useUpdateUserMutation,
+  useAdminUpdateUserPasswordMutation,
+  useAdminUpdateUserPermissionsMutation,
+} from 'app/api/clients/legacy';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AccountManagement, ActionError, useUserAction } from './UserManagement';
-import {
-  type OverviewProfile,
-  useUpdateOverviewProfileMutation,
-  useUpdateOverviewPasswordMutation,
-  useUpdateOverviewAdminMutation,
-} from './api';
+import { type OverviewProfile } from './api';
 
 type EditableField = 'name' | 'email' | 'login' | 'password' | 'isGrafanaAdmin';
 interface DetailField {
@@ -37,9 +37,9 @@ export function UserDetails({
 }) {
   const [editing, setEditing] = useState<EditableField | null>(null);
   const [value, setValue] = useState('');
-  const [updateProfile] = useUpdateOverviewProfileMutation();
-  const [updatePassword] = useUpdateOverviewPasswordMutation();
-  const [updateAdmin] = useUpdateOverviewAdminMutation();
+  const [updateProfile] = useUpdateUserMutation();
+  const [updatePassword] = useAdminUpdateUserPasswordMutation();
+  const [updateAdmin] = useAdminUpdateUserPermissionsMutation();
   const { run, failed, pending } = useUserAction(() => {
     setEditing(null);
     onUpdated();
@@ -126,12 +126,15 @@ export function UserDetails({
     const field = editing;
     run(() =>
       field === 'isGrafanaAdmin'
-        ? updateAdmin({ uid: profile.uid, isGrafanaAdmin: value === 'true' }).unwrap()
+        ? updateAdmin({
+            userId: profile.uid,
+            adminUpdateUserPermissionsForm: { isGrafanaAdmin: value === 'true' },
+          }).unwrap()
         : field === 'password'
-          ? updatePassword({ uid: profile.uid, password: value }).unwrap()
+          ? updatePassword({ userId: profile.uid, adminUpdateUserPasswordForm: { password: value } }).unwrap()
           : updateProfile({
-              uid: profile.uid,
-              profile: {
+              userId: profile.uid,
+              updateUserCommand: {
                 name: profile.name,
                 email: profile.email,
                 login: profile.login,

@@ -5,6 +5,21 @@ import { OrgRole } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, Button, Stack, Text } from '@grafana/ui';
+import {
+  useGetUserOrgListQuery,
+  useAdminGetUserAuthTokensQuery,
+  useGetSyncStatusQuery,
+  useAdminDeleteUserMutation,
+  useAdminDisableUserMutation,
+  useAdminEnableUserMutation,
+  useAddOrgUserMutation,
+  useRemoveOrgUserMutation,
+  useUpdateOrgUserMutation,
+  useUpdateOrgUserForCurrentOrgMutation,
+  useAdminRevokeUserAuthTokenMutation,
+  useAdminLogoutUserMutation,
+  usePostSyncUserWithLdapMutation,
+} from 'app/api/clients/legacy';
 import { useListRolesQuery } from 'app/api/clients/roles';
 import { UserRolePicker } from 'app/core/components/RolePicker/UserRolePicker';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -16,22 +31,6 @@ import { UserAccountActions } from '../UserAccountActions';
 import { UserLdapSyncInfo } from '../UserLdapSyncInfo';
 import { UserOrgs } from '../UserOrgs';
 import { UserSessions } from '../UserSessions';
-
-import {
-  useGetOverviewOrgsQuery,
-  useGetOverviewSessionsQuery,
-  useGetOverviewLdapStatusQuery,
-  useDeleteOverviewUserMutation,
-  useDisableOverviewUserMutation,
-  useEnableOverviewUserMutation,
-  useAddOverviewOrgUserMutation,
-  useRemoveOverviewOrgUserMutation,
-  useUpdateOverviewOrgRoleMutation,
-  useUpdateOverviewBasicRoleMutation,
-  useRevokeOverviewSessionMutation,
-  useRevokeOverviewSessionsMutation,
-  useSyncOverviewLdapUserMutation,
-} from './api';
 
 interface Props {
   user: UserDTO;
@@ -65,9 +64,9 @@ export function ActionError() {
 }
 
 export function AccountManagement({ user, onUpdated }: Props) {
-  const [deleteUser] = useDeleteOverviewUserMutation();
-  const [disableUser] = useDisableOverviewUserMutation();
-  const [enableUser] = useEnableOverviewUserMutation();
+  const [deleteUser] = useAdminDeleteUserMutation();
+  const [disableUser] = useAdminDisableUserMutation();
+  const [enableUser] = useAdminEnableUserMutation();
   const { run, failed } = useUserAction(onUpdated);
   return (
     <Stack direction="column" gap={3}>
@@ -76,22 +75,22 @@ export function AccountManagement({ user, onUpdated }: Props) {
         user={user}
         onUserDelete={() =>
           run(async () => {
-            await deleteUser(user.uid).unwrap();
+            await deleteUser({ userId: user.uid }).unwrap();
             locationService.push('/admin/users');
           }, false)
         }
-        onUserDisable={() => run(() => disableUser(user.uid).unwrap())}
-        onUserEnable={() => run(() => enableUser(user.uid).unwrap())}
+        onUserDisable={() => run(() => disableUser({ userId: user.uid }).unwrap())}
+        onUserEnable={() => run(() => enableUser({ userId: user.uid }).unwrap())}
       />
     </Stack>
   );
 }
 
 export function OrganizationsTab({ user, onUpdated }: Props) {
-  const [addOrgUser] = useAddOverviewOrgUserMutation();
-  const [removeOrgUser] = useRemoveOverviewOrgUserMutation();
-  const [updateOrgRole] = useUpdateOverviewOrgRoleMutation();
-  const { currentData: orgs, error, refetch } = useGetOverviewOrgsQuery(user.uid);
+  const [addOrgUser] = useAddOrgUserMutation();
+  const [removeOrgUser] = useRemoveOrgUserMutation();
+  const [updateOrgRole] = useUpdateOrgUserMutation();
+  const { currentData: orgs, error, refetch } = useGetUserOrgListQuery({ userId: user.uid });
   const { run, failed } = useUserAction(() => {
     refetch();
     onUpdated();
@@ -109,18 +108,22 @@ export function OrganizationsTab({ user, onUpdated }: Props) {
         user={user}
         orgs={orgs}
         isExternalUser={user.isExternallySynced || user.isProvisioned}
-        onOrgAdd={(orgId, role) => run(() => addOrgUser({ orgId, loginOrEmail: user.login, role }).unwrap())}
-        onOrgRemove={(orgId) => run(() => removeOrgUser({ orgId, uid: user.uid }).unwrap())}
-        onOrgRoleChange={(orgId, role) => run(() => updateOrgRole({ orgId, uid: user.uid, role }).unwrap())}
+        onOrgAdd={(orgId, role) =>
+          run(() => addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } }).unwrap())
+        }
+        onOrgRemove={(orgId) => run(() => removeOrgUser({ orgId, userId: user.uid }).unwrap())}
+        onOrgRoleChange={(orgId, role) =>
+          run(() => updateOrgRole({ orgId, userId: user.uid, updateOrgUserCommand: { role } }).unwrap())
+        }
       />
     </Stack>
   );
 }
 
 export function SessionsTab({ uid }: { uid: string }) {
-  const [revokeSession] = useRevokeOverviewSessionMutation();
-  const [revokeSessions] = useRevokeOverviewSessionsMutation();
-  const { currentData: sessions, error, refetch } = useGetOverviewSessionsQuery(uid);
+  const [revokeSession] = useAdminRevokeUserAuthTokenMutation();
+  const [revokeSessions] = useAdminLogoutUserMutation();
+  const { currentData: sessions, error, refetch } = useAdminGetUserAuthTokensQuery({ userId: uid });
   const { run, failed } = useUserAction(refetch);
   if (error) {
     return <Alert severity="warning" title={t('admin.user-overview.sessions-error', 'Unable to load sessions')} />;
@@ -133,16 +136,18 @@ export function SessionsTab({ uid }: { uid: string }) {
       {failed && <ActionError />}
       <UserSessions
         sessions={sessions}
-        onSessionRevoke={(authTokenId) => run(() => revokeSession({ uid, authTokenId }).unwrap())}
-        onAllSessionsRevoke={() => run(() => revokeSessions(uid).unwrap())}
+        onSessionRevoke={(authTokenId) =>
+          run(() => revokeSession({ userId: uid, revokeAuthTokenCmd: { authTokenId } }).unwrap())
+        }
+        onAllSessionsRevoke={() => run(() => revokeSessions({ userId: uid }).unwrap())}
       />
     </Stack>
   );
 }
 
 export function AuthenticationTab({ user, onUpdated }: Props) {
-  const [syncUser] = useSyncOverviewLdapUserMutation();
-  const { currentData: status, error, refetch } = useGetOverviewLdapStatusQuery();
+  const [syncUser] = usePostSyncUserWithLdapMutation();
+  const { currentData: status, error, refetch } = useGetSyncStatusQuery();
   const { run, failed } = useUserAction(() => {
     refetch();
     onUpdated();
@@ -161,7 +166,11 @@ export function AuthenticationTab({ user, onUpdated }: Props) {
   return (
     <Stack direction="column" gap={2}>
       {failed && <ActionError />}
-      <UserLdapSyncInfo user={user} ldapSyncInfo={status} onUserSync={() => run(() => syncUser(user.id).unwrap())} />
+      <UserLdapSyncInfo
+        user={user}
+        ldapSyncInfo={status}
+        onUserSync={() => run(() => syncUser({ userId: user.id }).unwrap())}
+      />
     </Stack>
   );
 }
@@ -180,7 +189,7 @@ export function UserRolesEditor({
   onUpdated: () => void;
 }) {
   const [editing, setEditing] = useState(false);
-  const [updateBasicRole] = useUpdateOverviewBasicRoleMutation();
+  const [updateBasicRole] = useUpdateOrgUserForCurrentOrgMutation();
   const { run, failed, pending } = useUserAction(onUpdated);
   const licensed = contextSrv.licensedAccessControlEnabled();
   const canEditBasic =
@@ -197,7 +206,8 @@ export function UserRolesEditor({
   if ((!canEditBasic && !canEditDirect) || !isBasicRole(basicRole)) {
     return null;
   }
-  const updateBasic = (role: OrgRole) => run(() => updateBasicRole({ userId: user.id, role }).unwrap());
+  const updateBasic = (role: OrgRole) =>
+    run(() => updateBasicRole({ userId: user.id, updateOrgUserCommand: { role } }).unwrap());
   return (
     <Stack direction="column" gap={2}>
       {failed && <ActionError />}
