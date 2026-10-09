@@ -316,7 +316,8 @@ func (s *server) consumeSearchRows(
 			Value:           val.Value,
 			ResourceVersion: val.ResourceVersion,
 		})
-		if (req.Limit > 0 && len(rsp.Items) >= int(req.Limit)) || pageBytes >= s.maxPageSizeBytes {
+		if reason := s.listLimitStopReason(req, rsp, pageBytes); reason != "" {
+			setListStopReason(ctx, reason)
 			token, err := NewSearchContinueToken(row.sortFields, listRV)
 			if err != nil {
 				return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}
