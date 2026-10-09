@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -59,6 +60,7 @@ func testIntegrationTeams(t *testing.T) {
 
 			if mode < rest.Mode3 {
 				doTeamCRUDTestsUsingTheLegacyAPIs(t, helper, mode)
+				doTeamScopedPermissionTests(t, helper)
 			}
 			if mode < rest.Mode4 {
 				doTeamDeleteCascadesLegacyMembersTest(t, helper)
@@ -1027,4 +1029,151 @@ func doTeamSpecExternalGroupsOSSTests(t *testing.T, helper *apis.K8sTestHelper) 
 		require.Equal(t, int32(400), se.ErrStatus.Code)
 		require.Contains(t, se.ErrStatus.Message, "duplicate")
 	})
+}
+
+func doTeamScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
+	const updatedName = "Updated scoped resource"
+
+	t.Run("legacy API permissions are scoped to the target", func(t *testing.T) {
+		cases := teamPermissionCases()
+
+		for i, tc := range cases {
+			t.Run(tc.name, func(t *testing.T) {
+				targetID, otherID := createScopedTeamTargets(t, helper, i)
+				grantedID := targetID
+				if tc.wrongTarget {
+					grantedID = otherID
+				}
+
+				grants := []resourcepermissions.SetResourcePermissionCommand{
+					{
+						Actions:           tc.actions,
+						Resource:          "teams",
+						ResourceAttribute: "id",
+						ResourceID:        grantedID,
+					},
+				}
+				caller := helper.CreateUser(fmt.Sprintf("team-scope-%d", i), apis.Org1, org.RoleNone, grants)
+
+				path := fmt.Sprintf("/api/teams/%s", targetID)
+				before := readScopedTeamAsAdmin(t, helper, path)
+
+				get := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: path}, &struct{}{})
+				expected := http.StatusForbidden
+				if tc.read {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, get.Response.StatusCode, string(get.Body))
+
+				body, err := json.Marshal(map[string]interface{}{"name": updatedName, "email": ""})
+				require.NoError(t, err)
+				update := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodPut,
+					Path:   path,
+					Body:   body,
+				}, &struct{}{})
+				expected = http.StatusForbidden
+				if tc.write {
+					expected = http.StatusOK
+				}
+				require.Equal(t, expected, update.Response.StatusCode, string(update.Body))
+
+				after := readScopedTeamAsAdmin(t, helper, path)
+				if tc.write {
+					require.Equal(t, updatedName, after["name"])
+				} else {
+					require.Equal(t, before, after)
+				}
+
+				deleted := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodDelete,
+					Path:   path,
+				}, &struct{}{})
+				require.Equal(t, http.StatusForbidden, deleted.Response.StatusCode, string(deleted.Body))
+
+				stillExists := readScopedTeamAsAdmin(t, helper, path)
+				require.Equal(t, after, stillExists)
+			})
+		}
+	})
+}
+
+type teamPermissionCase struct {
+	name        string
+	actions     []string
+	read        bool
+	write       bool
+	wrongTarget bool
+}
+
+func teamPermissionCases() []teamPermissionCase {
+	return []teamPermissionCase{
+		{name: "no permissions"},
+		{
+			name:    "read only",
+			actions: []string{accesscontrol.ActionTeamsRead},
+			read:    true,
+		},
+		{
+			name:    "write only",
+			actions: []string{accesscontrol.ActionTeamsWrite},
+			write:   true,
+		},
+		{
+			name:    "read and write",
+			actions: []string{accesscontrol.ActionTeamsRead, accesscontrol.ActionTeamsWrite},
+			read:    true,
+			write:   true,
+		},
+		{name: "permission management only", actions: []string{accesscontrol.ActionTeamsPermissionsWrite}},
+		{
+			name: "different target",
+			actions: []string{
+				accesscontrol.ActionTeamsRead,
+				accesscontrol.ActionTeamsWrite,
+				accesscontrol.ActionTeamsPermissionsWrite,
+			},
+			wrongTarget: true,
+		},
+	}
+}
+
+func readScopedTeamAsAdmin(t *testing.T, helper *apis.K8sTestHelper, path string) map[string]interface{} {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.Admin,
+		Path: path,
+	}, &map[string]interface{}{})
+	require.Equal(t, http.StatusOK, response.Response.StatusCode, string(response.Body))
+
+	return *response.Result
+}
+
+func createScopedTeamTargets(t *testing.T, helper *apis.K8sTestHelper, index int) (string, string) {
+	t.Helper()
+
+	ctx := context.Background()
+	admin := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvrTeams,
+	})
+	suffixes := []string{"target", "other"}
+	ids := make([]string, 0, len(suffixes))
+	for _, suffix := range suffixes {
+		name := fmt.Sprintf("scope-%d-%s", index, suffix)
+		title := fmt.Sprintf("Scope %d %s", index, suffix)
+		created := createNamedTeam(t, ctx, helper, admin, name, title, "")
+		t.Cleanup(func() {
+			require.NoError(t, admin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+		})
+
+		id := created.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, id)
+		ids = append(ids, id)
+	}
+
+	return ids[0], ids[1]
 }
