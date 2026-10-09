@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "重設"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "輔助記錄",
+      "description-auxiliary-logs": "啟用此功能後，若儀表板面板查詢設為 <2>輔助記錄</2> 的資料表，Azure Monitor 將按每次查詢收取費用。輔助記錄沒有回應時間服務等級協定 SLA，僅適用於臨時查詢和資料探索，不應用於需要即時資料的儀表板或警示。",
+      "label-enable-auxiliary-logs": "啟用輔助記錄"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "「{{queryDisplayName}}」原始查詢",
@@ -187,47 +187,47 @@
       "tooltip-limit": "限制傳回的列數（預設為 1000）。"
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "確定要切換至輔助記錄嗎？",
       "body-basic-logs-queries": "確定要切換至基本記錄嗎？",
       "confirmText-confirm": "確認",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "輔助記錄查詢會根據掃描的資料量產生費用。輔助記錄沒有回應時間 SLA，不應用於需要即時資料的儀表板或警示。",
       "description-basic-logs-queries": "基本記錄查詢會根據掃描的資料量產生費用。",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "分析",
+      "label-auxiliary": "輔助",
+      "label-basic": "基本",
       "label-logs": "紀錄",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "輔助記錄查詢",
       "title-basic-logs-queries": "基本記錄查詢",
       "tooltip-logs": "指定是否執行基本或分析記錄查詢。",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "指定是否執行分析、基本或輔助記錄查詢。",
+      "tooltip-logs-aux": "指定是否執行分析或輔助記錄查詢。"
     },
     "logs-query-builder": {
       "title-no-tables": "已成功載入資源，但沒有任何表格"
     },
     "logs-query-editor": {
       "learn-more": "了解更多",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "使用輔助記錄時，您一次只能選擇一個資源。",
+      "notice-basic-single-resource": "使用基本記錄時，您一次只能選擇一個資源。",
+      "notice-same-resource-type": "您只能選擇相同資源類型的項目。",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0>是「分析」資料表。",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0>是輔助記錄資料表 — 每掃描 1 GiB 會產生費用，沒有回應時間 SLA，不適合用於即時或警示情境。",
+      "tier-switch-body-basic": "<0>{{tableName}}</0>是基本記錄資料表 — 每掃描 1 GiB 會產生費用。",
+      "tier-switch-revert": "還原至 {{fromTier}}",
+      "tier-switch-title": "查詢層級設定為 {{toTier}}",
       "view-query": "在 Azure Portal 中檢視查詢",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "此輔助記錄查詢在執行時正在處理 {{dataIngested}} GiB。 輔助記錄沒有回應時間 SLA，不適合用於即時或警示情境。 ",
+      "warning-auxiliary-raw": "這是輔助記錄查詢 — 使用搜尋端點，每掃描 1 GiB 會產生費用，沒有回應時間 SLA，不適合用於即時或警示情境。在此模式下無法查詢分析方案表（請對其使用分析層級）。 ",
+      "warning-basic-raw": "這是基本記錄查詢 — 使用搜尋端點，且每掃描 1 GiB 會產生費用。 在此模式下無法查詢分析方案表（請對其使用分析層級）。 ",
+      "warning-data-ingested": "此查詢執行時會處理 {{dataIngested}} GiB 的資料。"
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "此資料表位於輔助記錄方案中。請在資料來源設定中啟用「輔助記錄」，以便進行查詢。",
+      "description-auxiliary-enabled": "選取此資料表後，查詢模式將切換為「輔助記錄」。",
+      "description-basic-disabled": "此資料表採用「基本記錄」方案。在資料來源設定中啟用「基本記錄」以進行查詢。",
+      "description-basic-enabled": "選取此資料表後，查詢模式將切換為「基本記錄」",
+      "description-plan-unavailable": "無法選取此資料表，因為無法判定其記錄方案。",
+      "label-all-columns": "所有欄"
     },
     "metric-name-field": {
       "label-metric": "指標"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "選取自訂命名空間",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "選取維度名稱",
+      "aria-label-select-metric-name": "選擇指標名稱",
       "aria-label-select-namespace": "選擇命名空間",
       "aria-label-select-query-type": "選取查詢類型",
       "aria-label-select-region": "選取地區",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "選取資源群組",
       "aria-label-select-subscription": "選取訂閱",
       "label-custom-namespace": "自訂命名空間",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "維度名稱",
+      "label-metric-name": "指標名稱",
       "label-namespace": "命名空間",
       "label-query-type": "查詢類型",
       "label-region": "地區",

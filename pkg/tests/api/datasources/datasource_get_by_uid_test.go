@@ -37,6 +37,18 @@ type testMode struct {
 	featureToggles []string
 }
 
+func TestIntegrationDataSourceGetByUID(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDataSourceGetByUID)
+}
+
+func TestIntegrationDataSourcePutByUID(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDataSourcePutByUID)
+}
+
+func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationDataSourceDeleteByUID)
+}
+
 // getTestModes returns the test configurations to run tests against
 func getTestModes() []testMode {
 	return []testMode{
@@ -52,7 +64,7 @@ func getTestModes() []testMode {
 
 // TestIntegrationDataSourceGetByUID tests the GET /api/datasources/uid/:uid endpoint
 // with both legacy and K8s-reroute feature flag modes.
-func TestIntegrationDataSourceGetByUID(t *testing.T) {
+func testIntegrationDataSourceGetByUID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	for _, mode := range getTestModes() {
@@ -309,7 +321,7 @@ func runGetTests(t *testing.T, ctx context.Context, grafanaListeningAddr string,
 // TestIntegrationDataSourcePutByUID tests the PUT /api/datasources/uid/:uid endpoint.
 //
 // k8s-reroute PUT handler is not implemented yet! This only tests the legacy mode.
-func TestIntegrationDataSourcePutByUID(t *testing.T) {
+func testIntegrationDataSourcePutByUID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
@@ -706,7 +718,7 @@ func TestIntegrationDataSourcePutByUID(t *testing.T) {
 // TestIntegrationDataSourceDeleteByUID tests the DELETE /api/datasources/uid/:uid endpoint.
 //
 // k8s-reroute DELETE handler is not implemented yet! This only tests the legacy mode.
-func TestIntegrationDataSourceDeleteByUID(t *testing.T) {
+func testIntegrationDataSourceDeleteByUID(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{

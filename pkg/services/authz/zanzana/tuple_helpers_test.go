@@ -306,7 +306,7 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 	t.Run("should reconcile role-management permissions", func(t *testing.T) {
 		// A typical "Grafana Admin" set of role-management permissions: read all roles,
 		// write any role (delegated), and delete any role (delegated). The reconciler
-		// must emit one group_resource tuple per IAM resource so the bound principal
+		// must emit granular group_resource permission tuples so the bound principal
 		// can act on the iam.grafana.app/{roles,globalroles} APIs.
 		permissions := []RolePermission{
 			{Action: "roles:read", Kind: "roles", Identifier: "*"},
@@ -320,7 +320,8 @@ func TestConvertRolePermissionsToTuples(t *testing.T) {
 		require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
 			{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/roles"},
 			{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/globalroles"},
-			{User: "role:role-admin#assignee", Relation: "edit", Object: "group_resource:iam.grafana.app/roles"},
+			{User: "role:role-admin#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/roles"},
+			{User: "role:role-admin#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/roles"},
 			{User: "role:role-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/roles"},
 		}), tupleKeyStrings(tuples))
 	})

@@ -178,28 +178,28 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 				continue
 			}
 
-			tuple, ok := zanzana.TranslateToResourceTuple(subject, p.Action, p.Kind, p.Identifier)
+			translated, ok := zanzana.TranslateToResourceTuples(subject, p.Action, p.Kind, p.Identifier)
 			if !ok {
 				continue
 			}
 
-			if tuples[tuple.Object] == nil {
-				tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
-			}
-
-			// For resource actions on folders we need to merge the tuples into one with combined subresources.
-			if zanzana.IsFolderResourceTuple(tuple) {
-				key := zanzana.TupleStringWithoutCondition(tuple)
-				if t, ok := tuples[tuple.Object][key]; ok {
-					zanzana.MergeFolderResourceTuples(t, tuple)
-				} else {
-					tuples[tuple.Object][key] = tuple
+			for _, tuple := range translated {
+				if tuples[tuple.Object] == nil {
+					tuples[tuple.Object] = make(map[string]*openfgav1.TupleKey)
 				}
 
-				continue
+				// For resource actions on folders merge the tuples' subresource filters.
+				if zanzana.IsFolderResourceTuple(tuple) {
+					key := zanzana.TupleStringWithoutCondition(tuple)
+					if t, ok := tuples[tuple.Object][key]; ok {
+						zanzana.MergeFolderResourceTuples(t, tuple)
+					} else {
+						tuples[tuple.Object][key] = tuple
+					}
+					continue
+				}
+				tuples[tuple.Object][tuple.String()] = tuple
 			}
-
-			tuples[tuple.Object][tuple.String()] = tuple
 		}
 
 		return tuples, nil
