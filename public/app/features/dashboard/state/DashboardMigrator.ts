@@ -42,15 +42,15 @@ import {
 } from 'app/features/transformers/timeSeriesTable/timeSeriesTableTransformer';
 import { isConstant, isMulti } from 'app/features/variables/guard';
 import { alignCurrentWithMulti } from 'app/features/variables/shared/multiOptions';
-import { type CloudWatchMetricsQuery } from 'app/plugins/datasource/cloudwatch/dataquery.gen';
-import { type LegacyAnnotationQuery } from 'app/plugins/datasource/cloudwatch/types';
+import { type CloudWatchMetricsQuery } from 'app/features/cloudwatch-helpers/dataquery';
+import { type LegacyAnnotationQuery } from 'app/features/cloudwatch-helpers/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
 import {
   migrateCloudWatchQuery,
   migrateMultipleStatsAnnotationQuery,
   migrateMultipleStatsMetricsQuery,
-} from '../../../plugins/datasource/cloudwatch/migrations/dashboardMigrations';
+} from '../../cloudwatch-helpers/dashboardMigrations';
 
 import { type DashboardModel } from './DashboardModel';
 import { PanelModel } from './PanelModel';
