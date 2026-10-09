@@ -12,6 +12,7 @@ import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
 import { AddToNotebookFormExposedComponent } from 'app/features/notebook/extensions/AddToNotebookFormExposedComponent';
 import { ManagedBadgeExposedComponent } from 'app/features/provisioning/components/ManagedBadgeExposedComponent';
 import { ProvisionedResourceDrawerExposedComponent } from 'app/features/provisioning/components/Shared/ProvisionedResourceDrawerExposedComponent';
+import { PullRequestBannerExposedComponent } from 'app/features/provisioning/components/Shared/PullRequestBannerExposedComponent';
 import { addResourceKinds } from 'app/features/provisioning/utils/resourceKinds';
 
 import { getCoreExtensionConfigurations } from '../getCoreExtensionConfigurations';
@@ -120,6 +121,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Managed badge',
         description: 'Shows which system manages a resource',
         component: ManagedBadgeExposedComponent,
+      },
+      {
+        id: provisioning.PullRequestBannerComponent,
+        title: 'Pull request banner',
+        description: 'Shown after a commit to a branch, with a link to open the pull request',
+        component: PullRequestBannerExposedComponent,
       },
     ],
   });

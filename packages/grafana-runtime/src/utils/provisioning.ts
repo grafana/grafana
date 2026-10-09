@@ -102,8 +102,32 @@ export interface SaveResourceDrawerProps {
   onDismiss?: () => void;
   /** The resource is stored in Grafana (commit to the configured branch). */
   onWriteSuccess?: (resource: unknown) => void;
-  /** The resource is committed to a branch and not stored in Grafana yet. */
-  onBranchSuccess?: (data: { ref: string; pullRequestUrl?: string; repositoryUrl?: string }) => void;
+  /** The resource is committed to a branch and not stored in Grafana yet. Pass the data to the PR banner. */
+  onBranchSuccess?: (data: BranchCommit) => void;
+}
+
+/** A commit to a branch other than the configured one. */
+export interface BranchCommit {
+  /** The branch the commit went to. */
+  ref: string;
+  /** URL to open a pull request for the branch. Absent for a plain git repository. */
+  pullRequestUrl?: string;
+  repositoryUrl?: string;
+  /** `github`, `gitlab`, `bitbucket`, or `git`. */
+  repoType?: string;
+  /** The repository's configured branch, which the pull request targets. */
+  configuredBranch?: string;
+}
+
+/**
+ * Exposed component: the banner that dashboards show after a commit to a branch, with a link to open
+ * the pull request. Use it with `usePluginComponent(PullRequestBannerComponent)`.
+ */
+export const PullRequestBannerComponent = 'grafana/provisioning/pull-request-banner/v1';
+
+export interface PullRequestBannerProps extends BranchCommit {
+  /** What the commit did. Defaults to `create`. */
+  action?: 'create' | 'update' | 'delete';
 }
 
 /**

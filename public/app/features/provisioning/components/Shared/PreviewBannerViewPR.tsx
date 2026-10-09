@@ -30,6 +30,8 @@ interface Props {
   action?: ResourceObjects['action'];
   /* URL of the version currently saved in Grafana, if the resource already exists. Offered as an action next to the pull request button. */
   originalUrl?: string;
+  /** Repository type. Defaults to the `repo_type` URL param. */
+  repoType?: string;
 }
 
 export type PreviewBranchInfo = {
@@ -46,9 +48,19 @@ const commonAlertProps = {
 /**
  * @description This component is used to display a banner when a provisioned dashboard/folder is created, deleted, or loaded from a new branch in repo.
  */
-export function PreviewBannerViewPR({ prURL, isNewPr, behindBranch, repoUrl, branchInfo, action, originalUrl }: Props) {
+export function PreviewBannerViewPR({
+  prURL,
+  isNewPr,
+  behindBranch,
+  repoUrl,
+  branchInfo,
+  action,
+  originalUrl,
+  repoType: repoTypeProp,
+}: Props) {
   const styles = useStyles2(getStyles);
-  const { repoType, action: paramAction, prTitle } = usePullRequestParam();
+  const { repoType: paramRepoType, action: paramAction, prTitle } = usePullRequestParam();
+  const repoType = isValidRepoType(repoTypeProp) ? repoTypeProp : paramRepoType;
 
   const capitalizedRepoType = isValidRepoType(repoType) ? RepoTypeDisplay[repoType] : 'repository';
   // Prefill the provider's "open pull request" form title from pullRequest.titleTemplate; only the

@@ -44,11 +44,19 @@ export function ProvisionedResourceDrawerExposedComponent({
     title,
     onDismiss,
     onWriteSuccess: onWriteSuccess ?? onDismiss,
-    onBranchSuccess: (data: { ref: string; urls?: Record<string, string>; repoUrl?: string }) =>
+    onBranchSuccess: (data: {
+      ref: string;
+      urls?: Record<string, string>;
+      repoUrl?: string;
+      repoType?: string;
+      configuredBranch?: string;
+    }) =>
       (onBranchSuccess ?? onDismiss)?.({
         ref: data.ref,
         pullRequestUrl: data.urls?.newPullRequestURL,
         repositoryUrl: data.urls?.repositoryURL ?? data.repoUrl,
+        repoType: data.repoType,
+        configuredBranch: data.configuredBranch,
       }),
   };
 
