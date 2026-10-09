@@ -35,19 +35,23 @@ Basic.args = {
 };
 
 export const Examples: StoryFn<typeof ColorCard> = () => {
+  const variants = ['card', 'info'];
+
   return (
     <Stack direction="column">
       <StoryExample name="With buttonContent and children">
-        <ColorCard size="sm" variant="error">
-          <ColorCard.Icon name="exclamation-circle" />
-          <ColorCard.Title>My title</ColorCard.Title>
-          <ColorCard.Content>Some long content</ColorCard.Content>
-          <ColorCard.Actions>
-            <Button variant="secondary" onClick={action('Remove button clicked')}>
-              Close
-            </Button>
-          </ColorCard.Actions>
-        </ColorCard>
+        {variants.map((variant) => (
+          <ColorCard size="sm" key={variant} variant={variant}>
+            <ColorCard.Icon name="exclamation-circle" />
+            <ColorCard.Title>My title</ColorCard.Title>
+            <ColorCard.Content>Some long content</ColorCard.Content>
+            <ColorCard.Actions>
+              <Button variant="secondary" onClick={action('Remove button clicked')}>
+                Close
+              </Button>
+            </ColorCard.Actions>
+          </ColorCard>
+        ))}
       </StoryExample>
     </Stack>
   );

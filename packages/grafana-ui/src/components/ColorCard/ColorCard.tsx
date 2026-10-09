@@ -9,7 +9,7 @@ import { useStyles2 } from '../../themes/ThemeContext';
 import { type IconName, type IconSize } from '../../types/icon';
 import { Icon } from '../Icon/Icon';
 
-export type ColorCardVariant = 'success' | 'warning' | 'error' | 'info' | 'tertiary' | 'accent';
+export type ColorCardVariant = 'success' | 'warning' | 'error' | 'info' | 'tertiary' | 'accent' | 'card';
 export type ColorCardSize = 'sm' | 'md' | 'lg';
 
 export interface Props extends HTMLAttributes<HTMLDivElement> {
@@ -159,8 +159,24 @@ function getSpacing(size: ColorCardSize): {
 }
 
 const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorCardSize, elevated?: boolean) => {
-  const color = theme.colors[variant];
   const sizing = getSpacing(size);
+
+  const colors = (function getColors() {
+    switch (variant) {
+      case 'info':
+        return {
+          bg: theme.colors.info.subtleBackground,
+          text: theme.colors.info.textEmphasis,
+          border: `1px solid ${theme.colors.info.subtleBorder}`,
+        };
+      case 'card':
+      default:
+        return {
+          bg: theme.colors.background.primary,
+          border: `1px solid ${theme.colors.border.weak}`,
+        };
+    }
+  })();
 
   return {
     wrapper: css({
@@ -192,12 +208,12 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
       borderRadius: theme.shape.radius.lg,
       boxShadow: elevated ? theme.shadows.z3 : undefined,
       padding: theme.spacing(sizing.padding),
-      background: `color-mix(in oklab, ${theme.components.card.background} 60%, ${color.background})`,
-      border: `1px solid color-mix(in oklab, ${theme.colors.background.page} 55%, ${color.border})`,
+      background: colors.bg,
+      border: colors.border,
     }),
     icon: css({
       gridArea: 'Icon',
-      color: color.text,
+      color: colors.text,
       backgroundColor: `color-mix(in oklab, ${theme.components.card.background} 40%, ${color.backgroundEmphasis})`,
       position: 'relative',
       width: theme.spacing(sizing.iconWidth),
@@ -212,7 +228,7 @@ const getStyles = (theme: GrafanaTheme2, variant: ColorCardVariant, size: ColorC
       gridArea: 'Title',
       alignSelf: 'center',
       ...theme.typography[sizing.titleVariant],
-      color: color.text,
+      color: colors.text,
       fontWeight: theme.typography.fontWeightMedium,
       margin: 0,
     }),
