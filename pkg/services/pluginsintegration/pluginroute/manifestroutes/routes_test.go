@@ -326,3 +326,68 @@ func TestParseAuthz(t *testing.T) {
 		"POST /report":   "x-grafana-declared-authz-resource must be a non-empty string",
 	}, reasons(problems))
 }
+
+// Each declared authz extension must be a non-empty string; the subresource
+// and verb are checked as the resource is.
+func TestParseAuthzExtensionTypes(t *testing.T) {
+	op := func(ext map[string]any) spec3.PathProps {
+		o := &spec3.Operation{}
+		for k, v := range ext {
+			o.AddExtension(k, v)
+		}
+		return spec3.PathProps{Get: o}
+	}
+	_, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/a": op(map[string]any{ExtensionAuthzResource: "reports", ExtensionAuthzSubresource: 7}),
+		"/b": op(map[string]any{ExtensionAuthzResource: "reports", ExtensionAuthzVerb: ""}),
+	}), Options{})
+	require.Equal(t, map[string]string{
+		"GET /a": "x-grafana-declared-authz-subresource must be a non-empty string",
+		"/a":     "no operation is served",
+		"GET /b": "x-grafana-declared-authz-verb must be a non-empty string",
+		"/b":     "no operation is served",
+	}, reasons(problems))
+}
+
+func TestParseKindRouteNeedsASubresource(t *testing.T) {
+	_, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/namespaces/{namespace}/things/{name}/": get(),
+	}), Options{})
+	require.Equal(t, map[string]string{
+		"/namespaces/{namespace}/things/{name}/": "a kind route needs a subresource below things/{name}/",
+	}, reasons(problems))
+}
+
+// The operations of one path share it, so they must agree on which parameter
+// catches the rest of it.
+func TestParseCatchAllExtensionsMustAgree(t *testing.T) {
+	marked := func(name string) *spec3.Operation {
+		o := &spec3.Operation{}
+		o.AddExtension(CatchAllExtension, name)
+		return o
+	}
+	_, problems := Parse(testVersion(map[string]spec3.PathProps{
+		"/files/{path}": {Get: marked("path"), Put: marked("other")},
+	}), Options{})
+	require.Equal(t, map[string]string{
+		"/files/{path}": "operations disagree on x-grafana-catch-all: path and other",
+	}, reasons(problems))
+}
+
+func TestProblemError(t *testing.T) {
+	require.Equal(t, "/a: why", Problem{Path: "/a", Reason: "why"}.Error())
+	require.Equal(t, "GET /a: why", Problem{Path: "/a", Method: "GET", Reason: "why"}.Error())
+	require.Equal(t, "v1 GET /a: why", Problem{Version: "v1", Path: "/a", Method: "GET", Reason: "why"}.Error())
+}
+
+// Any method can be one the server does not serve, and the declared name is
+// matched without regard to case.
+func TestParseUnservedMethodsAnyMethod(t *testing.T) {
+	op := &spec3.Operation{}
+	all := spec3.PathProps{Get: op, Head: op, Post: op, Put: op, Patch: op, Delete: op, Options: op, Trace: op}
+	routes, problems := Parse(testVersion(map[string]spec3.PathProps{"/all": all}), Options{
+		UnservedMethods: []string{"get", "HEAD", "Post", "put", "patch", "delete", "options", "trace", "CONNECT"},
+	})
+	require.Empty(t, routes)
+	require.Len(t, problems, 9, "each removed method, and the path left with none")
+}

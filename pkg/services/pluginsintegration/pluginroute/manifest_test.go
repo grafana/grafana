@@ -14,7 +14,7 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 )
 
-func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
+func testVersionSchema(t testing.TB, raw string) *app.VersionSchema {
 	t.Helper()
 
 	var schema app.VersionSchema
@@ -22,7 +22,7 @@ func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
 	return &schema
 }
 
-func testManifest(t *testing.T) *app.ManifestData {
+func testManifest(t testing.TB) *app.ManifestData {
 	t.Helper()
 
 	operation := func(id string) *spec3.Operation {

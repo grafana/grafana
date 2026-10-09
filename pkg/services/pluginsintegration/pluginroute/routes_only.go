@@ -110,27 +110,31 @@ func (b *manifestBuilder) versionDocuments(versions []schema.GroupVersion) (func
 	if len(versions) == 0 {
 		return func(next http.Handler) http.Handler { return next }, nil
 	}
-	documents := http.NewServeMux()
+	// Looked up by exact path, since this runs ahead of the API server on every
+	// request, and a ServeMux lookup costs far more.
+	documents := map[string]http.Handler{}
 	group := APIGroup(b.manifest)
 	group.TypeMeta = metav1.TypeMeta{Kind: "APIGroup", APIVersion: "v1"}
-	documents.Handle("GET /apis/"+b.group, jsonDocument(group))
+	documents["/apis/"+b.group] = jsonDocument(group)
 	for _, gv := range versions {
-		documents.Handle("GET /apis/"+gv.String(), jsonDocument(metav1.APIResourceList{
+		documents["/apis/"+gv.String()] = jsonDocument(metav1.APIResourceList{
 			TypeMeta:     metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"},
 			GroupVersion: gv.String(),
 			APIResources: []metav1.APIResource{},
-		}))
+		})
 		oas, err := b.routesOnlyOpenAPI(gv)
 		if err != nil {
 			return nil, fmt.Errorf("%s: openapi: %w", gv, err)
 		}
-		documents.Handle("GET /openapi/v3/apis/"+gv.String(), jsonDocument(oas))
+		documents["/openapi/v3/apis/"+gv.String()] = jsonDocument(oas)
 	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if _, pattern := documents.Handler(r); pattern != "" {
-				documents.ServeHTTP(w, r)
-				return
+			if r.Method == http.MethodGet || r.Method == http.MethodHead {
+				if document, ok := documents[r.URL.Path]; ok {
+					document.ServeHTTP(w, r)
+					return
+				}
 			}
 			next.ServeHTTP(w, r)
 		})

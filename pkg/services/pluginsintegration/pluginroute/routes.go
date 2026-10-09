@@ -29,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
 	"github.com/grafana/grafana/pkg/util/errhttp"
-	"github.com/grafana/grafana/pkg/util/proxyutil"
 )
 
 const (
@@ -122,6 +121,7 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 	}
 	metrics := builder.NewCustomRouteMetrics(reg)
 	mux := http.NewServeMux()
+	index := newRouteIndex(b.group)
 	mounted := 0
 	for _, version := range b.manifest.Versions {
 		if !version.Served {
@@ -141,19 +141,17 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 				mux.Handle(method+" "+root+route.Pattern, handler)
 				mounted++
 			}
+			index.add(version.Name, route)
 		}
 	}
 	if mounted == 0 {
 		return next
 	}
 
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Not mux.Handle("/", next): the mux would also clean and redirect paths
-		// meant for the apiserver.
-		if _, pattern := mux.Handler(r); pattern != "" {
-			mux.ServeHTTP(w, r)
-			return
-		}
+	// Reached for a candidate that no route matches. Only candidates go through
+	// the mux, so its cleaning and redirecting of paths never touches the API
+	// server's requests.
+	mux.Handle(fallbackPattern, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// The path is the plugin's, since paths the apiserver serves are never
 		// mounted, so an undeclared method is refused here rather than passed on
 		// to answer 404.
@@ -162,8 +160,20 @@ func (b *manifestBuilder) routeMux(next http.Handler, reg prometheus.Registerer)
 			return
 		}
 		next.ServeHTTP(w, r)
+	}))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !index.candidate(r.URL.Path) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		mux.ServeHTTP(w, r)
 	})
 }
+
+// fallbackPattern is registered on the route mux for a candidate path that no
+// route matches.
+const fallbackPattern = "/"
 
 // servedMethods are the methods a manifest route can be mounted for. HEAD is
 // matched by a GET pattern too.
@@ -173,8 +183,9 @@ var servedMethods = []string{
 }
 
 // allowedMethods returns the methods mux serves for r's path, the same lookup
-// ServeMux makes for its own 405s. Registering a method-less pattern per path
-// instead would conflict with another route's wildcard.
+// ServeMux makes for its own 405s, leaving out the fallback. Registering a
+// method-less pattern per path instead would conflict with another route's
+// wildcard.
 func allowedMethods(mux *http.ServeMux, r *http.Request) []string {
 	var allowed []string
 	// A shallow copy is enough to look up a route, and this runs for every
@@ -182,7 +193,7 @@ func allowedMethods(mux *http.ServeMux, r *http.Request) []string {
 	probe := *r
 	for _, method := range servedMethods {
 		probe.Method = method
-		if _, pattern := mux.Handler(&probe); pattern != "" {
+		if _, pattern := mux.Handler(&probe); pattern != "" && pattern != fallbackPattern {
 			allowed = append(allowed, method)
 		}
 	}
@@ -292,6 +303,7 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 	if route.Kind != nil {
 		path, resource = route.Subresource, strings.ToLower(route.Kind.Plural)
 	}
+	forward := httpadapter.HandlerFunc(b.clientV3)
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		ns := ""
@@ -342,7 +354,7 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 
 		// Before the parent's secure values are decrypted, so a request the
 		// manifest refuses never decrypts them.
-		if err := b.checkDeclaredAccess(r, gv, route, ns, name, parentMeta); err != nil {
+		if err := b.checkDeclaredAccess(r, gv, route, resource, ns, name, parentMeta); err != nil {
 			_ = errhttp.Write(ctx, err, w)
 			return
 		}
@@ -369,11 +381,10 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 			info.Parent = parent
 		}
 
-		req := r.Clone(httpadapter.WithRouteInfo(ctx, info))
 		// The caller's identity reaches the plugin only as the access token the
-		// v3 client exchanges for it, never as an ID token in the HTTP headers.
-		req.Header.Del(proxyutil.IDHeaderName)
-		httpadapter.HandlerFunc(b.clientV3).ServeHTTP(w, req)
+		// v3 client exchanges for it: httpadapter drops the ID token and the other
+		// credential headers, so the request is not cloned to remove them.
+		forward.ServeHTTP(w, r.WithContext(httpadapter.WithRouteInfo(ctx, info)))
 	}
 }
 
@@ -390,18 +401,16 @@ func declaredCheck(route manifestroutes.Route, method string) (authlib.CheckRequ
 
 // checkDeclaredAccess runs the access check the manifest declares for the
 // request, if any, filling in what only the request knows. The parent's name
-// and folder apply only when the check is for the parent's own resource.
-func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVersion, route manifestroutes.Route, namespace, name string, parent utils.GrafanaMetaAccessor) error {
+// and folder apply only when the check is for the parent's own resource, which
+// is parentResource for a kind route.
+func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVersion, route manifestroutes.Route, parentResource, namespace, name string, parent utils.GrafanaMetaAccessor) error {
 	check, ok := declaredCheck(route, r.Method)
 	if !ok {
 		return nil
 	}
 	ctx := r.Context()
-	forbidden := func(reason string) error {
-		return apierrors.NewForbidden(schema.GroupResource{Group: gv.Group, Resource: check.Resource}, check.Name, errors.New(reason))
-	}
 	if b.accessClient == nil {
-		return forbidden("the route declares an access check, and no access client is configured")
+		return forbidden(gv, check, "the route declares an access check, and no access client is configured")
 	}
 	authInfo, ok := authlib.AuthInfoFrom(ctx)
 	if !ok {
@@ -411,7 +420,7 @@ func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVe
 	check.Group = gv.Group
 	check.Namespace = namespace
 	folder := ""
-	if route.Kind != nil && check.Resource == strings.ToLower(route.Kind.Plural) {
+	if parentResource != "" && check.Resource == parentResource {
 		check.Name = name
 		if parent != nil {
 			folder = parent.GetFolder()
@@ -420,7 +429,7 @@ func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVe
 	if check.Verb == "" {
 		info, ok := request.RequestInfoFrom(ctx)
 		if !ok || info.Verb == "" {
-			return forbidden("the request has no verb to check")
+			return forbidden(gv, check, "the request has no verb to check")
 		}
 		check.Verb = info.Verb
 	}
@@ -430,9 +439,13 @@ func (b *manifestBuilder) checkDeclaredAccess(r *http.Request, gv schema.GroupVe
 		return apierrors.NewInternalError(fmt.Errorf("access check: %w", err))
 	}
 	if !res.Allowed {
-		return forbidden(fmt.Sprintf("%s %s is not allowed", check.Verb, check.Resource))
+		return forbidden(gv, check, fmt.Sprintf("%s %s is not allowed", check.Verb, check.Resource))
 	}
 	return nil
+}
+
+func forbidden(gv schema.GroupVersion, check authlib.CheckRequest, reason string) error {
+	return apierrors.NewForbidden(schema.GroupResource{Group: gv.Group, Resource: check.Resource}, check.Name, errors.New(reason))
 }
 
 // namespacePathParameter documents the {namespace} segment that namespaced

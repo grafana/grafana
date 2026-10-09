@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -114,4 +115,52 @@ func TestGetAuthorizerAppAccessGatesKinds(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, authorizer.DecisionDeny, decision)
 	require.Equal(t, "access denied", reason)
+}
+
+func TestGetAuthorizerRequiresIdentity(t *testing.T) {
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  kindPolicies(testManifest(t)),
+		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+	}
+	decision, reason, err := b.GetAuthorizer().Authorize(context.Background(),
+		authorizer.AttributesRecord{Resource: "testkinds", Verb: "get"})
+	require.Error(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision)
+	require.Equal(t, "valid user is required", reason)
+}
+
+// Service identities operate cluster-scoped kinds that users cannot read; their
+// access was already decided by the plugin's app access.
+func TestGetAuthorizerServiceIdentityOnClusterKind(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds,
+		app.ManifestVersionKind{Kind: "Secret", Plural: "Secrets", Scope: kindstore.ClusterScope})
+	b := &manifestBuilder{
+		pluginID:      "test-app",
+		kindPolicies:  kindPolicies(manifest),
+		accessChecker: appplugin.NewPluginAccessChecker(&actest.FakeAccessControl{ExpectedEvaluate: true}),
+	}
+	attr := authorizer.AttributesRecord{Resource: "secrets", Verb: "update"}
+
+	user := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: claims.TypeUser, UserID: 1, OrgID: 1})
+	decision, _, err := b.GetAuthorizer().Authorize(user, attr)
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionDeny, decision, "a user cannot write the kind")
+
+	service := identity.WithRequester(context.Background(), &identity.StaticRequester{Type: claims.TypeAccessPolicy, UserUID: "svc", OrgID: 1})
+	decision, reason, err := b.GetAuthorizer().Authorize(service, attr)
+	require.NoError(t, err)
+	require.Equal(t, authorizer.DecisionAllow, decision, reason)
+}
+
+// kindstore.New refuses a kind without a plural, so it has no resource to
+// police.
+func TestKindPoliciesSkipKindsWithoutPlural(t *testing.T) {
+	require.Nil(t, kindPolicies(nil))
+	policies := kindPolicies(&app.ManifestData{Versions: []app.ManifestVersion{{
+		Name: "v1", Served: true,
+		Kinds: []app.ManifestVersionKind{{Kind: "NoPlural", Scope: kindstore.ClusterScope}},
+	}}})
+	require.Empty(t, policies)
 }

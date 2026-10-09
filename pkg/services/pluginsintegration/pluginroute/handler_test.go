@@ -318,6 +318,11 @@ func TestNewHandlerInvalidConfiguration(t *testing.T) {
 		{"invalid group", func(p *definition.PluginDefinition, _ *Options) { p.Manifests[0].Group = "example.com" }, "invalid manifest group"},
 		{"missing storage", func(_ *definition.PluginDefinition, o *Options) { o.Storage = nil }, "storage provider is required"},
 		{"missing unified client", func(_ *definition.PluginDefinition, o *Options) { o.Storage = UnifiedStorage(nil, nil, nil) }, "unified storage client is required"},
+		{"storage provider without a getter", func(_ *definition.PluginDefinition, o *Options) {
+			o.Storage = func(*runtime.Scheme, serializer.CodecFactory, []schema.GroupVersion) (generic.RESTOptionsGetter, error) {
+				return nil, nil
+			}
+		}, "storage provider returned no REST options getter"},
 		{"invalid kind", func(p *definition.PluginDefinition, _ *Options) {
 			p.Manifests[0].Versions[0].Kinds[0].Kind = "Settings"
 		}, "reserved kind name"},

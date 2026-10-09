@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
+	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -901,4 +902,60 @@ func TestVersionRoutesFromOpenAPIPathsSkipShadowing(t *testing.T) {
 
 	// The authorizer allows exactly the subresources that are mounted.
 	require.Equal(t, map[string]bool{"sub": true}, kindPolicies(manifest)["testkinds"].customRoutes)
+}
+
+// A parent whose secure values cannot be decrypted is not sent to the plugin
+// at all, rather than without them.
+func TestRouteHandlerStopsWhenSecureValuesCannotBeDecrypted(t *testing.T) {
+	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
+	parent := &unstructured.Unstructured{Object: map[string]any{
+		"apiVersion": gv.String(), "kind": "TestKind",
+		"metadata": map[string]any{"name": "thing-1", "namespace": "org-2"},
+		"secure":   map[string]any{"apiKey": map[string]any{"name": "router-api-key"}},
+	}}
+	client := &fakeRouteClient{}
+	b := &manifestBuilder{
+		group:    gv.Group,
+		clientV3: client,
+		getter:   (&recordingGetter{obj: parent}).get,
+		decrypter: newSecureValueLookup(secureLookupDecrypter(func(context.Context, string, string, ...string) (map[string]decrypt.DecryptResult, error) {
+			return nil, errors.New("secrets unavailable")
+		})),
+	}
+	req := withPathValues(httptest.NewRequest(http.MethodPost, "/reload", nil), namespaceParameter, "org-2", nameParameter, "thing-1")
+	rec := httptest.NewRecorder()
+	b.routeHandler(gv, testKindRoute).ServeHTTP(rec, req)
+
+	require.Equal(t, http.StatusInternalServerError, rec.Code)
+	require.NotContains(t, rec.Body.String(), "secrets unavailable", "the cause is not sent to the caller")
+	require.Nil(t, client.req, "the plugin is never called")
+}
+
+// A manifest whose every route is rejected mounts nothing, so the API server's
+// handler is used as is.
+func TestRouteMuxWithOnlyRejectedRoutes(t *testing.T) {
+	manifest := testManifest(t)
+	for i := range manifest.Versions {
+		manifest.Versions[i].OpenAPI.Paths = map[string]spec3.PathProps{
+			"/namespaces/{namespace}/app/x": {Get: &spec3.Operation{}}, // the settings resource
+		}
+	}
+	next := http.NewServeMux()
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest}
+	require.Same(t, next, b.routeMux(next, prometheus.NewRegistry()))
+}
+
+// A manifest whose search declarations cannot be read loses search, and only
+// search: its custom routes are still served.
+func TestGetAPIRoutesWithInvalidSearchDeclarations(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions[1].Kinds[0].SearchFields = []app.ManifestVersionKindSearchField{{
+		// Text search applies to strings only.
+		Name: "testField", Path: "spec.testField", Type: "int64", Capabilities: []string{"text"},
+	}}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app", search: stubIndexClient{}}
+	gv := schema.GroupVersion{Group: manifest.Group, Version: "v1alpha1"}
+
+	require.Nil(t, b.GetAPIRoutes(gv), "no search, trash or hybrid routes")
+	require.Contains(t, mountedRoutes(b, gv), "namespaces/{namespace}/foobar")
 }

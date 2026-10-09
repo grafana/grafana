@@ -100,6 +100,13 @@ func TestBuildOpenAPIVersionSelection(t *testing.T) {
 		}
 	})
 
+	t.Run("a manifest the handler refuses is reported", func(t *testing.T) {
+		manifest := offlineManifest(t)
+		manifest.Versions[0].Kinds[0].Kind = "Settings"
+		_, err := BuildOpenAPI("example-app", manifest, "", OpenAPIOptions{})
+		require.ErrorContains(t, err, "reserved kind name")
+	})
+
 	t.Run("an invalid manifest is refused", func(t *testing.T) {
 		manifest := offlineManifest(t)
 		manifest.Group = "example.com"
