@@ -4,7 +4,8 @@ import { API_GROUP as DASHBOARD_API_GROUP } from '@grafana/api-clients/rtkq/dash
 import { API_GROUP as FOLDER_API_GROUP } from '@grafana/api-clients/rtkq/folder/v1beta1';
 import { API_GROUP as PLAYLIST_API_GROUP } from '@grafana/api-clients/rtkq/playlist/v1';
 import { t } from '@grafana/i18n';
-import { getBackendSrv } from '@grafana/runtime';
+import { isIconName } from '@grafana/data';
+import { getBackendSrv, type provisioning } from '@grafana/runtime';
 import { type IconName } from '@grafana/ui';
 import { playlistAPIv1 } from 'app/api/clients/playlist/v1';
 import { type Repository, type SupportedResource } from 'app/api/clients/provisioning/v0alpha1';
@@ -16,6 +17,8 @@ import { getIconForKind, queryResultToViewItem } from 'app/features/search/servi
 import { type AppDispatch } from 'app/store/configureStore';
 
 import { isManaged } from './managedResource';
+
+type ResourceKindDisplay = provisioning.ResourceKindDisplay;
 
 /**
  * A resource of some kind enumerated from the instance, in the minimal shape the
@@ -140,7 +143,7 @@ export const resourceKindInfos = {
  * edit-form fields, and each registry entry's own `key` all use this. Derived from the registry keys,
  * so a new kind only needs its registry entry.
  */
-export type ResourceKindKey = keyof typeof resourceKindInfos;
+export type ResourceKindKey = keyof typeof resourceKindInfos | (string & {});
 
 /**
  * Tree-view labels for the provisioning *resource* kinds (`Folder`, `Dashboard`, ...), derived from
@@ -148,7 +151,7 @@ export type ResourceKindKey = keyof typeof resourceKindInfos;
  * {@link ItemType} (these labels plus the `File` fallback) is assembled from this in `../types`, so a
  * new kind needs no edit there either.
  */
-export type ResourceItemType = (typeof resourceKindInfos)[ResourceKindKey]['itemType'];
+export type ResourceItemType = (typeof resourceKindInfos)[keyof typeof resourceKindInfos]['itemType'] | (string & {});
 
 /**
  * Consumer-facing shape of a registry entry. `key`/`itemType` are typed as the derived unions, so a
@@ -226,6 +229,37 @@ export interface ResourceKindInfo {
 // interface — a missing or mis-typed field (e.g. an unknown `icon`) fails at this line rather than at
 // each call site. The literal `key`/`itemType` values stay the source of truth for the unions above.
 const allKindInfos: ResourceKindInfo[] = Object.values(resourceKindInfos);
+
+/**
+ * Adds kinds that an app plugin registers with `provisioning.registerResourceKinds`. A kind that
+ * is already known (by group and kind) is skipped, so core entries always win.
+ */
+export function addResourceKinds(kinds: ResourceKindDisplay[]) {
+  for (const k of kinds) {
+    if (!allKindInfos.some((c) => c.group === k.group && c.kind === k.kind)) {
+      allKindInfos.push(toKindInfo(k));
+    }
+  }
+}
+
+function toKindInfo(k: ResourceKindDisplay): ResourceKindInfo {
+  const label = k.label ?? k.kind;
+  return {
+    key: `${k.group}/${k.kind}`,
+    getLabel: () => label,
+    pluralLabel: () => label,
+    group: k.group,
+    kind: k.kind,
+    resource: k.resource ?? `${k.kind.toLowerCase()}s`,
+    itemType: k.kind,
+    icon: isIconName(k.icon) ? k.icon : 'file-alt',
+    getRoute: k.getRoute,
+    listRoute: k.listRoute ?? '',
+    folderScoped: k.folderScoped ?? true,
+    list: async () => [],
+    alwaysAvailable: false,
+  };
+}
 
 /**
  * Builds the in-app route to view a repository's resources of the given kind.
