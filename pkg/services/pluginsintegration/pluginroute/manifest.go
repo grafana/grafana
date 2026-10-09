@@ -159,7 +159,7 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 		}
 
 		// Checked against the mounted routes rather than the manifest, since
-		// routes that shadow a resource are dropped.
+		// routes that cannot be served are dropped.
 		if len(storage) == 0 && (hasRoutes(b.GetAPIRoutes(gv)) || len(b.versionRoutes(gv, ignoreSkipped)) > 0) {
 			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
 		}

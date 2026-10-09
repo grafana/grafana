@@ -35,6 +35,16 @@ startup, including for plugins whose API is served by the router. Callers outsid
 that registration path must provision roles and configure their dual-write service
 for the plugin's settings resource before constructing a handler.
 
+A manifest that declares no kinds has nothing to store, so no API server is built
+for it. The handler serves its routes, its group and version discovery, and its
+OpenAPI documents directly. It runs the API server's own authentication,
+authorization, timeout and cache-control filters, with the same authorizer, so
+callers see the same decisions and errors. A routes-only handler needs no
+storage provider. Version discovery lists no resources, and the OpenAPI document
+describes only the plugin's routes. A manifest that mixes versions with and
+without kinds still gets an API server; each routes-only version in it is kept
+installed by a placeholder resource that serves no verbs.
+
 No listener or background server hooks are started. After stopping and draining
 requests, callers can release storage with `Handler.Destroy()`. The router's
 existing backend contract has no teardown hook, so handler retirement there
@@ -94,8 +104,8 @@ basic roles. Folder permissions still determine access to individual
 folder-scoped objects.
 
 Cluster-scoped kinds are reserved for service identities unless the manifest
-marks them `userReadable`. End users can only `get`, `list`, or `watch` a user-readable
-cluster-scoped kind.
+marks them `userReadable`. End users can only `get` or `list` a user-readable
+cluster-scoped kind; watching one is left to service identities.
 
 ## Admission hooks
 

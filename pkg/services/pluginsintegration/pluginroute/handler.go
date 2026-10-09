@@ -122,18 +122,27 @@ func APIGroup(m *app.ManifestData) metav1.APIGroup {
 // NewHandler installs resources, admission, custom routes and OpenAPI without
 // starting a listener or background hooks. The caller must authenticate requests
 // and put an identity.Requester in their context before invoking the handler.
+// A manifest without kinds gets a handler with no API server behind it, and
+// needs no storage provider.
 func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Handler, error) {
 	b, err := newManifestBuilder(pluginID, manifest, opts)
 	if err != nil {
 		return nil, err
 	}
+	if len(b.GetGroupVersions()) == 0 {
+		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
+	}
+	reg := opts.MetricsRegister
+	if reg == nil {
+		reg = prometheus.NewRegistry()
+	}
+	if !hasKinds(manifest) {
+		return newRoutesOnlyHandler(b, reg)
+	}
 	if opts.Storage == nil {
 		return nil, fmt.Errorf("plugin %q: a storage provider is required", pluginID)
 	}
 	gvs := b.GetGroupVersions()
-	if len(gvs) == 0 {
-		return nil, fmt.Errorf("plugin %q has no served versions", pluginID)
-	}
 	group := gvs[0].Group
 	scheme := builder.ProvideScheme()
 	if err := b.InstallSchema(scheme); err != nil {
@@ -147,10 +156,6 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	if getter == nil {
 		return nil, fmt.Errorf("%s: storage provider returned no REST options getter", group)
 	}
-	reg := opts.MetricsRegister
-	if reg == nil {
-		reg = prometheus.NewRegistry()
-	}
 	resources := serverstorage.NewResourceConfig()
 	resources.EnableVersions(gvs...)
 	builders := []builder.APIGroupBuilder{b}
@@ -161,11 +166,7 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 	config.EffectiveVersion = builder.GetEffectiveVersion(0, opts.BuildVersion, "", "")
 	config.RESTOptionsGetter = getter
 	config.AggregatedDiscoveryGroupManager = discoveryendpoint.NewResourceManager("apis")
-	config.Authorization.Authorizer, err = union.New(
-		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
-		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
-		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
-	)
+	config.Authorization.Authorizer, err = b.unionAuthorizer()
 	if err != nil {
 		return nil, fmt.Errorf("%s: authorization: %w", group, err)
 	}
@@ -271,6 +272,16 @@ func newManifestBuilder(pluginID string, manifest *app.ManifestData, opts Option
 		opts:          opts,
 		kindPolicies:  kindPolicies(manifest),
 	}, nil
+}
+
+// unionAuthorizer is the authorizer a plugin's requests pass, whether or not an
+// API server is built for them.
+func (b *manifestBuilder) unionAuthorizer() (authorizer.Authorizer, error) {
+	return union.New(
+		union.NamedAuthorizer{AuthorizerName: "impersonation", Authorizer: apiserverauthorizer.NewImpersonationAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "namespace", Authorizer: apiserverauthorizer.NewNamespaceAuthorizer()},
+		union.NamedAuthorizer{AuthorizerName: "plugin", Authorizer: b.GetAuthorizer()},
+	)
 }
 
 // buildHandlerChain is the default apiserver chain with the manifest's routes

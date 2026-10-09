@@ -38,7 +38,7 @@ const (
 
 // routeOptions are the parts of the manifest route rules that depend on this
 // server. The settings resource is served in every version. TRACE echoes the
-// request back, and OPTIONS keeps the 405 it always got.
+// request back, and OPTIONS is answered 405 like any other undeclared method.
 var routeOptions = manifestroutes.Options{
 	ReservedResources: []string{apppluginV0.APP_RESOURCE_NAME},
 	UnservedMethods:   []string{http.MethodTrace, http.MethodOptions},
@@ -332,7 +332,9 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 		}
 
 		// Without this the plugin only sees the raw URL, and no group, version,
-		// namespace or parent object.
+		// namespace or parent object. Path is the declared route, not the one it
+		// was called with, because app-sdk's simple.App finds handlers by exact
+		// declared path; the request URL still carries the concrete one.
 		info := httpadapter.RouteInfo{
 			Group:     gv.Group,
 			Version:   gv.Version,

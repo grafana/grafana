@@ -142,7 +142,6 @@ func Parse(version app.ManifestVersion, opts Options) ([]Route, []Problem) {
 	for i := range version.Kinds {
 		if plural := strings.ToLower(version.Kinds[i].Plural); plural != "" {
 			kinds[plural] = &version.Kinds[i]
-			reserved[plural] = true
 		}
 	}
 
@@ -295,8 +294,9 @@ func parameterName(segment string) (string, bool) {
 // The operations of one path share their path, so they must agree.
 func catchAllExtension(props *spec3.PathProps) (string, error) {
 	name := ""
-	for _, method := range slices.Sorted(maps.Keys(Operations(props))) {
-		value, ok := Operations(props)[method].Extensions[CatchAllExtension]
+	ops := Operations(props)
+	for _, method := range slices.Sorted(maps.Keys(ops)) {
+		value, ok := ops[method].Extensions[CatchAllExtension]
 		if !ok {
 			continue
 		}

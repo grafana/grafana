@@ -642,10 +642,8 @@ func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
 	require.NoError(t, json.Unmarshal([]byte(disco), &versions))
 	require.Len(t, versions, 1)
 	require.Equal(t, "v1", versions[0].Version)
-	// The placeholder is visible in discovery, but serves no verbs.
-	for _, resource := range versions[0].Resources {
-		require.Empty(t, resource.Verbs, "resource %s", resource.Resource)
-	}
+	// Without kinds there is no API server, and no resources to list.
+	require.Empty(t, versions[0].Resources)
 
 	raw, err := client.Get().AbsPath("/openapi/v3/apis/" + testAppGroup + "/v1").DoRaw(ctx)
 	require.NoError(t, err)
@@ -654,7 +652,8 @@ func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
 	}
 	require.NoError(t, json.Unmarshal(raw, &doc))
 	root := "/apis/" + testAppGroup + "/v1/"
-	require.ElementsMatch(t, []string{root, root + "namespaces/{namespace}/ping"}, slices.Collect(maps.Keys(doc.Paths)))
+	require.ElementsMatch(t, []string{root + "namespaces/{namespace}/ping"}, slices.Collect(maps.Keys(doc.Paths)),
+		"the document describes the plugin's routes")
 
 	// The route is mounted and reaches the plugin, which has no v3 backend.
 	raw, err = client.Get().AbsPath(root + "namespaces/default/ping").DoRaw(ctx)
