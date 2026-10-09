@@ -58,6 +58,23 @@ func TestProvideCloudRoutesLoaderFactory_NoTargetsConfigured(t *testing.T) {
 	require.Nil(t, loader) // falls back to dummyRoutesLoader upstream
 }
 
+// A deployment still configured only for the removed appmanifest apiserver
+// must not silently degrade to the dummy loader, reporting itself ready while
+// serving no real routes.
+func TestProvideCloudRoutesLoaderFactory_RemovedAppManifestKeyFailsLoudly(t *testing.T) {
+	for _, key := range []string{"appmanifest_apiserver_url", "apiserver_url"} {
+		t.Run(key, func(t *testing.T) {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{
+				key:                  "https://example.invalid",
+				"cap_token":          "tok",
+				"token_exchange_url": "https://exchange.invalid",
+			})
+			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.ErrorContains(t, err, key+" is no longer supported")
+		})
+	}
+}
+
 func TestProvideCloudRoutesLoaderFactory_AggregateOnlyRequiresCapToken(t *testing.T) {
 	cfg := cfgWithCloudRouterSection(t, map[string]string{})
 	addAggregateSection(t, cfg, "baas_apiserver", map[string]string{

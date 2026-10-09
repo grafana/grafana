@@ -46,11 +46,18 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   - On an OpenAPI cache miss, strip conditional headers and the `hash` query parameter before
     proxying.
   - Any 304 must carry an `ETag`.
-- **In middleware mode the router serves only app plugin groups** (`isPluginAPIGroup`: a
-  `*.ext.grafana.app` manifest group, or a plugin ID with a hyphen and no dots). It runs ahead of
-  the embedded API server, so it must never shadow a group that server owns. `NewPluginBackend`
-  enforces the same rule in every mode. One bad backend or plugin fails only its own group; it
-  must never stop the reconcile loop.
+- **The router may replace groups the embedded API server serves, core groups included.** APIs move
+  to the router gradually, so in middleware mode a group the router serves takes over that group from
+  the embedded server: its requests, discovery and OpenAPI. This is expected, and must keep working.
+  Don't reintroduce a filter on which groups the router may serve. Which groups are routed is decided
+  by the configured sources.
+- **A plugin backend serves only plugin groups and the routable core groups.** `newPluginBackend`
+  accepts a `*.ext.grafana.app` group or one of the hardcoded `routableCoreGroups`, from any source.
+  Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
+  `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
+  misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for
+  it, never one whose data or permissions matter (dashboards, folders, IAM).
+- **One bad backend or plugin fails only its own group;** it must never stop the reconcile loop.
 - **Outbound credentials (`rewriteOutbound`):** every proxy uses it. When the request carries a
   requester (middleware mode), Grafana has already consumed the caller's credentials: `Cookie`,
   `Authorization`, `X-Access-Token` and `X-Grafana-Id` are replaced by the requester's own tokens.
@@ -90,7 +97,6 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | dskit service, middleware entry point | `service.go` |
 | Metrics, access logs, tracing | `metrics.go`, `logging.go`, `tracing.go`, `plugin_tracing.go` |
 | Loader selection | `loader_factory.go` |
-| Forward-mode backend (`NewForwardBackend`) | `forward.go` |
 | Cloud loader: settings, source priority | `cloud_router.go` |
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
@@ -133,7 +139,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
-  that group.
+  that group, and its requests never reach `next`.
 - **Aggregated discovery** is built without a request per backend per call:
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.
@@ -198,9 +204,10 @@ These keys are read straight from `cfg.SectionWithEnvOverrides("cloud_router")`.
 | Key | Meaning |
 | --- | --- |
 | `cap_token`, `token_exchange_url` | Required when any aggregate target without `discovery_auth = none` is set. The CAP token is exchanged per request. |
+| `appmanifest_apiserver_url`, `apiserver_url` | Removed. When no other source is configured, either one is a startup error rather than a silent fallback to the dummy loader. |
 | `plugins_url` | Full URL of the plugin-manifests operator's `/plugins` endpoint. Needs no CAP token. |
 | `plugins_group_regex` | Globs that narrow the plugin groups, with the same semantics as `group_regex`. |
-| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. |
+| `core_url` | Same format as `plugins_url`, for core APIs served as plugin deployments. Needs no CAP token, and is not filtered by `plugins_group_regex`. Like any plugin source, it may serve the core groups in `routableCoreGroups`. |
 | `st_discovery_url` | A single-tenant instance used for discovery. Enables the ST fallback, which resolves stacks through grafana.com (`GrafanaComAPIURL`, `GrafanaComSSOAPIToken`). |
 
 Aggregate targets are configured in uniquely named `[router.aggregate.<name>]` sections, in

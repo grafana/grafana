@@ -243,9 +243,8 @@ func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 	if manifest.IsEmpty() {
 		return fmt.Errorf("plugin %q has an empty app manifest", pluginID)
 	}
-	group := manifest.Group
-	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
-		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
+	if len(validation.IsDNS1123Subdomain(manifest.Group)) > 0 {
+		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS subdomain", pluginID, manifest.Group)
 	}
 	versions := make(map[string]bool, len(manifest.Versions))
 	for _, version := range manifest.Versions {

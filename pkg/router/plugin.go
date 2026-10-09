@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/grafana/authlib/authn"
@@ -208,7 +209,7 @@ func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, 
 	pluginDefs, err := definition.LoadPluginDefinition(ctx, registry, definition.Options{
 		Filter: func(jsonData plugins.JSONData) bool {
 			if jsonData.Type == plugins.TypeApp {
-				if jsonData.ID == "v1" || !isPluginAPIGroup(jsonData.ID) {
+				if jsonData.ID == "v1" || !isAppPluginID(jsonData.ID) {
 					logging.FromContext(ctx).Warn("invalid app plugin id", "pluginId", jsonData.ID)
 					return false
 				}
@@ -277,15 +278,17 @@ func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.Man
 // always enforces RBAC on it, and no core Grafana group uses it.
 const pluginManifestGroupSuffix = ".ext.grafana.app"
 
-// isPluginAPIGroup reports whether group has the shape of an app plugin's API
-// group: a manifest group ending in pluginManifestGroupSuffix, or a plugin ID,
-// which contains a hyphen and no dots. No core Grafana or Kubernetes group has
-// either shape, so a group that passes cannot shadow one.
-func isPluginAPIGroup(group string) bool {
-	if name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix); ok {
-		return name != ""
-	}
-	return strings.Contains(group, "-") && !strings.Contains(group, ".")
+// isPluginManifestGroup reports whether group is a plugin manifest group: a
+// name followed by pluginManifestGroupSuffix.
+func isPluginManifestGroup(group string) bool {
+	name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix)
+	return ok && name != ""
+}
+
+// isAppPluginID reports whether id has the shape of an app plugin ID: it
+// contains a hyphen and no dots.
+func isAppPluginID(id string) bool {
+	return strings.Contains(id, "-") && !strings.Contains(id, ".")
 }
 
 func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
@@ -296,6 +299,17 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 // BACKEND
 //-----------------------
 
+// routableCoreGroups are the core groups a plugin backend may serve in place of
+// the embedded API server, from any source, local and remote plugins included.
+// This is deliberate: these groups are low risk, so any plugin may shadow them.
+// A misbehaving or malicious plugin serving one of them can do no serious harm,
+// which is why the router may route them before their authorization moves too.
+// Before adding a group, confirm the same holds for it: never add a group
+// whose data or permissions matter, such as dashboards, folders or IAM.
+var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
+
+// newPluginBackend builds the backend for one plugin manifest. Its group must be
+// a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
 func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (_ *PluginBackend, err error) {
 	// The plugin API builder panics on an invalid manifest. Plugins are loaded
 	// inside the reconcile loop, so a panic here would stop it for every group.
@@ -308,8 +322,8 @@ func newPluginBackend(pluginID string, manifest *app.ManifestData, client Plugin
 	if manifest == nil {
 		return nil, fmt.Errorf("plugin %q: missing manifest", pluginID)
 	}
-	if !isPluginAPIGroup(manifest.Group) {
-		return nil, fmt.Errorf("plugin %q: API group %q is not a plugin group", pluginID, manifest.Group)
+	if !isPluginManifestGroup(manifest.Group) && !slices.Contains(routableCoreGroups, manifest.Group) {
+		return nil, fmt.Errorf("plugin %q: API group %q must end in %s, or be a routable core group", pluginID, manifest.Group, pluginManifestGroupSuffix)
 	}
 	if err := pluginroute.ValidateManifest(pluginID, manifest); err != nil {
 		return nil, err

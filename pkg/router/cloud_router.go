@@ -71,6 +71,14 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 
 	singleTenantDiscoveryURL := section.Key("st_discovery_url").MustString("")
 	if len(aggregateTargetConfigs) == 0 && pluginsTarget == nil && coreTarget == nil && singleTenantDiscoveryURL == "" {
+		// The appmanifest apiserver source was removed. Fail loudly, or a
+		// config that still relies on it would silently fall back to the
+		// dummy loader and serve no routes.
+		for _, key := range []string{"appmanifest_apiserver_url", "apiserver_url"} {
+			if section.Key(key).MustString("") != "" {
+				return nil, fmt.Errorf("%s: %s is no longer supported -- configure an aggregate target, plugins_url, core_url or st_discovery_url instead", cloudRouterSection, key)
+			}
+		}
 		return nil, nil
 	}
 
