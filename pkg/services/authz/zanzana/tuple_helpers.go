@@ -539,6 +539,9 @@ func GetResourcePermissionDeleteTuples(req *authzextv1.DeletePermissionOperation
 }
 
 func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authzextv1.Permission) ([]*openfgav1.TupleKey, error) {
+	if resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), datasourcek8s.K8sDatasourceAPIGroupSuffix) {
+		return nil, fmt.Errorf("datasource permissions must use the %s group", datasourcek8s.Group)
+	}
 	subject, err := toZanzanaSubject(permission.GetKind(), permission.GetName())
 	if err != nil {
 		return nil, err

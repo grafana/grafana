@@ -1255,7 +1255,7 @@ func TestIntegrationZanzanaDatasourceQueryCreation(t *testing.T) {
 		t.Run(verb, func(t *testing.T) {
 			srv := setupOpenFGAServer(t)
 			tuples, err := zanzana.GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{
-				Resource:   &authzextv1.Resource{Group: group, Resource: "datasources", Name: "ds-1"},
+				Resource:   &authzextv1.Resource{Group: "datasource.grafana.app", Resource: "datasources", Name: "ds-1"},
 				Permission: &authzextv1.Permission{Kind: "User", Name: parityUserUID, Verb: verb},
 			})
 			require.NoError(t, err)

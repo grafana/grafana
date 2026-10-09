@@ -137,7 +137,7 @@ func TestResourcePermissionTupleRegressionCases(t *testing.T) {
 		{"wrong datasource resource remains singular", "loki.datasource.grafana.app", "queries", "Query", 1},
 		{"unrelated group remains singular", "loki", "datasources", "View", 1},
 		{"granular dashboard get remains singular", "dashboard.grafana.app", "dashboards", "Get", 1},
-		{"granular datasource get remains singular", "loki.datasource.grafana.app", "datasources", "Get", 1},
+		{"granular datasource get remains singular", "datasource.grafana.app", "datasources", "Get", 1},
 	}
 
 	for _, tc := range tests {
@@ -756,23 +756,21 @@ func TestDatasourceRoleSQLAndIAMGrantsMatch(t *testing.T) {
 	}
 }
 
-// Permission data uses its supplied identity; API aliases are only resolved for checks.
-func TestResourcePermissionTuplesPreservePluginGroup(t *testing.T) {
-	for _, verb := range []string{"Get", "Edit", "Admin"} {
-		t.Run(verb, func(t *testing.T) {
-			resource := &authzextv1.Resource{Group: "loki.datasource.grafana.app", Resource: "datasources", Name: "ds1"}
-			permission := &authzextv1.Permission{Kind: "User", Name: "u1", Verb: verb}
-			writes, err := GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{Resource: resource, Permission: permission})
-			require.NoError(t, err)
-			require.Len(t, writes, 1)
-			require.Equal(t, "resource:loki.datasource.grafana.app/datasources/ds1", writes[0].Object)
-			requireGroupFilter(t, writes[0], "loki.datasource.grafana.app/datasources")
-			deletes, err := GetResourcePermissionDeleteTuples(&authzextv1.DeletePermissionOperation{Resource: resource, Permission: permission})
-			require.NoError(t, err)
-			require.Len(t, deletes, 1)
-			require.Equal(t, writes[0].Object, deletes[0].Object)
-			require.Equal(t, writes[0].Relation, deletes[0].Relation)
-		})
+// Permission writes use the shared group; plugin aliases are only accepted on checks.
+func TestResourcePermissionTuplesRejectPluginGroup(t *testing.T) {
+	for _, group := range []string{"loki.datasource.grafana.app", "*.datasource.grafana.app"} {
+		for _, verb := range []string{"Query", "Get", "Edit", "Admin"} {
+			t.Run(group+"/"+verb, func(t *testing.T) {
+				resource := &authzextv1.Resource{Group: group, Resource: "datasources", Name: "ds1"}
+				permission := &authzextv1.Permission{Kind: "User", Name: "u1", Verb: verb}
+				writes, err := GetResourcePermissionWriteTuples(&authzextv1.CreatePermissionOperation{Resource: resource, Permission: permission})
+				require.ErrorContains(t, err, "datasource.grafana.app")
+				require.Empty(t, writes)
+				deletes, err := GetResourcePermissionDeleteTuples(&authzextv1.DeletePermissionOperation{Resource: resource, Permission: permission})
+				require.ErrorContains(t, err, "datasource.grafana.app")
+				require.Empty(t, deletes)
+			})
+		}
 	}
 }
 
