@@ -87,6 +87,15 @@ datasources:
         enabled: true
       search:
         hide: false
+        filters:
+          - id: 'service-name'
+            tag: 'service.name'
+            scope: 'resource'
+            operator: '='
+          - id: 'span-name'
+            tag: 'name'
+            scope: 'span'
+            operator: '='
       traceQuery:
         timeShiftEnabled: true
         spanStartTimeShift: '-1h'
