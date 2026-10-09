@@ -1,4 +1,4 @@
-package metadata
+package database
 
 import (
 	"context"
@@ -21,7 +21,7 @@ var transientTransactionBackoff = backoff.Config{
 	MaxRetries: 3,
 }
 
-func retryTransientTransaction(ctx context.Context, operation func() error) error {
+func RetryOnTransientTransactionError(ctx context.Context, operation func() error) error {
 	boff := backoff.New(ctx, transientTransactionBackoff)
 	for {
 		err := operation()

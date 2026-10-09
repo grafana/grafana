@@ -1,4 +1,4 @@
-package metadata
+package database
 
 import (
 	"context"
@@ -44,7 +44,7 @@ func TestIsTransientTransactionError(t *testing.T) {
 func TestRetryTransientTransaction(t *testing.T) {
 	t.Run("retries a transient error until success", func(t *testing.T) {
 		attempts := 0
-		err := retryTransientTransaction(t.Context(), func() error {
+		err := RetryOnTransientTransactionError(t.Context(), func() error {
 			attempts++
 			if attempts < 3 {
 				return &mysql.MySQLError{Number: 1213}
@@ -59,7 +59,7 @@ func TestRetryTransientTransaction(t *testing.T) {
 	t.Run("does not retry a permanent error", func(t *testing.T) {
 		attempts := 0
 		permanentErr := errors.New("permanent")
-		err := retryTransientTransaction(t.Context(), func() error {
+		err := RetryOnTransientTransactionError(t.Context(), func() error {
 			attempts++
 			return permanentErr
 		})
@@ -71,7 +71,7 @@ func TestRetryTransientTransaction(t *testing.T) {
 	t.Run("stops after the maximum attempts", func(t *testing.T) {
 		attempts := 0
 		deadlockErr := &mysql.MySQLError{Number: 1213}
-		err := retryTransientTransaction(t.Context(), func() error {
+		err := RetryOnTransientTransactionError(t.Context(), func() error {
 			attempts++
 			return deadlockErr
 		})
@@ -83,7 +83,7 @@ func TestRetryTransientTransaction(t *testing.T) {
 	t.Run("honors context cancellation while waiting", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(t.Context())
 		attempts := 0
-		err := retryTransientTransaction(ctx, func() error {
+		err := RetryOnTransientTransactionError(ctx, func() error {
 			attempts++
 			cancel()
 			return &mysql.MySQLError{Number: 1213}

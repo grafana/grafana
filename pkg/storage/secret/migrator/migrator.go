@@ -256,6 +256,7 @@ func (*SecretDB) AddMigration(mg *migrator.Migrator) {
 	}))
 
 	mg.AddMigration("add delete all from group index to "+TableNameSecureValue, migrator.NewAddIndexMigration(secureValueTable, &migrator.Index{
+		Name: "IDX_secret_secure_value_ns_owner_group_active",
 		Cols: []string{"namespace", "owner_reference_api_group", "active"},
 	}))
 }
