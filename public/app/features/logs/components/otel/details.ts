@@ -1,6 +1,5 @@
 import { type IconName } from '@grafana/data';
 
-const OTHER_CATEGORY_ID = 'other' as const;
 export const SERVICE_HEXAGON_CATEGORY_ICON = 'service-hexagon' as const;
 
 type AttributeCategoryIcon = IconName | typeof SERVICE_HEXAGON_CATEGORY_ICON;
