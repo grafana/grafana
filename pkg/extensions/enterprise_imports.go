@@ -115,7 +115,6 @@ import (
 	_ "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	_ "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	_ "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	_ "github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
 	_ "github.com/grafana/grafana/apps/plugins/pkg/apis/plugins/v0alpha1"
 	_ "github.com/grafana/grafana/apps/plugins/pkg/app"
 	_ "github.com/grafana/grafana/apps/plugins/pkg/app/install"
