@@ -647,45 +647,31 @@ func testIntegrationFineGrainedPermissions(t *testing.T) {
 func testIntegrationFolderPermissionCombinations(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{DisableAnonymous: true, DisableAuthZClientCache: true})
+	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
+		DisableAnonymous:        true,
+		DisableAuthZClientCache: true,
+	})
 	addr, env := testinfra.StartGrafanaEnv(t, dir, path)
 	admin := tests.GetClient(addr, "admin", "admin")
 
-	target, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{Title: "Metadata target", UID: "metadata-target"})
+	target, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{
+		Title: "Metadata target",
+		UID:   "metadata-target",
+	})
 	require.NoError(t, err)
-	other, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{Title: "Metadata other", UID: "metadata-other"})
+
+	other, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{
+		Title: "Metadata other",
+		UID:   "metadata-other",
+	})
 	require.NoError(t, err)
 
 	t.Run("canAdmin requires both permissions on the requested folder", func(t *testing.T) {
-		cases := []struct {
-			name                               string
-			read, write, otherWrite, wantAdmin bool
-		}{
-			{name: "neither"},
-			{name: "read only", read: true},
-			{name: "write only", write: true},
-			{name: "both", read: true, write: true, wantAdmin: true},
-			{name: "permissions split across folders", read: true, otherWrite: true},
-		}
+		cases := folderAdminPermissionCases()
 
 		for i, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				actions := []string{foldermodel.ActionFoldersRead}
-				if tc.read {
-					actions = append(actions, foldermodel.ActionFoldersPermissionsRead)
-				}
-				if tc.write {
-					actions = append(actions, foldermodel.ActionFoldersPermissionsWrite)
-				}
-
-				grants := []resourcepermissions.SetResourcePermissionCommand{
-					{Actions: actions, Resource: "folders", ResourceAttribute: "uid", ResourceID: target.Payload.UID},
-				}
-				if tc.otherWrite {
-					grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
-						Actions: []string{foldermodel.ActionFoldersPermissionsWrite}, Resource: "folders", ResourceAttribute: "uid", ResourceID: other.Payload.UID,
-					})
-				}
+				grants := folderAdminPermissionGrants(tc, target.Payload.UID, other.Payload.UID)
 
 				login := fmt.Sprintf("folder-metadata-%d", i)
 				createFolderPermissionUser(t, env, login, grants)
@@ -700,65 +686,21 @@ func testIntegrationFolderPermissionCombinations(t *testing.T) {
 	})
 
 	t.Run("move permission combinations", func(t *testing.T) {
-		cases := []struct {
-			name                                                                   string
-			destinationAction                                                      string
-			root, noSourceWrite, extraDestinationPermission, extraSourcePermission bool
-			wantStatus                                                             int
-			wantError                                                              string
-		}{
-			{name: "neither destination permission", wantStatus: http.StatusForbidden},
-			// The storage validator additionally requires create on the destination.
-			{name: "destination write without create", destinationAction: foldermodel.ActionFoldersWrite, wantStatus: http.StatusForbidden},
-			{name: "destination create", destinationAction: foldermodel.ActionFoldersCreate, wantStatus: http.StatusOK},
-			{name: "missing source write", destinationAction: foldermodel.ActionFoldersCreate, noSourceWrite: true, wantStatus: http.StatusForbidden},
-			{name: "root create", destinationAction: foldermodel.ActionFoldersCreate, root: true, wantStatus: http.StatusOK},
-			{name: "root without create", root: true, wantStatus: http.StatusForbidden},
-			{
-				name:                       "permission escalation",
-				destinationAction:          foldermodel.ActionFoldersWrite,
-				extraDestinationPermission: true,
-				wantStatus:                 http.StatusForbidden,
-				wantError:                  "folders.accessEscalation",
-			},
-			{
-				name:                       "matching source permissions",
-				destinationAction:          foldermodel.ActionFoldersCreate,
-				extraDestinationPermission: true,
-				extraSourcePermission:      true,
-				wantStatus:                 http.StatusOK,
-			},
-		}
+		cases := folderMovePermissionCases()
 
 		for i, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				source, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{Title: fmt.Sprintf("Move source %d", i), ParentUID: target.Payload.UID})
+				source, err := admin.Folders.CreateFolder(&models.CreateFolderCommand{
+					Title:     fmt.Sprintf("Move source %d", i),
+					ParentUID: target.Payload.UID,
+				})
 				require.NoError(t, err)
 				destination := other.Payload.UID
 				if tc.root {
 					destination = foldermodel.GeneralFolderUID
 				}
 
-				sourceActions := []string{foldermodel.ActionFoldersRead, foldermodel.ActionFoldersCreate}
-				if !tc.noSourceWrite {
-					sourceActions = append(sourceActions, foldermodel.ActionFoldersWrite)
-				}
-				if tc.extraSourcePermission {
-					sourceActions = append(sourceActions, foldermodel.ActionFoldersPermissionsRead)
-				}
-				grants := []resourcepermissions.SetResourcePermissionCommand{
-					{Actions: sourceActions, Resource: "folders", ResourceAttribute: "uid", ResourceID: source.Payload.UID},
-					{Actions: []string{foldermodel.ActionFoldersRead}, Resource: "folders", ResourceAttribute: "uid", ResourceID: "*"},
-				}
-				if tc.destinationAction != "" {
-					destinationActions := []string{tc.destinationAction}
-					if tc.extraDestinationPermission {
-						destinationActions = append(destinationActions, foldermodel.ActionFoldersPermissionsRead)
-					}
-					grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
-						Actions: destinationActions, Resource: "folders", ResourceAttribute: "uid", ResourceID: destination,
-					})
-				}
+				grants := folderMovePermissionGrants(tc, source.Payload.UID, destination)
 
 				login := fmt.Sprintf("folder-move-%d", i)
 				createFolderPermissionUser(t, env, login, grants)
@@ -766,22 +708,8 @@ func testIntegrationFolderPermissionCombinations(t *testing.T) {
 				if tc.root {
 					parentUID = ""
 				}
-				body, err := json.Marshal(models.MoveFolderCommand{ParentUID: parentUID})
-				require.NoError(t, err)
-
-				req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("http://%s/api/folders/%s/move", addr, source.Payload.UID), bytes.NewReader(body))
-				require.NoError(t, err)
-				req.SetBasicAuth(login, login)
-				req.Header.Set("Content-Type", "application/json")
-				response, err := http.DefaultClient.Do(req)
-				require.NoError(t, err)
-				t.Cleanup(func() {
-					require.NoError(t, response.Body.Close())
-				})
-
-				responseBody, err := io.ReadAll(response.Body)
-				require.NoError(t, err)
-				require.Equal(t, tc.wantStatus, response.StatusCode, string(responseBody))
+				status, responseBody := moveFolderWithPermissions(t, addr, login, source.Payload.UID, parentUID)
+				require.Equal(t, tc.wantStatus, status, string(responseBody))
 				if tc.wantError != "" {
 					var failure struct {
 						MessageID string `json:"messageId"`
@@ -802,11 +730,16 @@ func testIntegrationFolderPermissionCombinations(t *testing.T) {
 	})
 }
 
-func createFolderPermissionUser(t *testing.T, env *server.TestEnv, login string, grants []resourcepermissions.SetResourcePermissionCommand) {
+func createFolderPermissionUser(
+	t *testing.T, env *server.TestEnv, login string, grants []resourcepermissions.SetResourcePermissionCommand,
+) {
 	t.Helper()
 
 	userID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleNone), Login: login, Password: user.Password(login), OrgID: 1,
+		DefaultOrgRole: string(org.RoleNone),
+		Login:          login,
+		Password:       user.Password(login),
+		OrgID:          1,
 	})
 	store := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
 	for _, grant := range grants {
@@ -831,4 +764,186 @@ func setFolderPermissions(t *testing.T, grafanaListedAddr string, folderUID stri
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	err = resp.Body.Close()
 	require.NoError(t, err)
+}
+
+type folderAdminPermissionCase struct {
+	name       string
+	read       bool
+	write      bool
+	otherWrite bool
+	wantAdmin  bool
+}
+
+func folderAdminPermissionCases() []folderAdminPermissionCase {
+	return []folderAdminPermissionCase{
+		{name: "neither"},
+		{name: "read only", read: true},
+		{name: "write only", write: true},
+		{
+			name:      "both",
+			read:      true,
+			write:     true,
+			wantAdmin: true,
+		},
+		{
+			name:       "permissions split across folders",
+			read:       true,
+			otherWrite: true,
+		},
+	}
+}
+
+type folderMovePermissionCase struct {
+	name                       string
+	destinationAction          string
+	root                       bool
+	noSourceWrite              bool
+	extraDestinationPermission bool
+	extraSourcePermission      bool
+	wantStatus                 int
+	wantError                  string
+}
+
+func folderMovePermissionCases() []folderMovePermissionCase {
+	return []folderMovePermissionCase{
+		{name: "neither destination permission", wantStatus: http.StatusForbidden},
+		// The storage validator additionally requires create on the destination.
+		{
+			name:              "destination write without create",
+			destinationAction: foldermodel.ActionFoldersWrite,
+			wantStatus:        http.StatusForbidden,
+		},
+		{
+			name:              "destination create",
+			destinationAction: foldermodel.ActionFoldersCreate,
+			wantStatus:        http.StatusOK,
+		},
+		{
+			name:              "missing source write",
+			destinationAction: foldermodel.ActionFoldersCreate,
+			noSourceWrite:     true,
+			wantStatus:        http.StatusForbidden,
+		},
+		{
+			name:              "root create",
+			destinationAction: foldermodel.ActionFoldersCreate,
+			root:              true,
+			wantStatus:        http.StatusOK,
+		},
+		{
+			name:       "root without create",
+			root:       true,
+			wantStatus: http.StatusForbidden,
+		},
+		{
+			name:                       "permission escalation",
+			destinationAction:          foldermodel.ActionFoldersWrite,
+			extraDestinationPermission: true,
+			wantStatus:                 http.StatusForbidden,
+			wantError:                  "folders.accessEscalation",
+		},
+		{
+			name:                       "matching source permissions",
+			destinationAction:          foldermodel.ActionFoldersCreate,
+			extraDestinationPermission: true,
+			extraSourcePermission:      true,
+			wantStatus:                 http.StatusOK,
+		},
+	}
+}
+
+func folderMovePermissionGrants(
+	tc folderMovePermissionCase, sourceUID, destinationUID string,
+) []resourcepermissions.SetResourcePermissionCommand {
+	sourceActions := []string{foldermodel.ActionFoldersRead, foldermodel.ActionFoldersCreate}
+	if !tc.noSourceWrite {
+		sourceActions = append(sourceActions, foldermodel.ActionFoldersWrite)
+	}
+	if tc.extraSourcePermission {
+		sourceActions = append(sourceActions, foldermodel.ActionFoldersPermissionsRead)
+	}
+
+	grants := []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           sourceActions,
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        sourceUID,
+		},
+		{
+			Actions:           []string{foldermodel.ActionFoldersRead},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	}
+	if tc.destinationAction != "" {
+		destinationActions := []string{tc.destinationAction}
+		if tc.extraDestinationPermission {
+			destinationActions = append(destinationActions, foldermodel.ActionFoldersPermissionsRead)
+		}
+		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           destinationActions,
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        destinationUID,
+		})
+	}
+
+	return grants
+}
+
+func moveFolderWithPermissions(t *testing.T, addr, login, sourceUID, parentUID string) (int, []byte) {
+	t.Helper()
+
+	body, err := json.Marshal(models.MoveFolderCommand{ParentUID: parentUID})
+	require.NoError(t, err)
+
+	url := fmt.Sprintf("http://%s/api/folders/%s/move", addr, sourceUID)
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
+	require.NoError(t, err)
+	req.SetBasicAuth(login, login)
+	req.Header.Set("Content-Type", "application/json")
+
+	response, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, response.Body.Close())
+	})
+
+	responseBody, err := io.ReadAll(response.Body)
+	require.NoError(t, err)
+
+	return response.StatusCode, responseBody
+}
+
+func folderAdminPermissionGrants(
+	tc folderAdminPermissionCase, targetUID, otherUID string,
+) []resourcepermissions.SetResourcePermissionCommand {
+	actions := []string{foldermodel.ActionFoldersRead}
+	if tc.read {
+		actions = append(actions, foldermodel.ActionFoldersPermissionsRead)
+	}
+	if tc.write {
+		actions = append(actions, foldermodel.ActionFoldersPermissionsWrite)
+	}
+
+	grants := []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           actions,
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        targetUID,
+		},
+	}
+	if tc.otherWrite {
+		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           []string{foldermodel.ActionFoldersPermissionsWrite},
+			Resource:          "folders",
+			ResourceAttribute: "uid",
+			ResourceID:        otherUID,
+		})
+	}
+
+	return grants
 }

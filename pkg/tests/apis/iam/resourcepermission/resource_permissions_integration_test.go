@@ -944,24 +944,36 @@ func doResourcePermissionRevocationTests(t *testing.T, helper *apis.K8sTestHelpe
 					principal = membership.UID
 				}
 
-				checkAccess := func(want int) {
-					t.Helper()
+				requireFolderAccessAfterReload(t, helper, caller, target.GetName(), http.StatusForbidden)
 
-					refreshed := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: "/api/access-control/user/permissions?reloadcache=true"}, &map[string]interface{}{})
-					require.Equal(t, http.StatusOK, refreshed.Response.StatusCode)
-					response := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: fmt.Sprintf("/api/folders/%s", target.GetName())}, &struct{}{})
-					require.Equal(t, want, response.Response.StatusCode, string(response.Body))
-				}
-				checkAccess(http.StatusForbidden)
-
-				grant := createResourcePermissionObject(target.GetName(), gvrFolders.Group, gvrFolders.Resource, newPermission(kind, principal, "view"))
+				grant := createResourcePermissionObject(
+					target.GetName(), gvrFolders.Group, gvrFolders.Resource, newPermission(kind, principal, "view"),
+				)
 				created, err := clients.rpAdmin.Resource.Create(ctx, grant, metav1.CreateOptions{})
 				require.NoError(t, err)
-				checkAccess(http.StatusOK)
+				requireFolderAccessAfterReload(t, helper, caller, target.GetName(), http.StatusOK)
 
 				require.NoError(t, clients.rpAdmin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
-				checkAccess(http.StatusForbidden)
+				requireFolderAccessAfterReload(t, helper, caller, target.GetName(), http.StatusForbidden)
 			})
 		}
 	})
+}
+
+func requireFolderAccessAfterReload(
+	t *testing.T, helper *apis.K8sTestHelper, caller apis.User, folderUID string, wantStatus int,
+) {
+	t.Helper()
+
+	refreshed := apis.DoRequest(helper, apis.RequestParams{
+		User: caller,
+		Path: "/api/access-control/user/permissions?reloadcache=true",
+	}, &map[string]interface{}{})
+	require.Equal(t, http.StatusOK, refreshed.Response.StatusCode)
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User: caller,
+		Path: fmt.Sprintf("/api/folders/%s", folderUID),
+	}, &struct{}{})
+	require.Equal(t, wantStatus, response.Response.StatusCode, string(response.Body))
 }

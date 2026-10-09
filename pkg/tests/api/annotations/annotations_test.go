@@ -315,30 +315,28 @@ func testIntegrationAnnotations(t *testing.T) {
 func testIntegrationAnnotationScopePermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{DisableAnonymous: true, DisableAuthZClientCache: true})
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		DisableAnonymous:        true,
+		DisableAuthZClientCache: true,
+	})
 	env := helper.GetEnv()
 	addr := env.Server.HTTPServer.Listener.Addr().String()
 	parent := createFolder(t, addr, "Annotation parent")
 	childBody, err := json.Marshal(folder.CreateFolderCommand{Title: "Annotation child", ParentUID: parent.UID})
 	require.NoError(t, err)
-	child := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/folders", Body: childBody}, &dtos.Folder{})
+
+	child := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/folders",
+		Body:   childBody,
+	}, &dtos.Folder{})
 	require.Equal(t, http.StatusOK, child.Response.StatusCode)
+
 	dashboard := createDashboard(t, addr, "Annotation target", 0, child.Result.UID)
 	other := createDashboard(t, addr, "Annotation other", 0, "")
 
-	cases := []struct {
-		name, resource, attribute, resourceID string
-		organization, readOnly                bool
-		allowed                               bool
-	}{
-		{name: "dashboard grant", resource: "dashboards", attribute: "uid", resourceID: dashboard.UID, allowed: true},
-		{name: "ancestor folder grant", resource: "folders", attribute: "uid", resourceID: parent.UID, allowed: true},
-		{name: "different dashboard", resource: "dashboards", attribute: "uid", resourceID: other.UID},
-		{name: "organization grant cannot access dashboard annotation", resource: "annotations", attribute: "type", resourceID: "organization"},
-		{name: "organization grant", resource: "annotations", attribute: "type", resourceID: "organization", organization: true, allowed: true},
-		{name: "dashboard grant cannot access organization annotation", resource: "dashboards", attribute: "uid", resourceID: dashboard.UID, organization: true},
-		{name: "read only dashboard", resource: "dashboards", attribute: "uid", resourceID: dashboard.UID, readOnly: true, allowed: true},
-	}
+	cases := annotationScopePermissionCases(dashboard.UID, parent.UID, other.UID)
 
 	for i, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -346,31 +344,42 @@ func testIntegrationAnnotationScopePermissions(t *testing.T) {
 			if !tc.readOnly {
 				actions = append(actions, accesscontrol.ActionAnnotationsWrite, accesscontrol.ActionAnnotationsDelete)
 			}
-			caller := helper.CreateUser(fmt.Sprintf("annotation-grants-%d", i), apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-				{Actions: actions, Resource: tc.resource, ResourceAttribute: tc.attribute, ResourceID: tc.resourceID},
-				{Actions: []string{dashboards.ActionDashboardsRead}, Resource: "dashboards", ResourceAttribute: "uid", ResourceID: "*"},
-			})
+
+			grants := []resourcepermissions.SetResourcePermissionCommand{
+				{
+					Actions:           actions,
+					Resource:          tc.resource,
+					ResourceAttribute: tc.attribute,
+					ResourceID:        tc.resourceID,
+				},
+				{
+					Actions:           []string{dashboards.ActionDashboardsRead},
+					Resource:          "dashboards",
+					ResourceAttribute: "uid",
+					ResourceID:        "*",
+				},
+			}
+			caller := helper.CreateUser(fmt.Sprintf("annotation-grants-%d", i), apis.Org1, org.RoleNone, grants)
 
 			for _, method := range []string{http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodDelete} {
 				t.Run(method, func(t *testing.T) {
-					annotation := dtos.PostAnnotationsCmd{Time: 1234567890000, Text: "Original annotation"}
-					if !tc.organization {
-						annotation.DashboardUID = dashboard.UID
+					dashboardUID := dashboard.UID
+					if tc.organization {
+						dashboardUID = ""
 					}
-					body, err := json.Marshal(annotation)
-					require.NoError(t, err)
-					created := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodPost, Path: "/api/annotations", Body: body}, &struct {
-						ID int64 `json:"id"`
-					}{})
-					require.Equal(t, http.StatusOK, created.Response.StatusCode, string(created.Body))
-					require.NotZero(t, created.Result.ID)
-					path := fmt.Sprintf("/api/annotations/%d", created.Result.ID)
+					annotationID := createScopedAnnotation(t, helper, dashboardUID)
+					path := fmt.Sprintf("/api/annotations/%d", annotationID)
 
 					var update []byte
 					if method == http.MethodPut || method == http.MethodPatch {
 						update = []byte(`{"text":"Updated annotation","time":1234567890000}`)
 					}
-					response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: method, Path: path, Body: update}, &map[string]interface{}{})
+					response := apis.DoRequest(helper, apis.RequestParams{
+						User:   caller,
+						Method: method,
+						Path:   path,
+						Body:   update,
+					}, &map[string]interface{}{})
 					allowed := tc.allowed && (method == http.MethodGet || !tc.readOnly)
 					expected := http.StatusForbidden
 					if allowed {
@@ -378,19 +387,7 @@ func testIntegrationAnnotationScopePermissions(t *testing.T) {
 					}
 					require.Equal(t, expected, response.Response.StatusCode, string(response.Body))
 
-					stored := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodGet, Path: path}, &struct {
-						Text string `json:"text"`
-					}{})
-					if allowed && method == http.MethodDelete {
-						require.Equal(t, http.StatusNotFound, stored.Response.StatusCode)
-					} else {
-						require.Equal(t, http.StatusOK, stored.Response.StatusCode, string(stored.Body))
-						text := "Original annotation"
-						if allowed && (method == http.MethodPut || method == http.MethodPatch) {
-							text = "Updated annotation"
-						}
-						require.Equal(t, text, stored.Result.Text)
-					}
+					requireStoredAnnotation(t, helper, path, method, allowed)
 				})
 			}
 		})
@@ -531,4 +528,115 @@ func createDashboard(t *testing.T, grafanaListedAddr string, title string, folde
 		Version:   int(saveResp.Version),
 		FolderUID: saveResp.FolderUID,
 	}
+}
+
+type annotationScopePermissionCase struct {
+	name         string
+	resource     string
+	attribute    string
+	resourceID   string
+	organization bool
+	readOnly     bool
+	allowed      bool
+}
+
+func annotationScopePermissionCases(dashboardUID, parentUID, otherUID string) []annotationScopePermissionCase {
+	return []annotationScopePermissionCase{
+		{
+			name:       "dashboard grant",
+			resource:   "dashboards",
+			attribute:  "uid",
+			resourceID: dashboardUID,
+			allowed:    true,
+		},
+		{
+			name:       "ancestor folder grant",
+			resource:   "folders",
+			attribute:  "uid",
+			resourceID: parentUID,
+			allowed:    true,
+		},
+		{
+			name:       "different dashboard",
+			resource:   "dashboards",
+			attribute:  "uid",
+			resourceID: otherUID,
+		},
+		{
+			name:       "organization grant cannot access dashboard annotation",
+			resource:   "annotations",
+			attribute:  "type",
+			resourceID: "organization",
+		},
+		{
+			name:         "organization grant",
+			resource:     "annotations",
+			attribute:    "type",
+			resourceID:   "organization",
+			organization: true,
+			allowed:      true,
+		},
+		{
+			name:         "dashboard grant cannot access organization annotation",
+			resource:     "dashboards",
+			attribute:    "uid",
+			resourceID:   dashboardUID,
+			organization: true,
+		},
+		{
+			name:       "read only dashboard",
+			resource:   "dashboards",
+			attribute:  "uid",
+			resourceID: dashboardUID,
+			readOnly:   true,
+			allowed:    true,
+		},
+	}
+}
+
+func createScopedAnnotation(t *testing.T, helper *apis.K8sTestHelper, dashboardUID string) int64 {
+	t.Helper()
+
+	body, err := json.Marshal(dtos.PostAnnotationsCmd{
+		Time:         1234567890000,
+		Text:         "Original annotation",
+		DashboardUID: dashboardUID,
+	})
+	require.NoError(t, err)
+
+	created := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/annotations",
+		Body:   body,
+	}, &struct {
+		ID int64 `json:"id"`
+	}{})
+	require.Equal(t, http.StatusOK, created.Response.StatusCode, string(created.Body))
+	require.NotZero(t, created.Result.ID)
+
+	return created.Result.ID
+}
+
+func requireStoredAnnotation(t *testing.T, helper *apis.K8sTestHelper, path, method string, allowed bool) {
+	t.Helper()
+
+	stored := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodGet,
+		Path:   path,
+	}, &struct {
+		Text string `json:"text"`
+	}{})
+	if allowed && method == http.MethodDelete {
+		require.Equal(t, http.StatusNotFound, stored.Response.StatusCode)
+		return
+	}
+
+	require.Equal(t, http.StatusOK, stored.Response.StatusCode, string(stored.Body))
+	text := "Original annotation"
+	if allowed && (method == http.MethodPut || method == http.MethodPatch) {
+		text = "Updated annotation"
+	}
+	require.Equal(t, text, stored.Result.Text)
 }

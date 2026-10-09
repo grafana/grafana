@@ -543,41 +543,28 @@ func doServiceAccountCRUDTestsUsingTheLegacyAPIs(t *testing.T, helper *apis.K8sT
 
 func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHelper) {
 	t.Run("legacy API permissions are scoped to the target", func(t *testing.T) {
-		ctx := context.Background()
-		admin := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvrServiceAccounts})
-		cases := []struct {
-			name                     string
-			actions                  []string
-			read, write, wrongTarget bool
-		}{
-			{name: "no permissions"},
-			{name: "read only", actions: []string{serviceaccounts.ActionRead}, read: true},
-			{name: "write only", actions: []string{serviceaccounts.ActionWrite}, write: true},
-			{name: "read and write", actions: []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite}, read: true, write: true},
-			{name: "permission management only", actions: []string{serviceaccounts.ActionPermissionsWrite}},
-			{name: "different target", actions: []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionPermissionsWrite}, wrongTarget: true},
-		}
+		cases := serviceaccountPermissionCases()
 
 		for i, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				resources := make([]*unstructured.Unstructured, 0, 2)
-				for _, suffix := range []string{"target", "other"} {
-					created := createNamedServiceAccount(t, ctx, helper, admin, fmt.Sprintf("scope-%d-%s", i, suffix), fmt.Sprintf("Scope %d %s", i, suffix))
-					resources = append(resources, created)
-					t.Cleanup(func() { require.NoError(t, admin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})) })
-				}
-				targetID := resources[0].GetLabels()[utils.LabelKeyDeprecatedInternalID]
-				require.NotEmpty(t, targetID)
+				targetID, otherID := createScopedServiceAccountTargets(t, helper, i)
 				grantedID := targetID
 				if tc.wrongTarget {
-					grantedID = resources[1].GetLabels()[utils.LabelKeyDeprecatedInternalID]
+					grantedID = otherID
 				}
-				caller := helper.CreateUser(fmt.Sprintf("serviceaccount-scope-%d", i), apis.Org1, org.RoleNone, []resourcepermissions.SetResourcePermissionCommand{
-					{Actions: tc.actions, Resource: "serviceaccounts", ResourceAttribute: "id", ResourceID: grantedID},
-				})
+
+				grants := []resourcepermissions.SetResourcePermissionCommand{
+					{
+						Actions:           tc.actions,
+						Resource:          "serviceaccounts",
+						ResourceAttribute: "id",
+						ResourceID:        grantedID,
+					},
+				}
+				caller := helper.CreateUser(fmt.Sprintf("serviceaccount-scope-%d", i), apis.Org1, org.RoleNone, grants)
+
 				path := fmt.Sprintf("/api/serviceaccounts/%s", targetID)
-				before := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: path}, &map[string]interface{}{})
-				require.Equal(t, http.StatusOK, before.Response.StatusCode, string(before.Body))
+				before := readScopedServiceAccountAsAdmin(t, helper, path)
 
 				get := apis.DoRequest(helper, apis.RequestParams{User: caller, Path: path}, &struct{}{})
 				expected := http.StatusForbidden
@@ -588,26 +575,108 @@ func doServiceAccountScopedPermissionTests(t *testing.T, helper *apis.K8sTestHel
 
 				body, err := json.Marshal(map[string]interface{}{"name": "Updated scoped resource"})
 				require.NoError(t, err)
-				update := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodPatch, Path: path, Body: body}, &struct{}{})
+				update := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodPatch,
+					Path:   path,
+					Body:   body,
+				}, &struct{}{})
 				expected = http.StatusForbidden
 				if tc.write {
 					expected = http.StatusOK
 				}
 				require.Equal(t, expected, update.Response.StatusCode, string(update.Body))
-				after := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: path}, &map[string]interface{}{})
-				require.Equal(t, http.StatusOK, after.Response.StatusCode)
+
+				after := readScopedServiceAccountAsAdmin(t, helper, path)
 				if tc.write {
-					require.Equal(t, "Updated scoped resource", (*after.Result)["name"])
+					require.Equal(t, "Updated scoped resource", after["name"])
 				} else {
-					require.Equal(t, before.Result, after.Result)
+					require.Equal(t, before, after)
 				}
 
-				deleted := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodDelete, Path: path}, &struct{}{})
+				deleted := apis.DoRequest(helper, apis.RequestParams{
+					User:   caller,
+					Method: http.MethodDelete,
+					Path:   path,
+				}, &struct{}{})
 				require.Equal(t, http.StatusForbidden, deleted.Response.StatusCode, string(deleted.Body))
-				stillExists := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Path: path}, &map[string]interface{}{})
-				require.Equal(t, http.StatusOK, stillExists.Response.StatusCode)
-				require.Equal(t, after.Result, stillExists.Result)
+
+				stillExists := readScopedServiceAccountAsAdmin(t, helper, path)
+				require.Equal(t, after, stillExists)
 			})
 		}
 	})
+}
+
+type serviceaccountPermissionCase struct {
+	name        string
+	actions     []string
+	read        bool
+	write       bool
+	wrongTarget bool
+}
+
+func serviceaccountPermissionCases() []serviceaccountPermissionCase {
+	return []serviceaccountPermissionCase{
+		{name: "no permissions"},
+		{
+			name:    "read only",
+			actions: []string{serviceaccounts.ActionRead},
+			read:    true,
+		},
+		{
+			name:    "write only",
+			actions: []string{serviceaccounts.ActionWrite},
+			write:   true,
+		},
+		{
+			name:    "read and write",
+			actions: []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite},
+			read:    true,
+			write:   true,
+		},
+		{name: "permission management only", actions: []string{serviceaccounts.ActionPermissionsWrite}},
+		{
+			name:        "different target",
+			actions:     []string{serviceaccounts.ActionRead, serviceaccounts.ActionWrite, serviceaccounts.ActionPermissionsWrite},
+			wrongTarget: true,
+		},
+	}
+}
+
+func readScopedServiceAccountAsAdmin(t *testing.T, helper *apis.K8sTestHelper, path string) map[string]interface{} {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User: helper.Org1.Admin,
+		Path: path,
+	}, &map[string]interface{}{})
+	require.Equal(t, http.StatusOK, response.Response.StatusCode, string(response.Body))
+
+	return *response.Result
+}
+
+func createScopedServiceAccountTargets(t *testing.T, helper *apis.K8sTestHelper, index int) (string, string) {
+	t.Helper()
+
+	ctx := context.Background()
+	admin := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Admin,
+		GVR:  gvrServiceAccounts,
+	})
+	ids := make([]string, 0, 2)
+	for _, suffix := range []string{"target", "other"} {
+		name := fmt.Sprintf("scope-%d-%s", index, suffix)
+		title := fmt.Sprintf("Scope %d %s", index, suffix)
+		created := createNamedServiceAccount(t, ctx, helper, admin, name, title)
+		t.Cleanup(func() {
+			require.NoError(t, admin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+		})
+
+		id := created.GetLabels()[utils.LabelKeyDeprecatedInternalID]
+		require.NotEmpty(t, id)
+		ids = append(ids, id)
+	}
+
+	return ids[0], ids[1]
 }

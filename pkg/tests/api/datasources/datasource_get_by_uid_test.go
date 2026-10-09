@@ -59,32 +59,50 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true, DisableAuthZClientCache: true,
-		EnableFeatureToggles: []string{featuremgmt.FlagDatasourceLegacyIdApi},
+		DisableAnonymous:        true,
+		DisableAuthZClientCache: true,
+		EnableFeatureToggles:    []string{featuremgmt.FlagDatasourceLegacyIdApi},
 	})
 	env := helper.GetEnv()
-
 	ds := createResolverDataSource(t, &env, "resolver-target", "Resolver target", 1)
+
 	t.Run("UID grants authorize resolved names and IDs", func(t *testing.T) {
 		cases := []struct {
-			name, grant string
-			want        int
+			name       string
+			grant      string
+			wantStatus int
 		}{
-			{name: "matching UID", grant: ds.UID, want: http.StatusOK},
-			{name: "wildcard UID", grant: "*", want: http.StatusOK},
-			{name: "different UID", grant: "other-uid", want: http.StatusForbidden},
+			{
+				name:       "matching UID",
+				grant:      ds.UID,
+				wantStatus: http.StatusOK,
+			},
+			{
+				name:       "wildcard UID",
+				grant:      "*",
+				wantStatus: http.StatusOK,
+			},
+			{
+				name:       "different UID",
+				grant:      "other-uid",
+				wantStatus: http.StatusForbidden,
+			},
 		}
+		paths := []string{
+			fmt.Sprintf("/api/datasources/uid/%s", ds.UID),
+			fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(ds.Name)),
+			fmt.Sprintf("/api/datasources/%d", ds.ID),
+		}
+
 		for i, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
-				caller := helper.CreateUser(fmt.Sprintf("resolver-user-%d", i), apis.Org1, org.RoleNone, datasourceReadGrant(tc.grant))
-				paths := []string{fmt.Sprintf("/api/datasources/uid/%s", ds.UID), fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(ds.Name)), fmt.Sprintf("/api/datasources/%d", ds.ID)}
+				caller := helper.CreateUser(
+					fmt.Sprintf("resolver-user-%d", i), apis.Org1, org.RoleNone, datasourceReadGrant(tc.grant),
+				)
+
 				for _, path := range paths {
 					t.Run(path, func(t *testing.T) {
-						response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
-						require.Equal(t, tc.want, response.Response.StatusCode, string(response.Body))
-						if tc.want == http.StatusOK {
-							require.Equal(t, ds.UID, response.Result.UID)
-						}
+						requireDataSourceRead(t, helper, caller, path, tc.wantStatus, ds.UID)
 					})
 				}
 			})
@@ -92,13 +110,13 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 	})
 
 	t.Run("missing name preserves scoped and wildcard responses", func(t *testing.T) {
-		for _, tc := range []struct {
-			scope string
-			want  int
-		}{{ds.UID, http.StatusForbidden}, {"*", http.StatusForbidden}} {
-			caller := helper.CreateUser(fmt.Sprintf("missing-name-%s", tc.scope), apis.Org1, org.RoleNone, datasourceReadGrant(tc.scope))
-			response := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: "/api/datasources/name/missing-name"}, &dtos.DataSource{})
-			require.Equal(t, tc.want, response.Response.StatusCode, string(response.Body))
+		scopes := []string{ds.UID, "*"}
+
+		for _, scope := range scopes {
+			caller := helper.CreateUser(
+				fmt.Sprintf("missing-name-%s", scope), apis.Org1, org.RoleNone, datasourceReadGrant(scope),
+			)
+			requireDataSourceRead(t, helper, caller, "/api/datasources/name/missing-name", http.StatusForbidden, "")
 		}
 	})
 
@@ -106,21 +124,25 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 		name := "Same name in two organizations"
 		first := createResolverDataSource(t, &env, "org-one-ds", name, 1)
 		second := createResolverDataSource(t, &env, "org-two-ds", name, helper.OrgB.OrgID)
+
 		callerA := helper.CreateUser("resolver-org-a", apis.Org1, org.RoleNone, datasourceReadGrant(first.UID))
 		callerBWrong := helper.CreateUser("resolver-org-b-wrong", apis.Org2, org.RoleNone, datasourceReadGrant(first.UID))
 		callerB := helper.CreateUser("resolver-org-b", apis.Org2, org.RoleNone, datasourceReadGrant(second.UID))
-		for _, tc := range []struct {
-			caller apis.User
-			uid    string
-			want   int
+
+		cases := []struct {
+			caller     apis.User
+			wantUID    string
+			wantStatus int
 		}{
-			{callerA, first.UID, http.StatusOK}, {callerBWrong, "", http.StatusForbidden}, {callerB, second.UID, http.StatusOK}, {callerA, first.UID, http.StatusOK},
-		} {
-			response := apis.DoRequest(helper, apis.RequestParams{User: tc.caller, Method: http.MethodGet, Path: fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(name))}, &dtos.DataSource{})
-			require.Equal(t, tc.want, response.Response.StatusCode, string(response.Body))
-			if tc.want == http.StatusOK {
-				require.Equal(t, tc.uid, response.Result.UID)
-			}
+			{caller: callerA, wantUID: first.UID, wantStatus: http.StatusOK},
+			{caller: callerBWrong, wantStatus: http.StatusForbidden},
+			{caller: callerB, wantUID: second.UID, wantStatus: http.StatusOK},
+			{caller: callerA, wantUID: first.UID, wantStatus: http.StatusOK},
+		}
+		path := fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(name))
+
+		for _, tc := range cases {
+			requireDataSourceRead(t, helper, tc.caller, path, tc.wantStatus, tc.wantUID)
 		}
 	})
 
@@ -128,23 +150,23 @@ func testIntegrationDataSourceScopeResolution(t *testing.T) {
 		original := createResolverDataSource(t, &env, "before-recreate", "Reused name", 1)
 		caller := helper.CreateUser("before-recreate-user", apis.Org1, org.RoleNone, datasourceReadGrant(original.UID))
 		path := fmt.Sprintf("/api/datasources/name/%s", url.PathEscape(original.Name))
-		warm := apis.DoRequest(helper, apis.RequestParams{User: caller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
-		require.Equal(t, http.StatusOK, warm.Response.StatusCode)
-		require.Equal(t, original.UID, warm.Result.UID)
+		requireDataSourceRead(t, helper, caller, path, http.StatusOK, original.UID)
 
-		removed := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.Admin, Method: http.MethodDelete, Path: fmt.Sprintf("/api/datasources/uid/%s", original.UID)}, &struct{}{})
+		removed := apis.DoRequest(helper, apis.RequestParams{
+			User:   helper.Org1.Admin,
+			Method: http.MethodDelete,
+			Path:   fmt.Sprintf("/api/datasources/uid/%s", original.UID),
+		}, &struct{}{})
 		require.Equal(t, http.StatusOK, removed.Response.StatusCode, string(removed.Body))
+
 		replacement := createResolverDataSource(t, &env, "after-recreate", original.Name, 1)
 
 		// Deletion also removes grants, so restore the old UID grant to isolate resolver invalidation.
 		oldCaller := helper.CreateUser("old-uid-after-recreate", apis.Org1, org.RoleNone, datasourceReadGrant(original.UID))
-		denied := apis.DoRequest(helper, apis.RequestParams{User: oldCaller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
-		require.Equal(t, http.StatusForbidden, denied.Response.StatusCode)
+		requireDataSourceRead(t, helper, oldCaller, path, http.StatusForbidden, "")
 
 		newCaller := helper.CreateUser("new-uid-after-recreate", apis.Org1, org.RoleNone, datasourceReadGrant(replacement.UID))
-		allowed := apis.DoRequest(helper, apis.RequestParams{User: newCaller, Method: http.MethodGet, Path: path}, &dtos.DataSource{})
-		require.Equal(t, http.StatusOK, allowed.Response.StatusCode, string(allowed.Body))
-		require.Equal(t, replacement.UID, allowed.Result.UID)
+		requireDataSourceRead(t, helper, newCaller, path, http.StatusOK, replacement.UID)
 	})
 }
 
@@ -1164,7 +1186,10 @@ func createUserWithPermissions(
 
 func datasourceReadGrant(uid string) []resourcepermissions.SetResourcePermissionCommand {
 	return []resourcepermissions.SetResourcePermissionCommand{{
-		Actions: []string{datasources.ActionRead}, Resource: "datasources", ResourceAttribute: "uid", ResourceID: uid,
+		Actions:           []string{datasources.ActionRead},
+		Resource:          "datasources",
+		ResourceAttribute: "uid",
+		ResourceID:        uid,
 	}}
 }
 
@@ -1172,9 +1197,29 @@ func createResolverDataSource(t *testing.T, env *server.TestEnv, uid, name strin
 	t.Helper()
 
 	ds, err := env.Server.HTTPServer.DataSourcesService.AddDataSource(context.Background(), &datasources.AddDataSourceCommand{
-		OrgID: orgID, UID: uid, Name: name, Type: datasources.DS_TESTDATA, Access: datasources.DS_ACCESS_PROXY,
+		OrgID:  orgID,
+		UID:    uid,
+		Name:   name,
+		Type:   datasources.DS_TESTDATA,
+		Access: datasources.DS_ACCESS_PROXY,
 	})
 	require.NoError(t, err)
 
 	return ds
+}
+
+func requireDataSourceRead(
+	t *testing.T, helper *apis.K8sTestHelper, caller apis.User, path string, wantStatus int, wantUID string,
+) {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User:   caller,
+		Method: http.MethodGet,
+		Path:   path,
+	}, &dtos.DataSource{})
+	require.Equal(t, wantStatus, response.Response.StatusCode, string(response.Body))
+	if wantStatus == http.StatusOK {
+		require.Equal(t, wantUID, response.Result.UID)
+	}
 }
