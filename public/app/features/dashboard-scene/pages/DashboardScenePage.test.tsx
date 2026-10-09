@@ -211,7 +211,7 @@ describe('DashboardScenePage', () => {
     expect(await screen.findByText('Content B')).toBeInTheDocument();
   });
 
-  it('keeps the page loader visible until a directly requested panel editor is ready', async () => {
+  it('keeps the page loader until the editor is ready and opens it only once when the URL normalizes', async () => {
     loadDashboardMock.mockResolvedValue({ dashboard: cloneDeep(simpleDashboard), meta: { slug: '123' } });
     const pending = createDeferred<void>();
     const original = dashboardViews.editPanel;
@@ -233,6 +233,8 @@ describe('DashboardScenePage', () => {
       expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
       await act(async () => pending.resolve());
       expect(await screen.findByText('Panel options')).toBeInTheDocument();
+      expect(loadEditor).toHaveBeenCalledTimes(1);
+      expect(screen.queryByText('Loading ...')).not.toBeInTheDocument();
       expect(screen.queryByTitle('Panel B')).not.toBeInTheDocument();
       expect(locationService.getSearchObject()).toMatchObject({
         editPanel: '1',

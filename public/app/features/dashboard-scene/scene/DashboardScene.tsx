@@ -1254,6 +1254,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     try {
       const value = await view.load(request.signal);
       if (value !== undefined && !request.signal.aborted) {
+        // Committing the view can normalize its URL; that is not a new navigation request.
+        subscription.unsubscribe();
+        unlisten();
         this.setState({ [view.key]: value });
       }
     } finally {
