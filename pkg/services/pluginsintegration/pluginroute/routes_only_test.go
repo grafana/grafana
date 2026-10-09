@@ -108,6 +108,51 @@ func TestRoutesOnlyHandlerAuthorization(t *testing.T) {
 	}
 }
 
+// A version without kinds next to one with them has nothing for the API server
+// to install, so its documents come from versionDocuments, and discovery lists
+// it without any resource.
+func TestMixedManifestRoutesOnlyVersion(t *testing.T) {
+	plugin := testPlugin()
+	plugin.Manifests[0].Versions[1] = app.ManifestVersion{
+		Name:   "v2alpha1",
+		Served: true,
+		OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+			"/namespaces/{namespace}/reports": {Get: testOperation("listReports")},
+		}},
+	}
+	handler := withRequester(loadHandler(t, plugin, allowAll(testOptions())))
+
+	var group metav1.APIGroup
+	getJSON(t, handler, "/apis/example.ext.grafana.app", &group)
+	versions := make([]string, 0, len(group.Versions))
+	for _, v := range group.Versions {
+		versions = append(versions, v.Version)
+	}
+	require.ElementsMatch(t, []string{"v1alpha1", "v2alpha1"}, versions)
+
+	var resources metav1.APIResourceList
+	getJSON(t, handler, "/apis/example.ext.grafana.app/v2alpha1", &resources)
+	require.Empty(t, resources.APIResources, "no placeholder resource is listed")
+
+	// The version with kinds is still the API server's.
+	getJSON(t, handler, "/apis/example.ext.grafana.app/v1alpha1", &resources)
+	names := make([]string, 0, len(resources.APIResources))
+	for _, r := range resources.APIResources {
+		names = append(names, r.Name)
+	}
+	require.Contains(t, names, "testkinds")
+
+	res := get(t, handler, "/openapi/v3/apis/example.ext.grafana.app/v2alpha1")
+	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+	require.Contains(t, res.Header().Get("Cache-Control"), "private")
+	var oas spec3.OpenAPI
+	getJSON(t, handler, "/openapi/v3/apis/example.ext.grafana.app/v2alpha1", &oas)
+	require.Contains(t, oas.Paths.Paths, "/apis/example.ext.grafana.app/v2alpha1/namespaces/{namespace}/reports")
+
+	res = get(t, handler, "/apis/example.ext.grafana.app/v2alpha1/namespaces/default/reports")
+	require.Contains(t, res.Body.String(), errStubRoute.Error(), "the route reached the plugin (%d)", res.Code)
+}
+
 func TestBuildOpenAPIRoutesOnly(t *testing.T) {
 	plugin := routesOnlyPlugin()
 	oas, err := BuildOpenAPI(plugin.JSONData.ID, plugin.Manifests[0], "", OpenAPIOptions{

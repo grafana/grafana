@@ -413,7 +413,6 @@ func TestAddRouteComponents(t *testing.T) {
 			Examples:  map[string]*spec3.Example{"Sample": {ExampleProps: spec3.ExampleProps{Value: "x"}}},
 		},
 	}
-	manifest.Versions[2].Routes.Schemas = map[string]spec.Schema{"Legacy": *spec.StringProperty()} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
 	b := &manifestBuilder{group: manifest.Group, manifest: manifest}
 
 	existing := spec.Int64Property()
@@ -423,8 +422,4 @@ func TestAddRouteComponents(t *testing.T) {
 	require.Equal(t, spec.BoolProperty(), oas.Components.Schemas["Existing"], "the manifest replaces a schema already in the spec")
 	require.Equal(t, "missing", oas.Components.Responses["NotFound"].Description)
 	require.Equal(t, "x", oas.Components.Examples["Sample"].Value)
-
-	legacy := &spec3.OpenAPI{}
-	b.addRouteComponents(legacy, "v2alpha1")
-	require.Equal(t, spec.StringProperty(), legacy.Components.Schemas["Legacy"])
 }

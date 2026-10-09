@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -123,34 +122,20 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		})
 	})
 
-	// The apiserver skips a version with no storage, which would take its custom
-	// routes out of discovery and OpenAPI.
-	t.Run("a routes-only version gets placeholder storage", func(t *testing.T) {
-		routesOnly := func(routes app.ManifestVersionRoutes) *manifestBuilder { //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-			b := testBuilder(t, &app.ManifestData{
-				Group: "example.ext.grafana.app",
-				Versions: []app.ManifestVersion{{
-					Name:   "v1",
-					Served: true,
-					Routes: routes,
-				}},
-			})
-			return b
-		}
+	// Nothing is installed for a version without kinds: its discovery and
+	// OpenAPI documents are served by versionDocuments instead, so discovery
+	// lists no resource for it.
+	t.Run("a version without kinds installs no storage", func(t *testing.T) {
 		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}
-
-		b := routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{"ping": ping}}) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+		b := testBuilder(t, &app.ManifestData{
+			Group: "example.ext.grafana.app",
+			Versions: []app.ManifestVersion{{
+				Name:    "v1",
+				Served:  true,
+				OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{"/namespaces/{namespace}/ping": ping}},
+			}},
+		})
 		info, opts := testAPIGroupOptions(t, b)
-		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
-		require.Equal(t, map[string]rest.Storage{routesOnlyStorageKey: &routesOnlyStorage{}},
-			info.VersionedResourcesStorageMap["v1"])
-
-		// A route that is dropped at mount time, here for shadowing the settings
-		// resource, serves nothing, so the version has nothing to install.
-		b = routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-			"app": ping,
-		}})
-		info, opts = testAPIGroupOptions(t, b)
 		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
 		require.Empty(t, info.VersionedResourcesStorageMap)
 	})

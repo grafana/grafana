@@ -99,11 +99,18 @@ func TestRouteHandlerDeclaredAccess(t *testing.T) {
 	})
 
 	t.Run("HEAD gets the GET operation's check", func(t *testing.T) {
-		access := &recordingAccessClient{allowed: false}
-		rec, client := serve(t, access, versionRoute, http.MethodHead, "get")
-		require.Equal(t, http.StatusForbidden, rec.Code)
-		require.Nil(t, client.req)
-		require.Len(t, access.checks, 1)
+		withHead := versionRoute
+		withHead.Operations.Head = &spec3.Operation{}
+		for name, route := range map[string]manifestroutes.Route{
+			"served by the GET operation":         versionRoute,
+			"declared without a check of its own": withHead,
+		} {
+			access := &recordingAccessClient{allowed: false}
+			rec, client := serve(t, access, route, http.MethodHead, "get")
+			require.Equal(t, http.StatusForbidden, rec.Code, name)
+			require.Nil(t, client.req, name)
+			require.Len(t, access.checks, 1, name)
+		}
 	})
 
 	t.Run("a denied check stops the request", func(t *testing.T) {

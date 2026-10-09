@@ -620,9 +620,8 @@ func TestIntegrationPluginManifestDiscovery(t *testing.T) {
 	}
 }
 
-// A manifest may declare custom routes and no kinds. The version still needs
-// storage for the apiserver to install it, and that placeholder must not leak
-// into the OpenAPI spec.
+// A manifest may declare custom routes and no kinds. No API server is built for
+// it, and its discovery and OpenAPI documents list only what it declares.
 func TestIntegrationPluginManifestRoutesOnly(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

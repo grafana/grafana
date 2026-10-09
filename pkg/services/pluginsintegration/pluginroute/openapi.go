@@ -124,7 +124,7 @@ func (b *manifestBuilder) addRouteComponents(oas *spec3.OpenAPI, version string)
 		if v.Name != version || !v.Served {
 			continue
 		}
-		components := versionOpenAPI(v).Components
+		components := v.OpenAPI.Components
 		if components.IsZero() {
 			return
 		}

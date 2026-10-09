@@ -42,8 +42,9 @@ authorization, timeout and cache-control filters, with the same authorizer, so
 callers see the same decisions and errors. A routes-only handler needs no
 storage provider. Version discovery lists no resources, and the OpenAPI document
 describes only the plugin's routes. A manifest that mixes versions with and
-without kinds still gets an API server; each routes-only version in it is kept
-installed by a placeholder resource that serves no verbs.
+without kinds still gets an API server, which has nothing to install for a
+version without kinds; the handler serves that version's discovery and OpenAPI
+documents the same way, and lists it in the group's discovery.
 
 No listener or background server hooks are started. After stopping and draining
 requests, callers can release storage with `Handler.Destroy()`. The router's
@@ -73,8 +74,10 @@ request bodies, responses, and examples.
 
 A version's custom routes are the paths in its manifest `openapi` section,
 relative to the version root. A manifest from before app-sdk published routes
-there only has the deprecated `routes` and per-kind `routes`, which are
-converted to the same paths first. The components in the `openapi` section are
+there only has the deprecated `routes` and per-kind `routes`. Those are moved
+to the same paths when the manifest is loaded, by
+`definition.MigrateDeprecatedRoutes`, so this package never reads them, and
+`ValidateManifest` refuses a manifest that still has them. The components in the `openapi` section are
 published in the spec and replace any component already published under the
 same name.
 
@@ -115,7 +118,7 @@ plugin, and after reading the parent object, so a refused request never has
 the parent's secure values decrypted. The check's group is the manifest's, its
 namespace the request's, and its verb the declared one or else the request's.
 A check on the parent's own resource also names the parent and its folder. A
-HEAD request served by a GET operation gets that operation's check. A route
+HEAD request that declares no check of its own gets the GET operation's. A route
 that declares a check is refused when no access client is configured.
 
 

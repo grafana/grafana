@@ -26,6 +26,7 @@ import (
 	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
@@ -98,10 +99,10 @@ func TestGetAPIRoutesRegistration(t *testing.T) {
 // generic subresources (/search, /trash), so those routes are dropped.
 func TestVersionRoutesSkipReservedPaths(t *testing.T) {
 	manifest := testManifest(t)
-	operation := manifest.Versions[1].Routes.Namespaced["/foobar"]          //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Namespaced["/testkinds/search"] = operation //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Namespaced["/app"] = operation              //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Cluster["/testkinds"] = operation           //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	operation := manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}/foobar"]
+	manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}/testkinds/search"] = operation
+	manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}/app"] = operation
+	manifest.Versions[1].OpenAPI.Paths["/testkinds"] = operation
 
 	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app"}
 	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
@@ -126,10 +127,8 @@ func TestKindsWithoutPluralNeverReachRouteRegistration(t *testing.T) {
 	manifest.Versions[1].Kinds = append(manifest.Versions[1].Kinds, app.ManifestVersionKind{
 		Kind:  "NoPlural",
 		Scope: "Namespaced",
-		Routes: map[string]spec3.PathProps{
-			"/orphan": {Get: &spec3.Operation{}},
-		},
 	})
+	manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}//{name}/orphan"] = spec3.PathProps{Get: &spec3.Operation{}}
 	b := testBuilder(t, manifest)
 	for path := range mountedRoutes(b, schema.GroupVersion{Group: manifest.Group, Version: "v1alpha1"}) {
 		require.NotContains(t, path, "orphan")
@@ -162,17 +161,15 @@ func TestVersionRoutesKindRoutes(t *testing.T) {
 		Kind:   "ClusterKind",
 		Plural: "ClusterKinds",
 		Scope:  kindstore.ClusterScope,
-		Routes: map[string]spec3.PathProps{
-			"/rebuild": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
-				OperationId: "rebuildClusterKind",
-				Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
-					Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
-				}},
-			}}},
-		},
 	})
+	manifest.Versions[1].OpenAPI.Paths["/clusterkinds/{name}/rebuild"] = spec3.PathProps{Post: &spec3.Operation{OperationProps: spec3.OperationProps{
+		OperationId: "rebuildClusterKind",
+		Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
+			Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
+		}},
+	}}}
 	// Reserved because the kind store serves <plural>/{name}/status itself.
-	manifest.Versions[1].Kinds[0].Routes["/status"] = manifest.Versions[1].Kinds[0].Routes["/reload"]
+	manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}/testkinds/{name}/status"] = manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}/testkinds/{name}/reload"]
 
 	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app"}
 	byPath := mountedRoutes(b, schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
@@ -199,7 +196,7 @@ func TestVersionRoutesKindRoutes(t *testing.T) {
 	require.Equal(t, []string{"TestKind"}, byPath["namespaces/{namespace}/testkinds/{name}/reload"].Post.Tags)
 
 	// The manifest's own operation must not gain the parameters.
-	require.Empty(t, manifest.Versions[1].Kinds[0].Routes["/reload"].Post.Parameters)
+	require.Empty(t, manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}/testkinds/{name}/reload"].Post.Parameters)
 }
 
 // A route that already documents a path parameter must not have it added twice;
@@ -248,11 +245,11 @@ func TestVersionRouteNamespaceParameter(t *testing.T) {
 func TestRouteMux(t *testing.T) {
 	manifest := testManifest(t)
 	op := &spec3.Operation{}
-	manifest.Versions[1].Routes.Cluster["/headonly"] = spec3.PathProps{Head: op}                                           //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Cluster["/bad{pattern}"] = spec3.PathProps{Get: op}                                        //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Cluster["/dir/"] = spec3.PathProps{Get: op}                                                //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Cluster["/traceonly"] = spec3.PathProps{Trace: op, Options: op}                            //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Namespaced["/items/{item}"] = spec3.PathProps{Delete: op, Put: op, Trace: op, Options: op} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].OpenAPI.Paths["/headonly"] = spec3.PathProps{Head: op}
+	manifest.Versions[1].OpenAPI.Paths["/bad{pattern}"] = spec3.PathProps{Get: op}
+	manifest.Versions[1].OpenAPI.Paths["/dir/"] = spec3.PathProps{Get: op}
+	manifest.Versions[1].OpenAPI.Paths["/traceonly"] = spec3.PathProps{Trace: op, Options: op}
+	manifest.Versions[1].OpenAPI.Paths["/namespaces/{namespace}/items/{item}"] = spec3.PathProps{Delete: op, Put: op, Trace: op, Options: op}
 
 	client := &fakeRouteClient{}
 	get := &recordingGetter{obj: &unstructured.Unstructured{Object: map[string]any{
@@ -341,8 +338,8 @@ func TestRouteMux(t *testing.T) {
 func TestVersionRoutesDropUnservedMethods(t *testing.T) {
 	manifest := testManifest(t)
 	op := &spec3.Operation{}
-	manifest.Versions[1].Routes.Cluster["/mixed"] = spec3.PathProps{Get: op, Head: op, Options: op, Trace: op} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	manifest.Versions[1].Routes.Cluster["/traceonly"] = spec3.PathProps{Trace: op}                             //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	manifest.Versions[1].OpenAPI.Paths["/mixed"] = spec3.PathProps{Get: op, Head: op, Options: op, Trace: op}
+	manifest.Versions[1].OpenAPI.Paths["/traceonly"] = spec3.PathProps{Trace: op}
 	b := &manifestBuilder{group: manifest.Group, manifest: manifest, pluginID: "example-app"}
 
 	byPath := mountedRoutes(b, schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"})
@@ -354,7 +351,7 @@ func TestVersionRoutesDropUnservedMethods(t *testing.T) {
 	require.Nil(t, mixed.Options)
 	require.Nil(t, mixed.Trace)
 
-	require.NotNil(t, manifest.Versions[1].Routes.Cluster["/mixed"].Trace) //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
+	require.NotNil(t, manifest.Versions[1].OpenAPI.Paths["/mixed"].Trace)
 }
 
 // OpenAPI allows path parameter names ServeMux does not, so they are renamed
@@ -868,30 +865,15 @@ func TestSearchRouteGates(t *testing.T) {
 	})
 }
 
-// A manifest that declares its routes as OpenAPI paths mounts the same routes
-// as one using the deprecated per-scope Routes, and the deprecated fields are
-// ignored once OpenAPI paths exist.
-func TestVersionRoutesFromOpenAPIPaths(t *testing.T) {
-	gv := schema.GroupVersion{Group: "example.ext.grafana.app", Version: "v1alpha1"}
-	mounted := func(m *app.ManifestData) map[string]*spec3.PathProps {
-		return mountedRoutes(&manifestBuilder{group: m.Group, manifest: m, pluginID: "example-app"}, gv)
-	}
-
-	expected := mounted(testManifest(t))
-	require.Equal(t, []string{
-		"foobar",
-		"namespaces/{namespace}/foobar",
-		"namespaces/{namespace}/testkinds/{name}/reload",
-	}, slices.Sorted(maps.Keys(expected)))
-
+// A manifest still carrying the deprecated routes was not loaded through
+// definition, so it is refused rather than served without them.
+func TestValidateManifestRejectsDeprecatedRoutes(t *testing.T) {
 	manifest := testManifest(t)
-	version := &manifest.Versions[1]
-	version.OpenAPI = versionOpenAPI(*version)
-	// Left over from an older manifest; OpenAPI paths are authoritative.
-	version.Routes.Cluster = map[string]spec3.PathProps{"/stale": {Get: &spec3.Operation{}}} //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	version.Routes.Namespaced = nil                                                          //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-	version.Kinds[0].Routes = map[string]spec3.PathProps{"/stale": {Get: &spec3.Operation{}}}
-	require.Equal(t, expected, mounted(manifest))
+	manifest.Versions[1].Routes.Cluster = map[string]spec3.PathProps{"/stale": {Get: &spec3.Operation{}}} //nolint:staticcheck // SA1019: the input being refused.
+	require.ErrorContains(t, ValidateManifest("example-app", manifest), "version v1alpha1 still has deprecated routes")
+
+	definition.MigrateDeprecatedRoutes(manifest)
+	require.NoError(t, ValidateManifest("example-app", manifest))
 }
 
 // OpenAPI paths that would shadow resource storage, or that mount a kind's

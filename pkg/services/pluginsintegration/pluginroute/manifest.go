@@ -3,6 +3,7 @@ package pluginroute
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -41,6 +42,10 @@ type manifestBuilder struct {
 	getter        getter
 	kinds         map[schema.GroupVersionResource]*kindstore.Store
 	kindPolicies  map[string]kindPolicy
+
+	// documents serves what the API server cannot for versions without kinds.
+	// NewHandler sets it before the handler chain is built.
+	documents func(next http.Handler) http.Handler
 }
 
 // GetGroupVersions returns the served versions, preferred version first.
@@ -158,12 +163,6 @@ func (b *manifestBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIG
 					}
 				}
 			}
-		}
-
-		// Checked against the mounted routes rather than the manifest, since
-		// routes that cannot be served are dropped.
-		if len(storage) == 0 && (hasRoutes(b.GetAPIRoutes(gv)) || len(b.versionRoutes(gv, ignoreSkipped)) > 0) {
-			storage[routesOnlyStorageKey] = &routesOnlyStorage{}
 		}
 
 		if len(storage) > 0 {

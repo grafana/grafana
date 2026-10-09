@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -27,7 +26,6 @@ import (
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/keysroutes"
-	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 	"github.com/grafana/grafana/pkg/services/apiserver/searchroutes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginroute/manifestroutes"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -76,6 +74,11 @@ func (b *manifestBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoute
 	return routes
 }
 
+// hasRoutes reports whether any custom route is mounted.
+func hasRoutes(routes *builder.APIRoutes) bool {
+	return routes != nil && (len(routes.Root) > 0 || len(routes.Namespace) > 0)
+}
+
 func (b *manifestBuilder) servedVersion(gv schema.GroupVersion) *app.ManifestVersion {
 	if b.manifest == nil {
 		return nil
@@ -98,10 +101,9 @@ func (b *manifestBuilder) versionRoutes(gv schema.GroupVersion, skip func(manife
 	return parseManifestRoutes(*version, skip)
 }
 
-// parseManifestRoutes resolves a version's custom routes, from its OpenAPI paths
-// or, for an older manifest, its deprecated routes.
+// parseManifestRoutes resolves a version's custom routes from its OpenAPI paths.
+// Deprecated routes were moved there when the manifest was loaded.
 func parseManifestRoutes(version app.ManifestVersion, skip func(manifestroutes.Problem)) []manifestroutes.Route {
-	version.OpenAPI = versionOpenAPI(version)
 	routes, problems := manifestroutes.Parse(version, routeOptions)
 	for _, p := range problems {
 		skip(p)
@@ -211,42 +213,6 @@ func routeSpec(route manifestroutes.Route) *spec3.PathProps {
 		return withPathParameters(route.Operations, nil, params...)
 	}
 	return withPathParameters(route.Operations, []string{route.Kind.Kind}, append(params, namePathParameter())...)
-}
-
-// versionOpenAPI returns the custom routes a version declares. Manifests built
-// before app-sdk published routes as OpenAPI paths only carry the deprecated
-// Routes, so those are converted to paths the way app-sdk codegen does.
-func versionOpenAPI(version app.ManifestVersion) app.ManifestVersionOpenAPI {
-	out := version.OpenAPI
-	if len(out.Paths) > 0 {
-		return out
-	}
-
-	legacy := version.Routes //nolint:staticcheck // SA1019: Keep serving routes from legacy plugin manifests.
-	paths := map[string]spec3.PathProps{}
-	add := func(prefix string, routes map[string]spec3.PathProps) {
-		for path, props := range routes {
-			paths[prefix+"/"+strings.TrimPrefix(path, "/")] = props
-		}
-	}
-	add("", legacy.Cluster)
-	add("/"+manifestroutes.NamespacedPrefix, legacy.Namespaced)
-	for _, kind := range version.Kinds {
-		prefix := "/" + strings.ToLower(kind.Plural) + "/{" + nameParameter + "}"
-		if kind.Scope != kindstore.ClusterScope {
-			prefix = "/" + manifestroutes.NamespacedPrefix + prefix
-		}
-		add(prefix, kind.Routes)
-	}
-	out.Paths = paths
-
-	if len(legacy.Schemas) > 0 {
-		schemas := maps.Clone(legacy.Schemas)
-		// Schemas declared in the OpenAPI section win over the legacy copies.
-		maps.Copy(schemas, out.Components.Schemas)
-		out.Components.Schemas = schemas
-	}
-	return out
 }
 
 // searchRoutes builds the generic search, trash and hybrid endpoints for the kinds this
@@ -412,11 +378,11 @@ func (b *manifestBuilder) routeHandler(gv schema.GroupVersion, route manifestrou
 }
 
 // declaredCheck returns the access check the manifest declares for a request's
-// method. A HEAD request is matched by a GET pattern, so without a HEAD
-// operation of its own it gets the GET operation's check.
+// method. A HEAD request reads what a GET does, so one that declares no check
+// of its own gets the GET operation's.
 func declaredCheck(route manifestroutes.Route, method string) (authlib.CheckRequest, bool) {
 	check, ok := route.Authz[method]
-	if !ok && method == http.MethodHead && route.Operations.Head == nil {
+	if !ok && method == http.MethodHead {
 		check, ok = route.Authz[http.MethodGet]
 	}
 	return check, ok

@@ -270,18 +270,16 @@ func testPlugin() definition.PluginDefinition {
 				{
 					Name:   "v1alpha1",
 					Served: true,
-					Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-						Cluster:    map[string]spec3.PathProps{"/things": {Get: testOperation("listThings")}},
-						Namespaced: map[string]spec3.PathProps{"/widgets": {Get: testOperation("listWidgets")}},
-					},
+					OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+						"/things":                         {Get: testOperation("listThings")},
+						"/namespaces/{namespace}/widgets": {Get: testOperation("listWidgets")},
+						"/namespaces/{namespace}/testkinds/{name}/reload": {Get: testOperation("reloadTestKind")},
+					}},
 					Kinds: []app.ManifestVersionKind{{
 						Kind:   "TestKind",
 						Plural: "TestKinds",
 						Scope:  "Namespaced",
 						Schema: testSchema(),
-						Routes: map[string]spec3.PathProps{
-							"/reload": {Get: testOperation("reloadTestKind")},
-						},
 					}},
 				},
 				{Name: "v2alpha1", Served: false},

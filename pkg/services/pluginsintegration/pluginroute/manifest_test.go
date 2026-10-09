@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
@@ -66,9 +65,6 @@ func testManifest(t *testing.T) *app.ManifestData {
 					SearchFields: []app.ManifestVersionKindSearchField{{
 						Name: "testField", Path: "spec.testField", Type: "string",
 					}},
-					Routes: map[string]spec3.PathProps{
-						"/reload": {Post: operation("reloadTestKind")},
-					},
 					Schema: testVersionSchema(t, `{
 						"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},
 						"spec":{"type":"object","additionalProperties":false,"properties":{"testField":{"type":"string"},"foo":{"$ref":"#/components/schemas/Foo"}},"required":["testField","foo"]},
@@ -78,24 +74,18 @@ func testManifest(t *testing.T) *app.ManifestData {
 						"Baz":{"type":"object","additionalProperties":false,"properties":{"value":{"type":"integer"}},"required":["value"]}
 					}`),
 				}},
-				Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-					Namespaced: map[string]spec3.PathProps{
-						"/foobar": {Get: operation("getFoobar")},
-					},
-					Cluster: map[string]spec3.PathProps{
-						"/foobar": {Get: operation("getClusterFoobar")},
-					},
-					Schemas: map[string]spec.Schema{},
-				},
+				OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+					"/foobar":                        {Get: operation("getClusterFoobar")},
+					"/namespaces/{namespace}/foobar": {Get: operation("getFoobar")},
+					"/namespaces/{namespace}/testkinds/{name}/reload": {Post: operation("reloadTestKind")},
+				}},
 			},
 			{
 				Name:   "v2alpha1",
 				Served: true,
-				Routes: app.ManifestVersionRoutes{ //nolint:staticcheck // SA1019: Exercise legacy manifest route compatibility.
-					Namespaced: map[string]spec3.PathProps{
-						"/example": {Get: operation("getExample")},
-					},
-				},
+				OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+					"/namespaces/{namespace}/example": {Get: operation("getExample")},
+				}},
 			},
 		},
 	}

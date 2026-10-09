@@ -153,14 +153,14 @@ func offlineManifest(t *testing.T) *app.ManifestData {
 				SearchFields: []app.ManifestVersionKindSearchField{{
 					Name: "testField", Path: "spec.testField", Type: "string",
 				}},
-				Routes: map[string]spec3.PathProps{
-					"/reload": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
-						OperationId: "reloadTestKind",
-						Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
-							Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
-						}},
-					}}},
-				},
+			}},
+			OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+				"/namespaces/{namespace}/testkinds/{name}/reload": {Post: &spec3.Operation{OperationProps: spec3.OperationProps{
+					OperationId: "reloadTestKind",
+					Responses: &spec3.Responses{ResponsesProps: spec3.ResponsesProps{
+						Default: &spec3.Response{ResponseProps: spec3.ResponseProps{Description: "OK"}},
+					}},
+				}}},
 			}},
 		}},
 	}

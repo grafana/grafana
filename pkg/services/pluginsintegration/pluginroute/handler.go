@@ -116,7 +116,7 @@ func APIGroup(m *app.ManifestData) metav1.APIGroup {
 			g.PreferredVersion = g.Versions[len(g.Versions)-1]
 		}
 	}
-	// Make it first
+	// Discovery lists versions in order of preference.
 	if i := slices.Index(g.Versions, g.PreferredVersion); i > 0 {
 		g.Versions = append([]metav1.GroupVersionForDiscovery{g.PreferredVersion}, slices.Delete(g.Versions, i, i+1)...)
 	}
@@ -175,6 +175,9 @@ func NewHandler(pluginID string, manifest *app.ManifestData, opts Options) (*Han
 		return nil, fmt.Errorf("%s: authorization: %w", group, err)
 	}
 	config.Authentication.Authenticator = apiserverauthenticator.NewAuthenticator()
+	if b.documents, err = b.versionDocuments(b.kindlessVersions()); err != nil {
+		return nil, err
+	}
 	if err := builder.SetupConfig(scheme, config, builders, opts.BuildVersion,
 		b.buildHandlerChain, gvs,
 		[]common.GetOpenAPIDefinitions{appsdkapiserver.GetCommonOpenAPIDefinitions}, reg, resources); err != nil {
@@ -244,6 +247,14 @@ func ValidateManifest(pluginID string, manifest *app.ManifestData) error {
 	if !strings.HasSuffix(group, ".ext.grafana.app") || len(validation.IsDNS1123Subdomain(group)) > 0 {
 		return fmt.Errorf("plugin %q: invalid manifest group %q: must be a DNS name ending in .ext.grafana.app", pluginID, group)
 	}
+	for _, version := range manifest.Versions {
+		// Loading a manifest moves these to the OpenAPI paths, so a manifest that
+		// still has them was not loaded through definition and would lose them.
+		routes := version.Routes //nolint:staticcheck // SA1019: only checked, to refuse a manifest that was not migrated.
+		if len(routes.Cluster) > 0 || len(routes.Namespaced) > 0 || len(routes.Schemas) > 0 {
+			return fmt.Errorf("plugin %q: version %s still has deprecated routes; load the manifest with definition.ParseManifest, or call definition.MigrateDeprecatedRoutes", pluginID, version.Name)
+		}
+	}
 	return nil
 }
 
@@ -295,7 +306,11 @@ func (b *manifestBuilder) unionAuthorizer() (authorizer.Authorizer, error) {
 func (b *manifestBuilder) buildHandlerChain(builders []builder.APIGroupBuilder, reg prometheus.Registerer) builder.BuildHandlerChainFunc {
 	chain := builder.GetDefaultBuildHandlerChainFunc(builders, reg)
 	return func(delegate http.Handler, c *genericapiserver.Config) http.Handler {
-		return chain(b.routeMux(delegate, reg), c)
+		next := delegate
+		if b.documents != nil {
+			next = b.documents(delegate)
+		}
+		return chain(b.routeMux(next, reg), c)
 	}
 }
 

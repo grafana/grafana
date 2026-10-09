@@ -15,57 +15,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	genericapifilters "k8s.io/apiserver/pkg/endpoints/filters"
 	"k8s.io/apiserver/pkg/endpoints/request"
-	"k8s.io/apiserver/pkg/registry/rest"
 	genericfilters "k8s.io/apiserver/pkg/server/filters"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
-	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	apiserverauthenticator "github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
-	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
-
-// routesOnlyStorageKey holds the placeholder for a version that serves custom
-// routes but no resources.
-const routesOnlyStorageKey = "__routes"
-
-// routesOnlyStorage keeps a routes-only version installed. The apiserver skips
-// any group version without storage, which would leave its routes out of
-// discovery and OpenAPI.
-//
-// It implements no verbs, so the installer mounts no handlers or OpenAPI paths
-// for it; it only shows up in discovery as a resource with no verbs.
-type routesOnlyStorage struct{}
-
-var (
-	_ rest.Storage              = (*routesOnlyStorage)(nil)
-	_ rest.Scoper               = (*routesOnlyStorage)(nil)
-	_ rest.SingularNameProvider = (*routesOnlyStorage)(nil)
-)
-
-// New returns Settings because the installer resolves the storage kind through
-// the scheme, and Settings is registered in every served version.
-func (s *routesOnlyStorage) New() runtime.Object {
-	return &apppluginV0.Settings{}
-}
-
-func (s *routesOnlyStorage) NamespaceScoped() bool {
-	return true
-}
-
-func (s *routesOnlyStorage) GetSingularName() string {
-	return routesOnlyStorageKey
-}
-
-func (s *routesOnlyStorage) Destroy() {}
-
-// hasRoutes reports whether any custom route is mounted.
-func hasRoutes(routes *builder.APIRoutes) bool {
-	return routes != nil && (len(routes.Root) > 0 || len(routes.Namespace) > 0)
-}
 
 // hasKinds reports whether any served version of a manifest declares a kind.
 func hasKinds(manifest *app.ManifestData) bool {
@@ -94,30 +52,18 @@ func newRoutesOnlyHandler(b *manifestBuilder, reg prometheus.Registerer) (*Handl
 		return nil, fmt.Errorf("%s: authorization: %w", b.group, err)
 	}
 
-	documents := http.NewServeMux()
-	group := APIGroup(b.manifest)
-	group.TypeMeta = metav1.TypeMeta{Kind: "APIGroup", APIVersion: "v1"}
-	documents.Handle("GET /apis/"+b.group, jsonDocument(group))
-	for _, gv := range b.GetGroupVersions() {
-		documents.Handle("GET /apis/"+gv.String(), jsonDocument(metav1.APIResourceList{
-			TypeMeta:     metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"},
-			GroupVersion: gv.String(),
-			APIResources: []metav1.APIResource{},
-		}))
-		oas, err := b.routesOnlyOpenAPI(gv)
-		if err != nil {
-			return nil, fmt.Errorf("%s: openapi: %w", gv, err)
-		}
-		documents.Handle("GET /openapi/v3/apis/"+gv.String(), jsonDocument(oas))
+	documents, err := b.versionDocuments(b.GetGroupVersions())
+	if err != nil {
+		return nil, err
 	}
-	documents.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	notFound := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_ = errhttp.Write(r.Context(), &apierrors.StatusError{ErrStatus: metav1.Status{
 			Status:  metav1.StatusFailure,
 			Code:    http.StatusNotFound,
 			Reason:  metav1.StatusReasonNotFound,
 			Message: "the server could not find the requested resource",
 		}}, w)
-	}))
+	})
 
 	scheme := runtime.NewScheme()
 	metav1.AddToGroupVersion(scheme, schema.GroupVersion{Version: "v1"})
@@ -128,7 +74,7 @@ func newRoutesOnlyHandler(b *manifestBuilder, reg prometheus.Registerer) (*Handl
 	longRunning := genericfilters.BasicLongRunningRequestCheck(sets.NewString("watch"), sets.NewString())
 	const requestTimeout = 60 * time.Second
 
-	handler := b.routeMux(documents, reg)
+	handler := b.routeMux(documents(notFound), reg)
 	handler = filters.WithRequester(handler)
 	handler = genericapifilters.WithAuthorization(handler, authz, codecs)
 	handler = genericapifilters.WithAuthentication(handler, apiserverauthenticator.NewAuthenticator(),
@@ -144,8 +90,55 @@ func newRoutesOnlyHandler(b *manifestBuilder, reg prometheus.Registerer) (*Handl
 	return &Handler{Handler: handler, destroy: func() {}}, nil
 }
 
-// routesOnlyOpenAPI builds a version's OpenAPI document from its routes alone,
-// with the same post-processing as a full handler's.
+// kindlessVersions are the served versions that declare no kinds. The API
+// server has nothing to install for them, so it serves no documents for them.
+func (b *manifestBuilder) kindlessVersions() []schema.GroupVersion {
+	var out []schema.GroupVersion
+	for _, gv := range b.GetGroupVersions() {
+		if v := b.servedVersion(gv); v != nil && len(v.Kinds) == 0 {
+			out = append(out, gv)
+		}
+	}
+	return out
+}
+
+// versionDocuments serves the discovery and OpenAPI documents of versions
+// without kinds, and, when there are any, the group document listing every
+// served version, which the API server would otherwise list without them.
+// Every other request goes to next.
+func (b *manifestBuilder) versionDocuments(versions []schema.GroupVersion) (func(next http.Handler) http.Handler, error) {
+	if len(versions) == 0 {
+		return func(next http.Handler) http.Handler { return next }, nil
+	}
+	documents := http.NewServeMux()
+	group := APIGroup(b.manifest)
+	group.TypeMeta = metav1.TypeMeta{Kind: "APIGroup", APIVersion: "v1"}
+	documents.Handle("GET /apis/"+b.group, jsonDocument(group))
+	for _, gv := range versions {
+		documents.Handle("GET /apis/"+gv.String(), jsonDocument(metav1.APIResourceList{
+			TypeMeta:     metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"},
+			GroupVersion: gv.String(),
+			APIResources: []metav1.APIResource{},
+		}))
+		oas, err := b.routesOnlyOpenAPI(gv)
+		if err != nil {
+			return nil, fmt.Errorf("%s: openapi: %w", gv, err)
+		}
+		documents.Handle("GET /openapi/v3/apis/"+gv.String(), jsonDocument(oas))
+	}
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if _, pattern := documents.Handler(r); pattern != "" {
+				documents.ServeHTTP(w, r)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}, nil
+}
+
+// routesOnlyOpenAPI builds the OpenAPI document of a version without kinds from
+// its routes alone, with the same post-processing as the API server's.
 func (b *manifestBuilder) routesOnlyOpenAPI(gv schema.GroupVersion) (*spec3.OpenAPI, error) {
 	return b.PostProcessOpenAPI(&spec3.OpenAPI{
 		Version: "3.0.0",

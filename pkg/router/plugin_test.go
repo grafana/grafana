@@ -544,7 +544,7 @@ func TestPluginLoaderIsolatesFingerprintFailure(t *testing.T) {
 	bad.Versions = append([]app.ManifestVersion(nil), good.Versions...)
 	path := spec3.PathProps{Post: &spec3.Operation{}}
 	path.Post.AddExtension("x-unencodable", func() {})
-	bad.Versions[0].Routes.Namespaced = map[string]spec3.PathProps{"/bad": path} //nolint:staticcheck
+	bad.Versions[0].OpenAPI.Paths = map[string]spec3.PathProps{"/namespaces/{namespace}/bad": path}
 	defs := []definition.PluginDefinition{
 		{JSONData: plugins.JSONData{ID: "example-app"}, Manifests: []*app.ManifestData{&bad, good}},
 		{JSONData: plugins.JSONData{ID: "other-app"}, Manifests: []*app.ManifestData{good}},
