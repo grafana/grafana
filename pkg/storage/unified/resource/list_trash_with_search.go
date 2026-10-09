@@ -19,6 +19,7 @@ var errSearchCannotAnswerTrash = errors.New("search cannot answer this trash lis
 func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListTrashFromSearch")
 	defer span.End()
+	s.reportSearchListBodies(ctx)
 	minResourceVersion := ToSnowflakeRV(req.ResourceVersion)
 
 	srq := &resourcepb.ResourceSearchRequest{

@@ -9,6 +9,8 @@ import (
 	"time"
 	"uuid"
 
+	"github.com/prometheus/client_golang/prometheus"
+	promtestutil "github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -238,13 +240,13 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 	}
 	wantByName := map[string]want{}
 
-	write := func(name, team, folder, title string) int64 {
+	writeIn := func(namespace, name, team, folder, title string) int64 {
 		obj := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": searchBackedListGroup + "/v0alpha1",
 			"kind":       "Playlist",
 			"metadata": map[string]any{
 				"name":      name,
-				"namespace": ns,
+				"namespace": namespace,
 				"labels":    map[string]any{"team": team},
 			},
 			"spec": map[string]any{"title": title},
@@ -255,7 +257,7 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		value, err := obj.MarshalJSON()
 		require.NoError(t, err)
 
-		key := &resourcepb.ResourceKey{Group: searchBackedListGroup, Resource: searchBackedListResource, Namespace: ns, Name: name}
+		key := &resourcepb.ResourceKey{Group: searchBackedListGroup, Resource: searchBackedListResource, Namespace: namespace, Name: name}
 		prev := int64(0)
 		if existing := backend.ReadResource(ctx, &resourcepb.ReadRequest{Key: key}); existing != nil && existing.Error == nil {
 			prev = existing.ResourceVersion
@@ -275,6 +277,9 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		require.NoError(t, err)
 		require.Greater(t, rv, int64(0))
 		return rv
+	}
+	write := func(name, team, folder, title string) int64 {
+		return writeIn(ns, name, team, folder, title)
 	}
 
 	for i := 0; i < authorized; i++ {
@@ -297,8 +302,10 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 		write(fmt.Sprintf("other-%02d", i), otherTeam, okFolder, "other")
 	}
 
+	metrics := resource.ProvideStorageMetrics(prometheus.NewRegistry())
 	access := &denyFolderAccess{denied: deniedFolder}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
+		StorageMetrics:              metrics,
 		Backend:                     counting,
 		AccessClient:                access,
 		AuthorizeBeforeFetchEnabled: opts.AuthorizeBeforeFetch,
@@ -398,6 +405,32 @@ func RunTestSearchBackedList(t *testing.T, ctx context.Context, backend resource
 			require.Equal(t, int64(6), counting.batchReads.Load())
 			require.Equal(t, int64(0), counting.reads.Load())
 		}
+	})
+
+	// An in-process search that has to build the index first reads every object of
+	// the namespace on the list's behalf. Those reads build the index; they are not
+	// bodies the list read and dropped.
+	t.Run("an index built during the list does not count as list body reads", func(t *testing.T) {
+		if !opts.ExpectBatchReads {
+			t.Skip("only KV-backed lists report body reads")
+		}
+		const coldNS = "search-list-cold"
+		coldCtx := claims.WithAuthInfo(context.Background(), &identity.StaticRequester{
+			Type: claims.TypeUser, UserID: 1, UserUID: "u1", Namespace: coldNS, OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+		})
+		for i := range 100 {
+			writeIn(coldNS, fmt.Sprintf("cold-%03d", i), matchTeam, okFolder, "cold")
+		}
+		req := newReq(1, "")
+		req.Options.Key.Namespace = coldNS
+		requested := metrics.ListBodyKeysRequested.WithLabelValues("search", "count_limit")
+		before := promtestutil.ToFloat64(requested)
+
+		resp, err := server.List(coldCtx, req)
+		require.NoError(t, err)
+		require.Nil(t, resp.Error)
+		require.Len(t, resp.Items, 1)
+		require.Equal(t, float64(1), promtestutil.ToFloat64(requested)-before, "only the returned row's body counts")
 	})
 }
 
