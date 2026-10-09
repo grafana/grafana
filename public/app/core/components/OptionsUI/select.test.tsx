@@ -31,11 +31,7 @@ describe('SelectValueEditor', () => {
   it('loads static options and displays current selection', async () => {
     render(<SelectValueEditor {...buildProps({})} />);
 
-    await waitFor(() => {
-      expect(screen.queryByText('Loading options')).not.toBeInTheDocument();
-    });
-
-    expect(screen.getByText('B')).toBeVisible();
+    await waitFor(() => expect(screen.getByText('B')).toBeVisible());
   });
 
   it('calls onChange when another option is chosen', async () => {
@@ -54,8 +50,6 @@ describe('SelectValueEditor', () => {
   it('shows unknown value as a fallback option label', async () => {
     render(<SelectValueEditor {...buildProps({ value: 'orphan' })} />);
 
-    await waitFor(() => expect(screen.queryByText('Loading options')).not.toBeInTheDocument());
-
-    expect(screen.getByText('orphan')).toBeVisible();
+    await waitFor(() => expect(screen.getByText('orphan')).toBeVisible());
   });
 });

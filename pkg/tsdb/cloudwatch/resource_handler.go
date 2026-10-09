@@ -35,6 +35,8 @@ func (ds *DataSource) newResourceMux() *http.ServeMux {
 	mux.HandleFunc("/regions", ds.resourceRequestMiddleware(ds.RegionsHandler))
 	// remove this once AWS's Cross Account Observability is supported in GovCloud
 	mux.HandleFunc("/legacy-log-groups", ds.handleResourceReq(ds.handleGetLogGroups))
+	mux.HandleFunc("/promql-label-keys", ds.resourceRequestMiddleware(ds.PromQLLabelKeysHandler))
+	mux.HandleFunc("/promql-label-values", ds.resourceRequestMiddleware(ds.PromQLLabelValuesHandler))
 
 	return mux
 }

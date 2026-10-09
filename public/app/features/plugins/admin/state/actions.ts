@@ -5,6 +5,7 @@ import { type PanelPlugin, type PluginError } from '@grafana/data';
 import { config, getBackendSrv, isFetchError } from '@grafana/runtime';
 import { refetchPanelPluginMetas } from '@grafana/runtime/internal';
 import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
+import { type PluginDashboard } from 'app/types/plugins';
 import { type StoreState, type ThunkResult } from 'app/types/store';
 
 import { clearPluginInfoInCache } from '../../loader/pluginInfoCache';
@@ -256,13 +257,16 @@ export const uninstall = createAsyncThunk<Update<CatalogPlugin, string>, string>
 // We need this to be backwards-compatible with other parts of Grafana.
 // (Originally in "public/app/features/plugins/state/actions.ts")
 // TODO<remove once the "plugin_admin_enabled" feature flag is removed>
-export const loadPluginDashboards = createAsyncThunk(`${STATE_PREFIX}/loadPluginDashboards`, async (_, thunkApi) => {
-  const state = thunkApi.getState() as StoreState;
-  const dataSourceType = state.dataSources.dataSource.type;
-  const url = `api/plugins/${dataSourceType}/dashboards`;
+export const loadPluginDashboards = createAsyncThunk<PluginDashboard[], void, { state: StoreState }>(
+  `${STATE_PREFIX}/loadPluginDashboards`,
+  async (_, thunkApi) => {
+    const state = thunkApi.getState();
+    const dataSourceType = state.dataSources.dataSource.type;
+    const url = `api/plugins/${dataSourceType}/dashboards`;
 
-  return getBackendSrv().get(url);
-});
+    return getBackendSrv().get<PluginDashboard[]>(url);
+  }
+);
 
 export const panelPluginLoaded = createAction<PanelPlugin>(`${STATE_PREFIX}/panelPluginLoaded`);
 

@@ -2,6 +2,9 @@ import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { Dropdown } from '../Dropdown/Dropdown';
+import { Menu } from '../Menu/Menu';
+
 import { ConfirmModal } from './ConfirmModal';
 
 jest.useFakeTimers();
@@ -227,5 +230,62 @@ describe('ConfirmModal', () => {
     await waitFor(() => {
       expect(confirmButton).toBeEnabled();
     });
+  });
+});
+
+describe('ConfirmModal focus management', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    user = userEvent.setup({ delay: null });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('correctly moves focus inside the confirmation modal when opened from a dropdown menu item', async () => {
+    function OpenedFromDropdown() {
+      const [isOpen, setIsOpen] = useState(false);
+
+      return (
+        <>
+          <Dropdown
+            overlay={
+              <Menu>
+                <Menu.Item label="Delete all rules" onClick={() => setIsOpen(true)} />
+              </Menu>
+            }
+          >
+            <button>Folder actions</button>
+          </Dropdown>
+          <ConfirmModal
+            title="Delete"
+            body="This will delete all rules in the folder"
+            confirmText="Delete"
+            confirmationText="Delete"
+            isOpen={isOpen}
+            onConfirm={() => {}}
+            onDismiss={() => setIsOpen(false)}
+          />
+        </>
+      );
+    }
+
+    render(<OpenedFromDropdown />);
+
+    await user.click(screen.getByRole('button', { name: 'Folder actions' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Delete all rules' }));
+    await screen.findByRole('dialog');
+
+    // The dropdown returns focus to its trigger as it unmounts, so assert the settled state
+    // rather than polling — polling can catch the modal's focus before the trigger steals it.
+    // The modal focuses via an animation frame, which fake timers also drive.
+    await act(async () => {
+      jest.runAllTimers();
+    });
+
+    expect(screen.getByPlaceholderText('Type "Delete" to confirm')).toHaveFocus();
   });
 });

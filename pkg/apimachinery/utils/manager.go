@@ -1,5 +1,14 @@
 package utils
 
+import (
+	"errors"
+	"fmt"
+	"net/http"
+
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
 // ManagerProperties is used to identify the manager of the resource.
 type ManagerProperties struct {
 	// The kind of manager, which is responsible for managing the resource.
@@ -98,6 +107,42 @@ func (k ManagerKind) IsClassic() bool {
 	default:
 		return false
 	}
+}
+
+func NewForbiddenManagerKindChangeError(current, requested ManagerProperties) *apierrors.StatusError {
+	return &apierrors.StatusError{ErrStatus: metav1.Status{
+		Status: metav1.StatusFailure,
+		Code:   http.StatusForbidden,
+		Reason: metav1.StatusReasonForbidden,
+		Message: fmt.Sprintf("Cannot change resource manager kind from %q (identity %q) to %q (identity %q); remove the existing manager first, then add the new one",
+			current.Kind, current.Identity, requested.Kind, requested.Identity),
+		Details: &metav1.StatusDetails{
+			Causes: []metav1.StatusCause{{
+				Type:  "ResourceManagerKindConflict",
+				Field: "metadata.annotations[" + AnnoKeyManagerKind + "]",
+			}},
+		},
+	}}
+}
+
+func IsForbiddenManagerKindChangeError(err error) bool {
+	var statusErr apierrors.APIStatus
+	if !errors.As(err, &statusErr) {
+		return false
+	}
+	status := statusErr.Status()
+	if status.Code != http.StatusForbidden || status.Reason != metav1.StatusReasonForbidden {
+		return false
+	}
+	if status.Details != nil {
+		for _, cause := range status.Details.Causes {
+			if cause.Type == "ResourceManagerKindConflict" {
+				return true
+			}
+		}
+	}
+	// Older API instances do not include a structured cause during rolling upgrades.
+	return status.Message == "Cannot change resource manager kind; remove the existing manager first, then add the new one"
 }
 
 // SourceProperties is used to identify the source of a provisioned resource.

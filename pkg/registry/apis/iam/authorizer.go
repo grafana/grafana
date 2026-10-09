@@ -14,6 +14,7 @@ import (
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/display"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/sso"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	gfauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 )
@@ -80,19 +81,7 @@ func newIAMAuthorizer(
 	resourceAuthorizer[iamv0.UserResourceInfo.GetName()] = newUserAuthorizer(accessClient)
 	resourceAuthorizer[iamv0.AuthInfoResourceInfo.GetName()] = serviceIdentityAuthorizer
 	resourceAuthorizer[iamv0.TeamResourceInfo.GetName()] = newTeamAuthorizer(accessClient)
-	// The SSOSetting kind had no k8s-API consumers, so no authorizer was ever
-	// registered. Interim: allow authenticated identities; real settings:write
-	// RBAC is a follow-up (tracked with the SSO settings migration).
-	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
-		requester, err := identity.GetRequester(ctx)
-		if err != nil || requester == nil {
-			return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
-		}
-		if requester.IsIdentityType(authlib.TypeAnonymous) {
-			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
-		}
-		return authorizer.DecisionAllow, "", nil
-	})
+	resourceAuthorizer[legacyiamv0.SSOSettingResourceInfo.GetName()] = newSSOSettingAuthorizer(accessClient)
 	resourceAuthorizer["searchUsers"] = serviceAuthorizer
 	resourceAuthorizer["searchTeams"] = serviceAuthorizer
 	// TODO: Implement fine-grained authorization for external group mapping search on the search level
@@ -145,6 +134,16 @@ func (s *iamAuthorizer) Authorize(ctx context.Context, attr authorizer.Attribute
 	}
 
 	return authz.Authorize(ctx, attr)
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (s *iamAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(s.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (s *iamAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }
 
 // allowListAuthorizer allows a nameless list (resource request, no subresource, no name, verb=list)
@@ -201,6 +200,49 @@ func newTeamAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer 
 	})
 
 	return allowListAuthorizer(base)
+}
+
+// newSSOSettingAuthorizer authorizes ssosettings against the legacy settings RBAC:
+// the check targets the foreign setting.grafana.app/settings resource named
+// auth.<provider>. The identity guards run first, so a nameless list and create
+// (neither carries a provider name at authz time) are only allowed after the
+// no-identity/anonymous denials; the redacting store then filters per-provider.
+func newSSOSettingAuthorizer(accessClient authlib.AccessClient) authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		// The "~" login singleton is public and secret-free, not a provider; skip RBAC.
+		if attr.GetVerb() == utils.VerbGet && attr.GetName() == sso.LoginConfigName {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		requester, err := identity.GetRequester(ctx)
+		if err != nil || requester == nil {
+			return authorizer.DecisionDeny, "cannot access ssosettings without an identity", nil
+		}
+		if requester.IsIdentityType(authlib.TypeAnonymous) {
+			return authorizer.DecisionDeny, "anonymous identities cannot access ssosettings", nil
+		}
+
+		// Neither a nameless list nor a create carries a provider name at authz time;
+		// the redacting store filters the list and enforces per-provider write on create.
+		if (attr.GetVerb() == utils.VerbList && attr.GetName() == "") || attr.GetVerb() == utils.VerbCreate {
+			return authorizer.DecisionAllow, "", nil
+		}
+
+		res, err := accessClient.Check(ctx, requester, authlib.CheckRequest{
+			Verb:      attr.GetVerb(),
+			Group:     sso.SettingsAuthzGroup,
+			Resource:  sso.SettingsAuthzResource,
+			Namespace: attr.GetNamespace(),
+			Name:      "auth." + attr.GetName(),
+		}, "")
+		if err != nil {
+			return authorizer.DecisionDeny, "", err
+		}
+		if !res.Allowed {
+			return authorizer.DecisionDeny, "requires settings permission for the provider", nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	})
 }
 
 // allowSelfAuthorizer allows any authenticated identity to GET the current-user

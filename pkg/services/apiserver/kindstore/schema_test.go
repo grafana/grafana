@@ -138,16 +138,16 @@ func TestExpandSchemaRefsEverywhere(t *testing.T) {
 	root := spec.Schema{SchemaProps: spec.SchemaProps{
 		Type:                 []string{"object"},
 		Properties:           map[string]spec.Schema{"prop": ref()},
-		AdditionalProperties: &spec.SchemaOrBool{Schema: ptr(ref())},
-		AdditionalItems:      &spec.SchemaOrBool{Schema: ptr(ref())},
+		AdditionalProperties: &spec.SchemaOrBool{Schema: new(ref())},
+		AdditionalItems:      &spec.SchemaOrBool{Schema: new(ref())},
 		Items: &spec.SchemaOrArray{
-			Schema:  ptr(ref()),
+			Schema:  new(ref()),
 			Schemas: []spec.Schema{ref()},
 		},
 		AllOf: []spec.Schema{ref()},
 		AnyOf: []spec.Schema{ref()},
 		OneOf: []spec.Schema{ref()},
-		Not:   ptr(ref()),
+		Not:   new(ref()),
 		// Definitions are never consulted by the validator, so they are dropped
 		// rather than expanded.
 		Definitions: spec.Definitions{"unused": ref()},
@@ -205,5 +205,3 @@ func TestSchemaValidatorDropsCommonFields(t *testing.T) {
 	require.Len(t, kindSchema.Properties, 4, "the manifest schema is left alone")
 	require.Len(t, kindSchema.Required, 4)
 }
-
-func ptr[T any](v T) *T { return &v }

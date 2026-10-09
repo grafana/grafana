@@ -79,7 +79,7 @@ describe('ResourcesTable', () => {
     expect(container.querySelector('img')).toHaveAttribute('src', datasourceA.meta.info.logos.small);
   });
 
-  it('renders plugins with their logo', () => {
+  it('renders plugins with their logo', async () => {
     const plugin = getLocalPluginMock();
     const resources = [
       wellFormedPluginMigrationItem(1, {
@@ -91,7 +91,7 @@ describe('ResourcesTable', () => {
 
     const { container } = render({ resources, localPlugins: [plugin] });
 
-    expect(screen.getByText(plugin.name)).toBeInTheDocument();
+    expect(await screen.findByText(plugin.name)).toBeInTheDocument();
     expect(screen.getByText('Plugins')).toBeInTheDocument();
     expect(container.querySelector('img')).toHaveAttribute('src', plugin.info.logos.small);
   });

@@ -36,6 +36,12 @@ const packageColors = [
   color({ r: 128, g: 110, b: 183 }),
 ];
 
+// Painted on top of the bar palettes, which are light in both themes (light mode brightens them further).
+// These can't come from the app theme: a theme token follows the app surface, not the bar, so in dark mode
+// it resolves light and disappears against the bar it sits on.
+export const BAR_TEXT_COLOR = '#222222';
+export const BAR_GROUP_STRIP_COLOR = '#666666';
+
 const byValueMinColor = getBarColorByValue(1, 100, 0, 1);
 const byValueMaxColor = getBarColorByValue(100, 100, 0, 1);
 export const byValueGradient = `linear-gradient(90deg, ${byValueMinColor} 0%, ${byValueMaxColor} 100%)`;

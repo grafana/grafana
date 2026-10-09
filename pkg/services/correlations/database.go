@@ -401,7 +401,7 @@ func (s CorrelationsService) deleteCorrelationsBySourceUID(ctx context.Context, 
 
 func (s CorrelationsService) deleteCorrelationsByTargetUID(ctx context.Context, cmd DeleteCorrelationsByTargetUIDCommand) error {
 	return s.SQLStore.WithDbSession(ctx, func(session *db.Session) error {
-		_, err := session.Where("source_uid = ? and org_id = ?", cmd.TargetUID, cmd.OrgId).Delete(&Correlation{})
+		_, err := session.Where("target_uid = ? and org_id = ?", cmd.TargetUID, cmd.OrgId).Delete(&Correlation{})
 		return err
 	})
 }

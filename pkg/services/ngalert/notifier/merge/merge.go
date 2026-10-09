@@ -18,7 +18,7 @@ import (
 	"strings"
 
 	"github.com/grafana/alerting/utils/hash"
-	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
@@ -138,7 +138,13 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 	if err != nil {
 		return v1.AMConfigV1{}, MergeResult{}, fmt.Errorf("failed to convert imported receivers: %w", err)
 	}
-	mergedReceivers, renamedReceivers, addedReceivers := Receivers(cfg.AlertmanagerConfig.Receivers, importedReceivers, mimirCfg.Identifier)
+	mergedReceivers, renamedReceivers, addedReceiverUIDs := Receivers(cfg.Receivers, importedReceivers, mimirCfg.Identifier)
+	addedReceivers := make([]string, 0, len(addedReceiverUIDs))
+	for _, uid := range addedReceiverUIDs {
+		if r, ok := mergedReceivers[uid]; ok {
+			addedReceivers = append(addedReceivers, r.Name)
+		}
+	}
 
 	mergedTimeIntervals, renamedTimeIntervals, addedTimeIntervalUIDs := TimeIntervals(
 		cfg.TimeIntervals,
@@ -152,7 +158,7 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 		}
 	}
 
-	managedRoutes := make(v1.ManagedRoutes, len(cfg.ManagedRoutes)+1)
+	managedRoutes := make(map[string]*v1.Route, len(cfg.ManagedRoutes)+1)
 	{
 		maps.Copy(managedRoutes, cfg.ManagedRoutes)
 		extraRoute := mcfg.ToGrafanaRoute()
@@ -177,34 +183,34 @@ func MergeExtraConfig(_ context.Context, cfg *v1.AMConfigV1) (v1.AMConfigV1, Mer
 	}
 
 	return v1.AMConfigV1{
-			ExtraConfigs: cfg.ExtraConfigs[1:],
-			Templates:    templates,
-			AlertmanagerConfig: v1.PostableApiAlertingConfig{
-				Config: v1.Config{
-					Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
-					Route:        cfg.AlertmanagerConfig.Route,
-					InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
-					Templates:    nil, // Grafana does not use this.
-				},
-				Receivers: mergedReceivers,
+		ExtraConfigs: cfg.ExtraConfigs[1:],
+		Templates:    templates,
+		Receivers:    mergedReceivers,
+		AlertmanagerConfig: v1.PostableApiAlertingConfig{
+			Config: v1.Config{
+				Global:       nil, // Grafana does not use global. The Global settings are set to the respective integrations at parse time.
+				Route:        cfg.AlertmanagerConfig.Route,
+				InhibitRules: cfg.AlertmanagerConfig.InhibitRules,
+				Templates:    nil, // Grafana does not use this.
 			},
-			ManagedRoutes:   managedRoutes,
-			InhibitionRules: managedInhibitionRules,
-			TimeIntervals:   mergedTimeIntervals,
-		}, MergeResult{
-			RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
-			AddedRoute:           mimirCfg.Identifier,
-			AddedReceivers:       addedReceivers,
-			AddedTimeIntervals:   addedTimeIntervals,
-			AddedTemplates:       addedTemplates,
-			AddedInhibitionRules: addedInhibitionRules,
-		}, nil
+		},
+		ManagedRoutes:   managedRoutes,
+		InhibitionRules: managedInhibitionRules,
+		TimeIntervals:   mergedTimeIntervals,
+	}, MergeResult{
+		RenameResources:      RenameResources{Receivers: renamedReceivers, TimeIntervals: renamedTimeIntervals, Templates: renamedTemplates},
+		AddedRoute:           mimirCfg.Identifier,
+		AddedReceivers:       addedReceivers,
+		AddedTimeIntervals:   addedTimeIntervals,
+		AddedTemplates:       addedTemplates,
+		AddedInhibitionRules: addedInhibitionRules,
+	}, nil
 }
 
 // DeduplicateResources merges existing and incoming resources (receivers and time intervals) and ensures unique names by
 // appending a suffix derived from identifier. Returns renamed resources for tracking adjustments made.
 func DeduplicateResources(a v1.AMConfigV1, b v1.ExtraAlertmanagerConfig, identifier string) RenameResources {
-	_, renamedReceivers, _ := Receivers(a.AlertmanagerConfig.Receivers, b.ReceiverNameStubs(), identifier)
+	_, renamedReceivers, _ := Receivers(a.Receivers, b.ReceiverNameStubs(), identifier)
 	_, renamedTimeIntervals, _ := TimeIntervals(
 		a.TimeIntervals,
 		b.ToGrafanaTimeIntervals(),
@@ -284,18 +290,18 @@ func RenameResourceUsagesInRoutes(routes []*v1.Route, renames RenameResources) {
 	}
 }
 
-// Receivers merges two lists of PostableApiReceiver objects, ensuring unique names by appending a suffix derived from
-// identifier if necessary. It returns the combined list of receivers, a map of renamed original names to their new
-// unique names, and the incoming receivers in their original order after any renames have been applied.
-// The items of the existing list are added to the result list as is whereas the items of incoming list are copied (shallow copy)
-// and renamed if necessary.
-func Receivers(existing, incoming []*v1.PostableApiReceiver, identifier string) ([]*v1.PostableApiReceiver, map[string]string, []string) {
+// Receivers merges the existing UID-keyed receivers with a list of incoming PostableApiReceiver objects, ensuring
+// unique names by appending a suffix derived from identifier if necessary. It returns the merged map, a map of
+// renamed original names to their new unique names, and the UIDs of the incoming receivers (post-rename) in their
+// original order. The items of the existing map are added to the result as is whereas the items of the incoming
+// list are copied (shallow copy) and renamed if necessary.
+func Receivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, incoming []*v1.PostableApiReceiver, identifier string) (map[v1.ResourceUID]v1.PostableApiReceiver, map[string]string, []v1.ResourceUID) {
 	dedupSuffix := getDedupSuffix(identifier)
-	result := make([]*v1.PostableApiReceiver, 0, len(existing)+len(incoming))
-	result = append(result, existing...)
 	usedNames := createIndexReceivers(existing, incoming)
+	result := make(map[v1.ResourceUID]v1.PostableApiReceiver, len(existing)+len(incoming))
+	maps.Copy(result, existing)
 	renames := make(map[string]string)
-	added := make([]string, 0, len(incoming))
+	added := make([]v1.ResourceUID, 0, len(incoming))
 	for idx, r := range incoming {
 		if r == nil {
 			continue
@@ -304,16 +310,16 @@ func Receivers(existing, incoming []*v1.PostableApiReceiver, identifier string) 
 		if i, ok := usedNames[cpy.Name]; ok && i != idx {
 			newName := getUniqueName(cpy.Name, dedupSuffix, usedNames)
 			renames[cpy.Name] = newName
-			cpy.Name = newName
+			cpy = v1.NewReceiver(newName, cpy.GrafanaManagedReceivers, cpy.Provenance)
 			usedNames[cpy.Name] = i
 		}
-		added = append(added, cpy.Name)
-		result = append(result, &cpy)
+		added = append(added, cpy.UID)
+		result[cpy.UID] = cpy
 	}
 	return result, renames, added
 }
 
-func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[string]int {
+func createIndexReceivers(existing map[v1.ResourceUID]v1.PostableApiReceiver, incoming []*v1.PostableApiReceiver) map[string]int {
 	usedNames := make(map[string]int, len(existing)+len(incoming))
 	for _, e := range existing {
 		usedNames[e.Name] = -1
@@ -331,7 +337,7 @@ func createIndexReceivers(existing, incoming []*v1.PostableApiReceiver) map[stri
 // and all deprecated match/match_re fields are folded into the modern matchers slice.
 // UIDs are derived from a stable hash of (rule, index, identifier); collisions fall back to a short random UID.
 // Returns the merged map (existing + incoming) and the UIDs of the newly added rules.
-func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incoming []config.InhibitRule, identifier string) (result map[v1.ResourceUID]v1.InhibitionRule, added []string, err error) {
+func MergeInhibitionRules(existing map[v1.ResourceUID]v1.InhibitionRule, incoming []common.InhibitRule, identifier string) (result map[v1.ResourceUID]v1.InhibitionRule, added []string, err error) {
 	added = make([]string, 0, len(incoming))
 	result = make(map[v1.ResourceUID]v1.InhibitionRule, len(incoming)+len(existing))
 	maps.Copy(result, existing)
@@ -405,7 +411,7 @@ func MergeTemplates(existing map[v1.ResourceUID]v1.TemplateGroup, incoming map[s
 	return templates, renames, added, nil
 }
 
-func foldMatchers(match map[string]string, matchRE config.MatchRegexps, matchers config.Matchers) []v1.Matcher {
+func foldMatchers(match map[string]string, matchRE common.MatchRegexps, matchers common.Matchers) []v1.Matcher {
 	out := make([]v1.Matcher, 0, len(match)+len(matchRE)+len(matchers))
 	out = append(out, v1.MatchersToModel(matchers)...)
 	for _, ln := range slices.Sorted(maps.Keys(match)) {

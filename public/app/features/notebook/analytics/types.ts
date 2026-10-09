@@ -80,14 +80,14 @@ export type NotebookEntryPoint = (typeof NOTEBOOK_ENTRY_POINT)[keyof typeof NOTE
  * How an edit session began. `TOGGLE` is the Edit control inside an open notebook. `NAVIGATION` is
  * an arrival at `?edit=true`, such as the list's Edit action, a pasted link, or a reload. `NEW` is
  * a notebook with no uid yet. It wins over the other two: a notebook that does not exist yet is
- * the more useful fact.
- *
- * Nothing sends an assistant value. The assistant writes cells without entering edit mode.
+ * the more useful fact. `ASSISTANT` is the mutation API rewriting the open document, same as
+ * DashboardScene's own `'assistant'` edit source.
  */
 export const NOTEBOOK_EDIT_SESSION_SOURCE = {
   TOGGLE: 'toggle',
   NAVIGATION: 'navigation',
   NEW: 'new',
+  ASSISTANT: 'assistant',
 } as const;
 
 export type NotebookEditSessionSource =
@@ -126,8 +126,14 @@ export interface NotebookEditSessionEndedProperties extends EventProperty, Noteb
   cellsRemoved: number;
   /** Cells reordered during the session. */
   cellsMoved: number;
+  /** Undo steps taken during the session. A held key repeats, so this counts steps, not gestures. */
+  undoCount: number;
+  /** Redo steps taken during the session, counted the same way as undoCount. */
+  redoCount: number;
   /** Whether the time range moved during the session, by any control. */
   timeRangeChanged: boolean;
+  /** Whether any cell's own time range override changed during the session. */
+  cellTimeRangeChanged: boolean;
   /** How the session ended. */
   endReason: NotebookEditSessionEndReason;
 }
@@ -158,6 +164,99 @@ export const NOTEBOOK_DELETE_SOURCE = {
 
 export type NotebookDeleteSource = (typeof NOTEBOOK_DELETE_SOURCE)[keyof typeof NOTEBOOK_DELETE_SOURCE];
 
+/**
+ * Where an export happened. Spelled the same way NOTEBOOK_DELETE_SOURCE is, so a surface reads the
+ * same across every notebook event that names one. NOTEBOOK_AUTOSAVE_FAILED_REASON and
+ * NOTEBOOK_ADD_FAILED_REASON already share values the same way.
+ */
+export const NOTEBOOK_EXPORT_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  NOTEBOOK_TOOLBAR: 'notebook_toolbar',
+} as const;
+
+export type NotebookExportSource = (typeof NOTEBOOK_EXPORT_SOURCE)[keyof typeof NOTEBOOK_EXPORT_SOURCE];
+
+/** Where a copy-link click happened. Same two values as NOTEBOOK_EXPORT_SOURCE, for the same reason. */
+export const NOTEBOOK_LINK_COPY_SOURCE = {
+  NOTEBOOK_LIST: 'notebook_list',
+  NOTEBOOK_TOOLBAR: 'notebook_toolbar',
+} as const;
+
+export type NotebookLinkCopySource = (typeof NOTEBOOK_LINK_COPY_SOURCE)[keyof typeof NOTEBOOK_LINK_COPY_SOURCE];
+
+/**
+ * Where an export sent the notebook. Every action writes the same markdown, so the destination is
+ * the only thing that changes between them.
+ */
+export const NOTEBOOK_EXPORT_DESTINATION = {
+  CLIPBOARD: 'clipboard',
+  DOWNLOAD: 'download',
+} as const;
+
+export type NotebookExportDestination = (typeof NOTEBOOK_EXPORT_DESTINATION)[keyof typeof NOTEBOOK_EXPORT_DESTINATION];
+
+export interface NotebookExportedProperties extends EventProperty {
+  /**
+   * Identifier and join key for this notebook. The last `loaded` for this uid gives its size, as it
+   * does for `deleted`. A list row export never opens the notebook. For those the nearest `loaded`
+   * is somebody else's, and can be stale or missing.
+   */
+  notebookUid: string;
+  /** Where this export sent the document. */
+  destination: NotebookExportDestination;
+  /** Which surface held the export menu. */
+  source: NotebookExportSource;
+}
+
+export interface NotebookLinkCopiedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which surface held the copy-link button. */
+  source: NotebookLinkCopySource;
+}
+
+/**
+ * Which control narrowed the list. No `sort` value: the filter row holds these three and nothing
+ * else. The table's own column headers do sort. The list remounts the table whenever a filter
+ * commits, which resets that choice, so a filter event has nothing to say about it.
+ */
+export const NOTEBOOK_LIST_FILTER_TYPE = {
+  SEARCH: 'search',
+  TAG: 'tag',
+  CREATED_BY_ME: 'created_by_me',
+} as const;
+
+export type NotebookListFilterType = (typeof NOTEBOOK_LIST_FILTER_TYPE)[keyof typeof NOTEBOOK_LIST_FILTER_TYPE];
+
+/**
+ * What every filter holds after a change, not only the one the reader touched. Sending all three
+ * shows which filters people use at the same time.
+ *
+ * No `cleared` flag: `filterType` of `search` with `queryLength` 0 is a search somebody emptied.
+ */
+export interface NotebookListFilterState extends EventProperty {
+  /**
+   * Characters in the committed search, trimmed. 0 means empty. The length, never the text.
+   * Named to match dashboard search.
+   */
+  queryLength: number;
+  /** Tags selected. The count, never the names. */
+  tagCount: number;
+  /** Whether the created-by-me box is on. */
+  createdByMe: boolean;
+}
+
+/**
+ * One committed change to the list's filters. The search box waits for a pause in typing, so a
+ * search here is one somebody finished, not one keystroke.
+ *
+ * Says that somebody filtered, not what they found. A count would have to wait for the results.
+ */
+export interface NotebookListFilteredProperties extends EventProperty, NotebookListFilterState {
+  /** Which control the reader changed. */
+  filterType: NotebookListFilterType;
+}
+
 export interface NotebookDeletedProperties extends EventProperty {
   /**
    * Identifier and join key for this notebook. The last `loaded` for this uid gives its size, and the
@@ -170,11 +269,12 @@ export interface NotebookDeletedProperties extends EventProperty {
 
 /**
  * Why an autosave attempt failed. `build_failed` means autosave could not assemble the spec, so it
- * sent no request. `write_failed` means the request failed, either the create or the update. That
- * covers every write failure today, because nothing yet tells a conflict apart from the rest.
+ * sent no request. `conflict` means someone else saved the notebook first. `write_failed` covers
+ * every other failed request, either the create or the update.
  */
 export const NOTEBOOK_AUTOSAVE_FAILED_REASON = {
   BUILD_FAILED: 'build_failed',
+  CONFLICT: 'conflict',
   WRITE_FAILED: 'write_failed',
 } as const;
 
@@ -203,6 +303,26 @@ export interface NotebookAutosaveFailedProperties extends EventProperty {
   reason: NotebookAutosaveFailedReason;
   /** Failures in a row for this notebook since the last save that landed. */
   attempt: number;
+}
+
+/**
+ * How the user answered the "someone else has updated this notebook" prompt. `overwrite` writes the
+ * current content over theirs; `cancel` covers every way of not confirming (the Cancel button, the
+ * close button, Escape), since none of them says anything more specific than "not this".
+ */
+export const NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION = {
+  OVERWRITE: 'overwrite',
+  CANCEL: 'cancel',
+} as const;
+
+export type NotebookAutosaveConflictResolution =
+  (typeof NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION)[keyof typeof NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION];
+
+export interface NotebookAutosaveConflictResolvedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which way the user answered. */
+  resolution: NotebookAutosaveConflictResolution;
 }
 
 /** Where the panel was headed. Either a notebook the user picked, or one the same submit creates. */
@@ -239,4 +359,18 @@ export interface NotebookAddFailedProperties extends EventProperty {
   target: NotebookAddTarget;
   /** Why the attempt failed. */
   reason: NotebookAddFailedReason;
+}
+
+export const NOTEBOOK_INCIDENT_ACTION = {
+  DECLARE: 'declare',
+  ATTACH: 'attach',
+} as const;
+
+export type NotebookIncidentAction = (typeof NOTEBOOK_INCIDENT_ACTION)[keyof typeof NOTEBOOK_INCIDENT_ACTION];
+
+export interface NotebookIncidentActionClickedProperties extends EventProperty {
+  /** Identifier and join key for this notebook. */
+  notebookUid: string;
+  /** Which IRM action was picked: declaring an incident, or attaching to an existing one. */
+  action: NotebookIncidentAction;
 }

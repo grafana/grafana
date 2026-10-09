@@ -1,11 +1,12 @@
 import { type SerializedError } from '@reduxjs/toolkit';
 import { TestProvider } from 'test/helpers/TestProvider';
-import { render, screen, waitFor, within } from 'test/test-utils';
+import { render, screen, testWithFeatureToggles, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { PluginExtensionTypes } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { locationService, setAppEvents, usePluginLinks } from '@grafana/runtime';
+import { getCanvasContext } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { setAlertmanagerChoices } from 'app/features/alerting/unified/mocks/server/configure';
@@ -33,6 +34,7 @@ import {
   somePromRules,
   someRulerRules,
 } from './mocks';
+import { setPreviewToggle } from './previewToggles';
 import { setupPluginsExtensionsHook } from './testSetup/plugins';
 import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 
@@ -131,6 +133,13 @@ const ui = {
   },
   moreActionItems: {
     resume: byRole('menuitem', { name: /resume evaluation/i }),
+  },
+  listVersion: {
+    deprecationNotice: byRole('alert', { name: /this version of the alert rule list is deprecated/i }),
+    switchToNewListButton: byRole('button', { name: /switch to the new list/i }),
+    // Only the new list's filter has saved searches, and only the old list has the "State" view
+    savedSearchesButton: byRole('button', { name: 'Saved searches' }),
+    stateViewRadio: byRole('radio', { name: 'State' }),
   },
 };
 
@@ -237,7 +246,7 @@ describe('RuleList', () => {
 
     mocks.api.fetchRulerRules.mockRejectedValue({ status: 500, data: { message: 'Server error' } });
 
-    const { user } = await renderRuleList();
+    const { user } = renderRuleList();
 
     await waitFor(() => expect(mocks.api.fetchRules).toHaveBeenCalledTimes(4));
     const groups = await ui.ruleGroup.findAll();
@@ -333,7 +342,7 @@ describe('RuleList', () => {
       }
     });
 
-    const { user } = await renderRuleList();
+    const { user } = renderRuleList();
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
@@ -506,7 +515,7 @@ describe('RuleList', () => {
       }
     });
 
-    const { user } = await renderRuleList();
+    const { user } = renderRuleList();
 
     const groups = await ui.ruleGroup.findAll();
     expect(groups).toHaveLength(2);
@@ -740,6 +749,56 @@ describe('RuleList', () => {
       await waitFor(() => expect(ui.editGroupModal.namespaceInput.query()).not.toBeInTheDocument());
 
       expect(mocks.api.fetchRulerRules).toHaveBeenCalledTimes(4);
+    });
+  });
+
+  describe('which version of the list is shown', () => {
+    beforeEach(() => {
+      mocks.api.fetchRules.mockResolvedValue([]);
+      mocks.api.fetchRulerRules.mockResolvedValue({});
+    });
+
+    afterEach(() => {
+      setPreviewToggle('alertingListViewV2', undefined);
+    });
+
+    describe('with alertingListViewV2 enabled', () => {
+      testWithFeatureToggles({ enable: ['alertingListViewV2'] });
+
+      it('shows the new list without the deprecation notice', async () => {
+        // Skip loading the default saved search on the first visit, which the new list does on its own
+        sessionStorage.setItem('grafana.alerting.ruleList.visited', 'true');
+        // The new list's label picker measures text on a canvas. The jest.resetAllMocks() in this file
+        // wipes the canvas mock, so put back a working one (and fix the copy @grafana/ui may have kept).
+        HTMLCanvasElement.prototype.getContext = jest.fn().mockReturnValue({ measureText: () => ({ width: 0 }) });
+        getCanvasContext().measureText = jest.fn().mockReturnValue({ width: 0 });
+
+        renderRuleList();
+
+        expect(await ui.listVersion.savedSearchesButton.find()).toBeInTheDocument();
+        expect(ui.listVersion.deprecationNotice.query()).not.toBeInTheDocument();
+      });
+
+      it('keeps someone who chose the old list on it, with a deprecation notice that offers to switch back', async () => {
+        setPreviewToggle('alertingListViewV2', false);
+
+        renderRuleList();
+
+        const notice = await ui.listVersion.deprecationNotice.find();
+        expect(ui.listVersion.stateViewRadio.get()).toBeInTheDocument();
+        expect(ui.listVersion.switchToNewListButton.get(notice)).toBeInTheDocument();
+      });
+    });
+
+    describe('with alertingListViewV2 disabled', () => {
+      it('shows the old list with a deprecation notice and no switch button', async () => {
+        renderRuleList();
+
+        const notice = await ui.listVersion.deprecationNotice.find();
+        expect(notice).toHaveTextContent('It will be removed in a future release of Grafana');
+        expect(ui.listVersion.stateViewRadio.get()).toBeInTheDocument();
+        expect(ui.listVersion.switchToNewListButton.query(notice)).not.toBeInTheDocument();
+      });
     });
   });
 

@@ -1,7 +1,6 @@
 import { useForm } from 'react-hook-form';
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type WorkflowOption } from '../types';
@@ -72,26 +71,6 @@ function Host({
 }
 
 describe('useBranchTemplate', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  it('leaves the field untouched when the flag is off even with a template configured', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} />);
-
-    const input = screen.getByRole('textbox', { name: /branch/i });
-    expect(input).toHaveValue('');
-    expect(screen.getByTestId('locked')).toHaveTextContent('false');
-  });
-
   it('leaves the field untouched for the write workflow', () => {
     render(<Host repository={makeRepo({ nameTemplate: TEMPLATE })} vars={dashboardVars} workflow="write" />);
 
@@ -213,14 +192,6 @@ describe('useBranchTemplate', () => {
     expect(screen.getByTestId('locked')).toHaveTextContent('false');
     expect(input).not.toHaveAttribute('readonly');
     await waitFor(() => expect(input).toHaveValue('dashboard/2023-abc'));
-  });
-
-  it('does not lock when the flag is off even with enforcement configured', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ nameTemplate: TEMPLATE, enforceTemplate: true })} vars={dashboardVars} />);
-
-    expect(screen.getByTestId('locked')).toHaveTextContent('false');
-    expect(screen.getByRole('textbox', { name: /branch/i })).not.toHaveAttribute('readonly');
   });
 
   it('does not lock when enforcement is set but no template is configured', async () => {

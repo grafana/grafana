@@ -73,6 +73,20 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 							Format:      "",
 						},
 					},
+					"authenticatedBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 				},
 				Required: []string{"identity", "displayName"},
 			},
@@ -120,9 +134,8 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -140,9 +153,8 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: "",
-										Type:    []string{"string"},
-										Format:  "",
+										Type:   []string{"string"},
+										Format: "",
 									},
 								},
 							},
@@ -160,8 +172,7 @@ func schema_pkg_apis_iam_v0alpha1_DisplayList(ref common.ReferenceCallback) comm
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(Display{}.OpenAPIModelName()),
+										Ref: ref(Display{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -278,8 +289,7 @@ func schema_pkg_apis_iam_v0alpha1_SSOSettingList(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(SSOSetting{}.OpenAPIModelName()),
+										Ref: ref(SSOSetting{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -365,6 +375,20 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 							Format:      "",
 						},
 					},
+					"authenticatedBy": {
+						SchemaProps: spec.SchemaProps{
+							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"external": {
 						SchemaProps: spec.SchemaProps{
 							Description: "External is set if member ship was synced from external IDP.",
@@ -421,8 +445,7 @@ func schema_pkg_apis_iam_v0alpha1_TeamMemberList(ref common.ReferenceCallback) c
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.TeamMember"),
 									},
 								},
 							},
@@ -532,8 +555,7 @@ func schema_pkg_apis_iam_v0alpha1_UserPermissions(ref common.ReferenceCallback) 
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref(UserPermission{}.OpenAPIModelName()),
+										Ref: ref(UserPermission{}.OpenAPIModelName()),
 									},
 								},
 							},
@@ -614,8 +636,7 @@ func schema_pkg_apis_iam_v0alpha1_UserTeamList(ref common.ReferenceCallback) com
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
 									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
+										Ref: ref("github.com/grafana/grafana/pkg/apis/iam/v0alpha1.UserTeam"),
 									},
 								},
 							},

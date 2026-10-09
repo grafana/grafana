@@ -123,6 +123,11 @@ func (c PostRankAuthzConfig) growWindow(base, nextWindow int) int {
 // ensureSearchFields makes bleve load every stored field when the caller did not
 // request an explicit field set. The SEARCH_FIELD_ALL_FIELDS sentinel tells
 // hitsToTable to use the curated allFields column list.
+//
+// It also adds the resource version, which every result carries regardless of the
+// requested fields. Both happen here rather than in toBleveSearchRequest because
+// Search snapshots the response field list before calling this, so what is added
+// is loaded without becoming a response column.
 func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req *resourcepb.ResourceSearchRequest) error {
 	if len(req.Fields) < 1 && req.Limit > 0 {
 		f, err := b.index.Fields()
@@ -130,6 +135,10 @@ func (b *bleveIndex) ensureSearchFields(searchrequest *bleve.SearchRequest, req 
 			return err
 		}
 		searchrequest.Fields = append(f, resource.SEARCH_FIELD_ALL_FIELDS)
+		return nil
+	}
+	if !slices.Contains(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING) {
+		searchrequest.Fields = append(searchrequest.Fields, resource.SEARCH_FIELD_RV_STRING)
 	}
 	return nil
 }
@@ -161,13 +170,22 @@ func authzLoadFields(trash bool) []string {
 // authzResources builds the resource-type -> verb map used to authorize hits.
 // The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
+//
+// A hit whose resource type is absent from the map is dropped, so a
+// namespace-wide index has to list every type it covers. Each hit is still
+// authorized against its own type and group, read from its document id.
 func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 		verb = utils.VerbUpdate
 	}
-	resources := map[string]string{
-		b.key.Resource: verb,
+	resources := map[string]string{}
+	if b.key.IsGlobal() {
+		for _, gr := range resource.GlobalSearchResourceTypes() {
+			resources[gr.Resource] = verb
+		}
+	} else {
+		resources[b.key.Resource] = verb
 	}
 	for _, federated := range req.Federated {
 		resources[federated.Resource] = utils.VerbGet
@@ -310,7 +328,7 @@ func (b *bleveIndex) runPostFilterAuthz(
 
 	windowReq := firstReq
 	for window := 0; ; window++ {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, err
 		}
@@ -369,6 +387,9 @@ func (b *bleveIndex) runPostFilterAuthz(
 			// authorized count is still exact. candidates never exceeds the
 			// number of hits walked, so this can only under-claim.
 			exhausted = candidates >= int64(firstRes.Total)
+			if !exhausted {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("candidate_budget").Inc()
+			}
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -496,7 +517,7 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 
 	var firstRes *bleve.SearchResult
 	for {
-		res, err := index.SearchInContext(ctx, windowReq)
+		res, err := searchInContext(ctx, index, windowReq)
 		if err != nil {
 			return nil, 0, false, err
 		}
@@ -532,6 +553,9 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 		if candidates >= maxCandidates {
 			// Like the page scan: a budget that covered every match leaves
 			// nothing unsampled, so the facets are the complete authorized set.
+			if candidates < int64(firstRes.Total) {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("facet_budget").Inc()
+			}
 			return agg, authorized, candidates >= int64(firstRes.Total), nil
 		}
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {

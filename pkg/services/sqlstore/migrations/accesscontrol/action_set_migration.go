@@ -23,7 +23,7 @@ type actionSetMigrator struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(actionSetMigrator)
+var _ migrator.CodeMigration = (*actionSetMigrator)(nil)
 
 func (m *actionSetMigrator) SQL(migrator.Dialect) string {
 	return "code migration"

@@ -78,7 +78,9 @@ const TRASH_SORT_FIELDS: Record<string, SortField> = {
 
 // Evaluated per call rather than held: the flag's value can change under a running page.
 function isTrashEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardRecentlyDeletedViaTrash, false);
+  // The fallback matches the flag's registered default, so this and the pages reading it
+  // through the generated hook cannot disagree about which backend serves the list.
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardRecentlyDeletedViaTrash, true);
 }
 
 /**

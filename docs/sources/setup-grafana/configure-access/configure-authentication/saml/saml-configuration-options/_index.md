@@ -55,6 +55,12 @@ The table below describes all SAML configuration options. Continue reading below
 | `token_url`                                                | No       | URL to retrieve the access token from the IdP. (Microsoft Entra ID only)                                                                                                                                     |                                                       |
 | `force_use_graph_api`                                      | No       | Whether to use the IdP service application retrieve more information about the user from the IdP. (Microsoft Entra ID only)                                                                                  | `false`                                               |
 
+## Rotating credentials
+
+Grafana can store these options in its database, where they override the configuration file. If SAML was configured through the SSO Settings API, the SAML UI, Terraform, or [settings updates at runtime](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/), rotating a credential in the file has no effect until you remove the stored value. This applies to the `certificate`, `private_key`, and `idp_metadata` options even when the stored settings don't set them.
+
+Refer to [Check for stored settings](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/settings-updates-at-runtime/#check-for-stored-settings).
+
 ## Example SAML configuration
 
 ```ini

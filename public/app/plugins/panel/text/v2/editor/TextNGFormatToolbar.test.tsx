@@ -66,16 +66,15 @@ describe('TextNGFormatToolbar', () => {
       expect(screen.getByRole('button', { name: 'Insert variable' })).toBeInTheDocument();
     });
 
-    it('offers only the tag-based actions in HTML mode', () => {
+    it('offers the tag-based actions in HTML mode', () => {
       setup(TextMode.HTML);
 
-      expect(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Italic' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Link' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Insert variable' })).toBeInTheDocument();
-      // Markdown-only syntax has no HTML equivalent worth a one-click insert.
-      expect(screen.queryByRole('button', { name: 'Heading' })).not.toBeInTheDocument();
-      expect(screen.queryByRole('button', { name: 'Table' })).not.toBeInTheDocument();
+      for (const name of ['Heading', 'Bold', 'Italic', 'Link', 'Table', 'Insert variable']) {
+        expect(screen.getByRole('button', { name })).toBeInTheDocument();
+      }
+      // Line-based list toggles have no HTML equivalent worth a one-click insert.
+      expect(screen.queryByRole('button', { name: 'Bullet list' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Checklist' })).not.toBeInTheDocument();
     });
 
     it('hides the diagram action when the text.newFeatures flag is off', () => {
@@ -178,6 +177,24 @@ describe('TextNGFormatToolbar', () => {
       await clickButton('Bold');
 
       expect(view!.state.doc.toString()).toBe('<b>hello</b>');
+    });
+
+    it('wraps the selection in a heading', async () => {
+      setup(TextMode.HTML, 'Title', { anchor: 0, head: 5 });
+
+      await clickButton('Heading');
+
+      expect(view!.state.doc.toString()).toBe('<h1>Title</h1>');
+    });
+
+    it('inserts a table skeleton', async () => {
+      setup(TextMode.HTML);
+
+      await clickButton('Table');
+
+      expect(view!.state.doc.toString()).toBe(
+        '\n<table>\n  <tr>\n    <th>Column</th>\n    <th>Column</th>\n  </tr>\n  <tr>\n    <td>Value</td>\n    <td>Value</td>\n  </tr>\n</table>\n'
+      );
     });
 
     it('turns the selection into an anchor', async () => {

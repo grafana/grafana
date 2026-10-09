@@ -1,4 +1,4 @@
-import { type Annotation } from 'slate';
+import { type AnnotationJSON } from 'slate';
 import { type Plugin } from 'slate-react';
 
 const BRACES: Record<string, string> = {
@@ -45,7 +45,7 @@ export function BracesPlugin(): Plugin {
           ) {
             event.preventDefault();
             const complement = BRACES[event.key];
-            const matchAnnotation = {
+            const matchAnnotation: AnnotationJSON = {
               key: `${MATCH_MARK}-${uniqueId()}`,
               type: `${MATCH_MARK}-${complement}`,
               anchor: {
@@ -59,7 +59,7 @@ export function BracesPlugin(): Plugin {
                 object: 'point',
               },
               object: 'annotation',
-            } as Annotation;
+            };
             editor.insertText(event.key).insertText(complement).addAnnotation(matchAnnotation).moveBackward(1);
 
             return true;

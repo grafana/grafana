@@ -1,9 +1,9 @@
 import { css } from '@emotion/css';
+import { isEqual } from 'lodash';
 
-import { CoreApp, type DataQueryRequest, type GrafanaTheme2 } from '@grafana/data';
+import { CoreApp, type DataQueryRequest } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config, locationService, useChromeHeaderHeight } from '@grafana/runtime';
-import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
+import { config, locationService } from '@grafana/runtime';
 import {
   behaviors,
   type CancelActivationHandler,
@@ -37,12 +37,9 @@ import {
 import { canEditNotebooks } from '../permissions';
 import { NOTEBOOK_EDIT_PARAM } from '../urls';
 
-import { changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
-import { NotebookEditHistory } from './NotebookEditHistory';
-import { NotebookEditHistoryControls } from './NotebookEditHistoryControls';
-import { NotebookEditToggle } from './NotebookEditToggle';
-import { useIsNotebookEmbedded } from './NotebookEmbeddedContext';
-import { NotebookSaveStatus } from './NotebookSaveStatus';
+import { changedCellTimeRange, changesTimeSettings, NotebookAutosave } from './NotebookAutosave';
+import { NOTEBOOK_EDIT_KIND, NotebookEditHistory, type NotebookEditAction } from './NotebookEditHistory';
+import { PDF_PAGE_WIDTH_MM } from './NotebookPdfLayout';
 import { NotebookSceneUrlSync } from './NotebookSceneUrlSync';
 import { type NotebookLayoutManager } from './layout-notebook/NotebookLayoutManager';
 
@@ -98,6 +95,17 @@ export interface NotebookSceneState extends SceneObjectState {
 const sceneContextStack: NotebookScene[] = [];
 let beforeFirstSceneContext: SceneObject | undefined;
 
+// Matches CONTENT_EDIT_COALESCE_MS in NotebookLayoutManager: the same run-of-keystrokes-into-one-step
+// coalescing, for the title instead of a cell's content.
+const TITLE_EDIT_COALESCE_MS = 800;
+
+interface PendingTitleEdit {
+  before: string;
+  after: string;
+  action: NotebookEditAction;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
 function claimSceneContext(scene: NotebookScene): void {
   if (sceneContextStack.length === 0) {
     beforeFirstSceneContext = window.__grafanaSceneContext;
@@ -123,6 +131,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   // Declared before `editHistory`, which is handed it: class fields initialise in order.
   public readonly editSession = new NotebookEditSession();
   public readonly editHistory = new NotebookEditHistory(this.editSession);
+  private pendingTitleEdit?: PendingTitleEdit;
   // The layout manager needs to find the scene it lives in. It cannot use instanceof, because
   // importing this class would make the two files import each other, so it looks for this field.
   public readonly isNotebookScene = true;
@@ -151,13 +160,13 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       claimSceneContext(this);
 
       // activate() only propagates to $timeRange/$variables/$data/$behaviors — the pickers are
-      // plain state, so they are activated by their renderers. With the controls row hidden nothing
-      // renders the refresh picker, so activate it here or the spec's autoRefresh interval never
-      // starts. Same workaround as DashboardControls.
+      // Unconditionally, because whether any surface renders the controls row is its own choice, and
+      // autoRefresh only starts once the picker is active. Activation is reference counted, so the
+      // picker's own renderer activating it too is harmless.
       let refreshPickerDeactivation: CancelActivationHandler | undefined;
       const syncRefreshPickerActivation = (state: NotebookSceneState) => {
         refreshPickerDeactivation?.();
-        refreshPickerDeactivation = state.hideTimeControls ? state.refreshPicker.activate() : undefined;
+        refreshPickerDeactivation = state.refreshPicker.activate();
       };
       syncRefreshPickerActivation(this.state);
 
@@ -165,10 +174,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // rebuilds the scene from a spec) hands us a new SceneRefreshPicker that nothing has activated,
       // so a one-shot activation above would leave auto-refresh silently stopped after an edit.
       const stateSub = this.subscribeToState((newState, prevState) => {
-        if (
-          newState.refreshPicker !== prevState.refreshPicker ||
-          newState.hideTimeControls !== prevState.hideTimeControls
-        ) {
+        if (newState.refreshPicker !== prevState.refreshPicker) {
           syncRefreshPickerActivation(newState);
         }
         // Edit mode is held in two places: here, where the header reads it, and on the layout manager,
@@ -190,11 +196,6 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
         if (newState.body !== prevState.body || newState.title !== prevState.title) {
           newState.body.setTitle?.(newState.title);
         }
-        // Every undo step puts a cell back into the body that recorded it. That body is gone now, so
-        // the steps cannot run any more.
-        if (newState.body !== prevState.body) {
-          this.editHistory.clear();
-        }
       });
 
       // Only while editing. A reader moving the time range is theirs to move, and the notebook
@@ -202,8 +203,14 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
       // flag on the way into a session as well, but without this the flag would mean "moved since the
       // last start" rather than "moved during this session".
       const timeRangeSub = this.subscribeToEvent(SceneObjectStateChangedEvent, ({ payload }) => {
-        if (this.state.isEditing && changesTimeSettings(payload, this)) {
+        if (!this.state.isEditing) {
+          return;
+        }
+        if (changesTimeSettings(payload, this)) {
           this.editSession.onTimeRangeChanged();
+        }
+        if (changedCellTimeRange(payload, this)) {
+          this.editSession.onCellTimeRangeChanged();
         }
       });
 
@@ -223,6 +230,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
           this.setState({ isEditing: false });
           this.state.body.editModeChanged?.(false);
         }
+        this.commitTitleEdit();
         stopAutosave?.();
         destroyMutationClient();
         timeRangeSub.unsubscribe();
@@ -250,7 +258,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
   /**
    * Permission is checked here rather than only where the toggle renders, so no caller — including
-   * a hand-typed `?edit=true` — can force edit mode for a user without `dashboards:write`.
+   * a hand-typed `?edit=true` — can force edit mode for a user without `notebooks:write`.
    */
   public onEnterEditMode = (source: NotebookEditSessionSource = NOTEBOOK_EDIT_SESSION_SOURCE.TOGGLE) => {
     if (!canEditNotebooks()) {
@@ -266,6 +274,19 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
 
     this.startEditing(source);
   };
+
+  /**
+   * Enters edit mode for a write that is about to replace the whole document — the mutation API's
+   * own writes. Skips the prompt `onEnterEditMode` shows about a reader's own panel changes: those
+   * changes are about to be replaced by the incoming document anyway, same as
+   * `NotebookAutosave.saveDocumentChange` already treats them.
+   */
+  public enterEditModeForDocumentWrite(source: NotebookEditSessionSource): void {
+    if (this.state.isEditing || !canEditNotebooks()) {
+      return;
+    }
+    this.startEditing(source);
+  }
 
   private startEditing(source: NotebookEditSessionSource): void {
     const wasEditing = this.state.isEditing;
@@ -330,6 +351,7 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
     const wasEditing = this.state.isEditing;
 
     this.state.body.commitPendingEdits();
+    this.commitTitleEdit();
     this.setState({ isEditing: false });
     this.state.body.editModeChanged?.(false);
     // Leaving edit mode is a natural save point, and it is where changes stop counting. Without this, a
@@ -346,18 +368,122 @@ export class NotebookScene extends SceneObjectBase<NotebookSceneState> implement
   /**
    * The scene stays the single writer for tags — it is what transformNotebookSceneToSaveModel reads.
    * The layout manager's copy is refreshed by the subscription above, so the two cannot drift.
+   *
+   * Recorded on editHistory like a cell edit, so an accidental tag add/remove is undoable. TagFilter
+   * is used with isClearable={false} and no bulk-clear control, so every call here already represents
+   * exactly one add or one remove — unlike cell content, there is nothing to coalesce.
    */
   public onTagsChange = (tags: string[]) => {
-    this.setState({ tags });
+    const previous = this.state.tags ?? [];
+    if (isEqual(previous, tags)) {
+      return;
+    }
+
+    // Closes out any cell or title edit still coalescing, so it lands as its own undo step under
+    // this one instead of being interrupted by it.
+    this.state.body.commitPendingEdits();
+    this.commitTitleEdit();
+
+    this.editHistory.execute({
+      label:
+        tags.length > previous.length
+          ? t('notebooks.history.add-tag', 'Add tag')
+          : t('notebooks.history.remove-tag', 'Remove tag'),
+      kind: NOTEBOOK_EDIT_KIND.TAGS,
+      perform: () => this.setState({ tags }),
+      undo: () => this.setState({ tags: previous }),
+    });
   };
 
   /**
-   * Single writer for the title, on the same terms as onTagsChange above. Nothing persists it here:
-   * the save model reads this state, and autosave writes on any change made while editing.
+   * Single writer for the title, on the same terms as onTagsChange above — including being
+   * recorded on editHistory. Without that, a rename made after an assistant write would be
+   * invisible to the undo stack, and undoing that write (which restores the whole prior state)
+   * would silently discard the rename instead of being undone itself first. Nothing persists it
+   * here: the save model reads this state, and autosave writes on any change made while editing.
+   *
+   * NotebookTitleEditor reports every keystroke, not just the closing one (edit mode can be left
+   * without a blur), so a run of keystrokes coalesces into one undo step the same way cell content
+   * typing does (NotebookLayoutManager.setCellContent) — otherwise undo would walk a rename back
+   * one character at a time instead of reverting it as a whole.
    */
   public onTitleChange = (title: string) => {
-    this.setState({ title });
+    const previous = this.state.title;
+    if (previous === title) {
+      return;
+    }
+
+    // Closes out any cell edit still coalescing, so it lands as its own undo step under this one
+    // instead of being interrupted by it.
+    this.state.body.commitPendingEdits();
+
+    const pending = this.pendingTitleEdit;
+    if (pending) {
+      this.extendTitleEdit(pending, title);
+    } else {
+      this.startTitleEdit(previous, title);
+    }
   };
+
+  private startTitleEdit(before: string, title: string): void {
+    // perform and undo read `edit` when they run, not now — see NotebookLayoutManager's
+    // startContentEdit for why: extendTitleEdit keeps changing `after` while typing continues.
+    const edit: PendingTitleEdit = {
+      before,
+      after: title,
+      action: {
+        label: t('notebooks.history.rename', 'Rename notebook'),
+        kind: NOTEBOOK_EDIT_KIND.TITLE,
+        perform: () => {
+          this.finishTitleEdit(edit);
+          this.setState({ title: edit.after });
+        },
+        undo: () => {
+          this.finishTitleEdit(edit);
+          this.setState({ title: edit.before });
+        },
+      },
+    };
+
+    this.pendingTitleEdit = edit;
+    this.setState({ title });
+    this.editHistory.record(edit.action);
+    this.scheduleTitleEditCommit(edit);
+  }
+
+  private extendTitleEdit(edit: PendingTitleEdit, title: string): void {
+    this.setState({ title });
+    edit.after = title;
+
+    if (edit.before === edit.after) {
+      this.editHistory.discard(edit.action);
+      this.finishTitleEdit(edit);
+      return;
+    }
+
+    this.scheduleTitleEditCommit(edit);
+  }
+
+  private scheduleTitleEditCommit(edit: PendingTitleEdit): void {
+    clearTimeout(edit.timer);
+    edit.timer = setTimeout(() => this.finishTitleEdit(edit), TITLE_EDIT_COALESCE_MS);
+  }
+
+  private finishTitleEdit(edit: PendingTitleEdit): void {
+    clearTimeout(edit.timer);
+    if (this.pendingTitleEdit === edit) {
+      this.pendingTitleEdit = undefined;
+    }
+  }
+
+  // Left open underneath another action, a later keystroke would mutate this now-buried edit
+  // instead of extending the live one, and editHistory.discard (which only acts on the top of the
+  // stack) would fail to drop it.
+  public commitTitleEdit(): void {
+    if (this.pendingTitleEdit) {
+      this.finishTitleEdit(this.pendingTitleEdit);
+    }
+  }
 
   public showModal(modal: SceneObject) {
     this.setState({ overlay: modal });
@@ -387,38 +513,17 @@ function buildNotebookVariables(): SceneVariableSet | undefined {
   return new SceneVariableSet({ variables: [new ScopesVariable({ enable: true })] });
 }
 
+/**
+ * What `scene.Component` resolves to: the document only. Surfaces compose whatever else they want
+ * around it — see NotebookSceneControls.
+ */
 function NotebookSceneRenderer({ model }: SceneComponentProps<NotebookScene>) {
-  // The app header is fixed and its height varies (single vs docked mega menu), so the sticky offset has
-  // to come from the chrome rather than a constant.
-  const headerHeight = useChromeHeaderHeight();
-  const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const { body, timePicker, refreshPicker, hideTimeControls, overlay, isEditing } = model.useState();
-  /**
-   * From the tree, not the scene. The same notebook can be rendered on the route and in a host with
-   * no app header at the same time, and those two share one scene object — so the answer has to come
-   * from where it is being drawn rather than from what is being drawn.
-   */
-  const embedded = useIsNotebookEmbedded();
-  // `headerHeight` is read unconditionally above so the hook order never varies, then discarded when
-  // there is no app header for it to describe.
-  const styles = useStyles2(getStyles, embedded ? 0 : (headerHeight ?? 0), visualRefreshEnabled);
+  const styles = useStyles2(getStyles);
+  const { body, overlay } = model.useState();
 
   return (
     <div className={styles.container}>
       <NotebookHiddenVariables model={model} />
-      <div className={styles.controls}>
-        {/* Not gated on edit mode: the assistant writes without entering it, and a failed save has to
-            be visible and retryable there too. This renders nothing until there is something to say. */}
-        <NotebookSaveStatus autosave={model.autosave} />
-        {isEditing && <NotebookEditHistoryControls history={model.editHistory} />}
-        <NotebookEditToggle notebook={model} />
-        {!hideTimeControls && (
-          <>
-            <timePicker.Component model={timePicker} />
-            <refreshPicker.Component model={refreshPicker} />
-          </>
-        )}
-      </div>
       <body.Component model={body} />
       {overlay && <overlay.Component model={overlay} />}
     </div>
@@ -450,30 +555,16 @@ function NotebookHiddenVariables({ model }: SceneComponentProps<NotebookScene>) 
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) => ({
+const getStyles = () => ({
   container: css({
     display: 'flex',
     flexDirection: 'column',
     flexGrow: 1,
-  }),
-  controls: css({
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: theme.spacing(1),
-    padding: theme.spacing(1, 2),
-    // A sticky row is transparent by default, so the notebook would scroll visibly through it. These two
-    // tokens are the page's own background (PageLayoutType.Custom, see getDefaultBackgroundForLayout), so
-    // the row reads as chrome rather than as a tinted band — same pairing DashboardControlsChrome uses.
-    background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
-    // Only from md up: on a narrow viewport the row is a large share of the screen, so the dashboard lets
-    // it scroll away rather than eat the reading area, and this follows suit.
-    [theme.breakpoints.up('md')]: {
-      position: 'sticky',
-      top: headerHeight,
-      // Above the docked sidebar, or the time picker's popover opens behind it. Same reasoning and same
-      // token the dashboard's controls chrome uses.
-      zIndex: theme.zIndex.sidemenu,
+    // For Ctrl+P only: the PDF export never triggers print media and brings its own layout (see
+    // NotebookPdfLayout). Shared width so the two agree on how wide a sheet is.
+    '@media print': {
+      maxWidth: `${PDF_PAGE_WIDTH_MM}mm`,
+      margin: '0 auto',
     },
   }),
 });

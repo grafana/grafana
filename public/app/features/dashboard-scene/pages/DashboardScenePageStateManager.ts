@@ -29,6 +29,7 @@ import { dashboardAPIVersionResolver } from 'app/features/dashboard/api/Dashboar
 import { ensureV2Response } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import {
+  isDashboardNewLayoutsEnabled,
   isDashboardResource,
   isDashboardV1Resource,
   isDashboardV2Resource,
@@ -484,7 +485,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       if (renderTarget) {
         // Register the report render readiness observer so the image renderer can detect
         // when the dashboard has fully rendered (queries + transforms + fieldConfig + render)
-        initializeReportRenderReadinessObserver(queryController);
+        initializeReportRenderReadinessObserver();
       }
 
       // Start dashboard_view profiling (both services are now guaranteed to be listening)
@@ -503,6 +504,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       const messageId = getMessageIdFromError(err);
 
       this.setState({
+        // do not leave the previous dashboard mounted if fetch fails
+        dashboard: undefined,
         isLoading: false,
         loadError: {
           status,
@@ -1380,7 +1383,7 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
 }
 
 function shouldForceV2API(): boolean {
-  return Boolean(config.featureToggles.dashboardNewLayouts);
+  return isDashboardNewLayoutsEnabled();
 }
 
 export class UnifiedDashboardScenePageStateManager extends DashboardScenePageStateManagerBase<

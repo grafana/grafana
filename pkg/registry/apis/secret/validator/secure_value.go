@@ -15,7 +15,7 @@ import (
 
 type secureValueValidator struct{}
 
-var _ contracts.SecureValueValidator = &secureValueValidator{}
+var _ contracts.SecureValueValidator = (*secureValueValidator)(nil)
 
 func ProvideSecureValueValidator() contracts.SecureValueValidator {
 	return &secureValueValidator{}

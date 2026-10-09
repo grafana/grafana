@@ -12,6 +12,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { type DataSourceRef } from '@grafana/schema';
 import { type ActionMeta, PluginSignatureBadge, Select, Stack } from '@grafana/ui';
 
+import { useDefaultDataSourceInstanceListItem } from '../services/dataSource/hooks';
+import { toListItem } from '../services/dataSource/settings';
 import { getDataSourceSrv } from '../services/dataSourceSrv';
 
 import { ExpressionDatasourceRef } from './../utils/expressionRef';
@@ -162,15 +164,28 @@ export const LegacyDataSourcePicker = memo(function LegacyDataSourcePicker({
     };
   }
 
+  const dataSources = dataSourceSrv.getList({
+    alerting,
+    tracing,
+    metrics,
+    logs,
+    dashboard,
+    mixed,
+    variables,
+    annotations,
+    pluginId,
+    filter,
+    type,
+  });
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSources.map(toListItem));
+
   function getDataSourceOptions() {
-    return dataSourceSrv
-      .getList({ alerting, tracing, metrics, logs, dashboard, mixed, variables, annotations, pluginId, filter, type })
-      .map((ds) => ({
-        value: ds.uid,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
-        imgUrl: ds.meta.info.logos.small,
-        meta: ds.meta,
-      }));
+    return dataSources.map((ds) => ({
+      value: ds.uid,
+      label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
+      imgUrl: ds.meta.info.logos.small,
+      meta: ds.meta,
+    }));
   }
 
   const options = getDataSourceOptions();

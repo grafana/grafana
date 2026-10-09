@@ -16,6 +16,8 @@ import { Strikethrough } from '@lezer/markdown';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { toggleSurround } from 'app/plugins/panel/text/v2/editor/editorCommands';
 
+import { headingStyles } from './markdownHeadingStyles';
+
 // Inline marks the toolbar (and, later, other callers) can ask "is the selection already X" about.
 // Kept here, next to the decoration logic that walks the same tree, so there is one implementation of
 // "what formatting applies at this position," not two.
@@ -170,8 +172,6 @@ function wrappedMarkDecorations(
   }
 }
 
-// h5/h6 get only the shared `heading` class (margin/weight), matching the static renderer, which
-// never gave them their own font-size rule either.
 function headingLevelClass(styles: MarkdownEditorStyles, level: number): string | undefined {
   switch (level) {
     case 1:
@@ -182,6 +182,10 @@ function headingLevelClass(styles: MarkdownEditorStyles, level: number): string 
       return styles.heading3;
     case 4:
       return styles.heading4;
+    case 5:
+      return styles.heading5;
+    case 6:
+      return styles.heading6;
     default:
       return undefined;
   }
@@ -380,6 +384,8 @@ export interface MarkdownEditorStyles {
   heading2: string;
   heading3: string;
   heading4: string;
+  heading5: string;
+  heading6: string;
   bold: string;
   italic: string;
   inlineCode: string;
@@ -401,6 +407,8 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     heading2: 'cm-md-h2',
     heading3: 'cm-md-h3',
     heading4: 'cm-md-h4',
+    heading5: 'cm-md-h5',
+    heading6: 'cm-md-h6',
     bold: 'cm-md-bold',
     italic: 'cm-md-italic',
     inlineCode: 'cm-md-inline-code',
@@ -416,6 +424,12 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
       color: theme.colors.text.primary,
       fontFamily: theme.typography.fontFamily,
       fontSize: theme.typography.body.fontSize,
+    },
+    // @codemirror/view's own base theme hardcodes `.cm-scroller { fontFamily: 'monospace' }` for
+    // every editor unconditionally — this is a document, not code, so it needs its own override to
+    // read in the same proportional font MarkdownCell.tsx's static (non-editing) render uses.
+    '.cm-scroller': {
+      fontFamily: theme.typography.fontFamily,
     },
     '.cm-content': {
       caretColor: theme.colors.text.primary,
@@ -452,24 +466,12 @@ function buildEditorStyles(theme: GrafanaTheme2): { theme: Extension; classes: M
     '&.cm-focused .cm-placeholder': {
       visibility: 'visible',
     },
-    [`.${classes.heading}`]: {
-      fontWeight: theme.typography.fontWeightMedium,
-    },
-    [`.${classes.heading1}`]: {
-      fontSize: theme.typography.h1.fontSize,
-      lineHeight: `${theme.typography.h1.lineHeight}`,
-    },
-    [`.${classes.heading2}`]: {
-      fontSize: theme.typography.h2.fontSize,
-      lineHeight: `${theme.typography.h2.lineHeight}`,
-    },
-    [`.${classes.heading3}`]: {
-      fontSize: theme.typography.h3.fontSize,
-      lineHeight: `${theme.typography.h3.lineHeight}`,
-    },
-    [`.${classes.heading4}`]: {
-      fontSize: theme.typography.h4.fontSize,
-    },
+    [`.${classes.heading1}`]: headingStyles(theme.typography.h1),
+    [`.${classes.heading2}`]: headingStyles(theme.typography.h2),
+    [`.${classes.heading3}`]: headingStyles(theme.typography.h3),
+    [`.${classes.heading4}`]: headingStyles(theme.typography.h4),
+    [`.${classes.heading5}`]: headingStyles(theme.typography.h5),
+    [`.${classes.heading6}`]: headingStyles(theme.typography.h6),
     [`.${classes.bold}`]: {
       fontWeight: theme.typography.fontWeightBold,
     },

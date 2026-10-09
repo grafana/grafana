@@ -92,7 +92,7 @@ describe('AlertmanagerPageWrapper', () => {
       expect(screen.queryByTestId('alertmanager-picker')).not.toBeInTheDocument();
     });
 
-    it('should show AlertManagerPicker when an Alertmanager-type datasource exists', () => {
+    it('should show AlertManagerPicker when an Alertmanager-type datasource exists', async () => {
       const alertmanagerDataSource = mockDataSource<AlertManagerDataSourceJsonData>({
         name: 'external-alertmanager',
         uid: 'external-alertmanager-uid',
@@ -107,10 +107,10 @@ describe('AlertmanagerPageWrapper', () => {
 
       renderTestComponent();
 
-      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
+      expect(await screen.findByTestId('alertmanager-picker')).toBeInTheDocument();
     });
 
-    it('should show AlertManagerPicker when both Prometheus and Alertmanager datasources exist', () => {
+    it('should show AlertManagerPicker when both Prometheus and Alertmanager datasources exist', async () => {
       const prometheusDs = mockDataSource({
         name: 'prometheus-1',
         uid: 'prometheus-1-uid',
@@ -134,7 +134,7 @@ describe('AlertmanagerPageWrapper', () => {
 
       renderTestComponent();
 
-      expect(screen.getByTestId('alertmanager-picker')).toBeInTheDocument();
+      expect(await screen.findByTestId('alertmanager-picker')).toBeInTheDocument();
     });
 
     it('should hide AlertManagerPicker when user lacks external notifications permission even if Alertmanager datasources exist', () => {

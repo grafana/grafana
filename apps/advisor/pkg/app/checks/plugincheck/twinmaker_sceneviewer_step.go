@@ -15,7 +15,7 @@ const (
 	twinmakerAppPluginID       = "grafana-iot-twinmaker-app"
 )
 
-var _ checks.Step = &twinmakerSceneViewerStep{}
+var _ checks.Step = (*twinmakerSceneViewerStep)(nil)
 
 type twinmakerSceneViewerStep struct{}
 

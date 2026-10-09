@@ -34,7 +34,7 @@ beforeEach(() => {
   mockDetectSignal.mockReset();
   mockDetectSignal.mockResolvedValue({ status: 'active', datasource: ds });
   mockFetchActivity.mockReset();
-  mockFetchActivity.mockResolvedValue({ bytes: null, sources: null, series: null });
+  mockFetchActivity.mockResolvedValue({ bytes: null, series: null });
   mockDrilldownActiveCta.mockReset();
   mockDrilldownActiveCta.mockResolvedValue({ label: 'Open Logs Drilldown', href: '/logs', action: 'open_solution' });
 });
@@ -73,17 +73,8 @@ describe('logsSolution', () => {
   });
 
   describe('stats', () => {
-    it('shows ingested volume with the approximate source count', async () => {
-      mockFetchActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: 8, series: null });
-
-      await expect(logsSolution().stats()).resolves.toEqual({
-        primary: '47 GB',
-        secondary: 'ingested · 7d · ~8 sources',
-      });
-    });
-
-    it('degrades the secondary when the source count is unavailable', async () => {
-      mockFetchActivity.mockResolvedValue({ bytes: 47_000_000_000, sources: null, series: null });
+    it('shows ingested volume over the stats window', async () => {
+      mockFetchActivity.mockResolvedValue({ bytes: 47_000_000_000, series: null });
 
       await expect(logsSolution().stats()).resolves.toEqual({
         primary: '47 GB',
@@ -99,7 +90,7 @@ describe('logsSolution', () => {
   describe('sparkline', () => {
     it('carries the ingest-volume trend when present', async () => {
       const series = { x: { values: [1] }, y: { values: [2] } } as never;
-      mockFetchActivity.mockResolvedValue({ bytes: null, sources: null, series });
+      mockFetchActivity.mockResolvedValue({ bytes: null, series });
 
       await expect(logsSolution().sparkline()).resolves.toEqual({
         series,

@@ -1,45 +1,42 @@
 package router
 
 import (
+	"context"
+
 	"github.com/grafana/authlib/types"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/grafana/apps/secret/pkg/decrypt"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
-	"github.com/grafana/grafana/pkg/plugins/manager/sources"
-	"github.com/grafana/grafana/pkg/registry/apis/appplugin"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	secret "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
+	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// ProvideRoutesLoader wires the cloud-router RoutesLoader ahead of the dummy
-// one: when [cloud_router].apiserver_url is configured, that loader wins;
-// otherwise this falls back to two dummy API groups for exercising the OSS
-// router target end to end. Plugin manifests will replace the dummy backends
-// in a later iteration.
-func ProvideRoutesLoader(
-	pluginClient plugins.Client,
-	contextProvider appplugin.PluginContextWrapper,
-	clientV3Loader v3.ClientV3Loader,
-	pluginSources sources.Registry,
-	pluginSettings pluginsettings.Service,
-	acService accesscontrol.Service,
-	accessControl accesscontrol.AccessControl,
-	unified resource.ResourceClient,
-	accessClient types.AccessClient,
-	decrypter decrypt.DecryptService,
-	tracer tracing.Tracer,
-	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
-) (RoutesLoader, error) {
-	if cloud, err := ProvideCloudRoutesLoaderFactory(cfg); err != nil {
-		return nil, err
-	} else if cloud != nil {
-		return cloud, nil
+// ProvideRoutesLoader prefers configured cloud routes (aggregate targets,
+// plugins_url, core_url and/or st_discovery_url -- see
+// ProvideCloudRoutesLoaderFactory), then local plugins. Dummy groups let the
+// router run when none of those sources are available.
+func ProvideRoutesLoader(cfg *setting.Cfg, deps PluginLoaderDependencies) (RoutesLoader, error) {
+	if cloud, err := ProvideCloudRoutesLoaderFactory(cfg, deps.PluginDependencies); err != nil || cloud != nil {
+		return cloud, err
+	}
+
+	// Plugin sources
+	if deps.PluginSources != nil {
+		//nolint:staticcheck
+		middleware := deps.Features != nil && deps.Features.IsEnabledGlobally(featuremgmt.FlagGrafanaUseRouterMiddleware) //nolint:staticcheck
+		if middleware {
+			// When running in ST grafana as middleware, declare plugin roles and resolve settings storage defaults
+			if err := initLocalPlugins(context.Background(), deps); err != nil {
+				return nil, err
+			}
+		}
+		return &PluginLoader{deps: deps}, nil
 	}
 
 	return dummyRoutesLoader{groups: []string{
@@ -48,40 +45,55 @@ func ProvideRoutesLoader(
 	}}, nil
 }
 
+// ProvideCloudRoutesLoader builds the cloud routes loader from the router
+// module's clients, without ProvideRoutesLoader's dependencies: those open the
+// SQL database and run migrations. Like ProvideCloudRoutesLoaderFactory, it
+// returns (nil, nil) when [cloud_router] configures no source.
+//
+// Managed plugins get no plugin store, plugin settings, legacy access control
+// or dual writer (see pluginManifestsTarget), so the builder metrics, which
+// only the dual writer records, are not registered either.
+func ProvideCloudRoutesLoader(
+	cfg *setting.Cfg,
+	clients RoutesLoaderClients,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+	reg prometheus.Registerer,
+) (RoutesLoader, error) {
+	decrypter, err := remoteDecrypter(cfg, tracer)
+	if err != nil {
+		return nil, err
+	}
+	return ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{
+		SecureValues:       clients.SecureValues,
+		MetricsRegister:    reg,
+		RESTConfigProvider: clients.RESTConfigProvider,
+		Unified:            clients.Resource,
+		AccessClient:       clients.Access,
+		Decrypter:          decrypter,
+		TokenExchanger:     newClientV3TokenExchanger(cfg),
+		Tracer:             tracer,
+		Features:           features,
+		Cfg:                cfg,
+	})
+}
+
+// remoteDecrypter returns the secrets manager's gRPC client, or nil when it is
+// disabled: the in-process decrypter reads secret metadata from the SQL
+// database. A nil decrypter fails only the requests that read secure values.
+func remoteDecrypter(cfg *setting.Cfg, tracer tracing.Tracer) (decrypt.DecryptService, error) {
+	if !cfg.SecretsManagement.GrpcClientEnable {
+		return nil, nil
+	}
+	return secretdecrypt.ProvideDecryptService(cfg, tracer, nil)
+}
+
 // RoutesLoaderClients groups clients that are constructed by the router module
 // before the remaining routes loader dependencies are initialized.
 type RoutesLoaderClients struct {
-	Resource resource.ResourceClient
-	Access   types.AccessClient
-}
-
-func ProvideRoutesLoaderWithClients(
-	pluginClient plugins.Client,
-	contextProvider appplugin.PluginContextWrapper,
-	clientV3Loader v3.ClientV3Loader,
-	pluginSources sources.Registry,
-	pluginSettings pluginsettings.Service,
-	acService accesscontrol.Service,
-	accessControl accesscontrol.AccessControl,
-	decrypter decrypt.DecryptService,
-	tracer tracing.Tracer,
-	features featuremgmt.FeatureToggles,
-	cfg *setting.Cfg,
-	clients RoutesLoaderClients,
-) (RoutesLoader, error) {
-	return ProvideRoutesLoader(
-		pluginClient,
-		contextProvider,
-		clientV3Loader,
-		pluginSources,
-		pluginSettings,
-		acService,
-		accessControl,
-		clients.Resource,
-		clients.Access,
-		decrypter,
-		tracer,
-		features,
-		cfg,
-	)
+	RESTConfigProvider restcfg.RestConfigProvider
+	Resource           resource.ResourceClient
+	Access             types.AccessClient
+	DualWrite          dualwrite.Service
+	SecureValues       secret.InlineSecureValueSupport
 }

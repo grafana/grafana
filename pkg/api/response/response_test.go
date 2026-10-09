@@ -94,7 +94,6 @@ func TestErrors(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		tc := tc
 		t.Run(
 			tc.name+" Error",
 			compareResponses(tc.legacyResponse, Error(

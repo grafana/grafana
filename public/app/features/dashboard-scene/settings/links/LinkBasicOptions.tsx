@@ -8,7 +8,7 @@ import { Field, Input, Select, Switch, TagsInput } from '@grafana/ui';
 import { useSidebarInputAutoFocus } from '../../scene/layouts-shared/utils';
 import { type DashboardSceneLike } from '../../scene/types/dashboard';
 
-import { type LinkEdit } from './LinkAddEditableElement';
+import { type LinkEdit } from './LinkEdit';
 import { linkEditActions } from './actions';
 import { LINK_ICON_MAP } from './utils';
 

@@ -2,12 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { createAssistantContextItem, useAssistant } from '@grafana/assistant';
-import { createDataFrame, dateTime, FieldType, store, type TimeRange } from '@grafana/data';
-import {
-  getComponentIdFromComponentMeta,
-  useExtensionSidebarContext,
-} from 'app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider';
-import { useFullscreenWorkspace } from 'app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace';
+import { createDataFrame, dateTime, FieldType, type TimeRange } from '@grafana/data';
 
 import { AssistantTooltipButton } from './AssistantTooltipButton';
 import { type AssistantTooltipContext } from './buildAssistantContext';
@@ -18,41 +13,12 @@ jest.mock('@grafana/assistant', () => ({
   createAssistantContextItem: jest.fn((type, params) => ({ type, params })),
 }));
 
-jest.mock('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider', () => ({
-  ...jest.requireActual('app/core/components/AppChrome/ExtensionSidebar/ExtensionSidebarProvider'),
-  useExtensionSidebarContext: jest.fn(),
-}));
-
-jest.mock('app/core/components/AppChrome/FullscreenWorkspace/useFullscreenWorkspace', () => ({
-  useFullscreenWorkspace: jest.fn(),
-}));
-
 const POINT_1_MS = Date.UTC(2026, 6, 24, 12, 0, 0);
 const POINT_2_MS = Date.UTC(2026, 6, 24, 12, 1, 0);
 const POINT_2_ISO = new Date(POINT_2_MS).toISOString();
 
 const mockUseAssistant = jest.mocked(useAssistant);
 const mockCreateContextItem = jest.mocked(createAssistantContextItem);
-const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
-const mockUseFullscreenWorkspace = jest.mocked(useFullscreenWorkspace);
-
-function setSidebar(open: boolean, pluginId = 'grafana-assistant-app') {
-  mockUseExtensionSidebarContext.mockReturnValue({
-    isOpen: open,
-    dockedComponentId: open ? getComponentIdFromComponentMeta(pluginId, 'Assistant') : undefined,
-    setDockedComponentId: jest.fn(),
-    availableComponents: new Map(),
-    extensionSidebarWidth: 300,
-    setExtensionSidebarWidth: jest.fn(),
-  });
-}
-
-function setFullscreenWorkspace(active: boolean) {
-  mockUseFullscreenWorkspace.mockReturnValue({
-    fullscreenWorkspaceFeatureFlagEnabled: active,
-    fullscreenWorkspaceActive: active,
-  });
-}
 
 function makeSeries() {
   const frame = createDataFrame({
@@ -93,8 +59,6 @@ function makeContext(): AssistantTooltipContext {
 describe('AssistantTooltipButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    setSidebar(false);
-    setFullscreenWorkspace(false);
   });
 
   it('renders nothing when the assistant is unavailable', () => {
@@ -191,134 +155,5 @@ describe('AssistantTooltipButton', () => {
         context: expect.arrayContaining([expect.anything()]),
       })
     );
-  });
-
-  it('starts a new chat (no chatId) when the assistant sidebar is closed', async () => {
-    store.set('grafana-assistant-active-chat-id', 'stale-chat-id');
-    setSidebar(false);
-
-    const openAssistant = jest.fn();
-    mockUseAssistant.mockReturnValue({
-      isLoading: false,
-      isAvailable: true,
-      openAssistant,
-      closeAssistant: jest.fn(),
-      toggleAssistant: jest.fn(),
-    });
-
-    render(
-      <AssistantTooltipButton
-        series={makeSeries()}
-        seriesIdx={1}
-        dataIdxs={[1, 1]}
-        replaceVariables={(s) => s}
-        context={makeContext()}
-        xVal={POINT_2_MS}
-      />
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: /add to assistant/i }));
-
-    expect(openAssistant).toHaveBeenCalledWith(expect.objectContaining({ appendContext: true, chatId: undefined }));
-
-    store.delete('grafana-assistant-active-chat-id');
-  });
-
-  it('appends to the open chat when the assistant sidebar is open', async () => {
-    store.set('grafana-assistant-active-chat-id', 'open-chat-id');
-    setSidebar(true);
-
-    const openAssistant = jest.fn();
-    mockUseAssistant.mockReturnValue({
-      isLoading: false,
-      isAvailable: true,
-      openAssistant,
-      closeAssistant: jest.fn(),
-      toggleAssistant: jest.fn(),
-    });
-
-    render(
-      <AssistantTooltipButton
-        series={makeSeries()}
-        seriesIdx={1}
-        dataIdxs={[1, 1]}
-        replaceVariables={(s) => s}
-        context={makeContext()}
-        xVal={POINT_2_MS}
-      />
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: /add to assistant/i }));
-
-    expect(openAssistant).toHaveBeenCalledWith(
-      expect.objectContaining({ appendContext: true, chatId: 'open-chat-id' })
-    );
-
-    store.delete('grafana-assistant-active-chat-id');
-  });
-
-  it('appends to the open chat when the fullscreen workspace is active and the sidebar is closed', async () => {
-    store.set('grafana-assistant-active-chat-id', 'workspace-chat-id');
-    setSidebar(false);
-    setFullscreenWorkspace(true);
-
-    const openAssistant = jest.fn();
-    mockUseAssistant.mockReturnValue({
-      isLoading: false,
-      isAvailable: true,
-      openAssistant,
-      closeAssistant: jest.fn(),
-      toggleAssistant: jest.fn(),
-    });
-
-    render(
-      <AssistantTooltipButton
-        series={makeSeries()}
-        seriesIdx={1}
-        dataIdxs={[1, 1]}
-        replaceVariables={(s) => s}
-        context={makeContext()}
-        xVal={POINT_2_MS}
-      />
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: /add to assistant/i }));
-
-    expect(openAssistant).toHaveBeenCalledWith(
-      expect.objectContaining({ appendContext: true, chatId: 'workspace-chat-id' })
-    );
-
-    store.delete('grafana-assistant-active-chat-id');
-  });
-
-  it('starts a new chat when the sidebar is open with a different plugin', async () => {
-    store.set('grafana-assistant-active-chat-id', 'stale-chat-id');
-    setSidebar(true, 'grafana-pathfinder-app');
-
-    const openAssistant = jest.fn();
-    mockUseAssistant.mockReturnValue({
-      isLoading: false,
-      isAvailable: true,
-      openAssistant,
-      closeAssistant: jest.fn(),
-      toggleAssistant: jest.fn(),
-    });
-
-    render(
-      <AssistantTooltipButton
-        series={makeSeries()}
-        seriesIdx={1}
-        dataIdxs={[1, 1]}
-        replaceVariables={(s) => s}
-        context={makeContext()}
-        xVal={POINT_2_MS}
-      />
-    );
-
-    await userEvent.click(screen.getByRole('button', { name: /add to assistant/i }));
-
-    expect(openAssistant).toHaveBeenCalledWith(expect.objectContaining({ chatId: undefined }));
-
-    store.delete('grafana-assistant-active-chat-id');
   });
 });

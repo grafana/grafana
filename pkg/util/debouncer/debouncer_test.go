@@ -31,8 +31,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -68,8 +67,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -117,8 +115,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -153,8 +150,7 @@ func TestDebouncer(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 
@@ -193,8 +189,7 @@ func TestDebouncer(t *testing.T) {
 		require.NoError(t, err)
 
 		// Start the group with a context
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 
 		group.Start(ctx)
 

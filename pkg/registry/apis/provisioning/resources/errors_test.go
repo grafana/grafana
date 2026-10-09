@@ -617,6 +617,23 @@ func TestFolderValidationError(t *testing.T) {
 	})
 }
 
+func TestIsFolderNotEmptyAPIError(t *testing.T) {
+	statusErr := &apierrors.StatusError{
+		ErrStatus: metav1.Status{
+			Code: 400,
+			Details: &metav1.StatusDetails{
+				UID: "folder.not-empty",
+			},
+		},
+	}
+
+	require.True(t, IsFolderNotEmptyAPIError(statusErr))
+	require.True(t, IsFolderNotEmptyAPIError(fmt.Errorf("delete folder: %w", statusErr)))
+	require.True(t, IsFolderNotEmptyAPIError(foldermodel.ErrFolderNotEmpty.Errorf("folder contains a dashboard")))
+	require.False(t, IsFolderNotEmptyAPIError(apierrors.NewBadRequest("bad request")))
+	require.False(t, IsFolderNotEmptyAPIError(nil))
+}
+
 func TestIsFolderValidationAPIError(t *testing.T) {
 	t.Run("nil returns false", func(t *testing.T) {
 		require.False(t, IsFolderValidationAPIError(nil))
@@ -722,7 +739,6 @@ func TestIsFolderValidationAPIError(t *testing.T) {
 	t.Run("matches every entry in the allow-list", func(t *testing.T) {
 		// Guards drift between folderValidationMessageIDs and the matcher.
 		for id := range folderValidationMessageIDs {
-			id := id
 			t.Run(id, func(t *testing.T) {
 				statusErr := &apierrors.StatusError{
 					ErrStatus: metav1.Status{

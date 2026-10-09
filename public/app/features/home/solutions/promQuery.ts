@@ -1,21 +1,55 @@
-import { firstValueFrom, timeout } from 'rxjs';
+import { firstValueFrom, NEVER, takeUntil, timeout } from 'rxjs';
 import { first } from 'rxjs/operators';
 
 import {
+  type AdHocVariableFilter,
   type DataFrame,
   type DataQuery,
   type DataSourceInstanceSettings,
   dateTime,
+  escapeRegex,
   type Field,
   type FieldSparkline,
   FieldType,
   getDefaultTimeRange,
   getMinMaxAndDelta,
   LoadingState,
+  type MetricFindValue,
+  rangeUtil,
   type TimeRange,
 } from '@grafana/data';
 import { type PromQuery } from '@grafana/prometheus';
 import { createQueryRunner } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
+
+import { abortNotifier } from './probeUtils';
+
+export interface QueryRunOptions {
+  /** Rejects when the runner reaches no terminal state in time. Default 30s. */
+  timeoutMs?: number;
+  /** Keep the surviving targets' frames when some queries error; an error response with no frames still throws. */
+  partial?: boolean;
+  /**
+   * Tears the query down — queued entry dropped, dispatched request and pending datasource lookup
+   * cancelled — and rejects with an AbortError. An already-aborted signal rejects before any
+   * result is observed.
+   */
+  signal?: AbortSignal;
+}
+
+/** PromQL string literal: PromQL only accepts Go escapes, so backslash, quote and newline are escaped. */
+export function quotePromString(value: string): string {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n')}"`;
+}
+
+/**
+ * Anchored RE2 alternation of literal values as a PromQL string literal: `"a|b\\.c"`. Values escape
+ * RE2 metacharacters first, so a dot renders as `\\.` in the query text (the string escape of the
+ * regex escape).
+ */
+export function quotePromAlternation(values: string[]): string {
+  return quotePromString(values.map(escapeRegex).join('|'));
+}
 
 export function readScalar(frames: DataFrame[], refId: string): number | null {
   // '' is never a label key, so this shares readLabeledScalar's lookup with the label discarded.
@@ -67,8 +101,7 @@ async function runDatasourceQueries(
   queries: DataQuery[],
   range: TimeRange,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs = 30_000,
-  partial = false
+  { timeoutMs = 30_000, partial = false, signal }: QueryRunOptions = {}
 ): Promise<DataFrame[]> {
   const runner = createQueryRunner();
   try {
@@ -81,11 +114,16 @@ async function runDatasourceQueries(
       minInterval: null,
     });
     // If the runner never emits a terminal state (e.g. its internal datasource lookup rejects),
-    // time out instead of leaving callers' useAsync in a permanent loading state.
+    // time out instead of leaving callers' useAsync in a permanent loading state. An abort rejects
+    // with an AbortError; destroy() in `finally` then unsubscribes the query, which tears down its
+    // BackendSrv fetch (queued entry dropped, dispatched request cancelled) and discards a
+    // datasource lookup still in progress. takeUntil subscribes its notifier before the source, so
+    // an already-aborted signal rejects before a synchronous result is observed.
     const data = await firstValueFrom(
       runner.get().pipe(
         first((d) => d.state === LoadingState.Done || d.state === LoadingState.Error),
-        timeout(timeoutMs)
+        timeout(timeoutMs),
+        takeUntil(signal ? abortNotifier(signal) : NEVER)
       )
     );
     // Errors reject by default — `?? 0` readers would render a dropped refId as a real zero.
@@ -100,14 +138,12 @@ async function runDatasourceQueries(
 
 /**
  * Run a batch of instant queries (refId -> PromQL) and return the response frames. The overview
- * cards read single-value scalars off the result via {@link readScalar}. Set `partial` to
- * tolerate individual query errors and keep the surviving frames.
+ * cards read single-value scalars off the result via {@link readScalar}.
  */
 export async function runInstantQueries(
   queries: Record<string, string>,
   ds: Pick<DataSourceInstanceSettings, 'uid' | 'type'>,
-  timeoutMs?: number,
-  partial = false
+  options?: QueryRunOptions
 ): Promise<DataFrame[]> {
   const targets: PromQuery[] = Object.entries(queries).map(([refId, expr]) => ({
     refId,
@@ -115,7 +151,7 @@ export async function runInstantQueries(
     instant: true,
     range: false,
   }));
-  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, timeoutMs, partial);
+  return runDatasourceQueries(targets, getDefaultTimeRange(), ds, options);
 }
 
 /**
@@ -133,4 +169,34 @@ export async function runRangeQuery(
   const range: TimeRange = { from: fromTime, to: toTime, raw: { from: `now-${hours}h`, to: 'now' } };
   const target: PromQuery = { refId, expr, instant: false, range: true };
   return runDatasourceQueries([target], range, ds);
+}
+
+// Matches the cards' "seen recently" lookback (24h inventory / sm_check_info).
+const LABEL_VALUES_RANGE = { from: 'now-24h', to: 'now' };
+
+/**
+ * Distinct `key` values carried by `metric` in datasource `uid` over the last 24h, narrowed by
+ * `filters`. The Prometheus datasource caches label values per snapped time range itself
+ * (1–60 min by cacheLevel), so reopening a dialog inside that window issues no request and a
+ * moved window refreshes the list.
+ */
+export async function fetchLabelValues(
+  uid: string,
+  key: string,
+  metric: string,
+  filters: AdHocVariableFilter[] = []
+): Promise<string[]> {
+  const ds = await getDataSourceInstance({ uid });
+  if (!ds.getTagValues) {
+    return [];
+  }
+  const query: PromQuery = { refId: 'values', expr: metric };
+  const result = await ds.getTagValues({
+    key,
+    filters,
+    timeRange: rangeUtil.convertRawToRange(LABEL_VALUES_RANGE),
+    queries: [query],
+  });
+  const values: MetricFindValue[] = Array.isArray(result) ? result : (result.data ?? []);
+  return values.map((v) => String(v.value ?? v.text));
 }

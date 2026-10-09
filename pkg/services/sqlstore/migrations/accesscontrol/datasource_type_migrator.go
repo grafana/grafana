@@ -19,7 +19,7 @@ type datasourceTypeMigrator struct {
 	migrator.MigrationBase
 }
 
-var _ migrator.CodeMigration = new(datasourceTypeMigrator)
+var _ migrator.CodeMigration = (*datasourceTypeMigrator)(nil)
 
 func (m *datasourceTypeMigrator) SQL(_ migrator.Dialect) string {
 	return CodeMigrationSQL

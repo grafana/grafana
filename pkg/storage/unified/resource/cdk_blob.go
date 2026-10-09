@@ -9,8 +9,8 @@ import (
 	"mime"
 	"strings"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"gocloud.dev/blob"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -121,7 +121,7 @@ func (s *cdkBlobSupport) SupportsSignedURLs() bool {
 
 func (s *cdkBlobSupport) PutResourceBlob(ctx context.Context, req *resourcepb.PutBlobRequest) (*resourcepb.PutBlobResponse, error) {
 	info := &utils.BlobInfo{
-		UID: uuid.New().String(),
+		UID: uuid.NewV4().String(),
 	}
 	info.SetContentType(req.ContentType)
 	path, err := s.getBlobPath(req.Resource, info)

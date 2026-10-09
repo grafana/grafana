@@ -771,12 +771,7 @@
           "items": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.Stars"
             }
           },
           "kind": {
@@ -820,8 +815,7 @@
             "description": "The set of resources",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "type": "string"
             },
             "x-kubernetes-list-type": "set"
           }
@@ -836,12 +830,7 @@
           "resource": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsResource"
-                }
-              ]
+              "$ref": "#/components/schemas/com.github.grafana.grafana.apps.collections.pkg.apis.collections.v1alpha1.StarsResource"
             }
           }
         }

@@ -17,7 +17,7 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { type Repository, type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
+import { type ProvisioningResourceRef as ResourceRef, type Repository } from 'app/api/clients/provisioning/v0alpha1';
 
 import { JobStatus } from '../Job/JobStatus';
 import { BranchValidationError } from '../Shared/BranchValidationError';

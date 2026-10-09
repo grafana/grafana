@@ -39,7 +39,7 @@ func NewStagedGitRepository(ctx context.Context, repo *gitRepository, opts repos
 
 	writer, err := repo.client.NewStagedWriter(ctx, ref, repo.writerOptions...)
 	if err != nil {
-		return nil, fmt.Errorf("build staged writer: %w", err)
+		return nil, wrapNanogitError("build staged writer", err)
 	}
 
 	return &stagedGitRepository{
@@ -267,7 +267,7 @@ func (r *stagedGitRepository) Push(ctx context.Context) (err error) {
 		if errors.Is(err, nanogit.ErrNothingToCommit) {
 			return repository.ErrNothingToCommit
 		}
-		return err
+		return mapNanogitError(err)
 	}
 	return nil
 }

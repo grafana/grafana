@@ -9,6 +9,7 @@ package parse
 import (
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // A Node is an element in the parse tree. The interface is trivial.
@@ -137,28 +138,30 @@ func (f *FuncNode) append(arg Node) {
 
 // String returns the string representation of the FuncNode so it fulfills the Node interface.
 func (f *FuncNode) String() string {
-	s := f.Name + "("
+	var s strings.Builder
+	s.WriteString(f.Name + "(")
 	for i, arg := range f.Args {
 		if i > 0 {
-			s += ", "
+			s.WriteString(", ")
 		}
-		s += arg.String()
+		s.WriteString(arg.String())
 	}
-	s += ")"
-	return s
+	s.WriteString(")")
+	return s.String()
 }
 
 // StringAST returns the string representation of abstract syntax tree of the FuncNode so it fulfills the Node interface.
 func (f *FuncNode) StringAST() string {
-	s := f.Name + "("
+	var s strings.Builder
+	s.WriteString(f.Name + "(")
 	for i, arg := range f.Args {
 		if i > 0 {
-			s += ", "
+			s.WriteString(", ")
 		}
-		s += arg.StringAST()
+		s.WriteString(arg.StringAST())
 	}
-	s += ")"
-	return s
+	s.WriteString(")")
+	return s.String()
 }
 
 // Check performs parse time checking on the FuncNode so it fulfills the Node interface.

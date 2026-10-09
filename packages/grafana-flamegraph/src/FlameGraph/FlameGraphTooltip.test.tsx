@@ -186,6 +186,21 @@ describe('getDiffTooltipData', () => {
       },
     ]);
   });
+
+  it('does not render NaN/undefined when valueRight is missing (e.g. a merged sandwich-view node)', () => {
+    const tooltipData = getDiffTooltipData(
+      setupDiffData(),
+      // No valueRight here - this is what mergeSubtrees/mergeParentSubtrees used to produce for sandwich view nodes.
+      { start: 0, itemIndexes: [1], value: 90, children: [], level: 0 },
+      200
+    );
+    for (const row of tooltipData) {
+      expect(String(row.baseline)).not.toMatch(/NaN|undefined/);
+      expect(String(row.comparison)).not.toMatch(/NaN|undefined/);
+      expect(String(row.diff)).not.toMatch(/NaN|undefined/);
+    }
+    expect(tooltipData[0].comparison).toBe('0%');
+  });
 });
 
 function makeField(name: string, unit: string, values: number[]): Field {

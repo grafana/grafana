@@ -495,8 +495,8 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 					mockhub.GetReposHooksByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						hooks := []*github.Hook{
-							{ID: github.Ptr(int64(111)), Config: &github.HookConfig{URL: github.Ptr("https://other.example.com/webhook")}},
-							{ID: github.Ptr(int64(456)), Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook")}},
+							{ID: new(int64(111)), Config: &github.HookConfig{URL: new("https://other.example.com/webhook")}},
+							{ID: new(int64(456)), Config: &github.HookConfig{URL: new("https://example.com/webhook")}},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(hooks))
@@ -515,10 +515,10 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(&github.Hook{
-							ID:     github.Ptr(int64(456)),
+							ID:     new(int64(456)),
 							Events: []string{"push", "pull_request"},
-							Active: github.Ptr(true),
-							Config: &github.HookConfig{URL: github.Ptr("https://example.com/webhook"), ContentType: github.Ptr("json")},
+							Active: new(true),
+							Config: &github.HookConfig{URL: new("https://example.com/webhook"), ContentType: new("json")},
 						}))
 					}),
 				),
@@ -556,7 +556,7 @@ func TestGithubClient_CreateWebhook(t *testing.T) {
 					mockhub.GetReposHooksByOwnerByRepo,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						hooks := []*github.Hook{
-							{ID: github.Ptr(int64(111)), Config: &github.HookConfig{URL: github.Ptr("https://other.example.com/webhook")}},
+							{ID: new(int64(111)), Config: &github.HookConfig{URL: new("https://other.example.com/webhook")}},
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(hooks))

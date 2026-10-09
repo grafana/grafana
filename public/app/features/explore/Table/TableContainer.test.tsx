@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -16,6 +16,12 @@ import { configureStore } from '../../../store/configureStore';
 import { createEmptyQueryResponse, makeExplorePaneState } from '../state/utils';
 
 import ConnectedTableContainer, { mapStateToProps, TableContainer } from './TableContainer';
+
+const mockImportPanelPlugin = jest.fn();
+
+jest.mock('app/features/plugins/importPanelPlugin', () => ({
+  importPanelPlugin: (...args: unknown[]) => mockImportPanelPlugin(...args),
+}));
 
 const mockRenderedSeries: DataFrame[][] = [];
 const mockRenderedStates: Array<LoadingState | undefined> = [];
@@ -92,6 +98,8 @@ describe('TableContainer', () => {
   beforeEach(() => {
     mockRenderedSeries.length = 0;
     mockRenderedStates.length = 0;
+    mockImportPanelPlugin.mockReset();
+    mockImportPanelPlugin.mockReturnValue(new Promise(() => {}));
   });
 
   describe('With one main frame', () => {
@@ -100,6 +108,16 @@ describe('TableContainer', () => {
       const tables = getPanels();
       expect(tables.length).toBe(1);
       expect(tables[0]).toBeInTheDocument();
+    });
+
+    it('removes panel padding when the Table plugin requests it', async () => {
+      mockImportPanelPlugin.mockResolvedValue({ noPadding: true });
+
+      render(<TableContainer {...defaultProps} />);
+
+      await waitFor(() => {
+        expect(getPanels()[0].parentElement?.style.padding).toBe('0px 0px 0px 0px');
+      });
     });
 
     it('should render 0 series returned on no items', () => {

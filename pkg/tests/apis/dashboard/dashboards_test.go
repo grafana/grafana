@@ -827,7 +827,7 @@ func TestIntegrationSearchTypeFiltering(t *testing.T) {
 		var statusCode int
 		req := restClient.Get().AbsPath("apis", "dashboard.grafana.app", "v0alpha1", "namespaces", ns, "search").
 			Param("limit", "1000")
-		for _, kv := range strings.Split(params, "&") {
+		for kv := range strings.SplitSeq(params, "&") {
 			if kv == "" {
 				continue
 			}

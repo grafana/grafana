@@ -2,7 +2,6 @@ package shorturlimpl
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -86,13 +85,4 @@ func (s ShortURLService) CreateShortURL(ctx context.Context, user identity.Reque
 
 func (s ShortURLService) DeleteStaleShortURLs(ctx context.Context, cmd *shorturls.DeleteShortUrlCommand) error {
 	return s.SQLStore.Delete(ctx, cmd)
-}
-
-func (s ShortURLService) ConvertShortURLToDTO(shortURL *shorturls.ShortUrl, appURL string) *dtos.ShortURL {
-	url := fmt.Sprintf("%s/goto/%s?orgId=%d", strings.TrimSuffix(appURL, "/"), shortURL.Uid, shortURL.OrgId)
-
-	return &dtos.ShortURL{
-		UID: shortURL.Uid,
-		URL: url,
-	}
 }

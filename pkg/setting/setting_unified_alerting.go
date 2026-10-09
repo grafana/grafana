@@ -72,6 +72,11 @@ const (
 	lokiDefaultMaxQuerySize                = 65536 // 64kb
 	defaultHistorianPrometheusWriteTimeout = 10 * time.Second
 	defaultHistorianPrometheusMetricName   = "GRAFANA_ALERTS"
+	// Below this, a large recording rule degenerates into roughly one request per series.
+	recordingRulesMinWriteBatchSize = 65536 // 64kb
+	// Fan-out is per rule evaluation and multiplies with the number of rules
+	// evaluating at once, so keep it well under the default idle connection pool (100).
+	recordingRulesMaxWriteConcurrency = 32
 )
 
 var (
@@ -195,6 +200,12 @@ type RecordingRuleSettings struct {
 	CustomHeaders        map[string]string
 	Timeout              time.Duration
 	DefaultDatasourceUID string
+	// MaxWriteBatchSize splits a write larger than this many (estimated) bytes
+	// into several requests. 0 never splits.
+	MaxWriteBatchSize int
+	// MaxWriteConcurrency bounds how many split requests run in parallel.
+	// Ignored if MaxWriteBatchSize is 0. 0 defaults to 1 (sequential).
+	MaxWriteConcurrency int
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
@@ -208,6 +219,7 @@ type RemoteAlertmanagerSettings struct {
 }
 
 type UnifiedAlertingScreenshotSettings struct {
+	IncludeAlertHistory        bool
 	Capture                    bool
 	CaptureTimeout             time.Duration
 	MaxConcurrentScreenshots   int64
@@ -396,7 +408,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	peers := ua.Key("ha_peers").MustString("")
 	uaCfg.HAPeers = make([]string, 0)
 	if peers != "" {
-		for _, peer := range strings.Split(peers, ",") {
+		for peer := range strings.SplitSeq(peers, ",") {
 			peer = strings.TrimSpace(peer)
 			uaCfg.HAPeers = append(uaCfg.HAPeers, peer)
 		}
@@ -536,6 +548,7 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfgScreenshots := uaCfg.Screenshots
 
 	uaCfgScreenshots.Capture = screenshots.Key("capture").MustBool(screenshotsDefaultCapture)
+	uaCfgScreenshots.IncludeAlertHistory = screenshots.Key("include_alert_history").MustBool(true)
 
 	captureTimeout := screenshots.Key("capture_timeout").MustDuration(screenshotsDefaultCaptureTimeout)
 	if captureTimeout > screenshotsMaxCaptureTimeout {
@@ -609,6 +622,14 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 		Enabled:              rr.Key("enabled").MustBool(true),
 		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
 		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
+		MaxWriteBatchSize:    rr.Key("max_write_batch_size").MustInt(0),
+		MaxWriteConcurrency:  rr.Key("max_write_concurrency").MustInt(0),
+	}
+	if bs := uaCfgRecordingRules.MaxWriteBatchSize; bs != 0 && bs < recordingRulesMinWriteBatchSize {
+		return fmt.Errorf("setting 'max_write_batch_size' is invalid, only 0 or a value of at least %d bytes is allowed", recordingRulesMinWriteBatchSize)
+	}
+	if c := uaCfgRecordingRules.MaxWriteConcurrency; c < 0 || c > recordingRulesMaxWriteConcurrency {
+		return fmt.Errorf("setting 'max_write_concurrency' is invalid, only values between 0 and %d are allowed", recordingRulesMaxWriteConcurrency)
 	}
 
 	rrHeaders := iniFile.Section("recording_rules.custom_headers")

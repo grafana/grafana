@@ -222,6 +222,13 @@ func (sa *ServiceAccountsService) RetrieveServiceAccount(ctx context.Context, qu
 	return sa.store.RetrieveServiceAccount(ctx, query)
 }
 
+func (sa *ServiceAccountsService) RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if err := validOrgID(orgID); err != nil {
+		return nil, err
+	}
+	return sa.store.RetrieveServiceAccountsByUIDs(ctx, orgID, uids)
+}
+
 func (sa *ServiceAccountsService) RetrieveServiceAccountIdByName(ctx context.Context, orgID int64, name string) (int64, error) {
 	if err := validOrgID(orgID); err != nil {
 		return 0, err

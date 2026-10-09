@@ -6,10 +6,9 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/oauth2"
-
 	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
+	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/models/usertoken"
@@ -307,7 +306,7 @@ func (i *Identity) SignedInUser() *user.SignedInUser {
 		IsAnonymous:       i.IsIdentityType(claims.TypeAnonymous),
 		IsDisabled:        i.IsDisabled,
 		LastSeenAt:        i.LastSeenAt,
-		TeamIDs:           i.TeamIDs,
+		TeamIDs:           i.TeamIDs, //nolint:staticcheck // Preserve legacy field compatibility.
 		TeamUIDs:          i.Groups,
 		ExternalGroups:    i.ExternalGroups,
 		Permissions:       i.Permissions,

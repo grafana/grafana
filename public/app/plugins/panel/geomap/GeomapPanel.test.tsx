@@ -4,7 +4,7 @@ import Attribution from 'ol/control/Attribution';
 import { transformExtent } from 'ol/proj';
 import { type ComponentProps } from 'react';
 
-import { dateTime, EventBusSrv, LoadingState } from '@grafana/data';
+import { createTheme, dateTime, EventBusSrv, LoadingState } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 
 import { GeomapPanel } from './GeomapPanel';
@@ -94,6 +94,7 @@ jest.mock('./utils/layers', () => ({
     options: {},
   }),
   applyLayerFilter: jest.fn(),
+  reinitLayers: jest.fn(),
 }));
 
 jest.mock('./utils/attribution', () => ({
@@ -295,6 +296,7 @@ describe('GeomapPanel - View Listener', () => {
       },
       onChangeTimeRange: jest.fn(),
       eventBus: new EventBusSrv(),
+      theme: createTheme({ colors: { mode: 'dark' } }),
     };
 
     panel = new GeomapPanel(props);
@@ -525,6 +527,31 @@ describe('GeomapPanel - View Listener', () => {
 
       panel.componentDidUpdate(prevProps);
       expect(mockMap.updateSize).toHaveBeenCalled();
+    });
+  });
+
+  describe('Theme changes', () => {
+    it('should rebuild the layers when the app theme changes', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      const { reinitLayers } = require('./utils/layers');
+      const prevProps = { ...panel.props };
+      Object.assign(panel.props, { theme: createTheme({ colors: { mode: 'light' } }) });
+
+      panel.componentDidUpdate(prevProps);
+
+      expect(reinitLayers).toHaveBeenCalledWith(panel);
+    });
+
+    it('should leave the layers alone when the theme is unchanged', async () => {
+      const div = document.createElement('div');
+      await panel.initMapAsync(div);
+
+      const { reinitLayers } = require('./utils/layers');
+      panel.componentDidUpdate({ ...panel.props });
+
+      expect(reinitLayers).not.toHaveBeenCalled();
     });
   });
 

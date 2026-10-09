@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 import { type Dashboard } from '@grafana/schema';
 import { type Status, type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { isRecord } from 'app/core/utils/isRecord';
@@ -6,6 +6,7 @@ import {
   AnnoKeyGrantPermissions,
   type Resource,
   type ResourceClient,
+  type ResourceClientRequestOptions,
   type ResourceForCreate,
 } from 'app/features/apiserver/types';
 import { type DashboardDataDTO } from 'app/types/dashboard';
@@ -13,6 +14,13 @@ import { type DashboardDataDTO } from 'app/types/dashboard';
 import { type SaveDashboardCommand } from '../components/SaveDashboard/types';
 
 import { type DashboardWithAccessInfo } from './types';
+
+/**
+ * Prefer the `useDashboardNewLayouts` hook in React components - use this only where a hook can't be used
+ */
+export function isDashboardNewLayoutsEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardNewLayouts, true);
+}
 
 export function isV2StoredVersion(version: string | undefined): boolean {
   return version === 'v2alpha1' || version === 'v2beta1' || version === 'v2';
@@ -26,7 +34,7 @@ export function getDashboardsApiVersion(responseFormat?: 'v1' | 'v2') {
   if (responseFormat === 'v1') {
     return 'v1';
   }
-  if (responseFormat === 'v2' || config.featureToggles.dashboardNewLayouts) {
+  if (responseFormat === 'v2' || isDashboardNewLayoutsEnabled()) {
     return 'v2';
   }
   return 'unified';
@@ -134,4 +142,18 @@ export async function fetchDeletedDashboard<T>(
     fieldSelector: `metadata.name=${name}`,
   });
   return list.items.find((item) => item.metadata.name === name);
+}
+
+/**
+ * Callers that render the save failure in their own UI (the save drawer) pass
+ * `showErrorAlert: false` so the global error toast doesn't double-report it. Returns undefined
+ * when the caller didn't ask, to keep the request options out of the payload entirely.
+ */
+export function getRequestOptions(
+  command: Pick<SaveDashboardCommand<unknown>, 'showErrorAlert'>
+): ResourceClientRequestOptions | undefined {
+  if (command.showErrorAlert === undefined) {
+    return undefined;
+  }
+  return { showErrorAlert: command.showErrorAlert };
 }

@@ -116,12 +116,12 @@ func (k leaseKey) String() string {
 }
 
 func parseLeaseKey(key string) (leaseKey, error) {
-	idx := strings.Index(key, generationSeparator)
-	if idx < 0 {
+	before, after, ok := strings.Cut(key, generationSeparator)
+	if !ok {
 		return leaseKey{}, fmt.Errorf("invalid lease key %q: missing %q", key, generationSeparator)
 	}
-	name := key[:idx]
-	gen, err := strconv.ParseInt(key[idx+len(generationSeparator):], 10, 64)
+	name := before
+	gen, err := strconv.ParseInt(after, 10, 64)
 	if err != nil {
 		return leaseKey{}, fmt.Errorf("parsing lease key %q: %w", key, err)
 	}

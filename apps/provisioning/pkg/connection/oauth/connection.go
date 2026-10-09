@@ -18,12 +18,12 @@ import (
 )
 
 // Provider supplies the provider-specific pieces of an OAuth app connection
-// (e.g. GitLab, Bitbucket): its OAuth application settings and API calls.
+// (e.g. GitLab, Bitbucket): its OAuth application settings and health check.
 //
 //go:generate mockery --name Provider --structname MockProvider --inpackage --filename provider_mock.go --with-expecter
 type Provider interface {
 	Endpoint() oauth2.Endpoint
-	ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error)
+	Test(ctx context.Context) *provisioning.TestResults
 }
 
 type oauthConnection struct {
@@ -44,9 +44,11 @@ func newConnection(provider Provider, repoType provisioning.RepositoryType, cfg 
 	}
 }
 
-// Test validates that the stored access token works against the provider.
+// Test validates the stored access token, then checks it against the provider
+// when the provider can list repositories.
 func (c *oauthConnection) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	if token, err := parseToken(c.token); err != nil || token.AccessToken == "" {
+	token, err := parseToken(c.token)
+	if err != nil || token.AccessToken == "" {
 		return connection.FailedTestResults(
 			http.StatusUnauthorized,
 			[]provisioning.ErrorDetails{{
@@ -57,27 +59,18 @@ func (c *oauthConnection) Test(ctx context.Context) (*provisioning.TestResults, 
 		), nil
 	}
 
-	if _, err := c.ListRepositories(ctx); err != nil {
-		if errors.Is(err, connection.ErrAuthentication) {
-			return connection.FailedTestResults(
-				http.StatusUnauthorized,
-				[]provisioning.ErrorDetails{{
-					Type:   metav1.CauseTypeFieldValueInvalid,
-					Field:  field.NewPath("secure", "token").String(),
-					Detail: "The provider rejected the connection's access token",
-				}},
-			), nil
-		}
+	if !token.Expiry.IsZero() && time.Now().After(token.Expiry) {
 		return connection.FailedTestResults(
-			http.StatusUnprocessableEntity,
+			http.StatusUnauthorized,
 			[]provisioning.ErrorDetails{{
-				Type:   metav1.CauseTypeInternal,
-				Detail: fmt.Errorf("failed to list repositories: %w", err).Error(),
+				Type:   metav1.CauseTypeFieldValueInvalid,
+				Field:  field.NewPath("secure", "token").String(),
+				Detail: "The connection's access token has expired",
 			}},
 		), nil
 	}
 
-	return connection.SuccessTestResults(), nil
+	return c.provider.Test(ctx), nil
 }
 
 // GenerateRepositoryToken returns an access token usable for git operations on
@@ -105,14 +98,46 @@ func (c *oauthConnection) GenerateRepositoryToken(_ context.Context, repo *provi
 	}, nil
 }
 
+// TestByListingRepositories checks a provider's access token by listing the
+// repositories it can access.
+//
+// TODO: use a lighter endpoint than listing repositories to check the token.
+func TestByListingRepositories(ctx context.Context, lister connection.RepositoryLister) *provisioning.TestResults {
+	if _, err := lister.ListRepositories(ctx); err != nil {
+		if errors.Is(err, connection.ErrAuthentication) {
+			return connection.FailedTestResults(
+				http.StatusUnauthorized,
+				[]provisioning.ErrorDetails{{
+					Type:   metav1.CauseTypeFieldValueInvalid,
+					Field:  field.NewPath("secure", "token").String(),
+					Detail: "The provider rejected the connection's access token",
+				}},
+			)
+		}
+		return connection.FailedTestResults(
+			http.StatusUnprocessableEntity,
+			[]provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeInternal,
+				Detail: fmt.Errorf("failed to list repositories: %w", err).Error(),
+			}},
+		)
+	}
+	return connection.SuccessTestResults()
+}
+
+type listingConnection struct {
+	*oauthConnection
+	lister connection.RepositoryLister
+}
+
 // ListRepositories returns the list of repositories accessible through this connection.
-func (c *oauthConnection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
+func (c *listingConnection) ListRepositories(ctx context.Context) ([]provisioning.ExternalRepository, error) {
 	token, err := parseToken(c.token)
 	if err != nil || token.AccessToken == "" {
 		return nil, fmt.Errorf("connection access token not available: %w", connection.ErrAuthentication)
 	}
 
-	return c.provider.ListRepositories(ctx)
+	return c.lister.ListRepositories(ctx)
 }
 
 // GenerateConnectionToken exchanges the stored refresh token for a new access
@@ -269,7 +294,8 @@ func marshalToken(token *oauth2.Token) (common.RawSecureValue, error) {
 }
 
 var (
-	_ connection.Connection      = (*oauthConnection)(nil)
-	_ connection.TokenConnection = (*oauthConnection)(nil)
-	_ connection.OAuthConnection = (*oauthConnection)(nil)
+	_ connection.Connection       = (*oauthConnection)(nil)
+	_ connection.TokenConnection  = (*oauthConnection)(nil)
+	_ connection.OAuthConnection  = (*oauthConnection)(nil)
+	_ connection.RepositoryLister = (*listingConnection)(nil)
 )

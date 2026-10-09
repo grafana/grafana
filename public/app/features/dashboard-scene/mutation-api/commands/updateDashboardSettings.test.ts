@@ -94,6 +94,7 @@ function buildTestScene(
   const scene = {
     state,
     canEditDashboard: jest.fn(() => true),
+    isPlanning: jest.fn(() => false),
     onEnterEditMode: jest.fn(() => {
       state.isEditing = true;
     }),

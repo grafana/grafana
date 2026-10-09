@@ -1151,3 +1151,124 @@ func TestUpdateOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
 		assert.Nil(t, d.updateCmd, "user service update should not be called on the legacy path")
 	})
 }
+
+func TestRemoveOrgUserForCurrentOrg_KubernetesUsersRedirect(t *testing.T) {
+	permissions := []accesscontrol.Permission{
+		{Action: accesscontrol.ActionOrgUsersRead, Scope: "users:*"},
+		{Action: accesscontrol.ActionOrgUsersRemove, Scope: "users:*"},
+	}
+
+	orgUsersWithTwoAdmins := user.SearchUserQueryResult{
+		TotalCount: 2,
+		Users: []*user.UserSearchHitDTO{
+			{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
+			{ID: 2, Login: "other", Role: string(identity.RoleAdmin)},
+		},
+	}
+
+	type deps struct {
+		deleteCmd       *user.DeleteUserCommand
+		orgListResponse orgtest.OrgListResponse
+		deleteError     error
+		searchUsers     user.SearchUserQueryResult
+		singleOrg       bool
+		targetUser      *user.User
+	}
+
+	setup := func(t *testing.T, d *deps) *webtest.Server {
+		targetUser := d.targetUser
+		if targetUser == nil {
+			targetUser = &user.User{ID: 1, IsAdmin: false}
+		}
+		return SetupAPITestServer(t, func(hs *HTTPServer) {
+			hs.Cfg = setting.NewCfg()
+			hs.Cfg.RBAC.SingleOrganization = d.singleOrg
+			hs.userService = &usertest.FakeUserService{
+				ExpectedUser:        targetUser,
+				ExpectedSearchUsers: d.searchUsers,
+				DeleteFn: func(_ context.Context, cmd *user.DeleteUserCommand) error {
+					d.deleteCmd = cmd
+					return d.deleteError
+				},
+			}
+			hs.orgService = &orgtest.FakeOrgService{ExpectedOrgListResponse: d.orgListResponse}
+			hs.accesscontrolService = &actest.FakeService{ExpectedPermissions: permissions}
+		})
+	}
+
+	sendDelete := func(t *testing.T, server *webtest.Server) int {
+		signedInUser := userWithPermissions(1, permissions)
+		signedInUser.OrgRole = identity.RoleAdmin
+		req := server.NewRequest(http.MethodDelete, "/api/org/users/1", nil)
+		res, err := server.Send(webtest.RequestWithSignedInUser(req, signedInUser))
+		require.NoError(t, err)
+		require.NoError(t, res.Body.Close())
+		return res.StatusCode
+	}
+
+	t.Run("routes the removal through the user service when the flag is enabled and single-org", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{searchUsers: orgUsersWithTwoAdmins, singleOrg: true}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		require.NotNil(t, d.deleteCmd)
+		assert.Equal(t, int64(1), d.deleteCmd.UserID)
+	})
+
+	t.Run("returns 500 when the user service delete fails", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{deleteError: errors.New("boom"), searchUsers: orgUsersWithTwoAdmins, singleOrg: true}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusInternalServerError, statusCode)
+	})
+
+	t.Run("blocks removing the last org admin", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{singleOrg: true, searchUsers: user.SearchUserQueryResult{
+			TotalCount: 2,
+			Users: []*user.UserSearchHitDTO{
+				{ID: 1, Login: "target", Role: string(identity.RoleAdmin)},
+				{ID: 2, Login: "other", Role: string(identity.RoleViewer)},
+			},
+		}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusBadRequest, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called when the removal is blocked")
+	})
+
+	t.Run("blocks removing a Grafana server admin from their only org", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{singleOrg: true, searchUsers: orgUsersWithTwoAdmins, targetUser: &user.User{ID: 1, IsAdmin: true}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusBadRequest, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called for a Grafana server admin")
+	})
+
+	t.Run("keeps using the legacy org service when not single-org", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, true)
+
+		d := &deps{searchUsers: orgUsersWithTwoAdmins, singleOrg: false, orgListResponse: orgtest.OrgListResponse{{OrgID: 1, Response: nil}}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called on the legacy path")
+	})
+
+	t.Run("keeps using the legacy org service when the flag is disabled", func(t *testing.T) {
+		setupOpenFeatureFlag(t, featuremgmt.FlagKubernetesUsersRedirect, false)
+
+		d := &deps{searchUsers: orgUsersWithTwoAdmins, singleOrg: true, orgListResponse: orgtest.OrgListResponse{{OrgID: 1, Response: nil}}}
+		statusCode := sendDelete(t, setup(t, d))
+
+		assert.Equal(t, http.StatusOK, statusCode)
+		assert.Nil(t, d.deleteCmd, "user service delete should not be called on the legacy path")
+	})
+}

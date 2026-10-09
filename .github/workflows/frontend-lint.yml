@@ -57,6 +57,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+    - name: Verify generated theme styles
+      run: |
+        yarn themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-prettier-enterprise:
     needs: detect-changes
     permissions:
@@ -85,6 +89,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - run: yarn run prettier:check
     - run: yarn run lint
+    - name: Verify generated theme styles
+      run: |
+        yarn themes-generate
+        git diff --exit-code -- public/sass/grafana.dark.css public/sass/grafana.light.css
   lint-frontend-typecheck:
     needs: detect-changes
     permissions:
@@ -239,7 +247,8 @@ jobs:
         uncommited_error_message="ERROR! API client generation has not been committed. Please run 'yarn generate-apis', commit the changes and push again."
         # LICENSE is swapped to the Enterprise License Agreement by the "Setup Enterprise"
         # step above (grafana-enterprise's build.sh overlay), not by API client generation.
-        file_diff="$(git diff ':!conf' ':!go.mod' ':!go.sum' ':!LICENSE')"
+        # The overlay also edits go.mod files in the root and app modules.
+        file_diff="$(git diff -- . ':!conf' ':!LICENSE' ':(exclude,glob)**/go.mod' ':(exclude,glob)**/go.sum')"
         if [ -n "$file_diff" ]; then
             echo "$file_diff"
             echo "${uncommited_error_message}"
@@ -363,6 +372,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - name: Run knip
       run: yarn run knip
+    - name: Run knip (production)
+      # in production mode, we cannot tell the difference between unused exports and those used in tests
+      # if something is truly unused, it will be caught by the non-production knip run
+      run: yarn run knip --production --exclude exports,types
 
   yarn-install-validation:
     needs:

@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana-app-sdk/logging"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	claims "github.com/grafana/authlib/types"
@@ -40,6 +43,20 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	}, "") // NOTE: we do not know the folder in this context
 
 	if err != nil {
+		// The client only ever sees a generic 500 for this, so log it here.
+		// Context cancellation just means the caller gave up, not a real failure.
+		logError := logging.FromContext(ctx).Error
+		if errors.Is(err, context.Canceled) || status.Code(err) == codes.Canceled {
+			logError = logging.FromContext(ctx).Debug
+		}
+		logError("resource access check failed",
+			"err", err,
+			"apiGroup", attr.GetAPIGroup(),
+			"resource", attr.GetResource(),
+			"namespace", attr.GetNamespace(),
+			"name", attr.GetName(),
+			"verb", attr.GetVerb(),
+		)
 		return authorizer.DecisionDeny, "", err
 	}
 
@@ -48,6 +65,16 @@ func (r ResourceAuthorizer) Authorize(ctx context.Context, attr authorizer.Attri
 	}
 
 	return authorizer.DecisionAllow, "", nil
+}
+
+// ConditionsAwareAuthorize implements authorizer.Authorizer.
+func (r ResourceAuthorizer) ConditionsAwareAuthorize(ctx context.Context, attr authorizer.Attributes) authorizer.ConditionsAwareDecision {
+	return authorizer.ConditionsAwareDecisionFromParts(r.Authorize(ctx, attr))
+}
+
+// EvaluateConditions implements authorizer.Authorizer.
+func (r ResourceAuthorizer) EvaluateConditions(_ context.Context, _ authorizer.ConditionsAwareDecision, _ authorizer.ConditionsData) (authorizer.Decision, string, error) {
+	return authorizer.DecisionDeny, "", authorizer.ErrorConditionEvaluationNotSupported
 }
 
 // SubresourceCheck performs an authorization check for a specific subresource.

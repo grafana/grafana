@@ -14,7 +14,12 @@ const (
 	ScopeRoutesRoot          = accesscontrol.AlertingRoutesKind
 	ScopeInhibitionRulesRoot = "inhibition-rules"
 	ScopeAlertingConfigRoot  = accesscontrol.AlertingConfigResource
-	AlertRolesGroup          = "Alerting"
+	// ScopeAlertingRulesConfigRoot is intentionally distinct from
+	// ScopeAlertingConfigRoot: the rules-app and notifications-app Config
+	// singletons are separate resources, so they get separate scope namespaces
+	// even though both k8s resources happen to be named "configs".
+	ScopeAlertingRulesConfigRoot = accesscontrol.AlertingRulesConfigScopeRoot
+	AlertRolesGroup              = "Alerting"
 
 	PermissionView  ReceiverPermission = "View"
 	PermissionEdit  ReceiverPermission = "Edit"
@@ -36,6 +41,9 @@ var (
 
 	ScopeAlertingConfigProvider = accesscontrol.NewScopeProvider(ScopeAlertingConfigRoot)
 	ScopeAlertingConfigAll      = ScopeAlertingConfigProvider.GetResourceAllScope()
+
+	ScopeAlertingRulesConfigProvider = accesscontrol.NewScopeProvider(ScopeAlertingRulesConfigRoot)
+	ScopeAlertingRulesConfigAll      = ScopeAlertingRulesConfigProvider.GetResourceAllScope()
 )
 
 type ReceiverScopeProvider struct {

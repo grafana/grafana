@@ -1,4 +1,5 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
+import { contextSrv } from 'app/core/services/context_srv';
 
 import { METRICS_DRILLDOWN_APP_ID } from './appPluginIds';
 import { metricsSolution } from './metricsSolution';
@@ -34,13 +35,7 @@ const mockFetchActivity = jest.mocked(fetchMetricsActivity);
 const mockFetchDiskHoursToFull = jest.mocked(fetchMetricsDiskHoursToFull);
 const mockFetchDiskPressure = jest.mocked(fetchMetricsDiskPressure);
 
-const emptyActivity: MetricsActivity = {
-  series: null,
-  dataPointsPerMinute: null,
-  names: null,
-  hosts: null,
-  seriesSparkline: null,
-};
+const emptyActivity: MetricsActivity = { count: null, dataPointsPerMinute: null, hosts: null, seriesSparkline: null };
 
 function datasource(uid = 'prom-uid'): DataSourceInstanceListItem {
   return { uid, name: uid, type: 'prometheus' } as DataSourceInstanceListItem;
@@ -62,11 +57,12 @@ beforeEach(() => {
     href: '/metrics',
     action: 'open_solution',
   });
+  jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(true);
 });
 
 describe('metricsSolution', () => {
   it('does not start detection or data queries until a fact is requested', () => {
-    metricsSolution();
+    metricsSolution(null);
 
     expect(mockDetectSignal).not.toHaveBeenCalled();
     expect(mockFetchActivity).not.toHaveBeenCalled();
@@ -76,7 +72,7 @@ describe('metricsSolution', () => {
   });
 
   it('shares detection and activity across fact readers', async () => {
-    const solution = metricsSolution();
+    const solution = metricsSolution(null);
 
     await Promise.all([solution.signal(), solution.datasource(), solution.stats(), solution.sparkline()]);
     await solution.stats();
@@ -91,7 +87,7 @@ describe('metricsSolution', () => {
     mockDetectSignal
       .mockResolvedValueOnce({ status: 'active', datasource: metricsDatasource })
       .mockReturnValueOnce(new Promise(() => {}));
-    const solution = metricsSolution();
+    const solution = metricsSolution(null);
 
     const detected = Promise.all([solution.signal(), solution.datasource()]);
     const timeout = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 0));
@@ -104,7 +100,7 @@ describe('metricsSolution', () => {
     mockDetectSignal
       .mockResolvedValueOnce({ status: 'inactive', datasource: null })
       .mockResolvedValueOnce({ status: 'unknown', datasource: null });
-    const solution = metricsSolution();
+    const solution = metricsSolution(null);
 
     await expect(solution.signal()).resolves.toBe('unknown');
     await expect(solution.datasource()).resolves.toBeNull();
@@ -115,19 +111,68 @@ describe('metricsSolution', () => {
     mockDetectSignal
       .mockResolvedValueOnce({ status: 'inactive', datasource: null })
       .mockResolvedValueOnce({ status: 'active', datasource: kubernetesDatasource });
-    mockFetchActivity.mockResolvedValue({ ...emptyActivity, series: 12 });
-    const solution = metricsSolution();
+    mockFetchActivity.mockResolvedValue({ ...emptyActivity, count: { kind: 'series', value: 12 } });
+    const solution = metricsSolution(null);
 
     await expect(solution.signal()).resolves.toBe('active');
     await expect(solution.datasource()).resolves.toBe(kubernetesDatasource);
     await solution.stats();
 
-    expect(mockFetchActivity).toHaveBeenCalledWith(kubernetesDatasource);
+    expect(mockFetchActivity).toHaveBeenCalledWith(kubernetesDatasource, null);
+  });
+
+  it('reuses a shared detection instead of probing again', async () => {
+    const detect = jest.fn(async () => ({ status: 'active' as const, datasource: datasource() }));
+
+    await expect(metricsSolution(null, detect).signal()).resolves.toBe('active');
+
+    expect(detect).toHaveBeenCalledTimes(1);
+    expect(mockDetectSignal).not.toHaveBeenCalled();
+  });
+
+  it('scopes the disk facts to a filter saved for the resolved datasource and ignores one saved for another', async () => {
+    const filter = {
+      datasourceUid: 'prom-uid',
+      datasourceName: 'prom-uid',
+      excludes: [{ label: 'instance', regex: 'cache-.*' }],
+    };
+    mockFetchDiskPressure.mockResolvedValue({
+      hostsAbove: 1,
+      worstInstance: 'web-03:9100',
+      worstMount: '/data',
+      worstRatio: 0.96,
+    });
+    const scoped = metricsSolution(filter);
+
+    await scoped.stats();
+    await scoped.alert();
+    const cta = await scoped.cta();
+
+    expect(mockFetchActivity).toHaveBeenCalledWith(expect.objectContaining({ uid: 'prom-uid' }), filter);
+    expect(mockFetchDiskPressure).toHaveBeenCalledWith(expect.objectContaining({ uid: 'prom-uid' }), filter);
+    expect(mockFetchDiskHoursToFull).toHaveBeenCalledWith(
+      'web-03:9100',
+      '/data',
+      expect.objectContaining({ uid: 'prom-uid' }),
+      filter
+    );
+    // The Explore link investigates the same population the alert counted.
+    expect(decodeURIComponent(cta?.href ?? '')).toContain('instance!~\\"cache-.*\\"');
+
+    mockFetchActivity.mockClear();
+    mockFetchDiskPressure.mockClear();
+    const other = metricsSolution({ ...filter, datasourceUid: 'other-uid' });
+
+    await other.stats();
+    await other.needsAttention();
+
+    expect(mockFetchActivity).toHaveBeenCalledWith(expect.objectContaining({ uid: 'prom-uid' }), null);
+    expect(mockFetchDiskPressure).toHaveBeenCalledWith(expect.objectContaining({ uid: 'prom-uid' }), null);
   });
 
   it('does not query activity or disk pressure when no datasource has data', async () => {
     mockDetectSignal.mockResolvedValue({ status: 'inactive', datasource: null });
-    const solution = metricsSolution();
+    const solution = metricsSolution(null);
 
     await expect(solution.signal()).resolves.toBe('inactive');
     await expect(solution.stats()).resolves.toBeNull();
@@ -141,31 +186,35 @@ describe('metricsSolution', () => {
 
   describe('stats', () => {
     it('leads with the series count and ingest rate', async () => {
-      mockFetchActivity.mockResolvedValue({ ...emptyActivity, series: 4_200_000, dataPointsPerMinute: 5_160_000 });
+      mockFetchActivity.mockResolvedValue({
+        ...emptyActivity,
+        count: { kind: 'series', value: 4_200_000 },
+        dataPointsPerMinute: 5_160_000,
+      });
 
-      await expect(metricsSolution().stats()).resolves.toEqual({
+      await expect(metricsSolution(null).stats()).resolves.toEqual({
         primary: '4.20 Mil series',
         secondary: '5.16 Mil data points/min',
       });
     });
 
     it('falls back to the metric-name count and host count', async () => {
-      mockFetchActivity.mockResolvedValue({ ...emptyActivity, names: 1_200, hosts: 12 });
+      mockFetchActivity.mockResolvedValue({ ...emptyActivity, count: { kind: 'names', value: 1_200 }, hosts: 12 });
 
-      await expect(metricsSolution().stats()).resolves.toEqual({
+      await expect(metricsSolution(null).stats()).resolves.toEqual({
         primary: '1.20 K metrics',
         secondary: 'active · 12 hosts',
       });
     });
 
     it('uses the bare activity qualifier when no secondary count resolved', async () => {
-      mockFetchActivity.mockResolvedValue({ ...emptyActivity, names: 7 });
+      mockFetchActivity.mockResolvedValue({ ...emptyActivity, count: { kind: 'names', value: 7 } });
 
-      await expect(metricsSolution().stats()).resolves.toEqual({ primary: '7 metrics', secondary: 'active' });
+      await expect(metricsSolution(null).stats()).resolves.toEqual({ primary: '7 metrics', secondary: 'active' });
     });
 
     it('returns no stats when neither series nor names resolved', async () => {
-      await expect(metricsSolution().stats()).resolves.toBeNull();
+      await expect(metricsSolution(null).stats()).resolves.toBeNull();
     });
   });
 
@@ -174,14 +223,14 @@ describe('metricsSolution', () => {
       const series = { x: { values: [1] }, y: { values: [2] } } as never;
       mockFetchActivity.mockResolvedValue({ ...emptyActivity, seriesSparkline: series });
 
-      await expect(metricsSolution().sparkline()).resolves.toEqual({
+      await expect(metricsSolution(null).sparkline()).resolves.toEqual({
         series,
         caption: 'Active series · last 24h',
       });
     });
 
     it('omits the sparkline when the trend is unavailable', async () => {
-      await expect(metricsSolution().sparkline()).resolves.toBeNull();
+      await expect(metricsSolution(null).sparkline()).resolves.toBeNull();
     });
   });
 
@@ -195,7 +244,7 @@ describe('metricsSolution', () => {
       });
       mockFetchDiskHoursToFull.mockResolvedValue(0.3);
 
-      const solution = metricsSolution();
+      const solution = metricsSolution(null);
       await expect(solution.needsAttention()).resolves.toBe(true);
       expect(mockFetchDiskHoursToFull).not.toHaveBeenCalled();
       await expect(solution.alert()).resolves.toMatchObject({
@@ -206,12 +255,13 @@ describe('metricsSolution', () => {
       expect(mockFetchDiskHoursToFull).toHaveBeenCalledWith(
         'web-03:9100',
         '/data',
-        expect.objectContaining({ uid: 'prom-uid' })
+        expect.objectContaining({ uid: 'prom-uid' }),
+        null
       );
     });
 
     it('returns no alert below the disk threshold', async () => {
-      const solution = metricsSolution();
+      const solution = metricsSolution(null);
 
       await expect(solution.needsAttention()).resolves.toBe(false);
       await expect(solution.alert()).resolves.toBeNull();
@@ -226,7 +276,7 @@ describe('metricsSolution', () => {
         worstRatio: null,
       });
 
-      await expect(metricsSolution().alert()).resolves.toMatchObject({ details: [] });
+      await expect(metricsSolution(null).alert()).resolves.toMatchObject({ details: [] });
     });
   });
 
@@ -239,7 +289,7 @@ describe('metricsSolution', () => {
     });
     mockFetchDiskHoursToFull.mockRejectedValue(new Error('query failed'));
 
-    await expect(metricsSolution().cta()).resolves.toEqual({
+    await expect(metricsSolution(null).cta()).resolves.toEqual({
       label: 'Investigate disk usage in Explore',
       href: expect.stringMatching(/^\/explore\?left=/),
       action: 'view_alerts',
@@ -248,9 +298,27 @@ describe('metricsSolution', () => {
     expect(mockDrilldownActiveCta).not.toHaveBeenCalled();
   });
 
+  it('falls back to the active CTA without checking attention when Explore is inaccessible', async () => {
+    mockFetchDiskPressure.mockResolvedValue({
+      hostsAbove: 1,
+      worstInstance: 'web-03:9100',
+      worstMount: '/data',
+      worstRatio: 0.96,
+    });
+    jest.spyOn(contextSrv, 'hasAccessToExplore').mockReturnValue(false);
+
+    await expect(metricsSolution(null).cta()).resolves.toEqual({
+      label: 'Open Metrics Drilldown',
+      href: '/metrics',
+      action: 'open_solution',
+    });
+    expect(mockFetchDiskPressure).not.toHaveBeenCalled();
+    expect(mockDrilldownActiveCta).toHaveBeenCalled();
+  });
+
   it('builds the active CTA from the datasource that proved usage', async () => {
     const ds = datasource();
-    const solution = metricsSolution();
+    const solution = metricsSolution(null);
 
     await expect(solution.cta()).resolves.toEqual({
       label: 'Open Metrics Drilldown',

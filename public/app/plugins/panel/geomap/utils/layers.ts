@@ -11,7 +11,7 @@ import { MARKERS_LAYER_ID } from '../layers/data/markersLayer';
 import { DEFAULT_BASEMAP_CONFIG, geomapLayerRegistry } from '../layers/registry';
 import { type MapLayerState } from '../types';
 
-import { captureLayerAttribution, updateAttributionVisibility } from './attribution';
+import { captureLayerAttribution, guardLayerAttribution, updateAttributionVisibility } from './attribution';
 import { getNextLayerName } from './utils';
 
 const layerStateMap = new WeakMap<BaseLayer, MapLayerState>();
@@ -130,7 +130,7 @@ export async function initLayer(
     options.config.attribution = textUtil.sanitizeTextPanelContent(options.config.attribution);
   }
 
-  const handler = await item.create(map, options, panel.props.eventBus, config.theme2);
+  const handler = await item.create(map, options, panel.props.eventBus, panel.props.theme);
   const layer = handler.init(); // eslint-disable-line
   if (options.opacity != null) {
     layer.setOpacity(options.opacity);
@@ -158,6 +158,8 @@ export async function initLayer(
 
   panel.byName.set(UID, state);
   layerStateMap.set(state.layer, state);
+  // Must run before the attribution is captured so the recorded value is the filtered one
+  guardLayerAttribution(layer);
   captureLayerAttribution(layer);
   updateAttributionVisibility([state], panel.props.options.controls);
 
@@ -176,6 +178,51 @@ export async function initLayer(
   applyLayerFilter(handler, options, panel.props.data);
 
   return state;
+}
+
+const pendingRebuilds = new WeakMap<GeomapPanel, Promise<void>>();
+
+/**
+ * Layers resolve the theme when they are created, so a theme switch needs fresh instances.
+ * The map and its view are kept, otherwise switching would move what the user is looking at.
+ */
+export function reinitLayers(panel: GeomapPanel): Promise<void> {
+  // Rebuilds work off the same layer list and layer group, so two of them must never interleave
+  const pending = (pendingRebuilds.get(panel) ?? Promise.resolve()).then(() => rebuildLayers(panel));
+  pendingRebuilds.set(
+    panel,
+    pending.catch(() => undefined)
+  );
+  return pending;
+}
+
+async function rebuildLayers(panel: GeomapPanel): Promise<void> {
+  const map = panel.map;
+  if (!map) {
+    return;
+  }
+
+  const group = map.getLayers();
+  const layers = panel.layers.slice(0);
+  for (let i = 0; i < layers.length; i++) {
+    const current = layers[i];
+    // Layers the panel does not own, such as the measure layer, sit in between
+    const layerIndex = group.getArray().indexOf(current.layer);
+    if (layerIndex < 0) {
+      continue;
+    }
+    try {
+      const info = await initLayer(panel, map, current.options, current.isBasemap);
+      current.handler.dispose?.();
+      layers[i] = info;
+      group.setAt(layerIndex, info.layer);
+    } catch (err) {
+      console.warn('ERROR', err); // eslint-disable-line no-console
+    }
+  }
+
+  panel.layers = layers;
+  panel.setState({ legends: panel.getLegends() });
 }
 
 export const getMapLayerState = (l: BaseLayer | undefined): MapLayerState | undefined => {

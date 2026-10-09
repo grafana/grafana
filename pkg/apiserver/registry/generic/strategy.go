@@ -99,12 +99,12 @@ func (g *genericStrategy) WarningsOnCreate(ctx context.Context, obj runtime.Obje
 	return nil
 }
 
-func (g *genericStrategy) AllowCreateOnUpdate() bool {
+func (g *genericStrategy) AllowCreateOnUpdate(ctx context.Context) bool {
 	// Necessary due to dualwriter storage strategy
 	return true // TODO: Check if we can have a separate strategy for storage and for the /apis endpoint
 }
 
-func (g *genericStrategy) AllowUnconditionalUpdate() bool {
+func (g *genericStrategy) AllowUnconditionalUpdate(ctx context.Context) bool {
 	// Necessary due to dualwriter storage strategy
 	return true // TODO: Check if we can have a separate strategy for storage and for the /apis endpoint
 }
@@ -165,11 +165,11 @@ func (g *genericStatusStrategy) PrepareForUpdate(ctx context.Context, obj, old r
 	newMeta.SetOwnerReferences(oldMeta.GetOwnerReferences())
 }
 
-func (g *genericStatusStrategy) AllowCreateOnUpdate() bool {
+func (g *genericStatusStrategy) AllowCreateOnUpdate(ctx context.Context) bool {
 	return false
 }
 
-func (g *genericStatusStrategy) AllowUnconditionalUpdate() bool {
+func (g *genericStatusStrategy) AllowUnconditionalUpdate(ctx context.Context) bool {
 	return false
 }
 
@@ -226,11 +226,11 @@ func (g *genericCompleteStrategy) PrepareForCreate(ctx context.Context, obj runt
 
 func (g *genericCompleteStrategy) PrepareForUpdate(ctx context.Context, obj, old runtime.Object) {}
 
-func (g *genericCompleteStrategy) AllowCreateOnUpdate() bool {
+func (g *genericCompleteStrategy) AllowCreateOnUpdate(ctx context.Context) bool {
 	return true
 }
 
-func (g *genericCompleteStrategy) AllowUnconditionalUpdate() bool {
+func (g *genericCompleteStrategy) AllowUnconditionalUpdate(ctx context.Context) bool {
 	return true
 }
 

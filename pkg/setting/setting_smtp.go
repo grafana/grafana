@@ -5,6 +5,7 @@ import (
 	"regexp"
 
 	"github.com/grafana/grafana/pkg/util"
+	"gopkg.in/ini.v1"
 )
 
 type SmtpSettings struct {
@@ -31,53 +32,63 @@ type SmtpSettings struct {
 var mailHeaderRegex = regexp.MustCompile(`^[A-Z][A-Za-z0-9]*(-[A-Z][A-Za-z0-9]*)*$`)
 
 func (cfg *Cfg) readSmtpSettings() error {
-	sec := cfg.Raw.Section("smtp")
-	cfg.Smtp.Enabled = sec.Key("enabled").MustBool(false)
-	cfg.Smtp.Host = sec.Key("host").String()
-	cfg.Smtp.User = sec.Key("user").String()
-	cfg.Smtp.Password = sec.Key("password").String()
-	cfg.Smtp.CertFile = sec.Key("cert_file").String()
-	cfg.Smtp.KeyFile = sec.Key("key_file").String()
-	cfg.Smtp.FromAddress = sec.Key("from_address").String()
-	cfg.Smtp.FromName = sec.Key("from_name").String()
-	cfg.Smtp.EhloIdentity = sec.Key("ehlo_identity").String()
-	if cfg.Smtp.EhloIdentity == "" {
-		cfg.Smtp.EhloIdentity = cfg.InstanceName
-	}
-	cfg.Smtp.StartTLSPolicy = sec.Key("startTLS_policy").String()
-	cfg.Smtp.SkipVerify = sec.Key("skip_verify").MustBool(false)
-
-	emails := cfg.Raw.Section("emails")
-	cfg.Smtp.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)
-	cfg.Smtp.TemplatesPatterns = util.SplitString(emails.Key("templates_pattern").MustString("emails/*.html, emails/*.txt"))
-	cfg.Smtp.ContentTypes = util.SplitString(emails.Key("content_types").MustString("text/html"))
-
-	// populate static headers
-	if err := cfg.readGrafanaSmtpStaticHeaders(); err != nil {
+	smtpSetts, err := ReadSmtpSettings(cfg.Raw, cfg.InstanceName)
+	if err != nil {
 		return err
 	}
-
-	cfg.Smtp.EnableTracing = sec.Key("enable_tracing").MustBool(false)
-
+	cfg.Smtp = smtpSetts
 	return nil
+}
+
+func ReadSmtpSettings(iniFile *ini.File, instanceName string) (SmtpSettings, error) {
+	smtpSection := iniFile.Section("smtp")
+	staticHeadersSection := iniFile.Section("smtp.static_headers")
+	emails := iniFile.Section("emails")
+
+	smtpSetts := SmtpSettings{}
+
+	smtpSetts.Enabled = smtpSection.Key("enabled").MustBool(false)
+	smtpSetts.Host = smtpSection.Key("host").String()
+	smtpSetts.User = smtpSection.Key("user").String()
+	smtpSetts.Password = smtpSection.Key("password").String()
+	smtpSetts.CertFile = smtpSection.Key("cert_file").String()
+	smtpSetts.KeyFile = smtpSection.Key("key_file").String()
+	smtpSetts.FromAddress = smtpSection.Key("from_address").String()
+	smtpSetts.FromName = smtpSection.Key("from_name").String()
+	smtpSetts.EhloIdentity = smtpSection.Key("ehlo_identity").String()
+	if smtpSetts.EhloIdentity == "" {
+		smtpSetts.EhloIdentity = instanceName
+	}
+	smtpSetts.StartTLSPolicy = smtpSection.Key("startTLS_policy").String()
+	smtpSetts.SkipVerify = smtpSection.Key("skip_verify").MustBool(false)
+
+	smtpSetts.SendWelcomeEmailOnSignUp = emails.Key("welcome_email_on_sign_up").MustBool(false)
+	smtpSetts.TemplatesPatterns = util.SplitString(emails.Key("templates_pattern").MustString("emails/*.html, emails/*.txt"))
+	smtpSetts.ContentTypes = util.SplitString(emails.Key("content_types").MustString("text/html"))
+
+	// populate static headers
+	staticHeaders, err := readGrafanaSmtpStaticHeaders(staticHeadersSection)
+	if err != nil {
+		return SmtpSettings{}, err
+	}
+	smtpSetts.StaticHeaders = staticHeaders
+	smtpSetts.EnableTracing = smtpSection.Key("enable_tracing").MustBool(false)
+	return smtpSetts, nil
 }
 
 func validHeader(header string) bool {
 	return mailHeaderRegex.MatchString(header)
 }
 
-func (cfg *Cfg) readGrafanaSmtpStaticHeaders() error {
-	staticHeadersSection := cfg.Raw.Section("smtp.static_headers")
+func readGrafanaSmtpStaticHeaders(staticHeadersSection *ini.Section) (map[string]string, error) {
 	keys := staticHeadersSection.Keys()
-	cfg.Smtp.StaticHeaders = make(map[string]string, len(keys))
-
+	staticHeaders := make(map[string]string, len(keys))
 	for _, key := range keys {
 		if !validHeader(key.Name()) {
-			return fmt.Errorf("header %q in [smtp.static_headers] configuration: must follow canonical MIME form", key.Name())
+			return nil, fmt.Errorf("header %q in [smtp.static_headers] configuration: must follow canonical MIME form", key.Name())
 		}
-
-		cfg.Smtp.StaticHeaders[key.Name()] = key.Value()
+		staticHeaders[key.Name()] = key.Value()
 	}
 
-	return nil
+	return staticHeaders, nil
 }

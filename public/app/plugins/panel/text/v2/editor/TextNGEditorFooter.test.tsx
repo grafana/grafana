@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { FOOTER_TEST_ID } from '../TextNGFooter';
+
 import { TextNGEditorFooter } from './TextNGEditorFooter';
 
 const setup = (showLineNumbers: boolean) => {
@@ -44,6 +46,22 @@ describe('TextNGEditorFooter', () => {
 
     expect(screen.getByRole('button', { name: 'page 2' })).toBeInTheDocument();
     expect(screen.getByRole('switch', { name: 'Line numbers' })).toBeInTheDocument();
+  });
+
+  it('orders the footer left to right: frame selector, pagination, line numbers', () => {
+    render(
+      <TextNGEditorFooter
+        showLineNumbersSwitch
+        showLineNumbers={false}
+        onShowLineNumbersChange={jest.fn()}
+        frameSelector={<span>Frame A</span>}
+        pagination={<span>1 - 10 of 150 rows</span>}
+      />
+    );
+
+    const slots = Array.from(screen.getByTestId(FOOTER_TEST_ID).children).map((slot) => slot.textContent);
+
+    expect(slots).toEqual(['Frame A', '1 - 10 of 150 rows', 'Line numbers']);
   });
 
   it('leaves out the line numbers switch outside code mode', () => {

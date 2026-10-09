@@ -114,20 +114,6 @@
         ]
       },
       {
-        "name": "test-webhook",
-        "grafana_managed_receiver_configs": [
-          {
-            "uid": "12345",
-            "name": "",
-            "type": "webhook",
-            "disableResolveMessage": false,
-            "settings": {
-              "url": "http://localhost/api/v1/alerts"
-            }
-          }
-        ]
-      },
-      {
         "name": "recv",
         "grafana_managed_receiver_configs": [
           {
@@ -176,6 +162,20 @@
             }
           }
         ]
+      },
+      {
+        "name": "test-webhook",
+        "grafana_managed_receiver_configs": [
+          {
+            "uid": "12345",
+            "name": "",
+            "type": "webhook",
+            "disableResolveMessage": false,
+            "settings": {
+              "url": "http://localhost/api/v1/alerts"
+            }
+          }
+        ]
       }
     ]
   },
@@ -221,8 +221,8 @@
     }
   },
   "managed_inhibition_rules": {
-    "83e6a846175a154d": {
-      "name": "83e6a846175a154d",
+    "a1d38b33ebc9330": {
+      "name": "a1d38b33ebc9330",
       "source_matchers": [
         "alertname=\"test\"",
         "__grafana_managed_route__=\"mimir-12345\""

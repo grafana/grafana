@@ -2,14 +2,12 @@ package middleware
 
 import (
 	"bufio"
+	"compress/gzip"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"strings"
-	"sync"
-
-	gzip "github.com/klauspost/pgzip"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/web"
@@ -18,8 +16,7 @@ import (
 var gzipLogger = log.New("middleware.gzip")
 
 type gzipResponseWriter struct {
-	w    *gzip.Writer
-	sink *gzipSink
+	w *gzip.Writer
 	web.ResponseWriter
 }
 
@@ -31,14 +28,7 @@ func (grw *gzipResponseWriter) WriteHeader(c int) {
 func (grw *gzipResponseWriter) Write(p []byte) (int, error) {
 	prepareCompressedHeaders(grw.Header(), p)
 
-	n, err := grw.w.Write(p)
-	if err == nil {
-		// The sink hides write failures from pgzip, so report them here instead,
-		// otherwise a handler streaming a response would never learn that the
-		// client it is writing to is gone.
-		err = grw.sink.err()
-	}
-	return n, err
+	return grw.w.Write(p)
 }
 
 func (grw *gzipResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
@@ -83,55 +73,18 @@ func hijack(rw web.ResponseWriter) (net.Conn, *bufio.ReadWriter, error) {
 	return nil, nil, fmt.Errorf("GZIP ResponseWriter doesn't implement the Hijacker interface")
 }
 
-// gzipSink sits between the pgzip writer and the response writer it compresses
-// into, and reports every write to pgzip as complete.
-//
-// pgzip hands its compressed blocks to a goroutine of its own, and that
-// goroutine only exits when Close closes the channel it listens on. Close
-// returns before it gets that far if a write to the underlying writer failed or
-// reported fewer bytes than it was handed, leaving the goroutine parked on that
-// channel for the lifetime of the process, holding its block buffers - one
-// leaked per request, without bound (#130649). Reporting complete writes keeps
-// pgzip on the path where Close releases the goroutine.
-//
-// The first failure is recorded instead, so that the handler and the middleware
-// still see it, and nothing more is written to a writer that has already failed.
+// gzipSink detects short writes without an error because compress/gzip only
+// checks the underlying writer's error, not the number of bytes written.
 type gzipSink struct {
 	w io.Writer
-
-	mu       sync.Mutex
-	firstErr error
 }
 
 func (s *gzipSink) Write(p []byte) (int, error) {
-	if s.err() != nil {
-		return len(p), nil
-	}
-
 	n, err := s.w.Write(p)
-	switch {
-	case err != nil:
-		s.setErr(err)
-	case n != len(p):
-		s.setErr(fmt.Errorf("wrote %d bytes of %d to the response", n, len(p)))
-	default:
-		return n, nil
+	if err == nil && n != len(p) {
+		err = io.ErrShortWrite
 	}
-	return len(p), nil
-}
-
-func (s *gzipSink) err() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	return s.firstErr
-}
-
-func (s *gzipSink) setErr(err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.firstErr == nil {
-		s.firstErr = err
-	}
+	return n, err
 }
 
 type matcher func(s string) bool
@@ -180,7 +133,7 @@ func Gziper() func(http.Handler) http.Handler {
 			}
 
 			sink := &gzipSink{w: rw}
-			grw := &gzipResponseWriter{gzip.NewWriter(sink), sink, rw.(web.ResponseWriter)}
+			grw := &gzipResponseWriter{gzip.NewWriter(sink), rw.(web.ResponseWriter)}
 			grw.Header().Set("Content-Encoding", "gzip")
 			grw.Header().Set("Vary", "Accept-Encoding")
 
@@ -189,11 +142,7 @@ func Gziper() func(http.Handler) http.Handler {
 			// A failed response write cannot be reported to the caller at this
 			// point, and this is the only signal it produces, so log it rather than
 			// discard it.
-			err := grw.w.Close()
-			if err == nil {
-				err = sink.err()
-			}
-			if err != nil {
+			if err := grw.w.Close(); err != nil {
 				logger := gzipLogger.FromContext(req.Context())
 				if req.Context().Err() != nil {
 					// The client hung up. Expected traffic, not a server problem.

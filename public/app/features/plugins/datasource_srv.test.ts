@@ -20,6 +20,7 @@ import {
   type GetDataSourceInstanceListFilters,
   getDataSourceInstanceList,
   getDataSourceInstanceSettings,
+  getDefaultDataSourceInstanceListItem,
 } from '@grafana/runtime/unstable';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
@@ -804,12 +805,11 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   const clone = () => JSON.parse(JSON.stringify(paritySources));
 
   // Stable, comparable projection. Keeps array order so sort / built-in ordering drift is caught.
-  const project = (list: DataSourceInstanceSettings[]) =>
-    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault ?? false }));
+  const project = (list: DataSourceInstanceSettings[]) => list.map((d) => ({ name: d.name, uid: d.uid, type: d.type }));
 
   // The async list returns slim items; project to the same shape as the legacy projection.
   const projectListItems = (list: DataSourceInstanceListItem[]) =>
-    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type, isDefault: d.isDefault }));
+    list.map((d) => ({ name: d.name, uid: d.uid, type: d.type }));
 
   // Adapt GetDataSourceInstanceListFilters for the legacy getList() call: the slim filter
   // callback receives a DataSourceInstanceListItem, so wrap it to construct one from the full
@@ -829,7 +829,6 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
           apiVersion: ds.apiVersion,
           name: ds.name,
           meta: ds.meta,
-          isDefault: ds.isDefault ?? false,
         }),
     };
   };
@@ -868,8 +867,73 @@ describe('getList parity: DatasourceSrv.getList vs getDataSourceInstanceList', (
   ];
 
   it.each(cases)('matches getList for $label', async ({ filters }) => {
-    const legacy = project(legacySrv.getList(toLegacyFilters(filters)));
-    const asyncList = projectListItems(await getDataSourceInstanceList(filters));
-    expect(asyncList).toEqual(legacy);
+    const legacyList = legacySrv.getList(toLegacyFilters(filters));
+    const asyncList = await getDataSourceInstanceList(filters);
+
+    expect(projectListItems(asyncList)).toEqual(project(legacyList));
+    expect((await getDefaultDataSourceInstanceListItem(asyncList))?.uid).toBe(
+      legacyList.find((ds) => ds.isDefault)?.uid
+    );
+  });
+});
+
+describe('reference resolution parity: template variable that interpolates to a numeric id', () => {
+  const DEFAULT_NAME = 'BBB';
+
+  // `replace` returns the *numeric id* of Charlie, the case neither service's `$` branch handles.
+  const idTemplateSrv = {
+    getVariables: () => [{ type: 'datasource', name: 'dsById', current: { value: '42' } }],
+    replace: (v: string) => v.replace('${dsById}', '42'),
+  } as unknown as TemplateSrv;
+
+  // Charlie carries a numeric id and is reachable *only* through the id map: the interpolated
+  // value '42' matches neither its uid nor its name.
+  const sources = {
+    BBB: { id: 1, type: 'test-db', name: 'BBB', uid: 'uid-code-BBB', meta: { metrics: true, id: 'test-db' } },
+    Charlie: {
+      id: 42,
+      type: 'test-db',
+      name: 'Charlie',
+      uid: 'uid-code-charlie',
+      meta: { metrics: true, id: 'test-db' },
+    },
+  };
+
+  const clone = () => JSON.parse(JSON.stringify(sources));
+
+  let legacySrv: DatasourceSrv;
+
+  beforeEach(() => {
+    setTemplateSrv(idTemplateSrv);
+    legacySrv = new DatasourceSrv(idTemplateSrv);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    legacySrv.init(clone() as any, DEFAULT_NAME);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setDataSourceInstanceSettings(clone() as any, DEFAULT_NAME);
+  });
+
+  it('DatasourceSrv.get resolves the variable', async () => {
+    const result = await legacySrv.get('${dsById}');
+
+    expect(result.uid).toBe('uid-code-charlie');
+  });
+
+  it('DatasourceSrv.getInstanceSettings does NOT resolve the variable', () => {
+    // The asymmetry that hides the divergence: get() interpolates itself and then re-enters
+    // getInstanceSettings through the plain branch, which reads settingsMapById. The `$` branch
+    // never does. Because this returns undefined, the settings-level fallback stays silent and
+    // only the instance-level warning reaches production.
+    expect(legacySrv.getInstanceSettings('${dsById}')).toBeUndefined();
+  });
+
+  it('getDataSourceInstanceSettings resolves the variable, matching DatasourceSrv.get', async () => {
+    const legacy = await legacySrv.get('${dsById}');
+    const settings = await getDataSourceInstanceSettings('${dsById}');
+
+    expect(settings).toBeDefined();
+    expect(settings?.rawRef).toEqual({ type: 'test-db', uid: legacy.uid });
+    // The raw variable string is preserved as the identity, same as the legacy `$` branch.
+    expect(settings?.name).toBe('${dsById}');
+    expect(settings?.uid).toBe('${dsById}');
   });
 });

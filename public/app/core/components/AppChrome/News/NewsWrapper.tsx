@@ -36,7 +36,7 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
       ) : (
         <>
           {state.value?.map((_, index) => (
-            <News key={index} index={index} showImage data={state.value} />
+            <News key={index} index={index} showImage data={state.value} headingLevel={3} />
           ))}
         </>
       )}

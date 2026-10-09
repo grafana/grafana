@@ -1,7 +1,10 @@
+import { act } from '@testing-library/react';
 import type { JSX } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { render, screen, within } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
+
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
@@ -47,6 +50,18 @@ function FormWrapper({ formValues }: { formValues?: Partial<RuleFormValues> }) {
 }
 
 describe('AnnotationsField', function () {
+  beforeEach(() => {
+    // The dashboard mocks are v1 resources. New layouts select the v2 dashboard API, which
+    // rejects that shape.
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
   it('should display default list of annotations', function () {
     render(<FormWrapper />);
 

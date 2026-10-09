@@ -21,7 +21,7 @@ import { getFieldActions } from 'app/plugins/panel/status-history/utils';
 import { AnnotationEditor } from './AnnotationEditor';
 import { AnnotationTooltip } from './AnnotationTooltip';
 import { AnnotationTooltipCluster } from './AnnotationTooltipCluster';
-import { type AnnotationVals } from './types';
+import { type AnnotationId, type AnnotationVals } from './types';
 
 interface AnnotationMarkerProps {
   // Annotation dataframe
@@ -66,7 +66,7 @@ export const AnnotationMarker = ({
   const isRegion = annoVals?.isRegion?.[annoIdx] === true;
 
   // Set when editing
-  const [editAnnotationId, setEditAnnotationId] = useState(exitWipEdit != null ? annoIdx : null);
+  const [editAnnotationId, setEditAnnotationId] = useState<AnnotationId | null>(exitWipEdit != null ? annoIdx : null);
   const [isHovering, setIsHovering] = useState(false);
   const isClustering =
     annoVals.isCluster?.[annoIdx] && annoVals.clusterIdx?.[annoIdx] != null && annoVals.clusterIdx?.[annoIdx] > -1;
@@ -120,7 +120,7 @@ export const AnnotationMarker = ({
         annoIdx={annoIdx}
         annoVals={annoVals}
         timeZone={timeZone}
-        onEdit={(annotationId: number) => setEditAnnotationId(annotationId)}
+        onEdit={(annotationId: AnnotationId) => setEditAnnotationId(annotationId)}
       />
     );
   } else if (showTooltip) {

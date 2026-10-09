@@ -14,6 +14,7 @@ import { getVizSuggestionForQuery } from 'app/features/dashboard-scene/utils/get
 import { type NotebookCellItem } from './NotebookCellItem';
 import { PanelQueryEditorRow } from './PanelQueryEditorRow';
 import { applyQueries } from './applyQueries';
+import { NotebookCellTimeRangeControl } from './edit/NotebookCellTimeRangeControl';
 
 interface Props {
   panel: VizPanel;
@@ -62,7 +63,8 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
 
   return (
     <Stack direction="column" gap={1}>
-      <Stack justifyContent="flex-end">
+      <Stack justifyContent="flex-end" alignItems="center">
+        {cell && <NotebookCellTimeRangeControl cell={cell} />}
         <Button
           icon="plus"
           variant="secondary"

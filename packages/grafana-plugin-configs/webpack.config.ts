@@ -1,6 +1,7 @@
 import CopyWebpackPlugin from 'copy-webpack-plugin';
 import ESLintPlugin from 'eslint-webpack-plugin';
 import ForkTsCheckerWebpackPlugin from 'fork-ts-checker-webpack-plugin';
+import { createRequire } from 'node:module';
 import path from 'path';
 import ReplaceInFileWebpackPlugin from 'replace-in-file-webpack-plugin';
 import TerserPlugin from 'terser-webpack-plugin';
@@ -10,6 +11,8 @@ import VirtualModulesPlugin from 'webpack-virtual-modules';
 
 import { DIST_DIR } from './constants.ts';
 import { getPackageJson, getPluginJson, getEntries, hasLicense } from './utils.ts';
+
+const require = createRequire(import.meta.url);
 
 function skipFiles(f: string): boolean {
   if (f.includes('/dist/')) {
@@ -157,7 +160,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           test: /module\.tsx?$/,
           use: [
             {
-              loader: 'imports-loader',
+              loader: require.resolve('imports-loader'),
               options: {
                 imports: `side-effects grafana-public-path`,
               },
@@ -168,7 +171,9 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
           exclude: /(node_modules)/,
           test: /\.[tj]sx?$/,
           use: {
-            loader: 'swc-loader',
+            // Loaders are resolved from this package, which declares them. A bare specifier would be
+            // resolved from the plugin being built, and those workspaces don't depend on them.
+            loader: require.resolve('swc-loader'),
             options: {
               jsc: {
                 baseUrl: path.resolve(import.meta.dirname),
@@ -191,11 +196,7 @@ const config = async (env: Env, pluginDir = process.cwd()): Promise<Configuratio
         },
         {
           test: /\.css$/,
-          use: ['style-loader', 'css-loader'],
-        },
-        {
-          test: /\.s[ac]ss$/,
-          use: ['style-loader', 'css-loader', 'sass-loader'],
+          use: [require.resolve('style-loader'), require.resolve('css-loader')],
         },
         {
           test: /\.(png|jpe?g|gif|svg)$/,

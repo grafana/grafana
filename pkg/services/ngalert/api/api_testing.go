@@ -31,7 +31,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -79,7 +79,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingQueryOptimization) {
-		if _, err := store.OptimizeAlertQueries(rule.Data); err != nil {
+		if _, err := rulestore.OptimizeAlertQueries(rule.Data); err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "Failed to optimize query")
 		}
 	}
@@ -179,11 +179,11 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 		cond.Condition = cond.Data[len(cond.Data)-1].RefID
 	}
 
-	var optimizations []store.Optimization
+	var optimizations []rulestore.Optimization
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingQueryOptimization) {
 		var err error
-		optimizations, err = store.OptimizeAlertQueries(cond.Data)
+		optimizations, err = rulestore.OptimizeAlertQueries(cond.Data)
 		if err != nil {
 			return ErrResp(http.StatusInternalServerError, err, "Failed to optimize query")
 		}
@@ -211,7 +211,7 @@ func (srv TestingApiSrv) RouteEvalQueries(c *contextmodel.ReqContext, cmd apimod
 }
 
 // addOptimizedQueryWarnings adds warnings to the query results for any queries that were optimized.
-func addOptimizedQueryWarnings(evalResults *backend.QueryDataResponse, optimizations []store.Optimization) {
+func addOptimizedQueryWarnings(evalResults *backend.QueryDataResponse, optimizations []rulestore.Optimization) {
 	for _, opt := range optimizations {
 		if res, ok := evalResults.Responses[opt.RefID]; ok {
 			if len(res.Frames) > 0 {

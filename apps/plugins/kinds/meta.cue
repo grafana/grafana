@@ -3,6 +3,12 @@ package plugins
 metaV0Alpha1: {
 	kind:  "Meta"
 	scope: "Namespaced"
+
+	// Plugin metadata is read from the running instance rather than unified
+	// storage, so a search would always come back empty.
+	search: {
+		endpoint: false
+	}
 	schema: {
 		spec: {
 			pluginJson: #JSONData

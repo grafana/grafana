@@ -24,13 +24,13 @@ import (
 // "reranking disabled": HybridSearch returns RRF ordering and min_relevance
 // is a no-op.
 //
-// vectorMetrics is optional; when non-nil its RerankDuration histogram is
-// wired in so each provider call is timed.
+// Each provider call is timed. Nil vectorMetrics means unregistered metrics,
+// for callers without a registry.
 func ProvideReranker(cfg *setting.Cfg, vectorMetrics *resource.VectorMetrics) (*rerank.Reranker, error) {
-	var hist *prometheus.HistogramVec
-	if vectorMetrics != nil {
-		hist = vectorMetrics.RerankDuration
+	if vectorMetrics == nil {
+		vectorMetrics = resource.ProvideVectorMetrics(nil)
 	}
+	hist := vectorMetrics.RerankDuration
 	switch cfg.RerankProvider {
 	case "":
 		return nil, nil

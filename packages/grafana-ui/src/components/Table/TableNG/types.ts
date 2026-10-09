@@ -128,7 +128,9 @@ interface BaseTableProps {
    * frame indexes (`TableRow.__index`), not the current page slice.
    */
   onDisplayedRowIndicesChange?: TableDisplayedRowIndicesCallback;
+  onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellFilterAdded?: TableFilterActionCallback;
+  onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   footerValues?: FooterItem[];
   frozenColumns?: number;
   enablePagination?: boolean;
@@ -161,10 +163,23 @@ interface BaseTableProps {
   disableSanitizeHtml?: boolean;
   // if true, disables all keyboard events in the table. this is used when previewing a table (i.e. suggestions)
   disableKeyboardEvents?: boolean;
+  // controls whether cells overflow when hovered. Selected cells always overflow.
+  hoverOverflow?: boolean;
   // temporary feature toggle to manage rollout of content-aware auto column widths (table.autoColumnWidths)
   contentAwareWidthsEnabled?: boolean;
+  /**
+   * Set by callers that would rather see a column's content truncated than have the table scroll
+   * sideways — a table embedded in a fixed layout, where a horizontal scrollbar hides columns the
+   * surrounding UI has already reserved room for. Auto columns are then levelled down to fit the
+   * available width, widest first, instead of keeping their content width. Only affects
+   * content-aware widths (`contentAwareWidthsEnabled`).
+   */
+  preventHorizontalOverflow?: boolean;
   // temporary feature toggle to manage rollout of the refreshed table experience (table.refresh)
   tableRefreshEnabled?: boolean;
+  jsonSyntaxHighlightingEnabled?: boolean;
+  // alternates the background color of every other row (table.refreshNewFeatures)
+  zebraStriping?: boolean;
 }
 
 /* ---------------------------- Table cell props ---------------------------- */
@@ -173,6 +188,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
   timeRange?: TimeRange;
@@ -198,6 +214,8 @@ export type InspectCellProps = {
 };
 
 export interface TableCellActionsProps {
+  onAddToAssistant?: () => void;
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   displayName: string;
@@ -279,6 +297,7 @@ export interface TableCellStyleOptions {
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
+  hoverOverflow: boolean;
   maxHeight?: number;
 }
 
@@ -304,8 +323,24 @@ export interface TypographyCtx {
   fontFamily: string;
   letterSpacing: number;
   avgCharWidth: number;
+  /**
+   * Width of a single digit under `font-variant-numeric: tabular-nums` (which react-data-grid applies
+   * to every cell): all digits render at this uniform, wider advance. Used to size digit-heavy
+   * numeric/date columns, which `avgCharWidth` (a prose average) under-measures.
+   * Only applied when `dataviz.tabularNums` is enabled, otherwise set to `normal`.
+   */
+  numericCharWidth: number;
+  /** Width of a single character in the monospace font used by JSON/Geo cells (all chars are equal). */
+  monoCharWidth: number;
   estimateHeight: MeasureCellHeight;
   measureHeight: MeasureCellHeight;
+  /**
+   * The narrowest width at which the line counter keeps a string on one line — see
+   * `createTypographyContext`. Anything that sizes a column so its text fits has to measure with
+   * this rather than with `ctx.measureText`, or the counter and the sizing disagree about the same
+   * string and the row reserves a line the browser doesn't draw.
+   */
+  measureWidth: (text: string) => number;
 }
 
 export type MeasureCellHeight = (
@@ -315,6 +350,12 @@ export type MeasureCellHeight = (
   rowIdx: number,
   lineHeight: number
 ) => number;
+
+export interface TextWrapFallback {
+  disabledFields: ReadonlySet<string>;
+  shouldDisable: (field: Field, value: unknown) => boolean;
+}
+
 export interface MeasureCellHeightEntry {
   /**
    * given a values and the available width, returns the line count for that value

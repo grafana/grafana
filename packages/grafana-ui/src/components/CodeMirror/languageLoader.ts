@@ -10,6 +10,14 @@ const loadGo = async (): Promise<CodeMirrorExtension> =>
 const loadHtml = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/lang-html')).html();
 
+const loadIni = async (): Promise<CodeMirrorExtension> => {
+  const [{ LanguageSupport, StreamLanguage }, { properties }] = await Promise.all([
+    import(/* webpackChunkName: "codemirror-lang-ini" */ '@codemirror/language'),
+    import(/* webpackChunkName: "codemirror-lang-ini" */ '@codemirror/legacy-modes/mode/properties'),
+  ]);
+  return new LanguageSupport(StreamLanguage.define(properties));
+};
+
 const loadJson = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-json" */ '@codemirror/lang-json')).json();
 
@@ -56,6 +64,8 @@ const resolveLoad = (
       return { cacheKey: 'go', load: loadGo };
     case 'html':
       return { cacheKey: 'html', load: loadHtml };
+    case 'ini':
+      return { cacheKey: 'ini', load: loadIni };
     case 'json':
       return { cacheKey: 'json', load: loadJson };
     case 'markdown':

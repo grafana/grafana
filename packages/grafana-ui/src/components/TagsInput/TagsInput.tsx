@@ -127,7 +127,7 @@ TagsInput.displayName = 'TagsInput';
 
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
-    minHeight: theme.spacing(4),
+    minHeight: theme.spacing(theme.components.height.md),
     display: 'flex',
     flexDirection: 'column',
     gap: theme.spacing(1),

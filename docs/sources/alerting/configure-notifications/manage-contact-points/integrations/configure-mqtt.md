@@ -15,22 +15,6 @@ labels:
 menuTitle: MQTT
 title: Configure MQTT notifications
 weight: 140
-refs:
-  notification-template-examples:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/examples/
-  notification-templates:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/
 ---
 
 # Configure MQTT notifications
@@ -50,28 +34,28 @@ To create a contact point with MQTT integration, complete the following steps.
 1. (Optional) Configure [additional settings](#optional-settings).
 1. Click **Save contact point**.
 
-For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
+For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/).
 
 ### Required Settings
 
-| Option     | Description                                                                                                             |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Broker URL | The URL of the MQTT broker. This field is [protected](ref:configure-contact-points) from modification in Grafana Cloud. |
-| Topic      | The topic to which the message will be sent.                                                                            |
+| Option     | Description                                                                                                                                                                        |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Broker URL | The URL of the MQTT broker. This field is [protected](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/) from modification in Grafana Cloud. |
+| Topic      | The topic to which the message will be sent.                                                                                                                                       |
 
 ### Optional Settings
 
-| Option                   | Description                                                                                                                                                                                                                                                                                                            |
-| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Message format           | If set to `json` (default), the notification message uses the [default JSON payload](#default-json-payload). <br/> If set to `text`, the notification message is fully customizable.                                                                                                                                   |
-| Message                  | Depends on the **Message format** option. <br/> In `json` format, defines only the `message` field of the [default JSON payload](#default-json-payload). <br/> In `text` format, defines the [entire custom payload](#custom-payload). <br/> This field supports [notification templates](ref:notification-templates). |
-| Client ID                | The client ID to use when connecting to the MQTT broker. If blank, a random client ID is used.                                                                                                                                                                                                                         |
-| Username                 | The username to use when connecting to the MQTT broker.                                                                                                                                                                                                                                                                |
-| Password                 | The password to use when connecting to the MQTT broker.                                                                                                                                                                                                                                                                |
-| QoS                      | The quality of service to use when sending the message. Options are `At most once`, `At least once`, and `Exactly once`.                                                                                                                                                                                               |
-| Retain                   | If set to true, the message will be retained by the broker.                                                                                                                                                                                                                                                            |
-| TLS                      | TLS configuration options, including CA certificate, client certificate, and client key, and disable certificate verification.                                                                                                                                                                                         |
-| Disable resolved message | Enable this option to prevent notifications when an alert resolves.                                                                                                                                                                                                                                                    |
+| Option                   | Description                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Message format           | If set to `json` (default), the notification message uses the [default JSON payload](#default-json-payload). <br/> If set to `text`, the notification message is fully customizable.                                                                                                                                                                                                 |
+| Message                  | Depends on the **Message format** option. <br/> In `json` format, defines only the `message` field of the [default JSON payload](#default-json-payload). <br/> In `text` format, defines the [entire custom payload](#custom-payload). <br/> This field supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/). |
+| Client ID                | The client ID to use when connecting to the MQTT broker. If blank, a random client ID is used.                                                                                                                                                                                                                                                                                       |
+| Username                 | The username to use when connecting to the MQTT broker.                                                                                                                                                                                                                                                                                                                              |
+| Password                 | The password to use when connecting to the MQTT broker.                                                                                                                                                                                                                                                                                                                              |
+| QoS                      | The quality of service to use when sending the message. Options are `At most once`, `At least once`, and `Exactly once`.                                                                                                                                                                                                                                                             |
+| Retain                   | If set to true, the message will be retained by the broker.                                                                                                                                                                                                                                                                                                                          |
+| TLS                      | TLS configuration options, including CA certificate, client certificate, and client key, and disable certificate verification.                                                                                                                                                                                                                                                       |
+| Disable resolved message | Enable this option to prevent notifications when an alert resolves.                                                                                                                                                                                                                                                                                                                  |
 
 ## Default JSON payload
 
@@ -148,19 +132,19 @@ If the **Message format** option is `json` (the default), the payload is like th
 
 If the **Message format** option is `json` (the default), the payload contains the following fields.
 
-| Key                 | Type                             | Description                                                                                                                                                                 |
-| ------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `receiver`          | string                           | Name of the contact point                                                                                                                                                   |
-| `status`            | string                           | Current status of the alert, `firing` or `resolved`                                                                                                                         |
-| `orgId`             | number                           | ID of the organization related to the payload                                                                                                                               |
-| `alerts`            | array of [alerts](#alert-object) | Alerts that are triggering                                                                                                                                                  |
-| `groupLabels`       | object                           | Labels that are used for grouping, map of string keys to string values                                                                                                      |
-| `commonLabels`      | object                           | Labels that all alarms have in common, map of string keys to string values                                                                                                  |
-| `commonAnnotations` | object                           | Annotations that all alarms have in common, map of string keys to string values                                                                                             |
-| `externalURL`       | string                           | External URL to the Grafana instance sending this webhook                                                                                                                   |
-| `version`           | string                           | Version of the payload                                                                                                                                                      |
-| `groupKey`          | string                           | Key that is used for grouping                                                                                                                                               |
-| `message`           | string                           | Custom message configured in **Message** (**Optional Settings**). <br/> Supports [notification templates](ref:notification-templates); the output is formatted as a string. |
+| Key                 | Type                             | Description                                                                                                                                                                                                                               |
+| ------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `receiver`          | string                           | Name of the contact point                                                                                                                                                                                                                 |
+| `status`            | string                           | Current status of the alert, `firing` or `resolved`                                                                                                                                                                                       |
+| `orgId`             | number                           | ID of the organization related to the payload                                                                                                                                                                                             |
+| `alerts`            | array of [alerts](#alert-object) | Alerts that are triggering                                                                                                                                                                                                                |
+| `groupLabels`       | object                           | Labels that are used for grouping, map of string keys to string values                                                                                                                                                                    |
+| `commonLabels`      | object                           | Labels that all alarms have in common, map of string keys to string values                                                                                                                                                                |
+| `commonAnnotations` | object                           | Annotations that all alarms have in common, map of string keys to string values                                                                                                                                                           |
+| `externalURL`       | string                           | External URL to the Grafana instance sending this webhook                                                                                                                                                                                 |
+| `version`           | string                           | Version of the payload                                                                                                                                                                                                                    |
+| `groupKey`          | string                           | Key that is used for grouping                                                                                                                                                                                                             |
+| `message`           | string                           | Custom message configured in **Message** (**Optional Settings**). <br/> Supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/); the output is formatted as a string. |
 
 {{< admonition type="note" >}}
 
@@ -180,6 +164,6 @@ The Alert object represents an alert included in the notification group, as prov
 
 When you set the **Message format** option to `text`, you can customize the entire payload of the MQTT message.
 
-In this mode, the **Message** option defines the entire payload. It supports [notification templates](ref:notification-templates) and can generate notification messages in plain text, JSON, or any custom format.
+In this mode, the **Message** option defines the entire payload. It supports [notification templates](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/) and can generate notification messages in plain text, JSON, or any custom format.
 
-For examples of templates that produce plain text or JSON messages, refer to [notification template examples](ref:notification-template-examples).
+For examples of templates that produce plain text or JSON messages, refer to [notification template examples](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/examples/).

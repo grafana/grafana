@@ -72,12 +72,16 @@ const getStyles = stylesFactory((theme: GrafanaTheme2) => {
     indentSpacer: css({
       label: 'indentSpacer',
       flex: 'none',
+      display: 'flex',
+      alignItems: 'stretch',
     }),
     detailWrapper: css({
       label: 'detailWrapper',
       flex: '1',
       minWidth: 0,
-      backgroundColor: theme.colors.background.canvas,
+      backgroundColor: theme.flags.visualDesignRefresh
+        ? theme.colors.background.primary
+        : theme.colors.background.canvas,
       border: `1px solid ${theme.colors.border.weak}`,
     }),
   };

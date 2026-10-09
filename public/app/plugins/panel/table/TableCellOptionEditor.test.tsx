@@ -1,9 +1,12 @@
-import { render, screen } from '@testing-library/react';
+import { OpenFeatureProvider } from '@openfeature/react-sdk';
+import { cleanup, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 
+import { FlagKeys } from '@grafana/runtime/internal';
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode, type TableCellOptions } from '@grafana/schema';
 import { mockComboboxRect } from '@grafana/test-utils';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 
 import { TableCellOptionEditor } from './TableCellOptionEditor';
 
@@ -25,7 +28,11 @@ function setup(initial: TableCellOptions = { type: TableCellDisplayMode.Auto }) 
       />
     );
   }
-  render(<Wrapper />);
+  render(
+    <OpenFeatureProvider client={getTestFeatureFlagClient()}>
+      <Wrapper />
+    </OpenFeatureProvider>
+  );
   return { onChange };
 }
 
@@ -37,6 +44,37 @@ async function selectCellType(name: string) {
 }
 
 describe('TableCellOptionEditor', () => {
+  afterEach(() => {
+    cleanup();
+    setTestFlags({});
+  });
+
+  it('defaults JSON highlighting on and persists disabling it without table.refresh', async () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true, [FlagKeys.TableRefresh]: false });
+    const { onChange } = setup({ type: TableCellDisplayMode.JSONView });
+    expect(screen.getByRole('switch', { name: 'Syntax highlighting' })).toBeChecked();
+    await userEvent.click(screen.getByRole('switch', { name: 'Syntax highlighting' }));
+    expect(onChange).toHaveBeenLastCalledWith({ type: TableCellDisplayMode.JSONView, syntaxHighlighting: false });
+    expect(screen.getByRole('switch', { name: 'Syntax highlighting' })).not.toBeChecked();
+  });
+
+  it('reads a saved highlighting opt-out', () => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: true });
+    setup({ type: TableCellDisplayMode.JSONView, syntaxHighlighting: false });
+    expect(screen.getByRole('combobox')).toHaveDisplayValue('JSON View');
+    expect(screen.getByRole('switch', { name: 'Syntax highlighting' })).not.toBeChecked();
+  });
+
+  it.each([
+    { enabled: false, type: TableCellDisplayMode.JSONView, label: 'JSON View' },
+    { enabled: true, type: TableCellDisplayMode.Auto, label: 'Auto' },
+  ] as const)('omits the switch for $label with new features=$enabled', ({ enabled, type, label }) => {
+    setTestFlags({ [FlagKeys.TableRefreshNewFeatures]: enabled, [FlagKeys.TableRefresh]: true });
+    setup({ type });
+    expect(screen.getByRole('combobox')).toHaveDisplayValue(label);
+    expect(screen.queryByRole('switch', { name: 'Syntax highlighting' })).not.toBeInTheDocument();
+  });
+
   it('shows the label for the current cell type', () => {
     setup({ type: TableCellDisplayMode.ColorText });
     expect(screen.getByRole('combobox')).toHaveDisplayValue('Colored text');

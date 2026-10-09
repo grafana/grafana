@@ -20,11 +20,39 @@ import (
 )
 
 // RepositoryInformer provides access to a shared informer and lister for
-// Repositories.
+// Repositories. Prefer using the type-safe variant (see [TypedRepositoryInformer]).
 type RepositoryInformer interface {
 	Informer() cache.SharedIndexInformer
 	Lister() provisioningv0alpha1.RepositoryLister
 }
+
+// TypedRepositoryInformer provides access to a shared informer and lister for
+// Repositories, including the type-safe TypedInformer variant.
+// It is a superset of RepositoryInformer.
+type TypedRepositoryInformer interface {
+	Informer() cache.SharedIndexInformer
+	TypedInformer() RepositoryIndexInformer
+	Lister() provisioningv0alpha1.RepositoryLister
+}
+
+// RepositoryIndexInformer is a wrapper around the underlying [cache.SharedIndexInformer]
+// with type-safe variants of several methods.
+type RepositoryIndexInformer cache.TypedSharedIndexInformer[*apisprovisioningv0alpha1.Repository]
+
+// RepositoryHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerFuncs] for Repository.
+type RepositoryHandlerFuncs = cache.TypedResourceEventHandlerFuncs[*apisprovisioningv0alpha1.Repository]
+
+// RepositoryDetailedHandlerFuncs is a specialization of [cache.TypedResourceEventHandlerDetailedFuncs] for Repository.
+type RepositoryDetailedHandlerFuncs = cache.TypedResourceEventHandlerDetailedFuncs[*apisprovisioningv0alpha1.Repository]
+
+// RepositoryFilteringHandler is a specialization of [cache.TypedFilteringResourceEventHandler] for Repository.
+type RepositoryFilteringHandler = cache.TypedFilteringResourceEventHandler[*apisprovisioningv0alpha1.Repository]
+
+// RepositoryIndexers is a specialization of [cache.TypedIndexers] for Repository.
+type RepositoryIndexers = cache.TypedIndexers[*apisprovisioningv0alpha1.Repository]
+
+// DeletedRepository is a specialization of [cache.DeletedObject] for Repository.
+type DeletedRepository = cache.DeletedObject[*apisprovisioningv0alpha1.Repository]
 
 type repositoryInformer struct {
 	factory          internalinterfaces.SharedInformerFactory
@@ -35,25 +63,49 @@ type repositoryInformer struct {
 // NewRepositoryInformer constructs a new informer for Repository type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedRepositoryInformer]).
 func NewRepositoryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers) cache.SharedIndexInformer {
 	return NewRepositoryInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers})
+}
+
+// NewTypedRepositoryInformer constructs a new informer for Repository type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedRepositoryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers RepositoryIndexers) RepositoryIndexInformer {
+	return NewTypedRepositoryInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers)})
 }
 
 // NewFilteredRepositoryInformer constructs a new informer for Repository type.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedFilteredRepositoryInformer]).
 func NewFilteredRepositoryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers cache.Indexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) cache.SharedIndexInformer {
-	return NewRepositoryInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+	return NewTypedRepositoryInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: indexers, TweakListOptions: tweakListOptions})
+}
+
+// NewTypedFilteredRepositoryInformer constructs a new informer for Repository type.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedFilteredRepositoryInformer(client versioned.Interface, namespace string, resyncPeriod time.Duration, indexers RepositoryIndexers, tweakListOptions internalinterfaces.TweakListOptionsFunc) RepositoryIndexInformer {
+	return NewTypedRepositoryInformerWithOptions(client, namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.TypedIndexersToIndexers(indexers), TweakListOptions: tweakListOptions})
 }
 
 // NewRepositoryInformerWithOptions constructs a new informer for Repository type with additional options.
 // Always prefer using an informer factory to get a shared informer instead of getting an independent
 // one. This reduces memory footprint and number of connections to the server.
+// If you really need an independent one, prefer using the type-safe variant (see [NewTypedRepositoryInformerWithOptions]).
 func NewRepositoryInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) cache.SharedIndexInformer {
+	return NewTypedRepositoryInformerWithOptions(client, namespace, options)
+}
+
+// NewTypedRepositoryInformerWithOptions constructs a new informer for Repository type with additional options.
+// Always prefer using an informer factory to get a shared informer instead of getting an independent
+// one. This reduces memory footprint and number of connections to the server.
+func NewTypedRepositoryInformerWithOptions(client versioned.Interface, namespace string, options internalinterfaces.InformerOptions) RepositoryIndexInformer {
 	gvr := schema.GroupVersionResource{Group: "provisioning.grafana.app", Version: "v0alpha1", Resource: "repositorys"}
 	identifier := options.InformerName.WithResource(gvr)
 	tweakListOptions := options.TweakListOptions
-	return cache.NewSharedIndexInformerWithOptions(
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.Repository](cache.NewSharedIndexInformerWithOptions(
 		cache.ToListWatcherWithWatchListSemantics(&cache.ListWatch{
 			ListFunc: func(opts v1.ListOptions) (runtime.Object, error) {
 				if tweakListOptions != nil {
@@ -86,17 +138,57 @@ func NewRepositoryInformerWithOptions(client versioned.Interface, namespace stri
 			Indexers:     options.Indexers,
 			Identifier:   identifier,
 		},
-	)
+	))
 }
 
 func (f *repositoryInformer) defaultInformer(client versioned.Interface, resyncPeriod time.Duration) cache.SharedIndexInformer {
-	return NewRepositoryInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
+	return NewTypedRepositoryInformerWithOptions(client, f.namespace, internalinterfaces.InformerOptions{ResyncPeriod: resyncPeriod, Indexers: cache.Indexers{cache.NamespaceIndex: cache.MetaNamespaceIndexFunc}, InformerName: f.factory.InformerName(), TweakListOptions: f.tweakListOptions})
 }
 
 func (f *repositoryInformer) Informer() cache.SharedIndexInformer {
-	return f.factory.InformerFor(&apisprovisioningv0alpha1.Repository{}, f.defaultInformer)
+	return f.TypedInformer()
+}
+
+func (f *repositoryInformer) TypedInformer() RepositoryIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.Repository](f.factory.InformerFor(&apisprovisioningv0alpha1.Repository{}, f.defaultInformer))
 }
 
 func (f *repositoryInformer) Lister() provisioningv0alpha1.RepositoryLister {
 	return provisioningv0alpha1.NewRepositoryLister(f.Informer().GetIndexer())
+}
+
+// ToTypedRepositoryInformer converts an untyped informer into a TypedRepositoryInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *Repository. If that is not the case, calling type-safe methods of the returned
+// TypedRepositoryInformer leads to runtime panics. A safer alternative is to pass
+// around a TypedRepositoryInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToTypedRepositoryInformer(informer RepositoryInformer) TypedRepositoryInformer {
+	if informer, ok := informer.(TypedRepositoryInformer); ok {
+		return informer
+	}
+	return &repositoryTypedInformerAdapter{informer}
+}
+
+type repositoryTypedInformerAdapter struct {
+	RepositoryInformer
+}
+
+func (a *repositoryTypedInformerAdapter) TypedInformer() RepositoryIndexInformer {
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.Repository](a.Informer())
+}
+
+// ToRepositoryIndexInformer converts an untyped informer into a RepositoryIndexInformer.
+//
+// WARNING: this conversion is only safe if the informer handles objects of type
+// *Repository. If that is not the case, calling type-safe methods of the returned
+// RepositoryIndexInformer leads to runtime panics. A safer alternative is to pass
+// around a RepositoryIndexInformer instances that was obtained from a
+// SharedInformerFactory.
+func ToRepositoryIndexInformer(informer cache.SharedIndexInformer) RepositoryIndexInformer {
+	if informer, ok := informer.(RepositoryIndexInformer); ok {
+		return informer
+	}
+	return cache.NewTypedSharedIndexInformer[*apisprovisioningv0alpha1.Repository](informer)
 }

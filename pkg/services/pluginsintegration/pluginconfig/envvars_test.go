@@ -90,6 +90,35 @@ func TestPluginEnvVarsProvider_PluginEnvVars(t *testing.T) {
 	})
 }
 
+func TestPluginEnvVarsProvider_insecureSkipAuthentication(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		devMode bool
+		want    bool
+	}{
+		{name: "passed on in development mode", devMode: true, want: true},
+		{name: "dropped outside development mode", devMode: false, want: false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := &PluginInstanceCfg{
+				PluginSettings: map[string]map[string]string{
+					"test": {"insecure_skip_authentication": "true", "custom_env_var": "customVal"},
+				},
+				DevMode:  tc.devMode,
+				Features: featuremgmt.WithFeatures(),
+			}
+			provider := NewEnvVarsProvider(cfg, nil, &fakeSSOSettingsProvider{}, newTestMarketplaceLicensing(""))
+			envVars := provider.pluginSettingsEnvVars("test")
+			assert.Contains(t, envVars, "GF_PLUGIN_CUSTOM_ENV_VAR=customVal")
+			if tc.want {
+				assert.Contains(t, envVars, "GF_PLUGIN_INSECURE_SKIP_AUTHENTICATION=true")
+			} else {
+				assert.NotContains(t, envVars, "GF_PLUGIN_INSECURE_SKIP_AUTHENTICATION=true")
+			}
+		})
+	}
+}
+
 func TestPluginEnvVarsProvider_marketplaceLicenseEnvVars(t *testing.T) {
 	const grafanaAppURL = "https://grafana.example.com/"
 	marketplaceLicenseDirectory := mustAbs(t, "marketplace-license-test")

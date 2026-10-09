@@ -1,8 +1,8 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
-import { config, setBackendSrv } from '@grafana/runtime';
+import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
-import { getFolderFixtures } from '@grafana/test-utils/unstable';
+import { getFolderFixtures, setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
 
 import { MoveModal, type Props } from './MoveModal';
@@ -11,8 +11,6 @@ const [_, { folderA }] = getFolderFixtures();
 
 setBackendSrv(backendSrv);
 setupMockServer();
-
-const originalToggles = { ...config.featureToggles };
 
 describe('browse-dashboards MoveModal', () => {
   const mockOnDismiss = jest.fn();
@@ -69,10 +67,13 @@ describe('browse-dashboards MoveModal', () => {
         props.selectedItems.folder = {
           [folderA.item.uid]: true,
         };
-        config.featureToggles.foldersAppPlatformAPI = toggle;
+        setTestFlags({ foldersAppPlatformAPI: toggle });
       });
-      afterEach(() => {
-        config.featureToggles = originalToggles;
+      // The act wrap is needed because resetting fires OpenFeature events while the modal is mounted.
+      afterEach(async () => {
+        await act(async () => {
+          setTestFlags({});
+        });
       });
 
       it('displays a warning about permissions if a folder is selected', async () => {

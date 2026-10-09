@@ -294,6 +294,19 @@ describe('Format value', () => {
   // Below is current behavior but it's clearly not working great
   //
 
+  it('with a decimals count the Decimals option itself would reject', () => {
+    // Nothing between dashboard JSON and the formatter bounds field.config.decimals:
+    // numberOverrideProcessor is a bare parseFloat, so the editor's max of 15 does
+    // not apply to a value that arrives any other way.
+    const instance = getDisplayProcessorFromConfig({ decimals: 21 });
+    expect(instance(1.5).text).toEqual(`1.5${'0'.repeat(20)}`);
+
+    // 0 short-circuits to Number.prototype.toFixed, which throws outside 0 to 100.
+    const outOfRange = getDisplayProcessorFromConfig({ decimals: 101 });
+    expect(outOfRange(0).text).toEqual(`0.${'0'.repeat(100)}`);
+    expect(outOfRange(1.5).text).toEqual(`1.5${'0'.repeat(99)}`);
+  });
+
   it('with value 1000 and unit short', () => {
     const value = 1000;
     const instance = getDisplayProcessorFromConfig({ decimals: null, unit: 'short' });

@@ -13,10 +13,6 @@ const createDateTimeFormatter = deepMemoize((locale: string, options: Intl.DateT
   }
 });
 
-const createDurationFormatter = deepMemoize((locale: string, options: Intl.DurationFormatOptions) => {
-  return new Intl.DurationFormat(locale, options);
-});
-
 export const formatDate = deepMemoize(
   (value: number | Date | string, format: Intl.DateTimeFormatOptions = {}): string => {
     if (typeof value === 'string') {
@@ -27,14 +23,5 @@ export const formatDate = deepMemoize(
 
     const dateFormatter = createDateTimeFormatter(currentLocale, format);
     return dateFormatter.format(value);
-  }
-);
-
-export const formatDuration = deepMemoize(
-  (duration: Intl.DurationInput, options: Intl.DurationFormatOptions = {}): string => {
-    const currentLocale = getLanguage();
-
-    const dateFormatter = createDurationFormatter(currentLocale, options);
-    return dateFormatter.format(duration);
   }
 );

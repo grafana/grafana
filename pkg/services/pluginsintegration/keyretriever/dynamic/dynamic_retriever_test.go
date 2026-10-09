@@ -121,8 +121,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComAPIURL = s.URL + "/api"
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			_ = v.Run(ctx)
@@ -143,8 +142,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComAPIURL = s.URL + "/api"
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			_ = v.Run(ctx)
@@ -164,8 +162,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "other")
 		cfg.GrafanaComAPIURL = s.URL + "/api"
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		go func() {
 			_ = v.Run(ctx)
@@ -192,8 +189,7 @@ func Test_PublicKeyUpdate(t *testing.T) {
 		expectedKey := "fake"
 		s, done := setFakeAPIServer(t, expectedKey, "7e4d0c6a708866e7")
 		cfg.GrafanaComAPIURL = s.URL + "/api"
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+		ctx := t.Context()
 		v := ProvideService(cfg, keystore.ProvideService(kvstore.NewFakeKVStore()))
 		// Simulate an updated key
 		err := v.kv.SetLastUpdated(context.Background())

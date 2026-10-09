@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -34,6 +35,7 @@ func ToModel(in *definitions.PostableUserConfig) *AMConfigV1 {
 		Templates:          templates,
 		InhibitionRules:    InhibitionRulesToModel(in.ManagedInhibitionRules),
 		TimeIntervals:      TimeIntervalsToModel(in.AlertmanagerConfig.MuteTimeIntervals, in.AlertmanagerConfig.TimeIntervals),
+		Receivers:          ReceiversToModel(in.AlertmanagerConfig.Receivers),
 		AlertmanagerConfig: PostableApiAlertingConfigToModel(in.AlertmanagerConfig),
 		ExtraConfigs:       ExtraConfigsToModel(in.ExtraConfigs),
 		ManagedRoutes:      ManagedRoutesToModel(in.ManagedRoutes),
@@ -48,7 +50,6 @@ func PostableApiAlertingConfigToModel(in definition.PostableApiAlertingConfig) P
 			InhibitRules: slices.Clone(in.InhibitRules),
 			Templates:    slices.Clone(in.Templates),
 		},
-		Receivers: ReceiversToModel(in.Receivers),
 	}
 }
 
@@ -71,25 +72,19 @@ func TimeIntervalsToModel(muteIntervals []config.MuteTimeInterval, timeIntervals
 	return out
 }
 
-func ReceiversToModel(in []*definition.PostableApiReceiver) []*PostableApiReceiver {
+func ReceiversToModel(in []*definition.PostableApiReceiver) map[ResourceUID]PostableApiReceiver {
 	if in == nil {
 		return nil
 	}
-	out := make([]*PostableApiReceiver, 0, len(in))
+	out := make(map[ResourceUID]PostableApiReceiver, len(in))
 	for _, receiver := range in {
-		out = append(out, PostableApiReceiverToModel(receiver))
+		if receiver == nil {
+			continue
+		}
+		m := NewReceiver(receiver.Name, PostableGrafanaReceiversToModel(receiver.GrafanaManagedReceivers), models.ProvenanceNone)
+		out[m.UID] = m
 	}
 	return out
-}
-
-func PostableApiReceiverToModel(in *definition.PostableApiReceiver) *PostableApiReceiver {
-	if in == nil {
-		return nil
-	}
-	return &PostableApiReceiver{
-		Name:                    in.Name,
-		GrafanaManagedReceivers: PostableGrafanaReceiversToModel(in.GrafanaManagedReceivers),
-	}
 }
 
 func PostableGrafanaReceiversToModel(in []*definition.PostableGrafanaReceiver) []*PostableGrafanaReceiver {
@@ -103,7 +98,7 @@ func PostableGrafanaReceiversToModel(in []*definition.PostableGrafanaReceiver) [
 	return out
 }
 
-func ManagedRoutesToModel(in map[string]*definition.Route) ManagedRoutes {
+func ManagedRoutesToModel(in map[string]*definition.Route) map[string]*Route {
 	if in == nil {
 		return nil
 	}
@@ -172,7 +167,7 @@ func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
 	return NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
 }
 
-func MatchersToModel(in config.Matchers) []Matcher {
+func MatchersToModel(in common.Matchers) []Matcher {
 	out := make([]Matcher, 0, len(in))
 	for _, m := range in {
 		if m == nil {
@@ -209,10 +204,13 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 		return nil, nil
 	}
 	dbModel := AMConfigDB{
-		ManagedTemplates:   TemplatesToManagedTemplates(in.Templates),
-		AlertmanagerConfig: PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
-		ExtraConfigs:       ExtraConfigsToDB(in.ExtraConfigs),
-		ManagedRoutes:      ManagedRoutesToDB(in.ManagedRoutes),
+		ManagedTemplates: TemplatesToManagedTemplates(in.Templates),
+		AlertmanagerConfig: definition.PostableApiAlertingConfig{
+			Config:    PostableApiAlertingConfigToDB(in.AlertmanagerConfig, in.SortedTimeIntervals()),
+			Receivers: ReceiversToDB(in.GetReceivers()),
+		},
+		ExtraConfigs:  ExtraConfigsToDB(in.ExtraConfigs),
+		ManagedRoutes: ManagedRoutesToDB(in.ManagedRoutes),
 	}
 
 	var errs []error
@@ -225,17 +223,14 @@ func ToDBModel(in *AMConfigV1) (*AMConfigDB, error) {
 	return &dbModel, errors.Join(errs...)
 }
 
-func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.PostableApiAlertingConfig {
-	return definition.PostableApiAlertingConfig{
-		Config: definition.Config{
-			Global:       in.Global,
-			Route:        RouteToDB(in.Route),
-			InhibitRules: slices.Clone(in.InhibitRules),
-			Templates:    slices.Clone(in.Templates),
-			// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
-			TimeIntervals: TimeIntervalsToDB(timeIntervals),
-		},
-		Receivers: ReceiversToDB(in.Receivers),
+func PostableApiAlertingConfigToDB(in PostableApiAlertingConfig, timeIntervals []TimeInterval) definition.Config {
+	return definition.Config{
+		Global:       in.Global,
+		Route:        RouteToDB(in.Route),
+		InhibitRules: slices.Clone(in.InhibitRules),
+		Templates:    slices.Clone(in.Templates),
+		// This conversion can be lossy since we don't track whether the TimeInterval came from MuteTimeInterval or TimeInterval.
+		TimeIntervals: TimeIntervalsToDB(timeIntervals),
 	}
 }
 
@@ -376,13 +371,13 @@ func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) 
 	}, errors.Join(errs...)
 }
 
-func MatchersToDB(in []Matcher) (config.Matchers, error) {
+func MatchersToDB(in []Matcher) (common.Matchers, error) {
 	if len(in) == 0 {
 		return nil, nil
 	}
 
 	var errs []error
-	result := make(config.Matchers, 0, len(in))
+	result := make(common.Matchers, 0, len(in))
 	for _, m := range in {
 		matchType, err := MatcherTypeToDB(m.Type)
 		if err != nil {
@@ -445,10 +440,7 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*Postabl
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert v0 receiver to integrations: %w", err)
 	}
-	result := &PostableApiReceiver{
-		Name:                    r.Name,
-		GrafanaManagedReceivers: make([]*PostableGrafanaReceiver, 0, len(v0)),
-	}
+	integrations := make([]*PostableGrafanaReceiver, 0, len(v0))
 	typeCount := make(map[string]int)
 	for _, cfg := range v0 {
 		integrationType := string(cfg.Schema.Type())
@@ -458,9 +450,9 @@ func PostableMimirReceiverToPostableGrafanaReceiver(r compat.Receiver) (*Postabl
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert Mimir integration config to PostableGrafanaReceiver: %w", err)
 		}
-		result.GrafanaManagedReceivers = append(result.GrafanaManagedReceivers, integration)
+		integrations = append(integrations, integration)
 	}
-	return result, nil
+	return new(NewReceiver(r.Name, integrations, models.ProvenanceNone)), nil
 }
 
 // MimirIntegrationConfigToPostableGrafanaReceiver converts a Mimir integration configuration to a PostableGrafanaReceiver. All settings are unencrypted. Needs to be encrypted later.

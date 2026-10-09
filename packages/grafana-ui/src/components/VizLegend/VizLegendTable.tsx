@@ -50,7 +50,7 @@ export const VizLegendTable = <T extends unknown>({
   }
 
   if (sortKey != null) {
-    let itemVals = new Map<VizLegendItem, number>();
+    let itemVals = new Map<VizLegendItem<T>, number>();
 
     items.forEach((item) => {
       if (sortKey !== nameSortKey && item.getDisplayValues) {

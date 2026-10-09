@@ -118,9 +118,8 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 	t.Helper()
 
 	backend, err := search.NewBleveBackend(search.BleveOptions{
-		Root:                  t.TempDir(),
-		FileThreshold:         5,
-		IndexDeletedDocuments: true,
+		Root:          t.TempDir(),
+		FileThreshold: 5,
 		SearchFields: resource.NewSearchFieldsRegistry(nil, nil, map[resource.LowerGroupResource]resource.SearchFieldsProvider{
 			resource.NewLowerGroupResource(group, res): search.DashboardSearchFieldsProviderForTest(),
 		}),
@@ -137,7 +136,7 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 			Name:      name,
 			Title:     name,
 			RV:        rv,
-			IsDeleted: ptr(true),
+			IsDeleted: new(true),
 			DeletedRV: &rvs,
 		}
 		doc.DeletionTime = at
@@ -160,5 +159,3 @@ func newTrashRetentionIndex(t testing.TB, group, res string, retention search.Tr
 	require.NoError(t, err)
 	return index
 }
-
-func ptr[T any](v T) *T { return &v }

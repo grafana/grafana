@@ -3,8 +3,8 @@ package ml
 import (
 	"testing"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
@@ -71,7 +71,7 @@ func TestUnmarshalCommand(t *testing.T) {
 			{
 				name: "field 'type' is not known",
 				config: updateJson(outlierQuery, func(cmd map[string]interface{}) {
-					cmd["type"] = uuid.NewString()
+					cmd["type"] = uuid.NewV4().String()
 				}),
 				err: "unsupported command type. Should be one of [outlier]",
 			},

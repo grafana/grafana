@@ -1,8 +1,16 @@
-import { type DataFrame, getFrameDisplayName, type PanelProps, type SelectableValue } from '@grafana/data';
+import { css } from '@emotion/css';
+
+import {
+  type DataFrame,
+  getFrameDisplayName,
+  type GrafanaTheme2,
+  type PanelProps,
+  type SelectableValue,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import { TableCellHeight, type TableOptions } from '@grafana/schema';
-import { Box, Combobox, Field, Stack, usePanelContext, useTheme2 } from '@grafana/ui';
+import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
   useCacheFieldDisplayNames,
@@ -13,6 +21,8 @@ import {
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
+import { useTableCellAssistant } from './useTableCellAssistant';
+import { useTableFieldAssistant } from './useTableFieldAssistant';
 
 interface Props extends PanelProps<TableOptions> {
   initialRowIndex?: number;
@@ -38,9 +48,13 @@ export function TablePanel(props: Props) {
   useCacheFieldDisplayNames(data.series);
 
   const theme = useTheme2();
+  const styles = useStyles2(getStyles);
   const panelContext = usePanelContext();
   const getActions = useCellActions(replaceVariables);
   const commonTableProps = useCommonTableProps(options, fieldConfig);
+  const noPanelPadding = commonTableProps.tableRefreshEnabled;
+  const onFieldAddToAssistant = useTableFieldAssistant(props);
+  const onCellAddToAssistant = useTableCellAssistant(props);
   const enableSharedCrosshair = useTableSharedCrosshair();
   const frames = hasDeprecatedParentRowIndex(data.series)
     ? migrateFromParentRowIndexToNestedFrames(data.series)
@@ -60,13 +74,12 @@ export function TablePanel(props: Props) {
 
   // Under `table.refresh` the panel drops its own padding so the table can run edge to edge, so the
   // frame picker below it has to bring its own.
-  const framePickerPadding = commonTableProps.tableRefreshEnabled ? 1 : 0;
-
   if (count > 1 && !fitContent) {
     const inputHeight = theme.spacing.gridSize * theme.components.height.md;
-    const padding = theme.spacing.gridSize * (1 + framePickerPadding);
+    const padding = theme.spacing.gridSize * (noPanelPadding ? 2 : 1);
+    const borderWidth = noPanelPadding ? FRAME_PICKER_BORDER_WIDTH : 0;
 
-    tableHeight = height - inputHeight - padding;
+    tableHeight = height - inputHeight - padding - borderWidth;
   }
 
   const tableElement = (
@@ -82,13 +95,15 @@ export function TablePanel(props: Props) {
         onColumnResize(displayName, resizedWidth, fieldScope, props)
       }
       onCellFilterAdded={panelContext.onAddAdHocFilter}
+      onFieldAddToAssistant={onFieldAddToAssistant}
+      onCellAddToAssistant={onCellAddToAssistant}
       timeRange={timeRange}
       enableSharedCrosshair={enableSharedCrosshair}
       fieldConfig={fieldConfig}
       getActions={getActions}
       structureRev={data.structureRev}
       transparent={transparent}
-      noPanelPadding={commonTableProps.tableRefreshEnabled}
+      noPanelPadding={noPanelPadding}
     />
   );
 
@@ -104,9 +119,9 @@ export function TablePanel(props: Props) {
   });
 
   return (
-    <Stack direction="column" gap={1.5} justifyContent="space-between" height="100%">
+    <Stack direction="column" gap={noPanelPadding ? 0 : 1.5} justifyContent="space-between" height="100%">
       {tableElement}
-      <Box paddingX={framePickerPadding} paddingBottom={framePickerPadding}>
+      <div className={noPanelPadding ? styles.framePicker : undefined}>
         <Field noMargin>
           <Combobox
             aria-label={t('table.frame-picker.label', 'Query')}
@@ -115,10 +130,20 @@ export function TablePanel(props: Props) {
             onChange={(val) => onChangeTableSelection(val, props)}
           />
         </Field>
-      </Box>
+      </div>
     </Stack>
   );
 }
+
+const FRAME_PICKER_BORDER_WIDTH = 1;
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  framePicker: css({
+    borderTop: `${FRAME_PICKER_BORDER_WIDTH}px solid ${theme.components.table.border}`,
+    paddingInline: theme.spacing(1),
+    paddingBlock: theme.spacing(1),
+  }),
+});
 
 // Approximate row/header pixel sizes used to self-size in fit-content mode.
 // Mirrors getDefaultRowHeight in TableNG; exact pixels are not critical because

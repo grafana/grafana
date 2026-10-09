@@ -65,7 +65,7 @@
         "yyy (folder)",
         null,
         null,
-        null,
+        2,
         0,
         321,
         null
@@ -75,7 +75,8 @@
         "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "yyy",
-          "namespace": "ns"
+          "namespace": "ns",
+          "resourceVersion": "2"
         }
       }
     },
@@ -85,7 +86,7 @@
         "zzz (folder)",
         null,
         null,
-        null,
+        1,
         0,
         123,
         "repo"
@@ -95,7 +96,8 @@
         "apiVersion": "folder.grafana.app",
         "metadata": {
           "name": "zzz",
-          "namespace": "ns"
+          "namespace": "ns",
+          "resourceVersion": "1"
         }
       }
     }

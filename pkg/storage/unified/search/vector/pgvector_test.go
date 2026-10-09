@@ -224,6 +224,22 @@ func TestPgvectorBackend_GetLatestRV_SeedRowMissing(t *testing.T) {
 	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 }
 
+func TestPgvectorBackend_ListIncompleteBackfillJobs(t *testing.T) {
+	rdb := test.NewDBProviderNopSQL(t)
+	backend := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
+	rdb.SQLMock.ExpectQuery(`SELECT .*"content_version".* FROM vector_backfill_jobs`).WithArgs("m").
+		WillReturnRows(sqlmock.NewRows([]string{
+			"id", "model", "resource", "stopping_rv", "content_version", "last_seen_key", "is_complete", "last_error",
+		}).AddRow(int64(1), "m", "folder_embeddings", int64(100), 2, nil, false, nil))
+
+	jobs, err := backend.ListIncompleteBackfillJobs(t.Context(), "m")
+	require.NoError(t, err)
+	require.Equal(t, []BackfillJob{{
+		ID: 1, Model: "m", Resource: "folder_embeddings", StoppingRV: 100, ContentVersion: 2,
+	}}, jobs)
+	require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+}
+
 func TestPgvectorBackend_ContentVersion(t *testing.T) {
 	t.Run("returns MIN across the uid's rows", func(t *testing.T) {
 		rdb := test.NewDBProviderNopSQL(t)
@@ -308,6 +324,40 @@ func TestPgvectorBackend_UpdateContentVersion(t *testing.T) {
 		require.Contains(t, err.Error(), "unsupported resource")
 		require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
 	})
+}
+
+func TestPgvectorBackend_UpdateFolder(t *testing.T) {
+	const partitionKey = "folder_embeddings"
+	for _, tc := range []struct {
+		name   string
+		folder string
+		err    error
+	}{
+		{name: "move folder", folder: "folder-b"},
+		{name: "move to root"},
+		{name: "storage failure", folder: "folder-b", err: errors.New("write failed")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rdb := test.NewDBProviderNopSQL(t)
+			backend := NewPgvectorBackend(t.Context(), rdb.DB, 1000, 0, false, nil)
+			rdb.SQLMock.ExpectQuery("SELECT").WillReturnRows(
+				emptyCatalogRows().AddRow("folder.grafana.app", "folders", partitionKey, false))
+			exec := rdb.SQLMock.ExpectExec(`UPDATE embeddings SET "folder"`).WithArgs(tc.folder, partitionKey, "ns", "m", "folder-1")
+			if tc.err != nil {
+				exec.WillReturnError(tc.err)
+			} else {
+				exec.WillReturnResult(sqlmock.NewResult(0, 2))
+			}
+
+			err := backend.UpdateFolder(t.Context(), "ns", "m", partitionKey, "folder-1", tc.folder)
+			if tc.err != nil {
+				require.ErrorIs(t, err, tc.err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.NoError(t, rdb.SQLMock.ExpectationsWereMet())
+		})
+	}
 }
 
 func TestPartialHNSWName(t *testing.T) {

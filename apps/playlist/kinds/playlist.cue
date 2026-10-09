@@ -12,6 +12,9 @@ package playlist
 	//  dashboards behind the tag will be added to the playlist.
 	//  - dashboard_by_uid: The value is the dashboard UID
 	value: string
+	// Optional per-item display interval (e.g. "30s", "2m"). When unset, the
+	// playlist's global spec.interval is used.
+	interval?: string
 }
 
 playlistv1: {

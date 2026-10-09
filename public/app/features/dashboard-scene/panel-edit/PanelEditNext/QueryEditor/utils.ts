@@ -70,9 +70,11 @@ export function getExpressionSectionLabel(query: ExpressionQuery): string {
 }
 
 function isDataTransformerConfig(
-  transformation: DataTransformerConfig | DataQuery | CustomTransformerDefinition | null
+  transformation: DataTransformerConfig | CustomTransformerDefinition | null
 ): transformation is DataTransformerConfig {
-  return transformation !== null && 'id' in transformation && !('refId' in transformation);
+  // A CustomTransformerDefinition is an operator function or `{ operator, topic }`, so `id` is the
+  // only discriminator. `refId` is not: a transformation config can carry a user-set one.
+  return typeof transformation === 'object' && transformation !== null && 'id' in transformation;
 }
 
 /**

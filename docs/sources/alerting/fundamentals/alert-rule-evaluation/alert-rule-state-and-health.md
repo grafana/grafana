@@ -13,28 +13,17 @@ labels:
     - oss
 title: Alert rule state and health
 weight: 130
-refs:
-  example-multi-dimensional-alerts:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/best-practices/multi-dimensional-alerts/
-  alert-instance-states:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#alert-instance-states
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#alert-instance-states
 ---
 
 # Alert rule state and health
 
-Each alert rule can generate one or more alert instances—one alert instance for each series or dimension, as shown in the [multi-dimensional alert example](ref:example-multi-dimensional-alerts).
+Each alert rule can generate one or more alert instances—one alert instance for each series or dimension, as shown in the [multi-dimensional alert example](/docs/grafana/<GRAFANA_VERSION>/alerting/best-practices/multi-dimensional-alerts/).
 
 Each alert instance of the same alert rule represents a different target and can be in a different state; for example, one alert instance may be **Normal** while another is **Alerting**.
 
 {{< figure src="/media/docs/alerting/alert-rule-example-multiple-alert-instances.png" max-width="750px" alt="Multi dimensional alert rule. The alert rule state and alert rule health are determined by the state of the alert instances." >}}
 
-The alert rule state and alert rule health are determined by the [state of the alert instances](ref:alert-instance-states).
+The alert rule state and alert rule health are determined by the [state of the alert instances](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/nodata-and-error-states/#alert-instance-states).
 
 ## Alert rule states
 

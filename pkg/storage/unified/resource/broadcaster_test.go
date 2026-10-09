@@ -2,7 +2,6 @@ package resource
 
 import (
 	"context"
-	"errors"
 	"io"
 	"testing"
 	"time"
@@ -113,8 +112,7 @@ func TestBroadcaster(t *testing.T) {
 }
 
 func TestBroadcasterUnsubscribe(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -158,15 +156,14 @@ func TestBroadcasterUnsubscribe(t *testing.T) {
 }
 
 func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 
 	// Use small overflow cap so slow consumers get disconnected quickly.
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	// Create 101 subscribers that never read — enough to exceed the
 	// internal unsubscribe channel buffer and exercise bulk disconnect.
@@ -196,15 +193,14 @@ func TestBroadcasterSlowConsumerDeadlock(t *testing.T) {
 }
 
 func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -231,8 +227,7 @@ func TestBroadcasterOverflowSpoolsInsteadOfDisconnecting(t *testing.T) {
 }
 
 func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -241,7 +236,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 20
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -283,8 +278,7 @@ func TestBroadcasterDisconnectsOnOverflowCapExceeded(t *testing.T) {
 }
 
 func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -293,7 +287,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 	// so readInto should leave headroom.
 	const subBuf = defaultCacheSize + 100
 	const ovfCap = 1000
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, nil, nil, nil)
 
 	// Fill the cache to capacity by sending items through the input channel
 	// (no subscribers yet, so items only go to cache).
@@ -332,8 +326,7 @@ func TestBroadcasterReadIntoDoesNotFillChannel(t *testing.T) {
 }
 
 func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ctx := t.Context()
 
 	ch := make(chan int)
 	t.Cleanup(func() { close(ch) })
@@ -342,7 +335,7 @@ func TestBroadcasterOverflowMemoryReleasedWhenCaughtUp(t *testing.T) {
 
 	const subBuf = 10
 	const ovfCap = 100
-	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil)
+	b := newBroadcasterWithSizes(ctx, ch, subBuf, ovfCap, metrics, nil, nil)
 
 	sub, err := b.Subscribe(ctx, "test", "test")
 	require.NoError(t, err)
@@ -397,7 +390,7 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 		subCancel()
 
 		b := &broadcaster[int]{
-			subscribe:    make(chan *subscription[int]),
+			subscribe:    make(chan *subscribeRequest[int]),
 			terminated:   make(chan struct{}),
 			metrics:      metrics,
 			watchBufSize: watchChanSize,
@@ -414,13 +407,12 @@ func TestBroadcasterMetricsSubscribeFailures(t *testing.T) {
 
 		ctx := context.Background()
 		input := make(chan int)
-		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil)
+		b := newBroadcasterWithSizes(ctx, input, watchChanSize, defaultOverflowCap, metrics, nil, nil)
 		close(input)
+		<-b.terminated
 
-		require.Eventually(t, func() bool {
-			_, err := b.Subscribe(ctx, "sub1", "test")
-			return errors.Is(err, io.EOF)
-		}, time.Second, 10*time.Millisecond)
+		_, err := b.Subscribe(ctx, "sub1", "test")
+		require.ErrorIs(t, err, io.EOF)
 		requireMetricValue(t, metrics.SubscriptionsTotal.WithLabelValues("test", subscriptionResultTerminated), 1)
 	})
 }

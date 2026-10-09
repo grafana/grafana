@@ -10,6 +10,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
@@ -21,6 +22,7 @@ import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { type BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import {
+  type EditActionSource,
   type EditableDashboardElement,
   type EditableDashboardElementInfo,
 } from '../scene/types/EditableDashboardElement';
@@ -39,7 +41,7 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
   const backgroundId = useId();
 
   const panelOptions = useMemo(() => {
-    return new OptionsPaneCategoryDescriptor({ title: '', id: 'panel-options' })
+    return new OptionsPaneCategoryDescriptor({ title: '', id: 'Panel options' })
       .addItem(
         new OptionsPaneItemDescriptor({
           title: t('dashboard.sidebar.viz-panel.options.title-option', 'Title'),
@@ -56,6 +58,7 @@ function useSidebarOptions(this: VizPanelEditableElement, isNewElement: boolean)
           title: t('dashboard.sidebar.viz-panel.options.description', 'Description'),
           id: descriptionId,
           value: panel.state.description,
+          skipField: true,
           render: (descriptor) => <PanelDescriptionTextArea id={descriptor.props.id} panel={panel} />,
         })
       )
@@ -115,7 +118,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
 
   public useSidebarOptions = useSidebarOptions.bind(this);
 
-  public onDelete(source: PanelActionSource = 'edit_pane') {
+  public onDelete(source: EditActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('delete', getPanelIdForVizPanel(this.panel), source);
     const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
     layout.removePanel?.(this.panel);
@@ -137,13 +140,12 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     );
   }
 
-  public onDuplicate(source: PanelActionSource = 'edit_pane') {
+  public onDuplicate(source: EditActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(this.panel), source);
-    const layout = dashboardSceneGraph.getLayoutManagerFor(this.panel);
-    layout.duplicatePanel?.(this.panel);
+    duplicatePanel(this.panel);
   }
 
-  public onCopy(source: PanelActionSource = 'edit_pane') {
+  public onCopy(source: EditActionSource = 'edit_pane') {
     DashboardInteractions.panelActionClicked('copy', getPanelIdForVizPanel(this.panel), source);
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
@@ -154,7 +156,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {
-    return new MultiSelectedVizPanelsEditableElement(items);
+    return new MultiSelectedVizPanelsEditableElement(items, getDashboardSceneFor(this.panel));
   }
 
   public scrollIntoView() {
@@ -163,8 +165,6 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     }
   }
 }
-
-type PanelActionSource = 'edit_pane' | 'edit_popover';
 
 type OpenPanelEditVizProps = { panel: VizPanel };
 

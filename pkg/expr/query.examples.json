@@ -99,38 +99,13 @@
               ],
               "type": "gt"
             },
-            "loadedDimensions": {
-              "data": {
-                "values": [
-                  [
-                    18446744073709552000,
-                    2,
-                    3,
-                    4,
-                    5
-                  ]
-                ]
-              },
-              "schema": {
-                "fields": [
-                  {
-                    "name": "fingerprints",
-                    "type": "number",
-                    "typeInfo": {
-                      "frame": "uint64"
-                    }
-                  }
-                ],
-                "meta": {
-                  "type": "fingerprints",
-                  "typeVersion": [
-                    1,
-                    0
-                  ]
-                },
-                "name": "test"
-              }
-            },
+            "loadedFingerprints": [
+              "18446744073709551615",
+              "2",
+              "3",
+              "4",
+              "5"
+            ],
             "unloadEvaluator": {
               "params": [
                 31

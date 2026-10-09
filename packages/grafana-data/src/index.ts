@@ -284,6 +284,7 @@ export { generateUUID, isUUID } from './utils/uuid';
 
 // Transformations
 export { standardTransformers } from './transformations/transformers';
+export { getTransformationDynamicRefId, applyStaticRefId } from './transformations/transformers/utils';
 export {
   fieldMatchers,
   frameMatchers,
@@ -310,6 +311,7 @@ export {
   type TransformerUIProps,
   TransformerCategory,
   standardTransformersRegistry,
+  transformerUsesDynamicRefId,
 } from './transformations/standardTransformersRegistry';
 export {
   type RegexpOrNamesMatcherOptions,
@@ -615,6 +617,7 @@ export {
   type DataSourceConfigErrorStatusContext,
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
+  type PluginExtensionQueryEditorRowActionsV1Context,
   type PluginExtensionDataSourceConfigContext,
   type PluginExtensionDataSourceConfigActionsContext,
   type PluginExtensionDataSourceConfigStatusContext,
@@ -762,6 +765,10 @@ export {
   TransformationApplicabilityLevels,
   type DataTransformerInfo,
   type CustomTransformOperator,
+  type ResolvedSystemTransformations,
+  type SystemTransformations,
+  type SystemTransformationsContext,
+  type SystemTransformationsSupplier,
   type SynchronousDataTransformerInfo,
   type DataTransformerConfig,
   type FrameMatcher,

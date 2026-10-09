@@ -66,7 +66,7 @@ type jobProgressRecorder struct {
 	variance            string
 }
 
-func newJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
+func NewJobProgressRecorder(progressFn ProgressFn, metrics *JobMetrics, action provisioning.JobAction) JobProgressRecorder {
 	return &jobProgressRecorder{
 		started:             time.Now(),
 		notifyImmediatelyFn: maybeNotifyProgress(NotifyThrottleInterval, progressFn),
@@ -458,7 +458,8 @@ func (r *jobProgressRecorder) Complete(ctx context.Context, err error) provision
 			jobStatus.Message = "completed with errors"
 		}
 		jobStatus.State = provisioning.JobStateError
-	} else if len(jobStatus.Warnings) > 0 {
+	} else if len(jobStatus.Warnings) > 0 && len(jobStatus.Errors) == 0 &&
+		(jobStatus.State != provisioning.JobStateError || isWarningError(err)) {
 		jobStatus.State = provisioning.JobStateWarning
 		jobStatus.Message = "completed with warnings"
 	}

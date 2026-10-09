@@ -113,7 +113,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let sizes = opts.disp.size.values(u, seriesIdx);
           // let pointColors = opts.disp.color.values(u, seriesIdx);
           let pointColors = dispColors[seriesIdx - 1].values; // idxs
-          let pointPalette = dispColors[seriesIdx - 1].index as Array<CanvasRenderingContext2D['fillStyle']>;
+          let pointPalette = dispColors[seriesIdx - 1].index;
           let paletteHasAlpha = dispColors[seriesIdx - 1].hasAlpha;
 
           let isSquare = scatterInfo.pointShape === PointShape.Square;
@@ -141,8 +141,8 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
                     curColorIdx = pointColors[i];
                     let c =
                       curColorIdx === undefined || curColorIdx === -1 ? FALLBACK_COLOR : pointPalette[curColorIdx];
-                    u.ctx.fillStyle = paletteHasAlpha ? c : colorManipulator.alpha(c as string, pointAlpha);
-                    u.ctx.strokeStyle = colorManipulator.alpha(c as string, 1);
+                    u.ctx.fillStyle = paletteHasAlpha ? c : colorManipulator.alpha(c, pointAlpha);
+                    u.ctx.strokeStyle = colorManipulator.alpha(c, 1);
                   }
                 }
 
@@ -448,7 +448,7 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
 
     if (f != null) {
       Object.assign(cfg, fieldValueColors(f, theme));
-      cfg.hasAlpha = cfg.index.some((v) => !(v as string).endsWith('ff'));
+      cfg.hasAlpha = cfg.index.some((v) => !v.endsWith('ff'));
     }
 
     return cfg;
@@ -486,14 +486,20 @@ export const prepConfig = (xySeries: XYSeries[], theme: GrafanaTheme2) => {
           let maxVal = sizeRange.max;
           let valRange = maxVal - minVal;
 
-          diams = Array(len);
+          // Equal size values make valRange 0, which would produce NaN diameters.
+          // Point size is the configured fixed size. It is hidden when show is lines.
+          if (valRange === 0) {
+            diams = Array(len).fill(s.y.field.config.custom.pointSize.fixed);
+          } else {
+            diams = Array(len);
 
-          for (let i = 0; i < vals.length; i++) {
-            let val = vals[i];
+            for (let i = 0; i < vals.length; i++) {
+              let val = vals[i];
 
-            let valPct = (val - minVal) / valRange;
-            let pxArea = minPx + valPct * pxRange;
-            diams[i] = pxArea ** 0.5;
+              let valPct = (val - minVal) / valRange;
+              let pxArea = minPx + valPct * pxRange;
+              diams[i] = pxArea ** 0.5;
+            }
           }
         } else {
           diams = Array(len).fill(s.size.fixed!);
@@ -558,7 +564,7 @@ function getHex8Color(color: string, theme: GrafanaTheme2) {
 }
 
 export interface FieldColorValues {
-  index: unknown[];
+  index: string[];
   getOne: GetOneValue;
   getAll: GetAllValues;
 }
@@ -591,7 +597,7 @@ type ColorRule =
  * colors directly (no eval) and leave `getOne` at the -1 default.
  */
 interface ColorSpec {
-  index: unknown[];
+  index: string[];
   rules: Array<{ rule: ColorRule; idx: number }>;
   fallback: number;
   getAllOverride?: GetAllValues;
@@ -599,7 +605,7 @@ interface ColorSpec {
 
 /** Build the value->color spec from a field config, or null when no color branch applies. */
 export function buildColorSpec(f: Field, theme: GrafanaTheme2): ColorSpec | null {
-  const index: unknown[] = [];
+  const index: string[] = [];
   const rules: Array<{ rule: ColorRule; idx: number }> = [];
 
   // if any mappings exist, use them regardless of other settings
@@ -682,7 +688,7 @@ export function buildColorSpec(f: Field, theme: GrafanaTheme2): ColorSpec | null
   if (f.config.color?.mode?.startsWith('continuous')) {
     let calc = getFieldColorModeForField(f).getCalculator(f, theme);
 
-    const gradient: unknown[] = Array(32);
+    const gradient: string[] = Array(32);
 
     for (let i = 0; i < gradient.length; i++) {
       let pct = i / (gradient.length - 1);
@@ -693,7 +699,7 @@ export function buildColorSpec(f: Field, theme: GrafanaTheme2): ColorSpec | null
       index: gradient,
       rules: [],
       fallback: -1,
-      getAllOverride: (vals, min, max) => valuesToFills(vals as number[], gradient as string[], min!, max!),
+      getAllOverride: (vals, min, max) => valuesToFills(vals as number[], gradient, min!, max!),
     };
   }
 

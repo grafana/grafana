@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -243,6 +244,69 @@ func (s *ServiceAccountsStoreImpl) RetrieveServiceAccount(ctx context.Context, q
 	})
 
 	return serviceAccount, err
+}
+
+const retrieveServiceAccountsBatchSize = 500
+
+func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountsByUIDs(ctx context.Context, orgID int64, uids []string) ([]*serviceaccounts.ServiceAccountProfileDTO, error) {
+	if orgID == 0 {
+		return nil, errors.New("OrgID must be provided")
+	}
+	if len(uids) == 0 {
+		return []*serviceaccounts.ServiceAccountProfileDTO{}, nil
+	}
+
+	unique := make([]string, 0, len(uids))
+	seen := make(map[string]struct{}, len(uids))
+	for _, uid := range uids {
+		if uid == "" {
+			continue
+		}
+		if _, ok := seen[uid]; ok {
+			continue
+		}
+		seen[uid] = struct{}{}
+		unique = append(unique, uid)
+	}
+
+	serviceAccounts := make([]*serviceaccounts.ServiceAccountProfileDTO, 0, len(unique))
+	err := s.sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+		for chunk := range slices.Chunk(unique, retrieveServiceAccountsBatchSize) {
+			args := make([]any, 0, len(chunk)+1)
+			args = append(args, orgID)
+			for _, uid := range chunk {
+				args = append(args, uid)
+			}
+
+			var rows []*serviceaccounts.ServiceAccountProfileDTO
+			if err := sess.SQL(`
+				SELECT
+					u.id AS user_id,
+					u.uid,
+					u.name,
+					u.login,
+					u.is_disabled,
+					u.created,
+					u.updated,
+					ou.org_id,
+					ou.role
+				FROM `+s.sqlStore.GetDialect().Quote("user")+` u
+				INNER JOIN org_user ou ON ou.user_id = u.id
+				WHERE ou.org_id = ?
+					AND u.is_service_account = `+s.sqlStore.GetDialect().BooleanStr(true)+`
+					AND u.uid IN (?`+strings.Repeat(",?", len(chunk)-1)+`)
+			`, args...).Find(&rows); err != nil {
+				return err
+			}
+			serviceAccounts = append(serviceAccounts, rows...)
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccounts, nil
 }
 
 func (s *ServiceAccountsStoreImpl) RetrieveServiceAccountIdByName(ctx context.Context, orgId int64, name string) (int64, error) {

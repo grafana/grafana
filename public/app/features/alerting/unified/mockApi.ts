@@ -1,3 +1,4 @@
+import { act } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { type SetupServer } from 'msw/node';
 
@@ -5,6 +6,7 @@ import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1'
 import { setBackendSrv } from '@grafana/runtime';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
   setupAlertmanagerConfigMapDefaultState,
@@ -313,6 +315,23 @@ export function setupMswServer() {
 
   beforeAll(() => {
     setupBackendSrv();
+  });
+
+  // Rule permissions and the rule editor's folder picker read folders through the facades in
+  // app/api/clients/folder, which default to the app platform API. Only the legacy /api/folders
+  // handlers exist here, so pin the flag off.
+  // TODO: add app platform folder fixtures (folders/:name plus its access and parents
+  // subresources) and drop this, so these tests cover the API that production actually uses.
+  beforeEach(() => {
+    setTestFlags({ foldersAppPlatformAPI: false });
+  });
+
+  afterEach(async () => {
+    // The act wrap is needed because clearing the flag fires OpenFeature events while components
+    // are still mounted.
+    await act(async () => {
+      setTestFlags({});
+    });
   });
 
   afterEach(() => {

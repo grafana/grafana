@@ -277,14 +277,6 @@
   },
   {
     "type": "label",
-    "name": "area/panel/graph",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
-    }
-  },
-  {
-    "type": "label",
     "name": "area/panel/heatmap",
     "action": "addToProject",
     "addToProject": {
@@ -1017,14 +1009,6 @@
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/112"
-    }
-  },
-  {
-    "type": "label",
-    "name": "area/panel/singlestat",
-    "action": "addToProject",
-    "addToProject": {
-      "url": "https://github.com/orgs/grafana/projects/56"
     }
   },
   {

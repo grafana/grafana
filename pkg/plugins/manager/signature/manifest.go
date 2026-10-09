@@ -63,7 +63,7 @@ type Signature struct {
 	log log.Logger
 }
 
-var _ plugins.SignatureCalculator = &Signature{}
+var _ plugins.SignatureCalculator = (*Signature)(nil)
 
 func ProvideService(cfg *config.PluginManagementCfg, kr plugins.KeyRetriever) *Signature {
 	return NewCalculator(cfg, kr)

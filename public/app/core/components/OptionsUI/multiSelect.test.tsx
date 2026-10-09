@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import type { SelectFieldConfigSettings, StandardEditorProps } from '@grafana/data';
@@ -32,8 +32,6 @@ describe('MultiSelectValueEditor', () => {
     const user = userEvent.setup();
     const onChange = jest.fn();
     render(<MultiSelectValueEditor {...buildProps({ onChange, value: [] })} />);
-
-    await waitFor(() => expect(screen.queryByText('Loading options')).not.toBeInTheDocument());
 
     await user.click(screen.getByRole('combobox'));
     await user.click(await screen.findByRole('option', { name: /^A$/i }));

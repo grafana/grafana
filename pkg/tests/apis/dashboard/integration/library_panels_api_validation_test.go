@@ -17,9 +17,10 @@ import (
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
-	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/libraryelements"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
@@ -28,11 +29,136 @@ import (
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
 
+func TestIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelScopePermissions)
+}
+
+func TestIntegrationLibraryPanelConnections(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelConnections)
+}
+
+func TestIntegrationLibraryElementPermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryElementPermissions)
+}
+
+func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryElementLegacyAPIThroughK8s)
+}
+
+func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage)
+}
+
+func TestIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelStorageModesEnforceWritePermissions)
+}
+
+func TestIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes)
+}
+
+func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryPanelConnectionsWithFolderAccess)
+}
+
+func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationLibraryElementFolderHierarchy)
+}
+
+func testIntegrationLibraryPanelScopePermissions(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	for _, mode := range []grafanarest.DualWriterMode{grafanarest.Mode0, grafanarest.Mode5} {
+		t.Run(fmt.Sprintf("storage mode %d", mode), func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous:        true,
+				DisableAuthZClientCache: true,
+				EnableFeatureToggles:    []string{featuremgmt.FlagLibraryelementsKubernetesLibraryPanels},
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"librarypanels.dashboard.grafana.app": {DualWriterMode: mode},
+				},
+			})
+			ctx := createTestContext(t, helper, helper.Org1)
+			allowedFolder, err := createFolder(t, helper, ctx.AdminUser, "Allowed panels")
+			require.NoError(t, err)
+
+			deniedFolder, err := createFolder(t, helper, ctx.AdminUser, "Denied panels")
+			require.NoError(t, err)
+
+			panel, err := createLibraryElement(t, ctx, ctx.AdminUser, "Allowed panel", allowedFolder.UID)
+			require.NoError(t, err)
+
+			other, err := createLibraryElement(t, ctx, ctx.AdminUser, "Other panel", deniedFolder.UID)
+			require.NoError(t, err)
+
+			cases := []struct {
+				name     string
+				resource string
+				uid      string
+			}{
+				{
+					name:     "direct panel grant",
+					resource: libraryelements.ScopeLibraryPanelsRoot,
+					uid:      panel,
+				},
+				{
+					name:     "folder grant",
+					resource: folder.ScopeFoldersRoot,
+					uid:      allowedFolder.UID,
+				},
+			}
+
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					grant := resourcepermissions.SetResourcePermissionCommand{
+						Actions:           []string{libraryelements.ActionLibraryPanelsRead},
+						Resource:          tc.resource,
+						ResourceAttribute: "uid",
+						ResourceID:        tc.uid,
+					}
+					caller := helper.CreateUser(
+						fmt.Sprintf("panel-reader-%s", tc.resource),
+						apis.Org1,
+						org.RoleNone,
+						[]resourcepermissions.SetResourcePermissionCommand{grant},
+					)
+
+					readCases := []struct {
+						uid        string
+						wantStatus int
+					}{
+						{uid: panel, wantStatus: http.StatusOK},
+						{uid: other, wantStatus: http.StatusForbidden},
+						{uid: panel, wantStatus: http.StatusOK},
+					}
+
+					for _, read := range readCases {
+						requireLibraryPanelRead(t, helper, caller, read.uid, read.wantStatus)
+					}
+
+					requireLibraryPanelWritesDenied(t, helper, caller, ctx.AdminUser, panel)
+
+					grant.Actions = nil
+					helper.SetPermissions(caller, []resourcepermissions.SetResourcePermissionCommand{grant})
+
+					reload := apis.DoRequest(helper, apis.RequestParams{
+						User: caller,
+						Path: "/api/access-control/user/permissions?reloadcache=true",
+					}, &map[string]interface{}{})
+					require.Equal(t, http.StatusOK, reload.Response.StatusCode)
+
+					requireLibraryPanelRead(t, helper, caller, panel, http.StatusForbidden)
+				})
+			}
+		})
+	}
+}
+
 // this tests the /api path still, but behind the scenes is using search to get the library connections
 // as in modes 4+, the connections are found via searching dashboards for the reference of the library panel
 //
 // it also ensures we create the connection in modes 0-2 if a dashboard v1 is created with a reference
-func TestIntegrationLibraryPanelConnections(t *testing.T) {
+func testIntegrationLibraryPanelConnections(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -106,7 +232,7 @@ func TestIntegrationLibraryPanelConnections(t *testing.T) {
 
 // this tests the /apis path to ensure authorization is being enforced. /api integration tests are within the service package
 // only works in modes 0-2 because the library element is created through the /api path
-func TestIntegrationLibraryElementPermissions(t *testing.T) {
+func testIntegrationLibraryElementPermissions(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -251,7 +377,7 @@ func runLibraryElementCrossOrgTests(t *testing.T, org1Ctx, org2Ctx TestContext) 
 
 // exercises the legacy /api/library-elements surface while requests are routed through
 // the k8s /apis endpoints, to ensure the responses keep the legacy contract
-func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
+func testIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -336,7 +462,8 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 		ContentType: "application/json",
 	}, &model.LibraryElementResponse{})
 	require.Equal(t, http.StatusOK, moveToRootResponse.Response.StatusCode)
-	require.Equal(t, ac.GeneralFolderUID, moveToRootResponse.Result.Result.FolderUID)
+	require.Empty(t, moveToRootResponse.Result.Result.FolderUID)
+	require.Empty(t, moveToRootResponse.Result.Result.Meta.FolderUID)
 	require.NoError(t, deleteLibraryElement(t, ctx, ctx.AdminUser, createdByFolderIDResult["uid"].(string)))
 
 	// create: the display title and properties without a typed spec field (e.g.
@@ -354,6 +481,8 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	}, ctx.AdminUser)
 	require.NoError(t, err)
 	result := created["result"].(map[string]interface{})
+	require.Empty(t, result["folderUid"])
+	require.Empty(t, result["meta"].(map[string]interface{})["folderUid"])
 	uid := result["uid"].(string)
 	require.NotEmpty(t, uid)
 	require.Equal(t, "CRUDPanel", result["name"])
@@ -369,6 +498,8 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.NoError(t, err)
 	gotResult := got["result"].(map[string]interface{})
 	require.Equal(t, uid, gotResult["uid"])
+	require.Empty(t, gotResult["folderUid"])
+	require.Empty(t, gotResult["meta"].(map[string]interface{})["folderUid"])
 	gotModel := gotResult["model"].(map[string]interface{})
 	require.Equal(t, "CRUD panel display title", gotModel["title"])
 	require.Contains(t, gotModel, "transformations")
@@ -382,6 +513,9 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	filtered, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=crudpanel", ctx.AdminUser)
 	require.NoError(t, err)
 	require.Equal(t, float64(1), filtered["result"].(map[string]interface{})["totalCount"])
+	filteredPanel := filtered["result"].(map[string]interface{})["elements"].([]interface{})[0].(map[string]interface{})
+	require.Empty(t, filteredPanel["folderUid"])
+	require.Empty(t, filteredPanel["meta"].(map[string]interface{})["folderUid"])
 
 	empty, err := getDashboardViaHTTP(t, &ctx, "/api/library-elements?searchString=doesnotmatch", ctx.AdminUser)
 	require.NoError(t, err)
@@ -459,7 +593,7 @@ func TestIntegrationLibraryElementLegacyAPIThroughK8s(t *testing.T) {
 	require.Equal(t, "library element could not be found", notFoundBody["message"])
 }
 
-func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testing.T) {
+func testIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -510,84 +644,122 @@ func TestIntegrationLibraryPanelPreservesStatusMissingInUnifiedStorage(t *testin
 	require.Equal(t, int64(100), missing["maxDataPoints"])
 }
 
-func TestIntegrationLibraryPanelMode5EnforcesWritePermissions(t *testing.T) {
+func testIntegrationLibraryPanelStorageModesEnforceWritePermissions(t *testing.T) {
 	// Regression guard for the authorization bypass reproduced on the combined
 	// hosted POC: https://github.com/grafana/grafana/pull/130108#issuecomment-5189622165
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		DisableAnonymous: true,
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			"librarypanels.dashboard.grafana.app": {DualWriterMode: grafanarest.Mode5},
-		},
-	})
-	ctx := createTestContext(t, helper, helper.Org1)
-	adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
-	editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getLibraryElementGVR())
-	viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getLibraryElementGVR())
-	// Hosted storage-boundary regression: https://github.com/grafana/grafana/pull/130108#issuecomment-5192500857
-	viewerServiceAccountClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.ViewerServiceAccountToken, ctx.OrgID, getLibraryElementGVR())
+	tests := []struct {
+		name string
+		mode grafanarest.DualWriterMode
+	}{
+		{name: "legacy", mode: grafanarest.Mode0},
+		{name: "dual write", mode: grafanarest.Mode1},
+		{name: "unified", mode: grafanarest.Mode5},
+	}
 
-	panel := &unstructured.Unstructured{Object: map[string]interface{}{
-		"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
-		"kind":       "LibraryPanel",
-		"metadata": map[string]interface{}{
-			"name": "viewer-write-probe",
-		},
-		"spec": map[string]interface{}{
-			"type":        "text",
-			"title":       "Viewer write probe",
-			"panelTitle":  "Viewer write probe",
-			"options":     map[string]interface{}{},
-			"fieldConfig": map[string]interface{}{},
-		},
-	}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+				DisableAnonymous: true,
+				UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
+					"librarypanels.dashboard.grafana.app": {DualWriterMode: tt.mode},
+				},
+			})
+			ctx := createTestContext(t, helper, helper.Org1)
+			adminClient := getResourceClient(t, ctx.Helper, ctx.AdminUser, getLibraryElementGVR())
+			editorClient := getResourceClient(t, ctx.Helper, ctx.EditorUser, getLibraryElementGVR())
+			viewerClient := getResourceClient(t, ctx.Helper, ctx.ViewerUser, getLibraryElementGVR())
+			// Hosted storage-boundary regression: https://github.com/grafana/grafana/pull/130108#issuecomment-5192500857
+			viewerServiceAccountClient := getServiceAccountResourceClient(t, ctx.Helper, ctx.ViewerServiceAccountToken, ctx.OrgID, getLibraryElementGVR())
 
-	created, err := adminClient.Resource.Create(context.Background(), panel, v1.CreateOptions{})
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		_ = adminClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
-	})
-	_, err = viewerClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
-	require.NoError(t, err, "Viewer should retain read access")
+			panel := &unstructured.Unstructured{Object: map[string]interface{}{
+				"apiVersion": dashboardV0.APIGroup + "/" + dashboardV0.VERSION,
+				"kind":       "LibraryPanel",
+				"metadata": map[string]interface{}{
+					"name": fmt.Sprintf("viewer-write-probe-%d", tt.mode),
+				},
+				"spec": map[string]interface{}{
+					"type":        "text",
+					"title":       "Viewer write probe",
+					"panelTitle":  "Viewer write probe",
+					"options":     map[string]interface{}{},
+					"fieldConfig": map[string]interface{}{},
+				},
+			}}
 
-	viewerUpdate := created.DeepCopy()
-	require.NoError(t, unstructured.SetNestedField(viewerUpdate.Object, "Viewer must not update this", "spec", "description"))
-	_, err = viewerClient.Resource.Update(context.Background(), viewerUpdate, v1.UpdateOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer update must be forbidden, got %v", err)
+			_, err := viewerClient.Resource.Create(context.Background(), panel.DeepCopy(), v1.CreateOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer create must be forbidden, got %v", err)
+			_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "Denied Viewer create unexpectedly persisted: %v", err)
 
-	err = viewerClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer delete must be forbidden, got %v", err)
+			created, err := adminClient.Resource.Create(context.Background(), panel, v1.CreateOptions{})
+			require.NoError(t, err)
+			t.Cleanup(func() {
+				_ = adminClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+			})
+			_, err = viewerClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.NoError(t, err, "Viewer should retain read access")
 
-	serviceAccountUpdate := created.DeepCopy()
-	require.NoError(t, unstructured.SetNestedField(serviceAccountUpdate.Object, "Viewer service account must not update this", "spec", "description"))
-	_, err = viewerServiceAccountClient.Resource.Update(context.Background(), serviceAccountUpdate, v1.UpdateOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer service account update must be forbidden, got %v", err)
+			viewerUpdate := created.DeepCopy()
+			require.NoError(t, unstructured.SetNestedField(viewerUpdate.Object, "Viewer must not update this", "spec", "description"))
+			_, err = viewerClient.Resource.Update(context.Background(), viewerUpdate, v1.UpdateOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer update must be forbidden, got %v", err)
 
-	err = viewerServiceAccountClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
-	require.True(t, apierrors.IsForbidden(err), "Viewer service account delete must be forbidden, got %v", err)
+			err = viewerClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer delete must be forbidden, got %v", err)
 
-	unchanged, err := adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
-	require.NoError(t, err)
-	_, found, err := unstructured.NestedString(unchanged.Object, "spec", "description")
-	require.NoError(t, err)
-	require.False(t, found, "Viewer update unexpectedly persisted")
+			serviceAccountUpdate := created.DeepCopy()
+			require.NoError(t, unstructured.SetNestedField(serviceAccountUpdate.Object, "Viewer service account must not update this", "spec", "description"))
+			_, err = viewerServiceAccountClient.Resource.Update(context.Background(), serviceAccountUpdate, v1.UpdateOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer service account update must be forbidden, got %v", err)
 
-	editorUpdate := unchanged.DeepCopy()
-	require.NoError(t, unstructured.SetNestedField(editorUpdate.Object, "Editor may update this", "spec", "description"))
-	updated, err := editorClient.Resource.Update(context.Background(), editorUpdate, v1.UpdateOptions{})
-	require.NoError(t, err)
-	description, found, err := unstructured.NestedString(updated.Object, "spec", "description")
-	require.NoError(t, err)
-	require.True(t, found)
-	require.Equal(t, "Editor may update this", description)
+			err = viewerServiceAccountClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{})
+			require.True(t, apierrors.IsForbidden(err), "Viewer service account delete must be forbidden, got %v", err)
 
-	require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{}))
-	_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
-	require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
+			unchanged, err := adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.NoError(t, err)
+			_, found, err := unstructured.NestedString(unchanged.Object, "spec", "description")
+			require.NoError(t, err)
+			require.False(t, found, "Viewer update unexpectedly persisted")
+
+			editorUpdate := unchanged.DeepCopy()
+			require.NoError(t, unstructured.SetNestedField(editorUpdate.Object, "Editor may update this", "spec", "description"))
+			updated, err := editorClient.Resource.Update(context.Background(), editorUpdate, v1.UpdateOptions{})
+			require.NoError(t, err)
+			description, found, err := unstructured.NestedString(updated.Object, "spec", "description")
+			require.NoError(t, err)
+			require.True(t, found)
+			require.Equal(t, "Editor may update this", description)
+
+			// The legacy store does not implement dry-run, and dual-write dry-run
+			// delegates only to unified storage. Verify dry-run where it is supported.
+			if tt.mode == grafanarest.Mode5 {
+				require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{DryRun: []string{v1.DryRunAll}}))
+				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+				require.NoError(t, err, "dry-run delete removed the panel")
+			}
+
+			require.NoError(t, editorClient.Resource.Delete(context.Background(), panel.GetName(), v1.DeleteOptions{}))
+			_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+			require.True(t, apierrors.IsNotFound(err), "Editor delete did not remove the panel: %v", err)
+
+			if tt.mode == grafanarest.Mode5 {
+				_, err = viewerClient.Resource.Update(context.Background(), panel.DeepCopy(), v1.UpdateOptions{})
+				require.True(t, apierrors.IsForbidden(err), "Viewer create-on-update must be forbidden, got %v", err)
+				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+				require.True(t, apierrors.IsNotFound(err), "Denied Viewer create-on-update unexpectedly persisted: %v", err)
+
+				_, err = adminClient.Resource.Update(context.Background(), panel.DeepCopy(), v1.UpdateOptions{})
+				require.NoError(t, err, "Unified PUT should create a missing panel")
+				_, err = adminClient.Resource.Get(context.Background(), panel.GetName(), v1.GetOptions{})
+				require.NoError(t, err)
+			}
+		})
+	}
 }
 
-func TestIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) {
+func testIntegrationLibraryPanelMode5SupportsAdvertisedPatchTypes(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -702,7 +874,7 @@ func deleteLibraryElement(t *testing.T, ctx TestContext, user apis.User, uid str
 	return nil
 }
 
-func TestIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
+func testIntegrationLibraryPanelConnectionsWithFolderAccess(t *testing.T) {
 	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 		DisableAnonymous: true,
 		EnableFeatureToggles: []string{
@@ -914,7 +1086,7 @@ func getVisibleLibraryElementUIDs(t *testing.T, ctx *TestContext, user apis.User
 
 // TestIntegrationLibraryElementFolderHierarchy tests that permissions are correctly propagated in a folder hierarchy.
 // Each sub-test uses its own K8sTestHelper to ensure independent folder tree caches.
-func TestIntegrationLibraryElementFolderHierarchy(t *testing.T) {
+func testIntegrationLibraryElementFolderHierarchy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	opts := testinfra.GrafanaOpts{
@@ -992,4 +1164,61 @@ func createSubFolder(t *testing.T, helper *apis.K8sTestHelper, user apis.User, t
 		Title:     meta.FindTitle(""),
 		ParentUID: parentUID,
 	}, nil
+}
+
+const libraryPanelPathFormat = "/api/library-elements/%s"
+
+func requireLibraryPanelRead(
+	t *testing.T, helper *apis.K8sTestHelper, caller apis.User, uid string, wantStatus int,
+) map[string]interface{} {
+	t.Helper()
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User:   caller,
+		Method: http.MethodGet,
+		Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
+	}, &map[string]interface{}{})
+	require.Equal(t, wantStatus, response.Response.StatusCode, string(response.Body))
+	if wantStatus != http.StatusOK {
+		return nil
+	}
+
+	result, ok := (*response.Result)["result"].(map[string]interface{})
+	require.True(t, ok, "response must contain a library panel")
+	return result
+}
+
+func requireLibraryPanelWritesDenied(
+	t *testing.T, helper *apis.K8sTestHelper, caller, admin apis.User, uid string,
+) {
+	t.Helper()
+
+	before := requireLibraryPanelRead(t, helper, admin, uid, http.StatusOK)
+	patch, err := json.Marshal(map[string]interface{}{
+		"name":    "Unauthorized rename",
+		"version": before["version"],
+		"model":   before["model"],
+	})
+	require.NoError(t, err)
+
+	requests := []struct {
+		method string
+		body   []byte
+	}{
+		{method: http.MethodPatch, body: patch},
+		{method: http.MethodDelete},
+	}
+
+	for _, request := range requests {
+		response := apis.DoRequest(helper, apis.RequestParams{
+			User:   caller,
+			Method: request.method,
+			Path:   fmt.Sprintf(libraryPanelPathFormat, uid),
+			Body:   request.body,
+		}, &struct{}{})
+		require.Equal(t, http.StatusForbidden, response.Response.StatusCode, string(response.Body))
+
+		after := requireLibraryPanelRead(t, helper, admin, uid, http.StatusOK)
+		require.Equal(t, before, after, "denied %s must not change the panel", request.method)
+	}
 }

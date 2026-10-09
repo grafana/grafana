@@ -3,11 +3,20 @@ import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { AdHocFiltersVariable, ConstantVariable, SceneVariableSet, type SceneVariable } from '@grafana/scenes';
+import { config } from '@grafana/runtime';
+import {
+  AdHocFiltersVariable,
+  ConstantVariable,
+  CustomVariable,
+  GroupByVariable,
+  SceneVariableSet,
+  type SceneVariable,
+} from '@grafana/scenes';
 import { appEvents } from 'app/core/app_events';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { DashboardScene } from '../../scene/DashboardScene';
+import { toControlSourceRef } from '../../utils/predefinedVariables';
 import { activateFullSceneTree } from '../../utils/test-utils';
 
 import { DashboardFiltersList } from './DashboardFiltersList';
@@ -31,7 +40,7 @@ jest.mock('react-use', () => ({
   useLocalStorage: () => [{}, () => {}],
 }));
 
-function renderFiltersList(variables: SceneVariable[] = []) {
+function renderFiltersList(variables: SceneVariable[] = [], options?: { includePredefined?: boolean }) {
   const user = userEvent.setup();
 
   const variableSet = new SceneVariableSet({ variables });
@@ -42,7 +51,9 @@ function renderFiltersList(variables: SceneVariable[] = []) {
   activateFullSceneTree(dashboardScene);
   jest.spyOn(dashboardScene.state.sidebar, 'selectObject');
 
-  const renderResult = render(<DashboardFiltersList variableSet={variableSet} />);
+  const renderResult = render(
+    <DashboardFiltersList variableSet={variableSet} includePredefined={options?.includePredefined} />
+  );
 
   return {
     ...renderResult,
@@ -218,5 +229,55 @@ describe('<DashboardFiltersList />', () => {
         expect(names).toEqual(['visibleFilter2', 'queryVar', 'visibleFilter1']);
       });
     });
+  });
+});
+
+describe('predefined filters in the sidebar list', () => {
+  const previousUnified = config.featureToggles.dashboardUnifiedDrilldownControls;
+
+  beforeEach(() => {
+    config.featureToggles.dashboardUnifiedDrilldownControls = true;
+  });
+
+  afterEach(() => {
+    config.featureToggles.dashboardUnifiedDrilldownControls = previousUnified;
+  });
+
+  test('places filter and group-by variables in the display bucket their hide setting selects', async () => {
+    const localFilter = new AdHocFiltersVariable({ name: 'localFilter', type: 'adhoc', hide: VariableHide.dontHide });
+    const localGroupBy = new GroupByVariable({ name: 'localGroupBy', datasource: null, hide: VariableHide.dontHide });
+    const globalFilter = new AdHocFiltersVariable({
+      name: 'globalFilter',
+      type: 'adhoc',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const folderGroupBy = new GroupByVariable({
+      name: 'folderGroupBy',
+      datasource: null,
+      hide: VariableHide.inControlsMenu,
+      origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+    });
+    const globalCustom = new CustomVariable({
+      name: 'globalCustom',
+      query: 'a,b',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+
+    const { getByText, queryByText, queryByRole, findByText, user } = renderFiltersList(
+      [localFilter, localGroupBy, folderGroupBy, globalCustom, globalFilter],
+      { includePredefined: true }
+    );
+
+    expect(queryByRole('heading', { name: /^global/i })).not.toBeInTheDocument();
+    expect(queryByRole('heading', { name: /^folder/i })).not.toBeInTheDocument();
+    expect(getByText('globalFilter').closest('ul')).toHaveAttribute('data-testid', 'filters-list-visible');
+    expect(getByText('folderGroupBy').closest('ul')).toHaveAttribute('data-testid', 'filters-list-controls-menu');
+    expect(getByText('localFilter')).toBeInTheDocument();
+    expect(getByText('localGroupBy')).toBeInTheDocument();
+    expect(queryByText('globalCustom')).not.toBeInTheDocument();
+    expect(getByText('globalFilter').closest('[data-rfd-drag-handle-draggable-id]')).toBeNull();
+
+    await user.hover(getByText('folderGroupBy'));
+    expect(await findByText('This variable is defined on the folder level')).toBeInTheDocument();
   });
 });

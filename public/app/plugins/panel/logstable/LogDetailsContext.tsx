@@ -16,7 +16,7 @@ export interface LogDetailsContextData {
   setDisplayedRowIndices: (rowIndices: number[]) => void;
   setPrettifyDetailsJSON: (prettifyDetailsJSON: boolean) => void;
   showDetails: LogListModel[];
-  toggleDetails: (log: number | LogListModel) => void;
+  toggleDetails: (log: number | LogListModel, withModifierKey?: boolean) => void;
 }
 
 export const emptyContextData: LogDetailsContextData = {
@@ -105,7 +105,7 @@ export const LogDetailsContextProvider = ({
   );
 
   const toggleDetails = useCallback(
-    (logRef: number | LogListModel) => {
+    (logRef: number | LogListModel, withModifierKey?: boolean) => {
       if (!enableLogDetails) {
         return;
       }
@@ -115,6 +115,13 @@ export const LogDetailsContextProvider = ({
         return;
       }
       const found = showDetails.find((stateLog) => stateLog.uid === log.uid);
+
+      if (!withModifierKey && !found) {
+        setCurrentLog(log);
+        setShowDetails([log]);
+        return;
+      }
+
       if (found) {
         const newShowDetails = showDetails.filter((stateLog) => stateLog.uid !== log.uid);
         setShowDetails(newShowDetails);

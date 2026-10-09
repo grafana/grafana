@@ -1,4 +1,4 @@
-import { type ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
+import { type ProvisioningResourceRef as ResourceRef } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type FolderRow, type MigratableResource, resourceKey } from './hooks/useMigrationData';
 

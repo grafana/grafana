@@ -11,7 +11,7 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
 import { dashboardSceneGraph, getNextPanelId } from './dashboardSceneGraph';
-import { findVizPanelByKey } from './utils';
+import { findVizPanelByKey } from './findVizPanel';
 
 describe('dashboardSceneGraph', () => {
   describe('getPanelLinks', () => {

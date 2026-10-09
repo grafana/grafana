@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	_ fs.File = &LocalFile{}
+	_ fs.File = (*LocalFile)(nil)
 
-	_ FS = &LocalFS{}
-	_ FS = &StaticFS{}
+	_ FS = (*LocalFS)(nil)
+	_ FS = (*StaticFS)(nil)
 )
 
 // LocalFS is a plugins.FS that allows accessing files on the local file system.

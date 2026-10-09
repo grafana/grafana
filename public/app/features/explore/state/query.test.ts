@@ -18,6 +18,7 @@ import {
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
 import config from 'app/core/config';
 import { queryLogsSample, queryLogsVolume } from 'app/features/logs/logsModel';
+import { SupportingQueryType } from 'app/features/loki-helpers/types';
 import { type ExploreItemState } from 'app/types/explore';
 import { createAsyncThunk, type StoreState, type ThunkDispatch } from 'app/types/store';
 
@@ -38,6 +39,7 @@ import {
   clearCache,
   importQueries,
   queryReducer,
+  runLoadMoreLogsQueries,
   runQueries,
   scanStartAction,
   scanStopAction,
@@ -297,6 +299,92 @@ describe('runQueries', () => {
     const calls = (richHistory.addToRichHistory as jest.Mock).mock.calls;
     expect(calls).toHaveLength(1);
     expect(calls[0][0].queries).toHaveLength(2);
+  });
+});
+
+describe('runLoadMoreLogsQueries', () => {
+  const logQuery = { refId: 'A', expr: '{job="varlogs"}' };
+  const metricQuery = { refId: 'B', expr: 'count_over_time({job="varlogs"}[1m])' };
+
+  function setup(logsFrames: Array<{ refId: string }> = [{ refId: 'A' }]) {
+    const query = jest.fn().mockReturnValue(of({ data: [], state: LoadingState.Loading }));
+    const { dispatch, getState } = configureStore({
+      ...defaultInitialState,
+      explore: {
+        panes: {
+          left: {
+            ...defaultInitialState.explore.panes.left,
+            correlations: [],
+            datasourceInstance: {
+              name: 'loki',
+              type: 'loki',
+              uid: 'loki-uid',
+              query,
+              getRef: () => ({ type: 'loki', uid: 'loki-uid' }),
+              meta: { id: 'loki' },
+            },
+            queryResponse: {
+              state: LoadingState.Done,
+              series: [],
+              logsFrames,
+              logsResult: {
+                hasUniqueLabels: false,
+                rows: [],
+                queries: [logQuery, metricQuery],
+              },
+            },
+          },
+        },
+      },
+    } as unknown as Partial<StoreState>);
+
+    return { dispatch, getState, query };
+  }
+
+  it.each([
+    {
+      name: 'the older-logs endNs bound',
+      range: { from: 1_000, to: 20_000, endNs: '20000000010' },
+      nanoseconds: { endNs: '20000000010' },
+    },
+    {
+      name: 'the newer-logs startNs bound',
+      range: { from: 40_000, to: 100_000, startNs: '40000000001' },
+      nanoseconds: { startNs: '40000000001' },
+    },
+    {
+      name: 'no nanosecond bound',
+      range: { from: 1_000, to: 20_000 },
+      nanoseconds: {},
+    },
+  ])('sends only the log query with $name', async ({ range, nanoseconds }) => {
+    const { dispatch, getState, query } = setup();
+
+    await dispatch(runLoadMoreLogsQueries({ exploreId: 'left', absoluteRange: range }));
+
+    expect(query).toHaveBeenCalledTimes(1);
+    const request = query.mock.calls[0][0];
+    expect(request.targets).toEqual([
+      {
+        refId: 'A',
+        expr: '{job="varlogs"}',
+        datasource: { type: 'loki', uid: 'loki-uid' },
+        supportingQueryType: SupportingQueryType.InfiniteScroll,
+        ...nanoseconds,
+      },
+    ]);
+    expect(request.range.from.valueOf()).toBe(range.from);
+    expect(request.range.to.valueOf()).toBe(range.to);
+    expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
+  });
+
+  it('does not query when there are no log frames', async () => {
+    const { dispatch, getState, query } = setup([]);
+
+    await dispatch(runLoadMoreLogsQueries({ exploreId: 'left', absoluteRange: { from: 1_000, to: 20_000 } }));
+
+    expect(query).not.toHaveBeenCalled();
+    expect(getState().explore.panes.left!.queryResponse.state).toBe(LoadingState.Done);
   });
 });
 

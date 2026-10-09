@@ -63,15 +63,17 @@ type StorageOptions struct {
 	GrpcClientAuthenticationTokenNamespace   string
 	GrpcClientAuthenticationAllowInsecure    bool
 	GrpcClientKeepaliveTime                  time.Duration
+	GrpcClientMaxRecvMsgSize                 int
 
 	// Secrets Manager Configuration for InlineSecureValueSupport
-	SecretsManagerGrpcClientEnable        bool
-	SecretsManagerGrpcClientLoadBalancing bool
-	SecretsManagerGrpcServerAddress       string
-	SecretsManagerGrpcServerUseTLS        bool
-	SecretsManagerGrpcServerTLSSkipVerify bool
-	SecretsManagerGrpcServerTLSServerName string
-	SecretsManagerGrpcServerTLSCAFile     string
+	SecretsManagerGrpcClientEnable               bool
+	SecretsManagerGrpcClientLoadBalancing        bool
+	SecretsManagerGrpcServerAddress              string
+	SecretsManagerGrpcServerUseTLS               bool
+	SecretsManagerGrpcServerTLSSkipVerify        bool
+	SecretsManagerGrpcServerTLSServerName        string
+	SecretsManagerGrpcServerTLSCAFile            string
+	SecretsManagerGrpcTokenExchangerNamespaceAll bool
 
 	// For file storage, this is the requested path
 	DataPath string
@@ -95,6 +97,12 @@ type StorageOptions struct {
 	// door to unified storage. Nil until ApplyTo runs, and for storage types that
 	// have no client.
 	SearchIndexClient resourcepb.ResourceIndexClient
+
+	// KeysStoreClient is the list half of the same client, kept for the list-keys
+	// endpoints on the same terms as SearchIndexClient: the narrow interface, not a
+	// general back door to unified storage. Nil until ApplyTo runs, and for storage
+	// types that have no client.
+	KeysStoreClient resourcepb.ResourceStoreClient
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
@@ -130,8 +138,8 @@ func (v *unifiedStorageConfigValue) Set(val string) error {
 	}
 
 	// Parse comma-separated key=value pairs
-	pairs := strings.Split(val, ",")
-	for _, pair := range pairs {
+	pairs := strings.SplitSeq(val, ",")
+	for pair := range pairs {
 		kv := strings.SplitN(pair, "=", 2)
 		if len(kv) != 2 {
 			return fmt.Errorf("invalid format: %s (expected key=value)", pair)
@@ -181,6 +189,7 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.GrpcClientAuthenticationTokenNamespace, "grpc-client-authentication-token-namespace", o.GrpcClientAuthenticationTokenNamespace, "Token namespace for grpc client authentication")
 	fs.BoolVar(&o.GrpcClientAuthenticationAllowInsecure, "grpc-client-authentication-allow-insecure", o.GrpcClientAuthenticationAllowInsecure, "Allow insecure grpc client authentication")
 	fs.DurationVar(&o.GrpcClientKeepaliveTime, "grpc-client-keepalive-time", o.GrpcClientKeepaliveTime, "gRPC client keep-alive ping interval (e.g., 6m).")
+	fs.IntVar(&o.GrpcClientMaxRecvMsgSize, "grpc-client-max-recv-msg-size", o.GrpcClientMaxRecvMsgSize, "Maximum gRPC response message size in bytes for storage and search clients; 0 uses the gRPC default (4 MiB).")
 
 	// Use custom flag value for unified storage config
 	fs.Var(&unifiedStorageConfigValue{config: &o.UnifiedStorageConfig},
@@ -195,10 +204,14 @@ func (o *StorageOptions) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSServerName, "grafana.secrets-manager.grpc-server-tls-server-name", "", "Server name for TLS verification")
 	fs.StringVar(&o.SecretsManagerGrpcServerTLSCAFile, "grafana.secrets-manager.grpc-server-tls-ca-file", "", "CA file for TLS verification")
 	fs.BoolVar(&o.SecretsManagerGrpcClientLoadBalancing, "grafana.secrets-manager.grpc-client-load-balancing", false, "Enable client-side load balancing for gRPC client")
+	fs.BoolVar(&o.SecretsManagerGrpcTokenExchangerNamespaceAll, "grafana.secrets-manager.grpc-token-exchanger-namespace-all", false, "Whether to override the token exchanger namespace to *")
 }
 
 func (o *StorageOptions) Validate() []error {
 	errs := []error{}
+	if o.GrpcClientMaxRecvMsgSize < 0 {
+		errs = append(errs, fmt.Errorf("--grpc-client-max-recv-msg-size must be non-negative"))
+	}
 	switch o.StorageType {
 	// nolint:staticcheck
 	case StorageTypeUnifiedKVGrpc:
@@ -294,6 +307,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 			tlsCfg,
 			tracer,
 			o.SecretsManagerGrpcClientLoadBalancing,
+			o.SecretsManagerGrpcTokenExchangerNamespaceAll,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to create inline secure value service: %w", err)
@@ -302,6 +316,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	}
 
 	o.SearchIndexClient = unified
+	o.KeysStoreClient = unified
 
 	serverConfig.RESTOptionsGetter = apistore.NewRESTOptionsGetterForClient(unified, o.InlineSecrets, etcdOptions.StorageConfig, o.ConfigProvider, o.VersionPolicy)
 	return nil
@@ -312,11 +327,12 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 // - Retry interceptor for transient connection issues
 // - Keepalive for long-lived connections
 func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
-	// Retry interceptor for transient connection issues (codes.Unavailable includes connection refused)
+	// Retry transient failures (codes.Unavailable includes connection refused), but leave
+	// resource-version conflicts to callers that can re-read.
 	retryInterceptor := grpc_retry.UnaryClientInterceptor(
 		grpc_retry.WithMax(3),
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(time.Second, 0.5)),
-		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable, codes.Aborted),
+		grpc_retry.WithCodes(codes.ResourceExhausted, codes.Unavailable),
 	)
 
 	opts := []grpc.DialOption{
@@ -333,6 +349,10 @@ func (o *StorageOptions) buildGrpcDialOptions() []grpc.DialOption {
 			},
 			MinConnectTimeout: 5 * time.Second,
 		}),
+	}
+
+	if o.GrpcClientMaxRecvMsgSize > 0 {
+		opts = append(opts, grpc.WithDefaultCallOptions(grpc.MaxCallRecvMsgSize(o.GrpcClientMaxRecvMsgSize)))
 	}
 
 	if o.GrpcClientKeepaliveTime > 0 {

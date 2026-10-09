@@ -32,8 +32,8 @@ import {
 } from '@grafana/data';
 import { toDataQueryError } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { isStreamingDataFrame } from 'app/features/live/data/utils';
-import { getDatasourceSrv } from 'app/features/plugins/datasource_srv';
 import { getTemplateSrv } from 'app/features/templating/template_srv';
 
 import { isSharedDashboardQuery, runSharedRequest } from '../../../plugins/datasource/dashboard/runSharedRequest';
@@ -525,5 +525,5 @@ async function getDataSource(
     return datasource;
   }
 
-  return await getDatasourceSrv().get(datasource, scopedVars);
+  return await getDataSourceInstance(datasource, scopedVars);
 }

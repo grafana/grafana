@@ -84,6 +84,9 @@ type IndexViewData struct {
 	// Feature flag for controlling behaviour of blocking or alerting legacy api usage from the frontend
 	LegacyAPIMode string
 
+	// Feature flag for controlling how the frontend handles reads of the legacy feature toggle map
+	LegacyFeatureToggleMode string
+
 	// Feature flag for gradually rolling out the root /ofrep/v1 OFREP route instead of the namespaced route
 	OFREPRootUrlEnabled bool
 
@@ -183,6 +186,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	meticulousAIProductionEnvironmentFlag := meticulousAIMode == "on-prod-env"
 	reduceBootdataAPI := requestConfig.FullFrontendSettings != nil
 	legacyAPIMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyAPIHandling, "off", openfeature.TransactionContext(ctx))
+	legacyFeatureToggleMode, _ := ofClient.StringValue(ctx, featuremgmt.FlagGrafanaFrontendLegacyFeatureToggleHandling, "off", openfeature.TransactionContext(ctx))
 	ofrepRootUrlEnabled := ofClient.Boolean(ctx, featuremgmt.FlagGrafanaOfrepRootUrl, false, openfeature.TransactionContext(ctx))
 
 	data := IndexViewData{
@@ -205,6 +209,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		ReduceBootdataAPI:                     reduceBootdataAPI,
 		BootScript:                            bootScript,
 		LegacyAPIMode:                         legacyAPIMode,
+		LegacyFeatureToggleMode:               legacyFeatureToggleMode,
 		OFREPRootUrlEnabled:                   ofrepRootUrlEnabled,
 		ESModuleAssetsEnabled:                 assetsManifest.ESModule,
 	}
@@ -258,7 +263,7 @@ func (p *IndexProvider) resolveAssets(ctx context.Context, req *http.Request, bu
 	// The cookie only takes effect on stacks that have opted in.
 	if p.previewCfg.Active(k8srequest.NamespaceValue(ctx)) {
 		if cookie, err := req.Cookie(previewAssetsCookieName); err == nil && cookie.Value != "" {
-			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value)
+			assets, err := fswebassets.GetPreviewWebAssets(ctx, p.previewCfg, cookie.Value, buildDir)
 			if err == nil {
 				p.log.Info("resolved preview assets", "folder", cookie.Value)
 				return assets, cookie.Value, nil

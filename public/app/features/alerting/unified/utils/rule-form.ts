@@ -1,5 +1,6 @@
 import { produce } from 'immer';
 
+import { isSupportedExternalPrometheusFlavoredRulesSourceType } from '@grafana/alerting/internal';
 import {
   type IntervalValues,
   type RelativeTimeRange,
@@ -11,12 +12,10 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { type PromQuery } from '@grafana/prometheus';
-import { config, getDataSourceSrv } from '@grafana/runtime';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type VizPanel, sceneGraph } from '@grafana/scenes';
 import { type DataQuery, type DataSourceRef } from '@grafana/schema';
-import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
-import { type PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { getPanelIdForVizPanel } from 'app/features/dashboard-scene/utils/utils-panels';
@@ -39,7 +38,10 @@ import {
 
 import { type LokiQuery } from '../../../loki-helpers/types';
 import { EvalFunction } from '../../state/alertDef';
-import { NAMED_ROOT_LABEL_NAME } from '../components/notification-policies/useNotificationPolicyRoute';
+import {
+  resolveNamedPolicyName,
+  stripNamedRouteLabel,
+} from '../components/notification-policies/useNotificationPolicyRoute';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
 import { normalizeDefaultAnnotations } from '../rule-editor/formProcessing';
 import {
@@ -57,7 +59,6 @@ import {
   GRAFANA_RULES_SOURCE_NAME,
   getDefaultOrFirstCompatibleDataSource,
   isGrafanaRulesSource,
-  isSupportedExternalPrometheusFlavoredRulesSourceType,
   isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
@@ -112,13 +113,33 @@ function listifyLabelsOrAnnotations(item: Labels | Annotations | undefined, addE
   return list;
 }
 
+interface SelectedPolicyAndLabels {
+  selectedPolicy: string | undefined;
+  labels: Labels;
+}
+
+// Resolves selectedPolicy from the dedicated field or, failing that, the legacy label — and, when it
+// comes from the label, strips that label from the returned labels in the same step. Doing this
+// atomically ensures the two representations never coexist in form state: if the label lingered
+// after being read into selectedPolicy, PolicyTreeSelector would keep editing it via the label
+// instead of selectedPolicy, and a save would then write the stale pre-edit selectedPolicy.
+function resolveSelectedPolicyAndLabels(
+  notificationSettings: GrafanaNotificationSettings | undefined,
+  labels: Labels
+): SelectedPolicyAndLabels {
+  const selectedPolicy = resolveNamedPolicyName(notificationSettings, labels);
+  const migratedFromLabel = selectedPolicy !== undefined && notificationSettings?.policy === undefined;
+  return { selectedPolicy, labels: migratedFromLabel ? stripNamedRouteLabel(labels) : labels };
+}
+
 export function getNotificationSettingsForDTO(
   manualRouting: boolean,
   contactPoints?: AlertManagerManualRouting,
   selectedPolicy?: string
 ): GrafanaNotificationSettings | undefined {
-  // selectedPolicy is only populated for rules routed via notification_settings.policy so emit it in both toggle states.
-  // Legacy label-routed rules leave selectedPolicy unset and keep routing through the label.
+  // selectedPolicy is populated whenever a rule has named-policy routing, whether via the dedicated
+  // field or migrated at read time from the legacy label (see resolveSelectedPolicyAndLabels) — so
+  // emitting { policy: selectedPolicy } here covers both and completes the migration on save.
   if (selectedPolicy && !manualRouting) {
     return { policy: selectedPolicy };
   }
@@ -180,13 +201,9 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
     : undefined;
 
   const annotations = arrayToRecord(cleanAnnotations(values.annotations));
-  const labels = arrayToRecord(cleanLabels(values.labels));
-  // The legacy label must not be sent whenever the policy field is in use, so the two routing
-  // mechanisms never coexist in the same payload: either when the new policy routing is active
-  // (toggle on) or when we are writing a route to notification_settings.policy.
-  if (config.featureToggles.alertingPolicyRoutingSettings || notificationSettings?.policy) {
-    delete labels[NAMED_ROOT_LABEL_NAME];
-  }
+  // The legacy label is fully superseded by notification_settings.policy — never send it, so it can
+  // never coexist with (or mask) the dedicated field in the saved rule.
+  const labels = stripNamedRouteLabel(arrayToRecord(cleanLabels(values.labels)));
 
   const wantsAlertingRule = isGrafanaAlertingRuleByType(type);
   const wantsRecordingRule = isGrafanaRecordingRuleByType(type!);
@@ -369,11 +386,10 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
       // grafana alerting rule
       const ga = normalizedRule.grafana_alert;
       const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-      const selectedPolicy =
-        ga.notification_settings?.policy ??
-        (config.featureToggles.alertingPolicyRoutingSettings
-          ? normalizedRule.labels?.[NAMED_ROOT_LABEL_NAME]
-          : undefined);
+      const { selectedPolicy, labels: formLabels } = resolveSelectedPolicyAndLabels(
+        ga.notification_settings,
+        normalizedRule.labels ?? {}
+      );
       if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
         return {
           ...defaultFormValues,
@@ -389,7 +405,7 @@ export function rulerRuleToFormValues(ruleWithLocation: RuleWithLocation): RuleF
           queries: ga.data,
           condition: ga.condition,
           annotations: normalizeDefaultAnnotations(listifyLabelsOrAnnotations(normalizedRule.annotations, false)),
-          labels: listifyLabelsOrAnnotations(normalizedRule.labels, true),
+          labels: listifyLabelsOrAnnotations(formLabels, true),
           folder: { title: namespace, uid: ga.namespace_uid },
           isPaused: ga.is_paused,
 
@@ -520,9 +536,7 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
 
   // grafana alerting rule
   const routingSettings: AlertManagerManualRouting | undefined = getContactPointsFromDTO(ga);
-  const cloneSelectedPolicy =
-    ga.notification_settings?.policy ??
-    (config.featureToggles.alertingPolicyRoutingSettings ? rule.labels?.[NAMED_ROOT_LABEL_NAME] : undefined);
+  const { selectedPolicy, labels: formLabels } = resolveSelectedPolicyAndLabels(ga.notification_settings, labels ?? {});
   if (ga.no_data_state !== undefined && ga.exec_err_state !== undefined) {
     return {
       ...commonProperties,
@@ -532,10 +546,11 @@ export function grafanaRuleDtoToFormValues(rule: RulerGrafanaRuleDTO, namespace:
       keepFiringFor: keepFiringFor || '0',
       noDataState: ga.no_data_state,
       execErrState: ga.exec_err_state,
+      labels: listifyLabelsOrAnnotations(formLabels, true),
 
       contactPoints: routingSettings,
       manualRouting: Boolean(routingSettings),
-      selectedPolicy: cloneSelectedPolicy,
+      selectedPolicy,
 
       editorSettings: getEditorSettingsFromDTO(ga),
     };
@@ -804,65 +819,6 @@ export function folderFromDashboardMeta(meta: { folderUid?: string; folderTitle?
   const displayTitle = title || (uid ? uid : t('browse-dashboards.folder-picker.root-title', 'Dashboards'));
   return { uid, title: displayTitle };
 }
-
-export const panelToRuleFormValues = async (
-  panel: PanelModel,
-  dashboard: DashboardModel
-): Promise<Partial<RuleFormValues> | undefined> => {
-  const { targets } = panel;
-  if (!panel.id || !dashboard.uid) {
-    return undefined;
-  }
-
-  // Interpolate interval to replace dashboard variables
-  const interpolatedInterval = panel.interval ? panel.replaceVariables(panel.interval, undefined) : undefined;
-
-  const relativeTimeRange = rangeUtil.timeRangeToRelative(rangeUtil.convertRawToRange(dashboard.time));
-  const queries = await dataQueriesToGrafanaQueries(
-    targets,
-    relativeTimeRange,
-    panel.scopedVars || {},
-    panel.datasource ?? undefined,
-    panel.maxDataPoints ?? undefined,
-    interpolatedInterval
-  );
-  // if no alerting capable queries are found, can't create a rule
-  if (!queries.length || !queries.find((query) => query.datasourceUid !== ExpressionDatasourceUID)) {
-    return undefined;
-  }
-
-  // Add default expression queries if they don't exist
-  if (!queries.find((query) => query.datasourceUid === ExpressionDatasourceUID)) {
-    // Get the last data query's refId to use as the source for the reduce expression
-    const lastDataQueryRefId = queries[queries.length - 1].refId;
-    const reduceRefId = getNextRefId(queries);
-    const queriesWithReduce = [...queries, { refId: reduceRefId, datasourceUid: '', queryType: '', model: {} }];
-    const thresholdRefId = getNextRefId(queriesWithReduce);
-    const expressions = getDefaultExpressions(reduceRefId, thresholdRefId, lastDataQueryRefId);
-    queries.push(...expressions);
-  }
-
-  const folder = folderFromDashboardMeta(dashboard.meta);
-
-  const formValues = {
-    type: RuleFormType.grafana,
-    folder,
-    queries,
-    name: panel.title,
-    condition: queries[queries.length - 1].refId,
-    annotations: [
-      {
-        key: Annotation.dashboardUID,
-        value: dashboard.uid,
-      },
-      {
-        key: Annotation.panelID,
-        value: String(panel.id),
-      },
-    ],
-  };
-  return formValues;
-};
 
 export const scenesPanelToRuleFormValues = async (vizPanel: VizPanel): Promise<Partial<RuleFormValues> | undefined> => {
   if (!vizPanel.state.key) {

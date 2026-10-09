@@ -6,16 +6,19 @@ import { ErrorBoundary, PageLoader } from '@grafana/ui';
 import { updateMeticulousRecording } from 'app/core/services/meticulous';
 import { isFrontendService } from 'app/core/utils/isFrontendService';
 
+import { PageFallbackLoader } from '../components/PageLoader/PageFallbackLoader';
 import { useGrafana } from '../context/GrafanaContext';
 import { contextSrv } from '../services/context_srv';
 
 import { GrafanaRouteError } from './GrafanaRouteError';
+import { useMTFallback } from './mtFallback';
 import { type GrafanaRouteComponentProps, type RouteDescriptor } from './types';
 
 export interface Props extends Pick<GrafanaRouteComponentProps, 'route' | 'location'> {}
 
 export function GrafanaRoute(props: Props) {
   const { chrome, keybindings } = useGrafana();
+  const displayFallback = useMTFallback(props.location);
 
   chrome.setMatchedRoute(props.route);
 
@@ -55,7 +58,11 @@ export function GrafanaRoute(props: Props) {
 
         return (
           <Suspense fallback={<PageLoader />}>
-            <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+            {displayFallback ? (
+              <PageFallbackLoader />
+            ) : (
+              <props.route.component {...props} queryParams={locationSearchToObject(props.location.search)} />
+            )}
           </Suspense>
         );
       }}

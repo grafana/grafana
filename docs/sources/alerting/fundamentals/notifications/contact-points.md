@@ -20,12 +20,6 @@ labels:
     - oss
 title: Contact points
 weight: 112
-refs:
-  configure-contact-points:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points
 ---
 
 # Contact points
@@ -66,4 +60,4 @@ For example, a contact point could contain a PagerDuty integration; an email and
 
 Each contact point integration can also define the notification message to be sent, which can use the predefined message, a custom message, or notification templates.
 
-For a complete list of supported integrations and more details about contact points, refer to [Configure contact points](ref:configure-contact-points).
+For a complete list of supported integrations and more details about contact points, refer to [Configure contact points](/docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points).

@@ -149,6 +149,22 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.key).toBe(first);
   });
 
+  // Leaving a notebook and coming back to it is not a document replacement: it's the same scene,
+  // with the same editHistory, reused from the cache above. A person who navigated away by mistake
+  // should not find their undo history gone.
+  it('keeps the cached scene’s undo history across a revisit', async () => {
+    serveNotebooks();
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+  });
+
   it("reuses the cached scene when the only thing that moved the generation was this page's own save", async () => {
     serveGenerations(1, 2);
     const manager = new NotebookPageStateManager({ isLoading: false });
@@ -178,6 +194,24 @@ describe('NotebookPageStateManager', () => {
 
     expect(manager.state.scene).toBeInstanceOf(NotebookScene);
     expect(manager.state.scene?.state.key).not.toBe(first);
+  });
+
+  // The flip side of the cache-reuse case above: once the server moved past what this page saved,
+  // the rebuild is a genuinely different document, built fresh — its editHistory starts empty by
+  // construction, not by anything clearing the old one.
+  it('starts with an empty undo history when the scene is rebuilt rather than reused', async () => {
+    serveGenerations(1, 3);
+    const manager = new NotebookPageStateManager({ isLoading: false });
+
+    await manager.loadNotebook('nb-1');
+    manager.state.scene?.state.body.addCell('code', 1);
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(true);
+    manager.state.scene?.autosave.setState({ savedGeneration: 2 });
+    testStore.dispatch(dashboardAPIv2beta1.util.resetApiState());
+
+    await manager.loadNotebook('nb-1');
+
+    expect(manager.state.scene?.editHistory.state.canUndo).toBe(false);
   });
 
   it('keeps the cached scene when the query layer answers from before this page saved', async () => {
@@ -277,6 +311,49 @@ describe('NotebookPageStateManager', () => {
     expect(manager.state.scene?.state.uid).toBe('nb-fast');
   });
 
+  describe('the time range of a cached notebook', () => {
+    /** Reads the notebook once and closes it, which is what gives autosave a range to go back to. */
+    function readAndClose(scene: NotebookScene) {
+      scene.activate()();
+    }
+
+    it("puts the notebook's own range back when a reader's range is still on the cached scene", async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      readAndClose(scene);
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      manager.clearState();
+
+      await manager.loadNotebook('nb-1');
+
+      expect(manager.state.scene?.state.key).toBe(scene.state.key);
+      expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-6h');
+    });
+
+    // An embed can hold the same notebook open while the route reloads it, and the scene is shared.
+    // Resetting would move the range under someone still reading it.
+    it('leaves the range alone while the notebook is open somewhere else', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      await manager.loadNotebook('nb-1');
+      const scene = manager.state.scene!;
+      const release = scene.activate();
+
+      try {
+        scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+        await manager.loadNotebook('nb-1');
+
+        expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-1h');
+      } finally {
+        release();
+      }
+    });
+  });
+
   describe('loaded event', () => {
     it('fires once on a fresh load, reporting it was not cached', async () => {
       serveNotebooks();
@@ -326,8 +403,8 @@ describe('NotebookPageStateManager', () => {
   });
 
   describe('newNotebook', () => {
-    /** Nobody is asked for a name, so the notebook arrives with one it made up. */
-    const TITLE_PATTERN = /^Notebook #[a-z0-9]{12}$/;
+    /** Nobody is asked for a name, so the notebook arrives named after the moment it was made. */
+    const TITLE_PATTERN = /^Notebook \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
 
     it('builds an empty notebook with no resource behind it and nothing fetched', () => {
       serveNotebooks();
@@ -343,16 +420,22 @@ describe('NotebookPageStateManager', () => {
       expect(requested).toEqual([]);
     });
 
-    // The reason for the token at all: autosave creates these without asking for a name, so two
-    // notebooks made one after the other have to be tellable apart in the list.
-    it('gives each new notebook a title of its own', () => {
+    // The reason for naming them at all: autosave creates these without asking for a name, so
+    // notebooks made at different times have to be tellable apart in the list. The clock is stubbed
+    // through Date.now rather than with fake timers, which msw's delayed handlers would hang on.
+    it('names each new notebook after the time it was created', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
+      const now = jest.spyOn(Date, 'now');
 
+      now.mockReturnValue(new Date('2026-07-01T09:15:00Z').getTime());
       manager.newNotebook();
       const first = manager.state.scene?.state.title;
+      now.mockReturnValue(new Date('2026-07-01T11:42:00Z').getTime());
       manager.newNotebook();
       const second = manager.state.scene?.state.title;
+
+      now.mockRestore();
 
       expect(first).toMatch(TITLE_PATTERN);
       expect(second).toMatch(TITLE_PATTERN);
@@ -425,6 +508,23 @@ describe('NotebookPageStateManager', () => {
       await manager.loadNotebook('nb-new');
 
       expect(manager.state.scene?.state.key).toBe(blank.state.key);
+    });
+
+    // Adoption returns before the cache is consulted: this is the same scene they are looking at, not
+    // one being reopened, so their range stays.
+    it('keeps the range set on it while it was blank', async () => {
+      serveNotebooks();
+      const manager = new NotebookPageStateManager({ isLoading: false });
+
+      manager.newNotebook();
+      const blank = manager.state.scene!;
+      blank.setState({ uid: 'nb-new' });
+      blank.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+
+      await manager.loadNotebook('nb-new');
+
+      expect(manager.state.scene?.state.key).toBe(blank.state.key);
+      expect(manager.state.scene?.state.$timeRange.state.from).toBe('now-1h');
     });
 
     // Only the notebook it actually became. Anything else is a real load.

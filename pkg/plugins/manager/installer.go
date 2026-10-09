@@ -151,8 +151,7 @@ func (m *PluginInstaller) updateFromURL(ctx context.Context, plugin *plugins.Plu
 	m.log.Info("Updating plugin", "pluginId", plugin.ID, "from", plugin.Info.Version, "url", url)
 
 	// remove existing installation of plugin
-	err := m.Remove(ctx, plugin.ID, plugin.Info.Version)
-	if err != nil {
+	if _, err := m.unloadAndDelete(ctx, plugin.ID, plugin.Info.Version); err != nil {
 		return nil, err
 	}
 
@@ -180,8 +179,7 @@ func (m *PluginInstaller) updateFromCatalog(ctx context.Context, plugin *plugins
 	}
 
 	// remove existing installation of plugin
-	err = m.Remove(ctx, plugin.ID, plugin.Info.Version)
-	if err != nil {
+	if _, err = m.unloadAndDelete(ctx, plugin.ID, plugin.Info.Version); err != nil {
 		return nil, err
 	}
 
@@ -193,30 +191,72 @@ func (m *PluginInstaller) updateFromCatalog(ctx context.Context, plugin *plugins
 }
 
 func (m *PluginInstaller) Remove(ctx context.Context, pluginID, version string) error {
-	plugin, exists := m.plugin(ctx, pluginID, version)
-	if !exists {
-		return plugins.ErrPluginNotInstalled
-	}
-
-	if plugin.IsCorePlugin() {
-		return plugins.ErrUninstallCorePlugin
-	}
-
-	p, err := m.pluginLoader.Unload(ctx, plugin)
+	childIDs, err := m.unloadAndDelete(ctx, pluginID, version)
 	if err != nil {
 		return err
 	}
 
-	if remover, ok := p.FS.(plugins.FSRemover); ok {
-		if err = remover.Remove(); err != nil {
-			return err
+	rbacIDs := append([]string{pluginID}, childIDs...)
+	if err := m.rbacCleaner.CleanupPluginRBAC(ctx, rbacIDs...); err != nil {
+		m.log.Error("Failed to cleanup plugin RBAC. Stale RBAC data can be cleaned up on next startup by setting the cfg.RBAC.PluginsCleanup config option", "pluginIds", rbacIDs, "error", err)
+	}
+
+	for _, childID := range childIDs {
+		if err := m.removeExternalService(ctx, childID); err != nil {
+			m.log.Error("Failed to remove nested plugin external service", "pluginId", childID, "parentId", pluginID, "error", err)
 		}
 	}
 
-	if err := m.rbacCleaner.CleanupPluginRBAC(ctx, pluginID); err != nil {
-		m.log.Error("Failed to cleanup plugin RBAC. Stale RBAC data can be cleaned up on next startup by setting the cfg.RBAC.PluginsCleanup config option", "pluginId", pluginID, "error", err)
+	return m.removeExternalService(ctx, pluginID)
+}
+
+// unloadAndDelete unloads the plugin and its nested children and deletes its files, returning the
+// IDs of the unloaded children.
+func (m *PluginInstaller) unloadAndDelete(ctx context.Context, pluginID, version string) ([]string, error) {
+	plugin, exists := m.plugin(ctx, pluginID, version)
+	if !exists {
+		return nil, plugins.ErrPluginNotInstalled
 	}
 
+	if plugin.IsCorePlugin() {
+		return nil, plugins.ErrUninstallCorePlugin
+	}
+
+	// Unload nested plugins so they release files, then let the parent Remove
+	// delete the tree. Removing each child directory first can leave the
+	// parent half-deleted if a later child fails.
+	var childIDs []string
+	for _, child := range plugin.Children {
+		if child == nil {
+			continue
+		}
+		// The registry resolves by ID and alias, so only unload the entry that
+		// is this exact child and never an unrelated plugin sharing its ID.
+		registered, exists := m.plugin(ctx, child.ID, child.Info.Version)
+		if !exists || registered != child {
+			continue
+		}
+		if _, err := m.pluginLoader.Unload(ctx, child); err != nil {
+			return nil, err
+		}
+		childIDs = append(childIDs, child.ID)
+	}
+
+	p, err := m.pluginLoader.Unload(ctx, plugin)
+	if err != nil {
+		return nil, err
+	}
+
+	if remover, ok := p.FS.(plugins.FSRemover); ok {
+		if err = remover.Remove(); err != nil {
+			return nil, err
+		}
+	}
+
+	return childIDs, nil
+}
+
+func (m *PluginInstaller) removeExternalService(ctx context.Context, pluginID string) error {
 	has, err := m.serviceRegistry.HasExternalService(ctx, pluginID)
 	if err == nil && has {
 		return m.serviceRegistry.RemoveExternalService(ctx, pluginID)

@@ -135,14 +135,14 @@ func (r *Router) handle(method, pattern string, handle Handle) {
 // Handle registers a new request handle with the given pattern, method and handlers.
 func (r *Router) Handle(method string, pattern string, handlers []Handler) {
 	if len(r.groups) > 0 {
-		groupPattern := ""
+		var groupPattern strings.Builder
 		h := make([]Handler, 0) //nolint:prealloc
 		for _, g := range r.groups {
-			groupPattern += g.pattern
+			groupPattern.WriteString(g.pattern)
 			h = append(h, g.handlers...)
 		}
 
-		pattern = groupPattern + pattern
+		pattern = groupPattern.String() + pattern
 		h = append(h, handlers...)
 		handlers = h
 	}
