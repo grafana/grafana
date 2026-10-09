@@ -5,10 +5,8 @@ import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo
 
 import {
   CoreApp,
-  type Field,
   type GrafanaTheme2,
   type IconName,
-  type LinkModel,
   type LogLabelStatsModel,
   textUtil,
 } from '@grafana/data';
@@ -23,6 +21,7 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
+import { type LinkModelWithIcon, type LabelWithLinks } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
@@ -58,16 +57,6 @@ export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFi
     </div>
   );
 };
-
-interface LinkModelWithIcon extends LinkModel<Field> {
-  icon?: IconName;
-}
-
-export interface LabelWithLinks {
-  key: string;
-  value: string;
-  links?: LinkModelWithIcon[];
-}
 
 interface LogLineDetailsLabelFieldsProps {
   fields: LabelWithLinks[];
@@ -346,7 +335,7 @@ const LogLineOTelDetailsField = ({
   );
 };
 
-export function resolveAppFromLink(href: string): string | undefined {
+function resolveAppFromLink(href: string): string | undefined {
   return href.match(/\/a\/([^/?#]+)/)?.[1];
 }
 
@@ -487,7 +476,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const MultipleValue = ({
+const MultipleValue = ({
   links,
   onLinkClick,
   showCopy,
