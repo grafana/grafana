@@ -20233,6 +20233,7 @@ __metadata:
     jimp: "npm:^1.6.0"
     jquery: "npm:3.7.1"
     js-yaml: "npm:^4.1.0"
+    json-schema-library: "npm:^9.3.5"
     json-schema-to-typescript: "npm:15.0.4"
     json-source-map: "npm:0.6.1"
     jsurl: "npm:^0.1.5"

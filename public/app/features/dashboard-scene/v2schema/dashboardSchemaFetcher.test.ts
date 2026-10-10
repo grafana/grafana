@@ -1,4 +1,18 @@
+/** @jest-environment-options {"customExportConditions": ["@grafana-app/source", "node", "node-addons"]} */
+
+import { CompletionContext, type CompletionSource } from '@codemirror/autocomplete';
+import { EditorState } from '@codemirror/state';
+
 import type { BackendSrv } from '@grafana/runtime';
+
+import dashboardFixture from '../../../../../apps/dashboard/pkg/migration/conversion/testdata/input/v2beta1.complete.json';
+import openApiV2 from '../../../../../packages/grafana-openapi/src/apis/dashboard.grafana.app-v2.json';
+import openApiV2beta1 from '../../../../../packages/grafana-openapi/src/apis/dashboard.grafana.app-v2beta1.json';
+
+// Only tooltip rendering needs Shiki's ESM/WASM runtime; validation runs unmocked.
+jest.mock(require.resolve('codemirror-json-schema').replace('index.js', 'utils/markdown.js'), () => ({
+  renderMarkdown: (text: string) => text,
+}));
 
 const PREFIX = 'com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.v2beta1';
 
@@ -23,6 +37,10 @@ function buildMockOpenApiSchema() {
               additionalProperties: {
                 allOf: [{ $ref: `#/components/schemas/${PREFIX}.DashboardPanelKind` }],
               },
+            },
+            variables: {
+              type: 'array',
+              items: { $ref: `#/components/schemas/${PREFIX}.DashboardQueryVariableKindOrTextVariableKind` },
             },
           },
         },
@@ -139,6 +157,41 @@ function buildMockOpenApiSchema() {
             name: { type: 'string' },
           },
         },
+        [`${PREFIX}.DashboardQueryVariableKindOrTextVariableKind`]: {
+          type: 'object',
+          properties: {
+            queryVariable: { $ref: `#/components/schemas/${PREFIX}.DashboardQueryVariableKind` },
+            textVariable: { $ref: `#/components/schemas/${PREFIX}.DashboardTextVariableKind` },
+          },
+        },
+        [`${PREFIX}.DashboardQueryVariableKind`]: {
+          type: 'object',
+          required: ['kind', 'spec'],
+          properties: {
+            kind: { type: 'string' },
+            spec: {
+              type: 'object',
+              required: ['query'],
+              properties: { query: { $ref: `#/components/schemas/${PREFIX}.DashboardDataQueryKind` } },
+            },
+          },
+        },
+        [`${PREFIX}.DashboardTextVariableKind`]: {
+          type: 'object',
+          required: ['kind', 'spec'],
+          properties: {
+            kind: { type: 'string' },
+            spec: {
+              type: 'object',
+              required: ['query'],
+              properties: { query: { $ref: `#/components/schemas/${PREFIX}.DashboardStringOrArrayOfString` } },
+            },
+          },
+        },
+        [`${PREFIX}.DashboardStringOrArrayOfString`]: {
+          type: 'object',
+          properties: { string: { type: 'string' }, arrayOfString: { type: 'array', items: { type: 'string' } } },
+        },
       },
     },
   };
@@ -148,6 +201,7 @@ const DEF_PREFIX = PREFIX.replace(/\./g, '_');
 
 const mockGet = jest.fn();
 const mockResolve = jest.fn();
+let mockSchemaVersion = 'v2beta1';
 
 jest.mock('@grafana/runtime', () => ({
   getBackendSrv: (): Partial<BackendSrv> => ({ get: mockGet }),
@@ -162,17 +216,19 @@ jest.mock('app/features/dashboard/api/DashboardAPIVersionResolver', () => ({
 jest.mock('app/features/dashboard/api/v2', () => ({
   getK8sV2DashboardApiConfig: () => ({
     group: 'dashboard.grafana.app',
-    version: 'v2beta1',
+    version: mockSchemaVersion,
     resource: 'dashboards',
   }),
 }));
 
+import { createDashboardSchemaExtensions, createDashboardSchemaValidator } from './dashboardSchemaExtensions';
 import { fetchDashboardSchema } from './dashboardSchemaFetcher';
 
 type Definitions = Record<string, { type?: string; properties?: Record<string, Record<string, unknown>> }>;
 
 describe('dashboardSchemaFetcher', () => {
   let definitions: Definitions;
+  let validate: ReturnType<typeof createDashboardSchemaValidator>;
 
   beforeAll(async () => {
     mockResolve.mockResolvedValue({ v1: 'v1beta1', v2: 'v2beta1' });
@@ -180,6 +236,64 @@ describe('dashboardSchemaFetcher', () => {
 
     const schema = await fetchDashboardSchema();
     definitions = schema.definitions as unknown as Definitions;
+    validate = createDashboardSchemaValidator(schema);
+  });
+
+  describe('CodeMirror compatibility with the fetched Dashboard schema', () => {
+    it('accepts plugin options and override values without changing the resource', () => {
+      const text = JSON.stringify({
+        kind: 'Dashboard',
+        spec: {
+          elements: {
+            panel: {
+              kind: 'Panel',
+              spec: {
+                vizConfig: {
+                  kind: 'VizConfig',
+                  spec: {
+                    options: { enabled: true, count: 5, label: 'example', values: [1, null] },
+                    fieldConfig: {
+                      defaults: { custom: { enabled: true } },
+                      overrides: [
+                        { matcher: { id: 'byName', options: 'cpu' }, properties: [{ id: 'unit', value: 'bytes' }] },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      });
+      expect(validate(text)).toEqual({ diagnostics: [], hasErrors: false, hasParseError: false, json: text });
+    });
+
+    it.each([
+      { kind: 'TextVariable', spec: { query: 'example' } },
+      { kind: 'TextVariable', spec: { query: ['one', 'two'] } },
+      { kind: 'QueryVariable', spec: { query: { kind: 'DataQuery', spec: { expr: 'up', instant: true } } } },
+    ])('accepts the corrected $kind discriminated union and scalar union', (variable) => {
+      expect(validate(JSON.stringify({ kind: 'Dashboard', spec: { variables: [variable] } })).hasErrors).toBe(false);
+    });
+
+    it.each([
+      { kind: 'TextVariable', spec: { query: 123 } },
+      { kind: 'QueryVariable', spec: { query: 'not a query resource' } },
+      { kind: 'UnknownVariable', spec: { query: '' } },
+      { kind: 'TextVariable', spec: {} },
+    ])('rejects an invalid $kind variant using Draft 7 rules', (variable) => {
+      const result = validate(JSON.stringify({ kind: 'Dashboard', spec: { variables: [variable] } }));
+      expect(result).toMatchObject({ hasErrors: true, hasParseError: false });
+      expect(result.diagnostics[0]).toMatchObject({ severity: 'error', source: 'Dashboard schema' });
+    });
+
+    it('rejects a wrong constant kind through a rewritten component reference', () => {
+      const text = JSON.stringify({ kind: 'Dashboard', spec: { elements: { panel: { kind: 'Other', spec: {} } } } });
+      const result = validate(text);
+      expect(result.hasErrors).toBe(true);
+      expect(result.diagnostics[0].message).toContain('Panel');
+      expect(text.slice(result.diagnostics[0].from, result.diagnostics[0].to)).toBe('"Other"');
+    });
   });
 
   describe('fixAnyValueProperties — interface{} fields that accept any JSON type', () => {
@@ -243,6 +357,65 @@ describe('dashboardSchemaFetcher', () => {
 
     it('fetches from the correct OpenAPI endpoint', () => {
       expect(mockGet).toHaveBeenCalledWith('/openapi/v3/apis/dashboard.grafana.app/v2beta1');
+    });
+  });
+});
+
+describe('CodeMirror compatibility with checked-in Dashboard OpenAPI schemas', () => {
+  it.each([
+    ['v2beta1', openApiV2beta1],
+    ['v2', openApiV2],
+  ] as const)('validates a complete Dashboard resource against %s', async (version, openApi) => {
+    mockSchemaVersion = version;
+    const prefix = `com.github.grafana.grafana.apps.dashboard.pkg.apis.dashboard.${version}`;
+    // Client generation shortens component names; the backend returns qualified names.
+    const schemas = Object.fromEntries(
+      Object.entries(openApi.components.schemas).map(([name, schema]) => [
+        `${prefix}.${name}`,
+        JSON.parse(JSON.stringify(schema).replaceAll('"#/components/schemas/', `"#/components/schemas/${prefix}.`)),
+      ])
+    );
+    mockGet.mockResolvedValue({ components: { schemas } });
+    await jest.isolateModulesAsync(async () => {
+      const { fetchDashboardSchema } = await import('./dashboardSchemaFetcher');
+      const schema = await fetchDashboardSchema();
+      const validate = createDashboardSchemaValidator(schema);
+      // This is migration INPUT: normalize its historical row, nil-slice, and
+      // transformation shapes to what the current scene serializer writes.
+      const resource = JSON.parse(JSON.stringify(dashboardFixture));
+      resource.apiVersion = `dashboard.grafana.app/${version}`;
+      resource.spec.layout.spec.rows[0].kind = 'RowsLayoutRow';
+      for (const variable of resource.spec.variables) {
+        if (variable.spec.options === null) {
+          variable.spec.options = [];
+        }
+      }
+      for (const transformation of resource.spec.elements['panel-1'].spec.data.spec.transformations) {
+        transformation.group = transformation.kind;
+        transformation.kind = 'Transformation';
+      }
+      const text = JSON.stringify(resource);
+      const result = validate(text);
+      expect(result.diagnostics).toEqual([]);
+      expect(result).toMatchObject({ hasErrors: false, hasParseError: false, json: text });
+
+      const invalid = JSON.parse(text);
+      invalid.spec.title = 123;
+      const invalidResult = validate(JSON.stringify(invalid));
+      expect(invalidResult).toMatchObject({ hasErrors: true, hasParseError: false });
+      expect(invalidResult.diagnostics[0].message).toContain('/spec/title');
+
+      const doc = '{"spec":{"layout":{"kind":"","spec":{}}}}';
+      const state = EditorState.create({ doc, extensions: createDashboardSchemaExtensions(schema) });
+      const pos = doc.indexOf('""') + 1;
+      const [complete] = state.languageDataAt<CompletionSource>('autocomplete', pos);
+      const completions = await complete(new CompletionContext(state, pos, true));
+      expect(completions?.options.map((option) => option.label).sort()).toEqual([
+        'AutoGridLayout',
+        'GridLayout',
+        'RowsLayout',
+        'TabsLayout',
+      ]);
     });
   });
 });

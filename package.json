@@ -373,6 +373,7 @@
     "ix": "^7.0.0",
     "jquery": "3.7.1",
     "js-yaml": "^4.1.0",
+    "json-schema-library": "^9.3.5",
     "json-source-map": "0.6.1",
     "jsurl": "^0.1.5",
     "kbar": "0.1.0-beta.48",
