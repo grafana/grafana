@@ -10,3 +10,14 @@ export type ComboboxOption<T extends string | number = string> = {
   infoOption?: boolean;
   icon?: IconName;
 };
+
+/**
+ * Passed to an async options loader. `publish` replaces the open menu before the
+ * returned promise settles. Pass the full list so far. A newer search ignores
+ * publishes from an older one, and `signal` aborts when that search is replaced,
+ * the menu closes, or the combobox unmounts.
+ */
+export interface ComboboxAsyncOptionsContext<T extends string | number = string> {
+  signal: AbortSignal;
+  publish: (options: Array<ComboboxOption<T>>) => void;
+}
