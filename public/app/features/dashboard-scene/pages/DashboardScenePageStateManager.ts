@@ -456,6 +456,12 @@ abstract class DashboardScenePageStateManagerBase<T>
         return;
       }
 
+      // Scenes are cached by UID and can be reused across embedded and normal routes.
+      const isEmbedded = options.route === DashboardRoutes.Embedded;
+      if (Boolean(dashboard.state.meta.isEmbedded) !== isEmbedded) {
+        dashboard.setState({ meta: { ...dashboard.state.meta, isEmbedded } });
+      }
+
       if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
         restoreDashboardStateFromLocalStorage(dashboard);
       }
