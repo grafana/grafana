@@ -181,7 +181,7 @@ export const VizTooltipRow = ({
           ) : (
             <>
               <Tooltip content={label} interactive={false} show={showLabelTooltip}>
-                <>
+                <div>
                   {showCopySuccess && copiedText?.label && (
                     <InlineToast placement="top" referenceElement={labelRef.current}>
                       {SUCCESSFULLY_COPIED_TEXT}
@@ -197,7 +197,7 @@ export const VizTooltipRow = ({
                   >
                     {label}
                   </div>
-                </>
+                </div>
               </Tooltip>
             </>
           )}
