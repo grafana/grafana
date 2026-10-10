@@ -16,7 +16,19 @@ export {
 // Notification Policies / Routing Trees
 export { useRoutingTrees } from './grafana/notificationPolicies/hooks/useRoutingTrees';
 export { useMatchInstancesToSpecificRouteTree } from './grafana/notificationPolicies/hooks/useMatchPolicies';
+export {
+  useResolvedRoutingTree,
+  type ResolvedRoutingTree,
+} from './grafana/notificationPolicies/hooks/useResolvedRoutingTree';
 export { RoutingTreeSelector } from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector';
+export {
+  RoutingTreePicker,
+  type RoutingTreePickerProps,
+} from './grafana/notificationPolicies/components/RoutingTreePicker/RoutingTreePicker';
+export {
+  RoutingTreePreview,
+  type RoutingTreePreviewProps,
+} from './grafana/notificationPolicies/components/RoutingTreePreview/RoutingTreePreview';
 export {
   buildRoutingTreeOptions,
   findRoutingTreeByName,
