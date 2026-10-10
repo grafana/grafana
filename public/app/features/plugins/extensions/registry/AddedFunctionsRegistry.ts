@@ -1,5 +1,5 @@
 import { isFunction } from 'lodash';
-import { type ReplaySubject } from 'rxjs';
+import { type Observable, type ReplaySubject } from 'rxjs';
 
 import { type AppPluginConfig, type PluginExtensionAddedFunctionConfig } from '@grafana/data';
 
@@ -87,4 +87,14 @@ export class AddedFunctionsRegistry extends Registry<AddedFunctionsRegistryItem[
       registrySubject: this.registrySubject,
     });
   }
+}
+
+export function addedFunctionsRegistrySlice<Signature>(
+  registry: AddedFunctionsRegistry,
+  extensionPointId: string
+): Observable<Array<AddedFunctionsRegistryItem<Signature>> | undefined> {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  return registry.asObservableSlice((state) => state[extensionPointId]) as Observable<
+    Array<AddedFunctionsRegistryItem<Signature>> | undefined
+  >;
 }

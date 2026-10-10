@@ -47,6 +47,7 @@ export {
 export { setHelpNavItemHook, useHelpNavItem, type UseHelpNavItem } from './navigation/useHelpNavItem';
 export { getObservablePluginLinks } from './pluginExtensions/getObservablePluginLinks';
 export { getObservablePluginComponents } from './pluginExtensions/getObservablePluginComponents';
+export { getObservablePluginFunctions } from './pluginExtensions/getObservablePluginFunctions';
 export {
   isPluginExtensionLink,
   isPluginExtensionComponent,
