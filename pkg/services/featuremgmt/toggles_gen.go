@@ -1057,4 +1057,8 @@ const (
 	// FlagDatasourcesApiServerConnectToHostedGrafanaDatabases
 	// Connect to hosted grafana databases from datasource API servers
 	FlagDatasourcesApiServerConnectToHostedGrafanaDatabases = "datasources.apiServerConnectToHostedGrafanaDatabases"
+
+	// FlagDatasourcesJsonQueryDataFormat
+	// Requests the JSON data frame wire format from backend plugins for unary QueryData
+	FlagDatasourcesJsonQueryDataFormat = "datasources.jsonQueryDataFormat"
 )

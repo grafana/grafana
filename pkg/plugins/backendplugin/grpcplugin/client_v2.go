@@ -25,6 +25,29 @@ var (
 	logger = log.New("plugins.clientv2")
 )
 
+// QueryDataFormat is the data frame encoding a ClientV2 requests on the unary QueryData path.
+type QueryDataFormat int
+
+const (
+	// QueryDataFormatJSON is the zero value, so a ClientV2 built without setting QueryDataFormat requests JSON.
+	QueryDataFormatJSON QueryDataFormat = iota
+	// QueryDataFormatArrow requests one Arrow IPC file per frame.
+	QueryDataFormatArrow
+)
+
+type queryDataFormatKey struct{}
+
+// WithQueryDataFormat returns a context whose format takes precedence over ClientV2.QueryDataFormat for that request.
+func WithQueryDataFormat(ctx context.Context, format QueryDataFormat) context.Context {
+	return context.WithValue(ctx, queryDataFormatKey{}, format)
+}
+
+// QueryDataFormatFromContext returns the format set with WithQueryDataFormat, if any.
+func QueryDataFormatFromContext(ctx context.Context) (QueryDataFormat, bool) {
+	format, ok := ctx.Value(queryDataFormatKey{}).(QueryDataFormat)
+	return format, ok
+}
+
 type ClientV2 struct {
 	grpcplugin.DiagnosticsClient
 	grpcplugin.ResourceClient
@@ -32,6 +55,8 @@ type ClientV2 struct {
 	grpcplugin.StreamClient
 	grpcplugin.AdmissionClient
 	grpcplugin.ConversionClient
+
+	QueryDataFormat QueryDataFormat
 
 	// Chunking will fallback to DataQuery
 	chunkUnimplemented atomic.Bool
@@ -147,19 +172,31 @@ func (c *ClientV2) CheckHealth(ctx context.Context, req *backend.CheckHealthRequ
 }
 
 func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	protoResp, err := c.queryData(ctx, req)
+	protoResp, err := c.queryData(ctx, req, c.protoQueryDataFormat(ctx))
 	if err != nil {
 		return nil, err
 	}
 	return backend.FromProto().QueryDataResponse(protoResp)
 }
 
-func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest) (*pluginv2.QueryDataResponse, error) {
+func (c *ClientV2) protoQueryDataFormat(ctx context.Context) pluginv2.DataFrameFormat {
+	format := c.QueryDataFormat
+	if ctxFormat, ok := QueryDataFormatFromContext(ctx); ok {
+		format = ctxFormat
+	}
+	if format == QueryDataFormatArrow {
+		return pluginv2.DataFrameFormat_ARROW
+	}
+	return pluginv2.DataFrameFormat_JSON
+}
+
+func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest, format pluginv2.DataFrameFormat) (*pluginv2.QueryDataResponse, error) {
 	if c.DataClient == nil {
 		return nil, plugins.ErrMethodNotImplemented
 	}
 
 	protoReq := backend.ToProto().QueryDataRequest(req)
+	protoReq.Format = format
 	protoResp, err := c.DataClient.QueryData(ctx, protoReq)
 
 	if err != nil {
@@ -252,8 +289,8 @@ func (c *ClientV2) queryChunkedDataFacade(ctx context.Context, req *backend.Quer
 			PluginContext: req.PluginContext,
 			Queries:       req.Queries,
 			Headers:       req.Headers,
-			Format:        req.Format,
-		})
+		},
+		pluginv2.DataFrameFormat(req.Format))
 	if err != nil {
 		return err
 	}
