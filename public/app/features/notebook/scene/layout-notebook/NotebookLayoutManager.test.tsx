@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen, userEvent, waitFor, within } from 'test/test-utils';
 
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
 import { sceneGraph, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { appEvents } from 'app/core/app_events';
@@ -92,6 +94,12 @@ import { NotebookLayoutManager, splitSeed } from './NotebookLayoutManager';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
 const DRAG_HANDLE_SELECTOR = '[data-rfd-drag-handle-draggable-id]';
+
+// changePanelVisualization calls the real changePluginType, which needs a plugin that loads.
+setPluginImportUtils({
+  importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id }).useFieldConfig()),
+  getPanelPluginFromCache: () => undefined,
+});
 
 function buildManager(cells: NotebookCellItem[], isEditing?: boolean) {
   // The renderer reads the time range via sceneGraph.getTimeRange, which resolves the nearest
@@ -1639,6 +1647,144 @@ describe('NotebookLayoutManager', () => {
 
       history.redo();
       expect(manager.state.cells[1]).toBe(duplicate);
+    });
+
+    it('changes the panel visualization and supports undo and redo', async () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const originalPluginId = panel.state.pluginId;
+      const { manager, history } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+
+      await waitFor(() => expect(panel.state.pluginId).toBe('table'));
+      expect(history.state.undoLabel).toBe('Change visualization');
+
+      history.undo();
+      await waitFor(() => expect(panel.state.pluginId).toBe(originalPluginId));
+
+      history.redo();
+      await waitFor(() => expect(panel.state.pluginId).toBe('table'));
+    });
+
+    it('keeps standard field overrides but clears custom ones when changing visualization', () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({
+        fieldConfig: {
+          defaults: { unit: 'ms', custom: { drawStyle: 'line' } },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'latency' },
+              properties: [
+                { id: 'unit', value: 's' },
+                { id: 'custom.drawStyle', value: 'bars' },
+              ],
+            },
+          ],
+        },
+      });
+      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+      const { manager } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, { name: 'Table', pluginId: 'table', hash: 'table' });
+
+      expect(changePluginType).toHaveBeenCalledWith(
+        'table',
+        {},
+        {
+          defaults: { unit: 'ms', custom: {} },
+          overrides: [
+            {
+              matcher: { id: 'byName', options: 'latency' },
+              properties: [{ id: 'unit', value: 's' }],
+            },
+          ],
+        }
+      );
+    });
+
+    // defaultsDeep gives every real suggestion this fieldConfig shape, never undefined.
+    it('keeps standard field overrides when the suggestion only carries the empty fieldConfig default', () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({
+        fieldConfig: {
+          defaults: { unit: 'ms', custom: { drawStyle: 'line' } },
+          overrides: [{ matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] }],
+        },
+      });
+      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+      const { manager } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, {
+        name: 'Table',
+        pluginId: 'table',
+        hash: 'table',
+        fieldConfig: { defaults: {}, overrides: [] },
+      });
+
+      expect(changePluginType).toHaveBeenCalledWith(
+        'table',
+        {},
+        {
+          defaults: { unit: 'ms', custom: {} },
+          overrides: [{ matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] }],
+        }
+      );
+    });
+
+    it("merges a suggestion's own field defaults and overrides onto the cleaned existing config, rather than replacing it", () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      panel.setState({
+        fieldConfig: {
+          defaults: { unit: 'ms' },
+          overrides: [{ matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] }],
+        },
+      });
+      const changePluginType = jest.spyOn(panel, 'changePluginType').mockResolvedValue(undefined);
+      const { manager } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, {
+        name: 'Bar gauge',
+        pluginId: 'bargauge',
+        hash: 'bargauge',
+        fieldConfig: {
+          defaults: { max: 100 },
+          overrides: [{ matcher: { id: 'byName', options: 'error rate' }, properties: [{ id: 'max', value: 1 }] }],
+        },
+      });
+
+      expect(changePluginType).toHaveBeenCalledWith(
+        'bargauge',
+        {},
+        {
+          defaults: { unit: 'ms', custom: {}, max: 100 },
+          overrides: [
+            { matcher: { id: 'byName', options: 'latency' }, properties: [{ id: 'unit', value: 's' }] },
+            { matcher: { id: 'byName', options: 'error rate' }, properties: [{ id: 'max', value: 1 }] },
+          ],
+        }
+      );
+    });
+
+    it('does nothing when the suggestion matches the current visualization', () => {
+      const { cell } = panelCell('viz');
+      const panel = cell.state.body!;
+      const changePluginType = jest.spyOn(panel, 'changePluginType');
+      const { manager, history } = withHistory([cell]);
+
+      manager.changePanelVisualization(cell, {
+        name: 'Timeseries',
+        pluginId: panel.state.pluginId,
+        hash: 'timeseries',
+        options: panel.state.options,
+        fieldConfig: panel.state.fieldConfig,
+      });
+
+      expect(changePluginType).not.toHaveBeenCalled();
+      expect(history.state.undoLabel).toBeUndefined();
     });
   });
 

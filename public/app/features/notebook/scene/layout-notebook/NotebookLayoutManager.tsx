@@ -3,7 +3,12 @@ import { DragDropContext, Droppable, type DragStart, type DragUpdate, type DropR
 import { isEqual } from 'lodash';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type GrafanaTheme2 } from '@grafana/data';
+import {
+  filterFieldConfigOverrides,
+  type GrafanaTheme2,
+  isStandardFieldProp,
+  type PanelPluginVisualizationSuggestion,
+} from '@grafana/data';
 import { t } from '@grafana/i18n';
 import {
   sceneGraph,
@@ -497,6 +502,54 @@ export class NotebookLayoutManager
       kind: NOTEBOOK_EDIT_KIND.EDIT,
       perform: () => apply(after),
       undo: () => apply(before),
+    });
+  }
+
+  /**
+   * Merges the suggestion's fieldConfig onto the cleaned existing config rather than replacing it:
+   * PanelPlugin.getSuggestions defaultsDeep's every suggestion to a fieldConfig, so it's never
+   * actually undefined, and using it directly would wipe the panel's existing units/overrides.
+   */
+  public changePanelVisualization(cell: NotebookCellItem, suggestion: PanelPluginVisualizationSuggestion): void {
+    const panel = cell.state.body;
+    if (!panel) {
+      return;
+    }
+
+    const before = {
+      pluginId: panel.state.pluginId,
+      options: panel.state.options,
+      fieldConfig: panel.state.fieldConfig,
+    };
+
+    // Against the raw suggestion - cleaning always adds a `custom: {}` key, so comparing `after` here
+    // would never match even when nothing would actually change.
+    if (
+      before.pluginId === suggestion.pluginId &&
+      isEqual(before.options, suggestion.options ?? before.options) &&
+      isEqual(before.fieldConfig, suggestion.fieldConfig ?? before.fieldConfig)
+    ) {
+      return;
+    }
+
+    const cleanedFieldConfig = {
+      defaults: { ...before.fieldConfig.defaults, custom: {} },
+      overrides: filterFieldConfigOverrides(before.fieldConfig.overrides, isStandardFieldProp),
+    };
+    const after = {
+      pluginId: suggestion.pluginId,
+      options: suggestion.options ?? {},
+      fieldConfig: {
+        defaults: { ...cleanedFieldConfig.defaults, ...suggestion.fieldConfig?.defaults },
+        overrides: [...cleanedFieldConfig.overrides, ...(suggestion.fieldConfig?.overrides ?? [])],
+      },
+    };
+
+    this.executeEdit({
+      label: t('notebooks.history.change-visualization', 'Change visualization'),
+      kind: NOTEBOOK_EDIT_KIND.EDIT,
+      perform: () => void panel.changePluginType(after.pluginId, after.options, after.fieldConfig),
+      undo: () => void panel.changePluginType(before.pluginId, before.options, before.fieldConfig),
     });
   }
 
