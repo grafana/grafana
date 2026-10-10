@@ -1,14 +1,51 @@
 import { type SQLDialect } from '@codemirror/lang-sql';
 
-import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
+import {
+  type CodeMirrorCompletion,
+  type CodeMirrorCompletionContext,
+  type CodeMirrorCompletionResult,
+  type CodeMirrorEditorLanguage,
+  type CodeMirrorExtension,
+  type CodeMirrorSqlDialect,
+  type LoadLanguageOptions,
+} from './types';
+
+export { type LoadLanguageOptions };
 
 const DEFAULT_SQL_DIALECT: CodeMirrorSqlDialect = 'standardSql';
 
 const loadGo = async (): Promise<CodeMirrorExtension> =>
   (await import(/* webpackChunkName: "codemirror-lang-go" */ '@codemirror/lang-go')).go();
 
-const loadHtml = async (): Promise<CodeMirrorExtension> =>
-  (await import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/lang-html')).html();
+const isEventHandlerAttribute = (option: CodeMirrorCompletion): boolean =>
+  option.type === 'property' && /^on[a-z]+/i.test(option.label);
+
+const loadHtml = async (autocompleteEventHandlers = true): Promise<CodeMirrorExtension> => {
+  if (autocompleteEventHandlers) {
+    return (await import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/lang-html')).html();
+  }
+
+  const [{ LanguageSupport }, { htmlLanguage, autoCloseTags, htmlCompletionSource }] = await Promise.all([
+    import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/language'),
+    import(/* webpackChunkName: "codemirror-lang-html" */ '@codemirror/lang-html'),
+  ]);
+
+  const filteredCompletionSource = (context: CodeMirrorCompletionContext): CodeMirrorCompletionResult | null => {
+    const result = htmlCompletionSource(context);
+    if (!result) {
+      return null;
+    }
+    return {
+      ...result,
+      options: result.options.filter((option) => !isEventHandlerAttribute(option)),
+    };
+  };
+
+  return new LanguageSupport(htmlLanguage, [
+    htmlLanguage.data.of({ autocomplete: filteredCompletionSource }),
+    autoCloseTags,
+  ]);
+};
 
 const loadIni = async (): Promise<CodeMirrorExtension> => {
   const [{ LanguageSupport, StreamLanguage }, { properties }] = await Promise.all([
@@ -47,11 +84,6 @@ const loadSql = async (dialect: CodeMirrorSqlDialect): Promise<CodeMirrorExtensi
   return [sql({ dialect: dialects[dialect], upperCaseKeywords: true }), foldByIndentation];
 };
 
-interface LoadLanguageOptions {
-  /** SQL dialect to load. Only used when `language` is `'sql'`. */
-  sqlDialect?: CodeMirrorSqlDialect;
-}
-
 // Each language resolves to a cache key and a parameterless loader. The cache
 // key differentiates SQL dialects so each dialect's extension is loaded and
 // memoized independently.
@@ -62,8 +94,13 @@ const resolveLoad = (
   switch (language) {
     case 'go':
       return { cacheKey: 'go', load: loadGo };
-    case 'html':
-      return { cacheKey: 'html', load: loadHtml };
+    case 'html': {
+      const autocompleteEventHandlers = options.htmlAutocompleteEventHandlers ?? true;
+      return {
+        cacheKey: `html:${autocompleteEventHandlers}`,
+        load: () => loadHtml(autocompleteEventHandlers),
+      };
+    }
     case 'ini':
       return { cacheKey: 'ini', load: loadIni };
     case 'json':

@@ -31,6 +31,19 @@ export type CodeMirrorEditorLanguage = keyof typeof CODE_MIRROR_LANGUAGES;
 export type CodeMirrorSqlDialect = 'standardSql' | 'mySql';
 
 /**
+ * Options configuring language-specific syntax or autocomplete features.
+ */
+export interface LoadLanguageOptions {
+  /** SQL dialect to load. Only used when `language` is `'sql'`. */
+  sqlDialect?: CodeMirrorSqlDialect;
+  /**
+   * Whether HTML autocomplete includes `on*` event handler attributes.
+   * Only used when `language` is `'html'`. Defaults to `true`.
+   */
+  htmlAutocompleteEventHandlers?: boolean;
+}
+
+/**
  * A CodeMirror theme: either a theme extension (e.g. from `EditorView.theme`)
  * or one of CodeMirror's built-in keywords.
  */
@@ -112,6 +125,11 @@ export interface CodeMirrorEditorProps {
    * syntax highlighting and keyword completion. Defaults to `'standardSql'`.
    */
   sqlDialect?: CodeMirrorSqlDialect;
+  /**
+   * Whether HTML autocomplete includes `on*` event handler attributes.
+   * Only used when `language` is `'html'`. Defaults to `true`.
+   */
+  htmlAutocompleteEventHandlers?: boolean;
   /**
    * Editor height, such as `'200px'` or `'100%'`.
    */

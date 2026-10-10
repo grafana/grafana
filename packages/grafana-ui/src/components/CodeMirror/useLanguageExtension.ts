@@ -3,7 +3,12 @@ import { useEffect, useState } from 'react';
 import { faro } from '@grafana/faro-web-sdk';
 
 import { loadLanguageExtension } from './languageLoader';
-import { type CodeMirrorEditorLanguage, type CodeMirrorExtension, type CodeMirrorSqlDialect } from './types';
+import {
+  type CodeMirrorEditorLanguage,
+  type CodeMirrorExtension,
+  type CodeMirrorSqlDialect,
+  type LoadLanguageOptions,
+} from './types';
 
 export interface LanguageExtensionState {
   extension: CodeMirrorExtension | null;
@@ -12,10 +17,14 @@ export interface LanguageExtensionState {
 
 export function useLanguageExtension(
   language?: CodeMirrorEditorLanguage,
-  sqlDialect?: CodeMirrorSqlDialect
+  optionsOrSqlDialect?: CodeMirrorSqlDialect | LoadLanguageOptions
 ): LanguageExtensionState {
   const [languageExtension, setLanguageExtension] = useState<CodeMirrorExtension | null>(null);
   const [error, setError] = useState<Error | null>(null);
+
+  const options: LoadLanguageOptions =
+    typeof optionsOrSqlDialect === 'string' ? { sqlDialect: optionsOrSqlDialect } : (optionsOrSqlDialect ?? {});
+  const { sqlDialect, htmlAutocompleteEventHandlers } = options;
 
   useEffect(() => {
     let cancelled = false;
@@ -29,7 +38,12 @@ export function useLanguageExtension(
     setLanguageExtension(null);
     setError(null);
 
-    void loadLanguageExtension(language, { sqlDialect })
+    const loadOptions: LoadLanguageOptions = {
+      sqlDialect,
+      ...(htmlAutocompleteEventHandlers !== undefined ? { htmlAutocompleteEventHandlers } : {}),
+    };
+
+    void loadLanguageExtension(language, loadOptions)
       .then((extension) => {
         if (!cancelled) {
           setLanguageExtension(extension);
@@ -59,7 +73,7 @@ export function useLanguageExtension(
     return () => {
       cancelled = true;
     };
-  }, [language, sqlDialect]);
+  }, [language, sqlDialect, htmlAutocompleteEventHandlers]);
 
   return { extension: languageExtension, error };
 }
