@@ -12,7 +12,7 @@ import { FlameGraphDataContainer } from './FlameGraph/dataTransform';
 import FlameGraphHeader from './FlameGraphHeader';
 import FlameGraphPane from './FlameGraphPane';
 import { MIN_WIDTH_FOR_SPLIT_VIEW, FLAMEGRAPH_CONTAINER_HEIGHT } from './constants';
-import { PaneView, ViewMode } from './types';
+import { PaneView, ViewMode, DataSourceType } from './types';
 import { getAssistantContextFromDataFrame } from './utils';
 
 const ufuzzy = new uFuzzy();
@@ -94,6 +94,12 @@ export type Props = {
   enableNewUI?: boolean;
 
   /**
+   * Specifies the flame graph data source type.
+   * Affects frame classification rules (e.g. kernel vs user-space detection for Pyroscope).
+   */
+  dataSource?: DataSourceType;
+
+  /**
    * Set this when the host bounds our height (e.g. a dashboard panel), so the top table sizes itself to the
    * space actually available instead of a fixed height that can run past the host's bottom edge. Leave it off
    * for hosts that don't bound us (e.g. Explore, where the page scrolls and the flame graph grows organically):
@@ -134,6 +140,7 @@ const FlameGraphContainer = ({
   useTableNG,
   tableRefreshEnabled,
   contentAwareWidthsEnabled,
+  dataSource,
 }: Props) => {
   const theme = useMemo(() => getTheme(), [getTheme]);
 
@@ -176,9 +183,8 @@ const FlameGraphContainer = ({
     if (!data) {
       return;
     }
-
-    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme);
-  }, [data, theme, disableCollapsing]);
+    return new FlameGraphDataContainer(data, { collapsing: !disableCollapsing }, theme, dataSource);
+  }, [data, theme, disableCollapsing, dataSource]);
 
   const styles = getStyles(theme, Boolean(fillHeight));
   const matchedLabels = useLabelSearch(search, dataContainer);
