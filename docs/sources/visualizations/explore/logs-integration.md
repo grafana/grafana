@@ -47,7 +47,7 @@ The following sections provide detailed explanations on how to visualize and int
 
 <!-- vale Grafana.GoogleWill = NO -->
 
-When you reach the bottom of the list of logs, you will see the message `Scroll to load more`. If you continue scrolling and the displayed logs are within the selected time interval, Grafana will load more logs. When the sort order is "newest first" you receive older logs, and when the sort order is "oldest first" you get newer logs.
+When you reach the top or the bottom of the list of logs, you will see the message `Scroll to load more`. If you continue scrolling and the displayed logs are within the selected time interval, Grafana will load more logs. Scrolling to the bottom loads older logs when the sort order is "newest first" and newer logs when it is "oldest first"; scrolling to the top loads logs in the opposite direction.
 
 <!-- vale Grafana.GoogleWill = YES -->
 
