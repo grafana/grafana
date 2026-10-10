@@ -321,3 +321,19 @@ func TestRolloutAccessClient_BatchCheck(t *testing.T) {
 		assert.True(t, resp.Results["2"].Allowed, "mixed-resource batch should fall back to RBAC (allowed)")
 	})
 }
+
+func TestRolloutDatasourceAliasesShareBatchRoute(t *testing.T) {
+	client := newRolloutAccessClient(authlib.FixedAccessClient(true), authlib.FixedAccessClient(false), map[string]float64{
+		"datasource.grafana.app/datasources/query": 1,
+	})
+	req := authlib.BatchCheckRequest{Namespace: "stacks-1", Checks: []authlib.BatchCheckItem{
+		{CorrelationID: "1", Group: "loki.datasource.grafana.app", Resource: "datasources", Subresource: "query", Verb: "create", Name: "ds1"},
+		{CorrelationID: "2", Group: "query.grafana.app", Resource: "query", Verb: "create", Name: "ds1"},
+	}}
+	res, err := client.BatchCheck(context.Background(), &identity.StaticRequester{Namespace: "stacks-1"}, req)
+	require.NoError(t, err)
+	assert.False(t, res.Results["1"].Allowed)
+	assert.False(t, res.Results["2"].Allowed)
+	assert.Equal(t, "loki.datasource.grafana.app", req.Checks[0].Group)
+	assert.Equal(t, "query.grafana.app", req.Checks[1].Group)
+}

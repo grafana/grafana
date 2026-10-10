@@ -11,7 +11,9 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/datasourcek8s"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/authz/zanzana/common"
 )
 
 var (
@@ -203,29 +205,34 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 			continue
 		}
 
-		// Convert RBAC action/kind to Zanzana tuple
-		tuple, ok := TranslateToResourceTuple(subject, perm.Action, perm.Kind, perm.Identifier)
+		if tuples := datasourceRolePermissionTuples(subject, perm); len(tuples) > 0 {
+			for _, tuple := range tuples {
+				tupleMap[tuple.String()] = tuple
+			}
+			continue
+		}
+
+		// Convert RBAC action/kind to Zanzana tuples.
+		translated, ok := TranslateToResourceTuples(subject, perm.Action, perm.Kind, perm.Identifier)
 		if !ok {
 			// Skip permissions that can't be translated
 			log.New("zanzana").Debug("skipping permission that can't be translated", "permission", perm)
 			continue
 		}
 
-		// Handle folder resource tuples specially - they need to be merged
-		if IsFolderResourceTuple(tuple) {
-			// Create a key without the condition for deduplication
-			key := TupleStringWithoutCondition(tuple)
-			if existing, exists := folderResourceTuples[key]; exists {
-				// Merge this tuple with the existing one
-				MergeFolderResourceTuples(existing, tuple)
-			} else {
-				folderResourceTuples[key] = tuple
+		for _, tuple := range translated {
+			// Folder resource tuples share a relation and merge their filters.
+			if IsFolderResourceTuple(tuple) {
+				key := TupleStringWithoutCondition(tuple)
+				if existing, exists := folderResourceTuples[key]; exists {
+					MergeFolderResourceTuples(existing, tuple)
+				} else {
+					folderResourceTuples[key] = tuple
+				}
+				continue
 			}
-			continue
+			tupleMap[tuple.String()] = tuple
 		}
-
-		// For non-folder resource tuples, just add to the map
-		tupleMap[tuple.String()] = tuple
 	}
 
 	// Collect all tuples
@@ -238,6 +245,47 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 	}
 
 	return tuples, nil
+}
+
+// Datasource action sets and caching writes each grant multiple operations.
+// Expand these when writing roles so ordinary resource checks are sufficient.
+func datasourceRolePermissionTuples(subject string, perm RolePermission) []*openfgav1.TupleKey {
+	if perm.Kind != "datasources" || perm.Identifier == "" {
+		return nil
+	}
+	type grant struct {
+		relation    string
+		subresource string
+	}
+	var grants []grant
+	switch perm.Action {
+	case "datasources:query":
+		grants = []grant{{RelationSetView, ""}, {RelationCreate, "query"}}
+	case "datasources:edit":
+		grants = []grant{{RelationSetEdit, ""}, {RelationCreate, "query"}}
+	case "datasources:admin":
+		grants = []grant{
+			{RelationSetAdmin, ""},
+			{RelationCreate, "query"},
+			{RelationGet, "caching"},
+			{RelationCreate, "caching"},
+			{RelationUpdate, "caching"},
+			{RelationDelete, "caching"},
+		}
+	case "datasources.caching:write":
+		grants = []grant{{RelationCreate, "caching"}, {RelationUpdate, "caching"}, {RelationDelete, "caching"}}
+	default:
+		return nil
+	}
+	tuples := make([]*openfgav1.TupleKey, 0, len(grants))
+	for _, g := range grants {
+		if perm.Identifier == "*" {
+			tuples = append(tuples, NewGroupResourceTuple(subject, g.relation, datasourcek8s.Group, "datasources", g.subresource))
+		} else {
+			tuples = append(tuples, common.NewResourceTuple(subject, g.relation, datasourcek8s.Group, "datasources", g.subresource, perm.Identifier))
+		}
+	}
+	return tuples
 }
 
 // RoleToTuples converts role and its permissions (action/scope) to v1 TupleKey format
@@ -288,10 +336,9 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 //     pkg/services/authz/rbac/mapper.go, where `globalroles` is wired with
 //     `useWildcardScope: true`).
 //
-//   - `roles:write`  → `edit`   on group_resource:iam.grafana.app/roles.
-//     `edit` is used (instead of `update`) because the FGA schema defines
-//     create/update/delete on group_resource as `... or edit`, and the legacy
-//     `roles:write` action covers create + update + patch + delete.
+//   - `roles:write` → `create` and `update` on group_resource:iam.grafana.app/roles.
+//     `update` also covers patch. The `edit` action set would additionally grant
+//     read and delete, which require separate legacy permissions.
 //
 //   - `roles:delete` → `delete` on group_resource:iam.grafana.app/roles.
 func RoleManagementToTuples(subject string, permission RolePermission) []*openfgav1.TupleKey {
@@ -312,7 +359,8 @@ func RoleManagementToTuples(subject string, permission RolePermission) []*openfg
 		)
 	case actionRolesWrite:
 		tuples = append(tuples,
-			NewGroupResourceTuple(subject, RelationSetEdit, rolesGroup, rolesResource, ""),
+			NewGroupResourceTuple(subject, RelationCreate, rolesGroup, rolesResource, ""),
+			NewGroupResourceTuple(subject, RelationUpdate, rolesGroup, rolesResource, ""),
 		)
 	case actionRolesDelete:
 		tuples = append(tuples,
@@ -491,6 +539,9 @@ func GetResourcePermissionDeleteTuples(req *authzextv1.DeletePermissionOperation
 }
 
 func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authzextv1.Permission) ([]*openfgav1.TupleKey, error) {
+	if resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), datasourcek8s.K8sDatasourceAPIGroupSuffix) {
+		return nil, fmt.Errorf("datasource permissions must use the %s group", datasourcek8s.Group)
+	}
 	subject, err := toZanzanaSubject(permission.GetKind(), permission.GetName())
 	if err != nil {
 		return nil, err
@@ -501,9 +552,16 @@ func resourcePermissionToTuples(resource *authzextv1.Resource, permission *authz
 		return datasourcePermissionToTuples(subject, relation, resource), nil
 	}
 
-	return []*openfgav1.TupleKey{
-		newResourcePermissionTuple(subject, relation, resource, ""),
-	}, nil
+	tuples := []*openfgav1.TupleKey{newResourcePermissionTuple(subject, relation, resource, "")}
+	if relation == RelationSetEdit || relation == RelationSetAdmin {
+		switch resource.GetGroup() + "/" + resource.GetResource() {
+		case "folder.grafana.app/folders":
+			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, ""))
+		case "dashboard.grafana.app/dashboards":
+			tuples = append(tuples, newResourcePermissionTuple(subject, RelationCreate, resource, "annotations"))
+		}
+	}
+	return tuples, nil
 }
 
 func datasourcePermissionToTuples(subject, relation string, resource *authzextv1.Resource) []*openfgav1.TupleKey {
@@ -527,7 +585,7 @@ func datasourcePermissionToTuples(subject, relation string, resource *authzextv1
 }
 
 func isDatasourcePermission(resource *authzextv1.Resource) bool {
-	return resource.GetResource() == "datasources" && strings.HasSuffix(resource.GetGroup(), ".datasource.grafana.app")
+	return resource.GetResource() == "datasources" && resource.GetGroup() == datasourcek8s.Group
 }
 
 func toZanzanaType(apiGroup string) string {
@@ -538,7 +596,8 @@ func toZanzanaType(apiGroup string) string {
 }
 
 func newResourcePermissionTuple(subject, relation string, resource *authzextv1.Resource, subresource string) *openfgav1.TupleKey {
-	typ := toZanzanaType(resource.GetGroup())
+	group := resource.GetGroup()
+	typ := toZanzanaType(group)
 
 	key := &openfgav1.TupleKey{
 		// e.g. "user:{uid}", "service-account:{uid}", "team:{uid}", "role:basic_{viewer|editor|admin}#assignee"
@@ -549,7 +608,7 @@ func newResourcePermissionTuple(subject, relation string, resource *authzextv1.R
 		// e.g. "resource:{apiGroup}/{resource}/{subresource}/{name}"
 		Object: NewObjectEntry(
 			typ,
-			resource.GetGroup(),
+			group,
 			resource.GetResource(),
 			subresource,
 			resource.GetName(),
@@ -558,7 +617,7 @@ func newResourcePermissionTuple(subject, relation string, resource *authzextv1.R
 
 	// For generic resources we add a condition to filter by apiGroup/resource[/subresource]
 	// e.g "group_filter": {"group_resource": "dashboard.grafana.app/dashboards"}
-	// e.g "group_filter": {"group_resource": "loki.datasource.grafana.app/datasources/query"}
+	// e.g "group_filter": {"group_resource": "datasource.grafana.app/datasources/query"}
 	if typ == TypeResource {
 		groupResource := resource.GetResource()
 		if subresource != "" {
@@ -569,7 +628,7 @@ func newResourcePermissionTuple(subject, relation string, resource *authzextv1.R
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
 					"group_resource": structpb.NewStringValue(
-						resource.GetGroup() + "/" + groupResource,
+						group + "/" + groupResource,
 					),
 				},
 			},

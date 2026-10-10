@@ -87,6 +87,10 @@ func (s *Server) check(ctx context.Context, r *authzv1.CheckRequest) (*authzv1.C
 		if err != nil {
 			return nil, fmt.Errorf("failed to check generic resource: %w", err)
 		}
+		if res.GetAllowed() {
+			return res, nil
+		}
+
 		return res, nil
 	}
 
@@ -171,7 +175,7 @@ func (s *Server) checkGeneric(ctx context.Context, subject, relation string, res
 		folderIdent         = resource.FolderIdent()
 		resourceCtx         = resource.Context()
 		folderRelation      = common.SubresourceRelation(relation)
-		folderCheckRelation = common.FolderPermissionRelation(relation)
+		folderCheckRelation = common.FolderContentPermissionRelation(relation)
 	)
 
 	if folderIdent != "" && isFolderPermissionBasedResource(resource.GroupResource()) {

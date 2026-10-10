@@ -109,7 +109,6 @@ type listResourcePermissionsQueryTemplate struct {
 	UserRoleTable      string
 	TeamRoleTable      string
 	ManagedRolePattern string
-	WithDatasourceType bool
 }
 
 func (r listResourcePermissionsQueryTemplate) Validate() error {
@@ -119,7 +118,7 @@ func (r listResourcePermissionsQueryTemplate) Validate() error {
 	return nil
 }
 
-func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery, withDatasourceType bool) (string, []interface{}, error) {
+func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDatabaseHelper, query *ListResourcePermissionsQuery) (string, []interface{}, error) {
 	req := listResourcePermissionsQueryTemplate{
 		SQLTemplate:        sqltemplate.New(dbHelper.DialectForDriver()),
 		Query:              query,
@@ -131,7 +130,6 @@ func buildListResourcePermissionsQueryFromTemplate(dbHelper *legacysql.LegacyDat
 		UserRoleTable:      dbHelper.Table("user_role"),
 		TeamRoleTable:      dbHelper.Table("team_role"),
 		ManagedRolePattern: "managed:%",
-		WithDatasourceType: withDatasourceType,
 	}
 
 	rawQuery, err := sqltemplate.Execute(resourcePermissionsQueryTplt, req)

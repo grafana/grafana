@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	lifecycleDatasourceGroup    = "loki.datasource.grafana.app"
+	lifecycleDatasourceGroup    = "datasource.grafana.app"
 	lifecycleDatasourceResource = "datasources"
 )
 
