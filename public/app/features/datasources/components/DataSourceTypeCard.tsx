@@ -13,7 +13,12 @@ export type Props = {
 export function DataSourceTypeCard({ onClick, dataSourcePlugin }: Props) {
   const isPhantom = dataSourcePlugin.module === 'phantom';
   const isClickable = !isPhantom && !dataSourcePlugin.unlicensed;
-  const learnMoreLink = dataSourcePlugin.info?.links?.length > 0 ? dataSourcePlugin.info.links[0] : null;
+
+  const links = dataSourcePlugin.info?.links ?? [];
+  const learnMoreLink = links.find((link) => link.name.toLowerCase() === 'learn more') ??
+                        links.find((link) => link.name.toLowerCase() === 'documentation') ??
+                        (links.length > 0 ? links[0] : null);
+
   const learnMoreLinkTarget = learnMoreLink?.target ?? '_blank';
 
   const styles = useStyles2(getStyles);
