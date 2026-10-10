@@ -7,6 +7,7 @@ import { type DataSourceRef } from '@grafana/schema';
 import { RefreshPicker } from '@grafana/ui';
 import { stopQueryState } from 'app/core/utils/explore';
 import { getCorrelationsFromStorage } from 'app/features/correlations/utils';
+import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { type ExploreItemState } from 'app/types/explore';
 import { createAsyncThunk } from 'app/types/store';
 
@@ -108,6 +109,16 @@ export const datasourceReducer = (state: ExploreItemState, action: AnyAction): E
     return {
       ...state,
       datasourceInstance,
+      queries:
+        !datasourceInstance.meta?.mixed &&
+        datasourceInstance.uid !== MIXED_DATASOURCE_NAME &&
+        datasourceInstance.type !== 'mixed' &&
+        datasourceInstance.getRef
+          ? state.queries.map((query) => ({
+              ...query,
+              datasource: datasourceInstance.getRef(),
+            }))
+          : state.queries,
       graphResult: null,
       tableResult: null,
       logsResult: null,
