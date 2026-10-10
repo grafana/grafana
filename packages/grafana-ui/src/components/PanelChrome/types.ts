@@ -1,4 +1,4 @@
-import { type QueryResultMetaNotice } from '@grafana/data';
+import { type PanelStatusItem as RuntimePanelStatusItem, type QueryResultMetaNotice } from '@grafana/data';
 
 /**
  * Mode to describe if a legend is isolated/selected or being appended to an existing
@@ -35,7 +35,4 @@ export type PanelStatusSeverity = QueryResultMetaNotice['severity'];
  * A single error or notice shown in the panel header status popover.
  * @internal
  */
-export interface PanelStatusItem {
-  severity: PanelStatusSeverity;
-  text: string;
-}
+export type PanelStatusItem = Pick<RuntimePanelStatusItem, 'severity' | 'text'>;

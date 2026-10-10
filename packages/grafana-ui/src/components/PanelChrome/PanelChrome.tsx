@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { type CSSProperties, type ReactElement, type ReactNode, useId, useState } from 'react';
+import { type CSSProperties, type ReactElement, type ReactNode, useEffect, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -18,11 +18,13 @@ import { Text } from '../Text/Text';
 import { Tooltip } from '../Tooltip/Tooltip';
 
 import { HoverWidget } from './HoverWidget';
+import { usePanelContext } from './PanelContext';
 import { PanelDescription } from './PanelDescription';
 import { PanelMenu } from './PanelMenu';
 import { PanelStatus } from './PanelStatus';
 import { TitleItem } from './TitleItem';
 import { type PanelStatusItem } from './types';
+import { usePanelStatusSnapshot } from './usePanelNotices';
 
 /**
  * @internal
@@ -176,6 +178,12 @@ export function PanelChrome({
   subtitle,
   minHeight,
 }: PanelChromeProps) {
+  const { notices, activateNotices } = usePanelContext();
+  useEffect(() => activateNotices?.(), [activateNotices]);
+  const statusSnapshot = usePanelStatusSnapshot(notices);
+  const hasStatus = Boolean(
+    statusSnapshot.items.length || (!statusSnapshot.hostInitialized && (statusMessage || statusItems?.length))
+  );
   const theme = useTheme2();
   const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
@@ -424,7 +432,7 @@ export function PanelChrome({
               </HoverWidget>
             )}
 
-            {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
+            {hasStatus && (
               <div className={styles.errorContainerFloating}>
                 <PanelStatus
                   message={statusMessage}
@@ -448,7 +456,7 @@ export function PanelChrome({
               onMouseLeave={isSelectable ? onHeaderLeave : undefined}
               onPointerUp={onPointerUp}
             >
-              {(Boolean(statusMessage) || Boolean(statusItems?.length)) && (
+              {hasStatus && (
                 <div className={dragClassCancel}>
                   <PanelStatus
                     message={statusMessage}

@@ -446,6 +446,8 @@ export {
   type RangeValueMatcherOptions,
 } from './transformations/matchers/valueMatchers/types';
 export { LayoutModes, type LayoutMode } from './types/layout';
+export * from './panel/PanelNotices';
+
 export {
   PanelPlugin,
   type PanelOptionsSupplier,
