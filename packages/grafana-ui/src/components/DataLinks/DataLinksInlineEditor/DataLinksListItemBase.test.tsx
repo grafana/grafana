@@ -38,6 +38,15 @@ async function setup(overrides?: Partial<DataLinksListItemBaseProps<DataLink>>) 
 }
 
 describe('DataLinksListItemBase', () => {
+  it.each([
+    { title: 'My link', name: 'Reorder data link My link' },
+    { title: '   ', name: 'Reorder data link localhost' },
+  ])('names the drag handle "$name"', async ({ title, name }) => {
+    await setup({ item: { title, url: 'localhost' } });
+
+    expect(screen.getByRole('button', { name })).toHaveAttribute('data-rfd-drag-handle-draggable-id', 'key-0');
+  });
+
   it('renders title and url', async () => {
     await setup();
 

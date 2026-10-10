@@ -17,7 +17,7 @@ import { ConditionalRenderingGroup } from '../../conditional-rendering/group/Con
 import { RepeatsUpdatedEvent, DashboardStateChangedEvent } from '../../sidebar/events';
 import { getCloneKey, getLocalVariableValueSet } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { type CanvasScrollOptions, scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { type DashboardLayoutItem } from '../types/DashboardLayoutItem';
 
 import { getOptions } from './AutoGridItemEditor';
@@ -213,7 +213,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     this.performRepeat();
   }
 
-  public scrollIntoView() {
-    scrollCanvasElementIntoView(this, this.containerRef);
+  public scrollIntoView(options?: CanvasScrollOptions) {
+    scrollCanvasElementIntoView(this, this.containerRef, options);
   }
 }
