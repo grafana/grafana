@@ -1,7 +1,7 @@
 import { type StoryFn, type Meta } from '@storybook/react';
 
 import { VizOrientation, ThresholdsMode, type Field, FieldType, getDisplayProcessor } from '@grafana/data';
-import { BarGaugeDisplayMode } from '@grafana/schema';
+import { BarGaugeDisplayMode, ScaleDistribution } from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 
@@ -42,6 +42,8 @@ const meta: Meta = {
     lcdCellWidth: 12,
     itemSpacing: 8,
     showUnfilled: true,
+    showScaleLabels: false,
+    logScale: false,
   },
   argTypes: {
     displayMode: {
@@ -70,6 +72,7 @@ interface StoryProps extends Partial<Props> {
   threshold2Color: string;
   threshold1Value: number;
   threshold2Value: number;
+  logScale: boolean;
 }
 
 const AddBarGaugeStory = (storyProps: StoryProps) => {
@@ -80,6 +83,7 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
     config: {
       min: storyProps.minValue,
       max: storyProps.maxValue,
+      custom: { scaleDistribution: { type: storyProps.logScale ? ScaleDistribution.Log : ScaleDistribution.Linear } },
       thresholds: {
         mode: ThresholdsMode.Absolute,
         steps: [
@@ -97,6 +101,7 @@ const AddBarGaugeStory = (storyProps: StoryProps) => {
     lcdCellWidth: storyProps.lcdCellWidth,
     itemSpacing: storyProps.itemSpacing,
     showUnfilled: storyProps.showUnfilled,
+    showScaleLabels: storyProps.showScaleLabels,
     width: storyProps.width,
     height: storyProps.height,
     value: {
@@ -125,6 +130,20 @@ barGaugeHorizontal.args = {
   height: 100,
   width: 500,
   orientation: VizOrientation.Horizontal,
+};
+
+export const barGaugeLogScale: StoryFn<StoryProps> = AddBarGaugeStory.bind({});
+barGaugeLogScale.args = {
+  height: 100,
+  width: 500,
+  orientation: VizOrientation.Horizontal,
+  numeric: 300,
+  minValue: 1,
+  maxValue: 10000,
+  threshold1Value: 100,
+  threshold2Value: 1000,
+  logScale: true,
+  showScaleLabels: true,
 };
 
 export default meta;

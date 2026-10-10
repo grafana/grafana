@@ -6,7 +6,7 @@ import { RadialArcPathEndpointMarks } from './RadialArcPathEndpointMarks';
 import { getBarEndcapColors, getGradientCss } from './colors';
 import { ARC_END, ARC_START } from './constants';
 import { type RadialShape, type RadialGaugeDimensions, type GradientStop } from './types';
-import { drawRadialArcPath, toRad, IS_SAFARI } from './utils';
+import { drawRadialArcPath, toRad, IS_SAFARI, getValuePercentageForValue } from './utils';
 
 interface RadialArcPathPropsBase {
   arcLengthDeg: number;
@@ -88,7 +88,7 @@ export const RadialArcPath = memo(
     let barEndcapColors: [string, string] | undefined;
     if (barEndcaps) {
       if (isGradient) {
-        barEndcapColors = getBarEndcapColors(rest.gradient, fieldDisplay.display.percent);
+        barEndcapColors = getBarEndcapColors(rest.gradient, getValuePercentageForValue(fieldDisplay));
       } else {
         barEndcapColors = [rest.color, rest.color];
       }
