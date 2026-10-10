@@ -17,6 +17,7 @@ import {
   dateTimeAsMoment,
   getFieldDisplayName,
   getSearchFilterScopedVar,
+  type LegacyMetricFindQueryOptions,
   type MetricFindValue,
   type QueryResultMetaStat,
   type ScopedVars,
@@ -686,6 +687,22 @@ export class GraphiteDatasource
     return parsedDate.unix();
   }
 
+  /**
+   * Merge caller-provided scopedVars (including `__sceneObject`) with `__searchFilter`.
+   * Graphite interpolates via templateSrv.replace() and used to pass only the search-filter
+   * vars, so chained queries fell back to window.__grafanaSceneContext.
+   */
+  private getMetricFindScopedVars(
+    query: string,
+    wildcardChar: string,
+    options?: LegacyMetricFindQueryOptions
+  ): ScopedVars {
+    return {
+      ...options?.scopedVars,
+      ...getSearchFilterScopedVar({ query, wildcardChar, options }),
+    };
+  }
+
   metricFindQuery(findQuery: string | GraphiteQuery, optionalOptions?: any): Promise<MetricFindValue[]> {
     const options = optionalOptions || {};
 
@@ -697,10 +714,7 @@ export class GraphiteDatasource
     let query = queryObject.target ?? '';
 
     // First attempt to check for tag-related functions (using empty wildcard for interpolation)
-    let interpolatedQuery = this.templateSrv.replace(
-      query,
-      getSearchFilterScopedVar({ query, wildcardChar: '', options: optionalOptions })
-    );
+    let interpolatedQuery = this.templateSrv.replace(query, this.getMetricFindScopedVars(query, '', optionalOptions));
 
     // special handling for tag_values(<tag>[,<expression>]*), this is used for template variables
     let allParams = interpolatedQuery.match(/^tag_values\((.*)\)$/);
@@ -722,10 +736,7 @@ export class GraphiteDatasource
     let useExpand = query.match(/^expand\((.*)\)$/);
     query = useExpand ? useExpand[1] : query;
 
-    interpolatedQuery = this.templateSrv.replace(
-      query,
-      getSearchFilterScopedVar({ query, wildcardChar: '*', options: optionalOptions })
-    );
+    interpolatedQuery = this.templateSrv.replace(query, this.getMetricFindScopedVars(query, '*', optionalOptions));
 
     let range;
     if (options.range) {
