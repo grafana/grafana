@@ -182,6 +182,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
   - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
     instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
+    The instrumentation wraps the retries (`plugin_grpc.go`), so a call is recorded once.
     Connections are keyed by host and plugin ID, because each records its calls under one
     `plugin_id`. Local plugins are measured by `grafana_plugin_request_*` instead.
 
@@ -254,6 +255,18 @@ Shared authentication settings remain in `[cloud_router]`. Discovery uses `Autho
 `cloud_app_platform_apiserver` and `X-Access-Token` for other target names.
 
 Every URL must be absolute; a trailing slash is tolerated.
+
+## Settings (`[router.backend_grpc]`)
+
+These keys configure the gRPC connections to backends from `plugins_url` and `core_url`, and are
+read only when one of them is set. Like `[cloud_router]`, they are read with
+`cfg.SectionWithEnvOverrides`, so environment overrides such as `GF_ROUTER_BACKEND_GRPC_RETRY_MAX`
+work without the section in the INI configuration.
+
+| Key | Meaning |
+| --- | --- |
+| `retry_max` | Attempts per unary call, including the first, for calls failing with `Unavailable`. Default `3`; `0` or `1` disables retries. Streaming calls are not retried. |
+| `retry_backoff`, `retry_jitter` | Base retry backoff, doubled each attempt, and the jitter fraction (0 to 1). Default `1s` and `0.1`. |
 
 ## Security
 

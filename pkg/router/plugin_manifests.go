@@ -34,12 +34,13 @@ const (
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
 type pluginManifestsTarget struct {
-	keyPrefix string // prefixes every backend Key, so sources never share a key
-	source    string // reported by Backend.Source
-	url       string
-	client    *http.Client
-	patterns  []*regexp.Regexp
-	deps      PluginDependencies
+	keyPrefix  string // prefixes every backend Key, so sources never share a key
+	source     string // reported by Backend.Source
+	url        string
+	client     *http.Client
+	patterns   []*regexp.Regexp
+	grpcConfig pluginGRPCConfig
+	deps       PluginDependencies
 
 	cooldown *cooldown
 	status   pollStatus
@@ -69,6 +70,7 @@ func newPluginManifestsTarget(
 	rawURL string,
 	patterns []*regexp.Regexp,
 	client *http.Client,
+	grpcConfig pluginGRPCConfig,
 	deps PluginDependencies,
 ) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
@@ -87,6 +89,7 @@ func newPluginManifestsTarget(
 		url:             rawURL,
 		client:          client,
 		patterns:        patterns,
+		grpcConfig:      grpcConfig,
 		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
 	}
@@ -210,7 +213,7 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 	if conn == nil {
 		requestDuration := t.requestDuration.MustCurryWith(prometheus.Labels{"plugin_id": pluginID}).(*prometheus.HistogramVec)
 		var err error
-		conn, err = grpc.NewClient(host, pluginGRPCDialOptions(requestDuration)...)
+		conn, err = grpc.NewClient(host, t.grpcConfig.dialOptions(requestDuration)...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
 		}
