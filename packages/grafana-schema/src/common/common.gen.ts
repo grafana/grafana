@@ -620,6 +620,11 @@ export type FieldTextAlignment = ('auto' | 'left' | 'right' | 'center');
 export type TimelineValueAlignment = ('center' | 'left' | 'right');
 
 /**
+ * Controls where the series name is displayed in the TimelineChart component
+ */
+export type TimelineNamePosition = ('left' | 'top');
+
+/**
  * TODO docs
  */
 export interface VizTextDisplayOptions {
