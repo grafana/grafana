@@ -60,3 +60,7 @@ export const defaultOptions: Partial<Options> = {
   sparkline: true,
   textMode: 'auto',
 };
+
+export interface FieldConfig {
+  scaleDistribution?: common.ScaleDistributionConfig;
+}

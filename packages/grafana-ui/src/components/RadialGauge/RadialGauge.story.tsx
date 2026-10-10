@@ -8,7 +8,13 @@ import {
   type GrafanaTheme2,
   toDataFrame,
 } from '@grafana/data';
-import { FieldColorModeId, type FieldConfig, ThresholdsMode } from '@grafana/schema';
+import {
+  FieldColorModeId,
+  type FieldConfig,
+  ScaleDistribution,
+  type ScaleDistributionConfig,
+  ThresholdsMode,
+} from '@grafana/schema';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { Stack } from '../Layout/Stack/Stack';
@@ -355,6 +361,53 @@ export const Temp: StoryFn<StoryProps> = (args) => {
   );
 };
 
+export const LogScale: StoryFn<StoryProps> = (args) => {
+  const thresholds: FieldConfig['thresholds'] = {
+    mode: ThresholdsMode.Absolute,
+    steps: [
+      { value: -Infinity, color: 'green' },
+      { value: 100, color: 'orange' },
+      { value: 1000, color: 'red' },
+    ],
+  };
+
+  return (
+    <Stack direction={'row'} gap={3} wrap="wrap">
+      <RadialGaugeExample
+        {...args}
+        seriesName="Linear"
+        value={300}
+        min={1}
+        max={10000}
+        unit="none"
+        thresholds={thresholds}
+        showScaleLabels
+      />
+      <RadialGaugeExample
+        {...args}
+        seriesName="Logarithmic"
+        value={300}
+        min={1}
+        max={10000}
+        unit="none"
+        thresholds={thresholds}
+        showScaleLabels
+        scaleDistribution={{ type: ScaleDistribution.Log }}
+      />
+    </Stack>
+  );
+};
+
+LogScale.args = {
+  shape: 'gauge',
+  thresholdsBar: true,
+  gradient: true,
+};
+
+LogScale.parameters = {
+  controls: { include: ['shape', 'gradient', 'thresholdsBar', 'segmentCount', 'barWidthFactor'] },
+};
+
 interface ExampleProps {
   color?: string;
   seriesName?: string;
@@ -383,6 +436,7 @@ interface ExampleProps {
   unit?: string;
   showScaleLabels?: boolean;
   neutral?: number;
+  scaleDistribution?: ScaleDistributionConfig;
 }
 
 const DEFAULT_THRESHOLDS: FieldConfig['thresholds'] = {
@@ -422,6 +476,7 @@ export function RadialGaugeExample({
   unit = 'percent',
   showScaleLabels,
   neutral,
+  scaleDistribution,
 }: ExampleProps) {
   const theme = useTheme2();
 
@@ -454,6 +509,7 @@ export function RadialGaugeExample({
           color: { mode: colorScheme, fixedColor: color ? theme.visualization.getColorByName(color) : undefined },
           thresholds,
           displayName: seriesName,
+          custom: { scaleDistribution },
         },
         // Add state and getLinks
         state: {},
