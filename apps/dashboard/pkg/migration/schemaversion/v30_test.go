@@ -3,6 +3,8 @@ package schemaversion_test
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
@@ -686,4 +688,39 @@ func TestV30(t *testing.T) {
 	}
 
 	runMigrationTests(t, tests, schemaversion.V30)
+}
+
+func TestGetActiveThresholdColor_NegativeThreshold(t *testing.T) {
+	thresholds := map[string]interface{}{
+		"mode": "absolute",
+		"steps": []interface{}{
+			map[string]interface{}{
+				"color": "green",
+				"value": nil, // base threshold (-Infinity)
+			},
+			map[string]interface{}{
+				"color": "yellow",
+				"value": float64(-1),
+			},
+			map[string]interface{}{
+				"color": "red",
+				"value": float64(0),
+			},
+		},
+	}
+
+	t.Run("value equal to -1 should match step -1", func(t *testing.T) {
+		color := getActiveThresholdColor(-1.0, thresholds)
+		require.Equal(t, "yellow", color)
+	})
+
+	t.Run("value between -1 and 0 should match step -1", func(t *testing.T) {
+		color := getActiveThresholdColor(-0.5, thresholds)
+		require.Equal(t, "yellow", color)
+	})
+
+	t.Run("value equal to 0 should match step 0", func(t *testing.T) {
+		color := getActiveThresholdColor(0.0, thresholds)
+		require.Equal(t, "red", color)
+	})
 }
