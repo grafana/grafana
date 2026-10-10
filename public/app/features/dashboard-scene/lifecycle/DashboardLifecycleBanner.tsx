@@ -60,7 +60,8 @@ export function DashboardLifecycleBanner({ dashboard }: Props) {
       />
     );
   }
-  return <ForkHint uid={uid} />;
+  // Keyed by the scene so a reload (for example after Grafana Assistant forks this dashboard) refetches.
+  return <ForkHint key={dashboard.state.key} uid={uid} />;
 }
 
 function DraftBanner({ dashboard, uid, updatedAt }: { dashboard: DashboardScene; uid: string; updatedAt?: Date }) {

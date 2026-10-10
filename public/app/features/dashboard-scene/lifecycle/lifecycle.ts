@@ -28,8 +28,14 @@ export interface DashboardLifecycleInfo {
 
 interface LifecycleMeta {
   labels?: Record<string, string>;
-  annotations?: Record<string, string>;
+  // Wider than strings: the scene's k8s metadata types a few client annotations as booleans.
+  annotations?: Partial<Record<string, unknown>>;
   creationTimestamp?: string;
+}
+
+function stringAnnotation(annotations: Partial<Record<string, unknown>>, key: string): string | undefined {
+  const value = annotations[key];
+  return typeof value === 'string' ? value : undefined;
 }
 
 export function lifecycleFromMetadata(meta: LifecycleMeta | undefined): DashboardLifecycleInfo {
@@ -37,14 +43,14 @@ export function lifecycleFromMetadata(meta: LifecycleMeta | undefined): Dashboar
   const annotations = meta?.annotations ?? {};
   const value = labels[LabelKeyLifecycle];
   const lifecycle: DashboardLifecycle = value === 'draft' || value === 'fork' ? value : 'published';
-  const base = Number(annotations[AnnoKeyForkBase]);
-  const updated = annotations[AnnoKeyUpdatedTimestamp] ?? meta?.creationTimestamp;
+  const base = Number(stringAnnotation(annotations, AnnoKeyForkBase));
+  const updated = stringAnnotation(annotations, AnnoKeyUpdatedTimestamp) ?? meta?.creationTimestamp;
   return {
     lifecycle,
     forkOf: lifecycle === 'fork' ? labels[LabelKeyForkOf] : undefined,
     forkBase: Number.isFinite(base) && base > 0 ? base : undefined,
-    origin: annotations[AnnoKeyOrigin],
-    originRef: annotations[AnnoKeyOriginRef],
+    origin: stringAnnotation(annotations, AnnoKeyOrigin),
+    originRef: stringAnnotation(annotations, AnnoKeyOriginRef),
     updatedAt: updated ? new Date(updated) : undefined,
   };
 }
