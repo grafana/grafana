@@ -15,6 +15,8 @@ const (
 	ReasonNotARuler SyncReason = "not_a_ruler"
 	ReasonSave      SyncReason = "save"
 	ReasonPrune     SyncReason = "prune"
+	// ReasonPromote: promoting the synced rules to native Grafana rules failed.
+	ReasonPromote SyncReason = "promote"
 	// ReasonPanic is recorded when a per-org sync tick panics and is recovered so
 	// the background goroutine (and the process) survives.
 	ReasonPanic SyncReason = "panic"
@@ -41,6 +43,8 @@ func (r SyncReason) ConditionReason() string {
 		return "SaveFailed"
 	case ReasonPrune:
 		return "PruneFailed"
+	case ReasonPromote:
+		return "PromotionFailed"
 	case ReasonPanic:
 		return "Panicked"
 	default:

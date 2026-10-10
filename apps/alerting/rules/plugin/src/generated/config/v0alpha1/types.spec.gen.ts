@@ -7,6 +7,15 @@ export interface Spec {
 		// org. The operator ini setting `unified_alerting.external_ruler_uid`
 		// overrides this when set; see status.externalRulerSync.origin.
 		datasourceUid?: string;
+		// promote, when true, converts the rules already synced from datasourceUid
+		// into native Grafana rules the org owns (their management is cleared so
+		// they become freely editable) and stops syncing them. This is a one-way
+		// action scoped to that datasourceUid: once promoted, it cannot be
+		// reverted back to false for the same datasourceUid. Pointing
+		// datasourceUid at a different source resumes normal syncing for it,
+		// regardless of this flag. Ignored while the operator ini override
+		// `unified_alerting.external_ruler_uid` is set.
+		promote?: boolean;
 		// pollInterval sets how often this org's rules are re-synced from
 		// datasourceUid. Empty defaults to 5m; must be between 1m and 1h. The
 		// worker checks orgs against a short internal baseline and only does
