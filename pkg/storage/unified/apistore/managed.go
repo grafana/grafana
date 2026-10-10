@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
+	authnlib "github.com/grafana/authlib/authn"
 	authtypes "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -178,8 +179,19 @@ func ensureSameRepoManager(folder utils.GrafanaMetaAccessor, resource utils.Graf
 	return nil
 }
 
+// repositoryIdentityFrom returns the specific repository name a provisioning-identity caller
+// is acting as (set via identity.WithServiceIdentityName), if the caller set one.
+func repositoryIdentityFrom(auth authtypes.AuthInfo) (string, bool) {
+	values := auth.GetExtra()[authnlib.ServiceIdentityKey]
+	if len(values) == 0 || values[0] == "" {
+		return "", false
+	}
+	return values[0], true
+}
+
 func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error {
 	kind := obj.GetAnnotation(utils.AnnoKeyManagerKind)
+	uid := obj.GetAnnotation(utils.AnnoKeyManagerIdentity)
 	if kind == "" {
 		return nil
 	}
@@ -189,11 +201,27 @@ func enforceManagerProperties(auth authtypes.AuthInfo, obj utils.GrafanaMetaAcce
 		return nil // not managed
 
 	case utils.ManagerKindRepo:
-		if identity.IsProvisioningServiceIdentity(auth) {
-			return nil // OK!
+		if !identity.IsProvisioningServiceIdentity(auth) {
+			// This can fallback to writing the value with a provisioning client
+			return errResourceIsManagedInRepository
 		}
-		// This can fallback to writing the value with a provisioning client
-		return errResourceIsManagedInRepository
+
+		// The provisioning service identity is shared by every repository's sync job, so
+		// on its own it only proves "some repository sync is writing this" - not that it's
+		// the repository that actually owns the resource. Compare against the caller's own
+		// repository identity (set via identity.WithServiceIdentityName), the same cross-repo
+		// protection checkManagerPropertiesOnUpdateSpec already gives updates. Fails open when
+		// the caller hasn't set a specific identity, so callers not yet updated to do so keep
+		// today's behavior.
+		if callerRepo, ok := repositoryIdentityFrom(auth); ok && uid != "" && uid != callerRepo {
+			return &apierrors.StatusError{ErrStatus: metav1.Status{
+				Status:  metav1.StatusFailure,
+				Code:    http.StatusForbidden,
+				Reason:  metav1.StatusReasonForbidden,
+				Message: fmt.Sprintf("resource is managed by repository %q, not %q", uid, callerRepo),
+			}}
+		}
+		return nil // OK!
 
 	case utils.ManagerKindPlugin,
 		utils.ManagerKindClassicFP,                  // nolint:staticcheck

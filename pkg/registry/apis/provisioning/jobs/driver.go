@@ -193,8 +193,11 @@ func (d *jobProcessor) processKey(ctx context.Context, namespace, name string, t
 
 	// Now that we have a job, we need to augment our namespace to grant ourselves permission to work on it.
 	// Incidentally, this also limits our permissions to only the namespace of the job.
+	// WithServiceIdentityName scopes the identity to this job's repository, so
+	// enforceManagerProperties can compare it against a resource's manager identity on
+	// delete/create instead of failing open (see managed.go).
 	ctx = request.WithNamespace(ctx, namespace)
-	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace)
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, namespace, identity.WithServiceIdentityName(claimedJob.Spec.Repository))
 	if err != nil {
 		return errors.Join(errPostClaim, apifmt.Errorf("failed to grant provisioning identity: %w", err))
 	}
