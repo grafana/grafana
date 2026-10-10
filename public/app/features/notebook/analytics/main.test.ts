@@ -9,6 +9,40 @@ import { NotebookLayoutManager } from '../scene/layout-notebook/NotebookLayoutMa
 import { defaultVisualizationPanelKind } from '../types';
 
 import { NotebookAnalytics } from './main';
+import { NOTEBOOK_FEEDBACK_RATING, NOTEBOOK_FEEDBACK_REASON, NOTEBOOK_FEEDBACK_SOURCE } from './types';
+
+describe('NotebookAnalytics.feedbackSubmitted', () => {
+  it('reports rating, fixed reasons, and an optional trimmed comment', () => {
+    setEchoSrv(new Echo());
+    const events: Array<Record<string, unknown>> = [];
+    const unsubscribe = onInteraction('grafana_notebook_feedback_submitted', (properties) => events.push(properties));
+
+    NotebookAnalytics.feedbackSubmitted(
+      NOTEBOOK_FEEDBACK_RATING.COULD_BE_BETTER,
+      [NOTEBOOK_FEEDBACK_REASON.EDITING, NOTEBOOK_FEEDBACK_REASON.SOMETHING_BROKEN],
+      '  Saving did not work  ',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_TOOLBAR
+    );
+
+    NotebookAnalytics.feedbackSubmitted(
+      NOTEBOOK_FEEDBACK_RATING.GOOD,
+      [],
+      '   ',
+      NOTEBOOK_FEEDBACK_SOURCE.NOTEBOOK_LIST
+    );
+
+    expect(events).toEqual([
+      {
+        rating: 'could_be_better',
+        reasons: ['editing', 'something_broken'],
+        source: 'notebook_toolbar',
+        comment: 'Saving did not work',
+      },
+      { rating: 'good', reasons: [], source: 'notebook_list' },
+    ]);
+    unsubscribe();
+  });
+});
 
 function notebookScene(): NotebookScene {
   const cell = new NotebookCellItem({
