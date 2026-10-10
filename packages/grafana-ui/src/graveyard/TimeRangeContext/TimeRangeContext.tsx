@@ -12,6 +12,10 @@ type TimeRangeContextValue = TimeRangeContextHookValue & {
   removePicker(): void;
 };
 
+/**
+ * @deprecated Shape returned by `useTimeRangeContext`, which is itself deprecated.
+ * Will be removed in the next major version of `@grafana/ui`.
+ */
 export type TimeRangeContextHookValue = {
   // If the time range is synced, this is the value that all pickers should show.
   syncedValue?: TimeRange;
@@ -32,6 +36,11 @@ export type TimeRangeContextHookValue = {
 
 const TimeRangeContext = createContext<TimeRangeContextValue | undefined>(undefined);
 
+/**
+ * @deprecated This provider was gated by the `timeRangeProvider` feature flag,
+ * which was never enabled in any environment and has been removed. The provider
+ * is now dormant and will be removed in the next major version of `@grafana/ui`.
+ */
 export function TimeRangeProvider({ children }: { children: ReactNode }) {
   // We simply keep the count of the pickers visible by letting them call the addPicker and removePicker functions.
   const [pickersCount, setPickersCount] = useState(0);
@@ -60,6 +69,10 @@ export function TimeRangeProvider({ children }: { children: ReactNode }) {
   return <TimeRangeContext.Provider value={contextVal}>{children}</TimeRangeContext.Provider>;
 }
 
+/**
+ * @deprecated Read side of the deprecated `TimeRangeProvider`. Without a provider mounted
+ * this hook always returns `undefined`. Will be removed in the next major version of `@grafana/ui`.
+ */
 export function useTimeRangeContext(initialSyncValue?: TimeRange): TimeRangeContextHookValue | undefined {
   const context = useContext(TimeRangeContext);
 
