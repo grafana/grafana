@@ -2999,7 +2999,7 @@
       },
       "toggle": {
         "use-new-experience": "新しいエクスペリエンスを使用",
-        "view-previous-experience": "前のエクスペリエンスに戻す"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "不明なルールタイプ",
       "checking-data-sources_other": "",
@@ -3017,6 +3017,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "すべて閉じる",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "すべて展開"
     },
     "rule-list-v2": {
@@ -8930,8 +8935,8 @@
     },
     "show-all-spans": "すべてのスパンを表示",
     "signal-card": {
-      "collapse-aria-label": "クエリ{{refId}}のデータソースエクスプローラーを折りたたむ",
-      "expand-aria-label": "クエリ{{refId}}のデータソースエクスプローラーを展開",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "クエリ{{refId}}（{{datasourceName}}）に移動"
     },
     "signal-explorer": {
@@ -13055,6 +13060,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "キャンセル",
       "confirm-discard": "破棄",
@@ -13136,6 +13146,7 @@
       "redo-action": "やり直し：{{action}}",
       "remove-query": "クエリを削除",
       "remove-tag": "タグを削除",
+      "rename": "",
       "reset-cell-time-range": "ノートブックの時間範囲を使用",
       "select-query": "クエリを選択",
       "set-cell-time-range": "パネルの時間範囲を設定",
@@ -17600,15 +17611,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "フレーム内のフィールドを並べ替えます。"
       },
+      "drag-handle-label": "",
       "label-field": "フィールド",
       "label-reverse": "反転",
       "name": {
         "sort-by": "並べ替え"
       },
-      "placeholder-select-field": "フィールドを選択"
+      "placeholder-select-field": "フィールドを選択",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

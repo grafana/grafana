@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Använd ny upplevelse",
-        "view-previous-experience": "Återgå till föregående upplevelse"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Okänd regeltyp",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Stäng alla",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Visa alla"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Visa hela tidsspannet",
     "signal-card": {
-      "collapse-aria-label": "Dölj datakällutforskaren för frågan {{refId}}",
-      "expand-aria-label": "Expandera datakällutforskaren för frågan {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Gå till frågan {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Avbryt",
       "confirm-discard": "Kassera",
@@ -13235,6 +13245,7 @@
       "redo-action": "Gör om: {{action}}",
       "remove-query": "Ta bort fråga",
       "remove-tag": "Ta bort tagg",
+      "rename": "",
       "reset-cell-time-range": "Använd anteckningsbokens tidsintervall",
       "select-query": "Välj fråga",
       "set-cell-time-range": "Ange panelens tidsintervall",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Sortera fält i en ram."
       },
+      "drag-handle-label": "",
       "label-field": "Fält",
       "label-reverse": "Omvänt",
       "name": {
         "sort-by": "Sortera efter"
       },
-      "placeholder-select-field": "Välj fält"
+      "placeholder-select-field": "Välj fält",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

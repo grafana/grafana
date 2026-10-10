@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Utiliser la nouvelle expérience",
-        "view-previous-experience": "Revenir à l’expérience précédente"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Type de règle inconnu",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Tout réduire",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Développer tout"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Afficher toutes les traces",
     "signal-card": {
-      "collapse-aria-label": "Réduire l’explorateur de source de données pour la requête {{refId}}",
-      "expand-aria-label": "Développer l’explorateur de source de données pour la requête {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Aller à la requête {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Annuler",
       "confirm-discard": "Ignorer",
@@ -13235,6 +13245,7 @@
       "redo-action": "Rétablir : {{action}}",
       "remove-query": "Supprimez la requête",
       "remove-tag": "Supprimer la balise",
+      "rename": "",
       "reset-cell-time-range": "Utiliser la plage de temps du notebook",
       "select-query": "Sélectionnez la requête",
       "set-cell-time-range": "Définir la plage de temps du panneau",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Triez les champs dans une trame."
       },
+      "drag-handle-label": "",
       "label-field": "Champ",
       "label-reverse": "Inverser",
       "name": {
         "sort-by": "Trier par"
       },
-      "placeholder-select-field": "Sélectionner le champ"
+      "placeholder-select-field": "Sélectionner le champ",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

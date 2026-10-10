@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Nieuwe ervaring gebruiken",
-        "view-previous-experience": "Terug naar de vorige ervaring"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Onbekend regeltype",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Alles samenvouwen",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Alles uitvouwen"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Alle spans weergeven",
     "signal-card": {
-      "collapse-aria-label": "Gegevensbronverkenner samenvouwen voor query {{refId}}",
-      "expand-aria-label": "Gegevensbronverkenner uitvouwen voor query {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Ga naar query {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Annuleren",
       "confirm-discard": "Negeren",
@@ -13235,6 +13245,7 @@
       "redo-action": "Opnieuw uitvoeren: {{action}}",
       "remove-query": "Query verwijderen",
       "remove-tag": "Tag verwijderen",
+      "rename": "",
       "reset-cell-time-range": "Tijdsbereik van notitieboek gebruiken",
       "select-query": "Query selecteren",
       "set-cell-time-range": "Tijdsbereik van paneel instellen",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Velden in een frame sorteren."
       },
+      "drag-handle-label": "",
       "label-field": "Veld",
       "label-reverse": "Omkeren",
       "name": {
         "sort-by": "Sorteren op"
       },
-      "placeholder-select-field": "Veld selecteren"
+      "placeholder-select-field": "Veld selecteren",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {
