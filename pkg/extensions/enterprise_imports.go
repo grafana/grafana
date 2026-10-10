@@ -86,6 +86,7 @@ import (
 	_ "github.com/grafana/grafana-app-sdk/simple"
 	_ "github.com/grafana/grafana-aws-sdk/pkg/awsauth"
 	_ "github.com/grafana/grafana-aws-sdk/pkg/awsds"
+	_ "github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/grpcplugin"
 	_ "github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
