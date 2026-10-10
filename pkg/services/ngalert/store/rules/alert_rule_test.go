@@ -996,6 +996,40 @@ func TestIntegration_GetLatestVersionOfRulesByUID_DoesNotReuseAmbientSession(t *
 	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 }
 
+// TestIntegration_GetLatestVersionOfRulesByUID_DefaultPathJoinsAmbientSession is the mirror of
+// the test above: with no LegacyDatabaseProvider configured, this must stay on the caller's
+// transaction, or a caller rollback would not roll back the read's effects.
+func TestIntegration_GetLatestVersionOfRulesByUID_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
+		_, err := store.getLatestVersionOfRulesByUID(ctx, 1, []string{"does-not-exist"})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
+}
+
 // TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession is the same regression
 // test as above, for the analogous folder-key read.
 func TestIntegration_DeletedRuleFolderKeysOnDB_DoesNotReuseAmbientSession(t *testing.T) {
@@ -1110,16 +1144,64 @@ func TestIntegration_DeleteInFolder_LegacyDatabaseProvider(t *testing.T) {
 	rule := createRule(t, store, nil)
 
 	requester := &user.SignedInUser{UserID: 42}
-	err := store.DeleteInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		return store.DeleteInFolders(ctx, rule.OrgID, []string{rule.NamespaceUID}, requester)
+	})
 	require.NoError(t, err)
 
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "reads should run on dbHelper.DB, not st.SQLStore directly")
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 
 	require.NotNil(t, gotCtx, "provider should have been called")
 	got, err := identity.GetRequester(gotCtx)
 	require.NoError(t, err, "requester should be attached to ctx, not just passed as an argument")
 	assert.Same(t, requester, got)
+}
+
+// TestIntegration_ListAlertRuleUIDsInFolder_DefaultPathJoinsAmbientSession is the mirror of the
+// ambient-session check above: with no LegacyDatabaseProvider configured, this must stay on the
+// caller's transaction, or a caller rollback would not roll back the read's effects.
+func TestIntegration_ListAlertRuleUIDsInFolder_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	rule := createRule(t, store, nil)
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
+		_, err := store.ListAlertRuleUIDsInFolder(ctx, rule.OrgID, rule.NamespaceUID)
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
 // TestIntegration_CountInFolders_LegacyDatabaseProvider is a regression test: the folder delete
@@ -1152,17 +1234,68 @@ func TestIntegration_CountInFolders_LegacyDatabaseProvider(t *testing.T) {
 	rule := createRule(t, store, nil)
 
 	requester := &user.SignedInUser{UserID: 42}
-	count, err := store.CountInFolders(context.Background(), rule.OrgID, []string{rule.NamespaceUID}, requester)
+	var count int64
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		var err error
+		count, err = store.CountInFolders(ctx, rule.OrgID, []string{rule.NamespaceUID}, requester)
+		return err
+	})
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(1), count)
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "count should run on dbHelper.DB, not st.SQLStore directly")
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
 
 	require.NotNil(t, gotCtx, "provider should have been called")
 	got, err := identity.GetRequester(gotCtx)
 	require.NoError(t, err, "requester should be attached to ctx, not just passed as an argument")
 	assert.Same(t, requester, got)
+}
+
+// TestIntegration_CountInFolders_DefaultPathJoinsAmbientSession is the mirror of the ambient-
+// session check above: with no LegacyDatabaseProvider configured, this must stay on the caller's
+// transaction.
+func TestIntegration_CountInFolders_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	rule := createRule(t, store, nil)
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
+		_, err := store.CountInFolders(ctx, rule.OrgID, []string{rule.NamespaceUID}, &user.SignedInUser{})
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
 // TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider is a regression test:
@@ -1193,13 +1326,64 @@ func TestIntegration_GetAllFoldersWithRules_LegacyDatabaseProvider(t *testing.T)
 
 	rule := createRule(t, store, nil)
 
-	got, err := store.GetAllFoldersWithRules(context.Background(), rule.OrgID)
+	var got map[string]struct{}
+	var ambientSess *db.Session
+	err := sqlStore.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := sqlStore.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		var err error
+		got, err = store.GetAllFoldersWithRules(ctx, rule.OrgID)
+		return err
+	})
 	require.NoError(t, err)
 
 	_, ok := got[rule.NamespaceUID]
 	assert.True(t, ok)
 	assert.Contains(t, requestedTables, "alert_rule")
 	assert.True(t, spy.withDbSessionCalled, "scan should run on dbHelper.DB, not st.SQLStore directly")
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession)
+	assert.NotSame(t, ambientSess, spy.lastSession, "routed read should not reuse the ambient session from st.SQLStore's transaction")
+}
+
+// TestIntegration_GetAllFoldersWithRules_DefaultPathJoinsAmbientSession is the mirror of the
+// ambient-session check above: with no LegacyDatabaseProvider configured, this must stay on the
+// caller's transaction.
+func TestIntegration_GetAllFoldersWithRules_DefaultPathJoinsAmbientSession(t *testing.T) {
+	tutil.SkipIntegrationTestInShortMode(t)
+
+	sqlStore := db.InitTestDB(t) //nolint:staticcheck // legacy shared-DB test setup; migrate to NewTestStore
+	cfg := setting.NewCfg()
+	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	logger := log.New("test-dbstore")
+	store := createTestStore(sqlStore, folderService, logger, cfg.UnifiedAlerting, &fakeBus{})
+
+	spy := &dbSpy{DB: sqlStore}
+	store.SQLStore = spy
+
+	rule := createRule(t, store, nil)
+
+	var ambientSess *db.Session
+	err := spy.InTransaction(context.Background(), func(ctx context.Context) error {
+		if err := spy.WithDbSession(ctx, func(sess *db.Session) error {
+			ambientSess = sess
+			return nil
+		}); err != nil {
+			return err
+		}
+		spy.lastSession = nil // the setup call above also recorded a session; reset so only the target call below can set it
+		_, err := store.GetAllFoldersWithRules(ctx, rule.OrgID)
+		return err
+	})
+	require.NoError(t, err)
+
+	require.NotNil(t, ambientSess)
+	require.NotNil(t, spy.lastSession, "the target call itself must have used a session")
+	assert.Same(t, ambientSess, spy.lastSession, "default read should join the caller's ambient transaction")
 }
 
 func TestIntegrationInsertAlertRules(t *testing.T) {
