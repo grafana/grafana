@@ -2941,6 +2941,24 @@
     },
     {
       "metadata": {
+        "name": "grafana.publishLegacySQLEvents",
+        "resourceVersion": "1791422331913",
+        "creationTimestamp": "2026-10-07T14:35:19Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-08 01:18:51.913916 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Publish watch events when values are saved to legacy SQL tables",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-app-platform-squad",
+        "requiresRestart": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.queryVarEditorRedesign",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-07-13T12:52:09Z"
@@ -3424,7 +3442,7 @@
         "name": "kubernetesAlertingHistorian",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-11-27T16:14:16Z",
-        "deletionTimestamp": "2026-10-08T11:13:16Z"
+        "deletionTimestamp": "2026-10-08T14:06:18Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes alerting historian APIs",

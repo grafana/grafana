@@ -2198,6 +2198,16 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:            "grafana.publishLegacySQLEvents",
+			Description:     "Publish watch events when values are saved to legacy SQL tables",
+			Stage:           FeatureStageExperimental,
+			Generate:        Generate{Go: true},
+			HideFromDocs:    true,
+			Owner:           grafanaAppPlatformSquad,
+			RequiresRestart: true,
+			Expression:      "false",
+		},
+		{
 			Name:         "plugins.useMTPlugins",
 			Description:  "Enables plugins decoupling from bootdata",
 			Stage:        FeatureStageExperimental,
