@@ -72,8 +72,8 @@ type DataSourceAPIBuilder struct {
 	proxyDeps              *ProxyDependencies
 	dataSourceCRUDMetric   *prometheus.HistogramVec
 
-	// dataSourceRequestValidator gates outbound datasource requests (proxy and
-	// health), matching the legacy HTTP API behavior.
+	// dataSourceRequestValidator gates outbound datasource requests (proxy,
+	// health, and resources), matching the legacy HTTP API behavior.
 	dataSourceRequestValidator validations.DataSourceRequestValidator
 
 	// Legacy or Unified -- depending on config
@@ -211,7 +211,7 @@ func NewDataSourceAPIBuilder(
 }
 
 // validateDataSourceRequest runs the configured request validator against the
-// datasource URL and jsonData. It is used by the proxy and health subresources
+// datasource URL and jsonData. It is used by the proxy, health, and resource subresources
 // to mirror the legacy HTTP API, which rejects requests the validator denies.
 func (b *DataSourceAPIBuilder) validateDataSourceRequest(dsURL string, jsonData map[string]any, req *http.Request) error {
 	if b.dataSourceRequestValidator == nil {
