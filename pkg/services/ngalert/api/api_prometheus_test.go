@@ -46,6 +46,13 @@ import (
 func Test_FormatValues(t *testing.T) {
 	val1 := 1.1
 	val2 := 1.4
+	classicMatchesState := &state.State{LatestResult: &state.Evaluation{Condition: "B"}}
+	classicMatchesState.SetNextValues(eval.Result{Values: map[string]eval.NumberValueCapture{
+		"B10": {Var: "B", Metric: "disk_usage_bytes", Labels: data.Labels{"pod": "pod-10"}, Value: new(10.0), Type: "classic_conditions"},
+		"B0":  {Var: "B", Metric: "http_requests_total", Labels: data.Labels{"pod": "pod-0"}, Value: &val1, Type: "classic_conditions"},
+		"B1":  {Var: "B", Metric: "http_requests_total", Labels: data.Labels{"pod": "pod-1"}, Value: &val2, Type: "classic_conditions"},
+	}})
+	classicMatchesState.LastEvaluationString = "stale classic-condition string"
 
 	tc := []struct {
 		name       string
@@ -83,6 +90,11 @@ func Test_FormatValues(t *testing.T) {
 				LatestResult:         &state.Evaluation{Condition: "B", Values: map[string]float64{"B0": val1, "B1": val2, "B2": val1, "B10": val2, "B11": val1}},
 			},
 			expected: "B0: 1.1e+00, B10: 1.4e+00, B11: 1.1e+00, B1: 1.4e+00, B2: 1.1e+00",
+		},
+		{
+			name:       "with classic condition matches, it renders actual series in natural RefID order",
+			alertState: classicMatchesState,
+			expected:   "[ var='B0' metric='http_requests_total' labels={pod=pod-0} type='classic_conditions' value=1.1 ], [ var='B1' metric='http_requests_total' labels={pod=pod-1} type='classic_conditions' value=1.4 ], [ var='B10' metric='disk_usage_bytes' labels={pod=pod-10} type='classic_conditions' value=10 ]",
 		},
 	}
 

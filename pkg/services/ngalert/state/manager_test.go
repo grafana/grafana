@@ -2570,6 +2570,28 @@ func TestResetStateByRuleUID(t *testing.T) {
 		transitions := manager.ResetStateByRuleUID(ctx, nil, "test reason")
 		require.Empty(t, transitions)
 	})
+
+	t.Run("clears the evaluation snapshot", func(t *testing.T) {
+		manager := setupManager(nil)
+		rule := models.RuleGen.GenerateRef()
+		value := 42.0
+		manager.Put([]*state.State{{
+			OrgID:                rule.OrgID,
+			AlertRuleUID:         rule.UID,
+			CacheID:              1,
+			State:                eval.Alerting,
+			Values:               map[string]float64{"B0": value},
+			EvalMatches:          []state.EvaluationMatch{{RefID: "B0", Metric: "series", Value: &value}},
+			LastEvaluationString: "previous evaluation",
+		}})
+
+		transitions := manager.DeleteStateByRuleUID(ctx, rule.GetKeyWithGroup(), models.StateReasonPaused)
+
+		require.Len(t, transitions, 1)
+		require.Empty(t, transitions[0].Values)
+		require.Nil(t, transitions[0].EvalMatches)
+		require.Empty(t, transitions[0].LastEvaluationString)
+	})
 }
 
 func setCacheID(s *state.State) *state.State {

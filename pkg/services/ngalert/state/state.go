@@ -2,11 +2,14 @@ package state
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"math"
 	"net/url"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -23,6 +26,72 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/screenshot"
 )
+
+// EvaluationMatch identifies a series matched by a classic condition evaluation.
+// RefID is the explicit evaluation value key (for example, B0 or B1).
+type EvaluationMatch struct {
+	RefID  string      `json:"refId"`
+	Metric string      `json:"metric"`
+	Labels data.Labels `json:"labels"`
+	Value  *float64    `json:"value,string"`
+}
+
+func (m EvaluationMatch) MarshalJSON() ([]byte, error) {
+	var value *string
+	if m.Value != nil {
+		formatted := strconv.FormatFloat(*m.Value, 'f', -1, 64)
+		value = &formatted
+	}
+	return json.Marshal(struct {
+		RefID  string      `json:"refId"`
+		Metric string      `json:"metric"`
+		Labels data.Labels `json:"labels"`
+		Value  *string     `json:"value"`
+	}{
+		RefID:  m.RefID,
+		Metric: m.Metric,
+		Labels: m.Labels,
+		Value:  value,
+	})
+}
+
+func (m *EvaluationMatch) UnmarshalJSON(rawData []byte) error {
+	var raw struct {
+		RefID  string          `json:"refId"`
+		Metric string          `json:"metric"`
+		Labels data.Labels     `json:"labels"`
+		Value  json.RawMessage `json:"value"`
+	}
+	if err := json.Unmarshal(rawData, &raw); err != nil {
+		return err
+	}
+
+	m.RefID = raw.RefID
+	m.Metric = raw.Metric
+	m.Labels = raw.Labels
+	if len(raw.Value) == 0 || string(raw.Value) == "null" {
+		m.Value = nil
+		return nil
+	}
+
+	var value float64
+	var text string
+	if err := json.Unmarshal(raw.Value, &text); err == nil {
+		if text == "" {
+			m.Value = nil
+			return nil
+		}
+		parsed, err := strconv.ParseFloat(text, 64)
+		if err != nil {
+			return err
+		}
+		value = parsed
+	} else if err := json.Unmarshal(raw.Value, &value); err != nil {
+		return err
+	}
+	m.Value = &value
+	return nil
+}
 
 type State struct {
 	OrgID        int64
@@ -64,6 +133,9 @@ type State struct {
 	// conditions.
 	Values map[string]float64
 
+	// EvalMatches contains the series that matched classic conditions in the latest evaluation.
+	EvalMatches []EvaluationMatch
+
 	// FiredAt is the time the state first transitions to Alerting.
 	FiredAt *time.Time
 
@@ -100,6 +172,7 @@ func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, 
 		Annotations:          annotations,
 		Labels:               lbs,
 		Values:               nil,
+		EvalMatches:          nil,
 		StartsAt:             result.EvaluatedAt,
 		EndsAt:               result.EvaluatedAt,
 		ResolvedAt:           nil,
@@ -131,6 +204,7 @@ func (a *State) Copy() *State {
 		Annotations:          annotationsCopy,
 		Labels:               labelsCopy,
 		Values:               a.Values,
+		EvalMatches:          cloneEvalMatches(a.EvalMatches),
 		StartsAt:             a.StartsAt,
 		EndsAt:               a.EndsAt,
 		FiredAt:              a.FiredAt,
@@ -261,6 +335,7 @@ func datasourceErrorInfo(err error, rule *models.AlertRule) (string, string) {
 
 func (a *State) SetNextValues(result eval.Result) {
 	const sentinel = float64(-1)
+	a.EvalMatches = classicEvalMatches(result.Values)
 
 	// We try to provide a reasonable object for Values in the event of nodata/error.
 	// In order to not break templates that might refer to refIDs,
@@ -283,6 +358,73 @@ func (a *State) SetNextValues(result eval.Result) {
 		}
 	}
 	a.Values = newValues
+}
+
+func classicEvalMatches(values map[string]eval.NumberValueCapture) []EvaluationMatch {
+	matches := make([]EvaluationMatch, 0)
+	for refID, value := range values {
+		if value.Type != "classic_conditions" {
+			continue
+		}
+		matches = append(matches, EvaluationMatch{
+			RefID:  refID,
+			Metric: value.Metric,
+			Labels: value.Labels,
+			Value:  value.Value,
+		})
+	}
+	if len(matches) == 0 {
+		return nil
+	}
+	sort.Slice(matches, func(i, j int) bool {
+		return naturalRefIDLess(matches[i].RefID, matches[j].RefID)
+	})
+	return matches
+}
+
+func naturalRefIDLess(a, b string) bool {
+	aPrefix, aNumber, aHasNumber := refIDParts(a)
+	bPrefix, bNumber, bHasNumber := refIDParts(b)
+	if aPrefix != bPrefix {
+		return aPrefix < bPrefix
+	}
+	if aHasNumber != bHasNumber {
+		return aHasNumber
+	}
+	if aHasNumber && aNumber != bNumber {
+		return aNumber < bNumber
+	}
+	return a < b
+}
+
+func refIDParts(refID string) (string, uint64, bool) {
+	index := len(refID)
+	for index > 0 && refID[index-1] >= '0' && refID[index-1] <= '9' {
+		index--
+	}
+	if index == len(refID) {
+		return refID, 0, false
+	}
+	number, err := strconv.ParseUint(refID[index:], 10, 64)
+	if err != nil {
+		return refID, 0, false
+	}
+	return refID[:index], number, true
+}
+
+func cloneEvalMatches(matches []EvaluationMatch) []EvaluationMatch {
+	if matches == nil {
+		return nil
+	}
+
+	cloned := make([]EvaluationMatch, len(matches))
+	for i, match := range matches {
+		cloned[i] = match
+		if match.Labels != nil {
+			cloned[i].Labels = match.Labels.Copy()
+		}
+	}
+	return cloned
 }
 
 // StateTransition describes the transition from one state to another.
@@ -804,6 +946,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	newState.LatestResult = existingState.LatestResult
 	newState.Error = existingState.Error
 	newState.Values = existingState.Values
+	newState.EvalMatches = cloneEvalMatches(existingState.EvalMatches)
 	newState.LastEvaluationString = existingState.LastEvaluationString
 	newState.StartsAt = existingState.StartsAt
 	newState.EndsAt = existingState.EndsAt

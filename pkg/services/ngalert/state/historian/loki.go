@@ -358,6 +358,7 @@ func StateTransitionToLokiEntry(rule history_model.RuleMeta, state state.StateTr
 		Previous:       state.PreviousFormatted(),
 		Current:        state.Formatted(),
 		Values:         valuesAsDataBlob(state.State),
+		EvalMatches:    state.EvalMatches,
 		Condition:      rule.Condition,
 		DashboardUID:   rule.DashboardUID,
 		PanelID:        rule.PanelID,
@@ -383,18 +384,19 @@ func (h *RemoteLokiBackend) recordStreams(ctx context.Context, stream lokiclient
 }
 
 type LokiEntry struct {
-	SchemaVersion int              `json:"schemaVersion"`
-	Previous      string           `json:"previous"`
-	Current       string           `json:"current"`
-	Error         string           `json:"error,omitempty"`
-	Values        *simplejson.Json `json:"values"`
-	Condition     string           `json:"condition"`
-	DashboardUID  string           `json:"dashboardUID"`
-	PanelID       int64            `json:"panelID"`
-	Fingerprint   string           `json:"fingerprint"`
-	RuleTitle     string           `json:"ruleTitle"`
-	RuleID        int64            `json:"ruleID"`
-	RuleUID       string           `json:"ruleUID"`
+	SchemaVersion int                     `json:"schemaVersion"`
+	Previous      string                  `json:"previous"`
+	Current       string                  `json:"current"`
+	Error         string                  `json:"error,omitempty"`
+	Values        *simplejson.Json        `json:"values"`
+	EvalMatches   []state.EvaluationMatch `json:"evalMatches,omitempty"`
+	Condition     string                  `json:"condition"`
+	DashboardUID  string                  `json:"dashboardUID"`
+	PanelID       int64                   `json:"panelID"`
+	Fingerprint   string                  `json:"fingerprint"`
+	RuleTitle     string                  `json:"ruleTitle"`
+	RuleID        int64                   `json:"ruleID"`
+	RuleUID       string                  `json:"ruleUID"`
 	// InstanceLabels is exactly the set of labels associated with the alert instance in Alertmanager.
 	// These should not be conflated with labels associated with log streams.
 	InstanceLabels map[string]string `json:"labels"`
