@@ -27,6 +27,17 @@
       "label": "Override grouping",
       "summary": "Grouping: <strong>{{fields}}</strong>"
     },
+    "notifications-settings-selector": {
+      "alertmanager-label": "Alertmanager: grafana",
+      "contact-point-aria": "Contact point",
+      "contact-point-description": "Notifications for firing alerts are routed to a selected contact point.",
+      "contact-point-not-found": "The previously selected contact point could not be found — it may have been deleted",
+      "contact-points-error": "Could not load contact points",
+      "manage-contact-points": "View or create contact points",
+      "routing-tree-not-found": "The previously selected notification policy could not be found — it may have been deleted",
+      "routing-trees-error": "Could not load notification policies",
+      "timings-disabled": "Select a contact point first"
+    },
     "paused-badge": {
       "paused": "Paused"
     },
@@ -56,6 +67,15 @@
       "custom-policy-desc": "Route alerts through the {{name}} policy tree",
       "default-policy": "Default policy",
       "default-policy-desc": "Routes alerts using the default notification policy tree"
+    },
+    "simplified-routing-fields": {
+      "active-timings": "Active timings",
+      "active-timings-description": "Select a time interval to define when to only send notifications for this alert rule",
+      "description": "Configure how notifications for this alert rule are sent.",
+      "mute-timings": "Mute timings",
+      "mute-timings-description": "Select a mute timing to define when not to send notifications for this alert rule",
+      "time-intervals-error": "Could not load mute/active timings — showing the rest of the section without them.",
+      "toggle": "Muting, grouping and timings (optional)"
     },
     "time-intervals-select": {
       "error": "Could not load time intervals",
