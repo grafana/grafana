@@ -23,6 +23,7 @@ import {
 } from '@grafana/scenes';
 import { type DataSourceRef, VariableHide, type VariableType } from '@grafana/schema';
 
+import { ResettingCustomVariable } from '../../serialization/custom-variables/ResettingCustomVariable';
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/getIntervalsQueryFromNewIntervalModel';
 import { isPredefinedOrigin } from '../../utils/predefinedVariables';
 
@@ -206,7 +207,7 @@ async function getDefaultDatasourceRef(): Promise<DataSourceRef | undefined> {
 export async function getVariableScene(type: EditableVariableType, initialState: CommonVariableProperties) {
   switch (type) {
     case 'custom':
-      return new CustomVariable(initialState);
+      return new ResettingCustomVariable(initialState);
     case 'query': {
       // we need to initialize the query variable with the default datasource
       // this matches the behavior in Settings -> Variables -> Add Variable
