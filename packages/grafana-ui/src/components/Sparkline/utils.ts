@@ -7,7 +7,10 @@ import {
   type FieldConfig,
   type FieldSparkline,
   FieldType,
+  formattedValueToString,
+  getDisplayProcessor,
   getFieldColorModeForField,
+  getFieldSeriesColor,
   type GrafanaTheme2,
   guessDecimals,
   isLikelyAscendingVector,
@@ -27,6 +30,14 @@ import {
 } from '@grafana/schema';
 
 import { UPlotConfigBuilder } from '../uPlot/config/UPlotConfigBuilder';
+
+import { type SparklineHoverEvent } from './Sparkline';
+
+/** Internal: public `SparklineHoverEvent` plus cursor viewport coords for positioning the tooltip. */
+export interface SparklineHoverInfo extends SparklineHoverEvent {
+  left: number;
+  top: number;
+}
 
 /** @internal
  * Given a sparkline config returns a DataFrame ready to be turned into Plot data set
@@ -170,19 +181,42 @@ export const prepareConfig = (
   sparkline: FieldSparkline,
   dataFrame: DataFrame,
   theme: GrafanaTheme2,
-  showHighlights?: boolean
+  showHighlights?: boolean,
+  enableHover?: boolean,
+  onHover?: (hover: SparklineHoverInfo | null) => void
 ): UPlotConfigBuilder => {
   const builder = new UPlotConfigBuilder();
   const rangePad = HIGHLIGHT_IDX_POINT_SIZE / 2;
-
-  builder.setCursor({
-    show: false,
-    x: false, // no crosshairs
-    y: false,
-  });
+  // uPlot series/data index of the single y series (0 is the x field).
+  let yFieldIndex = -1;
 
   // X is the first field in the aligned frame
   const xField = dataFrame.fields[0];
+
+  if (enableHover) {
+    // Crosshair + focused point at the hovered index, no drag/zoom. focus.prox Infinity keeps
+    // the single series focused so hover works across the full width.
+    const yField = dataFrame.fields.find((f) => f !== xField && f.type === FieldType.number);
+    // Paint the cursor point a solid series color. uPlot's default cursor-point color fn reads
+    // the builder's `frames`, which Sparkline never populates, so it would throw on gradient
+    // series (e.g. TableNG's default hue). A solid color sidesteps that.
+    const pointColor = yField ? getFieldSeriesColor(yField, theme).color : theme.colors.text.primary;
+    builder.setCursor({
+      show: true,
+      x: true,
+      y: false,
+      drag: { x: false, y: false, setScale: false },
+      focus: { prox: Infinity },
+      points: { size: HIGHLIGHT_IDX_POINT_SIZE, stroke: pointColor, fill: pointColor },
+    });
+  } else {
+    builder.setCursor({
+      show: false,
+      x: false,
+      y: false,
+    });
+  }
+
   builder.addScale({
     scaleKey: 'x',
     orientation: ScaleOrientation.Horizontal,
@@ -220,6 +254,7 @@ export const prepareConfig = (
     }
 
     const scaleKey = config.unit || '__fixed';
+    yFieldIndex = i;
     builder.addScale({
       scaleKey,
       orientation: ScaleOrientation.Vertical,
@@ -265,6 +300,40 @@ export const prepareConfig = (
       lineStyle: customConfig.lineStyle,
       gradientMode: customConfig.gradientMode,
       spanNulls: customConfig.spanNulls,
+    });
+  }
+
+  if (enableHover && onHover && yFieldIndex >= 0) {
+    const seriesIdx = yFieldIndex;
+    const yField = dataFrame.fields[seriesIdx];
+    const display = yField.display ?? getDisplayProcessor({ field: yField, theme });
+    // Emit only on index change; emit null once when leaving a hovered point.
+    let prevIdx: number | null | undefined;
+
+    builder.addHook('setCursor', (u) => {
+      const idx = u.cursor.idxs?.[seriesIdx] ?? null;
+      const value = idx != null ? u.data[seriesIdx]?.[idx] : null;
+
+      if (idx == null || value == null || !Number.isFinite(value)) {
+        if (typeof prevIdx === 'number') {
+          prevIdx = null;
+          onHover(null);
+        }
+        return;
+      }
+
+      if (idx === prevIdx) {
+        return;
+      }
+      prevIdx = idx;
+
+      onHover({
+        index: idx,
+        value,
+        display: formattedValueToString(display(value)),
+        left: u.rect.left + (u.cursor.left ?? 0),
+        top: u.rect.top + (u.cursor.top ?? 0),
+      });
     });
   }
 

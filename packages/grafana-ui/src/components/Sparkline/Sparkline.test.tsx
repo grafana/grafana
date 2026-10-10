@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { act, render, waitFor } from '@testing-library/react';
 import type uPlot from 'uplot';
 
 import { createTheme, dateTime, type FieldSparkline, FieldType, makeTimeRange } from '@grafana/data';
@@ -135,5 +135,78 @@ describe('Sparkline', () => {
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+
+  // Public payload is the trimmed { index, value, display }; unmount while hovered clears it.
+  it('fans a trimmed hover event out to onHover and clears it on unmount', async () => {
+    const onHover = jest.fn();
+    const { unmount } = render(
+      <Sparkline width={WIDTH} height={HEIGHT} theme={createTheme()} sparkline={makeSparkline()} onHover={onHover} />
+    );
+    await waitFor(() => expect(plotInstance?.status).toBe(1));
+
+    expect(prepareConfigSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      true,
+      expect.any(Function)
+    );
+
+    // The component passes its internal emit dispatcher as prepareConfig's onHover arg.
+    const emit = prepareConfigSpy.mock.calls[0][5] as (hover: sparklineUtils.SparklineHoverInfo | null) => void;
+    act(() => emit({ index: 1, value: 20, display: '20', left: 5, top: 6 }));
+    expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20' });
+
+    onHover.mockClear();
+    unmount();
+    expect(onHover).toHaveBeenCalledWith(null);
+  });
+
+  // A data refresh can swap the series while the mouse is held still; the active hover must clear.
+  it('clears an active hover when the sparkline series changes', async () => {
+    const onHover = jest.fn();
+    const { rerender } = render(
+      <Sparkline width={WIDTH} height={HEIGHT} theme={createTheme()} sparkline={makeSparkline()} onHover={onHover} />
+    );
+    await waitFor(() => expect(plotInstance?.status).toBe(1));
+
+    const emit = prepareConfigSpy.mock.calls[0][5] as (hover: sparklineUtils.SparklineHoverInfo | null) => void;
+    act(() => emit({ index: 1, value: 20, display: '20', left: 5, top: 6 }));
+    expect(onHover).toHaveBeenLastCalledWith({ index: 1, value: 20, display: '20' });
+
+    onHover.mockClear();
+    rerender(
+      <Sparkline
+        width={WIDTH}
+        height={HEIGHT}
+        theme={createTheme()}
+        sparkline={makeSparkline({
+          y: {
+            name: 'y',
+            values: [9, 8, 7, 6, 5],
+            type: FieldType.number,
+            config: {},
+            state: { range: { min: 5, max: 9, delta: 4 } },
+          },
+        })}
+        onHover={onHover}
+      />
+    );
+    expect(onHover).toHaveBeenCalledWith(null);
+  });
+
+  it('leaves the cursor disabled when no hover props are passed', async () => {
+    await mountAndGetPlot(makeSparkline());
+
+    expect(prepareConfigSpy).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      undefined,
+      false,
+      expect.any(Function)
+    );
   });
 });
