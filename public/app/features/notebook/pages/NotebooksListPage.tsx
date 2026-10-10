@@ -30,9 +30,11 @@ export function NotebooksListPage() {
     rows,
     totalCount,
     isTotalExact,
+    loadedCount,
     isTruncated,
     isLoadingMore,
     isFiltered,
+    searchesContent,
     searchQuery,
     setSearchQuery,
     debouncedSearch,
@@ -41,6 +43,7 @@ export function NotebooksListPage() {
     canFilterByMe,
     tagFilter,
     setTagFilter,
+    loadedTags,
     addTagFilter,
     isLoading,
     isReloading,
@@ -173,23 +176,33 @@ export function NotebooksListPage() {
                   value={searchQuery}
                   onChange={setSearchQuery}
                   escapeRegex={false}
-                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks by title...')}
+                  placeholder={t('notebooks.list.search-placeholder', 'Search notebooks...')}
                   data-testid={selectors.pages.Notebooks.List.searchInput}
                 />
+                {searchQuery.trim() && (
+                  <Text variant="bodySmall" color="secondary" role="status" aria-live="polite">
+                    {searchesContent
+                      ? t('notebooks.list.search-scope-content', 'Matches may be in titles, markdown, or code.')
+                      : t('notebooks.list.search-scope-title', 'Searching titles only on this instance.')}
+                  </Text>
+                )}
                 <Stack justifyContent="space-between" alignItems="center" gap={2} wrap="wrap">
                   <Stack alignItems="center" gap={1} wrap="wrap">
                     <NotebookTagsField
                       value={tagFilter}
                       onChange={setTagFilter}
+                      // Where the search route is not served the facet cannot answer, and these are
+                      // the only tags there are to offer.
+                      fallbackTags={loadedTags}
                       placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                     />
                     {canFilterByMe && (
                       <Checkbox
                         id="notebooks-created-by-me"
+                        data-testid={selectors.pages.Notebooks.List.createdByMeCheckbox}
                         value={createdByMe}
                         onChange={(event) => setCreatedByMe(event.currentTarget.checked)}
                         label={t('notebooks.list.created-by-me', 'Created by me')}
-                        data-testid={selectors.pages.Notebooks.List.createdByMeCheckbox}
                       />
                     )}
                   </Stack>
@@ -201,6 +214,7 @@ export function NotebooksListPage() {
                     ) : (
                       <CountSummary
                         shown={rows.length}
+                        loadedCount={loadedCount}
                         totalCount={totalCount}
                         isTotalExact={isTotalExact}
                         isTruncated={isTruncated}
@@ -243,16 +257,22 @@ const COUNT_SKELETON_WIDTH = 120;
 interface CountSummaryProps {
   /** Rows on screen. */
   shown: number;
-  /** Matches the server counted. */
-  totalCount: number;
+  /** Rows the request returned, before client-side filtering. */
+  loadedCount: number;
+  /** Matches the server counted, or undefined when it reports no total. */
+  totalCount: number | undefined;
   isTotalExact: boolean;
   isTruncated: boolean;
   /** Pages are still arriving, so every number here is still climbing. */
   isLoadingMore: boolean;
 }
 
-/** Says how much of the library is on screen, phrased by what the server can honestly claim. */
-function CountSummary({ shown, totalCount, isTotalExact, isTruncated, isLoadingMore }: CountSummaryProps) {
+/**
+ * Says how much of the library is on screen, phrased by what the serving path can honestly claim.
+ * Nothing here invents a total: when the server does not report one, the size of the window it
+ * returned is all there is to say.
+ */
+function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncated, isLoadingMore }: CountSummaryProps) {
   const matches = (
     <Text variant="bodySmall" color="secondary">
       {t('notebooks.list.count', '', {
@@ -264,7 +284,7 @@ function CountSummary({ shown, totalCount, isTotalExact, isTruncated, isLoadingM
   );
 
   // Say so rather than letting the count climb on its own, which reads as a miscount.
-  if (isLoadingMore) {
+  if (isLoadingMore && totalCount !== undefined) {
     return (
       <Text variant="bodySmall" color="secondary">
         {t('notebooks.list.count-loading', 'Loading {{shown}} of {{total}}...', { shown, total: totalCount })}
@@ -274,6 +294,23 @@ function CountSummary({ shown, totalCount, isTotalExact, isTruncated, isLoadingM
 
   if (!isTruncated) {
     return matches;
+  }
+
+  // No server-side total: two numbers, because how many were loaded and how many of those matched
+  // are different facts, and folding them into one would misreport both.
+  if (totalCount === undefined) {
+    return (
+      <>
+        <Text variant="bodySmall" color="secondary">
+          {t('notebooks.list.count-truncated', '', {
+            count: loadedCount,
+            defaultValue_one: 'First {{count}} notebook loaded',
+            defaultValue_other: 'First {{count}} notebooks loaded',
+          })}
+        </Text>
+        {matches}
+      </>
+    );
   }
 
   return (
