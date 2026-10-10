@@ -72,7 +72,7 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 	if !enabled {
 		// A disabled feature is an expected configuration state, not a failure:
 		// complete the job in a warning state so it is not logged or alerted as an error.
-		return jobs.AsWarning(errors.New("export functionality is disabled"))
+		return jobs.AsWarning(errors.New("push jobs require the provisioningExport feature flag"))
 	}
 
 	logger := logging.FromContext(ctx).With("options", options)
