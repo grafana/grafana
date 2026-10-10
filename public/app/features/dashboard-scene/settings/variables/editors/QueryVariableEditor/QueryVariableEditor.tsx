@@ -10,7 +10,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { getDataSourceInstance } from '@grafana/runtime/unstable';
-import { type QueryVariable, sceneGraph } from '@grafana/scenes';
+import { type QueryVariable, SafeSerializableSceneObject, sceneGraph } from '@grafana/scenes';
 import { type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Field, Stack } from '@grafana/ui';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
@@ -104,6 +104,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
 
   return (
     <QueryVariableEditorForm
+      variable={variable}
       datasource={datasource ?? undefined}
       onDataSourceChange={onDataSourceChange}
       query={query}
@@ -156,7 +157,9 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
   } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
   const { value: dsConfig } = useAsync(async () => {
-    const datasource = await getDataSourceInstance(datasourceRef ?? '');
+    const datasource = await getDataSourceInstance(datasourceRef ?? '', {
+      __sceneObject: new SafeSerializableSceneObject(variable),
+    });
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
 
@@ -189,7 +192,7 @@ export function Editor({ variable, hideRefresh, hideStaticOptions, hidePreview }
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
   };
-  const onRegexApplyToChange = (event: VariableRegexApplyTo) => {
+  const onRegexApplyToChange = (event: VariableRegexApplyToChange) => {
     variable.setState({ regexApplyTo: event });
   };
   const onSortChange = (sort: SelectableValue<VariableSort>) => {
