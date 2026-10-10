@@ -1981,7 +1981,12 @@ func (dr *DashboardServiceImpl) buildDashboardSearchRequest(query *dashboards.Fi
 	request := &resourcepb.ResourceSearchRequest{
 		Options: &resourcepb.ListOptions{
 			Fields: []*resourcepb.Requirement{},
-			Labels: []*resourcepb.Requirement{},
+			// Dashboard drafts and forks are private to their owner; legacy search never returns them.
+			Labels: []*resourcepb.Requirement{{
+				Key:      utils.LabelKeyLifecycle,
+				Operator: string(selection.NotIn),
+				Values:   []string{utils.LifecycleDraft, utils.LifecycleFork},
+			}},
 		},
 		Limit:        100000,
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
