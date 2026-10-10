@@ -35,9 +35,10 @@ Treat a bundle as you would treat a credential. **Review it before you share it*
 
 To generate a diagnostic bundle, you need the following:
 
-- A self-managed Grafana instance. Diagnostic bundles aren't available in Grafana Cloud.
+- A self-managed Grafana instance running version 13.2 or later. Diagnostic bundles aren't available in Grafana Cloud, and earlier self-managed versions don't include this feature.
 - The Grafana server administrator role. The menu items described on this page don't appear for other users.
 - The `grafana.onDemandDiagnostics` feature toggle enabled.
+- A data source whose plugin supports diagnostic bundles. Refer to [Data source support for capturing upstream traffic](#data-source-support-for-capturing-upstream-traffic).
 
 ### Enable the feature toggle
 
@@ -109,19 +110,27 @@ A dashboard bundle contains a `panels/<id>-<title>/` directory holding those fil
 
 `traffic.har` is usually the most valuable file in the bundle, but it isn't available for every data source. When upstream traffic can't be captured, Grafana still generates the rest of the bundle, and `querydata.json` still shows what the data source plugin returned.
 
-### Data sources that capture upstream traffic
+### Data sources that support capture today
 
-The following data sources are built into Grafana and capture their upstream traffic with no extra configuration:
-
-- Prometheus
+- Amazon Managed Service for Prometheus
+- Azure Data Explorer
+- Azure Monitor
+- Azure Prometheus
+- CSV
+- Dynatrace
+- Elasticsearch
+- Falcon LogScale
+- Google Sheets
 - Graphite
 - InfluxDB
-- Azure Monitor
-
-### Data sources that don't capture upstream traffic
-
-- **SQL and other database data sources**, such as MySQL, PostgreSQL, Microsoft SQL Server, and MongoDB. These communicate over a database wire protocol instead of HTTP, so there's no HTTP exchange to record.
-- **Amazon CloudWatch.** Queries go through the AWS SDK, which doesn't use the instrumented HTTP client that capture depends on.
+- Jaeger
+- Loki
+- OpenTSDB
+- Prometheus
+- Sentry
+- Tempo, for its standard HTTP query path—TraceQL streaming is not supported.
+- Zabbix
+- Zipkin
 
 ## Limitations
 
