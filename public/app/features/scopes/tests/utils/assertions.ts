@@ -13,6 +13,7 @@ import {
   getResultApplicationsMimirSelect,
   getSelectorInput as getSelectorButton,
   getTreeHeadline,
+  queryTreeHeadline,
   queryAllDashboard,
   queryDashboard,
   queryDashboardFolderExpand,
@@ -41,6 +42,7 @@ export const expectRecentScopeNotPresentInDocument = () => expectNotInDocument(q
 export const expectRecentScopesSection = () => expectInDocument(getRecentScopesSection);
 export const expectScopesSelectorValue = (value: string) => expect(getSelectorButton().dataset.value).toBe(value);
 export const expectScopesHeadline = (value: string) => expectTextContent(getTreeHeadline, value);
+export const expectScopesHeadlineNotPresent = () => expectNotInDocument(queryTreeHeadline);
 export const expectResultApplicationsGrafanaSelected = () => expectChecked(getResultApplicationsGrafanaSelect);
 export const expectResultApplicationsGrafanaPresent = () => expectInDocument(getResultApplicationsGrafanaSelect);
 export const expectResultApplicationsGrafanaPresentAsync = async () =>

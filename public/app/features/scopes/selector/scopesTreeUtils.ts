@@ -40,6 +40,24 @@ export function expandNodes(tree: TreeNode, path: string[]): TreeNode {
   return newTree;
 }
 
+/**
+ * Walks down the currently expanded branch of the tree (there is ever only one) and returns the chain of expanded
+ * nodes, root excluded. Used to render a breadcrumb back out of a branch opened via quick jump or manual expansion.
+ */
+export function getExpandedPath(tree: TreeNode): TreeNode[] {
+  const path: TreeNode[] = [];
+  let current = tree;
+  while (current.children) {
+    const expandedChild = Object.values(current.children).find((child) => child.expanded);
+    if (!expandedChild) {
+      break;
+    }
+    path.push(expandedChild);
+    current = expandedChild;
+  }
+  return path;
+}
+
 export function isNodeExpandable(node: ScopeNode) {
   return node.spec.nodeType === 'container';
 }

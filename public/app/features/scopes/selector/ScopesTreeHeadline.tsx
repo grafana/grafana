@@ -4,30 +4,26 @@ import { type GrafanaTheme2 } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
 import { useStyles2 } from '@grafana/ui';
 
-import { type NodesMap, type TreeNode } from './types';
+import { type TreeNode } from './types';
 
 export interface ScopesTreeHeadlineProps {
   anyChildExpanded: boolean;
   query: string;
   resultsNodes: TreeNode[];
-  scopeNodes: NodesMap;
 }
 
-export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes, scopeNodes }: ScopesTreeHeadlineProps) {
+export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes }: ScopesTreeHeadlineProps) {
   const styles = useStyles2(getStyles);
 
-  if (
-    anyChildExpanded ||
-    (resultsNodes.some((n) => scopeNodes[n.scopeNodeId]?.spec.nodeType === 'container') && !query)
-  ) {
+  // Only search results get a headline ("Results" / "No results..."). An unfiltered listing doesn't get a
+  // "Recommended" label — there's no actual recommendation behind it, just the plain unfiltered list.
+  if (anyChildExpanded || !query) {
     return null;
   }
 
   return (
     <h6 className={styles.container} data-testid="scopes-tree-headline">
-      {!query ? (
-        <Trans i18nKey="scopes.tree.headline.recommended">Recommended</Trans>
-      ) : resultsNodes.length === 0 ? (
+      {resultsNodes.length === 0 ? (
         <Trans i18nKey="scopes.tree.headline.noResults">No results found for your query</Trans>
       ) : (
         <Trans i18nKey="scopes.tree.headline.results">Results</Trans>
