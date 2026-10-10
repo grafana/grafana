@@ -53,6 +53,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
+	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
@@ -2150,6 +2151,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 
 				// Setup mocks and service
 				permService := acmock.NewMockedPermissionsService()
+				permService.On("GetPermissions", mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil).Maybe()
 				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 
 				service := &DashboardServiceImpl{
@@ -2179,6 +2181,134 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 				require.NoError(t, err)
 
 				// Verify results
+				if tc.expectedPermission == nil {
+					permService.AssertNotCalled(t, "SetPermissions")
+				} else {
+					permService.AssertCalled(t, "SetPermissions", mock.Anything, mock.Anything, mock.Anything, tc.expectedPermission)
+				}
+			})
+		}
+	})
+
+	t.Run("Should carry over the inherited permissions when the dashboard is moved to the root", func(t *testing.T) {
+		key := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
+		meta, err := utils.MetaAccessor(&dashboardv0.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "test"}})
+		require.NoError(t, err)
+
+		user := &user.SignedInUser{OrgID: 1, OrgRole: "Editor", UserID: 1}
+		ctx := request.WithNamespace(context.Background(), "default")
+		ctx = identity.WithRequester(ctx, user)
+		ctx = apistore.WithInheritedFrom(ctx, "old-parent")
+
+		viewerOwn := accesscontrol.ResourcePermission{BuiltInRole: string(org.RoleViewer), IsManaged: true, Actions: []string{dashboards.ActionDashboardsRead}}
+		viewerInherited := accesscontrol.ResourcePermission{BuiltInRole: string(org.RoleViewer), IsManaged: true, IsInherited: true, Actions: []string{dashboards.ActionDashboardsWrite}}
+		team := accesscontrol.ResourcePermission{TeamID: 3, IsManaged: true, Actions: []string{dashboards.ActionDashboardsWrite}}
+		fixedRole := accesscontrol.ResourcePermission{UserID: 7, IsManaged: false, Actions: []string{dashboards.ActionDashboardsRead}}
+
+		permService := acmock.NewMockedPermissionsService()
+		permService.On("GetPermissions", mock.Anything, mock.Anything, "old-parent").Return([]accesscontrol.ResourcePermission{viewerOwn, viewerInherited, team, fixedRole}, nil)
+		permService.On("GetPermissions", mock.Anything, mock.Anything, "test").Return([]accesscontrol.ResourcePermission{}, nil)
+		permService.On("MapActions", viewerOwn).Return(dashboardaccess.PERMISSION_VIEW.String())
+		permService.On("MapActions", viewerInherited).Return(dashboardaccess.PERMISSION_EDIT.String())
+		permService.On("MapActions", team).Return(dashboardaccess.PERMISSION_EDIT.String())
+		permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+		service := &DashboardServiceImpl{
+			cfg:                       setting.NewCfg(),
+			log:                       log.New("test-logger"),
+			dashboardPermissions:      permService,
+			folderPermissions:         permService,
+			dashboardPermissionsReady: make(chan struct{}),
+			acService:                 &actest.FakeService{},
+		}
+		service.RegisterDashboardPermissions(permService)
+
+		require.NoError(t, service.SetDefaultPermissionsAfterCreate(ctx, key, user, meta))
+
+		// The broadest level per assignee from the old folder tree, nothing for the mover, and
+		// unmanaged (fixed role) grants are left alone.
+		permService.AssertCalled(t, "SetPermissions", mock.Anything, mock.Anything, mock.Anything, []accesscontrol.SetResourcePermissionCommand{
+			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+			{TeamID: 3, Permission: dashboardaccess.PERMISSION_EDIT.String()},
+		})
+	})
+
+	t.Run("Should keep existing permissions when the dashboard already has some", func(t *testing.T) {
+		// The setter also runs when an existing dashboard is moved into the root folder.
+		key := &resourcepb.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
+		meta, err := utils.MetaAccessor(&dashboardv0.Dashboard{ObjectMeta: metav1.ObjectMeta{Name: "test"}})
+		require.NoError(t, err)
+
+		testCases := []struct {
+			name               string
+			existing           []accesscontrol.ResourcePermission
+			expectedPermission []accesscontrol.SetResourcePermissionCommand
+		}{
+			{
+				name: "adds the defaults and ignores team, inherited and unmanaged permissions",
+				existing: []accesscontrol.ResourcePermission{
+					{TeamID: 3, IsManaged: true, Actions: []string{dashboards.ActionDashboardsWrite}},
+					{BuiltInRole: string(org.RoleViewer), IsManaged: true, IsInherited: true, Actions: []string{dashboards.ActionDashboardsRead}},
+					{BuiltInRole: string(org.RoleEditor), IsManaged: false, Actions: []string{dashboards.ActionDashboardsRead}},
+				},
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
+					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name: "does not lower an existing basic role permission",
+				existing: []accesscontrol.ResourcePermission{
+					{BuiltInRole: string(org.RoleViewer), IsManaged: true, Actions: []string{dashboards.ActionDashboardsWrite}},
+				},
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
+					{UserID: 1, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+				},
+			},
+			{
+				name: "does not change the mover's existing permission",
+				existing: []accesscontrol.ResourcePermission{
+					{UserID: 1, IsManaged: true, Actions: []string{dashboards.ActionDashboardsRead}},
+				},
+				expectedPermission: []accesscontrol.SetResourcePermissionCommand{
+					{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
+					{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
+				},
+			},
+			{
+				name: "does nothing when every default assignee already has a permission",
+				existing: []accesscontrol.ResourcePermission{
+					{UserID: 1, IsManaged: true, Actions: []string{dashboards.ActionDashboardsRead}},
+					{BuiltInRole: string(org.RoleViewer), IsManaged: true, Actions: []string{dashboards.ActionDashboardsRead}},
+					{BuiltInRole: string(org.RoleEditor), IsManaged: true, Actions: []string{dashboards.ActionDashboardsWrite}},
+				},
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				user := &user.SignedInUser{OrgID: 1, OrgRole: "Editor", UserID: 1}
+				ctx := request.WithNamespace(context.Background(), "default")
+				ctx = identity.WithRequester(ctx, user)
+
+				permService := acmock.NewMockedPermissionsService()
+				permService.On("GetPermissions", mock.Anything, mock.Anything, "test").Return(tc.existing, nil)
+				permService.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
+
+				service := &DashboardServiceImpl{
+					cfg:                       setting.NewCfg(),
+					log:                       log.New("test-logger"),
+					dashboardPermissions:      permService,
+					folderPermissions:         permService,
+					dashboardPermissionsReady: make(chan struct{}),
+					acService:                 &actest.FakeService{},
+				}
+				service.RegisterDashboardPermissions(permService)
+
+				require.NoError(t, service.SetDefaultPermissionsAfterCreate(ctx, key, user, meta))
+
 				if tc.expectedPermission == nil {
 					permService.AssertNotCalled(t, "SetPermissions")
 				} else {

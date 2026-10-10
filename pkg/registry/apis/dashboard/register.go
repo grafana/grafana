@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -1512,47 +1513,57 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	log.Debug("setting default dashboard permissions", "uid", obj.GetName(), "namespace", obj.GetNamespace())
 
 	// Setting the default permissions is a system operation triggered by the creation
-	// of the dashboard, not an action the requester performs directly. The creator does
-	// not yet have permission to manage permissions on the brand-new dashboard, so we use
-	// a service identity to write them through the ResourcePermission API.
+	// of the dashboard (or its move into the root folder), not an action the requester
+	// performs directly. The requester does not necessarily have permission to manage
+	// permissions on the dashboard, so we use a service identity to write them through
+	// the ResourcePermission API.
 	nsInfo, err := authlib.ParseNamespace(obj.GetNamespace())
 	if err != nil {
 		return fmt.Errorf("parse namespace: %w", err)
 	}
 	ctx = identity.WithServiceIdentityContext(ctx, nsInfo.OrgID)
 
+	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
+	gvr := dashv1.DashboardResourceInfo.GroupVersionResource()
+
 	// The creator gets admin on their dashboard, in addition to the default basic-role
 	// permissions. Anonymous and other non-user identities don't get an explicit grant.
-	permissions := buildDefaultDashboardPermissions(id)
-
-	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
-	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
-
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
-		_, err := client.Update(ctx, &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]any{
-					"name":      name,
-					"namespace": obj.GetNamespace(),
-				},
-				"spec": map[string]any{
-					"resource": map[string]any{
-						"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-						"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
-						"name":     obj.GetName(),
-					},
-					"permissions": permissions,
-				},
-			},
-		}, metav1.UpdateOptions{})
+	defaults := buildDefaultDashboardPermissions(id)
+	if from, ok := apistore.InheritedFrom(ctx); ok {
+		// A dashboard moved to the root keeps the access it had through its old folder tree
+		// instead of getting the generic defaults, so the move neither widens nor narrows who
+		// can reach it, and the mover gains nothing they did not already have.
+		defaults, err = resourcepermission.InheritedPermissions(ctx, client, b.folderParents(nsInfo), from)
 		if err != nil {
+			return fmt.Errorf("inherited dashboard permissions: %w", err)
+		}
+	}
+	name := fmt.Sprintf("%s-%s-%s", gvr.Group, gvr.Resource, obj.GetName())
+
+	existing, err := client.Get(ctx, name, metav1.GetOptions{})
+	if err != nil && !apierrors.IsNotFound(err) {
+		return fmt.Errorf("get dashboard permissions: %w", err)
+	}
+
+	if err == nil {
+		// A dashboard moved to the root (or one whose permissions were seeded elsewhere) may
+		// already have grants; only add the defaults that are missing, never replace them.
+		current, _, _ := unstructured.NestedSlice(existing.Object, "spec", "permissions")
+		merged, changed := resourcepermission.MergeDefaultPermissions(current, defaults)
+		if !changed {
+			return nil
+		}
+		if err := unstructured.SetNestedSlice(existing.Object, merged, "spec", "permissions"); err != nil {
+			return fmt.Errorf("set dashboard permissions: %w", err)
+		}
+		if _, err := client.Update(ctx, existing, metav1.UpdateOptions{}); err != nil {
 			log.Error("failed to update dashboard permissions", "error", err)
 			return fmt.Errorf("update dashboard permissions: %w", err)
 		}
-
 		return nil
 	}
 
+	permissions, _ := resourcepermission.MergeDefaultPermissions(nil, defaults)
 	_, err = client.Create(ctx, &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"metadata": map[string]any{
@@ -1561,8 +1572,8 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 			},
 			"spec": map[string]any{
 				"resource": map[string]any{
-					"apiGroup": dashv1.DashboardResourceInfo.GroupVersionResource().Group,
-					"resource": dashv1.DashboardResourceInfo.GroupVersionResource().Resource,
+					"apiGroup": gvr.Group,
+					"resource": gvr.Resource,
 					"name":     obj.GetName(),
 				},
 				"permissions": permissions,
@@ -1575,6 +1586,36 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	}
 
 	return nil
+}
+
+// folderParents resolves a folder and all of its ancestors through the folders "parents"
+// subresource, for the namespace of the resource whose permissions are being set.
+func (b *DashboardsAPIBuilder) folderParents(ns authlib.NamespaceInfo) resourcepermission.FolderParents {
+	return func(ctx context.Context, folderUID string) ([]string, error) {
+		if b.folderClientProvider == nil {
+			return nil, fmt.Errorf("folder client provider is not configured")
+		}
+		folderClient := b.folderClientProvider.GetOrCreateHandler(ns.Value)
+		if folderClient == nil {
+			return nil, fmt.Errorf("folder client handler is not configured for namespace %q", ns.Value)
+		}
+		obj, err := folderClient.Get(ctx, folderUID, ns.OrgID, metav1.GetOptions{}, "parents")
+		if err != nil {
+			return nil, err
+		}
+		var info folders.FolderInfoList
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &info); err != nil {
+			return nil, fmt.Errorf("convert folder parents: %w", err)
+		}
+		uids := make([]string, 0, len(info.Items))
+		for _, item := range info.Items {
+			if item.Detached {
+				continue
+			}
+			uids = append(uids, item.Name)
+		}
+		return uids, nil
+	}
 }
 
 func (b *DashboardsAPIBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {

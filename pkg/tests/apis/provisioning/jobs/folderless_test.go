@@ -13,6 +13,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/apis/provisioning/common"
 )
 
@@ -428,4 +429,66 @@ func TestIntegrationProvisioning_FolderlessFileMove(t *testing.T) {
 		assert.Empty(collect, back.GetAnnotations()[utils.AnnoKeyFolder],
 			"dashboard should be back at the top level after moving to root")
 	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should return to the top level")
+}
+
+// TestIntegrationProvisioning_FolderlessRootPermissions verifies that dashboards a folderless
+// repository places at the top level get their own default permissions, both when they are
+// synced there directly and when a later move puts them there. Without them, nobody but admins
+// can see a top-level dashboard: there is no parent folder to inherit access from.
+func TestIntegrationProvisioning_FolderlessRootPermissions(t *testing.T) {
+	helper := sharedHelper(t)
+
+	const repo = "folderless-root-permissions"
+	helper.CreateLocalRepo(t, common.TestRepo{
+		Name:       repo,
+		LocalPath:  path.Join(helper.ProvisioningPath, repo),
+		SyncTarget: "folderless",
+		Workflows:  []string{"write"},
+		Copies: map[string]string{
+			"../testdata/all-panels.json":    "root-dashboard.json",
+			"../testdata/timeline-demo.json": "team-y/nested-dashboard.json",
+		},
+	})
+
+	helper.RequireRepoDashboardCount(t, repo, 2)
+	helper.RequireRepoFolderCount(t, repo, 1)
+
+	viewerDashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+		User: helper.Org1.Viewer,
+		GVR:  helper.DashboardsV1.Args.GVR,
+	})
+
+	// Synced directly at the top level.
+	rootDash, err := helper.DashboardsV1.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Empty(t, rootDash.GetAnnotations()[utils.AnnoKeyFolder], "dashboard should be at the top level")
+	_, err = viewerDashboards.Resource.Get(t.Context(), allPanelsUID, metav1.GetOptions{})
+	require.NoError(t, err, "viewer should be able to read a dashboard synced at the top level")
+
+	// Nested dashboards inherit from their folder, so the move below is what grants access.
+	nestedDash, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotEmpty(t, nestedDash.GetAnnotations()[utils.AnnoKeyFolder], "dashboard should start inside the subfolder")
+
+	// Move subdirectory -> root (reparent to the top level).
+	resp := helper.PostFilesRequest(t, repo, common.FilesPostOptions{
+		TargetPath:   "nested-dashboard.json",
+		OriginalPath: "team-y/nested-dashboard.json",
+		Message:      "move dashboard to the repository root",
+	})
+	_ = resp.Body.Close()
+	require.Equal(t, 200, resp.StatusCode, "move to root should succeed")
+
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		moved, err := helper.DashboardsV1.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Empty(collect, moved.GetAnnotations()[utils.AnnoKeyFolder],
+			"dashboard should be at the top level after the move")
+		assert.Equal(collect, repo, moved.GetAnnotations()[utils.AnnoKeyManagerIdentity])
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault, "dashboard should be reparented to the top level")
+
+	_, err = viewerDashboards.Resource.Get(t.Context(), timelineUID, metav1.GetOptions{})
+	require.NoError(t, err, "viewer should be able to read a dashboard moved to the top level")
 }

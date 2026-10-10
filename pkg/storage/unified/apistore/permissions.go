@@ -15,6 +15,40 @@ import (
 
 type permissionCreatorFunc = func(ctx context.Context) error
 
+type inheritedFromKey struct{}
+
+// WithInheritedFrom records the folder a resource was moved out of when it arrived at the root.
+// A DefaultPermissionSetter uses it to carry over the access the resource inherited from that
+// folder (and its ancestors) instead of applying the generic defaults, so a move never widens
+// or narrows who can reach the resource.
+func WithInheritedFrom(ctx context.Context, folderUID string) context.Context {
+	return context.WithValue(ctx, inheritedFromKey{}, folderUID)
+}
+
+// InheritedFrom returns the folder set by WithInheritedFrom, if any.
+func InheritedFrom(ctx context.Context) (string, bool) {
+	folderUID, ok := ctx.Value(inheritedFromKey{}).(string)
+	return folderUID, ok && folderUID != ""
+}
+
+// afterMoveToRootPermissionCreator is afterCreatePermissionCreator for an update that moved the
+// resource into the root folder: the setter also learns which folder it came from.
+func afterMoveToRootPermissionCreator(ctx context.Context,
+	key *resourcepb.ResourceKey,
+	grantPermisions string,
+	obj runtime.Object,
+	setter DefaultPermissionSetter,
+	inheritedFrom string,
+) (permissionCreatorFunc, error) {
+	creator, err := afterCreatePermissionCreator(ctx, key, grantPermisions, obj, setter)
+	if creator == nil || err != nil {
+		return creator, err
+	}
+	return func(ctx context.Context) error {
+		return creator(WithInheritedFrom(ctx, inheritedFrom))
+	}, nil
+}
+
 func afterCreatePermissionCreator(ctx context.Context,
 	key *resourcepb.ResourceKey,
 	grantPermisions string,
