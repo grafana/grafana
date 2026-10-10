@@ -33,4 +33,4 @@ jobs:
       - name: Trufflehog
         uses: trufflesecurity/trufflehog@363923b901c911a9164f50b6c423f47c15372b1c # v3.97.4
         with:
-          extra_args: --results=verified
+          extra_args: --results=verified --exclude-paths=.trufflehogignore
