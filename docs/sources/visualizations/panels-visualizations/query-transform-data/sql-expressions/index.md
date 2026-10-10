@@ -244,6 +244,22 @@ Grafana maintains a complete list of supported SQL keywords, operators, and func
 
 For the most up-to-date reference of all supported SQL functionality, refer to the `allowedNode` and `allowedFunction` definitions in the Grafana [codebase](https://github.com/grafana/grafana/blob/main/pkg/expr/sql/parser_allow.go).
 
+### Cast values used in conditional expressions
+
+SQL expressions run on an embedded SQL engine that evaluates each value using its inferred data type. When a data source returns a column with a native type, such as an `ENUM`, that value can fail type coercion when you use it directly inside a conditional expression, such as `CASE` or `IF`. When this happens, the expression returns an error or an unexpected result.
+
+To resolve this, explicitly cast the column to a string type with `CAST(<COLUMN> AS CHAR)`. This forces a standard string type, so the engine evaluates the conditional expression reliably.
+
+```sql
+-- May fail when the column uses a native type such as ENUM
+SELECT CASE WHEN state = 'active' THEN 1 ELSE 0 END AS status FROM A
+
+-- Cast the column to a string type so the engine evaluates it reliably
+SELECT CASE WHEN CAST(state AS CHAR) = 'active' THEN 1 ELSE 0 END AS status FROM A
+```
+
+Replace _`<COLUMN>`_ with the name of the column you want to cast.
+
 ## Alerting and recording rules
 
 SQL expressions integrates alerting and recording rules, allowing you to define complex conditions and metrics using standard SQL queries. The system processes your query results and automatically creates alert instances or recorded metrics based on the returned data structure.
@@ -297,6 +313,7 @@ Following are some best practices for alerting and recording rules:
 - Each SQL expression query must include a time range.
 - SQL expressions aren't supported on 32-bit ARM builds of Grafana.
 - Autocomplete is available, but column and field autocomplete requires the experimental `sqlExpressionsColumnAutoComplete` feature toggle.
+- Columns with a native type, such as an `ENUM`, can fail type coercion inside conditional expressions such as `CASE` or `IF`. Cast the column to a string type to resolve this. For more information, refer to [Cast values used in conditional expressions](#cast-values-used-in-conditional-expressions).
 
 ### Query limits
 
