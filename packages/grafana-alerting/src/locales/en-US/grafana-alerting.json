@@ -14,13 +14,18 @@
       "common-labels-count_other": "+{{count}} common labels"
     },
     "duration-field": {
-      "invalid": "Invalid duration format. Use a number followed by a time unit, for example 30s or 5m."
+      "invalid": "Invalid duration format. Use a number followed by a time unit, for example 30s or 5m.",
+      "zero": "Duration must be greater than zero."
     },
     "group-by-field": {
       "aria-label": "Group by",
       "description": "Alerts are always grouped by grafana_folder and alertname, plus any additional labels you select. Select \"Disable (...)\" to send each alert as a separate notification.",
       "disable-option": "Disable (...)",
       "label": "Group by"
+    },
+    "grouping-override": {
+      "label": "Override grouping",
+      "summary": "Grouping: <strong>{{fields}}</strong>"
     },
     "paused-badge": {
       "paused": "Paused"
@@ -56,6 +61,13 @@
       "error": "Could not load time intervals",
       "imported-not-usable": "Imported from an external Alertmanager — promote it to use it here",
       "placeholder": "Select time intervals..."
+    },
+    "timings-override": {
+      "group-interval": "Group interval",
+      "group-wait": "Group wait",
+      "label": "Override timings",
+      "repeat-interval": "Repeat interval",
+      "summary": "Group wait: <strong>{{groupWait}}</strong>, Group interval: <strong>{{groupInterval}}</strong>, Repeat interval: <strong>{{repeatInterval}}</strong>"
     }
   }
 }
