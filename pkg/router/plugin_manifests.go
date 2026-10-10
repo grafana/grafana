@@ -51,6 +51,8 @@ type pluginManifestsTarget struct {
 	// requestDuration records every gRPC call to a plugin deployment, by
 	// plugin, method and status code.
 	requestDuration *prometheus.HistogramVec
+	// requestRetries counts the retries of unary calls, by plugin and method.
+	requestRetries *prometheus.CounterVec
 
 	connectionsMu sync.Mutex
 	connections   map[pluginConnectionKey]*grpc.ClientConn
@@ -92,6 +94,7 @@ func newPluginManifestsTarget(
 		grpcConfig:      grpcConfig,
 		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
+		requestRetries:  newPluginGRPCRequestRetries(deps.MetricsRegister, source),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)
@@ -211,9 +214,11 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 	key := pluginConnectionKey{host: host, pluginID: pluginID}
 	conn := t.connections[key]
 	if conn == nil {
-		requestDuration := t.requestDuration.MustCurryWith(prometheus.Labels{"plugin_id": pluginID}).(*prometheus.HistogramVec)
+		labels := prometheus.Labels{"plugin_id": pluginID}
+		requestDuration := t.requestDuration.MustCurryWith(labels).(*prometheus.HistogramVec)
+		requestRetries := t.requestRetries.MustCurryWith(labels)
 		var err error
-		conn, err = grpc.NewClient(host, t.grpcConfig.dialOptions(requestDuration)...)
+		conn, err = grpc.NewClient(host, t.grpcConfig.dialOptions(requestDuration, requestRetries)...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
 		}

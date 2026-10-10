@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
@@ -12,6 +13,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -73,8 +75,9 @@ func parsePluginGRPCSection(section *setting.DynamicSection) (pluginGRPCConfig, 
 }
 
 // dialOptions returns the options for a connection to a plugin deployment.
-// requestDuration must already be curried with the plugin ID.
-func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec) []grpc.DialOption {
+// requestDuration and requestRetries must already be curried with the plugin
+// ID.
+func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec, requestRetries *prometheus.CounterVec) []grpc.DialOption {
 	return []grpc.DialOption{
 		// Plugin deployments expose plaintext gRPC on the internal cluster network.
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
@@ -84,6 +87,7 @@ func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec) 
 		grpc.WithChainUnaryInterceptor(
 			middleware.UnaryClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption),
 			c.Retry.unaryInterceptor(),
+			countRetries(requestRetries),
 		),
 		grpc.WithChainStreamInterceptor(middleware.StreamClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
 		// Spread calls over every address the host resolves to, rather than
@@ -107,6 +111,17 @@ func (c pluginGRPCRetryConfig) unaryInterceptor() grpc.UnaryClientInterceptor {
 		grpc_retry.WithBackoff(grpc_retry.BackoffExponentialWithJitter(c.Backoff, c.Jitter)),
 		grpc_retry.WithCodes(pluginGRPCRetryCodes...),
 	)
+}
+
+// countRetries counts the retry attempts of unary calls. It must run inside
+// the retry interceptor, which marks each retry with its attempt header.
+func countRetries(requestRetries *prometheus.CounterVec) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if md, ok := metadata.FromOutgoingContext(ctx); ok && len(md.Get(grpc_retry.AttemptMetadataKey)) > 0 {
+			requestRetries.WithLabelValues(method).Inc()
+		}
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
 }
 
 func parseUintKey(section *setting.DynamicSection, key string, def uint) (uint, error) {

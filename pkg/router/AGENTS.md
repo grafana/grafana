@@ -182,7 +182,8 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     why, counts it, and stores the count once per load (`pollStatus.recordSkipped`).
   - Managed plugin connections (`pluginManifestsTarget.pluginClients`) use dskit's gRPC client
     instrumentation interceptors and `otelgrpc`, which propagates the caller's trace to the plugin.
-    The instrumentation wraps the retries (`plugin_grpc.go`), so a call is recorded once.
+    The instrumentation wraps the retries (`plugin_grpc.go`), so a call is recorded once, and
+    `grafana_router_plugin_grpc_request_retries_total` counts the retries.
     Connections are keyed by host and plugin ID, because each records its calls under one
     `plugin_id`. Local plugins are measured by `grafana_plugin_request_*` instead.
 
