@@ -384,9 +384,11 @@ func (dr *DashboardServiceImpl) processDashboardBatch(ctx context.Context, orgID
 // This gets auto-invoked when grafana starts, part of the BackgroundService interface
 func (dr *DashboardServiceImpl) Run(ctx context.Context) error {
 	cleanupBackgroundJobStopped := dr.startK8sDeletedDashboardsCleanupJob(ctx)
+	draftsCleanupStopped := dr.startDashboardDraftsCleanupJob(ctx)
 	<-ctx.Done()
-	// Wait for cleanup job to finish
+	// Wait for cleanup jobs to finish
 	<-cleanupBackgroundJobStopped
+	<-draftsCleanupStopped
 	return ctx.Err()
 }
 
