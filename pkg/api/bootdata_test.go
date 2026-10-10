@@ -567,6 +567,48 @@ func TestIntegrationHTTPServer_GetFrontendSettings_apps(t *testing.T) {
 	}
 }
 
+func TestIntegrationHTTPServer_GetFrontendSettings_panelDependencies(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	type settings struct {
+		Panels map[string]plugins.PanelDTO `json:"panels"`
+	}
+
+	pluginStore := &pluginstore.FakePluginStore{
+		PluginList: []pluginstore.Plugin{
+			{
+				Module: fmt.Sprintf("/%s/module.js", "test-panel"),
+				JSONData: plugins.JSONData{
+					ID:   "test-panel",
+					Info: plugins.Info{Version: "0.5.0"},
+					Type: plugins.TypePanel,
+					Dependencies: plugins.Dependencies{
+						Extensions: plugins.ExtensionsDependencies{
+							ExposedComponents: []string{"grafana-test-app/exposed-component/v1"},
+						},
+					},
+				},
+				FS:              &pluginfakes.FakePluginFS{},
+				LoadingStrategy: plugins.LoadingStrategyScript,
+			},
+		},
+	}
+
+	cfg := setting.NewCfg()
+	m, _ := setupTestEnvironment(t, cfg, featuremgmt.WithFeatures(), pluginStore, &pluginsettings.FakePluginSettings{}, newPluginAssets()())
+	req := httptest.NewRequest(http.MethodGet, "/api/frontend/settings", nil)
+
+	recorder := httptest.NewRecorder()
+	m.ServeHTTP(recorder, req)
+	var got settings
+	err := json.Unmarshal(recorder.Body.Bytes(), &got)
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, recorder.Code)
+
+	require.Contains(t, got.Panels, "test-panel")
+	require.Equal(t, []string{"grafana-test-app/exposed-component/v1"}, got.Panels["test-panel"].Dependencies.Extensions.ExposedComponents)
+}
+
 func newAppSettings(id string, enabled bool) map[string]*pluginsettings.DTO {
 	return map[string]*pluginsettings.DTO{
 		id: {
