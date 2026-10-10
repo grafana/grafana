@@ -5,7 +5,8 @@ import React from 'react';
 import { getGrafanaContextMock } from 'test/mocks/getGrafanaContextMock';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { locationService } from '@grafana/runtime';
+import { config, locationService, useScopes } from '@grafana/runtime';
+import { useFlagGrafanaScopesDashboardsMegaMenu } from '@grafana/runtime/internal';
 import {
   CustomVariable,
   LocalValueVariable,
@@ -60,7 +61,21 @@ jest.mock('@grafana/runtime', () => ({
     reload: jest.fn(),
     registerRuntimeDataSource: jest.fn(),
   })),
+  useScopes: jest.fn(),
 }));
+
+jest.mock('app/features/scopes/ScopesContextProvider', () => ({
+  ...jest.requireActual('app/features/scopes/ScopesContextProvider'),
+  useScopesServices: jest.fn(() => ({ scopesDashboardsService: { toggleDrawer: jest.fn() } })),
+}));
+
+jest.mock('@grafana/runtime/internal', () => ({
+  ...jest.requireActual('@grafana/runtime/internal'),
+  useFlagGrafanaScopesDashboardsMegaMenu: jest.fn(),
+}));
+
+const mockUseScopes = jest.mocked(useScopes);
+const mockUseFlagScopesDashboardsMegaMenu = jest.mocked(useFlagGrafanaScopesDashboardsMegaMenu);
 
 function renderInGrafanaContext(child: React.ReactNode, kioskMode?: KioskMode) {
   const context = getGrafanaContextMock();
@@ -841,6 +856,27 @@ describe('DashboardControls', () => {
       renderInGrafanaContext(<controls.Component model={controls} />);
 
       expect(screen.getByTestId(selectors.components.NavToolbar.editDashboard.saveButton)).toBeInTheDocument();
+    });
+  });
+
+  describe('scopes dashboards navigation toggle', () => {
+    beforeEach(() => {
+      mockUseScopes.mockReturnValue({ state: { enabled: true } } as ReturnType<typeof useScopes>);
+    });
+
+    it('hides the toggle when the mega-menu flag is on, even with scopeFilters enabled', () => {
+      const originalFeatureToggles = { ...config.featureToggles };
+      try {
+        config.featureToggles.scopeFilters = true;
+        mockUseFlagScopesDashboardsMegaMenu.mockReturnValue(true);
+
+        const scene = buildTestScene();
+        const renderer = renderInGrafanaContext(<scene.Component model={scene} />);
+
+        expect(renderer.queryByTestId('scopes-dashboards-expand')).not.toBeInTheDocument();
+      } finally {
+        config.featureToggles = originalFeatureToggles;
+      }
     });
   });
 });
