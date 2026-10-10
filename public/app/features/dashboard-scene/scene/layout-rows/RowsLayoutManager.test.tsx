@@ -57,6 +57,8 @@ function buildRowsLayoutManager(rows: RowItem[] = []) {
   return rowsLayoutManager;
 }
 
+afterEach(() => setTestFlags({}));
+
 describe('RowsLayoutManager', () => {
   describe('getSlug', () => {
     it('generates slugs based on row titles', () => {
@@ -104,6 +106,20 @@ describe('RowsLayoutManager', () => {
   });
 
   describe('addNewRow', () => {
+    it('disables interaction in the inner layout added during review', () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      const manager = new RowsLayoutManager({ rows: [] });
+      new DashboardScene({ body: manager, isEditing: true, mode: 'view' });
+      const layout = AutoGridLayoutManager.createEmpty();
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+
+      manager.addNewRow(new RowItem({ layout }));
+
+      expect(layout.state.layout.state.isDraggable).toBe(false);
+      manager.editModeChanged(true);
+      expect(layout.state.layout.state.isDraggable).toBe(true);
+    });
+
     beforeEach(() => {
       lastUndo = undefined;
     });

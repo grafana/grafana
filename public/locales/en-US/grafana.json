@@ -6032,6 +6032,21 @@
       "tooltip-next": "Next",
       "tooltip-previous": "Previous"
     },
+    "modes": {
+      "agent-edit": "Agent editing",
+      "change-mode": "Change dashboard mode",
+      "current": "Dashboard mode: {{mode}}",
+      "discard": "Discard changes",
+      "discard-body": "This restores the last saved dashboard.",
+      "discard-title": "Discard dashboard changes?",
+      "edit": "Editing",
+      "edit-description": "Manually edit panels, layout, and settings.",
+      "empty": "This dashboard has no panels.",
+      "label": "Dashboard mode",
+      "view": "Viewing",
+      "view-changes": "View changes",
+      "view-description": "View and explore the dashboard."
+    },
     "mutation-api": {
       "apply-spec": {
         "undo-title": "Assistant schema edit"
@@ -6147,6 +6162,9 @@
           "no-template-variables-found": "No template variables found"
         }
       }
+    },
+    "review": {
+      "no-changes": "No changes to save"
     },
     "rows-layout": {
       "cancel": "Cancel",

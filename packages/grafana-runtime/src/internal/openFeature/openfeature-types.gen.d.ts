@@ -44,6 +44,7 @@ declare module "@openfeature/core" {
     | "dashboards.publicDashboardBadgeFromApi"
     | "disableScriptedDashboards"
     | "dashboard.notebooks"
+    | "grafana.dashboardPreviewMode"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"

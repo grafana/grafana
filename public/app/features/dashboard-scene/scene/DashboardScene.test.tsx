@@ -40,6 +40,7 @@ import { DashboardEventAction } from 'app/features/live/dashboard/types';
 import { VariablesChanged } from 'app/features/variables/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
+import { changeTitle } from '../actions/dashboard/changeTitle';
 import { buildPanelEditScene } from '../panel-edit/PanelEditor';
 import { openPanelEditor } from '../panel-edit/openPanelEditor';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -47,6 +48,7 @@ import { createWorker } from '../saving/createDetectChangesWorker';
 import { buildGridItemForPanel, transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
+import { DashboardSidebar } from '../sidebar/DashboardSidebar';
 import { getCloneKey } from '../utils/clone';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { findVizPanelByKey } from '../utils/findVizPanel';
@@ -278,6 +280,280 @@ describe('DashboardScene', () => {
         expect(scene.state.isEditing).toBeFalsy();
         expect(scene.state.isDirty).toBeFalsy();
         expect(scene.getEditSessionSource()).toBeUndefined();
+      });
+    });
+
+    describe('Viewing and Editing modes', () => {
+      let scene: DashboardScene;
+      let deactivateScene: () => void;
+
+      beforeEach(() => {
+        jest.useFakeTimers();
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        locationService.push('/d/dash-1');
+        scene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+        deactivateScene = scene.activate();
+        scene.onEnterEditMode();
+        jest.advanceTimersByTime(10);
+      });
+
+      afterEach(() => {
+        deactivateScene();
+        jest.useRealTimers();
+        setTestFlags({});
+      });
+
+      it.each([false, true])(
+        'starts Agent editing from Viewing and retains an existing Editing choice (already editing: %s)',
+        (alreadyEditing) => {
+          if (!alreadyEditing) {
+            scene.exitEditMode({ skipConfirm: true });
+          }
+          scene.onEnterEditMode('assistant');
+          jest.advanceTimersByTime(10);
+
+          expect(scene.state.mode).toBe(alreadyEditing ? 'edit' : 'agent');
+          expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(alreadyEditing);
+          expect(scene.state.sidebar.state.selectionContext.enabled).toBe(alreadyEditing);
+        }
+      );
+
+      it('starts a dashboard created by Assistant in Agent editing', () => {
+        locationService.push('/dashboard/new?editSource=assistant');
+        const newScene = buildTestScene({ meta: { canEdit: true, canSave: true } });
+        const deactivate = newScene.activate();
+        try {
+          expect(newScene.state.mode).toBe('agent');
+          expect((newScene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(false);
+          expect(newScene.getEditSessionSource()).toBe('assistant');
+        } finally {
+          deactivate();
+        }
+      });
+
+      it('restores dashboard options after an Assistant layout replacement in Viewing', () => {
+        scene.state.sidebar.selectObject(scene);
+        scene.setDashboardMode('view');
+        scene.setState({ sidebar: new DashboardSidebar() });
+        scene.applyDashboardMode();
+        scene.setDashboardMode('edit');
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.sidebar.getSelectedObject() === scene).toBe(true);
+        expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+      });
+
+      it('does not reopen options for a panel removed in Viewing', async () => {
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        scene.state.sidebar.selectObject(panel);
+        scene.setDashboardMode('view');
+        await scene.withAssistantWrite(async () => scene.removePanel(panel));
+        scene.setDashboardMode('edit');
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
+        expect(scene.state.sidebar.state.selectionContext.selected).toEqual([]);
+        expect(scene.state.sidebar.state.openPane).toBeUndefined();
+      });
+
+      it('retains Editing across Assistant writes until a new edit session', () => {
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+        scene.setDashboardMode('edit');
+        jest.advanceTimersByTime(10);
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.mode).toBe('edit');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+        expect(scene.state.mode).toBe('agent');
+      });
+
+      it('respects opening the full editor before Assistant edits', () => {
+        scene.openFullEditor();
+        jest.advanceTimersByTime(10);
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.mode).toBe('edit');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+      });
+
+      it('keeps manual edits, Editing mode, and undo history across Assistant writes', () => {
+        scene.activateSidebar();
+        changeTitle({ source: scene, oldValue: 'hello', newValue: 'Manual edit' });
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.mode).toBe('edit');
+        expect(scene.state.title).toBe('Manual edit');
+        scene.openFullEditor();
+        jest.advanceTimersByTime(10);
+        scene.state.sidebar.undoAction();
+        expect(scene.state.title).toBe('hello');
+      });
+
+      it('keeps legacy editing for Assistant when the flags are disabled', () => {
+        setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': false });
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.mode).toBe('edit');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+      });
+
+      it('preserves the session source and discard baseline when edit mode is entered again', () => {
+        scene.setState({ title: 'Unsaved title' });
+        scene.setDashboardMode('view');
+
+        scene.onEnterEditMode('assistant');
+        jest.advanceTimersByTime(10);
+
+        expect(scene.getEditSessionSource()).toBe('user');
+        expect(scene.state.mode).toBe('agent');
+        expect(scene.state.isDirty).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true });
+
+        expect(scene.state.title).toBe('hello');
+        expect(scene.state.isEditing).toBe(false);
+        expect(scene.state.mode).toBeUndefined();
+      });
+
+      it('preserves undo and redo across Editing to Viewing to Editing transitions', () => {
+        scene.activateSidebar();
+        changeTitle({ source: scene, oldValue: 'hello', newValue: 'First edit' });
+        changeTitle({ source: scene, oldValue: 'First edit', newValue: 'Second edit' });
+        scene.state.sidebar.undoAction();
+
+        scene.setDashboardMode('view');
+        scene.openFullEditor();
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.mode).toBe('edit');
+        expect(scene.state.title).toBe('First edit');
+        scene.state.sidebar.redoAction();
+        expect(scene.state.title).toBe('Second edit');
+        scene.state.sidebar.undoAction();
+        scene.state.sidebar.undoAction();
+        expect(scene.state.title).toBe('hello');
+      });
+
+      it('finishes an active panel drag before allowing a switch to Viewing', () => {
+        const panel = findVizPanelByKey(scene, 'panel-1')!;
+        const gridItem = sceneGraph.getAncestor(panel, DashboardGridItem);
+        scene.state.layoutOrchestrator.setState({ draggingGridItem: gridItem.getRef() });
+        scene.setDashboardMode('view');
+        expect(
+          sceneGraph.getAncestor(findVizPanelByKey(scene, 'panel-1')!, DefaultGridLayoutManager).state.grid.state
+            .isDraggable
+        ).toBe(true);
+        expect(scene.state.mode).toBe('edit');
+
+        scene.state.layoutOrchestrator.setState({ draggingGridItem: undefined });
+        scene.setDashboardMode('view');
+        expect(scene.state.mode).toBe('view');
+        expect(
+          sceneGraph.getAncestor(findVizPanelByKey(scene, 'panel-1')!, DefaultGridLayoutManager).state.grid.state
+            .isDraggable
+        ).toBe(false);
+      });
+
+      it('keeps Assistant edit actions working while Viewing disables canvas selection', async () => {
+        scene.setDashboardMode('view');
+
+        await scene.withAssistantWrite(async () => {
+          changeTitle({ source: scene, oldValue: 'hello', newValue: 'Changed during review' });
+        });
+
+        expect(scene.state.title).toBe('Changed during review');
+        expect(scene.state.isDirty).toBe(true);
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
+        scene.openFullEditor();
+        jest.advanceTimersByTime(10);
+        scene.state.sidebar.undoAction();
+        expect(scene.state.title).toBe('hello');
+      });
+
+      it.each(['view', 'edit', 'agent'] as const)(
+        'preserves %s on save and the saved baseline after later Assistant edits',
+        async (presentation) => {
+          scene.setState({ title: 'Saved title' });
+          scene.setDashboardMode(presentation);
+
+          await scene.saveCompleted(scene.getSaveModel(), {
+            slug: 'saved-title',
+            uid: 'dash-1',
+            url: '/d/dash-1/saved-title',
+            version: 2,
+            status: 'success',
+          });
+
+          expect(scene.state.mode).toBe(presentation);
+          mockResultsOfDetectChangesWorker({ hasChanges: false });
+          scene.onEnterEditMode('assistant');
+          jest.advanceTimersByTime(10);
+          expect(scene.state.mode).toBe(presentation === 'view' ? 'agent' : presentation);
+          expect(scene.state.isEditing).toBe(true);
+          expect(scene.state.isDirty).toBe(false);
+
+          scene.setState({ title: 'Later unsaved title' });
+          scene.exitEditMode({ skipConfirm: true });
+
+          expect(scene.state.title).toBe('Saved title');
+          expect(scene.state.meta.version).toBe(2);
+          expect(scene.state.isEditing).toBe(false);
+          expect(scene.state.mode).toBeUndefined();
+        }
+      );
+
+      it('discards changes while retaining Viewing and an active Assistant mutation listener', async () => {
+        scene.setDashboardMode('view');
+        await scene.withAssistantWrite(async () => {
+          changeTitle({ source: scene, oldValue: 'hello', newValue: 'Discard me' });
+        });
+
+        scene.discardChangesAndKeepEditing();
+
+        expect(scene.state.title).toBe('hello');
+        expect(scene.state.isDirty).toBe(false);
+        expect(scene.state.mode).toBe('view');
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(false);
+        expect(scene.state.sidebar.state.undoStack).toEqual([]);
+
+        await scene.withAssistantWrite(async () => {
+          changeTitle({ source: scene, oldValue: 'hello', newValue: 'New review edit' });
+        });
+        expect(scene.state.title).toBe('New review edit');
+        expect(scene.state.isDirty).toBe(true);
+      });
+
+      it('rejects mode switching when the OpenFeature flag is disabled', () => {
+        setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': false });
+
+        scene.setDashboardMode('view');
+
+        expect(scene.state.isEditing).toBe(true);
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+        expect(scene.state.mode).toBe('edit');
+      });
+
+      it('allows returning to full editing when the flags are disabled during Viewing', () => {
+        scene.setDashboardMode('view');
+        setTestFlags({ dashboardNewLayouts: false, 'grafana.dashboardPreviewMode': false });
+
+        scene.openFullEditor();
+        jest.advanceTimersByTime(10);
+
+        expect(scene.state.mode).toBe('view');
+        expect((scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable).toBe(true);
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
       });
     });
 

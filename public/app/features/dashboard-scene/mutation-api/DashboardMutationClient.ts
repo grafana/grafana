@@ -5,9 +5,12 @@
  * rule: a plan preview is read-only.
  */
 
+import { isEqual } from 'lodash';
+
 import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import type { DashboardScene } from '../scene/DashboardScene';
+import { dashboardModesEnabled, isViewingDashboard } from '../scene/dashboardModes';
 
 import { SceneMutationClient } from './SceneMutationClient';
 import { LAZY_DASHBOARD_COMMANDS } from './commands/lazyRegistry';
@@ -52,7 +55,7 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
    * Does not add conversation scoping to the mutation API -- a caller still acts on whatever
    * scene is mounted, regardless of conversation. Only closes that gap for a plan preview.
    */
-  async execute(mutation: MutationRequest): Promise<MutationResult> {
+  async execute(mutation: MutationRequest, callerPluginId?: string): Promise<MutationResult> {
     const type = mutation.type.toUpperCase();
 
     if (this.scene.isPlanning() && !PLANNING_ALLOWED_COMMANDS.has(type) && !this.isReadOnly(type)) {
@@ -63,6 +66,29 @@ export class DashboardMutationClient extends SceneMutationClient<DashboardScene>
       };
     }
 
-    return super.execute(mutation);
+    const checkWrite = () =>
+      dashboardModesEnabled() &&
+      isViewingDashboard(this.scene.state) &&
+      callerPluginId !== 'grafana-assistant-app' &&
+      !PLANNING_ALLOWED_COMMANDS.has(type)
+        ? 'Only Grafana Assistant can edit a dashboard in View mode. Select Editing to edit manually.'
+        : undefined;
+    const execute = async () => {
+      const result = await super.executeChecked(mutation, checkWrite);
+      // Some commands update child scenes directly rather than publishing undoable actions.
+      if (
+        dashboardModesEnabled() &&
+        result.success &&
+        !this.isReadOnly(type) &&
+        !PLANNING_ALLOWED_COMMANDS.has(type) &&
+        type !== 'ENTER_EDIT_MODE' &&
+        type !== 'CREATE_NOTEBOOK_SPEC' &&
+        result.changes.some(({ previousValue, newValue }) => !isEqual(previousValue, newValue))
+      ) {
+        this.scene.recordEditMutation();
+      }
+      return result;
+    };
+    return callerPluginId === 'grafana-assistant-app' ? this.scene.withAssistantWrite(execute) : execute();
   }
 }

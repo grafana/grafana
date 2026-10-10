@@ -206,6 +206,15 @@ describe('new layouts empty state', () => {
     return dashboard;
   }
 
+  it('hides manual layout controls and the add pane in View mode', () => {
+    setTestFlags({ 'grafana.dashboardPreviewMode': true });
+    const dashboard = setupScene({ mode: 'view' });
+    expect(screen.getByText('This dashboard has no panels.')).toBeInTheDocument();
+    expect(screen.queryByText('Select layout')).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
+    expect(dashboard.state.sidebar.state.openPane).toBeUndefined();
+  });
+
   it('keeps the layout picker and opens the add pane when assistant dashboard planning is off', async () => {
     const dashboard = setupScene();
 

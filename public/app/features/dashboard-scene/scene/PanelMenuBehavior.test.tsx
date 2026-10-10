@@ -1,3 +1,4 @@
+import { waitFor } from '@testing-library/react';
 import { of } from 'rxjs';
 import { testWithFeatureToggles } from 'test/test-utils';
 
@@ -99,6 +100,26 @@ describe('panelMenuBehavior', () => {
     expect(menu.state.items?.[4].subMenu).toBeDefined();
 
     expect(menu.state.items?.[4].subMenu?.length).toBe(3);
+  });
+
+  it.each(['view', 'agent'] as const)('opens panel editing from the %s menu and enters Editing', async (mode) => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const { scene, panel, menu } = await buildTestScene({});
+    let deactivateMenu = () => {};
+    try {
+      scene.setState({ mode, isEditing: true, editable: true });
+      panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
+      deactivateMenu = menu.activate();
+      await waitFor(() =>
+        expect(menu.state.items?.find((item) => item.text === 'Edit')?.href).toContain('editPanel=12')
+      );
+      scene.urlSync?.updateFromUrl({ editPanel: 'panel-12' });
+      await waitFor(() => expect(scene.state.editPanel?.getUrlKey()).toBe('12'));
+      expect(scene.state.mode).toBe('edit');
+    } finally {
+      deactivateMenu();
+      setTestFlags({});
+    }
   });
 
   it('should have reduced menu options when panel editor is open', async () => {

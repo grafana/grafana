@@ -8,6 +8,7 @@ import { type DashboardEditView } from '../../settings/utils';
 import { type DashboardSidebarLike } from '../../sidebar/types';
 import { type DashboardControls } from '../DashboardControls';
 import { type DashboardLayoutOrchestrator } from '../DashboardLayoutOrchestrator';
+import { dashboardModesEnabled, getDashboardMode, type DashboardMode } from '../dashboardModes';
 
 import { type AnyDashboardLayoutManager, type DashboardLayoutManager } from './DashboardLayoutManager';
 import { type LayoutParent } from './LayoutParent';
@@ -21,6 +22,7 @@ export interface DashboardViewState {
   body: AnyDashboardLayoutManager;
   /** True when editing */
   isEditing?: boolean;
+  mode?: DashboardMode;
   /** Panel to inspect */
   inspectPanelKey?: string;
   /** Panel key to view in fullscreen */
@@ -87,6 +89,14 @@ export interface DashboardSceneState extends SceneObjectState, DashboardViewStat
    * toolbar shows only the plan banner (Build/Dismiss) in place of the normal actions.
    */
   planning?: DashboardPlanningState;
+}
+
+export function isFullDashboardEditing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  return Boolean(state.isEditing && (!dashboardModesEnabled() || getDashboardMode(state) === 'edit'));
+}
+
+export function isDashboardReviewing(state: Pick<DashboardSceneState, 'mode' | 'isEditing'>): boolean {
+  return dashboardModesEnabled() && getDashboardMode(state) !== 'edit';
 }
 
 export interface DashboardPlanningState {

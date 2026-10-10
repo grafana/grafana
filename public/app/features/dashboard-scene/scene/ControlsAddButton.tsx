@@ -6,6 +6,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { DashboardInteractions } from '../utils/interactions';
 
@@ -14,7 +15,9 @@ import { type DashboardScene } from './DashboardScene';
 
 export function AddControlsButton({ dashboard }: { dashboard: DashboardScene }) {
   const styles = useStyles2(getStyles);
-  const { editview, editPanel, isEditing, viewPanel } = dashboard.useState();
+  const dashboardState = dashboard.useState();
+  const { editview, editPanel, viewPanel } = dashboardState;
+  const isEditing = isFullDashboardEditing(dashboardState);
 
   // The add flows are edit-only, so their implementations (variable type pane,
   // filter form, annotation actions, link pane) load on first use.

@@ -16,6 +16,11 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
+import {
+  isDashboardReviewing,
+  isDashboardSceneLike,
+  isFullDashboardEditing,
+} from 'app/features/dashboard-scene/scene/types/dashboard';
 
 import { addElement } from '../../actions/element/addElement';
 import { removeElement } from '../../actions/element/removeElement';
@@ -137,6 +142,10 @@ export class AutoGridLayoutManager
     });
 
     this.addActivationHandler(() => {
+      const root = this.getRoot();
+      if (isDashboardSceneLike(root) && isDashboardReviewing(root.state)) {
+        this.editModeChanged(false);
+      }
       // Children changes (add/remove/drag between grids, undo/redo) can change
       // whether any panel opts into content-fit, so autoRows must be recomputed.
       this._subs.add(
@@ -467,7 +476,7 @@ export class AutoGridLayoutManager
     const layoutManager = AutoGridLayoutManager.createEmpty();
     layoutManager.state.layout.setState({
       children,
-      isDraggable: getDashboardSceneFor(layout).state.isEditing,
+      isDraggable: isFullDashboardEditing(getDashboardSceneFor(layout).state),
     });
 
     return layoutManager;

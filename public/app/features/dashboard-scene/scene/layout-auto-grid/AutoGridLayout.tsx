@@ -204,7 +204,7 @@ export class AutoGridLayout extends SceneObjectBase<AutoGridLayoutState> impleme
 
   // Handle inside drag moves
   private _onDrag(evt: PointerEvent) {
-    if (!this._draggedGridItem || !this._initialGridItemPosition) {
+    if (!this.isDraggable() || !this._draggedGridItem || !this._initialGridItemPosition) {
       this._onDragEnd();
       return;
     }

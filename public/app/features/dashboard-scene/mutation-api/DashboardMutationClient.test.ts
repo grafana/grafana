@@ -9,6 +9,10 @@ import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLay
 import { DashboardMutationClient } from './DashboardMutationClient';
 import { DASHBOARD_COMMANDS } from './commands/registry';
 
+jest.mock('../saving/createDetectChangesWorker', () => ({
+  createWorker: () => ({ postMessage: jest.fn(), terminate: jest.fn(), onmessage: null }),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
   getPanelPluginFromCache: (id: string) => getPanelPlugin({ id }),
@@ -70,6 +74,53 @@ describe('DashboardMutationClient', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('Unknown command type: GET_NOTEBOOK_SPEC');
     expect(result.error).toContain('GET_SPEC');
+  });
+
+  describe.each([
+    { type: 'ENTER_EDIT_MODE', payload: {} },
+    { type: 'UPDATE_DASHBOARD_SETTINGS', payload: { title: 'Assistant title' } },
+  ])('$type mode', (command) => {
+    beforeEach(() => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    });
+
+    it('retains Editing and the discard baseline when Assistant changes a manually edited dashboard', async () => {
+      const scene = dashboardScene();
+      scene.onEnterEditMode();
+      scene.setState({ title: 'Manual edit' });
+
+      try {
+        const result = await new DashboardMutationClient(scene).execute(command);
+
+        expect(result.success).toBe(true);
+        expect(scene.state.mode).toBe('edit');
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
+
+        scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+        expect(scene.state.title).toBe('Dash');
+      } finally {
+        if (scene.state.isEditing) {
+          scene.exitEditMode({ skipConfirm: true });
+        }
+      }
+    });
+
+    it('preserves Editing across repeated Assistant commands', async () => {
+      const scene = dashboardScene();
+      scene.onEnterEditMode();
+      scene.setDashboardMode('view');
+      scene.setDashboardMode('edit');
+
+      try {
+        const client = new DashboardMutationClient(scene);
+        expect((await client.execute(command)).success).toBe(true);
+        expect((await client.execute(command)).success).toBe(true);
+        expect(scene.state.mode).toBe('edit');
+        expect(scene.state.sidebar.state.selectionContext.enabled).toBe(true);
+      } finally {
+        scene.exitEditMode({ skipConfirm: true });
+      }
+    });
   });
 
   describe('while a plan preview is active', () => {

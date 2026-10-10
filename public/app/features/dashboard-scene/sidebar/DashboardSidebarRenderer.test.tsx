@@ -12,6 +12,7 @@ import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
+import { isFullDashboardEditing } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
 import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
@@ -28,13 +29,7 @@ jest.mock('app/core/hooks/useMediaQueryMinWidth', () => ({
   useMediaQueryMinWidth: () => true,
 }));
 
-jest.mock('../utils/interactions', () => ({
-  DashboardInteractions: {
-    editSessionStarted: jest.fn(),
-    dashboardOutlineClicked: jest.fn(),
-    outlineItemClicked: jest.fn(),
-  },
-}));
+jest.mock('../utils/interactions');
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
@@ -76,6 +71,8 @@ export function buildTestScene() {
   });
   return testScene;
 }
+
+afterEach(() => setTestFlags({}));
 
 describe('DashboardSidebarRenderer', () => {
   beforeEach(() => {
@@ -147,6 +144,39 @@ describe('DashboardSidebarRenderer', () => {
     await waitFor(() => expect(scene.state.sidebar.state.openPane?.getId()).toBe('add'));
   });
 
+  describe('returning from Viewing', () => {
+    beforeEach(() => setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true }));
+    afterEach(() => {
+      cleanup();
+      setTestFlags({});
+    });
+
+    it('restores the docked dashboard options pane after switching back to Editing', async () => {
+      const scene = buildTestScene();
+      scene.setState({ meta: { canEdit: true, canSave: true } });
+      act(() => activateFullSceneTree(scene));
+      function SidebarWithMode() {
+        const state = scene.useState();
+        return <DashboardSidebarSplitter dashboard={scene} isEditing={isFullDashboardEditing(state)} />;
+      }
+      const user = userEvent.setup();
+      render(<SidebarWithMode />);
+      await user.click(screen.getByTestId(selectors.pages.Dashboard.Sidebar.optionsButton));
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+
+      act(() => scene.setDashboardMode('view'));
+      expect(screen.queryByTestId(selectors.components.Sidebar.dockToggle)).not.toBeInTheDocument();
+      act(() => scene.setDashboardMode('edit'));
+
+      expect(await screen.findByTestId(selectors.components.Sidebar.dockToggle)).toBeInTheDocument();
+      expect(scene.state.sidebar.getSelectedObject()).toBe(scene);
+      expect(scene.state.sidebar.state.openPane?.getId()).toBe('element');
+      expect(scene.state.sidebar.state.isDocked).toBe(true);
+    });
+  });
+
   it('Should sync sidebar docked state with sidebar state', async () => {
     const scene = buildTestScene();
 
@@ -179,6 +209,20 @@ describe('DashboardSidebarRenderer', () => {
       await user.click(outlineButton);
       expect(DashboardInteractions.dashboardOutlineClicked).toHaveBeenCalled();
     });
+  });
+
+  it('hides the Editing sidebar when switching to Viewing with an active edit session', async () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    const scene = buildTestScene();
+    scene.setState({ mode: 'edit', meta: { canEdit: true, canSave: true } });
+    act(() => activateFullSceneTree(scene));
+    render(<DashboardSidebarSplitter dashboard={scene} isEditing />);
+    expect(await screen.findByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).toBeInTheDocument();
+
+    act(() => scene.setDashboardMode('view'));
+    expect(scene.state.isEditing).toBe(true);
+    expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.outlineButton)).not.toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.pages.Dashboard.Sidebar.addButton)).not.toBeInTheDocument();
   });
 
   describe('hide button', () => {

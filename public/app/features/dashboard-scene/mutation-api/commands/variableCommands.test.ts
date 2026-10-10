@@ -239,10 +239,10 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect(result.changes).toEqual([{ path: '/isEditing', previousValue: false, newValue: true }]);
-    expect(scene.onEnterEditMode).toHaveBeenCalled();
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
   });
 
-  it('ENTER_EDIT_MODE is a no-op when already editing', async () => {
+  it('ENTER_EDIT_MODE applies the Assistant presentation when already editing', async () => {
     scene = buildMockScene({ editable: true, isEditing: true });
     client = new DashboardMutationClient(scene);
 
@@ -253,7 +253,7 @@ describe('Variable mutation commands', () => {
 
     expect(result.success).toBe(true);
     expect((result.data as { wasAlreadyEditing: boolean }).wasAlreadyEditing).toBe(true);
-    expect(scene.onEnterEditMode).not.toHaveBeenCalled();
+    expect(scene.onEnterEditMode).toHaveBeenCalledWith('assistant');
   });
 
   it('ENTER_EDIT_MODE refuses while a plan is being previewed, like every other mutating command', async () => {

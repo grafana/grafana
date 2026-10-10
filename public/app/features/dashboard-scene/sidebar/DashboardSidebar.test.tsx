@@ -38,9 +38,13 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
+import { DashboardCodePane } from './DashboardCodePane';
 import { MAX_UNDO_ACTIONS } from './DashboardSidebar';
+import { ElementEditPane } from './ElementEditPane';
 import { MultiSelectedObjectsEditableElement } from './MultiSelectedObjectsEditableElement';
 import { MultiSelectedVizPanelsEditableElement } from './MultiSelectedVizPanelsEditableElement';
+import { AddNewPane } from './add-new/AddNewPane';
+import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
@@ -202,6 +206,51 @@ describe('DashboardSidebar', () => {
       expect(sidebar.state.isLoading).toBe(false);
       pending.resolve(undefined);
       await opening;
+    });
+  });
+
+  describe('Viewing mode', () => {
+    afterEach(() => setTestFlags({}));
+    it('keeps selection disabled when direct selection or previous-pane navigation is requested', () => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      sidebar.selectObject(dashboard);
+      sidebar.openPane(new AddNewPane({}));
+      sidebar.closePane();
+      sidebar.disableSelection();
+      dashboard.setState({ mode: 'view' });
+
+      sidebar.enableSelection();
+      sidebar.selectObject(dashboard, { force: true });
+      sidebar.goBackToPrevious();
+
+      expect(sidebar.state.selectionContext).toMatchObject({ enabled: false, selected: [] });
+      expect(sidebar.state.openPane).toBeUndefined();
+      dashboard.setState({ mode: 'edit' });
+      sidebar.enableSelection();
+      sidebar.selectObject(dashboard);
+      expect(sidebar.getSelectedObject()).toBe(dashboard);
+    });
+
+    it.each([
+      ['add', () => new AddNewPane({})],
+      ['element', () => new ElementEditPane({})],
+      ['code', () => new DashboardCodePane({})],
+      ['cross-dashboard-variables', () => new DashboardCrossDashboardVariablesPane({})],
+    ] as const)('refuses the %s pane during review', (_, createPane) => {
+      const { dashboard, sidebar } = setupEmptyDashboard();
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      sidebar.closePane();
+      dashboard.setState({ mode: 'view' });
+      const pane = createPane();
+
+      sidebar.openPane(pane);
+      expect(dashboard.state.isEditing).toBe(true);
+      expect(sidebar.state.openPane).toBeUndefined();
+
+      dashboard.setState({ mode: 'edit' });
+      sidebar.openPane(pane);
+      expect(sidebar.state.openPane).toBe(pane);
     });
   });
 

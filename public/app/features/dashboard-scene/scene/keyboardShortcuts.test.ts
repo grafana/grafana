@@ -1,7 +1,8 @@
 import { LegacyGraphHoverClearEvent, SetPanelAttentionEvent } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { behaviors, sceneGraph, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { DashboardCursorSync } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { appEvents } from 'app/core/app_events';
 import { LS_PANEL_COPY_KEY } from 'app/core/constants';
 import { KeybindingSet } from 'app/core/services/KeybindingSet';
@@ -14,6 +15,7 @@ import { findVizPanelByPathId } from '../utils/pathId';
 
 import { DashboardScene } from './DashboardScene';
 import { setupKeyboardShortcuts } from './keyboardShortcuts';
+import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 // Mock dependencies
 jest.mock('app/core/app_events', () => ({
@@ -77,6 +79,7 @@ describe('setupKeyboardShortcuts', () => {
 
   afterEach(() => {
     jest.restoreAllMocks();
+    setTestFlags({});
   });
 
   it('should setup keyboard shortcuts and return cleanup function', () => {
@@ -89,6 +92,18 @@ describe('setupKeyboardShortcuts', () => {
     // Call cleanup function
     cleanup();
     expect(mockKeybindingSet.removeAll).toHaveBeenCalled();
+  });
+
+  it('keeps panel editing available without registering the obsolete Preview shortcut', () => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      setupKeyboardShortcuts(mockScene);
+      const keys = mockKeybindingSet.addBinding.mock.calls.map(([binding]) => binding.key);
+      expect(keys).toContain('e');
+      expect(keys).not.toContain('d p');
+    } finally {
+      setTestFlags({});
+    }
   });
 
   describe('mod+o shortcut (toggle shared crosshair)', () => {
@@ -303,6 +318,35 @@ describe('setupKeyboardShortcuts', () => {
       await getBinding('i')();
       expect(mockScene.showModal).not.toHaveBeenCalled();
     });
+  });
+
+  it.each([
+    { mode: 'view' as const, editable: true },
+    { mode: 'view' as const, editable: false },
+    { mode: 'agent' as const, editable: true },
+    { mode: 'agent' as const, editable: false },
+  ])('panel edit shortcut enters Editing from $mode only when editable=$editable', async ({ mode, editable }) => {
+    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+    try {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+      mockScene.setState({
+        mode,
+        isEditing: true,
+        editable,
+        body: DefaultGridLayoutManager.fromVizPanels([panel]),
+      });
+      jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+      locationService.replace('/d/test-uid');
+      setupKeyboardShortcuts(mockScene);
+      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+      const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'e')![0];
+      await binding.onTrigger();
+      expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
+      expect(locationService.getSearchObject().editPanel).toBe(editable ? '1' : undefined);
+    } finally {
+      setTestFlags({});
+    }
   });
 
   describe('edit mode shortcuts', () => {
@@ -591,6 +635,20 @@ describe('setupKeyboardShortcuts', () => {
 
         expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
         expect(DashboardInteractions.trackPastePanelClick).toHaveBeenCalledWith('keyboard', 'dashboard', 'keyboard');
+      });
+
+      it('ignores paste in Viewing and enables the same shortcut after returning to Editing', () => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        mockScene.setState({ isEditing: true, mode: 'view' });
+        localStorageMock.setItem(LS_PANEL_COPY_KEY, JSON.stringify({ panelId: 'panel-1' }));
+        setupKeyboardShortcuts(mockScene);
+
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).not.toHaveBeenCalled();
+
+        mockScene.setState({ mode: 'edit' });
+        getBinding('p v')!.onTrigger();
+        expect(mockScene.pastePanel).toHaveBeenCalledTimes(1);
       });
 
       it('does not paste when not editing', () => {

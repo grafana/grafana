@@ -8,6 +8,7 @@ import { Page } from 'app/core/components/Page/Page';
 import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
+import { isFullDashboardEditing } from 'app/features/dashboard-scene/scene/types/dashboard';
 import { useScopesServices } from 'app/features/scopes/ScopesContextProvider';
 import { useSelector } from 'app/types/store';
 
@@ -144,7 +145,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
         {!editPanel && (
           <DashboardSidebarSplitter
             dashboard={model}
-            isEditing={isEditing}
+            isEditing={isFullDashboardEditing(model.state)}
             isPlanning={Boolean(planning)}
             controls={renderControls()}
             body={renderBody()}

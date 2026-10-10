@@ -27,6 +27,7 @@ import { getDashboardSnapshotSrv } from 'app/features/dashboard/services/Snapsho
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDataDTO, type DashboardDTO, DashboardRoutes } from 'app/types/dashboard';
 
+import { consumeDashboardModeAfterSave, setDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { DashboardScene } from '../scene/DashboardScene';
 import * as DashboardTemplateExtensionModule from '../settings/enterprise-components/DashboardTemplateExtension';
 import { DashboardInteractions } from '../utils/interactions';
@@ -237,6 +238,51 @@ beforeEach(() => {
 });
 
 describe('DashboardScenePageStateManager v1', () => {
+  describe('dashboard mode after save navigation', () => {
+    afterEach(() => {
+      setTestFlags({});
+      consumeDashboardModeAfterSave('');
+    });
+
+    it.each(['view', 'edit', 'agent'] as const)(
+      'restores %s once after saving and starts later Assistant edits in the right mode',
+      async (presentation) => {
+        setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+        setupLoadDashboardMock({
+          dashboard: { uid: 'saved-copy', title: 'Saved title', editable: true },
+          meta: { canEdit: true },
+        });
+        setDashboardModeAfterSave('saved-copy', presentation);
+        const loader = new DashboardScenePageStateManager({});
+        await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
+        const dashboard = loader.state.dashboard!;
+        dashboard.onEnterEditMode('assistant');
+        expect(dashboard.state.mode).toBe(presentation === 'view' ? 'agent' : presentation);
+        expect(dashboard.state.isEditing).toBe(true);
+        expect(dashboard.getInitialState()?.title).toBe('Saved title');
+        dashboard.setState({ title: 'Later edit' });
+        dashboard.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+        expect(dashboard.state.title).toBe('Saved title');
+
+        loader.clearSceneCache();
+        await loader.loadDashboard({ uid: 'saved-copy', route: DashboardRoutes.Normal });
+        expect(loader.state.dashboard!.state.mode).toBeUndefined();
+        expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
+      }
+    );
+
+    it('drops the handoff when another dashboard is opened first', async () => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      setupLoadDashboardMock({ dashboard: { uid: 'other', editable: true }, meta: { canEdit: true } });
+      setDashboardModeAfterSave('saved-copy', 'view');
+      const loader = new DashboardScenePageStateManager({});
+      await loader.loadDashboard({ uid: 'other', route: DashboardRoutes.Normal });
+      expect(loader.state.dashboard!.state.uid).toBe('other');
+      expect(loader.state.dashboard!.state.isEditing).toBeFalsy();
+      expect(consumeDashboardModeAfterSave('saved-copy')).toBeUndefined();
+    });
+  });
+
   afterEach(() => {
     store.delete(DASHBOARD_FROM_LS_KEY);
 
