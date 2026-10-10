@@ -133,7 +133,7 @@ function renderIcon(icon: IconName | React.ReactNode, iconSize?: IconSize) {
   }
 
   if (isIconName(icon)) {
-    return <Icon name={icon} size={`${iconSize ? iconSize : 'lg'}`} />;
+    return <Icon name={icon} size={`${iconSize ? iconSize : 'md'}`} />;
   }
 
   return icon;
