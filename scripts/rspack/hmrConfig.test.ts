@@ -119,7 +119,7 @@ describe('the dev config with hmr', () => {
     expect(devServer.host).toBe('localhost');
     expect(devServer.port).toBe(3333);
     // The path the Go side fetches the manifest from - see webassets.PublicPathFor.
-    expect(devServer.devMiddleware?.publicPath).toBe('/public/build/rspack/');
+    expect(devServer.devMiddleware?.publicPath).toBe('/public/build/');
     expect(devServer.devMiddleware?.writeToDisk).toBe(false);
   });
 

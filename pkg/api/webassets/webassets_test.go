@@ -21,7 +21,7 @@ func TestGetWebAssetsBuildDir(t *testing.T) {
 	license := licensingtest.NewFakeLicensing()
 	license.On("ContentDeliveryPrefix").Return("grafana")
 
-	assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+	assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
 	require.NoError(t, err)
 	require.Equal(t, "public/build/runtime.js", assets.JSFiles[0].FilePath)
 	require.Equal(t, "public/build/grafana.dark.dddd3333eeee4444ffff.css", assets.Dark)
@@ -48,7 +48,7 @@ func TestGetWebAssetsMissingBuildDir(t *testing.T) {
 }
 
 func TestReadWebassets(t *testing.T) {
-	assets, err := ReadWebAssetsFromFile("testdata/build/assets-manifest.json")
+	assets, err := ReadWebAssetsFromFile("testdata/assets-manifest.json")
 	require.NoError(t, err)
 
 	dto, err := json.MarshalIndent(assets, "", "  ")
@@ -162,7 +162,6 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 		expected string
 	}{
 		{buildDir: BuildDir, expected: "public/build/"},
-		{buildDir: RspackBuildDir, expected: "public/build/rspack/"},
 		{buildDir: "build-swagger", expected: "public/build-swagger/"},
 	}
 
@@ -177,9 +176,9 @@ func TestPublicPathFollowsBuildDir(t *testing.T) {
 		license := licensingtest.NewFakeLicensing()
 		license.On("ContentDeliveryPrefix").Return("grafana")
 
-		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
 		require.NoError(t, err)
-		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+		require.Equal(t, "public/build/", assets.PublicPath)
 	})
 }
 
@@ -187,7 +186,7 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 	license := licensingtest.NewFakeLicensing()
 	license.On("ContentDeliveryPrefix").Return("grafana")
 
-	manifest, err := os.ReadFile(filepath.Join("testdata", RspackBuildDir, AssetsManifestFile))
+	manifest, err := os.ReadFile(filepath.Join("testdata", BuildDir, AssetsManifestFile))
 	require.NoError(t, err)
 
 	t.Run("prefixes assets with the dev server origin", func(t *testing.T) {
@@ -199,12 +198,12 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 		defer devServer.Close()
 
 		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
-		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
 		require.NoError(t, err)
 
-		require.Equal(t, "/public/build/rspack/"+AssetsManifestFile, gotPath)
+		require.Equal(t, "/public/build/"+AssetsManifestFile, gotPath)
 		require.Equal(t, devServer.URL+"/", assets.ContentDeliveryURL)
-		require.Equal(t, "public/build/rspack/", assets.PublicPath)
+		require.Equal(t, "public/build/", assets.PublicPath)
 		require.Equal(t, devServer.URL+"/public/build/runtime.js", assets.JSFiles[0].FilePath)
 	})
 
@@ -214,7 +213,7 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 		devServer.Close()
 
 		cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServerURL}
-		assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+		assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
 		require.NoError(t, err)
 
 		require.Empty(t, assets.ContentDeliveryURL)
@@ -235,7 +234,7 @@ func TestGetWebAssetsFromDevServer(t *testing.T) {
 				defer devServer.Close()
 
 				cfg := &setting.Cfg{Env: setting.Dev, StaticRootPath: "testdata", FrontendDevServerURL: devServer.URL}
-				assets, err := GetWebAssets(context.Background(), RspackBuildDir, cfg, license)
+				assets, err := GetWebAssets(context.Background(), BuildDir, cfg, license)
 				require.NoError(t, err)
 
 				require.Empty(t, assets.ContentDeliveryURL)

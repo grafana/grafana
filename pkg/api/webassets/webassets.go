@@ -27,9 +27,7 @@ var tracer = otel.Tracer("github.com/grafana/grafana/pkg/api/webassets")
 var logger = log.New("webassets")
 
 const (
-	// BuildDir is served at the public/build URL prefix; the rspack build writes inside it.
-	BuildDir       = "build"
-	RspackBuildDir = BuildDir + "/rspack"
+	BuildDir = "build"
 
 	AssetsManifestFile = "assets-manifest.json"
 )
@@ -125,7 +123,7 @@ const devServerManifestTimeout = 10 * time.Second
 // dev server to read from, leaving the caller to use the build on disk. Only the main build
 // has a dev server; the swagger build compiles to disk.
 func readDevServerAssets(ctx context.Context, buildDir string, cfg *setting.Cfg) *dtos.EntryPointAssets {
-	if cfg.Env != setting.Dev || cfg.FrontendDevServerURL == "" || buildDir != RspackBuildDir {
+	if cfg.Env != setting.Dev || cfg.FrontendDevServerURL == "" || buildDir != BuildDir {
 		return nil
 	}
 

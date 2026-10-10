@@ -397,8 +397,8 @@ func TestHTTPServer_getListeners(t *testing.T) {
 
 func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
 	staticRoot := t.TempDir()
-	require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, webassets.RspackBuildDir), 0o750))
-	require.NoError(t, os.WriteFile(filepath.Join(staticRoot, webassets.RspackBuildDir, "app.js"), []byte("rspack"), 0o644))
+	require.NoError(t, os.MkdirAll(filepath.Join(staticRoot, webassets.BuildDir), 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(staticRoot, webassets.BuildDir, "app.js"), []byte("rspack"), 0o644))
 
 	cfg := setting.NewCfg()
 	cfg.Env = setting.Prod
@@ -410,7 +410,7 @@ func TestHTTPServer_mapStaticBuildDir(t *testing.T) {
 	hs.mapStatic(m, cfg.StaticRootPath, webassets.BuildDir, "public/build")
 
 	recorder := httptest.NewRecorder()
-	m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/public/build/rspack/app.js", nil))
+	m.ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/public/build/app.js", nil))
 
 	require.Equal(t, http.StatusOK, recorder.Code)
 	require.Equal(t, "rspack", recorder.Body.String())
