@@ -94,7 +94,7 @@ function onAppendToHistory(
 }
 
 function isAbsoluteTimeRange(value: TimeRange): boolean {
-  return isDateTime(value.raw.from) || isDateTime(value.raw.to);
+  return Boolean(value.fromNano || value.toNano) || isDateTime(value.raw.from) || isDateTime(value.raw.to);
 }
 
 function limit(value: TimePickerHistoryItem[]): TimePickerHistoryItem[] {

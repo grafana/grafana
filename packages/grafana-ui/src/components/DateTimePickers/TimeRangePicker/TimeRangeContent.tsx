@@ -9,6 +9,9 @@ import {
   type GrafanaTheme2,
   isDateTime,
   rangeUtil,
+  parseTimeWithNanos,
+  formatTimeWithNanos,
+  toEpochNs,
   type RawTimeRange,
   type TimeRange,
 } from '@grafana/data';
@@ -71,6 +74,7 @@ export const TimeRangeContent = (props: Props) => {
   } = props;
   const style = useStyles2(getStyles);
   const [isOpen, setOpen] = useState(false);
+  const hasNanos = Boolean(value.fromNano || value.toNano);
 
   const {
     handleSubmit,
@@ -80,8 +84,8 @@ export const TimeRangeContent = (props: Props) => {
     watch,
   } = useForm<FormState>({
     defaultValues: {
-      from: valueAsString(value.raw.from, timeZone),
-      to: valueAsString(value.raw.to, timeZone),
+      from: valueAsString(value.raw.from, timeZone, hasNanos),
+      to: valueAsString(value.raw.to, timeZone, hasNanos),
     },
   });
 
@@ -90,9 +94,9 @@ export const TimeRangeContent = (props: Props) => {
 
   // Synchronize internal state with external value
   useEffect(() => {
-    setValue('from', valueAsString(value.raw.from, timeZone));
-    setValue('to', valueAsString(value.raw.to, timeZone));
-  }, [value.raw.from, value.raw.to, setValue, timeZone]);
+    setValue('from', valueAsString(value.raw.from, timeZone, hasNanos));
+    setValue('to', valueAsString(value.raw.to, timeZone, hasNanos));
+  }, [value.raw.from, value.raw.to, setValue, timeZone, hasNanos]);
 
   const onOpen = () => setOpen(true);
 
@@ -137,8 +141,9 @@ export const TimeRangeContent = (props: Props) => {
       return;
     }
 
-    setValue('from', valueAsString(range.from, timeZone));
-    setValue('to', valueAsString(range.to, timeZone));
+    const hasNanos = Boolean(parseTimeWithNanos(range.from).nanos || parseTimeWithNanos(range.to).nanos);
+    setValue('from', valueAsString(range.from, timeZone, hasNanos));
+    setValue('to', valueAsString(range.to, timeZone, hasNanos));
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
@@ -275,12 +280,17 @@ export const TimeRangeContent = (props: Props) => {
 function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   const raw: RawTimeRange = { from, to };
   const timeRange = rangeUtil.convertRawToRange(raw, timezone);
-  const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
+  const valid = toEpochNs(timeRange.from, timeRange.fromNano) <= toEpochNs(timeRange.to, timeRange.toNano);
 
   return !valid;
 }
 
-function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
+function valueAsString(value: DateTime | string, timeZone?: TimeZone, precise = false): string {
+  const { time, nanos } = parseTimeWithNanos(value, { timeZone });
+  if ((nanos || precise) && time.isValid() && !rangeUtil.isRelativeTime(value)) {
+    return formatTimeWithNanos(time, nanos, timeZone);
+  }
+
   if (isDateTime(value)) {
     return dateTimeFormat(value, { timeZone });
   }

@@ -1,6 +1,7 @@
 import { t } from '@grafana/i18n';
 
 import {
+  type AbsoluteTimeRange,
   type RawTimeRange,
   type TimeRange,
   type TimeZone,
@@ -12,7 +13,7 @@ import {
 import * as dateMath from './datemath';
 import { timeZoneAbbrevation, dateTimeFormat, dateTimeFormatTimeAgo } from './formatter';
 import { isDateTime, type DateTime, dateTime, dateTimeForTimeZone } from './moment_wrapper';
-import { dateTimeParse } from './parser';
+import { parseTimeWithNanos, formatTimeWithNanos, toISOStringWithNanos } from './nanoseconds';
 
 // `fQ` and `fy` are synthesized lookup keys matching the regex group `f[Qy]`
 // in `describeTextRange`; `datemath.parse` itself recognizes the base unit
@@ -452,6 +453,14 @@ export function describeTimeRange(range: RawTimeRange, timeZone?: TimeZone, quic
 
   const options = { timeZone };
 
+  const from = parseTimeWithNanos(range.from, options);
+  const to = parseTimeWithNanos(range.to, options);
+  if ((from.nanos || to.nanos) && !isRelativeTimeRange(range)) {
+    return (
+      formatTimeWithNanos(from.time, from.nanos, timeZone) + ' to ' + formatTimeWithNanos(to.time, to.nanos, timeZone)
+    );
+  }
+
   if (isDateTime(range.from) && isDateTime(range.to)) {
     return dateTimeFormat(range.from, options) + ' to ' + dateTimeFormat(range.to, options);
   }
@@ -510,18 +519,48 @@ export const convertRawToRange = (
   fiscalYearStartMonth?: number,
   format?: string
 ): TimeRange => {
-  const from = dateTimeParse(raw.from, { roundUp: false, timeZone, fiscalYearStartMonth, format });
-  const to = dateTimeParse(raw.to, { roundUp: true, timeZone, fiscalYearStartMonth, format });
+  const { time: from, nanos: fromNano } = parseTimeWithNanos(raw.from, {
+    roundUp: false,
+    timeZone,
+    fiscalYearStartMonth,
+    format,
+  });
+  const { time: to, nanos: toNano } = parseTimeWithNanos(raw.to, {
+    roundUp: true,
+    timeZone,
+    fiscalYearStartMonth,
+    format,
+  });
 
   return {
     from,
     to,
+    ...(fromNano ? { fromNano } : {}),
+    ...(toNano ? { toNano } : {}),
     raw: {
-      from: dateMath.isMathString(raw.from) ? raw.from : from,
-      to: dateMath.isMathString(raw.to) ? raw.to : to,
+      from: fromNano ? toISOStringWithNanos(from, fromNano) : dateMath.isMathString(raw.from) ? raw.from : from,
+      to: toNano ? toISOStringWithNanos(to, toNano) : dateMath.isMathString(raw.to) ? raw.to : to,
     },
   };
 };
+
+export function toAbsoluteTimeRange(range: TimeRange): AbsoluteTimeRange {
+  return {
+    from: range.from.valueOf(),
+    to: range.to.valueOf(),
+    ...(range.fromNano ? { fromNano: range.fromNano } : {}),
+    ...(range.toNano ? { toNano: range.toNano } : {}),
+  };
+}
+
+export function convertAbsoluteToRaw(range: AbsoluteTimeRange, timeZone?: TimeZone): RawTimeRange {
+  const from = dateTimeForTimeZone(timeZone, range.from);
+  const to = dateTimeForTimeZone(timeZone, range.to);
+  return {
+    from: range.fromNano ? toISOStringWithNanos(from, range.fromNano) : from,
+    to: range.toNano ? toISOStringWithNanos(to, range.toNano) : to,
+  };
+}
 
 export function isRelativeTime(v: DateTime | string) {
   if (typeof v === 'string') {

@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { getDefaultTimeRange, systemDateFormats } from '@grafana/data';
+import { getDefaultTimeRange, systemDateFormats, toEpochNs } from '@grafana/data';
 
 import { TimePickerWithHistory } from './TimePickerWithHistory';
 
@@ -38,6 +38,36 @@ describe('TimePickerWithHistory', () => {
     await userEvent.click(screen.getByLabelText(/Time range selected/));
 
     expect(screen.getByText(/It looks like you haven't used this time picker before/i)).toBeInTheDocument();
+  });
+
+  it('stores precise absolute ranges in time picker history', async () => {
+    render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+    await clearAndType(getFromField(), '2023-06-14 07:49:50.123000001');
+    await clearAndType(getToField(), '2023-06-14 07:49:50.123999999');
+    await userEvent.click(getApplyButton());
+    expect(JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) ?? '[]')).toEqual([
+      { from: '2023-06-14T07:49:50.123000001Z', to: '2023-06-14T07:49:50.123999999Z' },
+    ]);
+  });
+
+  it.each([
+    ['123000001', '123999999', '1686728990123000001', '1686728990123999999'],
+    ['123000000', '123999999', '1686728990123000000', '1686728990123999999'],
+    ['123000001', '124000000', '1686728990123000001', '1686728990124000000'],
+  ])('restores the exact history range .%s to .%s', async (from, to, fromNs, toNs) => {
+    window.localStorage.setItem(
+      LOCAL_STORAGE_KEY,
+      JSON.stringify([{ from: `2023-06-14T07:49:50.${from}Z`, to: `2023-06-14T07:49:50.${to}Z` }])
+    );
+    const onChange = jest.fn();
+    render(<TimePickerWithHistory value={getDefaultTimeRange()} {...props} onChange={onChange} />);
+    await userEvent.click(screen.getByLabelText(/Time range selected/));
+    await userEvent.click(screen.getByText(/2023-06-14 07:49:50.* to 2023-06-14 07:49:50/));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    const restored = onChange.mock.calls[0][0];
+    expect(toEpochNs(restored.from, restored.fromNano).toString()).toBe(fromNs);
+    expect(toEpochNs(restored.to, restored.toNano).toString()).toBe(toNs);
   });
 
   it('Should load with valid time picker history only', async () => {

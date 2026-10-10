@@ -8,6 +8,7 @@ import {
   rangeUtil,
   type GrafanaTheme2,
   dateTimeFormat,
+  formatTimeWithNanos,
   type TimeOption,
   type TimeRange,
   dateMath,
@@ -257,6 +258,7 @@ const ZoomOutTooltip = () => {
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
   const now = Date.now();
+  const hasNanos = Boolean(timeRange.fromNano || timeRange.toNano);
 
   // Get timezone info only if timeZone is provided
   const timeZoneInfo = timeZone ? getTimeZoneDisplayInfo(timeZone, now) : undefined;
@@ -264,11 +266,15 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
   return (
     <Stack alignItems="center" direction="column" gap={0}>
       <div className="text-center">
-        {dateTimeFormat(timeRange.from, { timeZone })}
+        {hasNanos
+          ? formatTimeWithNanos(timeRange.from, timeRange.fromNano, timeZone)
+          : dateTimeFormat(timeRange.from, { timeZone })}
         <div className="text-center">
           <Trans i18nKey="time-picker.range-picker.to">to</Trans>
         </div>
-        {dateTimeFormat(timeRange.to, { timeZone })}
+        {hasNanos
+          ? formatTimeWithNanos(timeRange.to, timeRange.toNano, timeZone)
+          : dateTimeFormat(timeRange.to, { timeZone })}
       </div>
       <div className={styles.container}>
         <span className={styles.utc}>{timeZoneInfo ? getTimeZoneTitle(timeZoneInfo) : ''}</span>
@@ -299,8 +305,8 @@ TimePickerButtonLabel.displayName = 'TimePickerButtonLabel';
 
 const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: TimeOption[]) => {
   const adjustedTimeRange = {
-    to: dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
-    from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
+    to: value.toNano || dateMath.isMathString(value.raw.to) ? value.raw.to : value.to,
+    from: value.fromNano || dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
   return rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
 };
