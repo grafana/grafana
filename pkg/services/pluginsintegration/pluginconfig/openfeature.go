@@ -18,26 +18,19 @@ const (
 	openFeatureContextKey      = "GF_INSTANCE_OPENFEATURE_CONTEXT"
 )
 
-// openFeatureProviderURL resolves the OFREP base URL plugins should evaluate
-// feature flags against. Remote providers (features-service, ofrep) expose
-// their own URL; without one there is nothing plugins could reach, so
-// discovery is not advertised at all. The static provider serves the
-// [feature_toggles] ini flags on Grafana's own root OFREP route
-// (/ofrep/v1/evaluate/flags), so the Grafana app URL is advertised instead.
-// Any other provider type advertises nothing: the app URL is only known to
-// serve flags for the static provider.
-func (cfg *PluginInstanceCfg) openFeatureProviderURL() string {
+// openFeatureDiscovery returns the endpoint and type advertised to plugins: PluginURL, then the provider URL, or empty strings for nothing.
+// The app URL is advertised only for static, because only then does Grafana's own OFREP route serve all flags without credentials.
+func (cfg *PluginInstanceCfg) openFeatureDiscovery() (providerURL string, providerType string) {
 	of := cfg.OpenFeature
-	switch of.ProviderType {
-	case setting.FeaturesServiceProviderType, setting.OFREPProviderType:
-		if of.URL == nil {
-			return ""
-		}
-		return of.URL.String()
-	case setting.StaticProviderType:
-		return cfg.GrafanaAppURL
+	switch {
+	case of.PluginURL != nil:
+		return of.PluginURL.String(), string(setting.OFREPProviderType)
+	case of.ProviderType == setting.StaticProviderType && cfg.GrafanaAppURL != "":
+		return cfg.GrafanaAppURL, string(setting.StaticProviderType)
+	case (of.ProviderType == setting.OFREPProviderType || of.ProviderType == setting.FeaturesServiceProviderType) && of.URL != nil:
+		return of.URL.String(), string(of.ProviderType)
 	default:
-		return ""
+		return "", ""
 	}
 }
 

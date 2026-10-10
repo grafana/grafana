@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/features"
+	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // OpenFeatureProviderType is an alias for features.OpenFeatureProviderType
@@ -24,6 +25,8 @@ type OpenFeatureSettings struct {
 	APIEnabled   bool
 	ProviderType features.OpenFeatureProviderType
 	URL          *url.URL
+	// PluginURL is an OFREP endpoint advertised to plugins in place of the provider endpoint.
+	PluginURL    *url.URL
 	TargetingKey string
 	ContextAttrs map[string]string
 	CacheTTL     time.Duration
@@ -72,6 +75,8 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 		cfg.OpenFeature.URL = u
 	}
 
+	cfg.OpenFeature.PluginURL = parseOpenFeaturePluginURL(cfg.Logger, config.Key("plugin_url").MustString(""))
+
 	// build the eval context attributes using [feature_toggles.openfeature.context] section
 	ctxConf := cfg.Raw.Section("feature_toggles.openfeature.context")
 	attrs := map[string]string{}
@@ -92,4 +97,21 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	cfg.OpenFeature.CacheTTL = config.Key("cache_ttl").MustDuration(time.Minute)
 	return nil
+}
+
+// parseOpenFeaturePluginURL ignores invalid values instead of failing startup, because hosts can write plugin_url automatically.
+func parseOpenFeaturePluginURL(logger log.Logger, raw string) *url.URL {
+	if raw == "" {
+		return nil
+	}
+	u, err := url.Parse(raw)
+	if err != nil {
+		logger.Warn("Ignoring OpenFeature plugin_url: not a valid URL")
+		return nil
+	}
+	if (u.Scheme != "http" && u.Scheme != "https") || u.Hostname() == "" {
+		logger.Warn("Ignoring OpenFeature plugin_url: must be an absolute http or https URL")
+		return nil
+	}
+	return u
 }
