@@ -8,11 +8,20 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 )
 
-// InMemory is a registry that only allows a single version of a plugin to be registered at a time.
+// InMemory is a registry that holds a single active build per plugin (keyed by ID)
+// plus, in a secondary index, up to maxRetainedBuilds superseded builds per plugin
+// keyed by (pluginID, buildHash). See retained_builds.go.
 type InMemory struct {
 	store map[string]*plugins.Plugin
 	alias map[string]*plugins.Plugin
-	mu    sync.RWMutex
+	// builds indexes retained builds: pluginID -> buildHash -> retainedBuild.
+	builds map[string]map[string]*retainedBuild
+	// activeHash pins the buildHash of each plugin's active build so capacity
+	// eviction never removes the live build: pluginID -> active buildHash.
+	activeHash        map[string]string
+	maxRetainedBuilds int
+	buildSeq          uint64
+	mu                sync.RWMutex
 }
 
 func ProvideService() *InMemory {
@@ -21,8 +30,11 @@ func ProvideService() *InMemory {
 
 func NewInMemory() *InMemory {
 	return &InMemory{
-		store: make(map[string]*plugins.Plugin),
-		alias: make(map[string]*plugins.Plugin),
+		store:             make(map[string]*plugins.Plugin),
+		alias:             make(map[string]*plugins.Plugin),
+		builds:            make(map[string]map[string]*retainedBuild),
+		activeHash:        make(map[string]string),
+		maxRetainedBuilds: defaultMaxRetainedBuilds,
 	}
 }
 
@@ -52,6 +64,17 @@ func (i *InMemory) Add(_ context.Context, p *plugins.Plugin) error {
 	for _, a := range p.AliasIDs {
 		i.alias[a] = p
 	}
+	// Pin the active build's hash now that the plugin is live. AddBuild retains
+	// this build before Add runs (to close the registration 410 window), so at
+	// AddBuild time the plugin is not yet in store and AddBuild's own pin cannot
+	// fire. Pin here by matching the retained build that carries this exact
+	// plugin pointer, so capacity eviction never drops the live build.
+	for hash, rb := range i.builds[p.ID] {
+		if rb.plugin == p {
+			i.activeHash[p.ID] = hash
+			break
+		}
+	}
 	i.mu.Unlock()
 
 	return nil
@@ -70,6 +93,11 @@ func (i *InMemory) Remove(_ context.Context, pluginID, _ string) error {
 			delete(i.alias, a)
 		}
 	}
+	// Drop the plugin's retained builds and active-build pin so an uninstalled plugin
+	// stops resolving through the build-addressed route and its retained build objects
+	// are released (no stale serving, no leak).
+	delete(i.builds, pluginID)
+	delete(i.activeHash, pluginID)
 	i.mu.Unlock()
 
 	return nil
