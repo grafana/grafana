@@ -566,14 +566,18 @@ function createExtensionContext(panel: VizPanel, dashboard: DashboardScene): Plu
 }
 
 export function onRemovePanel(dashboard: DashboardScene, panel: VizPanel) {
-  appEvents.publish(
-    new ShowConfirmModalEvent({
-      title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
-      text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
-      yesText: 'Remove',
-      onConfirm: () => dashboard.removePanel(panel),
-    })
-  );
+  // Let the menu close and release focus before mounting the confirmation modal.
+  // Otherwise its aria-hidden ancestor still contains the focused trigger.
+  setTimeout(() => {
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.on-remove-panel.title.remove-panel', 'Remove panel'),
+        text: t('dashboard-scene.on-remove-panel.text.remove-panel', 'Are you sure you want to remove this panel?'),
+        yesText: 'Remove',
+        onConfirm: () => dashboard.removePanel(panel),
+      })
+    );
+  }, 0);
 }
 
 const onCreateAlert = async (panel: VizPanel, dashboard: DashboardScene) => {
