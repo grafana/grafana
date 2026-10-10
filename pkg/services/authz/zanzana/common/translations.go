@@ -81,6 +81,21 @@ var (
 )
 
 var resourceTranslations = map[string]resourceTranslation{
+	KindServiceAccounts: {
+		typ:      TypeServiceAccount,
+		group:    iamv0.ServiceAccountResourceInfo.GroupResource().Group,
+		resource: iamv0.ServiceAccountResourceInfo.GroupResource().Resource,
+		mapping: map[string]actionMapping{
+			"serviceaccounts:read":              newMapping(RelationGet, ""),
+			"serviceaccounts:write":             newMapping(RelationUpdate, ""),
+			"serviceaccounts:delete":            newMapping(RelationDelete, ""),
+			"serviceaccounts:create":            newUnscopedMapping(RelationCreate),
+			"serviceaccounts.permissions:read":  newMapping(RelationGetPermissions, ""),
+			"serviceaccounts.permissions:write": newMapping(RelationSetPermissions, ""),
+			"serviceaccounts:edit":              newMapping(RelationSetEdit, ""),
+			"serviceaccounts:admin":             newMapping(RelationSetAdmin, ""),
+		},
+	},
 	KindFolders: {
 		typ:      TypeFolder,
 		group:    folderGroup,

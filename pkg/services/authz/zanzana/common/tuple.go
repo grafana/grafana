@@ -170,12 +170,14 @@ var RelationsUser = append(append([]string{}, RelationsSubresourceTyped...),
 	RelationSetPermissions,
 )
 
-// RelationsServiceAccount are the relations valid on type "service-account":
-// no per-object `create`, and no get_permissions / set_permissions.
+// RelationsServiceAccount are the relations valid on type "service-account".
+// Creation is governed by group_resource, not an existing service account.
 var RelationsServiceAccount = append(append([]string{}, RelationsSubresourceTyped...),
 	RelationGet,
 	RelationUpdate,
 	RelationDelete,
+	RelationGetPermissions,
+	RelationSetPermissions,
 )
 
 // VerbMapping is mapping a k8s verb to a zanzana relation.
@@ -353,12 +355,20 @@ func lookupActionMapping(kind, action string) (resourceTranslation, actionMappin
 	return resourceTranslation{}, actionMapping{}, false
 }
 
-// TranslateToResourceTuples keeps action sets compact, adding only creation
-// grants that cannot be inferred from a generic Edit/Admin relation.
+// TranslateToResourceTuples keeps action sets compact where the model supports
+// their semantics, expanding grants only where a generic action set differs.
 func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1.TupleKey, bool) {
 	translation, m, ok := lookupActionMapping(kind, action)
 	if !ok {
 		return nil, false
+	}
+	// Generic group_resource Edit includes delete, but service-account Edit does not.
+	// Named service accounts use their own compact Edit relation instead.
+	if action == "serviceaccounts:edit" && name == "*" {
+		m.relation = RelationGet
+		read := translateResourceTuple(subject, translation, m, name)
+		m.relation = RelationUpdate
+		return []*openfgav1.TupleKey{read, translateResourceTuple(subject, translation, m, name)}, true
 	}
 	tuples := make([]*openfgav1.TupleKey, 1, 2)
 	tuples[0] = translateResourceTuple(subject, translation, m, name)
