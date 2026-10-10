@@ -13,11 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grafana/dskit/middleware"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -213,13 +210,7 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 	if conn == nil {
 		requestDuration := t.requestDuration.MustCurryWith(prometheus.Labels{"plugin_id": pluginID}).(*prometheus.HistogramVec)
 		var err error
-		conn, err = grpc.NewClient(host,
-			// Plugin deployments expose plaintext gRPC on the internal cluster network.
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-			grpc.WithChainUnaryInterceptor(middleware.UnaryClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
-			grpc.WithChainStreamInterceptor(middleware.StreamClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
-		)
+		conn, err = grpc.NewClient(host, pluginGRPCDialOptions(requestDuration)...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
 		}
