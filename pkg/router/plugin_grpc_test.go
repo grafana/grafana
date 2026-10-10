@@ -35,12 +35,15 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 			"connect_max_delay":  "10s",
 			"keepalive_time":     "20s",
 			"keepalive_timeout":  "5s",
+			"max_recv_msg_size":  "209715200",
+			"max_send_msg_size":  "33554432",
 		}))
 		require.NoError(t, err)
 		require.Equal(t, pluginGRPCConfig{
 			Retry:     pluginGRPCRetryConfig{Max: 3, Backoff: time.Second, Jitter: 0.5},
 			Connect:   pluginGRPCConnectConfig{Timeout: 20 * time.Second, BaseDelay: 100 * time.Millisecond, MaxDelay: 10 * time.Second},
 			Keepalive: pluginGRPCKeepaliveConfig{Time: 20 * time.Second, Timeout: 5 * time.Second},
+			Message:   pluginGRPCMessageConfig{MaxRecvSize: 200 << 20, MaxSendSize: 32 << 20},
 		}, cfg)
 	})
 
@@ -53,6 +56,8 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 		"connect_max_delay":  "0s",
 		"keepalive_time":     "-1s",
 		"keepalive_timeout":  "0s",
+		"max_recv_msg_size":  "0",
+		"max_send_msg_size":  "4MiB",
 	} {
 		t.Run("invalid "+key, func(t *testing.T) {
 			cfg := cfgWithBackendGRPCSection(t, map[string]string{key: value})

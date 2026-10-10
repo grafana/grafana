@@ -30,6 +30,7 @@ type pluginGRPCConfig struct {
 	Retry     pluginGRPCRetryConfig
 	Connect   pluginGRPCConnectConfig
 	Keepalive pluginGRPCKeepaliveConfig
+	Message   pluginGRPCMessageConfig
 }
 
 // pluginGRPCRetryConfig configures retries of unary plugin calls that fail
@@ -60,6 +61,13 @@ type pluginGRPCKeepaliveConfig struct {
 	Timeout time.Duration
 }
 
+// pluginGRPCMessageConfig limits the size of messages to and from plugin
+// deployments, in bytes.
+type pluginGRPCMessageConfig struct {
+	MaxRecvSize int
+	MaxSendSize int
+}
+
 func defaultPluginGRPCConfig() pluginGRPCConfig {
 	return pluginGRPCConfig{
 		Retry: pluginGRPCRetryConfig{
@@ -75,6 +83,10 @@ func defaultPluginGRPCConfig() pluginGRPCConfig {
 		Keepalive: pluginGRPCKeepaliveConfig{
 			Time:    20 * time.Second,
 			Timeout: 10 * time.Second,
+		},
+		Message: pluginGRPCMessageConfig{
+			MaxRecvSize: 100 << 20,
+			MaxSendSize: 100 << 20,
 		},
 	}
 }
@@ -120,6 +132,12 @@ func parsePluginGRPCSection(section *setting.DynamicSection) (pluginGRPCConfig, 
 	if cfg.Keepalive.Timeout, err = parsePositiveDurationKey(section, "keepalive_timeout", cfg.Keepalive.Timeout); err != nil {
 		return cfg, err
 	}
+	if cfg.Message.MaxRecvSize, err = parsePositiveIntKey(section, "max_recv_msg_size", cfg.Message.MaxRecvSize); err != nil {
+		return cfg, err
+	}
+	if cfg.Message.MaxSendSize, err = parsePositiveIntKey(section, "max_send_msg_size", cfg.Message.MaxSendSize); err != nil {
+		return cfg, err
+	}
 	return cfg, nil
 }
 
@@ -155,6 +173,10 @@ func (c pluginGRPCConfig) dialOptions(requestDuration *prometheus.HistogramVec, 
 			MinConnectTimeout: c.Connect.Timeout,
 		}),
 	}
+	opts = append(opts, grpc.WithDefaultCallOptions(
+		grpc.MaxCallRecvMsgSize(c.Message.MaxRecvSize),
+		grpc.MaxCallSendMsgSize(c.Message.MaxSendSize),
+	))
 	if c.Keepalive.Time > 0 {
 		// The plugin deployment's server must allow pings this often, and on
 		// connections without active calls: by default, gRPC servers allow one
@@ -203,6 +225,18 @@ func parseUintKey(section *setting.DynamicSection, key string, def uint) (uint, 
 		return 0, fmt.Errorf("%s must be a non-negative integer, got %q", key, value)
 	}
 	return uint(n), nil
+}
+
+func parsePositiveIntKey(section *setting.DynamicSection, key string, def int) (int, error) {
+	value := section.Key(key).String()
+	if value == "" {
+		return def, nil
+	}
+	n, err := strconv.Atoi(value)
+	if err != nil || n <= 0 {
+		return 0, fmt.Errorf("%s must be a positive integer, got %q", key, value)
+	}
+	return n, nil
 }
 
 func parseDurationKey(section *setting.DynamicSection, key string, def time.Duration) (time.Duration, error) {
