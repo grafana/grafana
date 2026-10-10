@@ -322,7 +322,7 @@ func (s *ModuleServer) Run() error {
 	m.RegisterModule(modules.All, nil)
 
 	// Register modules provided by other builds (e.g. enterprise).
-	s.moduleRegisterer.RegisterModules(m)
+	s.moduleRegisterer.RegisterModules(m, s)
 
 	return m.Run(s.context)
 }
