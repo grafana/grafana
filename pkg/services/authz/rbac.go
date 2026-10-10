@@ -32,6 +32,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	zClient "github.com/grafana/grafana/pkg/services/authz/zanzana/client"
@@ -77,6 +78,7 @@ func ProvideAuthZClients(
 	zanzanaClient zanzana.Client,
 	restConfig apiserver.RestConfigProvider,
 	eventualResourceClient *resource.EventualClient,
+	legacyLoader *legacypermissions.Loader,
 ) (*AuthZClients, error) {
 	//nolint:staticcheck // not yet migrated to OpenFeature
 	zanzanaEnabled := features.IsEnabledGlobally(featuremgmt.FlagZanzana)
@@ -111,9 +113,8 @@ func ProvideAuthZClients(
 		}
 		return newAuthZClients(accessClient, rbacClient), nil
 	default:
-		userPermissionsEvaluator, ok := acService.(accesscontrol.UserPermissionsEvaluator)
-		if !ok {
-			return nil, errors.New("access control service does not support local user permission evaluation")
+		if legacyLoader == nil {
+			return nil, errors.New("embedded user permission loader is not configured")
 		}
 		sql := legacysql.NewDatabaseProvider(db)
 		rbacSettings := rbac.Settings{
@@ -141,7 +142,7 @@ func ProvideAuthZClients(
 				store.NewStaticPermissionStore(acService),
 				store.NewSQLPermissionStore(sql, tracer),
 			),
-			userPermissionsEvaluator,
+			legacyLoader,
 			nil,
 			nil,
 			log.New("authz-grpc-server"),

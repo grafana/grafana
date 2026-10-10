@@ -33,6 +33,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/pluginutils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/seeding"
 	"github.com/grafana/grafana/pkg/services/apiserver/restcfg"
+	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
+	"github.com/grafana/grafana/pkg/services/authz/rbac/legacypermissions"
 	"github.com/grafana/grafana/pkg/services/authz/zanzana"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -65,6 +67,7 @@ func ProvideService(
 	lock *serverlock.ServerLockService, zanzanaClient zanzana.Client,
 	restConfigProvider restcfg.RestConfigProvider,
 	iamFeatures IAMFeatures,
+	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
 ) (*Service, error) {
 	service := ProvideOSSService(
 		cfg,
@@ -77,6 +80,7 @@ func ProvideService(
 		permRegistry,
 		lock,
 		iamFeatures,
+		legacyClient, roleCatalog,
 	)
 
 	api.NewAccessControlAPI(routeRegister, accessControl, service, userService).RegisterAPIEndpoints()
@@ -109,6 +113,7 @@ func ProvideOSSService(
 	cache *localcache.CacheService, features featuremgmt.FeatureToggles, tracer tracing.Tracer,
 	db db.DB, permRegistry permreg.PermissionRegistry, lock *serverlock.ServerLockService,
 	iamFeatures IAMFeatures,
+	legacyClient legacyclient.Service, roleCatalog *legacypermissions.RoleCatalog,
 ) *Service {
 	s := &Service{
 		actionResolver:            actionResolver,
@@ -122,7 +127,10 @@ func ProvideOSSService(
 		permRegistry:              permRegistry,
 		sql:                       db,
 		serverLock:                lock,
+		legacyClient:              legacyClient,
+		roleCatalog:               roleCatalog,
 	}
+	s.publishRoleCatalogLocked()
 
 	if backend, ok := store.(*database.AccessControlStore); ok {
 		s.seeder = seeding.New(log.New("accesscontrol.seeder"), backend, backend)
@@ -142,6 +150,7 @@ type Service struct {
 	registrations             accesscontrol.RegistrationList
 	rolesMu                   sync.RWMutex
 	roles                     map[string]*accesscontrol.RoleDTO
+	roleCatalog               *legacypermissions.RoleCatalog
 	store                     accesscontrol.Store
 	seeder                    *seeding.Seeder
 	permRegistry              permreg.PermissionRegistry
@@ -149,6 +158,7 @@ type Service struct {
 	sql                       db.DB
 	serverLock                *serverlock.ServerLockService
 	singleFlight              singleflight.Group
+	legacyClient              legacyclient.Service
 	userPermissionsClient     accesscontrol.UserPermissionsClient
 	zanzanaResolver           *ZanzanaPermissionResolver
 }
@@ -171,6 +181,9 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
+	if accesscontrol.LegacyUserPermissionsEnabled(ctx) {
+		return accesscontrol.GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
+	}
 	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled {
 		if s.userPermissionsClient == nil {
 			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
@@ -653,6 +666,7 @@ func (s *Service) getBasicRolePermissionsLocked() map[string][]accesscontrol.Per
 // registerRolesLocked processes a single role registration and adds permissions to basic roles.
 // Must be called with s.rolesMu locked.
 func (s *Service) registerRolesLocked(registration accesscontrol.RoleRegistration) {
+	defer s.publishRoleCatalogLocked()
 	for br := range accesscontrol.BuiltInRolesWithParents(registration.Grants) {
 		if basicRole, ok := s.roles[br]; ok {
 			for _, p := range registration.Role.Permissions {

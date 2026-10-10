@@ -9,6 +9,11 @@ package authz.extention.v1;
 service LegacyAuthzService {
   // Deprecated: transitional compatibility API for legacy RBAC checks.
   rpc LegacyCheck(LegacyCheckRequest) returns (LegacyCheckResponse);
+
+  // Deprecated: transitional compatibility API for legacy permission enumeration.
+  rpc LegacyGetUserPermissions(LegacyGetUserPermissionsRequest) returns (stream LegacyGetUserPermissionsResponse) {
+    option deprecated = true;
+  }
 }
 
 message LegacyCheckRequest {
@@ -57,4 +62,53 @@ message LegacyPermission {
 
 message LegacyExpressionList {
   repeated LegacyExpression expressions = 1;
+}
+
+// Trusted assertions from Grafana authentication, not end-user input. The caller
+// is authenticated by the transport, independently of this target identity.
+message LegacyPermissionIdentity {
+  string type = 1;
+  // Untyped UID; type supplies its identity type. Never parse this as an ID.
+  string uid = 2;
+  optional int64 internal_id = 3;
+  bool has_unique_id = 4;
+  string org_role = 5;
+  bool is_grafana_admin = 6;
+  // Numeric legacy RBAC memberships and contextual groups are distinct inputs.
+  repeated int64 team_ids = 7;
+  repeated string groups = 8;
+  // Preserve the trusted requester's shared-cache key, including empty values.
+  optional string cache_key = 9;
+  // Original namespace for legacy resolution, not a tenant scope override.
+  // When nonempty it must match the request namespace, except org--1 for
+  // self-managed no_org_membership evaluation. Empty differs from absent.
+  optional string requester_namespace = 10;
+}
+
+message LegacyGetUserPermissionsRequest {
+  LegacyPermissionIdentity identity = 1;
+  // Concrete transport namespace, also required for global/no-membership
+  // evaluation. A self-managed default anchor never selects evaluation org 1.
+  string namespace = 2;
+  // True selects instance-global legacy grants (org zero). When both this and
+  // no_org_membership are false, use the namespace's org. Never crosses tenants.
+  bool global_org = 3;
+  // Preserve the legacy no-membership state (org -1), not a tenant namespace.
+  // Mutually exclusive with global_org.
+  bool no_org_membership = 6;
+  bool reload_cache = 4;
+  // Bypass Zanzana cache reads AND writes without refreshing legacy caches.
+  bool skip_zanzana_cache = 5;
+}
+
+// An enumerated grant, distinct from LegacyPermission's check expression with
+// alternative scopes. Keep the singular scope and preserve empty values.
+message LegacyUserPermission {
+  string action = 1;
+  string scope = 2;
+}
+
+message LegacyGetUserPermissionsResponse {
+  // Preserve duplicates. Clients publish results only after successful EOF.
+  repeated LegacyUserPermission permissions = 1;
 }
