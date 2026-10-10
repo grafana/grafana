@@ -14,7 +14,7 @@ import (
 // mutateDashboardLifecycle keeps the lifecycle metadata server-owned.
 //
 // On create, a client may ask for a draft (lifecycle=draft); the server stamps the owner.
-// Forks are created only through the fork subresource. On update, lifecycle labels and
+// Forks are created only through the fork subresource: fork metadata from a client is dropped. On update, lifecycle labels and
 // annotations are carried over from the stored object whatever the client sent, so a
 // regular save can neither publish a draft nor forge or drop fork metadata.
 func mutateDashboardLifecycle(ctx context.Context, a admission.Attributes) error {
@@ -24,16 +24,23 @@ func mutateDashboardLifecycle(ctx context.Context, a admission.Attributes) error
 	}
 	switch a.GetOperation() {
 	case admission.Create:
+		// Server-owned metadata from a client is dropped rather than rejected, so copies of
+		// a draft or fork (for example Save as) become regular dashboards.
 		labels := obj.GetLabels()
 		requested := labels[utils.LabelKeyLifecycle]
-		if labels[utils.LabelKeyLifecycleOwner] != "" || labels[utils.LabelKeyForkOf] != "" || obj.GetAnnotations()[utils.AnnoKeyForkBase] != "" {
-			return apierrors.NewBadRequest("lifecycle owner and fork metadata are set by the server")
-		}
+		delete(labels, utils.LabelKeyLifecycleOwner)
+		delete(labels, utils.LabelKeyForkOf)
+		annotations := obj.GetAnnotations()
+		delete(annotations, utils.AnnoKeyForkBase)
+		obj.SetAnnotations(annotations)
 		switch requested {
 		case "", utils.LifecyclePublished:
+			obj.SetLabels(labels)
 			return nil
 		case utils.LifecycleFork:
-			return apierrors.NewBadRequest("create forks with the fork subresource")
+			delete(labels, utils.LabelKeyLifecycle)
+			obj.SetLabels(labels)
+			return nil
 		case utils.LifecycleDraft:
 			if !draftsAndForksEnabled(ctx) {
 				return apierrors.NewBadRequest("dashboard drafts are not enabled")
@@ -48,6 +55,15 @@ func mutateDashboardLifecycle(ctx context.Context, a admission.Attributes) error
 			}
 			labels[utils.LabelKeyLifecycleOwner] = owner
 			obj.SetLabels(labels)
+			// The creator needs access to their own draft; at the root folder that comes only
+			// from the default permissions. Others still can't see it (see lifecycleGuard).
+			if annotations == nil {
+				annotations = map[string]string{}
+			}
+			if annotations[utils.AnnoKeyGrantPermissions] == "" {
+				annotations[utils.AnnoKeyGrantPermissions] = utils.AnnoGrantPermissionsDefault
+			}
+			obj.SetAnnotations(annotations)
 			return nil
 		default:
 			return apierrors.NewBadRequest(fmt.Sprintf("unknown %s value %q", utils.LabelKeyLifecycle, requested))

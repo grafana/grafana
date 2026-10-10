@@ -205,12 +205,12 @@ func (c *lifecycleConnector) fork(ctx context.Context, name string, body lifecyc
 	}
 	forkMeta.SetName(util.GenerateShortUID())
 	forkMeta.SetFolder(origMeta.GetFolder())
-	labels := forkMeta.GetLabels()
+	labels := labelsOf(forkMeta)
 	labels[utils.LabelKeyLifecycle] = utils.LifecycleFork
 	labels[utils.LabelKeyLifecycleOwner] = owner
 	labels[utils.LabelKeyForkOf] = name
 	forkMeta.SetLabels(labels)
-	annotations := forkMeta.GetAnnotations()
+	annotations := annotationsOf(forkMeta)
 	annotations[utils.AnnoKeyForkBase] = strconv.FormatInt(origMeta.GetGeneration(), 10)
 	setOptional(annotations, utils.AnnoKeyOrigin, body.Origin)
 	setOptional(annotations, utils.AnnoKeyOriginRef, body.OriginRef)
@@ -276,11 +276,11 @@ func (c *lifecycleConnector) publish(ctx context.Context, name string, body life
 	if err != nil {
 		return nil, err
 	}
-	labels := updatedMeta.GetLabels()
+	labels := labelsOf(updatedMeta)
 	labels[utils.LabelKeyLifecycle] = utils.LifecyclePublished
 	delete(labels, utils.LabelKeyLifecycleOwner)
 	updatedMeta.SetLabels(labels)
-	annotations := updatedMeta.GetAnnotations()
+	annotations := annotationsOf(updatedMeta)
 	annotations[utils.AnnoKeyMessage] = messageOr(body.Message, "Published")
 	updatedMeta.SetAnnotations(annotations)
 	if body.Folder != nil {
@@ -349,7 +349,7 @@ func (c *lifecycleConnector) merge(ctx context.Context, name string, body lifecy
 	if err != nil {
 		return nil, err
 	}
-	annotations := mergedMeta.GetAnnotations()
+	annotations := annotationsOf(mergedMeta)
 	annotations[utils.AnnoKeyMessage] = messageOr(body.Message, fmt.Sprintf("Merged fork %s", name))
 	mergedMeta.SetAnnotations(annotations)
 	result, _, err := c.store.Update(ctx, originalName, rest.DefaultUpdatedObjectInfo(merged), nil, nil, false, &metav1.UpdateOptions{})
@@ -391,7 +391,7 @@ func (c *lifecycleConnector) rebase(ctx context.Context, name string, body lifec
 	if err != nil {
 		return nil, err
 	}
-	annotations := updatedMeta.GetAnnotations()
+	annotations := annotationsOf(updatedMeta)
 	annotations[utils.AnnoKeyForkBase] = strconv.FormatInt(body.BaseGeneration, 10)
 	annotations[utils.AnnoKeyMessage] = messageOr(body.Message, fmt.Sprintf("Updated fork onto version %d", body.BaseGeneration))
 	updatedMeta.SetAnnotations(annotations)
@@ -534,6 +534,20 @@ func roundTrip(obj runtime.Object, edit func(map[string]any)) (runtime.Object, e
 		return nil, err
 	}
 	return out, nil
+}
+
+func labelsOf(obj utils.GrafanaMetaAccessor) map[string]string {
+	if labels := obj.GetLabels(); labels != nil {
+		return labels
+	}
+	return map[string]string{}
+}
+
+func annotationsOf(obj utils.GrafanaMetaAccessor) map[string]string {
+	if annotations := obj.GetAnnotations(); annotations != nil {
+		return annotations
+	}
+	return map[string]string{}
 }
 
 func setOptional(m map[string]string, key, value string) {

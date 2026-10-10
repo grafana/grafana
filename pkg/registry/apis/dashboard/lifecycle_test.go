@@ -42,15 +42,17 @@ func TestMutateDashboardLifecycle(t *testing.T) {
 			dashv2.DashboardResourceInfo.GroupVersionResource(), "", op, nil, false, nil)
 	}
 
-	t.Run("rejects forged fork metadata on create", func(t *testing.T) {
-		for _, labels := range []map[string]string{
-			{utils.LabelKeyLifecycle: utils.LifecycleFork},
-			{utils.LabelKeyLifecycle: utils.LifecycleDraft, utils.LabelKeyLifecycleOwner: "bob"},
-			{utils.LabelKeyForkOf: "other"},
-		} {
-			err := mutateDashboardLifecycle(ctx, attrs(lifecycleDashboard("d1", 0, labels, nil), nil, admission.Create))
-			require.Error(t, err, labels)
-		}
+	t.Run("drops forged fork metadata on create", func(t *testing.T) {
+		obj := lifecycleDashboard("d1", 0, map[string]string{
+			utils.LabelKeyLifecycle: utils.LifecycleFork, utils.LabelKeyLifecycleOwner: "bob", utils.LabelKeyForkOf: "other",
+		}, map[string]string{utils.AnnoKeyForkBase: "3"})
+		require.NoError(t, mutateDashboardLifecycle(ctx, attrs(obj, nil, admission.Create)))
+		require.Empty(t, obj.Labels, "a copy of a fork becomes a regular dashboard")
+		require.NotContains(t, obj.Annotations, utils.AnnoKeyForkBase)
+
+		draft := lifecycleDashboard("d1", 0, map[string]string{utils.LabelKeyLifecycle: utils.LifecycleDraft, utils.LabelKeyLifecycleOwner: "bob"}, nil)
+		require.NoError(t, mutateDashboardLifecycle(ctx, attrs(draft, nil, admission.Create)))
+		require.Equal(t, "alice", draft.Labels[utils.LabelKeyLifecycleOwner], "the owner is always the requester")
 	})
 
 	t.Run("stamps the owner of a new draft", func(t *testing.T) {
