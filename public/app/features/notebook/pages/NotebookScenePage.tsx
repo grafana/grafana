@@ -12,6 +12,7 @@ import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 
 import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_ENTRY_POINT } from '../analytics/types';
+import { useTrackNotebookVisitForFeedback } from '../feedback/useTrackNotebookVisitForFeedback';
 import { NotebookPrompt } from '../scene/NotebookPrompt';
 import { type NotebookScene } from '../scene/NotebookScene';
 import { NotebookSceneControls } from '../scene/NotebookSceneControls';
@@ -88,6 +89,7 @@ function NotebookDocument({ scene, isNew }: { scene: NotebookScene; isNew: boole
   const headerHeight = useChromeHeaderHeight();
 
   useEffect(() => scene.activate(), [scene]);
+  useTrackNotebookVisitForFeedback();
 
   // A blank notebook that has just been created by its first save: point the url at it instead of the
   // route that made it. Replace rather than push, or Back lands back on the blank route and reads as a
