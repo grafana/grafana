@@ -4,6 +4,7 @@ import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import {
   AdHocFiltersVariable,
   ConstantVariable,
+  CustomVariable,
   DataSourceVariable,
   GroupByVariable,
   IntervalVariable,
@@ -20,7 +21,6 @@ import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 
 import { ReportInteractionBehavior } from '../scene/ReportInteractionBehavior';
-import { ResettingCustomVariable } from '../serialization/custom-variables/ResettingCustomVariable';
 import { SnapshotVariable } from '../serialization/custom-variables/SnapshotVariable';
 import { migrateGroupByVariablesV1 } from '../serialization/groupByMigration';
 import { createSceneVariableFromVariableModel as createSceneVariableFromVariableModelV2 } from '../serialization/transformSaveModelSchemaV2ToScene';
@@ -255,7 +255,7 @@ export function createSceneVariableFromVariableModel(variable: TypedVariableMode
   }
   // Custom variable
   if (variable.type === 'custom') {
-    return new ResettingCustomVariable({
+    return new CustomVariable({
       ...commonProperties,
       value: variable.current?.value ?? '',
       text: variable.current?.text ?? '',
