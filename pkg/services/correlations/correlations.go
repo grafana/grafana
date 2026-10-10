@@ -222,6 +222,14 @@ func (s *CorrelationsK8sService) UpdateCorrelation(ctx context.Context, cmd Upda
 			correlation.Config.Target = *cmd.Config.Target
 		}
 		correlation.Config.Transformations = cmd.Config.Transformations
+
+		if cmd.Config.TimeRange != nil {
+			if cmd.Config.TimeRange.Field != nil || cmd.Config.TimeRange.Range != nil {
+				correlation.Config.TimeRange = *cmd.Config.TimeRange
+			} else {
+				correlation.Config.TimeRange = CorrelationTimeRange{}
+			}
+		}
 	}
 
 	dsCmd := &datasources.GetDataSourceQuery{OrgID: cmd.OrgId, UID: cmd.SourceUID}
