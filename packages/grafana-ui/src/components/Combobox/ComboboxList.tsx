@@ -173,6 +173,7 @@ export const ComboboxList = <T extends string | number>({
                   <Stack direction="row" alignItems="center">
                     {item.icon && <Icon name={item.icon} />}
                     <div className={styles.optionLabel}>{item.label ?? item.value}</div>
+                    {!isMultiSelect && isOptionSelected(item) && <Icon name="check" className={styles.selectedIcon} />}
                   </Stack>
 
                   {item.description && <div className={styles.optionDescription}>{item.description}</div>}
