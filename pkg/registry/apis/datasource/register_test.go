@@ -4,6 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	k8srest "k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/apiserver/pkg/server"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
@@ -12,6 +14,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+func TestAccessRegisteredWithoutDualWriter(t *testing.T) {
+	b := newAccessREST(nil).builder
+	group := &server.APIGroupInfo{VersionedResourcesStorageMap: map[string]map[string]k8srest.Storage{}}
+	require.NoError(t, b.UpdateAPIGroupInfo(group, builder.APIGroupOptions{}))
+	storage := group.VersionedResourcesStorageMap[b.GetGroupVersion().Version]
+	require.IsType(t, &subAccessREST{}, storage["datasources/access"])
+}
 
 func TestApplyDefaultStorageConfig(t *testing.T) {
 	newRI := func(pluginID string) utils.ResourceInfo {
