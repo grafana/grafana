@@ -76,11 +76,16 @@ type parseDataSourceSaveResponse = {
   details?: HealthCheckResultDetails | { message?: string; verboseMessage?: string };
 };
 
-const parseHealthCheckError = (errorResponse: any): parseDataSourceSaveResponse => {
+const parseHealthCheckError = (errorResponse: unknown): parseDataSourceSaveResponse => {
   let message: string | undefined;
   let details: HealthCheckResultDetails;
 
-  if (errorResponse.error && errorResponse.error instanceof HealthCheckError) {
+  if (
+    errorResponse &&
+    typeof errorResponse === 'object' &&
+    'error' in errorResponse &&
+    errorResponse.error instanceof HealthCheckError
+  ) {
     message = errorResponse.error.message;
     details = errorResponse.error.details;
   } else if (isFetchError(errorResponse)) {
