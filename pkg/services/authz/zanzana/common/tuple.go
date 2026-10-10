@@ -69,11 +69,17 @@ const (
 	RelationSetPermissions string = "set_permissions"
 
 	RelationCanGet            string = "can_get"
-	RelationCanCreate         string = "can_create"
 	RelationCanUpdate         string = "can_update"
 	RelationCanDelete         string = "can_delete"
 	RelationCanGetPermissions string = "can_get_permissions"
 	RelationCanSetPermissions string = "can_set_permissions"
+
+	RelationCanReadContents           string = "can_read_contents"
+	RelationCanCreateContents         string = "can_create_contents"
+	RelationCanUpdateContents         string = "can_update_contents"
+	RelationCanDeleteContents         string = "can_delete_contents"
+	RelationCanGetContentsPermissions string = "can_get_contents_permissions"
+	RelationCanSetContentsPermissions string = "can_set_contents_permissions"
 
 	RelationSubresourceSetView  string = "resource_" + RelationSetView
 	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
@@ -87,7 +93,6 @@ const (
 	RelationSubresourceSetPermissions string = "resource_" + RelationSetPermissions
 
 	RelationCanSubresourceGet            string = "can_resource_" + RelationGet
-	RelationCanSubresourceCreate         string = "can_resource_" + RelationCreate
 	RelationCanSubresourceUpdate         string = "can_resource_" + RelationUpdate
 	RelationCanSubresourceDelete         string = "can_resource_" + RelationDelete
 	RelationCanSubresourceGetPermissions string = "can_resource_" + RelationGetPermissions
@@ -202,8 +207,6 @@ func FolderPermissionRelation(relation string) string {
 	switch relation {
 	case RelationGet:
 		return RelationCanGet
-	case RelationCreate:
-		return RelationCanCreate
 	case RelationUpdate:
 		return RelationCanUpdate
 	case RelationDelete:
@@ -217,13 +220,31 @@ func FolderPermissionRelation(relation string) string {
 	}
 }
 
+// FolderContentPermissionRelation keeps folder-only grants from authorizing contained resources.
+func FolderContentPermissionRelation(relation string) string {
+	switch relation {
+	case RelationGet:
+		return RelationCanReadContents
+	case RelationCreate:
+		return RelationCanCreateContents
+	case RelationUpdate:
+		return RelationCanUpdateContents
+	case RelationDelete:
+		return RelationCanDeleteContents
+	case RelationGetPermissions:
+		return RelationCanGetContentsPermissions
+	case RelationSetPermissions:
+		return RelationCanSetContentsPermissions
+	default:
+		return relation
+	}
+}
+
 // SubresourcePermissionRelation returns computed subresource relations that include escalation.
 func SubresourcePermissionRelation(relation string) string {
 	switch relation {
 	case RelationSubresourceGet:
 		return RelationCanSubresourceGet
-	case RelationSubresourceCreate:
-		return RelationCanSubresourceCreate
 	case RelationSubresourceUpdate:
 		return RelationCanSubresourceUpdate
 	case RelationSubresourceDelete:
@@ -332,32 +353,57 @@ func lookupActionMapping(kind, action string) (resourceTranslation, actionMappin
 	return resourceTranslation{}, actionMapping{}, false
 }
 
+// TranslateToResourceTuples keeps action sets compact, adding only creation
+// grants that cannot be inferred from a generic Edit/Admin relation.
+func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1.TupleKey, bool) {
+	translation, m, ok := lookupActionMapping(kind, action)
+	if !ok {
+		return nil, false
+	}
+	tuples := make([]*openfgav1.TupleKey, 1, 2)
+	tuples[0] = translateResourceTuple(subject, translation, m, name)
+	switch action {
+	case "folders:edit", "folders:admin":
+		m.relation = RelationCreate
+	case "dashboards:edit", "dashboards:admin":
+		m.relation = RelationCreate
+		m.subresource = "annotations"
+	default:
+		return tuples, true
+	}
+	return append(tuples, translateResourceTuple(subject, translation, m, name)), true
+}
+
+// TranslateToResourceTuple translates only the base action. Permission writers
+// must use TranslateToResourceTuples to include action-set creation grants.
 func TranslateToResourceTuple(subject string, action, kind, name string) (*openfgav1.TupleKey, bool) {
 	translation, m, ok := lookupActionMapping(kind, action)
 	if !ok {
 		return nil, false
 	}
+	return translateResourceTuple(subject, translation, m, name), true
+}
 
+func translateResourceTuple(subject string, translation resourceTranslation, m actionMapping, name string) *openfgav1.TupleKey {
 	if m.skipScope || name == "*" {
 		if m.group != "" && m.resource != "" {
-			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource), true
+			return NewGroupResourceTuple(subject, m.relation, m.group, m.resource, m.subresource)
 		}
-		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource), true
+		return NewGroupResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource)
 	}
 
 	if translation.typ == TypeResource {
-		return NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name), true
+		return NewResourceTuple(subject, m.relation, translation.group, translation.resource, m.subresource, name)
 	}
 
 	if translation.typ == TypeFolder {
 		if m.group != "" && m.resource != "" {
-			return NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name), true
+			return NewFolderResourceTuple(subject, m.relation, m.group, m.resource, m.subresource, name)
 		}
-
-		return NewFolderTuple(subject, m.relation, name), true
+		return NewFolderTuple(subject, m.relation, name)
 	}
 
-	return NewTypedTuple(translation.typ, subject, m.relation, name), true
+	return NewTypedTuple(translation.typ, subject, m.relation, name)
 }
 
 func MergeFolderResourceTuples(a, b *openfgav1.TupleKey) {

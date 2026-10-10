@@ -67,7 +67,7 @@ func NewResourceInfoFromCheck(r *authzv1.CheckRequest) ResourceInfo {
 	if r.GetVerb() == utils.VerbCreate {
 		if resource.IsFolderResource() && resource.name == "" {
 			// Create checks use an empty Name. For a subfolder, Folder is the parent;
-			// permission must be evaluated on the parent folder (can_create), not on "general".
+			// permission must be evaluated on the parent folder, not on "general".
 			if resource.folder != "" {
 				resource.name = resource.folder
 				resource.folder = ""
