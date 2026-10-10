@@ -53,6 +53,7 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
     app,
     allowDownload,
     controlsExpanded,
+    copyLogs,
     dedupStrategy,
     downloadLogs,
     filterLevels,
@@ -468,6 +469,18 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               </Dropdown>
+              <LogListControlsOption
+                expanded={controlsExpanded}
+                name="copy"
+                className={styles.controlButton}
+                onClick={() => {
+                  copyLogs();
+                  reportInteraction('logs_log_list_controls_copied_logs');
+                }}
+                label={t('logs.logs-controls.copy', 'Copy results')}
+                tooltip={t('logs.logs-controls.tooltip.copy', 'Copy results')}
+                size="lg"
+              />
             </>
           )}
         </>
@@ -536,6 +549,18 @@ export const LogListControls = ({ eventBus, logLevels = FILTER_LEVELS, visualisa
                   size="lg"
                 />
               </Dropdown>
+              <LogListControlsOption
+                expanded={controlsExpanded}
+                name="copy"
+                className={styles.controlButton}
+                onClick={() => {
+                  copyLogs();
+                  reportInteraction('logs_log_list_controls_copied_logs');
+                }}
+                label={t('logs.logs-controls.copy', 'Copy results')}
+                tooltip={t('logs.logs-controls.tooltip.copy', 'Copy results')}
+                size="lg"
+              />
             </>
           )}
         </>

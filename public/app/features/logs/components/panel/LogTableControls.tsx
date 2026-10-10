@@ -20,6 +20,7 @@ type Props = {
   logOptionsStorageKey: string;
   sortOrder: LogsSortOrder;
   downloadLogs: (format: DownloadFormat) => void;
+  copyLogs: () => void;
   onWrapTextClick: () => void;
   wrapText: boolean;
 };
@@ -32,6 +33,7 @@ export const LogTableControls = ({
   setSortOrder,
   sortOrder,
   downloadLogs,
+  copyLogs,
   onWrapTextClick,
   wrapText,
 }: Props) => {
@@ -157,6 +159,18 @@ export const LogTableControls = ({
               size="lg"
             />
           </Dropdown>
+          <LogListControlsOption
+            expanded={controlsExpanded}
+            name="copy"
+            className={styles.controlButton}
+            onClick={() => {
+              copyLogs();
+              reportInteraction('logs_log_list_controls_copied_logs');
+            }}
+            label={t('logs.logs-controls.copy', 'Copy results')}
+            tooltip={t('logs.logs-controls.tooltip.copy', 'Copy results')}
+            size="lg"
+          />
         </>
       )}
     </div>
