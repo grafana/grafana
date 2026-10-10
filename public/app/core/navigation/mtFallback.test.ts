@@ -6,14 +6,14 @@ import { getWrapper } from 'test/test-utils';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
-import { useMTFallback } from './mtFallback';
+import { useIsUrlAllowed } from './mtFallback';
 
 function locationFor(pathname: string): Location {
   return { pathname, search: '', hash: '', state: undefined };
 }
 
-function renderUseMTFallback(pathname: string) {
-  return renderHook(() => useMTFallback(locationFor(pathname)), { wrapper: getWrapper({}) });
+function renderUseIsUrlAllowed(pathname: string) {
+  return renderHook(() => useIsUrlAllowed(locationFor(pathname)), { wrapper: getWrapper({}) });
 }
 
 // setTestFlags fires OpenFeature events that update React state; wrap in act() so those
@@ -24,19 +24,19 @@ async function setMTFallbackFlag(value: JsonValue) {
   });
 }
 
-describe('useMTFallback', () => {
+describe('useIsUrlAllowed', () => {
   afterEach(async () => {
     await act(async () => {
       setTestFlags({});
     });
   });
 
-  it('does not show the fallback when the flag has no allow list', async () => {
+  it('allows every path when the flag has no allow list', async () => {
     await setMTFallbackFlag({});
 
-    const { result } = renderUseMTFallback('/some/random/path');
+    const { result } = renderUseIsUrlAllowed('/some/random/path');
 
-    expect(result.current).toBe(false);
+    expect(result.current).toBe(true);
   });
 
   describe('with an allow list of exact and wildcard patterns', () => {
@@ -50,16 +50,16 @@ describe('useMTFallback', () => {
       ['/dashboards/foo', 'a path nested under a wildcard entry'],
       ['/a/grafana-metricsdrilldown-app/foo', 'another path nested under a wildcard entry'],
       ['/a/grafana-metricsdrilldown-app/foo/bar', 'a deeply nested path under a wildcard entry'],
-    ])('does not show the fallback for %s (%s)', (pathname) => {
-      const { result } = renderUseMTFallback(pathname);
-
-      expect(result.current).toBe(false);
-    });
-
-    it('shows the fallback for a path that is not in the allow list', () => {
-      const { result } = renderUseMTFallback('/explore');
+    ])('allows %s (%s)', (pathname) => {
+      const { result } = renderUseIsUrlAllowed(pathname);
 
       expect(result.current).toBe(true);
+    });
+
+    it('does not allow a path that is not in the allow list', () => {
+      const { result } = renderUseIsUrlAllowed('/explore');
+
+      expect(result.current).toBe(false);
     });
   });
 });

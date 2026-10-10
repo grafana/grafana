@@ -1,20 +1,22 @@
 import { screen } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { lazy, type ComponentType } from 'react';
-import { render } from 'test/test-utils';
+import { act, render } from 'test/test-utils';
 
-import { setEchoSrv } from '@grafana/runtime';
+import { setBackendSrv, setEchoSrv } from '@grafana/runtime';
+import { FlagKeys } from '@grafana/runtime/internal';
+import server, { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { backendSrv } from 'app/core/services/backend_srv';
 
 import { Echo } from '../services/echo/Echo';
 
 import { GrafanaRoute, type Props } from './GrafanaRoute';
-import { useMTFallback } from './mtFallback';
+import { invalidateStPodReadiness } from './stPodReadiness';
 import { type GrafanaRouteComponentProps } from './types';
 
-jest.mock('./mtFallback', () => ({
-  useMTFallback: jest.fn(),
-}));
-
-const mockUseMTFallback = jest.mocked(useMTFallback);
+setBackendSrv(backendSrv);
+setupMockServer();
 
 const mockLocation = {
   search: '?query=hello&test=asd',
@@ -22,7 +24,10 @@ const mockLocation = {
   state: undefined,
   hash: '',
 };
-function setup(overrides: Partial<Props>) {
+
+// The readiness gate suspends during its first render for routes that are not allow-listed,
+// and React requires the surrounding act() to be awaited when a component suspends.
+async function setup(overrides: Partial<Props>) {
   const props: Props = {
     location: mockLocation,
     route: {
@@ -32,23 +37,32 @@ function setup(overrides: Partial<Props>) {
     ...overrides,
   };
 
-  render(<GrafanaRoute {...props} />);
+  await act(async () => {
+    render(<GrafanaRoute {...props} />);
+  });
 }
 
 describe('GrafanaRoute', () => {
   beforeEach(() => {
     setEchoSrv(new Echo());
-    mockUseMTFallback.mockReturnValue(false);
+    invalidateStPodReadiness();
   });
 
-  it('Parses search', () => {
+  afterEach(async () => {
+    await act(async () => {
+      setTestFlags({});
+    });
+  });
+
+  it('Parses search', async () => {
     let capturedProps: GrafanaRouteComponentProps;
     const PageComponent = (props: GrafanaRouteComponentProps) => {
       capturedProps = props;
       return <div />;
     };
 
-    setup({ route: { component: PageComponent, path: '' } });
+    await setup({ route: { component: PageComponent, path: '' } });
+
     expect(capturedProps!.queryParams.query).toBe('hello');
   });
 
@@ -57,7 +71,7 @@ describe('GrafanaRoute', () => {
       return new Promise<{ default: ComponentType }>(() => {});
     });
 
-    setup({ route: { component: PageComponent, path: '' } });
+    await setup({ route: { component: PageComponent, path: '' } });
 
     expect(await screen.findByLabelText('Loading')).toBeInTheDocument();
   });
@@ -70,18 +84,24 @@ describe('GrafanaRoute', () => {
     const consoleError = jest.fn();
     jest.spyOn(console, 'error').mockImplementation(consoleError);
 
-    setup({ route: { component: PageComponent, path: '' } });
+    await setup({ route: { component: PageComponent, path: '' } });
 
     expect(await screen.findByRole('heading', { name: 'An unexpected error happened' })).toBeInTheDocument();
     expect(consoleError).toHaveBeenCalled();
   });
 
-  it('shows the fallback loader instead of the route component when useMTFallback returns true', () => {
-    mockUseMTFallback.mockReturnValue(true);
+  it('shows the fallback loader instead of the route component for a route outside the allow list', async () => {
+    server.use(http.get('/api/health', () => HttpResponse.json({ code: 'NotFound' }, { status: 404 })));
+    await act(async () => {
+      setTestFlags({ [FlagKeys.GrafanaMtFallback]: { allowList: ['/dashboards/*'] } });
+    });
 
-    setup({ route: { component: () => <div data-testid="real-page" />, path: '/' } });
+    await setup({
+      location: { ...mockLocation, pathname: '/explore' },
+      route: { component: () => <div data-testid="real-page" />, path: '/explore' },
+    });
 
-    expect(screen.getByTestId('page-fallback-loader')).toBeInTheDocument();
+    expect(await screen.findByTestId('page-fallback-loader')).toBeInTheDocument();
     expect(screen.queryByTestId('real-page')).not.toBeInTheDocument();
   });
 });
