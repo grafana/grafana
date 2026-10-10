@@ -112,9 +112,9 @@ export function NotebookView(props: NotebookViewProps) {
 }
 
 function SavedNotebookView({ uid, onTitleChange }: SavedNotebookViewProps) {
-  // Per instance, not the module singleton: the singleton holds one scene for the whole app, so an
-  // embedded notebook would evict whatever the notebooks route had open and be evicted by it in
-  // turn. The cost is that this instance's scene is not shared with the route's.
+  // Per instance, not the module singleton, so this view has its own loading and error state. The
+  // scenes themselves are still shared, through the module-level cache in NotebookPageStateManager:
+  // one notebook on screen twice has to be one scene, and therefore one autosave.
   const stateManager = useMemo(() => new NotebookPageStateManager({ isLoading: false }), []);
   const { scene, isLoading, loadError } = stateManager.useState();
 

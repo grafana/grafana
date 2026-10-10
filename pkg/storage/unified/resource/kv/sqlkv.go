@@ -21,36 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/sqlite"
 )
 
-const (
-	DataSection                   = "unified/data"
-	EventsSection                 = "unified/events"
-	LastImportTimeSection         = "unified/lastimport"
-	PendingDeleteSection          = "unified/pendingdelete"
-	LeasesSection                 = "unified/leases"
-	SearchSnapshotManifestSection = "search/snapshot-manifest"
-	SearchSnapshotDataSection     = "search/snapshot-data"
-	StatsDailySection             = "stats/daily"
-	StatsAggregatesSection        = "stats/aggregates"
-	NATSPeersSection              = "nats/peers"
-	VersionPolicySection          = "apiserver/versionpolicy"
-)
-
-// validSaveSections is the set of sections accepted by SqlKV.Save.
-var validSaveSections = map[string]bool{
-	DataSection:                   true,
-	EventsSection:                 true,
-	PendingDeleteSection:          true,
-	LastImportTimeSection:         true,
-	LeasesSection:                 true,
-	SearchSnapshotManifestSection: true,
-	SearchSnapshotDataSection:     true,
-	StatsDailySection:             true,
-	StatsAggregatesSection:        true,
-	NATSPeersSection:              true,
-	VersionPolicySection:          true,
-	BlobDataSection:               true,
-}
-
 var _ KV = (*SqlKV)(nil)
 
 // DataImportRow represents a single append-only resource_history row written during bulk import.
@@ -420,7 +390,7 @@ func (k *SqlKV) Save(ctx context.Context, section string, key string) (io.WriteC
 	if key == "" {
 		return nil, fmt.Errorf("key is required")
 	}
-	if !validSaveSections[section] {
+	if !IsSupportedSection(section) {
 		return nil, fmt.Errorf("invalid section: %s", section)
 	}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/alerting/http/v0mimir/v0mimirtest"
 	"github.com/grafana/alerting/notify/notifytest"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/notify/webhook"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/stretchr/testify/require"
 
@@ -70,7 +71,7 @@ func TestFindUnsupportedReceiverFields_FlagsRemovedFields(t *testing.T) {
 			name: "webhook url_file",
 			receiver: config.Receiver{
 				Name:           "webhook",
-				WebhookConfigs: []*config.WebhookConfig{{URLFile: "/etc/webhook-url"}},
+				WebhookConfigs: []*webhook.WebhookConfig{{URLFile: "/etc/webhook-url"}},
 			},
 			wantPath: "webhook_configs[0].url_file",
 		},
@@ -78,7 +79,7 @@ func TestFindUnsupportedReceiverFields_FlagsRemovedFields(t *testing.T) {
 			name: "webhook tls cert_file in shared http config",
 			receiver: config.Receiver{
 				Name: "webhook-tls",
-				WebhookConfigs: []*config.WebhookConfig{{
+				WebhookConfigs: []*webhook.WebhookConfig{{
 					HTTPConfig: &commoncfg.HTTPClientConfig{
 						TLSConfig: commoncfg.TLSConfig{CertFile: "/etc/cert.pem"},
 					},

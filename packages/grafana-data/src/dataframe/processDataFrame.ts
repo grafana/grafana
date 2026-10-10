@@ -289,8 +289,33 @@ export const toLegacyResponseData = (frame: DataFrame): TimeSeries | TableData =
 };
 
 export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = false): DataFrame {
-  const field = data.fields[sortIndex!];
-  if (!field) {
+  return sortDataFrameByFields(data, [{ index: sortIndex!, desc: reverse }]);
+}
+
+export interface DataFrameSortField {
+  index: number;
+  desc?: boolean;
+}
+
+const comparableFieldTypes = new Set([FieldType.number, FieldType.string, FieldType.boolean, FieldType.time]);
+
+/**
+ * Sorts by each field in order, later fields only break ties of earlier ones.
+ * Fields that do not exist in the frame are ignored.
+ */
+export function sortDataFrameByFields(data: DataFrame, sorts: DataFrameSortField[]): DataFrame {
+  const candidates = sorts.flatMap((s) => {
+    const field = data.fields[s.index];
+    return field ? [{ field, desc: s.desc }] : [];
+  });
+
+  // Types without a real comparer fall back to comparing row indexes, which never ties and so would
+  // swallow every field after it. They only get to order anything when nothing else can.
+  const comparable = candidates.filter(({ field }) => comparableFieldTypes.has(field.type));
+  const chained = comparable.length ? comparable : candidates.slice(0, 1);
+
+  const comparers = chained.map(({ field, desc }) => fieldIndexComparer(field, desc));
+  if (!comparers.length) {
     return data;
   }
 
@@ -300,8 +325,15 @@ export function sortDataFrame(data: DataFrame, sortIndex?: number, reverse = fal
     index.push(i);
   }
 
-  const fieldComparer = fieldIndexComparer(field, reverse);
-  index.sort(fieldComparer);
+  index.sort((a, b) => {
+    for (const compare of comparers) {
+      const result = compare(a, b);
+      if (result !== 0) {
+        return result;
+      }
+    }
+    return 0;
+  });
 
   return {
     ...data,

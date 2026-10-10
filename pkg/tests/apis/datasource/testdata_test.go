@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -187,9 +188,11 @@ func TestIntegrationTestDatasource(t *testing.T) {
 			Name:      key.Name,
 		}
 		rsp, err := storage.Read(svcCtx, &resourcepb.ReadRequest{Key: pluginKey})
-		require.NoError(t, err)
-		require.NotNil(t, rsp.Error)
-		require.Equal(t, int32(http.StatusNotFound), rsp.Error.Code)
+		readErr := resource.ErrorFromResponse(rsp.GetError(), err)
+		require.Error(t, readErr)
+		errorResult := resource.AsErrorResult(readErr)
+		require.NotNil(t, errorResult)
+		require.Equal(t, int32(http.StatusNotFound), errorResult.Code)
 
 		// The label selects this plugin's datasources from the shared collection
 		list, err := storage.List(svcCtx, &resourcepb.ListRequest{

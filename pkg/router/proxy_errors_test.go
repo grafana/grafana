@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestCanonicalAPIPath(t *testing.T) {
@@ -50,9 +49,7 @@ func TestHandleFuncRejectsNonCanonicalPaths(t *testing.T) {
 // proxiedRouter serves group "test-app" through a real forward proxy to upstream.
 func proxiedRouter(t *testing.T, upstream string, transport *http.Transport) *GrafanaRouter {
 	t.Helper()
-	backend, err := NewForwardBackend(metav1.APIGroup{Name: "test-app"}, forwardSpec(upstream), "1", transport)
-	require.NoError(t, err)
-	handler, err := backend.Load(t.Context())
+	handler, err := proxyBackend(t, "test-app", upstream, transport).Load(t.Context())
 	require.NoError(t, err)
 	return withGroupHandler("test-app", handler)
 }
@@ -134,16 +131,12 @@ func TestResponseHeaderTimeout(t *testing.T) {
 }
 
 func TestProxyTransportsHaveAResponseHeaderTimeout(t *testing.T) {
-	loader := &cloudLoader{transports: map[tlsCacheKey]*http.Transport{}}
-	forward, err := loader.transportFor(tlsCacheKey{})
-	require.NoError(t, err)
 	st, err := newSingleTenantFallback(singleTenantFallbackOptions{
 		cacheSize:   1,
 		resolveHost: func(context.Context, int64) (singleTenantStack, error) { return singleTenantStack{}, nil },
 	})
 	require.NoError(t, err)
 	for name, transport := range map[string]*http.Transport{
-		"forward":            forward,
 		"aggregate":          newAggregateBaseTransport(nil),
 		"single-tenant (ST)": st.transport,
 	} {

@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -810,7 +811,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 		return nil, err
 	}
 	statscollectorService := statscollector.ProvideService(usageStats, validatorService, statsService, cfg, sqlStore, socialService, pluginstoreService, featureManager, service13, httpclientProvider, sandboxService, advisorService)
-	internalMetricsService, err := metrics.ProvideService(cfg, registerer, gatherer)
+	internalMetricsService, err := metricsservice.ProvideService(cfg, registerer, gatherer)
 	if err != nil {
 		return nil, err
 	}
@@ -825,7 +826,7 @@ func Initialize(ctx context.Context, cfg *setting.Cfg, opts server.Options, apiO
 	v10 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	apiExtensionsRunner := apiserver.ProvideNoopApiExtensionsRunner()
-	appInstaller, err := playlist2.RegisterAppInstaller(cfg, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, acimplService, accessClient)
 	if err != nil {
 		return nil, err
 	}
@@ -1599,7 +1600,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 		return nil, err
 	}
 	statscollectorService := statscollector.ProvideService(usageStats, validatorService, statsService, cfg, sqlStore, socialService, pluginstoreService, featureManager, service13, httpclientProvider, sandboxService, advisorService)
-	internalMetricsService, err := metrics.ProvideService(cfg, registerer, gatherer)
+	internalMetricsService, err := metricsservice.ProvideService(cfg, registerer, gatherer)
 	if err != nil {
 		return nil, err
 	}
@@ -1614,7 +1615,7 @@ func InitializeForTest(ctx context.Context, t sqlutil.ITestDB, testingT interfac
 	v10 := builder.ProvideDefaultBuildHandlerChainFuncFromBuilders()
 	aggregatorRunner := aggregatorrunner.ProvideNoopAggregatorConfigurator()
 	apiExtensionsRunner := apiserver.ProvideNoopApiExtensionsRunner()
-	appInstaller, err := playlist2.RegisterAppInstaller(cfg, acimplService, accessControl)
+	appInstaller, err := playlist2.RegisterAppInstaller(cfg, acimplService, accessClient)
 	if err != nil {
 		return nil, err
 	}

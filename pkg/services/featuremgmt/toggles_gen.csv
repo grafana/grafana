@@ -195,7 +195,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-08-12,datasources.azureMonitorBatchAPI,preview,@grafana/data-sources-plugins,false,false,false
 2025-03-27,alertingRuleRecoverDeleted,GA,@grafana/alerting-squad,false,false,false
 2025-04-02,multiTenantTempCredentials,experimental,@grafana/data-sources-plugins,false,false,false
-2025-04-09,unifiedNavbars,GA,@grafana/grafana-catalog,false,false,true
+2025-04-09,unifiedNavbars,GA,@grafana/grafana-frontend-navigation,false,false,true
 2025-04-09,metricsFromProfiles,privatePreview,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-31,grafanaAssistantInProfilesDrilldown,GA,@grafana/observability-traces-and-profiling,false,false,true
 2025-07-15,tempoAlerting,experimental,@grafana/data-sources-plugins,false,false,false
@@ -222,7 +222,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-06-30,enableAppChromeExtensions,experimental,@grafana/grafana-catalog,false,false,true
 2025-10-13,enableDashboardEmptyExtensions,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-03,foldersAppPlatformAPI,GA,@grafana/grafana-frontend-navigation,false,false,true
-2025-07-16,otelLogsFormatting,experimental,@grafana/observability-logs,false,false,true
+2025-07-16,otelLogsFormatting,GA,@grafana/observability-logs,false,false,true
 2025-07-17,alertingNotificationHistory,GA,@grafana/alerting-squad,false,false,false
 2025-07-31,dashboardLevelTimeMacros,experimental,@grafana/dashboards-squad,false,false,true
 2025-07-25,alertmanagerRemoteSecondaryWithRemoteState,experimental,@grafana/alerting-squad,false,false,false
@@ -299,12 +299,12 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-03-11,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-04-09,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-08-13,flameGraph.tableNg,experimental,@grafana/observability-traces-and-profiling,false,false,true
-2026-03-11,inlineLogDetailsNoScrolls,experimental,@grafana/observability-logs,false,false,true
+2026-03-11,inlineLogDetailsNoScrolls,GA,@grafana/observability-logs,false,false,true
 2026-03-24,logsTablePanelNG,GA,@grafana/observability-logs,false,false,true
 2026-05-08,plugins.useMTPluginSettings,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-03-27,splashScreen,preview,@grafana/grafana-frontend-platform,false,false,true
 2026-03-27,streamingForwardTeamHeadersTempo,privatePreview,@grafana/data-sources-plugins,false,false,false
-2026-03-26,lokiAlignedQuerySplitting,experimental,@grafana/observability-logs,false,false,false
+2026-03-26,lokiAlignedQuerySplitting,GA,@grafana/observability-logs,false,false,false
 2026-04-16,profilesHeatmap,experimental,@grafana/observability-traces-and-profiling,false,false,false
 2026-04-01,tracesDrilldownTimeSeeker,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-04-02,enableColorblindSafePanelOptions,experimental,@grafana/dataviz-squad,false,false,true
