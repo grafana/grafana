@@ -4955,6 +4955,21 @@
     },
     {
       "metadata": {
+        "name": "recordedQueriesDisableCreate",
+        "resourceVersion": "1791486561005",
+        "creationTimestamp": "2026-10-08T19:09:21Z"
+      },
+      "spec": {
+        "description": "Disables creating new recorded queries while preserving access to existing queries",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-datasources-core-services",
+        "frontend": true,
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "refreshTokenRequired",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2025-11-19T18:21:40Z"
