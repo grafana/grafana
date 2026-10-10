@@ -345,14 +345,14 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 		info.PreviewURL += "?" + query.Encode()
 		if shouldRender {
 			if info.GrafanaURL != "" {
-				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, screenshotBaseURL, e.render, info.Parsed.Repo, info.GrafanaURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
 			}
 
 			if info.PreviewURL != "" {
-				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, screenshotBaseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, screenshotBaseURL, e.render, info.Parsed.Repo, info.PreviewURL, e.metrics)
 				if err != nil {
 					info.Error = err.Error()
 				}
@@ -414,7 +414,8 @@ func (e *evaluator) evaluateDeletedFile(ctx context.Context, repo repository.Rea
 }
 
 func renderScreenshotFromGrafanaURL(ctx context.Context,
-	baseURL string,
+	grafanaBaseURL string,
+	screenshotBaseURL string,
 	renderer ScreenshotRenderer,
 	repo provisioning.ResourceRepositoryInfo,
 	grafanaURL string,
@@ -436,7 +437,7 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	// an orgId here would make OrgRedirect try to switch the render user instead.
 	query := parsed.Query()
 	query.Del("orgId")
-	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), query)
+	snap, err := renderer.RenderScreenshot(ctx, repo, renderPath(grafanaBaseURL, parsed.Path), query)
 	if err != nil {
 		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
 		return "", fmt.Errorf("error rendering screenshot: %w", err)
@@ -444,13 +445,35 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	if strings.Contains(snap, "://") {
 		return snap, nil // it is a full URL already (can happen when the blob storage returns CDN urls)
 	}
-	base, err := url.Parse(baseURL)
+	base, err := url.Parse(screenshotBaseURL)
 	if err != nil {
-		logger.Warn("invalid base", "url", baseURL, "err", err)
+		logger.Warn("invalid base", "url", screenshotBaseURL, "err", err)
 		return "", err
 	}
 	outcome = utils.SuccessOutcome
 	return base.JoinPath(snap).String(), nil
+}
+
+// renderPath converts an absolute Grafana URL path into the form
+// RenderScreenshot expects: relative to Grafana's root URL, without a leading
+// slash.
+//
+// The renderer resolves the path against [rendering] callback_url, which
+// already includes any sub-path configured through server.serve_from_sub_path.
+// Trimming only the leading slash leaves that sub-path in place and the
+// renderer then requests /grafana/grafana/d/..., which matches no route, so
+// the screenshot captures Grafana's own "Page not found" page instead of the
+// dashboard. Strip the base URL's path so the sub-path is contributed once.
+func renderPath(grafanaBaseURL, urlPath string) string {
+	path := strings.TrimPrefix(urlPath, "/")
+	base, err := url.Parse(grafanaBaseURL)
+	if err != nil {
+		return path
+	}
+	if subPath := strings.Trim(base.Path, "/"); subPath != "" {
+		path = strings.TrimPrefix(path, subPath+"/")
+	}
+	return path
 }
 
 // hasRemovedMetadata returns true if the original object (from the file)
