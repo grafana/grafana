@@ -106,7 +106,7 @@ func (h *previewAssetsHandler) handleGet(w http.ResponseWriter, r *http.Request)
 
 	// Check the preview build actually exists before committing the browser to
 	// it for 24 hours.
-	if _, err := fswebassets.GetPreviewWebAssets(ctx, h.previewCfg, folder, webassets.ResolveBuildDir(ctx)); err != nil {
+	if _, err := fswebassets.GetPreviewWebAssets(ctx, h.previewCfg, folder, webassets.RspackBuildDir); err != nil {
 		logger.Warn("preview assets manifest could not be loaded", "folder", folder, "err", err)
 		http.Error(w, "preview assets could not be loaded - check the deploy exists and has finished uploading", http.StatusBadGateway)
 		return

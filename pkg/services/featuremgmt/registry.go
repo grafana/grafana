@@ -3234,14 +3234,6 @@ var (
 			Generate:    Generate{Go: true, React: true},
 		},
 		{
-			Name:        "grafana.rspackBuild",
-			Description: "Switches the backend to load frontend assets built with rspack instead of webpack",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
-			Generate:    Generate{Go: true},
-			Expression:  "false",
-		},
-		{
 			Name:        "pluginsForceTls13",
 			Description: "Forces the plugin HTTP client to use TLS 1.3 - if the plugin is using the SDK client",
 			Stage:       FeatureStageExperimental,
