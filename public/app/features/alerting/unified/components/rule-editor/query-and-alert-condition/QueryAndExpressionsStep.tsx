@@ -510,7 +510,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 }}
               />
             </Field>
-            {mode === 'edit' && hasAlertEnabledDataSources && (
+            {mode === 'edit' && canSelectDataSourceManaged && (
               <>
                 <Divider />
                 <SmartAlertTypeDetector
