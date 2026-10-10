@@ -80,6 +80,30 @@ export { ConfirmModal, type ConfirmModalProps } from './components/ConfirmModal/
 /** @deprecated Slate is being removed from `@grafana/ui`. Migrate to `QueryInput`; this export may be removed in a future release. */
 export { QueryField, type QueryFieldProps } from './components/QueryField/QueryField';
 export { QueryInput, type QueryInputProps } from './components/QueryInput/QueryInput';
+export { CodeMirrorEditor } from './components/CodeMirror/CodeEditorLazy';
+export { CODE_MIRROR_LANGUAGES } from './components/CodeMirror/languages';
+export { createCodeEditorTheme } from './components/CodeMirror/theme';
+export { signatureHelp } from './components/CodeMirror/signatureHelp';
+export type { SignatureHelpOptions } from './components/CodeMirror/signatureHelp';
+export { applyVariableReference, createVariableCompletionSource } from './components/CodeMirror/variableCompletion';
+export type { VariableCompletionDisplay, VariableCompletionOptions } from './components/CodeMirror/variableCompletion';
+export type {
+  CodeMirrorBasicSetup,
+  CodeMirrorCompletion,
+  CodeMirrorCompletionContext,
+  CodeMirrorCompletionMode,
+  CodeMirrorCompletionResult,
+  CodeMirrorCompletionSource,
+  CodeMirrorEditorLanguage,
+  CodeMirrorEditorProps,
+  CodeMirrorEditorTheme,
+  CodeMirrorExtension,
+  CodeMirrorSqlDialect,
+  SignatureHelp,
+  SignatureHelpProvider,
+  SignatureInformation,
+  SignatureParameter,
+} from './components/CodeMirror/types';
 export { CodeEditor } from './components/Monaco/CodeEditor';
 export { ReactMonacoEditorLazy as ReactMonacoEditor } from './components/Monaco/ReactMonacoEditorLazy';
 export { ReactMonacoDiffEditorLazy as ReactMonacoDiffEditor } from './components/Monaco/ReactMonacoDiffEditorLazy';

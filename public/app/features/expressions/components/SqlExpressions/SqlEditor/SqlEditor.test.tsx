@@ -4,7 +4,8 @@ import { SqlEditor } from './SqlEditor';
 
 let editorProps: Record<string, unknown> | undefined;
 
-jest.mock('@grafana/ui/unstable', () => ({
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: (props: Record<string, unknown>) => {
     editorProps = props;
     return <div className="cm-scroller" />;

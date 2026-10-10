@@ -3,7 +3,7 @@ import { type EditorState } from '@codemirror/state';
 import { type SyntaxNode } from '@lezer/common';
 
 import { unquoteIdentifier } from '@grafana/sql';
-import { type CodeMirrorCompletionContext } from '@grafana/ui/unstable';
+import { type CodeMirrorCompletionContext } from '@grafana/ui';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 

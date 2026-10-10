@@ -30,8 +30,8 @@ jest.mock(
       children({ width: 1000, height: 1000, scaledWidth: 1, scaledHeight: 1 })
 );
 
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: ({ value }: { value: string }) => <textarea data-testid="code-editor" readOnly value={value} />,
 }));
 

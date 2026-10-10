@@ -4,7 +4,7 @@ import type {
   CodeMirrorCompletionContext,
   CodeMirrorCompletionResult,
   CodeMirrorCompletionSource,
-} from '@grafana/ui/unstable';
+} from '@grafana/ui';
 
 import { SQL_EXPRESSIONS_DIALECT } from '../../../utils/sqlIdentifier';
 

@@ -31,8 +31,8 @@ jest.spyOn(libraryPanelsApi, 'getLibraryPanel').mockResolvedValue({
 } as never);
 
 // See CodeCell.test.tsx — the real editor does not run in jsdom.
-jest.mock('@grafana/ui/unstable', () => ({
-  ...jest.requireActual('@grafana/ui/unstable'),
+jest.mock('@grafana/ui', () => ({
+  ...jest.requireActual('@grafana/ui'),
   CodeMirrorEditor: ({
     value,
     readOnly,
