@@ -13,11 +13,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/grafana/dskit/middleware"
 	"github.com/prometheus/client_golang/prometheus"
-	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -37,12 +34,13 @@ const (
 
 // pluginManifestsTarget discovers remote plugin deployments and builds their API handlers.
 type pluginManifestsTarget struct {
-	keyPrefix string // prefixes every backend Key, so sources never share a key
-	source    string // reported by Backend.Source
-	url       string
-	client    *http.Client
-	patterns  []*regexp.Regexp
-	deps      PluginDependencies
+	keyPrefix  string // prefixes every backend Key, so sources never share a key
+	source     string // reported by Backend.Source
+	url        string
+	client     *http.Client
+	patterns   []*regexp.Regexp
+	grpcConfig pluginGRPCConfig
+	deps       PluginDependencies
 
 	cooldown *cooldown
 	status   pollStatus
@@ -53,6 +51,8 @@ type pluginManifestsTarget struct {
 	// requestDuration records every gRPC call to a plugin deployment, by
 	// plugin, method and status code.
 	requestDuration *prometheus.HistogramVec
+	// requestRetries counts the retries of unary calls, by plugin and method.
+	requestRetries *prometheus.CounterVec
 
 	connectionsMu sync.Mutex
 	connections   map[pluginConnectionKey]*grpc.ClientConn
@@ -72,6 +72,7 @@ func newPluginManifestsTarget(
 	rawURL string,
 	patterns []*regexp.Regexp,
 	client *http.Client,
+	grpcConfig pluginGRPCConfig,
 	deps PluginDependencies,
 ) (*pluginManifestsTarget, error) {
 	parsed, err := url.Parse(rawURL)
@@ -90,8 +91,10 @@ func newPluginManifestsTarget(
 		url:             rawURL,
 		client:          client,
 		patterns:        patterns,
+		grpcConfig:      grpcConfig,
 		cooldown:        newCooldown(defaultAggregatePollInterval, defaultAggregateMinBackoff, defaultAggregateMaxBackoff),
 		requestDuration: newPluginGRPCRequestDuration(deps.MetricsRegister, source),
+		requestRetries:  newPluginGRPCRequestRetries(deps.MetricsRegister, source),
 	}
 	empty := []Backend{}
 	t.snapshot.Store(&empty)
@@ -211,15 +214,11 @@ func (t *pluginManifestsTarget) pluginClients(host, pluginID string) (plugins.Cl
 	key := pluginConnectionKey{host: host, pluginID: pluginID}
 	conn := t.connections[key]
 	if conn == nil {
-		requestDuration := t.requestDuration.MustCurryWith(prometheus.Labels{"plugin_id": pluginID}).(*prometheus.HistogramVec)
+		labels := prometheus.Labels{"plugin_id": pluginID}
+		requestDuration := t.requestDuration.MustCurryWith(labels).(*prometheus.HistogramVec)
+		requestRetries := t.requestRetries.MustCurryWith(labels)
 		var err error
-		conn, err = grpc.NewClient(host,
-			// Plugin deployments expose plaintext gRPC on the internal cluster network.
-			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
-			grpc.WithChainUnaryInterceptor(middleware.UnaryClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
-			grpc.WithChainStreamInterceptor(middleware.StreamClientInstrumentInterceptor(requestDuration, middleware.ReportGRPCStatusOption)),
-		)
+		conn, err = grpc.NewClient(host, t.grpcConfig.dialOptions(requestDuration, requestRetries)...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("router: creating plugin client for %q: %w", host, err)
 		}

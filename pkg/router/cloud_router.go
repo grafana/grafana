@@ -29,8 +29,43 @@ import (
 // than reusing any existing unified-storage/authz settings.
 const cloudRouterSection = "cloud_router"
 
+// newPluginManifestsTargets builds the targets for plugins_url and core_url,
+// each nil when its URL is unset. core_url serves core APIs (like playlists)
+// in the plugin manifests format, and both share the [router.backend_grpc]
+// connection settings.
+func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection, deps PluginDependencies) (pluginsTarget, coreTarget *pluginManifestsTarget, err error) {
+	pluginsURL := section.Key("plugins_url").MustString("")
+	coreURL := section.Key("core_url").MustString("")
+	if pluginsURL == "" && coreURL == "" {
+		return nil, nil, nil
+	}
+	grpcConfig, err := parsePluginGRPCConfig(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+	if pluginsURL != "" {
+		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
+		if err != nil {
+			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		}
+		pluginsTarget, err = newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, pluginsURL,
+			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, grpcConfig, deps)
+		if err != nil {
+			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		}
+	}
+	if coreURL != "" {
+		coreTarget, err = newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, coreURL,
+			nil, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, grpcConfig, deps)
+		if err != nil {
+			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
+		}
+	}
+	return pluginsTarget, coreTarget, nil
+}
+
 // ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
-// [cloud_router] and [router.aggregate.<name>] sections. It returns (nil, nil) when no source is configured
+// [cloud_router], [router.aggregate.<name>] and [router.backend_grpc] sections. It returns (nil, nil) when no source is configured
 // (an aggregate target url, plugins_url, core_url or st_discovery_url), and
 // the caller falls back to another loader.
 //
@@ -44,29 +79,11 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		return nil, err
 	}
 
-	// plugins_url needs no CAP token (it is an unauthenticated in-cluster
-	// endpoint), so it stays out of the cap_token gate below.
-	var pluginsTarget, coreTarget *pluginManifestsTarget
-	if pluginsURL := section.Key("plugins_url").MustString(""); pluginsURL != "" {
-		patterns, err := compileGroupPatterns(splitGroupPatterns(section.Key("plugins_group_regex").MustString("")))
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
-		pluginsTarget, err = newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, pluginsURL,
-			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
-	}
-
-	// core_url serves core APIs (like playlists) in the plugin manifests
-	// format. Like plugins_url, it needs no CAP token.
-	if coreURL := section.Key("core_url").MustString(""); coreURL != "" {
-		coreTarget, err = newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, coreURL,
-			nil, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, deps)
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
-		}
+	// plugins_url and core_url need no CAP token (they are unauthenticated
+	// in-cluster endpoints), so they stay out of the cap_token gate below.
+	pluginsTarget, coreTarget, err := newPluginManifestsTargets(cfg, section, deps)
+	if err != nil {
+		return nil, err
 	}
 
 	singleTenantDiscoveryURL := section.Key("st_discovery_url").MustString("")

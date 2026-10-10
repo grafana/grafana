@@ -347,7 +347,7 @@ func TestPluginManifestsSkips(t *testing.T) {
 		]}`))
 	}))
 	t.Cleanup(srv.Close)
-	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), PluginDependencies{})
+	target, err := newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, srv.URL, nil, srv.Client(), defaultPluginGRPCConfig(), PluginDependencies{})
 	require.NoError(t, err)
 
 	target.poll(t.Context(), make(chan struct{}, 1))
