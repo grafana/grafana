@@ -139,6 +139,7 @@ export const QueryHeader = ({
         />
 
         <InlineSelect
+          aria-label={t('components.query-header.aria-label-service', 'Service')}
           label={t('components.query-header.label-service', 'Service')}
           value={query.queryType === AzureQueryType.TraceExemplar ? AzureQueryType.AzureTraces : query.queryType}
           placeholder={t('components.query-header.placeholder-service', 'Service...')}

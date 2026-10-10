@@ -263,6 +263,7 @@
     },
     "query-header": {
       "aria-label-kick-start": "Azure logs kick start your query button",
+      "aria-label-service": "Service",
       "body-switching-to-builder": "Switching to Builder will discard your current KQL query and clear the KQL editor. Are you sure?",
       "button-kick-start-your-query": "Kick start your query",
       "button-run-query": "Run query",

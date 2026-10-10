@@ -50,6 +50,7 @@ describe('Azure Monitor QueryHeader', () => {
 
     expect(screen.getByTestId(selectors.components.queryEditor.header.select)).toBeInTheDocument();
     expect(screen.getByLabelText(/Service/i)).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /service/i })).toBeInTheDocument();
   });
 
   it('changes query type when a new service is selected', async () => {
