@@ -2999,7 +2999,7 @@
       },
       "toggle": {
         "use-new-experience": "使用新体验",
-        "view-previous-experience": "恢复为以前的体验"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "未知规则类型",
       "checking-data-sources_other": "",
@@ -3017,6 +3017,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "折叠全部",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "展开全部"
     },
     "rule-list-v2": {
@@ -8930,8 +8935,8 @@
     },
     "show-all-spans": "显示所有跨度",
     "signal-card": {
-      "collapse-aria-label": "收起查询 {{refId}} 的数据源浏览器",
-      "expand-aria-label": "展开查询 {{refId}} 的数据源浏览器",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "跳转到查询 {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13055,6 +13060,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "取消",
       "confirm-discard": "丢弃",
@@ -13136,6 +13146,7 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查询",
       "remove-tag": "移除标记",
+      "rename": "",
       "reset-cell-time-range": "使用笔记本时间范围",
       "select-query": "选择查询",
       "set-cell-time-range": "设置面板时间范围",
@@ -17600,15 +17611,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "对帧中的字段进行排序。"
       },
+      "drag-handle-label": "",
       "label-field": "字段",
       "label-reverse": "反转",
       "name": {
         "sort-by": "排序方式"
       },
-      "placeholder-select-field": "选择字段"
+      "placeholder-select-field": "选择字段",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {
