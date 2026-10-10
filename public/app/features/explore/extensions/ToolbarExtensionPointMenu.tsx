@@ -1,8 +1,9 @@
+import { css } from '@emotion/css';
 import { type ReactElement, useMemo, type JSX } from 'react';
 
-import { type PluginExtensionLink } from '@grafana/data';
+import { type GrafanaTheme2, type PluginExtensionLink } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Menu } from '@grafana/ui';
+import { Menu, useStyles2 } from '@grafana/ui';
 import { truncateTitle } from 'app/features/plugins/extensions/utils';
 
 type Props = {
@@ -11,35 +12,40 @@ type Props = {
 };
 
 export function ToolbarExtensionPointMenu({ extensions, onSelect }: Props): ReactElement | null {
+  const styles = useStyles2(getStyles);
   const { categorised, uncategorised } = useExtensionLinksByCategory(extensions);
   const showDivider = uncategorised.length > 0 && Object.keys(categorised).length > 0;
 
   return (
-    <Menu>
+    <Menu style={{ maxWidth: 'min(260px, calc(100vw - 32px))' }}>
       <>
         {Object.keys(categorised).map((category) => (
           <Menu.Group key={category} label={truncateTitle(category, 25)}>
-            {renderItems(categorised[category], onSelect)}
+            {renderItems(categorised[category], onSelect, styles.expandItemLabel)}
           </Menu.Group>
         ))}
         {showDivider && <Menu.Divider key="divider" />}
-        {renderItems(uncategorised, onSelect)}
+        {renderItems(uncategorised, onSelect, styles.expandItemLabel)}
       </>
     </Menu>
   );
 }
 
-function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginExtensionLink) => void): JSX.Element[] {
+function renderItems(
+  extensions: PluginExtensionLink[],
+  onSelect: (link: PluginExtensionLink) => void,
+  className: string
+): JSX.Element[] {
   return extensions.map((extension) => {
     const dataTestId = selectors.pages.Explore.toolbar.add(extension.title);
-
     return (
       <Menu.Item
         testId={dataTestId}
         ariaLabel={extension.title}
+        className={className}
         icon={extension?.icon || 'plug'}
         key={extension.id}
-        label={truncateTitle(extension.title, 25)}
+        label={extension.title}
         onClick={(event) => {
           if (extension.path) {
             return onSelect(extension);
@@ -50,6 +56,24 @@ function renderItems(extensions: PluginExtensionLink[], onSelect: (link: PluginE
     );
   });
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  expandItemLabel: css({
+    '& > div > span': {
+      maxHeight: '1.6em',
+      [theme.transitions.handleMotion('no-preference')]: {
+        transition: 'max-height 180ms ease-out',
+      },
+    },
+    '&:is(:hover, :focus-visible) > div > span': {
+      maxHeight: '10em',
+      overflowWrap: 'anywhere',
+      textAlign: 'start',
+      textOverflow: 'clip',
+      whiteSpace: 'normal',
+    },
+  }),
+});
 
 type ExtensionLinksResult = {
   uncategorised: PluginExtensionLink[];

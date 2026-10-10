@@ -40,6 +40,7 @@ import {
   createNotebookWithPanel,
 } from './addPanelToNotebook';
 import { shouldLockCapturedTimeRange, withCapturedTimeRange, type CapturedTimeRange } from './capturedTimeRange';
+import { setRecentNotebook } from './recentNotebook';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const FORM_ID = 'add-panel-to-notebook';
@@ -146,6 +147,8 @@ export function AddPanelToNotebookModalBody({
         const added = existingUid
           ? await addPanelToExistingNotebook(existingUid, panel, entryPoint, isLibraryPanel)
           : await createNotebookWithPanel({ title: values.title.trim() }, panel, entryPoint, isLibraryPanel);
+
+        setRecentNotebook(added.uid, added.title);
 
         dispatch(
           notifyApp(
