@@ -227,7 +227,9 @@ export const ConnectionSVG = ({ setLineRef, setVertexPathRef, setVertexRef, setC
                 }
 
                 // Calculate angle between two segments where arc will be placed
-                const theta = angle2 - angle1; //radians
+                let theta = angle2 - angle1; // radians
+                // Normalize to the shortest turn across the atan2 branch cut.
+                theta = ((theta + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
                 // Attempt to determine if arc is counter clockwise (ccw)
                 const ccw = theta < 0;
                 // Half arc is used for arc control points
