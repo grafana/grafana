@@ -593,12 +593,12 @@ func TestAddAppLinksObservabilityAssertsOrdering(t *testing.T) {
 		require.NotNil(t, monitoringNode)
 		require.Len(t, monitoringNode.Children, 3)
 
-		// Asserts "Entity graph" stays hoisted to the top, then Frontend, then the
-		// asserts "Application" page (weight 4).
-		require.Equal(t, "Entity graph", monitoringNode.Children[0].Text)
-		require.Equal(t, "Frontend", monitoringNode.Children[1].Text)
-		require.Equal(t, "Application", monitoringNode.Children[2].Text)
-		require.Equal(t, "standalone-plugin-page-application", monitoringNode.Children[2].Id)
+		// Frontend, then the asserts "Application" page (weight 4), then the other
+		// asserts pages below all the apps.
+		require.Equal(t, "Frontend", monitoringNode.Children[0].Text)
+		require.Equal(t, "Application", monitoringNode.Children[1].Text)
+		require.Equal(t, "standalone-plugin-page-application", monitoringNode.Children[1].Id)
+		require.Equal(t, "Entity graph", monitoringNode.Children[2].Text)
 	})
 
 	t.Run("when the App Observability plugin is present, it replaces the asserts Application page", func(t *testing.T) {

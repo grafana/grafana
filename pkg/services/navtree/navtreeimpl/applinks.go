@@ -449,8 +449,8 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				// ever shown.
 				child.SortWeight = s.navigationAppConfig[appObservabilityAppID].SortWeight
 			} else {
-				// keep current sorting of the pages, but above all the other apps
-				child.SortWeight = -100 + child.SortWeight
+				// keep current sorting of the pages, but below all the other apps
+				child.SortWeight = 100 + child.SortWeight
 			}
 			child.Id = "standalone-plugin-page-" + strings.ReplaceAll(strings.ToLower(child.Text), " ", "-")
 		}
