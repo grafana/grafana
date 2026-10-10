@@ -50,18 +50,11 @@ func (c *RepositoryQuotaChecker) RepositoryQuotaConditions(
 		}, nil
 	}
 
-	// List all repositories from the read seam. The count tolerates staleness.
-	repos, err := c.repos.List(ctx, namespace)
+	// Count the namespace's active repositories through the read seam. The count
+	// tolerates staleness.
+	activeCount, err := c.repos.CountActiveRepositories(ctx, namespace)
 	if err != nil {
 		return metav1.Condition{}, err
-	}
-
-	// Count only non-deleted repositories
-	activeCount := 0
-	for _, repo := range repos {
-		if repo.DeletionTimestamp == nil {
-			activeCount++
-		}
 	}
 
 	switch {

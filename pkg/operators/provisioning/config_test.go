@@ -18,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	apisprovisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	client "github.com/grafana/grafana/apps/provisioning/pkg/generated/clientset/versioned"
@@ -230,4 +231,41 @@ func TestControllersOwnNATSSubscriber(t *testing.T) {
 			require.Eventually(t, func() bool { return srv.NumClients() == 0 }, time.Second, time.Millisecond, "controller must close its subscriber on shutdown")
 		})
 	}
+}
+
+// The collectors register on first call, so a second call that rebuilt them
+// would panic on the duplicate and take the operator down at startup. One call
+// per process is all there is today; this holds the accessor to that regardless.
+func TestRelistProjectionMetricsIsMemoized(t *testing.T) {
+	cfg := &ControllerConfig{}
+
+	first := cfg.RelistProjectionMetrics()
+	require.NotNil(t, first)
+	require.Same(t, first, cfg.RelistProjectionMetrics())
+}
+
+// nil keeps the full-object re-list, so the flag is the whole gate: an operator
+// that reads it wrong either never uses the projection or uses it unasked.
+func TestProvisioningKeysListerFollowsTheSetting(t *testing.T) {
+	gvr := apisprovisioning.RepositoryResourceInfo.GroupVersionResource()
+
+	t.Run("off by default", func(t *testing.T) {
+		cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: ini.Empty()}}
+
+		lister, err := cfg.ProvisioningKeysLister(logging.DefaultLogger, gvr)
+		require.NoError(t, err)
+		assert.Nil(t, lister, "without the setting the re-list must stay on full objects")
+	})
+
+	t.Run("on requires a REST client", func(t *testing.T) {
+		raw := ini.Empty()
+		_, err := raw.Section("provisioning").NewKey("keys_only_relist", "true")
+		require.NoError(t, err)
+		cfg := &ControllerConfig{Settings: &setting.Cfg{Raw: raw}}
+
+		// No provisioning client is configured, so building the REST client fails
+		// rather than silently handing back a nil lister that reads as "off".
+		_, err = cfg.ProvisioningKeysLister(logging.DefaultLogger, gvr)
+		require.Error(t, err)
+	})
 }

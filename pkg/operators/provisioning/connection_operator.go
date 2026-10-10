@@ -16,7 +16,6 @@ import (
 	appcontroller "github.com/grafana/grafana/apps/provisioning/pkg/controller"
 	"github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/operators/internal/supervision"
-	keysapi "github.com/grafana/grafana/pkg/registry/apis/keys"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/controller"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/informer"
 	"github.com/grafana/grafana/pkg/server"
@@ -70,18 +69,13 @@ func RunConnectionController(ctx context.Context, deps server.OperatorDependenci
 	}
 
 	// nil unless keys_only_relist is on, which keeps the full-object re-list.
-	var connKeys keysapi.Lister
-	if controllerCfg.Settings.SectionWithEnvOverrides("provisioning").Key("keys_only_relist").MustBool(false) {
-		restClient, err := controllerCfg.ProvisioningRESTClient()
-		if err != nil {
-			return fmt.Errorf("failed to create provisioning REST client: %w", err)
-		}
-		connKeys = keysapi.NewHTTPLister(restClient, apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
-		logger.Info("provisioning re-list will ask for keys only", "transport", "http")
+	connKeys, err := controllerCfg.ProvisioningKeysLister(logger, apisprovisioning.ConnectionResourceInfo.GroupVersionResource())
+	if err != nil {
+		return err
 	}
 
 	// The connection delta source and the getter it backs.
-	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.Registry())
+	connSource, connGetter := informer.NewConnectionDeltaSource(controllerCfg.natsSubscriber, provisioningClient, connKeys, controllerCfg.ResyncInterval(), controllerCfg.RelistProjectionMetrics())
 	connController := controller.NewConnectionController(
 		connGetter,
 		statusPatcher,
