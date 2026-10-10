@@ -27,7 +27,15 @@ const customRawTimeRange = {
 
 function setup(initial: TimeRange = defaultTimeRange, timeZone = 'utc') {
   return {
-    ...render(<TimeRangeContent isFullscreen={true} value={initial} onApply={() => {}} timeZone={timeZone} />),
+    ...render(
+      <TimeRangeContent
+        calendarAnchor={{ current: null }}
+        isFullscreen={true}
+        value={initial}
+        onApply={() => {}}
+        timeZone={timeZone}
+      />
+    ),
     getCalendarDayByLabelText: (label: string) => {
       const item = screen.getByLabelText(label);
       return item?.parentElement as HTMLButtonElement;
@@ -256,6 +264,62 @@ describe('TimeRangeForm', () => {
   });
 
   describe('dates error handling', () => {
+    it.each(['From', 'To'])('applies edited equal bounds on Enter in %s', async (label) => {
+      const onApply = jest.fn<void, [TimeRange]>();
+      render(
+        <TimeRangeContent
+          calendarAnchor={{ current: null }}
+          isFullscreen
+          value={defaultTimeRange}
+          onApply={onApply}
+          timeZone="utc"
+        />
+      );
+      const input = screen.getByLabelText(label);
+      const value = label === 'From' ? '2021-06-19 23:59:00' : '2021-06-17 00:00:00';
+      await user.clear(input);
+      await user.type(input, `${value}{Enter}`);
+      const expected = label === 'From' ? '2021-06-19T23:59:00.000Z' : '2021-06-17T00:00:00.000Z';
+      expect(onApply).toHaveBeenCalledTimes(1);
+      expect(onApply.mock.calls[0][0].from.toISOString()).toBe(expected);
+      expect(onApply.mock.calls[0][0].to.toISOString()).toBe(expected);
+    });
+
+    it('revalidates a corrected field after rejecting an invalid submission', async () => {
+      const onApply = jest.fn();
+      render(
+        <TimeRangeContent
+          calendarAnchor={{ current: null }}
+          isFullscreen
+          value={defaultTimeRange}
+          onApply={onApply}
+          timeZone="utc"
+        />
+      );
+      const from = screen.getByLabelText('From');
+      await user.clear(from);
+      await user.type(from, 'invalid{Enter}');
+      expect(await screen.findByRole('alert')).toHaveTextContent('Enter a date');
+      expect(onApply).not.toHaveBeenCalled();
+      await user.clear(from);
+      await user.type(from, '2021-06-17 00:00:00');
+      expect(from).toHaveValue('2021-06-17 00:00:00');
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    });
+
+    it('synchronizes both controlled fields after an external range update', () => {
+      const props = {
+        calendarAnchor: { current: null },
+        isFullscreen: true,
+        onApply: jest.fn(),
+        timeZone: 'utc',
+      };
+      const { rerender } = render(<TimeRangeContent {...props} value={defaultTimeRange} />);
+      rerender(<TimeRangeContent {...props} value={{ ...defaultTimeRange, raw: customRawTimeRange }} />);
+      expect(screen.getByLabelText('From')).toHaveValue(customRawTimeRange.from);
+      expect(screen.getByLabelText('To')).toHaveValue(customRawTimeRange.to);
+    });
+
     it('should show error on invalid dates', async () => {
       const invalidTimeRange: TimeRange = {
         from: dateTimeParse('foo', { timeZone: 'utc' }),
