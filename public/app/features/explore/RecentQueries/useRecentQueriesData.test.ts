@@ -269,6 +269,27 @@ describe('useRecentQueriesData', () => {
     expect(storeFilterDefaults).toHaveBeenCalledWith('recent', {});
   });
 
+  it('neither restores nor persists stored defaults with ignoreStoredFilters', async () => {
+    (getStoredFilterDefaults as jest.Mock).mockReturnValue({
+      rememberFilters: true,
+      searchQuery: 'stored-query',
+    });
+
+    const { result, unmount } = renderHook(() => useRecentQueriesData({ ignoreStoredFilters: true }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    // Clean defaults, even though remembered filters exist.
+    expect(getStoredFilterDefaults).not.toHaveBeenCalled();
+    expect(result.current.filters.searchQuery).toBe('');
+
+    // Never writes back — the surface has no filter UI, so persisting would
+    // clobber the filters remembered by the full Recent Queries view.
+    await act(async () => result.current.setFilters({ rememberFilters: true }));
+    await act(async () => result.current.setFilters({ rememberFilters: false }));
+    unmount();
+    expect(storeFilterDefaults).not.toHaveBeenCalled();
+  });
+
   it('debounces search before fetching', async () => {
     jest.useFakeTimers();
     try {
