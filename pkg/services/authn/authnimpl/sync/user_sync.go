@@ -362,6 +362,28 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 	return nil
 }
 
+// resolveUserID returns the numeric internal user ID for the identity, falling
+// back to a UID lookup when the identifier is a storage UID (e.g. user:u000000002,
+// user:<shortuid>, user:scim-<uid>) rather than a legacy numeric ID (user:2). The
+// UID is in id.ID: the ID-token path never populates id.UID.
+func (s *UserSync) resolveUserID(ctx context.Context, id *authn.Identity) (int64, error) {
+	userID, err := id.GetInternalID()
+	if err == nil {
+		return userID, nil
+	}
+
+	if id.ID == "" {
+		return 0, err
+	}
+
+	usr, err := s.userService.GetByUID(ctx, &user.GetUserByUIDQuery{UID: id.ID})
+	if err != nil {
+		return 0, err
+	}
+
+	return usr.ID, nil
+}
+
 func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, r *authn.Request) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.FetchSyncedUserHook")
 	defer span.End()
@@ -374,7 +396,7 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
+	userID, err := s.resolveUserID(ctx, id)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -416,7 +438,7 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
+	userID, err := s.resolveUserID(ctx, id)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -447,7 +469,7 @@ func (s *UserSync) EnableUserHook(ctx context.Context, id *authn.Identity, _ *au
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
+	userID, err := s.resolveUserID(ctx, id)
 	if err != nil {
 		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
 		return nil
@@ -837,6 +859,7 @@ func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity)
 // syncSignedInUserToIdentity syncs a user to an identity.
 // id.ExternalGroups must not be overridden here — SAML role mapping and team sync rely on it.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
+	id.ID = strconv.FormatInt(usr.UserID, 10)
 	id.UID = usr.UserUID
 	id.Name = usr.Name
 	id.Login = usr.Login
