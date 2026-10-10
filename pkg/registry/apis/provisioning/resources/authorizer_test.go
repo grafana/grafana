@@ -1323,7 +1323,7 @@ func TestAuthorizeDeleteByPath_Folders(t *testing.T) {
 			}
 
 			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.path)
+			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.path, "")
 
 			if tt.shouldAllow {
 				assert.NoError(t, err, tt.description)
@@ -1427,7 +1427,7 @@ func TestAuthorizeMoveByPath_Folders(t *testing.T) {
 			}
 
 			authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-			err := authorizer.AuthorizeMoveByPath(context.Background(), tt.originalPath, tt.targetPath)
+			err := authorizer.AuthorizeMoveByPath(context.Background(), tt.originalPath, tt.targetPath, "")
 
 			if tt.shouldSucceed {
 				assert.NoError(t, err, tt.description)
@@ -1518,7 +1518,7 @@ func TestAuthorizeFolderMetadata(t *testing.T) {
 			}
 
 			authorizer := NewAuthorizer(repo, reader, mockAccess, authTestClients(t), nil, true) // folderMetadataEnabled=true
-			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.folderPath)
+			err := authorizer.AuthorizeDeleteByPath(context.Background(), tt.folderPath, "")
 
 			if tt.shouldPass {
 				assert.NoError(t, err, tt.description)
@@ -1661,7 +1661,7 @@ func TestAuthorizeMoveByPathWithMetadata(t *testing.T) {
 		}), "target-parent-stable-uid").Return(nil).Once()
 
 		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), nil, true)
-		err := authorizer.AuthorizeMoveByPath(context.Background(), "source/", "target-parent/moved/")
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "source/", "target-parent/moved/", "")
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
@@ -1815,6 +1815,16 @@ func dashboardFileInfo() *repository.FileInfo {
 	}
 }
 
+// folderManifestFileInfo returns a FileInfo containing a folder manifest -
+// resolveFileGVR explicitly rejects folders (they're authorized through their
+// own dedicated path), so this is useful for proving a path resolves to a
+// different kind depending on which ref it's read from.
+func folderManifestFileInfo() *repository.FileInfo {
+	return &repository.FileInfo{
+		Data: []byte(`{"apiVersion":"folder.grafana.app/v1beta1","kind":"Folder","metadata":{"name":"f"},"spec":{"title":"F"}}`),
+	}
+}
+
 func TestAuthorizeDeleteByPath(t *testing.T) {
 	t.Run("file path checks dashboard delete on parent folder", func(t *testing.T) {
 		repo := &provisioning.Repository{
@@ -1835,7 +1845,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json", "")
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
@@ -1860,7 +1870,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		}), rootFolder).Return(nil).Once()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "dashboard.json")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "dashboard.json", "")
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
@@ -1883,7 +1893,38 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/", "")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("top-level folder delete checks against the repository folder, not the instance root", func(t *testing.T) {
+		// Regression (issue #127254, folder half): this passed "" for a top-level
+		// directory, claiming the instance root as its parent. That left the check with
+		// no folder to resolve ancestry from, so a grant on the repository folder
+		// couldn't cascade - a user with Admin on the repository folder was denied
+		// deleting a folder inside it. The parent is the repository's own folder.
+		repo := &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+			Spec: provisioning.RepositorySpec{
+				Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+			},
+		}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == FolderResource.Group &&
+				req.Resource == FolderResource.Resource &&
+				req.Verb == utils.VerbDelete
+		}), RootFolder(repo)).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/", "")
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
@@ -1904,7 +1945,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		mockAccess.On("Check", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "restricted/dashboard.json")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "restricted/dashboard.json", "")
 
 		assert.Error(t, err)
 	})
@@ -1920,7 +1961,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "unknown/file.json")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "unknown/file.json", "")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "read file")
@@ -1941,7 +1982,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "bad/widget.json")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "bad/widget.json", "")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unsupported resource type")
@@ -1962,7 +2003,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 			Return(nil, repository.ErrFileNotFound).Maybe()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "sneaky/folder.json")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "sneaky/folder.json", "")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unsupported resource type")
@@ -1992,7 +2033,7 @@ func TestAuthorizeDeleteByPath(t *testing.T) {
 		}), "stable-folder-uid").Return(nil).Once()
 
 		authorizer := NewAuthorizer(repo, rw, mockAccess, authTestClients(t), nil, true)
-		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json")
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json", "")
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
@@ -2023,8 +2064,11 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 				req.Verb == utils.VerbCreate
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dashboard.json", "dst/dashboard.json")
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "dst/", "").Return("dst-folder-uid", true, nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dashboard.json", "dst/dashboard.json", "")
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
@@ -2052,7 +2096,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		}), mock.AnythingOfType("string")).Return(nil).Once()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeMoveByPath(context.Background(), "src-folder/", "dst-folder/")
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "src-folder/", "dst-folder/", "")
 
 		assert.NoError(t, err)
 		mockAccess.AssertExpectations(t)
@@ -2075,7 +2119,7 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 		}), mock.Anything).Return(assert.AnError).Once()
 
 		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeMoveByPath(context.Background(), "restricted/dash.json", "dest/dash.json")
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "restricted/dash.json", "dest/dash.json", "")
 
 		assert.Error(t, err)
 	})
@@ -2099,10 +2143,219 @@ func TestAuthorizeMoveByPath(t *testing.T) {
 			return req.Verb == utils.VerbCreate
 		}), mock.Anything).Return(assert.AnError).Once()
 
-		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
-		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dash.json", "restricted/dash.json")
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "restricted/", "").Return("restricted-folder-uid", true, nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "src/dash.json", "restricted/dash.json", "")
 
 		assert.Error(t, err)
+	})
+}
+
+// TestFileKindResolvesFromRef covers resolveFileGVR's ref-awareness (via
+// AuthorizeDeleteByPath/AuthorizeMoveByPath, its only callers): file *content* is
+// read from the caller's actual ref, with a narrow ErrRefNotFound-only fallback to
+// the configured branch, while folder *identity* stays pinned regardless of ref.
+// TestTargetFolderResolvesToNearestExistingAncestor covers destination resolution
+// when the target's containing folder chain has not been synced to Grafana.
+//
+// Resolution starts from safepath.Dir(targetPath), so for a directory target it
+// begins at that directory's parent - stepping above the destination is inherent
+// to that, and unchanged here. What changed is the outcome when the folder it
+// lands on does not exist: that used to produce a hash-derived UID Grafana had
+// never stored, which no grant could match and nothing could cascade from, so the
+// caller got an unexplained 403. It now walks up to the nearest folder that does
+// exist, letting an ancestor's grant apply.
+func TestTargetFolderResolvesToNearestExistingAncestor(t *testing.T) {
+	repo := &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo"},
+		Spec: provisioning.RepositorySpec{
+			Sync: provisioning.SyncOptions{Target: provisioning.SyncTargetTypeFolder},
+		},
+	}
+
+	t.Run("an unsynced parent chain inherits from the nearest existing ancestor", func(t *testing.T) {
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		// "team-a/pending/" exists only on a branch; the walk lands on "team-a".
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "team-a/pending/", "").
+			Return("team-a-uid", true, nil).Once()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbCreate
+		}), "team-a-uid").Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "team-a/pending/child/")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("the walk is pinned to the configured branch", func(t *testing.T) {
+		// The ref argument must always be "": which folder stands in for a path
+		// cannot be something a caller selects by editing _folder.json on a branch.
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, mock.Anything, "").
+			Return("team-a-uid", true, nil).Once()
+		mockAccess.On("Check", mock.Anything, mock.Anything, "team-a-uid").Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "team-a/pending/child/")
+
+		assert.NoError(t, err)
+		folders.AssertExpectations(t)
+	})
+
+	t.Run("no existing ancestor falls back to the repository root", func(t *testing.T) {
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "nowhere/", "").
+			Return("", false, nil).Once()
+
+		mockAccess.On("Check", mock.Anything, mock.Anything, RootFolder(repo)).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "nowhere/deeper/")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("a lookup error is surfaced, not treated as absent", func(t *testing.T) {
+		mockAccess := auth.NewMockAccessChecker(t)
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "team-a/", "").
+			Return("", false, assert.AnError).Once()
+
+		authorizer := NewAuthorizer(repo, repository.NewMockReader(t), mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeCreateInFolder(context.Background(), DashboardResource, "team-a/sub/")
+
+		assert.Error(t, err)
+	})
+}
+
+func TestFileKindResolvesFromRef(t *testing.T) {
+	t.Run("reads file content from the supplied ref, not the configured branch", func(t *testing.T) {
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").
+			Return(dashboardFileInfo(), nil)
+		// Seeded with a *different* kind on the configured branch: if resolveFileGVR
+		// regressed to reading ref="" for file content, this would be picked up
+		// instead and the check below would fail with "unsupported resource type".
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").
+			Return(folderManifestFileInfo(), nil).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group && req.Resource == DashboardResource.Resource && req.Verb == utils.VerbDelete
+		}), mock.Anything).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json", "feature-branch")
+
+		assert.NoError(t, err)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("falls back to the configured branch only when the ref doesn't exist yet", func(t *testing.T) {
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "new-branch").
+			Return(nil, repository.ErrRefNotFound)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").
+			Return(dashboardFileInfo(), nil)
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Verb == utils.VerbDelete
+		}), mock.Anything).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json", "new-branch")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("does not fall back on ErrFileNotFound - the branch exists, the file just isn't there", func(t *testing.T) {
+		// ErrFileNotFound means the branch exists but has independent content
+		// without this file - unlike ErrRefNotFound, falling back here would
+		// silently authorize against a different branch's file.
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").
+			Return(nil, repository.ErrFileNotFound)
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "").
+			Return(dashboardFileInfo(), nil).Maybe()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/dashboard.json", "feature-branch")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "read file")
+	})
+
+	t.Run("AuthorizeMoveByPath resolves the source kind once from ref and reuses it for both checks", func(t *testing.T) {
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		// .Once(): if AuthorizeMoveByPath read the source file twice (once per
+		// check) instead of resolving its kind a single time, this would fail.
+		mockReader.On("Read", mock.Anything, "team-a/dashboard.json", "feature-branch").
+			Return(dashboardFileInfo(), nil).Once()
+		mockReader.On("Read", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group && req.Resource == DashboardResource.Resource && req.Verb == utils.VerbUpdate
+		}), mock.Anything).Return(nil).Once()
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == DashboardResource.Group && req.Resource == DashboardResource.Resource && req.Verb == utils.VerbCreate
+		}), mock.Anything).Return(nil).Once()
+
+		folders := NewMockFolderAncestorFinder(t)
+		folders.EXPECT().FindExistingAncestor(mock.Anything, "team-b/", "").Return("team-b-uid", true, nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), folders, false)
+		err := authorizer.AuthorizeMoveByPath(context.Background(), "team-a/dashboard.json", "team-b/dashboard.json", "feature-branch")
+
+		assert.NoError(t, err)
+		mockReader.AssertExpectations(t)
+		mockAccess.AssertExpectations(t)
+	})
+
+	t.Run("directory paths never read from ref - folder identity stays pinned to the configured branch", func(t *testing.T) {
+		repo := &provisioning.Repository{ObjectMeta: metav1.ObjectMeta{Name: "test-repo"}}
+		mockAccess := auth.NewMockAccessChecker(t)
+		mockReader := repository.NewMockReader(t)
+		mockReader.On("Config").Return(repo).Maybe()
+		// Only ref="" is registered - if a directory operation asked the reader
+		// for "feature-branch" content, the mock would panic on an unexpected call.
+		mockReader.On("Read", mock.Anything, mock.Anything, "").
+			Return(nil, repository.ErrFileNotFound).Maybe()
+
+		mockAccess.On("Check", mock.Anything, mock.MatchedBy(func(req authlib.CheckRequest) bool {
+			return req.Group == FolderResource.Group && req.Resource == FolderResource.Resource && req.Verb == utils.VerbDelete
+		}), mock.Anything).Return(nil).Once()
+
+		authorizer := NewAuthorizer(repo, mockReader, mockAccess, authTestClients(t), nil, false)
+		err := authorizer.AuthorizeDeleteByPath(context.Background(), "team-a/", "feature-branch")
+
+		assert.NoError(t, err)
 	})
 }
 

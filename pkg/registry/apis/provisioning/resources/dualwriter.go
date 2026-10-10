@@ -582,7 +582,7 @@ func (r *DualReadWriter) moveDirectory(ctx context.Context, opts DualWriteOption
 		}
 	}
 
-	if err := r.authorizer.AuthorizeMoveByPath(ctx, opts.OriginalPath, opts.Path); err != nil {
+	if err := r.authorizer.AuthorizeMoveByPath(ctx, opts.OriginalPath, opts.Path, opts.Ref); err != nil {
 		return nil, fmt.Errorf("authorize move folder: %w", err)
 	}
 
@@ -764,7 +764,7 @@ func (r *DualReadWriter) deleteFolder(ctx context.Context, opts DualWriteOptions
 		}
 	}
 
-	if err := r.authorizer.AuthorizeDeleteByPath(ctx, opts.Path); err != nil {
+	if err := r.authorizer.AuthorizeDeleteByPath(ctx, opts.Path, opts.Ref); err != nil {
 		return nil, fmt.Errorf("authorize delete folder: %w", err)
 	}
 
