@@ -1,8 +1,9 @@
+import { makeDataSourceSettings } from 'test/helpers/makeDataSourceSettings';
+
 import {
   type AdHocVariableFilter,
   DataSourceApi,
   type DataSourceInstanceSettings,
-  type DataSourcePluginMeta,
   dateTime,
   type ExploreUrlState,
   type GrafanaConfig,
@@ -44,48 +45,12 @@ const interpolateMockLoki = jest.fn().mockReturnValue([{ refId: 'a', expr: 'repl
 const interpolateMockProm = jest.fn().mockReturnValue([{ refId: 'a', expr: 'replaced testDs2 prom' }]);
 const interpolateByUid: Record<string, jest.Mock> = { ds1: interpolateMockLoki, ds2: interpolateMockProm };
 
-function makeSettings(
-  uid: string,
-  name: string,
-  type: string,
-  opts: { isDefault?: boolean; mixed?: boolean } = {}
-): DataSourceInstanceSettings {
-  return {
-    id: 1,
-    uid,
-    name,
-    type,
-    access: 'direct',
-    jsonData: {},
-    readOnly: false,
-    isDefault: opts.isDefault ?? false,
-    meta: {
-      id: type,
-      name: type,
-      type: 'datasource',
-      module: '',
-      baseUrl: '',
-      mixed: opts.mixed ?? false,
-      metrics: true,
-      info: {
-        author: { name: '' },
-        description: '',
-        links: [],
-        logos: { small: '', large: '' },
-        screenshots: [],
-        updated: '',
-        version: '',
-      },
-    } as unknown as DataSourcePluginMeta,
-  } as DataSourceInstanceSettings;
-}
-
 const DEFAULT_DS_NAME = 'default datasource';
 const dsSettings: Record<string, DataSourceInstanceSettings> = {
-  default: makeSettings('default-uid', DEFAULT_DS_NAME, 'test-db', { isDefault: true }),
-  ds1: makeSettings('ds1', 'testDs', 'loki'),
-  ds2: makeSettings('ds2', 'testDs2', 'prom'),
-  dsMixed: makeSettings('dsMixed', 'testDSMixed', 'mixed', { mixed: true }),
+  default: makeDataSourceSettings('default-uid', DEFAULT_DS_NAME, 'test-db', { isDefault: true }),
+  ds1: makeDataSourceSettings('ds1', 'testDs', 'loki'),
+  ds2: makeDataSourceSettings('ds2', 'testDs2', 'prom'),
+  dsMixed: makeDataSourceSettings('dsMixed', 'testDSMixed', 'mixed', { mixed: true }),
 };
 
 // Unlike a preset-instance mock, this class derives its identity from the settings the loader

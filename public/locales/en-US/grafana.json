@@ -11126,7 +11126,7 @@
       "most-used": "Most used",
       "most-used-active": "Most used dashboards",
       "recent": "Recent",
-      "recent-active": "Recent dashboards",
+      "recent-activity-active": "Recent activity",
       "retry": "Retry",
       "starred": "Starred",
       "starred-active": "Starred dashboards"
@@ -11299,15 +11299,23 @@
       },
       "title": "Your observability stack overview"
     },
-    "recent-dashboards-tab": {
+    "recent-activity-tab": {
       "browse": "Browse dashboards",
-      "clear": "Clear history",
+      "clear": "Clear recent activity",
       "create": "Create your first dashboard",
-      "empty": "Dashboards you've recently viewed will appear here.",
-      "empty-description": "After you've connected data, you can use dashboards to query and visualize your data with charts, stats and tables or create lists, markdowns and other widgets.",
-      "error-title": "Could not load recently viewed dashboards",
-      "loading": "Loading recently viewed dashboards...",
-      "reset": "Reset recent dashboards"
+      "empty": "No recent activity yet. Pages you visit will show up here.",
+      "error-title": "Could not load your recent activity",
+      "filter-alerting": "Alerting",
+      "filter-all": "All",
+      "filter-apps": "Apps",
+      "filter-dashboards": "Dashboards",
+      "filter-explore": "Explore",
+      "filter-label": "Show only",
+      "kind-alerting": "Alerting",
+      "kind-app": "App",
+      "kind-dashboard": "Dashboard",
+      "kind-explore": "Explore",
+      "loading": "Loading your recent activity..."
     },
     "recommendations": {
       "application-observability": {
