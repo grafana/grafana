@@ -5,7 +5,9 @@ export * from './grafana/api/notifications/v1beta1/mocks/handlers';
 export * from './grafana/api/notifications/v1beta1/mocks/fakes/common';
 export * from './grafana/api/notifications/v1beta1/mocks/fakes/Receivers';
 export * from './grafana/api/notifications/v1beta1/mocks/fakes/Routes';
+export * from './grafana/api/notifications/v1beta1/mocks/fakes/TimeIntervals';
 
 // scenarios
 export * from './grafana/contactPoints/components/ContactPointSelector/ContactPointSelector.scenario';
 export * from './grafana/notificationPolicies/components/RoutingTreeSelector/RoutingTreeSelector.scenario';
+export * from './grafana/notificationSettings/components/NotificationsSettingsSelector/NotificationsSettingsSelector.scenario';
