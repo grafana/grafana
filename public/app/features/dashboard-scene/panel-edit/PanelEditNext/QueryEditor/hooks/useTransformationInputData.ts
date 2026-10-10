@@ -22,7 +22,8 @@ interface UseTransformationInputDataOptions {
  *
  * @param selectedTransformation - The transformation currently open in the editor.
  * @param allTransformations - The full ordered list of transformations in the pipeline.
- * @param rawData - Raw data frames from the query runner, before any transformations.
+ * @param rawData - Raw frames of the selected transformation's topic (series or annotations) from the
+ *   query runner, before any transformations.
  * @returns Data frames that feed into the selected transformation.
  */
 export function useTransformationInputData({

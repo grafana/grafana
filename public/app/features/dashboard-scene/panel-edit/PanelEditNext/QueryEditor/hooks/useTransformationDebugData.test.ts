@@ -2,6 +2,7 @@ import { renderHook, waitFor } from '@testing-library/react';
 import { Observable } from 'rxjs';
 
 import { type DataFrame, type DataTransformerConfig, transformDataFrame } from '@grafana/data';
+import { DataTopic } from '@grafana/schema';
 
 import { makeFrames, makeTransformation } from './testUtils';
 import { useTransformationDebugData } from './useTransformationDebugData';
@@ -156,6 +157,31 @@ describe('useTransformationDebugData', () => {
     expect(debuggedRuns.map(([, frames]) => frames.map(({ name }) => name))).toEqual([[]]);
 
     consoleError.mockRestore();
+  });
+
+  it('feeds an annotation-topic transformation only the annotation-topic transformations ahead of it', () => {
+    const annotationPipeline = [
+      makeTransformation('organize'),
+      makeTransformation('filterByRefId', DataTopic.Annotations),
+      makeTransformation('filterFieldsByName', DataTopic.Annotations),
+    ];
+    respondByConfig({ filterByRefId: makeFrames(['filtered']) });
+
+    const { result } = renderHook(() =>
+      useTransformationDebugData({
+        selectedTransformation: annotationPipeline[2],
+        transformations: annotationPipeline,
+        data,
+        isActive: true,
+      })
+    );
+
+    expect(mockTransformDataFrame).toHaveBeenCalledWith(
+      [annotationPipeline[1].transformConfig],
+      data,
+      expect.any(Object)
+    );
+    expect(result.current.input.map(({ name }) => name)).toEqual(['filtered']);
   });
 
   it('runs the preceding stage once, not once per pane', () => {

@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
+  type DataFrame,
   type DataTransformerConfig,
   DataTransformerID,
   FieldType,
@@ -18,6 +19,7 @@ import {
   reduceTransformer,
   ReduceTransformerMode,
 } from '@grafana/data/internal';
+import { DataTopic } from '@grafana/schema';
 
 import { usePreviousTransformationOutput } from '../hooks/usePreviousTransformationOutput';
 import { useTransformationGeneratedRefId } from '../hooks/useTransformationGeneratedRefId';
@@ -68,10 +70,21 @@ const seriesC = toDataFrame({
   ],
 });
 
-function getData(series = [seriesA, seriesB]): PanelData {
+function annotationFrame(refId: string) {
+  return toDataFrame({
+    refId,
+    fields: [
+      { name: 'time', type: FieldType.time, values: [1000] },
+      { name: 'text', type: FieldType.string, values: ['deploy'] },
+    ],
+  });
+}
+
+function getData(series = [seriesA, seriesB], annotations?: DataFrame[]): PanelData {
   return {
     state: LoadingState.Done,
     series,
+    annotations,
     timeRange: { from: dateTime(), to: dateTime(), raw: { from: 'now-1h', to: 'now' } },
   };
 }
@@ -156,6 +169,44 @@ describe('TransformationIdentifier', () => {
 
     await user.click(screen.getByRole('button', { name: /edit transformation name/i }));
     await user.type(screen.getByTestId('transformation-refid-input'), 'A');
+
+    expect(
+      await screen.findByText('Transformation name is already used by a query or an earlier transformation')
+    ).toBeInTheDocument();
+
+    await user.click(document.body);
+    expect(onUpdate).not.toHaveBeenCalled();
+  });
+
+  it.each<{ desc: string; topic: DataTopic | undefined; name: string }>([
+    { desc: 'no topic', topic: undefined, name: 'merge-A-B' },
+    { desc: 'the series topic', topic: DataTopic.Series, name: 'merge-A-B' },
+    { desc: 'the annotations topic', topic: DataTopic.Annotations, name: 'merge-X-Y' },
+  ])('names a transformation with $desc after the frames of its own topic', async ({ topic, name }) => {
+    const transformation = getTransformation({ id: DataTransformerID.merge, options: {}, topic }, true);
+    renderIdentifier(
+      transformation,
+      jest.fn(),
+      getData([seriesA, seriesB], [annotationFrame('X'), annotationFrame('Y')])
+    );
+
+    expect(await screen.findByText(name)).toBeInTheDocument();
+  });
+
+  it('reserves the names of the annotation frames, not the series queries, for an annotation-topic transformation', async () => {
+    const transformation = getTransformation(
+      { id: DataTransformerID.merge, options: {}, topic: DataTopic.Annotations },
+      true
+    );
+    const onUpdate = renderIdentifier(
+      transformation,
+      jest.fn(),
+      getData([seriesA, seriesB], [annotationFrame('X'), annotationFrame('Y')])
+    );
+    const user = userEvent.setup();
+
+    await user.click(screen.getByRole('button', { name: /edit transformation name/i }));
+    await user.type(screen.getByTestId('transformation-refid-input'), 'X');
 
     expect(
       await screen.findByText('Transformation name is already used by a query or an earlier transformation')
