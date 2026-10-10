@@ -67,8 +67,27 @@ type EmailDTO struct {
 	Recipient string `json:"recipient"`
 }
 
-// Alias the generated type
-type DashAnnotation = dashboard.AnnotationQuery
+// DashAnnotation is the dashboard annotation query an annotation event was produced by.
+type DashAnnotation struct {
+	Name       string                  `json:"name"`
+	Datasource dashboard.DataSourceRef `json:"datasource"`
+	Enable     bool                    `json:"enable"`
+	Hide       *bool                   `json:"hide,omitempty"`
+	IconColor  string                  `json:"iconColor"`
+	// Not dashboard.AnnotationPanelFilter: the generated type stores panel IDs as uint8, which rejects
+	// any dashboard whose panel IDs exceed 255.
+	Filter    *DashAnnotationPanelFilter  `json:"filter,omitempty"`
+	Target    *dashboard.AnnotationTarget `json:"target,omitempty"`
+	Type      *string                     `json:"type,omitempty"`
+	BuiltIn   *float64                    `json:"builtIn,omitempty"`
+	Placement *string                     `json:"placement,omitempty"`
+}
+
+// DashAnnotationPanelFilter limits an annotation query to a set of panels by panel ID.
+type DashAnnotationPanelFilter struct {
+	Exclude *bool   `json:"exclude,omitempty"`
+	Ids     []int64 `json:"ids"`
+}
 
 type AnnotationsDto struct {
 	Annotations struct {
@@ -77,17 +96,17 @@ type AnnotationsDto struct {
 }
 
 type AnnotationEvent struct {
-	Id           int64                     `json:"id"`
-	DashboardId  int64                     `json:"dashboardId"`
-	DashboardUID string                    `json:"dashboardUID"`
-	PanelId      int64                     `json:"panelId"`
-	Tags         []string                  `json:"tags"`
-	IsRegion     bool                      `json:"isRegion"`
-	Text         string                    `json:"text"`
-	Color        string                    `json:"color"`
-	Time         int64                     `json:"time"`
-	TimeEnd      int64                     `json:"timeEnd"`
-	Source       dashboard.AnnotationQuery `json:"source"`
+	Id           int64          `json:"id"`
+	DashboardId  int64          `json:"dashboardId"`
+	DashboardUID string         `json:"dashboardUID"`
+	PanelId      int64          `json:"panelId"`
+	Tags         []string       `json:"tags"`
+	IsRegion     bool           `json:"isRegion"`
+	Text         string         `json:"text"`
+	Color        string         `json:"color"`
+	Time         int64          `json:"time"`
+	TimeEnd      int64          `json:"timeEnd"`
+	Source       DashAnnotation `json:"source"`
 }
 
 func (pd PublicDashboard) TableName() string {

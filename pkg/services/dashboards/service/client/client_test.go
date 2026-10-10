@@ -828,7 +828,7 @@ func TestGetConversionStatus(t *testing.T) {
 				input = &unstructured.Unstructured{Object: map[string]interface{}{}}
 			}
 
-			failed, storedVersion, conversionErr := getConversionStatus(input)
+			failed, storedVersion, conversionErr := GetConversionStatus(input)
 			require.Equal(t, tt.expectedFailed, failed, "failed mismatch")
 			require.Equal(t, tt.expectedStoredVersion, storedVersion, "storedVersion mismatch")
 			require.Equal(t, tt.expectedError, conversionErr, "conversionErr mismatch")

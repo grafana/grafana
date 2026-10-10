@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -16,7 +15,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/models"
 	"github.com/grafana/grafana/pkg/services/publicdashboards/internal/validation"
-	"github.com/grafana/grafana/pkg/tsdb/grafanads"
 )
 
 // FindAnnotations returns annotations for a public dashboard
@@ -43,7 +41,7 @@ func (pd *PublicDashboardServiceImpl) FindAnnotations(ctx context.Context, reqDT
 	uniqueEvents := make(map[int64]models.AnnotationEvent, 0)
 	for _, anno := range annoDto.Annotations.List {
 		// skip annotations that are not enabled or are not a grafana datasource
-		if !anno.Enable || (*anno.Datasource.Uid != grafanads.DatasourceUID && *anno.Datasource.Uid != grafanads.DatasourceName) {
+		if !anno.Enable || !isGrafanaAnnotationDatasource(anno.Datasource.Uid) {
 			continue
 		}
 		annoQuery := &annotations.ItemQuery{
@@ -482,8 +480,7 @@ func sanitizeDataV2(data *simplejson.Json) {
 // isDashboardV2 returns true for dashboard API versions v2 and above.
 // v0/v1 (including empty, which implies legacy v1) use the panels schema.
 func isDashboardV2(dash *dashboards.Dashboard) bool {
-	v := dash.APIVersion
-	return v != "" && !strings.HasPrefix(v, "v0") && !strings.HasPrefix(v, "v1")
+	return dashboards.IsV2OrLaterAPIVersion(dash.APIVersion)
 }
 
 // NewTimeRange declared to be able to stub this function in tests
