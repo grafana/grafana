@@ -100,51 +100,18 @@ After the command has finished, you can start building the source code:
 yarn start
 ```
 
-This command generates SASS theme files, builds all external plugins, and then builds the frontend assets.
+This command generates SASS theme files, builds all external plugins, and then starts the rspack dev server. The dev server supports hot module replacement and React Fast Refresh: when you edit a component, the running page updates without a reload and keeps its app state. When rspack cannot hot-apply a module, it reloads the page.
 
-After `yarn start` has built the assets, it will continue to do so whenever any of the files change. This means you don't have to manually build the assets every time you change the code.
+Keep using `http://localhost:3000`. The dev server holds the bundles in memory and listens on the port named by `[frontend_dev] server_url`. Grafana treats it as a CDN: the `index.html` it renders points the browser straight at the dev server for frontend assets, and the hot-update websocket connects there too.
 
 > **Troubleshooting:** if your first build works, after pulling updates you may see unexpected errors in the "Type-checking in progress..." stage. These errors can be caused by the [tsbuildinfo cache supporting incremental builds](https://www.typescriptlang.org/tsconfig#incremental). In this case, you can enter `rm tsconfig.tsbuildinfo` and re-try.
 
-#### Hot module replacement with rspack
+#### How the dev server affects the build on disk
 
-Grafana is migrating its frontend build from webpack to rspack. The rspack build supports hot
-module replacement and React Fast Refresh, so editing a component updates the running page
-without a reload and without losing app state.
-
-Start the frontend and the backend in two terminals:
-
-```
-yarn start:rspack
-RSPACK=1 make run
-```
-
-`RSPACK=1` turns on the `grafana.rspackBuild` feature toggle, which is what makes the backend
-read the rspack build instead of the webpack one.
-
-Keep using `http://localhost:3000`. The rspack dev server holds the bundles in memory and
-listens on the port named by `[frontend_dev] server_url`. Grafana treats it as a CDN: the
-`index.html` it renders points the browser straight at the dev server for frontend assets, and
-the hot-update websocket connects there too. When a module cannot be hot-applied, rspack
-reloads the page.
-
-Some consequences of this setup:
-
-- Almost nothing is written to `public/build/rspack`. The one exception is `boot.js`, which
-  every rspack start command builds to disk first, because the backend reads it from there at
-  startup. Serving the rest of the build from a static file server, as `make frontend-service`
-  does, needs `yarn start:rspack:noHmr` instead.
-- If the dev server is not running, Grafana falls back to whatever the last build left on disk.
-  A stale page usually means the dev server stopped.
-- Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy
-  will not let the page load assets from another origin, so Grafana logs a line and serves the
-  build on disk. That is what keeps the e2e suite off the dev server, since the suite also runs
-  in development mode.
-- Blanking `server_url` in a config file does not turn the dev server off, and leaves the two
-  halves disagreeing: `yarn start:rspack` refuses to start, while Grafana ignores empty values in
-  `custom.ini` and still points the browser at the dev server. To build without one, run
-  `yarn start:rspack:noHmr`. To stop Grafana looking for one, pass
-  `cfg:frontend_dev.server_url=` on the command line.
+- Almost nothing is written to `public/build/rspack`. The one exception is `boot.js`, which every start command builds to disk first, because the backend reads it from there at startup. To serve the rest of the build from a static file server, as `make frontend-service` does, run `yarn start:noHmr` instead.
+- If the dev server is not running, Grafana falls back to whatever the last build left on disk. A stale page usually means the dev server stopped.
+- Turning on `[security] content_security_policy` disables the dev server. A `'self'` policy will not let the page load assets from another origin, so Grafana logs a line and serves the build on disk. That is what keeps the e2e suite off the dev server, since the suite also runs in development mode.
+- Blanking `server_url` in a config file does not turn the dev server off, and leaves the two halves disagreeing: `yarn start` refuses to start, while Grafana ignores empty values in `custom.ini` and still points the browser at the dev server. To build without one, run `yarn start:noHmr`. To stop Grafana looking for one, pass `cfg:frontend_dev.server_url=` on the command line.
 
 #### Plugins
 

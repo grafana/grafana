@@ -9,5 +9,5 @@
     "strict": true,
     "skipLibCheck": true
   },
-  "include": ["./**/*.ts", "../webpack/types/http-server.d.ts"]
+  "include": ["./**/*.ts"]
 }

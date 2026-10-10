@@ -1,13 +1,8 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-import { readOptionalJson } from './fs.mts';
-
 const PUBLIC_PATH = 'public/build/';
-const MANIFESTS = [
-  { name: 'default', fileName: 'assets-manifest.json' },
-  { name: 'rspack', fileName: 'rspack/assets-manifest.json' },
-];
+const MANIFEST_FILE_NAME = 'rspack/assets-manifest.json';
 
 interface Entrypoint {
   assets: Record<string, string[]>;
@@ -17,41 +12,24 @@ interface BundleManifest {
   entrypoints: Record<string, Entrypoint | boolean>;
 }
 
-export async function readBundleSizes(
-  buildDirectory: string,
-  options: { includeRspack?: boolean } = {}
-): Promise<Record<string, number>> {
-  const sizes: Record<string, number> = {};
-  for (const manifest of MANIFESTS) {
-    if (manifest.name === 'rspack' && options.includeRspack === false) {
-      continue;
-    }
-    const manifestPath = path.join(buildDirectory, manifest.fileName);
-    const data =
-      manifest.name === 'rspack'
-        ? await readOptionalJson<BundleManifest>(manifestPath)
-        : await readManifest(manifestPath);
+export async function readBundleSizes(buildDirectory: string): Promise<Record<string, number>> {
+  const manifestPath = path.join(buildDirectory, MANIFEST_FILE_NAME);
+  const data = await readManifest(manifestPath);
+  if (typeof data.entrypoints !== 'object' || data.entrypoints === null || Array.isArray(data.entrypoints)) {
+    throw new Error(`Invalid entrypoints in ${manifestPath}`);
+  }
 
-    if (data === undefined) {
+  const sizes: Record<string, number> = {};
+  for (const [entrypointName, entrypoint] of Object.entries(data.entrypoints)) {
+    // esModule describes the output format, not an entrypoint.
+    if (entrypointName === 'esModule') {
       continue;
     }
-    if (typeof data.entrypoints !== 'object' || data.entrypoints === null || Array.isArray(data.entrypoints)) {
-      throw new Error(`Invalid entrypoints in ${manifestPath}`);
+    if (typeof entrypoint !== 'object' || entrypoint === null) {
+      throw new Error(`Invalid entrypoint ${entrypointName} in ${manifestPath}`);
     }
-    for (const [entrypointName, entrypoint] of Object.entries(data.entrypoints)) {
-      // esModule describes the output format, not an entrypoint.
-      if (entrypointName === 'esModule') {
-        continue;
-      }
-      if (typeof entrypoint !== 'object' || entrypoint === null) {
-        throw new Error(`Invalid entrypoint ${entrypointName} in ${manifestPath}`);
-      }
-      for (const [assetType, assets] of Object.entries(entrypoint.assets)) {
-        sizes[`${manifest.name}.entrypoints.${entrypointName}.${assetType}`] = await totalSize(
-          buildDirectory,
-          new Set(assets)
-        );
-      }
+    for (const [assetType, assets] of Object.entries(entrypoint.assets)) {
+      sizes[`default.entrypoints.${entrypointName}.${assetType}`] = await totalSize(buildDirectory, new Set(assets));
     }
   }
 

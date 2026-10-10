@@ -883,7 +883,7 @@ func TestReadFrontendDevSettings(t *testing.T) {
 		return []byte("app_mode = development\n[frontend_dev]\nserver_url = " + url)
 	}
 
-	// The default matters as much as the parsing: `yarn start:rspack` is meant to work without
+	// The default matters as much as the parsing: `yarn start` is meant to work without
 	// anyone editing an ini file. `make run` passes cfg:app_mode=development, same as here.
 	t.Run("conf/defaults.ini ships a dev server url", func(t *testing.T) {
 		cfg := NewCfg()
