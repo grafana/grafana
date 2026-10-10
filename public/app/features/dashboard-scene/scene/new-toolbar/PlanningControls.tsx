@@ -6,7 +6,7 @@ import { useStyles2 } from '@grafana/ui';
 import { type DashboardScene } from '../DashboardScene';
 import { VariableControls } from '../VariableControls';
 import { getPlanningGround } from '../planningGround';
-import { type DashboardPlanningState } from '../types/dashboard';
+import { type DashboardPlanPreviewState } from '../types/dashboard';
 
 import { PlanningBanner } from './PlanningBanner';
 
@@ -20,7 +20,7 @@ export function PlanningControls({
   planning,
 }: {
   dashboard: DashboardScene;
-  planning: DashboardPlanningState;
+  planning: DashboardPlanPreviewState;
 }) {
   const styles = useStyles2(getStyles);
 

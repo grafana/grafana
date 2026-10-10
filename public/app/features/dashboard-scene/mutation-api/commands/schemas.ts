@@ -875,6 +875,13 @@ const renderPlanPayloadSchema = z
         'Names of stand-in variables to preview alongside the plan. Sample values are generated here -- ' +
           'the plan names only the variable, not what its values should look like.'
       ),
+    phase: z
+      .enum(['preview', 'building'])
+      .default('preview')
+      .describe(
+        '"preview" renders the plan with sample data and Build/Dismiss actions. "building" shows a loading ' +
+          'screen instead, while the plan is built; call END_PLANNING before the first write.'
+      ),
   })
   .superRefine((data, ctx) => {
     data.sections.forEach((section, index) => {
@@ -966,7 +973,7 @@ export const payloads = {
     'Update allowlisted metadata.annotations. Currently only grafana.app/useCrossDashboardVariables is writable. Not a query annotation layer (use ADD_ANNOTATION / UPDATE_ANNOTATION). GET_SPEC / APPLY_SPEC do not include these annotations.'
   ),
   renderPlan: renderPlanPayloadSchema.describe(
-    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
+    'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call, or show a loading screen while the plan is built. The dashboard never enters edit mode while previewing.'
   ),
   endPlanning: endPlanningPayloadSchema.describe('End the plan preview and clear the dashboard back to empty'),
 };

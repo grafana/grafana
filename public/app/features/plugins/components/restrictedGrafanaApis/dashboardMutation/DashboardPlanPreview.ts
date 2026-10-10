@@ -1,6 +1,11 @@
 import { locationService } from '@grafana/runtime';
 import { payloads } from 'app/features/dashboard-scene/mutation-api/commands/schemas';
 import type { MutationClient, MutationResult } from 'app/features/dashboard-scene/mutation-api/types';
+import {
+  clearPendingPlanBuild,
+  setPendingPlanBuild,
+  type PendingPlanBuild,
+} from 'app/features/dashboard-scene/scene/pendingPlanBuild';
 
 interface PreviewSession {
   planId: string;
@@ -40,9 +45,15 @@ export class DashboardPlanPreview {
       client: previous?.client,
     };
     this.active = session;
+    let pendingBuild: PendingPlanBuild | undefined;
 
     try {
       if (!session.client) {
+        // Lets the new scene open on the building screen; see pendingPlanBuild.ts. A newer
+        // navigation replaces whatever an older one left.
+        pendingBuild =
+          parsed.data.phase === 'building' ? { planId: parsed.data.planId, planTitle: parsed.data.title } : undefined;
+        setPendingPlanBuild(pendingBuild);
         locationService.replace(
           `${previewPath}?title=${encodeURIComponent(parsed.data.title)}&editSource=plan-preview`
         );
@@ -64,6 +75,12 @@ export class DashboardPlanPreview {
     } catch (error) {
       this.restoreAfterFailure(session);
       return { success: false, error: error instanceof Error ? error.message : String(error), changes: [] };
+    } finally {
+      // Unclaimed when no new scene mounted, e.g. the navigation was cancelled. Only this
+      // render's own entry: a newer render may have left one that is still on its way.
+      if (pendingBuild) {
+        clearPendingPlanBuild(pendingBuild);
+      }
     }
   }
 

@@ -255,6 +255,27 @@ describe('RENDER_PLAN', () => {
     expect((variable as CustomVariable).state.query.length).toBeGreaterThan(0);
   });
 
+  it('shows a loading screen instead of the plan once it is building, with nothing left to decide', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, variables: ['cluster'] } });
+
+    const result = await client.execute({
+      type: 'RENDER_PLAN',
+      payload: { ...plan, variables: ['cluster'], phase: 'building' },
+    });
+
+    expect(result.success).toBe(true);
+    expect(scene.state.title).toBe('Kafka overview');
+    expect(scene.state.body.getVizPanels()).toHaveLength(0);
+    expect(sceneGraph.getVariables(scene).state.variables).toHaveLength(0);
+    expect(scene.state.planning).toEqual({ phase: 'building', planId: 'plan-1', planTitle: 'Kafka overview' });
+    expect(scene.state.isEditing).toBeFalsy();
+
+    const ended = await client.execute({ type: 'END_PLANNING', payload: { planId: 'plan-1' } });
+    expect(ended.success).toBe(true);
+    expect(scene.state.planning).toBeUndefined();
+  });
+
   it('refuses when the scene is no longer open', async () => {
     const { scene, client } = setup();
     cleanUpPreviousScene();
@@ -453,7 +474,10 @@ describe('RENDER_PLAN', () => {
     // A second render replaces the first plan before the stale closure ever fires.
     await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, planId: 'plan-2', title: 'Replacement' } });
 
-    expect(() => stalePlanning?.onBuild()).not.toThrow();
+    if (stalePlanning?.phase !== 'preview') {
+      throw new Error('Expected a preview to be rendered');
+    }
+    expect(() => stalePlanning.onBuild()).not.toThrow();
     expect(scene.state.planning?.planId).toBe('plan-2');
   });
 
