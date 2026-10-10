@@ -361,6 +361,25 @@ func TestMode1_Update(t *testing.T) {
 	}
 }
 
+func TestUpdateMarksOnlyUnifiedReplayAsMirrored(t *testing.T) {
+	legacy := &fakeStorage{}
+	legacy.onUpdate(exampleObj, nil)
+	unified := &fakeStorage{}
+	unified.onUpdate(exampleObj, nil)
+	dw := &dualWriter{
+		legacy:  legacy,
+		unified: unified,
+		getMode: func(context.Context) (bool, bool) { return false, false },
+	}
+
+	_, _, err := dw.Update(context.Background(), "foo", updatedObjInfoObj{}, nil, nil, false, &metav1.UpdateOptions{})
+	require.NoError(t, err)
+	require.Len(t, legacy.updateCalls, 1)
+	require.Len(t, unified.updateCalls, 1)
+	require.False(t, IsMirroredUpdate(legacy.updateCalls[0].args[0].(context.Context)))
+	require.True(t, IsMirroredUpdate(unified.updateCalls[0].args[0].(context.Context)))
+}
+
 func TestMode1_UpdateBackgroundOutlivesRequest(t *testing.T) {
 	legacy := &fakeStorage{}
 	legacy.onUpdate(exampleObj, nil)
