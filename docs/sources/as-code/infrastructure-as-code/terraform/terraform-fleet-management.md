@@ -256,7 +256,7 @@ This Terraform configuration creates an Alloy configuration file with the [`remo
      content = templatefile(
        "config.alloy.tftpl",
        {
-         collector_id = "prod_collector",
+         collector_id = "prod_alloy_collector",
          fm_id        = local.fm_id,
          fm_url       = local.fm_url,
        },
@@ -308,7 +308,7 @@ This Terraform configuration creates a Supervisor configuration file that connec
        "supervisor.yaml.tftpl",
        {
          collector_id   = <COLLECTOR_ID>
-         fm_auth_base64 = base64encode("${local.fm_id}:${var.otel_token}"),
+         fm_auth_base64 = base64encode("${local.fm_id}:${grafana_cloud_access_policy_token.otel_token.token}"),
          fm_url         = local.fm_url,
        },
      )
@@ -321,6 +321,11 @@ This Terraform configuration creates a Supervisor configuration file that connec
    - `<OTELCOL_EXECUTABLE_PATH>` with the path to your OpenTelemetry Collector executable
    - `<STORAGE_DIRECTORY>` with the path to a writable directory to use for [persistent data storage](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/cmd/opampsupervisor/README.md#persistent-data-storage)
    - `<COLLECTOR_ID>` with the unique identifier of the Collector.
+     You can create one by running the following command:
+
+     ```shell
+     uuidgen | tr '[:upper:]' '[:lower:]'
+     ```
 
 ## Create a Fleet Management collector
 
@@ -490,10 +495,9 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
 
    exporters:
      otlp_http/grafana_cloud:
-       # Replace the following placeholder with the OTLP endpoint for your stack.
-       endpoint: <OTLP_ENDPOINT>
+       endpoint: "<OTLP_ENDPOINT>"
        headers:
-         Authorization: 'Basic ${env:GCLOUD_BASIC_AUTH_BASE64}'
+         Authorization: 'Basic $${env:GCLOUD_BASIC_AUTH_BASE64}'
 
    service:
      pipelines:
@@ -503,6 +507,8 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
          exporters: [otlp_http/grafana_cloud]
    ```
 
+1. Replace `<OTLP_ENDPOINT>` with the OTLP endpoint for your stack, which you can find in your Grafana Cloud portal.
+
 1. Create a file named `fm-pipeline-otel-hostmetrics.tf` and add the following code block:
 
    ```terraform
@@ -511,13 +517,7 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
 
      name        = "otel_host_metrics"
      config_type = "OTEL"
-     contents = templatefile(
-       "hostmetrics.otel.yaml.tftpl",
-       {
-         fm_token  = var.otel_token,
-         fm_user_id = local.fm_id,
-       },
-     )
+     contents = templatefile("hostmetrics.otel.yaml.tftpl", {})
      matchers = [
        "env=\"PROD\""
      ]
@@ -547,6 +547,8 @@ In a terminal, run the following commands from the directory where all of the co
    terraform apply
    ```
 
+   If you're following the OTel path, enter `yes` when Terraform asks to change the `otel_token` value.
+
 ## Run the collector
 
 The final step is to start your collector.
@@ -567,18 +569,11 @@ The pipelines used in this guide won't work without it.
 
 ### OpenTelemetry Collector
 
-1. Run the following command to view the Fleet Management token.
+1. Run the following command to export the Base64-encoded credentials the Collector uses to send telemetry to Grafana Cloud.
+   Replace `<INSTANCE_ID>` with your actual instance ID, which you can find on the **API** tab in the Fleet Management application.
 
    ```shell
-   terraform output -raw otel_token
-   ```
-
-1. Run the following command, substituting the value from the first step, to export the token as an environment variable.
-   Terraform fetches and injects the variable into `${var.otel_token}`.
-   You can use `${var.otel_token}` to authenticate all your OpenTelemetry Collectors and pipelines to the Fleet Management service.
-
-   ```shell
-   export TF_VAR_otel_token=<TOKEN>
+   export GCLOUD_BASIC_AUTH_BASE64=$(printf '%s' "<INSTANCE_ID>:$(terraform output -raw otel_token)" | base64 | tr -d '\n')
    ```
 
 1. Start the Supervisor:
