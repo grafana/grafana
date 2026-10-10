@@ -84,10 +84,6 @@ A _template_ is any query that contains a variable.
 Queries with text that starts with `$` are templates.
 For example, if you administer a dashboard that monitors several servers, it can have panels that use a template query like this one:
 
-{{< admonition type="note">}}
-Grafana documentation and the application typically refer to a _template query_ as a _query_, but the terms _variable_ and _template variable_ are often used interchangeably.
-{{< /admonition >}}
-
 ```text
 groupByNode(movingAverage(apps.$app.$server.counters.requests.count, 10), 2, 'sum')
 ```
