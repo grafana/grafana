@@ -2,7 +2,7 @@ import { omitBy } from 'lodash';
 import { type Observable, of, throwError } from 'rxjs';
 
 import { deprecationWarning, validatePath } from '@grafana/data';
-import { type BackendSrvRequest } from '@grafana/runtime';
+import { type BackendSrvRequest, TracedError } from '@grafana/runtime';
 
 export const parseInitFromOptions = (options: BackendSrvRequest): RequestInit => {
   const method = options.method;
@@ -142,7 +142,18 @@ export async function parseResponseBody<T>(
           console.warn(`${response.url} returned an invalid JSON`);
           return {} as T;
         }
-        return await response.json();
+        try {
+          return await response.json();
+        } catch (err) {
+          // The request itself succeeded, so a bare SyntaxError is misleading here. The most common
+          // cause is a body larger than the browser's maximum string length (~512 MB in Chromium):
+          // text() then resolves to "" and json() rejects with "Unexpected end of JSON input".
+          const reason = err instanceof Error ? err.message : String(err);
+          throw new TracedError(
+            `Failed to parse the response body as JSON: ${reason}. The response may be too large for the browser to process.`,
+            err
+          );
+        }
 
       case 'text':
         // this specifically returns a Promise<string>
