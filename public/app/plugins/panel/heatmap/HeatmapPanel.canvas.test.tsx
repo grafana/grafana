@@ -517,6 +517,39 @@ describe('HeatmapPanel (canvas)', () => {
       await assertCanvasOutput();
     });
 
+    it('renders updated sparse cells when a frame object is reused', async () => {
+      const frame = createSparseHeatmapCellsFrame();
+      const options: Options = {
+        ...fullDefaultOptions,
+        ...defaultOptions,
+        legend: { show: false },
+        tooltip: {
+          mode: TooltipDisplayMode.Single,
+          yHistogram: false,
+          showColorScale: false,
+        },
+      };
+      const initialProps = getPanelProps<Options>(options, {
+        data: {
+          state: LoadingState.Done,
+          series: [frame],
+          timeRange,
+        },
+        width: compactCanvas.width,
+        height: compactCanvas.height,
+      });
+      const { rerender } = render(<HeatmapPanel {...initialProps} />);
+      await assertUPlotReady();
+
+      frame.fields.forEach((field) => {
+        field.values = field.values.slice(0, 2);
+      });
+      rerender(<HeatmapPanel {...initialProps} data={{ ...initialProps.data, series: [frame] }} />);
+
+      uPlotInstance!.redraw();
+      await assertCanvasOutput(compactCanvas);
+    });
+
     it('cellGap', async () => {
       renderHeatmapPanel(
         { series: [createSparseHeatmapCellsFrame()] },
