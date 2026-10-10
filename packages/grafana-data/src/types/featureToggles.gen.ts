@@ -626,11 +626,6 @@ export interface FeatureToggles {
   */
   pluginsSriChecks?: boolean;
   /**
-  * Enables time pickers sync
-  * @default false
-  */
-  timeRangeProvider?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */

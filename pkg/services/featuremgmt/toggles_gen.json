@@ -5669,7 +5669,8 @@
       "metadata": {
         "name": "timeRangeProvider",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2024-10-22T10:52:33Z"
+        "creationTimestamp": "2024-10-22T10:52:33Z",
+        "deletionTimestamp": "2026-10-07T23:03:15Z"
       },
       "spec": {
         "description": "Enables time pickers sync",

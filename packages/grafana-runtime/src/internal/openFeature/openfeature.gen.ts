@@ -364,8 +364,6 @@ export const FlagKeys = {
   TextNewFeatures: "text.newFeatures",
   /** Enables time comparison option in supported panels */
   TimeComparison: "timeComparison",
-  /** Enables time pickers sync */
-  TimeRangeProvider: "timeRangeProvider",
   /** Show transformation quick-start cards in empty transformations state */
   TransformationsEmptyPlaceholder: "transformationsEmptyPlaceholder",
   /** Enables unified navbars */
@@ -2301,17 +2299,6 @@ export const useFlagTextNewFeatures = (options?: ReactFlagEvaluationOptions): bo
  */
 export const useFlagTimeComparison = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("timeComparison", true, options).value;
-};
-
-/**
- * Enables time pickers sync
- *
- * **Details:**
- * - flag key: `timeRangeProvider`
- * - default value: `false`
- */
-export const useFlagTimeRangeProvider = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("timeRangeProvider", false, options).value;
 };
 
 /**
