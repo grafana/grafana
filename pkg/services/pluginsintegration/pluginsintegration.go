@@ -182,7 +182,10 @@ func NewMiddlewareHandler(
 	tracer tracing.Tracer, cachingServiceClient *caching.CachingServiceClient, features featuremgmt.FeatureToggles,
 	promRegisterer prometheus.Registerer, registry registry.Service,
 ) (*backend.MiddlewareHandler, error) {
-	c := client.ProvideService(pluginRegistry)
+	c := client.ProvideService(
+		pluginRegistry,
+		features.IsEnabledGlobally(featuremgmt.FlagPluginsStripAcceptEncoding),
+	)
 	middlewares := CreateMiddlewares(cfg, oAuthTokenService, tracer, cachingServiceClient, features, promRegisterer, registry)
 	return backend.HandlerFromMiddlewares(c, middlewares...)
 }

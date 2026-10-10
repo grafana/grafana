@@ -43,7 +43,9 @@ type IntegrationTestCtx struct {
 }
 
 func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *coreplugin.Registry) *IntegrationTestCtx {
-	pCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), featuremgmt.WithFeatures())
+	features := featuremgmt.WithFeatures()
+
+	pCfg, err := pluginconfig.ProvidePluginManagementConfig(cfg, setting.ProvideProvider(cfg), features)
 	require.NoError(t, err)
 
 	reg := registry.ProvideService()
@@ -69,7 +71,10 @@ func CreateIntegrationTestCtx(t *testing.T, cfg *setting.Cfg, coreRegistry *core
 	require.NoError(t, err)
 
 	return &IntegrationTestCtx{
-		PluginClient:   client.ProvideService(reg),
+		PluginClient: client.ProvideService(
+			reg,
+			features.IsEnabledGlobally(featuremgmt.FlagPluginsStripAcceptEncoding),
+		),
 		PluginStore:    ps,
 		PluginRegistry: reg,
 	}

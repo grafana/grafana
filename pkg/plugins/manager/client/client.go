@@ -17,9 +17,10 @@ import (
 )
 
 const (
-	setCookieHeaderName   = "Set-Cookie"
-	contentTypeHeaderName = "Content-Type"
-	defaultContentType    = "application/json"
+	setCookieHeaderName      = "Set-Cookie"
+	contentTypeHeaderName    = "Content-Type"
+	acceptEncodingHeaderName = "Accept-Encoding"
+	defaultContentType       = "application/json"
 )
 
 var _ plugins.Client = (*Service)(nil)
@@ -38,12 +39,14 @@ var passthroughErrors = []error{
 }
 
 type Service struct {
-	pluginRegistry registry.Service
+	pluginRegistry      registry.Service
+	stripAcceptEncoding bool
 }
 
-func ProvideService(pluginRegistry registry.Service) *Service {
+func ProvideService(pluginRegistry registry.Service, stripAcceptEncoding bool) *Service {
 	return &Service{
-		pluginRegistry: pluginRegistry,
+		pluginRegistry:      pluginRegistry,
+		stripAcceptEncoding: stripAcceptEncoding,
 	}
 }
 
@@ -123,6 +126,10 @@ func (s *Service) CallResource(ctx context.Context, req *backend.CallResourceReq
 	p, exists := s.plugin(ctx, req.PluginContext.PluginID, req.PluginContext.PluginVersion)
 	if !exists {
 		return plugins.ErrPluginNotRegistered
+	}
+
+	if s.stripAcceptEncoding {
+		removeAcceptEncodingHeader(req.Headers)
 	}
 
 	removeConnectionHeaders(req.Headers)
@@ -378,6 +385,14 @@ func removeHopByHopHeaders(h map[string][]string) {
 func removeNonAllowedHeaders(h map[string][]string) {
 	for k := range h {
 		if textproto.CanonicalMIMEHeaderKey(k) == setCookieHeaderName {
+			delete(h, k)
+		}
+	}
+}
+
+func removeAcceptEncodingHeader(h map[string][]string) {
+	for k := range h {
+		if textproto.CanonicalMIMEHeaderKey(k) == acceptEncodingHeaderName {
 			delete(h, k)
 		}
 	}
