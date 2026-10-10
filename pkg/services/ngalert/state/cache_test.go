@@ -23,6 +23,45 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+func Test_expandAnnotationsAndLabels_titleUsesAnyLabel(t *testing.T) {
+	ctx := context.Background()
+	logger := log.NewNopLogger()
+	evaluatedAt := time.Now()
+
+	expandTitle := func(title string, instance data.Labels) data.Labels {
+		rule := &models.AlertRule{Title: title, UID: "rule"}
+		result := eval.Result{Instance: instance, EvaluatedAt: evaluatedAt, State: eval.Normal}
+		extra := data.Labels{"alertname": title}
+		labels, _ := expandAnnotationsAndLabels(ctx, logger, rule, result, extra, nil, 0, nil)
+		return labels
+	}
+
+	t.Run("any label key can be used in the title", func(t *testing.T) {
+		labels := expandTitle("{{ $labels.exported_namespace }}: disk full", data.Labels{
+			"exported_namespace": "payments",
+		})
+		require.Equal(t, "payments: disk full", labels["alertname"])
+	})
+
+	t.Run("a different label key is not special-cased", func(t *testing.T) {
+		labels := expandTitle("{{ $labels.service }}: disk full", data.Labels{
+			"service": "billing",
+		})
+		require.Equal(t, "billing: disk full", labels["alertname"])
+	})
+
+	t.Run("a plain title is unchanged", func(t *testing.T) {
+		labels := expandTitle("disk full", data.Labels{"exported_namespace": "payments"})
+		require.Equal(t, "disk full", labels["alertname"])
+	})
+
+	t.Run("a broken title template keeps the original", func(t *testing.T) {
+		title := "{{ $labels. }}"
+		labels := expandTitle(title, data.Labels{"exported_namespace": "payments"})
+		require.Equal(t, title, labels["alertname"])
+	})
+}
+
 func Test_expand(t *testing.T) {
 	ctx := context.Background()
 	logger := log.NewNopLogger()
