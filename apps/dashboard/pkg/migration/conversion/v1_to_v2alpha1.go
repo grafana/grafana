@@ -161,6 +161,9 @@ func ConvertDashboard_V1_to_V2alpha1(in *dashv1.Dashboard, out *dashv2alpha1.Das
 		if ns := request.NamespaceValue(ctxWithNamespace); ns != "" {
 			ctx = request.WithNamespace(ctx, ns)
 		}
+		if requester, err := identity.GetRequester(ctxWithNamespace); err == nil {
+			ctx = identity.WithRequester(ctx, requester)
+		}
 	}
 
 	ctx, span := TracingStart(ctx, "dashboard.conversion.v1_to_v2alpha1",
