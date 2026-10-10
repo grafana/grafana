@@ -64,6 +64,7 @@ export function executeAnnotationQuery(
     scopedVars,
     ...interval,
     app: CoreApp.Dashboard,
+    headers: { 'X-Grafana-Query-Purpose': 'annotation' },
 
     timezone: options.dashboard.timezone,
 

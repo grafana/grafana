@@ -369,6 +369,19 @@ describe('refreshIntervalToSortOrder', () => {
 });
 
 describe('when buildQueryTransaction', () => {
+  it('labels a multi-target request as Explore traffic', () => {
+    const from = dateTime('2023-01-01T12:00:00Z');
+    const to = dateTime('2023-01-02T12:00:00Z');
+    const transaction = buildQueryTransaction(
+      'left',
+      [{ refId: 'A' }, { refId: 'B' }],
+      {},
+      { from, to, raw: { from: '1h', to: 'now' } },
+      false
+    );
+    expect(transaction.request.headers).toEqual({ 'X-Grafana-Query-Purpose': 'explore' });
+  });
+
   it('it should calculate interval based on time range', () => {
     const queries = [{ refId: 'A' }];
     const queryOptions = { maxDataPoints: 1000, minInterval: '15s' };

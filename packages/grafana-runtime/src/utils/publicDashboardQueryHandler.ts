@@ -40,6 +40,7 @@ export function publicDashboardQueryHandler(request: DataQueryRequest<DataQuery>
     .fetch<BackendDataSourceResponse>({
       url: `/api/public/dashboards/${config.publicDashboardAccessToken!}/panels/${panelId}/query`,
       method: 'POST',
+      headers: { 'X-Grafana-Query-Purpose': 'dashboard' },
       data: body,
       requestId,
     })

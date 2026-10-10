@@ -185,6 +185,7 @@ export class VariableQueryRunner {
 
     const request: DataQueryRequest = {
       app: CoreApp.Dashboard,
+      headers: { 'X-Grafana-Query-Purpose': 'variable' },
       requestId: generateUUID(),
       timezone: '',
       range,

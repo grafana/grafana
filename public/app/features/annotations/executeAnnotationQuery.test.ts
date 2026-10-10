@@ -39,6 +39,15 @@ describe('executeAnnotationQuery', () => {
     jest.clearAllMocks();
   });
 
+  it('labels the datasource request as an annotation query', () => {
+    setup({ query: { q: 'SUM(foo)', refId: 'A' } });
+    expect(querySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: { 'X-Grafana-Query-Purpose': 'annotation' },
+      })
+    );
+  });
+
   it('Should not call query method in case query is filtered out', async () => {
     setup({
       query: { q: 'SUM(foo)', refId: 'A' },

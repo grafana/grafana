@@ -62,6 +62,11 @@ describe('publicDashboardQueryHandler', () => {
     expect(fetchMock.mock.calls[0][0].url).toBe('/api/public/dashboards/test-token/panels/42/query');
   });
 
+  it('labels public dashboard panel requests as dashboard traffic', async () => {
+    await lastValueFrom(publicDashboardQueryHandler(makeRequest({ panelId: 42 })));
+    expect(fetchMock.mock.calls[0][0].headers).toEqual({ 'X-Grafana-Query-Purpose': 'dashboard' });
+  });
+
   it('returns an empty response when targets is empty, irrespective of panelId', async () => {
     const response = await lastValueFrom(publicDashboardQueryHandler(makeRequest({ panelId: 42, targets: [] })));
 

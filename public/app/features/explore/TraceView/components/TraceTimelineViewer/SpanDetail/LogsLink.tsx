@@ -618,6 +618,7 @@ function getRequest(query: DataQuery, timeRange: TimeRange, datasource: DataSour
   const request = {
     requestId: getNextRequestId(),
     app: CoreApp.Explore,
+    headers: { 'X-Grafana-Query-Purpose': 'explore' },
     targets: [query],
     range: timeRange,
     timezone: 'browser',

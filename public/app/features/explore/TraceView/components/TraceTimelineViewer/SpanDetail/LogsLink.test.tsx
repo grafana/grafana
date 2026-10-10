@@ -206,6 +206,21 @@ describe('LogsLinkButton', () => {
     );
   });
 
+  it('labels trace-to-logs preview requests as Explore traffic', async () => {
+    const query = mockDatasourceReturningFrames([logsFrame], 'loki');
+    const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'loki' } };
+    render(
+      <LogsLinkButton linkModel={createProbingLinkModel(interpolatedQuery)} traceDatasourceUid={TRACE_DATASOURCE_UID} />
+    );
+    await waitFor(() =>
+      expect(query).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: { 'X-Grafana-Query-Purpose': 'explore' },
+        })
+      )
+    );
+  });
+
   it('does not set maxLines for non-loki logging datasources', async () => {
     const query = mockDatasourceReturningFrames([logsFrame], 'elasticsearch');
     const interpolatedQuery: DataQuery = { refId: 'A', datasource: { uid: 'logs-ds-uid', type: 'elasticsearch' } };

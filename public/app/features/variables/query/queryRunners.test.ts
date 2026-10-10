@@ -37,6 +37,18 @@ describe('QueryRunners', () => {
       return { timeSrv, datasource, runner, variable, runnerArgs, request, defaultTimeRange };
     };
 
+    it('preserves context headers in legacy metricFindQuery options', () => {
+      const { runner, runnerArgs, request, datasource } = getLegacyTestContext();
+      request.headers = { 'X-Grafana-Query-Purpose': 'variable', 'X-Test': 'retained' };
+      runner.runRequest(runnerArgs, request);
+      expect(datasource.metricFindQuery).toHaveBeenCalledWith(
+        'A query',
+        expect.objectContaining({
+          headers: { 'X-Grafana-Query-Purpose': 'variable', 'X-Test': 'retained' },
+        })
+      );
+    });
+
     describe('and calling getRunnerForDatasource', () => {
       it('then it should return LegacyQueryRunner', () => {
         const { runner } = getLegacyTestContext();

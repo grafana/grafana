@@ -80,6 +80,21 @@ describe('ExpressionDatasourceApi', () => {
         rangeRaw: { from: 'now-1h', to: 'now' },
       }) as DataQueryRequest<ExpressionQuery>;
 
+    it('preserves query purpose when delegating expressions to the backend', async () => {
+      const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
+      mockGetDatasource.mockResolvedValue({});
+      const querySpy = jest.spyOn(DataSourceWithBackend.prototype, 'query').mockReturnValue(of({ data: [] }));
+      const request = buildRequest({ refId: 'A', type: ExpressionQueryType.math, expression: '1 + 2' }, {});
+      request.headers = { 'X-Grafana-Query-Purpose': 'dashboard' };
+      await lastValueFrom(ds.query(request));
+      expect(querySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: { 'X-Grafana-Query-Purpose': 'dashboard' },
+        })
+      );
+      querySpy.mockRestore();
+    });
+
     it('passes scopedVars when resolving query datasources', async () => {
       const ds = new ExpressionDatasourceApi({} as DataSourceInstanceSettings);
       const scopedVars = { datasource: { value: 'mysql_uid', text: 'mysql_uid' } };

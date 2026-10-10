@@ -43,6 +43,32 @@ describe('MixedDatasource', () => {
     setTemplateSrv(new TemplateSrv());
   });
 
+  it('preserves query purpose for each datasource in a mixed request', async () => {
+    const a = await datasourceSrv.get({ uid: 'A' });
+    const b = await datasourceSrv.get({ uid: 'B' });
+    const spies = [jest.spyOn(a, 'query'), jest.spyOn(b, 'query')];
+    const ds = new MixedDatasource({} as DataSourceInstanceSettings);
+    await lastValueFrom(
+      ds.query(
+        getQueryOptions({
+          targets: [
+            { refId: 'A', datasource: { uid: 'A' } },
+            { refId: 'B', datasource: { uid: 'B' } },
+          ],
+          headers: { 'X-Grafana-Query-Purpose': 'dashboard' },
+        })
+      )
+    );
+    for (const spy of spies) {
+      expect(spy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: { 'X-Grafana-Query-Purpose': 'dashboard' },
+        })
+      );
+      spy.mockRestore();
+    }
+  });
+
   describe('with no errors', () => {
     it('direct query should return results', async () => {
       const ds = new MixedDatasource({} as DataSourceInstanceSettings);

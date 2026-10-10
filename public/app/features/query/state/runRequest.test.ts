@@ -1,4 +1,4 @@
-import { Observable, type Subscriber, type Subscription } from 'rxjs';
+import { firstValueFrom, Observable, type Subscriber, type Subscription } from 'rxjs';
 
 import {
   type CoreApp,
@@ -8,11 +8,13 @@ import {
   type DataSourceApi,
   DataTopic,
   dateTime,
+  getDefaultTimeRange,
   LoadingState,
   type PanelData,
 } from '@grafana/data';
 import { setEchoSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import { dataLayers, QueryVariable, SafeSerializableSceneObject } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 
 import { deepFreeze } from '../../../../test/core/redux/reducerTester';
@@ -673,3 +675,41 @@ async function sleep(ms: number) {
     setTimeout(resolve, ms);
   });
 }
+
+describe('Scenes query-purpose headers', () => {
+  beforeEach(() => {
+    isMigrationHandlerMock.mockReturnValue(false);
+  });
+  it.each([
+    { purpose: 'variable', scene: new QueryVariable({ name: 'region' }) },
+    {
+      purpose: 'annotation',
+      scene: new dataLayers.AnnotationsDataLayer({
+        name: 'events',
+        query: { name: 'events', enable: true, iconColor: 'red' },
+      }),
+    },
+  ])('labels $purpose requests before calling the datasource', async ({ purpose, scene }) => {
+    const ds = getMockDataSource();
+    const query = jest.spyOn(ds, 'query');
+    const request: DataQueryRequest = {
+      requestId: 'scene-query',
+      interval: '1s',
+      intervalMs: 1000,
+      timezone: 'UTC',
+      app: 'dashboard',
+      startTime: 0,
+      targets: [{ refId: 'A' }],
+      range: getDefaultTimeRange(),
+      scopedVars: { __sceneObject: new SafeSerializableSceneObject(scene) },
+      headers: { 'X-Grafana-Query-Purpose': 'dashboard', 'X-Test': 'retained' },
+    };
+    await firstValueFrom(runRequest(ds, request));
+    expect(query).toHaveBeenCalledWith(
+      expect.objectContaining({
+        headers: { 'X-Grafana-Query-Purpose': purpose, 'X-Test': 'retained' },
+      })
+    );
+    expect(request.headers?.['X-Grafana-Query-Purpose']).toBe('dashboard');
+  });
+});

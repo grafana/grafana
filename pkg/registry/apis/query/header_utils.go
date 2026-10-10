@@ -32,6 +32,7 @@ var expectedHeaders = map[string]string{
 	strings.ToLower("X-Rule-Uid"):                      "X-Rule-Uid",
 	strings.ToLower("X-Rule-Folder"):                   "X-Rule-Folder",
 	strings.ToLower("X-Rule-Source"):                   "X-Rule-Source",
+	strings.ToLower("X-Grafana-Query-Purpose"):         "X-Grafana-Query-Purpose",
 	strings.ToLower("X-Rule-Type"):                     "X-Rule-Type",
 	strings.ToLower("X-Rule-Version"):                  "X-Rule-Version",
 	strings.ToLower("X-Rule-Origin"):                   "X-Rule-Origin",
