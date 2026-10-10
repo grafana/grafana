@@ -1,4 +1,7 @@
-import { type NavModelItem } from '@grafana/data';
+import { type NavModelItem, PluginIncludeType } from '@grafana/data';
+
+import { NavID } from '../navtree/constants';
+import { navIds, setupNavTestApps, setupNavTestState } from '../navtree/test-utils';
 
 import { ID_PREFIX, navTreeReducer, setStarred, setStarredItems, updateDashboardName } from './navBarTree';
 
@@ -218,6 +221,59 @@ describe('navBarTree reducer', () => {
         setStarredItems({ uids: ['a'], items: [{ id: 'a', title: 'A', url: '/d/a' }] })
       );
       expect(next).toEqual(state);
+    });
+  });
+
+  // The slice's initial state runs the plugin merge, so the "More apps" ordering
+  // these cover is a property of the initial state rather than of any action.
+  describe('initial state', () => {
+    const initialTree = () => navTreeReducer(undefined, { type: '@@test/init' });
+
+    const app = (id: string, name: string, pageName: string) => ({
+      id,
+      name,
+      includes: [{ type: PluginIncludeType.page, name: pageName, path: `/a/${id}`, addToNav: true }],
+    });
+
+    const moreAppsText = (tree: NavModelItem[]) =>
+      tree.find((node) => node.id === NavID.apps)?.children?.map((child) => child.text);
+
+    beforeEach(() => {
+      setupNavTestState({
+        permissions: ['plugins.app:access'],
+        orgRole: 'Admin',
+        openFeatureFlags: { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true },
+      });
+    });
+
+    afterEach(() => {
+      setupNavTestApps();
+    });
+
+    it('orders the More apps children alphabetically', () => {
+      setupNavTestApps([app('c-app', 'Charlie', 'Page'), app('a-app', 'Alpha', 'Page'), app('b-app', 'Bravo', 'Page')]);
+
+      expect(moreAppsText(initialTree())).toEqual(['Alpha', 'Bravo', 'Charlie']);
+    });
+
+    // The point of sorting after translateNav rather than in the merge: these two
+    // ids are translated by nav id, and the translated order reverses the raw one
+    it('orders on the translated text, not the text the merge produced', () => {
+      setupNavTestApps([
+        app('grafana-k8s-app', 'zzz raw name', 'Page'),
+        app('grafana-slo-app', 'aaa raw name', 'Page'),
+      ]);
+
+      expect(moreAppsText(initialTree())).toEqual(['Kubernetes', 'SLO']);
+    });
+
+    it('leaves the other sections in the order the merge produced', () => {
+      setupNavTestApps([app('a-app', 'Alpha', 'Page')]);
+
+      // Sections are ordered by sort weight; alphabetical order would put
+      // "More apps" ahead of Home
+      const roots = navIds(initialTree());
+      expect(roots.indexOf(NavID.home)).toBeLessThan(roots.indexOf(NavID.apps));
     });
   });
 });

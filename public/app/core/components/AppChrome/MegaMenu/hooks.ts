@@ -352,7 +352,7 @@ export const useNavCustomization = () => {
   } = useSectionOrdering({ editMode, baseItems });
 
   // Render a skeleton until the customisation state has loaded on first visit, so the menu doesn't
-  // render then reflow (pins appearing). Cached after that.
+  // render then reflow. Cached after that.
   const isLoading = canCustomise && (pinningLoading || hidingLoading || orderingLoading);
 
   // Pinned box: one breadcrumb entry per pinned url (in the user's order). Pinning duplicates items

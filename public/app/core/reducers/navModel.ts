@@ -69,10 +69,6 @@ function buildWarningNav(text: string, subTitle?: string): NavModel {
 const initialState: NavIndex = {};
 
 export const updateNavIndex = createAction<NavModelItem>('navIndex/updateNavIndex');
-// Rebuilds the index from the current permissions. The frontend service loads
-// permissions asynchronously after the store is configured, so the index built
-// at store-init sees an empty permission set and must be rebuilt once they land.
-export const navIndexInitialized = createAction('navIndex/navIndexInitialized');
 // Since the configuration subtitle includes the organization name, we include this action to update the org name if it changes.
 export const updateConfigurationSubtitle = createAction<string>('navIndex/updateConfigurationSubtitle');
 
@@ -93,9 +89,7 @@ const getItemWithNewSubTitle = (item: NavModelItem, subTitle: string): NavModelI
 // the frozen state.
 // https://github.com/reduxjs/redux-toolkit/issues/242
 export const navIndexReducer = (state: NavIndex = initialState, action: AnyAction): NavIndex => {
-  if (navIndexInitialized.match(action)) {
-    return buildInitialState();
-  } else if (updateNavIndex.match(action)) {
+  if (updateNavIndex.match(action)) {
     const newPages: NavIndex = {};
     const payload = action.payload;
 

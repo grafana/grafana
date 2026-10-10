@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { type IconName, type NavModelItem } from '@grafana/data';
 
 import { getInitialNavTree } from '../navtree/buildStaticNavTree';
+import { NavID } from '../navtree/constants';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 function translateNav(navTree: NavModelItem[]): NavModelItem[] {
@@ -36,14 +37,21 @@ const collator = new Intl.Collator();
 const compareStarredChildren = (a: NavModelItem, b: NavModelItem): number =>
   (a.sortWeight ?? 0) - (b.sortWeight ?? 0) || collator.compare(a.text, b.text);
 
+// Apps in "More apps" all carry the same plugin sort weight, so the merge leaves
+// them in whatever order the metas API returned. Order them by the text the user
+// actually reads, which translateNav has just resolved — sorting earlier, in the
+// merge, would sort the untranslated names instead.
+const sortMoreApps = (tree: NavModelItem[]): NavModelItem[] =>
+  tree.map((node) =>
+    node.id === NavID.apps && node.children
+      ? { ...node, children: [...node.children].sort((a, b) => collator.compare(a.text, b.text)) }
+      : node
+  );
+
 const navTreeSlice = createSlice({
   name: 'navBarTree',
-  initialState: () => translateNav(getInitialNavTree()),
+  initialState: () => sortMoreApps(translateNav(getInitialNavTree())),
   reducers: {
-    // Rebuilds the tree from the current permissions. The frontend service loads
-    // permissions asynchronously after the store is configured, so the tree built
-    // at store-init sees an empty permission set and must be rebuilt once they land.
-    navTreeInitialized: () => translateNav(getInitialNavTree()),
     setStarred: (state, action: PayloadAction<StarredNavItem & { isStarred: boolean }>) => {
       const starredItems = state.find((navItem) => navItem.id === 'starred');
       const { id, title, url, icon, sortWeight, isStarred } = action.payload;
@@ -145,12 +153,6 @@ const navTreeSlice = createSlice({
   },
 });
 
-export const {
-  navTreeInitialized,
-  setStarred,
-  setStarredItems,
-  removePluginFromNavTree,
-  updateDashboardName,
-  setBookmark,
-} = navTreeSlice.actions;
+export const { setStarred, setStarredItems, removePluginFromNavTree, updateDashboardName, setBookmark } =
+  navTreeSlice.actions;
 export const navTreeReducer = navTreeSlice.reducer;

@@ -1,12 +1,12 @@
-import { type NavModelItem } from '@grafana/data';
+import { type NavModelItem, PluginIncludeType } from '@grafana/data';
 import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { buildStaticNavTree } from './buildStaticNavTree';
+import { buildStaticNavTree, getInitialNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
 import { addNavEntries, clearRegisteredNavEntries } from './registry';
-import { navIds as ids, setupNavTestState as setup } from './test-utils';
+import { navIds as ids, setupNavTestApps as setupApps, setupNavTestState as setup } from './test-utils';
 import { applyAppSubUrl, findNavById as findById, pruneEmptyNavSections, sortNavTree } from './utils';
 
 const DASHBOARD_READER = [AccessControlAction.DashboardsRead];
@@ -546,5 +546,106 @@ describe('registered nav entries', () => {
     expect(findById(tree, NavID.home)).toBeDefined();
     expect(error).toHaveBeenCalledWith('[navtree] nav entry failed to build', expect.any(Error));
     error.mockRestore();
+  });
+});
+
+describe('getInitialNavTree', () => {
+  // The plugin merge is the other place that prunes, and it needs
+  // plugins.useMTPlugins on top of the client-build flag. With that off it never
+  // runs, so the tree this returns is the one the user gets.
+  const clientBuildOnly = { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': false };
+
+  it('prunes the connections and administration shells when the plugin merge is disabled', () => {
+    setup({ openFeatureFlags: clientBuildOnly });
+
+    const tree = getInitialNavTree();
+
+    expect(findById(tree, NavID.connections)).toBeUndefined();
+    expect(findById(tree, NavID.cfg)).toBeUndefined();
+  });
+
+  // Drilldown is filled only by drilldown app plugins, so with the merge off it
+  // is always empty — and it takes the same permission that makes Explore (and
+  // Correlations, which keeps Administration alive) visible
+  it('prunes the drilldown shell when the plugin merge is disabled', () => {
+    setup({ permissions: [AccessControlAction.DataSourcesExplore], openFeatureFlags: clientBuildOnly });
+
+    const tree = getInitialNavTree();
+
+    expect(findById(tree, NavID.drilldown)).toBeUndefined();
+    expect(findById(tree, NavID.explore)).toBeDefined();
+  });
+
+  it('returns the bootdata tree when the client build is off', () => {
+    setup();
+    config.bootData = { ...config.bootData, navTree: [{ id: 'server-built', text: 'Server built' }] };
+
+    expect(ids(getInitialNavTree())).toEqual(['server-built']);
+  });
+
+  // The merge reads the app metas synchronously, so these cover what used to be
+  // the job of the asynchronous merge: app.ts primes the cache and fetches the
+  // user's permissions before the store is configured, and this is where both
+  // land in the tree.
+  describe('plugin merge', () => {
+    const bothFlags = { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true };
+    const someApp = {
+      id: 'some-app',
+      name: 'Some app',
+      includes: [{ type: PluginIncludeType.page, name: 'Overview', path: '/a/some-app/overview', addToNav: true }],
+    };
+
+    afterEach(() => {
+      setupApps();
+    });
+
+    it('merges the primed app metas into More apps', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([someApp]);
+
+      const apps = findById(getInitialNavTree(), NavID.apps);
+
+      expect(apps?.text).toBe('More apps');
+      expect(ids(apps?.children ?? [])).toEqual(['plugin-page-some-app']);
+    });
+
+    it('omits plugin items when the plugin merge is disabled', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: clientBuildOnly });
+      setupApps([someApp]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+    });
+
+    // In a fully multi-tenant deployment the permissions come from the AuthZ API
+    // rather than bootdata, so a user without app access must get no plugin items
+    it('omits plugin items for a user without app access', () => {
+      setup({ openFeatureFlags: bothFlags });
+      setupApps([someApp]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+    });
+
+    it('prunes the empty shells but keeps the section the merge filled', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([someApp]);
+
+      const tree = getInitialNavTree();
+
+      expect(findById(tree, NavID.connections)).toBeUndefined();
+      expect(findById(tree, NavID.apps)).toBeDefined();
+    });
+
+    // The merge returns sub-url relative urls and getInitialNavTree applies the
+    // prefix, so a node the merge created must come out prefixed exactly once
+    it('applies the app sub url once to the sections the merge creates', () => {
+      setup({
+        permissions: [AccessControlAction.PluginsAppAccess],
+        openFeatureFlags: bothFlags,
+        config: { appSubUrl: '/grafana' },
+      });
+      setupApps([someApp]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
+    });
   });
 });

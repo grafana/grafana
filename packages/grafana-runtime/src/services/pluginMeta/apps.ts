@@ -55,6 +55,20 @@ export async function getAppPluginMetas(): Promise<AppPluginConfig[]> {
   return Object.values(structuredClone(apps));
 }
 
+/**
+ * Get the installed app plugins.
+ * This is a synchronous function that should only be used as an escape hatch in cases where the caller is guaranteed to be called after the app plugins have been initialized.
+ * In other cases, getAppPluginMetas() should be used instead to ensure the app plugins have been initialized before accessing them.
+ * @throws Error if the app plugins have not been initialized yet
+ * @returns the installed app plugins
+ */
+export function getAppPluginMetasSync(): AppPluginConfig[] {
+  if (!initialized() && process.env.NODE_ENV === 'development') {
+    throw new Error('getAppPluginMetasSync() was called before app plugins cache was initialized!');
+  }
+  return Object.values(structuredClone(apps));
+}
+
 export async function getAppPluginMeta(pluginId: string): Promise<AppPluginConfig | null> {
   if (!initialized()) {
     await initAppPluginMetas();
