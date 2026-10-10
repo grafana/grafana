@@ -179,7 +179,7 @@ func TestIntegrationDatasourceQueryMatchesRBACActionSet(t *testing.T) {
 				for _, action := range []string{"datasources:read", "datasources:query", "datasources:write"} {
 					for _, uid := range []string{"ds1", "ds2", "ds3"} {
 						evaluator := accesscontrol.EvalPermission(action, "datasources:uid:"+uid)
-						require.Equal(t, evaluator.Evaluate(accesscontrol.GroupScopesByAction(expected)), evaluator.Evaluate(accesscontrol.GroupScopesByAction(perms)), "%s on %s", action, uid)
+						require.Equal(t, evaluator.Evaluate(accesscontrol.GroupScopesByActionContext(t.Context(), expected)), evaluator.Evaluate(accesscontrol.GroupScopesByActionContext(t.Context(), perms)), "%s on %s", action, uid)
 					}
 				}
 			})
