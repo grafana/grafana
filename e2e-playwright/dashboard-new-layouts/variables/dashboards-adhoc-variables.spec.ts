@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -10,45 +12,54 @@ test.use({
   },
 });
 
-const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
-const DASHBOARD_NAME = 'Test variable output';
-
 test.describe(
   'Dashboard edit - Ad hoc variables',
   {
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new adhoc variable', async ({ gotoDashboardPage, page, controls, sidebar, panels }) => {
-      await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
+    test('can add a new adhoc variable', async ({ page, selectors, controls, sidebar, panels }) => {
+      const viewUrl = await importVariableTestDashboard(page, selectors, panels);
       const variable: Variable & { label: string } = {
         type: 'adhoc',
         name: 'VariableUnderTest',
-        value: 'label1',
-        label: 'VariableUnderTest',
+        label: 'VariableUnderTestLabel',
+        value: '',
       };
+      const dataSource = 'gdev-e2etestdatasource';
 
       await flows.variables.addNewGenericVariable(page, sidebar, controls, variable);
-      await sidebar.variableOptions.adhoc.selectDatasource('gdev-e2etestdatasource');
+      await sidebar.variableOptions.adhoc.selectDatasource(dataSource);
 
-      // Assert the variable dropdown is visible with correct label
       const variableLabel = controls.variables.getLabel(variable.label);
       await expect(variableLabel).toBeVisible();
       await expect(variableLabel).toContainText(variable.label);
 
-      const labels = ['label1', 'label2'];
-      const labelValues = ['label2Value1'];
-
       // build the filter, then close the dropdown
-      await controls.variables.addFilter(variable.label, [labels[1], '=', labelValues[0]]);
+      await controls.variables.addFilter(variable.label, ['label2', '=', 'label2Value1']);
       await page.locator('body').click();
 
-      // assert the panel is visible and has the correct value
-      const panelBody = panels.getBodies().first();
-      await expect(panelBody).toBeVisible();
-      const markdownContent = panelBody.locator('.markdown-html');
-      await expect(markdownContent).toContainText(`VariableUnderTest: ${labels[1]}="${labelValues[0]}"`);
+      const filter = controls.variables.getFilter(variable.label, 'label2');
+      await expect(filter).toHaveText('label2 = label2Value1');
+
+      const markdownContent = panels.getBody('Variable output').locator('.markdown-html');
+      await expect(markdownContent).toContainText('VariableUnderTest: label2="label2Value1"');
+
+      await saveAndGotoDashboardUrl(page, controls, viewUrl);
+
+      await expect(variableLabel).toContainText(variable.label);
+      await expect(filter).toHaveText('label2 = label2Value1');
+      await expect(markdownContent).toContainText('VariableUnderTest: label2="label2Value1"');
+
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
+      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.clickItem(variable.label);
+
+      await expect(sidebar.getPaneTitle()).toHaveText('Filter');
+      await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
+      await expect(sidebar.variableOptions.getLabelInput()).toHaveValue(variable.label);
+      await expect(sidebar.variableOptions.adhoc.getDatasourceInput()).toHaveAttribute('placeholder', dataSource);
     });
   }
 );

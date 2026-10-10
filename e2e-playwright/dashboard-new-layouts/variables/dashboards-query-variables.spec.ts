@@ -1,6 +1,8 @@
 import { test, expect } from '../fixtures';
 import { flows, type Variable } from '../helpers';
 
+import { importVariableTestDashboard, saveAndGotoDashboardUrl } from './flows';
+
 test.use({
   featureToggles: {
     dashboardNewLayouts: true,
@@ -23,13 +25,12 @@ test.describe(
     tag: ['@dashboards'],
   },
   () => {
-    test('can add a new query variable', async ({ gotoDashboardPage, selectors, page, controls, sidebar, panels }) => {
-      const dashboardPage = await gotoDashboardPage({ uid: PAGE_UNDER_TEST });
-      await expect(page.getByText(DASHBOARD_NAME)).toBeVisible();
+    test('can add a new query variable', async ({ selectors, page, controls, sidebar, panels }) => {
+      const viewUrl = await importVariableTestDashboard(page, selectors, panels);
       const variable: Variable & { label: string } = {
         type: 'query',
         name: 'VariableUnderTest',
-        label: 'VariableUnderTest',
+        label: 'VariableUnderTestLabel',
         value: '',
       };
 
@@ -46,24 +47,10 @@ test.describe(
       const previewValues = sidebar.variableOptions.query.getPreviewOfValues();
       await expect(previewValues.first()).toBeVisible({ timeout: 15_000 });
 
-      // Go to the "Static options" tab
-      await dashboardPage.getByGrafanaSelector(selectors.components.Tab.title('Static options (0)')).click();
-
-      // Click on the "+ Add new option" button
-      await dashboardPage
-        .getByGrafanaSelector(selectors.pages.Dashboard.Settings.Variables.Edit.StaticOptionsEditor.addButton)
-        .click();
-
       // Add two static options and run the query again
-      await page.keyboard.type('custom-value-1');
-      await page.keyboard.press('Tab');
-      await page.keyboard.type('Custom value one');
-
-      await page.keyboard.press('Enter');
-
-      await page.keyboard.type('custom-value-2');
-      await page.keyboard.press('Tab');
-      await page.keyboard.type('Custom value two');
+      await sidebar.variableOptions.query.openStaticOptionsTab();
+      await sidebar.variableOptions.query.addStaticOption('custom-value-1', 'Custom value one');
+      await sidebar.variableOptions.query.addStaticOption('custom-value-2', 'Custom value two');
 
       await sidebar.variableOptions.query.runQuery();
 
@@ -83,10 +70,50 @@ test.describe(
       await page.keyboard.press('Escape');
 
       // Assert that the markdown panels contain the correct variable values
-      const panelBody = panels.getBodies().first();
-      await expect(panelBody).toBeVisible();
-      const markdownContent = panelBody.locator('.markdown-html');
+      const markdownContent = panels.getBody('Variable output').locator('.markdown-html');
       await expect(markdownContent).toContainText('VariableUnderTest: custom-value-1');
+
+      // We select a non-first option because initialization falls back to the first one, so only this proves the saved value.
+      await controls.variables.selectOption(variable.label, 'Custom value two');
+      const dropdownTrigger = controls.variables.getDropdownTrigger(variable.label);
+      await expect(dropdownTrigger).toContainText('Custom value two');
+      await expect(markdownContent).toContainText('VariableUnderTest: custom-value-2');
+
+      await saveAndGotoDashboardUrl(page, controls, viewUrl);
+
+      await expect(controls.variables.getLabel(variable.label)).toContainText(variable.label);
+      await expect(dropdownTrigger).toContainText('Custom value two');
+      await expect(markdownContent).toContainText('VariableUnderTest: custom-value-2');
+
+      await controls.enterEditMode();
+      await sidebar.toolbar.clickButton('Outline');
+      await sidebar.contentOutline.toggleNode('Variables');
+      await sidebar.contentOutline.clickItem(variable.label);
+
+      await expect(sidebar.getPaneTitle()).toHaveText('Query variable');
+      await expect(sidebar.variableOptions.getNameInput()).toHaveValue(variable.name);
+      await expect(sidebar.variableOptions.getLabelInput()).toHaveValue(variable.label);
+
+      await sidebar.variableOptions.query.openEditor();
+      await expect(sidebar.variableOptions.query.getTargetDatasourceInput()).toHaveAttribute(
+        'placeholder',
+        'gdev-testdata'
+      );
+      await expect(sidebar.variableOptions.query.getTestDataQueryInput()).toHaveValue('*');
+
+      await expect(sidebar.variableOptions.query.getStaticOptionsTab()).toHaveText('Static options (2)');
+      await sidebar.variableOptions.query.openStaticOptionsTab();
+      const staticOptionRows = sidebar.variableOptions.query.getStaticOptionRows();
+      await expect(staticOptionRows).toHaveCount(2);
+      const expectedStaticOptions = [
+        { value: 'custom-value-1', text: 'Custom value one' },
+        { value: 'custom-value-2', text: 'Custom value two' },
+      ];
+      for (const [i, { value, text }] of expectedStaticOptions.entries()) {
+        const row = staticOptionRows.nth(i);
+        await expect(sidebar.variableOptions.query.getStaticOptionInputs('value', row)).toHaveValue(value);
+        await expect(sidebar.variableOptions.query.getStaticOptionInputs('text', row)).toHaveValue(text);
+      }
     });
 
     test('can add a new query variable that references other variables', async ({
@@ -158,7 +185,7 @@ test.describe(
       await page.keyboard.press('Escape');
 
       // Assert that the markdown panels contain the correct variable values
-      const panelBody = panels.getBodies().first();
+      const panelBody = panels.getBody('Panel Title');
       await expect(panelBody).toBeVisible();
       const markdownContent = panelBody.locator('.markdown-html');
       await expect(markdownContent).toContainText('VariableUnderTest: A');

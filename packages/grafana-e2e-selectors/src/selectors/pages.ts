@@ -808,6 +808,12 @@ export const versionedPages = {
             row: {
               [MIN_GRAFANA_VERSION]: 'data-testid Variable editor Form Static Options Row',
             },
+            spreadsheet: {
+              '13.3.0': 'data-testid Variable editor Form Static Options spreadsheet',
+            },
+            spreadsheetRow: {
+              '13.3.0': 'data-testid Variable editor Form Static Options spreadsheet row',
+            },
           },
         },
       },
