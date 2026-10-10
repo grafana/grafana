@@ -20,6 +20,7 @@ import {
 import { MonacoDiffEditor } from 'app/core/components/MonacoDiffEditor/MonacoDiffEditor';
 import { InlineDiffToggle, useInlineDiffPreference } from 'app/core/components/MonacoDiffEditor/inlineDiffPreference';
 
+import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardSchemaEditor, type SchemaEditorFormat } from '../v2schema/DashboardSchemaEditor';
 
@@ -82,10 +83,11 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
     setApplyError(null);
 
     const result = applyJsonToDashboard(dashboard, jsonText);
+    DashboardInteractions.codePaneActionClicked({ action: 'apply', format: editorFormat, success: result.success });
     if (!result.success) {
       setApplyError(result.error ?? 'Failed to apply changes');
     }
-  }, [dashboard, jsonText]);
+  }, [dashboard, jsonText, editorFormat]);
 
   const getResourceText = useCallback(
     () => getDashboardResourceText(dashboard, editorFormat),
@@ -98,6 +100,9 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
       size="sm"
       icon="copy"
       getText={getResourceText}
+      onClipboardCopy={() =>
+        DashboardInteractions.codePaneActionClicked({ action: 'copy_as_resource', format: editorFormat })
+      }
       tooltip={t(
         'dashboard.sidebar.edit-schema.copy-as-resource-tooltip',
         'Copy dashboard as resource (with apiVersion, kind and metadata) for use in provisioning files'
@@ -119,7 +124,14 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
           showLabel
           value={showDiff}
           disabled={!canShowDiff}
-          onChange={(e) => model.setState({ showDiff: e.currentTarget.checked })}
+          onChange={(e) => {
+            const showDiff = e.currentTarget.checked;
+            model.setState({ showDiff });
+            DashboardInteractions.codePaneActionClicked({
+              action: showDiff ? 'show_diff' : 'hide_diff',
+              format: editorFormat,
+            });
+          }}
         />
       </div>
     </Tooltip>
@@ -243,7 +255,10 @@ function DashboardCodePaneRenderer({ model }: SceneComponentProps<DashboardCodeP
             name="expand-arrows"
             size="sm"
             tooltip={t('dashboard.sidebar.edit-schema.expand', 'Expand editor')}
-            onClick={() => model.setState({ isExpanded: true })}
+            onClick={() => {
+              model.setState({ isExpanded: true });
+              DashboardInteractions.codePaneActionClicked({ action: 'expand', format: editorFormat });
+            }}
           />
         </div>
       </div>
