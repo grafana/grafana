@@ -40,7 +40,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `dashboardNewLayouts`                        | Enables new dashboard layouts                                                                                                       | Yes                |
 | `timeComparison`                             | Enables time comparison option in supported panels                                                                                  | Yes                |
 | `alertingQueryOptimization`                  | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
-| `sqlExpressions`                             | Enables SQL Expressions, which can execute SQL queries against data source results.                                                 | Yes                |
 | `grafana.filterablePanels`                   | Enables interactive grouped-label filtering through the tooltip in state timeline, status history and histogram panels              |                    |
 | `cloudWatchNewLabelParsing`                  | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
 | `queryLibrary`                               | Enables Saved queries (query library) feature                                                                                       | Yes                |

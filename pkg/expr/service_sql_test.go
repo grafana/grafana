@@ -12,7 +12,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana/pkg/expr/sql"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/stretchr/testify/require"
 )
@@ -64,7 +63,6 @@ func TestSQLService(t *testing.T) {
 
 	t.Run("with feature flag basic select works", func(t *testing.T) {
 		s, req := newMockQueryService(resp, newABSQLQueries("SELECT * FROM A"))
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
@@ -83,8 +81,6 @@ func TestSQLService(t *testing.T) {
 			newABSQLQueries(`SELECT CAST(load_file('/etc/topSecretz') AS CHAR(10000) CHARACTER SET utf8)`),
 		)
 
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-
 		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
@@ -102,8 +98,6 @@ func TestSQLService(t *testing.T) {
 		s, req := newMockQueryService(resp,
 			newABSQLQueries(`SELECT * FROM A LIMIT sloth`),
 		)
-
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
 
 		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
@@ -185,8 +179,6 @@ func TestSQLServiceErrors(t *testing.T) {
 			reg,
 		)
 
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-
 		pl, err := s.BuildPipeline(t.Context(), req)
 		require.NoError(t, err)
 
@@ -216,8 +208,6 @@ func TestSQLServiceErrors(t *testing.T) {
 			newABSQLQueries(`SELECT * FROM nonExisting`), reg,
 		)
 
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-
 		_, err := s.BuildPipeline(t.Context(), req)
 		var sqlErr *sql.ErrorWithCategory
 		require.ErrorAs(t, err, &sqlErr)
@@ -234,8 +224,6 @@ func TestSQLServiceErrors(t *testing.T) {
 			newABSQLQueries(`SELECT This is too long and does not need to be valid SQL`),
 		)
 		s.cfg.SQLExpressionQueryLengthLimit = 5
-		s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
-
 		_, err := s.BuildPipeline(t.Context(), req)
 		require.ErrorContains(t, err, "exceeded the configured limit of 5 characters")
 		var sqlErr *sql.ErrorWithCategory
