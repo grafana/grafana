@@ -27,18 +27,32 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 
 	t.Run("configured", func(t *testing.T) {
 		cfg, err := parsePluginGRPCConfig(cfgWithBackendGRPCSection(t, map[string]string{
-			"retry_max":     "3",
-			"retry_backoff": "1s",
-			"retry_jitter":  "0.5",
+			"retry_max":          "3",
+			"retry_backoff":      "1s",
+			"retry_jitter":       "0.5",
+			"connect_timeout":    "20s",
+			"connect_base_delay": "100ms",
+			"connect_max_delay":  "10s",
+			"keepalive_time":     "20s",
+			"keepalive_timeout":  "5s",
 		}))
 		require.NoError(t, err)
-		require.Equal(t, pluginGRPCRetryConfig{Max: 3, Backoff: time.Second, Jitter: 0.5}, cfg.Retry)
+		require.Equal(t, pluginGRPCConfig{
+			Retry:     pluginGRPCRetryConfig{Max: 3, Backoff: time.Second, Jitter: 0.5},
+			Connect:   pluginGRPCConnectConfig{Timeout: 20 * time.Second, BaseDelay: 100 * time.Millisecond, MaxDelay: 10 * time.Second},
+			Keepalive: pluginGRPCKeepaliveConfig{Time: 20 * time.Second, Timeout: 5 * time.Second},
+		}, cfg)
 	})
 
 	for key, value := range map[string]string{
-		"retry_max":     "-1",
-		"retry_backoff": "soon",
-		"retry_jitter":  "1.5",
+		"retry_max":          "-1",
+		"retry_backoff":      "soon",
+		"retry_jitter":       "1.5",
+		"connect_timeout":    "0s",
+		"connect_base_delay": "-1s",
+		"connect_max_delay":  "0s",
+		"keepalive_time":     "-1s",
+		"keepalive_timeout":  "0s",
 	} {
 		t.Run("invalid "+key, func(t *testing.T) {
 			cfg := cfgWithBackendGRPCSection(t, map[string]string{key: value})
@@ -47,6 +61,11 @@ func TestParsePluginGRPCConfig(t *testing.T) {
 			require.ErrorContains(t, err, backendGRPCSection+": "+key+" must be")
 		})
 	}
+
+	t.Run("base delay over max delay", func(t *testing.T) {
+		_, err := parsePluginGRPCConfig(cfgWithBackendGRPCSection(t, map[string]string{"connect_base_delay": "11s"}))
+		require.ErrorContains(t, err, "connect_base_delay (11s) must not exceed connect_max_delay (10s)")
+	})
 }
 
 func cfgWithBackendGRPCSection(t *testing.T, kv map[string]string) *setting.Cfg {
@@ -72,7 +91,8 @@ func TestPluginGRPCDialOptionsCountRetries(t *testing.T) {
 	labels := prometheus.Labels{"plugin_id": "test-app"}
 	requestDuration := newPluginGRPCRequestDuration(nil, sourcePluginsURL).MustCurryWith(labels).(*prometheus.HistogramVec)
 	requestRetries := newPluginGRPCRequestRetries(nil, sourcePluginsURL).MustCurryWith(labels)
-	cfg := pluginGRPCConfig{Retry: pluginGRPCRetryConfig{Max: 3, Backoff: time.Millisecond}}
+	cfg := defaultPluginGRPCConfig()
+	cfg.Retry = pluginGRPCRetryConfig{Max: 3, Backoff: time.Millisecond}
 	conn, err := grpc.NewClient(listener.Addr().String(), cfg.dialOptions(requestDuration, requestRetries)...)
 	require.NoError(t, err)
 	t.Cleanup(func() { _ = conn.Close() })
