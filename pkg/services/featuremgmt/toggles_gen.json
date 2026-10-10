@@ -2884,6 +2884,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.otelLogDetails",
+        "resourceVersion": "1791390838681",
+        "creationTimestamp": "2026-10-07T16:33:58Z"
+      },
+      "spec": {
+        "description": "Enables a new version of log details optimized for displaying OTel logs",
+        "stage": "experimental",
+        "codeowner": "@grafana/observability-logs",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.panelEditNextFeedbackEvent",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-05-28T18:04:20Z"

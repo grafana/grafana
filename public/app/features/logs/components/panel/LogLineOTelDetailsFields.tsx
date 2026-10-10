@@ -1,18 +1,9 @@
 import { css } from '@emotion/css';
 import { isEqual } from 'lodash';
 import { parse, stringify } from 'lossless-json';
-import { memo, type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  CoreApp,
-  type Field,
-  fuzzySearch,
-  type GrafanaTheme2,
-  type IconName,
-  type LinkModel,
-  type LogLabelStatsModel,
-  textUtil,
-} from '@grafana/data';
+import { CoreApp, type GrafanaTheme2, type IconName, type LogLabelStatsModel, textUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { ClipboardButton, Dropdown, Icon, IconButton, Menu, useStyles2 } from '@grafana/ui';
@@ -24,36 +15,31 @@ import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields'
 import { type FieldDef } from '../logParser';
 
 import { AsyncIconButton } from './AsyncIconButton';
+import { type LinkModelWithIcon, type LabelWithLinks } from './LogLineDetailsFields';
 import { type LogListFontSize } from './LogList';
 import { useLogListContext } from './LogListContext';
 import { type LogListModel, getNormalizedFieldName } from './processing';
 
 interface LogLineDetailsFieldsProps {
-  disableActions?: boolean;
   fields: FieldDef[];
   log: LogListModel;
   logs: LogListModel[];
-  search?: string;
 }
 
-export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, search }: LogLineDetailsFieldsProps) => {
-  const { onClickShowField, fontSize } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+export const LogLineOTelDetailsFields = ({ fields, log, logs }: LogLineDetailsFieldsProps) => {
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
-  const filteredFields = useMemo(() => (search ? filterFields(fields, search) : fields), [fields, search]);
 
   if (!fields.length) {
     return null;
-  } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No matching results.');
   }
 
   return (
-    <div className={disableActions ? styles.fieldsTableNoActions : styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
-        <LogLineDetailsField
+    <div className={styles.fieldsTable}>
+      {fields.map((field, i) => (
+        <LogLineOTelDetailsField
           key={`${field.keys[0]}=${field.values[0]}-${i}`}
-          disableActions={disableActions}
           getLogs={getLogs}
           fieldIndex={field.fieldIndex}
           keys={field.keys}
@@ -64,42 +50,27 @@ export const LogLineDetailsFields = memo(({ disableActions, fields, log, logs, s
       ))}
     </div>
   );
-});
-LogLineDetailsFields.displayName = 'LogLineDetailsFields';
-
-export interface LinkModelWithIcon extends LinkModel<Field> {
-  icon?: IconName;
-}
-
-export interface LabelWithLinks {
-  key: string;
-  value: string;
-  links?: LinkModelWithIcon[];
-}
+};
 
 interface LogLineDetailsLabelFieldsProps {
   fields: LabelWithLinks[];
   log: LogListModel;
   logs: LogListModel[];
-  search?: string;
 }
 
-export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLineDetailsLabelFieldsProps) => {
-  const { fontSize, onClickShowField } = useLogListContext();
-  const styles = useStyles2(getFieldsStyles, fontSize, onClickShowField);
+export const LogLineOTelDetailsLabelFields = ({ fields, log, logs }: LogLineDetailsLabelFieldsProps) => {
+  const { fontSize } = useLogListContext();
+  const styles = useStyles2(getFieldsStyles, fontSize);
   const getLogs = useCallback(() => logs, [logs]);
-  const filteredFields = useMemo(() => (search ? filterLabels(fields, search) : fields), [fields, search]);
 
   if (!fields.length) {
     return null;
-  } else if (filteredFields.length === 0) {
-    return t('logs.log-line-details.search.no-results', 'No matching results.');
   }
 
   return (
     <div className={styles.fieldsTable}>
-      {filteredFields.map((field, i) => (
-        <LogLineDetailsField
+      {fields.map((field, i) => (
+        <LogLineOTelDetailsField
           key={`${field.key}=${field.value}-${i}`}
           getLogs={getLogs}
           isLabel
@@ -113,20 +84,11 @@ export const LogLineDetailsLabelFields = ({ fields, log, logs, search }: LogLine
   );
 };
 
-const getFieldsStyles = (
-  theme: GrafanaTheme2,
-  fontSize: LogListFontSize,
-  onClickShowField?: (key: string) => void
-) => ({
+const getFieldsStyles = (theme: GrafanaTheme2, fontSize: LogListFontSize) => ({
   fieldsTable: css({
     display: 'grid',
     gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `${fontSize === 'small' ? (onClickShowField ? theme.spacing(10) : theme.spacing(7)) : onClickShowField ? theme.spacing(11.5) : theme.spacing(7.5)} fit-content(30%) 1fr`,
-  }),
-  fieldsTableNoActions: css({
-    display: 'grid',
-    gap: fontSize === 'small' ? theme.spacing(0.25, 0.5) : theme.spacing(0.5, 1),
-    gridTemplateColumns: `auto 1fr`,
+    gridTemplateColumns: `${fontSize === 'small' ? theme.spacing(7) : theme.spacing(7.5)} fit-content(30%) 1fr`,
   }),
 });
 
@@ -141,7 +103,7 @@ interface LogLineDetailsFieldProps {
   log: LogListModel;
 }
 
-const LogLineDetailsField = ({
+const LogLineOTelDetailsField = ({
   disableActions = false,
   fieldIndex,
   getLogs,
@@ -155,17 +117,8 @@ const LogLineDetailsField = ({
   const [fieldCount, setFieldCount] = useState(0);
   const [fieldStats, setFieldStats] = useState<LogLabelStatsModel[] | null>(null);
   const { fontSize } = useLogListContext();
-  const {
-    app,
-    displayedFields,
-    isLabelFilterActive,
-    noInteractions,
-    onClickFilterLabel,
-    onClickFilterOutLabel,
-    onClickShowField,
-    onClickHideField,
-    prettifyJSON,
-  } = useLogListContext();
+  const { app, isLabelFilterActive, noInteractions, onClickFilterLabel, onClickFilterOutLabel, prettifyJSON } =
+    useLogListContext();
 
   const styles = useStyles2(getFieldStyles);
 
@@ -203,26 +156,6 @@ const LogLineDetailsField = ({
     },
     [noInteractions]
   );
-
-  const showField = useCallback(() => {
-    if (onClickShowField) {
-      onClickShowField(keys[0]);
-    }
-
-    reportInteractionWrapper('logs_log_line_details_show_field_clicked', {
-      datasourceType: log.datasourceType,
-    });
-  }, [onClickShowField, reportInteractionWrapper, log.datasourceType, keys]);
-
-  const hideField = useCallback(() => {
-    if (onClickHideField) {
-      onClickHideField(keys[0]);
-    }
-
-    reportInteractionWrapper('logs_log_line_details_hide_field_clicked', {
-      datasourceType: log.datasourceType,
-    });
-  }, [onClickHideField, reportInteractionWrapper, log.datasourceType, keys]);
 
   const filterLabel = useCallback(() => {
     if (onClickFilterLabel) {
@@ -349,26 +282,6 @@ const LogLineDetailsField = ({
                   onClick={filterOutLabel}
                 />
               )}
-              {onClickHideField && singleKey && displayedFields.includes(keys[0]) && (
-                <IconButton
-                  variant="primary"
-                  size={fontSize === 'small' ? 'sm' : undefined}
-                  tooltip={t('logs.log-line-details.fields.toggle-field-button.hide-this-field', 'Hide this field')}
-                  name="eye"
-                  onClick={hideField}
-                />
-              )}
-              {onClickShowField && singleKey && !displayedFields.includes(keys[0]) && (
-                <IconButton
-                  tooltip={t(
-                    'logs.log-line-details.fields.toggle-field-button.field-instead-message',
-                    'Show this field instead of the message'
-                  )}
-                  name="eye"
-                  size={fontSize === 'small' ? 'sm' : undefined}
-                  onClick={showField}
-                />
-              )}
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
@@ -416,7 +329,7 @@ const LogLineDetailsField = ({
   );
 };
 
-export function resolveAppFromLink(href: string): string | undefined {
+function resolveAppFromLink(href: string): string | undefined {
   return href.match(/\/a\/([^/?#]+)/)?.[1];
 }
 
@@ -438,6 +351,7 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     paddingRight: 4,
   }),
   label: css({
+    color: theme.colors.text.secondary,
     paddingRight: theme.spacing(1),
     overflowWrap: 'break-word',
     wordBreak: 'break-word',
@@ -470,6 +384,49 @@ const getFieldStyles = (theme: GrafanaTheme2) => ({
     wordBreak: 'break-word',
     maxHeight: '50vh',
     overflow: 'auto',
+  }),
+});
+
+const getValueLinkStyles = (theme: GrafanaTheme2) => ({
+  linkValue: css({
+    '& svg': {
+      color: theme.colors.text.primary,
+    },
+    color: theme.colors.text.link,
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: theme.spacing(0.5),
+  }),
+  linkIcon: css({
+    flexShrink: 0,
+  }),
+  multiLinkValue: css({
+    display: 'inline-flex',
+    alignItems: 'flex-start',
+    gap: theme.spacing(0.25),
+  }),
+  multiLinkContent: css({
+    color: theme.colors.text.link,
+    cursor: 'pointer',
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkTrigger: css({
+    display: 'inline-flex',
+    alignItems: 'center',
+    padding: 0,
+    margin: 0,
+    background: 'none',
+    border: 'none',
+    cursor: 'pointer',
+    color: theme.colors.text.link,
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+  multiLinkChevron: css({
+    flexShrink: 0,
   }),
 });
 
@@ -513,7 +470,7 @@ const getClipboardButtonStyles = (theme: GrafanaTheme2) => ({
   }),
 });
 
-export const MultipleValue = ({
+const MultipleValue = ({
   links,
   onLinkClick,
   showCopy,
@@ -687,10 +644,7 @@ const LinkValuesMenu = ({
                     target={link.target}
                     onClick={(event) => {
                       onLinkClick?.(link);
-                      if (!(event.ctrlKey || event.metaKey || event.shiftKey) && link.onClick) {
-                        event.preventDefault();
-                        link.onClick(event);
-                      }
+                      link.onClick?.(event);
                     }}
                   />
                 </div>
@@ -712,78 +666,3 @@ const LinkValuesMenu = ({
     </div>
   );
 };
-
-const getValueLinkStyles = (theme: GrafanaTheme2) => ({
-  linkValue: css({
-    '& svg': {
-      color: theme.colors.text.primary,
-    },
-    color: theme.colors.text.link,
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: theme.spacing(0.5),
-  }),
-  linkIcon: css({
-    flexShrink: 0,
-  }),
-  multiLinkValue: css({
-    display: 'inline-flex',
-    alignItems: 'flex-start',
-    gap: theme.spacing(0.25),
-  }),
-  multiLinkContent: css({
-    color: theme.colors.text.link,
-    cursor: 'pointer',
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  }),
-  multiLinkTrigger: css({
-    display: 'inline-flex',
-    alignItems: 'center',
-    padding: 0,
-    margin: 0,
-    background: 'none',
-    border: 'none',
-    cursor: 'pointer',
-    color: theme.colors.text.link,
-    '&:hover': {
-      textDecoration: 'underline',
-    },
-  }),
-  multiLinkChevron: css({
-    flexShrink: 0,
-  }),
-});
-
-export function filterFields(fields: FieldDef[], search: string) {
-  const keys = fields.map((field) => field.keys.join(' '));
-  const keysIdx = fuzzySearch(keys, search);
-  const values = fields.map((field) => field.values.join(' '));
-  const valuesIdx = fuzzySearch(values, search);
-
-  const results = keysIdx.map((index) => fields[index]);
-  valuesIdx.forEach((index) => {
-    if (!results.includes(fields[index])) {
-      results.push(fields[index]);
-    }
-  });
-
-  return results;
-}
-
-export function filterLabels(labels: LabelWithLinks[], search: string) {
-  const keys = labels.map((field) => field.key);
-  const keysIdx = fuzzySearch(keys, search);
-  const values = labels.map((field) => field.value);
-  const valuesIdx = fuzzySearch(values, search);
-
-  const results = keysIdx.map((index) => labels[index]);
-  valuesIdx.forEach((index) => {
-    if (!results.includes(labels[index])) {
-      results.push(labels[index]);
-    }
-  });
-
-  return results;
-}

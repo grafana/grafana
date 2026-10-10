@@ -11955,6 +11955,11 @@
       "load-newer": "Loading newer logs...",
       "load-older": "Loading older logs..."
     },
+    "log-details": {
+      "error": {
+        "error-details": "Error details"
+      }
+    },
     "log-labels": {
       "collapse": "Collapse labels",
       "expand": "Expand labels"
@@ -12005,6 +12010,7 @@
       "inline-mode": "Display inline",
       "inline-no-scrolls": "Switch to expanded view",
       "inline-with-scrolls": "Switch to condensed view",
+      "link-fallback-label": "Link",
       "link-value-tooltip": "Link value",
       "links-section": "Links",
       "log-attributes-field": "Log attributes",
@@ -12014,13 +12020,14 @@
       "move-displayed-field-up": "Move up",
       "no-details": "No fields to display.",
       "open-assistant": "Explain log line in Assistant",
+      "open-value-in": "Open value in",
       "pin-line": "Pin log",
       "prettify": "Prettify",
       "remove-displayed-field": "Remove field",
       "remove-log": "Remove log",
       "scroll-to-logline": "Scroll to log line",
       "search": {
-        "no-results": "No results to display."
+        "no-results": "No matching results."
       },
       "search-placeholder": "Search field names and values",
       "show-context": "Show context",
