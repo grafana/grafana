@@ -3,9 +3,10 @@ import { useEffect } from 'react';
 import { Provider } from 'react-redux';
 
 import { MockBackendSrv } from '@grafana/api-clients';
-import { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
 import { generatedAPI as rulesAPIv0alpha1 } from '@grafana/api-clients/rtkq/rules.alerting/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
+
+import { notificationsAPI } from '../src/grafana/api/notifications';
 
 // Initialize BackendSrv for tests - this allows RTKQ to make HTTP requests
 // The actual HTTP requests will be intercepted by MSW (setupMockServer)
@@ -22,10 +23,10 @@ export const store: ReturnType<typeof configureStore> = configureStore({
       serializableCheck: false,
       immutableCheck: false,
     })
-      .concat(notificationsAPIv1beta1.middleware)
+      .concat(notificationsAPI.middleware)
       .concat(rulesAPIv0alpha1.middleware),
   reducer: {
-    [notificationsAPIv1beta1.reducerPath]: notificationsAPIv1beta1.reducer,
+    [notificationsAPI.reducerPath]: notificationsAPI.reducer,
     [rulesAPIv0alpha1.reducerPath]: rulesAPIv0alpha1.reducer,
   },
 });
@@ -53,7 +54,7 @@ export const getDefaultWrapper = () => {
 function useResetQueryCacheAfterUnmount() {
   useEffect(() => {
     return () => {
-      store.dispatch(notificationsAPIv1beta1.util.resetApiState());
+      store.dispatch(notificationsAPI.util.resetApiState());
     };
   }, []);
 }
