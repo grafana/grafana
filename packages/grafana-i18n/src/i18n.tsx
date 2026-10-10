@@ -26,7 +26,7 @@ function initTFuncAndTransComponent({ id, ns }: { id?: string; ns?: string[] } =
     return;
   }
 
-  tFunc = getI18nInstance().t;
+  tFunc = getI18nInstance().getFixedT(null, ns ?? null);
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
 }
 

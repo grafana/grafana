@@ -106,6 +106,8 @@ const config: KnipConfig = {
         'public/swagger/index.tsx!',
         'public/app/api/clients/**/index.ts!',
         'public/app/extensions/index.ts!',
+        // locale extensions for enterprise translations
+        'public/app/extensions/locales/localeExtensions.ts!',
         'public/app/extensions/api/clients/**/index.ts!',
         'public/app/plugins/**/module.{ts,tsx,js}!',
         'scripts/**/*.{t,j,mt,mj,cj}s*',
