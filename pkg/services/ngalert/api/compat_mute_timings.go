@@ -24,16 +24,16 @@ func ModelToMuteTimeInterval(interval v1.TimeInterval) definitions.MuteTimeInter
 			TimeIntervals: interval.TimeIntervals,
 		},
 		Version:    interval.Version,
-		Provenance: definitions.Provenance(interval.Provenance),
+		Provenance: definitions.Provenance(interval.Provenance()),
 	}
 }
 
 func MuteTimeIntervalToModel(mt definitions.MuteTimeInterval) v1.TimeInterval {
 	return v1.TimeInterval{
 		ResourceMetadata: v1.ResourceMetadata{
-			UID:        v1.ResourceUID(mt.UID),
-			Version:    mt.Version,
-			Provenance: models.Provenance(mt.Provenance),
+			UID:     v1.ResourceUID(mt.UID),
+			Version: mt.Version,
+			Manager: models.ProvenanceToManagerProperties(models.Provenance(mt.Provenance)),
 		},
 		Title:         mt.Name,
 		TimeIntervals: mt.TimeIntervals,

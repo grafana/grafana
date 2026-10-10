@@ -776,7 +776,7 @@ func TestMergeTemplates(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, "tmpl2", tmpl.Title)
 		assert.Equal(t, v1.TemplateKindMimir, tmpl.Kind)
-		assert.Equal(t, models.ProvenanceNone, tmpl.Provenance)
+		assert.Equal(t, models.ProvenanceNone, tmpl.Provenance())
 	})
 
 	t.Run("UID is deterministic for same name, content, identifier", func(t *testing.T) {

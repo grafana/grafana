@@ -6945,6 +6945,13 @@
             },
             "type": "array"
           },
+          "managerIdentity": {
+            "type": "string"
+          },
+          "managerKind": {
+            "description": "ManagerKind and ManagerIdentity identify the tool that manages the rule, when it is more\nspecific than what Provenance can express. When they are missing, the manager is derived from\nProvenance.",
+            "type": "string"
+          },
           "name": {
             "type": "string"
           },

@@ -15,6 +15,8 @@ import (
 	"github.com/grafana/alerting/models"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/grafana/alerting/receivers/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
 // GetReceiversQuery represents a query for receiver groups.
@@ -49,18 +51,25 @@ type Receiver struct {
 	UID          string
 	Name         string
 	Integrations []*Integration
-	Provenance   Provenance
-	Version      string
-	Origin       ResourceOrigin
+	// Manager records which tool manages the receiver (see v1.ResourceMetadata). Only its coarse
+	// view, Provenance, is part of the fingerprint.
+	Manager utils.ManagerProperties
+	Version string
+	Origin  ResourceOrigin
+}
+
+// Provenance is the legacy, coarse view of Manager.
+func (r Receiver) Provenance() Provenance {
+	return ManagerPropertiesToProvenance(r.Manager)
 }
 
 func (r *Receiver) Clone() Receiver {
 	clone := Receiver{
-		UID:        r.UID,
-		Name:       r.Name,
-		Provenance: r.Provenance,
-		Version:    r.Version,
-		Origin:     r.Origin,
+		UID:     r.UID,
+		Name:    r.Name,
+		Manager: r.Manager,
+		Version: r.Version,
+		Origin:  r.Origin,
 	}
 
 	if r.Integrations != nil {
@@ -489,7 +498,7 @@ func (r *Receiver) Fingerprint() string {
 	// fields that determine the rule state
 	sum.writeString(r.UID)
 	sum.writeString(r.Name)
-	sum.writeString(string(r.Provenance))
+	sum.writeString(string(r.Provenance()))
 
 	for _, integration := range r.Integrations {
 		writeIntegration(integration)

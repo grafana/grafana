@@ -20,7 +20,7 @@ func ModelToNotificationTemplate(tmpl v1.TemplateGroup) definitions.Notification
 		UID:             string(tmpl.UID),
 		Name:            tmpl.Title,
 		Template:        tmpl.Content,
-		Provenance:      definitions.Provenance(tmpl.Provenance),
+		Provenance:      definitions.Provenance(tmpl.Provenance()),
 		ResourceVersion: tmpl.Version,
 		Kind:            definition.TemplateKind(tmpl.Kind),
 	}
