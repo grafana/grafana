@@ -25,8 +25,10 @@ import { LazyFeatureControlFloating } from './FeatureControl/LazyFeatureControl'
 import { FullscreenWorkspacePlatformBar } from './FullscreenWorkspace/FullscreenWorkspacePlatformBar';
 import { FullscreenWorkspaceShell } from './FullscreenWorkspace/FullscreenWorkspaceShell';
 import { useFullscreenWorkspace } from './FullscreenWorkspace/useFullscreenWorkspace';
-import { MegaMenu, MENU_WIDTH } from './MegaMenu/MegaMenu';
+import { MENU_WIDTH } from './MegaMenu/MegaMenu';
 import { useMegaMenuFocusHelper } from './MegaMenu/utils';
+import { DashboardNavigatorHost, useDashboardNavigatorVisible } from './MegaMenuPrototype/DashboardNavigator';
+import { MegaMenuOrPrototype, PrototypeVariantBar } from './MegaMenuPrototype/PrototypeMegaMenu';
 import { ReturnToPrevious } from './ReturnToPrevious/ReturnToPrevious';
 import { SingleTopBar } from './TopBar/SingleTopBar';
 import { getChromeHeaderLevelHeight, useChromeHeaderLevels } from './TopBar/useChromeHeaderHeight';
@@ -76,6 +78,8 @@ export function AppChrome({ children }: Props) {
   }, []);
 
   const menuDockedAndOpen = !state.chromeless && state.megaMenuDocked && state.megaMenuOpen;
+  // PROTOTYPE: mega menu solutions — the dashboard navigator takes a menu-width column beside the menu.
+  const dashboardNavigatorVisible = useDashboardNavigatorVisible() && !state.chromeless;
   const isScopesDashboardsOpen = Boolean(
     !state.chromeless && scopes?.state.enabled && scopes?.state.drawerOpened && !scopes?.state.readOnly
   );
@@ -159,7 +163,7 @@ export function AppChrome({ children }: Props) {
             <Trans i18nKey="app-chrome.skip-content-button">Skip to main content</Trans>
           </LinkButton>
           {menuDockedAndOpen && (
-            <MegaMenu className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
+            <MegaMenuOrPrototype className={styles.dockedMegaMenu} onClose={() => chrome.setMegaMenuOpen(false)} />
           )}
           <header className={cx(styles.topNav, menuDockedAndOpen && styles.topNavMenuDocked)}>
             <SingleTopBar
@@ -190,8 +194,10 @@ export function AppChrome({ children }: Props) {
           )}
           <main
             className={cx(styles.pageContainer, {
-              [styles.pageContainerMenuDocked]: menuDockedAndOpen || isScopesDashboardsOpen,
-              [styles.pageContainerMenuDockedScopes]: menuDockedAndOpen && isScopesDashboardsOpen,
+              [styles.pageContainerMenuDocked]:
+                menuDockedAndOpen || isScopesDashboardsOpen || dashboardNavigatorVisible,
+              [styles.pageContainerMenuDockedScopes]:
+                (menuDockedAndOpen && isScopesDashboardsOpen) || (menuDockedAndOpen && dashboardNavigatorVisible),
               [styles.pageContainerWithSidebar]: !state.chromeless && isExtensionSidebarOpen,
               [contentSizeStyles.contentWidth]: !state.chromeless && isExtensionSidebarOpen && !isSmallScreen,
             })}
@@ -230,6 +236,8 @@ export function AppChrome({ children }: Props) {
       )}
       {!state.chromeless && isSplashScreenEnabled && <SplashScreenModal />}
       {!state.chromeless && <LazyFeatureControlFloating />}
+      {!state.chromeless && <PrototypeVariantBar />}
+      {!state.chromeless && <DashboardNavigatorHost />}
       {shouldShowReturnToPrevious && state.returnToPrevious && (
         <ReturnToPrevious href={state.returnToPrevious.href} title={state.returnToPrevious.title} />
       )}
