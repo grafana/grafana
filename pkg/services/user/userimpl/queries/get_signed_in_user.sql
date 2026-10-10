@@ -19,7 +19,9 @@ LEFT OUTER JOIN {{ .Ident .OrgUserTable }} AS org_user
   AND org_user.user_id = u.id
 LEFT OUTER JOIN {{ .Ident .OrgTable }} AS org
   ON org.id = org_user.org_id
-{{ if gt .UserID 0 -}}
+{{ if .UID -}}
+WHERE u.uid = {{ .Arg .UID }}
+{{ else if gt .UserID 0 -}}
 WHERE u.id = {{ .Arg .UserID }}
 {{ else if .Login -}}
 WHERE LOWER(u.login) = LOWER({{ .Arg .Login }})

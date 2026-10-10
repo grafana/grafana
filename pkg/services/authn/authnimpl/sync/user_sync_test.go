@@ -1043,7 +1043,9 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 		desc        string
 		req         *authn.Request
 		identity    *authn.Identity
+		userService *usertest.FakeUserService
 		expectedErr error
+		verify      func(t *testing.T, identity *authn.Identity)
 	}
 
 	tests := []testCase{
@@ -1057,15 +1059,83 @@ func TestUserSync_FetchSyncedUserHook(t *testing.T) {
 			req:      &authn.Request{},
 			identity: &authn.Identity{ID: "1", Type: claims.TypeAPIKey, ClientParams: authn.ClientParams{FetchSyncedUser: true}},
 		},
+		{
+			desc: "should resolve by numeric ID when identity has no UID (unaffected by the UID cache-hit path)",
+			req:  &authn.Request{OrgID: 1},
+			identity: &authn.Identity{
+				ID:           "7",
+				Type:         claims.TypeUser,
+				ClientParams: authn.ClientParams{FetchSyncedUser: true},
+			},
+			userService: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					require.Equal(t, int64(7), query.UserID)
+					require.Empty(t, query.UID)
+					return &user.SignedInUser{UserID: 7, UserUID: "uid-7"}, nil
+				},
+			},
+			verify: func(t *testing.T, identity *authn.Identity) {
+				assert.Equal(t, "7", identity.ID)
+				assert.Equal(t, "uid-7", identity.UID)
+			},
+		},
+		{
+			desc: "should resolve by UID when identity has a UID but no numeric ID (auth-proxy cache-hit path), and populate id.ID from the result",
+			req:  &authn.Request{OrgID: 1},
+			identity: &authn.Identity{
+				UID:          "uid-42",
+				Type:         claims.TypeUser,
+				ClientParams: authn.ClientParams{FetchSyncedUser: true},
+			},
+			userService: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					require.Equal(t, "uid-42", query.UID)
+					require.Zero(t, query.UserID)
+					return &user.SignedInUser{UserID: 42, UserUID: "uid-42"}, nil
+				},
+			},
+			verify: func(t *testing.T, identity *authn.Identity) {
+				// downstream hooks (e.g. RBAC sync) call GetInternalID(), which requires id.ID.
+				assert.Equal(t, "42", identity.ID)
+				internalID, err := identity.GetInternalID()
+				require.NoError(t, err)
+				assert.Equal(t, int64(42), internalID)
+			},
+		},
+		{
+			desc: "should return not-found without a self-heal fallback when UID does not resolve",
+			req:  &authn.Request{OrgID: 1},
+			identity: &authn.Identity{
+				UID:             "uid-deleted",
+				Type:            claims.TypeUser,
+				AuthenticatedBy: login.AuthProxyAuthModule,
+				ClientParams:    authn.ClientParams{FetchSyncedUser: true},
+			},
+			userService: &usertest.FakeUserService{
+				GetSignedInUserFn: func(ctx context.Context, query *user.GetSignedInUserQuery) (*user.SignedInUser, error) {
+					return nil, user.ErrUserNotFound
+				},
+			},
+			expectedErr: errFetchingSignedInUserNotFound,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			s := UserSync{
-				tracer: tracing.InitializeTracerForTest(),
+				tracer:      tracing.InitializeTracerForTest(),
+				log:         log.New("test"),
+				userService: tt.userService,
 			}
 			err := s.FetchSyncedUserHook(context.Background(), tt.identity, tt.req)
-			require.ErrorIs(t, err, tt.expectedErr)
+			if tt.expectedErr != nil {
+				require.ErrorIs(t, err, tt.expectedErr)
+				return
+			}
+			require.NoError(t, err)
+			if tt.verify != nil {
+				tt.verify(t, tt.identity)
+			}
 		})
 	}
 }

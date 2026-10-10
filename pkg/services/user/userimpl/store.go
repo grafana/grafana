@@ -472,12 +472,13 @@ type signedInUserQuery struct {
 	OrgTable     string
 	OrgID        int64
 	UserID       int64
+	UID          string
 	Login        string
 	Email        string
 }
 
 func (q signedInUserQuery) Validate() error {
-	if q.UserID <= 0 && q.Login == "" && q.Email == "" {
+	if q.UserID <= 0 && q.UID == "" && q.Login == "" && q.Email == "" {
 		return user.ErrNoUniqueID
 	}
 	return nil
@@ -498,6 +499,7 @@ func (ss *sqlStore) GetSignedInUser(ctx context.Context, query *user.GetSignedIn
 			OrgTable:     dbHelper.Table("org"),
 			OrgID:        query.OrgID,
 			UserID:       query.UserID,
+			UID:          query.UID,
 			Login:        query.Login,
 			Email:        query.Email,
 		}

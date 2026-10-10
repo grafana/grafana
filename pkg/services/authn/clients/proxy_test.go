@@ -211,7 +211,7 @@ func TestProxy_Authenticate_CacheHitExternalGroups(t *testing.T) {
 			require.NotNil(t, got)
 			assert.Equal(t, tt.expectCacheHit, !clientCalled)
 			if tt.expectCacheHit {
-				assert.Equal(t, "42", got.ID)
+				assert.Equal(t, "42", got.UID)
 			} else {
 				assert.Equal(t, "99", got.ID)
 			}
@@ -318,6 +318,7 @@ func TestProxy_Hook(t *testing.T) {
 			require.NoError(t, err)
 			userIdentity := &authn.Identity{
 				ID:   "1",
+				UID:  "u1",
 				Type: claims.TypeUser,
 				ClientParams: authn.ClientParams{
 					CacheAuthProxyKey: cacheKey,
@@ -334,7 +335,7 @@ func TestProxy_Hook(t *testing.T) {
 			err = c.Hook(context.Background(), userIdentity, userReq)
 			assert.NoError(t, err)
 			expectedCache := map[string][]byte{
-				cacheKey: []byte("1"),
+				cacheKey: []byte("u1"),
 				fmt.Sprintf("%s:%s", proxyCachePrefix, "johndoe"): fmt.Appendf(nil, "users:johndoe-%s", role),
 			}
 			assert.Equal(t, expectedCache, cache.data)

@@ -374,16 +374,19 @@ func (s *UserSync) FetchSyncedUserHook(ctx context.Context, id *authn.Identity, 
 		return nil
 	}
 
-	userID, err := id.GetInternalID()
-	if err != nil {
-		s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
-		return nil
+	query := &user.GetSignedInUserQuery{OrgID: r.OrgID}
+	if id.UID != "" {
+		query.UID = id.UID
+	} else {
+		userID, err := id.GetInternalID()
+		if err != nil {
+			s.log.FromContext(ctx).Warn("got invalid identity ID", "id", id.ID, "err", err)
+			return nil
+		}
+		query.UserID = userID
 	}
 
-	usr, err := s.userService.GetSignedInUser(ctx, &user.GetSignedInUserQuery{
-		UserID: userID,
-		OrgID:  r.OrgID,
-	})
+	usr, err := s.userService.GetSignedInUser(ctx, query)
 	if err != nil {
 		if errors.Is(err, user.ErrUserNotFound) {
 			return errFetchingSignedInUserNotFound.Errorf("%w", err)
@@ -837,6 +840,7 @@ func syncUserToIdentity(ctx context.Context, usr *user.User, id *authn.Identity)
 // syncSignedInUserToIdentity syncs a user to an identity.
 // id.ExternalGroups must not be overridden here — SAML role mapping and team sync rely on it.
 func syncSignedInUserToIdentity(usr *user.SignedInUser, id *authn.Identity) {
+	id.ID = strconv.FormatInt(usr.UserID, 10)
 	id.UID = usr.UserUID
 	id.Name = usr.Name
 	id.Login = usr.Login
