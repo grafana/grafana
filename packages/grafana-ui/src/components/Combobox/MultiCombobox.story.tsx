@@ -3,6 +3,7 @@ import { type ComponentProps } from 'react';
 import { action } from 'storybook/actions';
 import { useArgs, useEffect, useState } from 'storybook/preview-api';
 
+import { Badge } from '../Badge/Badge';
 import { Field } from '../Forms/Field';
 
 import { MultiCombobox } from './MultiCombobox';
@@ -65,6 +66,35 @@ const BasicStory: StoryFn<typeof MultiCombobox> = (args) => {
 
 export const Basic: Story = {
   args: commonArgs,
+  render: BasicStory,
+};
+
+export const CustomOptionRendering: Story = {
+  args: {
+    width: 48,
+    value: ['service-2', 'service-5'],
+    placeholder: 'Select services...',
+    options: Array.from({ length: 40 }, (_, index) => {
+      const serviceNumber = index + 1;
+      const hasDescription = serviceNumber % 3 === 0;
+
+      return {
+        label: `Service ${serviceNumber}`,
+        value: `service-${serviceNumber}`,
+        group: serviceNumber <= 20 ? 'Core services' : 'Supporting services',
+        description: hasDescription ? 'Receives traffic from multiple environments' : undefined,
+      };
+    }),
+    renderOption: (option) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <span>{option.label}</span>
+          <Badge text="Available" color="green" />
+        </div>
+        {option.description && <span style={{ fontWeight: 400 }}>{option.description}</span>}
+      </div>
+    ),
+  },
   render: BasicStory,
 };
 
