@@ -1312,14 +1312,6 @@ var (
 			Generate:    Generate{LegacyGo: true, LegacyFrontend: true, React: true},
 		},
 		{
-			Name:        "pluginsSriChecks",
-			Description: "Enables SRI checks for plugin assets",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaCatalogSquad,
-			Expression:  "false", // disabled by default
-			Generate:    Generate{LegacyGo: true, LegacyFrontend: true},
-		},
-		{
 			Name:        "timeRangeProvider",
 			Description: "Enables time pickers sync",
 			Stage:       FeatureStageExperimental,
