@@ -31,6 +31,8 @@ export const reloadFromServerCommand: MutationCommand<Record<string, never>> = {
     try {
       const { getDashboardScenePageStateManager } = await import('../../pages/DashboardScenePageStateManager');
       const manager = getDashboardScenePageStateManager();
+      // Both caches: a second reload seconds after the first would otherwise reuse its response.
+      manager.clearDashboardCache();
       manager.removeSceneCache(uid);
       await manager.reloadDashboard(locationService.getSearchObject());
       return { success: true, data: { reloaded: true }, changes: [] };

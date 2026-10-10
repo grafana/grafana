@@ -36,6 +36,18 @@ describe('diffDashboardSpecs', () => {
     ]);
   });
 
+  it('treats absent and empty values as the same, so a converted dashboard has no phantom edits', () => {
+    const base = { title: 'API', elements: { a: panel(1, 'Rate') }, layout: { kind: 'GridLayout' } };
+    const converted = {
+      title: 'API',
+      tags: [],
+      elements: { a: { ...panel(1, 'Rate'), spec: { ...panel(1, 'Rate').spec, description: '', links: [] } } },
+      layout: { kind: 'GridLayout' },
+    };
+
+    expect(diffDashboardSpecs(base, converted)).toEqual([]);
+  });
+
   it('diffs classic dashboards and treats moves as a layout change', () => {
     const base = { panels: [{ id: 1, type: 'stat', title: 'Up', gridPos: { x: 0, y: 0, w: 6, h: 4 } }] };
     const fork = { panels: [{ id: 1, type: 'stat', title: 'Up', gridPos: { x: 6, y: 0, w: 6, h: 4 } }] };

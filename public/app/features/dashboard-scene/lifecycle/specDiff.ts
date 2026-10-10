@@ -2,6 +2,25 @@ import { isEqual } from 'lodash';
 
 import { isRecord } from 'app/core/utils/isRecord';
 
+/** Absent, null, empty strings, arrays and objects all mean "not set" across schema versions. */
+function withoutEmpty(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    const items = value.map(withoutEmpty);
+    return items.length ? items : undefined;
+  }
+  if (isRecord(value)) {
+    const entries = Object.entries(value)
+      .map(([key, item]) => [key, withoutEmpty(item)] as const)
+      .filter(([, item]) => item !== undefined);
+    return entries.length ? Object.fromEntries(entries) : undefined;
+  }
+  return value === null || value === '' ? undefined : value;
+}
+
+function same(a: unknown, b: unknown): boolean {
+  return isEqual(withoutEmpty(a), withoutEmpty(b));
+}
+
 export type SpecChangeType = 'added' | 'edited' | 'removed';
 export type SpecChangeTarget = 'panel' | 'variable' | 'layout' | 'settings';
 
@@ -53,8 +72,8 @@ export function diffDashboardSpecs(base: unknown, next: unknown): SpecChange[] {
     const old = beforePanels.get(key);
     if (!old) {
       changes.push({ type: 'added', target: 'panel', name: panel.title, panelKey: panelKeyOf(panel) });
-    } else if (!isEqual(old.value, panel.value)) {
-      const parts = Object.keys(panel.parts).filter((part) => !isEqual(old.parts[part], panel.parts[part]));
+    } else if (!same(old.value, panel.value)) {
+      const parts = Object.keys(panel.parts).filter((part) => !same(old.parts[part], panel.parts[part]));
       changes.push({ type: 'edited', target: 'panel', name: panel.title, parts, panelKey: panelKeyOf(panel) });
     }
   }
@@ -69,7 +88,7 @@ export function diffDashboardSpecs(base: unknown, next: unknown): SpecChange[] {
   for (const [name, value] of afterVars) {
     if (!beforeVars.has(name)) {
       changes.push({ type: 'added', target: 'variable', name });
-    } else if (!isEqual(beforeVars.get(name), value)) {
+    } else if (!same(beforeVars.get(name), value)) {
       changes.push({ type: 'edited', target: 'variable', name });
     }
   }
@@ -79,11 +98,11 @@ export function diffDashboardSpecs(base: unknown, next: unknown): SpecChange[] {
     }
   }
 
-  if (!isEqual(layoutOf(before), layoutOf(after))) {
+  if (!same(layoutOf(before), layoutOf(after))) {
     changes.push({ type: 'edited', target: 'layout', name: 'layout' });
   }
   for (const field of SETTINGS_FIELDS) {
-    if (!isEqual(before[field], after[field]) && (before[field] !== undefined || after[field] !== undefined)) {
+    if (!same(before[field], after[field])) {
       changes.push({ type: 'edited', target: 'settings', name: field });
     }
   }
