@@ -308,8 +308,6 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(infranats.Publisher), new(*infranats.PublisherService)),
 	infranats.ProvideSubscriber,
 	wire.Bind(new(infranats.Subscriber), new(*infranats.SubscriberService)),
-	legacywatch.ProvidePublisher,
-	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
@@ -493,6 +491,8 @@ var wireBasicSet = wire.NewSet(
 
 var wireSet = wire.NewSet(
 	wireBasicSet,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
@@ -513,6 +513,10 @@ var wireSet = wire.NewSet(
 var wireCLISet = wire.NewSet(
 	NewRunner,
 	wireBasicSet,
+	// The CLI and routes loader serve no writes to announce; a real publisher
+	// would construct a second NATS server and publisher, whose metrics collide
+	// with the ones a module target already registered.
+	legacywatch.ProvideDisabledPublisher,
 	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
@@ -531,6 +535,8 @@ var wireCLISet = wire.NewSet(
 
 var wireTestSet = wire.NewSet(
 	wireBasicSet,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	ProvideTestEnv,
 	metricsservice.WireSetForTest,
 	sqlstore.ProvideServiceForTests,

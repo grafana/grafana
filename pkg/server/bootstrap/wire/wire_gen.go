@@ -1895,14 +1895,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	secretsMigrator := migrator7.ProvideSecretsMigrator(serviceService, secretsService, sqlStore, ossImpl, featureToggles)
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(ctx, legacyDatabaseProvider, configProvider)
-	registerer := metrics.ProvideRegisterer()
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
-	if err != nil {
-		return server.Runner{}, err
-	}
-	config := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(config, registerer)
-	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
+	publisher := legacywatch.ProvideDisabledPublisher()
 	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
 	if err != nil {
 		return server.Runner{}, err
@@ -1923,6 +1916,7 @@ func InitializeForCLI(ctx context.Context, cfg *setting.Cfg) (server.Runner, err
 	}
 	tracer := server.OtelTracer()
 	databaseDatabase := database2.ProvideDatabase(sqlStore, tracer)
+	registerer := metrics.ProvideRegisterer()
 	globalDataKeyStorage, err := encryption.ProvideGlobalDataKeyStorage(databaseDatabase, tracer, registerer)
 	if err != nil {
 		return server.Runner{}, err
@@ -2052,19 +2046,13 @@ func InitializeRoutesLoader(cfg *setting.Cfg, clients router.RoutesLoaderClients
 	}
 	legacyDatabaseProvider := legacysql.NewDatabaseProvider(sqlStore)
 	quotaService := quotaimpl.ProvideService(contextContext, legacyDatabaseProvider, configProvider)
-	registerer := metrics.ProvideRegisterer()
-	natsServer, err := nats.ProvideServer(cfg, sqlStore, registerer)
-	if err != nil {
-		return nil, err
-	}
-	config := nats.ProvideNATSConfig(cfg, natsServer)
-	publisherService := nats.ProvidePublisher(config, registerer)
-	publisher := legacywatch.ProvidePublisher(cfg, publisherService, inProcBus)
+	publisher := legacywatch.ProvideDisabledPublisher()
 	orgService, err := orgimpl.ProvideServiceWithWatch(legacyDatabaseProvider, cfg, quotaService, publisher)
 	if err != nil {
 		return nil, err
 	}
 	orgRoleMapper := connectors.ProvideOrgRoleMapper(configProvider, orgService)
+	registerer := metrics.ProvideRegisterer()
 	ossImpl := setting.ProvideProvider(cfg)
 	hooksService := hooks.ProvideService()
 	ossLicensingService := licensing.ProvideService(cfg, hooksService)

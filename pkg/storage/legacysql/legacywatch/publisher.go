@@ -83,6 +83,12 @@ func ProvidePublisher(cfg *setting.Cfg, nats Bus, events bus.Bus) *Publisher {
 	return p
 }
 
+// ProvideDisabledPublisher provides the nil Publisher, which announces nothing,
+// for wire graphs that must not construct the NATS bus.
+func ProvideDisabledPublisher() *Publisher {
+	return nil
+}
+
 func (p *Publisher) onNotification(ctx context.Context, n *LegacyWatchNotification) error {
 	p.Publish(ctx, n.Type, n.Resource, n.OrgID, n.Name, n.ResourceVersion)
 	return nil
