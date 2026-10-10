@@ -1,9 +1,19 @@
 import { cx } from '@emotion/css';
-import { type ChangeEvent, type KeyboardEvent, type MutableRefObject, type ReactNode, useEffect, useRef } from 'react';
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
+import {
+  type ChangeEvent,
+  type KeyboardEvent,
+  type MutableRefObject,
+  type ReactNode,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+} from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { t, Trans } from '@grafana/i18n';
-import { Badge, Button, Icon, IconButton, Text, TextArea, useStyles2 } from '@grafana/ui';
+import { Badge, Button, Icon, IconButton, Portal, Text, TextArea, useStyles2 } from '@grafana/ui';
 
 import { getQueryCoauthoringStyles } from './QueryCoauthoring.styles';
 import { type QueryCoauthoringFeedbackState } from './QueryCoauthoringFeedback';
@@ -11,7 +21,8 @@ import {
   type QueryEditorCoauthoringChangeV1,
   type QueryEditorCoauthoringContextV1,
 } from './internalCoauthoringContract';
-import { workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
+import { type QueryCoauthoringMentionMenu } from './queryCoauthoringMentions';
+import { type QueryExplanation, workingContextSummary, workingFocusSummary } from './queryCoauthoringPrompts';
 
 interface HeaderProps {
   children?: ReactNode;
@@ -66,8 +77,12 @@ interface PromptInputProps {
   ariaDescribedBy?: string;
   actionLabel: string;
   disabled: boolean;
-  onChange: (value: string) => void;
+  onChange: (value: string, caret?: number) => void;
   onSubmit: () => void;
+  mention?: QueryCoauthoringMentionMenu;
+  mentionMenuRef?: MutableRefObject<HTMLDivElement | null>;
+  cursorPosition?: number;
+  onCaretChange?: (caret: number) => void;
 }
 
 export function QueryCoauthoringPromptInput({
@@ -81,11 +96,30 @@ export function QueryCoauthoringPromptInput({
   disabled,
   onChange,
   onSubmit,
+  mention,
+  mentionMenuRef,
+  cursorPosition,
+  onCaretChange,
 }: PromptInputProps) {
   const styles = useStyles2(getQueryCoauthoringStyles);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const initialActiveElementRef = useRef(document.activeElement);
   const localUserGestureRef = useRef(false);
   const hasOutsideUserGestureRef = userGestureRef ?? localUserGestureRef;
+  const menuId = useId();
+  const { refs, floatingStyles } = useFloating({
+    open: !!mention,
+    placement: 'bottom-start',
+    strategy: 'fixed',
+    middleware: [offset(4), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+  useLayoutEffect(() => {
+    if (cursorPosition !== undefined) {
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(cursorPosition, cursorPosition);
+    }
+  }, [cursorPosition, value]);
 
   useEffect(() => {
     const recordOutsideUserGesture = (event: Event) => {
@@ -107,6 +141,21 @@ export function QueryCoauthoringPromptInput({
     let firstFocusFrame: number | undefined;
     let secondFocusFrame: number | undefined;
     let focusFrame: number | undefined;
+    let retryFocusFrame: number | undefined;
+    const focusPrompt = () => {
+      const input = inputRef.current;
+      const currentActiveElement = document.activeElement;
+      if (
+        input &&
+        !hasOutsideUserGestureRef.current &&
+        (currentActiveElement === activeElement ||
+          currentActiveElement === initialActiveElementRef.current ||
+          currentActiveElement === document.body ||
+          currentActiveElement === input)
+      ) {
+        input.focus();
+      }
+    };
     const cancelFocus = () => {
       if (firstFocusFrame !== undefined) {
         cancelAnimationFrame(firstFocusFrame);
@@ -120,6 +169,10 @@ export function QueryCoauthoringPromptInput({
         cancelAnimationFrame(focusFrame);
         focusFrame = undefined;
       }
+      if (retryFocusFrame !== undefined) {
+        cancelAnimationFrame(retryFocusFrame);
+        retryFocusFrame = undefined;
+      }
     };
 
     // Wait until Monaco has finished its two-frame surface placement before taking focus.
@@ -129,18 +182,12 @@ export function QueryCoauthoringPromptInput({
         secondFocusFrame = undefined;
         focusFrame = requestAnimationFrame(() => {
           focusFrame = undefined;
-          const input = inputRef.current;
-          const currentActiveElement = document.activeElement;
-
-          if (
-            input &&
-            !hasOutsideUserGestureRef.current &&
-            (currentActiveElement === activeElement ||
-              currentActiveElement === document.body ||
-              currentActiveElement === input)
-          ) {
-            input.focus();
-          }
+          focusPrompt();
+          // Monaco can reclaim focus after placement; retry once while respecting user navigation.
+          retryFocusFrame = requestAnimationFrame(() => {
+            retryFocusFrame = undefined;
+            focusPrompt();
+          });
         });
       });
     });
@@ -148,40 +195,100 @@ export function QueryCoauthoringPromptInput({
     return cancelFocus;
   }, [focusTrigger, hasOutsideUserGestureRef]);
 
-  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) => onChange(event.currentTarget.value);
+  const handleChange = (event: ChangeEvent<HTMLTextAreaElement>) =>
+    onChange(event.currentTarget.value, event.currentTarget.selectionStart);
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.nativeEvent.isComposing) {
       return;
     }
+    if (mention && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
+      event.preventDefault();
+      mention.move(event.key === 'ArrowDown' ? 1 : -1);
+      return;
+    }
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
-      if (!disabled) {
+      if (mention) {
+        mention.select();
+      } else if (!disabled) {
         onSubmit();
       }
     }
   };
 
   return (
-    <div className={styles.promptRow}>
-      <TextArea
-        ref={inputRef}
-        className={styles.promptInput}
-        value={value}
-        rows={1}
-        placeholder={placeholder}
-        aria-label={ariaLabel}
-        aria-describedby={ariaDescribedBy}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-      />
-      <IconButton
-        className={styles.promptSubmit}
-        name="enter"
-        aria-label={actionLabel}
-        disabled={disabled}
-        onClick={onSubmit}
-      />
-    </div>
+    <>
+      <div className={styles.promptRow}>
+        <TextArea
+          ref={(element) => {
+            inputRef.current = element;
+            refs.setReference(element);
+          }}
+          className={styles.promptInput}
+          value={value}
+          rows={1}
+          placeholder={placeholder}
+          aria-label={ariaLabel}
+          aria-describedby={ariaDescribedBy}
+          aria-autocomplete={mention ? 'list' : undefined}
+          aria-expanded={!!mention}
+          aria-haspopup="listbox"
+          aria-controls={mention ? menuId : undefined}
+          aria-activedescendant={mention ? `${menuId}-${mention.selectedIndex}` : undefined}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          onSelect={(event) => onCaretChange?.(event.currentTarget.selectionStart)}
+        />
+        <IconButton
+          className={styles.promptSubmit}
+          name="enter"
+          aria-label={actionLabel}
+          disabled={disabled}
+          onClick={onSubmit}
+        />
+      </div>
+      {mention && (
+        <Portal>
+          <div
+            id={menuId}
+            ref={(element) => {
+              refs.setFloating(element);
+              if (mentionMenuRef) {
+                mentionMenuRef.current = element;
+              }
+            }}
+            role="listbox"
+            aria-label={t('query-editor-coauthoring.mention-suggestions', 'Metrics and labels')}
+            className={styles.mentionMenu}
+            style={floatingStyles}
+          >
+            {mention.options.map((option, index) => (
+              <button
+                key={`${option.kind}:${option.name}`}
+                type="button"
+                role="option"
+                id={`${menuId}-${index}`}
+                tabIndex={-1}
+                aria-selected={index === mention.selectedIndex}
+                aria-label={t('query-editor-coauthoring.mention-option', '{{name}} ({{kind}})', {
+                  name: option.name,
+                  kind:
+                    option.kind === 'metric'
+                      ? t('query-editor-coauthoring.mention-metric', 'Metric')
+                      : t('query-editor-coauthoring.mention-label', 'Label'),
+                })}
+                className={cx(styles.mentionOption, index === mention.selectedIndex && styles.mentionSelected)}
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => mention.select(index)}
+              >
+                <Icon name={option.kind === 'metric' ? 'graph-bar' : 'tag-alt'} size="sm" />
+                {option.name}
+              </button>
+            ))}
+          </div>
+        </Portal>
+      )}
+    </>
   );
 }
 
@@ -196,45 +303,113 @@ export function QueryCoauthoringClarificationAction({ onContinue }: { onContinue
   );
 }
 
+export function QueryCoauthoringExplain({
+  answer,
+  intent,
+  onIntentChange,
+  onFollowUp,
+  onModify,
+  onClose,
+  mention,
+  mentionMenuRef,
+  cursorPosition,
+  onCaretChange,
+}: {
+  answer: QueryExplanation;
+  intent: string;
+  onIntentChange: (intent: string, caret?: number) => void;
+  onFollowUp: (question?: string) => void;
+  onModify: () => void;
+  onClose: () => void;
+  mention?: QueryCoauthoringMentionMenu;
+  mentionMenuRef?: MutableRefObject<HTMLDivElement | null>;
+  cursorPosition?: number;
+  onCaretChange?: (caret: number) => void;
+}) {
+  const styles = useStyles2(getQueryCoauthoringStyles);
+  return (
+    <>
+      <QueryCoauthoringHeader onClose={onClose}>
+        <Text variant="body" color="secondary">
+          <Trans i18nKey="query-editor-coauthoring.highlighted-query">Highlighted query</Trans>
+        </Text>
+      </QueryCoauthoringHeader>
+      <div className={styles.body}>
+        <Text variant="body">{answer.explanation}</Text>
+        <div className={styles.quickActions}>
+          {answer.followUps.map((question, index) => (
+            <Button key={index} size="sm" variant="secondary" onClick={() => onFollowUp(question)}>
+              {question}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <QueryCoauthoringPromptInput
+        value={intent}
+        placeholder={t('query-editor-coauthoring.follow-up-placeholder', 'Ask a follow up…')}
+        ariaLabel={t('query-editor-coauthoring.follow-up-label', 'Ask a follow up')}
+        actionLabel={t('query-editor-coauthoring.submit-follow-up', 'Ask')}
+        disabled={!intent.trim()}
+        onChange={onIntentChange}
+        onSubmit={() => onFollowUp()}
+        mention={mention}
+        mentionMenuRef={mentionMenuRef}
+        cursorPosition={cursorPosition}
+        onCaretChange={onCaretChange}
+      />
+      <div className={styles.footer}>
+        <Button size="sm" variant="secondary" fill="text" onClick={onModify}>
+          <Trans i18nKey="query-editor-coauthoring.modify-query">Modify this query</Trans>
+        </Button>
+      </div>
+    </>
+  );
+}
+
 export function QueryCoauthoringWorking({
   context,
+  mode,
   onStop,
 }: {
   context?: QueryEditorCoauthoringContextV1;
+  mode: 'modify' | 'explain';
   onStop: () => void;
 }) {
   const styles = useStyles2(getQueryCoauthoringStyles);
   return (
-    <div className={styles.building}>
-      <QueryCoauthoringHeader onStop={onStop} pulse>
-        <QueryCoauthoringLiveStatus>
-          <Icon name="ai-sparkle" size="sm" />
+    <QueryCoauthoringHeader onStop={onStop}>
+      <QueryCoauthoringLiveStatus>
+        <div className={styles.workingStatus}>
           <Text variant="bodySmall" color="secondary">
-            <Trans i18nKey="query-editor-coauthoring.building">Building query...</Trans>
+            {mode === 'explain' ? (
+              <Trans i18nKey="query-editor-coauthoring.explaining">Explaining query…</Trans>
+            ) : (
+              <Trans i18nKey="query-editor-coauthoring.building">Building query…</Trans>
+            )}
           </Text>
-        </QueryCoauthoringLiveStatus>
-      </QueryCoauthoringHeader>
-      {context && (
-        <div className={styles.workingFlow}>
-          <div className={styles.workingStep} aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}>
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.focus">FOCUS</Trans>
-            </Text>
-            <code>{workingFocusSummary(context)}</code>
-          </div>
-          <Icon className={styles.flowArrow} name="arrow-right" />
-          <div
-            className={cx(styles.workingStep, styles.workingStepDelayed)}
-            aria-label={t('query-editor-coauthoring.relevant-context', 'Relevant query context')}
-          >
-            <Text variant="bodySmall" color="secondary">
-              <Trans i18nKey="query-editor-coauthoring.context">CONTEXT</Trans>
-            </Text>
-            <code>{workingContextSummary(context)}</code>
-          </div>
+          {context && (
+            <div className={styles.workingChips}>
+              <div
+                className={styles.workingChip}
+                aria-label={t('query-editor-coauthoring.working-focus', 'Query focus')}
+              >
+                <Text variant="bodySmall" color="secondary">
+                  <Trans i18nKey="query-editor-coauthoring.focus">Focus</Trans>
+                </Text>
+                <code>{workingFocusSummary(context)}</code>
+              </div>
+              <span className={styles.workingSweep} aria-hidden="true" />
+              <div
+                className={styles.workingChip}
+                aria-label={t('query-editor-coauthoring.relevant-context', 'Relevant query context')}
+              >
+                <code>{workingContextSummary(context)}</code>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-    </div>
+      </QueryCoauthoringLiveStatus>
+    </QueryCoauthoringHeader>
   );
 }
 
@@ -362,6 +537,9 @@ export function QueryCoauthoringProposal({
           <FeedbackButtons outcome="proposal" onFeedback={onFeedback} />
         </div>
         <div className={styles.footerActions}>
+          <Button size="sm" fill="text" variant="secondary" onClick={onClose}>
+            <Trans i18nKey="query-editor-coauthoring.cancel">Cancel</Trans>
+          </Button>
           <Button className={styles.compactButton} size="sm" fill="text" icon="ai-sparkle" onClick={onContinue}>
             <Trans i18nKey="query-editor-coauthoring.open-in-chat">Open in chat</Trans>
           </Button>

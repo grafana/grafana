@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Component, type MouseEvent, type ReactNode, useSyncExternalStore } from 'react';
+import { Component, type MouseEvent, type ReactNode, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
 import { type GrafanaTheme2 } from '@grafana/data';
@@ -99,30 +99,12 @@ function QueryCoauthoringAdapterSurface({
   onBaseline,
   snapshot,
 }: Props & { snapshot: QueryEditorCoauthoringSnapshotV1 }) {
-  const styles = useStyles2(getStyles);
-
   if (snapshot.mode === 'hidden') {
     return null;
   }
 
   if (snapshot.mode === 'selection') {
-    const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
-    return createPortal(
-      <div className={styles.toolbarSurface} data-testid={selectors.components.QueryEditorCoauthoring.selectionToolbar}>
-        <Button
-          fill="text"
-          icon="ai-sparkle"
-          onClick={adapter.invoke}
-          onMouseDown={preserveSelection}
-          size="sm"
-          variant="secondary"
-        >
-          {t('query-editor-coauthoring.explain-or-modify', 'Explain or modify')}
-          <span className={styles.shortcut}>{getModKey()}+.</span>
-        </Button>
-      </div>,
-      snapshot.portalTarget
-    );
+    return <QueryCoauthoringEntry adapter={adapter} portalTarget={snapshot.portalTarget} />;
   }
 
   return (
@@ -139,6 +121,64 @@ function QueryCoauthoringAdapterSurface({
       isPreviewRunning={host.previewPhase === 'pending' || host.previewPhase === 'running'}
       timeRange={host.timeRange}
     />
+  );
+}
+
+function QueryCoauthoringEntry({
+  adapter,
+  portalTarget,
+}: {
+  adapter: QueryEditorCoauthoringAdapterV1;
+  portalTarget: HTMLElement;
+}) {
+  const styles = useStyles2(getStyles);
+  const entryRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const onOutsidePointerDown = (event: PointerEvent) => {
+      // Selection gestures in the owning editor must not dismiss the entry they reveal.
+      const editor = portalTarget.closest('.monaco-editor');
+      if (
+        event.target instanceof Node &&
+        !entryRef.current?.contains(event.target) &&
+        !editor?.contains(event.target)
+      ) {
+        adapter.dismiss();
+      }
+    };
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        event.stopPropagation();
+        adapter.dismiss();
+      }
+    };
+    document.addEventListener('pointerdown', onOutsidePointerDown, true);
+    document.addEventListener('keydown', onEscape);
+    return () => {
+      document.removeEventListener('pointerdown', onOutsidePointerDown, true);
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [adapter, portalTarget]);
+  const preserveSelection = (event: MouseEvent<HTMLButtonElement>) => event.preventDefault();
+  return createPortal(
+    <div
+      ref={entryRef}
+      className={styles.toolbarSurface}
+      data-testid={selectors.components.QueryEditorCoauthoring.selectionToolbar}
+    >
+      <Button
+        fill="text"
+        icon="ai-sparkle"
+        onClick={adapter.invoke}
+        onMouseDown={preserveSelection}
+        size="sm"
+        variant="secondary"
+      >
+        {t('query-editor-coauthoring.explain-or-modify', 'Explain or modify')}
+        <span className={styles.shortcut}>{getModKey()}+.</span>
+      </Button>
+    </div>,
+    portalTarget
   );
 }
 

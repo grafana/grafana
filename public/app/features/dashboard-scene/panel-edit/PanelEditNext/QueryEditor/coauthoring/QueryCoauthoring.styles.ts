@@ -12,9 +12,9 @@ const statusPulse = keyframes({
   '50%': { opacity: 1 },
 });
 
-const fillIn = keyframes({
-  from: { opacity: 0.4, transform: 'translateX(-3px)' },
-  to: { opacity: 1, transform: 'translateX(0)' },
+const contextSweep = keyframes({
+  from: { backgroundPosition: '100% 0' },
+  to: { backgroundPosition: '-100% 0' },
 });
 
 export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
@@ -103,11 +103,46 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       margin: 0,
       padding: theme.spacing(0.75),
     }),
+    mentionMenu: css({
+      display: 'flex',
+      flexDirection: 'column',
+      minWidth: theme.spacing(28),
+      maxWidth: 'calc(100vw - 16px)',
+      padding: theme.spacing(0.5),
+      color: theme.colors.text.primary,
+      background: theme.colors.background.elevated,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
+      boxShadow: theme.shadows.z2,
+      zIndex: theme.zIndex.typeahead,
+    }),
+    mentionOption: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(1),
+      padding: theme.spacing(0.75, 1),
+      color: theme.colors.text.primary,
+      background: 'transparent',
+      border: 0,
+      borderRadius: theme.shape.radius.default,
+      textAlign: 'left',
+      overflowWrap: 'anywhere',
+      '&:hover': { background: theme.colors.action.hover },
+    }),
+    mentionSelected: css({ background: theme.colors.action.selected }),
     clarificationAction: css({
       display: 'flex',
       flex: '0 0 auto',
       justifyContent: 'flex-end',
       paddingInline: theme.spacing(1),
+    }),
+    quickActions: css({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: theme.spacing(0.5),
+      padding: theme.spacing(0, 1, 0.5),
+      button: { maxWidth: '100%', whiteSpace: 'normal', height: 'auto', textAlign: 'left' },
     }),
     status: css({
       display: 'flex',
@@ -134,43 +169,38 @@ export function getQueryCoauthoringStyles(theme: GrafanaTheme2) {
       overflowY: 'auto',
       scrollbarGutter: 'stable',
     }),
-    building: css({
-      display: 'flex',
-      flexDirection: 'column',
-      gap: theme.spacing(1),
+    contextError: css({
+      background: theme.colors.background.primary,
+      borderRadius: theme.shape.radius.default,
     }),
-    workingFlow: css({
-      display: 'grid',
-      gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+    workingStatus: css({ display: 'flex', flexDirection: 'column', gap: theme.spacing(1), minWidth: 0 }),
+    workingChips: css({ display: 'flex', alignItems: 'center', gap: theme.spacing(0.5), minWidth: 0 }),
+    workingChip: css({
+      display: 'flex',
       alignItems: 'center',
-      gap: theme.spacing(1),
-      minWidth: 0,
-      padding: theme.spacing(0, 1.5, 1),
-    }),
-    workingStep: css({
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
       gap: theme.spacing(0.5),
       minWidth: 0,
-      padding: theme.spacing(0.75, 1),
-      border: `1px dashed ${theme.colors.border.medium}`,
-      borderRadius: theme.shape.radius.default,
+      padding: theme.spacing(0.5, 0.75),
       background: theme.colors.background.secondary,
-      [theme.transitions.handleMotion('no-preference')]: {
-        animation: `${fillIn} 320ms ${theme.transitions.easing.easeOut} both`,
-      },
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
       code: {
         minWidth: 0,
         overflow: 'hidden',
         color: theme.colors.text.secondary,
         fontFamily: theme.typography.fontFamilyMonospace,
+        fontSize: theme.typography.bodySmall.fontSize,
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
       },
     }),
-    workingStepDelayed: css({
-      [theme.transitions.handleMotion('no-preference')]: { animationDelay: '180ms' },
+    workingSweep: css({
+      flex: '0 0 auto',
+      width: theme.spacing(2),
+      height: 2,
+      background: `linear-gradient(90deg, transparent, ${theme.colors.text.secondary}, transparent)`,
+      backgroundSize: '200% 100%',
+      [theme.transitions.handleMotion('no-preference')]: { animation: `${contextSweep} 1400ms ease-in-out infinite` },
     }),
     flowArrow: css({ color: theme.colors.text.disabled }),
     proposal: css({
