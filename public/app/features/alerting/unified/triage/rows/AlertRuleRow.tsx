@@ -1,7 +1,10 @@
+import { css } from '@emotion/css';
 import { useCallback, useState } from 'react';
 
+import { type GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { Stack, Text } from '@grafana/ui';
+import { Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { MetaText } from '../../components/MetaText';
 import { RuleDetailsDrawer } from '../rule-details/RuleDetailsDrawer';
@@ -9,9 +12,9 @@ import { AlertRuleInstances } from '../scene/AlertRuleInstances';
 import { AlertRuleSummary } from '../scene/AlertRuleSummary';
 import { type AlertRuleRow as AlertRuleRowType } from '../types';
 
+import { AlertRuleRowActions } from './AlertRuleRowActions';
 import { GenericRow } from './GenericRow';
 import { RowActions } from './InstanceCountBadges';
-import { OpenDrawerButton } from './OpenDrawerButton';
 
 interface AlertRuleRowProps {
   row: AlertRuleRowType;
@@ -30,6 +33,7 @@ export function AlertRuleRow({
   enableFolderMeta = true,
   groupLabels,
 }: AlertRuleRowProps) {
+  const styles = useStyles2(getStyles);
   const { ruleUID, folder, title } = row.metadata;
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -46,17 +50,23 @@ export function AlertRuleRow({
       <GenericRow
         key={rowKey}
         width={leftColumnWidth}
-        title={<Text variant="body">{title}</Text>}
+        title={
+          <button
+            type="button"
+            className={styles.ruleName}
+            onClick={handleDrawerOpen}
+            data-testid={selectors.pages.Alerting.Triage.ruleNameButton}
+            aria-label={t('alerting.triage.rule-details-aria-label', 'Open details for {{ruleName}}', {
+              ruleName: title,
+            })}
+          >
+            <Text variant="body">{title}</Text>
+          </button>
+        }
         actions={
           <RowActions
             counts={row.instanceCounts}
-            actionButton={
-              <OpenDrawerButton
-                aria-label={t('alerting.triage.open-rule-details', 'Open rule details')}
-                onClick={handleDrawerOpen}
-                text={t('alerting.open-drawer-icon-button.rule-details', 'Rule details')}
-              />
-            }
+            actionButton={<AlertRuleRowActions ruleUID={ruleUID} ruleName={title} />}
           />
         }
         metadata={
@@ -81,3 +91,20 @@ export function AlertRuleRow({
     </>
   );
 }
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  // The rule name opens the details sidebar. Strip the browser's button styling so it still
+  // reads as the row's title rather than as a control.
+  ruleName: css({
+    background: 'none',
+    border: 'none',
+    padding: 0,
+    margin: 0,
+    textAlign: 'left',
+    cursor: 'pointer',
+    color: theme.colors.text.primary,
+    '&:hover': {
+      textDecoration: 'underline',
+    },
+  }),
+});
