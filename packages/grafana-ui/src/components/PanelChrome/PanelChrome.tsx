@@ -301,6 +301,7 @@ export function PanelChrome({
             variant={visualRefreshEnabled ? 'base' : 'h6'}
             truncate
             title={typeof title === 'string' ? title : undefined}
+            weight="medium"
             id={panelTitleId}
           >
             {title}
@@ -311,7 +312,7 @@ export function PanelChrome({
       {/* Collapsible title */}
       {collapsible && (
         <div className={styles.title}>
-          <Text element="h2" variant={visualRefreshEnabled ? 'base' : 'h6'}>
+          <Text element="h2" variant={visualRefreshEnabled ? 'base' : 'h6'} weight="medium">
             <button
               type="button"
               className={styles.clearButtonStyles}
