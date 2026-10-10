@@ -41,9 +41,6 @@ export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onO
 
   return (
     <div>
-      <h3 className="page-heading">
-        <Trans i18nKey="admin.user-orgs.title">Organizations</Trans>
-      </h3>
       <Stack gap={1.5} direction="column">
         <table className="filter-table form-inline">
           <tbody>
@@ -148,6 +145,7 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
 
   const handleOrgRoleSave = () => {
     onOrgRoleChange(org.orgId, currentRole);
+    setIsChangingRole(false);
   };
 
   const handleCancelClick = () => {
@@ -425,7 +423,7 @@ interface ExternalUserTooltipProps {
   lockMessage?: string;
 }
 
-export const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
+const ExternalUserTooltip = ({ lockMessage }: ExternalUserTooltipProps) => {
   const styles = useStyles2(getTooltipStyles);
 
   return (

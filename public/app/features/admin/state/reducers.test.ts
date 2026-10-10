@@ -1,7 +1,7 @@
 import { reducerTester } from 'test/core/redux/reducerTester';
 
 import { type LdapState, type LdapUser } from 'app/types/ldap';
-import { type UserAdminState, type UserListAdminState, type UserDTO } from 'app/types/user';
+import { type UserListAdminState } from 'app/types/user';
 
 import {
   clearUserMappingInfoAction,
@@ -9,11 +9,8 @@ import {
   ldapFailedAction,
   ldapReducer,
   ldapSyncStatusLoadedAction,
-  userAdminReducer,
   userMappingInfoFailedAction,
   userMappingInfoLoadedAction,
-  userProfileLoadedAction,
-  userSessionsLoadedAction,
   userListAdminReducer,
   queryChanged,
   filterChanged,
@@ -21,12 +18,6 @@ import {
 
 const makeInitialLdapState = (): LdapState => ({
   connectionInfo: [],
-});
-
-const makeInitialUserAdminState = (): UserAdminState => ({
-  sessions: [],
-  orgs: [],
-  isLoading: true,
 });
 
 const makeInitialUserListAdminState = (): UserListAdminState => ({
@@ -53,17 +44,6 @@ const getTestUserMapping = (): LdapUser => ({
   },
   roles: [],
   teams: [],
-});
-
-const getTestUser = (): UserDTO => ({
-  id: 1,
-  uid: 'aaaaaa',
-  email: 'user@localhost',
-  login: 'user',
-  name: 'User',
-  avatarUrl: '',
-  isGrafanaAdmin: false,
-  isDisabled: false,
 });
 
 describe('LDAP page reducer', () => {
@@ -210,65 +190,6 @@ describe('LDAP page reducer', () => {
         .thenStateShouldEqual({
           ...makeInitialLdapState(),
           user: undefined,
-        });
-    });
-  });
-});
-
-describe('Edit Admin user page reducer', () => {
-  describe('When user loaded', () => {
-    it('should set user and clear user error', () => {
-      const initialState = {
-        ...makeInitialUserAdminState(),
-      };
-
-      reducerTester<UserAdminState>()
-        .givenReducer(userAdminReducer, initialState)
-        .whenActionIsDispatched(userProfileLoadedAction(getTestUser()))
-        .thenStateShouldEqual({
-          ...makeInitialUserAdminState(),
-
-          user: getTestUser(),
-        });
-    });
-  });
-
-  describe('when userSessionsLoadedAction is dispatched', () => {
-    it('then state should be correct', () => {
-      reducerTester<UserAdminState>()
-        .givenReducer(userAdminReducer, { ...makeInitialUserAdminState() })
-        .whenActionIsDispatched(
-          userSessionsLoadedAction([
-            {
-              browser: 'Chrome',
-              id: 1,
-              browserVersion: '79',
-              clientIp: '127.0.0.1',
-              createdAt: '2020-01-01 00:00:00',
-              device: 'a device',
-              isActive: true,
-              os: 'MacOS',
-              osVersion: '15',
-              seenAt: '2020-01-01 00:00:00',
-            },
-          ])
-        )
-        .thenStateShouldEqual({
-          ...makeInitialUserAdminState(),
-          sessions: [
-            {
-              browser: 'Chrome',
-              id: 1,
-              browserVersion: '79',
-              clientIp: '127.0.0.1',
-              createdAt: '2020-01-01 00:00:00',
-              device: 'a device',
-              isActive: true,
-              os: 'MacOS',
-              osVersion: '15',
-              seenAt: '2020-01-01 00:00:00',
-            },
-          ],
         });
     });
   });
