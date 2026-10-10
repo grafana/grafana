@@ -20,6 +20,7 @@ import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
 import { type UserDTO } from 'app/types/user';
 
 import { OrgUnits } from './OrgUnits';
+import { getUserLastActive, getUsersTableSortBy } from './utils';
 
 type Cell<T extends keyof UserDTO = keyof UserDTO> = CellProps<UserDTO, UserDTO[T]>;
 
@@ -30,6 +31,7 @@ export interface UsersTableProps {
   onChangePage: (page: number) => void;
   currentPage: number;
   fetchData?: FetchDataFunc<UserDTO>;
+  sort?: string;
 }
 
 export const UsersTable = ({
@@ -39,6 +41,7 @@ export const UsersTable = ({
   onChangePage,
   currentPage,
   fetchData,
+  sort,
 }: UsersTableProps) => {
   const showLicensedRole = useMemo(() => users.some((user) => user.licensedRole), [users]);
   const showBelongsTo = useMemo(() => users.some((user) => user.orgs), [users]);
@@ -135,29 +138,9 @@ export const UsersTable = ({
           content: 'Time since user was seen using Grafana',
           iconName: 'question-circle',
         },
-        cell: ({
-          cell: { value },
-          row: {
-            original: { lastSeenAt, created },
-          },
-        }: Cell<'lastSeenAtAge'>) => {
-          // The user has never logged in if lastSeenAt is before its creation date.
-          const neverLoggedIn = lastSeenAt && created && new Date(lastSeenAt) < new Date(created);
-          return (
-            <>
-              {value && (
-                <>
-                  {neverLoggedIn ? (
-                    <Text color={'disabled'}>
-                      <Trans i18nKey="admin.users-table.last-seen-never">Never</Trans>
-                    </Text>
-                  ) : (
-                    value
-                  )}
-                </>
-              )}
-            </>
-          );
+        cell: ({ row: { original } }: Cell<'lastSeenAtAge'>) => {
+          const { text, neverLoggedIn } = getUserLastActive(original);
+          return neverLoggedIn ? <Text color="disabled">{text}</Text> : text;
         },
         sortType: (a, b) => new Date(a.original.lastSeenAt!).getTime() - new Date(b.original.lastSeenAt!).getTime(),
       },
@@ -201,7 +184,13 @@ export const UsersTable = ({
   );
   return (
     <Stack direction={'column'} gap={2}>
-      <InteractiveTable columns={columns} data={users} getRowId={(user) => user.uid} fetchData={fetchData} />
+      <InteractiveTable
+        columns={columns}
+        data={users}
+        getRowId={(user) => user.uid}
+        fetchData={fetchData}
+        initialSortBy={getUsersTableSortBy(sort)}
+      />
       {showPaging && (
         <Stack justifyContent={'flex-end'}>
           <Pagination numberOfPages={totalPages} currentPage={currentPage} onNavigate={onChangePage} />

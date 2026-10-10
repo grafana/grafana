@@ -94,6 +94,11 @@ export const versionedComponents = {
       '13.3.0': 'data-testid ControlsAddButton trigger button',
     },
   },
+  ExportUsersButton: {
+    downloadButton: {
+      '13.3.0': 'data-testid ExportUsersButton download button',
+    },
+  },
   /**
    * @deprecated use DashboardSidebarSplitter instead
    */

@@ -123,14 +123,14 @@ export const userAdminReducer = userAdminSlice.reducer;
 // UserListAdminPage
 
 const initialUserListAdminState: UserListAdminState = {
-  users: [],
+  users: undefined,
   query: '',
   page: 0,
   perPage: 50,
   totalPages: 1,
   showPaging: false,
   filters: [{ name: 'activeLast30Days', value: false }],
-  isLoading: true,
+  isLoading: false,
 };
 
 interface UsersFetched {
@@ -161,7 +161,7 @@ const userListAdminSlice = createSlice({
       return { ...state, isLoading: true };
     },
     usersFetchEnd: (state) => {
-      return { ...state, isLoading: false };
+      return { ...state, isLoading: false, users: [], totalPages: 0, showPaging: false };
     },
     queryChanged: (state, action: PayloadAction<string>) => ({
       ...state,

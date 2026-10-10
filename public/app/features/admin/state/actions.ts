@@ -11,6 +11,8 @@ import { type LdapUser } from 'app/types/ldap';
 import { type ThunkResult } from 'app/types/store';
 import { type UserDTO, type UserSession, type UserFilter, type AnonUserFilter } from 'app/types/user';
 
+import { getUsersPage } from '../Users/utils';
+
 import {
   userAdminPageLoadedAction,
   userProfileLoadedAction,
@@ -277,29 +279,19 @@ export function clearUserMappingInfo(): ThunkResult<void> {
 
 // UserListAdminPage
 
-const getFilters = (filters: UserFilter[]) => {
-  return filters
-    .map((filter) => {
-      if (Array.isArray(filter.value)) {
-        return filter.value.map((v) => `${filter.name}=${v.value}`).join('&');
-      }
-      return `${filter.name}=${filter.value}`;
-    })
-    .join('&');
-};
-
 export function fetchUsers(): ThunkResult<void> {
   return async (dispatch, getState) => {
     try {
+      dispatch(usersFetchBegin());
       const { perPage, page, query, filters, sort } = getState().userListAdmin;
-      let url = `/api/users/search?perpage=${perPage}&page=${page}&query=${query}&${getFilters(filters)}`;
-      if (sort) {
-        url += `&sort=${sort}`;
-      }
-      const result = await getBackendSrv().get(url);
+      const result = await getUsersPage({ perPage, page, query, filters, sort }, 'all-users-list');
       dispatch(usersFetched(result));
     } catch (error) {
-      usersFetchEnd();
+      // A replacement request owns the loading state when the previous one is cancelled.
+      if (isFetchError(error) && error.cancelled) {
+        return;
+      }
+      dispatch(usersFetchEnd());
       console.error(error);
     }
   };
@@ -309,7 +301,6 @@ const fetchUsersWithDebounce = debounce((dispatch) => dispatch(fetchUsers()), 50
 
 export function changeQuery(query: string): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(queryChanged(query));
     fetchUsersWithDebounce(dispatch);
   };
@@ -317,7 +308,6 @@ export function changeQuery(query: string): ThunkResult<void> {
 
 export function changeFilter(filter: UserFilter): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(filterChanged(filter));
     fetchUsersWithDebounce(dispatch);
   };
@@ -325,7 +315,6 @@ export function changeFilter(filter: UserFilter): ThunkResult<void> {
 
 export function changePage(page: number): ThunkResult<void> {
   return async (dispatch) => {
-    dispatch(usersFetchBegin());
     dispatch(pageChanged(page));
     dispatch(fetchUsers());
   };
@@ -336,7 +325,6 @@ export function changeSort({ sortBy }: FetchDataArgs<UserDTO>): ThunkResult<void
   return async (dispatch, getState) => {
     const currentSort = getState().userListAdmin.sort;
     if (currentSort !== sort) {
-      dispatch(usersFetchBegin());
       dispatch(sortChanged(sort));
       dispatch(fetchUsers());
     }
