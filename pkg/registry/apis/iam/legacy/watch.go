@@ -6,7 +6,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 )
 
@@ -90,41 +89,21 @@ func (s *notifyingStore) CreateTeamMember(ctx context.Context, ns claims.Namespa
 }
 
 func (s *notifyingStore) UpdateTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd UpdateTeamMemberCommand) (*UpdateTeamMemberResult, error) {
-	teamUID := s.bindingTeamUID(ctx, ns, cmd.UID)
 	res, err := s.LegacyIdentityStore.UpdateTeamMember(ctx, ns, cmd)
 	if err == nil {
-		s.publishTeam(ctx, ns, teamUID)
+		s.publishTeam(ctx, ns, cmd.TeamUID)
 	}
 	return res, err
 }
 
 func (s *notifyingStore) DeleteTeamMember(ctx context.Context, ns claims.NamespaceInfo, cmd DeleteTeamMemberCommand) error {
-	// Read the team first: it cannot be found from the binding once it is gone.
-	teamUID := s.bindingTeamUID(ctx, ns, cmd.UID)
 	err := s.LegacyIdentityStore.DeleteTeamMember(ctx, ns, cmd)
 	if err == nil {
-		s.publishTeam(ctx, ns, teamUID)
+		s.publishTeam(ctx, ns, cmd.TeamUID)
 	}
 	return err
 }
 
 func (s *notifyingStore) publishTeam(ctx context.Context, ns claims.NamespaceInfo, teamUID string) {
 	s.publisher.Publish(ctx, legacywatch.Modified, iamv0.TeamResourceInfo.GroupResource(), ns.OrgID, teamUID, 0)
-}
-
-// bindingTeamUID returns the UID of the team a binding belongs to, or "" when
-// nothing will be announced or the lookup fails.
-func (s *notifyingStore) bindingTeamUID(ctx context.Context, ns claims.NamespaceInfo, uid string) string {
-	if !s.publisher.Enabled() {
-		return ""
-	}
-	res, err := s.ListTeamBindings(ctx, ns, ListTeamBindingsQuery{
-		UID:        uid,
-		OrgID:      ns.OrgID,
-		Pagination: common.Pagination{Limit: 1},
-	})
-	if err != nil || len(res.Bindings) == 0 {
-		return ""
-	}
-	return res.Bindings[0].TeamUID
 }
