@@ -544,7 +544,7 @@ func buildQueryTail(query models.HistoryQuery) (string, error) {
 	})
 	for _, m := range sorted {
 		b.WriteString(" | labels_")
-		b.WriteString(m.Name)
+		b.WriteString(sanitizeLokiLabelName(m.Name))
 		b.WriteString(logQLOperator(m.Type))
 		_, err := fmt.Fprintf(&b, "%q", m.Value)
 		if err != nil {
@@ -552,6 +552,16 @@ func buildQueryTail(query models.HistoryQuery) (string, error) {
 		}
 	}
 	return b.String(), nil
+}
+
+// sanitizeLokiLabelName replaces characters that Loki's json parser does not allow in extracted label names.
+func sanitizeLokiLabelName(name string) string {
+	return strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' {
+			return r
+		}
+		return '_'
+	}, name)
 }
 
 // logQLOperator maps an alertmanager MatchType to its LogQL filter operator string.
