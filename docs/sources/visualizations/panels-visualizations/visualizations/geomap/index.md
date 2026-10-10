@@ -226,7 +226,7 @@ You can add multiple layers of data to a single geomap in order to create rich, 
 
 #### Layer type
 
-Geomap has nine data layer types and five basemap layer types.
+Geomap has ten data layer types and five basemap layer types.
 
 - [Markers](#markers-layer) renders a marker at each data point.
 - [Heatmap](#heatmap-layer) visualizes a heatmap of the data.
@@ -241,10 +241,11 @@ Geomap has nine data layer types and five basemap layer types.
 - [XYZ Tile layer](#xyz-tile-layer) adds a map from a generic tile layer.
 - [MapLibre Style layer](#maplibre-style-layer) adds a map from a MapLibre/Mapbox style URL.
 
-There are also two experimental, alpha layer types.
+There are also three experimental, alpha layer types.
 
 - **Icon at last point (Alpha)** renders an icon at the last data point.
 - **Dynamic GeoJSON (Alpha)** styles a GeoJSON file based on query results. It includes options for **GeoJSON URL**, **ID Field**, **Data style**, and **Default style**.
+- **Geometry (Alpha)** renders geometry parsed from a WKT, WKB, or GeoJSON field, such as points, lines, and polygons returned by a spatial database query. It's the only layer type that supports the **WKT**, **WKB**, and **GeoJSON** location modes. For more information, refer to [Location Mode](#location-mode).
 
 To enable experimental layers. Set `enable_alpha` to `true` in your configuration file:
 
@@ -265,7 +266,7 @@ Geomaps need a source of geographical data gathered from a data source query whi
 
 #### Location Mode
 
-There are four options to map the data returned by the selected query:
+There are seven options to map the data returned by the selected query:
 
 - **Auto** automatically searches for location data. Use this option when your query is based on one of the following names for data fields.
   - geohash: “geohash”
@@ -275,6 +276,9 @@ There are four options to map the data returned by the selected query:
 - **Coords** specifies that your query holds coordinate data. You will get prompted to select numeric data fields for latitude and longitude from your database query.
 - **Geohash** specifies that your query holds geohash data. You will be prompted to select a string data field for the geohash from your database query.
 - **Lookup** specifies that your query holds location name data that needs to be mapped to a value. You will be prompted to select the lookup field from your database query and a gazetteer. The gazetteer is the directory that is used to map your queried data to a geographical point.
+- **WKT** specifies that your query holds WKT (Well-Known Text) geometry data, such as `LINESTRING (...)` or `POLYGON (...)` returned by a spatial database query, for example PostGIS's `ST_AsText(col)`. You will be prompted to select the string data field that contains the WKT for each row. Coordinates are assumed to be in WGS 84 (EPSG:4326). This mode is only available on the [Geometry layer](#layer-type), because other layer types don't render arbitrary line or polygon geometry.
+- **WKB** specifies that your query holds WKB (Well-Known Binary) geometry data as a hex string, such as a raw PostGIS `geography`/`geometry` column (its default text output is already hex-encoded EWKB) or `encode(ST_AsBinary(col), 'hex')`. You will be prompted to select the string data field that contains the hex value for each row. Raw binary isn't supported: by the time a binary value reaches Grafana as a string field, any bytes that aren't valid text have already been corrupted, so the source query must produce a hex string. Coordinates are assumed to be in WGS 84 (EPSG:4326) unless the value is EWKB with an embedded SRID. This mode is only available on the [Geometry layer](#layer-type).
+- **GeoJSON** specifies that your query holds a GeoJSON geometry object as text, such as `{"type":"LineString","coordinates":[...]}` returned by `ST_AsGeoJSON(...)` or similar. You will be prompted to select the string data field that contains the GeoJSON for each row. This mode is only available on the [Geometry layer](#layer-type).
 
 #### Markers layer
 
