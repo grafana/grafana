@@ -18,12 +18,14 @@ import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { TABLE } from '../constants';
-import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
+import { type FilterType, type TableRow, type TableSummaryRow, type TableWarning } from '../types';
 import { getDisplayName, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
+import { TableWarnings } from './TableWarnings';
 
 interface HeaderCellProps {
+  warnings?: readonly TableWarning[];
   onAddToAssistant?: () => void;
   column: Column<TableRow, TableSummaryRow>;
   rows: TableRow[];
@@ -65,6 +67,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   crossFilterTailRows,
   tableRefreshEnabled,
   onAddToAssistant,
+  warnings = [],
 }) => {
   const ref = useRef<HTMLDivElement>(null);
   const headerCellWrap = field.config.custom?.wrapHeaderText ?? false;
@@ -171,6 +174,7 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
 
   const label = (
     <>
+      <TableWarnings warnings={warnings} scope="field" />
       {showTypeIcons && (
         <Stack alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
           <Icon className={styles.headerCellIcon} name={getFieldTypeIcon(field)} title={field?.type} size="sm" />

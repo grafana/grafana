@@ -188,6 +188,7 @@ export interface TableNGProps extends BaseTableProps {}
 export type TableCellRenderer = FC<TableCellRendererProps>;
 
 export interface TableCellRendererProps {
+  tableRefreshEnabled?: boolean;
   jsonSyntaxHighlightingEnabled?: boolean;
   rowIdx: number;
   frame: DataFrame;
@@ -269,6 +270,7 @@ export interface GeoCellProps {
 }
 
 export interface AutoCellProps {
+  tableRefreshEnabled?: boolean;
   field: Field;
   value: TableCellValue;
   rowIdx: number;
@@ -293,7 +295,13 @@ export interface PillCellProps {
   getTextColorForBackground: (color: string) => string;
 }
 
+export interface TableWarning {
+  id: string;
+  message: string;
+}
+
 export interface TableCellStyleOptions {
+  tableRefreshEnabled?: boolean;
   textWrap: boolean;
   textAlign: TextAlign;
   shouldOverflow: boolean;
