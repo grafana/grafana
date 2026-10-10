@@ -511,8 +511,6 @@ go test ./apps/dashboard/pkg/migration/... -run TestMigrate
 
 ## Resources
 
-- [Migration Architecture Documentation](../../../docs/migration-architecture.md)
-- [Frontend Migration Guide](../../../../public/app/features/dashboard/state/README.md)
 - [Test Data Examples](../testdata/input/)
 - [Existing Migration Examples](./)
 
