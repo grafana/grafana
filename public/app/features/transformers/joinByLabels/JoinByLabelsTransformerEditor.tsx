@@ -5,7 +5,7 @@ import { type SelectableValue, type TransformerUIProps } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { Alert, Stack, InlineField, InlineFieldRow, Select, ValuePicker } from '@grafana/ui';
 
-import { getDistinctLabels } from '../utils';
+import { getDistinctLabels } from '../transformerDataUtils';
 
 import { type JoinByLabelsTransformOptions } from './joinByLabels';
 

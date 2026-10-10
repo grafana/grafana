@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
+	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 	"gonum.org/v1/gonum/graph/simple"
@@ -161,6 +162,8 @@ func buildCMDNode(ctx context.Context, rn *rawNode, toggles featuremgmt.FeatureT
 		node.Command, err = UnmarshalThresholdCommand(rn)
 	case TypeSQL:
 		node.Command, err = UnmarshalSQLCommand(ctx, rn, cfg)
+	case TypeTransform:
+		node.Command, err = UnmarshalTransformCommand(rn, cfg)
 	default:
 		return nil, fmt.Errorf("expression command type '%v' in expression '%v' not implemented", commandType, rn.RefID)
 	}
@@ -190,6 +193,9 @@ type DSNode struct {
 	request    Request
 
 	isInputToSQLExpr bool
+	// isInputToTransform keeps the response frames as returned, because transformations
+	// operate on raw frames rather than on series or numbers.
+	isInputToTransform bool
 }
 
 func (dn *DSNode) String() string {
@@ -362,6 +368,12 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 					return
 				}
 
+				if dn.isInputToTransform {
+					instrument(nil, "raw")
+					vars[dn.refID] = rawFramesResult(dataFrames)
+					continue
+				}
+
 				var result mathexp.Results
 				responseType, result, err := s.converter.Convert(ctx, dn.datasource.Type, dataFrames)
 				if err != nil {
@@ -372,6 +384,19 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			}
 		}()
 	}
+}
+
+// rawFramesResult wraps each data source frame unchanged, preserving labels, field config,
+// and metadata for transform expressions.
+func rawFramesResult(frames data.Frames) mathexp.Results {
+	if len(frames) == 0 {
+		return mathexp.Results{Values: mathexp.Values{mathexp.NewNoData()}}
+	}
+	values := make(mathexp.Values, 0, len(frames))
+	for _, frame := range frames {
+		values = append(values, mathexp.TableData{Frame: frame})
+	}
+	return mathexp.Results{Values: values}
 }
 
 // Execute runs the node and adds the results to vars. If the node requires
@@ -452,6 +477,11 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 	}
 
 	var result mathexp.Results
+
+	if dn.isInputToTransform {
+		responseType = "raw"
+		return rawFramesResult(dataFrames), nil
+	}
 
 	if dn.isInputToSQLExpr {
 		var converted bool

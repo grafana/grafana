@@ -11,7 +11,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 
-import { getDistinctLabels } from '../utils';
+import { getDistinctLabels } from '../transformerDataUtils';
 
 export interface JoinByLabelsTransformOptions {
   value: string; // something must be defined

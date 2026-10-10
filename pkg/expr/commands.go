@@ -348,6 +348,8 @@ const (
 	TypeThreshold
 	// TypeSQL is the CMDType for running SQL expressions
 	TypeSQL
+	// TypeTransform is the CMDType for running frontend transformations through the transform sidecar
+	TypeTransform
 )
 
 func (gt CommandType) String() string {
@@ -364,6 +366,8 @@ func (gt CommandType) String() string {
 		return "threshold"
 	case TypeSQL:
 		return "sql"
+	case TypeTransform:
+		return "transform"
 	default:
 		return "unknown"
 	}
@@ -384,6 +388,8 @@ func ParseCommandType(s string) (CommandType, error) {
 		return TypeThreshold, nil
 	case "sql":
 		return TypeSQL, nil
+	case "transform":
+		return TypeTransform, nil
 	default:
 		return TypeUnknown, fmt.Errorf("'%v' is not a recognized expression type", s)
 	}

@@ -6,7 +6,8 @@ import { t } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
 
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
-import { getVariableSuggestions, numberOrVariableValidator } from '../utils';
+import { numberOrVariableValidator } from '../transformerDataUtils';
+import { getVariableSuggestions } from '../utils';
 
 export const HistogramTransformerEditor = ({
   input,

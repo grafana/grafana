@@ -559,6 +559,16 @@ type Cfg struct {
 	// SQLExpressionTimeoutSeconds is the duration a SQL expression will run before timing out
 	SQLExpressionTimeout time.Duration
 
+	// TransformSidecarURL is the base URL of the transform sidecar. Transform expressions are
+	// rejected when it is empty.
+	TransformSidecarURL string
+
+	// TransformSidecarTimeout bounds each call to the transform sidecar.
+	TransformSidecarTimeout time.Duration
+
+	// TransformSidecarFormat is the wire format to the transform sidecar: "json" or "arrow".
+	TransformSidecarFormat string
+
 	// MathExpressionMemoryLimit is the maximum estimated memory (in bytes) for a
 	// single math expression binary operation. Memory usage is estimated before
 	// the expression runs. When the estimate exceeds this limit, evaluation fails
@@ -1250,6 +1260,9 @@ func (cfg *Cfg) readExpressionsSettings() {
 	cfg.SQLExpressionTimeout = expressions.Key("sql_expression_timeout").MustDuration(DefaultSQLExpressionTimeout)
 	cfg.SQLExpressionQueryLengthLimit = expressions.Key("sql_expression_query_length_limit").MustInt64(DefaultSQLExpressionQueryLengthLimit)
 	cfg.MathExpressionMemoryLimit = expressions.Key("math_expression_memory_limit").MustInt64(1 << 30) // 1 GiB
+	cfg.TransformSidecarURL = expressions.Key("transform_sidecar_url").String()
+	cfg.TransformSidecarTimeout = expressions.Key("transform_sidecar_timeout").MustDuration(15 * time.Second)
+	cfg.TransformSidecarFormat = expressions.Key("transform_sidecar_format").MustString("json")
 }
 
 type AnnotationCleanupSettings struct {
