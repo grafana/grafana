@@ -513,10 +513,7 @@ var wireSet = wire.NewSet(
 var wireCLISet = wire.NewSet(
 	NewRunner,
 	wireBasicSet,
-	// The CLI and routes loader serve no writes to announce; a real publisher
-	// would construct a second NATS server and publisher, whose metrics collide
-	// with the ones a module target already registered.
-	legacywatch.ProvideDisabledPublisher,
+	legacywatch.ProvideDisabledPublisher, // No need for real legacywatch support
 	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
