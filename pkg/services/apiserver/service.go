@@ -666,7 +666,13 @@ func (s *service) startCoreServer(
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.Fn = grafanaresponsewriter.WrapHandler(server.Handler)
+	transport.Fn = grafanaresponsewriter.WrapHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := identity.GetRequester(r.Context()); err == nil {
+			s.requestRouter.HandleFunc(w, r, server.Handler)
+			return
+		}
+		server.Handler.ServeHTTP(w, r)
+	}))
 	close(transport.Ready)
 
 	prepared := server.PrepareRun()
