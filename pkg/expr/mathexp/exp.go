@@ -533,7 +533,7 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
 			case NoData:
-				value = uni.B
+				value = resolveNoDataBinaryOp(e.RefID, node.OpStr, aFloat, uni.B)
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
@@ -551,6 +551,8 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			case Series:
 				value, err = e.biSeriesSeries(uni.Labels, node.OpStr, at, bt)
 			case NoData:
+				// A series may hold multiple points, so there is no single "known value"
+				// to short-circuit on; keep propagating NoData as before.
 				value = uni.B
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
@@ -567,12 +569,20 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 			case Series:
 				value, err = e.biSeriesNumber(uni.Labels, node.OpStr, bt, aFloat, false)
 			case NoData:
-				value = uni.B
+				value = resolveNoDataBinaryOp(e.RefID, node.OpStr, aFloat, uni.B)
 			default:
 				return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 			}
 		case NoData:
-			value = uni.A
+			// A itself is NoData: check whether B allows a logical short-circuit.
+			switch bt := uni.B.(type) {
+			case Scalar:
+				value = resolveNoDataBinaryOp(e.RefID, node.OpStr, bt.GetFloat64Value(), uni.A)
+			case Number:
+				value = resolveNoDataBinaryOp(e.RefID, node.OpStr, bt.GetFloat64Value(), uni.A)
+			default:
+				value = uni.A
+			}
 		default:
 			return res, fmt.Errorf("not implemented: binary %v on %T and %T", node.OpStr, uni.A, uni.B)
 		}
@@ -582,6 +592,45 @@ func (e *State) walkBinary(node *parse.BinaryNode) (Results, error) {
 		res.Values = append(res.Values, value)
 	}
 	return res, nil
+}
+
+// resolveNoDataBinaryOp resolves a binary operation where one operand is known
+// (knownValue) and the other is NoData (noDataVal). Arithmetic operators cannot be
+// short-circuited, so they keep propagating NoData like any other missing operand. But
+// || and && can: this mirrors the short-circuit binaryOp already applies when the known
+// operand renders the other side's actual value irrelevant (see binaryOp's "short circuit
+// before NaN" case below) — NoData deserves the same treatment as NaN there.
+//
+//   - a || NoData is true whenever a is truthy, regardless of what NoData would have been.
+//   - a && NoData is false whenever a is falsy, regardless of what NoData would have been.
+//
+// Otherwise there is nothing to resolve, so NoData still propagates.
+func resolveNoDataBinaryOp(refID string, op string, knownValue *float64, noDataVal Value) Value {
+	if knownValue == nil {
+		return noDataVal
+	}
+	switch op {
+	case "||":
+		if *knownValue != 0 {
+			return newBoolNumber(refID, true)
+		}
+	case "&&":
+		if *knownValue == 0 {
+			return newBoolNumber(refID, false)
+		}
+	}
+	return noDataVal
+}
+
+// newBoolNumber returns a Number holding 1 (true) or 0 (false).
+func newBoolNumber(refID string, b bool) Number {
+	n := NewNumber(refID, nil)
+	f := 0.0
+	if b {
+		f = 1.0
+	}
+	n.SetValue(&f)
+	return n
 }
 
 // binaryOp performs a binary operations (e.g. A+B or A>B) on two

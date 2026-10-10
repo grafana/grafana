@@ -444,3 +444,71 @@ func TestNoData(t *testing.T) {
 		})
 	}
 }
+
+// TestNoDataLogicalShortCircuit checks that || and && short-circuit around a NoData
+// operand the same way binaryOp already short-circuits around NaN: a truthy value makes
+// "value || NoData" fire, and a falsy value makes "value && NoData" not fire, regardless
+// of which side was NoData. Every other operator keeps propagating NoData untouched.
+//
+// See grafana/grafana#92974 (the same short-circuit gap made "A or B" alert rules stuck
+// on NoData when B briefly had no data). This test also covers pkg/expr/classic.go's
+// isFiring/isNoData priority fix in classic_test.go's OR-with-NoData cases.
+func TestNoDataLogicalShortCircuit(t *testing.T) {
+	makeVars := func(a, b Value) Vars {
+		return Vars{
+			"A": resultValuesNoErr(a),
+			"B": resultValuesNoErr(b),
+		}
+	}
+
+	truthy := makeNumber("", nil, new(1.))
+	falsy := makeNumber("", nil, new(0.))
+
+	execute := func(t *testing.T, expr string, a, b Value) Results {
+		t.Helper()
+		e, err := New(expr)
+		require.NoError(t, err)
+		res, err := e.Execute("", makeVars(a, b), tracing.InitializeTracerForTest())
+		require.NoError(t, err)
+		require.Len(t, res.Values, 1)
+		return res
+	}
+
+	requireFires := func(t *testing.T, res Results, want float64) {
+		t.Helper()
+		require.Equal(t, parse.TypeNumberSet, res.Values[0].Type())
+		num, ok := res.Values[0].(Number)
+		require.True(t, ok)
+		require.NotNil(t, num.GetFloat64Value())
+		require.Equal(t, want, *num.GetFloat64Value())
+	}
+
+	requireNoData := func(t *testing.T, res Results) {
+		t.Helper()
+		require.Equal(t, parse.TypeNoData, res.Values[0].Type())
+	}
+
+	t.Run("truthy || NoData fires, either operand order", func(t *testing.T) {
+		requireFires(t, execute(t, "$A || $B", truthy, NewNoData()), 1)
+		requireFires(t, execute(t, "$A || $B", NewNoData(), truthy), 1)
+	})
+
+	t.Run("falsy || NoData stays NoData, either operand order", func(t *testing.T) {
+		requireNoData(t, execute(t, "$A || $B", falsy, NewNoData()))
+		requireNoData(t, execute(t, "$A || $B", NewNoData(), falsy))
+	})
+
+	t.Run("falsy && NoData does not fire, either operand order", func(t *testing.T) {
+		requireFires(t, execute(t, "$A && $B", falsy, NewNoData()), 0)
+		requireFires(t, execute(t, "$A && $B", NewNoData(), falsy), 0)
+	})
+
+	t.Run("truthy && NoData stays NoData, either operand order", func(t *testing.T) {
+		requireNoData(t, execute(t, "$A && $B", truthy, NewNoData()))
+		requireNoData(t, execute(t, "$A && $B", NewNoData(), truthy))
+	})
+
+	t.Run("arithmetic operators are not short-circuited", func(t *testing.T) {
+		requireNoData(t, execute(t, "$A + $B", truthy, NewNoData()))
+	})
+}
