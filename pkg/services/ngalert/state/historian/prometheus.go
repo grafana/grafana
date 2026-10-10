@@ -32,6 +32,7 @@ const (
 	// alert state: alerting, pending, recovering, etc.
 	grafanaAlertStateLabel = "grafana_alertstate"
 	alertRuleUIDLabel      = "grafana_rule_uid"
+	grafanaOrgIDLabel      = "grafana_org_id"
 )
 
 // isMetricEmittingState defines which evaluation states should emit ALERTS metrics.
@@ -150,7 +151,7 @@ func (b *RemotePrometheusBackend) Record(ctx context.Context, rule history_model
 		b.metrics.TransitionsTotal.WithLabelValues(org).Add(float64(len(frames)))
 
 		var sendErr error
-		if err := b.promWriter.WriteDatasource(ctx, b.cfg.DatasourceUID, b.cfg.MetricName, st.LastEvaluationTime, frames, st.OrgID, nil); err != nil {
+		if err := b.promWriter.WriteDatasource(ctx, b.cfg.DatasourceUID, b.cfg.MetricName, st.LastEvaluationTime, frames, st.OrgID, map[string]string{grafanaOrgIDLabel: org}); err != nil {
 			logger.Error("Failed to write alert state metrics batch", "error", err)
 			b.metrics.WritesFailed.WithLabelValues(org, "prometheus").Inc()
 			b.metrics.TransitionsFailed.WithLabelValues(org).Add(float64(len(frames)))
