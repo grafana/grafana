@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { ActionType, type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
+import { useFlagVizActionsAuth } from '@grafana/runtime/internal';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { Select } from '@grafana/ui';
 
@@ -26,14 +26,23 @@ interface ConnectionPickerProps {
 const DIRECT_OPTION_VALUE = 'direct';
 
 export const ConnectionPicker = ({ actionType, datasourceUid, onChange, id }: ConnectionPickerProps) => {
+  const vizActionsAuth = useFlagVizActionsAuth();
   const [supportedDataSources, setSupportedDataSources] = useState<DataSourceInstanceListItem[]>([]);
   useEffect(() => {
-    if (config.featureToggles.vizActionsAuth) {
+    let cancelled = false;
+    if (vizActionsAuth) {
       getDataSourceInstanceList({
         filter: (item) => item.type === INFINITY_DATASOURCE_TYPE,
-      }).then(setSupportedDataSources);
+      }).then((dataSources) => {
+        if (!cancelled) {
+          setSupportedDataSources(dataSources);
+        }
+      });
     }
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [vizActionsAuth]);
 
   const connectionOptions = useMemo(() => {
     const options: ConnectionOption[] = [
@@ -47,7 +56,7 @@ export const ConnectionPicker = ({ actionType, datasourceUid, onChange, id }: Co
         icon: 'adjust-circle',
       },
     ];
-    supportedDataSources.forEach((ds) => {
+    (vizActionsAuth ? supportedDataSources : []).forEach((ds) => {
       options.push({
         label: ds.name,
         value: ds.uid,
@@ -56,7 +65,7 @@ export const ConnectionPicker = ({ actionType, datasourceUid, onChange, id }: Co
     });
 
     return options;
-  }, [supportedDataSources]);
+  }, [supportedDataSources, vizActionsAuth]);
 
   const getCurrentValue = () => {
     if (actionType === ActionType.Fetch) {
