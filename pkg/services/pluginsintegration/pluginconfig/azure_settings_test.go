@@ -1,6 +1,7 @@
 package pluginconfig
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/grafana/grafana-azure-sdk-go/v2/azsettings"
@@ -194,4 +195,67 @@ func TestGetAzureSettings(t *testing.T) {
 		assert.Equal(t, "original-auth", result.UserIdentityTokenEndpoint.ClientAuthentication)
 		assert.Equal(t, "original-client-id", result.UserIdentityTokenEndpoint.ClientId)
 	})
+}
+
+func TestMergeAzureSettingsLeavesTheInputUnchanged(t *testing.T) {
+	currSettings := &azsettings.AzureSettings{
+		Cloud:                  azsettings.AzurePublic,
+		ForwardSettingsPlugins: []string{"grafana-azure-monitor-datasource"},
+		UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{
+			TokenUrl: "original-token-url",
+			ClientId: "original-client-id",
+		},
+	}
+	azureAdSettings := &pluginsso.Settings{
+		Values: map[string]any{
+			"token_url":     "sso-token-url",
+			"client_id":     "sso-client-id",
+			"client_secret": "sso-client-secret",
+		},
+	}
+
+	merged := mergeAzureSettings(currSettings, azureAdSettings)
+
+	require.Equal(t, "sso-token-url", merged.UserIdentityTokenEndpoint.TokenUrl)
+	require.Equal(t, "sso-client-id", merged.UserIdentityTokenEndpoint.ClientId)
+	require.Equal(t, "sso-client-secret", merged.UserIdentityTokenEndpoint.ClientSecret)
+	require.Equal(t, azsettings.AzurePublic, merged.Cloud)
+	require.Equal(t, []string{"grafana-azure-monitor-datasource"}, merged.ForwardSettingsPlugins)
+
+	require.Equal(t, "original-token-url", currSettings.UserIdentityTokenEndpoint.TokenUrl)
+	require.Equal(t, "original-client-id", currSettings.UserIdentityTokenEndpoint.ClientId)
+	require.Empty(t, currSettings.UserIdentityTokenEndpoint.ClientSecret)
+	require.NotSame(t, currSettings, merged)
+	require.NotSame(t, currSettings.UserIdentityTokenEndpoint, merged.UserIdentityTokenEndpoint)
+}
+
+func TestMergeAzureSettingsWithoutTokenEndpointLeavesTheInputUnchanged(t *testing.T) {
+	currSettings := &azsettings.AzureSettings{Cloud: azsettings.AzurePublic}
+	azureAdSettings := &pluginsso.Settings{Values: map[string]any{"token_url": "sso-token-url"}}
+
+	merged := mergeAzureSettings(currSettings, azureAdSettings)
+
+	require.Equal(t, "sso-token-url", merged.UserIdentityTokenEndpoint.TokenUrl)
+	require.Nil(t, currSettings.UserIdentityTokenEndpoint)
+}
+
+// The settings pointer is shared by every request of the process, so concurrent
+// merges must not write into it. Run with -race.
+func TestMergeAzureSettingsIsSafeForConcurrentRequests(t *testing.T) {
+	shared := &azsettings.AzureSettings{
+		UserIdentityTokenEndpoint: &azsettings.TokenEndpointSettings{TokenUrl: "original-token-url"},
+	}
+	azureAdSettings := &pluginsso.Settings{Values: map[string]any{"token_url": "sso-token-url", "client_id": "sso-client-id"}}
+
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			merged := mergeAzureSettings(shared, azureAdSettings)
+			assert.Equal(t, "sso-token-url", merged.UserIdentityTokenEndpoint.TokenUrl)
+		}()
+	}
+	wg.Wait()
+	require.Equal(t, "original-token-url", shared.UserIdentityTokenEndpoint.TokenUrl)
 }
