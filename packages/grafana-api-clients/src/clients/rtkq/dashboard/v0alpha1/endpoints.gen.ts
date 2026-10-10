@@ -196,6 +196,7 @@ const injectedRtkApi = api
             permission: queryArg.permission,
             sort: queryArg.sort,
             limit: queryArg.limit,
+            offset: queryArg.offset,
             ownerReference: queryArg.ownerReference,
             createdBy: queryArg.createdBy,
             panelTitleSearch: queryArg.panelTitleSearch,
@@ -496,6 +497,8 @@ export type SearchDashboardsAndFoldersApiArg = {
   sort?: string;
   /** number of results to return */
   limit?: number;
+  /** number of results to skip */
+  offset?: number;
   /** filter by owner reference in the format {Group}/{Kind}/{Name}. When you pass multiple values, the filter matches any of them. */
   ownerReference?: string[];
   /** filter by the user who created the resource (format: user:<uid>) */
