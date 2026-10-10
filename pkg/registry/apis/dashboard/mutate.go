@@ -143,6 +143,10 @@ func (b *DashboardsAPIBuilder) mutateDashboard(ctx context.Context, a admission.
 		meta.SetDeprecatedInternalID(internalID) // nolint:staticcheck
 	}
 
+	if err := mutateDashboardLifecycle(ctx, a); err != nil {
+		return err
+	}
+
 	return b.validateDashboardIfStrict(ctx, a, migrationErr, resourceInfo)
 }
 

@@ -43,6 +43,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -1269,11 +1270,13 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		return err
 	}
 	unified.AfterDelete = b.afterDelete
+	guarded := newLifecycleGuard(unified, dashboards.GroupResource())
 
 	if b.isStandalone {
-		storage[dashboards.StoragePath()] = unified
+		storage[dashboards.StoragePath()] = guarded
+		b.registerLifecycleSubresources(storage, dashboards, guarded)
 		storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
-			unified,
+			guarded,
 			b.unified,
 			b.accessClient,
 			newDTOFunc,
@@ -1305,13 +1308,15 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	}
 
 	storage[dashboards.StoragePath()] = dashboardStorageWrapper{
-		Storage:                 unified,
+		Storage:                 guarded,
 		homeDashboard:           b.homeDashboard,
 		apiVersion:              apiVersion,
 		dashboardPermissionsSvc: b.dashboardPermissionsSvc,
 		live:                    b.dashboardActivityChannel,
 		iamFeatures:             b.iamFeatures,
 	}
+
+	b.registerLifecycleSubresources(storage, dashboards, storage[dashboards.StoragePath()].(grafanarest.Storage))
 
 	// Register the DTO endpoint that will consolidate all dashboard bits
 	storage[dashboards.StoragePath("dto")], err = NewDTOConnector(
