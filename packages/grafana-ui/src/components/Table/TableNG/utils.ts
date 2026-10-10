@@ -49,6 +49,7 @@ import {
   STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import type { TextAlign } from './styles';
 import type {
   TableRow,
@@ -1227,6 +1228,14 @@ export function getVisibleFields(fields: Field[]): Field[] {
   return fields.filter((field) => field.type !== FieldType.nestedFrames && field.config.custom?.hideFrom?.viz !== true);
 }
 
+/** Removes fields hidden through table controls. @internal */
+export function filterFieldsByHiddenColumns(fields: Field[], hiddenColumns?: ReadonlySet<string>): Field[] {
+  if (!hiddenColumns || hiddenColumns.size === 0) {
+    return fields;
+  }
+  return fields.filter((field) => !hiddenColumns.has(getDisplayName(field)));
+}
+
 /**
  * @internal
  * returns a map of column types by display name
@@ -1332,6 +1341,7 @@ export interface ContentAwareColWidthsOptions {
    * filter icon that marks it — unlike the sort arrow, that icon only exists while the state holds.
    */
   filter?: FilterType;
+  hasColumnSidebar?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /**
@@ -1435,6 +1445,15 @@ function measureInlineRunWidth(
   return stack ? widestItem : Math.max(rowTotalSum / sampledRows, widestItem);
 }
 
+export function isFieldFilterable(field: Field): boolean {
+  return field.config.custom?.filterable ?? false;
+}
+
+/** @internal */
+export function isFieldHideable(field: Field): boolean {
+  return field.config.custom?.hideable ?? false;
+}
+
 /**
  * Width the header label needs, including its filter/sort/type-icon affordances.
  *
@@ -1448,7 +1467,7 @@ function measureInlineRunWidth(
  * that shifts every other column's share of the leftover space).
  */
 export interface HeaderAffordanceOptions {
-  hasAssistantAction?: boolean;
+  hasColumnOptions?: boolean;
   showTypeIcons: boolean;
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
@@ -1464,9 +1483,9 @@ export interface HeaderAffordanceOptions {
  */
 export function getHeaderAffordanceWidth(
   field: Field,
-  { showTypeIcons, tableRefreshEnabled, isFiltered, hasAssistantAction }: HeaderAffordanceOptions
+  { showTypeIcons, tableRefreshEnabled, isFiltered, hasColumnOptions = false }: HeaderAffordanceOptions
 ): number {
-  const isFilterable = field.config.custom?.filterable ?? false;
+  const isFilterable = isFieldFilterable(field);
   let width = 0;
   width += showTypeIcons ? HEADER_ICON_SPACE : 0;
   // reserved on every sortable column, not just the currently-sorted one, so a wrapped header doesn't
@@ -1476,9 +1495,7 @@ export function getHeaderAffordanceWidth(
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
   if (tableRefreshEnabled) {
-    // the refreshed header replaces the inline filter icon with a hover-revealed column menu, which
-    // stays in flow (opacity-faded, not unmounted) whenever filtering or Assistant is available.
-    width += isFilterable || hasAssistantAction ? HEADER_MENU_SPACE : 0;
+    width += hasColumnOptions ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
@@ -1784,6 +1801,7 @@ export function computeContentAwareColWidths(
     theme,
     filter,
     sampleSize,
+    hasColumnSidebar = false,
     noPanelPadding = false,
     preventHorizontalOverflow = false,
   }: ContentAwareColWidthsOptions
@@ -1832,7 +1850,13 @@ export function computeContentAwareColWidths(
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
-          hasAssistantAction,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: isFieldFilterable(field),
+              hideable: isFieldHideable(field),
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         })
       : 0;
 

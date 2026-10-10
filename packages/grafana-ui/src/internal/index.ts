@@ -112,6 +112,8 @@ export { flattenTokens } from '../slate-plugins/slate-prism';
 export { RadialGauge } from '../components/RadialGauge/RadialGauge';
 
 export { MaybeWrapWithLink } from '../components/Table/TableNG/components/MaybeWrapWithLink';
+export { useColumnTransformations } from '../components/Table/TableNG/transformations/useColumnTransformations';
+export { getSourceFrameIndex } from '../components/Table/TableNG/transformations/columnContext';
 
 export { getInternalRadius, getExternalRadius } from '../themes/mixins';
 export { BrandingContext, useBranding, type BrandingContextValue } from '../components/Branding/BrandingContext';

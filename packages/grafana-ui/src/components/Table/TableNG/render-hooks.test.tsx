@@ -447,6 +447,41 @@ describe('useColumnBuilderFromFields', () => {
     expect(result.columns[1].width).toBe(200);
   });
 
+  describe('table.refresh column hide', () => {
+    it('threads onHideColumn into each column, bound to its own display name', () => {
+      const onHideColumn = jest.fn();
+      const hook = renderColumnBuilderHook({
+        filterResult: makeFilterResult(),
+        config: makeConfig({ onHideColumn }),
+      });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const fieldAProps = getHeaderCellProps(result.columns[0]);
+      const fieldBProps = getHeaderCellProps(result.columns[1]);
+
+      fieldAProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('A');
+      fieldBProps.onHideColumn?.();
+      expect(onHideColumn).toHaveBeenCalledWith('B');
+    });
+
+    it('omits onHideColumn when not configured', () => {
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, frame.fields, [100, 100], frame, rows, rows);
+
+      const headerProps = getHeaderCellProps(result.columns[0]);
+      expect(headerProps.onHideColumn).toBeUndefined();
+    });
+
+    it('sets canHideColumn based on the number of fields being built', () => {
+      const singleFieldFrame = createDataFrame({ fields: [{ name: 'A', type: FieldType.string, values: ['x'] }] });
+      const hook = renderColumnBuilderHook({ filterResult: makeFilterResult(), config: makeConfig() });
+      const result = callFromFields(hook, singleFieldFrame.fields, [100], singleFieldFrame, rows, rows);
+
+      expect(getHeaderCellProps(result.columns[0]).canHideColumn).toBe(false);
+    });
+  });
+
   it('renders a cell tooltip against a prepared copy of the tooltip field', () => {
     // The tooltip field is hidden, so it never reaches the builder through `fields` — it has to be
     // prepared on lookup, otherwise the tooltip formats JSON with the frame's raw display processor.

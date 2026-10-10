@@ -67,6 +67,7 @@ import {
   isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
+  filterFieldsByHiddenColumns,
   migrateTableDisplayModeToCellOptions,
   parseStyleJson,
   predicateByName,
@@ -77,6 +78,22 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
+  it.each([true, false])('uses supplied menu availability for width (hasColumnOptions=%s)', (hasColumnOptions) => {
+    const field: Field = {
+      name: 'A',
+      type: FieldType.string,
+      values: [],
+      config: { custom: { sortable: false, filterable: true, hideable: true } },
+    };
+    expect(
+      getHeaderAffordanceWidth(field, {
+        showTypeIcons: false,
+        tableRefreshEnabled: true,
+        isFiltered: false,
+        hasColumnOptions,
+      })
+    ).toBe(hasColumnOptions ? 22 : 0);
+  });
   it.each([
     [true, false, 22],
     [true, true, 22],
@@ -92,7 +109,7 @@ describe('TableNG utils', () => {
         showTypeIcons: false,
         tableRefreshEnabled,
         isFiltered: false,
-        hasAssistantAction: true,
+        hasColumnOptions: true,
       })
     ).toBe(expected);
   });
@@ -2695,9 +2712,6 @@ describe('TableNG utils', () => {
     });
 
     it('reserves no column menu space for a non-filterable column when table.refresh is on', () => {
-      // The menu only renders on filterable columns (it has nothing else to offer yet), so a
-      // non-filterable column must not pay for it: header 32 + sort arrow 22 + chrome 13 = 67, not
-      // the 89 it would need if the menu were reserved as well.
       const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       expect(
         computeContentAwareColWidths(fields, 60, {
@@ -2706,6 +2720,18 @@ describe('TableNG utils', () => {
           tableRefreshEnabled: true,
         })
       ).toEqual([67]);
+    });
+
+    it('reserves column menu space for a non-filterable column when hide/pin are available', () => {
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
+      expect(
+        computeContentAwareColWidths(fields, 80, {
+          typographyCtx: makeTypographyCtx(),
+          headerTypographyCtx: makeTypographyCtx(),
+          tableRefreshEnabled: true,
+          hasColumnSidebar: true,
+        })
+      ).toEqual([89]);
     });
 
     it('reserves header space for the filter icon on a filtered column when table.refresh is on', () => {
@@ -3638,6 +3664,25 @@ describe('TableNG utils', () => {
       const field: Field = { name: 'test', type: FieldType.string, config: {}, values: [] };
       const predicate = predicateByName('other');
       expect(predicate(field)).toBe(false);
+    });
+  });
+
+  describe('filterFieldsByHiddenColumns', () => {
+    const fieldA: Field = { name: 'A', type: FieldType.string, config: {}, values: [] };
+    const fieldB: Field = { name: 'B', type: FieldType.string, config: {}, values: [] };
+    const fieldC: Field = { name: 'C', type: FieldType.string, config: {}, values: [] };
+    const fields = [fieldA, fieldB, fieldC];
+
+    it('returns fields unchanged when hiddenColumns is undefined', () => {
+      expect(filterFieldsByHiddenColumns(fields)).toBe(fields);
+    });
+
+    it('returns fields unchanged when hiddenColumns is empty', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set())).toBe(fields);
+    });
+
+    it('filters out fields whose display name is hidden', () => {
+      expect(filterFieldsByHiddenColumns(fields, new Set(['B']))).toEqual([fieldA, fieldC]);
     });
   });
 

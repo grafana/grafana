@@ -46,6 +46,7 @@ import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
 import { TableCellTooltip } from './components/TableCellTooltip';
 import { CELL_HORIZONTAL_CHROME, OVERFLOW_CELL_CLASS } from './constants';
+import { getCellMenuOptions } from './menuOptions';
 import {
   getCellActionStyles,
   getDefaultCellStyles,
@@ -156,6 +157,7 @@ export interface ColumnBuildConfig {
   disableKeyboardEvents?: boolean;
   hoverOverflow?: boolean;
   disableSanitizeHtml?: boolean;
+  hasColumnSidebar?: boolean;
   filter: FilterType;
   /**
    * Inline-start padding the grid's first column takes on top of the usual cell padding (see the
@@ -174,6 +176,8 @@ export interface ColumnBuildConfig {
   maxRowHeight?: number;
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
+  onHideColumn?: (displayName: string) => void;
+  onOpenColumnPanel?: () => void;
   onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
   rowHeight: NonNullable<CSSProperties['height']> | ((row: TableRow) => number);
@@ -267,6 +271,8 @@ function buildColumnsFromFields(
     gridRef,
     getCellActions,
     onCellFilterAdded,
+    onHideColumn,
+    onOpenColumnPanel,
     onFieldAddToAssistant,
     onCellAddToAssistant,
     frozenColumns,
@@ -275,6 +281,7 @@ function buildColumnsFromFields(
     disableKeyboardEvents,
     hoverOverflow = true,
     disableSanitizeHtml,
+    hasColumnSidebar,
     showTypeIcons,
     tableRefreshEnabled,
     jsonSyntaxHighlightingEnabled,
@@ -354,8 +361,9 @@ function buildColumnsFromFields(
     const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
     const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-    const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
-    const showActions = cellInspect || showFilters || showAssistant;
+    const showAssistant = Boolean(tableRefreshEnabled && onCellAddToAssistant != null);
+    const cellMenuOptions = getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: showAssistant });
+    const showActions = cellMenuOptions.length > 0;
     const width = widths[i];
     const contentWidth =
       width -
@@ -488,6 +496,7 @@ function buildColumnsFromFields(
           />
           {showActions && (
             <TableCellActions
+              groups={cellMenuOptions}
               tableRefreshEnabled={tableRefreshEnabled}
               field={field}
               value={value}
@@ -619,6 +628,10 @@ function buildColumnsFromFields(
           crossFilterRows={crossFilterRows}
           crossFilterTailRows={crossFilterTailRows}
           tableRefreshEnabled={tableRefreshEnabled}
+          hasColumnSidebar={hasColumnSidebar}
+          onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
+          canHideColumn={fields.length > 1}
+          onOpenColumnPanel={onOpenColumnPanel}
           onAddToAssistant={onFieldAddToAssistant ? () => onFieldAddToAssistant(frame, field) : undefined}
           selectFirstCell={() => {
             gridRef.current?.setActivePosition({ rowIdx: 0, idx: 0 });

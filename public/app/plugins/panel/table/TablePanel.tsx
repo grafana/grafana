@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import {
   type DataFrame,
@@ -13,11 +14,14 @@ import { TableCellHeight, type TableOptions } from '@grafana/schema';
 import { Combobox, Field, Stack, usePanelContext, useStyles2, useTheme2 } from '@grafana/ui';
 import { TableNG } from '@grafana/ui/unstable';
 import {
+  useAdHocColumnState,
+  useTableRefreshNewFeatures,
   useCacheFieldDisplayNames,
   useCellActions,
   useCommonTableProps,
   useTableSharedCrosshair,
 } from 'app/features/table/hooks';
+import { supportsColumnManagement, withAdHocTransformCapabilities } from 'app/features/table/tableCapabilities';
 import { getCurrentFrameIndex, onColumnResize, onSortByChange } from 'app/features/table/utils';
 
 import { hasDeprecatedParentRowIndex, migrateFromParentRowIndexToNestedFrames } from './migrations';
@@ -62,7 +66,17 @@ export function TablePanel(props: Props) {
   const count = frames?.length;
   const hasFields = frames.some((frame) => frame.fields.length > 0);
   const currentIndex = getCurrentFrameIndex(frames, options);
-  const main = frames[currentIndex];
+  const rawMain = frames[currentIndex];
+  const tableRefreshNewFeaturesEnabled = useTableRefreshNewFeatures();
+  const columnManagementEnabled = tableRefreshNewFeaturesEnabled && supportsColumnManagement(rawMain);
+  const adHocColumns = useAdHocColumnState(frames, currentIndex, tableRefreshNewFeaturesEnabled);
+  const main = useMemo(
+    () =>
+      tableRefreshNewFeaturesEnabled && rawMain
+        ? withAdHocTransformCapabilities(rawMain, Boolean(adHocColumns))
+        : rawMain,
+    [rawMain, tableRefreshNewFeaturesEnabled, adHocColumns]
+  );
 
   // Fit-content: the panel has no fixed height, so self-size from the row count.
   // The cell's CSS min/max bounds (and scrolls) the result.
@@ -85,6 +99,8 @@ export function TablePanel(props: Props) {
   const tableElement = (
     <TableNG
       {...commonTableProps}
+      {...adHocColumns}
+      showColumnsSidebar={columnManagementEnabled && options.showColumnsSidebar}
       initialRowIndex={initialRowIndex}
       height={tableHeight}
       width={width}
