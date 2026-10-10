@@ -2,8 +2,8 @@ import {
   ContactPointFactory,
   ContactPointMetadataAnnotationsFactory,
   EmailIntegrationFactory,
-  GenericIntegrationFactory,
   SlackIntegrationFactory,
+  WebhookIntegrationFactory,
 } from '../api/notifications/v1beta1/mocks/fakes/Receivers';
 
 import {
@@ -47,11 +47,11 @@ describe('getContactPointDescription', () => {
     expect(getContactPointDescription(contactPoint)).toBe('<empty contact point>');
   });
 
-  it('should show description for generic / unknown contact point integration', () => {
+  it('should show description for a webhook contact point integration', () => {
     const contactPoint = ContactPointFactory.build({
-      spec: { integrations: [GenericIntegrationFactory.build({ type: 'generic' })] },
+      spec: { integrations: [WebhookIntegrationFactory.build()] },
     });
-    expect(getContactPointDescription(contactPoint)).toBe('generic');
+    expect(getContactPointDescription(contactPoint)).toBe('webhook');
   });
 });
 
