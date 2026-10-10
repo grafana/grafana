@@ -228,20 +228,21 @@ Git Sync supports two sync targets: `target: folder` (the default) creates a fol
 
 The following configuration parameters are available:
 
-| Field                                   | Description                                                     |
-| --------------------------------------- | --------------------------------------------------------------- |
-| `metadata.name`                         | Unique identifier for this repository resource                  |
-| `spec.title`                            | Human-readable name displayed in Grafana UI                     |
-| `spec.type`                             | Repository type (`github`, `githubEnterprise`)                  |
-| `spec.github.url`                       | GitHub repository URL                                           |
-| `spec.github.branch`                    | Branch to sync                                                  |
-| `spec.github.path`                      | Directory path containing dashboards                            |
-| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) (Only available in GitHub) |
-| `spec.sync.enabled`                     | Enable synchronization (true/false)                             |
-| `spec.sync.intervalSeconds`             | Sync interval in seconds                                        |
-| `spec.sync.target`                      | Where to place synced dashboards (`folder` or `folderless`)     |
-| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs)     |
-| `secure.token.create`                   | GitHub Personal Access Token                                    |
+| Field                                   | Description                                                          |
+| --------------------------------------- | -------------------------------------------------------------------- |
+| `metadata.name`                         | Unique identifier for this repository resource                       |
+| `metadata.namespace`                    | Use `org-<ORG_ID>` to map each repository resource to a specific org |
+| `spec.title`                            | Human-readable name displayed in Grafana UI                          |
+| `spec.type`                             | Repository type (`github`, `githubEnterprise`)                       |
+| `spec.github.url`                       | GitHub repository URL                                                |
+| `spec.github.branch`                    | Branch to sync                                                       |
+| `spec.github.path`                      | Directory path containing dashboards                                 |
+| `spec.github.generateDashboardPreviews` | Generate preview images (true/false) (Only available in GitHub)      |
+| `spec.sync.enabled`                     | Enable synchronization (true/false)                                  |
+| `spec.sync.intervalSeconds`             | Sync interval in seconds                                             |
+| `spec.sync.target`                      | Where to place synced dashboards (`folder` or `folderless`)          |
+| `spec.workflows`                        | Enabled workflows: `write` (direct commits), `branch` (PRs)          |
+| `secure.token.create`                   | GitHub Personal Access Token                                         |
 
 ## Push the resources to Grafana
 
