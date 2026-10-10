@@ -6,6 +6,7 @@ import { t, Trans } from '@grafana/i18n';
 import { Button, Icon, Stack, Text, useStyles2 } from '@grafana/ui';
 
 import { QueryEditorType } from '../../constants';
+import { DatasourceErrorAlert } from '../DatasourceErrorAlert';
 import { usePanelContext, useQueryEditorUIContext, useQueryRunnerContext } from '../QueryEditorContext';
 
 import { StackedSection } from './StackedSection';
@@ -77,6 +78,11 @@ export function StackedEditorRenderer() {
           <Trans i18nKey="query-editor-next.stacked.exit">Exit stacked view</Trans>
         </Button>
       </div>
+
+      <div className={styles.errorAlert}>
+        <DatasourceErrorAlert />
+      </div>
+
       <div
         className={styles.scrollArea}
         ref={containerRef}
@@ -123,6 +129,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.5, 2),
     backgroundColor: theme.colors.background.secondary,
     borderBottom: `1px solid ${theme.colors.border.weak}`,
+  }),
+  errorAlert: css({
+    flex: '0 0 auto',
   }),
   scrollArea: css({
     flex: 1,
