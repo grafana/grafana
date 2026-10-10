@@ -495,7 +495,7 @@ This pipeline collects host metrics with the [`hostmetrics` receiver](https://gi
 
    exporters:
      otlp_http/grafana_cloud:
-       endpoint: "<OTLP_ENDPOINT>"
+       endpoint: '<OTLP_ENDPOINT>'
        headers:
          Authorization: 'Basic $${env:GCLOUD_BASIC_AUTH_BASE64}'
 
