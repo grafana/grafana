@@ -1058,6 +1058,7 @@ var appManifestData = app.ManifestData{
 					},
 				},
 			},
+			// nolint:staticcheck
 			Routes: app.ManifestVersionRoutes{
 				Namespaced: map[string]spec3.PathProps{
 					"/searchExternalGroupMappings": {
