@@ -1,7 +1,7 @@
 import { toDataFrame, FieldType, ReducerID, DataTransformerID, transformDataFrame } from '@grafana/data';
 import { mockTransformationsRegistry } from '@grafana/data/internal';
 
-import { FieldConfigHandlerKey } from '../fieldToConfigMapping/fieldToConfigMapping';
+import { FieldConfigHandlerKey, type FieldToConfigMapping } from '../fieldToConfigMapping/fieldToConfigMapping';
 
 import {
   extractConfigFromQuery,
@@ -391,5 +391,133 @@ describe('value mapping from data', () => {
         },
       ]
     `);
+  });
+});
+
+describe('thresholds from data', () => {
+  const seriesA = toDataFrame({
+    fields: [
+      { name: 'Time', type: FieldType.time, values: [1, 2, 3] },
+      { name: 'Value', type: FieldType.number, values: [1, 2, 3], config: {} },
+    ],
+  });
+
+  function extractSteps(fields: Parameters<typeof toDataFrame>[0]['fields'], mappings: FieldToConfigMapping[]) {
+    const config = toDataFrame({ fields, refId: 'config' });
+    const results = extractConfigFromQuery({ configRefId: 'config', mappings }, [config, seriesA]);
+    return results[0].fields[1].config.thresholds?.steps;
+  }
+
+  const rowMappings: FieldToConfigMapping[] = [
+    { fieldName: 'threshold', handlerKey: 'thresholds.value' },
+    { fieldName: 'color', handlerKey: 'thresholds.color' },
+  ];
+
+  it('Creates one sorted step per row, paired with the color in the same row', () => {
+    const steps = extractSteps(
+      [
+        { name: 'threshold', type: FieldType.number, values: [10, 0, 20, 5] },
+        { name: 'color', type: FieldType.string, values: ['orange', 'green', 'red', 'yellow'] },
+      ],
+      rowMappings
+    );
+
+    expect(steps).toEqual([
+      { value: 0, color: 'green' },
+      { value: 5, color: 'yellow' },
+      { value: 10, color: 'orange' },
+      { value: 20, color: 'red' },
+    ]);
+  });
+
+  it('Parses numeric strings and skips rows that are not numbers without shifting colors', () => {
+    const steps = extractSteps(
+      [
+        { name: 'threshold', type: FieldType.string, values: ['10', null, 'abc', '', '30'] },
+        { name: 'color', type: FieldType.string, values: ['blue', 'green', 'yellow', 'purple', 'orange'] },
+      ],
+      rowMappings
+    );
+
+    expect(steps).toEqual([
+      { value: 10, color: 'blue' },
+      { value: 30, color: 'orange' },
+    ]);
+  });
+
+  it('Falls back to red when the color is missing or invalid', () => {
+    const steps = extractSteps(
+      [
+        { name: 'threshold', type: FieldType.number, values: [1, 2, 3, 4] },
+        { name: 'color', type: FieldType.string, values: ['blue', 'notacolor', 'ff0000'] },
+      ],
+      rowMappings
+    );
+
+    expect(steps).toEqual([
+      { value: 1, color: 'blue' },
+      { value: 2, color: 'red' },
+      { value: 3, color: 'red' },
+      { value: 4, color: 'red' },
+    ]);
+  });
+
+  it('Uses red for every step when no color field is mapped', () => {
+    const steps = extractSteps([{ name: 'threshold', type: FieldType.number, values: [5, 1] }], [rowMappings[0]]);
+
+    expect(steps).toEqual([
+      { value: 1, color: 'red' },
+      { value: 5, color: 'red' },
+    ]);
+  });
+
+  it('Does not create thresholds from a color field alone', () => {
+    const steps = extractSteps([{ name: 'color', type: FieldType.string, values: ['blue'] }], [rowMappings[1]]);
+
+    expect(steps).toBeUndefined();
+  });
+
+  it('Does not create thresholds when no row has a number', () => {
+    const steps = extractSteps(
+      [{ name: 'threshold', type: FieldType.string, values: ['abc', null] }],
+      [rowMappings[0]]
+    );
+
+    expect(steps).toBeUndefined();
+  });
+
+  it('Treats a single selected value as one step', () => {
+    const steps = extractSteps(
+      [
+        { name: 'threshold', type: FieldType.number, values: [1, 7] },
+        { name: 'color', type: FieldType.string, values: ['blue', 'purple'] },
+      ],
+      [
+        { fieldName: 'threshold', handlerKey: 'thresholds.value', reducerId: ReducerID.last },
+        { fieldName: 'color', handlerKey: 'thresholds.color', reducerId: ReducerID.last },
+      ]
+    );
+
+    expect(steps).toEqual([{ value: 7, color: 'purple' }]);
+  });
+
+  it('Merges with steps from the Threshold mapping', () => {
+    const steps = extractSteps(
+      [
+        { name: 'threshold', type: FieldType.number, values: [10, 30] },
+        { name: 'color', type: FieldType.string, values: ['blue', 'purple'] },
+        { name: 'limit', type: FieldType.number, values: [20] },
+      ],
+      [
+        ...rowMappings,
+        { fieldName: 'limit', handlerKey: 'threshold1', handlerArguments: { threshold: { color: 'orange' } } },
+      ]
+    );
+
+    expect(steps).toEqual([
+      { value: 10, color: 'blue' },
+      { value: 20, color: 'orange' },
+      { value: 30, color: 'purple' },
+    ]);
   });
 });
