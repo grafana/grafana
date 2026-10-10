@@ -809,17 +809,13 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 						}
 					}
 					if queries, _ := spec["queries"].([]any); queries != nil {
+						targets := newTargetInfo(lookup)
 						for _, q := range queries {
 							if m, ok := q.(map[string]any); ok {
-								if ds, ok := m["datasource"].(map[string]any); ok {
-									uid, _ := ds["uid"].(string)
-									typ, _ := ds["type"].(string)
-									if uid != "" {
-										panel.Datasource = append(panel.Datasource, DataSourceRef{UID: uid, Type: typ})
-									}
-								}
+								targets.addV2Query(m)
 							}
 						}
+						panel.Datasource = targets.GetDatasourceInfo()
 					}
 				}
 			} else {
@@ -829,7 +825,6 @@ func readV2PanelSpec(iter *jsoniter.Iterator, lookup DatasourceLookup, jsonPath 
 			iter.Skip()
 		}
 	}
-	panel.Datasource = filterSpecialDatasourcesFromRefs(panel.Datasource)
 	return panel
 }
 
