@@ -82,8 +82,31 @@ describe('dashboardActions', () => {
             section: 'Recent dashboards',
             sectionId: 'recent-dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            uid: 'my-dashboard-1',
             managedBy: 'repo',
+            tags: [],
           },
+        ]);
+      });
+
+      it('maps the dashboard tags onto the recent dashboard action', async () => {
+        server.use(
+          getCustomSearchHandler([
+            {
+              resource: 'dashboards',
+              name: 'my-dashboard-1',
+              title: 'My dashboard 1',
+              field: {},
+              tags: ['prod', 'team-a'],
+            },
+          ])
+        );
+        const results = await getRecentDashboardActions();
+        expect(results).toEqual([
+          expect.objectContaining({
+            id: 'recent-dashboards/d/my-dashboard-1/my-dashboard-1',
+            tags: ['prod', 'team-a'],
+          }),
         ]);
       });
 
@@ -130,7 +153,9 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: 'Dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            uid: 'my-dashboard-1',
             managedBy: 'repo',
+            tags: [],
           },
         ]);
       });
@@ -153,8 +178,28 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: 'Dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            uid: 'my-dashboard-1',
             managedBy: 'repo',
+            tags: [],
           },
+        ]);
+      });
+
+      it('maps the dashboard tags onto the search result action', async () => {
+        server.use(
+          getCustomSearchHandler([
+            {
+              resource: 'dashboards',
+              name: 'my-dashboard-1',
+              title: 'My dashboard 1',
+              field: {},
+              tags: ['prod', 'team-a'],
+            },
+          ])
+        );
+        const results = await getSearchResultActions('mySearchQuery');
+        expect(results).toEqual([
+          expect.objectContaining({ id: 'go/dashboard/d/my-dashboard-1/my-dashboard-1', tags: ['prod', 'team-a'] }),
         ]);
       });
 
@@ -266,6 +311,7 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: 'Dashboards',
             url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+            uid: 'hybrid-dashboard-1',
             managedBy: ManagerKind.Repo,
           },
           expect.objectContaining({
@@ -276,6 +322,12 @@ describe('dashboardActions', () => {
             url: '/dashboards/f/my-folder-1',
           }),
         ]);
+      });
+
+      it("does not set tags on hybrid dashboard actions, since the hybrid endpoint doesn't return them", async () => {
+        const results = await getSearchResultActions('mySearchQuery', true);
+        expect(results[0].id).toBe('go/dashboard/d/hybrid-dashboard-1/hybrid-dashboard-1');
+        expect(results[0]).not.toHaveProperty('tags');
       });
 
       it('caps hybrid dashboard results at 20', async () => {
@@ -324,6 +376,7 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: undefined,
             url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+            uid: 'hybrid-dashboard-1',
             managedBy: ManagerKind.Repo,
           },
           expect.objectContaining({
@@ -394,7 +447,9 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: 'Dashboards',
             url: '/d/my-dashboard-1/my-dashboard-1',
+            uid: 'my-dashboard-1',
             managedBy: 'repo',
+            tags: [],
           },
         ]);
       });
@@ -456,6 +511,7 @@ describe('dashboardActions', () => {
             sectionId: 'dashboards',
             subtitle: 'Dashboards',
             url: '/d/hybrid-dashboard-1/hybrid-dashboard-1',
+            uid: 'hybrid-dashboard-1',
             managedBy: ManagerKind.Repo,
           },
         ]);

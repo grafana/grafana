@@ -1,4 +1,5 @@
-import { AppPlugin } from '@grafana/data';
+import { AppPlugin, PluginExtensionPoints } from '@grafana/data';
+import { Badge } from '@grafana/ui';
 
 import { LINKS_EXTENSION_POINT_ID } from '../../pages/AddedLinks';
 import { testIds } from '../../testIds';
@@ -18,6 +19,12 @@ export const plugin = new AppPlugin<{}>()
     description: '...',
     targets: [LINKS_EXTENSION_POINT_ID],
     path: '/a/grafana-extensionexample1-app/',
+  })
+  .addComponent({
+    title: 'Dashboard owner',
+    description: 'Shows a hello world owner on dashboard rows in the command palette',
+    targets: [PluginExtensionPoints.CommandPaletteResultItem],
+    component: () => <Badge text="Owner: Hello World" color="blue" data-testid={testIds.appB.commandPaletteOwner} />,
   })
   .addLink({
     title: 'Go to A',
