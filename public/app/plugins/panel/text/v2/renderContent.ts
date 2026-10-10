@@ -1,6 +1,5 @@
 import {
   type DataFrame,
-  type DisplayValue,
   type Field,
   FieldType,
   getDisplayProcessor,
@@ -105,8 +104,6 @@ function getMacroField(frame: DataFrame): Field | undefined {
   return frame.fields.find((field) => field.type !== FieldType.time) ?? frame.fields[0];
 }
 
-// Rendering once leaves no row for ${__value} to read, so it resolves against the
-// reduced value instead. ${__data} does need one, and keeps its literal fallback.
 function buildOnceContext(series: DataFrame[]): ScopedVars {
   const frameIndex = findMacroFrameIndex(series);
   const frame = series[frameIndex];
@@ -116,9 +113,24 @@ function buildOnceContext(series: DataFrame[]): ScopedVars {
     return {};
   }
 
-  const calculatedValue = reduceToDisplayValue(field);
+  // Cached null-as-zero calculations can point at an earlier cell with the same value.
+  let rowIndex: number | undefined;
+  for (let index = field.values.length - 1; index >= 0; index--) {
+    const value = field.values[index];
+    if (value != null && !Number.isNaN(value)) {
+      rowIndex = index;
+      break;
+    }
+  }
 
-  return { __dataContext: { value: { data: series, frame, field, frameIndex, calculatedValue } } };
+  const value =
+    rowIndex === undefined
+      ? reduceField({ field, reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull]
+      : field.values[rowIndex];
+  // `display` is only attached once field overrides have run.
+  const calculatedValue = (field.display ?? getDisplayProcessor())(value);
+
+  return { __dataContext: { value: { data: series, frame, field, frameIndex, calculatedValue, rowIndex } } };
 }
 
 // The frame Handlebars' `data` binds to, so the two syntaxes agree.
@@ -126,14 +138,6 @@ function findMacroFrameIndex(series: DataFrame[]): number {
   const withRows = series.findIndex((frame) => frame.fields.length > 0 && frame.length > 0);
 
   return withRows >= 0 ? withRows : series.findIndex((frame) => frame.fields.length > 0);
-}
-
-// lastNotNull, the reduction the stat panel shows by default.
-function reduceToDisplayValue(field: Field): DisplayValue {
-  const value = reduceField({ field, reducers: [ReducerID.lastNotNull] })[ReducerID.lastNotNull];
-
-  // `display` is only attached once field overrides have run.
-  return (field.display ?? getDisplayProcessor())(value);
 }
 
 // Markdown needs a blank line between blocks, because `breaks` is off.

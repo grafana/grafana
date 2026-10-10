@@ -34,6 +34,11 @@ function getValueForValueMacro(match: string, fieldPath?: string, scopedVars?: S
 
   const { frame, rowIndex, field, calculatedValue } = dataContext.value;
 
+  if (fieldPath === 'time' && rowIndex !== undefined) {
+    const timeField = frame.fields.find((f) => f.type === FieldType.time);
+    return timeField ? timeField.values[rowIndex] : undefined;
+  }
+
   if (calculatedValue) {
     switch (fieldPath) {
       case 'numeric':
@@ -50,11 +55,6 @@ function getValueForValueMacro(match: string, fieldPath?: string, scopedVars?: S
 
   if (rowIndex === undefined) {
     return match;
-  }
-
-  if (fieldPath === 'time') {
-    const timeField = frame.fields.find((f) => f.type === FieldType.time);
-    return timeField ? timeField.values[rowIndex] : undefined;
   }
 
   const value = field.values[rowIndex];

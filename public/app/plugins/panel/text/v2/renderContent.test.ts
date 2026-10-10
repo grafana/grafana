@@ -9,6 +9,9 @@ import {
   FieldType,
   type InterpolateFunction,
   MappingType,
+  NullValueMode,
+  reduceField,
+  ReducerID,
   standardFieldConfigEditorRegistry,
   ThresholdsMode,
   toDataFrame,
@@ -159,7 +162,7 @@ describe('interpolateTemplate', () => {
       ['Once', RenderMode.Once],
       ['an undefined render mode', undefined],
     ])('renders the content once for %s', (_name, renderMode) => {
-      expect(interpolate('CPU is ${__data.fields.cpu}%', [hosts], renderMode)).toBe('CPU is ${__data.fields.cpu}%');
+      expect(interpolate('CPU is ${__data.fields.cpu}%', [hosts], renderMode)).toBe('CPU is 12%');
     });
   });
 
@@ -330,8 +333,113 @@ describe('interpolateTemplate', () => {
       it.each([
         ['${__value.text}', '12'],
         ['${__value.numeric}', '12'],
-      ])('resolves %s from the reduced value, since there is no row', (content, expected) => {
+      ])('resolves %s from the reduced value', (content, expected) => {
         expect(interpolate(content, [cpu], RenderMode.Once)).toBe(expected);
+      });
+
+      it.each([
+        ['${__data.fields.value}', '12'],
+        ['${__data.fields.value.numeric}', '12'],
+        ['${__data.fields.value.text}', '12'],
+        ['${__data.fields[1]}', '12'],
+        ['${__value.time}', '2'],
+      ])('resolves %s from the row of the reduced value', (content, expected) => {
+        expect(interpolate(content, [cpu], RenderMode.Once)).toBe(expected);
+      });
+
+      it.each([
+        ['null', [null]],
+        ['undefined', [undefined]],
+        ['NaN', [NaN]],
+        ['all three', [null, undefined, NaN]],
+      ])('skips trailing %s when selecting the row of the reduced value', (_name, trailing) => {
+        const frame = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [500, 1000, 2000, ...trailing.map(() => 3000)] },
+            { name: 'value', type: FieldType.number, values: [12, 84, 12, ...trailing] },
+            {
+              name: 'host',
+              type: FieldType.string,
+              values: ['old', 'web-1', 'web-2', ...trailing.map(() => 'missing')],
+            },
+          ],
+        });
+
+        expect(
+          interpolate(
+            '${__value.text}/${__data.fields.value}/${__data.fields.host}/${__value.time}',
+            [frame],
+            RenderMode.Once
+          )
+        ).toBe('12/12/web-2/2000');
+      });
+
+      it('preserves reduced value units while resolving data from the same row', () => {
+        const formatted = toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [84, 12] }] });
+        formatted.fields[0].display = (value) => ({ text: String(value), numeric: Number(value), suffix: '%' });
+
+        expect(interpolate('${__value.text}/${__data.fields.value}', [formatted], RenderMode.Once)).toBe('12%/12%');
+      });
+
+      it('selects zero as the last non-null value', () => {
+        const zero = toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values: [84, 0, null] }] });
+
+        expect(interpolate('${__value.text}/${__data.fields.value}', [zero], RenderMode.Once)).toBe('0/0');
+      });
+
+      it.each([
+        ['all-null', [null, null]],
+        ['empty', []],
+      ])('keeps the no-row fallback for an %s field', (_name, values) => {
+        const missing = toDataFrame({ fields: [{ name: 'value', type: FieldType.number, values }] });
+
+        expect(
+          interpolate('[${__value.text}]/[${__data.fields.value}]/[${__value.time}]', [missing], RenderMode.Once)
+        ).toBe('[]/[${__data.fields.value}]/[]');
+      });
+
+      it('keeps the no-row fallback when a cached reduction has no matching source value', () => {
+        const missing = toDataFrame({
+          fields: [
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [null, null],
+              config: { nullValueMode: NullValueMode.AsZero },
+            },
+          ],
+        });
+        reduceField({ field: missing.fields[0], reducers: [ReducerID.lastNotNull, ReducerID.count] });
+
+        expect(
+          interpolate('[${__value.text}]/[${__data.fields.value}]/[${__value.time}]', [missing], RenderMode.Once)
+        ).toBe('[0]/[${__data.fields.value}]/[]');
+      });
+
+      it('reads the last non-null row when cached null-as-zero calculations match an earlier zero', () => {
+        const frame = toDataFrame({
+          fields: [
+            { name: 'time', type: FieldType.time, values: [1000, 2000, 3000] },
+            {
+              name: 'value',
+              type: FieldType.number,
+              values: [0, 10, null],
+              config: { nullValueMode: NullValueMode.AsZero },
+            },
+            { name: 'host', type: FieldType.string, values: ['old', 'last-value', 'null-row'] },
+          ],
+        });
+        const cached = reduceField({ field: frame.fields[1], reducers: [ReducerID.lastNotNull, ReducerID.count] });
+        expect(cached.lastNotNull).toBe(0);
+
+        expect(
+          interpolate(
+            '${__value.text}/${__data.fields.value}/${__data.fields.host}/${__value.time}',
+            [frame],
+            RenderMode.Once
+          )
+        ).toBe('10/10/last-value/2000');
+        expect(frame.fields[1].state?.calcs?.lastNotNull).toBe(0);
       });
 
       it('formats the reduced value with the display processor that field overrides attach', () => {
