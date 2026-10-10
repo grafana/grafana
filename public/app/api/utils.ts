@@ -1,7 +1,7 @@
 import { normalizeError } from '@grafana/api-clients';
 import { isObject } from '@grafana/data';
 import { type ThunkDispatch } from 'app/types/store';
-
+// adding a new line
 import { createErrorNotification } from '../core/copy/appNotification';
 import { notifyApp } from '../core/reducers/appNotification';
 import { isStatusFailure } from '../features/apiserver/guards';
