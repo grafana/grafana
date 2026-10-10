@@ -66,12 +66,15 @@ export function hasRenderableData(series?: DataFrame[]): series is DataFrame[] {
   return series?.some((frame) => frame.fields.length > 0 && frame.length > 0) ?? false;
 }
 
+// Code mode is excluded: escaping would mangle the source it shows as written.
+export function compilesHandlebars(mode: TextMode): boolean {
+  return mode !== TextMode.Code && isTextNewFeaturesEnabled();
+}
+
 export function interpolateTemplate(template: TextTemplate, replaceVariables: InterpolateFunction): string {
   const { content, mode, series = [], renderMode, format } = template;
 
-  // Code mode shows the source verbatim, and Handlebars' HTML escaping would mangle it.
-  const compiled =
-    isTextNewFeaturesEnabled() && mode !== TextMode.Code ? compileTemplate(content, replaceVariables) : undefined;
+  const compiled = compilesHandlebars(mode) ? compileTemplate(content, replaceVariables) : undefined;
 
   if (renderMode === RenderMode.PerRow && hasRenderableData(series)) {
     return interpolateEveryRow(template, series, replaceVariables, compiled);
