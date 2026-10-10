@@ -1,5 +1,5 @@
 import { type DataSourceInstanceSettings, type DataSourceJsonData } from '@grafana/data';
-import { type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
+import { getTraceToLogsOptions, type TraceToLogsOptionsV2 } from '@grafana/o11y-ds-frontend';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type LokiQuery } from 'app/features/loki-helpers/types';
@@ -250,5 +250,83 @@ describe('getTraceToLogsQuery loki alternatives', () => {
       expr: '{cluster="cluster1", hostname="hostname1", service_namespace="namespace1"} |= "7946b05c2e2e4e5a"',
       refId: 't2l:line-contains',
     });
+  });
+});
+
+const splunkSettings = {
+  uid: 'splunk1_uid',
+  name: 'Splunk',
+  type: 'grafana-splunk-datasource',
+} as DataSourceInstanceSettings<DataSourceJsonData>;
+
+describe('getTraceToLogsQuery Splunk custom query', () => {
+  const tags = [{ key: 'cluster', value: 'cluster1' }];
+  const customQueryText = 'index=app $__span.traceId';
+
+  it('Case A: uses custom query when customQuery is true', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      { customQuery: true, query: customQueryText, filterByTraceID: true },
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
+  });
+
+  it('Case B: ignores leftover query text when customQuery is explicitly false', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      { customQuery: false, query: customQueryText, filterByTraceID: true },
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: '${__tags} "7946b05c2e2e4e5a"', refId: '' });
+  });
+
+  it('Case C: uses configured query when customQuery is omitted and query is set', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      // Provisioned / hand-edited V2 may omit the boolean while still setting query.
+      { query: customQueryText, filterByTraceID: true } as TraceToLogsOptionsV2,
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
+  });
+
+  it('uses custom query when customQuery is a truthy non-boolean value', () => {
+    const { query } = getTraceToLogsQuery(
+      tags,
+      splunkSettings,
+      // JSON written by API clients can carry the flag as a string.
+      { customQuery: 'true', query: customQueryText, filterByTraceID: true } as unknown as TraceToLogsOptionsV2,
+      '7946b05c2e2e4e5a'
+    );
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
+  });
+
+  it('uses the V2 custom query when jsonData also has a legacy tracesToLogs key', () => {
+    const options = getTraceToLogsOptions({
+      tracesToLogsV2: {
+        datasourceUid: 'splunk1_uid',
+        customQuery: true,
+        query: customQueryText,
+        filterByTraceID: true,
+      },
+      tracesToLogs: {
+        datasourceUid: 'splunk1_uid',
+        tags: ['cluster'],
+        filterByTraceID: true,
+        filterBySpanID: true,
+      },
+    });
+
+    const { query } = getTraceToLogsSpanQuery(createSpan(), splunkSettings, options!);
+
+    expect(query).toEqual({ query: customQueryText, refId: '' });
   });
 });
