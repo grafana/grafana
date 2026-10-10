@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -83,6 +84,37 @@ func TestHandlerUsesExternalGroupsWhenConfigured(t *testing.T) {
 
 	require.Equal(t, http.StatusOK, rec.Code)
 	require.Equal(t, []string{"idp-group"}, client.info.GetGroups())
+}
+
+func TestHandlerSkipsCacheWhenRequested(t *testing.T) {
+	caller := &identity.StaticRequester{Type: authlib.TypeUser, UserUID: "u1", Namespace: "org-1"}
+
+	for _, tc := range []struct {
+		query     string
+		skipCache bool
+	}{
+		{query: "?skipCache=true", skipCache: true},
+		{query: "?skipCache=1", skipCache: true},
+		{query: "?skipCache=false", skipCache: false},
+		{query: "?skipCache=", skipCache: false},
+		// A value we can't parse falls back to the cache rather than erroring, so a
+		// malformed refresh still returns permissions
+		{query: "?skipCache=yes-please", skipCache: false},
+		{query: "", skipCache: false},
+	} {
+		t.Run(tc.query, func(t *testing.T) {
+			client := &fakeUserPermissionsClient{}
+			handler := NewHandler(client, false)
+			req := permissionsRequest(t, caller, "org-1")
+			req.URL.RawQuery = strings.TrimPrefix(tc.query, "?")
+			rec := httptest.NewRecorder()
+
+			handler.handle(rec, req)
+
+			require.Equal(t, http.StatusOK, rec.Code)
+			require.Equal(t, tc.skipCache, client.request.SkipCache)
+		})
+	}
 }
 
 func TestHandlerRejectsNamespaceMismatch(t *testing.T) {

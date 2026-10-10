@@ -3114,7 +3114,16 @@
         "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
         "deprecated": true,
         "operationId": "getCurrentUserPermissions",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "skipCache",
+            "in": "query",
+            "description": "recompute the permissions instead of serving the cached snapshot",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
