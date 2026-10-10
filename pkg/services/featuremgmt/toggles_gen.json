@@ -3354,15 +3354,18 @@
     {
       "metadata": {
         "name": "inlineLogDetailsNoScrolls",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T11:18:41Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2026-03-11T11:18:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables an inline version of Log Details that creates no new scrolls",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3992,14 +3995,17 @@
     {
       "metadata": {
         "name": "lokiAlignedQuerySplitting",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-26T10:03:21Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2026-03-26T10:03:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Aligns query splitting chunks with UTC midnight",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4264,15 +4270,18 @@
     {
       "metadata": {
         "name": "otelLogsFormatting",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T15:42:14Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2025-07-16T15:42:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Applies OTel formatting templates to displayed logs",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -5732,13 +5741,16 @@
     {
       "metadata": {
         "name": "unifiedNavbars",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-09T12:51:22Z"
+        "resourceVersion": "1791558064690",
+        "creationTimestamp": "2025-04-09T12:51:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 15:01:04.690462 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables unified navbars",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-catalog",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }

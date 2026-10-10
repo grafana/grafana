@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"strings"
 	"testing"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	rp "github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -154,6 +157,7 @@ func testIntegrationResourcePermissions(t *testing.T) {
 			doResourcePermissionCRUDTests(t, helper, clients, parentUID)
 			doResourcePermissionAuthzTests(t, helper, clients, parentUID)
 			doResourcePermissionHierarchyTests(t, helper, clients, parentUID)
+			doResourcePermissionRevocationTests(t, helper, clients, parentUID)
 			doResourcePermissionListFilteringTests(t, helper, clients, parentUID)
 			// TODO: Add tests for External JWT authentication
 			// doResourcePermissionAccessPolicyTests(t, helper)
@@ -924,4 +928,61 @@ func testIntegrationResourcePermissionSearch(t *testing.T) {
 				"Viewer should not see Viewer basic role's permission for folder %q (caller lacks get_permissions on target)", folderUID)
 		}
 	})
+}
+
+func doResourcePermissionRevocationTests(t *testing.T, helper *apis.K8sTestHelper, clients *k8sTestClients, parentUID string) {
+	t.Run("resource permission changes affect folder access", func(t *testing.T) {
+		kinds := []iamv0.ResourcePermissionSpecPermissionKind{
+			iamv0.ResourcePermissionSpecPermissionKindUser,
+			iamv0.ResourcePermissionSpecPermissionKindTeam,
+		}
+
+		for _, kind := range kinds {
+			t.Run(string(kind), func(t *testing.T) {
+				ctx := context.Background()
+				name := fmt.Sprintf("revocation-%s", kind)
+				target := createTestFolder(t, helper, helper.Org1.Admin, name, parentUID)
+				caller := helper.CreateUser(name, apis.Org1, org.RoleNone, nil)
+				principal := caller.Identity.GetIdentifier()
+				if kind == iamv0.ResourcePermissionSpecPermissionKindTeam {
+					membership := helper.CreateTeam("revocation-team", "", helper.Org1.OrgID)
+					helper.AddOrUpdateTeamMember(caller, membership.ID, team.PermissionTypeMember)
+					principal = membership.UID
+				}
+
+				requireFolderAccessAfterReload(t, helper, caller, target.GetName(), http.StatusForbidden)
+
+				grant := createResourcePermissionObject(
+					target.GetName(),
+					gvrFolders.Group,
+					gvrFolders.Resource,
+					newPermission(string(kind), principal, "view"),
+				)
+				created, err := clients.rpAdmin.Resource.Create(ctx, grant, metav1.CreateOptions{})
+				require.NoError(t, err)
+				requireFolderAccessAfterReload(t, helper, caller, target.GetName(), http.StatusOK)
+
+				require.NoError(t, clients.rpAdmin.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{}))
+				requireFolderAccessAfterReload(t, helper, caller, target.GetName(), http.StatusForbidden)
+			})
+		}
+	})
+}
+
+func requireFolderAccessAfterReload(
+	t *testing.T, helper *apis.K8sTestHelper, caller apis.User, folderUID string, wantStatus int,
+) {
+	t.Helper()
+
+	refreshed := apis.DoRequest(helper, apis.RequestParams{
+		User: caller,
+		Path: "/api/access-control/user/permissions?reloadcache=true",
+	}, &map[string]interface{}{})
+	require.Equal(t, http.StatusOK, refreshed.Response.StatusCode)
+
+	response := apis.DoRequest(helper, apis.RequestParams{
+		User: caller,
+		Path: fmt.Sprintf("/api/folders/%s", folderUID),
+	}, &struct{}{})
+	require.Equal(t, wantStatus, response.Response.StatusCode, string(response.Body))
 }

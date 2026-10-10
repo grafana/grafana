@@ -230,6 +230,13 @@ func TestIntegrationSearchBackedList(t *testing.T) {
 		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, DataKeyScans: scans.Scans})
 	})
 
+	t.Run("kv backend (batched reads, authorize before fetch)", func(t *testing.T) {
+		ctx := context.Background()
+		scans := &unitest.DataKeyScanCounter{}
+		backend, _ := unitest.NewTestSqlKvBackendWithKV(t, ctx, true, scans.Wrap)
+		unitest.RunTestSearchBackedList(t, ctx, backend, newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: true, AuthorizeBeforeFetch: true, DataKeyScans: scans.Scans})
+	})
+
 	t.Run("sql backend (per-resource fallback)", func(t *testing.T) {
 		ctx := context.Background()
 		unitest.RunTestSearchBackedList(t, ctx, newTestBackend(t, false, 0, 0), newBleve(t), unitest.SearchBackedListOptions{ExpectBatchReads: false})

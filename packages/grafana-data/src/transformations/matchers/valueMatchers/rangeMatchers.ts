@@ -11,6 +11,9 @@ const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions> = {
   get: (options) => {
     return (valueIndex: number, field: Field) => {
       const value = field.values[valueIndex];
+      if (options.includeMissing !== undefined && (typeof value !== 'number' || !Number.isFinite(value))) {
+        return options.includeMissing;
+      }
       if (isNaN(value)) {
         return false;
       }
@@ -19,11 +22,25 @@ const isBetweenValueMatcher: ValueMatcherInfo<RangeValueMatcherOptions> = {
       const fromVal = typeof options.from !== 'number' ? parseInt(options.from, 10) : options.from;
       const toVal = typeof options.to !== 'number' ? parseInt(options.to, 10) : options.to;
 
-      return value > fromVal && value < toVal;
+      const aboveFrom =
+        (options.allowOpenBounds && options.from === undefined) ||
+        (options.inclusive ? value >= fromVal : value > fromVal);
+      const belowTo =
+        (options.allowOpenBounds && options.to === undefined) || (options.inclusive ? value <= toVal : value < toVal);
+      return aboveFrom && belowTo;
     };
   },
   getOptionsDisplayText: (options) => {
-    return `Matches all rows where field value is between ${options.from} and ${options.to}.`;
+    const from = options.allowOpenBounds && options.from === undefined ? '-∞' : options.from;
+    const to = options.allowOpenBounds && options.to === undefined ? '∞' : options.to;
+    const inclusive = options.inclusive ? ' (inclusive)' : '';
+    const missing =
+      options.includeMissing === undefined
+        ? ''
+        : options.includeMissing
+          ? ' Includes missing, non-numeric and non-finite values.'
+          : ' Finite numbers only.';
+    return `Matches all rows where field value is between ${from} and ${to}${inclusive}.${missing}`;
   },
   isApplicable: (field) => field.type === FieldType.number || field.type === FieldType.time,
   getDefaultOptions: (field) => {

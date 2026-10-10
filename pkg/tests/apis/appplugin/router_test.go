@@ -36,7 +36,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/util/retry"
 
-	"github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	pluginv3 "github.com/grafana/grafana-app-sdk/plugin/genproto/grafana/plugin/v3"
 	"github.com/grafana/grafana-app-sdk/plugin/httpadapter"
 	secretv1beta1 "github.com/grafana/grafana/apps/secret/pkg/apis/secret/v1beta1"
@@ -189,11 +188,9 @@ func TestIntegrationPluginsOverRouter(t *testing.T) {
 		folderProxy.ServeHTTP(w, r)
 	}))
 	t.Cleanup(folderServer.Close)
-	folderBackend, err := router.NewForwardBackend(metav1.APIGroup{Name: "folder.grafana.app"}, v1alpha2.RouteBackendSpec{
-		Mode:    v1alpha2.RouteBackendSpecModeForward,
-		Forward: &v1alpha2.RouteBackendCommonBackendConfig{Url: folderServer.URL},
-	}, "folder", folderServer.Client().Transport.(*http.Transport))
+	folderServerURL, err := url.Parse(folderServer.URL)
 	require.NoError(t, err)
+	folderBackend := folderProxyBackend{proxy: httputil.NewSingleHostReverseProxy(folderServerURL)}
 	routerHandler := http.NewServeMux()
 	cfg := setting.NewCfg()
 	cfg.ExtJWTAuth.JWKSUrl = manifests.URL + "/jwks"
@@ -544,6 +541,20 @@ func (l folderRoutesLoader) Load(ctx context.Context) ([]router.Backend, error) 
 		return nil, err
 	}
 	return append(backends, l.folder), nil
+}
+
+// folderProxyBackend serves the folder API by proxying to a test server.
+type folderProxyBackend struct {
+	proxy http.Handler
+}
+
+func (b folderProxyBackend) Key() string { return "folder" }
+func (b folderProxyBackend) Group() metav1.APIGroup {
+	return metav1.APIGroup{Name: "folder.grafana.app"}
+}
+func (b folderProxyBackend) Source() string { return "test" }
+func (b folderProxyBackend) Load(context.Context) (http.Handler, error) {
+	return b.proxy, nil
 }
 
 type routerTestDecrypter func(context.Context, string, string, ...string) (map[string]decrypt.DecryptResult, error)

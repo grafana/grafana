@@ -2,6 +2,7 @@ package dashboards
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +18,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/server"
+	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboardimport"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -1234,6 +1238,48 @@ func testIntegrationDashboardServicePermissions(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("move requires source write and destination create", func(t *testing.T) {
+		const movedDashboardTitle = "Moved dashboard"
+
+		for _, toRoot := range []bool{false, true} {
+			t.Run(fmt.Sprintf("to root=%t", toRoot), func(t *testing.T) {
+				cases := dashboardMovePermissionCases()
+
+				for i, tc := range cases {
+					t.Run(tc.name, func(t *testing.T) {
+						sourceFolder, destinationFolder := "", otherSavedFolder.UID
+						if toRoot {
+							sourceFolder, destinationFolder = savedFolder.UID, ""
+						}
+						originalTitle := fmt.Sprintf("Move permission %t %d", toRoot, i)
+						dashboard := createDashboard(t, grafanaListedAddr, originalTitle, 0, sourceFolder)
+						login := fmt.Sprintf("dashboard-move-%t-%d", toRoot, i)
+						createDashboardMoveUser(t, env, login, dashboard.UID, destinationFolder, tc)
+
+						payload := map[string]interface{}{
+							"dashboard": map[string]interface{}{
+								"uid":   dashboard.UID,
+								"title": movedDashboardTitle,
+							},
+							"folderUid": destinationFolder,
+							"overwrite": true,
+						}
+						response, err := postDashboard(t, grafanaListedAddr, login, login, payload)
+						require.NoError(t, err)
+						require.NoError(t, response.Body.Close())
+						require.Equal(t, tc.wantStatus, response.StatusCode)
+
+						expectedFolder, expectedTitle := sourceFolder, originalTitle
+						if tc.wantStatus == http.StatusOK {
+							expectedFolder, expectedTitle = destinationFolder, movedDashboardTitle
+						}
+						requireDashboardLocationAndTitle(t, grafanaListedAddr, dashboard.UID, expectedFolder, expectedTitle)
+					})
+				}
+			})
+		}
+	})
+
 	t.Run("RBAC tests", func(t *testing.T) {
 		setFolderPermissions := func(t *testing.T, grafanaListedAddr string, folderUID string, permissions []map[string]interface{}) {
 			t.Helper()
@@ -1455,4 +1501,116 @@ func testIntegrationDashboardServicePermissions(t *testing.T) {
 			require.NoError(t, err)
 		})
 	})
+}
+
+type dashboardMovePermissionCase struct {
+	name              string
+	writeSource       bool
+	createDestination bool
+	wrongDestination  bool
+	wantStatus        int
+}
+
+func dashboardMovePermissionCases() []dashboardMovePermissionCase {
+	return []dashboardMovePermissionCase{
+		{name: "neither", wantStatus: http.StatusForbidden},
+		{
+			name:        "source write only",
+			writeSource: true,
+			wantStatus:  http.StatusForbidden,
+		},
+		{
+			name:              "destination create only",
+			createDestination: true,
+			wantStatus:        http.StatusForbidden,
+		},
+		{
+			name:              "both",
+			writeSource:       true,
+			createDestination: true,
+			wantStatus:        http.StatusOK,
+		},
+		{
+			name:              "create on a different destination",
+			writeSource:       true,
+			createDestination: true,
+			wrongDestination:  true,
+			wantStatus:        http.StatusForbidden,
+		},
+	}
+}
+
+func requireDashboardLocationAndTitle(t *testing.T, addr, uid, wantFolderUID, wantTitle string) {
+	t.Helper()
+
+	url := fmt.Sprintf("http://admin:admin@%s/api/dashboards/uid/%s", addr, uid)
+	stored, err := http.Get(url) // nolint:gosec
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		require.NoError(t, stored.Body.Close())
+	})
+	require.Equal(t, http.StatusOK, stored.StatusCode)
+
+	var result struct {
+		Meta struct {
+			FolderUID string `json:"folderUid"`
+		} `json:"meta"`
+		Dashboard struct {
+			Title string `json:"title"`
+		} `json:"dashboard"`
+	}
+	require.NoError(t, json.NewDecoder(stored.Body).Decode(&result))
+	require.Equal(t, wantFolderUID, result.Meta.FolderUID)
+	require.Equal(t, wantTitle, result.Dashboard.Title)
+}
+
+func createDashboardMoveUser(
+	t *testing.T, env *server.TestEnv, login, dashboardUID, destinationUID string, tc dashboardMovePermissionCase,
+) {
+	t.Helper()
+
+	orgID := env.Cfg.DefaultOrgID()
+	userID := tests.CreateUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
+		DefaultOrgRole: string(org.RoleNone),
+		Login:          login,
+		Password:       user.Password(login),
+		OrgID:          orgID,
+	})
+	grants := []resourcepermissions.SetResourcePermissionCommand{
+		{
+			Actions:           []string{folder.ActionFoldersRead},
+			Resource:          folder.ScopeFoldersRoot,
+			ResourceAttribute: "uid",
+			ResourceID:        "*",
+		},
+	}
+	if tc.writeSource {
+		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           []string{dashboards.ActionDashboardsRead, dashboards.ActionDashboardsWrite},
+			Resource:          dashboards.ScopeDashboardsRoot,
+			ResourceAttribute: "uid",
+			ResourceID:        dashboardUID,
+		})
+	}
+	if tc.createDestination {
+		scopeUID := destinationUID
+		if scopeUID == "" {
+			scopeUID = folder.GeneralFolderUID
+		}
+		if tc.wrongDestination {
+			scopeUID = "another-destination"
+		}
+		grants = append(grants, resourcepermissions.SetResourcePermissionCommand{
+			Actions:           []string{dashboards.ActionDashboardsCreate},
+			Resource:          folder.ScopeFoldersRoot,
+			ResourceAttribute: "uid",
+			ResourceID:        scopeUID,
+		})
+	}
+
+	store := resourcepermissions.NewStore(env.Cfg, env.SQLStore, featuremgmt.WithFeatures())
+	for _, grant := range grants {
+		_, err := store.SetUserResourcePermission(context.Background(), orgID, accesscontrol.User{ID: userID}, grant, nil)
+		require.NoError(t, err)
+	}
 }

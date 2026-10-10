@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -494,7 +494,7 @@ var Basic = wire.NewSet(
 
 var Server = wire.NewSet(
 	Basic,
-	metrics.WireSet,
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -514,7 +514,7 @@ var Server = wire.NewSet(
 var CLI = wire.NewSet(
 	server.NewRunner,
 	Basic,
-	metrics.WireSet,
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -533,7 +533,7 @@ var CLI = wire.NewSet(
 var Test = wire.NewSet(
 	Basic,
 	server.ProvideTestEnv,
-	metrics.WireSetForTest,
+	metricsservice.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideService,
 	notifications.MockNotificationService,
