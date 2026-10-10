@@ -1,6 +1,6 @@
 import { type TransformerUIProps, FrameMatcherID } from '@grafana/data';
 import { type FilterFramesByRefIdTransformerOptions } from '@grafana/data/internal';
-import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
+import { FrameMultiSelectionEditor } from 'app/features/dashboard/components/TransformationsEditor/FrameSelectionEditor';
 
 export const FilterByRefIdTransformerEditor = (props: TransformerUIProps<FilterFramesByRefIdTransformerOptions>) => {
   return (
