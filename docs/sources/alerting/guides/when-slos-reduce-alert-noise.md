@@ -25,9 +25,7 @@ This guide covers the three most common patterns where SLOs can help reduce aler
 
 Threshold alerts evaluate a condition on its evaluation interval, for example, every `5m`, `30m`, `1h`.
 
-If the query result crosses the threshold at that moment, the alert fires. It continues in a firing state on the next evaluation if the condition still holds, or returns to normal once resolved.
-
-In this sense, the alert state is binary: firing or not firing.
+If the query result crosses the threshold, the alert instance enters the [Pending](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period) state until the pending period elapses, then fires. You can set the pending period to zero to skip Pending and fire on the evaluation where the condition is first met. The alert continues in a firing state on later evaluations if the condition still holds, or returns to normal once resolved.
 
 {{< figure src="/media/docs/alerting/slog-guide-alert-state-lifecycle.png" max-width="750px" alt="States of alert instances over time" >}}
 
