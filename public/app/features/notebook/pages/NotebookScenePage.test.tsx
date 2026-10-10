@@ -164,6 +164,24 @@ describe('NotebookScenePage', () => {
       expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('notebook_list');
     });
 
+    it('reports the command palette as the launcher and removes it from the saved URL', async () => {
+      jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
+      setTestFlags({ [NOTEBOOKS_FLAG]: true });
+
+      render(<NotebookScenePage />, {
+        historyOptions: { initialEntries: ['/notebooks/new?edit=true&notebookSource=command_palette'] },
+      });
+      await screen.findByRole('radio', { name: 'Edit' });
+
+      expect(jest.mocked(NotebookAnalytics.newStarted)).toHaveBeenCalledWith('command_palette');
+
+      await act(async () => {
+        getNotebookPageStateManager().state.scene!.setState({ uid: 'nb-new' });
+      });
+      await waitFor(() => expect(locationService.getLocation().pathname).toBe('/notebooks/nb-new'));
+      expect(new URLSearchParams(locationService.getLocation().search).has('notebookSource')).toBe(false);
+    });
+
     // The flag gate is what makes this route real, and a page that renders not-found started nothing.
     it('reports nothing when the notebooks flag is off', async () => {
       jest.spyOn(contextSrv, 'hasPermission').mockReturnValue(true);
