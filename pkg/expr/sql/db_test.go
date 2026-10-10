@@ -61,6 +61,22 @@ func TestQueryFrames(t *testing.T) {
 				data.NewField("OSS Projects with Typos", nil, []string{"Garfana"}),
 			).SetRefID("sqlExpressionRefId"),
 		},
+		{
+			name:  "query column with @ in name (e.g. elasticsearch @timestamp)",
+			query: "SELECT `@timestamp`, `val` FROM inputFrameRefId;",
+			input_frames: []*data.Frame{
+				data.NewFrame(
+					"",
+					data.NewField("@timestamp", nil, []time.Time{time.Date(2026, 8, 21, 9, 22, 6, 0, time.UTC)}),
+					data.NewField("val", nil, []float64{42.0}),
+				).SetRefID("inputFrameRefId"),
+			},
+			expected: data.NewFrame(
+				"sqlExpressionRefId",
+				data.NewField("@timestamp", nil, []time.Time{time.Date(2026, 8, 21, 9, 22, 6, 0, time.UTC)}),
+				data.NewField("val", nil, []*float64{ptr(42.0)}),
+			).SetRefID("sqlExpressionRefId"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -443,4 +459,8 @@ func (ts *testSpan) AddEvent(name string, options ...trace.EventOption) {
 }
 
 func (ts *testSpan) RecordError(err error, options ...trace.EventOption) {
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }
