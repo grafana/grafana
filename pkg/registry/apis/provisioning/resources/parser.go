@@ -280,6 +280,22 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		parsed.Meta.SetFolder(r.resolveFolderID(ctx, info))
 	}
 
+	// A dashboard inside a folder inherits access from it. One at the top level — an
+	// instance-scoped (folderless) repository's root files — has nothing to inherit from, so
+	// without a permission record of its own it is invisible to everybody but admins. Ask for
+	// the default permissions, the same way the UI does when a user creates a dashboard there.
+	// Unified storage strips the annotation and runs its permission setter instead of persisting
+	// it, and only adds the defaults that are missing, so this never lowers an existing grant.
+	//
+	// Dashboards only: the annotation is rejected for a kind that registered no permission
+	// setter with unified storage, and dashboards and folders are the only provisioned kinds
+	// that have one. Library panels and playlists are folder-scoped but have none, and need
+	// their setter before they can be added here.
+	if parsed.GVK.Group == dashboard.GROUP && parsed.GVK.Kind == "Dashboard" &&
+		foldermodel.IsRootFolderUID(parsed.Meta.GetFolder()) {
+		parsed.Meta.SetAnnotation(utils.AnnoKeyGrantPermissions, utils.AnnoGrantPermissionsDefault)
+	}
+
 	return parsed, nil
 }
 

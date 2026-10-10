@@ -50,6 +50,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/snapshot"
 	iamapi "github.com/grafana/grafana/pkg/registry/apis/iam"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/resourcepermission"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanaauthorizer "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -1528,7 +1529,18 @@ func (b *DashboardsAPIBuilder) setDefaultDashboardPermissions(ctx context.Contex
 	client := (*resourcePermissionsSvc).Namespace(obj.GetNamespace())
 	name := fmt.Sprintf("%s-%s-%s", dashv1.DashboardResourceInfo.GroupVersionResource().Group, dashv1.DashboardResourceInfo.GroupVersionResource().Resource, obj.GetName())
 
-	if _, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+	if existing, err := client.Get(ctx, name, metav1.GetOptions{}); err == nil {
+		// The dashboard already had a permission record, which happens when it reached the root
+		// by a move rather than by being created there. Only add the defaults nobody granted,
+		// so the move cannot remove or lower an existing grant.
+		if apistore.KeepExistingPermissions(ctx) {
+			if err := resourcepermission.AddMissingPermissions(ctx, client, existing, permissions); err != nil {
+				log.Error("failed to add missing dashboard permissions", "error", err)
+				return fmt.Errorf("add missing dashboard permissions: %w", err)
+			}
+			return nil
+		}
+
 		_, err := client.Update(ctx, &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"metadata": map[string]any{
