@@ -65,6 +65,36 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
+// Dashboard lifecycle: drafts are unpublished dashboards, forks are private working
+// copies of a published dashboard. Both are visible only to their owner and org admins.
+
+// LabelKeyLifecycle holds the lifecycle state (LifecycleDraft, LifecycleFork, or LifecyclePublished).
+// An absent label means published.
+const LabelKeyLifecycle = "grafana.app/lifecycle"
+
+// LabelKeyLifecycleOwner holds the identity UID of the user who owns a draft or fork.
+// It is set by the server and cannot be changed by clients.
+const LabelKeyLifecycleOwner = "grafana.app/lifecycle-owner"
+
+// LabelKeyForkOf holds the name of the dashboard a fork was created from.
+const LabelKeyForkOf = "grafana.app/fork-of"
+
+// AnnoKeyForkBase holds the metadata.generation of the original when the fork was created
+// or last updated onto it. Merging requires the original to still be at this generation.
+const AnnoKeyForkBase = "grafana.app/fork-base"
+
+// AnnoKeyOrigin names the product that created a draft or fork, for display only (for example "assistant").
+const AnnoKeyOrigin = "grafana.app/origin"
+
+// AnnoKeyOriginRef is an optional relative URL back to where the draft or fork was created, for display only.
+const AnnoKeyOriginRef = "grafana.app/origin-ref"
+
+const (
+	LifecycleDraft     = "draft"
+	LifecycleFork      = "fork"
+	LifecyclePublished = "published"
+)
+
 // LabelKeyDeprecatedInternalID holds the deprecated internal ID of a resource.
 // Resources are now identified by their metadata.name (previously grafana UID)
 // Deprecated: This label will be removed when legacy support via internal IDs is no longer required.

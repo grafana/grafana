@@ -984,6 +984,19 @@
     },
     {
       "metadata": {
+        "name": "assistant.dashboard.artifactsDraftsAndForks",
+        "resourceVersion": "1791630553664",
+        "creationTimestamp": "2026-10-10T11:09:13Z"
+      },
+      "spec": {
+        "description": "Enables dashboard drafts and forks: private unpublished dashboards and working copies that are published or merged explicitly, used by Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "assistant.dashboardPlanning",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-05T14:53:48Z"

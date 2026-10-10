@@ -283,6 +283,7 @@ type Cfg struct {
 
 	// K8s Dashboard Cleanup
 	K8sDashboardCleanup K8sDashboardCleanupSettings
+	DashboardDrafts     DashboardDraftsSettings
 
 	TempDataLifetime time.Duration
 
@@ -1806,6 +1807,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
 	cfg.readK8sDashboardCleanupSettings()
+	cfg.readDashboardDraftsSettings()
 	cfg.readSqlDataSourceSettings()
 
 	cfg.Storage = readStorageSettings(iniFile)

@@ -3148,6 +3148,14 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
+			Name:        "assistant.dashboard.artifactsDraftsAndForks",
+			Description: "Enables dashboard drafts and forks: private unpublished dashboards and working copies that are published or merged explicitly, used by Grafana Assistant",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaDashboardsSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true, React: true},
+		},
+		{
 			Name:         "features.bulkFlagEvalFiltering",
 			Description:  "Filters bulk OFREP flag evaluations to public-metadata flags only",
 			Stage:        FeatureStageExperimental,

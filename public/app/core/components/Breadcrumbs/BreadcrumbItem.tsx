@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Badge, Icon, useStyles2 } from '@grafana/ui';
 
 import { type Breadcrumb } from './types';
 
@@ -13,7 +13,7 @@ type Props = Breadcrumb & {
   flexGrow: number;
 };
 
-export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props) {
+export function BreadcrumbItem({ href, isCurrent, text, highlightText, index, flexGrow }: Props) {
   const styles = useStyles2(getStyles);
 
   const onBreadcrumbClick = () => {
@@ -23,14 +23,17 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
   return (
     <li className={styles.breadcrumbWrapper} style={{ flexGrow }}>
       {isCurrent ? (
-        <span
-          data-testid={Components.Breadcrumbs.breadcrumb(text)}
-          className={styles.breadcrumb}
-          aria-current="page"
-          title={text}
-        >
-          {text}
-        </span>
+        <>
+          <span
+            data-testid={Components.Breadcrumbs.breadcrumb(text)}
+            className={styles.breadcrumb}
+            aria-current="page"
+            title={text}
+          >
+            {text}
+          </span>
+          {highlightText && <Badge className={styles.badge} text={highlightText} color="blue" />}
+        </>
       ) : (
         <>
           <a
@@ -42,6 +45,7 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
           >
             {text}
           </a>
+          {highlightText && <Badge className={styles.badge} text={highlightText} color="blue" />}
           <div className={styles.separator} aria-hidden={true}>
             <Icon name="angle-right" />
           </div>
@@ -59,6 +63,9 @@ const getStyles = (theme: GrafanaTheme2) => {
       overflow: 'hidden',
       whiteSpace: 'nowrap',
       color: theme.colors.text.secondary,
+    }),
+    badge: css({
+      flexShrink: 0,
     }),
     breadcrumbLink: css({
       color: theme.colors.text.primary,

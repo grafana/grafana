@@ -4,6 +4,7 @@ import { getAppPluginMetas, getCachedPromise } from '@grafana/runtime/internal';
 import CentralAlertHistorySceneExposedComponent from 'app/features/alerting/unified/components/rules/central-state-history/CentralAlertHistorySceneExposedComponent';
 import { CreateAlertFromPanelExposedComponentLazy } from 'app/features/alerting/unified/extensions/CreateAlertFromPanelExposedComponentLazy';
 import { AddToDashboardFormExposedComponent } from 'app/features/dashboard-scene/addToDashboard/AddToDashboardFormExposedComponent';
+import { DashboardViewLazy } from 'app/features/dashboard-scene/embedding/DashboardViewLazy';
 import { OpenQueryLibraryExposedComponent } from 'app/features/explore/QueryLibrary/OpenQueryLibraryExposedComponent';
 import { PrometheusQueryResultsContainer } from 'app/features/explore/RawPrometheus/PrometheusQueryResultsContainer';
 import { NotebookViewLazy } from 'app/features/notebook/embed/NotebookViewLazy';
@@ -70,6 +71,12 @@ function registerCoreExtensions({ addedLinksRegistry, exposedComponentsRegistry 
         title: 'Notebook',
         description: 'An editable notebook, for a host rendering one outside the notebooks route',
         component: NotebookViewLazy,
+      },
+      {
+        id: PluginExtensionExposedComponents.DashboardViewV1,
+        title: 'Dashboard',
+        description: 'A saved dashboard with its draft or fork banner, for a host rendering one outside the dashboard route',
+        component: DashboardViewLazy,
       },
     ],
   });

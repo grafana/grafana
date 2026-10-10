@@ -1005,6 +1005,8 @@ func convertHttpSearchRequestToResourceSearchRequest(queryParams url.Values, use
 		})
 	}
 
+	searchRequest.Options.Labels = append(searchRequest.Options.Labels, lifecycleSearchRequirements(queryParams, user)...)
+
 	// K6 creates a technical folder for some rbac handling that should not be visible to normal user.
 	// The legacy search backend ignores NotIn on name, but we should be mostly in mode 4+ now.
 	if !user.IsIdentityType(claims.TypeServiceAccount) {
@@ -1247,4 +1249,37 @@ func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name st
 	return slices.ContainsFunc(response.GetResults().GetColumns(), func(field *resourcepb.ResourceTableColumnDefinition) bool {
 		return field.GetName() == name
 	})
+}
+
+// lifecycleSearchRequirements hides dashboard drafts and forks from search unless the
+// request asks for them with lifecycle=draft|fork, and then returns only the requester's
+// own. forkOf=<name> narrows that to the forks of one dashboard.
+func lifecycleSearchRequirements(queryParams url.Values, user identity.Requester) []*resourcepb.Requirement {
+	var lifecycles []string
+	for _, v := range queryParams["lifecycle"] {
+		for _, l := range strings.Split(v, ",") {
+			if l == utils.LifecycleDraft || l == utils.LifecycleFork {
+				lifecycles = append(lifecycles, l)
+			}
+		}
+	}
+	forkOf := queryParams.Get("forkOf")
+	if forkOf != "" && !slices.Contains(lifecycles, utils.LifecycleFork) {
+		lifecycles = append(lifecycles, utils.LifecycleFork)
+	}
+	if len(lifecycles) == 0 {
+		return []*resourcepb.Requirement{{
+			Key:      utils.LabelKeyLifecycle,
+			Operator: string(selection.NotIn),
+			Values:   []string{utils.LifecycleDraft, utils.LifecycleFork},
+		}}
+	}
+	requirements := []*resourcepb.Requirement{
+		{Key: utils.LabelKeyLifecycle, Operator: string(selection.In), Values: lifecycles},
+		{Key: utils.LabelKeyLifecycleOwner, Operator: string(selection.Equals), Values: []string{user.GetIdentifier()}},
+	}
+	if forkOf != "" {
+		requirements = append(requirements, &resourcepb.Requirement{Key: utils.LabelKeyForkOf, Operator: string(selection.Equals), Values: []string{forkOf}})
+	}
+	return requirements
 }

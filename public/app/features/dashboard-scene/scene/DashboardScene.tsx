@@ -68,6 +68,7 @@ import {
 } from '../../apiserver/types';
 import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
+import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
 import { createMutationClient } from '../mutation-api/clientBridge';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { type DashboardChangeInfo } from '../saving/shared';
@@ -824,6 +825,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     let pageNav: NavModelItem = {
       text: title,
+      highlightText: getLifecycleBreadcrumbLabel(meta.k8s?.labels),
       url: isProvisioningPreview
         ? locationUtil.getUrlForPartial(location, clearPanelView)
         : locationUtil.assureBaseUrl(

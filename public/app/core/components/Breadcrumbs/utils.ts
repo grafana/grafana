@@ -42,7 +42,11 @@ export function buildBreadcrumbs(sectionNav: NavModelItem, pageNav?: NavModelIte
           crumbs.unshift({ text: activeChild.text, href: locationUtil.assureBaseUrl(activeChild.url ?? '') });
         }
       }
-      crumbs.unshift({ text: node.text, href: locationUtil.assureBaseUrl(node.url ?? '') });
+      crumbs.unshift({
+        text: node.text,
+        href: locationUtil.assureBaseUrl(node.url ?? ''),
+        ...(node.highlightText ? { highlightText: node.highlightText } : {}),
+      });
     }
 
     if (node.parentItem) {

@@ -661,6 +661,12 @@ export function getAppRoutes(): RouteDescriptor[] {
       ),
     },
     {
+      path: '/dashboard/drafts',
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "DashboardDraftsPage" */ 'app/features/dashboard-scene/lifecycle/DashboardDraftsPage')
+      ),
+    },
+    {
       path: '/dashboard/recently-deleted',
       component: SafeDynamicImport(
         () => import(/* webpackChunkName: "RecentlyDeletedPage" */ 'app/features/browse-dashboards/RecentlyDeletedPage')

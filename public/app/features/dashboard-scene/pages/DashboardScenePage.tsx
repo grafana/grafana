@@ -32,6 +32,7 @@ import { DashboardTemplateUseBanner } from '../components/DashboardTemplateUseBa
 import { ScriptedDashboardDeprecationBanner } from '../components/ScriptedDashboardDeprecationBanner';
 import { ScriptedDashboardsDisabledPage } from '../components/ScriptedDashboardsDisabledPage';
 import { SuggestedDashboardsBanner } from '../components/SuggestedDashboardsBanner';
+import { DashboardLifecycleBanner } from '../lifecycle/DashboardLifecycleBanner';
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { useScenesFlickeringFix } from '../utils/utils';
@@ -185,6 +186,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
       <DashboardTemplateSavedBanner />
       <DashboardTemplateUseBanner dashboard={dashboard} />
       <DashboardTemplateEditBanner dashboard={dashboard} />
+      <DashboardLifecycleBanner dashboard={dashboard} />
       <dashboard.Component model={dashboard} key={dashboard.state.key} />
       <DashboardPrompt dashboard={dashboard} />
       {showCustomTemplates && <TemplateDashboardModal />}
