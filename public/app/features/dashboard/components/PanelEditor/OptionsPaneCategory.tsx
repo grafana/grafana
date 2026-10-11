@@ -223,7 +223,7 @@ export const OptionsPaneCategory = React.memo(
           {headerActionPlacement === 'right' && toggleButton}
         </div>
         {isExpanded && (
-          <div className={bodyStyles} id={id} aria-labelledby={`button-${id}`}>
+          <div className={bodyStyles} id={id} role="group" aria-labelledby={`button-${id}`}>
             {children}
           </div>
         )}

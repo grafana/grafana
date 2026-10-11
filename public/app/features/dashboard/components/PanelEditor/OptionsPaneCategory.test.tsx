@@ -32,6 +32,12 @@ describe('OptionsPaneCategory', () => {
     window.localStorage.clear();
   });
 
+  it('labels the expanded options group with the category title', () => {
+    setup();
+
+    expect(screen.getByRole('group', { name: 'Test category' })).toHaveTextContent(childText);
+  });
+
   describe('initial expanded state', () => {
     it('is expanded when it has items and is open by default', () => {
       setup({ itemsCount: 3, isOpenDefault: true });
