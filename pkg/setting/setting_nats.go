@@ -70,7 +70,8 @@ type NATSSettings struct {
 	// to polling.
 	Notifier bool
 
-	// NotifierWatchMaxAge bounds NATS-backed watch streams with jittered expiry.
+	// NotifierWatchMaxAge makes each NATS-backed watch client re-list once per
+	// max age, at a phase spread across clients.
 	// Zero disables expiry.
 	NotifierWatchMaxAge time.Duration
 

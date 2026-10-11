@@ -423,7 +423,8 @@ class DataSourceWithBackend<
   /**
    * Internal function to build the datasource URL based on the feature toggle
    */
-  buildResourcesDatasourceUrl(path: string): string {
+  buildResourcesDatasourceUrl(rawPath: string): string {
+    const path = rawPath.replace(/^\/+/, '');
     const enabledRedirect = getFeatureFlagClient().getBooleanValue(
       'datasources.apiserver.useNewAPIsForDatasourceResources',
       false

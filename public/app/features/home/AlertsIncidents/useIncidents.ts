@@ -8,7 +8,7 @@ import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unif
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
-import { type IncidentFilterSelection, decodeIncidentFilter } from './incidentFilter';
+import { type FilterSelection, resolveFilterScope } from './filterSelection';
 
 export type IncidentsData = ReturnType<typeof useIncidents>;
 
@@ -19,7 +19,7 @@ export type IncidentsData = ReturnType<typeof useIncidents>;
  * When `selectedFilter` names a label value, incidents are filtered to that
  * value; the default scope fetches every active incident.
  */
-export function useIncidents(selectedFilter: IncidentFilterSelection = '') {
+export function useIncidents(selectedFilter: FilterSelection = '') {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
   const pluginId = SupportedPlugin.Irm;
 
@@ -30,7 +30,10 @@ export function useIncidents(selectedFilter: IncidentFilterSelection = '') {
   // /incidents?declare=new (IRM's declare flow), and canAccessPluginPage ignores the query string.
   const canDeclare = settings ? canAccessPluginPage(settings, createBridgeURL(pluginId, '/incidents/declare')) : false;
 
-  const filter = decodeIncidentFilter(selectedFilter);
+  const filterScope = resolveFilterScope(selectedFilter);
+  // Incident label fields are keyed by slug.
+  const filter =
+    filterScope.kind === 'label' ? { slug: filterScope.label.key, value: filterScope.label.value } : undefined;
 
   // Skipped until the plugin probe confirms availability, so the hook can run unconditionally
   // in callers that render even when incidents are unavailable.
@@ -72,8 +75,8 @@ export function useIncidents(selectedFilter: IncidentFilterSelection = '') {
     count,
     hasMore,
     hasIncidents,
-    // Echoed back so the card can scope its empty message to the filtered value.
-    filter,
+    // Echoed back so the card can scope its empty message to the picked value.
+    filterScope,
     enabled: pluginLoading ? undefined : !!installed,
     loading,
     error: loadError,

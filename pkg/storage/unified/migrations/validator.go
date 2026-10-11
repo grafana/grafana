@@ -147,7 +147,7 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 			Namespace: summary.Namespace,
 			Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 		})
-		if err != nil {
+		if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
 			return fmt.Errorf("failed to get stats for %s/%s in namespace %s: %w",
 				summary.Group, summary.Resource, summary.Namespace, err)
 		}

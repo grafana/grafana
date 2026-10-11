@@ -173,15 +173,29 @@ linters:
         storage-unified-apistore:
           list-mode: lax
           files:
-            - ./pkg/storage/unified/apistore/*
-            - ./pkg/storage/unified/apistore/**/*
+            - '**/pkg/storage/unified/apistore/*'
+            - '**/pkg/storage/unified/apistore/**/*'
           allow:
             - github.com/grafana/grafana/pkg/apimachinery
             - github.com/grafana/grafana/pkg/apiserver
-            - github.com/grafana/grafana/pkg/unified/resource
+            - github.com/grafana/grafana/pkg/storage/unified/apistore
+            - github.com/grafana/grafana/pkg/storage/unified/resourceclient
+            - github.com/grafana/grafana/pkg/storage/unified/resourcepb
           deny:
             - pkg: github.com/grafana/grafana/pkg
               desc: pkg/storage/unified/apistore is not allowed to import grafana core
+        storage-unified-resourceclient:
+          list-mode: lax
+          files:
+            - '**/pkg/storage/unified/resourceclient/*'
+            - '**/pkg/storage/unified/resourceclient/**/*'
+          allow:
+            - github.com/grafana/grafana/pkg/apimachinery
+            - github.com/grafana/grafana/pkg/storage/unified/resourceclient
+            - github.com/grafana/grafana/pkg/storage/unified/resourcepb
+          deny:
+            - pkg: github.com/grafana/grafana/pkg
+              desc: pkg/storage/unified/resourceclient is not allowed to import grafana core
     exhaustive:
       default-signifies-exhaustive: true
     gocritic:

@@ -165,16 +165,15 @@ describe('useFiringAlerts', () => {
       expect(requests).toEqual([[]]);
     });
 
-    it('matches an explicitly selected team label value exactly, with regex escaping', async () => {
+    it('matches a picked label exactly, in place of the own-teams default', async () => {
       mockTeams([{ name: 'Platform Monitoring' }]);
       const requests = captureAlertFilters();
 
-      // Dropdown values are real label values; '.' must be escaped, not treated as a wildcard.
-      const { result } = renderHook(() => useFiringAlerts('team.one'), { wrapper: getWrapper({}) });
+      // Picks are values set on real rules, so '.' is a plain character, not a wildcard.
+      const { result } = renderHook(() => useFiringAlerts('team:team.one'), { wrapper: getWrapper({}) });
       await waitFor(() => expect(result.current.loading).toBe(false));
 
-      // escapeRegExp adds '\\.', quoteWithEscape doubles the backslash on the wire.
-      expect(requests).toEqual([['team=~"team\\\\.one"']]);
+      expect(requests).toEqual([['team="team.one"']]);
     });
   });
 });

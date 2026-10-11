@@ -595,6 +595,19 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['RuleSequence'],
       }),
+      getHybridSearchAlertRules: build.query<GetHybridSearchAlertRulesApiResponse, GetHybridSearchAlertRulesApiArg>({
+        query: (queryArg) => ({
+          url: `/search/hybrid`,
+          params: {
+            folder: queryArg.folder,
+            limit: queryArg.limit,
+            minRelevance: queryArg.minRelevance,
+            query: queryArg.query,
+            semanticQuery: queryArg.semanticQuery,
+            skipRerank: queryArg.skipRerank,
+          },
+        }),
+      }),
     }),
     overrideExisting: false,
   });
@@ -1368,6 +1381,21 @@ export type UpdateRuleSequenceStatusApiArg = {
   force?: boolean;
   patch: Patch;
 };
+export type GetHybridSearchAlertRulesApiResponse = unknown;
+export type GetHybridSearchAlertRulesApiArg = {
+  /** Filter by the stored folder UID */
+  folder?: string;
+  /** Maximum number of results (default 50) */
+  limit?: number;
+  /** Minimum reranker relevance: lowest, low, medium, high, or highest. Cannot be combined with skipRerank */
+  minRelevance?: string;
+  /** Search text for lexical and semantic retrieval */
+  query: string;
+  /** Optional text to embed for semantic retrieval instead of query */
+  semanticQuery?: string;
+  /** Skip reranking and return the fused lexical and semantic ordering */
+  skipRerank?: boolean;
+};
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -1568,6 +1596,14 @@ export type AlertRuleOperatorState = {
 };
 export type AlertRuleAlertRuleState = 'Inactive' | 'Healthy' | 'Firing' | 'Pending' | 'Recovering';
 export type AlertRuleAlertRuleStateReason = 'Evaluated' | 'KeepLast';
+export type AlertRuleAlertRuleInstanceTotals = {
+  error?: number;
+  firing?: number;
+  healthy?: number;
+  nodata?: number;
+  pending?: number;
+  recovering?: number;
+};
 export type AlertRuleStatus = {
   /** additionalFields is reserved for future use */
   additionalFields?: {
@@ -1585,6 +1621,7 @@ export type AlertRuleStatus = {
   };
   state?: AlertRuleAlertRuleState;
   stateReason?: AlertRuleAlertRuleStateReason;
+  totals?: AlertRuleAlertRuleInstanceTotals;
 };
 export type AlertRule = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -2157,4 +2194,6 @@ export const {
   useLazyGetRuleSequenceStatusQuery,
   useReplaceRuleSequenceStatusMutation,
   useUpdateRuleSequenceStatusMutation,
+  useGetHybridSearchAlertRulesQuery,
+  useLazyGetHybridSearchAlertRulesQuery,
 } = injectedRtkApi;

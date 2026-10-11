@@ -372,6 +372,10 @@ jobs:
       uses: ./.github/actions/yarn-install
     - name: Run knip
       run: yarn run knip
+    - name: Run knip (production)
+      # in production mode, we cannot tell the difference between unused exports and those used in tests
+      # if something is truly unused, it will be caught by the non-production knip run
+      run: yarn run knip --production --exclude exports,types
 
   yarn-install-validation:
     needs:

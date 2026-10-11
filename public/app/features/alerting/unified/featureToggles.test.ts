@@ -1,6 +1,6 @@
 import { config } from '@grafana/runtime';
 
-import { shouldUseAlertingListViewV2 } from './featureToggles';
+import { isNotificationHistoryEnabled, shouldUseAlertingListViewV2 } from './featureToggles';
 import { mockLocalStorage } from './mocks';
 import { setPreviewToggle } from './previewToggles';
 
@@ -19,48 +19,43 @@ describe('featureToggles', () => {
   });
 
   describe('shouldUseAlertingListViewV2', () => {
-    describe('when alertingListViewV2 toggle is disabled', () => {
-      beforeEach(() => {
-        config.featureToggles.alertingListViewV2 = false;
-      });
+    it.each`
+      listViewV2 | previewToggle | storedPreference | expected
+      ${true}    | ${false}      | ${undefined}     | ${true}
+      ${true}    | ${false}      | ${false}         | ${false}
+      ${true}    | ${true}       | ${undefined}     | ${true}
+      ${true}    | ${true}       | ${true}          | ${true}
+      ${true}    | ${true}       | ${false}         | ${false}
+      ${false}   | ${false}      | ${undefined}     | ${false}
+      ${false}   | ${false}      | ${true}          | ${false}
+      ${false}   | ${true}       | ${true}          | ${false}
+    `(
+      'returns $expected when alertingListViewV2 is $listViewV2, alertingListViewV2PreviewToggle is $previewToggle and the stored preference is $storedPreference',
+      ({ listViewV2, previewToggle, storedPreference, expected }) => {
+        config.featureToggles.alertingListViewV2 = listViewV2;
+        config.featureToggles.alertingListViewV2PreviewToggle = previewToggle;
+        setPreviewToggle('alertingListViewV2', storedPreference);
 
-      it('should return false when no localStorage preference is set', () => {
-        expect(shouldUseAlertingListViewV2()).toBe(false);
-      });
+        expect(shouldUseAlertingListViewV2()).toBe(expected);
+      }
+    );
+  });
 
-      it('should return true when localStorage preference is true', () => {
-        setPreviewToggle('alertingListViewV2', true);
-
-        expect(shouldUseAlertingListViewV2()).toBe(true);
-      });
-
-      it('should return false when localStorage preference is false', () => {
-        setPreviewToggle('alertingListViewV2', false);
-
-        expect(shouldUseAlertingListViewV2()).toBe(false);
-      });
+  describe('isNotificationHistoryEnabled', () => {
+    afterEach(() => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
     });
 
-    describe('when alertingListViewV2 toggle is enabled', () => {
-      beforeEach(() => {
-        config.featureToggles.alertingListViewV2 = true;
-      });
+    it('should be enabled when the backend does not send the setting', () => {
+      config.unifiedAlerting.notificationHistoryEnabled = undefined;
 
-      it('should return true when no localStorage preference is set', () => {
-        expect(shouldUseAlertingListViewV2()).toBe(true);
-      });
+      expect(isNotificationHistoryEnabled()).toBe(true);
+    });
 
-      it('should return true when localStorage preference is true', () => {
-        setPreviewToggle('alertingListViewV2', true);
+    it.each([true, false])('should follow the backend setting when it is %s', (enabled) => {
+      config.unifiedAlerting.notificationHistoryEnabled = enabled;
 
-        expect(shouldUseAlertingListViewV2()).toBe(true);
-      });
-
-      it('should return false when localStorage preference is false', () => {
-        setPreviewToggle('alertingListViewV2', false);
-
-        expect(shouldUseAlertingListViewV2()).toBe(false);
-      });
+      expect(isNotificationHistoryEnabled()).toBe(enabled);
     });
   });
 });

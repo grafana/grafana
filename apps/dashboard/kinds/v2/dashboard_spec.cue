@@ -660,6 +660,7 @@ RowsLayoutRowSpec: {
 	repeat?:               RowRepeatOptions
 	layout:                GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 AutoGridLayoutKind: {
@@ -715,6 +716,7 @@ TabsLayoutTabSpec: {
 	conditionalRendering?: ConditionalRenderingGroupKind
 	repeat?:               TabRepeatOptions
 	variables?: [...VariableKind]
+	annotations?: [...AnnotationQueryKind]
 }
 
 PanelSpec: {

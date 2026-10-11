@@ -153,6 +153,9 @@ export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings)
  * populated at boot. Call {@link reloadDataSourceInstanceSettings} to refresh
  * the cache from the backend.
  *
+ * A `null`, `undefined` or `'default'` ref resolves to the configured default data source, which is
+ * `-- Grafana --` when no instance is the org default.
+ *
  * `scopedVars` are used when `ref` contains a template variable (e.g. `$ds`).
  *
  * @public
@@ -221,7 +224,6 @@ export function toListItem(settings: DataSourceInstanceSettings): DataSourceInst
     apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
-    isDefault: settings.isDefault ?? false,
   };
 }
 
@@ -231,16 +233,21 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 }
 
 /**
- * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
+ * Resolve the item whose data source is the org default, or `undefined` when the list holds none.
  *
- * At most one instance per org carries the flag, so a filtered list need not contain it.
+ * A filtered list need not contain the org default.
  *
  * @public
  */
 export async function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): Promise<DataSourceInstanceListItem | undefined> {
-  return items.find((item) => item.isDefault);
+  // A `default` ref falls back to `-- Grafana --` when no instance is the default, which is not an org default.
+  const defaultSettings = await getDataSourceInstanceSettings(null);
+  if (!defaultSettings || defaultSettings.meta.builtIn) {
+    return undefined;
+  }
+  return items.find((item) => item.uid === defaultSettings.uid);
 }
 
 /**

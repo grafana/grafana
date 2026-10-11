@@ -241,7 +241,7 @@ func TestBuild_MountsKindsWithoutSearchFields(t *testing.T) {
 		}}
 	}
 
-	// No trash in either case: playlists are not in trashAllowlist.
+	// No trash in either case: playlists are not allowed to use search-backed trash.
 	t.Run("no fields, gets the search endpoint", func(t *testing.T) {
 		got := paths(BuildFromManifests(playlists(nil), true, true, nil, fakeClient{}, builders, nil, Options{}))
 		assert.Equal(t, []string{"playlists/search"}, got[gv.String()])
@@ -603,7 +603,7 @@ func TestBuild_KindsWithTrashAreListedHere(t *testing.T) {
 	assert.ElementsMatch(t, []string{"dashboards"}, names)
 }
 
-// Folders get lexical and hybrid search but are not in trashAllowlist.
+// Folders get lexical and hybrid search but are not allowed to use search-backed trash.
 func TestBuild_FoldersGetSearchWithoutTrash(t *testing.T) {
 	versions := []schema.GroupVersion{
 		{Group: "folder.grafana.app", Version: "v1"},
@@ -704,7 +704,7 @@ func TestBuildForServedGroupVersions_MountsWithoutBuildersOrInstallers(t *testin
 
 		routes, err := BuildForServedGroupVersions(manifests, served, true, true, nil, fakeClient{}, Options{})
 		require.NoError(t, err)
-		// No trash: ext app kinds are not in trashAllowlist.
+		// No trash: ext app kinds are not allowed to use search-backed trash.
 		assert.Equal(t, []string{"todos/search"}, paths(routes)[gv.String()])
 	})
 

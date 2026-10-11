@@ -84,6 +84,13 @@ func (q *perKindQuery) filter(field, op string, values ...string) *perKindQuery 
 	return q
 }
 
+func (q *perKindQuery) regex(field, pattern string, negate bool) *perKindQuery {
+	q.and(searchv0.WhereNode{
+		Regex: &searchv0.RegexPredicate{Field: field, Pattern: pattern, Negate: negate},
+	})
+	return q
+}
+
 func (q *perKindQuery) and(node searchv0.WhereNode) {
 	if q.body.Where == nil {
 		q.body.Where = &searchv0.WhereNode{}
@@ -301,6 +308,56 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 		require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("labels", perKindOpIn, "team=a"))))
 	})
 
+	// Regex leaves follow Prometheus =~ / !~ semantics: whole-value, case-sensitive,
+	// and a missing label is matched as an empty value. Recording rules carry no
+	// labels here, so they exercise the missing-label cases.
+	t.Run("label regex", func(t *testing.T) {
+		for _, tc := range []struct {
+			name     string
+			resource string
+			pattern  string
+			negate   bool
+			titles   []string
+		}{
+			{"alternation", alertRules, "team=a|b", false, []string{"cpu usage high", "memory usage high", "disk low"}},
+			{"whole-value", alertRules, "team=b", false, []string{"memory usage high"}},
+			{"leading (?i) folds the value", alertRules, "team=(?i)A", false, []string{"cpu usage high", "disk low"}},
+			{"negated", alertRules, "team=a", true, []string{"memory usage high"}},
+			{"missing label matches a pattern matching empty", recordingRules, "team=.*", false, []string{"cpu recording", "disk recording"}},
+			{"missing label misses a pattern requiring a value", recordingRules, "team=.+", false, []string{}},
+			{"negated keeps a missing label", recordingRules, "team=a", true, []string{"cpu recording", "disk recording"}},
+			{"negated match-all drops a missing label", recordingRules, "team=.*", true, []string{}},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				got := search(t, tc.resource, newPerKindQuery().regex("labels", tc.pattern, tc.negate))
+				require.ElementsMatch(t, tc.titles, perKindTitles(got))
+				require.EqualValues(t, len(tc.titles), got.Metadata.TotalHits)
+			})
+		}
+
+		t.Run("combines with a label filter", func(t *testing.T) {
+			got := searchAlerts(t, newPerKindQuery().filter("labels", perKindOpIn, "team=a").regex("labels", "team=a|b", false))
+			require.ElementsMatch(t, []string{"cpu usage high", "disk low"}, perKindTitles(got))
+		})
+
+		t.Run("rejects a pattern outside the supported subset", func(t *testing.T) {
+			payload, err := json.Marshal(newPerKindQuery().regex("labels", "team=a.*?", false).body)
+			require.NoError(t, err)
+			raw, err := rc.Post().
+				AbsPath("apis", v0alpha1.APIGroup, v0alpha1.APIVersion, "namespaces", "default", alertRules, "searchRules").
+				Body(payload).
+				DoRaw(ctx)
+			var statusErr *apierrors.StatusError
+			require.ErrorAs(t, err, &statusErr)
+			require.EqualValues(t, http.StatusUnprocessableEntity, statusErr.ErrStatus.Code)
+			var status v1.Status
+			require.NoError(t, json.Unmarshal(raw, &status))
+			require.NotNil(t, status.Details)
+			require.Len(t, status.Details.Causes, 1)
+			require.Equal(t, "where.and[0].regex.pattern", status.Details.Causes[0].Field)
+		})
+	})
+
 	// labelSelector targets metadata labels. Selecting a group that no rule is in
 	// must return nothing: were the selector dropped, every rule would match.
 	t.Run("alert rules: metadata labelSelector is applied", func(t *testing.T) {
@@ -335,18 +392,10 @@ func runPerKindRuleSearchTests(t *testing.T, helper *apis.K8sTestHelper, mode re
 	})
 
 	t.Run("alert rules: paused filter", func(t *testing.T) {
-		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
-		if mode == rest.Mode4 {
-			t.Skip()
-		}
 		require.Equal(t, []string{"memory usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("paused", perKindOpIn, "true"))))
 	})
 
 	t.Run("alert rules: panelID filter", func(t *testing.T) {
-		// TODO: unskip this once filtering on non-string fields in Unified Search is fixed
-		if mode == rest.Mode4 {
-			t.Skip()
-		}
 		require.Equal(t, []string{"cpu usage high"}, perKindTitles(searchAlerts(t, newPerKindQuery().filter("panelID", perKindOpIn, "1234"))))
 	})
 
