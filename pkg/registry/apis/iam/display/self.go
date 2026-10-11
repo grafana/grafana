@@ -94,6 +94,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		rsp.Role = string(req.GetOrgRole())
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil {
 		// GetUID() is already in the "<type>:<identifier>" form the resolvers expect
 		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
@@ -105,18 +106,20 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 				errhttp.Write(ctx, fmt.Errorf("error calling GetDisplayList %w", err), w) // 500
 				return
 			}
-			if len(partial.Items) > 0 {
-				item := partial.Items[0]
+			for _, item := range partial.Items {
+				if item.Identity != rsp.Identity {
+					continue
+				}
 				if item.DisplayName != "" {
 					rsp.DisplayName = item.DisplayName
 				}
 				rsp.AvatarURL = item.AvatarURL
 				rsp.InternalID = item.InternalID
-				break
+				_ = json.NewEncoder(w).Encode(rsp)
+				return
 			}
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(rsp)
 }

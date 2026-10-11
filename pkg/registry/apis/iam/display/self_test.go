@@ -8,11 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-
 	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
+	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
