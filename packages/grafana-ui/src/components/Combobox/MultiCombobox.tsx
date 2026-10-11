@@ -48,6 +48,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     width,
     enableAllOption,
     invalid: invalidProp,
+    size = 'md',
     disabled: disabledProp,
     loading: loadingProp,
     minWidth,
@@ -284,7 +285,8 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
     width,
     minWidth,
     maxWidth,
-    isClearable
+    isClearable,
+    size
   );
 
   // Selected items that show up in the input field
@@ -303,6 +305,7 @@ export const MultiCombobox = <T extends string | number>(props: MultiComboboxPro
           {visibleItems.map((item, index) => (
             <ValuePill
               disabled={disabled}
+              size={size}
               onRemove={() => {
                 removeSelectedItem(item);
               }}
