@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
+	"github.com/grafana/authlib/authn"
 	authlib "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -140,6 +141,28 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		want.Role = string(identity.RoleEditor)
 		want.Namespace = "default"
 
+		var got iam.Display
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+		require.Equal(t, want, got)
+	})
+
+	t.Run("token identity receives its namespace", func(t *testing.T) {
+		caller := authn.NewIDTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{},
+			&authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{
+				Type: authlib.TypeUser, Identifier: "u1", Namespace: "stacks-123",
+			}})
+		_, isRequester := any(caller).(identity.Requester)
+		require.False(t, isRequester)
+		want := iam.Display{Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"}, DisplayName: "Alice"}
+		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want}}}
+		h := NewDisplayHandler(resolver)
+		rec := httptest.NewRecorder()
+
+		h.handleSelf(rec, selfRequest(t, caller))
+
+		require.Equal(t, http.StatusOK, rec.Code)
+		require.Equal(t, []string{"user:u1"}, resolver.gotKeys)
+		want.Namespace = "stacks-123"
 		var got iam.Display
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 		require.Equal(t, want, got)

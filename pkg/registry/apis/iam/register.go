@@ -234,6 +234,7 @@ func NewAPIService(
 	teamLBACAuthorizer := newTeamLBACRuleAuthorizer(teamLBACApiInstaller.GetAuthorizer())
 	resourceAuthorizer := gfauthorizer.NewResourceAuthorizer(accessClient)
 	userAuthorizer := newUserAuthorizer(accessClient)
+	whoamiAuthorizer := newWhoamiAuthorizer()
 
 	resourceParentProvider := iamauthorizer.NewApiParentProvider(
 		iamauthorizer.NewRemoteConfigProvider(authorizerDialConfigs, tokenExchanger),
@@ -276,6 +277,10 @@ func NewAPIService(
 				user, ok := types.AuthInfoFrom(ctx)
 				if !ok {
 					return authorizer.DecisionDeny, "no identity found", apierrors.NewUnauthorized("no identity found in context")
+				}
+
+				if a.GetResource() == "whoami" {
+					return whoamiAuthorizer.Authorize(ctx, a)
 				}
 
 				if a.GetResource() == "globalroles" {

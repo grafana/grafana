@@ -124,6 +124,62 @@ func TestNewAPIService_WiresSSOStore(t *testing.T) {
 	require.NotNil(t, b.ssoLegacyStore)
 }
 
+func TestNewAPIService_AuthorizesWhoami(t *testing.T) {
+	b := NewAPIService(
+		nil,
+		nil,
+		legacysql.NewDatabaseProvider(nil),
+		&NoopApiInstaller[*iamv0.RoleBinding]{ResourceInfo: iamv0.RoleBindingInfo},
+		&NoopApiInstaller[*iamv0.Role]{ResourceInfo: iamv0.RoleInfo},
+		&NoopApiInstaller[*iamv0.GlobalRole]{ResourceInfo: iamv0.GlobalRoleInfo},
+		&NoopApiInstaller[*iamv0.TeamLBACRule]{ResourceInfo: iamv0.TeamLBACRuleInfo},
+		nil,
+		prometheus.NewRegistry(),
+		nil,
+		nil,
+		tracing.InitializeTracerForTest(),
+		resourcepermission.NewMappersRegistry(),
+		nil,
+		Features{},
+	)
+
+	for _, tc := range []struct {
+		name         string
+		verb         string
+		resourceName string
+		subresource  string
+		namespace    string
+		noIdentity   bool
+		want         authorizer.Decision
+	}{
+		{name: "list", verb: "list", want: authorizer.DecisionAllow},
+		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "create", verb: "create", want: authorizer.DecisionDeny},
+		{name: "watch", verb: "watch", want: authorizer.DecisionDeny},
+		{name: "named resource", verb: "get", resourceName: "other", want: authorizer.DecisionDeny},
+		{name: "subresource", verb: "get", subresource: "permissions", want: authorizer.DecisionDeny},
+		{name: "namespaced", verb: "list", namespace: "default", want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			if !tc.noIdentity {
+				ctx = authlib.WithAuthInfo(ctx, newTestAuthInfo())
+			}
+			decision, _, err := b.GetAuthorizer().Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, Resource: "whoami", Verb: tc.verb,
+				Name: tc.resourceName, Subresource: tc.subresource, Namespace: tc.namespace,
+			})
+			if tc.noIdentity {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
 func TestNewAPIService_AuthorizesSSOSettings(t *testing.T) {
 	b := NewAPIService(
 		nil,

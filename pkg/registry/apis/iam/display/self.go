@@ -95,11 +95,11 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		}
 		if len(partial.Items) > 0 {
 			item := partial.Items[0]
+			item.Namespace = authInfo.GetNamespace()
 
 			if req, ok := authInfo.(identity.Requester); ok {
 				item.Role = string(req.GetOrgRole())
 				item.AuthenticatedBy = req.GetAuthenticatedBy()
-				item.Namespace = authInfo.GetNamespace()
 				item.Email = req.GetEmail()
 			}
 
