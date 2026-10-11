@@ -12,6 +12,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 )
@@ -20,6 +21,35 @@ type fakeResolver struct {
 	gotKeys []string
 	result  *iam.DisplayList
 	err     error
+}
+
+func TestCurrentUserRoutes(t *testing.T) {
+	routes := NewDisplayHandler().GetAPIRoutes(nil)
+	require.Len(t, routes.Root, 1)
+	whoami := routes.Root[0]
+	require.Equal(t, "whoami", whoami.Path)
+	require.Equal(t, "getWhoAmI", whoami.Spec.Get.OperationId)
+	require.Equal(t, []string{"User"}, whoami.Spec.Get.Tags)
+	require.False(t, whoami.Spec.Get.Deprecated)
+	require.Empty(t, whoami.Spec.Get.Parameters)
+	require.Equal(t, "#/components/schemas/"+iam.Display{}.OpenAPIModelName(),
+		whoami.Spec.Get.Responses.StatusCodeResponses[http.StatusOK].Content["application/json"].Schema.Ref.String())
+
+	for _, route := range routes.Namespace {
+		if route.Path == "display" {
+			require.Equal(t, []string{"Display"}, route.Spec.Get.Tags)
+		}
+		if route.Path == currentUserPath {
+			require.Equal(t, []string{"User"}, route.Spec.Get.Tags)
+			require.Equal(t, "getCurrentUserDisplay", route.Spec.Get.OperationId)
+			require.True(t, route.Spec.Get.Deprecated)
+			require.Contains(t, route.Spec.Get.Description, "/apis/iam.grafana.app/v0alpha1/whoami")
+			require.Len(t, route.Spec.Get.Parameters, 1)
+			require.Equal(t, "namespace", route.Spec.Get.Parameters[0].Name)
+			return
+		}
+	}
+	t.Fatal("missing namespaced current-user route")
 }
 
 func (f *fakeResolver) GetDisplayList(_ context.Context, _ authlib.NamespaceInfo, keys []string) (*iam.DisplayList, error) {
@@ -108,6 +138,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		require.Equal(t, []string{"user:u1"}, resolver.gotKeys)
 
 		want.Role = string(identity.RoleEditor)
+		want.Namespace = "default"
 
 		var got iam.Display
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))

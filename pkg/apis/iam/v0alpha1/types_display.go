@@ -47,8 +47,12 @@ type Display struct {
 	Role string `json:"role,omitempty"`
 
 	// AuthenticatedBy is the authentication provider used for the current identity.
-	// Only populated for the current-user ("users/~") endpoint.
+	// Only populated for the current-user ("users/~") and whoami endpoint.
 	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
+
+	// Namespace is the valid namespace for this user
+	// Only populated for the current-user ("users/~") and whoami endpoint.
+	Namespace string `json:"namespace,omitempty"`
 
 	// Email is the email address for the current identity.
 	// Only populated for the current-user ("users/~") endpoint.

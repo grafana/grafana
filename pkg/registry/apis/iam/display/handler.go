@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
+	authlib "github.com/grafana/authlib/types"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
-	authlib "github.com/grafana/authlib/types"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -34,6 +34,13 @@ func NewDisplayHandler(resolvers ...Resolver) *DisplayHandler {
 }
 
 func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) *builder.APIRoutes {
+	whoamiSpec := r.selfRouteSpec()
+	whoamiSpec.Get.OperationId = "getWhoAmI"
+	whoamiSpec.Get.Parameters = nil
+	currentUserSpec := r.selfRouteSpec()
+	currentUserSpec.Get.Deprecated = true
+	currentUserSpec.Get.Description += ". Deprecated: use /apis/iam.grafana.app/v0alpha1/whoami instead."
+
 	return &builder.APIRoutes{
 		Namespace: []builder.APIRouteHandler{
 			{
@@ -43,7 +50,7 @@ func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 						OperationProps: spec3.OperationProps{
 							OperationId: "getDisplayMapping", // This is used by RTK client generator
 							Tags:        []string{"Display"},
-							Description: "Show user display information",
+							Description: "Show logged in user information",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -96,10 +103,16 @@ func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 			},
 			{
 				Path:    currentUserPath,
-				Spec:    r.selfRouteSpec(),
+				Spec:    currentUserSpec,
 				Handler: r.handleSelf,
 			},
 		},
+		// This allows external clients (terraform, gcx to know which namespace the user is attached to)
+		Root: []builder.APIRouteHandler{{
+			Path:    "whoami",
+			Spec:    whoamiSpec,
+			Handler: r.handleSelf,
+		}},
 	}
 }
 

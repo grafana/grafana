@@ -54,6 +54,7 @@ func newIAMAuthorizer(
 	// Identity specific resources
 	legacyAuthorizer := gfauthorizer.NewResourceAuthorizer(legacyAccessClient)
 	resourceAuthorizer["display"] = legacyAuthorizer
+	resourceAuthorizer["whoami"] = newWhoamiAuthorizer()
 
 	// Temporary security fix: Block Watch on ResourcePermissions until proper filtering is implemented
 	blockWatchAuthorizer := authorizer.AuthorizerFunc(func(
@@ -118,6 +119,21 @@ func newTeamLBACRuleAuthorizer(base authorizer.Authorizer) authorizer.Authorizer
 		}
 		if !servicePermission.Allowed {
 			return authorizer.DecisionDeny, "calling service lacks TeamLBACRule read permission", nil
+		}
+		return authorizer.DecisionAllow, "", nil
+	})
+}
+
+func newWhoamiAuthorizer() authorizer.Authorizer {
+	return authorizer.AuthorizerFunc(func(ctx context.Context, attr authorizer.Attributes) (authorizer.Decision, string, error) {
+		// Kubernetes treats GET on a resource path without a name as a list request.
+		if !attr.IsResourceRequest() || attr.GetResource() != "whoami" ||
+			attr.GetName() != "" || attr.GetSubresource() != "" || attr.GetNamespace() != "" ||
+			(attr.GetVerb() != utils.VerbList && attr.GetVerb() != utils.VerbGet) {
+			return authorizer.DecisionDeny, "only reading the current identity is supported", nil
+		}
+		if _, ok := authlib.AuthInfoFrom(ctx); !ok {
+			return authorizer.DecisionDeny, "cannot read current user without an identity", nil
 		}
 		return authorizer.DecisionAllow, "", nil
 	})

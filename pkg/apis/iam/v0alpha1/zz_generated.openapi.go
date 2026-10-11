@@ -75,7 +75,14 @@ func schema_pkg_apis_iam_v0alpha1_Display(ref common.ReferenceCallback) common.O
 					},
 					"authenticatedBy": {
 						SchemaProps: spec.SchemaProps{
-							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -377,7 +384,14 @@ func schema_pkg_apis_iam_v0alpha1_TeamMember(ref common.ReferenceCallback) commo
 					},
 					"authenticatedBy": {
 						SchemaProps: spec.SchemaProps{
-							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+							Description: "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
 							Type:        []string{"string"},
 							Format:      "",
 						},

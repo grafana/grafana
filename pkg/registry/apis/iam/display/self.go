@@ -10,6 +10,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/util/errhttp"
@@ -27,7 +28,7 @@ func (r *DisplayHandler) selfRouteSpec() *spec3.PathProps {
 		Get: &spec3.Operation{
 			OperationProps: spec3.OperationProps{
 				OperationId: "getCurrentUserDisplay",
-				Tags:        []string{"Display"},
+				Tags:        []string{"User"},
 				Description: "Show display information for the currently authenticated identity",
 				Parameters: []*spec3.Parameter{
 					{
@@ -98,6 +99,7 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 			if req, ok := authInfo.(identity.Requester); ok {
 				item.Role = string(req.GetOrgRole())
 				item.AuthenticatedBy = req.GetAuthenticatedBy()
+				item.Namespace = authInfo.GetNamespace()
 				item.Email = req.GetEmail()
 			}
 

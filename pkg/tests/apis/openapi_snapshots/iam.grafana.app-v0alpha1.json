@@ -86,7 +86,7 @@
         "tags": [
           "Display"
         ],
-        "description": "Show user display information",
+        "description": "Show logged in user information",
         "operationId": "getDisplayMapping",
         "parameters": [
           {
@@ -3485,9 +3485,9 @@
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~": {
       "get": {
         "tags": [
-          "Display"
+          "User"
         ],
-        "description": "Show display information for the currently authenticated identity",
+        "description": "Show display information for the currently authenticated identity. Deprecated: use /apis/iam.grafana.app/v0alpha1/whoami instead.",
         "operationId": "getCurrentUserDisplay",
         "parameters": [
           {
@@ -3511,7 +3511,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/apis/iam.grafana.app/v0alpha1/namespaces/{namespace}/users/~/permissions": {
@@ -3520,7 +3521,6 @@
           "User"
         ],
         "description": "Get effective permissions for the currently authenticated identity. Deprecated: do not use for new integrations.",
-        "deprecated": true,
         "operationId": "getCurrentUserPermissions",
         "parameters": [
           {
@@ -3539,6 +3539,27 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermissions"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/apis/iam.grafana.app/v0alpha1/whoami": {
+      "get": {
+        "tags": [
+          "User"
+        ],
+        "description": "Show display information for the currently authenticated identity",
+        "operationId": "getWhoAmI",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.Display"
                 }
               }
             }
@@ -5839,7 +5860,7 @@
         ],
         "properties": {
           "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
             "type": "string"
           },
           "avatarURL": {
@@ -5866,6 +5887,10 @@
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
+          },
+          "namespace": {
+            "description": "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
+            "type": "string"
           },
           "role": {
             "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
@@ -6015,7 +6040,7 @@
         ],
         "properties": {
           "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
             "type": "string"
           },
           "avatarURL": {
@@ -6042,6 +6067,10 @@
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
+          },
+          "namespace": {
+            "description": "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
+            "type": "string"
           },
           "permission": {
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
@@ -6585,7 +6614,7 @@
         ],
         "properties": {
           "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
             "type": "string"
           },
           "avatarURL": {
@@ -6617,6 +6646,10 @@
             "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
             "type": "integer",
             "format": "int64"
+          },
+          "namespace": {
+            "description": "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
+            "type": "string"
           },
           "permission": {
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",

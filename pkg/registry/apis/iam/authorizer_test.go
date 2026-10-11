@@ -90,6 +90,41 @@ func newTestAuthInfo() types.AuthInfo {
 	)
 }
 
+func TestWhoamiAuthorizer(t *testing.T) {
+	authz := newWhoamiAuthorizer()
+	for _, tc := range []struct {
+		name         string
+		verb         string
+		resourceName string
+		subresource  string
+		namespace    string
+		noIdentity   bool
+		want         authorizer.Decision
+	}{
+		{name: "list", verb: "list", want: authorizer.DecisionAllow},
+		{name: "get", verb: "get", want: authorizer.DecisionAllow},
+		{name: "missing identity", verb: "list", noIdentity: true, want: authorizer.DecisionDeny},
+		{name: "create", verb: "create", want: authorizer.DecisionDeny},
+		{name: "watch", verb: "watch", want: authorizer.DecisionDeny},
+		{name: "named resource", verb: "get", resourceName: "other", want: authorizer.DecisionDeny},
+		{name: "subresource", verb: "get", subresource: "permissions", want: authorizer.DecisionDeny},
+		{name: "namespaced", verb: "list", namespace: "default", want: authorizer.DecisionDeny},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			if !tc.noIdentity {
+				ctx = types.WithAuthInfo(ctx, newTestAuthInfo())
+			}
+			decision, _, err := authz.Authorize(ctx, authorizer.AttributesRecord{
+				ResourceRequest: true, Resource: "whoami", Verb: tc.verb,
+				Name: tc.resourceName, Subresource: tc.subresource, Namespace: tc.namespace,
+			})
+			require.NoError(t, err)
+			require.Equal(t, tc.want, decision)
+		})
+	}
+}
+
 func TestAllowSelfAuthorizerAllowsCurrentUserPermissions(t *testing.T) {
 	base := authorizer.AuthorizerFunc(func(context.Context, authorizer.Attributes) (authorizer.Decision, string, error) {
 		return authorizer.DecisionDeny, "base authorizer", nil
