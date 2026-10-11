@@ -10,7 +10,7 @@ import { FieldColorModeId } from '../types/fieldColor';
 import { type FieldConfigPropertyItem, type FieldConfigSource } from '../types/fieldOverrides';
 import { type InterpolateFunction } from '../types/panel';
 import { ThresholdsMode } from '../types/thresholds';
-import { MappingType } from '../types/valueMapping';
+import { MappingType, type ValueMapping } from '../types/valueMapping';
 import { Registry } from '../utils/Registry';
 import { locationUtil } from '../utils/location';
 import { mockStandardProperties } from '../utils/tests/mockStandardProperties';
@@ -1196,43 +1196,167 @@ describe('setDynamicConfigValue', () => {
     expect(config.displayName).toBeUndefined();
   });
 
-  it('works correctly with multiple value mappings in the same override', () => {
+  it('merges array values from earlier overrides but replaces the existing value', () => {
     const config: FieldConfig = {
       mappings: [{ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } }],
     };
+    const context = {
+      fieldConfigRegistry: customFieldRegistry,
+      data: [],
+      field: { type: FieldType.number } as Field,
+      dataFrameIndex: 0,
+    };
+    const overriddenIds = new Set<string>();
 
     setDynamicConfigValue(
       config,
-      {
-        id: 'mappings',
-        value: [{ type: MappingType.ValueToText, options: { first: { text: 'first' } } }],
-      },
-      {
-        fieldConfigRegistry: customFieldRegistry,
-        data: [],
-        field: { type: FieldType.number } as Field,
-        dataFrameIndex: 0,
-      }
+      { id: 'mappings', value: [{ type: MappingType.ValueToText, options: { first: { text: 'first' } } }] },
+      context,
+      overriddenIds
     );
-
     setDynamicConfigValue(
       config,
-      {
-        id: 'mappings',
-        value: [{ type: MappingType.ValueToText, options: { second: { text: 'second' } } }],
-      },
-      {
-        fieldConfigRegistry: customFieldRegistry,
-        data: [],
-        field: { type: FieldType.number } as Field,
-        dataFrameIndex: 0,
-      }
+      { id: 'mappings', value: [{ type: MappingType.ValueToText, options: { second: { text: 'second' } } }] },
+      context,
+      overriddenIds
     );
 
-    expect(config.mappings).toHaveLength(3);
-    expect(config.mappings![0]).toEqual({ type: MappingType.ValueToText, options: { second: { text: 'second' } } });
-    expect(config.mappings![1]).toEqual({ type: MappingType.ValueToText, options: { first: { text: 'first' } } });
-    expect(config.mappings![2]).toEqual({ type: MappingType.ValueToText, options: { existing: { text: 'existing' } } });
+    expect(config.mappings).toEqual([
+      { type: MappingType.ValueToText, options: { second: { text: 'second' } } },
+      { type: MappingType.ValueToText, options: { first: { text: 'first' } } },
+    ]);
+  });
+});
+
+describe('applyFieldOverrides with array values', () => {
+  const frame = toDataFrame({
+    fields: [
+      { name: 'year', type: FieldType.number, values: [2024] },
+      { name: 'value', type: FieldType.number, values: [10] },
+    ],
+  });
+
+  const panelMapping: ValueMapping = { type: MappingType.ValueToText, options: { panel: { text: 'panel' } } };
+  const firstMapping: ValueMapping = { type: MappingType.ValueToText, options: { first: { text: 'first' } } };
+  const secondMapping: ValueMapping = { type: MappingType.ValueToText, options: { second: { text: 'second' } } };
+
+  function apply(fieldConfig: FieldConfigSource, data: DataFrame[] = [frame]) {
+    const [result] = applyFieldOverrides({
+      data,
+      fieldConfig,
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+      fieldConfigRegistry: customFieldRegistry,
+    });
+    return result.fields;
+  }
+
+  it('replaces the panel value with the override value', () => {
+    const [year, value] = apply({
+      defaults: { mappings: [panelMapping], custom: { property1: ['sum'] } },
+      overrides: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'year' },
+          properties: [
+            { id: 'mappings', value: [firstMapping] },
+            { id: 'custom.property1', value: ['countAll'] },
+          ],
+        },
+      ],
+    });
+
+    expect(year.config.mappings).toEqual([firstMapping]);
+    expect(year.config.custom.property1).toEqual(['countAll']);
+    expect(value.config.mappings).toEqual([panelMapping]);
+    expect(value.config.custom.property1).toEqual(['sum']);
+  });
+
+  it('replaces a value set by the data source with the override value', () => {
+    const dsFrame = toDataFrame({
+      fields: [{ name: 'year', type: FieldType.number, values: [2024], config: { mappings: [panelMapping] } }],
+    });
+
+    const [year] = apply(
+      {
+        defaults: {},
+        overrides: [
+          {
+            matcher: { id: FieldMatcherID.byName, options: 'year' },
+            properties: [{ id: 'mappings', value: [firstMapping] }],
+          },
+        ],
+      },
+      [dsFrame]
+    );
+
+    expect(year.config.mappings).toEqual([firstMapping]);
+  });
+
+  it('merges values from multiple properties in the same override, later ones first', () => {
+    const [year] = apply({
+      defaults: { mappings: [panelMapping] },
+      overrides: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'year' },
+          properties: [
+            { id: 'mappings', value: [firstMapping] },
+            { id: 'mappings', value: [secondMapping] },
+          ],
+        },
+      ],
+    });
+
+    expect(year.config.mappings).toEqual([secondMapping, firstMapping]);
+  });
+
+  it('merges values from multiple overrides that match the same field', () => {
+    const [year, value] = apply({
+      defaults: { custom: { property1: ['sum'] } },
+      overrides: [
+        { matcher: { id: FieldMatcherID.numeric }, properties: [{ id: 'custom.property1', value: ['max'] }] },
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'year' },
+          properties: [{ id: 'custom.property1', value: ['countAll'] }],
+        },
+      ],
+    });
+
+    expect(year.config.custom.property1).toEqual(['countAll', 'max']);
+    expect(value.config.custom.property1).toEqual(['max']);
+  });
+
+  it('does not merge with a value removed by an earlier override', () => {
+    const [year] = apply({
+      defaults: { mappings: [panelMapping] },
+      overrides: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'year' },
+          properties: [
+            { id: 'mappings', value: [firstMapping] },
+            { id: 'mappings', value: undefined },
+            { id: 'mappings', value: [secondMapping] },
+          ],
+        },
+      ],
+    });
+
+    expect(year.config.mappings).toEqual([secondMapping]);
+  });
+
+  it('does not change the panel defaults', () => {
+    const defaults = { mappings: [panelMapping] };
+
+    apply({
+      defaults,
+      overrides: [
+        {
+          matcher: { id: FieldMatcherID.byName, options: 'year' },
+          properties: [{ id: 'mappings', value: [firstMapping] }],
+        },
+      ],
+    });
+
+    expect(defaults.mappings).toEqual([panelMapping]);
   });
 });
 

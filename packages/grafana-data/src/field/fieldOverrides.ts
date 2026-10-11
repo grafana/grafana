@@ -185,11 +185,12 @@ export function applyFieldOverrides(
       setFieldConfigDefaults(config, source.defaults, context);
 
       // Find any matching rules and then override
+      const overriddenIds = new Set<string>();
       for (const rule of override) {
         if (rule.match(field, newFrame, data)) {
           for (const prop of rule.properties) {
             // config.scopedVars is set already here
-            setDynamicConfigValue(config, prop, context);
+            setDynamicConfigValue(config, prop, context, overriddenIds);
           }
         }
       }
@@ -382,7 +383,12 @@ export interface FieldOverrideEnv extends FieldOverrideContext {
   fieldConfigRegistry: FieldConfigOptionsRegistry;
 }
 
-export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigValue, context: FieldOverrideEnv) {
+export function setDynamicConfigValue(
+  config: FieldConfig,
+  value: DynamicConfigValue,
+  context: FieldOverrideEnv,
+  overriddenIds?: Set<string>
+) {
   const reg = context.fieldConfigRegistry;
   const item = reg.getIfExists(value.id);
 
@@ -401,9 +407,11 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       unset(config, item.path);
     }
   } else {
-    // Merge arrays (e.g. mappings) when multiple overrides target the same field
-    // Override values come first so they take precedence (first match wins in getValueMappingResult)
-    if (Array.isArray(val)) {
+    // Merge arrays (e.g. mappings) when multiple overrides target the same field, but only with
+    // values from earlier overrides: panel defaults are already applied to config at this point,
+    // and an override must replace them rather than add to them.
+    // Later override values come first so they take precedence (first match wins in getValueMappingResult)
+    if (Array.isArray(val) && overriddenIds?.has(item.id)) {
       const existingValue = item.isCustom ? get(config.custom, item.path) : get(config, item.path);
 
       if (Array.isArray(existingValue)) {
@@ -420,6 +428,8 @@ export function setDynamicConfigValue(config: FieldConfig, value: DynamicConfigV
       set(config, item.path, val);
     }
   }
+
+  overriddenIds?.add(item.id);
 }
 
 // config -> from DS
