@@ -995,6 +995,8 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 			}},
 	}
 
+	oas.Components.Schemas[compBase+"CurrentUserInfo"].Properties["identity"] = oas.Components.Schemas[compBase+"Display"].Properties["identity"]
+
 	// Patch /tokens endpoints: wire request/response schemas, rename {path} to {tokenName}.
 	serviceaccounttoken.PostProcessOpenAPI(oas)
 

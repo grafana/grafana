@@ -52,7 +52,7 @@ func (r *DisplayHandler) selfRouteSpec() *spec3.PathProps {
 											MediaTypeProps: spec3.MediaTypeProps{
 												Schema: &spec.Schema{
 													SchemaProps: spec.SchemaProps{
-														Ref: spec.MustCreateRef("#/components/schemas/" + iam.Display{}.OpenAPIModelName()),
+														Ref: spec.MustCreateRef("#/components/schemas/" + iam.CurrentUserInfo{}.OpenAPIModelName()),
 													},
 												},
 											},
@@ -77,37 +77,46 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	ns, err := authlib.ParseNamespace(authInfo.GetNamespace())
-	if err != nil {
-		errhttp.Write(ctx, apierrors.NewBadRequest("missing namespace"), w)
-		return
+	rsp := iam.CurrentUserInfo{
+		Display: iam.Display{
+			Identity: iam.IdentityRef{
+				Type: authInfo.GetIdentityType(),
+				Name: authInfo.GetIdentifier(),
+			},
+			DisplayName: authInfo.GetName(),
+		},
+		Namespace:       authInfo.GetNamespace(),
+		Email:           authInfo.GetEmail(),
+		AuthenticatedBy: authInfo.GetAuthenticatedBy(),
 	}
 
-	// GetUID() is already in the "<type>:<identifier>" form the resolvers expect
-	// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
-	key := authInfo.GetUID()
+	if req, ok := authInfo.(identity.Requester); ok {
+		rsp.Role = string(req.GetOrgRole())
+	}
 
-	for _, p := range r.resolvers {
-		partial, err := p.GetDisplayList(ctx, ns, []string{key})
-		if err != nil {
-			errhttp.Write(ctx, fmt.Errorf("error calling GetDisplayList %w", err), w) // 500
-			return
-		}
-		if len(partial.Items) > 0 {
-			item := partial.Items[0]
-			item.Namespace = authInfo.GetNamespace()
+	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil {
+		// GetUID() is already in the "<type>:<identifier>" form the resolvers expect
+		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
+		key := authInfo.GetUID()
 
-			if req, ok := authInfo.(identity.Requester); ok {
-				item.Role = string(req.GetOrgRole())
-				item.AuthenticatedBy = req.GetAuthenticatedBy()
-				item.Email = req.GetEmail()
+		for _, p := range r.resolvers {
+			partial, err := p.GetDisplayList(ctx, ns, []string{key})
+			if err != nil {
+				errhttp.Write(ctx, fmt.Errorf("error calling GetDisplayList %w", err), w) // 500
+				return
 			}
-
-			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(item)
-			return
+			if len(partial.Items) > 0 {
+				item := partial.Items[0]
+				if item.DisplayName != "" {
+					rsp.DisplayName = item.DisplayName
+				}
+				rsp.AvatarURL = item.AvatarURL
+				rsp.InternalID = item.InternalID
+				break
+			}
 		}
 	}
 
-	errhttp.Write(ctx, apierrors.NewNotFound(iam.Resource("users"), authInfo.GetIdentifier()), w)
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(rsp)
 }

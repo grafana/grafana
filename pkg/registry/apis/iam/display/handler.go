@@ -50,7 +50,7 @@ func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 						OperationProps: spec3.OperationProps{
 							OperationId: "getDisplayMapping", // This is used by RTK client generator
 							Tags:        []string{"Display"},
-							Description: "Show logged in user information",
+							Description: "Show user display information",
 							Parameters: []*spec3.Parameter{
 								{
 									ParameterProps: spec3.ParameterProps{
@@ -107,7 +107,7 @@ func (r *DisplayHandler) GetAPIRoutes(defs map[string]common.OpenAPIDefinition) 
 				Handler: r.handleSelf,
 			},
 		},
-		// This allows external clients (terraform, gcx to know which namespace the user is attached to)
+		// Clients use this cluster-scoped endpoint to discover their namespace.
 		Root: []builder.APIRouteHandler{{
 			Path:    "whoami",
 			Spec:    whoamiSpec,

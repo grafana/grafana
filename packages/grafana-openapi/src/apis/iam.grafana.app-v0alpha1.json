@@ -69,7 +69,7 @@
     "/display": {
       "get": {
         "tags": ["Display"],
-        "description": "Show logged in user information",
+        "description": "Show user display information",
         "operationId": "getDisplayMapping",
         "parameters": [
           {
@@ -3100,7 +3100,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Display"
+                  "$ref": "#/components/schemas/CurrentUserInfo"
                 }
               }
             }
@@ -3139,7 +3139,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Display"
+                  "$ref": "#/components/schemas/CurrentUserInfo"
                 }
               }
             }
@@ -5137,12 +5137,12 @@
         "additionalProperties": true,
         "x-kubernetes-preserve-unknown-fields": true
       },
-      "Display": {
+      "CurrentUserInfo": {
         "type": "object",
         "required": ["identity", "displayName"],
         "properties": {
           "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
+            "description": "AuthenticatedBy is the authentication provider used for the current identity.",
             "type": "string"
           },
           "avatarURL": {
@@ -5155,7 +5155,7 @@
             "default": ""
           },
           "email": {
-            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
+            "description": "Email is the email address for the current identity.",
             "type": "string"
           },
           "identity": {
@@ -5171,12 +5171,39 @@
             "format": "int64"
           },
           "namespace": {
-            "description": "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
+            "description": "Namespace is the namespace of the current identity.",
             "type": "string"
           },
           "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
+            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",
             "type": "string"
+          }
+        }
+      },
+      "Display": {
+        "type": "object",
+        "required": ["identity", "displayName"],
+        "properties": {
+          "avatarURL": {
+            "description": "AvatarURL is the url where we can get the avatar for identity",
+            "type": "string"
+          },
+          "displayName": {
+            "description": "Display name for identity.",
+            "type": "string",
+            "default": ""
+          },
+          "identity": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IdentityRef"
+              }
+            ]
+          },
+          "internalId": {
+            "description": "InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible",
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -5304,10 +5331,6 @@
         "type": "object",
         "required": ["identity", "displayName"],
         "properties": {
-          "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
-            "type": "string"
-          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -5316,10 +5339,6 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
-          },
-          "email": {
-            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
@@ -5333,18 +5352,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "namespace": {
-            "description": "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
-            "type": "string"
-          },
           "permission": {
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
             "type": "string",
             "enum": ["admin", "member"]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },
@@ -5819,10 +5830,6 @@
         "type": "object",
         "required": ["identity", "displayName"],
         "properties": {
-          "authenticatedBy": {
-            "description": "AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user (\"users/~\") and whoami endpoint.",
-            "type": "string"
-          },
           "avatarURL": {
             "description": "AvatarURL is the url where we can get the avatar for identity",
             "type": "string"
@@ -5831,10 +5838,6 @@
             "description": "Display name for identity.",
             "type": "string",
             "default": ""
-          },
-          "email": {
-            "description": "Email is the email address for the current identity. Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           },
           "external": {
             "description": "External is set if member ship was synced from external IDP.",
@@ -5853,18 +5856,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "namespace": {
-            "description": "Namespace is the valid namespace for this user Only populated for the current-user (\"users/~\") and whoami endpoint.",
-            "type": "string"
-          },
           "permission": {
             "description": "Permission member has in team.\n\nPossible enum values:\n - `\"admin\"`\n - `\"member\"`",
             "type": "string",
             "enum": ["admin", "member"]
-          },
-          "role": {
-            "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user (\"users/~\") endpoint.",
-            "type": "string"
           }
         }
       },

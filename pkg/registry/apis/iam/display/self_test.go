@@ -33,7 +33,7 @@ func TestCurrentUserRoutes(t *testing.T) {
 	require.Equal(t, []string{"User"}, whoami.Spec.Get.Tags)
 	require.False(t, whoami.Spec.Get.Deprecated)
 	require.Empty(t, whoami.Spec.Get.Parameters)
-	require.Equal(t, "#/components/schemas/"+iam.Display{}.OpenAPIModelName(),
+	require.Equal(t, "#/components/schemas/"+iam.CurrentUserInfo{}.OpenAPIModelName(),
 		whoami.Spec.Get.Responses.StatusCodeResponses[http.StatusOK].Content["application/json"].Schema.Ref.String())
 
 	for _, route := range routes.Namespace {
@@ -45,6 +45,7 @@ func TestCurrentUserRoutes(t *testing.T) {
 			require.Equal(t, "getCurrentUserDisplay", route.Spec.Get.OperationId)
 			require.True(t, route.Spec.Get.Deprecated)
 			require.Contains(t, route.Spec.Get.Description, "/apis/iam.grafana.app/v0alpha1/whoami")
+			require.Equal(t, whoami.Spec.Get.Responses, route.Spec.Get.Responses)
 			require.Len(t, route.Spec.Get.Parameters, 1)
 			require.Equal(t, "namespace", route.Spec.Get.Parameters[0].Name)
 			return
@@ -121,14 +122,16 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 	})
 
 	t.Run("caller display is resolved from context and returned", func(t *testing.T) {
-		want := iam.Display{
-			Identity:        iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
-			DisplayName:     "Alice",
-			InternalID:      1,
+		want := iam.CurrentUserInfo{
+			Display: iam.Display{
+				Identity:    iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
+				DisplayName: "Alice",
+				InternalID:  1,
+			},
 			AuthenticatedBy: "oauth_github",
 			Email:           "alice@example.com",
 		}
-		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want}}}
+		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want.Display}}}
 		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
 
@@ -141,7 +144,7 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		want.Role = string(identity.RoleEditor)
 		want.Namespace = "default"
 
-		var got iam.Display
+		var got iam.CurrentUserInfo
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 		require.Equal(t, want, got)
 	})
@@ -150,11 +153,12 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		caller := authn.NewIDTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{},
 			&authn.Claims[authn.IDTokenClaims]{Rest: authn.IDTokenClaims{
 				Type: authlib.TypeUser, Identifier: "u1", Namespace: "stacks-123",
+				Email: "alice@example.com", AuthenticatedBy: "oauth_github", DisplayName: "Alice",
 			}})
 		_, isRequester := any(caller).(identity.Requester)
 		require.False(t, isRequester)
-		want := iam.Display{Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"}, DisplayName: "Alice"}
-		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want}}}
+		want := iam.CurrentUserInfo{Display: iam.Display{Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"}, DisplayName: "Alice"}}
+		resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{want.Display}}}
 		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
 
@@ -163,19 +167,56 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 		require.Equal(t, http.StatusOK, rec.Code)
 		require.Equal(t, []string{"user:u1"}, resolver.gotKeys)
 		want.Namespace = "stacks-123"
-		var got iam.Display
+		want.Email = "alice@example.com"
+		want.AuthenticatedBy = "oauth_github"
+		var got iam.CurrentUserInfo
 		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
 		require.Equal(t, want, got)
 	})
 
-	t.Run("unresolved caller returns 404", func(t *testing.T) {
+	for _, namespace := range []string{"default", "", "stacks-invalid"} {
+		t.Run("authentication fallback with namespace "+namespace, func(t *testing.T) {
+			caller := &identity.StaticRequester{
+				Type: authlib.TypeUser, UserUID: "u1", Name: "Alice", Namespace: namespace,
+				Email: "alice@example.com", AuthenticatedBy: "oauth_github", OrgRole: identity.RoleEditor,
+			}
+			resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{{}}}}
+			h := NewDisplayHandler(resolver)
+			rec := httptest.NewRecorder()
+			h.handleSelf(rec, selfRequest(t, caller))
+			require.Equal(t, http.StatusOK, rec.Code)
+			var got iam.CurrentUserInfo
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+			require.Equal(t, iam.CurrentUserInfo{
+				Display:   iam.Display{Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"}, DisplayName: "Alice"},
+				Namespace: namespace, Email: "alice@example.com", AuthenticatedBy: "oauth_github", Role: "Editor",
+			}, got)
+			var fields map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &fields))
+			require.Contains(t, fields, "identity")
+			require.Contains(t, fields, "displayName")
+			require.NotContains(t, fields, "inline")
+			if namespace == "stacks-invalid" {
+				require.Empty(t, resolver.gotKeys)
+			}
+		})
+	}
+
+	t.Run("unresolved caller returns information from authentication", func(t *testing.T) {
 		resolver := &fakeResolver{result: &iam.DisplayList{}}
 		h := NewDisplayHandler(resolver)
 		rec := httptest.NewRecorder()
 
 		h.handleSelf(rec, selfRequest(t, caller))
 
-		require.Equal(t, http.StatusNotFound, rec.Code)
+		require.Equal(t, http.StatusOK, rec.Code)
+		var got iam.CurrentUserInfo
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+		require.Equal(t, caller.GetIdentifier(), got.Identity.Name)
+		require.Equal(t, caller.GetNamespace(), got.Namespace)
+		require.Equal(t, caller.GetEmail(), got.Email)
+		require.Equal(t, caller.GetAuthenticatedBy(), got.AuthenticatedBy)
+		require.Equal(t, string(caller.GetOrgRole()), got.Role)
 	})
 
 	t.Run("resolver error returns 500", func(t *testing.T) {

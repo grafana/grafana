@@ -175,7 +175,9 @@ const injectedRtkApi = api
         GetServiceAccountTokensWithPathApiResponse,
         GetServiceAccountTokensWithPathApiArg
       >({
-        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}` }),
+        query: (queryArg) => ({
+          url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}`,
+        }),
         providesTags: ['ServiceAccount'],
       }),
       deleteServiceAccountTokensWithPath: build.mutation<
@@ -272,7 +274,10 @@ const injectedRtkApi = api
         invalidatesTags: ['Team'],
       }),
       createTeamAddmember: build.mutation<CreateTeamAddmemberApiResponse, CreateTeamAddmemberApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.name}/addmember`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.name}/addmember`,
+          method: 'POST',
+        }),
         invalidatesTags: ['Team'],
       }),
       getTeamGroups: build.query<GetTeamGroupsApiResponse, GetTeamGroupsApiArg>({
@@ -298,7 +303,10 @@ const injectedRtkApi = api
         providesTags: ['Team'],
       }),
       createTeamRemovemember: build.mutation<CreateTeamRemovememberApiResponse, CreateTeamRemovememberApiArg>({
-        query: (queryArg) => ({ url: `/teams/${queryArg.name}/removemember`, method: 'POST' }),
+        query: (queryArg) => ({
+          url: `/teams/${queryArg.name}/removemember`,
+          method: 'POST',
+        }),
         invalidatesTags: ['Team'],
       }),
       listUser: build.query<ListUserApiResponse, ListUserApiArg>({
@@ -529,10 +537,9 @@ export type ListServiceAccountApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateServiceAccountApiResponse = /** status 200 OK */
-  | ServiceAccount
-  | /** status 201 Created */ ServiceAccount
-  | /** status 202 Accepted */ ServiceAccount;
+export type CreateServiceAccountApiResponse =
+  /** status 200 OK */
+  ServiceAccount | /** status 201 Created */ ServiceAccount | /** status 202 Accepted */ ServiceAccount;
 export type CreateServiceAccountApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -551,9 +558,9 @@ export type GetServiceAccountApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceServiceAccountApiResponse = /** status 200 OK */
-  | ServiceAccount
-  | /** status 201 Created */ ServiceAccount;
+export type ReplaceServiceAccountApiResponse =
+  /** status 200 OK */
+  ServiceAccount | /** status 201 Created */ ServiceAccount;
 export type ReplaceServiceAccountApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -584,9 +591,9 @@ export type DeleteServiceAccountApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateServiceAccountApiResponse = /** status 200 OK */
-  | ServiceAccount
-  | /** status 201 Created */ ServiceAccount;
+export type UpdateServiceAccountApiResponse =
+  /** status 200 OK */
+  ServiceAccount | /** status 201 Created */ ServiceAccount;
 export type UpdateServiceAccountApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -656,10 +663,9 @@ export type ListTeamApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateTeamApiResponse = /** status 200 OK */
-  | Team
-  | /** status 201 Created */ Team
-  | /** status 202 Accepted */ Team;
+export type CreateTeamApiResponse =
+  /** status 200 OK */
+  Team | /** status 201 Created */ Team | /** status 202 Accepted */ Team;
 export type CreateTeamApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -785,10 +791,9 @@ export type ListUserApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateUserApiResponse = /** status 200 OK */
-  | User
-  | /** status 201 Created */ User
-  | /** status 202 Accepted */ User;
+export type CreateUserApiResponse =
+  /** status 200 OK */
+  User | /** status 201 Created */ User | /** status 202 Accepted */ User;
 export type CreateUserApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -900,11 +905,11 @@ export type GetUserTeamsApiArg = {
   /** Opaque token from a previous response's metadata.continue; resumes listing after the last team returned. The token is base64 ('+', '/', '=' may appear) — clients MUST URL-encode it when appending to the query string, otherwise '+' will silently decode to a space on the server and pagination will fail. */
   continue?: string;
 };
-export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ Display;
+export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ CurrentUserInfo;
 export type GetCurrentUserDisplayApiArg = void;
 export type GetCurrentUserPermissionsApiResponse = /** status 200 undefined */ UserPermissions;
 export type GetCurrentUserPermissionsApiArg = void;
-export type GetWhoAmIApiResponse = /** status 200 undefined */ Display;
+export type GetWhoAmIApiResponse = /** status 200 undefined */ CurrentUserInfo;
 export type GetWhoAmIApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
@@ -945,21 +950,13 @@ export type IdentityRef = {
   type: string;
 };
 export type Display = {
-  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") and whoami endpoint. */
-  authenticatedBy?: string;
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
   /** Display name for identity. */
   displayName: string;
-  /** Email is the email address for the current identity. Only populated for the current-user ("users/~") endpoint. */
-  email?: string;
   identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
-  /** Namespace is the valid namespace for this user Only populated for the current-user ("users/~") and whoami endpoint. */
-  namespace?: string;
-  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user ("users/~") endpoint. */
-  role?: string;
 };
 export type ListMeta = {
   /** continue may be set if the user set a limit on the number of items returned, and indicates that the server has more data available. The value is opaque and may be used to issue another request to the endpoint that served this list to retrieve the next set of available objects. Continuing a consistent list may not be possible if the server configuration has changed or more than a few minutes have passed. The resourceVersion field returned when using this continue value will be identical to the value in the first response, unless you have received this token from an error message. */
@@ -1189,29 +1186,21 @@ export type TeamList = {
   metadata: ListMeta;
 };
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
-  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") and whoami endpoint. */
-  authenticatedBy?: string;
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
   /** Display name for identity. */
   displayName: string;
-  /** Email is the email address for the current identity. Only populated for the current-user ("users/~") endpoint. */
-  email?: string;
   /** External is set if member ship was synced from external IDP. */
   external?: boolean;
   identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
-  /** Namespace is the valid namespace for this user Only populated for the current-user ("users/~") and whoami endpoint. */
-  namespace?: string;
   /** Permission member has in team.
     
     Possible enum values:
      - `"admin"`
      - `"member"` */
   permission?: 'admin' | 'member';
-  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user ("users/~") endpoint. */
-  role?: string;
 };
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMemberList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1277,6 +1266,23 @@ export type GetUserTeamsResponse = {
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   metadata: any;
+};
+export type CurrentUserInfo = {
+  /** AuthenticatedBy is the authentication provider used for the current identity. */
+  authenticatedBy?: string;
+  /** AvatarURL is the url where we can get the avatar for identity */
+  avatarURL?: string;
+  /** Display name for identity. */
+  displayName: string;
+  /** Email is the email address for the current identity. */
+  email?: string;
+  identity: IdentityRef;
+  /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
+  internalId?: number;
+  /** Namespace is the namespace of the current identity. */
+  namespace?: string;
+  /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). */
+  role?: string;
 };
 export type UserPermission = {
   action: string;

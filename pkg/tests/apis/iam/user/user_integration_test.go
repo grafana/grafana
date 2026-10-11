@@ -742,7 +742,7 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 	assertSelf := func(t *testing.T, caller apis.User, path string) {
 		t.Helper()
 
-		res := &iam.Display{}
+		res := &iam.CurrentUserInfo{}
 		rsp := apis.DoRequest(helper, apis.RequestParams{
 			User:   caller,
 			Method: "GET",
@@ -760,6 +760,7 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.NotEmpty(t, res.AvatarURL)
 		require.Contains(t, res.AvatarURL, "/avatar/")
 		require.Equal(t, wantID, res.InternalID)
+		require.Equal(t, "default", res.Namespace)
 		require.NotEmpty(t, res.Role)
 		require.Equal(t, string(caller.Identity.GetOrgRole()), res.Role)
 		require.Equal(t, login.PasswordAuthModule, res.AuthenticatedBy)
