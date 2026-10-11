@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -209,11 +210,21 @@ func (dn *DSNode) NeedsVars() []string {
 	return []string{}
 }
 
+// singleFrameTableKey is a request-only Prometheus query property set by its frontend.
+const singleFrameTableKey = "singleFrameTable"
+
 func (s *Service) buildDSNode(_ *simple.DirectedGraph, rn *rawNode, req *Request) (*DSNode, error) {
 	if rn.TimeRange == nil {
 		return nil, fmt.Errorf("time range must be specified for refID %s", rn.RefID)
 	}
-	encodedQuery, err := json.Marshal(rn.Query)
+	query := rn.Query
+	if _, ok := query[singleFrameTableKey]; ok {
+		// Prometheus returns one table frame per query instead of one frame per series
+		// when asked to. Expressions read the frames themselves, so they always get one frame per series.
+		query = maps.Clone(query)
+		delete(query, singleFrameTableKey)
+	}
+	encodedQuery, err := json.Marshal(query)
 	if err != nil {
 		return nil, err
 	}
