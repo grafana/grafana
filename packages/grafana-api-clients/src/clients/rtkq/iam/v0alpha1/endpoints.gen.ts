@@ -175,9 +175,7 @@ const injectedRtkApi = api
         GetServiceAccountTokensWithPathApiResponse,
         GetServiceAccountTokensWithPathApiArg
       >({
-        query: (queryArg) => ({
-          url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}`,
-        }),
+        query: (queryArg) => ({ url: `/serviceaccounts/${queryArg.name}/tokens/${queryArg.tokenName}` }),
         providesTags: ['ServiceAccount'],
       }),
       deleteServiceAccountTokensWithPath: build.mutation<
@@ -274,10 +272,7 @@ const injectedRtkApi = api
         invalidatesTags: ['Team'],
       }),
       createTeamAddmember: build.mutation<CreateTeamAddmemberApiResponse, CreateTeamAddmemberApiArg>({
-        query: (queryArg) => ({
-          url: `/teams/${queryArg.name}/addmember`,
-          method: 'POST',
-        }),
+        query: (queryArg) => ({ url: `/teams/${queryArg.name}/addmember`, method: 'POST' }),
         invalidatesTags: ['Team'],
       }),
       getTeamGroups: build.query<GetTeamGroupsApiResponse, GetTeamGroupsApiArg>({
@@ -303,10 +298,7 @@ const injectedRtkApi = api
         providesTags: ['Team'],
       }),
       createTeamRemovemember: build.mutation<CreateTeamRemovememberApiResponse, CreateTeamRemovememberApiArg>({
-        query: (queryArg) => ({
-          url: `/teams/${queryArg.name}/removemember`,
-          method: 'POST',
-        }),
+        query: (queryArg) => ({ url: `/teams/${queryArg.name}/removemember`, method: 'POST' }),
         invalidatesTags: ['Team'],
       }),
       listUser: build.query<ListUserApiResponse, ListUserApiArg>({
@@ -537,9 +529,10 @@ export type ListServiceAccountApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateServiceAccountApiResponse =
-  /** status 200 OK */
-  ServiceAccount | /** status 201 Created */ ServiceAccount | /** status 202 Accepted */ ServiceAccount;
+export type CreateServiceAccountApiResponse = /** status 200 OK */
+  | ServiceAccount
+  | /** status 201 Created */ ServiceAccount
+  | /** status 202 Accepted */ ServiceAccount;
 export type CreateServiceAccountApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -558,9 +551,9 @@ export type GetServiceAccountApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
 };
-export type ReplaceServiceAccountApiResponse =
-  /** status 200 OK */
-  ServiceAccount | /** status 201 Created */ ServiceAccount;
+export type ReplaceServiceAccountApiResponse = /** status 200 OK */
+  | ServiceAccount
+  | /** status 201 Created */ ServiceAccount;
 export type ReplaceServiceAccountApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -591,9 +584,9 @@ export type DeleteServiceAccountApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type UpdateServiceAccountApiResponse =
-  /** status 200 OK */
-  ServiceAccount | /** status 201 Created */ ServiceAccount;
+export type UpdateServiceAccountApiResponse = /** status 200 OK */
+  | ServiceAccount
+  | /** status 201 Created */ ServiceAccount;
 export type UpdateServiceAccountApiArg = {
   /** name of the ServiceAccount */
   name: string;
@@ -663,9 +656,10 @@ export type ListTeamApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateTeamApiResponse =
-  /** status 200 OK */
-  Team | /** status 201 Created */ Team | /** status 202 Accepted */ Team;
+export type CreateTeamApiResponse = /** status 200 OK */
+  | Team
+  | /** status 201 Created */ Team
+  | /** status 202 Accepted */ Team;
 export type CreateTeamApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
@@ -791,9 +785,10 @@ export type ListUserApiArg = {
   /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
   watch?: boolean;
 };
-export type CreateUserApiResponse =
-  /** status 200 OK */
-  User | /** status 201 Created */ User | /** status 202 Accepted */ User;
+export type CreateUserApiResponse = /** status 200 OK */
+  | User
+  | /** status 201 Created */ User
+  | /** status 202 Accepted */ User;
 export type CreateUserApiArg = {
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
   pretty?: string;
