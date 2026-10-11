@@ -19,7 +19,11 @@ export interface Props extends Omit<HTMLProps<HTMLInputElement>, 'onChange'> {
 }
 
 export const FilterInput = forwardRef<HTMLInputElement, Props>(
-  ({ value, width, onChange, escapeRegex = true, suffix: _suffix, variant = 'search', ...restProps }, ref) => {
+  (
+    { value, width, onChange, escapeRegex = true, suffix: _suffix, variant = 'search', size: _size, ...restProps },
+    ref
+  ) => {
+    // The native numeric `size` is dropped because Input's `size` is now the 'sm' | 'md' height variant
     const innerRef = useRef<HTMLInputElement | null>(null);
     const combinedRef = useCombinedRefs<HTMLInputElement>(ref, innerRef);
 
