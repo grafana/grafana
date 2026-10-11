@@ -70,6 +70,8 @@ func Test_expandAnnotationsAndLabels_titleUsesAnyLabel(t *testing.T) {
 		require.LessOrEqual(t, len(labels["alertname"]), 8)
 		require.True(t, strings.HasPrefix("billing-payments-extra", labels["alertname"]))
 	})
+
+	t.Run("a broken title template keeps the original", func(t *testing.T) {
 		title := "{{ $labels. }}"
 		labels := expandTitle(title, data.Labels{"exported_namespace": "payments"})
 		require.Equal(t, title, labels["alertname"])
