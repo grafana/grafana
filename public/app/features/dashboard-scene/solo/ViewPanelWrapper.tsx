@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
-import { type SceneDataProvider, type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, type SceneDataProvider, type VizPanel, useSceneObjectState } from '@grafana/scenes';
 import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
 
 import { getDashboardSceneLike } from '../scene/types/dashboard';
@@ -28,6 +28,11 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
   const context = usePanelSceneContextObject(panel);
   const viewPanelPane = useMemo(() => new ViewPanelSidePane({ panelRef: panel.getRef() }), [panel]);
   const { fanoutMode } = useSceneObjectState(viewPanelPane, { shouldActivateOrKeepAlive: true });
+
+  // Register the pane for URL synchronization without opening it.
+  useEffect(() => {
+    sidebar.publishEvent(new NewSceneObjectAddedEvent(viewPanelPane), true);
+  }, [sidebar, viewPanelPane]);
 
   // Handle manual toggling of the pane via the sidebar buttons
   // This is done via an event that sidebar pane button publishes as the ViewPanelSidePane instance & panel ref is only available from this component

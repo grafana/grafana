@@ -1,10 +1,10 @@
-
 import { render } from '@testing-library/react';
 
 import { useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
-import { useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import { NewSceneObjectAddedEvent, useSceneObjectState, type VizPanel } from '@grafana/scenes';
 
 import { getDashboardSceneLike } from '../scene/types/dashboard';
+import { ViewPanelSidePane } from './ViewPanelSidePane';
 
 import { ViewPanelWrapper } from './ViewPanelWrapper';
 
@@ -33,6 +33,7 @@ describe('ViewPanelWrapper', () => {
       state: { openPane: undefined },
       openPane: jest.fn(),
       closePane: jest.fn(),
+      publishEvent: jest.fn(),
       subscribeToEvent: jest.fn(() => ({ unsubscribe: jest.fn() })),
     };
 
@@ -60,5 +61,10 @@ describe('ViewPanelWrapper', () => {
     render(<ViewPanelWrapper panel={panel} showControlsPane />);
 
     expect(sidebar.openPane).not.toHaveBeenCalled();
+    const publishedEvent = sidebar.publishEvent.mock.calls[0][0];
+
+    expect(publishedEvent).toBeInstanceOf(NewSceneObjectAddedEvent);
+    expect(publishedEvent.payload).toBeInstanceOf(ViewPanelSidePane);
+    expect(sidebar.publishEvent).toHaveBeenCalledWith(publishedEvent, true);
   });
 });
