@@ -90,6 +90,10 @@ func (f LocalFS) walkFunc(basePath string, acc map[string]struct{}) filepath.Wal
 		if err != nil {
 			return err
 		}
+		if info.IsDir() && info.Name() == "node_modules" {
+			return filepath.SkipDir
+		}
+
 		ok, err := f.fileIsAllowed(basePath, path, info)
 		if err != nil {
 			return err
