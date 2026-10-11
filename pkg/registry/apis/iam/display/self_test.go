@@ -180,7 +180,9 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 				Type: authlib.TypeUser, UserUID: "u1", Name: "Alice", Namespace: namespace,
 				Email: "alice@example.com", AuthenticatedBy: "oauth_github", OrgRole: identity.RoleEditor,
 			}
-			resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{{}}}}
+			resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{{
+				Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
+			}}}}
 			h := NewDisplayHandler(resolver)
 			rec := httptest.NewRecorder()
 			h.handleSelf(rec, selfRequest(t, caller))
@@ -201,6 +203,42 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 			}
 		})
 	}
+
+	t.Run("enrichment only uses the authenticated identity", func(t *testing.T) {
+		matching := iam.Display{
+			Identity:    iam.IdentityRef{Type: authlib.TypeUser, Name: "u1"},
+			DisplayName: "Alice", AvatarURL: "/avatar/alice", InternalID: 1,
+		}
+		unrelated := []iam.Display{
+			{Identity: iam.IdentityRef{Type: authlib.TypeServiceAccount, Name: "u1"}, DisplayName: "Service account", InternalID: 2},
+			{Identity: iam.IdentityRef{Type: authlib.TypeUser, Name: "u2"}, DisplayName: "Bob", InternalID: 3},
+		}
+		for _, tc := range []struct {
+			name    string
+			results [][]iam.Display
+			want    iam.Display
+		}{
+			{name: "ignores unrelated results", results: [][]iam.Display{unrelated}, want: iam.Display{
+				Identity: matching.Identity, DisplayName: caller.GetName(),
+			}},
+			{name: "finds matching result in a batch", results: [][]iam.Display{append(unrelated, matching)}, want: matching},
+			{name: "tries the next resolver", results: [][]iam.Display{unrelated, {matching}}, want: matching},
+		} {
+			t.Run(tc.name, func(t *testing.T) {
+				resolvers := make([]Resolver, 0, len(tc.results))
+				for _, items := range tc.results {
+					resolvers = append(resolvers, &fakeResolver{result: &iam.DisplayList{Items: items}})
+				}
+				h := NewDisplayHandler(resolvers...)
+				rec := httptest.NewRecorder()
+				h.handleSelf(rec, selfRequest(t, caller))
+				require.Equal(t, http.StatusOK, rec.Code)
+				var got iam.CurrentUserInfo
+				require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+				require.Equal(t, tc.want, got.Display)
+			})
+		}
+	})
 
 	t.Run("unresolved caller returns information from authentication", func(t *testing.T) {
 		resolver := &fakeResolver{result: &iam.DisplayList{}}
