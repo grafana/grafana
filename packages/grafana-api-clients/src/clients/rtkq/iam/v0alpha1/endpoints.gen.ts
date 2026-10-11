@@ -434,10 +434,14 @@ const injectedRtkApi = api
       }),
       getCurrentUserDisplay: build.query<GetCurrentUserDisplayApiResponse, GetCurrentUserDisplayApiArg>({
         query: () => ({ url: `/users/~` }),
-        providesTags: ['Display'],
+        providesTags: ['User'],
       }),
       getCurrentUserPermissions: build.query<GetCurrentUserPermissionsApiResponse, GetCurrentUserPermissionsApiArg>({
         query: () => ({ url: `/users/~/permissions` }),
+        providesTags: ['User'],
+      }),
+      getWhoAmI: build.query<GetWhoAmIApiResponse, GetWhoAmIApiArg>({
+        query: () => ({ url: `/whoami` }),
         providesTags: ['User'],
       }),
     }),
@@ -900,6 +904,8 @@ export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ Displ
 export type GetCurrentUserDisplayApiArg = void;
 export type GetCurrentUserPermissionsApiResponse = /** status 200 undefined */ UserPermissions;
 export type GetCurrentUserPermissionsApiArg = void;
+export type GetWhoAmIApiResponse = /** status 200 undefined */ Display;
+export type GetWhoAmIApiArg = void;
 export type ApiResource = {
   /** categories is a list of the grouped resources this resource belongs to (e.g. 'all') */
   categories?: string[];
@@ -939,7 +945,7 @@ export type IdentityRef = {
   type: string;
 };
 export type Display = {
-  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") endpoint. */
+  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") and whoami endpoint. */
   authenticatedBy?: string;
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
@@ -950,6 +956,8 @@ export type Display = {
   identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
+  /** Namespace is the valid namespace for this user Only populated for the current-user ("users/~") and whoami endpoint. */
+  namespace?: string;
   /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). Only populated for the current-user ("users/~") endpoint. */
   role?: string;
 };
@@ -1181,7 +1189,7 @@ export type TeamList = {
   metadata: ListMeta;
 };
 export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
-  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") endpoint. */
+  /** AuthenticatedBy is the authentication provider used for the current identity. Only populated for the current-user ("users/~") and whoami endpoint. */
   authenticatedBy?: string;
   /** AvatarURL is the url where we can get the avatar for identity */
   avatarURL?: string;
@@ -1194,6 +1202,8 @@ export type GithubCom1Grafana1Grafana1Pkg1Apis1Iam1V0Alpha1TeamMember = {
   identity: IdentityRef;
   /** InternalID is the legacy numeric id for identity, Deprecated: use the identityRef where possible */
   internalId?: number;
+  /** Namespace is the valid namespace for this user Only populated for the current-user ("users/~") and whoami endpoint. */
+  namespace?: string;
   /** Permission member has in team.
     
     Possible enum values:
@@ -1331,4 +1341,6 @@ export const {
   useLazyGetCurrentUserDisplayQuery,
   useGetCurrentUserPermissionsQuery,
   useLazyGetCurrentUserPermissionsQuery,
+  useGetWhoAmIQuery,
+  useLazyGetWhoAmIQuery,
 } = injectedRtkApi;
