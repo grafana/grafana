@@ -55,7 +55,21 @@ func Test_expandAnnotationsAndLabels_titleUsesAnyLabel(t *testing.T) {
 		require.Equal(t, "disk full", labels["alertname"])
 	})
 
-	t.Run("a broken title template keeps the original", func(t *testing.T) {
+	t.Run("a value template does not change the alert name", func(t *testing.T) {
+		title := "{{ $labels.service }} {{ $value }}"
+		labels := expandTitle(title, data.Labels{"service": "billing"})
+		require.Equal(t, title, labels["alertname"])
+	})
+
+	t.Run("an expanded title is clamped", func(t *testing.T) {
+		ctx := context.Background()
+		logger := log.NewNopLogger()
+		rule := &models.AlertRule{Title: "{{ $labels.service }}", UID: "rule"}
+		result := eval.Result{Instance: data.Labels{"service": "billing-payments-extra"}, EvaluatedAt: time.Now(), State: eval.Normal}
+		labels, _ := expandAnnotationsAndLabels(ctx, logger, rule, result, data.Labels{"alertname": rule.Title}, nil, 8, nil)
+		require.LessOrEqual(t, len(labels["alertname"]), 8)
+		require.True(t, strings.HasPrefix("billing-payments-extra", labels["alertname"]))
+	})
 		title := "{{ $labels. }}"
 		labels := expandTitle(title, data.Labels{"exported_namespace": "payments"})
 		require.Equal(t, title, labels["alertname"])
