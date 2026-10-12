@@ -59,6 +59,8 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
           zIndex: theme.zIndex.sidemenu,
           top: headerHeight,
         },
+        maxHeight: `calc(100dvh - ${headerHeight}px - max(20dvh, 200px))`,
+        overflowY: 'auto',
       },
       visualRefreshEnabled && {
         borderTopLeftRadius: getInternalRadius(theme, 0, {
