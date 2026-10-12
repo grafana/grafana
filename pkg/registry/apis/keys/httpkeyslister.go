@@ -43,9 +43,6 @@ func NewHTTPLister(client rest.Interface, gvr schema.GroupVersionResource, opts 
 // gated by server config, and a POST to an unmounted path resolves to the object
 // handler, so neither status means the request itself was wrong.
 func (l httpLister) page(ctx context.Context, token string) (*metav1.PartialObjectMetadataList, error) {
-	// No envelope: a server that predates ListKeyRequest answers 400 to any kind
-	// but ListOptions, which would fail the re-list instead of falling back. The
-	// envelope is optional, so omitting it is valid for both.
 	body, err := json.Marshal(keysv0.ListKeyRequest{Limit: l.cfg.PageSize, Continue: token})
 	if err != nil {
 		return nil, err
