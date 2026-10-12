@@ -310,7 +310,11 @@ test.describe('Panels test: Time Comparison', { tag: ['@panels', '@timeseries'] 
         const notice = panel.getByTestId(selectors.components.Panels.Panel.status('info'));
         await expect(notice).toBeVisible();
         await notice.click();
-        await expect(page.getByTestId('toggletip-content')).toContainText('No data returned for time comparison');
+        const popover = page.getByTestId('toggletip-content');
+        await expect(popover).toContainText('No data returned for time comparison');
+        // The popover is modal and hides the rest of the page from role queries while open.
+        await page.keyboard.press('Escape');
+        await expect(popover).toBeHidden();
 
         const comparisonLegendItem = legend.getByRole('button', {
           name: 'F-compare-series (comparison)',
