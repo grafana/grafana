@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Restablecer"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Logs auxiliares",
+      "description-auxiliary-logs": "Habilitar esta función conlleva costes por consulta de Azure Monitor en los paneles del dashboard que consultan tablas configuradas para <2>logs auxiliares</2>. Los logs auxiliares no tienen SLA de tiempo de respuesta, están pensados únicamente para consultas «ad hoc» y para la exploración de datos, y no deben utilizarse para dashboards que requieran datos en tiempo real ni para las alertas.",
+      "label-enable-auxiliary-logs": "Habilitar logs auxiliares"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Consulta sin procesar {{queryDisplayName}}",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Restrinja el número de filas devueltas (el valor predeterminado es 1000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "¿Seguro que quieres cambiar a logs auxiliares?",
       "body-basic-logs-queries": "¿Seguro que quieres cambiar a Logs básicos?",
       "confirmText-confirm": "Confirmar",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Las consultas de logs auxiliares incurren en un coste basado en la cantidad de datos escaneados. Los logs auxiliares no tienen SLA de tiempo de respuesta y no deben utilizarse para dashboards que requieran datos en tiempo real ni para alertas.",
       "description-basic-logs-queries": "Las consultas de logs básicos incurren en un coste basado en la cantidad de datos escaneados.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "De análisis",
+      "label-auxiliary": "Auxiliares",
+      "label-basic": "Básicos",
       "label-logs": "Logs",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Consultas de logs auxiliares",
       "title-basic-logs-queries": "Consultas de logs básicos",
       "tooltip-logs": "Especifica si se debe ejecutar una consulta de logs básicos o de análisis.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Especifica si se debe ejecutar una consulta de logs de análisis, básicos o auxiliares.",
+      "tooltip-logs-aux": "Especifica si se debe ejecutar una consulta de logs de análisis o auxiliares."
     },
     "logs-query-builder": {
       "title-no-tables": "Recurso cargado correctamente pero sin tablas"
     },
     "logs-query-editor": {
       "learn-more": "Más información",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Cuando utilices logs auxiliares, solo podrás seleccionar un recurso a la vez.",
+      "notice-basic-single-resource": "Cuando utilices logs básicos, solo podrás seleccionar un recurso a la vez.",
+      "notice-same-resource-type": "Solo puedes elegir elementos del mismo tipo de recurso.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> es una tabla de análisis.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> es una tabla de logs auxiliares: incurre en un coste por GiB escaneado, no tiene un SLA de tiempo de respuesta y no es adecuada para escenarios en tiempo real o de alertas.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> es una tabla de logs básicos: incurre en un coste por GiB escaneado.",
+      "tier-switch-revert": "Revertir a {{fromTier}}",
+      "tier-switch-title": "Nivel de consulta establecido en {{toTier}}",
       "view-query": "Ver consulta en Azure Portal",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Esta consulta de logs auxiliares procesa {{dataIngested}} GiB cuando se ejecuta. Los logs auxiliares no tienen un SLA de tiempo de respuesta y no son adecuados para escenarios en tiempo real o de alertas. ",
+      "warning-auxiliary-raw": "Esta es una consulta de logs auxiliares: utiliza el endpoint de búsqueda, incurre en un coste por GiB escaneado, no tiene un SLA de tiempo de respuesta y no es adecuada para escenarios en tiempo real o de alertas. Las tablas del plan de análisis no se pueden consultar en este modo (utiliza el nivel de análisis para ellas). ",
+      "warning-basic-raw": "Esta es una consulta de logs básicos: utiliza el punto de conexión de búsqueda e incurre en un coste por GiB escaneado. Las tablas del plan de análisis no se pueden consultar en este modo (utiliza el nivel de análisis para ellas). ",
+      "warning-data-ingested": "Esta consulta procesa {{dataIngested}} GiB cuando se ejecuta. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Esta tabla está en el plan de logs auxiliares. Habilita «Logs auxiliares» en la configuración de la fuente de datos para consultarla.",
+      "description-auxiliary-enabled": "Al seleccionar esta tabla, el modo de consulta cambiará a logs auxiliares",
+      "description-basic-disabled": "Esta tabla está incluida en el plan de logs básicos. Habilita «Logs básicos» en la configuración de la fuente de datos para consultarla.",
+      "description-basic-enabled": "Al seleccionar esta tabla, el modo de consulta cambiará a logs básicos",
+      "description-plan-unavailable": "Esta tabla no se puede seleccionar porque no se ha podido determinar su plan de logs.",
+      "label-all-columns": "Todas las columnas"
     },
     "metric-name-field": {
       "label-metric": "Métrica"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Seleccionar espacio de nombres personalizado",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Seleccionar nombre de la dimensión",
+      "aria-label-select-metric-name": "Seleccionar nombre de la métrica",
       "aria-label-select-namespace": "Seleccionar espacio de nombres",
       "aria-label-select-query-type": "Seleccionar tipo de consulta",
       "aria-label-select-region": "Seleccionar región",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Seleccionar grupo de recursos",
       "aria-label-select-subscription": "Seleccionar subscripción",
       "label-custom-namespace": "Espacio de nombres personalizado",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Nombre de la dimensión",
+      "label-metric-name": "Nombre de la métrica",
       "label-namespace": "Nombre del espacio",
       "label-query-type": "Tipo de consulta",
       "label-region": "Región",

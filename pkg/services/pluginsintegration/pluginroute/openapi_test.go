@@ -15,7 +15,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/kindstore"
 )
 
@@ -225,7 +224,7 @@ func TestPostProcessManifestKindPostExample(t *testing.T) {
 }
 
 func TestSpecVersion(t *testing.T) {
-	b := &manifestBuilder{group: "example.ext.grafana.app", pluginJSON: plugins.JSONData{ID: "example-app"}}
+	b := &manifestBuilder{group: "example.ext.grafana.app", pluginID: "example-app"}
 
 	// The builder framework stamps Info.Title with "<group>/<version>"
 	oas := &spec3.OpenAPI{Info: &spec.Info{InfoProps: spec.InfoProps{Title: "example.ext.grafana.app/v1alpha1"}}}
@@ -399,4 +398,72 @@ func TestDropUnstructuredModels(t *testing.T) {
 		require.True(t, ok)
 		require.Contains(t, def.Schema.Extensions, "x-kubernetes-group-version-kind")
 	})
+}
+
+// The components a version's routes reference come from its OpenAPI section,
+// or from the deprecated route schemas when a manifest has no OpenAPI paths,
+// and win over anything already published under the same name.
+func TestAddRouteComponents(t *testing.T) {
+	manifest := testManifest(t)
+	manifest.Versions[1].OpenAPI = app.ManifestVersionOpenAPI{
+		Paths: map[string]spec3.PathProps{"/x": {Get: &spec3.Operation{}}},
+		Components: app.ManifestVersionOpenAPIComponents{
+			Schemas:   map[string]spec.Schema{"Result": *spec.StringProperty(), "Existing": *spec.BoolProperty()},
+			Responses: map[string]*spec3.Response{"NotFound": {ResponseProps: spec3.ResponseProps{Description: "missing"}}},
+			Examples:  map[string]*spec3.Example{"Sample": {ExampleProps: spec3.ExampleProps{Value: "x"}}},
+		},
+	}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest}
+
+	existing := spec.Int64Property()
+	oas := &spec3.OpenAPI{Components: &spec3.Components{
+		Schemas:   map[string]*spec.Schema{"Existing": existing},
+		Responses: map[string]*spec3.Response{"NotFound": {ResponseProps: spec3.ResponseProps{Description: "generated"}}},
+		Examples:  map[string]*spec3.Example{"Sample": {ExampleProps: spec3.ExampleProps{Value: "generated"}}},
+	}}
+	b.addRouteComponents(oas, "v1alpha1")
+	require.Equal(t, spec.StringProperty(), oas.Components.Schemas["Result"])
+	require.Equal(t, spec.BoolProperty(), oas.Components.Schemas["Existing"], "the manifest replaces a schema already in the spec")
+	require.Equal(t, "missing", oas.Components.Responses["NotFound"].Description, "the manifest replaces a response")
+	require.Equal(t, "x", oas.Components.Examples["Sample"].Value, "the manifest replaces an example")
+}
+
+// A cluster-scoped kind is served at the version root, not under a namespace,
+// so its paths are found there to be given the kind's schemas.
+func TestPostProcessClusterScopedKind(t *testing.T) {
+	manifest := &app.ManifestData{
+		Group: "example.ext.grafana.app",
+		Versions: []app.ManifestVersion{{
+			Name: "v1", Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: "Node", Plural: "Nodes", Scope: kindstore.ClusterScope,
+				Schema: testVersionSchema(t, `{"Node":{"type":"object","properties":{"spec":{"type":"object"}}}}`),
+			}},
+		}},
+	}
+	b := &manifestBuilder{group: manifest.Group, manifest: manifest}
+	root := "/apis/example.ext.grafana.app/v1/"
+	response := func() *spec3.Responses {
+		return &spec3.Responses{ResponsesProps: spec3.ResponsesProps{StatusCodeResponses: map[int]*spec3.Response{
+			200: {ResponseProps: spec3.ResponseProps{Content: map[string]*spec3.MediaType{
+				"application/json": {MediaTypeProps: spec3.MediaTypeProps{Schema: spec.MapProperty(nil)}},
+			}}},
+		}}}
+	}
+	oas := &spec3.OpenAPI{
+		Paths: &spec3.Paths{Paths: map[string]*spec3.Path{
+			root + "nodes":        {PathProps: spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{Responses: response()}}}},
+			root + "nodes/{name}": {PathProps: spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{Responses: response()}}}},
+		}},
+		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
+	}
+
+	b.postProcessManifestKinds(oas, root, "v1")
+
+	kind := "example.ext.grafana.app.v1.Node"
+	ref := func(path string) string {
+		return oas.Paths.Paths[path].Get.Responses.StatusCodeResponses[200].Content["application/json"].Schema.Ref.String()
+	}
+	require.Equal(t, "#/components/schemas/"+kind+"List", ref(root+"nodes"))
+	require.Equal(t, "#/components/schemas/"+kind, ref(root+"nodes/{name}"))
 }

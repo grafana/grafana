@@ -51,6 +51,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	apiserverbuilder "github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/services/apiserver/restoptions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -344,7 +345,7 @@ func TestDashboardAPIBuilder_EmbeddedLibraryPanelFinalStorageKeepsAccessBoundary
 	scheme := runtime.NewScheme()
 	require.NoError(t, dashv0.AddToScheme(scheme))
 	codecs := serializer.NewCodecFactory(scheme)
-	optsGetter, err := apistore.NewRESTOptionsGetterMemory(storagebackend.Config{
+	optsGetter, err := restoptions.NewRESTOptionsGetterMemory(storagebackend.Config{
 		Codec: codecs.LegacyCodec(dashv0.LibraryPanelResourceInfo.GroupVersion()),
 	}, nil)
 	require.NoError(t, err)

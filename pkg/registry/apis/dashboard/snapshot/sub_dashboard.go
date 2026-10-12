@@ -10,7 +10,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -84,20 +83,11 @@ func (r *dashboardREST) Connect(ctx context.Context, name string, opts runtime.O
 		return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
 	}
 
-	content := snap.Spec.Dashboard
-	blobCtx := ctx
-	if snap.Blobs.Dashboard != nil && snap.Blobs.Dashboard.Uid != "" {
-		caller, ok := authlib.AuthInfoFrom(ctx)
-		if !ok || caller == nil || !authlib.NamespaceMatches(caller.GetNamespace(), snap.Namespace) {
-			// The public GET was already authorized. Anonymous and cross-org callers
-			// need a namespace-scoped identity for the delegated blob read.
-			blobCtx = authlib.WithAuthInfo(ctx, &identity.StaticRequester{Type: authlib.TypeAnonymous, Namespace: snap.Namespace})
-		}
-	}
-	if fromBlob, ok, err := readDashboardBlob(blobCtx, r.blobs, snap); err != nil {
+	// The public GET was already authorized; blob reads must not depend on caller credentials.
+	blobCtx := identity.WithServiceIdentityForSingleNamespaceContext(ctx, snap.Namespace)
+	content, err := loadDashboardContent(blobCtx, r.blobs, snap)
+	if err != nil {
 		return nil, err
-	} else if ok {
-		content = fromBlob
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

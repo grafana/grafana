@@ -9,14 +9,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	apppluginV0 "github.com/grafana/grafana/pkg/apis/appplugin/v0alpha1"
-	"github.com/grafana/grafana/pkg/plugins"
 )
 
-func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
+func testVersionSchema(t testing.TB, raw string) *app.VersionSchema {
 	t.Helper()
 
 	var schema app.VersionSchema
@@ -24,7 +22,7 @@ func testVersionSchema(t *testing.T, raw string) *app.VersionSchema {
 	return &schema
 }
 
-func testManifest(t *testing.T) *app.ManifestData {
+func testManifest(t testing.TB) *app.ManifestData {
 	t.Helper()
 
 	operation := func(id string) *spec3.Operation {
@@ -67,9 +65,6 @@ func testManifest(t *testing.T) *app.ManifestData {
 					SearchFields: []app.ManifestVersionKindSearchField{{
 						Name: "testField", Path: "spec.testField", Type: "string",
 					}},
-					Routes: map[string]spec3.PathProps{
-						"/reload": {Post: operation("reloadTestKind")},
-					},
 					Schema: testVersionSchema(t, `{
 						"TestKind":{"type":"object","properties":{"spec":{"$ref":"#/components/schemas/spec"},"status":{"$ref":"#/components/schemas/status"}},"required":["spec"]},
 						"spec":{"type":"object","additionalProperties":false,"properties":{"testField":{"type":"string"},"foo":{"$ref":"#/components/schemas/Foo"}},"required":["testField","foo"]},
@@ -79,24 +74,18 @@ func testManifest(t *testing.T) *app.ManifestData {
 						"Baz":{"type":"object","additionalProperties":false,"properties":{"value":{"type":"integer"}},"required":["value"]}
 					}`),
 				}},
-				Routes: app.ManifestVersionRoutes{
-					Namespaced: map[string]spec3.PathProps{
-						"/foobar": {Get: operation("getFoobar")},
-					},
-					Cluster: map[string]spec3.PathProps{
-						"/foobar": {Get: operation("getClusterFoobar")},
-					},
-					Schemas: map[string]spec.Schema{},
-				},
+				OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+					"/foobar":                        {Get: operation("getClusterFoobar")},
+					"/namespaces/{namespace}/foobar": {Get: operation("getFoobar")},
+					"/namespaces/{namespace}/testkinds/{name}/reload": {Post: operation("reloadTestKind")},
+				}},
 			},
 			{
 				Name:   "v2alpha1",
 				Served: true,
-				Routes: app.ManifestVersionRoutes{
-					Namespaced: map[string]spec3.PathProps{
-						"/example": {Get: operation("getExample")},
-					},
-				},
+				OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{
+					"/namespaces/{namespace}/example": {Get: operation("getExample")},
+				}},
 			},
 		},
 	}
@@ -106,9 +95,9 @@ func TestGetGroupVersions(t *testing.T) {
 	manifest := testManifest(t)
 	manifest.Versions = append(manifest.Versions, app.ManifestVersion{Name: "unused", Served: false})
 	b := &manifestBuilder{
-		group:      manifest.Group,
-		manifest:   manifest,
-		pluginJSON: plugins.JSONData{ID: "example-app"},
+		group:    manifest.Group,
+		manifest: manifest,
+		pluginID: "example-app",
 	}
 
 	require.Equal(t, []schema.GroupVersion{

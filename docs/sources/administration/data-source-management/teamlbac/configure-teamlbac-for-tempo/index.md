@@ -1,5 +1,6 @@
 ---
-description: 'Use label-based access control (LBAC) to restrict Cloud Traces data by team and attribute rules.'
+title: Configure LBAC for Tempo or Cloud Traces
+description: Use label-based access control (LBAC) to restrict Cloud Traces data by team and attribute rules.
 keywords:
   - tempo
   - datasource
@@ -7,153 +8,153 @@ keywords:
 labels:
   products:
     - cloud
-title: Configure team LBAC for data sources for Tempo
 weight: 350
+review_date: 2026-09-23
 ---
 
-# Configure team label-based access control for Tempo or Cloud Traces
+# Configure LBAC for Tempo or Cloud Traces
 
 {{< docs/public-preview product="Label-based access control for traces" >}}
 
-Team label-based access control (LBAC) for Cloud Traces or Tempo lets you restrict which spans teams can access by defining rules using trace attributes. LBAC provides fine-grained, team-based access control within a single tenant and mirrors the experience used for logs and metrics LBAC in Grafana Cloud.
+This document explains how to configure Label-Based Access Control (LBAC) for data sources for a Tempo or Cloud Traces data source. LBAC for data sources lets you restrict which spans a team can access by defining rules based on trace attributes, providing fine-grained, team-based access control within a single tenant. It mirrors the experience used for logs and metrics LBAC in Grafana Cloud.
+
+Grafana uses LBAC as an umbrella term for label-based access control across all data sources. Traces use **attributes**, not labels, for access control, but the Grafana UI surfaces this functionality as LBAC for consistency.
 
 {{< admonition type="note" >}}
-Unlike logs and metrics, which also support data source-level LBAC through cloud access policies, traces LBAC is currently available only at the team level.
+LBAC for traces is available only on Grafana Cloud. It isn't available in Grafana Enterprise. It applies only to the Cloud-provisioned Tempo or Cloud Traces data source that Grafana hosts, not to self-managed data sources.
+
+Unlike logs and metrics, which also support data source-level LBAC through cloud access policies, traces LBAC is available only at the team level.
 {{< /admonition >}}
-
-Grafana uses the term LBAC as an umbrella term for label-based access control for all data sources.
-Traces use **attributes**, not labels, for access control, but the Grafana UI surfaces this functionality as LBAC for consistency.
-
-This feature only applies to Grafana Cloud Traces, specifically, the Cloud-provisioned tracing data source.
 
 ## How LBAC works
 
-When a user queries tracing data source, Grafana evaluates the user’s team memberships and the LBAC rules assigned to those teams. These rules are added to the request so the Cloud Traces data source returns only permitted spans or attributes.
+When a user queries a tracing data source, Grafana evaluates the user's team memberships and the LBAC rules assigned to those teams. Grafana adds these rules to the request, so the Cloud Traces data source returns only permitted spans or attributes.
 
-LBAC rules use **attribute selectors**, such as:
+LBAC rules use attribute selectors, such as:
 
-```
+```traceql
 { resource.service.name="checkout", resource.env="prod" }
 ```
 
-Multiple conditions in the same rule use **AND** (`,`), while multiple rules across teams use **OR**.
+Multiple conditions in the same rule are combined with `AND` (`,`), while multiple rules across teams are combined with `OR`.
+
+If none of a user's teams have LBAC rules for the data source, that user can query all traces, subject to their data source permissions.
 
 ## Before you begin
 
-To use team LBAC for Tempo or Cloud Traces, you need to have the following:
+Before you configure LBAC for data sources, ensure you have the following:
 
-- The permission setup to create a Tempo or Cloud Traces tenant in Grafana Cloud
-- Administrator permissions for Grafana
-- A team setup in Grafana
+- Permission to create a Tempo or Cloud Traces tenant in Grafana Cloud.
+- Administrator permissions for Grafana.
+- A team set up in Grafana.
 
-Team LBAC works with Grafana Cloud and Grafana Enterprise v12.3 and later when the data source uses Grafana Cloud Traces. It doesn't work with self-hosted Tempo OSS or Grafana Enterprise Traces (GET).
+## Known limitations
 
-### Known limitations
+Be aware of the following limitations for traces LBAC:
 
-- LBAC for traces is available only at the team level. Data source-level LBAC rules (configured through cloud access policies) aren't currently supported for traces. This differs from logs and metrics LBAC, which supports both team-level and data source-level rules.
+- LBAC for traces is available only at the team level. Data source-level LBAC rules, configured through cloud access policies, aren't currently supported for traces. This differs from logs and metrics LBAC, which supports both team-level and data source-level rules.
 - Autocomplete in search is still under development.
-- LBAC is restricted to only contain resource scope attributes.
-- There is a slight performance degradation for users with multiple rules.
+- Rules are restricted to resource scope attributes.
+- Users with multiple rules may experience a slight performance degradation.
 
-## Configure team LBAC for traces
+## Configure a new Tempo or Cloud Traces data source
 
 Follow this workflow when adding a new data source. The data source must be hosted by Grafana and not self-managed.
 
 1. Start your Grafana Cloud instance.
-2. Access Tempo or Cloud Traces data sources details for your stack.
-3. Copy Tempo or Cloud Traces details and create a Cloud Access Policy.
-   - Copy the [details of your Tempo or Cloud Traces setup](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/).
-4. In Grafana Cloud, navigate to **Administration > Users and access > Cloud Access Policies**.
+1. Access Tempo or Cloud Traces data source details for your stack.
+1. Copy the [details of your Tempo or Cloud Traces setup](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/).
+1. In Grafana Cloud, navigate to **Administration** > **Users and access** > **Cloud Access Policies**.
    - Create an access policy for the Tempo or Cloud Traces data source.
    - Ensure the access policy includes `traces:read` permissions.
    - Ensure the access policy doesn't include `labels` rules. Data source-level LBAC isn't supported for traces, so any `labels` rules in the access policy are ignored.
-5. In Grafana, select Tempo or Cloud Traces or create new data source.
-6. Navigate back to the Tempo or Cloud Traces data source.
-   - Set up the Tempo or Cloud Traces data source using basic authentication. Use the [userID/tenantID](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/) as the username. Use the token from your access policy as the password.
-   - Select **Save and connect**.
-   - After a successful connection test, the data source is ready to use.
-7. Go to the **Permissions** tab of the newly created Tempo or Cloud Traces data source. Here, you find the LBAC for data sources rules section.
-   The **Data access** section shows the LBAC rules UI for the selected data source.
+1. In Grafana, select the Tempo or Cloud Traces data source, or create a new one.
+1. Navigate back to the Tempo or Cloud Traces data source.
+   - Set up the data source using basic authentication. Use the [userID or tenantID](https://grafana.com/docs/grafana-cloud/send-data/traces/set-up/locate-url-user-password/) as the username. Use the token from your access policy as the password.
+   - Select **Save & test**.
+1. Go to the **Permissions** tab of the newly created data source. Here, you find the LBAC for data sources rules section.
+1. Choose a team from the **Team** drop-down.
+1. Enter attribute selectors, such as:
 
-8. Choose a team from the **Team** dropdown.
-9. Enter attribute selectors such as:
-
-   ```
+   ```traceql
    { resource.service.name="checkout", resource.env="prod" }
    ```
 
-   Refer to the Examples section below for more examples.
+1. Select **Save**.
 
-10. Select **Save**.
-    The rule appears under the team's attribute filters. Team members see only spans matching the rule in Explore search and metrics.
+## Examples of LBAC rules
 
-### Examples of LBAC rules
+An LBAC rule for traces is an attribute selector that filters spans based on trace attributes. Each rule operates independently as its own filter, separate from other rules within a team.
 
-LBAC rules for traces use TraceQL attribute selector syntax.
-Each rule operates independently as its own filter, separate from other rules within a team.
-
-LBAC rules guidelines:
+Follow these guidelines when you write rules:
 
 - Use only resource scope attributes, for example `{ resource.env="prod" }`.
-- Only string values are supported.
-- Use double quotes for string values, for example: `{ resource.env="prod" }`.
-- You can use regular expressions matching with `=~` operator, for example: `{ resource.team =~ "team-a|team-b" }`.
+- Use double quotes for string values. Only string values are supported.
+- Use the `=~` operator for regular expression matching, for example `{ resource.team =~ "team-a|team-b" }`.
 - If you use negation (`!=` or `!~`), refer to [Troubleshoot missing service traces](#troubleshoot-missing-service-traces). TraceQL negation behaves differently from PromQL when an attribute is missing.
-- You can have up to two conditions in the same rule using a comma (`,`) as an `AND` operator, for example: `{ resource.env="prod", resource.team="frontend" }`.
+- Use up to two conditions in a single rule, separated by a comma (`,`), which acts as an `AND` operator.
 
-Refer to [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/next/administration/data-source-management/teamlbac/create-teamlbac-rules/) for more information.
+For more detail, refer to [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/create-teamlbac-rules/).
 
-#### Single rule
+### Single rule
 
-Limit users to only see spans from the `payments` API.
+Multiple conditions in a single rule are combined with `AND`. The following rule grants access to spans that match both `resource.service.name="payments-api"` and `resource.env="prod"`:
 
+```traceql
+{ resource.service.name="payments-api", resource.env="prod" }
 ```
-{ resource.service.name="payments-api" }
-```
 
-This example matches spans with team A **or** team B. This single example is faster than using multiple rules with the same label.
+### Match multiple values with a regular expression
 
-```
+Use the `=~` operator to match an attribute against a regular expression. The following rule grants access to spans from `team-a` or `team-b`:
+
+```traceql
 { resource.team =~ "team-a|team-b" }
 ```
 
-#### Multiple rules
+### Multiple rules
 
-Two rules combined to give user access to spans from `prod` environment or the `billing` team.
+Multiple rules assigned to the same team are combined with `OR`. The following two rules grant access to spans in the `prod` environment or spans from the `billing` team:
 
-```
+```traceql
 { resource.env="prod" }
 { resource.team="billing" }
 ```
 
-This example gives users access to spans from the `frontend` team in the `prod` environment or the `checkout` team but doesn't enforce additional conditions. The comma (`,`) acts as an `AND` operator within the same rule.
+### User on multiple teams
 
-```
-{ resource.env="prod", resource.team="frontend" }
-{ resource.team="checkout" }
-```
+Users on multiple teams receive access based on all the combined rules assigned to each team, combined with `OR`. For example, if the teams have the following rules:
 
-#### User on multiple teams
+- Team A: `{ resource.cluster="us-east-1" }`
+- Team B: `{ resource.service.name="frontend" }`
 
-Users on multiple teams receive access based on all combined LBAC rules assigned to each team.
-
-Team A → `{ resource.cluster="us-east-1" }`
-Team B → `{ resource.service.name="frontend" }`
+A user on both teams can access spans that match `resource.cluster="us-east-1"` or `resource.service.name="frontend"`.
 
 ## How LBAC affects returned data
 
-Cloud Traces supports three redaction modes that control how unauthorized spans are handled in trace by ID search responses. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
+How LBAC filters data depends on the endpoint:
+
+- **Trace-by-ID lookups** use one of three redaction modes, described in the following sections, that control how non-matching spans are handled.
+- **Search, metrics, and autocomplete endpoints** always return only the spans that match the LBAC rules, regardless of the configured redaction mode.
+
+Cloud Traces supports three redaction modes for trace-by-ID lookups. The active mode is configured per tenant. To change the mode for your organization, contact Grafana Support.
+
+| Mode                 | Non-matching spans                           | Best for                                         |
+| -------------------- | -------------------------------------------- | ------------------------------------------------ |
+| Attributes (default) | Kept, but attributes and intrinsics redacted | Preserving trace structure                       |
+| Spans                | Removed entirely                             | Hiding the existence of spans (may break traces) |
+| Error                | Entire request returns a `404`               | Strict, all-or-nothing visibility                |
 
 ### Attributes mode (default)
 
-Non-matching spans are included in the response but have their attributes and intrinsics redacted. Only the following minimal fields remain visible on redacted spans:
+Non-matching spans are included in the response, but their attributes and intrinsics are redacted. Only the following minimal fields remain visible on redacted spans:
 
 - `traceId`, `spanId`, `parentId`
 - `name`, `kind`
 - `timestamps`
 - `status`
 
-You can extend the set of always-visible fields by configuring `allowed_attributes`, which sets a list of scoped attributes and intrinsics that are never redacted, For example, you can set `span:name`, `resource.service.name`, `event:name`, or `scope.version` so they are never redacted, even from non-matching spans. Contact Grafana Support to configure `allowed_attributes` for your organization.
+You can extend the set of always-visible fields by configuring `allowed_attributes`, which sets a list of scoped attributes and intrinsics that are never redacted. For example, you can set `span:name`, `resource.service.name`, `event:name`, or `scope.version` so they're never redacted, even on non-matching spans. Contact Grafana Support to configure `allowed_attributes` for your organization.
 
 ### Spans mode
 
@@ -161,9 +162,7 @@ Non-matching spans are removed from the response entirely. This can result in br
 
 ### Error mode
 
-If any span in a requested trace does not match the LBAC policy, the entire request returns a 404 error. This is the strictest mode and is suited for environments where partial trace visibility is not acceptable.
-
-For Search, metrics, and autocomplete endpoints, only spans matching the LBAC rules appear regardless of the configured redaction mode.
+If any span in a requested trace doesn't match the LBAC policy, the entire request returns a `404` error. This is the strictest mode and suits environments where partial trace visibility isn't acceptable.
 
 ## Troubleshoot missing service traces
 
@@ -203,27 +202,29 @@ This query returns services that don't have `resource.k8s.namespace.name` set.
 
 ## Manage LBAC rules
 
-To edit an existing LBAC rule, follow these steps:
+You can edit or delete existing LBAC rules from the data source's **Permissions** tab.
+
+### Edit an LBAC rule
 
 1. Open your stack and select your **Tempo** or **Cloud Traces** data source.
-2. Select **Permissions**.
-3. Scroll to **Data access**.
-4. Select the rule you want to edit and click the Pencil (Edit) icon.
-5. Modify **Attribute filters**.
-6. Select **Save**.
+1. Select **Permissions**.
+1. Scroll to **Data access**.
+1. Select the rule you want to edit and select the pencil (edit) icon.
+1. Modify the **Attribute filters**.
+1. Select **Save**.
 
-To delete an existing LBAC rule, follow these steps:
+### Delete an LBAC rule
 
 1. Open your stack and select your **Tempo** or **Cloud Traces** data source.
-2. Select **Permissions**.
-3. Scroll to **Data access**.
-4. Select the rule you want to delete.
-5. Select the **X** (Delete) icon.
-6. Confirm deletion.
+1. Select **Permissions**.
+1. Scroll to **Data access**.
+1. Select the rule you want to delete.
+1. Select the **X** (delete) icon.
+1. Confirm the deletion.
 
-## Next steps
+## Related resources
 
-- Refer to [Label Based Access Control (LBAC) for data sources](../_index/) for an overview and supported data sources.
-- Refer to [Create LBAC for data sources rules for a supported data source](../create-teamlbac-rules/) for rule-creation reference.
-- Refer to [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/) for attribute selector syntax, including `!=`, `!~`, and `= nil`.
-- Refer to [Search traces using the query builder](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/) to run the diagnostic query in Explore.
+- [LBAC for data sources overview](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/) explains how LBAC works, which data sources are supported, and current limitations.
+- [Create LBAC for data sources rules for a supported data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/create-teamlbac-rules/) explains how to define and manage rules.
+- [Construct a TraceQL query](https://grafana.com/docs/tempo/<TEMPO_VERSION>/traceql/construct-traceql-queries/) explains attribute selector syntax, including `!=`, `!~`, and `= nil`.
+- [Search traces using the query builder](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/query-editor/traceql-search/) explains how to run the diagnostic query in Explore.

@@ -4756,7 +4756,7 @@
         }
       },
       "ListAlertRuleSearchRulesV0alpha1SearchRegexLeaf": {
-        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "description": "Supported on the \"labels\" field only, as \"key=<value regex>\": the key is\nliteral, and the value regex matches the whole label value, case-sensitively\nunless it starts with (?i). A missing label is matched as an empty value.",
         "type": "object",
         "required": ["field", "pattern"],
         "properties": {
@@ -4860,7 +4860,7 @@
         }
       },
       "ListAlertRuleSearchRulesV0alpha1SearchWhereNode": {
-        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter/regex leaf or a top-level \"and\" of those leaves.",
         "type": "object",
         "properties": {
           "and": {
@@ -5087,7 +5087,7 @@
         }
       },
       "ListRecordingRuleSearchRulesV0alpha1SearchRegexLeaf": {
-        "description": "Retained for generic schema compatibility; rejected by the compatibility handler.",
+        "description": "Supported on the \"labels\" field only, as \"key=<value regex>\": the key is\nliteral, and the value regex matches the whole label value, case-sensitively\nunless it starts with (?i). A missing label is matched as an empty value.",
         "type": "object",
         "required": ["field", "pattern"],
         "properties": {
@@ -5191,7 +5191,7 @@
         }
       },
       "ListRecordingRuleSearchRulesV0alpha1SearchWhereNode": {
-        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter leaf or a top-level \"and\" of those leaves.",
+        "description": "Exactly one key must be set. The compatibility handler accepts only a\ntext/filter/regex leaf or a top-level \"and\" of those leaves.",
         "type": "object",
         "properties": {
           "and": {

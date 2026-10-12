@@ -43,11 +43,11 @@ func TestBuildSearchRoutes_perKindRoutes(t *testing.T) {
 func TestSearchRulesPathSegmentMatchesManifest(t *testing.T) {
 	paths := map[string]struct{}{}
 	for _, version := range rulesmanifest.LocalManifest().ManifestData.Versions {
-		for path := range version.Routes.Namespaced {
+		for path := range version.OpenAPI.Paths {
 			paths[path] = struct{}{}
 		}
 	}
 	for _, kind := range []resource.Kind{v0alpha1.AlertRuleKind(), v0alpha1.RecordingRuleKind()} {
-		require.Contains(t, paths, fmt.Sprintf("/%s/%s", kind.Plural(), SearchRulesPathSegment))
+		require.Contains(t, paths, fmt.Sprintf("/namespaces/{namespace}/%s/%s", kind.Plural(), SearchRulesPathSegment))
 	}
 }

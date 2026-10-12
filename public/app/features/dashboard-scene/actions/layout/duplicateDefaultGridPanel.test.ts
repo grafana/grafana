@@ -1,8 +1,7 @@
-import { testWithFeatureToggles } from 'test/test-utils';
-
 import { getPanelPlugin } from '@grafana/data/test';
 import { setPluginImportUtils } from '@grafana/runtime';
 import { SceneGridLayout, SceneGridRow, SceneQueryRunner, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
@@ -18,7 +17,6 @@ setPluginImportUtils({
 });
 
 describe('duplicateDefaultGridPanel', () => {
-  testWithFeatureToggles({ enable: ['dashboardNewLayouts'] });
   let deactivate: () => void;
 
   function setup() {
@@ -84,7 +82,14 @@ describe('duplicateDefaultGridPanel', () => {
 });
 
 describe('duplicateDefaultGridPanel (legacy mode)', () => {
-  testWithFeatureToggles({ disable: ['dashboardNewLayouts'] });
+  beforeAll(() => {
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
+  afterAll(() => {
+    setTestFlags({});
+  });
+
   it('Should duplicate a panel', () => {
     const { manager, grid } = setupLegacy();
     const vizPanel = findVizPanelByKey(manager, 'panel-1')!;

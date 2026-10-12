@@ -5,6 +5,11 @@ resource, and proxy subresources through the plugin v2 client. It supports legac
 settings storage, unified storage, and the configured dual-write migration policy.
 It does not install manifest kinds, custom v3 routes, or admission hooks.
 
+Unified storage saves all app settings in the `plugins.grafana.app` group and
+`app` resource, with the plugin ID as the object name. The settings API continues
+to serve each plugin's group with the name `instance`; storage translates the
+group and name for reads, writes, and inline secure value ownership.
+
 `RegisterAPIService` registers settings for plugins without a manifest when
 `appplugins.registerAPIServer` is enabled. Manifest plugins are served exclusively
 by the [plugin router handler](../../../services/pluginsintegration/pluginroute/README.md);

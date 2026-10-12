@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Återställ"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Hjälploggar",
+      "description-auxiliary-logs": "Om den här funktionen aktiveras medför det Azure Monitor-kostnader per fråga för instrumentpanelspaneler som frågar tabeller konfigurerade för <2>hjälploggar</2>. Hjälploggar har inga SLA:er för svarstid, är endast avsedda för ad hoc-frågor och datautforskning och bör inte användas för instrumentpaneler som kräver realtidsdata eller för larm.",
+      "label-enable-auxiliary-logs": "Aktivera hjälploggar"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "{{queryDisplayName}} rå fråga",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Begränsa antalet rader som returneras (standard är 1 000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Är du säker på att du vill byta till hjälploggar?",
       "body-basic-logs-queries": "Är du säker på att du vill byta till grundläggande loggar?",
       "confirmText-confirm": "Bekräfta",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Hjälploggfrågor medför kostnader baserat på mängden data som skannas. Hjälploggar har inga SLA:er för svarstid och bör inte användas för instrumentpaneler som kräver realtidsdata eller för larm.",
       "description-basic-logs-queries": "Grundläggande loggfrågor medför kostnader baserat på mängden data som skannas.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analyser",
+      "label-auxiliary": "Hjälpare",
+      "label-basic": "Grundläggande",
       "label-logs": "Loggar",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Hjälploggfrågor",
       "title-basic-logs-queries": "Grundläggande loggfrågor",
       "tooltip-logs": "Anger om en grundläggande eller analytisk loggfråga ska köras.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Anger om en analytisk, grundläggande eller hjälploggfråga ska köras.",
+      "tooltip-logs-aux": "Anger om en analytisk eller hjälploggfråga ska köras."
     },
     "logs-query-builder": {
       "title-no-tables": "Resursen laddades utan några tabeller"
     },
     "logs-query-editor": {
       "learn-more": "Läs mer",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Vid användning av hjälploggar kan du bara välja en resurs åt gången.",
+      "notice-basic-single-resource": "Vid användning av grundläggande loggar kan du bara välja en resurs åt gången.",
+      "notice-same-resource-type": "Du får bara välja objekt av samma resurstyp.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> är en analystabell.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> är en tabell med hjälploggar – medför kostnader per skannad GiB, har inget SLA för svarstid och är inte lämplig för realtidsscenarier eller larmscenarier.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> är en tabell med grundläggande loggar – medför kostnader per skannad GiB.",
+      "tier-switch-revert": "Återställ till {{fromTier}}",
+      "tier-switch-title": "Frågenivå inställd på {{toTier}}",
       "view-query": "Visa fråga i Azure Portal",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Den här hjälploggfrågan behandlar {{dataIngested}} GiB när den körs. Hjälploggar har inget SLA för svarstid och är inte lämpliga för realtidsscenarier eller larmscenarier. ",
+      "warning-auxiliary-raw": "Detta är en fråga för hjälploggar – den använder sök-slutpunkten, medför en kostnad per skannad GiB, har inget SLA för svarstid och är inte lämplig för realtids- eller larmscenarier. Tabeller i analysplanen kan inte frågas i detta läge (använd analysnivån för dem). ",
+      "warning-basic-raw": "Det här är en fråga för grundläggande loggar – använder sökslutpunkten och medför kostnader per skannad GiB. Tabeller i analysplanen kan inte frågas i detta läge (använd analysnivån för dem). ",
+      "warning-data-ingested": "Den här frågan behandlar {{dataIngested}} GiB när den körs. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Den här tabellen ingår i hjälploggplanen. Aktivera ”Hjälploggar” i datakällans inställningar för att fråga den.",
+      "description-auxiliary-enabled": "Om du väljer den här tabellen ändras frågeläget till hjälploggar",
+      "description-basic-disabled": "Den här tabellen ingår i den grundläggande loggplanen. Aktivera ”Grundläggande loggar” i datakällans inställningar för att ställa sökfrågor mot den.",
+      "description-basic-enabled": "Om du väljer den här tabellen ändras sökfrågeläget till grundläggande loggar",
+      "description-plan-unavailable": "Den här tabellen kan inte väljas eftersom dess loggplan inte kunde fastställas.",
+      "label-all-columns": "Alla kolumner"
     },
     "metric-name-field": {
       "label-metric": "Mått"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Välj anpassat namnutrymme",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Välj namn för dimension",
+      "aria-label-select-metric-name": "Välj namn för mätvärde",
       "aria-label-select-namespace": "Välj namnutrymme",
       "aria-label-select-query-type": "Välj typ av fråga",
       "aria-label-select-region": "Välj region",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Välj resursgrupp",
       "aria-label-select-subscription": "Välj prenumeration",
       "label-custom-namespace": "Anpassat namnområde",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Dimensionsnamn",
+      "label-metric-name": "Mätvärdesnamn",
       "label-namespace": "Namnområde",
       "label-query-type": "Typ av fråga",
       "label-region": "Region",

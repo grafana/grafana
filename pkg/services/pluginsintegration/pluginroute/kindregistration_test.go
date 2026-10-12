@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/kube-openapi/pkg/spec3"
@@ -29,18 +28,18 @@ func testBuilder(t *testing.T, manifest *app.ManifestData) *manifestBuilder {
 	t.Helper()
 
 	plugin := definition.PluginDefinition{
-		JSONData: plugins.JSONData{ID: "example-app"},
-		Manifest: manifest,
+		JSONData:  plugins.JSONData{ID: "example-app"},
+		Manifests: []*app.ManifestData{manifest},
 	}
 	group := plugin.JSONData.ID
 	if manifest != nil {
 		group = manifest.Group
 	}
 	return &manifestBuilder{
-		group:      group,
-		manifest:   manifest,
-		pluginJSON: plugin.JSONData,
-		clientV3:   &fakeRouteClient{},
+		group:    group,
+		manifest: manifest,
+		pluginID: plugin.JSONData.ID,
+		clientV3: &fakeRouteClient{},
 	}
 }
 
@@ -123,34 +122,20 @@ func TestUpdateAPIGroupInfo(t *testing.T) {
 		})
 	})
 
-	// The apiserver skips a version with no storage, which would take its custom
-	// routes out of discovery and OpenAPI.
-	t.Run("a routes-only version gets placeholder storage", func(t *testing.T) {
-		routesOnly := func(routes app.ManifestVersionRoutes) *manifestBuilder {
-			b := testBuilder(t, &app.ManifestData{
-				Group: "example.ext.grafana.app",
-				Versions: []app.ManifestVersion{{
-					Name:   "v1",
-					Served: true,
-					Routes: routes,
-				}},
-			})
-			return b
-		}
+	// Nothing is installed for a version without kinds: its discovery and
+	// OpenAPI documents are served by versionDocuments instead, so discovery
+	// lists no resource for it.
+	t.Run("a version without kinds installs no storage", func(t *testing.T) {
 		ping := spec3.PathProps{Get: &spec3.Operation{OperationProps: spec3.OperationProps{OperationId: "getPing"}}}
-
-		b := routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{"ping": ping}})
+		b := testBuilder(t, &app.ManifestData{
+			Group: "example.ext.grafana.app",
+			Versions: []app.ManifestVersion{{
+				Name:    "v1",
+				Served:  true,
+				OpenAPI: app.ManifestVersionOpenAPI{Paths: map[string]spec3.PathProps{"/namespaces/{namespace}/ping": ping}},
+			}},
+		})
 		info, opts := testAPIGroupOptions(t, b)
-		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
-		require.Equal(t, map[string]rest.Storage{routesOnlyStorageKey: &routesOnlyStorage{}},
-			info.VersionedResourcesStorageMap["v1"])
-
-		// A route that is dropped at mount time serves nothing, so the version
-		// has nothing to install.
-		b = routesOnly(app.ManifestVersionRoutes{Namespaced: map[string]spec3.PathProps{
-			"ping": {Head: ping.Get},
-		}})
-		info, opts = testAPIGroupOptions(t, b)
 		require.NoError(t, b.UpdateAPIGroupInfo(info, opts))
 		require.Empty(t, info.VersionedResourcesStorageMap)
 	})

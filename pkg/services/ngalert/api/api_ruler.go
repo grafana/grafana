@@ -34,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
 )
 
 type ConditionValidator interface {
@@ -76,7 +75,9 @@ var ignoreFieldsForValidate = [...]string{"RuleGroupIndex", "FolderFullpath"}
 // RouteDeleteAlertRules deletes all alert rules the user is authorized to access in the given namespace
 // or, if non-empty, a specific group of rules in the namespace.
 // Returns http.StatusForbidden if user does not have access to any of the rules that match the filter.
-// Returns http.StatusBadRequest if all rules that match the filter and the user is authorized to delete are provisioned.
+// Returns http.StatusBadRequest if group is non-empty and all rules in that group are provisioned.
+// If group is empty (bulk delete of all groups in the namespace) and all groups are provisioned, returns
+// http.StatusAccepted with a response reporting 0 deleted and the number of rules skipped, instead of an error.
 func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceUID string, group string) response.Response {
 	var permanently bool
 	if c.QueryBool("deletePermanently") {
@@ -106,6 +107,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 	if err != nil {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
+	isBulkDelete := finalGroup == ""
 
 	if finalGroup != "" {
 		loggerCtx = append(loggerCtx, "group", finalGroup)
@@ -117,7 +119,11 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		return ErrResp(http.StatusInternalServerError, err, "failed to fetch provenances of alert rules")
 	}
 
+	var deletedCount, skippedCount int
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		// Reset on every invocation: InTransaction may retry this callback (e.g. on a SQLite busy
+		// error), and these counters must reflect only the attempt that actually committed.
+		deletedCount, skippedCount = 0, 0
 		deletionCandidates := map[ngmodels.AlertRuleGroupKey]ngmodels.RulesGroup{}
 		if finalGroup != "" {
 			key := ngmodels.AlertRuleGroupKey{
@@ -149,6 +155,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 			if containsProvisionedAlerts(provenances, rules) {
 				logger.Debug("Alert group cannot be deleted because it is provisioned", "group", groupKey.RuleGroup)
 				provisioned = true
+				skippedCount += len(rules)
 				continue
 			}
 			uid := make([]string, 0, len(rules))
@@ -163,14 +170,18 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 				return err
 			}
 			logger.Info("Alert rules were deleted", "ruleUid", strings.Join(rulesToDelete, ","))
+			deletedCount = len(rulesToDelete)
 			return nil
 		}
 		// if none rules were deleted return an error.
 		// Check whether provisioned check failed first because if it is true, then all rules that the user can access (actually read via GET API) are provisioned.
-		if provisioned {
+		// For a bulk (folder-wide) delete, an all-provisioned result is reported as a successful no-op (deleted: 0, skipped: N)
+		// rather than an error, since the user did not target a specific group.
+		if provisioned && !isBulkDelete {
 			return errProvisionedResource
 		}
 		logger.Info("No alert rules were deleted")
+		deletedCount = len(rulesToDelete)
 		return nil
 	})
 
@@ -183,7 +194,7 @@ func (srv RulerSrv) RouteDeleteAlertRules(c *contextmodel.ReqContext, namespaceU
 		}
 		return ErrResp(http.StatusInternalServerError, err, "failed to delete rule group")
 	}
-	return response.JSON(http.StatusAccepted, util.DynMap{"message": "rules deleted"})
+	return response.JSON(http.StatusAccepted, apimodels.DeleteRuleGroupResponse{Message: "rules deleted", Deleted: deletedCount, Skipped: skippedCount})
 }
 
 // RouteGetNamespaceRulesConfig returns all rules in a specific folder that user has access to
@@ -881,8 +892,26 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 		})
 	}
 
+	provenances, err := srv.provenanceStore.GetProvenances(c.Req.Context(), c.GetOrgID(), (&ngmodels.AlertRule{}).ResourceType())
+	if err != nil {
+		return ErrResp(http.StatusInternalServerError, err, "failed to fetch provenances of alert rules")
+	}
+
+	var updated, skipped int
 	err = srv.xactManager.InTransaction(c.Req.Context(), func(ctx context.Context) error {
+		// Reset on every invocation: InTransaction may retry this callback (e.g. on a SQLite busy
+		// error), and these counters must reflect only the attempt that actually committed.
+		updated, skipped = 0, 0
 		for groupKey, rules := range ruleGroups {
+			// Check provenance directly instead of relying on performUpdateAlertRules to reject provisioned
+			// groups: if the requested change is a no-op (e.g. resuming a rule that was never paused because
+			// pausing it was previously skipped), CalculateChanges reports an empty diff and the provisioning
+			// guard inside performUpdateAlertRules never runs, so it would otherwise be miscounted as updated.
+			if containsProvisionedAlerts(provenances, rules) {
+				skipped += len(rules)
+				continue
+			}
+
 			rulesToUpdate := make([]*ngmodels.AlertRuleWithOptionals, 0, len(rules))
 
 			for _, rule := range rules {
@@ -900,11 +929,14 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 			}
 			_, _, err := srv.performUpdateAlertRules(ctx, c, groupKey, rulesToUpdate, false)
 			if errors.Is(err, errProvisionedResource) {
+				// Defensive fallback; shouldn't normally happen since provisioned groups are filtered above.
+				skipped += len(rules)
 				continue
 			}
 			if err != nil {
 				return err
 			}
+			updated += len(rules)
 		}
 
 		return nil
@@ -916,6 +948,8 @@ func (srv RulerSrv) RouteUpdateNamespaceRules(c *contextmodel.ReqContext, body a
 
 	return response.JSON(http.StatusAccepted, apimodels.UpdateNamespaceRulesResponse{
 		Message: "rules updated successfully",
+		Updated: updated,
+		Skipped: skipped,
 	})
 }
 

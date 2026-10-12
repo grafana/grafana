@@ -1,5 +1,7 @@
 /* eslint-disable id-blacklist, no-restricted-imports */
 
+import { formatRelativeTime } from '@grafana/i18n';
+
 import { type TimeZone } from '../types/time';
 
 import { type DateTimeOptions, getTimeZone } from './common';
@@ -26,6 +28,19 @@ export interface DateTimeOptionsWithTimeAgo extends DateTimeOptions {
 }
 
 type DateTimeFormatter<T extends DateTimeOptions = DateTimeOptions> = (dateInUtc: DateTimeInput, options?: T) => string;
+
+const YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+/**
+ * Smallest first, each with the rounded count at which the next unit takes over, so 30 minutes reads
+ * as 30m while 59.6 minutes rounds to 60 and rolls over to 1h. Years have no next unit.
+ */
+const TIME_AGO_UNITS: Array<[Intl.RelativeTimeFormatUnit, number, number]> = [
+  ['second', 1000, 60],
+  ['minute', 60 * 1000, 60],
+  ['hour', 60 * 60 * 1000, 24],
+  ['day', 24 * 60 * 60 * 1000, 30],
+  ['month', 30 * 24 * 60 * 60 * 1000, 12],
+];
 
 // NOTE:
 // These date formatting functions now just wrap the @grafana/i18n formatting functions
@@ -72,6 +87,39 @@ export const dateTimeFormatTimeAgo: DateTimeFormatter<DateTimeOptionsWithTimeAgo
 
   return options?.now == null ? date.fromNow() : date.from(toTz(options.now, timeZone));
 };
+
+/**
+ * Compact form of {@link dateTimeFormatTimeAgo} for dense lists: `11m ago`, `2h ago`, `3d ago`, `in 5m`.
+ * Uses the browser's narrow relative-time style in the current language. A difference between two
+ * instants is the same in every time zone, so none is taken.
+ *
+ * @param dateInUtc - date in UTC format, e.g. string formatted with UTC offset, UNIX epoch in seconds etc.
+ * @param options.now - reference instant; defaults to the current time
+ *
+ * @internal
+ */
+export function dateTimeFormatTimeAgoShort(dateInUtc: DateTimeInput, options?: { now?: DateTimeInput }): string {
+  const date = moment.utc(toMomentInput(dateInUtc));
+  if (!date.isValid()) {
+    return 'Invalid date';
+  }
+
+  const now = options?.now == null ? Date.now() : moment.utc(toMomentInput(options.now)).valueOf();
+  const diff = date.valueOf() - now;
+  // Rounds the magnitude (Math.round(-1.5) is -1, which would make 45 days "1mo ago"); `|| -0` keeps
+  // the past-tense form for a zero count ("0s ago", not "in 0s").
+  const countIn = (size: number) => Math.sign(diff) * Math.round(Math.abs(diff) / size) || -0;
+  const format = (count: number, unit: Intl.RelativeTimeFormatUnit) =>
+    formatRelativeTime(count, unit, { style: 'narrow', numeric: 'always' });
+
+  for (const [unit, size, limit] of TIME_AGO_UNITS) {
+    const count = countIn(size);
+    if (Math.abs(count) < limit) {
+      return format(count, unit);
+    }
+  }
+  return format(countIn(YEAR_MS), 'year');
+}
 
 /**
  * Helper function to format date and time according to the Grafana default formatting, but it

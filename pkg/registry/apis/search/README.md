@@ -184,6 +184,18 @@ To exclude empty values, prefer a `filter` leaf over a regex: `NotIn` with a sin
 
 Omitting `where` matches everything of that kind in the namespace, subject to authorization.
 
+#### Searching a folder and everything below it
+
+The global search (`.../namespaces/{namespace}/global/search`) also offers `folderTree`, which matches what is in the named folders or in any folder below them, at any depth:
+
+```json
+{ "filter": { "field": "folderTree", "operator": "In", "values": ["team-a"] } }
+```
+
+Several values are ORed. Only `In` is supported. The named folders themselves are not returned, only what they hold; to match only what is directly in a folder, filter on `folder` instead. The root folder is named `general`, and an empty value is rejected: `folderTree` with `general` matches everything, the same as no filter. A search of one kind rejects `folderTree` as an unknown field, because only the global index holds folders together with what is in them.
+
+`folderTree` is not stored with each item: the global search works it out from the folders it has indexed when it searches. Like the rest of that index it is eventually consistent, so just after a folder moves, a search can still find what is below it in its old place.
+
 #### Requiring every value
 
 `In` with several values is an OR: this returns dashboards tagged `prod`, or `eu-west`, or both.

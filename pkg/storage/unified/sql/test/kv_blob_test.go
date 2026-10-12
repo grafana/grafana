@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	stdsql "database/sql"
 	"io"
 	"net/http"
 	"testing"
@@ -121,6 +122,7 @@ func TestIntegrationKVBlobSupportOnResourceBlob(t *testing.T) {
 }
 
 type kvBlobTestEnv struct {
+	db       *stdsql.DB
 	ctx      context.Context
 	kv       kv.KV
 	kvBlobs  resource.BlobSupport
@@ -147,7 +149,7 @@ func newKVBlobTestEnv(t *testing.T) *kvBlobTestEnv {
 	sqlBlobs, ok := sqlBackend.(resource.BlobSupport)
 	require.True(t, ok)
 
-	return &kvBlobTestEnv{ctx: ctx, kv: sqlKV, kvBlobs: resource.NewKVBlobSupport(sqlKV), sqlBlobs: sqlBlobs}
+	return &kvBlobTestEnv{db: dbConn.SqlDB(), ctx: ctx, kv: sqlKV, kvBlobs: resource.NewKVBlobSupport(sqlKV), sqlBlobs: sqlBlobs}
 }
 
 type namedBlobStore struct {
