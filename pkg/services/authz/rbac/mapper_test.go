@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -140,6 +141,40 @@ func TestMapperRegistry_DatasourceCachingActionSets(t *testing.T) {
 		assert.Equal(t, []string{"datasources:admin"}, sets,
 			"verb %q: only datasources:admin carries the caching actions", verb)
 	}
+}
+
+func TestMapperRegistry_Snapshots(t *testing.T) {
+	reg := NewMapperRegistry()
+	mapping, ok := reg.Get("dashboard.grafana.app", "snapshots", "")
+	require.True(t, ok)
+	assert.False(t, mapping.HasFolderSupport())
+
+	for verb, action := range map[string]string{
+		utils.VerbGet:    "snapshots:read",
+		utils.VerbList:   "snapshots:read",
+		utils.VerbWatch:  "snapshots:read",
+		utils.VerbCreate: "snapshots:create",
+		utils.VerbDelete: "snapshots:delete",
+	} {
+		t.Run(verb, func(t *testing.T) {
+			got, ok := mapping.Action(verb)
+			require.True(t, ok)
+			assert.Equal(t, action, got)
+			assert.True(t, mapping.SkipScope(verb))
+
+			allowed, err := (&Service{}).checkPermissionWithMapping(context.Background(), map[string]bool{"": true},
+				&checkRequest{Verb: verb}, mapping, nil)
+			require.NoError(t, err)
+			assert.True(t, allowed)
+		})
+	}
+
+	for _, verb := range []string{utils.VerbUpdate, utils.VerbPatch, utils.VerbDeleteCollection} {
+		_, ok := mapping.Action(verb)
+		assert.False(t, ok, "verb %q must not grant snapshot writes", verb)
+	}
+	_, ok = reg.Get("dashboard.grafana.app", "snapshots", "dashboard")
+	assert.False(t, ok, "dashboard subresource must not inherit snapshot write permissions")
 }
 
 // TestMapperRegistry_Playlist verifies playlists map to their real two-action model
