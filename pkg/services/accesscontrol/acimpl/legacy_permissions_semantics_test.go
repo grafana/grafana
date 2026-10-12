@@ -53,6 +53,7 @@ func TestLegacyCheckReference_PermissionAssembly(t *testing.T) {
 				UserUID: "user-1",
 				OrgID:   1,
 				OrgRole: "Viewer",
+				//nolint:staticcheck // Verify legacy numeric team IDs are passed to the permission store.
 				TeamIDs: tc.teamIDs,
 			}
 
