@@ -99,8 +99,8 @@ func TestHTTPLister_RequestShape(t *testing.T) {
 	assert.Equal(t, "/apis/dashboard.grafana.app/v1beta1/dashboards/list-keys", got.path)
 	assert.Equal(t, int64(DefaultPageSize), got.opts.Limit)
 	assert.Empty(t, got.opts.Continue, "the first page carries no token")
-	assert.Equal(t, keysv0.APIVERSION, got.opts.APIVersion)
-	assert.Equal(t, keysv0.KindListKeyRequest, got.opts.Kind)
+	assert.Empty(t, got.opts.APIVersion, "a server that predates ListKeyRequest refuses any envelope but ListOptions")
+	assert.Empty(t, got.opts.Kind, "a server that predates ListKeyRequest refuses any envelope but ListOptions")
 }
 
 func TestHTTPLister_FollowsContinue(t *testing.T) {
