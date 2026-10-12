@@ -6,6 +6,7 @@ import { useChromeHeaderHeight } from '@grafana/runtime';
 import { useFlagGrafanaVisualDesignRefresh } from '@grafana/runtime/internal';
 import { useStyles2 } from '@grafana/ui';
 import { getInternalRadius } from '@grafana/ui/internal';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 
 interface DashboardControlsChromeProps {
   children: React.ReactNode;
@@ -29,7 +30,7 @@ interface DashboardControlsChromeProps {
 export function DashboardControlsChrome({ children, onPointerDown }: DashboardControlsChromeProps) {
   const headerHeight = useChromeHeaderHeight();
   const visualRefreshEnabled = useFlagGrafanaVisualDesignRefresh();
-  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled);
+  const styles = useStyles2(getStyles, headerHeight ?? 0, visualRefreshEnabled, isDashboardNewLayoutsEnabled());
 
   return (
     <div className={styles.chrome} onPointerDown={onPointerDown}>
@@ -38,7 +39,19 @@ export function DashboardControlsChrome({ children, onPointerDown }: DashboardCo
   );
 }
 
-function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnabled: boolean) {
+function getStyles(
+  theme: GrafanaTheme2,
+  headerHeight: number,
+  visualRefreshEnabled: boolean,
+  newLayoutsEnabled: boolean
+) {
+  // keep a strip of the dashboard reachable when the controls are taller than viewport
+  // makes controls scrollable
+  const heightCap = {
+    maxHeight: `calc(100dvh - ${headerHeight}px - max(20dvh, 200px))`,
+    overflowY: 'auto',
+  } as const;
+
   return {
     chrome: css(
       {
@@ -58,10 +71,12 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number, visualRefreshEnab
           // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
           zIndex: theme.zIndex.sidemenu,
           top: headerHeight,
+          // Legacy only needs the cap where the bar is sticky; below md it scrolls away with the page.
+          ...heightCap,
         },
-        maxHeight: `calc(100dvh - ${headerHeight}px - max(20dvh, 200px))`,
-        overflowY: 'auto',
       },
+      // New layouts keep the bar outside the scrolling body at every width, so the cap always applies.
+      newLayoutsEnabled && heightCap,
       visualRefreshEnabled && {
         borderTopLeftRadius: getInternalRadius(theme, 0, {
           parentBorderRadius: 'lg',
