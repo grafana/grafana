@@ -275,11 +275,18 @@ func parseAuthzExemptions(values []string) (groupResource, error) {
 }
 
 func alwaysEnforced(group, resource string) bool {
-	if strings.HasSuffix(group, ".ext.grafana.app") {
+	if strings.HasSuffix(group, ".ext.grafana.app") || isAppPluginGroup(group) {
 		return true
 	}
 	_, ok := rbacAllowlist[group][resource]
 	return ok
+}
+
+// isAppPluginGroup reports whether group is shaped like an app plugin ID, which
+// app plugins may use as their API group. No core Grafana group has this shape.
+func isAppPluginGroup(group string) bool {
+	name, ok := strings.CutSuffix(group, "-app")
+	return ok && name != "" && !strings.Contains(group, ".")
 }
 
 // Check implements claims.AccessClient.
@@ -368,7 +375,8 @@ func (c authzLimitedClient) Compile(ctx context.Context, id claims.AuthInfo, req
 }
 
 func (c authzLimitedClient) IsCompatibleWithRBAC(group, resource string) bool {
-	// When the allow list is disabled, *.ext.grafana.app groups are additionally
+	// When the allow list is disabled, plugin groups (*.ext.grafana.app and app
+	// plugin IDs) are additionally
 	// forwarded to the underlying authz client so the new dual-check path runs
 	// for K8s-native CRDs. This mirrors narrowing in
 	// rbac.Service.checkPermission and keeps folder/dashboard/iam flow on the
