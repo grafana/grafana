@@ -36,13 +36,6 @@ func TestLegacyCheck_Evaluators(t *testing.T) {
 
 					permission, ok := tc.Evaluator().(accesscontrol.PermissionEvaluatorForTest)
 					require.True(t, ok, "wire the complete expression request before enabling this case")
-					switch len(permission.Scopes) {
-					case 0:
-						t.Skip("pending: LegacyCheck request cannot distinguish action-only checks from an explicit empty scope")
-					case 1: // we only support single-scope checks for now.
-					default:
-						t.Skip("pending: LegacyCheck request cannot represent multiple alternative scopes")
-					}
 
 					var permissions []accesscontrol.Permission
 					for action, scopes := range tc.Permissions() {
@@ -67,8 +60,11 @@ func TestLegacyCheck_Evaluators(t *testing.T) {
 					response, err := service.LegacyCheck(types.WithAuthInfo(t.Context(), caller), &authzextv1.LegacyCheckRequest{
 						Namespace: namespace,
 						Subject:   "user:user-1",
-						Action:    permission.Action,
-						Scope:     permission.Scopes[0],
+						Expression: &authzextv1.LegacyExpression{
+							Node: &authzextv1.LegacyExpression_Permission{
+								Permission: &authzextv1.LegacyPermission{Action: permission.Action, Scopes: permission.Scopes},
+							},
+						},
 					})
 					require.NoError(t, err)
 					require.NotNil(t, response)
