@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { AppEvents } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
+import { reportInteraction } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
@@ -20,6 +21,7 @@ export function ExportUsersButton({ className, ...options }: Props) {
     setIsExporting(true);
     try {
       await exportUsers(options);
+      reportInteraction('users_admin_csv_downloaded', { scope: options.scope });
     } catch {
       appEvents.emit(AppEvents.alertError, [
         t('admin.users-export.error', 'Failed to export users. Please try again.'),
