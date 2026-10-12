@@ -568,7 +568,7 @@ describe('NotebookPageStateManager', () => {
       serveNotebooks();
       const manager = new NotebookPageStateManager({ isLoading: false });
 
-      manager.newNotebook();
+      await manager.newNotebook();
       const blank = manager.state.scene!;
       blank.setState({ uid: 'nb-new' });
       blank.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
