@@ -44,6 +44,8 @@ export const FlagKeys = {
   CanvasPanelNesting: "canvasPanelNesting",
   /** Allow pan and zoom in canvas panel */
   CanvasPanelPanZoom: "canvasPanelPanZoom",
+  /** Cross filtering between panels: Alt-click (Option-click on macOS) selects and multi-selects values that filter the other panels, while the selecting panel highlights them instead of filtering itself */
+  DashboardCrossFilterSelection: "dashboard.crossFilterSelection",
   /** Enable notebooks, a resource in the dashboard API group for mixing text cells, code cells, and visualization panels */
   DashboardNotebooks: "dashboard.notebooks",
   /** Load the Recently deleted dashboard list from the search API trash endpoint, instead of listing every deleted dashboard and filtering in the browser */
@@ -419,6 +421,17 @@ export const useFlagCanvasPanelNesting = (options?: ReactFlagEvaluationOptions):
  */
 export const useFlagCanvasPanelPanZoom = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("canvasPanelPanZoom", false, options).value;
+};
+
+/**
+ * Cross filtering between panels: Alt-click (Option-click on macOS) selects and multi-selects values that filter the other panels, while the selecting panel highlights them instead of filtering itself
+ *
+ * **Details:**
+ * - flag key: `dashboard.crossFilterSelection`
+ * - default value: `false`
+ */
+export const useFlagDashboardCrossFilterSelection = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("dashboard.crossFilterSelection", false, options).value;
 };
 
 /**

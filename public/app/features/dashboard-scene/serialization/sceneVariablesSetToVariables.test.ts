@@ -628,6 +628,36 @@ describe('sceneVariablesSetToVariables', () => {
     expect(result).toHaveLength(0);
   });
 
+  it('should not save the BI selection stamp of a filter', () => {
+    const biSelection = { sourcePanel: 'panel-1', key: 'country', values: ['UK'] };
+    const variable = new AdHocFiltersVariable({
+      name: 'test',
+      datasource: { uid: 'fake-uid', type: 'fake-type' },
+      filters: [
+        { key: 'country', operator: '=', value: 'UK', meta: { biSelection } },
+        {
+          key: 'region',
+          operator: '=',
+          value: 'EU',
+          meta: { biSelection: { ...biSelection, key: 'region', values: ['EU'] }, other: 1 },
+        },
+      ],
+    });
+    const set = new SceneVariableSet({ variables: [variable] });
+
+    const result = sceneVariablesSetToVariables(set);
+
+    expect(JSON.stringify(result)).not.toContain('biSelection');
+    expect(result[0]).toMatchObject({
+      filters: [
+        { key: 'country', operator: '=', value: 'UK' },
+        { key: 'region', operator: '=', value: 'EU', meta: { other: 1 } },
+      ],
+    });
+    // The live state keeps the stamp
+    expect(variable.state.filters[0].meta).toEqual({ biSelection });
+  });
+
   describe('should adapt AdHocFiltersVariable filters', () => {
     it('should remove non dashboard originated filters from schema', () => {
       const variable = new AdHocFiltersVariable({
@@ -1531,6 +1561,38 @@ describe('sceneVariablesSetToVariables', () => {
       },
     }
     `);
+    });
+
+    it('should not save the BI selection stamp of a filter', () => {
+      const biSelection = { sourcePanel: 'panel-1', key: 'country', values: ['UK'] };
+      const variable = new AdHocFiltersVariable({
+        name: 'test',
+        datasource: { uid: 'fake-uid', type: 'fake-type' },
+        filters: [
+          { key: 'country', operator: '=', value: 'UK', meta: { biSelection } },
+          {
+            key: 'region',
+            operator: '=',
+            value: 'EU',
+            meta: { biSelection: { ...biSelection, key: 'region', values: ['EU'] }, other: 1 },
+          },
+        ],
+      });
+      const set = new SceneVariableSet({ variables: [variable] });
+
+      const result = sceneVariablesSetToSchemaV2Variables(set);
+
+      expect(JSON.stringify(result)).not.toContain('biSelection');
+      expect(result[0]).toMatchObject({
+        spec: {
+          filters: [
+            { key: 'country', operator: '=', value: 'UK' },
+            { key: 'region', operator: '=', value: 'EU', meta: { other: 1 } },
+          ],
+        },
+      });
+      // The live state keeps the stamp
+      expect(variable.state.filters[0].meta).toEqual({ biSelection });
     });
 
     it('should handle AdHocFiltersVariable with defaultKeys', () => {

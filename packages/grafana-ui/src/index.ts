@@ -177,6 +177,7 @@ export {
   type PanelChromeLoadingIndicatorProps,
   PanelContextProvider,
   type PanelContext,
+  type AdHocFilterSelectionUpdate,
   PanelContextRoot,
   usePanelContext,
 } from './components/PanelChrome';
