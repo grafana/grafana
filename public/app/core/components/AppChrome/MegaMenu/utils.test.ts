@@ -8,6 +8,7 @@ import {
   getEnrichedHelpItem,
   getActiveItem,
   findByUrl,
+  resolveBookmark,
   getPinnedEntries,
   moveItem,
   reorderSections,
@@ -492,5 +493,55 @@ describe('hiding helpers', () => {
       const result = revealItem(['cfg'], tree, 'cfg/access/users');
       expect(new Set(result)).toEqual(new Set(['cfg/settings', 'cfg/access/teams']));
     });
+  });
+});
+
+describe('dynamic app bookmarks', () => {
+  const pages: NavModelItem = { id: 'pages', text: 'Pages', url: '/a/example-app/pages', icon: 'file-alt' };
+  const tree: NavModelItem[] = [{ id: 'app', text: 'Example', url: '/a/example-app', children: [pages] }];
+
+  it('keeps registered navigation metadata', () => {
+    expect(resolveBookmark(tree, '/a/example-app/pages')).toBe(pages);
+  });
+
+  it('resolves a page under the most specific app navigation entry after a reload', () => {
+    expect(resolveBookmark(tree, '/a/example-app/pages/service-health-123')).toEqual({
+      id: 'bookmark:/a/example-app/pages/service-health-123',
+      text: 'service-health-123',
+      url: '/a/example-app/pages/service-health-123',
+      icon: 'file-alt',
+      parentItem: pages,
+    });
+  });
+
+  it('includes dynamic app routes in the customisable pinned menu', () => {
+    expect(getPinnedEntries(tree, ['/a/example-app/pages/service-health-123'])).toEqual([
+      {
+        url: '/a/example-app/pages/service-health-123',
+        line: {
+          item: {
+            id: 'bookmark:/a/example-app/pages/service-health-123',
+            text: 'service-health-123',
+            url: '/a/example-app/pages/service-health-123',
+            icon: 'file-alt',
+            parentItem: pages,
+          },
+          ancestors: ['Pages'],
+          icon: 'file-alt',
+        },
+      },
+    ]);
+  });
+
+  it.each([
+    'https://example.com/a/example-app/pages/x',
+    '//example.com/a/example-app/pages/x',
+    '/a/example-app-other/pages/x',
+    '/a/missing-app/pages/x',
+    '/admin/missing',
+    '/a/example-app/pages/../../admin',
+    '/a/example-app/pages/%zz',
+  ])('does not surface an unsafe or unavailable app route: %s', (url) => {
+    expect(resolveBookmark(tree, url)).toBeNull();
   });
 });

@@ -18,7 +18,7 @@ import { contextSrv } from '../../../services/context_srv';
 import { getNavExperimentPayload, reportNavExperimentViewOnce, setNavExperimentVariant } from './navExperiment';
 import {
   enrichWithInteractionTracking,
-  findByUrl,
+  resolveBookmark,
   getActiveItem,
   getPinnedEntries,
   hiddenKey,
@@ -37,6 +37,19 @@ export const usePinnedItems = () => {
   const k8sPreferences = useListPreferencesQuery(
     contextSrv.user.isSignedIn ? { fieldSelector: `metadata.name=user-${contextSrv.user.uid}` } : skipToken
   );
+
+  const { refetch } = k8sPreferences;
+  useEffect(() => {
+    if (!contextSrv.user.isSignedIn) {
+      return;
+    }
+    // Plugins can update preferences through BackendSrv, outside the RTK query cache.
+    const refresh = () => {
+      void refetch();
+    };
+    window.addEventListener('grafana-bookmarks-changed', refresh);
+    return () => window.removeEventListener('grafana-bookmarks-changed', refresh);
+  }, [refetch]);
 
   const preferences = k8sPreferences.data?.items[0]?.spec;
   const isLoading = k8sPreferences.isLoading;
@@ -381,7 +394,7 @@ export const useNavCustomization = () => {
     if (bookmarksItem) {
       // Add children to the legacy bookmarks section
       bookmarksItem.children = pinnedItems.reduce<NavModelItem[]>((acc, url) => {
-        const item = findByUrl(navItems, url);
+        const item = resolveBookmark(navItems, url);
         if (!item) {
           return acc;
         }

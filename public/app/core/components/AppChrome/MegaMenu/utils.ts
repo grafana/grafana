@@ -219,6 +219,13 @@ export function getPinnedEntries(items: NavModelItem[], pinnedUrls: string[]): P
   for (const url of pinnedUrls) {
     const path = findPath(items, (item) => item.url === url);
     if (!path) {
+      const item = resolveBookmark(items, url);
+      if (item) {
+        entries.push({
+          url,
+          line: { item, ancestors: item.parentItem ? [item.parentItem.text] : [], icon: item.icon },
+        });
+      }
       continue;
     }
     const node = path[path.length - 1];
@@ -393,6 +400,56 @@ export function findByUrl(nodes: NavModelItem[], url: string): NavModelItem | nu
     }
   }
   return null;
+}
+
+/** Resolve saved app routes even when only their parent is registered in navigation. */
+export function resolveBookmark(nodes: NavModelItem[], url: string): NavModelItem | null {
+  const exact = findByUrl(nodes, url);
+  if (exact) {
+    return exact;
+  }
+  // Only app-relative paths are eligible; never turn an arbitrary stored URL into a link.
+  if (!url.startsWith('/a/') || /[\\\s]/.test(url)) {
+    return null;
+  }
+  let parsed: URL;
+  try {
+    parsed = new URL(url, 'http://grafana.local');
+  } catch {
+    return null;
+  }
+  if (parsed.pathname !== url.split(/[?#]/)[0]) {
+    return null;
+  }
+  let parent: NavModelItem | undefined;
+  const visit = (items: NavModelItem[]) => {
+    for (const item of items) {
+      if (item.id === 'bookmarks') {
+        continue;
+      }
+      if (
+        item.url?.startsWith('/a/') &&
+        parsed.pathname.startsWith(`${item.url.replace(/\/$/, '')}/`) &&
+        (!parent?.url || item.url.length > parent.url.length)
+      ) {
+        parent = item;
+      }
+      if (item.children) {
+        visit(item.children);
+      }
+    }
+  };
+  visit(nodes);
+  if (!parent?.url) {
+    return null;
+  }
+  let text: string;
+  try {
+    text = decodeURIComponent(parsed.pathname.slice(parent.url.replace(/\/$/, '').length + 1));
+  } catch {
+    return null;
+  }
+  return { id: `bookmark:${url}`, text, url, icon: parent.icon, parentItem: parent };
 }
 
 /**

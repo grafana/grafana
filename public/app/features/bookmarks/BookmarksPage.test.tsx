@@ -1,4 +1,4 @@
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import { setBackendSrv } from '@grafana/runtime';
 import { setupMockServer } from '@grafana/test-utils/server';
@@ -31,6 +31,7 @@ function setup() {
       navBarTree: [
         { id: 'dashboards', text: 'Dashboards', url: '/dashboards', subTitle: 'Browse dashboards' },
         { id: 'explore', text: 'Explore', url: '/explore' },
+        { id: 'pages', text: 'Pages', url: '/a/example-app/pages' },
       ],
     },
   });
@@ -66,4 +67,25 @@ describe('BookmarksPage', () => {
 
     expect(await screen.findByText('It looks like you haven’t created any bookmarks yet')).toBeInTheDocument();
   });
+});
+
+it('shows an individual app page stored in preferences on a fresh load', async () => {
+  setMockUserPreferences({ navbar: { bookmarkUrls: ['/a/example-app/pages/service-health-123'] } });
+  setup();
+  expect(await screen.findByRole('link', { name: /service-health-123/ })).toHaveAttribute(
+    'href',
+    '/a/example-app/pages/service-health-123'
+  );
+});
+
+it('refreshes after a plugin updates bookmark preferences', async () => {
+  setMockUserPreferences({ navbar: { bookmarkUrls: [] } });
+  setup();
+  expect(await screen.findByText('It looks like you haven’t created any bookmarks yet')).toBeInTheDocument();
+  setMockUserPreferences({ navbar: { bookmarkUrls: ['/a/example-app/pages/service-health-123'] } });
+  act(() => window.dispatchEvent(new Event('grafana-bookmarks-changed')));
+  expect(await screen.findByRole('link', { name: /service-health-123/ })).toHaveAttribute(
+    'href',
+    '/a/example-app/pages/service-health-123'
+  );
 });
