@@ -196,7 +196,7 @@ func NewRepositoryController(
 	registry.MustRegister(prometheus.NewGaugeFunc(
 		prometheus.GaugeOpts{
 			Name: "grafana_provisioning_repository_worker_queue_lag_seconds",
-			Help: "Age in seconds of the oldest unfinished repository key (waiting or in flight) in this replica's queue, measured from first enqueue.",
+			Help: "Age in seconds of the oldest unfinished repository key (waiting or in flight) in this replica's queue, measured from first enqueue and reset on error-triggered retry.",
 		},
 		func() float64 { return rc.queueLag.lag().Seconds() },
 	))
@@ -399,9 +399,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 
 	// repoType is empty when process failed before resolving the object (bad key
 	// or not-found); the field is still emitted so type-scoped log filters match
-	// every failure/retry line for a resolvable repository. On error the key stays
-	// in flight so a retry (below) inherits its original enqueue time; the deferred
-	// done clears it once this attempt ends.
+	// every failure/retry line for a resolvable repository.
 	logger = logger.With("repositoryType", repoType, "queue_lag", rc.queueLag.lag(), "error", err, "attempts", attempts)
 	logger.Error("RepositoryController failed to process key")
 
@@ -424,7 +422,7 @@ func (rc *RepositoryController) processNextWorkItem(ctx context.Context) bool {
 	if ok {
 		rc.setTrigger(key, trigger)
 	}
-	rc.queueLag.add(key)
+	rc.queueLag.retry(key)
 	rc.queue.AddRateLimited(key)
 	logger.Info("RepositoryController will retry as the failure is transient", "queue_len", rc.queue.Len())
 
