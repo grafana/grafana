@@ -13,7 +13,8 @@ import { metricsDetection, metricsSolution } from './solutions/metricsSolution';
 import { solutionFilterStorageKey } from './solutions/solutionFilter';
 import { detectSignal, settleSignals, type SolutionState } from './solutions/solutionState';
 import { probeSpanMetrics } from './solutions/spanMetricsSignal';
-import { syntheticsSolution } from './solutions/syntheticsSolution';
+import { parseSyntheticsFilter } from './solutions/syntheticsFilter';
+import { syntheticsDetection, syntheticsSolution } from './solutions/syntheticsSolution';
 import { tracesSolution } from './solutions/tracesSolution';
 import { type Solution } from './solutions/types';
 
@@ -31,16 +32,17 @@ export interface HomepageSolutions {
 export function useHomepageSolutions(): HomepageSolutions {
   const [rawKubernetesFilter] = useStoredString(solutionFilterStorageKey('kubernetes'), '');
   const [rawMetricsFilter] = useStoredString(solutionFilterStorageKey('metrics'), '');
+  const [rawSyntheticsFilter] = useStoredString(solutionFilterStorageKey('synthetics'), '');
 
   // Built once: the filter-independent solutions, the span-metrics probe, the detections every
   // recreated filtered solution shares, and the signal snapshot read from them.
   const shared = useMemo(() => {
     const detectKubernetes = kubernetesDetection();
     const detectMetrics = metricsDetection();
+    const detectSynthetics = syntheticsDetection();
     const solutions = {
       traces: tracesSolution(),
       logs: logsSolution(),
-      synthetics: syntheticsSolution(),
     };
 
     // App Observability and IRM are not homepage solutions; only the recommendation matrix reads these signals.
@@ -56,11 +58,11 @@ export function useHomepageSolutions(): HomepageSolutions {
         traces: solutions.traces.signal(),
         kubernetes: detectKubernetes().then(({ status }) => status),
         spanMetrics: spanMetricsSignal().then(({ status }) => status),
-        synthetics: solutions.synthetics.signal(),
+        synthetics: detectSynthetics().then(({ status }) => status),
         irm: irmSignal(),
       });
 
-    return { detectKubernetes, detectMetrics, solutions, signals };
+    return { detectKubernetes, detectMetrics, detectSynthetics, solutions, signals };
   }, []);
 
   // Saving or clearing a filter recreates only its solution, so every consumer re-reads its facts.
@@ -72,10 +74,14 @@ export function useHomepageSolutions(): HomepageSolutions {
     () => metricsSolution(parseMetricsFilter(rawMetricsFilter), shared.detectMetrics),
     [rawMetricsFilter, shared]
   );
+  const synthetics = useMemo(
+    () => syntheticsSolution(parseSyntheticsFilter(rawSyntheticsFilter), shared.detectSynthetics),
+    [rawSyntheticsFilter, shared]
+  );
 
   return useMemo(() => {
     // The Record makes a missing solution a type error.
-    const byId: Record<Solution['id'], Solution> = { kubernetes, metrics, ...shared.solutions };
+    const byId: Record<Solution['id'], Solution> = { kubernetes, metrics, synthetics, ...shared.solutions };
     return { solutions: SOLUTION_IDS.map((id) => byId[id]), signals: shared.signals };
-  }, [kubernetes, metrics, shared]);
+  }, [kubernetes, metrics, synthetics, shared]);
 }

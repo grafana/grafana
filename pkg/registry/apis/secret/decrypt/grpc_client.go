@@ -30,9 +30,10 @@ import (
 )
 
 type GRPCDecryptClient struct {
-	conn           *grpc.ClientConn
-	tracer         trace.Tracer
-	tokenExchanger authnlib.TokenExchanger
+	conn                       *grpc.ClientConn
+	tracer                     trace.Tracer
+	tokenExchanger             authnlib.TokenExchanger
+	tokenExchangerNamespaceAll bool
 }
 
 var _ decrypt.DecryptService = (*GRPCDecryptClient)(nil)
@@ -44,8 +45,14 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCDecryptClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, clientLoadBalancingEnabled bool) (*GRPCDecryptClient, error) {
-	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, address, TLSConfig{}, clientLoadBalancingEnabled)
+func NewGRPCDecryptClient(
+	tokenExchanger authnlib.TokenExchanger,
+	tracer trace.Tracer,
+	address string,
+	clientLoadBalancingEnabled bool,
+	tokenExchangerNamespaceAll bool,
+) (*GRPCDecryptClient, error) {
+	return NewGRPCDecryptClientWithTLS(tokenExchanger, tracer, address, TLSConfig{}, clientLoadBalancingEnabled, tokenExchangerNamespaceAll)
 }
 
 func NewGRPCDecryptClientWithTLS(
@@ -54,6 +61,7 @@ func NewGRPCDecryptClientWithTLS(
 	address string,
 	tlsConfig TLSConfig,
 	clientLoadBalancingEnabled bool,
+	tokenExchangerNamespaceAll bool,
 ) (*GRPCDecryptClient, error) {
 	var opts []grpc.DialOption
 	if tlsConfig.UseTLS {
@@ -93,9 +101,10 @@ func NewGRPCDecryptClientWithTLS(
 	}
 
 	return &GRPCDecryptClient{
-		conn:           conn,
-		tracer:         tracer,
-		tokenExchanger: tokenExchanger,
+		conn:                       conn,
+		tracer:                     tracer,
+		tokenExchanger:             tokenExchanger,
+		tokenExchangerNamespaceAll: tokenExchangerNamespaceAll,
 	}, nil
 }
 
@@ -143,9 +152,14 @@ func (g *GRPCDecryptClient) Decrypt(ctx context.Context, serviceName string, nam
 		return map[string]decrypt.DecryptResult{}, nil
 	}
 
+	tokenExchangerNamespace := namespace
+	if g.tokenExchangerNamespaceAll {
+		tokenExchangerNamespace = "*"
+	}
+
 	opts := []authnlib.GrpcClientInterceptorOption{
 		authnlib.WithClientInterceptorTracer(g.tracer),
-		authnlib.WithClientInterceptorNamespace(namespace),
+		authnlib.WithClientInterceptorNamespace(tokenExchangerNamespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
 	}
 

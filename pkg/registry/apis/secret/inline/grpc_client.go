@@ -23,9 +23,10 @@ import (
 )
 
 type GRPCInlineClient struct {
-	conn           *grpc.ClientConn
-	tracer         trace.Tracer
-	tokenExchanger authnlib.TokenExchanger
+	conn                       *grpc.ClientConn
+	tracer                     trace.Tracer
+	tokenExchanger             authnlib.TokenExchanger
+	tokenExchangerNamespaceAll bool
 }
 
 var _ contracts.InlineSecureValueSupport = (*GRPCInlineClient)(nil)
@@ -37,7 +38,14 @@ type TLSConfig struct {
 	InsecureSkipVerify bool
 }
 
-func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tracer, address string, tlsConfig TLSConfig, clientLoadBalancingEnabled bool) (*GRPCInlineClient, error) {
+func NewGRPCInlineClient(
+	tokenExchanger authnlib.TokenExchanger,
+	tracer trace.Tracer,
+	address string,
+	tlsConfig TLSConfig,
+	clientLoadBalancingEnabled bool,
+	tokenExchangerNamespaceAll bool,
+) (*GRPCInlineClient, error) {
 	var opts []grpc.DialOption
 	if tlsConfig.UseTLS {
 		creds, err := createTLSCredentials(tlsConfig)
@@ -67,9 +75,10 @@ func NewGRPCInlineClient(tokenExchanger authnlib.TokenExchanger, tracer trace.Tr
 	}
 
 	return &GRPCInlineClient{
-		conn:           conn,
-		tracer:         tracer,
-		tokenExchanger: tokenExchanger,
+		conn:                       conn,
+		tracer:                     tracer,
+		tokenExchanger:             tokenExchanger,
+		tokenExchangerNamespaceAll: tokenExchangerNamespaceAll,
 	}, nil
 }
 
@@ -186,10 +195,15 @@ func (g *GRPCInlineClient) getClient(namespace string) (inlinev1beta1.InlineSecu
 		return nil, err
 	}
 
+	tokenExchangerNamespace := namespace
+	if g.tokenExchangerNamespaceAll {
+		tokenExchangerNamespace = "*"
+	}
+
 	tokenExchangerInterceptor := authnlib.NewGrpcClientInterceptor(
 		g.tokenExchanger,
 		authnlib.WithClientInterceptorTracer(g.tracer),
-		authnlib.WithClientInterceptorNamespace(namespace),
+		authnlib.WithClientInterceptorNamespace(tokenExchangerNamespace),
 		authnlib.WithClientInterceptorAudience([]string{secretv1beta1.APIGroup}),
 	)
 

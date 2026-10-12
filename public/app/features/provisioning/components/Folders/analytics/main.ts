@@ -12,7 +12,7 @@ import {
 const createProvisioningEvent = defineFeatureEvents('grafana', 'provisioning');
 
 /**
- * Analytics events for the provisioned folder README experiment (`provisioning.readmes` toggle).
+ * Analytics events for the provisioned folder README panel.
  */
 export const FolderReadmeEvents = {
   /** Fired once per status when the README panel scrolls at least 50 % into view. Provides the denominator for engagement and the status distribution for feature health. */

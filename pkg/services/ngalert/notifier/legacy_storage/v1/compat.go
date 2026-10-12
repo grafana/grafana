@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/alerting/definition/compat"
 	alertingNotify "github.com/grafana/alerting/notify"
 	"github.com/prometheus/alertmanager/config"
+	"github.com/prometheus/alertmanager/config/common"
 	"github.com/prometheus/alertmanager/pkg/labels"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -166,7 +167,7 @@ func InhibitionRuleToModel(in definitions.InhibitionRule) InhibitionRule {
 	return NewInhibitionRule(in.Name, MatchersToModel(in.SourceMatchers), MatchersToModel(in.TargetMatchers), in.Equal, models.Provenance(in.Provenance))
 }
 
-func MatchersToModel(in config.Matchers) []Matcher {
+func MatchersToModel(in common.Matchers) []Matcher {
 	out := make([]Matcher, 0, len(in))
 	for _, m := range in {
 		if m == nil {
@@ -370,13 +371,13 @@ func InhibitionRuleToDB(in InhibitionRule) (*definitions.InhibitionRule, error) 
 	}, errors.Join(errs...)
 }
 
-func MatchersToDB(in []Matcher) (config.Matchers, error) {
+func MatchersToDB(in []Matcher) (common.Matchers, error) {
 	if len(in) == 0 {
 		return nil, nil
 	}
 
 	var errs []error
-	result := make(config.Matchers, 0, len(in))
+	result := make(common.Matchers, 0, len(in))
 	for _, m := range in {
 		matchType, err := MatcherTypeToDB(m.Type)
 		if err != nil {

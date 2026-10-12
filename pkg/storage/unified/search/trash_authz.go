@@ -52,16 +52,23 @@ func trashAuthorized(
 			for _, info := range batch {
 				items = append(items, resource.TrashItem{Folder: info.folder, DeletedBy: info.deletedBy})
 			}
-			authorizer.Prepare(ctx, items)
+			if err := authorizer.Prepare(ctx, items); err != nil {
+				yield(docInfo{}, err)
+				return false
+			}
 
 			for _, info := range batch {
-				// Per item, not per batch: a folder Prepare left undecided still costs a
-				// check, and on a dead context that reads as a denial rather than an error.
+				// A folder excluded from batching still needs its own check.
 				if err := ctx.Err(); err != nil {
 					yield(docInfo{}, err)
 					return false
 				}
-				if !authorizer.Allowed(ctx, info.folder, info.deletedBy) {
+				ok, err := authorizer.Allowed(ctx, info.folder, info.deletedBy)
+				if err != nil {
+					yield(docInfo{}, err)
+					return false
+				}
+				if !ok {
 					continue
 				}
 				allowed++

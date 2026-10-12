@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { customAlphabet } from 'nanoid';
 import { useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
@@ -29,12 +28,7 @@ import { getManagerIdentity, getSourcePath, type ManagedResource } from '../../u
 import { type ResourceBranchAction } from '../../utils/redirect';
 import { getKindInfoByGroupKind, type ResourceKindInfo } from '../../utils/resourceKinds';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-  shouldEnforceBranchTemplate,
-} from '../defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
 import { getProvisionedRequestError } from '../utils/errors';
 import { slugifyForFilename } from '../utils/path';
 
@@ -358,7 +352,6 @@ function ResourceDrawerContent({
   });
   const canPushToConfiguredBranch = getCanPushToConfiguredBranch(repository);
   const sourcePath = getSourcePath(managedResource);
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
 
   // Title combines a shared translated template with the kind's translated noun (interpolated, so
   // translators control word order), instead of a per-kind "Save/Delete provisioned <kind>" string.
@@ -379,13 +372,9 @@ function ResourceDrawerContent({
       ref: getDefaultRef(repository, prefix),
       repo: repository.name || '',
       path: sourcePath || '',
-      // When the branch name template is enforced, push through the branch workflow so the templated
-      // branch is created and sent as `ref`; useBranchTemplate then fills it.
-      workflow: shouldEnforceBranchTemplate(repository, gitConventionsEnabled)
-        ? ('branch' as const)
-        : getDefaultWorkflow(repository),
+      workflow: getDefaultWorkflow(repository),
     };
-  }, [repository, isLoading, title, sourcePath, prefix, gitConventionsEnabled]);
+  }, [repository, isLoading, title, sourcePath, prefix]);
 
   return (
     <Drawer

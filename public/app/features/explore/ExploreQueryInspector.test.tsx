@@ -14,7 +14,6 @@ import { ExploreQueryInspector } from './ExploreQueryInspector';
 type ExploreQueryInspectorProps = ComponentProps<typeof ExploreQueryInspector>;
 
 jest.mock('../inspector/styles', () => ({
-  getPanelInspectorStyles: () => ({}),
   getPanelInspectorStyles2: () => ({}),
 }));
 

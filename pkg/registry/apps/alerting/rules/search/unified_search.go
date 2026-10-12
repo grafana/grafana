@@ -35,6 +35,13 @@ func buildUnifiedRequest(query *Query) *resourcepb.ResourceSearchRequest {
 	for _, f := range query.Filters {
 		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: f.Field, Operator: strings.ToLower(f.Operator), Values: f.Values})
 	}
+	for _, r := range query.Regexes {
+		op := resource.OperatorRegex
+		if r.Negate {
+			op = resource.OperatorNotRegex
+		}
+		req.Options.Fields = append(req.Options.Fields, &resourcepb.Requirement{Key: r.Field, Operator: string(op), Values: []string{r.Pattern}})
+	}
 	for _, f := range query.GroupFilters {
 		req.Options.Labels = append(req.Options.Labels, &resourcepb.Requirement{Key: f.Key, Operator: strings.ToLower(string(f.Operator)), Values: f.Values})
 	}
@@ -46,7 +53,7 @@ func buildUnifiedRequest(query *Query) *resourcepb.ResourceSearchRequest {
 
 func (c *unifiedClient) Search(ctx context.Context, query *Query) (*Result, error) {
 	resp, err := c.client.Search(ctx, buildUnifiedRequest(query))
-	if err := resource.ErrorFromResponse(resp.GetError(), err); err != nil {
+	if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
 		return nil, err
 	}
 	hits, err := c.decodeHits(ctx, query, resp)

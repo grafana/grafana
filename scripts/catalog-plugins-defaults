@@ -11,5 +11,6 @@ jaeger
 loki
 mysql
 influxdb
+cloudwatch
 grafana-postgresql-datasource
 grafana-pyroscope-datasource

@@ -9,12 +9,25 @@ import {
   VizPanel,
   type SceneDataProvider,
 } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from './DashboardScene';
 import { PlanPlaceholderBadge } from './PlanPlaceholderBadge';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 
 describe('PlanPlaceholderBadge', () => {
+  beforeEach(() => {
+    // addPanel only parents the panel immediately when new layouts are off. With the flag on it
+    // goes through the edit-action bus, and these tests never activate the sidebar that performs it.
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
   // Sample data remains visible after Build clears planning state, until APPLY_SPEC replaces it.
   it('keeps the sample data label after planning ends, while the sample is still on the panel', () => {
     const { dashboard } = setup(new SceneDataNode({}));

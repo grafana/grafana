@@ -28,6 +28,20 @@ func TestRequesterFromContext(t *testing.T) {
 	})
 }
 
+func TestServiceIdentityPluginGroups(t *testing.T) {
+	_, requester := identity.WithServiceIdentity(context.Background(), 1)
+	for group, want := range map[string]bool{
+		"example.ext.grafana.app": true,
+		"grafana-example-app":     true,
+		"-app":                    false,
+		"example.grafana-app":     false,
+	} {
+		res := authz.CheckServicePermissions(requester, group, "things", "get")
+		require.True(t, res.ServiceCall, group)
+		require.Equal(t, want, res.Allowed, group)
+	}
+}
+
 func TestWithProvisioningIdentity(t *testing.T) {
 	ctx, requester, err := identity.WithProvisioningIdentity(context.Background(), "default")
 	require.NoError(t, err)

@@ -1,4 +1,5 @@
 import { KBarPortal, KBarProvider } from 'kbar';
+import { HttpResponse, http } from 'msw';
 import { act, render, screen, userEvent } from 'test/test-utils';
 
 import { OpenAssistantButton, useAssistant } from '@grafana/assistant';
@@ -12,7 +13,10 @@ import {
 } from '@grafana/runtime/internal';
 import { getVectorSearchHandler } from '@grafana/test-utils/handlers';
 import { setupMockServer } from '@grafana/test-utils/server';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
+import { contextSrv } from 'app/core/services/context_srv';
+import { AccessControlAction } from 'app/types/accessControl';
 
 import { getObservablePluginLinks } from '../plugins/extensions/getPluginExtensions';
 
@@ -70,6 +74,7 @@ const triggerEmptyState = async () => {
 
 describe('CommandPalette', () => {
   beforeEach(() => {
+    setTestFlags({ 'dashboard.notebooks': false });
     jest.mocked(KBarPortal).mockImplementation(({ children }) => <div>{children}</div>);
     setPluginLinksHook(() => ({
       links: [],
@@ -146,6 +151,47 @@ describe('CommandPalette', () => {
     const user = userEvent.setup();
     await user.type(screen.getByPlaceholderText('Search or jump to...'), 'Dynamic extension action');
     expect(await screen.findByText('Dynamic extension action')).toBeInTheDocument();
+  });
+
+  describe('notebook results', () => {
+    // contextSrv.user is a mutable singleton, so these are restored even when an assertion throws —
+    // otherwise a failure here leaks a signed-in user with notebooks:read into every later test.
+    const originalPermissions = contextSrv.user.permissions;
+    const originalIsSignedIn = contextSrv.user.isSignedIn;
+
+    beforeEach(() => {
+      contextSrv.user.permissions = { [AccessControlAction.NotebooksRead]: true };
+      contextSrv.user.isSignedIn = true;
+      setTestFlags({ 'dashboard.notebooks': true });
+    });
+
+    afterEach(() => {
+      contextSrv.user.permissions = originalPermissions;
+      contextSrv.user.isSignedIn = originalIsSignedIn;
+    });
+
+    it('shows notebook search results alongside other palette actions', async () => {
+      server.use(
+        http.post('*/apis/dashboard.grafana.app/v2beta1/namespaces/default/notebooks/search', () =>
+          HttpResponse.json({
+            items: [
+              {
+                resource: { group: 'dashboard.grafana.app', resource: 'notebooks', kind: 'Notebook', name: 'nb1' },
+                fields: { title: 'Incident latency notes' },
+              },
+            ],
+          })
+        )
+      );
+
+      setup();
+      await userEvent.setup().type(screen.getByPlaceholderText('Search or jump to...'), 'Incident');
+
+      expect(await screen.findByRole('option', { name: 'Notebooks: Incident latency notes' })).toHaveAttribute(
+        'href',
+        expect.stringContaining('/notebooks/nb1')
+      );
+    });
   });
 
   it('should render empty state with AI Assistant button when no results and assistant is available', async () => {

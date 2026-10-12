@@ -14,21 +14,22 @@ type fakeAlertRuleStore struct {
 	deleted []string
 }
 
-func (s *fakeAlertRuleStore) ListAlertRules(_ context.Context, q *models.ListAlertRulesQuery) (models.RulesGroup, error) {
-	if len(q.NamespaceUIDs) == 0 {
-		return s.rules[q.OrgID], nil
-	}
-	want := map[string]bool{}
-	for _, uid := range q.NamespaceUIDs {
-		want[uid] = true
-	}
-	var out models.RulesGroup
-	for _, r := range s.rules[q.OrgID] {
-		if want[r.NamespaceUID] {
-			out = append(out, r)
-		}
+func (s *fakeAlertRuleStore) GetAllFoldersWithRules(_ context.Context, orgID int64) (map[string]struct{}, error) {
+	out := make(map[string]struct{})
+	for _, r := range s.rules[orgID] {
+		out[r.NamespaceUID] = struct{}{}
 	}
 	return out, nil
+}
+
+func (s *fakeAlertRuleStore) ListAlertRuleUIDsInFolder(_ context.Context, orgID int64, folderUID string) ([]string, error) {
+	var uids []string
+	for _, r := range s.rules[orgID] {
+		if r.NamespaceUID == folderUID {
+			uids = append(uids, r.UID)
+		}
+	}
+	return uids, nil
 }
 
 func (s *fakeAlertRuleStore) DeleteAlertRulesByUID(_ context.Context, _ int64, _ *models.UserUID, _ bool, ruleUID ...string) error {

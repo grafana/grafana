@@ -82,6 +82,7 @@ type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval                              string                                          `json:"minInterval"`
 	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
 	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	NotificationHistoryEnabled               bool                                            `json:"notificationHistoryEnabled"`
 	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
 
 	// Backward compatibility fields - deprecated

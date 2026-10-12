@@ -15,14 +15,16 @@ import { useEffect, useState } from 'react';
  * An explicit invalidation lands the other way round: the datasource and range are unchanged, but
  * the cached answer for them is gone, so it has to count as a different request. That is why the
  * generation from `useMetricCacheGeneration` belongs in the key too.
+ *
+ * A `null` key is no request at all: `empty` data, not loading, and nothing fetched.
  */
 export function useAsyncResource<T>(
-  requestKey: string,
+  requestKey: string | null,
   fetch: () => Promise<T>,
   empty: T
 ): { data: T; loading: boolean; error?: Error } {
   const [data, setData] = useState<T>(empty);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(requestKey !== null);
   const [error, setError] = useState<Error | undefined>(undefined);
 
   const [activeKey, setActiveKey] = useState<string | null>(null);
@@ -35,10 +37,13 @@ export function useAsyncResource<T>(
     setActiveKey(requestKey);
     setData(empty);
     setError(undefined);
-    setLoading(true);
+    setLoading(requestKey !== null);
   }
 
   useEffect(() => {
+    if (requestKey === null) {
+      return;
+    }
     let cancelled = false;
     setLoading(true);
     setError(undefined);

@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gopkg.in/ini.v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -1716,6 +1718,45 @@ func TestCountInFolders(t *testing.T) {
 	result, err := service.CountInFolders(ctx, 1, []string{"folder1"}, &user.SignedInUser{})
 	require.NoError(t, err)
 	require.Equal(t, result, int64(2))
+}
+
+func TestSearchDashboardsThroughK8sRawErrors(t *testing.T) {
+	result := &resourcepb.ErrorResult{
+		Code: http.StatusUnprocessableEntity, Reason: string(metav1.StatusReasonInvalid), Message: "invalid search",
+		Details: &resourcepb.ErrorDetails{
+			Group: "dashboard.grafana.app", Kind: "dashboards", Name: "dashboard", Uid: "uid",
+			Causes: []*resourcepb.ErrorCause{{Reason: "FieldValueInvalid", Field: "query", Message: "invalid value"}},
+		},
+	}
+	grpcStatus, err := status.New(codes.InvalidArgument, result.Message).WithDetails(result)
+	require.NoError(t, err)
+	for _, tc := range []struct {
+		name string
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+		want error
+	}{
+		{name: "embedded", resp: &resourcepb.ResourceSearchResponse{Error: result}, want: resource.StatusError(result)},
+		{name: "grpc nil response", err: grpcStatus.Err(), want: grpcStatus.Err()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			cli := new(client.MockK8sHandler)
+			cli.On("GetNamespace", int64(1)).Return("default").Once()
+			cli.On("Search", mock.Anything, int64(1), mock.MatchedBy(func(req *resourcepb.ResourceSearchRequest) bool {
+				return req.Page == 2 && req.Limit == 3 && req.Offset == 3
+			})).Return(tc.resp, tc.err).Once()
+			svc := &DashboardServiceImpl{k8sclient: cli}
+			got, err := svc.searchDashboardsThroughK8sRaw(t.Context(), &dashboards.FindPersistedDashboardsQuery{OrgId: 1, Page: 2, Limit: 3})
+			require.Equal(t, tc.want, err)
+			if tc.err != nil {
+				require.Same(t, tc.err, err)
+			} else {
+				require.IsType(t, &apierrors.StatusError{}, err)
+			}
+			require.Empty(t, got.Hits)
+			cli.AssertExpectations(t)
+		})
+	}
 }
 
 func TestSearchDashboardsThroughK8sRaw(t *testing.T) {

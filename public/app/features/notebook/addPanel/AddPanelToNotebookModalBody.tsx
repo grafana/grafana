@@ -30,6 +30,7 @@ import { type PanelElement } from '../types';
 import { notebookViewHref } from '../urls';
 
 import { CreateNotebookFields } from './CreateNotebookFields';
+import { LockTimeRangeField } from './LockTimeRangeField';
 import { NotebookPickerList } from './NotebookPickerList';
 import { type AddPanelFormValues } from './addPanelForm';
 import {
@@ -38,6 +39,7 @@ import {
   addPanelToExistingNotebook,
   createNotebookWithPanel,
 } from './addPanelToNotebook';
+import { shouldLockCapturedTimeRange, withCapturedTimeRange, type CapturedTimeRange } from './capturedTimeRange';
 import { getSortOptions, useNotebookPicker } from './useNotebookPicker';
 
 const FORM_ID = 'add-panel-to-notebook';
@@ -56,9 +58,17 @@ interface Props {
    * loaded library panel is inlined on the way here and the built element cannot say.
    */
   isLibraryPanel: boolean;
+  /** The window the source was showing, offered as a lock on the capture. */
+  capturedTimeRange: CapturedTimeRange;
 }
 
-export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint, isLibraryPanel }: Props) {
+export function AddPanelToNotebookModalBody({
+  buildPanel,
+  onDismiss,
+  entryPoint,
+  isLibraryPanel,
+  capturedTimeRange,
+}: Props) {
   const styles = useStyles2(getStyles);
   const canAddToExisting = canEditNotebooks();
   const canCreate = canCreateNotebooks();
@@ -79,7 +89,11 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
     watch,
     formState: { errors },
   } = useForm<AddPanelFormValues>({
-    defaultValues: { saveTarget: saveTargets[0]?.value, title: '', description: '', tags: [] },
+    defaultValues: {
+      saveTarget: saveTargets[0]?.value,
+      title: '',
+      lockTimeRange: shouldLockCapturedTimeRange(capturedTimeRange),
+    },
   });
 
   // With only one route open to this user there is nothing to choose, so the control is not rendered
@@ -122,17 +136,16 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
       let panelWasBuilt = false;
 
       try {
-        const panel = await buildPanel();
+        const built = await buildPanel();
         panelWasBuilt = true;
+
+        // Applied here rather than in either builder: both entry points capture the same way, and
+        // the builders serialize what the source has without deciding what the notebook keeps.
+        const panel = values.lockTimeRange ? withCapturedTimeRange(built, capturedTimeRange) : built;
 
         const added = existingUid
           ? await addPanelToExistingNotebook(existingUid, panel, entryPoint, isLibraryPanel)
-          : await createNotebookWithPanel(
-              { title: values.title.trim(), description: values.description.trim(), tags: values.tags },
-              panel,
-              entryPoint,
-              isLibraryPanel
-            );
+          : await createNotebookWithPanel({ title: values.title.trim() }, panel, entryPoint, isLibraryPanel);
 
         dispatch(
           notifyApp(
@@ -164,7 +177,7 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
         throw error;
       }
     },
-    [buildPanel, onDismiss, selected, entryPoint, isLibraryPanel]
+    [buildPanel, onDismiss, selected, entryPoint, isLibraryPanel, capturedTimeRange]
   );
 
   const isSubmitting = submitState.loading;
@@ -229,7 +242,6 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
                     <NotebookTagsField
                       value={picker.tagFilter}
                       onChange={picker.setTagFilter}
-                      fallbackTags={picker.loadedTags}
                       disabled={picker.isLoading}
                       placeholder={t('notebooks.add-panel.tag-placeholder', 'Filter by tag')}
                     />
@@ -263,13 +275,19 @@ export function AddPanelToNotebookModalBody({ buildPanel, onDismiss, entryPoint,
               </Stack>
             ) : (
               <CreateNotebookFields
-                control={control}
                 register={register}
                 errors={errors}
                 existingTitles={picker.rows.map((row) => row.title)}
                 disabled={isSubmitting}
               />
             )}
+
+            {/* Wrapped so the column Stack stretches the div rather than the Checkbox inside. Checkbox is
+                an inline-grid with no column sizes, so stretching it hands the spare width to the
+                checkbox column and pushes the label away from its box. */}
+            <div>
+              <LockTimeRangeField control={control} capturedTimeRange={capturedTimeRange} disabled={isSubmitting} />
+            </div>
           </Stack>
         </form>
       </Box>

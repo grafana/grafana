@@ -1,9 +1,10 @@
-import { screen, waitFor } from '@testing-library/react';
+import { cleanup, screen, waitFor } from '@testing-library/react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 
 import { locationService } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardRoutes } from 'app/types/dashboard';
 
 import DashboardPageProxy, { type DashboardPageProxyProps } from './DashboardPageProxy';
@@ -60,6 +61,16 @@ function setup(props: Partial<DashboardPageProxyProps> & { uid?: string }) {
 describe('DashboardPageProxy', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // The backend mock is a v1beta1 resource. The page state manager is a singleton
+    // created on first render, so the flag has to be off before either test mounts.
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
+  afterEach(() => {
+    // Testing Library unmounts after this hook, so the rendered DashboardScenePage is still mounted.
+    // setTestFlags({}) would turn dashboardNewLayouts back on and re-render it. cleanup() unmounts that page first.
+    cleanup();
+    setTestFlags({});
   });
 
   it('should render DashboardScenePage for home route', async () => {

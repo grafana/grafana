@@ -1,6 +1,8 @@
 import { existsSync, readFileSync } from 'fs';
 import path from 'path';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
+
 import { getSceneCreationOptions } from '../pages/DashboardScenePageStateManager';
 
 import {
@@ -80,7 +82,6 @@ jest.mock('@grafana/runtime', () => {
       },
     },
     featureToggles: {
-      dashboardNewLayouts: true,
       unifiedAlertingEnabled: true,
       scopeFilters: false,
       reloadDashboardsOnParamsChange: false,
@@ -108,11 +109,15 @@ jest.mock('@grafana/runtime', () => {
 
 describe('V1 to V2 Dashboard Transformation Comparison', () => {
   beforeEach(() => {
+    setTestFlags({ dashboardNewLayouts: true });
     jest.clearAllMocks();
 
     // Mock console methods to avoid test failures from expected warnings
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    setTestFlags({});
   });
 
   const inputDir = path.join(

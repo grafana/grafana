@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -103,6 +104,10 @@ func isBackendFailure(status int) bool {
 	return status == http.StatusBadGateway || status == http.StatusServiceUnavailable || status == http.StatusGatewayTimeout
 }
 
+// clientBreakerKey carries the group breaker to handlers that gate individual
+// client calls instead of the entire HTTP request.
+type clientBreakerKey struct{}
+
 // groupBreaker is two-step, so an outcome can be reported when the response
 // status is known rather than when the handler returns.
 type groupBreaker = gobreaker.TwoStepCircuitBreaker[struct{}]
@@ -158,7 +163,8 @@ func breakerOutcome(req *http.Request, status int, failure *proxyFailure) error 
 
 // serveThroughBreaker proxies one request to h through cb, streaming the
 // response straight to w. An open breaker (or a half-open one already running
-// its trial request) fails fast with a local 503, without calling h.
+// its trial request) fails fast with a local 503, unless h gates its own client
+// calls through the breaker passed in the request context.
 //
 // The outcome is reported as soon as the response status is written, not when
 // the body ends. A watch streams for as long as it lasts; holding its outcome
@@ -172,6 +178,11 @@ func serveThroughBreaker(cb *groupBreaker, group string, h http.Handler, w http.
 	rec, req, endSpan := traceRouterRequest(w, req, "router.backend", group)
 	defer endSpan()
 	w = rec.writer()
+	// Client-scoped breakers leave requests that do not call the client available.
+	if _, clientScoped := h.(interface{ breaksOnClientCalls() }); clientScoped {
+		h.ServeHTTP(w, req.WithContext(context.WithValue(req.Context(), clientBreakerKey{}, cb)))
+		return
+	}
 	done, err := cb.Allow()
 	if err != nil {
 		setFailure(req, failureBreakerOpen)

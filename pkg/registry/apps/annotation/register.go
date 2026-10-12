@@ -131,6 +131,7 @@ func NewAppInstaller(
 		snowflakeNode:  sfNode,
 		maxScopeCount:  cfg.MaxScopeCount,
 		retentionTTL:   cfg.RetentionTTL,
+		maxAge:         cfg.MaxAge,
 		metrics:        installer.metrics,
 		logger:         logger,
 	}

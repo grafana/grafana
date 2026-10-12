@@ -2,7 +2,7 @@ import { act, fireEvent, screen } from '@testing-library/react';
 import { render } from 'test/test-utils';
 
 import { type ChatContextItem } from '@grafana/assistant';
-import { config } from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 
@@ -39,16 +39,14 @@ function renderEmpty() {
 }
 
 describe('AssistantDashboardEmpty', () => {
-  const originalDashboardNewLayouts = config.featureToggles.dashboardNewLayouts;
-
   beforeEach(() => {
     jest.clearAllMocks();
     latestOnSubmit = undefined;
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
   });
 
   afterEach(() => {
-    config.featureToggles.dashboardNewLayouts = originalDashboardNewLayouts;
+    setTestFlags({});
   });
 
   it('adds a panel through the sidebar instead of opening the panel editor', () => {
