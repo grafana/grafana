@@ -38,6 +38,7 @@ import (
 
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac"
@@ -1315,6 +1316,128 @@ func TestIntegrationRBACParityServiceAccountPermissions(t *testing.T) {
 					})
 				})
 			}
+		}
+	}
+}
+
+func TestIntegrationRBACParityServiceAccountIDScopes(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	const (
+		group    = "iam.grafana.app"
+		resource = "serviceaccounts"
+	)
+	accounts := []legacy.ServiceAccount{
+		{ID: 42, UID: "account-a"},
+		{ID: 99, UID: "42"},
+		{ID: 100, UID: "404"},
+	}
+	// Numeric UIDs are legitimate names, but must never be mistaken for database
+	// IDs. No account has ID 404, even though an account has that UID.
+	scopes := []struct {
+		name  string
+		scope string
+		uid   string
+		all   bool
+	}{
+		{name: "database ID targets account A", scope: "serviceaccounts:id:42", uid: "account-a"},
+		{name: "UID targets account A", scope: "serviceaccounts:uid:account-a", uid: "account-a"},
+		{name: "numeric UID targets account B", scope: "serviceaccounts:uid:42", uid: "42"},
+		{name: "missing ID must not target numeric UID", scope: "serviceaccounts:id:404"},
+		{name: "numeric UID needs no matching database ID", scope: "serviceaccounts:uid:404", uid: "404"},
+		{name: "ID wildcard", scope: "serviceaccounts:id:*", all: true},
+		{name: "UID wildcard", scope: "serviceaccounts:uid:*", all: true},
+		{name: "resource wildcard", scope: "serviceaccounts:*", all: true},
+	}
+	grants := []struct {
+		action  string
+		allowed map[string]bool
+	}{
+		{"serviceaccounts:read", map[string]bool{utils.VerbGet: true}},
+		{"serviceaccounts:write", map[string]bool{utils.VerbUpdate: true}},
+		{"serviceaccounts:delete", map[string]bool{utils.VerbDelete: true}},
+		{"serviceaccounts.permissions:read", map[string]bool{utils.VerbGetPermissions: true}},
+		{"serviceaccounts.permissions:write", map[string]bool{utils.VerbSetPermissions: true}},
+		{"serviceaccounts:edit", map[string]bool{utils.VerbGet: true, utils.VerbUpdate: true}},
+		{"serviceaccounts:admin", map[string]bool{utils.VerbGet: true, utils.VerbUpdate: true, utils.VerbDelete: true, utils.VerbGetPermissions: true, utils.VerbSetPermissions: true}},
+	}
+	for _, grant := range grants {
+		for _, scope := range scopes {
+			t.Run(grant.action+"/"+scope.name, func(t *testing.T) {
+				permissions := []accesscontrol.Permission{{Action: grant.action, Scope: scope.scope}}
+				rbacService := rbac.NewTestService(parityUserUID, permissions, nil, accounts...)
+				tuples, err := zanzana.RoleToTuples("sa-id-scopes", []*authzextv1.RolePermission{
+					{Action: grant.action, Scope: scope.scope},
+				})
+				require.NoError(t, err)
+				tuples = append(tuples, common.NewTuple(paritySubject, common.RelationAssignee, "role:sa-id-scopes"))
+				srv := setupOpenFGAServer(t)
+				setupOpenFGADatabase(t, srv, tuples)
+				batch := &authzv1.BatchCheckRequest{Namespace: namespace, Subject: paritySubject}
+				expectedBatch := map[string]bool{}
+				for _, verb := range []string{utils.VerbGet, utils.VerbUpdate, utils.VerbDelete, utils.VerbGetPermissions, utils.VerbSetPermissions} {
+					t.Run(verb, func(t *testing.T) {
+						for _, name := range []string{"account-a", "42", "404", "sa-other"} {
+							allowed := grant.allowed[verb] && (scope.all || name == scope.uid)
+							id := verb + "-" + name
+							expectedBatch[id] = allowed
+							batch.Checks = append(batch.Checks, &authzv1.BatchCheckItem{CorrelationId: id, Group: group, Resource: resource, Verb: verb, Name: name})
+							t.Run("Check/"+name, func(t *testing.T) {
+								req := parityCheckReq(group, resource, "", verb, name, "")
+								rbacRes, err := rbacService.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								require.Equal(t, allowed, rbacRes.GetAllowed(), "RBAC answer changed")
+								res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
+								require.NoError(t, err)
+								assert.Equal(t, allowed, res.GetAllowed(), "Zanzana must distinguish database IDs from UIDs")
+							})
+						}
+						t.Run("List", func(t *testing.T) {
+							expected := parityListResult{}
+							if grant.allowed[verb] {
+								if scope.all {
+									expected.All = true
+								} else if scope.uid != "" {
+									expected.Items = []string{scope.uid}
+								}
+							}
+							req := parityListReq(group, resource, "", verb)
+							rbacRes, err := rbacService.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+							require.NoError(t, err)
+							if scope.uid == "" && !scope.all {
+								// RBAC can retain an unresolved scope literal in Items. It
+								// must not authorize any of the actual account UIDs.
+								require.False(t, rbacRes.GetAll())
+								require.Empty(t, rbacRes.GetFolders())
+								for _, account := range accounts {
+									require.NotContains(t, rbacRes.GetItems(), account.UID)
+								}
+							} else {
+								require.Equal(t, normalizeParityList(expected), toParityListResult(rbacRes), "RBAC answer changed")
+							}
+							res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
+							require.NoError(t, err)
+							assert.Equal(t, normalizeParityList(expected), toParityListResult(res), "Zanzana must list UIDs, not database IDs")
+						})
+					})
+				}
+				t.Run("BatchCheck", func(t *testing.T) {
+					rbacRes, err := rbacService.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+					require.NoError(t, err)
+					res, err := srv.BatchCheck(newContextWithNamespace(), proto.Clone(batch).(*authzv1.BatchCheckRequest))
+					require.NoError(t, err)
+					for engine, response := range map[string]*authzv1.BatchCheckResponse{"RBAC": rbacRes, "Zanzana": res} {
+						require.Len(t, response.GetResults(), len(expectedBatch), engine)
+						for id, allowed := range expectedBatch {
+							t.Run(engine+"/"+id, func(t *testing.T) {
+								require.Contains(t, response.GetResults(), id)
+								result := response.GetResults()[id]
+								require.Empty(t, result.GetError())
+								assert.Equal(t, allowed, result.GetAllowed())
+							})
+						}
+					}
+				})
+			})
 		}
 	}
 }
