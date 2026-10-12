@@ -76,26 +76,26 @@ func TestClientV2QueryDataFormat(t *testing.T) {
 		want         pluginv2.DataFrameFormat
 	}{
 		{
-			name: "zero value requests JSON",
-			want: pluginv2.DataFrameFormat_JSON,
+			name: "zero value requests Arrow",
+			want: pluginv2.DataFrameFormat_ARROW,
 		},
 		{
-			name:         "client set to Arrow requests Arrow",
-			clientFormat: QueryDataFormatArrow,
-			want:         pluginv2.DataFrameFormat_ARROW,
-		},
-		{
-			name:      "context Arrow overrides the client zero value",
-			setCtx:    true,
-			ctxFormat: QueryDataFormatArrow,
-			want:      pluginv2.DataFrameFormat_ARROW,
-		},
-		{
-			name:         "context JSON overrides a client set to Arrow",
-			clientFormat: QueryDataFormatArrow,
-			setCtx:       true,
-			ctxFormat:    QueryDataFormatJSON,
+			name:         "client set to JSON requests JSON",
+			clientFormat: QueryDataFormatJSON,
 			want:         pluginv2.DataFrameFormat_JSON,
+		},
+		{
+			name:      "context JSON overrides the client zero value",
+			setCtx:    true,
+			ctxFormat: QueryDataFormatJSON,
+			want:      pluginv2.DataFrameFormat_JSON,
+		},
+		{
+			name:         "context Arrow overrides a client set to JSON",
+			clientFormat: QueryDataFormatJSON,
+			setCtx:       true,
+			ctxFormat:    QueryDataFormatArrow,
+			want:         pluginv2.DataFrameFormat_ARROW,
 		},
 	}
 
@@ -119,7 +119,7 @@ func TestClientV2QueryDataFormat(t *testing.T) {
 
 func TestClientV2QueryDataDecodesByReplyFormat(t *testing.T) {
 	fake := &fakeDataClient{respond: respondInArrow(testResponse())}
-	c := &ClientV2{DataClient: fake}
+	c := &ClientV2{DataClient: fake, QueryDataFormat: QueryDataFormatJSON}
 
 	resp, err := c.QueryData(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{RefID: "A"}}})
 	require.NoError(t, err)
@@ -148,7 +148,7 @@ func TestClientV2QueryChunkedDataFacadeKeepsChunkedFormat(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			fake := &fakeDataClient{respond: respondInRequestedFormat(testResponse())}
-			c := &ClientV2{DataClient: fake, QueryDataFormat: QueryDataFormatArrow}
+			c := &ClientV2{DataClient: fake, QueryDataFormat: QueryDataFormatJSON}
 			ctx := WithQueryDataFormat(context.Background(), QueryDataFormatJSON)
 
 			req := &backend.QueryChunkedDataRequest{

@@ -29,10 +29,10 @@ var (
 type QueryDataFormat int
 
 const (
-	// QueryDataFormatJSON is the zero value, so a ClientV2 built without setting QueryDataFormat requests JSON.
-	QueryDataFormatJSON QueryDataFormat = iota
-	// QueryDataFormatArrow requests one Arrow IPC file per frame.
-	QueryDataFormatArrow
+	// QueryDataFormatArrow is the zero value, so a ClientV2 built without setting QueryDataFormat requests one Arrow IPC file per frame.
+	QueryDataFormatArrow QueryDataFormat = iota
+	// QueryDataFormatJSON requests JSON-encoded frames.
+	QueryDataFormatJSON
 )
 
 type queryDataFormatKey struct{}
@@ -184,10 +184,10 @@ func (c *ClientV2) protoQueryDataFormat(ctx context.Context) pluginv2.DataFrameF
 	if ctxFormat, ok := QueryDataFormatFromContext(ctx); ok {
 		format = ctxFormat
 	}
-	if format == QueryDataFormatArrow {
-		return pluginv2.DataFrameFormat_ARROW
+	if format == QueryDataFormatJSON {
+		return pluginv2.DataFrameFormat_JSON
 	}
-	return pluginv2.DataFrameFormat_JSON
+	return pluginv2.DataFrameFormat_ARROW
 }
 
 func (c *ClientV2) queryData(ctx context.Context, req *backend.QueryDataRequest, format pluginv2.DataFrameFormat) (*pluginv2.QueryDataResponse, error) {

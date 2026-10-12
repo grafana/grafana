@@ -19,19 +19,18 @@ func TestQueryDataFormatMiddleware(t *testing.T) {
 		arrowPlugins []string
 		pluginID     string
 		wantFormat   grpcplugin.QueryDataFormat
-		wantSet      bool
 	}{
 		{
-			name:     "toggle on leaves the client default in place",
-			toggle:   true,
-			pluginID: "prometheus",
+			name:       "toggle on requests JSON",
+			toggle:     true,
+			pluginID:   "prometheus",
+			wantFormat: grpcplugin.QueryDataFormatJSON,
 		},
 		{
 			name:       "toggle off requests Arrow",
 			toggle:     false,
 			pluginID:   "prometheus",
 			wantFormat: grpcplugin.QueryDataFormatArrow,
-			wantSet:    true,
 		},
 		{
 			name:         "listed plugin requests Arrow with the toggle on",
@@ -39,13 +38,13 @@ func TestQueryDataFormatMiddleware(t *testing.T) {
 			arrowPlugins: []string{"loki", "tempo"},
 			pluginID:     "loki",
 			wantFormat:   grpcplugin.QueryDataFormatArrow,
-			wantSet:      true,
 		},
 		{
-			name:         "unlisted plugin leaves the client default in place",
+			name:         "unlisted plugin requests JSON with the toggle on",
 			toggle:       true,
 			arrowPlugins: []string{"loki", "tempo"},
 			pluginID:     "prometheus",
+			wantFormat:   grpcplugin.QueryDataFormatJSON,
 		},
 	}
 
@@ -67,7 +66,7 @@ func TestQueryDataFormatMiddleware(t *testing.T) {
 			require.NoError(t, err)
 
 			format, ok := grpcplugin.QueryDataFormatFromContext(cdt.QueryDataCtx)
-			require.Equal(t, tc.wantSet, ok)
+			require.True(t, ok)
 			require.Equal(t, tc.wantFormat, format)
 		})
 	}
