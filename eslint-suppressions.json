@@ -1579,15 +1579,10 @@
   },
   "public/app/features/dashboard-scene/panel-edit/PanelDataPane/EmptyTransformationsMessage.tsx": {
     "@grafana/no-config-feature-toggles": {
-      "count": 2
-    }
-  },
-  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/NewAlertRuleButton.tsx": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },
-  "public/app/features/dashboard-scene/panel-edit/PanelEditNext/QueryEditor/Body/TransformationTypePicker.tsx": {
+  "public/app/features/dashboard-scene/panel-edit/PanelDataPane/NewAlertRuleButton.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
     }
@@ -1925,11 +1920,6 @@
       "count": 1
     }
   },
-  "public/app/features/dashboard/components/TransformationsEditor/TransformationPickerNg.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmptyExtensionPoint.tsx": {
     "@grafana/no-config-feature-toggles": {
       "count": 1
@@ -2209,11 +2199,6 @@
   },
   "public/app/features/expressions/guards.ts": {
     "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/expressions/types.ts": {
-    "@grafana/no-config-feature-toggles": {
       "count": 1
     }
   },

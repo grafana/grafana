@@ -3,9 +3,6 @@ import { type Locator, type Page } from '@playwright/test';
 import { test, expect, type DashboardPage, type E2ESelectorGroups } from '@grafana/plugin-e2e';
 
 test.use({
-  featureToggles: {
-    sqlExpressions: true,
-  },
   // queryEditorNext uses OpenFeature (OFREP), not legacy config.featureToggles
   openFeature: {
     flags: {
@@ -346,7 +343,7 @@ test.describe('Query Editor Next: Expression Flows', { tag: ['@panels', '@queryE
     await expect(page.getByText('Function', { exact: true })).toBeVisible();
   });
 
-  test('SQL expression type is available with sqlExpressions toggle', async ({ gotoDashboardPage, page }) => {
+  test('SQL expression type is available by default', async ({ gotoDashboardPage, page }) => {
     await gotoDashboardPage({ uid: DASHBOARD_UID, queryParams: editPanelUrl() });
 
     await addQueryOrExpressionButton(page).click();

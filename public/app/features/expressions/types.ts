@@ -1,5 +1,4 @@
 import { type DataQuery, ReducerID, type SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { EvalFunction } from '../alerting/state/alertDef';
 
@@ -68,12 +67,7 @@ export const expressionTypes: Array<SelectableValue<ExpressionQueryType>> = [
     description:
       'Takes one or more time series returned from a query or an expression and checks if any of the series match the threshold condition.',
   },
-].filter((expr) => {
-  if (expr.value === ExpressionQueryType.sql) {
-    return config?.featureToggles?.sqlExpressions;
-  }
-  return true;
-});
+];
 
 export const reducerTypes: Array<SelectableValue<string>> = [
   { value: ReducerID.min, label: 'Min', description: 'Get the minimum value' },
