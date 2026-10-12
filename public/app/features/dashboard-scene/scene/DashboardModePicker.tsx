@@ -12,9 +12,9 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
   const state = dashboard.useState();
   const styles = useStyles2(getStyles);
   const [buttonGroup, setButtonGroup] = useState<HTMLDivElement | null>(null);
-  const [isLabelMenuOpen, setIsLabelMenuOpen] = useState(false);
   const [isCaretMenuOpen, setIsCaretMenuOpen] = useState(false);
   const mode = getDashboardMode(state);
+  const nextMode = mode === 'edit' ? 'view' : 'edit';
   const disabled = dashboard.managedResourceCannotBeEdited();
   const hidden =
     !dashboardModesEnabled() ||
@@ -75,27 +75,20 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
 
   return (
     <ButtonGroup ref={setButtonGroup}>
-      <Dropdown
-        positioningReference={buttonGroup}
-        placement="bottom-end"
-        onVisibleChange={(visible) => {
-          setIsLabelMenuOpen(visible);
-          if (visible) {
-            dashboard.trackModePickerOpened();
-          }
-        }}
-        overlay={menu}
+      <ToolbarButton
+        variant="canvas"
+        icon={current.icon}
+        aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
+        tooltip={
+          nextMode === 'view'
+            ? t('dashboard.modes.switch-to-viewing', 'Switch to Viewing')
+            : t('dashboard.modes.switch-to-editing', 'Switch to Editing')
+        }
+        disabled={disabled || (!state.editable && nextMode === 'edit')}
+        onClick={() => dashboard.setDashboardMode(nextMode, 'picker')}
       >
-        <ToolbarButton
-          variant="canvas"
-          icon={current.icon}
-          aria-label={t('dashboard.modes.current', 'Dashboard mode: {{mode}}', { mode: current.label })}
-          aria-haspopup="menu"
-          disabled={disabled}
-        >
-          {current.label}
-        </ToolbarButton>
-      </Dropdown>
+        {current.label}
+      </ToolbarButton>
       <Dropdown
         positioningReference={buttonGroup}
         placement="bottom-end"
@@ -109,7 +102,7 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
       >
         <ToolbarButton
           variant="canvas"
-          icon={isLabelMenuOpen || isCaretMenuOpen ? 'angle-up' : 'angle-down'}
+          icon={isCaretMenuOpen ? 'angle-up' : 'angle-down'}
           aria-label={t('dashboard.modes.change-mode', 'Change dashboard mode')}
           aria-haspopup="menu"
           disabled={disabled}

@@ -684,6 +684,22 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     if (previous === mode) {
       return true;
     }
+    if (
+      trigger === 'picker' &&
+      previous === 'edit' &&
+      mode === 'view' &&
+      this.state.isDirty &&
+      hasActualSaveChanges(this)
+    ) {
+      this.showUnsavedChangesDialog(
+        () => this.setDashboardMode('view', trigger),
+        () => {
+          this.discardChangesAndKeepEditing();
+          this.setDashboardMode('view', trigger);
+        }
+      );
+      return false;
+    }
     if (!this.state.isEditing && mode !== 'view') {
       this.onEnterEditMode('user', 'restore');
     }
@@ -833,32 +849,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     }
 
     if (isDashboardNewLayoutsEnabled()) {
-      const canSave = Boolean(this.state.meta.canSave);
-
-      appEvents.publish(
-        new ShowConfirmModalEvent({
-          title: t('dashboard-scene.dashboard-scene.modal.title.unsaved-changes', 'Unsaved changes'),
-          text: t(
-            'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
-            'Do you want to save your changes?'
-          ),
-          altActionText: canSave ? t('dashboard-scene.dashboard-scene.modal.save', 'Save') : undefined,
-          noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
-          yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
-          yesButtonVariant: 'destructive',
-          onAltAction: canSave
-            ? () => {
-                this.openSaveDrawer({
-                  onSaveSuccess: () => {
-                    this.exitEditModeConfirmed(false);
-                  },
-                });
-              }
-            : undefined,
-          onConfirm: () => {
-            this.exitEditModeConfirmed();
-          },
-        })
+      this.showUnsavedChangesDialog(
+        () => this.exitEditModeConfirmed(false),
+        () => this.exitEditModeConfirmed()
       );
     } else {
       appEvents.publish(
@@ -878,6 +871,32 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
         })
       );
     }
+  }
+
+  private showUnsavedChangesDialog(onSaveSuccess: () => void, onDiscard: () => void) {
+    const canSave = Boolean(this.state.meta.canSave);
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard-scene.dashboard-scene.modal.title.unsaved-changes', 'Unsaved changes'),
+        text: t(
+          'dashboard-scene.dashboard-scene.modal.text.save-changes-question',
+          'Do you want to save your changes?'
+        ),
+        altActionText: canSave ? t('dashboard-scene.dashboard-scene.modal.save', 'Save') : undefined,
+        noText: t('dashboard-scene.dashboard-scene.modal.cancel', 'Cancel'),
+        yesText: t('dashboard-scene.dashboard-scene.modal.discard', 'Discard'),
+        yesButtonVariant: 'destructive',
+        onAltAction: canSave
+          ? () => {
+              this.openSaveDrawer({
+                onSaveSuccess,
+              });
+            }
+          : undefined,
+        onConfirm: onDiscard,
+      })
+    );
   }
 
   private exitEditModeConfirmed(restoreInitialState = true) {

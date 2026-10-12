@@ -930,6 +930,20 @@ describe('SaveDashboardDrawer', () => {
     });
   });
 
+  it.each([false, true])('continues the pending action after saving (new dashboard: %s)', async (isNew) => {
+    const { dashboard, openAndRender } = setup();
+    if (isNew) {
+      dashboard.setState({ uid: '', version: 0 });
+    }
+    dashboard.setState({ title: 'Updated title' });
+    const onSaveSuccess = jest.fn();
+    await openAndRender({ onSaveSuccess });
+    mockSaveDashboard();
+    await userEvent.click(await screen.findByTestId(selectors.components.Drawer.DashboardSaveDrawer.saveButton));
+    await waitFor(() => expect(onSaveSuccess).toHaveBeenCalledTimes(1));
+    expect(dashboard.state.isDirty).toBe(false);
+  });
+
   describe('Tags', () => {
     it('Should send the tags set on a new dashboard before its first save', async () => {
       const { dashboard, openAndRender } = setup();
@@ -1126,6 +1140,7 @@ function setup(overrides?: Partial<DashboardSceneState>) {
       saveAsCopy?: boolean;
       saveAsDashboardTemplate?: boolean;
       saveDashboardTemplate?: boolean;
+      onSaveSuccess?: () => void;
     } = {}
   ) => {
     await dashboard.openSaveDrawer(opts);

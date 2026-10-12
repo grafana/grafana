@@ -6043,6 +6043,8 @@
       "edit-description": "Manually edit panels, layout, and settings.",
       "empty": "This dashboard has no panels.",
       "label": "Dashboard mode",
+      "switch-to-editing": "Switch to Editing",
+      "switch-to-viewing": "Switch to Viewing",
       "view": "Viewing",
       "view-changes": "View changes",
       "view-description": "View and explore the dashboard."
