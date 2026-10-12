@@ -202,7 +202,7 @@ func TestSubProxyREST_ReusesConnectionsWithCurrentUserHeaders(t *testing.T) {
 	builder := newProxyTestBuilder(provider)
 	builder.proxyDeps.OAuthTokenService = nil
 	builder.proxyDeps.ProxyCfg.SendUserHeader = true
-	storage := &subProxyREST{builder: builder}
+	storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
 	t.Cleanup(storage.Destroy)
 	for _, tc := range []struct {
 		namespace, login string

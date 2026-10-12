@@ -2,7 +2,6 @@ package datasource
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -100,13 +99,7 @@ func (l *datasourceLoader) GetHTTPTransport(ctx context.Context, clientProvider 
 		return nil, err
 	}
 	if l.timeoutDefaults != nil {
-		var data map[string]json.RawMessage
-		if len(settings.JSONData) > 0 {
-			if err := json.Unmarshal(settings.JSONData, &data); err != nil {
-				return nil, err
-			}
-		}
-		applyProxyTimeoutDefaults(&opts, data, *l.timeoutDefaults)
+		applyProxyTimeoutDefaults(&opts, backend.JSONDataFromHTTPClientOptions(opts), *l.timeoutDefaults)
 	}
 	// Without a namespace, do not risk sharing connections between tenants.
 	namespace := krequest.NamespaceValue(ctx)

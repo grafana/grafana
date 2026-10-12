@@ -324,7 +324,7 @@ func (b *DataSourceAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver
 
 	// Frontend proxy
 	if b.cfg.EnableProxyEndpoint && len(b.pluginJSON.Routes) > 0 {
-		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b}
+		storage[ds.StoragePath("proxy")] = &subProxyREST{builder: b, transports: newProxyTransportCache(256)}
 	}
 
 	// Register query types (convert to real k8s type first)

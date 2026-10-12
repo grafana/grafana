@@ -89,7 +89,7 @@ func proxyTransportFingerprint(settings *backend.DataSourceInstanceSettings, opt
 
 // HTTPClientOptions fills absent datasource values from SDK globals. Replace
 // only those defaults with the current tenant's values; preserve explicit overrides.
-func applyProxyTimeoutDefaults(opts *sdkhttpclient.Options, data map[string]json.RawMessage, defaults sdkhttpclient.TimeoutOptions) {
+func applyProxyTimeoutDefaults(opts *sdkhttpclient.Options, data map[string]any, defaults sdkhttpclient.TimeoutOptions) {
 	t := *opts.Timeouts
 	if _, ok := data["timeout"]; !ok {
 		t.Timeout = defaults.Timeout

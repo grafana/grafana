@@ -5,9 +5,9 @@ import (
 	"errors"
 	"net/http"
 	"strings"
-	"sync"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,6 +35,7 @@ type ProxyDependencies struct {
 	RouteAccessChecker pluginproxy.RouteAccessChecker
 	ProxyCfg           *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider httpclient.Provider
+	GrafanaConfig      *config.GrafanaCfg
 	// TransportConfigKey changes when provider configuration changes between requests.
 	TransportConfigKey string
 	TimeoutDefaults    *sdkhttpclient.TimeoutOptions
@@ -62,7 +63,6 @@ func ProvideProxyDependencies(
 
 type subProxyREST struct {
 	builder    *DataSourceAPIBuilder
-	cacheOnce  sync.Once
 	transports *proxyTransportCache
 }
 
@@ -73,12 +73,7 @@ func (r *subProxyREST) New() runtime.Object {
 }
 
 func (r *subProxyREST) Destroy() {
-	r.transportCache().close()
-}
-
-func (r *subProxyREST) transportCache() *proxyTransportCache {
-	r.cacheOnce.Do(func() { r.transports = newProxyTransportCache(256) })
-	return r.transports
+	r.transports.close()
 }
 
 func (r *subProxyREST) ConnectMethods() []string {
@@ -129,7 +124,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 				return
 			}
 		}
-		loader.transports = r.transportCache()
+		if deps.GrafanaConfig != nil {
+			req = req.WithContext(config.WithGrafanaConfig(req.Context(), deps.GrafanaConfig))
+		}
+		loader.transports = r.transports
 		loader.transportConfigKey = deps.TransportConfigKey
 		loader.timeoutDefaults = deps.TimeoutDefaults
 
@@ -145,6 +143,14 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 		jsonData, _ := ds.Spec.JSONData().(map[string]any)
+		if deps.GrafanaConfig != nil && datasources.IsSecureSocksDSProxyEnabled(jsonData) {
+			proxyCfg, err := deps.GrafanaConfig.Proxy()
+			if err != nil || proxyCfg.ClientCfg == nil {
+				m.SetError()
+				responder.Error(apierrors.NewBadRequest("PDC is not configured for this datasource proxy"))
+				return
+			}
+		}
 		validate := r.builder.validateDataSourceRequest
 		if deps.RequestValidator != nil {
 			validate = deps.RequestValidator.Validate
@@ -172,6 +178,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.Tracer,
 			deps.Features,
 			pluginproxy.WithRouteAccessChecker(deps.RouteAccessChecker),
+			pluginproxy.WithDestinationValidator(func(url string) error {
+				// Headers and cookies were filtered on ingress; do not strip route-added authentication.
+				return validate(url, jsonData, nil)
+			}),
 		)
 		if err != nil {
 			m.SetError()
