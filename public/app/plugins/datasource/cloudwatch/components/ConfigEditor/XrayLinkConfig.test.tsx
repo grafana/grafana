@@ -1,19 +1,14 @@
 import { render, screen } from '@testing-library/react';
 
-import { useHasDataSourceInstance } from '@grafana/runtime/unstable';
+import { useHasDataSourceInstance } from '@grafana/runtime';
 
 import { XrayLinkConfig } from './XrayLinkConfig';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   DataSourcePicker: () => <></>,
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   useHasDataSourceInstance: jest.fn(),
 }));
-
 const missingDataSourceText = /There is no Application Signals datasource to link to/;
 
 describe('XrayLinkConfig', () => {

@@ -14,16 +14,11 @@
 
 jest.mock('../../utils/date');
 
-// SpanDetailLinkButtons resolves data source settings via an async hook; return a
-// synchronous value so rendering doesn't trigger an un-acted state update in tests.
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
-}));
-
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   useAppPluginInstalled: jest.fn().mockReturnValue({ loading: false, value: false, error: undefined }),
+  // Resolve synchronously so SpanDetailLinkButtons doesn't trigger un-acted state updates.
+  useDataSourceInstanceSettings: jest.fn().mockReturnValue({ isLoading: false, settings: undefined }),
 }));
 
 jest.mock('./pluginPromo/attributePluginPromos', () => ({

@@ -4,8 +4,7 @@ import { render } from 'test/test-utils';
 
 import { type ScopedVars } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { setPluginImportUtils, getDataSourceInstance } from '@grafana/runtime';
 import { SceneGridLayout, SceneQueryRunner, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import {
@@ -32,8 +31,8 @@ jest.mock('app/features/query/diagnostics/downloadDiagnostics', () => ({
 const interpolateVariablesInQueries = jest.fn(
   (queries: DataQuery[], _scopedVars?: ScopedVars, _filters?: unknown): DataQuery[] => queries
 );
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(() => Promise.resolve({ interpolateVariablesInQueries })),
 }));
 

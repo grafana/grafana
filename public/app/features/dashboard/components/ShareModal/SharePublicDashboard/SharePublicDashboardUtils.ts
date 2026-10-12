@@ -1,5 +1,4 @@
-import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { config, DataSourceWithBackend, featureEnabled, getDataSourceInstance } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 
 import { type PanelModel } from '../../../state/PanelModel';

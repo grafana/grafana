@@ -34,8 +34,8 @@ import { NEW_LINK } from '../settings/links/utils';
 import { createSceneVariableFromVariableModel, createVariablesForSnapshot, getUserDefinedVariables } from './variables';
 
 // mock getDataSourceInstanceSettings()
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
 

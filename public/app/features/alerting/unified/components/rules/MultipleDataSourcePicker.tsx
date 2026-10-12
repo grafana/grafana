@@ -9,9 +9,8 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourcePickerProps, getDataSourceSrv, useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
-import { useDefaultDataSourceInstanceListItem } from '@grafana/runtime/unstable';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';

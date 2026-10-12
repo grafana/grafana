@@ -3,12 +3,13 @@ import { fromEvent, lastValueFrom, type Observable, throwError } from 'rxjs';
 import { map, mergeMap, takeUntil } from 'rxjs/operators';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { DataSourceWithBackend, getBackendSrv } from '@grafana/runtime';
 import {
+  DataSourceWithBackend,
+  getBackendSrv,
   getDataSourceInstance,
   getDataSourceInstanceList,
   getDefaultDataSourceInstanceListItem,
-} from '@grafana/runtime/unstable';
+} from '@grafana/runtime';
 
 /**
  * A lazily-started, shared solution fact derived from the solution's datasource: the first read

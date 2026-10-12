@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from 'test/test-utils';
 
+import { getDataSourceInstanceList } from '@grafana/runtime';
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 import { type AlertDataQuery, type AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { GrafanaRuleQueryViewer } from './GrafanaRuleQueryViewer';

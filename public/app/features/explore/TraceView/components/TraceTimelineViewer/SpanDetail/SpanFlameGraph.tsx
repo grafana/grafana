@@ -15,8 +15,12 @@ import {
 import { FlameGraph } from '@grafana/flamegraph';
 import { Trans } from '@grafana/i18n';
 import { type TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
-import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
-import { getDataSourceInstance, useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  DataSourceWithBackend,
+  getTemplateSrv,
+  getDataSourceInstance,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { useStyles2, useTheme2 } from '@grafana/ui';
 import { type PyroscopeQuery } from 'app/features/explore/TraceView/components/TraceTimelineViewer/SpanDetail/pyroscope-types';
 

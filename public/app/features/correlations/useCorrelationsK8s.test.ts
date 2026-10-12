@@ -6,8 +6,8 @@ import { type DataSourceRef } from '@grafana/schema/dist/esm/index';
 
 import { toEnrichedCorrelationDataK8s, useCorrelationsK8s } from './useCorrelationsK8s';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: (ref: DataSourceRef | string) => {
     const uid = typeof ref === 'string' ? ref : ref.uid;
     if (uid !== 'notFoundUid') {

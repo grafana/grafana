@@ -1,13 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react';
 
 import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourceSettings } from '@grafana/data';
-import { type DataSourceSrv, setDataSourceSrv } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { type DataSourceSrv, setDataSourceSrv, getDataSourceInstance } from '@grafana/runtime';
 
 import { type TraceToProfilesData, TraceToProfilesSettings } from './TraceToProfilesSettings';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

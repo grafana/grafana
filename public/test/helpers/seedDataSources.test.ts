@@ -1,9 +1,14 @@
 import { type DataSourceApi, type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 // Seeding the legacy service is part of this util's contract while DataSourceSrv still exists,
 // so reading it back is the only way to assert that half. Delete with the legacySrv option.
-// eslint-disable-next-line @grafana/no-get-data-source-srv
-import { getDataSourceSrv, setDataSourceSrv, type DataSourceSrv } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  // eslint-disable-next-line @grafana/no-get-data-source-srv
+  getDataSourceSrv,
+  setDataSourceSrv,
+  type DataSourceSrv,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 
 import { seedDataSources, watchDataSourceFallbacks } from './seedDataSources';
 

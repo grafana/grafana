@@ -35,11 +35,8 @@ const DEFAULT_EXPLORE_STATE: ExploreUrlState = {
   range: DEFAULT_RANGE,
 };
 
-// The migration under test swaps getDataSourceSrv().get() for getDataSourceInstance() from
-// @grafana/runtime/unstable. We deliberately seed the *real* new-API caches (instance settings +
-// plugin importer) rather than delegate getDataSourceInstance back to a legacy mock. A
-// delegate-to-legacy mock reasserts the old semantics by construction, so it can never fail on the
-// template-variable identity gap that got the original migration (#127578) reverted (#127870).
+// Seeds the real async-API caches instead of delegating to a legacy mock, which could never
+// catch the template-variable identity gap that got the original migration reverted.
 const interpolateMockLoki = jest.fn().mockReturnValue([{ refId: 'a', expr: 'replaced testDs loki' }]);
 const interpolateMockProm = jest.fn().mockReturnValue([{ refId: 'a', expr: 'replaced testDs2 prom' }]);
 const interpolateByUid: Record<string, jest.Mock> = { ds1: interpolateMockLoki, ds2: interpolateMockProm };

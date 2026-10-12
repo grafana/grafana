@@ -17,9 +17,8 @@ import {
   type ScopedVars,
   toDataFrame,
 } from '@grafana/data';
-import { setPluginLinksHook, usePluginLinks } from '@grafana/runtime';
+import { setPluginLinksHook, usePluginLinks, getDataSourceInstance } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
 import { createLokiDatasource } from 'app/features/loki-helpers/mocks';
 
 import { DATAPLANE_LABEL_TYPES_NAME, DATAPLANE_LABELS_NAME } from '../../logsFrame';
@@ -72,13 +71,8 @@ jest.mock('@grafana/assistant', () => {
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   usePluginLinks: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
 }));
-
 jest.mock('./LogListContext');
 jest.mock('app/features/explore/TraceView/TraceView', () => ({
   TraceView: () => <div>Trace view</div>,

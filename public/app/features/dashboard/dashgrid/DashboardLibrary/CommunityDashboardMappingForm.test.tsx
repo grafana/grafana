@@ -24,8 +24,8 @@ interface CommunityDashboardMappingFormProps {
 // `useAsync`, which would trigger React `act(...)` warnings in tests that assert
 // synchronously after `render(...)`. Returning a sync value keeps the test setup simple
 // and matches the data shape the component reads (`uid`, `name`).
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({
     isLoading: false,
     items: [{ uid: 'loki-uid', name: 'DataSource loki-uid', type: 'loki' }],

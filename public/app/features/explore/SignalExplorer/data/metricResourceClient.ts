@@ -1,6 +1,6 @@
 import type { DataSourceApi, DataSourceRef, TimeRange } from '@grafana/data';
 import type { PrometheusLanguageProviderInterface } from '@grafana/prometheus';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import type { MetricInfo } from '../types';
 

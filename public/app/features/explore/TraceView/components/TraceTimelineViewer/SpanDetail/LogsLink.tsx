@@ -35,13 +35,14 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getTraceToLogsOptions } from '@grafana/o11y-ds-frontend';
-import { reportInteraction, usePluginLinks } from '@grafana/runtime';
-import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import {
+  reportInteraction,
+  usePluginLinks,
   getDataSourceInstance,
   useDataSourceInstanceList,
   useDataSourceInstanceSettings,
-} from '@grafana/runtime/unstable';
+} from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient, useFlagGrafanaDynamicTraceToLogs } from '@grafana/runtime/internal';
 import { usePanelContext, useStyles2, DataLinkButton, Menu } from '@grafana/ui';
 import { getNextRequestId } from 'app/features/query/state/PanelQueryRunner';
 

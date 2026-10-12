@@ -129,8 +129,8 @@ const getDataSourceInstance = jest.fn(async (..._args: unknown[]) => ({
   getDefaultQuery: () => defaultQueryForNewType,
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(async (ref?: DataSourceRef | string) => settingsForRef(ref)),
   getDataSourceInstance: (...args: unknown[]) => getDataSourceInstance(...args),
   useDataSourceInstanceSettings: (ref?: DataSourceRef | string) => ({

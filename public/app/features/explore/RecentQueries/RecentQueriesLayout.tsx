@@ -3,7 +3,7 @@ import { useCallback, useMemo } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { useDataSourceInstanceList } from '@grafana/runtime';
 import { Divider, EmptyState, useStyles2 } from '@grafana/ui';
 import { SortOrder } from 'app/core/utils/richHistoryTypes';
 import { type RichHistoryQuery } from 'app/types/explore';

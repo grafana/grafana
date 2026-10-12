@@ -4,7 +4,7 @@ import { useAsync } from 'react-use';
 
 import { type TraceSearchProps, type Field, type LinkModel, type PanelProps } from '@grafana/data';
 import { Trans } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { type DataSourceRef } from '@grafana/schema';
 import { TraceView } from 'app/features/explore/TraceView/TraceView';
 import { type SpanLinkFunc } from 'app/features/explore/TraceView/components/types/links';

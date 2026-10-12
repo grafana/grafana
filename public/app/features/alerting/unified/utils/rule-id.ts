@@ -1,7 +1,6 @@
 import { nth } from 'lodash';
 
-import { locationService } from '@grafana/runtime';
-import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceSettings, locationService } from '@grafana/runtime';
 import {
   type CloudRuleIdentifier,
   type CombinedRule,

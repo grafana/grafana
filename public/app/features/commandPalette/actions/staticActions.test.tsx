@@ -3,8 +3,7 @@ import { type ReactNode } from 'react';
 import { getWrapper, renderHook } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getDashboardTemplatesTab } from 'app/features/dashboard/dashgrid/DashboardLibrary/enterprise-components/DashboardTemplatesTabExtension';
@@ -30,8 +29,8 @@ const defaultTestDataSource = {
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
 }));
 

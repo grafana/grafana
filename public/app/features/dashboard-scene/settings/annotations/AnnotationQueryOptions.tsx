@@ -2,8 +2,7 @@ import { useCallback, useState } from 'react';
 
 import { AppEvents } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
-import { getAppEvents } from '@grafana/runtime';
-import { useDataSourceInstance } from '@grafana/runtime/unstable';
+import { getAppEvents, useDataSourceInstance } from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Box, Button, ButtonGroup } from '@grafana/ui';
 import { updateAnnotationFromSavedQuery } from 'app/features/annotations/utils/savedQueryUtils';

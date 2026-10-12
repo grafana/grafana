@@ -9,7 +9,7 @@ import {
   type PluginMetaInfo,
   PluginType,
 } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import { CloudWatchDatasource } from '../../datasource';
 import {
@@ -51,13 +51,8 @@ jest.mock('@grafana/runtime', () => ({
       cloudWatchCrossAccountQuerying: true,
     },
   },
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
 }));
-
 const props: Props = {
   options: {
     id: 1,

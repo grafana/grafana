@@ -13,8 +13,8 @@ const defaultDatasource = mockDataSource({
   type: 'test',
 });
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceSettings: jest.fn(async () => ({ ...defaultDatasource })),
 }));
 

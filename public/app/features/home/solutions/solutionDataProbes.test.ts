@@ -1,8 +1,13 @@
 import { of, throwError } from 'rxjs';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { type BackendSrv, config, getBackendSrv } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import {
+  type BackendSrv,
+  config,
+  getBackendSrv,
+  getDataSourceInstance,
+  getDataSourceInstanceList,
+} from '@grafana/runtime';
 
 import { resetProbeHealth } from './probeUtils';
 import { lokiHasRecentLabels, probeFound, prometheusHasRecentMetrics, tempoHasTraces } from './solutionDataProbes';
@@ -11,14 +16,9 @@ import { backendInstance } from './test-utils';
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   getBackendSrv: jest.fn(),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceList: jest.fn(),
 }));
-
 const mockList = jest.mocked(getDataSourceInstanceList);
 const mockInstance = jest.mocked(getDataSourceInstance);
 const mockProxyGet = jest.fn();

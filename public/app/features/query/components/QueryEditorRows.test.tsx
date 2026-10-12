@@ -3,8 +3,12 @@ import userEvent from '@testing-library/user-event';
 
 import type { DataSourceApi } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import type { DataSourceSrv, GetDataSourceListFilters } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  type DataSourceSrv,
+  type GetDataSourceListFilters,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataSourceRef, type DataQuery } from '@grafana/schema';
 import { mockBoundingClientRect } from '@grafana/test-utils';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -43,14 +47,9 @@ jest.mock('@grafana/runtime', () => ({
     containsTemplate: () => false,
     updateTimeRange: () => {},
   }),
-}));
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
   getDataSourceInstance: jest.fn(),
   getDataSourceInstanceSettings: jest.fn(),
 }));
-
 jest
   .mocked(getDataSourceInstance)
   .mockImplementation((...args: unknown[]) => dsSrvMock.get(...(args as Parameters<DataSourceSrv['get']>)));

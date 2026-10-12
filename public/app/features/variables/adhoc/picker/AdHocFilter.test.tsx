@@ -3,12 +3,12 @@ import userEvent from '@testing-library/user-event';
 import selectEvent from 'react-select-event';
 
 import { type AdHocVariableFilter, type DataSourceApi } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import { AdHocFilter } from './AdHocFilter';
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 

@@ -19,8 +19,13 @@ import {
 } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { getTraceToLogsOptions, type TraceToMetricsData, type TraceToProfilesData } from '@grafana/o11y-ds-frontend';
-import { config, getTemplateSrv, reportInteraction, useAppPluginInstalled } from '@grafana/runtime';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  config,
+  getTemplateSrv,
+  reportInteraction,
+  useAppPluginInstalled,
+  useDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { getTimeZone } from 'app/features/profile/state/selectors';

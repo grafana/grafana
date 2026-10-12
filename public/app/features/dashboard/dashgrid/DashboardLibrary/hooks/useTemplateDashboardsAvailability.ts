@@ -1,7 +1,6 @@
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, useDataSourceInstanceList } from '@grafana/runtime';
 import { useFlagGrafanaCustomDashboardTemplates } from '@grafana/runtime/internal';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
 
 import { getDashboardTemplatesTab } from '../enterprise-components/DashboardTemplatesTabExtension';
 import { canReadDashboardTemplates } from '../utils/templatePermissions';

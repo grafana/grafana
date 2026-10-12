@@ -1,5 +1,5 @@
 import type { TimeRange } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 
 import {
   CACHE_TTL_MS,
@@ -40,7 +40,10 @@ const makeLP = () => ({
   queryLabelValues: jest.fn().mockResolvedValue(['web-1', 'web-2']),
 });
 
-jest.mock('@grafana/runtime/unstable', () => ({ getDataSourceInstance: jest.fn() }));
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceInstance: jest.fn(),
+}));
 
 describe('metricResourceClient', () => {
   beforeEach(() => {

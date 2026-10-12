@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { ActionType, type DataSourceInstanceListItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, getDataSourceInstanceList } from '@grafana/runtime';
 import { Select } from '@grafana/ui';
 
 import { INFINITY_DATASOURCE_TYPE } from './utils';
