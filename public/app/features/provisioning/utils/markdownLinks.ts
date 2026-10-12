@@ -70,7 +70,7 @@ export function rewriteRelativeMarkdownLinks(html: string, options: RewriteOptio
 
     // Tag JSON/YAML/folder/markdown links so the README click handler can resolve
     // them to the in-app Grafana page. Done regardless of the host URL so links in
-    // repos without one (local/git) still resolve via the resource listing.
+    // repos without one (local/git) still resolve via the files API.
     if (isResourceLinkCandidate(result.path)) {
       anchor.setAttribute(RESOURCE_PATH_ATTR, result.path);
     }

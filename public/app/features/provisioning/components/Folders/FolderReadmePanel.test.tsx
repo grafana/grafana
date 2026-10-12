@@ -6,7 +6,7 @@ import { type GrafanaConfig, locationUtil } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
 import { interceptLinkClicks } from 'app/core/navigation/patch/interceptLinkClicks';
 
 import { type UseFolderDocsResult, useFolderDocs } from '../../hooks/useFolderDocs';
@@ -29,9 +29,26 @@ jest.mock('mermaid', () => ({
 
 setupProvisioningMswServer();
 
-// The resource listing is fetched lazily on link click; stub the endpoint per test.
-function setResources(items: ResourceListItem[]) {
-  server.use(http.get(`${BASE}/repositories/:name/resources`, () => HttpResponse.json({ items })));
+function fileResource(resource: string, name?: string): ResourceWrapper {
+  return {
+    repository: { name: 'test-repo', namespace: 'default', title: 'Test', type: 'github' },
+    resource: {
+      type: { group: resource === 'folders' ? 'folder.grafana.app' : 'dashboard.grafana.app', resource },
+      existing: name ? { metadata: { name } } : undefined,
+      file: { metadata: { name: 'not-synced' } },
+    },
+  };
+}
+
+function setFileResource(response: ResourceWrapper) {
+  const requests = jest.fn();
+  server.use(
+    http.get(`${BASE}/repositories/:name/files/*`, ({ request }) => {
+      requests(request.url);
+      return HttpResponse.json(response);
+    })
+  );
+  return requests;
 }
 
 const mockUseFolderDocs = jest.mocked(useFolderDocs);
@@ -266,29 +283,37 @@ describe('FolderReadmePanel', () => {
   });
 
   describe('resource links', () => {
-    const dashboardItem: ResourceListItem = {
-      path: 'dashboards/team-a/cpu.json',
-      resource: 'dashboards',
-      name: 'abc',
-      group: '',
-      hash: '',
+    const dashboardFile = fileResource('dashboards', 'abc');
+    const rootFolder = {
+      metadata: {
+        name: 'test-repo',
+        annotations: { 'grafana.app/managedBy': 'repo', 'grafana.app/managerId': 'test-repo' },
+      },
+      spec: { title: 'Test Repository' },
     };
+    const rootFolderUrl = '/apis/folder.grafana.app/v1beta1/namespaces/default/folders/test-repo';
 
     it('navigates in-app when a JSON link maps to a synced dashboard', async () => {
-      setResources([dashboardItem]);
+      const requests = setFileResource(dashboardFile);
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
       const { user } = setup();
+      expect(requests).not.toHaveBeenCalled();
       // Spy after render: test-utils swaps the locationService the component uses.
       const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
       await user.click(screen.getByRole('link', { name: 'CPU' }));
 
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+      expect(requests.mock.calls).toEqual([
+        [
+          'http://localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/dashboards/team-a/cpu.json',
+        ],
+      ]);
       expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'in_app' });
     });
 
     it('resolves a bare relative link (no ./) that renderMarkdown would otherwise strip', async () => {
-      setResources([dashboardItem]);
+      setFileResource(dashboardFile);
       setReadmeResult({ markdownContent: 'See [CPU](cpu.json)' });
 
       const { user } = setup();
@@ -301,8 +326,163 @@ describe('FolderReadmePanel', () => {
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
     });
 
+    it.each([
+      { link: './', path: 'dashboards/team-a/', route: '/dashboards/f/fold1' },
+      { link: './_folder.json', path: 'dashboards/team-a/', route: '/dashboards/f/fold1' },
+    ])('resolves $link with a targeted folder lookup', async ({ link, path, route }) => {
+      const requests = setFileResource(fileResource('folders', 'fold1'));
+      setReadmeResult({ markdownContent: `See [target](${link})` });
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+
+      await user.click(screen.getByRole('link', { name: 'target' }));
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith(route));
+      expect(requests.mock.calls).toEqual([
+        [
+          `http://localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/${path}`,
+        ],
+      ]);
+    });
+
+    it.each([
+      { link: '../../README.md', route: '/dashboards/f/test-repo?docTab=README.md' },
+      { link: '../../', route: '/dashboards/f/test-repo' },
+      { link: '../../_folder.json', route: '/dashboards/f/test-repo' },
+    ])('resolves $link through the existing folders API', async ({ link, route }) => {
+      const requests = jest.fn();
+      const fileRequests = setFileResource(fileResource('folders', 'wrong-folder'));
+      server.use(
+        http.get(rootFolderUrl, ({ request }) => {
+          requests(request.url);
+          return HttpResponse.json(rootFolder);
+        })
+      );
+      setReadmeResult({ markdownContent: `See [target](${link})` });
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+
+      await user.click(screen.getByRole('link', { name: 'target' }));
+
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith(route));
+      expect(requests.mock.calls).toEqual([
+        ['http://localhost/apis/folder.grafana.app/v1beta1/namespaces/default/folders/test-repo'],
+      ]);
+      expect(fileRequests).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { description: 'access is denied', status: 403, annotations: rootFolder.metadata.annotations },
+      { description: 'the folder is missing', status: 404, annotations: rootFolder.metadata.annotations },
+      { description: 'the folder is unmanaged', status: 200, annotations: {} },
+      {
+        description: 'another repository owns the folder',
+        status: 200,
+        annotations: { ...rootFolder.metadata.annotations, 'grafana.app/managerId': 'another-repo' },
+      },
+      {
+        description: 'the folder has a non-root source path',
+        status: 200,
+        annotations: { ...rootFolder.metadata.annotations, 'grafana.app/sourcePath': 'team-a' },
+      },
+    ])('leaves root links on the host when $description', async ({ status, annotations }) => {
+      server.use(
+        http.get(rootFolderUrl, () =>
+          HttpResponse.json({ ...rootFolder, metadata: { ...rootFolder.metadata, annotations } }, { status })
+        )
+      );
+      setReadmeResult({ markdownContent: 'See [root doc](../../README.md)' });
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const assignMock = jest.fn();
+      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
+      try {
+        await user.click(screen.getByRole('link', { name: 'root doc' }));
+
+        await waitFor(() =>
+          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/README.md')
+        );
+        expect(pushSpy).not.toHaveBeenCalled();
+      } finally {
+        if (originalLocation) {
+          Object.defineProperty(window, 'location', originalLocation);
+        }
+      }
+    });
+
+    it('leaves instance-scoped root links on the host without guessing a folder UID', async () => {
+      const requests = jest.fn();
+      server.use(
+        http.get(rootFolderUrl, () => {
+          requests();
+          return HttpResponse.json(rootFolder);
+        })
+      );
+      setDocs({ repository: { ...mockRepository, target: 'instance' } });
+      setReadmeResult({ markdownContent: 'See [root doc](../../README.md)' });
+      const { user } = setup();
+      const assignMock = jest.fn();
+      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
+      try {
+        await user.click(screen.getByRole('link', { name: 'root doc' }));
+
+        await waitFor(() =>
+          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/README.md')
+        );
+        expect(requests).not.toHaveBeenCalled();
+      } finally {
+        if (originalLocation) {
+          Object.defineProperty(window, 'location', originalLocation);
+        }
+      }
+    });
+
+    it('caches clicked paths and looks them up again after a sync', async () => {
+      const requests = setFileResource(dashboardFile);
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)', syncFinished: 1 });
+      const { user, rerender } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+      await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/d/abc'));
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+      expect(pushSpy).toHaveBeenCalledTimes(2);
+      expect(requests).toHaveBeenCalledTimes(1);
+
+      const nextRequests = setFileResource(fileResource('dashboards', 'after-sync'));
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)', syncFinished: 2 });
+      rerender(<FolderReadmePanel folderUID="test-folder" />);
+      await user.click(screen.getByRole('link', { name: 'CPU' }));
+
+      await waitFor(() => expect(pushSpy).toHaveBeenLastCalledWith('/d/after-sync'));
+      expect(nextRequests).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([403, 404, 500])('falls back to the host when the file lookup returns HTTP %s', async (status) => {
+      server.use(http.get(`${BASE}/repositories/:name/files/*`, () => new HttpResponse(null, { status })));
+      setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
+      const { user } = setup();
+      const pushSpy = jest.spyOn(locationService, 'push').mockImplementation();
+      const assignMock = jest.fn();
+      const originalLocation = Object.getOwnPropertyDescriptor(window, 'location');
+      Object.defineProperty(window, 'location', { configurable: true, value: { assign: assignMock } });
+      try {
+        await user.click(screen.getByRole('link', { name: 'CPU' }));
+        await waitFor(() =>
+          expect(assignMock).toHaveBeenCalledWith('https://github.com/owner/repo/blob/main/dashboards/team-a/cpu.json')
+        );
+        expect(pushSpy).not.toHaveBeenCalled();
+      } finally {
+        if (originalLocation) {
+          Object.defineProperty(window, 'location', originalLocation);
+        }
+      }
+    });
+
     it('resolves when the click lands on a non-HTML element inside the link (e.g. an SVG icon)', async () => {
-      setResources([dashboardItem]);
+      setFileResource(dashboardFile);
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
       const { user } = setup();
@@ -317,7 +497,7 @@ describe('FolderReadmePanel', () => {
     });
 
     it('navigates the current tab to the host URL when a JSON link has no synced resource', async () => {
-      setResources([]);
+      setFileResource(fileResource('dashboards'));
       const assignMock = jest.fn();
       setReadmeResult({ markdownContent: 'See [CPU](./cpu.json)' });
 
@@ -341,27 +521,17 @@ describe('FolderReadmePanel', () => {
       }
     });
 
-    it('resolves against the current repository after switching repos (no stale listing)', async () => {
+    it('resolves against the current repository after switching repos (no stale lookup)', async () => {
       // Same path in each repo maps to a different dashboard. repo-b is delayed so
       // that, without a remount, a stale synchronous read of repo-a's listing would
       // push /d/aaa immediately (before repo-b's refetch resolves).
       server.use(
-        http.get(`${BASE}/repositories/:name/resources`, async ({ params }) => {
+        http.get(`${BASE}/repositories/:name/files/*`, async ({ params }) => {
           const isB = params.name === 'repo-b';
           if (isB) {
             await delay(50);
           }
-          return HttpResponse.json({
-            items: [
-              {
-                path: 'dashboards/team-a/cpu.json',
-                resource: 'dashboards',
-                name: isB ? 'bbb' : 'aaa',
-                group: '',
-                hash: '',
-              },
-            ],
-          });
+          return HttpResponse.json(fileResource('dashboards', isB ? 'bbb' : 'aaa'));
         })
       );
 
@@ -388,7 +558,7 @@ describe('FolderReadmePanel', () => {
 
     it('navigates in-app to the containing folder doc tab when a markdown link maps to a synced folder', async () => {
       // A folder is keyed by its directory; the doc's containing folder resolves it.
-      setResources([{ path: 'dashboards/team-a', resource: 'folders', name: 'fold1', group: '', hash: '' }]);
+      const requests = setFileResource(fileResource('folders', 'fold1'));
       setReadmeResult({ markdownContent: 'See [contributing](./CONTRIBUTING.md)' });
 
       const { user } = setup();
@@ -396,11 +566,16 @@ describe('FolderReadmePanel', () => {
       await user.click(screen.getByRole('link', { name: 'contributing' }));
 
       await waitFor(() => expect(pushSpy).toHaveBeenCalledWith('/dashboards/f/fold1?docTab=CONTRIBUTING.md'));
+      expect(requests.mock.calls).toEqual([
+        [
+          'http://localhost/apis/provisioning.grafana.app/v0alpha1/namespaces/default/repositories/test-repo/files/dashboards/team-a/',
+        ],
+      ]);
       expect(linkClickedSpy).toHaveBeenCalledWith({ repositoryType: 'github', outcome: 'in_app' });
     });
 
     it('navigates the current tab to the host URL when a markdown link has no synced folder', async () => {
-      setResources([]);
+      setFileResource(fileResource('folders'));
       const assignMock = jest.fn();
       setReadmeResult({ markdownContent: 'See [notes](./notes.md)' });
 

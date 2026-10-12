@@ -1,185 +1,151 @@
-import { type ResourceListItem } from 'app/api/clients/provisioning/v0alpha1';
+import { type ResourceWrapper } from 'app/api/clients/provisioning/v0alpha1';
 
 import { createGrafanaLinkResolver } from './markdownResourceLinks';
 
-function resource(overrides: Partial<ResourceListItem>): ResourceListItem {
-  return { group: '', hash: '', name: '', path: '', resource: '', ...overrides };
+function resource(resource: string, name = 'synced-uid'): ResourceWrapper {
+  const group =
+    resource === 'folders'
+      ? 'folder.grafana.app'
+      : resource === 'playlists'
+        ? 'playlist.grafana.app'
+        : 'dashboard.grafana.app';
+  return {
+    repository: { name: 'test-repo', namespace: 'default', title: 'Test', type: 'github' },
+    resource: {
+      type: { group, resource },
+      existing: { metadata: { name } },
+      file: { metadata: { name: 'git-only-uid' } },
+      dryRun: { metadata: { name: 'dry-run-uid' } },
+    },
+  };
 }
 
 describe('createGrafanaLinkResolver', () => {
-  it('resolves a dashboard file to its in-app dashboard route', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      undefined
-    );
+  it.each([
+    { link: 'team-a/cpu.json', path: 'team-a/cpu.json', kind: 'dashboards', route: '/d/synced-uid' },
+    { link: 'team-a/cpu.yaml', path: 'team-a/cpu.yaml', kind: 'dashboards', route: '/d/synced-uid' },
+    {
+      link: 'playlists/weekly.json',
+      path: 'playlists/weekly.json',
+      kind: 'playlists',
+      route: '/playlists/edit/synced-uid',
+    },
+    { link: 'team-a/', path: 'team-a/', kind: 'folders', route: '/dashboards/f/synced-uid' },
+    { link: 'team-a/_folder.json', path: 'team-a/', kind: 'folders', route: '/dashboards/f/synced-uid' },
+    {
+      link: 'team-a/CONTRIBUTING.md',
+      path: 'team-a/',
+      kind: 'folders',
+      route: '/dashboards/f/synced-uid?docTab=CONTRIBUTING.md',
+    },
+    {
+      link: 'team-a/Release Notes.md',
+      path: 'team-a/',
+      kind: 'folders',
+      route: '/dashboards/f/synced-uid?docTab=Release%20Notes.md',
+    },
+    { link: 'Team #1/a?b.json', path: 'Team%20%231/a%3Fb.json', kind: 'dashboards', route: '/d/synced-uid' },
+  ])('resolves $link through the targeted files lookup to $route', async ({ link, path, kind, route }) => {
+    const read = jest.fn().mockResolvedValue(resource(kind));
+    const resolve = createGrafanaLinkResolver(read, undefined);
 
-    expect(resolve('team-a/cpu.json')).toBe('/d/abc');
+    await expect(resolve(link)).resolves.toBe(route);
+    expect(read.mock.calls).toEqual([[{ path }]]);
   });
 
-  it('resolves a folder directory link to its in-app folder route', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-      undefined
-    );
+  it.each([
+    {
+      root: 'grafana',
+      link: 'grafana/team-a/cpu.json',
+      path: 'team-a/cpu.json',
+      kind: 'dashboards',
+      route: '/d/synced-uid',
+    },
+    {
+      root: '/data/repo/',
+      link: 'data/repo/team-a/cpu.json',
+      path: 'team-a/cpu.json',
+      kind: 'dashboards',
+      route: '/d/synced-uid',
+    },
+    {
+      root: 'grafana',
+      link: 'grafana/team-a/SECURITY.md',
+      path: 'team-a/',
+      kind: 'folders',
+      route: '/dashboards/f/synced-uid?docTab=SECURITY.md',
+    },
+  ])('strips the configured root $root from $link', async ({ root, link, path, kind, route }) => {
+    const read = jest.fn().mockResolvedValue(resource(kind));
+    const resolve = createGrafanaLinkResolver(read, root);
 
-    // Directory links carry a trailing slash from the markdown resolver.
-    expect(resolve('team-a/')).toBe('/dashboards/f/fold1');
-    expect(resolve('team-a')).toBe('/dashboards/f/fold1');
+    await expect(resolve(link)).resolves.toBe(route);
+    expect(read.mock.calls).toEqual([[{ path }]]);
   });
 
-  it('resolves a link to a folder _folder.json to the folder it describes', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-      undefined
-    );
+  it.each([
+    { link: '_folder.json', root: undefined, route: '/dashboards/f/root-uid' },
+    { link: '/', root: undefined, route: '/dashboards/f/root-uid' },
+    { link: 'README.md', root: undefined, route: '/dashboards/f/root-uid?docTab=README.md' },
+    { link: 'dev/resources/_folder.json', root: 'dev/resources', route: '/dashboards/f/root-uid' },
+  ])('resolves $link through the root folder lookup, not the file listing', async ({ link, root, route }) => {
+    const read = jest.fn();
+    const readRootFolder = jest.fn().mockResolvedValue('root-uid');
+    const resolve = createGrafanaLinkResolver(read, root, readRootFolder);
 
-    expect(resolve('team-a/_folder.json')).toBe('/dashboards/f/fold1');
+    await expect(resolve(link)).resolves.toBe(route);
+    expect(readRootFolder.mock.calls).toEqual([[]]);
+    expect(read).not.toHaveBeenCalled();
   });
 
-  it('normalizes a trailing slash on the resource path', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'fold1', path: 'team-a/' })],
-      undefined
-    );
+  it('leaves a root Markdown link on the host when there is no root folder', async () => {
+    const read = jest.fn();
+    const readRootFolder = jest.fn().mockResolvedValue(undefined);
+    const resolve = createGrafanaLinkResolver(read, undefined, readRootFolder);
 
-    expect(resolve('team-a')).toBe('/dashboards/f/fold1');
+    await expect(resolve('README.md')).resolves.toBeUndefined();
+    expect(readRootFolder.mock.calls).toEqual([[]]);
+    expect(read).not.toHaveBeenCalled();
   });
 
-  it('resolves a playlist to its edit route', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'playlists', name: 'pl1', path: 'playlists/weekly.json' })],
-      undefined
-    );
+  it('does not look up links outside the configured root, including similarly prefixed paths', async () => {
+    const read = jest.fn().mockResolvedValue(resource('dashboards'));
+    const resolve = createGrafanaLinkResolver(read, 'grafana');
 
-    expect(resolve('playlists/weekly.json')).toBe('/playlists/edit/pl1');
+    await expect(resolve('grafana/team-a/cpu.json')).resolves.toBe('/d/synced-uid');
+    await expect(resolve('team-a/cpu.json')).resolves.toBeUndefined();
+    await expect(resolve('grafana-other/cpu.json')).resolves.toBeUndefined();
+    expect(read.mock.calls).toEqual([[{ path: 'team-a/cpu.json' }]]);
   });
 
-  it('returns undefined for kinds without a per-item route (library panels)', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'librarypanels', name: 'lp1', path: 'panels/graph.json' })],
-      undefined
-    );
+  it.each([
+    {
+      description: 'no existing object',
+      value: { ...resource('dashboards'), resource: { ...resource('dashboards').resource, existing: undefined } },
+    },
+    { description: 'no existing name', value: resource('dashboards', '') },
+    { description: 'a kind without a per-item route', value: resource('librarypanels') },
+    {
+      description: 'a resource from an unknown API group',
+      value: {
+        ...resource('dashboards'),
+        resource: { ...resource('dashboards').resource, type: { resource: 'dashboards', group: 'other.example.com' } },
+      },
+    },
+    { description: 'validation errors', value: { ...resource('dashboards'), errors: ['invalid resource'] } },
+  ])('leaves the host link when the response has $description', async ({ value }) => {
+    const read = jest.fn().mockResolvedValue(value);
+    const resolve = createGrafanaLinkResolver(read, undefined);
 
-    expect(resolve('panels/graph.json')).toBeUndefined();
+    await expect(resolve('team-a/cpu.json')).resolves.toBeUndefined();
+    expect(read.mock.calls).toEqual([[{ path: 'team-a/cpu.json' }]]);
   });
 
-  it('returns undefined for a path with no synced resource', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      undefined
-    );
+  it('does not route Markdown to a non-folder response', async () => {
+    const read = jest.fn().mockResolvedValue(resource('dashboards'));
+    const resolve = createGrafanaLinkResolver(read, undefined);
 
-    expect(resolve('team-a/notes.md')).toBeUndefined();
-    expect(resolve('')).toBeUndefined();
-  });
-
-  it('resolves a root _folder.json link to the repository root folder', () => {
-    // The root folder has an empty path; joined with the configured root it keys
-    // at the configured root, which a root `_folder.json` link resolves to.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'root-folder', path: '' })],
-      'dev/resources'
-    );
-
-    expect(resolve('dev/resources/_folder.json')).toBe('/dashboards/f/root-folder');
-  });
-
-  it('resolves a root _folder.json link when the repository has no configured path', () => {
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'folders', name: 'root-folder', path: '' })],
-      undefined
-    );
-
-    expect(resolve('_folder.json')).toBe('/dashboards/f/root-folder');
-  });
-
-  it('matches an absolute (local repo) configured path against the leading-slash-stripped link', () => {
-    // A `local` repo's configured root is an absolute filesystem path; the
-    // rewriter strips the leading slash, so the resolver must too.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      '/data/repo'
-    );
-
-    expect(resolve('data/repo/team-a/cpu.json')).toBe('/d/abc');
-  });
-
-  it('returns undefined when the matched resource has no name', () => {
-    // A nameless entry would otherwise build a broken route like `/d/`.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: '', path: 'team-a/cpu.json' })],
-      undefined
-    );
-
-    expect(resolve('team-a/cpu.json')).toBeUndefined();
-  });
-
-  it('does not match a non-metadata file against a root-keyed entry', () => {
-    // A resource keyed at the repo root ("/") must not be returned for an
-    // unrelated file whose folder-metadata fallback resolves to an empty dir.
-    const resolve = createGrafanaLinkResolver([resource({ resource: 'folders', name: 'root', path: '/' })], undefined);
-
-    expect(resolve('team-a/cpu.json')).toBeUndefined();
-  });
-
-  it('joins the repository configured path when matching resource paths', () => {
-    // Resource paths from the API are relative to the configured root; the paths
-    // passed to the resolver are full repo-root paths that include that prefix.
-    const resolve = createGrafanaLinkResolver(
-      [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-      'grafana'
-    );
-
-    expect(resolve('grafana/team-a/cpu.json')).toBe('/d/abc');
-    expect(resolve('team-a/cpu.json')).toBeUndefined();
-  });
-
-  describe('markdown docs', () => {
-    it('resolves a markdown doc to its containing folder page with a docTab param', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-        undefined
-      );
-
-      expect(resolve('team-a/CONTRIBUTING.md')).toBe('/dashboards/f/fold1?docTab=CONTRIBUTING.md');
-    });
-
-    it('resolves a README in the repository root to the root folder page', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'root-folder', path: '' })],
-        undefined
-      );
-
-      expect(resolve('README.md')).toBe('/dashboards/f/root-folder?docTab=README.md');
-    });
-
-    it('encodes a doc file name with spaces in the docTab param', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-        undefined
-      );
-
-      expect(resolve('team-a/Release Notes.md')).toBe('/dashboards/f/fold1?docTab=Release%20Notes.md');
-    });
-
-    it('joins the configured repository path when resolving a doc folder', () => {
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'folders', name: 'fold1', path: 'team-a' })],
-        'grafana'
-      );
-
-      expect(resolve('grafana/team-a/SECURITY.md')).toBe('/dashboards/f/fold1?docTab=SECURITY.md');
-    });
-
-    it('returns undefined when the doc folder is not a synced folder', () => {
-      // Only a dashboard is synced here; the doc's directory has no folder resource,
-      // so the caller falls back to the host link.
-      const resolve = createGrafanaLinkResolver(
-        [resource({ resource: 'dashboards', name: 'abc', path: 'team-a/cpu.json' })],
-        undefined
-      );
-
-      expect(resolve('team-a/NOTES.md')).toBeUndefined();
-    });
+    await expect(resolve('team-a/NOTES.md')).resolves.toBeUndefined();
+    expect(read.mock.calls).toEqual([[{ path: 'team-a/' }]]);
   });
 });
