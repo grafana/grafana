@@ -240,6 +240,18 @@ func TestPluginEnvVarsProvider_marketplaceLicensing(t *testing.T) {
 		require.False(t, hasText)
 	})
 
+	t.Run("nested plugin uses the parent's license", func(t *testing.T) {
+		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
+		environment.token = "parent-token"
+		parent := &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-app"}}
+		child := &plugins.Plugin{JSONData: plugins.JSONData{ID: "acme-datasource"}, Parent: parent}
+		envVars := newProvider(environment).PluginEnvVars(context.Background(), child)
+
+		require.Equal(t, "acme-app", environment.preparedWith)
+		require.Equal(t, "parent-token", getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_TEXT"))
+		require.Equal(t, filepath.Join(mustAbs(t, "marketplace-licenses"), "license-acme-app.jwt"), getEnvVar(envVars, "GF_MARKETPLACE_LICENSE_PATH"))
+	})
+
 	t.Run("passes selected token verbatim with path when available", func(t *testing.T) {
 		environment := newTestMarketplaceLicensing("hmac:marketplace-environment")
 		environment.token = " token\n"
