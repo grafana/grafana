@@ -483,7 +483,7 @@ func TestValidateCreate(t *testing.T) {
 
 			getter := newParentsGetter(mockStorage, maxDepth)
 
-			err := validateOnCreate(ctx, tt.folder, getter, maxDepth)
+			err := validateOnCreate(ctx, tt.folder, getter, maxDepth, false)
 
 			if tt.expectedErr == nil {
 				require.NoError(t, err)
@@ -496,35 +496,41 @@ func TestValidateCreate(t *testing.T) {
 }
 
 func TestValidateCreateDetachedParent(t *testing.T) {
-	for _, ancestorMissing := range []bool{false, true} {
-		t.Run(fmt.Sprintf("ancestorMissing=%t", ancestorMissing), func(t *testing.T) {
-			storage := grafanarest.NewMockStorage(t)
-			parentName := "missing"
-			if ancestorMissing {
-				parentName = "parent"
-				storage.On("Get", mock.Anything, parentName, &metav1.GetOptions{}).Return(&folders.Folder{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:        parentName,
-						Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
-					},
-				}, nil).Once()
-			}
-			storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
-				Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
+	for _, dryRun := range []bool{false, true} {
+		for _, ancestorMissing := range []bool{false, true} {
+			t.Run(fmt.Sprintf("dryRun=%t/ancestorMissing=%t", dryRun, ancestorMissing), func(t *testing.T) {
+				storage := grafanarest.NewMockStorage(t)
+				parentName := "missing"
+				if ancestorMissing {
+					parentName = "parent"
+					storage.On("Get", mock.Anything, parentName, &metav1.GetOptions{}).Return(&folders.Folder{
+						ObjectMeta: metav1.ObjectMeta{
+							Name:        parentName,
+							Annotations: map[string]string{utils.AnnoKeyFolder: "missing"},
+						},
+					}, nil).Once()
+				}
+				storage.On("Get", mock.Anything, "missing", &metav1.GetOptions{}).
+					Return(nil, apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), "missing")).Once()
 
-			obj := &folders.Folder{
-				ObjectMeta: metav1.ObjectMeta{
-					Name:        "orphan",
-					Annotations: map[string]string{utils.AnnoKeyFolder: parentName},
-				},
-				Spec: folders.FolderSpec{Title: "orphan"},
-			}
-			err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5)
-			require.Error(t, err)
-			require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
-			require.Equal(t, int32(http.StatusBadRequest), responsewriters.ErrorToAPIStatus(err).Code)
-			require.ErrorContains(t, err, "missing")
-		})
+				obj := &folders.Folder{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "orphan",
+						Annotations: map[string]string{utils.AnnoKeyFolder: parentName},
+					},
+					Spec: folders.FolderSpec{Title: "orphan"},
+				}
+				err := validateOnCreate(context.Background(), obj, newParentsGetter(storage, 5), 5, dryRun)
+				if dryRun {
+					require.NoError(t, err)
+					return
+				}
+				require.Error(t, err)
+				require.True(t, apierrors.IsBadRequest(err), "expected BadRequest, got %v", err)
+				require.Equal(t, int32(http.StatusBadRequest), responsewriters.ErrorToAPIStatus(err).Code)
+				require.ErrorContains(t, err, "missing")
+			})
+		}
 	}
 }
 
