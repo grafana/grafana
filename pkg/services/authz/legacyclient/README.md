@@ -18,7 +18,7 @@ Both embedded permission RPCs share one AuthZ-owned `legacypermissions.Loader`. 
 - Preserve the original requester cache key so existing Access Control invalidation reaches the loader's cache entry.
 - `ReloadCache` refreshes legacy caches; `SkipZanzanaCache` bypasses only Zanzana cache reads and writes. The client has no permission cache.
 - Preserve duplicate action/scope pairs and empty scopes. Publish only a complete snapshot after successful EOF; discard partial results on any error. Preserve cancellation and deadlines.
-- Never fall back to the old RPC or local enumeration on transport errors. The default-off `authz.legacyUserPermissions` OpenFeature toggle selects the old or embedded path in Access Control.
+- Never fall back to the old RPC or local enumeration on transport errors. The default-off `authz.legacyUserPermissions` OpenFeature toggle selects the old or embedded local path in Access Control only after the existing AuthZ delegation gate. For single-org, non-global requests with the permissions API enabled, that API remains authoritative (including empty results and failures), regardless of the legacy toggle or Enterprise license.
 
 The generated service/messages and this client can be removed together once legacy enumeration is retired. Existing authlib Check/List, the older permission RPC, and Grafana's extension service remain unchanged.
 

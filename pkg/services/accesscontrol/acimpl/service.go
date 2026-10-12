@@ -181,14 +181,15 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
 	defer timer.ObserveDuration()
 
-	if accesscontrol.LegacyUserPermissionsEnabled(ctx) {
-		return accesscontrol.GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
-	}
 	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled {
 		if s.userPermissionsClient == nil {
 			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
 		}
 		return s.userPermissionsClient.GetUserPermissions(ctx, user, options)
+	}
+	// The legacy toggle replaces local enumeration, not the delegated authority.
+	if accesscontrol.LegacyUserPermissionsEnabled(ctx) {
+		return accesscontrol.GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
 	}
 	return s.getLocalUserPermissions(ctx, user, options)
 }
