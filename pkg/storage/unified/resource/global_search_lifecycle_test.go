@@ -11,6 +11,8 @@ import (
 	"testing/synctest"
 	"time"
 
+	badger "github.com/dgraph-io/badger/v4"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	dto "github.com/prometheus/client_model/go"
@@ -18,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -331,8 +334,9 @@ type reconcileStorage struct {
 	read []string
 	// Set to refuse batch reads, as a backend without them does.
 	noBatchReads bool
-	// Runs right after the listing, to simulate a write arriving then.
+	// Runs right after the listing, and as it lists each name.
 	afterList func()
+	onListed  func(name string)
 	// Simulates storage being unavailable.
 	readErr error
 	// Answers one more batch read than was asked for, as a misbehaving reader would.
@@ -342,14 +346,30 @@ type reconcileStorage struct {
 }
 
 func (m *reconcileStorage) ListIterator(ctx context.Context, req *resourcepb.ListRequest, cb func(ListIterator) error) (int64, error) {
-	rv, err := m.multiTypeStorage.ListIterator(ctx, req, cb)
+	rv, err := m.multiTypeStorage.ListIterator(ctx, req, func(it ListIterator) error {
+		return cb(&hookedListIterator{ListIterator: it, onNext: m.onListed})
+	})
 	if m.afterList != nil {
 		m.afterList()
 	}
 	return rv, err
 }
 
-func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*resourcepb.ReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
+// hookedListIterator runs onNext as it moves to each name.
+type hookedListIterator struct {
+	ListIterator
+	onNext func(name string)
+}
+
+func (i *hookedListIterator) Next() bool {
+	ok := i.ListIterator.Next()
+	if ok && i.onNext != nil {
+		i.onNext(i.Name())
+	}
+	return ok
+}
+
+func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []BatchReadRequest, _ bool) (iter.Seq[*BackendReadResponse], error) {
 	if m.readErr != nil {
 		return nil, m.readErr
 	}
@@ -358,7 +378,7 @@ func (m *reconcileStorage) BatchReadResource(_ context.Context, requests []*reso
 	}
 	responses := make([]*BackendReadResponse, 0, len(requests)+1)
 	for _, request := range requests {
-		responses = append(responses, m.readOne(request))
+		responses = append(responses, m.readOne(request.ReadRequest))
 	}
 	if m.extraBatchResponse && len(responses) > 0 {
 		responses = append(responses, responses[0])
@@ -492,7 +512,7 @@ func TestReconcileRemovesWhatStorageNoLongerHas(t *testing.T) {
 	require.Len(t, items, 1)
 	assert.Equal(t, ActionDelete, items[0].Action)
 	assert.Equal(t, "gone", items[0].Key.GetName())
-	assert.Empty(t, storage.read, "nothing has to be read to remove a document")
+	assert.Equal(t, []string{"gone"}, storage.read, "read first, as it may have been created since the listing")
 }
 
 // An agreeing index costs no reads or writes.
@@ -636,24 +656,105 @@ var (
 	foldersGroupResource    = schema.GroupResource{Group: "folder.grafana.app", Resource: "folders"}
 )
 
-// A document created and indexed after the listing is live and must be kept.
+// A document created and indexed after storage listed past its name is live, so
+// it is read again rather than removed.
 func TestReconcileDoesNotRemoveADocumentIndexedAfterTheListing(t *testing.T) {
 	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
-		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a", "zz"}},
 		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
 	}}
 	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
-		dashboardsGroupResource: {{Name: "dash-a", RV: 20}},
+		dashboardsGroupResource: {{Name: "dash-a", RV: 20}, {Name: "zz", RV: 20}},
 	})
-	storage.afterList = func() {
-		// Created in storage and indexed, both after the listing was taken.
-		storage.live[dashboardType("ns")] = append(storage.live[dashboardType("ns")], "late")
-		idx.documentRefs[dashboardsGroupResource] = append(idx.documentRefs[dashboardsGroupResource], DocumentRef{Name: "late", RV: 21})
+	storage.onListed = func(name string) {
+		if name != "dash-a" {
+			return
+		}
+		// Storage has already read the names after dash-a, as it reads a page at a
+		// time, so the listing goes on without "late". The index reaches "late",
+		// in name order, after it is written.
+		storage.live[dashboardType("ns")] = []string{"dash-a", "late", "zz"}
+		idx.documentRefs[dashboardsGroupResource] = []DocumentRef{{Name: "dash-a", RV: 20}, {Name: "late", RV: 21}, {Name: "zz", RV: 20}}
 	}
 
 	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
 	require.NoError(t, err)
 	assert.Equal(t, 0, res.Removed)
+	assert.Equal(t, []string{"late"}, storage.read)
+	for _, item := range idx.indexedItems() {
+		assert.NotEqual(t, ActionDelete, item.Action, "removed %s", item.Key.GetName())
+	}
+}
+
+// An object deleted after the listing reported it is read as not found, and goes
+// from the index.
+func TestReconcileRemovesWhatWasDeletedSinceTheListing(t *testing.T) {
+	storage := &reconcileStorage{multiTypeStorage: multiTypeStorage{
+		live:    map[NamespacedResource][]string{dashboardType("ns"): {"dash-a"}},
+		listRVs: map[NamespacedResource]int64{dashboardType("ns"): 20},
+	}}
+	server, idx := repairServer(t, storage, map[schema.GroupResource][]DocumentRef{
+		dashboardsGroupResource: {{Name: "dash-a", RV: 10}},
+	})
+	storage.afterList = func() { storage.live[dashboardType("ns")] = nil }
+
+	res, err := server.reconcileResourceType(t.Context(), idx, GlobalSearchKey("ns"), dashboardType("ns"))
+	require.NoError(t, err)
+	assert.Equal(t, repairResult{Removed: 1}, res)
+	items := idx.indexedItems()
+	require.Len(t, items, 1)
+	assert.Equal(t, ActionDelete, items[0].Action)
+	assert.Equal(t, "dash-a", items[0].Key.GetName())
+}
+
+// Storage lists a name after the names that extend it with "-" or ".", while
+// the index lists it before them. With real storage, an index that agrees costs
+// no reads or writes all the same.
+func TestReconcileMatchesNamesStorageListsInAnotherOrder(t *testing.T) {
+	db, err := badger.Open(badger.DefaultOptions("").WithInMemory(true).WithLogger(nil))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+	store, err := NewKVStorageBackend(KVBackendOptions{KvStore: NewBadgerKV(db)})
+	require.NoError(t, err)
+	writer, err := NewResourceServer(ResourceServerOptions{Backend: store})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = writer.Stop(context.Background()) })
+	ctx := authlib.WithAuthInfo(t.Context(), &identity.StaticRequester{
+		Type: authlib.TypeUser, Login: "testuser", UserID: 1, UserUID: "u1", OrgRole: identity.RoleAdmin, IsGrafanaAdmin: true,
+	})
+
+	const ns = "default" // storage refuses names as short as "ns"
+	// In index order, which is plain string order.
+	names := []string{"a", "a-1", "a-1-x", "a.b", "b"}
+	refs := make([]DocumentRef, 0, len(names))
+	for _, name := range names {
+		key := &resourcepb.ResourceKey{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards", Name: name}
+		rsp, err := writer.Create(ctx, &resourcepb.CreateRequest{Key: key, Value: fmt.Appendf(nil,
+			`{"apiVersion":"dashboard.grafana.app/v1","kind":"Dashboard","metadata":{"name":%q,"namespace":%q},"spec":{"title":%q}}`, name, ns, name)})
+		require.NoError(t, err)
+		require.Nil(t, rsp.Error)
+		read := store.ReadResource(ctx, &resourcepb.ReadRequest{Key: key})
+		require.Nil(t, read.Error)
+		refs = append(refs, DocumentRef{Name: name, RV: read.ResourceVersion})
+	}
+
+	var listed []string
+	_, err = store.ListIterator(ctx, &resourcepb.ListRequest{KeysOnly: true, Options: &resourcepb.ListOptions{
+		Key: &resourcepb.ResourceKey{Namespace: ns, Group: "dashboard.grafana.app", Resource: "dashboards"},
+	}}, func(it ListIterator) error {
+		for it.Next() {
+			listed = append(listed, it.Name())
+		}
+		return it.Error()
+	})
+	require.NoError(t, err)
+	require.NotEqual(t, names, listed, "storage lists them in another order")
+
+	idx := &MockResourceIndex{documentRefs: map[schema.GroupResource][]DocumentRef{dashboardsGroupResource: refs}}
+	server := globalTestServer(t, store, &mockSearchBackend{cache: map[NamespacedResource]ResourceIndex{GlobalSearchKey(ns): idx}})
+	res, err := server.reconcileResourceType(ctx, idx, GlobalSearchKey(ns), dashboardType(ns))
+	require.NoError(t, err)
+	assert.Equal(t, repairResult{}, res)
 	assert.Empty(t, idx.indexedItems())
 }
 
@@ -1851,5 +1952,49 @@ func requireOpen(t *testing.T, ch <-chan struct{}, msg string) {
 	case <-ch:
 		t.Fatal(msg)
 	default:
+	}
+}
+
+// A name storage lists after the names extending it is compared as soon as both
+// sides have seen it, so pairs like a/a-1 do not pile up over a long listing.
+// Either side can be the one that lists it first.
+func TestRefDiffComparesReorderedNamesAsSoonAsBothSidesHaveThem(t *testing.T) {
+	nameOrder := make([]string, 0, 2000)
+	keyOrder := make([]string, 0, 2000)
+	for i := range 1000 {
+		base := fmt.Sprintf("p%04d", i)
+		nameOrder = append(nameOrder, base, base+"-1")
+		keyOrder = append(keyOrder, base+"-1", base)
+	}
+	for _, tc := range []struct {
+		name            string
+		indexed, stored []string
+	}{
+		{"as the index and storage list them", nameOrder, keyOrder},
+		{"the other way round", keyOrder, nameOrder},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			refs := func(yield func(DocumentRef, error) bool) {
+				for _, name := range tc.indexed {
+					if !yield(DocumentRef{Name: name, RV: 20}, nil) {
+						return
+					}
+				}
+			}
+			diff := newRefDiff()
+			peak := 0
+			listing := &hookedListIterator{
+				ListIterator: &namedListIterator{names: tc.stored, rv: 20, keysOnly: true},
+				onNext: func(string) {
+					peak = max(peak, len(diff.onlyIndexed)+len(diff.onlyStored))
+				},
+			}
+
+			require.NoError(t, diff.walk(refs, listing))
+			assert.LessOrEqual(t, peak, 1)
+			assert.Empty(t, diff.onlyIndexed)
+			assert.Empty(t, diff.onlyStored)
+			assert.Empty(t, diff.outdated)
+		})
 	}
 }

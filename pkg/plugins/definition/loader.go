@@ -182,5 +182,6 @@ func ParseManifest(raw []byte) (*app.ManifestData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("converting AppManifestSpec to ManifestData: %w", err)
 	}
+	MigrateDeprecatedRoutes(&manifest)
 	return &manifest, nil
 }

@@ -17,6 +17,8 @@ export const SEARCH_DEBOUNCE_MS = 300;
 /** What a catalog reader gets. */
 export interface MetricCatalog {
   metrics: MetricInfo[];
+  /** Whether `metrics` comes from a catalog the series limit cut short, so its length is no total. */
+  truncated: boolean;
   loading: boolean;
   error?: Error;
 }
@@ -82,6 +84,8 @@ export function useMetricCatalog(
 
   return {
     metrics,
+    // A settled datasource search answers from the whole datasource, not the cut-short catalog.
+    truncated: catalog.data.truncated && !serverSearch,
     loading: catalog.loading || search.loading || pending,
     // A failed search belongs to the term it was for, not to the one being typed now.
     error: catalog.error ?? (pending ? undefined : search.error),

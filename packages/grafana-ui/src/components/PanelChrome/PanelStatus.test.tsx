@@ -1,9 +1,11 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { type ReactElement } from 'react';
+import { type ReactElement, useState } from 'react';
 
 import { EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+
+import { Drawer } from '../Drawer/Drawer';
 
 import { type PanelContext, PanelContextProvider } from './PanelContext';
 import { PanelStatus } from './PanelStatus';
@@ -134,6 +136,46 @@ describe('PanelStatus', () => {
 
       await userEvent.click(inspectButton);
       expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it.each(['onClick', 'onOpenInspector'] as const)('closes on Inspect through %s and can reopen', async (handler) => {
+      const onInspect = jest.fn();
+      renderWithPanelContext(<PanelStatus items={items} onClick={handler === 'onClick' ? onInspect : undefined} />, {
+        onOpenInspector: handler === 'onOpenInspector' ? onInspect : undefined,
+      });
+      const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('warning'));
+      await userEvent.click(trigger);
+      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      expect(onInspect).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'false'));
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+      await userEvent.click(trigger);
+      expect(await screen.findByText('Query marked as big')).toBeVisible();
+    });
+
+    it('hands focus to the inspector drawer and returns it to the status trigger on close', async () => {
+      function PanelWithInspector() {
+        const [isOpen, setIsOpen] = useState(false);
+        return (
+          <>
+            <PanelStatus items={items} onClick={() => setIsOpen(true)} />
+            {isOpen && (
+              <Drawer title="Inspect panel" onClose={() => setIsOpen(false)}>
+                <p>Inspector details</p>
+              </Drawer>
+            )}
+          </>
+        );
+      }
+      render(<PanelWithInspector />);
+      const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('warning'));
+      await userEvent.click(trigger);
+      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      const drawer = await screen.findByRole('dialog');
+      await waitFor(() => expect(drawer).toContainElement(document.activeElement as HTMLElement));
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
+      await waitFor(() => expect(trigger).toHaveFocus());
     });
 
     it('does not render an assistant button when no onInvestigateErrors is provided', async () => {

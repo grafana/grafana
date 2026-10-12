@@ -133,7 +133,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
       const url = await tryGetExploreUrlForPanel(vizPanel);
       if (url) {
-        locationService.push(url);
+        locationService.push(locationUtil.stripBaseFromUrl(url));
       }
     }),
   });
@@ -247,9 +247,11 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         if (sceneRoot instanceof DashboardScene) {
           if (scene.state.editPanel) {
             locationService.push(
-              locationUtil.getUrlForPartial(locationService.getLocation(), {
-                editPanel: undefined,
-              })
+              locationUtil.stripBaseFromUrl(
+                locationUtil.getUrlForPartial(locationService.getLocation(), {
+                  editPanel: undefined,
+                })
+              )
             );
           } else {
             const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));

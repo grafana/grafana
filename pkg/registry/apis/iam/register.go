@@ -27,6 +27,7 @@ import (
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	legacyiamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/configprovider"
@@ -66,6 +67,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -101,9 +103,10 @@ func RegisterAPIService(
 	mappers *resourcepermission.MappersRegistry,
 	legacyAuthInfoStore *authinfoimpl.Store,
 	remoteCache remotecache.CacheStorage,
+	legacyWatch *legacywatch.Publisher,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
-	store := legacy.NewLegacySQLStores(dbProvider)
+	store := legacy.WithWatchNotifications(legacy.NewLegacySQLStores(dbProvider), legacyWatch)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(
 		accessClient,
@@ -744,7 +747,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 		return err
 	}
 
-	if enableZanzanaSync {
+	readOnly := b.features.UsersAPIReadOnly
+
+	if enableZanzanaSync && !readOnly {
 		b.logger.Info("Enabling hooks for User to sync basic role assignments to Zanzana")
 		userUniStore.AfterCreate = b.AfterUserCreate
 		userUniStore.BeginUpdate = b.BeginUserUpdate
@@ -767,26 +772,34 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
-	storage[userResource.StoragePath()] = storewrapper.New(
+	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
 		iamv0.UserResourceInfo.GroupResource(),
 		user.NewStoreWrapper(b.cfgProvider, b.settingService),
 		storewrapper.WithPreserveIdentity(),
 		storewrapper.WithObserver(storageObserver{}),
 	)
+	if readOnly {
+		b.logger.Info("Registering the User API as read-only")
+		userAPIStore = readonly.Wrap(userAPIStore)
+	}
+	storage[userResource.StoragePath()] = userAPIStore
 
 	if b.dual != nil && b.unified != nil {
-		statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
-		storage[userResource.StoragePath("status")] = statusStore
+		// status only supports updates, so it is left out of the read-only API.
+		if !readOnly {
+			statusStore := grafanaregistry.NewRegistryStatusStore(opts.Scheme, userUniStore)
+			storage[userResource.StoragePath("status")] = statusStore
 
-		if b.userLegacyStore != nil && b.useStatusDualWriter(userResource) {
-			storage[userResource.StoragePath("status")] = user.NewStatusDualWriter(
-				userResource.GroupVersion(),
-				b.tracing,
-				statusStore,
-				b.userLegacyStore,
-				b.store,
-			)
+			if b.userLegacyStore != nil && b.useStatusDualWriter(userResource) {
+				storage[userResource.StoragePath("status")] = user.NewStatusDualWriter(
+					userResource.GroupVersion(),
+					b.tracing,
+					statusStore,
+					b.userLegacyStore,
+					b.store,
+				)
+			}
 		}
 		if enableTeamsAPI {
 			backends := dualwrite.NewSelector[user.UserTeamsBackend](b.dual, iamv0.TeamResourceInfo.GroupResource(),

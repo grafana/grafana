@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"hash/fnv"
+	"iter"
+	"maps"
 	"net/http"
 	"slices"
 	"strings"
@@ -422,51 +424,133 @@ func (s *searchServer) reconcileResourceType(ctx context.Context, index Resource
 	if err := checkRepairTarget(key, src); err != nil {
 		return repairResult{}, err
 	}
-	// Read the index before listing storage: otherwise a document created and
-	// indexed after the listing looks deleted and is removed while live.
-	//
-	// Two narrower races remain, both repaired by the next reconcile: an older body
-	// overwriting a newer write, and a document recreated after the listing being
-	// removed. Closing them needs conditional writes, which the index lacks.
-	gr := schema.GroupResource{Group: src.Group, Resource: src.Resource}
-	indexed := map[string]int64{}
-	for ref, err := range index.ListDocumentRefs(ctx, gr) {
-		if err != nil {
-			return repairResult{}, err
-		}
-		indexed[ref.Name] = ref.RV
-	}
-
-	stored, err := s.storedRefs(ctx, src)
+	diff := newRefDiff()
+	_, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
+		KeysOnly: true,
+		Options: &resourcepb.ListOptions{
+			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource},
+		},
+	}, func(it ListIterator) error {
+		return diff.walk(index.ListDocumentRefs(ctx, groupResourceOf(src)), it)
+	})
 	if err != nil {
 		return repairResult{}, err
 	}
 
-	// Newer in the index than in the listing is left alone: the listing is older,
-	// and a later change may already be indexed.
-	var outdated []string
-	for name, rv := range stored {
-		if indexedRV, ok := indexed[name]; !ok || indexedRV < rv {
-			outdated = append(outdated, name)
-		}
-	}
-	// A delete the index never heard about looks like this.
-	var removed []string
-	for name := range indexed {
-		if _, ok := stored[name]; !ok {
-			removed = append(removed, name)
-		}
-	}
+	missing := slices.Sorted(maps.Keys(diff.onlyStored))
+	// Read again rather than removed: the index is read while storage is listed,
+	// so a document can be written after the listing passed its name. A delete
+	// the index never heard about reads as not found.
+	inIndex := slices.AppendSeq(diff.outdated, maps.Keys(diff.onlyIndexed))
 	// Sorted so a repair is reproducible, not in map order.
-	slices.Sort(outdated)
-	slices.Sort(removed)
+	slices.Sort(inIndex)
 
-	if err := s.removeFromIndex(index, src, removed); err != nil {
-		return repairResult{}, err
+	result, err := s.reindex(ctx, index, src, missing, false)
+	if err != nil {
+		return result, err
 	}
-	result, err := s.reindex(ctx, index, src, outdated)
-	result.Removed = len(removed)
+	updated, err := s.reindex(ctx, index, src, inIndex, true)
+	result.Reindexed += updated.Reindexed
+	result.Removed += updated.Removed
+	result.Failed += updated.Failed
 	return result, err
+}
+
+// refDiff is what differs between the index and a listing of storage.
+type refDiff struct {
+	// Names seen on one side only so far, with their version.
+	onlyIndexed map[string]int64
+	onlyStored  map[string]int64
+	// Indexed at an older version than storage holds.
+	outdated []string
+}
+
+func newRefDiff() *refDiff {
+	return &refDiff{onlyIndexed: map[string]int64{}, onlyStored: map[string]int64{}}
+}
+
+// walk reads the index and the listing side by side in name order, so memory
+// grows with what differs, not with the size of the type.
+//
+// Storage lists a name after the names that extend it with "-" or ".", and the
+// index before them, so such a name is first seen on one side only. It is
+// compared as soon as the other side reaches it, which keeps that bounded too.
+func (d *refDiff) walk(indexedRefs iter.Seq2[DocumentRef, error], stored ListIterator) error {
+	next, stop := iter.Pull2(indexedRefs)
+	defer stop()
+	var indexed *DocumentRef
+	advance := func() error {
+		ref, err, ok := next()
+		if !ok {
+			indexed = nil
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		indexed = &ref
+		return nil
+	}
+	if err := advance(); err != nil {
+		return err
+	}
+
+	for stored.Next() {
+		if err := stored.Error(); err != nil {
+			return err
+		}
+		name, rv := stored.Name(), stored.ResourceVersion()
+		for indexed != nil && indexed.Name < name {
+			d.indexed(indexed.Name, indexed.RV)
+			if err := advance(); err != nil {
+				return err
+			}
+		}
+		if indexed == nil || indexed.Name != name {
+			d.stored(name, rv)
+			continue
+		}
+		d.compare(name, indexed.RV, rv)
+		if err := advance(); err != nil {
+			return err
+		}
+	}
+	if err := stored.Error(); err != nil {
+		return err
+	}
+	for indexed != nil {
+		d.indexed(indexed.Name, indexed.RV)
+		if err := advance(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *refDiff) indexed(name string, rv int64) {
+	if storedRV, ok := d.onlyStored[name]; ok {
+		delete(d.onlyStored, name)
+		d.compare(name, rv, storedRV)
+		return
+	}
+	d.onlyIndexed[name] = rv
+}
+
+func (d *refDiff) stored(name string, rv int64) {
+	if indexedRV, ok := d.onlyIndexed[name]; ok {
+		delete(d.onlyIndexed, name)
+		d.compare(name, indexedRV, rv)
+		return
+	}
+	d.onlyStored[name] = rv
+}
+
+// compare leaves a newer indexed version alone: a later change may already be
+// indexed.
+func (d *refDiff) compare(name string, indexedRV, storedRV int64) {
+	if indexedRV < storedRV {
+		d.outdated = append(d.outdated, name)
+	}
 }
 
 // rebuildResourceType rewrites one resource type in a global index from storage,
@@ -482,7 +566,8 @@ func (s *searchServer) rebuildResourceType(ctx context.Context, index ResourceIn
 		return repairResult{}, err
 	}
 
-	// Before the listing, for the same reason as in reconcileResourceType.
+	// Read before the listing: otherwise a document created and indexed after the
+	// listing looks dropped by the import and is removed while live.
 	gr := schema.GroupResource{Group: src.Group, Resource: src.Resource}
 	indexed := map[string]struct{}{}
 	for ref, err := range index.ListDocumentRefs(ctx, gr) {
@@ -607,34 +692,6 @@ type repairResult struct {
 	Failed int
 }
 
-// storedRefs lists names and versions without bodies, because it only decides
-// which objects are worth reading.
-func (s *searchServer) storedRefs(ctx context.Context, src NamespacedResource) (map[string]int64, error) {
-	refs := map[string]int64{}
-	_, err := s.storage.ListIterator(ctx, &resourcepb.ListRequest{
-		KeysOnly: true,
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Namespace: src.Namespace,
-				Group:     src.Group,
-				Resource:  src.Resource,
-			},
-		},
-	}, func(iter ListIterator) error {
-		for iter.Next() {
-			if err := iter.Error(); err != nil {
-				return err
-			}
-			refs[iter.Name()] = iter.ResourceVersion()
-		}
-		return iter.Error()
-	})
-	if err != nil {
-		return nil, err
-	}
-	return refs, nil
-}
-
 // removeFromIndex deletes in batches, so removing a whole type is not one huge
 // write.
 func (s *searchServer) removeFromIndex(index ResourceIndex, src NamespacedResource, names []string) error {
@@ -659,12 +716,13 @@ func (s *searchServer) removeFromIndex(index ResourceIndex, src NamespacedResour
 }
 
 // reindex reads and writes the named objects. One that cannot be built is
-// skipped, not fatal, so a bad object does not block the rest; it stays missing,
-// so the next reconcile retries it.
+// skipped, not fatal, so a bad object does not block the rest; the next reconcile
+// retries it. With removeMissing, the names are in the index, and one storage no
+// longer holds is removed from it.
 //
 // Reads go in small chunks, writes in full batches: each write is a separate
 // index batch with its own fixed cost.
-func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string) (repairResult, error) {
+func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src NamespacedResource, names []string, removeMissing bool) (repairResult, error) {
 	var result repairResult
 	if len(names) == 0 {
 		return result, nil
@@ -684,34 +742,53 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 		if err := index.BulkIndex(&BulkIndexRequest{Items: items, Path: IndexPathUpdate}); err != nil {
 			return err
 		}
-		result.Reindexed += len(items)
+		for _, item := range items {
+			if item.Action == ActionDelete {
+				result.Removed++
+			} else {
+				result.Reindexed++
+			}
+		}
 		items = items[:0]
 		return nil
+	}
+	add := func(item *BulkIndexItem) error {
+		items = append(items, item)
+		if len(items) < maxBatchSize {
+			return nil
+		}
+		return flush()
 	}
 
 	// Requests are built a chunk at a time, so only the comparison scales with
 	// the size of the type.
 	for chunk := range slices.Chunk(names, readChunkSize) {
-		requests := make([]*resourcepb.ReadRequest, 0, len(chunk))
+		requests := make([]BatchReadRequest, 0, len(chunk))
 		for _, name := range chunk {
-			requests = append(requests, &resourcepb.ReadRequest{
+			requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 				Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-			})
+			}})
 		}
 
+		// One response per request, in order, so a not found names its request.
+		read := 0
 		for response := range readResourcesInChunks(ctx, s.storage, requests, readChunkSize) {
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
+			read++
 			if response.Error != nil {
-				// Not found means deleted since the listing, or the revision was
-				// pruned by a newer update, which the update path delivers.
-				// Anything else is a storage failure, returned so the caller does
-				// not think the type is repaired.
-				if response.Error.Code != http.StatusNotFound {
+				// Anything but not found is a storage failure, returned so the
+				// caller does not think the type is repaired.
+				if response.Error.Code != http.StatusNotFound || read > len(requests) {
 					return result, StatusError(response.Error)
 				}
-				logger.Debug("object deleted since the listing, skipping it", "error", response.Error.Message)
+				if !removeMissing {
+					continue
+				}
+				if err := add(&BulkIndexItem{Action: ActionDelete, Key: requests[read-1].Key}); err != nil {
+					return result, err
+				}
 				continue
 			}
 			doc, err := builder.BuildDocument(ctx, response.Key, response.ResourceVersion, response.Value)
@@ -720,11 +797,8 @@ func (s *searchServer) reindex(ctx context.Context, index ResourceIndex, src Nam
 				result.Failed++
 				continue
 			}
-			items = append(items, &BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)})
-			if len(items) >= maxBatchSize {
-				if err := flush(); err != nil {
-					return result, err
-				}
+			if err := add(&BulkIndexItem{Action: ActionIndex, Doc: keepStandardFieldsOnly(doc)}); err != nil {
+				return result, err
 			}
 		}
 	}
@@ -935,11 +1009,11 @@ func (s *searchServer) writeCurrentState(ctx context.Context, index ResourceInde
 	}
 	logger := s.log.New("namespace", src.Namespace, "resource", src.GroupResource())
 
-	requests := make([]*resourcepb.ReadRequest, 0, len(names))
+	requests := make([]BatchReadRequest, 0, len(names))
 	for _, name := range names {
-		requests = append(requests, &resourcepb.ReadRequest{
+		requests = append(requests, BatchReadRequest{ReadRequest: &resourcepb.ReadRequest{
 			Key: &resourcepb.ResourceKey{Namespace: src.Namespace, Group: src.Group, Resource: src.Resource, Name: name},
-		})
+		}})
 	}
 
 	items := make([]*BulkIndexItem, 0, len(names))

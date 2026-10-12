@@ -26,7 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/leaderelection"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/log/slogadapter"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
@@ -186,6 +186,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
 	legacydualwrite "github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
@@ -384,9 +385,9 @@ var Basic = wire.NewSet(
 	annotationsapi.ProvideTokenExchanger,
 	annotationsapi.ProvideMigrationProxy,
 	starApi.ProvideK8sClients,
-	userimpl.ProvideService,
+	userimpl.ProvideServiceWithWatch,
 	wire.Bind(new(user.Service), new(*userimpl.Service)),
-	orgimpl.ProvideService,
+	orgimpl.ProvideServiceWithWatch,
 	orgimpl.ProvideDeletionService,
 	orgimpl.ProvideDeleteRegistrar,
 	wire.Bind(new(org.DeletionService), new(*orgimpl.DeletionService)),
@@ -394,7 +395,7 @@ var Basic = wire.NewSet(
 	grpccontext.ProvideContextHandler,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
-	teamimpl.ProvideService,
+	teamimpl.ProvideServiceWithWatch,
 	wire.Bind(new(team.Service), new(*teamimpl.Service)),
 	teamapi.ProvideTeamAPI,
 	tempuserimpl.ProvideService,
@@ -491,7 +492,9 @@ var Basic = wire.NewSet(
 
 var Server = wire.NewSet(
 	Basic,
-	metrics.WireSet,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -511,7 +514,8 @@ var Server = wire.NewSet(
 var CLI = wire.NewSet(
 	server.NewRunner,
 	Basic,
-	metrics.WireSet,
+	legacywatch.ProvideDisabledPublisher, // No need for real legacywatch support
+	metricsservice.WireSet,
 	sqlstore.ProvideService,
 	ngmetrics.ProvideService,
 	wire.Bind(new(notifications.Service), new(*notifications.NotificationService)),
@@ -529,8 +533,10 @@ var CLI = wire.NewSet(
 
 var Test = wire.NewSet(
 	Basic,
+	legacywatch.ProvidePublisher,
+	wire.Bind(new(legacywatch.Bus), new(*infranats.PublisherService)),
 	server.ProvideTestEnv,
-	metrics.WireSetForTest,
+	metricsservice.WireSetForTest,
 	sqlstore.ProvideServiceForTests,
 	ngmetrics.ProvideService,
 	notifications.MockNotificationService,

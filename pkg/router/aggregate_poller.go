@@ -129,6 +129,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 
 	backends := make([]Backend, 0, len(groups))
 	keys := make(map[string]struct{}, len(groups))
+	skipped := 0
 	for _, discovered := range groups {
 		if !matchesAnyPattern(discovered.group.Name, t.patterns) {
 			continue
@@ -136,6 +137,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 		backend, err := newDiscoveredAggregateBackend(t.name, discovered, t.base, t.proxyTransport)
 		if err != nil {
 			logging.FromContext(ctx).Warn("router: skipping unfingerprintable discovered group", "target", t.name, "group", discovered.group.Name, "err", err)
+			skipped++
 			continue
 		}
 		backends = append(backends, backend)
@@ -143,6 +145,7 @@ func (t *aggregateTarget) poll(ctx context.Context, dirty chan<- struct{}) {
 	}
 
 	t.snapshot.Store(&backends)
+	t.status.recordSkipped(skipped)
 
 	lastKeys := *t.lastKeys.Load()
 	if !sameKeySet(lastKeys, keys) {

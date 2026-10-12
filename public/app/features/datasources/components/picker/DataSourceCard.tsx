@@ -24,16 +24,7 @@ export function DataSourceCard({
 }: DataSourceCardProps) {
   const theme = useTheme2();
   const styles = getStyles(theme, ds.meta.builtIn);
-  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem([
-    {
-      uid: ds.uid,
-      type: ds.type,
-      apiVersion: ds.apiVersion,
-      name: ds.name,
-      meta: ds.meta,
-      isDefault: ds.isDefault ?? false,
-    },
-  ]);
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem([ds]);
   const isDefaultDataSource = defaultDataSource?.uid === ds.uid;
 
   return (

@@ -260,6 +260,7 @@ func TestValidateAuthzOptions(t *testing.T) {
 		"iam.grafana.app/teams",
 		"iam.grafana.app/serviceaccounts",
 		"plugin.ext.grafana.app/widgets",
+		"grafana-example-app/widgets",
 	} {
 		t.Run("rejects already enforced exemption "+value, func(t *testing.T) {
 			err := ValidateAuthzOptions(AuthzOptions{ExemptResources: []string{value}})
@@ -297,6 +298,9 @@ func TestAuthzLimitedClientExemptionGate(t *testing.T) {
 	}{
 		{"disabled enforces allowlist resource", AuthzOptions{}, "dashboard.grafana.app", "dashboards", true},
 		{"disabled enforces extension group", AuthzOptions{}, "plugin.ext.grafana.app", "widgets", true},
+		{"disabled enforces app plugin group", AuthzOptions{}, "grafana-example-app", "widgets", true},
+		{"disabled bypasses dotted app suffix", AuthzOptions{}, "example.grafana-app", "widgets", false},
+		{"disabled bypasses bare app suffix", AuthzOptions{}, "-app", "widgets", false},
 		{"disabled bypasses unknown resource", AuthzOptions{}, "example.grafana.app", "widgets", false},
 		{"disabled ignores exemptions", AuthzOptions{ExemptResources: exempted.ExemptResources}, "example.grafana.app", "widgets", false},
 		{"enabled without exemptions enforces unknown resource", AuthzOptions{ExemptionEnabled: true}, "example.grafana.app", "widgets", true},

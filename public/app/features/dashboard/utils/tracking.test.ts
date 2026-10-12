@@ -1,10 +1,20 @@
 import { getDashboardModel } from 'test/helpers/getDashboardModel';
 
 import * as runtime from '@grafana/runtime';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { trackDashboardLoaded } from './tracking';
 
 describe('trackDashboardLoaded', () => {
+  beforeEach(() => {
+    // reportDashboardInteraction stamps isDynamicDashboard from the flag, which defaults on.
+    setTestFlags({ dashboardNewLayouts: false });
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+
   it('should report dashboard_loaded interaction with correct parameters', () => {
     const dashboardJSON = {
       uid: 'dashboard-123',

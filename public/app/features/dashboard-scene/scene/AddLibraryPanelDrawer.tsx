@@ -1,5 +1,4 @@
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import {
   type SceneComponentProps,
   SceneObjectBase,
@@ -9,6 +8,7 @@ import {
 } from '@grafana/scenes';
 import { type LibraryPanel } from '@grafana/schema';
 import { Drawer } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { LibraryPanelsSearch } from 'app/features/library-panels/components/LibraryPanelsSearch/LibraryPanelsSearch';
 
 import { replacePanel } from '../actions/panel/replacePanel';
@@ -43,8 +43,7 @@ export class AddLibraryPanelDrawer extends SceneObjectBase<AddLibraryPanelDrawer
       const layoutItem = panelToReplace.parent;
 
       if (layoutItem && isDashboardLayoutItem(layoutItem)) {
-        // eslint-disable-next-line @grafana/no-config-feature-toggles -- blocked by #133263
-        if (config.featureToggles.dashboardNewLayouts) {
+        if (isDashboardNewLayoutsEnabled()) {
           replacePanel({ source: layoutItem, oldPanel: panelToReplace, newPanel });
         } else {
           // This else block is needed only for old architecture which reuses the same component

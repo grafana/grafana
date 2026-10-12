@@ -42,6 +42,9 @@ export function getConnectionFormDefaults(type: string | undefined, data?: Conne
       clientSecret: '',
       workspace: data?.spec?.bitbucket?.workspace || '',
       serverUrl: data?.spec?.githubEnterpriseOAuth?.serverUrl || (type === 'gitlabOAuth' && data?.spec?.url) || '',
+      authURL: data?.spec?.gitOAuth?.authURL || '',
+      tokenURL: data?.spec?.gitOAuth?.tokenURL || '',
+      scopes: data?.spec?.gitOAuth?.scopes ?? [],
     };
   }
 
@@ -102,6 +105,15 @@ export function connectionSpecFromForm(form: ConnectionFormData): ConnectionSpec
           : {}),
         ...(form.type === 'bitbucketOAuth' ? { bitbucket: { workspace: form.workspace ?? '' } } : {}),
         ...(form.type === 'gitlabOAuth' && form.serverUrl ? { url: form.serverUrl } : {}),
+        ...(form.type === 'gitOAuth'
+          ? {
+              gitOAuth: {
+                authURL: form.authURL ?? '',
+                tokenURL: form.tokenURL ?? '',
+                scopes: form.scopes ?? [],
+              },
+            }
+          : {}),
       };
   }
 }

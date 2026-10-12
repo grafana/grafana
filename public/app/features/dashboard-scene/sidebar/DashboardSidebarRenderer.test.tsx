@@ -1,11 +1,12 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { render } from 'test/test-utils';
 
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils, setPluginLinksHook, config } from '@grafana/runtime';
+import { setPluginImportUtils, setPluginLinksHook } from '@grafana/runtime';
 import { SceneGridLayout, SceneTimeRange, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
 import { DashboardScene } from '../scene/DashboardScene';
@@ -78,7 +79,7 @@ export function buildTestScene() {
 
 describe('DashboardSidebarRenderer', () => {
   beforeEach(() => {
-    config.featureToggles.dashboardNewLayouts = true;
+    setTestFlags({ dashboardNewLayouts: true });
     // Sidebar state is persisted to localStorage — clear between tests so each test
     // starts with the default visibility/dock state.
     window.localStorage.clear();
@@ -87,6 +88,8 @@ describe('DashboardSidebarRenderer', () => {
   afterEach(() => {
     jest.clearAllMocks();
     window.localStorage.clear();
+    cleanup();
+    setTestFlags({});
   });
 
   it('Should render sidebar', async () => {

@@ -173,7 +173,7 @@ const searchSelector = (term: string) => {
   return `{__name__=~"(?i).*${literal.replace(/[\\"]/g, '\\$&')}.*"}`;
 };
 
-function toMetricInfos(names: string[], meta: PromMetricsMetadata): MetricInfo[] {
+function toMetricInfos(names: string[], meta: PromMetricsMetadata, catalog: ReadonlySet<string>): MetricInfo[] {
   return names.map<MetricInfo>((name) => {
     // Metadata is keyed by the metric family, so a classic histogram or summary series has none of
     // its own; fall back to its family's. Own entry first, in case a metric really is named with
@@ -181,7 +181,7 @@ function toMetricInfos(names: string[], meta: PromMetricsMetadata): MetricInfo[]
     const entry = meta[name] ?? meta[baseMetricName(name)];
     return {
       name,
-      type: deriveMetricType(name, entry),
+      type: deriveMetricType(name, entry, catalog),
       help: entry?.help,
       unit: entry?.unit,
     };
@@ -200,7 +200,7 @@ export function fetchCatalog(dsRef: DataSourceRef, timeRange: TimeRange): Promis
     // from a complete list, so both are treated as truncated.
     const capsNames = datasource.hasLabelsMatchAPISupport() && !datasource.hasSearchApiSupport();
     return {
-      metrics: toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {}),
+      metrics: toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {}, new Set(names)),
       // A capped request is answered with exactly `limit` names; zero means uncapped. With lookups
       // disabled nothing was fetched, and searching would send the requests the setting forbids.
       truncated: !datasource.lookupsDisabled && (!capsNames || (limit > 0 && names.length >= limit)),
@@ -226,12 +226,15 @@ export function searchCatalog(dsRef: DataSourceRef, timeRange: TimeRange, term: 
   }
   const result = once(searchCache, key, async () => {
     const lp = await getLP(dsRef);
-    const [names] = await Promise.all([
+    const [names, catalog] = await Promise.all([
       lp.queryLabelValues(timeRange, '__name__', searchSelector(term)),
       // Loads the metadata the rows are typed from; already cached whenever the catalog is open.
       fetchCatalog(dsRef, timeRange),
     ]);
-    return toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {});
+    // A term like `sum` matches `foo_sum` but not the `foo_bucket` that types it, so the loaded
+    // catalog supplies the rest of the family.
+    const known = new Set([...names, ...catalog.metrics.map((metric) => metric.name)]);
+    return toMetricInfos(names, lp.retrieveMetricsMetadata() ?? {}, known);
   });
   // A `Map` iterates in insertion order, so the first key is the least recently used search.
   if (searchCache.size > SEARCH_CACHE_MAX_ENTRIES) {
