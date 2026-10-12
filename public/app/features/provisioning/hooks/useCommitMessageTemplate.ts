@@ -27,7 +27,7 @@ interface UseCommitMessageTemplateArgs {
  * Takes plain values rather than the form object so it stays free of generics and type assertions.
  *
  * `locked`: the field is enforced/read-only, so render `message` instead of binding it to form state.
- * `message`: the resolved commit message (with the `Grafana-saved-by` trailer) to commit.
+ * `message`: the resolved commit message to commit.
  */
 export function useCommitMessageTemplate({
   repository,

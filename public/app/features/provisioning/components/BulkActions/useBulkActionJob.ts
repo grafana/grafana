@@ -13,7 +13,7 @@ export type ResourceRef = Required<GeneratedResourceRef>;
 
 export interface DeleteJobSpec {
   action: 'delete';
-  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  // Commit message for the resulting git commit.
   message?: string;
   delete: {
     ref?: string;
@@ -23,7 +23,7 @@ export interface DeleteJobSpec {
 
 export interface MoveJobSpec {
   action: 'move';
-  // Commit message for the resulting git commit. Carries the Grafana-saved-by trailer.
+  // Commit message for the resulting git commit.
   message?: string;
   move: {
     ref?: string;

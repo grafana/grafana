@@ -12,7 +12,6 @@ import { useGetResourceRepositoryView } from '../../hooks/useGetResourceReposito
 import { type StatusInfo } from '../../types';
 import { type BaseProvisionedFormData } from '../../types/form';
 import { useGetActiveJob } from '../../useGetActiveJob';
-import { withSavedByTrailer } from '../../utils/currentUser';
 import { ProvisionedFormGate } from '../ProvisionedFormGate';
 import { ResourceEditFormSharedFields } from '../Shared/ResourceEditFormSharedFields';
 import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../defaults';
@@ -123,15 +122,11 @@ function FixFolderMetadataForm({
   const handleSubmitForm = async ({ ref }: BaseProvisionedFormData) => {
     onSubmitError(undefined);
     try {
-      // The Grafana-saved-by trailer rides through JobSpec.Message to the
-      // resulting git commit.
       const result = await createJob({
         name: repositoryName,
         jobSpec: {
           action: 'fixFolderMetadata',
-          message: withSavedByTrailer(
-            t('provisioning.fix-folder-metadata-drawer.default-commit-message', 'Fix folder metadata')
-          ),
+          message: t('provisioning.fix-folder-metadata-drawer.default-commit-message', 'Fix folder metadata'),
           fixFolderMetadata: { ref },
         },
       }).unwrap();

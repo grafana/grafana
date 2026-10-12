@@ -1,7 +1,6 @@
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { appendSavedByTrailer, getSingleResourceCommitMessage, renderCommitMessage } from './commitMessage';
+import { getSingleResourceCommitMessage, renderCommitMessage } from './commitMessage';
 
 const repoWithTemplate = (template: string | undefined): RepositoryView => ({
   name: 'r',
@@ -131,59 +130,6 @@ describe('renderCommitMessage', () => {
   });
 });
 
-describe('appendSavedByTrailer', () => {
-  it('appends a trailer with name and login', () => {
-    expect(appendSavedByTrailer('Save dashboard: Latency', userVars)).toBe(
-      'Save dashboard: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)'
-    );
-  });
-
-  it('skips the trailer when user attribution is enabled', () => {
-    setTestFlags({ 'provisioning.userAttribution': true });
-    expect(appendSavedByTrailer('Save dashboard: Latency', userVars)).toBe('Save dashboard: Latency');
-    setTestFlags({});
-  });
-
-  it('uses login alone when name is missing', () => {
-    expect(appendSavedByTrailer('msg', { userLogin: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
-  });
-
-  it('uses name alone when login is missing', () => {
-    expect(appendSavedByTrailer('msg', { userName: 'Ada Lovelace' })).toBe('msg\n\nGrafana-saved-by: Ada Lovelace');
-  });
-
-  it('avoids duplicating the parens when name equals login', () => {
-    expect(appendSavedByTrailer('msg', { userName: 'ada', userLogin: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
-  });
-
-  it('returns the message unchanged when there is no user info', () => {
-    expect(appendSavedByTrailer('msg', {})).toBe('msg');
-    expect(appendSavedByTrailer('msg', { userName: '   ', userLogin: '' })).toBe('msg');
-  });
-
-  it('does not append a duplicate trailer if one is already present', () => {
-    const existing = 'Save dashboard: X\n\nGrafana-saved-by: someone';
-    expect(appendSavedByTrailer(existing, userVars)).toBe(existing);
-  });
-
-  it('trims trailing whitespace before appending', () => {
-    expect(appendSavedByTrailer('msg\n\n\n', userVars)).toBe('msg\n\nGrafana-saved-by: Ada Lovelace (ada)');
-  });
-
-  it('collapses newlines in user identity fields to prevent trailer injection', () => {
-    expect(
-      appendSavedByTrailer('Save dashboard: X', {
-        userName: 'Ada\nSigned-off-by: forge\n',
-        userLogin: 'ada\nGrafana-saved-by: someone-else',
-      })
-    ).toBe('Save dashboard: X\n\nGrafana-saved-by: Ada Signed-off-by: forge (ada Grafana-saved-by: someone-else)');
-  });
-
-  it('treats a name that is only line breaks as missing', () => {
-    expect(appendSavedByTrailer('msg', { userName: '\n\n', userLogin: 'ada' })).toBe('msg\n\nGrafana-saved-by: ada');
-  });
-});
-
 describe('getSingleResourceCommitMessage', () => {
   const baseVars = {
     action: 'update' as const,
@@ -192,7 +138,7 @@ describe('getSingleResourceCommitMessage', () => {
     title: 'Latency',
   };
 
-  it('uses a non-empty user comment verbatim (plus trailer)', () => {
+  it('uses a non-empty user comment verbatim and does not append a saved-by trailer', () => {
     expect(
       getSingleResourceCommitMessage({
         comment: 'My commit message',
@@ -200,7 +146,7 @@ describe('getSingleResourceCommitMessage', () => {
         ...baseVars,
         ...userVars,
       })
-    ).toBe('My commit message\n\nGrafana-saved-by: Ada Lovelace (ada)');
+    ).toBe('My commit message');
   });
 
   it('trims surrounding whitespace from the comment', () => {
@@ -244,7 +190,7 @@ describe('getSingleResourceCommitMessage', () => {
     ).toBe('Create dashboard: Latency');
   });
 
-  it('appends the Grafana-saved-by trailer to the default message', () => {
+  it('does not append a saved-by trailer to the default message', () => {
     expect(
       getSingleResourceCommitMessage({
         comment: undefined,
@@ -252,10 +198,10 @@ describe('getSingleResourceCommitMessage', () => {
         ...baseVars,
         ...userVars,
       })
-    ).toBe('Save dashboard: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)');
+    ).toBe('Save dashboard: Latency');
   });
 
-  it('appends the trailer to a template-rendered message', () => {
+  it('does not append a saved-by trailer to a template-rendered message', () => {
     expect(
       getSingleResourceCommitMessage({
         comment: '',
@@ -263,10 +209,10 @@ describe('getSingleResourceCommitMessage', () => {
         ...baseVars,
         ...userVars,
       })
-    ).toBe('feat: Latency\n\nGrafana-saved-by: Ada Lovelace (ada)');
+    ).toBe('feat: Latency');
   });
 
-  it('does not duplicate the trailer when the template already includes it', () => {
+  it('keeps a trailer that the template already renders', () => {
     expect(
       getSingleResourceCommitMessage({
         comment: '',

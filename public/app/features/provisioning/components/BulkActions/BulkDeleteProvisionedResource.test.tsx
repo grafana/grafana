@@ -519,7 +519,7 @@ describe('BulkDeleteProvisionedResource', () => {
       );
     });
 
-    it('appends the saved-by trailer exactly once', async () => {
+    it('does not append a saved-by trailer when the acting user is known', async () => {
       jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
       const trailerRepository: RepositoryView = {
         ...templateRepository,
@@ -530,9 +530,10 @@ describe('BulkDeleteProvisionedResource', () => {
       await screen.findByRole('button', { name: /Delete/i });
       await user.click(screen.getByRole('button', { name: /Delete/i }));
 
-      const jobSpec = mockCreateBulkJob.mock.calls[0][1];
-      expect(jobSpec.message).toContain('chore: delete');
-      expect(jobSpec.message.match(/Grafana-saved-by:/g)).toHaveLength(1);
+      expect(mockCreateBulkJob).toHaveBeenCalledWith(
+        trailerRepository,
+        expect.objectContaining({ message: 'chore: delete' })
+      );
     });
   });
 });

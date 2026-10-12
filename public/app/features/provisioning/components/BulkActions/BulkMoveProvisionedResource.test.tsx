@@ -702,7 +702,7 @@ describe('BulkMoveProvisionedResource', () => {
       );
     });
 
-    it('appends the saved-by trailer exactly once', async () => {
+    it('does not append a saved-by trailer when the acting user is known', async () => {
       jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
       const trailerRepository: RepositoryView = {
         ...templateRepository,
@@ -713,9 +713,10 @@ describe('BulkMoveProvisionedResource', () => {
       await user.click(screen.getByTestId('folder-picker'));
       await user.click(screen.getByRole('button', { name: /Move/i }));
 
-      const jobSpec = mockCreateBulkJob.mock.calls[0][1];
-      expect(jobSpec.message).toContain('chore: move');
-      expect(jobSpec.message.match(/Grafana-saved-by:/g)).toHaveLength(1);
+      expect(mockCreateBulkJob).toHaveBeenCalledWith(
+        trailerRepository,
+        expect.objectContaining({ message: 'chore: move' })
+      );
     });
   });
 });

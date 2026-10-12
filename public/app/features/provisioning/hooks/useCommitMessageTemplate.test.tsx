@@ -196,7 +196,7 @@ describe('useCommitMessageTemplate', () => {
       expect(textarea).toHaveAttribute('readonly');
     });
 
-    it('appends the saved-by trailer exactly once even when the template already includes one', async () => {
+    it('renders a trailer that the template already includes exactly once', async () => {
       const repository = makeRepo({
         singleResourceMessageTemplate: 'chore: {{action}}\n\nGrafana-saved-by: {{userName}}',
       });
