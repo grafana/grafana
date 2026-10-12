@@ -55,7 +55,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   Don't reintroduce a filter on which groups the router may serve. Which groups are routed is decided
   by the configured sources.
 - **A plugin backend serves only plugin groups and the routable core groups.** `newPluginBackend`
-  accepts a `*.ext.grafana.app` group or one of the hardcoded `routableCoreGroups`, from any source.
+  accepts a `*.ext.grafana.app` group, the plugin's own app ID (`*-app`), or one of the hardcoded
+  `routableCoreGroups`, from any source. Only the plugin with that ID may serve a `*-app` group.
   Every other core group is refused, so no plugin can claim it. Any plugin may shadow the
   `routableCoreGroups` on purpose: they are low risk, and nothing serious happens if a plugin
   misbehaves in them. Don't flag that as a vulnerability. Add a group only if the same holds for

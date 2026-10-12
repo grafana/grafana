@@ -14,12 +14,13 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 )
 
-// Unified storage enforces RBAC on every group ending in .ext.grafana.app, and
-// a group it holds no static mapping for is checked as "stack role AND folder
-// permission": the caller must hold the scopeless <group>/<resource>:<verb>
-// action, and their permission on the object's folder then decides. Nothing
-// else grants that action -- a plugin cannot even declare it in plugin.json,
-// since plugin actions must carry the plugin id as their prefix -- so these
+// Unified storage enforces RBAC on every plugin manifest group (see
+// isPluginManifestGroup), and a group it holds no static mapping for is checked
+// as "stack role AND folder permission": the caller must hold the scopeless
+// <group>/<resource>:<verb> action, and their permission on the object's folder
+// then decides. Nothing else grants that action -- a plugin cannot even declare
+// it in plugin.json, since plugin actions must start with "<plugin id>:" or
+// "<plugin id>.", even when the group is the plugin id -- so these
 // registrations are what make a plugin's kinds reachable at all.
 
 var (
