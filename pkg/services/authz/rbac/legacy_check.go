@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/authlib/types"
 
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 )
@@ -18,11 +17,10 @@ import (
 // Evaluation failures are returned as deny-with-error to avoid fail-open.
 func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRequest) (*authzextv1.LegacyCheckResponse, error) {
 	// TODO: Complete in subsequent PRs:
-	//   - ANY/ALL evaluators: nesting, empty expressions and short-circuit evaluation.
+	//   - ANY/ALL execution: multi-action permission loading and empty-permission denial.
 	//   - Scope resolution: inheritance, MutateScopes after denial, errors and WithoutResolvers.
 	//   - Resolver caching: tenant isolation, bypass and invalidation.
 	//   - Permissions: NoOrgID globals, contextual team grants, SharedWithMe and empty-permission denial.
-	//   - Expression validation: tree limits for composite expressions.
 	ns, err := validateNamespace(ctx, req.GetNamespace())
 	if err != nil {
 		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
@@ -33,9 +31,15 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 	}
 	ctx = request.WithNamespace(ctx, ns.Value)
 
+	evaluator, err := convertLegacyExpression(req.GetExpression())
+	if err != nil {
+		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: err.Error()}, nil
+	}
 	permission := req.GetExpression().GetPermission()
-	if permission == nil || permission.GetAction() == "" {
-		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: "a permission expression with a non-empty action is required"}, nil
+	if permission == nil {
+		// Composite evaluation also needs complete permission loading and the
+		// AccessControl empty-permission guard before it can be enabled.
+		return &authzextv1.LegacyCheckResponse{Allowed: false, Error: "composite legacy expressions are not supported yet"}, nil
 	}
 
 	scopes, err := s.getLegacyIdentityScopes(ctx, ns, idType, userUID, permission.GetAction(), req.GetSkipCache())
@@ -48,9 +52,7 @@ func (s *Service) LegacyCheck(ctx context.Context, req *authzextv1.LegacyCheckRe
 		permissions[permission.GetAction()] = scopes
 	}
 
-	allowed := accesscontrol.
-		EvalPermission(permission.GetAction(), permission.GetScopes()...).
-		Evaluate(permissions)
+	allowed := evaluator.Evaluate(permissions)
 
 	return &authzextv1.LegacyCheckResponse{Allowed: allowed}, nil
 }
