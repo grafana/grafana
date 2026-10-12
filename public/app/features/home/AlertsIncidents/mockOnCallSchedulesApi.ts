@@ -77,15 +77,20 @@ export interface ScheduleListCall {
   page: number;
 }
 
-function listFilter(params: URLSearchParams): string {
+/** Which list a request asks for; undefined for an unfiltered (whole-org) request, which the homepage never makes. */
+function listFilter(params: URLSearchParams): string | undefined {
   const team = params.get('team');
-  return team !== null ? `team:${team}` : 'mine';
+  if (team !== null) {
+    return `team:${team}`;
+  }
+  return params.get('mine') === 'true' ? 'mine' : undefined;
 }
 
 /**
- * Answers the schedule list. `?mine=true` serves `mine`; `?team=<id>` serves `byTeam[id]` (missing team → []).
- * Pages are sliced at `perpage`; `totalPages` (default: computed) lets a test claim more pages than the data holds.
- * Returns `{ filter, page }` per call.
+ * Answers the schedule list. `?mine=true` serves `mine`; `?team=<id>` serves `byTeam[id]` (missing team → []);
+ * a request with neither gets a 400, so dropping the filter in production fails loudly instead of being served
+ * the personal fixture. Pages are sliced at `perpage`; `totalPages` (default: computed) lets a test claim more
+ * pages than the data holds. Returns `{ filter, page }` per call.
  */
 export function mockSchedules({
   mine = [],
@@ -100,11 +105,15 @@ export function mockSchedules({
   server.use(
     http.get(SCHEDULES_PATH, ({ request }) => {
       const params = new URL(request.url).searchParams;
+      const filter = listFilter(params);
+      if (filter === undefined) {
+        return HttpResponse.json({ detail: 'unfiltered schedule list' }, { status: 400 });
+      }
       const page = Number(params.get('page') ?? 1);
       const perpage = Number(params.get('perpage') ?? SCHEDULE_PAGE_SIZE);
-      calls.push({ filter: listFilter(params), page });
+      calls.push({ filter, page });
       const team = params.get('team');
-      const all = team !== null ? (byTeam[team] ?? []) : mine;
+      const all = team === null ? mine : (byTeam[team] ?? []);
       return HttpResponse.json({
         count: all.length,
         next: null,

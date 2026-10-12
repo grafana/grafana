@@ -147,6 +147,23 @@ describe('AlertIncidentTabs On call tab', () => {
     ]);
   });
 
+  it('refreshes your shifts together with the rosters each time the tab opens', async () => {
+    const { eventCalls, listCalls } = mockOnCall({ byTeam: TEAM_SCHEDULES });
+    const { user } = render(<AlertIncidentTabsWithData />);
+
+    await user.click(await screen.findByRole('tab', { name: /on call/i }));
+    expect(await screen.findByText('Backend')).toBeInTheDocument();
+    const eventCallsAfterFirstOpen = eventCalls.length;
+
+    await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
+    await user.click(screen.getByRole('tab', { name: /on call/i }));
+
+    // Cached rows stay on screen while both sources refetch.
+    expect(screen.getByText('Backend')).toBeInTheDocument();
+    await waitFor(() => expect(eventCalls).toHaveLength(eventCallsAfterFirstOpen + 1));
+    expect(listCalls.filter((call) => call.filter === 'mine')).toHaveLength(2);
+  });
+
   it('lists your schedules first, then team schedules with someone on call', async () => {
     mockOnCall({ byTeam: TEAM_SCHEDULES });
     const { user } = render(<AlertIncidentTabsWithData />);

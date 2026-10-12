@@ -1,6 +1,6 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
-import { useInterval } from 'react-use';
+import { useInterval, useUpdateEffect } from 'react-use';
 
 import { dateTimeFormat, getTimeZone, getTimeZoneInfo } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -78,8 +78,11 @@ const isPending = (query: { isFetching: boolean; currentData?: unknown }) =>
  * Everything the homepage "On call" view shows: the user's own shifts in the next 30 days and the schedules of
  * the teams those belong to, with who is on call right now. The user's shifts load eagerly (the header badge
  * depends on them); the schedule lists load only while `loadRosters` is true, since they can cost several
- * requests per team and most visitors never open the tab. Every opening refetches while any cached roster stays
- * on screen.
+ * requests per team and most visitors never open the tab.
+ *
+ * Refresh policy: both sources refetch on homepage mount and each time the tab opens, while anything cached
+ * stays on screen. Between refreshes only the clock moves: the user's shift labels and the badge follow it;
+ * rosters are the snapshot from the last refresh. No polling, like the alerts and incidents tabs.
  */
 export function useOnCallSchedules({ loadRosters }: { loadRosters: boolean }): OnCallSchedulesData {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
@@ -102,6 +105,13 @@ export function useOnCallSchedules({ loadRosters }: { loadRosters: boolean }): O
   const schedules = onCallApi.useGetRelatedSchedulesQuery(ready && loadRosters ? { pluginId } : skipToken, {
     refetchOnMountOrArgChange: true,
   });
+  // The rosters refetch on their own when the tab opens (their args go from skipped to set); the shifts need a
+  // nudge, or a roster fetched now could contradict a shift fetched at page load after an override or a swap.
+  useUpdateEffect(() => {
+    if (loadRosters && !events.isUninitialized) {
+      events.refetch();
+    }
+  }, [loadRosters]);
 
   const shifts = useMemo(
     () => new Map((events.currentData ?? []).map((schedule) => [schedule.id, nextShift(schedule.events, now)])),
