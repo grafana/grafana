@@ -2999,7 +2999,7 @@
       },
       "toggle": {
         "use-new-experience": "使用新體驗",
-        "view-previous-experience": "還原為之前的體驗"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "未知的規則類型",
       "checking-data-sources_other": "",
@@ -3017,6 +3017,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "全部收闔",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "展開全部"
     },
     "rule-list-v2": {
@@ -8930,8 +8935,8 @@
     },
     "show-all-spans": "顯示所有跨度",
     "signal-card": {
-      "collapse-aria-label": "收合查詢 {{refId}} 的資料來源瀏覽器",
-      "expand-aria-label": "展開查詢 {{refId}} 的資料來源瀏覽器",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "跳至查詢 {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13055,6 +13060,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "取消",
       "confirm-discard": "捨棄",
@@ -13136,6 +13146,7 @@
       "redo-action": "重做：{{action}}",
       "remove-query": "移除查詢",
       "remove-tag": "移除標記",
+      "rename": "",
       "reset-cell-time-range": "使用筆記本時間範圍",
       "select-query": "選取查詢項目",
       "set-cell-time-range": "設定面板時間範圍",
@@ -17600,15 +17611,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "對框架中的欄位進行排序。"
       },
+      "drag-handle-label": "",
       "label-field": "欄位",
       "label-reverse": "反向",
       "name": {
         "sort-by": "排序方式"
       },
-      "placeholder-select-field": "選擇欄位"
+      "placeholder-select-field": "選擇欄位",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

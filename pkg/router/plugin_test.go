@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/attribute"
@@ -198,6 +199,23 @@ func TestPluginBackendLoad(t *testing.T) {
 		require.NoError(t, json.Unmarshal(res.Body.Bytes(), &group))
 		require.Equal(t, backend.Group().Versions, group.Versions)
 		require.Equal(t, backend.Group().PreferredVersion, group.PreferredVersion)
+	})
+	t.Run("authenticates a core app, which has no plugin ID, by its API group", func(t *testing.T) {
+		core := definition.PluginDefinition{Manifests: []*app.ManifestData{{
+			AppName: "playlist", Group: "playlist.grafana.app",
+			Versions: []app.ManifestVersion{{Name: "v1", Served: true}},
+		}}}
+		backend, err := testPluginBackend(t, core, func(context.Context, string) (plugins.Client, appclientv3.Client, error) {
+			return nil, struct{ appclientv3.Client }{}, nil
+		}, PluginDependencies{
+			Unified:        &resource.MockResourceClient{},
+			AccessControl:  &actest.FakeAccessControl{ExpectedEvaluate: true},
+			TokenExchanger: authn.NewStaticTokenExchanger("token"),
+		})
+		require.NoError(t, err)
+		handler, err := backend.Load(t.Context())
+		require.NoError(t, err)
+		t.Cleanup(handler.(interface{ Destroy() }).Destroy)
 	})
 	t.Run("propagates client errors", func(t *testing.T) {
 		failure := errors.New("plugin unavailable")
