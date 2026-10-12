@@ -128,11 +128,14 @@ export function useUserOverview(uid: string) {
   const profile = profileQuery.currentData;
   const resource = iam.currentData;
   const login = profile?.login ?? resource?.spec.login;
-  const members = useGetOrgUsersForCurrentOrgQuery(
-    login && contextSrv.hasPermission(AccessControlAction.OrgUsersRead) ? { query: login, limit: 100 } : skipToken
-  );
+  const canSearchMembers = !!login && contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
+  const members = useGetOrgUsersForCurrentOrgQuery(canSearchMembers ? { query: login, limit: 100 } : skipToken);
   const member = members.currentData?.find((member) => member.uid === uid);
-  const orgs = useGetUserOrgListQuery(profile && !useIAM && !member ? { userId: uid } : skipToken);
+  const orgs = useGetUserOrgListQuery(
+    profile && (!enabled || discovery.currentData) && !useIAM && !member && (!canSearchMembers || members.isSuccess)
+      ? { userId: uid }
+      : skipToken
+  );
   const user: OverviewUser | undefined =
     (!enabled || discovery.currentData) && !discovery.error && !iam.error && (profile || resource)
       ? {

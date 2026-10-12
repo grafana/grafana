@@ -593,6 +593,37 @@ it('supports IAM user reads alongside legacy team membership reads', async () =>
   expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
 });
 
+it.each([true, false])('waits for organization membership before the org-list fallback (member: %s)', async (found) => {
+  config.featureToggles.kubernetesUsersApi = false;
+  const orgRequests = jest.fn();
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const memberRequests = jest.fn();
+  server.use(
+    http.get('/api/org/users', async () => {
+      memberRequests();
+      await pending;
+      return HttpResponse.json(found ? [{ ...profile, role: 'Viewer', lastSeenAt: '1970-01-01T00:00:00Z' }] : []);
+    }),
+    http.get('/api/users/alice/orgs', () => {
+      orgRequests();
+      return HttpResponse.json([]);
+    })
+  );
+  setup();
+  await waitFor(() => expect(memberRequests).toHaveBeenCalledTimes(1));
+  expect(orgRequests).not.toHaveBeenCalled();
+  release();
+  if (found) {
+    await screen.findByText('Never');
+    expect(orgRequests).not.toHaveBeenCalled();
+  } else {
+    await waitFor(() => expect(orgRequests).toHaveBeenCalledTimes(1));
+  }
+});
+
 it('preserves the legacy organization member last-active timestamp', async () => {
   config.featureToggles.kubernetesUsersApi = false;
   server.use(
