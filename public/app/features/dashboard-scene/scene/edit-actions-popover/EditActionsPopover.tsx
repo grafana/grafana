@@ -1,4 +1,4 @@
-import { css, cx, keyframes } from '@emotion/css';
+import { css, keyframes } from '@emotion/css';
 import {
   autoUpdate,
   flip,
@@ -47,8 +47,6 @@ type EditActionsPopoverProps = {
   shiftPadding?: () => number | { right: number };
   /** Show the popover outside of edit mode too. */
   showOutsideEditMode?: boolean;
-  /** Class added to the reference element (the wrapped child). */
-  referenceClassName?: string;
 };
 
 /**
@@ -64,7 +62,6 @@ export function EditActionsPopover({
   zIndex,
   shiftPadding,
   showOutsideEditMode = false,
-  referenceClassName,
 }: EditActionsPopoverProps) {
   const theme = useTheme2();
   const styles = useStyles2(getPopoverStyles);
@@ -124,14 +121,9 @@ export function EditActionsPopover({
     []
   );
 
-  const referenceProps = getReferenceProps({ ref: mergedRef });
-  if (referenceClassName) {
-    referenceProps.className = cx(children.props.className, referenceClassName);
-  }
-
   return (
     <>
-      {cloneElement(children, referenceProps)}
+      {cloneElement(children, getReferenceProps({ ref: mergedRef }))}
       {isEnabled && isOpen && content && (
         <Portal root={portalRoot?.()} zIndex={zIndex ?? theme.zIndex.portal}>
           <div ref={refs.setFloating} style={floatingStyles} className={styles.popover} {...getFloatingProps()}>

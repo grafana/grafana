@@ -1,12 +1,10 @@
-import { css } from '@emotion/css';
 import { useCallback, type JSX } from 'react';
 import { useAsync } from 'react-use';
 
-import { type GrafanaTheme2, locationUtil } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
+import { locationUtil } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { type VizPanel } from '@grafana/scenes';
+import { type VizPanel, VizPanelHeaderMenuScope } from '@grafana/scenes';
 import { Dropdown, IconButton, useStyles2, useTheme2 } from '@grafana/ui';
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 
@@ -41,7 +39,6 @@ export function PanelHoverActionsWrapper({
   children: JSX.Element;
 }) {
   const theme = useTheme2();
-  const styles = useStyles2(getStyles);
   const isPopoverSupported = useHoverPopoverSupported();
   const { getPortalRoot, getSidebarShiftPadding } = useEditActionsLayout();
   const root = panel.getRoot();
@@ -58,18 +55,20 @@ export function PanelHoverActionsWrapper({
     isEditing && !viewPanel ? <PanelHoverEditActions panel={panel} /> : <PanelHoverViewActions panel={panel} />;
 
   return (
-    <EditActionsPopover
-      content={content}
-      disabled={!isEnabled}
-      showOutsideEditMode
-      placement="top-end"
-      portalRoot={getPortalRoot}
-      zIndex={theme.zIndex.dropdown}
-      shiftPadding={getSidebarShiftPadding}
-      referenceClassName={isEnabled ? styles.hideHeaderMenu : undefined}
-    >
-      {children}
-    </EditActionsPopover>
+    // The popover's "more" replaces the header menu button on hover; keyboard focus still reveals that button
+    <VizPanelHeaderMenuScope hideOnHover={isEnabled}>
+      <EditActionsPopover
+        content={content}
+        disabled={!isEnabled}
+        showOutsideEditMode
+        placement="top-end"
+        portalRoot={getPortalRoot}
+        zIndex={theme.zIndex.dropdown}
+        shiftPadding={getSidebarShiftPadding}
+      >
+        {children}
+      </EditActionsPopover>
+    </VizPanelHeaderMenuScope>
   );
 }
 
@@ -250,17 +249,3 @@ function PanelMenuButton({ panel }: { panel: VizPanel }) {
     </Dropdown>
   );
 }
-
-const getStyles = (theme: GrafanaTheme2) => {
-  const menuButton = `[data-testid^="${selectors.components.Panels.Panel.menu('')}"], [data-testid="panel-menu-button"]`;
-
-  return {
-    // The popover's "more" button replaces the header menu button for mouse users. Keyboard users can't open the
-    // hover popover, so the header button comes back while anything in the panel has keyboard focus.
-    hideHeaderMenu: css({
-      [`&:not(:has(:focus-visible)) :is(${menuButton})`]: {
-        display: 'none',
-      },
-    }),
-  };
-};

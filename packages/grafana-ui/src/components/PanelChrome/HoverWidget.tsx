@@ -18,9 +18,22 @@ interface Props {
   dragClass?: string;
   onDragStart?: (event: React.PointerEvent<HTMLDivElement>) => void;
   onOpenMenu?: () => void;
+  /** Only show the menu while the panel has keyboard focus, see PanelChrome's hideMenuOnHover */
+  hideMenuOnHover?: boolean;
+  hasContentBesidesMenu?: boolean;
 }
 
-export function HoverWidget({ menu, title, dragClass, children, offset = -32, onOpenMenu, onDragStart }: Props) {
+export function HoverWidget({
+  menu,
+  title,
+  dragClass,
+  children,
+  offset = -32,
+  onOpenMenu,
+  onDragStart,
+  hideMenuOnHover = false,
+  hasContentBesidesMenu = true,
+}: Props) {
   const styles = useStyles2(getStyles);
   const draggableRef = useRef<HTMLDivElement>(null);
   const selectors = e2eSelectors.components.Panels.Panel.HoverWidget;
@@ -43,7 +56,8 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
 
   return (
     <div
-      className={cx(styles.container, 'show-on-hover')}
+      // A widget holding only a menu that hover shouldn't reveal would show up empty on hover
+      className={cx(styles.container, hideMenuOnHover && !hasContentBesidesMenu ? 'show-on-focus' : 'show-on-hover')}
       style={{ top: offset === 0 ? -1 : offset }}
       data-testid={selectors.container}
     >
@@ -64,7 +78,7 @@ export function HoverWidget({ menu, title, dragClass, children, offset = -32, on
           menu={menu}
           title={title}
           placement="bottom"
-          menuButtonClass={styles.menuButton}
+          menuButtonClass={cx(styles.menuButton, hideMenuOnHover && 'show-on-focus')}
           onOpenMenu={onOpenMenu}
         />
       )}
