@@ -27,6 +27,7 @@ import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
 import { type DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
+import { markViewPanelExit } from '../utils/viewPanelTracking';
 
 import { type DashboardScene } from './DashboardScene';
 import { GoToSnapshotOriginButton } from './GoToSnapshotOriginButton';
@@ -285,6 +286,7 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => (
       <Button
         onClick={() => {
+          markViewPanelExit('toolbar_back');
           locationService.partial({ viewPanel: null, editPanel: null });
         }}
         tooltip=""

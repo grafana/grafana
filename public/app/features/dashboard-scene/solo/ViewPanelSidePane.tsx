@@ -19,6 +19,7 @@ import { importPanelPlugin } from 'app/features/plugins/importPanelPlugin';
 
 import { getDashboardSceneLike } from '../scene/types/dashboard';
 import { DashboardInteractions } from '../utils/interactions';
+import { markViewPanelExit } from '../utils/viewPanelTracking';
 
 import { ViewPanelQuickToggles } from './ViewPanelQuickToggles';
 
@@ -89,7 +90,10 @@ function ViewPanelSidePaneRenderer({ model }: SceneComponentProps<ViewPanelSideP
           <Box display="flex" direction="column" gap={0} padding={2} paddingBottom={2}>
             <Button
               variant="secondary"
-              onClick={() => dashboard.setState({ viewPanel: undefined })}
+              onClick={() => {
+                markViewPanelExit('pane_back');
+                dashboard.setState({ viewPanel: undefined });
+              }}
               size="sm"
               fullWidth
               data-testid={selectors.components.ViewPanelSidePane.goBackButton}

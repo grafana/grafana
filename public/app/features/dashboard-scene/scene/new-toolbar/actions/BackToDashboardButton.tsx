@@ -3,13 +3,19 @@ import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button } from '@grafana/ui';
 
+import { markViewPanelExit } from '../../../utils/viewPanelTracking';
 import { type ToolbarActionProps } from '../types';
 
 export const BackToDashboardButton = ({ dashboard }: ToolbarActionProps) => (
   <Button
-    onClick={() =>
-      locationService.partial(dashboard.state.editview ? { editview: null } : { viewPanel: null, editPanel: null })
-    }
+    onClick={() => {
+      if (dashboard.state.editview) {
+        locationService.partial({ editview: null });
+        return;
+      }
+      markViewPanelExit('toolbar_back');
+      locationService.partial({ viewPanel: null, editPanel: null });
+    }}
     tooltip=""
     fill={dashboard.state.editview ? 'text' : undefined}
     variant="secondary"
