@@ -1,5 +1,6 @@
-import { useImperativeHandle, useRef, type Ref } from 'react';
+import { type ComponentProps, type ReactNode, useImperativeHandle, useRef, type Ref } from 'react';
 
+import { isTruthy } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { Badge, Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
@@ -41,21 +42,16 @@ export type AlertIncidentSwitchHandle = {
   switch: (tab: TabId, scroll?: boolean) => void;
 };
 
-/** The remembered tab when it is currently available; otherwise alerts, else incidents (the previous fixed default). */
-function resolveActiveTab(
-  stored: string,
-  {
-    canViewAlerts,
-    canViewIncidents,
-    canViewOnCall,
-  }: { canViewAlerts: boolean; canViewIncidents: boolean; canViewOnCall: boolean }
-): TabId {
-  const available: TabId[] = [
-    ...(canViewAlerts ? [ALERTS_TAB_ID] : []),
-    ...(canViewIncidents ? [INCIDENTS_TAB_ID] : []),
-    ...(canViewOnCall ? [ON_CALL_TAB_ID] : []),
-  ];
-  return available.find((id) => id === stored) ?? (canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
+interface TabDefinition {
+  id: TabId;
+  label: string;
+  // Undefined while loading so the counter doesn't flash 0 before the data arrives.
+  counter?: number;
+  counterCappedAt?: number;
+  filter?: ComponentProps<typeof LabelFilterCombobox>;
+  content: ReactNode;
+  // Each tab gates this on its own data state; false renders nothing.
+  footer: ReactNode;
 }
 
 export function AlertIncidentTabs({
@@ -79,12 +75,8 @@ export function AlertIncidentTabs({
   const canViewAlerts = alertsData.enabled;
 
   const [storedTab, setActiveTab] = useStoredString(ALERTS_INCIDENTS_TAB_STORAGE_KEY, '');
-  // Keyed on the stored value, not `activeTab`: whether this tab is available comes from the hook itself. When
-  // the plugin is absent the hook has no teams to load anyway, so the two conditions select the same requests.
-  // The IRM probe is memoized per plugin id, so this second usePluginBridge(Irm) costs no request.
-  const onCallData = useOnCallSchedules({ skip: storedTab !== ON_CALL_TAB_ID });
-  const canViewOnCall = !!onCallData.enabled;
-  const activeTab = resolveActiveTab(storedTab, { canViewAlerts, canViewIncidents, canViewOnCall });
+  // Team rosters cost several requests, so they load only while this is the remembered tab.
+  const onCallData = useOnCallSchedules({ loadRosters: storedTab === ON_CALL_TAB_ID });
   const { count, hasAlerts, hasTeams, teamsLoading, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
@@ -100,12 +92,6 @@ export function AlertIncidentTabs({
   const loadAlertOptions = useAlertFilterOptions(canViewAlerts && !teamsLoading);
   const loadIncidentOptions = useIncidentFilterOptions(canViewIncidents);
 
-  const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
-  const isIncidentsActionsVisible =
-    canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
-  const isOnCallActionsVisible =
-    canViewOnCall && !onCallData.loading && !onCallData.error && onCallData.canAccess && activeTab === ON_CALL_TAB_ID;
-
   const containerRef = useRef<HTMLDivElement>(null);
   useImperativeHandle(
     switchRef,
@@ -120,10 +106,83 @@ export function AlertIncidentTabs({
     [setActiveTab]
   );
 
-  // Hide the tabs if none of alerts, incidents, or OnCall schedules are available
-  if (!canViewAlerts && !canViewIncidents && !canViewOnCall) {
+  // A tab whose availability is still unknown (plugin probe in flight) stays on offer while it is the
+  // remembered one, so a reload doesn't paint another tab first; it drops out if the probe says no.
+  const isOffered = (id: TabId, enabled: boolean | undefined) => enabled ?? id === storedTab;
+
+  // Each tab keeps its own selection: alerts filter by any alert rule label, incidents by any
+  // incident label, so a shared pick would often name a value the other tab can't hold.
+  const tabs: TabDefinition[] = [
+    isOffered(ALERTS_TAB_ID, canViewAlerts) && {
+      id: ALERTS_TAB_ID,
+      label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
+      counter: loading ? undefined : count,
+      filter: loadAlertOptions && {
+        loadOptions: loadAlertOptions,
+        selected: alertsFilter,
+        onChange: onAlertsFilterChange,
+        offersYourTeams: hasTeams,
+        allOptionLabel: t('home.alerts-incidents.alert-filter-all', 'All alerts'),
+        ariaLabel: t('home.alerts-incidents.alert-filter-label', 'Filter alerts by label'),
+      },
+      content: <FiringAlertsCard data={alertsData} hideFooterActions />,
+      footer: !loading && !error && (
+        <CreateAndViewAlertsButtons
+          hasAlerts={hasAlerts}
+          canCreate={canCreate}
+          newRuleHref={newRuleHref}
+          viewAllHref={viewAllHref}
+        />
+      ),
+    },
+    isOffered(INCIDENTS_TAB_ID, incidentsData.enabled) && {
+      id: INCIDENTS_TAB_ID,
+      label: t('home.alerts-incidents.incident-tab-label', 'Incidents'),
+      // When the server truncated the result (hasMore), bump the counter past the limit so
+      // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
+      counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
+      counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
+      filter: loadIncidentOptions && {
+        loadOptions: loadIncidentOptions,
+        selected: incidentsFilter,
+        onChange: onIncidentsFilterChange,
+        // Incidents have no "your teams" scope: the unfiltered default is every active incident.
+        offersYourTeams: false,
+        allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
+        ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
+      },
+      content: <IncidentsCard data={incidentsData} hideFooterActions />,
+      footer: !incidentsLoading && !incidentsError && (
+        <DeclareAndViewIncidentsButtons
+          pluginId={incidentsPluginId}
+          hasIncidents={incidentsCount > 0}
+          canDeclare={incidentsCanDeclare}
+          canAccess={incidentsCanAccess}
+        />
+      ),
+    },
+    isOffered(ON_CALL_TAB_ID, onCallData.enabled) && {
+      id: ON_CALL_TAB_ID,
+      label: t('home.alerts-incidents.on-call-tab-label', 'On call schedules'),
+      content: <OnCallCard data={onCallData} />,
+      footer: onCallData.canAccess && !onCallData.loading && !onCallData.error && (
+        <FooterActions>
+          <FooterAction
+            href={onCallData.schedulesHref}
+            onClick={() => ctaClicked({ surface: 'oncall_card', action: 'view_schedules', placement: 'footer' })}
+          >
+            <Trans i18nKey="home.alerts-incidents.view-schedules">View schedules</Trans>
+          </FooterAction>
+        </FooterActions>
+      ),
+    },
+  ].filter(isTruthy);
+
+  if (tabs.length === 0) {
     return null;
   }
+  // The remembered tab while it is on offer; otherwise the first one (alerts before incidents).
+  const activeTab = tabs.find((tab) => tab.id === storedTab) ?? tabs[0];
 
   const title =
     canViewAlerts && canViewIncidents
@@ -131,55 +190,6 @@ export function AlertIncidentTabs({
       : canViewIncidents
         ? t('home.alerts-incidents.title-incidents', 'Incidents')
         : t('home.alerts-incidents.title-alerts', 'Alerts');
-
-  // Each tab keeps its own selection: alerts filter by any alert rule label, incidents by any
-  // incident label, so a shared pick would often name a value the other tab can't hold.
-  const tabs = [
-    ...(canViewAlerts
-      ? [
-          {
-            id: ALERTS_TAB_ID,
-            label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
-            // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
-            counter: loading ? undefined : count,
-            filter: loadAlertOptions && {
-              loadOptions: loadAlertOptions,
-              selected: alertsFilter,
-              onChange: onAlertsFilterChange,
-              offersYourTeams: hasTeams,
-              allOptionLabel: t('home.alerts-incidents.alert-filter-all', 'All alerts'),
-              ariaLabel: t('home.alerts-incidents.alert-filter-label', 'Filter alerts by label'),
-            },
-          },
-        ]
-      : []),
-    ...(canViewIncidents
-      ? [
-          {
-            id: INCIDENTS_TAB_ID,
-            label: t('home.alerts-incidents.incident-tab-label', 'Incidents'),
-            // Undefined while loading so the counter doesn't flash 0 before the incidents arrive.
-            // When the server truncated the result (hasMore), bump the counter past the limit so
-            // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
-            counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
-            counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
-            filter: loadIncidentOptions && {
-              loadOptions: loadIncidentOptions,
-              selected: incidentsFilter,
-              onChange: onIncidentsFilterChange,
-              // Incidents have no "your teams" scope: the unfiltered default is every active incident.
-              offersYourTeams: false,
-              allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
-              ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
-            },
-          },
-        ]
-      : []),
-    ...(canViewOnCall
-      ? [{ id: ON_CALL_TAB_ID, label: t('home.alerts-incidents.on-call-tab-label', 'On call schedules') }]
-      : []),
-  ];
-  const filter = tabs.find((tab) => tab.id === activeTab)?.filter;
 
   return (
     <Stack direction="column" gap={1} minWidth={0} ref={containerRef}>
@@ -198,7 +208,7 @@ export function AlertIncidentTabs({
               id={tabElementId(tab.id)}
               aria-controls={PANEL_ID}
               label={tab.label}
-              active={activeTab === tab.id}
+              active={activeTab.id === tab.id}
               counter={tab.counter}
               onChangeTab={() => {
                 setActiveTab(tab.id);
@@ -208,53 +218,19 @@ export function AlertIncidentTabs({
             />
           ))}
         </TabsBar>
-        <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab)}>
+        <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab.id)}>
           {/* Fixed height so the section doesn't jump between tabs; the list fills whatever the filter row leaves. */}
           <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
-            {filter && (
+            {activeTab.filter && (
               <Box paddingTop={2}>
-                <LabelFilterCombobox {...filter} />
+                <LabelFilterCombobox {...activeTab.filter} />
               </Box>
             )}
-            <ScrollContainer showScrollIndicators>
-              {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
-              {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
-              {activeTab === ON_CALL_TAB_ID && <OnCallCard data={onCallData} />}
-            </ScrollContainer>
+            <ScrollContainer showScrollIndicators>{activeTab.content}</ScrollContainer>
           </Box>
 
           <Box padding={1} paddingTop={1.5}>
-            {/* Alerts tab footer */}
-            {isAlertActionsVisible && (
-              <CreateAndViewAlertsButtons
-                hasAlerts={hasAlerts}
-                canCreate={canCreate}
-                newRuleHref={newRuleHref}
-                viewAllHref={viewAllHref}
-              />
-            )}
-
-            {/* Incidents tab footer */}
-            {isIncidentsActionsVisible && (
-              <DeclareAndViewIncidentsButtons
-                pluginId={incidentsPluginId}
-                hasIncidents={incidentsData.count > 0}
-                canDeclare={incidentsCanDeclare}
-                canAccess={incidentsCanAccess}
-              />
-            )}
-
-            {/* On call tab footer */}
-            {isOnCallActionsVisible && (
-              <FooterActions>
-                <FooterAction
-                  href={onCallData.schedulesHref}
-                  onClick={() => ctaClicked({ surface: 'oncall_card', action: 'view_schedules', placement: 'footer' })}
-                >
-                  <Trans i18nKey="home.alerts-incidents.view-schedules">View schedules</Trans>
-                </FooterAction>
-              </FooterActions>
-            )}
+            {activeTab.footer}
           </Box>
         </TabContent>
       </HomeSection>

@@ -4,20 +4,14 @@ import { useInterval } from 'react-use';
 
 import { dateTimeFormat, getTimeZone, getTimeZoneInfo } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
-import {
-  onCallApi,
-  type OnCallScheduleDTO,
-  type OnCallScheduleEvent,
-  type OnCallShortUser,
-  type UserScheduleShifts,
-} from 'app/features/alerting/unified/api/onCallApi';
+import { onCallApi, type OnCallScheduleDTO, type OnCallShortUser } from 'app/features/alerting/unified/api/onCallApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors';
-import { type ShiftWindow } from './shiftTiming';
+import { type ShiftWindow, nextShift } from './shiftTiming';
 
 export interface OnCallScheduleRow {
   id: string;
@@ -33,9 +27,11 @@ export interface OnCallSchedulesData {
   /** Whether the user may open the plugin's schedules pages; rows and footer render as plain text otherwise. */
   canAccess: boolean;
   schedulesHref: string;
+  /** The instant rows were derived at; shift times format against the same clock. */
+  now: number;
   /** The user's schedules first (running shift, then soonest upcoming), then team schedules by name. */
   rows: OnCallScheduleRow[];
-  /** True while one of the user's shifts is running; never derived from stale rows after a failed refetch. */
+  /** True while one of the user's shifts is running; never derived from stale data after a failed refetch. */
   isOnCall: boolean;
   /** Undefined while the plugin probe is in flight. */
   enabled: boolean | undefined;
@@ -51,60 +47,41 @@ function resolveUserTimeZone(now: number): string {
   return getTimeZoneInfo(getTimeZone(), now)?.ianaName || getTimeZoneInfo('browser', now)?.ianaName || 'UTC';
 }
 
-/** The running shift, else the next one to start; undefined when every shift in the window has ended. */
-function nextShift(events: OnCallScheduleEvent[], now: number): ShiftWindow | undefined {
-  // The window starts at local midnight, so shifts that ended earlier today come back too.
-  const remaining = events
-    .map((event) => ({ start: Date.parse(event.start), end: Date.parse(event.end) }))
-    .filter((event) => event.end > now)
-    .sort((a, b) => a.start - b.start);
-  const next = remaining[0];
-  return next && { ...next, isCurrent: next.start <= now };
-}
-
+/** Schedules with a shift of the user's ahead or someone on call now; the user's shifts lead, then by name. */
 function toRows(
-  mine: UserScheduleShifts[],
-  teams: OnCallScheduleDTO[],
-  now: number,
+  schedules: OnCallScheduleDTO[],
+  shifts: Map<string, ShiftWindow | undefined>,
   login: string
 ): OnCallScheduleRow[] {
   const meFirst = (users: OnCallShortUser[]) =>
     [...users].sort((a, b) => Number(b.username === login) - Number(a.username === login));
-  const rows: OnCallScheduleRow[] = [];
-  const seen = new Set<string>();
-  for (const schedule of mine) {
-    seen.add(schedule.id);
-    const shift = nextShift(schedule.events, now);
-    // A schedule whose shift of mine already ended today still matters while someone else is on call.
-    if (shift || schedule.onCallNow.length > 0) {
-      rows.push({ id: schedule.id, name: schedule.name, onCallNow: meFirst(schedule.onCallNow), shift });
-    }
-  }
-  for (const schedule of teams) {
-    if (seen.has(schedule.id)) {
-      continue;
-    }
-    seen.add(schedule.id);
-    if (schedule.on_call_now.length > 0) {
-      rows.push({ id: schedule.id, name: schedule.name, onCallNow: meFirst(schedule.on_call_now) });
-    }
-  }
   const collator = new Intl.Collator();
   const rank = (row: OnCallScheduleRow) => (row.shift?.isCurrent ? 0 : row.shift ? 1 : 2);
-  return rows
+  return schedules
+    .flatMap((schedule) => {
+      const shift = shifts.get(schedule.id);
+      // A schedule whose shift of mine already ended today still matters while someone else is on call.
+      return shift || schedule.on_call_now.length > 0
+        ? [{ id: schedule.id, name: schedule.name, onCallNow: meFirst(schedule.on_call_now), shift }]
+        : [];
+    })
     .sort(
       (a, b) => rank(a) - rank(b) || (a.shift?.start ?? 0) - (b.shift?.start ?? 0) || collator.compare(a.name, b.name)
     )
     .slice(0, HOME_CARD_MAX_ITEMS);
 }
 
+const isPending = (query: { isFetching: boolean; currentData?: unknown }) =>
+  query.isFetching && query.currentData === undefined;
+
 /**
  * Everything the homepage "On call" view shows: the user's own shifts in the next 30 days and the schedules of
  * the teams those belong to, with who is on call right now. The user's shifts load eagerly (the header badge
- * depends on them); team schedules load only while `skip` is false, since they can cost several requests per
- * team and most visitors never open the tab. Every opening refetches while any cached roster stays on screen.
+ * depends on them); the schedule lists load only while `loadRosters` is true, since they can cost several
+ * requests per team and most visitors never open the tab. Every opening refetches while any cached roster stays
+ * on screen.
  */
-export function useOnCallSchedules({ skip }: { skip: boolean }): OnCallSchedulesData {
+export function useOnCallSchedules({ loadRosters }: { loadRosters: boolean }): OnCallSchedulesData {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
   const pluginId = SupportedPlugin.Irm;
   const schedulesHref = createBridgeURL(pluginId, '/schedules');
@@ -116,42 +93,42 @@ export function useOnCallSchedules({ skip }: { skip: boolean }): OnCallSchedules
   const [now, setNow] = useState(() => Date.now());
   useInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
 
+  const ready = !pluginLoading && !!installed;
   const userTz = resolveUserTimeZone(now);
   const date = dateTimeFormat(now, { format: 'YYYY-MM-DD' });
-  const shifts = onCallApi.useGetCurrentUserShiftsQuery(
-    pluginLoading || !installed ? skipToken : { pluginId, date, userTz },
-    { refetchOnMountOrArgChange: true }
-  );
-  const shiftsLoading = pluginLoading || (shifts.isFetching && shifts.currentData === undefined);
-  const shiftsError = shifts.error ? classifyScheduleError(shifts.error) : undefined;
-
-  // Team discovery uses every schedule the window reported, past-only ones included.
-  const teamIds = useMemo(
-    () => [...new Set((shifts.currentData ?? []).flatMap((s) => (s.team ? [s.team] : [])))].sort(),
-    [shifts.currentData]
-  );
-  const loadTeams = !skip && !shiftsLoading && !shiftsError && teamIds.length > 0;
-  const teams = onCallApi.useGetTeamSchedulesQuery(loadTeams ? { pluginId, teamIds } : skipToken, {
+  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? { pluginId, date, userTz } : skipToken, {
     refetchOnMountOrArgChange: true,
   });
-  // Until the first team page lands (or fails) the list would be missing half its rows.
-  const teamsLoading = loadTeams && teams.currentData === undefined && !teams.error;
+  const schedules = onCallApi.useGetRelatedSchedulesQuery(ready && loadRosters ? { pluginId } : skipToken, {
+    refetchOnMountOrArgChange: true,
+  });
 
+  const shifts = useMemo(
+    () => new Map((events.currentData ?? []).map((schedule) => [schedule.id, nextShift(schedule.events, now)])),
+    [events.currentData, now]
+  );
   const rows = useMemo(
-    () => toRows(shifts.currentData ?? [], teams.currentData ?? [], now, contextSrv.user.login),
-    [shifts.currentData, teams.currentData, now]
+    () => toRows(schedules.currentData ?? [], shifts, contextSrv.user.login),
+    [schedules.currentData, shifts]
   );
 
+  const error = events.error ?? schedules.error;
   return {
     pluginId,
     canAccess,
     schedulesHref,
+    now,
     rows,
-    isOnCall: !shiftsError && rows.some((row) => row.shift?.isCurrent),
+    isOnCall: !events.error && [...shifts.values()].some((shift) => shift?.isCurrent),
     enabled: pluginLoading ? undefined : !!installed,
-    loading: shiftsLoading || teamsLoading,
-    // The team list derives from the user's schedules, so their failure is the whole view's failure.
-    error: shiftsError ?? (teams.error ? classifyScheduleError(teams.error) : undefined),
-    refetch: shiftsError ? shifts.refetch : teams.refetch,
+    loading: pluginLoading || isPending(events) || isPending(schedules),
+    error: error ? classifyScheduleError(error) : undefined,
+    refetch: () => {
+      for (const query of [events, schedules]) {
+        if (query.error) {
+          query.refetch();
+        }
+      }
+    },
   };
 }

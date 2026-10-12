@@ -30,7 +30,7 @@ import {
 } from './AlertIncidentTabs';
 import { type FilterSelection } from './filterSelection';
 import { mockNoIncidentFields } from './mockIncidentsApi';
-import { mockCurrentUserEvents } from './mockOnCallSchedulesApi';
+import { mockCurrentUserEvents, mockSchedules } from './mockOnCallSchedulesApi';
 import { useFiringAlerts } from './useFiringAlerts';
 import { useIncidents } from './useIncidents';
 
@@ -150,8 +150,9 @@ export function setupAlertIncidentTabsTests() {
     mockNoIrmPlugin();
     // No custom fields by default, so the incidents dropdown stays hidden.
     mockNoIncidentFields();
-    // With IRM installed the On call tab loads the user's shifts; none by default.
-    mockCurrentUserEvents({ schedules: [], is_oncall: false });
+    // With IRM installed the On call tab loads the user's shifts and schedule lists; none by default.
+    mockCurrentUserEvents({ schedules: [] });
+    mockSchedules({});
     // AlertIncidentTabs only ships in the growth-homepage redesign, which is flag-gated,
     // so exercise it in the same flag state it renders in production.
     await act(async () => {

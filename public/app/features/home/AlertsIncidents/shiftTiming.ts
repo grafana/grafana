@@ -1,11 +1,23 @@
 import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
+import { type OnCallScheduleEvent } from 'app/features/alerting/unified/api/onCallApi';
 
 /** Epoch milliseconds. */
 export interface ShiftWindow {
   start: number;
   end: number;
   isCurrent: boolean;
+}
+
+/** The running shift, else the next one to start; undefined when every shift in the window has ended. */
+export function nextShift(events: OnCallScheduleEvent[], now: number): ShiftWindow | undefined {
+  // The window starts at local midnight, so shifts that ended earlier today come back too.
+  const remaining = events
+    .map((event) => ({ start: Date.parse(event.start), end: Date.parse(event.end) }))
+    .filter((event) => event.end > now)
+    .sort((a, b) => a.start - b.start);
+  const next = remaining[0];
+  return next && { ...next, isCurrent: next.start <= now };
 }
 
 const DAY_KEY = 'YYYY-MM-DD';
@@ -19,7 +31,7 @@ function clock(ts: number, now: number): string {
   return dateTimeFormat(ts, { format: today ? CLOCK : DATE_CLOCK });
 }
 
-export function formatShiftTiming(shift: ShiftWindow, now = Date.now()): string {
+export function formatShiftTiming(shift: ShiftWindow, now: number): string {
   if (shift.isCurrent) {
     return t('home.on-call-card.current-shift', "You're on call until {{end}}", { end: clock(shift.end, now) });
   }

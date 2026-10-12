@@ -19,10 +19,10 @@ export function classifyScheduleError(error: unknown): ScheduleLoadError {
 export function scheduleErrorTitle(error: ScheduleLoadError): string {
   switch (error) {
     case 'not_available':
-      return t('home.schedules.error-not-available', 'Grafana IRM is not available');
+      return t('home.on-call-card.error-not-available', 'Grafana IRM is not available');
     case 'forbidden':
-      return t('home.schedules.error-forbidden', "You don't have access to IRM schedules");
+      return t('home.on-call-card.error-forbidden', "You don't have access to IRM schedules");
     case 'failed':
-      return t('home.schedules.error-failed', 'Could not load schedules');
+      return t('home.on-call-card.error-failed', 'Could not load schedules');
   }
 }

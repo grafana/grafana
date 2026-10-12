@@ -1,4 +1,4 @@
-import { range } from 'lodash';
+import { range, uniq, uniqBy } from 'lodash';
 
 import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 
@@ -16,15 +16,12 @@ export interface NewOnCallIntegrationDTO {
 
 interface OnCallPaginatedResult<T> {
   results: T[];
-}
-
-interface OnCallPagedResult<T> extends OnCallPaginatedResult<T> {
   total_pages: number;
 }
 
 export const SHIFTS_LOOKAHEAD_DAYS = 30;
 export const SCHEDULE_PAGE_SIZE = 100;
-// Org-wide teams can own hundreds of schedules; the homepage stops after this many pages.
+// Org-wide teams can own hundreds of schedules; the homepage stops a team's list after this many pages.
 export const SCHEDULE_MAX_PAGES = 5;
 
 /** Short user shape OnCall embeds in a schedule's `on_call_now`. */
@@ -43,9 +40,15 @@ export interface OnCallScheduleEvent {
   users: Array<{ pk: string; display_name: string; email: string; avatar_full: string }>;
 }
 
-interface CurrentUserEventsResponse {
-  schedules: Array<{ id: string; name: string; events: OnCallScheduleEvent[] }>;
-  is_oncall: boolean;
+/** The user's shifts on one schedule, as `schedules/current_user_events/` reports them. */
+export interface OnCallUserScheduleEvents {
+  id: string;
+  name: string;
+  events: OnCallScheduleEvent[];
+}
+
+export interface CurrentUserEventsResponse {
+  schedules: OnCallUserScheduleEvents[];
 }
 
 export interface OnCallScheduleDTO {
@@ -53,15 +56,6 @@ export interface OnCallScheduleDTO {
   name: string;
   team: string | null;
   on_call_now: OnCallShortUser[];
-}
-
-/** A schedule the user has shifts on in the window, joined with its team and current on-call roster. */
-export interface UserScheduleShifts {
-  id: string;
-  name: string;
-  team: string | null;
-  events: OnCallScheduleEvent[];
-  onCallNow: OnCallShortUser[];
 }
 
 export const ONCALL_INTEGRATION_V2_FEATURE = 'grafana_alerting_v2';
@@ -108,17 +102,18 @@ function grafanaOnCallIntegrationsRequest(pluginId: string) {
 async function fetchSchedulePages(
   pluginId: string,
   filter: { mine: true } | { team: string },
-  abortSignal: AbortSignal
+  abortSignal: AbortSignal,
+  maxPages = Infinity
 ): Promise<OnCallScheduleDTO[]> {
   const fetchPage = (page: number) =>
-    getBackendSrv().get<OnCallPagedResult<OnCallScheduleDTO>>(
+    getBackendSrv().get<OnCallPaginatedResult<OnCallScheduleDTO>>(
       getProxyApiUrl('/schedules/', pluginId),
       { ...filter, perpage: SCHEDULE_PAGE_SIZE, page },
       undefined,
       { showErrorAlert: false, abortSignal }
     );
   const first = await fetchPage(1);
-  const pageCount = Math.min(first.total_pages, SCHEDULE_MAX_PAGES);
+  const pageCount = Math.min(first.total_pages, maxPages);
   const rest = await Promise.all(range(2, pageCount + 1).map(fetchPage));
   return [first, ...rest].flatMap((page) => page.results);
 }
@@ -158,37 +153,25 @@ export const onCallApi = alertingApi.injectEndpoints({
         showErrorAlert: false,
       }),
     }),
-    getCurrentUserShifts: build.query<UserScheduleShifts[], { pluginId: string; date: string; userTz: string }>({
-      queryFn: async ({ pluginId, date, userTz }, { signal }) => {
-        try {
-          const { schedules } = await getBackendSrv().get<CurrentUserEventsResponse>(
-            getProxyApiUrl('/schedules/current_user_events/', pluginId),
-            { date, days: SHIFTS_LOOKAHEAD_DAYS, user_tz: userTz },
-            undefined,
-            { showErrorAlert: false, abortSignal: signal }
-          );
-          // The events payload carries neither team nor roster; the user's own schedule list has both.
-          const mine = schedules.length > 0 ? await fetchSchedulePages(pluginId, { mine: true }, signal) : [];
-          const byId = new Map(mine.map((schedule) => [schedule.id, schedule]));
-          return {
-            data: schedules.map(({ id, name, events }) => ({
-              id,
-              name,
-              events,
-              team: byId.get(id)?.team ?? null,
-              onCallNow: byId.get(id)?.on_call_now ?? [],
-            })),
-          };
-        } catch (error) {
-          return { error };
-        }
-      },
+    getCurrentUserEvents: build.query<OnCallUserScheduleEvents[], { pluginId: string; date: string; userTz: string }>({
+      query: ({ pluginId, date, userTz }) => ({
+        url: getProxyApiUrl('/schedules/current_user_events/', pluginId),
+        params: { date, days: SHIFTS_LOOKAHEAD_DAYS, user_tz: userTz },
+        showErrorAlert: false,
+      }),
+      transformResponse: (response: CurrentUserEventsResponse) => response.schedules,
     }),
-    getTeamSchedules: build.query<OnCallScheduleDTO[], { pluginId: string; teamIds: string[] }>({
-      queryFn: async ({ pluginId, teamIds }, { signal }) => {
+    /** The user's own schedules plus every schedule of the teams those belong to, each with who is on call now. */
+    getRelatedSchedules: build.query<OnCallScheduleDTO[], { pluginId: string }>({
+      queryFn: async ({ pluginId }, { signal }) => {
         try {
-          const perTeam = await Promise.all(teamIds.map((team) => fetchSchedulePages(pluginId, { team }, signal)));
-          return { data: perTeam.flat() };
+          // The user's own list is read in full: every schedule they have a shift on must be in it.
+          const mine = await fetchSchedulePages(pluginId, { mine: true }, signal);
+          const teamIds = uniq(mine.flatMap((schedule) => (schedule.team ? [schedule.team] : [])));
+          const teams = await Promise.all(
+            teamIds.map((team) => fetchSchedulePages(pluginId, { team }, signal, SCHEDULE_MAX_PAGES))
+          );
+          return { data: uniqBy([...mine, ...teams.flat()], 'id') };
         } catch (error) {
           return { error };
         }

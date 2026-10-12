@@ -18,11 +18,11 @@ const MAX_AVATARS = 3;
 
 /** Render-only card body; data comes from useOnCallSchedules so callers control where the hook runs. */
 export function OnCallCard({ data }: { data: OnCallSchedulesData }) {
-  const { pluginId, canAccess, rows, loading, error, refetch } = data;
+  const { pluginId, canAccess, now, rows, loading, error, refetch } = data;
 
   return (
     <SummaryCard
-      title={t('home.on-call-card.title', 'On call schedules')}
+      title={t('home.alerts-incidents.on-call-tab-label', 'On call schedules')}
       loading={loading}
       error={error ? { title: scheduleErrorTitle(error), onRetry: () => refetch() } : undefined}
       emptyMessage={t('home.on-call-card.empty', 'No on-call shifts for you or your teams in the next 30 days.')}
@@ -32,9 +32,7 @@ export function OnCallCard({ data }: { data: OnCallSchedulesData }) {
         <ListRow
           isCompact
           title={row.name}
-          subtitle={row.shift && formatShiftTiming(row.shift)}
-          // Green only while the user's own shift is running: the row-level counterpart of the header badge.
-          subtitleColor={row.shift?.isCurrent ? 'success' : undefined}
+          subtitle={row.shift && formatShiftTiming(row.shift, now)}
           trailing={<OnCallNowChip users={row.onCallNow} />}
           href={canAccess ? createBridgeURL(pluginId, `/schedules/${row.id}`) : undefined}
           onClick={() =>
@@ -50,7 +48,7 @@ export function OnCallCard({ data }: { data: OnCallSchedulesData }) {
   );
 }
 
-/** Who is on call right now: the first person's name, then up to three avatars (full login in the tooltip). */
+/** Who is on call right now: the first person's login, then avatars collapsing past three (login in the tooltip). */
 function OnCallNowChip({ users }: { users: OnCallShortUser[] }) {
   const styles = useStyles2(getStyles);
   if (users.length === 0) {
@@ -61,23 +59,13 @@ function OnCallNowChip({ users }: { users: OnCallShortUser[] }) {
     );
   }
   // `avatar` is Grafana's own relative /avatar/<hash> URL; `avatar_full` is pinned to the engine's idea of the stack host.
-  const views: UserView[] = users
-    .slice(0, MAX_AVATARS)
-    .map((u) => ({ user: { name: u.username, avatarUrl: u.avatar || undefined } }));
-  const [first, ...rest] = users;
-  // Logins are emails on SSO stacks; the local part is what fits next to the avatar.
-  const firstName = first.username.split('@')[0];
-  // Same wording for any number of extra people, so the variable is not `count` (which would demand plural forms).
-  const label =
-    rest.length > 0
-      ? t('home.on-call-card.on-call-now-more', '{{name}} +{{more}}', { name: firstName, more: rest.length })
-      : firstName;
+  const views: UserView[] = users.map((u) => ({ user: { name: u.username, avatarUrl: u.avatar || undefined } }));
 
   return (
     <div className={styles.chip}>
       <div className={styles.chipLabel}>
         <Text variant="bodySmall" truncate element="p">
-          {label}
+          {users[0].username}
         </Text>
       </div>
       <UsersIndicator users={views} limit={MAX_AVATARS} />

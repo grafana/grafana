@@ -70,7 +70,6 @@ const MY_EVENTS = {
     },
     { id: 'S3', name: 'Old', events: [shiftEvent({ start: '2024-01-02T06:00:00Z', end: '2024-01-02T09:00:00Z' })] },
   ],
-  is_oncall: true,
 };
 
 const TEAM_SCHEDULES: Record<string, OnCallScheduleDTO[]> = {
@@ -127,14 +126,14 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(screen.queryByRole('tab', { name: /on call/i })).not.toBeInTheDocument();
   });
 
-  it('shows the badge from the eager shift load and fetches team rosters only when the tab opens', async () => {
+  it('shows the badge from the eager shift load and fetches schedule lists only when the tab opens', async () => {
     const { eventCalls, listCalls } = mockOnCall({ byTeam: TEAM_SCHEDULES });
     const { user } = render(<AlertIncidentTabsWithData />);
 
     expect(await screen.findByText('On call now')).toBeInTheDocument();
     expect(eventCalls).toHaveLength(1);
     expect(Object.fromEntries(eventCalls[0])).toEqual({ date: '2024-01-02', days: '30', user_tz: 'UTC' });
-    expect(listCalls).toEqual([{ filter: 'mine', page: 1 }]);
+    expect(listCalls).toEqual([]);
 
     await user.click(screen.getByRole('tab', { name: /on call/i }));
     expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: 'on-call' });
@@ -162,19 +161,20 @@ describe('AlertIncidentTabs On call tab', () => {
     const [primary, secondary, backend, old] = panelRows();
     expect(within(primary).getByText("You're on call until 17:00")).toBeInTheDocument();
     // The signed-in user leads the roster even though the API listed bob first.
-    expect(within(primary).getByText('admin +1')).toBeInTheDocument();
+    expect(within(primary).getByText('admin')).toBeInTheDocument();
     expect(within(primary).getByLabelText('admin icon')).toBeInTheDocument();
     expect(within(primary).getByLabelText('bob icon')).toBeInTheDocument();
 
     expect(within(secondary).getByText('Your next shift Jan 4, 10:00–18:00')).toBeInTheDocument();
     expect(within(secondary).getByText('carol')).toBeInTheDocument();
 
-    // Team rows carry only the roster.
+    // Team rows carry only the roster: the first login as text, everyone as an avatar.
     expect(
       within(backend)
         .getAllByText(/\S/, { selector: 'p' })
         .map((p) => p.textContent)
-    ).toEqual(['Backend', 'bob +1']);
+    ).toEqual(['Backend', 'bob']);
+    expect(within(backend).getByLabelText('carol icon')).toBeInTheDocument();
     expect(within(old).getByText('bob')).toBeInTheDocument();
   });
 
@@ -207,21 +207,20 @@ describe('AlertIncidentTabs On call tab', () => {
   });
 
   describe('pagination', () => {
-    it('stops after five pages even when the engine reports more', async () => {
+    it('reads every page of your own list but stops a team list after five', async () => {
       const { listCalls } = mockOnCall({ byTeam: { T1: [S1, S3] }, totalPages: 7 });
       const { user } = render(<AlertIncidentTabsWithData />);
 
       await user.click(await screen.findByRole('tab', { name: /on call/i }));
       expect(await screen.findByText('Old')).toBeInTheDocument();
 
-      await waitFor(() =>
-        expect(
-          listCalls
-            .filter((call) => call.filter === 'team:T1')
-            .map((call) => call.page)
-            .sort()
-        ).toEqual([1, 2, 3, 4, 5])
-      );
+      const pagesOf = (filter: string) =>
+        listCalls
+          .filter((call) => call.filter === filter)
+          .map((call) => call.page)
+          .sort((a, b) => a - b);
+      expect(pagesOf('mine')).toEqual([1, 2, 3, 4, 5, 6, 7]);
+      expect(pagesOf('team:T1')).toEqual([1, 2, 3, 4, 5]);
     });
 
     it('renders schedules from a later page', async () => {
@@ -276,9 +275,9 @@ describe('AlertIncidentTabs On call tab', () => {
       expect(rowTitles()).toEqual(['Primary', 'Secondary']);
     });
 
-    it('shows the empty message without listing schedules or claiming on-call status', async () => {
+    it('shows the empty message when no schedule has a shift of yours or anyone on call', async () => {
       mockIrmPlugin();
-      mockCurrentUserEvents({ schedules: [], is_oncall: false });
+      mockCurrentUserEvents({ schedules: [] });
       const listCalls = mockSchedules({});
       const { user } = render(<AlertIncidentTabsWithData />);
 
@@ -287,7 +286,7 @@ describe('AlertIncidentTabs On call tab', () => {
       expect(await screen.findByText(EMPTY_MESSAGE)).toBeInTheDocument();
       expect(screen.queryByText('On call now')).not.toBeInTheDocument();
       expect(screen.getByRole('link', { name: /view schedules/i })).toHaveAttribute('href', SCHEDULES_HREF);
-      expect(listCalls).toEqual([]);
+      expect(listCalls).toEqual([{ filter: 'mine', page: 1 }]);
     });
   });
 
@@ -308,18 +307,7 @@ describe('AlertIncidentTabs On call tab', () => {
       expect(screen.queryByRole('link', { name: /view schedules/i })).not.toBeInTheDocument();
     });
 
-    it('fails the view when the schedule list fails', async () => {
-      mockOnCall();
-      mockSchedulesError(500, 'mine');
-      const { user } = render(<AlertIncidentTabsWithData />);
-
-      await user.click(await screen.findByRole('tab', { name: /on call/i }));
-
-      expect(await screen.findByText(LOAD_FAILED)).toBeInTheDocument();
-      expect(screen.queryByText('On call now')).not.toBeInTheDocument();
-    });
-
-    it('fails the view, keeping the badge, when a team list fails', async () => {
+    it('fails the view, keeping the badge, when the schedule list fails', async () => {
       mockOnCall({ byTeam: TEAM_SCHEDULES });
       mockSchedulesError(500, 'team:T1');
       const { user } = render(<AlertIncidentTabsWithData />);
@@ -347,7 +335,7 @@ describe('AlertIncidentTabs On call tab', () => {
       expect(screen.getByText('On call now')).toBeInTheDocument();
     });
 
-    it('retries the team schedules', async () => {
+    it('retries the schedule list', async () => {
       mockOnCall({ byTeam: TEAM_SCHEDULES });
       mockSchedulesError(500, 'team:T1');
       const { user } = render(<AlertIncidentTabsWithData />);
@@ -406,21 +394,24 @@ describe('AlertIncidentTabs On call tab', () => {
   });
 
   describe('remembered tab', () => {
-    it('reopens on the stored tab when it is available', async () => {
+    it('reopens on the stored tab, selected before the plugin probe settles', async () => {
       window.localStorage.setItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY, 'on-call');
       mockOnCall({ byTeam: TEAM_SCHEDULES });
       render(<AlertIncidentTabsWithData />);
 
+      // Offered on the strength of the memory alone, so no other tab paints first.
+      expect(screen.getByRole('tab', { name: /on call/i })).toHaveAttribute('aria-selected', 'true');
       expect(await screen.findByText('Backend')).toBeInTheDocument();
       expect(screen.getByRole('tab', { name: /on call/i })).toHaveAttribute('aria-selected', 'true');
       expect(jest.mocked(tabChanged)).not.toHaveBeenCalled();
     });
 
-    it('falls back to Firing alerts when the stored tab is unavailable', async () => {
+    it('falls back to Firing alerts once the probe says the stored tab is unavailable', async () => {
       window.localStorage.setItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY, 'on-call');
       render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
+      await waitFor(() => expect(screen.queryByRole('tab', { name: /on call/i })).not.toBeInTheDocument());
       expect(screen.getByRole('tab', { name: /firing alerts/i })).toHaveAttribute('aria-selected', 'true');
     });
 

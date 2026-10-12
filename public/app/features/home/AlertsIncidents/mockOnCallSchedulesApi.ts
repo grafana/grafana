@@ -2,6 +2,7 @@ import { http, HttpResponse } from 'msw';
 
 import server from '@grafana/test-utils/server';
 import {
+  type CurrentUserEventsResponse,
   type OnCallScheduleDTO,
   type OnCallScheduleEvent,
   type OnCallShortUser,
@@ -54,13 +55,8 @@ export function shiftEvent({
   };
 }
 
-interface CurrentUserEvents {
-  schedules: Array<{ id: string; name: string; events: OnCallScheduleEvent[] }>;
-  is_oncall: boolean;
-}
-
 /** Answers the shift-events request; returns the query params (`date`, `days`, `user_tz`) of each call. */
-export function mockCurrentUserEvents(response: CurrentUserEvents): URLSearchParams[] {
+export function mockCurrentUserEvents(response: CurrentUserEventsResponse): URLSearchParams[] {
   const calls: URLSearchParams[] = [];
   server.use(
     http.get(CURRENT_USER_EVENTS_PATH, ({ request }) => {

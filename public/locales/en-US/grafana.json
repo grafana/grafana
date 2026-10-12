@@ -11200,11 +11200,12 @@
     "on-call-card": {
       "current-shift": "You're on call until {{end}}",
       "empty": "No on-call shifts for you or your teams in the next 30 days.",
+      "error-failed": "Could not load schedules",
+      "error-forbidden": "You don't have access to IRM schedules",
+      "error-not-available": "Grafana IRM is not available",
       "next-shift": "Your next shift {{start}}–{{end}}",
       "next-shift-multi-day": "Your next shift {{start}} – {{end}}",
-      "nobody-on-call": "Nobody on call",
-      "on-call-now-more": "{{name}} +{{more}}",
-      "title": "On call schedules"
+      "nobody-on-call": "Nobody on call"
     },
     "overview": {
       "available": {
@@ -11401,11 +11402,6 @@
         "title": "Monitor uptime from the outside"
       },
       "title": "Recommendations for your stack"
-    },
-    "schedules": {
-      "error-failed": "Could not load schedules",
-      "error-forbidden": "You don't have access to IRM schedules",
-      "error-not-available": "Grafana IRM is not available"
     },
     "solutions": {
       "cta": {
