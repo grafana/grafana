@@ -89,9 +89,29 @@ func (n *storageWrapper) List(ctx context.Context, options *internalversion.List
 	}
 	if requester.GetOrgRole() != org.RoleAdmin {
 		items := make([]dashv0.Snapshot, 0, len(list.Items))
-		for _, snap := range list.Items {
-			if snapshotOwnedBy(&snap, requester) {
-				items = append(items, snap)
+		page := list
+		for {
+			for _, snap := range page.Items {
+				if snapshotOwnedBy(&snap, requester) {
+					items = append(items, snap)
+				}
+			}
+			list.Continue = page.Continue
+			if options == nil || options.Limit <= 0 || int64(len(items)) >= options.Limit || page.Continue == "" {
+				break
+			}
+
+			// Consume whole storage pages so the continuation token never skips visible items.
+			pageOptions := options.DeepCopy()
+			pageOptions.Limit = options.Limit - int64(len(items))
+			pageOptions.Continue = page.Continue
+			obj, err := n.inner.(rest.Lister).List(ctx, pageOptions)
+			if err != nil {
+				return nil, err
+			}
+			page, err = stripSensitiveFieldsFromList(obj)
+			if err != nil {
+				return nil, err
 			}
 		}
 		list.Items = items
