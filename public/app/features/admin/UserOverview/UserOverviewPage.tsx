@@ -53,11 +53,13 @@ export default function UserOverviewPage() {
         text: user?.login || t('admin.user-overview.title', 'User'),
         subTitle: user?.email,
         img: profile?.avatarUrl,
-        children: tabs.map(({ id, label }) => ({
-          text: label,
-          url: `${pathname}?tab=${id}`,
-          active: active === id,
-        })),
+        children: user
+          ? tabs.map(({ id, label }) => ({
+              text: label,
+              url: `${pathname}?tab=${id}`,
+              active: active === id,
+            }))
+          : [],
       }}
     >
       <Page.Contents isLoading={!user && overview.isLoading}>

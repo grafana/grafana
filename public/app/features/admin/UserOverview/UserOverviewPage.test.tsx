@@ -548,6 +548,7 @@ it.each([false, true])(
     );
     setup();
     expect(await screen.findByText('This information is not available')).toBeInTheDocument();
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
     expect(profileRequests).not.toHaveBeenCalled();
     expect(orgRequests).not.toHaveBeenCalled();
@@ -566,6 +567,7 @@ it.each([403, 500])('does not switch to legacy data when IAM returns %s', async 
     status === 403 ? 'You do not have permission' : 'Unable to load'
   );
   expect(screen.queryByText('Alice Example')).not.toBeInTheDocument();
+  expect(screen.queryByRole('tab')).not.toBeInTheDocument();
 });
 
 it('supports IAM user reads alongside legacy team membership reads', async () => {
