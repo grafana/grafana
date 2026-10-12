@@ -3,7 +3,7 @@ import { GrafanaEdition } from '@grafana/data/internal';
 import { config } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { buildStaticNavTree } from './buildStaticNavTree';
+import { buildStaticNavTree, getInitialNavTree } from './buildStaticNavTree';
 import { NavID } from './constants';
 import { addNavEntries, clearRegisteredNavEntries } from './registry';
 import { navIds as ids, setupNavTestState as setup } from './test-utils';
@@ -527,5 +527,38 @@ describe('registered nav entries', () => {
     expect(findById(tree, NavID.home)).toBeDefined();
     expect(error).toHaveBeenCalledWith('[navtree] nav entry failed to build', expect.any(Error));
     error.mockRestore();
+  });
+});
+
+describe('Pages navigation icon', () => {
+  const originalBootData = config.bootData;
+  const originalAppSubUrl = config.appSubUrl;
+
+  afterEach(() => {
+    config.bootData = originalBootData;
+    config.appSubUrl = originalAppSubUrl;
+  });
+
+  it.each([
+    { nested: false, appSubUrl: '' },
+    { nested: true, appSubUrl: '' },
+    { nested: false, appSubUrl: '/grafana' },
+    { nested: true, appSubUrl: '/grafana' },
+  ])('uses the sparkle icon with nested=$nested and subpath "$appSubUrl"', ({ nested, appSubUrl }) => {
+    setup({ config: { appSubUrl } });
+    const pages: NavModelItem = {
+      text: 'Pages',
+      pluginID: 'grafana-assistant-app',
+      url: `${appSubUrl}/a/grafana-assistant-app/pages`,
+      icon: 'file-alt',
+    };
+    const otherPage: NavModelItem = { text: 'Other', url: '/other/pages', icon: 'file-alt' };
+    const navTree: NavModelItem[] = nested ? [{ text: 'AI', children: [pages, otherPage] }] : [pages, otherPage];
+    config.bootData = { ...originalBootData, navTree };
+
+    const tree = getInitialNavTree();
+    const entries = nested ? tree[0].children : tree;
+    expect(entries).toEqual([{ ...pages, icon: 'pages' }, otherPage]);
+    expect(pages.icon).toBe('file-alt');
   });
 });

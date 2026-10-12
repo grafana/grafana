@@ -60,13 +60,28 @@ export function getInitialNavTree(): NavModelItem[] {
     // Clone so callers get an owned tree: the flag-off path returns the shared
     // bootData reference, which the redux slices would otherwise mutate. The
     // flag-on path below already returns freshly built objects.
-    return cloneDeep(config.bootData?.navTree ?? []);
+    const tree = cloneDeep(config.bootData?.navTree ?? []);
+    applyPagesIcon(tree);
+    return tree;
   }
 
   const staticTree = applyAppSubUrl(buildStaticNavTree());
   // Empty sections (cfg/access without children) are pruned like the server
   // prunes them after its enterprise hooks run.
   return pruneEmptyNavSections(staticTree);
+}
+
+// Select the custom icon with the frontend that ships its SVG. Older frontends
+// retain the plugin's file-alt fallback, regardless of backend deployment order.
+function applyPagesIcon(tree: NavModelItem[]): void {
+  for (const item of tree) {
+    if (item.pluginID === 'grafana-assistant-app' && item.url === `${config.appSubUrl}/a/grafana-assistant-app/pages`) {
+      item.icon = 'pages';
+    }
+    if (item.children) {
+      applyPagesIcon(item.children);
+    }
+  }
 }
 
 /**
