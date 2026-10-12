@@ -5,7 +5,10 @@ import { useAssistant } from '@grafana/assistant';
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { t, Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
-import { useFlagAssistantDashboardArtifactsDraftsAndForks } from '@grafana/runtime/internal';
+import {
+  useFlagAssistantDashboardArtifactsDraftsAndForks,
+  useFlagGrafanaVisualDesignRefresh,
+} from '@grafana/runtime/internal';
 import { Alert, Button, ConfirmModal, Stack, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 
@@ -28,8 +31,12 @@ import {
 import { useChangeHighlights } from './useChangeHighlights';
 import { useForkChanges } from './useForkChanges';
 
+/** Where the banner renders: above a dashboard page, or inside an embedded dashboard view. */
+type BannerPlacement = 'page' | 'embedded';
+
 interface Props {
   dashboard: DashboardScene;
+  placement?: BannerPlacement;
 }
 
 /**
@@ -37,8 +44,11 @@ interface Props {
  * dashboard), with the actions that finish it: Publish, or Compare and Merge. On a
  * published dashboard it points at the viewer's own fork, if they have one.
  */
-export function DashboardLifecycleBanner({ dashboard }: Props) {
+export function DashboardLifecycleBanner({ dashboard, placement = 'page' }: Props) {
   const enabled = useFlagAssistantDashboardArtifactsDraftsAndForks();
+  const visualRefresh = useFlagGrafanaVisualDesignRefresh();
+  // With the visual refresh, a dashboard page is a card inset from the page edge; line up with it.
+  const inset: BannerInset = placement === 'page' ? (visualRefresh ? 'card' : 'page') : 'embedded';
   const { meta, uid, isEditing } = dashboard.useState();
   const info = useMemo(() => getDashboardLifecycle(dashboard), [dashboard, meta]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -46,7 +56,7 @@ export function DashboardLifecycleBanner({ dashboard }: Props) {
     return null;
   }
   if (info.lifecycle === 'draft') {
-    return <DraftBanner dashboard={dashboard} uid={uid} updatedAt={info.updatedAt} />;
+    return <DraftBanner dashboard={dashboard} uid={uid} updatedAt={info.updatedAt} inset={inset} />;
   }
   if (info.lifecycle === 'fork' && info.forkOf) {
     return (
@@ -57,15 +67,26 @@ export function DashboardLifecycleBanner({ dashboard }: Props) {
         forkBase={info.forkBase}
         originRef={info.originRef}
         createdByAssistant={info.origin === 'assistant'}
+        inset={inset}
       />
     );
   }
   // Keyed by the scene so a reload (for example after Grafana Assistant forks this dashboard) refetches.
-  return <ForkHint key={dashboard.state.key} uid={uid} />;
+  return <ForkHint key={dashboard.state.key} uid={uid} inset={inset} />;
 }
 
-function DraftBanner({ dashboard, uid, updatedAt }: { dashboard: DashboardScene; uid: string; updatedAt?: Date }) {
-  const styles = useStyles2(getStyles);
+function DraftBanner({
+  dashboard,
+  uid,
+  updatedAt,
+  inset,
+}: {
+  dashboard: DashboardScene;
+  uid: string;
+  updatedAt?: Date;
+  inset: BannerInset;
+}) {
+  const styles = useStyles2(getStyles, inset);
   const [publishing, setPublishing] = useState(false);
   const [discarding, setDiscarding] = useState(false);
   const days = daysUntilExpiry(updatedAt);
@@ -139,10 +160,11 @@ interface ForkBannerProps {
   forkBase?: number;
   originRef?: string;
   createdByAssistant: boolean;
+  inset: BannerInset;
 }
 
-function ForkBanner({ dashboard, uid, originalUid, forkBase, originRef, createdByAssistant }: ForkBannerProps) {
-  const styles = useStyles2(getStyles);
+function ForkBanner({ dashboard, uid, originalUid, forkBase, originRef, createdByAssistant, inset }: ForkBannerProps) {
+  const styles = useStyles2(getStyles, inset);
   const [original, setOriginal] = useState<OriginalDashboard | null | undefined>(undefined);
   const [conflict, setConflict] = useState<MergeConflict | undefined>(undefined);
   const [comparing, setComparing] = useState(false);
@@ -440,8 +462,8 @@ function DiscardForkModal({
 }
 
 /** On a published dashboard: a quiet pointer to the viewer's own fork of it. */
-function ForkHint({ uid }: { uid: string }) {
-  const styles = useStyles2(getStyles);
+function ForkHint({ uid, inset }: { uid: string; inset: BannerInset }) {
+  const styles = useStyles2(getStyles, inset);
   const [forks, setForks] = useState<ForkSummary[]>([]);
 
   useEffect(() => {
@@ -479,17 +501,35 @@ function chatIdFromOriginRef(originRef?: string): string | undefined {
   return match?.[0];
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+/**
+ * card: a visual-refresh dashboard page, whose dashboard card is inset 0.5 from the page edge.
+ * page: a classic dashboard page, whose panels are inset 2.
+ * embedded: an embedded dashboard view, whose controls already pad the gap below.
+ */
+type BannerInset = 'card' | 'page' | 'embedded';
+
+function bannerMargin(theme: GrafanaTheme2, inset: BannerInset): string {
+  switch (inset) {
+    case 'card':
+      return theme.spacing(2, 0.5);
+    case 'page':
+      return theme.spacing(2, 2);
+    case 'embedded':
+      return theme.spacing(2, 2, 0, 2);
+  }
+}
+
+const getStyles = (theme: GrafanaTheme2, inset: BannerInset) => ({
   banner: css({
     flex: 0,
-    margin: theme.spacing(2, 2, 0, 2),
+    margin: bannerMargin(theme, inset),
   }),
   hint: css({
     display: 'flex',
     gap: theme.spacing(1),
     alignItems: 'center',
     flex: 0,
-    margin: theme.spacing(2, 2, 0, 2),
+    margin: bannerMargin(theme, inset),
     padding: theme.spacing(0.75, 1.5),
     border: `1px solid ${theme.colors.border.weak}`,
     borderRadius: theme.shape.radius.default,

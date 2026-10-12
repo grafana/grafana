@@ -77,7 +77,7 @@ function DashboardViewRenderer({ model, controlsBackground }: { model: Dashboard
 
   return (
     <div className={styles.root}>
-      <DashboardLifecycleBanner dashboard={model} />
+      <DashboardLifecycleBanner dashboard={model} placement="embedded" />
       <div className={cx(styles.canvas, controls && styles.canvasWithControls)}>
         {controls && (
           <div className={styles.controls}>
