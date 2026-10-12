@@ -47,3 +47,13 @@ export function setTestFlags(flags: FlagSet = {}) {
 
   ofProvider.putConfiguration(flagConfig);
 }
+
+export function testWithFlags(flags: FlagSet) {
+  beforeEach(() => {
+    setTestFlags(flags);
+  });
+
+  afterEach(() => {
+    setTestFlags({});
+  });
+}

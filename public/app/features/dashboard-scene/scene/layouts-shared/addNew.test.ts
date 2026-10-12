@@ -1,5 +1,5 @@
 import { SceneGridLayout, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { testWithFlags } from '@grafana/test-utils/unstable';
 
 import { DashboardScene } from '../DashboardScene';
 import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
@@ -173,13 +173,7 @@ describe('addNewTabTo', () => {
 });
 
 describe('addNewRowTo', () => {
-  beforeAll(() => {
-    setTestFlags({ dashboardNewLayouts: true });
-  });
-
-  afterAll(() => {
-    setTestFlags({});
-  });
+  testWithFlags({ dashboardNewLayouts: true });
 
   describe('when layout has no rows', () => {
     it('should wrap existing content into a single row', () => {

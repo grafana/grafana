@@ -10,7 +10,7 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
 import { markAsUrlRewrite } from 'app/core/navigation/urlRewrite';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -844,13 +844,7 @@ describe('DashboardScenePageStateManager v2', () => {
     });
 
     describe('predefined variables', () => {
-      beforeEach(() => {
-        setTestFlags({ 'grafana.dashboardGlobalVariables': true });
-      });
-
-      afterEach(() => {
-        setTestFlags({});
-      });
+      testWithFlags({ 'grafana.dashboardGlobalVariables': true });
 
       const predefinedVariable = {
         kind: 'CustomVariable' as const,

@@ -13,7 +13,7 @@ import {
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { setupDataSources } from 'app/features/alerting/unified/testSetup/datasources';
 import { DataSourceType } from 'app/features/alerting/unified/utils/datasource';
@@ -218,13 +218,7 @@ describe('PanelEditor', () => {
   });
 
   describe('When the scene is rebuilt underneath the editor', () => {
-    beforeAll(() => {
-      setTestFlags({ dashboardNewLayouts: true });
-    });
-
-    afterAll(() => {
-      setTestFlags({});
-    });
+    testWithFlags({ dashboardNewLayouts: true });
 
     /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */
     function swapBody(dashboard: DashboardScene) {

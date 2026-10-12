@@ -1,5 +1,5 @@
 import { CustomVariable, SceneVariableSet, VizPanel } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
 import { AutoGridLayoutManager } from '../../scene/layout-auto-grid/AutoGridLayoutManager';
@@ -227,13 +227,7 @@ function buildSceneWithLayoutParent(
 }
 
 describe('Layout mutation commands', () => {
-  beforeEach(() => {
-    setTestFlags({ dashboardNewLayouts: true });
-  });
-
-  afterEach(() => {
-    setTestFlags({});
-  });
+  testWithFlags({ dashboardNewLayouts: true });
 
   describe('ADD_ROW', () => {
     it('adds a row to a RowsLayout', async () => {

@@ -25,5 +25,5 @@ export { customCreateFolderHandler as customCreateFolderHandlerAppPlatform } fro
 
 export * as folderHandlers from './handlers/apis/folder.grafana.app/v1beta1/handlers';
 
-export { setTestFlags, getTestFeatureFlagClient } from './utilities/featureFlags';
+export { setTestFlags, testWithFlags, getTestFeatureFlagClient } from './utilities/featureFlags';
 export { mockLogger } from './utilities/mockLogger';
