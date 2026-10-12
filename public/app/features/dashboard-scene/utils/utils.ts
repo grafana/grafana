@@ -21,6 +21,7 @@ import {
 import { type Dashboard, type Panel, type RowPanel } from '@grafana/schema';
 import { createLogger } from '@grafana/ui';
 import kbn from 'app/core/utils/kbn';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type RowItem } from 'app/features/dashboard-scene/scene/layout-rows/RowItem';
 import { type TabItem } from 'app/features/dashboard-scene/scene/layout-tabs/TabItem';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
@@ -38,6 +39,7 @@ import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutM
 import { type DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardDropTarget } from '../scene/types/DashboardDropTarget';
 import { type DashboardSceneState } from '../scene/types/dashboard';
 
@@ -204,7 +206,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultPluginId(): string {
-  return config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
+  return isDashboardNewLayoutsEnabled() ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
 }
 
 export async function getDefaultVizPanel(): Promise<VizPanel> {
@@ -215,6 +217,8 @@ export async function getDefaultVizPanel(): Promise<VizPanel> {
   const datasourceSettings = await getDataSourceInstanceSettings(null);
 
   return new VizPanel({
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     title: newPanelTitle,
     pluginId: defaultPluginId,
     seriesLimit: config.panelSeriesLimit,

@@ -156,7 +156,7 @@ const getStyles = (theme: GrafanaTheme2) => {
         marginRight: theme.spacing(1),
       },
 
-      '&:focus-visible': getFocusStyles(theme),
+      '&:focus-visible': getFocusStyles(theme, true),
 
       '&::before': {
         display: 'block',

@@ -108,6 +108,10 @@ type k8sRESTAdapter struct {
 	// immediately purged. A zero TTL disables this bound.
 	retentionTTL time.Duration
 
+	// maxAge bounds how far in the past an annotation's time may be on write.
+	// If unset, the retention TTL is used as the maximum age (if one is set).
+	maxAge time.Duration
+
 	metrics *Metrics
 	logger  log.Logger
 }
@@ -374,6 +378,10 @@ func (s *k8sRESTAdapter) Update(ctx context.Context,
 		return nil, false, goneError(name)
 	}
 
+	if resource.Spec.TimeEnd == nil {
+		resource.Spec.TimeEnd = new(resource.Spec.Time)
+	}
+
 	if err := validateUpdate(existing, resource); err != nil {
 		return nil, false, err
 	}
@@ -568,12 +576,13 @@ func (s *k8sRESTAdapter) validateTimes(anno *annotationV0.Annotation) error {
 		return apierrors.NewBadRequest(
 			fmt.Sprintf("%v: time cannot be more than 1 week in the future", ErrInvalidInput))
 	}
-	if s.retentionTTL > 0 {
-		maxPast := now.Add(-s.retentionTTL).UnixMilli()
-		if anno.Spec.Time < maxPast {
-			return apierrors.NewBadRequest(
-				fmt.Sprintf("%v: time cannot be older than retention TTL (%v)", ErrInvalidInput, s.retentionTTL))
-		}
+	maxAge := s.maxAge
+	if maxAge == 0 {
+		maxAge = s.retentionTTL
+	}
+	if maxAge > 0 && anno.Spec.Time < now.Add(-maxAge).UnixMilli() {
+		return apierrors.NewBadRequest(
+			fmt.Sprintf("%v: time cannot be older than %v", ErrInvalidInput, maxAge))
 	}
 
 	// If timeEnd is set, validate it's after time and within future bounds

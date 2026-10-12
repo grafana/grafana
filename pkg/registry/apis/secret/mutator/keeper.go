@@ -12,7 +12,7 @@ import (
 
 type keeperMutator struct{}
 
-var _ contracts.KeeperMutator = &keeperMutator{}
+var _ contracts.KeeperMutator = (*keeperMutator)(nil)
 
 func ProvideKeeperMutator() contracts.KeeperMutator {
 	return &keeperMutator{}

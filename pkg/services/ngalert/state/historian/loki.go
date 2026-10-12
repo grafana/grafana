@@ -484,6 +484,20 @@ func buildQueryTail(query models.HistoryQuery) (string, error) {
 		return "", nil
 	}
 	b := strings.Builder{}
+
+	// Filter before parsing JSON, matching the JSON-encoded UID in the raw log line.
+	for _, uid := range []string{query.RuleUID, query.DashboardUID} {
+		if uid == "" {
+			continue
+		}
+		encoded, err := json.Marshal(uid)
+		if err != nil {
+			return "", err
+		}
+		b.WriteString(" |= ")
+		b.WriteString(strconv.Quote(string(encoded[1 : len(encoded)-1])))
+	}
+
 	b.WriteString(" | json")
 
 	if query.RuleUID != "" {

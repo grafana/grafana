@@ -228,6 +228,17 @@ func (n *Informer) AllowDegradedStart() { n.degradedStart = true }
 // observer (the default) disables observation. Call before Run.
 func (n *Informer) SetMetrics(m Metrics) { n.metrics = m }
 
+// SetLogger overrides the default "provisioning.informer.nats" logger, so a
+// consumer outside pkg/registry/apis/provisioning (whose controllers this type
+// originated for) can log under its own name instead. A nil logger is ignored,
+// leaving the default in place. Call before Run.
+func (n *Informer) SetLogger(l log.Logger) {
+	if l == nil {
+		return
+	}
+	n.log = l
+}
+
 // registration implements cache.ResourceEventHandlerRegistration by deferring to
 // the informer's sync state, so a NATS informer registration is interchangeable
 // with an apiserver one at the wiring seam.
@@ -511,7 +522,7 @@ func (n *Informer) relist(ctx context.Context, initial bool) error {
 	// are the keys to dispatch as adds/updates/deletes, with objects a live write
 	// already delivered here filtered out.
 	added, updated, removed := n.store.Replace(objs, listRV)
-	n.log.Debug("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
+	n.log.Info("nats informer re-listed", "gvr", n.gvr.String(), "initial", initial,
 		"count", len(objs), "added", len(added), "updated", len(updated), "removed", len(removed))
 
 	for _, obj := range added {

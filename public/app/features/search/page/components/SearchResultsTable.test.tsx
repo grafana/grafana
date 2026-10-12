@@ -308,6 +308,88 @@ describe('SearchResultsTable', () => {
     });
   });
 
+  describe('when an item was deleted', () => {
+    // The second row has no deletion time, which is what an object deleted before those
+    // were recorded looks like.
+    const searchData = toDataFrame({
+      name: 'A',
+      fields: [
+        {
+          name: 'kind',
+          type: FieldType.string,
+          config: {},
+          values: [DashboardSearchItemType.DashDB, DashboardSearchItemType.DashDB],
+        },
+        { name: 'uid', type: FieldType.string, config: {}, values: ['my-dashboard-1', 'my-dashboard-2'] },
+        { name: 'name', type: FieldType.string, config: {}, values: ['My dashboard 1', 'My dashboard 2'] },
+        { name: 'panel_type', type: FieldType.string, config: {}, values: ['', ''] },
+        { name: 'url', type: FieldType.string, config: {}, values: ['/my-dashboard-1', '/my-dashboard-2'] },
+        { name: 'tags', type: FieldType.other, config: {}, values: [[], []] },
+        { name: 'ds_uid', type: FieldType.other, config: {}, values: ['', ''] },
+        { name: 'location', type: FieldType.string, config: {}, values: ['/my-dashboard-1', '/my-dashboard-2'] },
+        {
+          name: 'deletionTimestamp',
+          type: FieldType.string,
+          config: {},
+          values: ['2026-09-25T20:43:31.000Z', null],
+        },
+      ],
+    });
+
+    const dataFrames = applyFieldOverrides({
+      data: [searchData],
+      fieldConfig: { defaults: {}, overrides: [] },
+      replaceVariables: (value) => value,
+      theme: createTheme(),
+    });
+
+    const mockSearchResult: QueryResponse = {
+      isItemLoaded: jest.fn().mockReturnValue(true),
+      loadMoreItems: jest.fn(),
+      totalRows: searchData.length,
+      view: new DataFrameView<DashboardQueryResult>(dataFrames[0]),
+    };
+
+    it('shows when it was deleted', async () => {
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={mockSearchResult}
+          onTagSelected={mockOnTagSelected}
+          selection={mockSelection}
+          selectionToggle={mockSelectionToggle}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+      await screen.findByRole('table');
+
+      expect(screen.getByRole('columnheader', { name: 'Deleted on' })).toBeInTheDocument();
+      // Formatted in the test runner's locale, so match the year rather than a fixed string.
+      expect(screen.getByText(/2026/)).toBeInTheDocument();
+    });
+
+    it('shows a dash for an item with no deletion time, rather than a loading state', async () => {
+      render(
+        <SearchResultsTable
+          keyboardEvents={mockKeyboardEvents}
+          response={mockSearchResult}
+          onTagSelected={mockOnTagSelected}
+          selection={mockSelection}
+          selectionToggle={mockSelectionToggle}
+          clearSelection={mockClearSelection}
+          height={1000}
+          width={1000}
+        />
+      );
+      await screen.findByRole('table');
+
+      expect(screen.getByRole('columnheader', { name: 'Deleted on' })).toBeInTheDocument();
+      expect(screen.getByText('-')).toBeInTheDocument();
+    });
+  });
+
   describe('when there is no data', () => {
     const emptySearchData: DataFrame = {
       fields: [

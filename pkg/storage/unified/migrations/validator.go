@@ -147,7 +147,7 @@ func (v *CountValidator) Validate(ctx context.Context, sess *xorm.Session, respo
 			Namespace: summary.Namespace,
 			Kinds:     []string{fmt.Sprintf("%s/%s", summary.Group, summary.Resource)},
 		})
-		if err != nil {
+		if err := resource.ErrorFromResponse(statsResp.GetError(), err); err != nil {
 			return fmt.Errorf("failed to get stats for %s/%s in namespace %s: %w",
 				summary.Group, summary.Resource, summary.Namespace, err)
 		}
@@ -364,7 +364,7 @@ func (v *FolderTreeValidator) buildUnifiedFolderParentMap(ctx context.Context, n
 			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): empty response", page)
 		}
 		if searchResp.GetError() != nil {
-			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, resource.GetError(searchResp.GetError()))
+			return nil, fmt.Errorf("failed to search folders in unified storage (page %d): %w", page, resource.StatusError(searchResp.GetError()))
 		}
 
 		rows, err := decodeFolderRows(searchResp)

@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/alerting/definition"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
@@ -85,7 +86,7 @@ func TestManagedRoute_GeneratedSubRoute_PreservesFields(t *testing.T) {
 	assert.Equal(t, "managed", route.ObjectMatchers[0].Value)
 
 	// Provenance propagated
-	assert.EqualValues(t, v1.Provenance("test"), route.Provenance)
+	assert.EqualValues(t, definition.Provenance("test"), route.Provenance)
 }
 
 func TestWithManagedRoutes(t *testing.T) {
@@ -106,7 +107,7 @@ func TestWithManagedRoutes(t *testing.T) {
 
 		rev *ConfigRevision
 
-		expectedRoute *v1.Route
+		expectedRoute *definition.Route
 	}{
 		{
 			name: "simple, root is empty just adds managed routes",
@@ -116,9 +117,9 @@ func TestWithManagedRoutes(t *testing.T) {
 					"matcher-variety":  policy_exports.MatcherVariety(),
 				},
 			),
-			expectedRoute: &v1.Route{
+			expectedRoute: &definition.Route{
 				Receiver: policy_exports.Empty().Receiver,
-				Routes: []*v1.Route{
+				Routes: []*definition.Route{
 					GeneratedSubRoute(v1.NewManagedRoute("matcher-variety", policy_exports.MatcherVariety())),
 					GeneratedSubRoute(v1.NewManagedRoute("override-inherit", policy_exports.OverrideInherit())),
 				},
@@ -140,27 +141,27 @@ func TestWithManagedRoutes(t *testing.T) {
 					"r2": {Receiver: "recv2"},
 				},
 			),
-			expectedRoute: &v1.Route{
+			expectedRoute: &definition.Route{
 				Receiver: "root-receiver",
-				Routes: []*v1.Route{
+				Routes: []*definition.Route{
 					{
 						Receiver:       "recv1",
-						ObjectMatchers: v1.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r1"}},
+						ObjectMatchers: definition.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r1"}},
 						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
 						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
 						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
 					},
 					{
 						Receiver:       "recv2",
-						ObjectMatchers: v1.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r2"}},
+						ObjectMatchers: definition.ObjectMatchers{{Name: NamedRouteMatcher, Type: labels.MatchEqual, Value: "r2"}},
 						GroupWait:      new(model.Duration(dispatch.DefaultRouteOpts.GroupWait)),
 						GroupInterval:  new(model.Duration(dispatch.DefaultRouteOpts.GroupInterval)),
 						RepeatInterval: new(model.Duration(dispatch.DefaultRouteOpts.RepeatInterval)),
 					},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
-					{ObjectMatchers: v1.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
+					{ObjectMatchers: definition.ObjectMatchers{{Name: "severity", Type: labels.MatchEqual, Value: "warn"}}, Continue: true},
+					{ObjectMatchers: definition.ObjectMatchers{{Name: "severity", Type: labels.MatchNotEqual, Value: "critical"}}, Continue: true},
+					{ObjectMatchers: definition.ObjectMatchers{{Name: "severity", Type: labels.MatchRegexp, Value: "info"}}, Continue: true},
+					{ObjectMatchers: definition.ObjectMatchers{{Name: "severity", Type: labels.MatchNotRegexp, Value: "debug"}}, Continue: true},
 				},
 			},
 		},
@@ -168,7 +169,7 @@ func TestWithManagedRoutes(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := WithManagedRoutes(tc.rev.Config.AlertmanagerConfig.Route, tc.rev.Config.ManagedRoutes)
+			result := WithManagedRoutes(tc.rev.Config)
 			assert.Equal(t, tc.expectedRoute, result)
 		})
 	}

@@ -89,15 +89,16 @@ export function LabelValues({ id, dsRef, timeRange, metric, labelKey }: Props) {
       {visible.length > 0 && (
         <ul className={styles.valueList}>
           {visible.map((value) => (
-            <li key={value} className={styles.valueRow} data-testid="signal-explorer-value-row">
+            <li key={value} className={styles.valueRow} title={value} data-testid="signal-explorer-value-row">
               {value}
             </li>
           ))}
         </ul>
       )}
       {ordered.length > visible.length && (
-        // The visible text stays short for the rail, but the accessible name says which list this
-        // extends: the metric list's own "Show more" can be in the same scroll region as this one.
+        // A button rather than loading on scroll: this block sits mid-way through the metrics list, and
+        // growing it as it scrolls past would push the metrics below it out of reach. The accessible
+        // name says which list it extends, since the visible text stays short for the rail.
         <Button
           size="sm"
           variant="secondary"

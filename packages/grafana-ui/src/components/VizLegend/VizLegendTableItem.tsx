@@ -104,7 +104,11 @@ export const LegendTableItem = ({
       </td>
       {item.getDisplayValues &&
         item.getDisplayValues().map((stat, index) => {
-          return <td key={`${stat.title}-${index}`}>{formattedValueToString(stat)}</td>;
+          return (
+            <td key={`${stat.title}-${index}`} className={styles.value}>
+              {formattedValueToString(stat)}
+            </td>
+          );
         })}
     </tr>
   );
@@ -122,6 +126,9 @@ const getStyles = (theme: GrafanaTheme2, overflow?: LegendOverflow) => {
       '&:hover': {
         background: rowHoverBg,
       },
+    }),
+    value: css({
+      fontVariantNumeric: theme.flags.tabularNums ? 'tabular-nums' : undefined,
     }),
     label: css({
       label: 'LegendLabel',

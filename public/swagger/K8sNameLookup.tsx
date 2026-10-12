@@ -3,7 +3,7 @@ import { useContext, useEffect, useState } from 'react';
 import { type SelectableValue } from '@grafana/data';
 import { Select } from '@grafana/ui';
 
-import { NamespaceContext, ResourceContext } from './plugins';
+import { NamespaceContext, ResourceContext } from './contexts';
 
 type Props = {
   value?: string;

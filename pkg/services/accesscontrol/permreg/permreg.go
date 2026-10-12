@@ -64,7 +64,7 @@ type PermissionRegistry interface {
 
 type PrefixSet map[string]bool
 
-var _ PermissionRegistry = &permissionRegistry{}
+var _ PermissionRegistry = (*permissionRegistry)(nil)
 
 type permissionRegistry struct {
 	mu                  sync.RWMutex

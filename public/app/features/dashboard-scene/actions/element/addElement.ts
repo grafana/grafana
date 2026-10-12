@@ -1,10 +1,12 @@
 import { t } from '@grafana/i18n';
 import { type SceneObject } from '@grafana/scenes';
 
+import { type DashboardActionMeta } from '../../sidebar/events';
 import { edit } from '../utils/edit';
 import { getElementTypeName } from '../utils/getElementTypeName';
 
 interface AddElementActionHelperProps {
+  meta: DashboardActionMeta;
   addedObject: SceneObject;
   source: SceneObject;
   perform: () => void;
@@ -23,6 +25,7 @@ export function addElement(props: AddElementActionHelperProps) {
   }
 
   edit({
+    meta: props.meta,
     description: t('dashboard.edit-actions.add', 'Add {{typeName}}', { typeName }),
     addedObject,
     source,

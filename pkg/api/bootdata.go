@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/frontendsettings"
 	"github.com/grafana/grafana/pkg/api/webassets"
-	"github.com/grafana/grafana/pkg/login/social"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
@@ -179,31 +178,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 	frontendSettings.SamlEnabled = hs.samlEnabled(c.Req.Context())
 	frontendSettings.SamlName = hs.samlName(c.Req.Context())
 
-	// It returns false if the provider is not enabled or the skip org role sync is false.
-	parseSkipOrgRoleSyncEnabled := func(info *social.OAuthInfo) bool {
-		if info == nil {
-			return false
-		}
-		return info.SkipOrgRoleSync
-	}
-
-	oauthProviders, err := hs.SocialService.GetOAuthInfoProviders(c.Req.Context())
-	if err != nil {
-		hs.log.Error("Failed to load OAuth providers", "error", err)
-		oauthProviders = map[string]*social.OAuthInfo{}
-	}
 	frontendSettings.Auth = dtos.FrontendSettingsAuthDTO{
-		AuthProxyEnableLoginToken:     hs.Cfg.AuthProxy.EnableLoginToken,
-		SAMLSkipOrgRoleSync:           hs.Cfg.SAMLSkipOrgRoleSync,
-		LDAPSkipOrgRoleSync:           hs.Cfg.LDAPSkipOrgRoleSync,
-		JWTAuthSkipOrgRoleSync:        hs.Cfg.JWTAuth.SkipOrgRoleSync,
-		GoogleSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GoogleProviderName]),
-		GrafanaComSkipOrgRoleSync:     parseSkipOrgRoleSyncEnabled(oauthProviders[social.GrafanaComProviderName]),
-		GenericOAuthSkipOrgRoleSync:   parseSkipOrgRoleSyncEnabled(oauthProviders[social.GenericOAuthProviderName]),
-		AzureADSkipOrgRoleSync:        parseSkipOrgRoleSyncEnabled(oauthProviders[social.AzureADProviderName]),
-		GithubSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitHubProviderName]),
-		GitLabSkipOrgRoleSync:         parseSkipOrgRoleSyncEnabled(oauthProviders[social.GitlabProviderName]),
-		OktaSkipOrgRoleSync:           parseSkipOrgRoleSyncEnabled(oauthProviders[social.OktaProviderName]),
 		DisableLogin:                  hs.Cfg.DisableLogin,
 		BasicAuthStrongPasswordPolicy: hs.Cfg.BasicAuthStrongPasswordPolicy,
 		DisableSignoutMenu:            hs.Cfg.DisableSignoutMenu,

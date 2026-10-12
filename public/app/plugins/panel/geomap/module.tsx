@@ -3,7 +3,7 @@ import { t, Trans } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { commonOptionsBuilder } from '@grafana/ui';
 
-import { GeomapPanel } from './GeomapPanel';
+import { GeomapPanelWithTheme } from './GeomapPanel';
 import { LayersEditor } from './editor/LayersEditor';
 import { MapViewEditor } from './editor/MapViewEditor';
 import { VariableNameEditor } from './editor/VariableNameEditor';
@@ -13,7 +13,7 @@ import { defaultMapViewConfig, type Options, TooltipMode } from './panelcfg.gen'
 import { geomapSuggestionsSupplier } from './suggestions';
 import { type GeomapInstanceState } from './types';
 
-export const plugin = new PanelPlugin<Options>(GeomapPanel)
+export const plugin = new PanelPlugin<Options>(GeomapPanelWithTheme)
   .setNoPadding()
   .setPanelChangeHandler(mapPanelChangedHandler)
   .setMigrationHandler(mapMigrationHandler)

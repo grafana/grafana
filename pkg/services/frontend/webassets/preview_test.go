@@ -91,7 +91,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		server := newBucketServer(t, "pr_grafana_42", nil)
 		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
-		assets, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
+		assets, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42", "build")
 		require.NoError(t, err)
 
 		previewURL := server.URL + "/pr_grafana_42/"
@@ -109,7 +109,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		for range 3 {
-			_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
+			_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42", "build")
 			require.NoError(t, err)
 		}
 
@@ -118,7 +118,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 
 	t.Run("should error when the feature is not configured", func(t *testing.T) {
 		fswebassets.ResetPreviewAssetsCache()
-		_, err := fswebassets.GetPreviewWebAssets(context.Background(), fswebassets.PreviewAssetsConfig{}, "pr_grafana_42")
+		_, err := fswebassets.GetPreviewWebAssets(context.Background(), fswebassets.PreviewAssetsConfig{}, "pr_grafana_42", "build")
 		assert.Error(t, err)
 	})
 
@@ -127,7 +127,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		server := newBucketServer(t, "pr_grafana_42", nil)
 		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
-		_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999")
+		_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999", "build")
 		assert.Error(t, err)
 	})
 
@@ -138,7 +138,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		preview := fswebassets.PreviewAssetsConfig{BaseURL: server.URL + "/", AllowedNamespaces: []string{"stacks-123"}}
 
 		for range 3 {
-			_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999")
+			_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_999", "build")
 			require.Error(t, err)
 		}
 
@@ -161,7 +161,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		var wg sync.WaitGroup
 		for range 5 {
 			wg.Go(func() {
-				_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
+				_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42", "build")
 				assert.NoError(t, err)
 			})
 		}
@@ -188,7 +188,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 		defer cancel()
 		leaderErr := make(chan error, 1)
 		go func() {
-			_, err := fswebassets.GetPreviewWebAssets(ctx, preview, "pr_grafana_42")
+			_, err := fswebassets.GetPreviewWebAssets(ctx, preview, "pr_grafana_42", "build")
 			leaderErr <- err
 		}()
 
@@ -199,7 +199,7 @@ func TestGetPreviewWebAssets(t *testing.T) {
 
 		// The detached fetch must still complete and serve a later caller.
 		close(release)
-		_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42")
+		_, err := fswebassets.GetPreviewWebAssets(context.Background(), preview, "pr_grafana_42", "build")
 		require.NoError(t, err)
 		assert.Equal(t, int64(1), requests.Load(), "the cancelled caller's fetch should be reused, not retried")
 	})

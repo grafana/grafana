@@ -1,5 +1,6 @@
 import { act, render, screen } from 'test/test-utils';
 
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { contextSrv } from 'app/core/services/context_srv';
@@ -93,14 +94,6 @@ describe('NotebookView', () => {
     expect(await screen.findByRole('radio', { name: 'Edit' })).toBeInTheDocument();
   });
 
-  // The sticky controls row offsets itself by the app header's height, which is not this host's
-  // coordinate space -- left alone the row floats over the first cells as they scroll past it.
-  /**
-   * It renders without an app header above it, but it must not say so ON THE SCENE: the same scene
-   * object is shared with the /notebooks route, which does have one, so a flag there would answer
-   * for both and leave the route's sticky controls row under its header. The answer travels with the
-   * tree instead — see NotebookEmbeddedContext.
-   */
   it('does not mark the shared scene as embedded', async () => {
     setTestFlags({ [NOTEBOOKS_FLAG]: true });
     const { instances } = captureStateManager();
@@ -128,6 +121,21 @@ describe('NotebookView', () => {
     });
 
     expect(onTitleChange).toHaveBeenCalledWith('Q2 latency regression');
+  });
+
+  it('paints the sticky controls row with the host-supplied background', async () => {
+    setTestFlags({ [NOTEBOOKS_FLAG]: true });
+    const { instances } = captureStateManager();
+
+    render(<NotebookView uid="nb-1" controlsBackground="rebeccapurple" />);
+
+    await act(async () => {
+      instances[0].setState({ isLoading: false, scene: aNotebookScene() });
+    });
+
+    expect(screen.getByTestId(selectors.pages.Notebooks.Item.controls)).toHaveStyle({
+      background: 'rebeccapurple',
+    });
   });
 
   // Without the route's breadcrumb to carry it, the body is the only place the difference between

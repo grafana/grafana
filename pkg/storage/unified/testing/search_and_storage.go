@@ -3,8 +3,8 @@ package test
 import (
 	"context"
 	"testing"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 
 	claims "github.com/grafana/authlib/types"
@@ -18,18 +18,19 @@ import (
 )
 
 func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend) {
+	const nsPrefix = "test-ns"
+
 	// Create a test user with admin permissions
 	testUser := &identity.StaticRequester{
 		Type:           claims.TypeUser,
 		Login:          "testuser",
 		UserID:         123,
 		UserUID:        "u123",
+		Namespace:      nsPrefix,
 		OrgRole:        identity.RoleAdmin,
 		IsGrafanaAdmin: true,
 	}
 	ctx = claims.WithAuthInfo(ctx, testUser)
-
-	nsPrefix := "test-ns"
 
 	var server resource.ResourceServer
 
@@ -88,7 +89,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 				Key:    key,
 				Value:  value,
 				Object: meta,
-				GUID:   uuid.New().String(),
+				GUID:   uuid.NewV4().String(),
 			})
 			require.NoError(t, err)
 			require.Greater(t, rv, int64(0))

@@ -65,9 +65,10 @@ describe('annotationServer with FE flag OFF', () => {
     expect(postFn).toHaveBeenCalledWith('/api/annotations', expect.objectContaining({ time: 1 }));
   });
 
-  it('update PUTs to legacy /api/annotations/:id', async () => {
+  it('update PUTs to legacy /api/annotations/:id without the id in the body', async () => {
     await annotationServer().update({ id: '42', time: 1, text: 'x' });
-    expect(putFn).toHaveBeenCalledWith('/api/annotations/42', expect.objectContaining({ id: '42' }));
+    // the legacy backend reads the id from the path and rejects a string id in the body
+    expect(putFn).toHaveBeenCalledWith('/api/annotations/42', { time: 1, text: 'x' });
   });
 
   it('delete DELETEs the legacy resource', async () => {

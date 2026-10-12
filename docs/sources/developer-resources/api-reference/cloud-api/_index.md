@@ -1090,6 +1090,125 @@ Example response:
 }
 ```
 
+### Get a stack's details
+
+```http
+GET https://grafana.com/api/instances/<STACK_SLUG>
+```
+
+Retrieves details for a single Grafana Cloud stack by its slug. This is a more direct alternative to fetching the stack from the paginated [list stacks](#list-stacks) endpoint.
+
+#### Responses
+
+The following responses may be returned.
+
+| Code  | Description                      |
+| ----- | -------------------------------- |
+| `200` | Successful operation.            |
+| `401` | API token is missing or invalid. |
+| `403` | Forbidden.                       |
+| `404` | Cloud Stack not found.           |
+
+Example response:
+
+```json
+{
+  "id": 007303,
+  "orgId": 052992,
+  "orgSlug": "grafanacom",
+  "orgName": "grafanacom",
+  "type": "grafana",
+  "name": "cloudapistack.grafana.net",
+  "url": "https://cloudapistack.grafana.net",
+  "slug": "cloudapistack",
+  "version": "stable",
+  "description": "",
+  "status": "active",
+  "gateway": "istio",
+  "createdAt": "2023-01-04T06:43:24.000Z",
+  "createdBy": "foobar",
+  "updatedAt": null,
+  "updatedBy": "",
+  "trial": 0,
+  "trialExpiresAt": null,
+  "clusterId": 69,
+  "clusterSlug": "prod-us-central-0",
+  "clusterName": "prod-us-central-0",
+  "plan": "gcloud",
+  "planName": "Grafana Cloud",
+  "billingStartDate": "2023-01-04T06:43:23.000Z",
+  "billingEndDate": null,
+  "billingActiveUsers": 0,
+  "billingGrafanaActiveUsers": 0,
+  "billingOnCallActiveUsers": 0,
+  "currentActiveUsers": 0,
+  "currentActiveAdminUsers": 0,
+  "currentActiveEditorUsers": 0,
+  "currentActiveViewerUsers": 0,
+  "dailyUserCnt": 0,
+  "dailyAdminCnt": 0,
+  "dailyEditorCnt": 0,
+  "dailyViewerCnt": 0,
+  "dashboardCnt": 8,
+  "datasourceCnts": {},
+  "userQuota": 10,
+  "dashboardQuota": -1,
+  "alertQuota": -1,
+  "alertCnt": 0,
+  "ssl": true,
+  "customAuth": true,
+  "customDomain": true,
+  "support": true,
+  "runningVersion": "9.3.2-45365 (commit: ef5286dd77, branch: v9.3.x)",
+  "machineLearning": 0,
+  "incident": 0,
+  "deleteProtection": false,
+  "hmInstancePromId": 715391,
+  "hmInstancePromUrl": "https://prometheus-us-central1.grafana.net",
+  "hmInstancePromName": "cloudapistack-prom",
+  "hmInstancePromStatus": "active",
+  "hmInstancePromCurrentUsage": 0,
+  "hmInstancePromCurrentActiveSeries": 0,
+  "hmInstanceGraphiteId": 715392,
+  "hmInstanceGraphiteUrl": "https://graphite-prod-10-prod-us-central-0.grafana.net",
+  "hmInstanceGraphiteName": "cloudapistack-graphite",
+  "hmInstanceGraphiteType": "graphite-v5",
+  "hmInstanceGraphiteStatus": "active",
+  "hmInstanceGraphiteCurrentUsage": 0,
+  "hlInstanceId": 356665,
+  "hlInstanceUrl": "https://logs-prod-017.grafana.net",
+  "hlInstanceName": "cloudapistack-logs",
+  "hlInstanceStatus": "active",
+  "hlInstanceCurrentUsage": 0,
+  "amInstanceId": 355647,
+  "amInstanceName": "cloudapistack-alerts",
+  "amInstanceUrl": "https://alertmanager-us-central1.grafana.net",
+  "amInstanceStatus": "active",
+  "amInstanceGeneratorUrl": "https://cloudapistack.grafana.net",
+  "amInstanceGeneratorUrlDatasource": "",
+  "htInstanceId": 353178,
+  "htInstanceUrl": "https://tempo-us-central1.grafana.net",
+  "htInstanceName": "cloudapistack-traces",
+  "htInstanceStatus": "active",
+  "regionId": 1,
+  "regionSlug": "us",
+  "links": [
+    {
+      "rel": "self",
+      "href": "/instances/cloudapistack"
+    },
+    {
+      "rel": "org",
+      "href": "/orgs/grafanacom"
+    },
+    {
+      "rel": "plugins",
+      "href": "/instances/cloudapistack/plugins"
+    }
+  ]
+}
+```
+
 ### Update stack
 
 {{< admonition type="note" >}}

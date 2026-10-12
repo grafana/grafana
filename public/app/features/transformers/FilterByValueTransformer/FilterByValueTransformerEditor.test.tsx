@@ -1,11 +1,46 @@
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, screen } from '@testing-library/react';
+import { selectOptionInTest } from 'test/helpers/selectOptionInTest';
 
 import { type DataFrame, FieldType, ValueMatcherID, valueMatchers } from '@grafana/data';
-import { FilterByValueMatch, FilterByValueType } from '@grafana/data/internal';
+import {
+  FilterByValueMatch,
+  FilterByValueType,
+  filterByValueTransformer,
+  type FilterByValueTransformerOptions,
+} from '@grafana/data/internal';
 
 import { FilterByValueTransformerEditor } from './FilterByValueTransformerEditor';
 
 describe('FilterByValueTransformerEditor', () => {
+  it('filters the newly selected field instead of the saved raw field identity', async () => {
+    const onChange = jest.fn<void, [FilterByValueTransformerOptions]>();
+    const input: DataFrame[] = [
+      {
+        fields: [
+          { name: 'A', type: FieldType.number, config: {}, values: [null, 1] },
+          { name: 'B', type: FieldType.number, config: {}, values: [2, null] },
+        ],
+        length: 2,
+      },
+    ];
+    const options: FilterByValueTransformerOptions = {
+      type: FilterByValueType.include,
+      match: FilterByValueMatch.all,
+      filters: [{ fieldName: 'A', field: { name: 'A' }, config: { id: ValueMatcherID.isNull, options: {} } }],
+    };
+    render(<FilterByValueTransformerEditor input={input} options={options} onChange={onChange} />);
+
+    await selectOptionInTest(screen.getByRole('combobox', { name: 'Field' }), 'B');
+
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...options,
+      filters: [{ fieldName: 'B', field: undefined, config: { id: ValueMatcherID.isNull, options: {} } }],
+    });
+    const [updatedOptions] = onChange.mock.calls[0];
+    const [output] = filterByValueTransformer.transformer(updatedOptions, { interpolate: (s) => s })(input);
+    expect(output.fields.map((field) => field.values)).toEqual([[1], [null]]);
+  });
+
   it('correctly applies the default isNull option when onAddFilter is first called', () => {
     // Mock onChange function
     const onChangeMock = jest.fn();

@@ -8,59 +8,100 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-func TestLoadSmtpStaticHeaders(t *testing.T) {
+func newStaticHeadersSection(t *testing.T, headers map[string]string) *ini.Section {
+	t.Helper()
+	section, err := ini.Empty().NewSection("smtp.static_headers")
+	require.NoError(t, err)
+	for name, value := range headers {
+		_, err = section.NewKey(name, value)
+		require.NoError(t, err)
+	}
+	return section
+}
+
+func TestReadGrafanaSmtpStaticHeaders(t *testing.T) {
 	t.Run("will load valid headers", func(t *testing.T) {
-		f := ini.Empty()
-		cfg := NewCfg()
-		s, err := f.NewSection("smtp.static_headers")
-		require.NoError(t, err)
-		cfg.Raw = f
-		_, err = s.NewKey("Foo-Header", "foo_val")
-		require.NoError(t, err)
-		_, err = s.NewKey("Bar", "bar_val")
+		section := newStaticHeadersSection(t, map[string]string{
+			"Foo-Header": "foo_val",
+			"Bar":        "bar_val",
+		})
+
+		staticHeaders, err := readGrafanaSmtpStaticHeaders(section)
 		require.NoError(t, err)
 
-		err = cfg.readGrafanaSmtpStaticHeaders()
-		require.NoError(t, err)
-
-		assert.Equal(t, "foo_val", cfg.Smtp.StaticHeaders["Foo-Header"])
-		assert.Equal(t, "bar_val", cfg.Smtp.StaticHeaders["Bar"])
+		assert.Equal(t, "foo_val", staticHeaders["Foo-Header"])
+		assert.Equal(t, "bar_val", staticHeaders["Bar"])
 	})
 
-	t.Run("will load no static headers into smtp config when section is defined but has no keys", func(t *testing.T) {
-		f := ini.Empty()
-		cfg := NewCfg()
-		_, err := f.NewSection("smtp.static_headers")
-		require.NoError(t, err)
-		cfg.Raw = f
+	t.Run("will load no static headers when section is defined but has no keys", func(t *testing.T) {
+		section := newStaticHeadersSection(t, nil)
 
-		err = cfg.readGrafanaSmtpStaticHeaders()
+		staticHeaders, err := readGrafanaSmtpStaticHeaders(section)
 		require.NoError(t, err)
 
-		assert.Empty(t, cfg.Smtp.StaticHeaders)
+		assert.Empty(t, staticHeaders)
 	})
 
-	t.Run("will load no static headers into smtp config when section is not defined", func(t *testing.T) {
-		f := ini.Empty()
-		cfg := NewCfg()
-		cfg.Raw = f
+	t.Run("will load no static headers when section is not defined", func(t *testing.T) {
+		section := ini.Empty().Section("smtp.static_headers")
 
-		err := cfg.readGrafanaSmtpStaticHeaders()
+		staticHeaders, err := readGrafanaSmtpStaticHeaders(section)
 		require.NoError(t, err)
 
-		assert.Empty(t, cfg.Smtp.StaticHeaders)
+		assert.Empty(t, staticHeaders)
 	})
 
 	t.Run("will return error when header label is not in valid format", func(t *testing.T) {
-		f := ini.Empty()
-		cfg := NewCfg()
-		s, err := f.NewSection("smtp.static_headers")
-		require.NoError(t, err)
-		_, err = s.NewKey("header with spaces", "value")
-		require.NoError(t, err)
-		cfg.Raw = f
+		section := newStaticHeadersSection(t, map[string]string{
+			"header with spaces": "value",
+		})
 
-		err = cfg.readGrafanaSmtpStaticHeaders()
+		_, err := readGrafanaSmtpStaticHeaders(section)
+		require.Error(t, err)
+	})
+}
+
+func TestReadSmtpSettings(t *testing.T) {
+	t.Run("will populate settings from the ini file", func(t *testing.T) {
+		f := ini.Empty()
+		smtp, err := f.NewSection("smtp")
+		require.NoError(t, err)
+		_, err = smtp.NewKey("enabled", "true")
+		require.NoError(t, err)
+		_, err = smtp.NewKey("host", "localhost:25")
+		require.NoError(t, err)
+		_, err = smtp.NewKey("ehlo_identity", "custom-identity")
+		require.NoError(t, err)
+
+		headers, err := f.NewSection("smtp.static_headers")
+		require.NoError(t, err)
+		_, err = headers.NewKey("Foo-Header", "foo_val")
+		require.NoError(t, err)
+
+		settings, err := ReadSmtpSettings(f, "instance-name")
+		require.NoError(t, err)
+
+		assert.True(t, settings.Enabled)
+		assert.Equal(t, "localhost:25", settings.Host)
+		assert.Equal(t, "custom-identity", settings.EhloIdentity)
+		assert.Equal(t, "foo_val", settings.StaticHeaders["Foo-Header"])
+	})
+
+	t.Run("will fall back to instance name for ehlo identity when unset", func(t *testing.T) {
+		settings, err := ReadSmtpSettings(ini.Empty(), "instance-name")
+		require.NoError(t, err)
+
+		assert.Equal(t, "instance-name", settings.EhloIdentity)
+	})
+
+	t.Run("will return error when a static header label is not in valid format", func(t *testing.T) {
+		f := ini.Empty()
+		headers, err := f.NewSection("smtp.static_headers")
+		require.NoError(t, err)
+		_, err = headers.NewKey("header with spaces", "value")
+		require.NoError(t, err)
+
+		_, err = ReadSmtpSettings(f, "instance-name")
 		require.Error(t, err)
 	})
 }

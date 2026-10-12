@@ -177,6 +177,7 @@ export function PanelChrome({
   minHeight,
 }: PanelChromeProps) {
   const theme = useTheme2();
+  const visualRefreshEnabled = theme.flags.visualDesignRefresh;
   const styles = useStyles2(getStyles);
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
@@ -297,7 +298,7 @@ export function PanelChrome({
         <div className={styles.title}>
           <Text
             element="h2"
-            variant="h6"
+            variant={visualRefreshEnabled ? 'base' : 'h6'}
             truncate
             title={typeof title === 'string' ? title : undefined}
             id={panelTitleId}
@@ -310,7 +311,7 @@ export function PanelChrome({
       {/* Collapsible title */}
       {collapsible && (
         <div className={styles.title}>
-          <Text element="h2" variant="h6">
+          <Text element="h2" variant={visualRefreshEnabled ? 'base' : 'h6'}>
             <button
               type="button"
               className={styles.clearButtonStyles}
@@ -330,7 +331,7 @@ export function PanelChrome({
                   !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
                 }
               />
-              <Text variant="h6" truncate id={panelTitleId}>
+              <Text variant={visualRefreshEnabled ? 'base' : 'h6'} truncate id={panelTitleId}>
                 {title}
               </Text>
             </button>

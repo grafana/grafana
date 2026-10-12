@@ -152,6 +152,18 @@ describe('getStandardTransformers', () => {
     });
   });
 
+  describe('usesDynamicRefId invariant', () => {
+    // Lazy items restate this flag instead of hoisting it, so the registry can answer "can this be
+    // named?" without awaiting the import. Restating it is what lets the two drift apart.
+    it('TransformerRegistryItem.usesDynamicRefId matches the resolved DataTransformerInfo', async () => {
+      const items = getStandardTransformers();
+      for (const item of items) {
+        const info = await item.transformation();
+        expect(item.usesDynamicRefId).toEqual(info.usesDynamicRefId);
+      }
+    });
+  });
+
   describe('eager transformation resolution', () => {
     it.each([DataTransformerID.reduce, DataTransformerID.merge])(
       'resolves %s transformation without error and includes operator',

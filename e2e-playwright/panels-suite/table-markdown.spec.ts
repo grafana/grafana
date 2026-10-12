@@ -29,7 +29,7 @@ test.describe(
         queryParams: new URLSearchParams({ editPanel: '1' }),
       });
 
-      const table = page.locator('.rdg');
+      const table = page.locator('.rdg:not([aria-hidden="true"])');
 
       // confirm that the second row of the table is tall due to the content in it
       await expect(getCellHeight(table, 2, 1)).resolves.toBeGreaterThan(100);

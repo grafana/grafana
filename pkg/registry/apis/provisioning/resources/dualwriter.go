@@ -82,7 +82,12 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 		return nil, fmt.Errorf("error running dryRun: %w", err)
 	}
 
-	if err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet); err != nil {
+	if parsed.IsPreviewRead(r.repo.Config().Branch()) {
+		err = r.authorizer.AuthorizeResourcePreview(ctx, parsed)
+	} else {
+		err = r.authorizer.AuthorizeResource(ctx, parsed, utils.VerbGet)
+	}
+	if err != nil {
 		return nil, fmt.Errorf("authorize read resource: %w", err)
 	}
 

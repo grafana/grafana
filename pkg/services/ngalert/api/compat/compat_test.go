@@ -195,6 +195,18 @@ func TestAlertRuleExportFromAlertRule(t *testing.T) {
 	}
 }
 
+func TestAlertRuleExportFromAlertRuleYearDurations(t *testing.T) {
+	rule := models.RuleGen.With(
+		models.RuleGen.WithFor(8760*time.Hour),
+		models.RuleGen.WithKeepFiringFor(17520*time.Hour),
+	).Generate()
+
+	exported, err := AlertRuleExportFromAlertRule(rule)
+	require.NoError(t, err)
+	require.Equal(t, "365d", *exported.ForString)
+	require.Equal(t, "730d", *exported.KeepFiringForString)
+}
+
 func TestAlertQueryExportFromAlertQuery(t *testing.T) {
 	query := models.RuleGen.GenerateQuery()
 

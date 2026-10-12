@@ -21,8 +21,8 @@ type subHealthREST struct {
 }
 
 var (
-	_ = rest.Connecter(&subHealthREST{})
-	_ = rest.StorageMetadata(&subHealthREST{})
+	_ rest.Connecter       = (*subHealthREST)(nil)
+	_ rest.StorageMetadata = (*subHealthREST)(nil)
 )
 
 func (r *subHealthREST) New() runtime.Object {

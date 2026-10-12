@@ -13,8 +13,11 @@ import { AddButton } from './AddButton';
 export async function openAddFilterForm(
   dashboard: DashboardSceneLike,
   sectionOwner: SceneObject,
-  signal: AbortSignal = dashboard.state.sidebar.beginPaneRequest()
-) {
+  signal?: AbortSignal
+): Promise<void> {
+  if (!signal) {
+    return dashboard.state.sidebar.runPaneRequest((signal) => openAddFilterForm(dashboard, sectionOwner, signal));
+  }
   const existing = sectionOwner.state.$variables;
   const variablesSet = existing instanceof SceneVariableSet ? existing : new SceneVariableSet({ variables: [] });
 

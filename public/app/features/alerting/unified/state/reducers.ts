@@ -16,7 +16,7 @@ const reducer = combineReducers({
     .reducer,
   saveAMConfig: createAsyncSlice<void>('saveAMConfig', alertingActionTypePrefix.updateAlertManagerConfig).reducer,
   deleteAMConfig: createAsyncSlice<void>('deleteAMConfig', alertingActionTypePrefix.deleteAlertManagerConfig).reducer,
-  managedAlertStateHistory: createAsyncSlice<StateHistoryItem[]>(
+  managedAlertStateHistory: createAsyncSlice<{ ruleUID: string; history: StateHistoryItem[] }>(
     'managedAlertStateHistory',
     alertingActionTypePrefix.fetchGrafanaAnnotations
   ).reducer,

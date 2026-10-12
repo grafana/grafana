@@ -130,19 +130,19 @@ type manifestWatcherMetrics struct {
 func newManifestWatcherMetrics(reg prometheus.Registerer) *manifestWatcherMetrics {
 	return &manifestWatcherMetrics{
 		polls: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "search_manifest_watcher_polls_total",
+			Name: "grafana_search_manifest_watcher_polls_total",
 			Help: "Manifest watcher poll cycles by result (success, empty, error).",
 		}, []string{"result"}),
 		reloads: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "search_manifest_watcher_reloads_total",
+			Name: "grafana_search_manifest_watcher_reloads_total",
 			Help: "Times the manifest watcher published a changed manifest set.",
 		}),
 		manifests: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "search_manifest_watcher_manifests",
+			Name: "grafana_search_manifest_watcher_manifests",
 			Help: "Number of manifests in the current watcher snapshot.",
 		}),
 		lastSuccess: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
-			Name: "search_manifest_watcher_last_success_timestamp_seconds",
+			Name: "grafana_search_manifest_watcher_last_success_timestamp_seconds",
 			Help: "Unix time of the last successful manifest watcher poll (list succeeded).",
 		}),
 	}

@@ -60,13 +60,16 @@ export class MultiSelectedVizPanelsEditableElement implements EditableDashboardE
       t('dashboard.edit-actions.remove-multiple', 'Remove {{typeName}} ({{num}})', {
         num: panels.length,
         typeName: this.getEditableElementInfo().typeName.toLowerCase(),
-      })
+      }),
+      { actionId: 'panel.remove', scope: 'multiple' }
     );
 
-    this._panels.forEach((panel) => {
-      panel.onDelete();
-    });
-
-    endBatch(this._dashboard);
+    try {
+      this._panels.forEach((panel) => {
+        panel.onDelete();
+      });
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 }

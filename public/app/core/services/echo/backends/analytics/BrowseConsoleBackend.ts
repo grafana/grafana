@@ -2,19 +2,23 @@
 import {
   type EchoBackend,
   EchoEventType,
+  type ExperimentViewEchoEvent,
+  type InteractionEchoEvent,
   isExperimentViewEvent,
   isInteractionEvent,
   isPageviewEvent,
   type PageviewEchoEvent,
 } from '@grafana/runtime';
 
-export class BrowserConsoleBackend implements EchoBackend<PageviewEchoEvent, unknown> {
+export class BrowserConsoleBackend
+  implements EchoBackend<PageviewEchoEvent | InteractionEchoEvent | ExperimentViewEchoEvent, unknown>
+{
   options = {};
   supportedEvents = [EchoEventType.Pageview, EchoEventType.Interaction, EchoEventType.ExperimentView];
 
   constructor() {}
 
-  addEvent = (e: PageviewEchoEvent) => {
+  addEvent = (e: PageviewEchoEvent | InteractionEchoEvent | ExperimentViewEchoEvent) => {
     if (isPageviewEvent(e)) {
       console.log('[EchoSrv:pageview]', e.payload.page);
     }

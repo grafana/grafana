@@ -114,6 +114,74 @@ func TestDashboardsAPIBuilderValidateNotebook(t *testing.T) {
 	})
 }
 
+// The format the UI uses for the same default, so the two cannot drift apart unnoticed.
+const defaultTitlePattern = `^Notebook \d{4}-\d{2}-\d{2} \d{2}:\d{2}$`
+
+func TestMutateNotebook(t *testing.T) {
+	t.Run("a notebook created without a title is named after the time it was created", func(t *testing.T) {
+		nb := newNotebook("nb")
+		nb.Spec.Title = ""
+
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{})))
+
+		require.Regexp(t, defaultTitlePattern, nb.Spec.Title)
+	})
+
+	// A title of spaces is as blank a row in the list as no title at all.
+	t.Run("a title of only whitespace counts as no title", func(t *testing.T) {
+		nb := newNotebook("nb")
+		nb.Spec.Title = "   "
+
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{})))
+
+		require.Regexp(t, defaultTitlePattern, nb.Spec.Title)
+	})
+
+	t.Run("a title the client supplied is left exactly as it is", func(t *testing.T) {
+		nb := newNotebook("nb")
+		nb.Spec.Title = "  Incident review  "
+
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Create, nb, &metav1.CreateOptions{})))
+
+		require.Equal(t, "  Incident review  ", nb.Spec.Title)
+	})
+
+	// Naming it here would report the time of the edit as the time of creation.
+	t.Run("a title cleared on update is left cleared", func(t *testing.T) {
+		nb := newNotebook("nb")
+		nb.Spec.Title = ""
+
+		require.NoError(t, mutateNotebook(notebookAttributes(admission.Update, nb, &metav1.UpdateOptions{})))
+
+		require.Empty(t, nb.Spec.Title)
+	})
+}
+
+func TestDashboardsAPIBuilderMutateNotebook(t *testing.T) {
+	builder := &DashboardsAPIBuilder{}
+	ctx := context.Background()
+
+	t.Run("routes a notebook create to the notebook mutation", func(t *testing.T) {
+		nb := newNotebook("nb")
+		nb.Spec.Title = ""
+
+		require.NoError(t, builder.Mutate(ctx, notebookAttributes(admission.Create, nb, &metav1.CreateOptions{}), nil))
+
+		require.Regexp(t, defaultTitlePattern, nb.Spec.Title)
+	})
+
+	// Mutate returns early for anything that is not a create or an update, so the object it was
+	// handed is never touched.
+	t.Run("leaves a delete alone", func(t *testing.T) {
+		nb := newNotebook("nb")
+		nb.Spec.Title = ""
+
+		require.NoError(t, builder.Mutate(ctx, notebookAttributes(admission.Delete, nb, &metav1.DeleteOptions{}), nil))
+
+		require.Empty(t, nb.Spec.Title)
+	})
+}
+
 func setNotebooksToggle(t *testing.T, enabled bool) {
 	t.Helper()
 	variant := "disabled"

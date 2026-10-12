@@ -38,12 +38,6 @@ func (p *loopbackRestConfigProvider) RoundTrip(req *http.Request) (*http.Respons
 	req = req.Clone(req.Context())
 	// Forwarded backends authenticate headers; local handlers also retain the
 	// requester through WrapHandler. Read credentials per request, never per client.
-	if token := requester.GetAccessToken(); token != "" {
-		req.Header.Set("X-Access-Token", "Bearer "+token)
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-	if token := requester.GetIDToken(); token != "" {
-		req.Header.Set("X-Grafana-Id", token)
-	}
+	setRequesterCredentials(req.Header, requester)
 	return responsewriter.WrapHandler(p.handler)(req)
 }

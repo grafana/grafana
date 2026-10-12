@@ -272,6 +272,7 @@ export const SeriesEditor = ({
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
                   placeholderText: '',
+                  isClearable: true,
                 },
               }}
             />
@@ -308,6 +309,7 @@ export const SeriesEditor = ({
                     !field.config.custom?.hideFrom?.viz,
                   baseNameMode,
                   placeholderText: '',
+                  isClearable: true,
                 },
               }}
             />

@@ -6,14 +6,16 @@ import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import {
-  useFlagGrafanaDashboardGlobalVariables,
+  useFlagDashboardUndoRedo,
   useFlagGrafanaViewPanelPane,
   useFlagFeedbackButton,
 } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
+import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { onOpenSnapshotOriginalDashboard } from '../scene/GoToSnapshotOriginButton';
 import { ManagedDashboardNavBarBadge } from '../scene/ManagedDashboardNavBarBadge';
@@ -23,7 +25,6 @@ import { dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 
 import { ShareExportDashboardButton } from './DashboardExportButton';
 import { DashboardSidebarExtensionPoint } from './DashboardSidebarExtensionPoint';
-import { DashboardCrossDashboardVariablesPane } from './dashboard/DashboardCrossDashboardVariablesPane';
 import { ToggleViewPanePaneEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike, type DashboardSidebarPane } from './types';
@@ -37,7 +38,7 @@ export interface Props {
  */
 export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebar = dashboard.state.sidebar;
-  const { openPane, selectionContext, outlinePane } = useSceneObjectState(sidebar, {
+  const { openPane, selectionContext, outlinePane, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
   const { isEditing, meta, uid, viewPanel } = dashboard.useState();
@@ -47,22 +48,26 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const selectedObject = sidebar.getSelectedObject();
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
-  const globalDashboardVariablesEnabled = useFlagGrafanaDashboardGlobalVariables();
   const feedbackButton = useFlagFeedbackButton();
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  const dashboardUndoRedo = useFlagDashboardUndoRedo();
+
   const onOpenAddPane = useCallback(async () => {
-    const signal = sidebar.beginPaneRequest();
-    const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
-    if (!signal.aborted) {
-      sidebar.openPane(new AddNewPane({}));
-    }
+    await sidebar.runPaneRequest(async (signal) => {
+      const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
+      if (!signal.aborted) {
+        sidebar.openPane(new AddNewPane({}));
+      }
+    });
   }, [sidebar]);
 
   const onOpenCodePane = useCallback(async () => {
-    const signal = sidebar.beginPaneRequest();
-    const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
-    if (!signal.aborted) {
-      sidebar.openPane(new DashboardCodePane({}));
-    }
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardCodePane } = await import(/* webpackChunkName: "dashboard-code-pane" */ './DashboardCodePane');
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardCodePane({}));
+      }
+    });
   }, [sidebar]);
 
   const onClickHideSidebar: React.MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -86,9 +91,14 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
 
   return (
     <>
-      {openPane && (
+      {(openPane || isLoading) && (
         <Sidebar.OpenPane>
-          <openPane.Component key={openPane.state.key} model={openPane} />
+          {isLoading && <DashboardLoadingBar label={t('dashboard.loading.sidebar', 'Loading sidebar')} />}
+          {openPane ? (
+            <openPane.Component key={openPane.state.key} model={openPane} />
+          ) : (
+            <Sidebar.PaneHeader title={t('dashboard.loading.sidebar-title', 'Loading…')} />
+          )}
         </Sidebar.OpenPane>
       )}
       <Sidebar.Toolbar>
@@ -133,16 +143,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
               data-testid={selectors.pages.Dashboard.Sidebar.codeButton}
               active={openPane?.getId() === 'code'}
             />
-            {globalDashboardVariablesEnabled && (
-              <Sidebar.Button
-                icon="gf-variable"
-                onClick={() => sidebar.openPane(new DashboardCrossDashboardVariablesPane({}))}
-                title={t('dashboard.sidebar.cross-dashboard-variables.title', 'Cross-dashboard')}
-                tooltip={t('dashboard.sidebar.cross-dashboard-variables.tooltip', 'Choose global and folder variables')}
-                active={openPane instanceof DashboardCrossDashboardVariablesPane}
-              />
-            )}
-            {config.featureToggles.dashboardUndoRedo && (
+            {dashboardUndoRedo && (
               <>
                 <Sidebar.Divider />
                 <UndoButton dashboard={dashboard} />
@@ -164,7 +165,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
+          {dashboardNewLayoutsEnabled && config.featureToggles.dashboardUnifiedDrilldownControls && (
             <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
           )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}
@@ -212,13 +213,14 @@ function FiltersOverviewButton({
   const hasFilters = variables.some((v) => v.state.type === 'adhoc');
 
   const onClick = useCallback(async () => {
-    const signal = sidebar.beginPaneRequest();
-    const { DashboardFiltersOverviewPane } = await import(
-      /* webpackChunkName: "dashboard-filters-overview" */ '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane'
-    );
-    if (!signal.aborted) {
-      sidebar.openPane(new DashboardFiltersOverviewPane({}));
-    }
+    await sidebar.runPaneRequest(async (signal) => {
+      const { DashboardFiltersOverviewPane } = await import(
+        /* webpackChunkName: "dashboard-filters-overview" */ '../scene/dashboard-filters-overview/DashboardFiltersOverviewPane'
+      );
+      if (!signal.aborted) {
+        sidebar.openPane(new DashboardFiltersOverviewPane({}));
+      }
+    });
   }, [sidebar]);
 
   if (!hasFilters) {

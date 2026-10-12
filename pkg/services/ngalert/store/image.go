@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
+	"uuid"
 
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -112,10 +111,7 @@ func (st DBstore) SaveImage(ctx context.Context, img *models.Image) error {
 			// and an expiration time. The expiration time of the image is derived from the created
 			// timestamp rather than the current time as it helps assert that the expiration time
 			// has the intended duration in tests.
-			token, err := uuid.NewRandom()
-			if err != nil {
-				return fmt.Errorf("failed to create token: %w", err)
-			}
+			token := uuid.NewV4()
 			img.Token = token.String()
 			img.CreatedAt = TimeNow().UTC()
 			img.ExpiresAt = img.CreatedAt.Add(imageExpirationDuration)

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 )
 
@@ -598,4 +599,42 @@ func TestQueue(t *testing.T) {
 		err = q.Enqueue(context.Background(), "tenant1", func() {})
 		require.ErrorIs(t, err, ErrQueueClosed)
 	})
+}
+
+func TestEnqueueContextDiscardReason(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		reason  string
+		timeout time.Duration
+		wantErr error
+	}{
+		{"context_canceled", time.Hour, context.Canceled},
+		{"deadline_exceeded", 0, context.DeadlineExceeded},
+	} {
+		t.Run(tc.reason, func(t *testing.T) {
+			t.Parallel()
+
+			q := NewQueue(QueueOptionsWithDefaults(nil))
+			// Prevent the dispatcher from accepting work so cancellation is deterministic.
+			q.enqueueChan = nil
+			require.NoError(t, services.StartAndAwaitRunning(t.Context(), q))
+			defer func() {
+				require.NoError(t, services.StopAndAwaitTerminated(t.Context(), q))
+			}()
+
+			ctx, cancel := context.WithTimeout(t.Context(), tc.timeout)
+			cancel()
+
+			const tenantID = "tenant-a"
+			require.ErrorIs(t, q.Enqueue(ctx, tenantID, func() {}), tc.wantErr)
+			for _, reason := range []string{"context_canceled", "deadline_exceeded"} {
+				want := float64(0)
+				if reason == tc.reason {
+					want = 1
+				}
+				require.Equal(t, want, testutil.ToFloat64(q.discardedRequests.WithLabelValues(tenantID, reason)), "reason=%s", reason)
+			}
+		})
+	}
 }

@@ -13,6 +13,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/rest"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -297,4 +299,70 @@ func TestIntegrationListKeys_ClusterWideSpansNamespaces(t *testing.T) {
 	}
 	assert.Equal(t, org1, got["keys-org1"])
 	assert.Equal(t, orgB, got["keys-orgb"], "a pinned namespace would serve only one org")
+}
+
+// The gRPC lister against a real store: the only way to show its per-key
+// resourceVersion is byte-identical to the object's, which is what a caller
+// carrying an unchanged key forward compares.
+func TestIntegrationListKeys_GRPCListerReadsRealStorage(t *testing.T) {
+	helper := setupTest(t)
+	require.NoError(t, createDashboard(t, dashboardClient(t, helper), "keys-grpc-lister", "A"))
+
+	obj, err := dashboardClient(t, helper).Resource.Get(t.Context(), "keys-grpc-lister", metav1.GetOptions{})
+	require.NoError(t, err)
+
+	// The lister stamps the service identity itself; a bare context would be
+	// rejected by the in-process client with "no claims found".
+	listRV, seq := keysapi.NewGRPCLister(helper.GetEnv().ResourceClient, gvr).ListKeys(t.Context())
+	assert.NotZero(t, listRV, "the snapshot version callers arbitrate races with")
+
+	keys := map[string]keysapi.Key{}
+	for k, err := range seq {
+		require.NoError(t, err, "the server must honour keys_only")
+		keys[k.Name] = k
+	}
+
+	got, found := keys["keys-grpc-lister"]
+	require.True(t, found, "the created dashboard must appear in the keys list, got %v", keys)
+	assert.Equal(t, adminNamespace(helper), got.Namespace)
+	assert.Equal(t, obj.GetResourceVersion(), got.ResourceVersion,
+		"the projection's version must match the object's, or every key reads as changed")
+}
+
+// The HTTP lister against the real route and real storage. Only the
+// authentication layer is stood in for: a service identity is built in process,
+// so no test client can hold one over HTTP.
+func TestIntegrationListKeys_HTTPListerReadsRealStorage(t *testing.T) {
+	helper := setupTest(t)
+	require.NoError(t, createDashboard(t, dashboardClient(t, helper), "keys-http-lister", "A"))
+
+	route := keysapi.NewHandler(helper.GetEnv().ResourceClient, noop.NewTracerProvider().Tracer("test")).
+		ListKeysRoute(gvr.Group, gvr.Version, gvr.Resource, "Dashboard")
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		route.Handler(w, r.WithContext(identity.WithServiceIdentityContext(r.Context(), 1)))
+	}))
+	t.Cleanup(srv.Close)
+
+	gv := gvr.GroupVersion()
+	client, err := rest.RESTClientFor(&rest.Config{
+		Host:          srv.URL,
+		APIPath:       "/apis",
+		ContentConfig: rest.ContentConfig{GroupVersion: &gv, NegotiatedSerializer: scheme.Codecs.WithoutConversion()},
+	})
+	require.NoError(t, err)
+
+	listRV, seq := keysapi.NewHTTPLister(client, gvr).ListKeys(t.Context())
+	assert.NotZero(t, listRV, "the snapshot version callers arbitrate races with")
+
+	keys := map[string]keysapi.Key{}
+	for k, err := range seq {
+		require.NoError(t, err, "the endpoint must serve a keys projection over HTTP")
+		keys[k.Name] = k
+	}
+
+	got, found := keys["keys-http-lister"]
+	require.True(t, found, "the created dashboard must appear, got %v", keys)
+	assert.Equal(t, adminNamespace(helper), got.Namespace)
+	assert.NotEmpty(t, got.ResourceVersion, "the per-key version is what a caller diffs on")
 }

@@ -29,7 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/signingkeys/signingkeystore"
 )
 
-var _ signingkeys.Service = new(Service)
+var _ signingkeys.Service = (*Service)(nil)
 
 func ProvideEmbeddedSigningKeysService(dbStore db.DB,
 	secretsService secrets.Service, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature

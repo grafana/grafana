@@ -10,6 +10,7 @@ import { getFieldMatcher } from '../matchers';
 import { alwaysFieldMatcher, notTimeFieldMatcher } from '../matchers/predicates';
 
 import { DataTransformerID } from './ids';
+import { applyStaticRefId, getTransformationDynamicRefId } from './utils';
 
 export enum ReduceTransformerMode {
   SeriesToRows = 'seriesToRows', // default
@@ -22,6 +23,7 @@ export interface ReduceTransformerOptions {
   mode?: ReduceTransformerMode;
   includeTimeField?: boolean;
   labelsToFields?: boolean;
+  refId?: string;
 }
 
 export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = {
@@ -40,7 +42,7 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
     source.pipe(
       map((data) => {
         if (!options?.reducers?.length) {
-          return data; // nothing selected
+          return applyStaticRefId(data, options?.refId); // nothing selected
         }
 
         const matcher = options.fields
@@ -49,7 +51,8 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
             ? alwaysFieldMatcher
             : notTimeFieldMatcher;
 
-        // Collapse all matching fields into a single row
+        // Collapse all matching fields into a single row. One frame in, one frame out, each keeping
+        // its own refId — there is no combined frame to name, so a static refId does not apply.
         if (options.mode === ReduceTransformerMode.ReduceFields) {
           return reduceFields(data, matcher, options.reducers);
         }
@@ -57,10 +60,16 @@ export const reduceTransformer: DataTransformerInfo<ReduceTransformerOptions> = 
         // Add a row for each series
         const res = reduceSeriesToRows(data, matcher, options.reducers, options.labelsToFields);
         return res
-          ? [{ ...res, refId: `${DataTransformerID.reduce}-${data.map((frame) => frame.refId).join('-')}` }]
+          ? [
+              {
+                ...res,
+                refId: options.refId ?? getTransformationDynamicRefId(DataTransformerID.reduce, data),
+              },
+            ]
           : [];
       })
     ),
+  usesDynamicRefId: (options) => options?.mode !== ReduceTransformerMode.ReduceFields,
 };
 
 /**
