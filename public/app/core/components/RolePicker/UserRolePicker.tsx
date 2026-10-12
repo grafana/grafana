@@ -13,7 +13,7 @@ export interface Props {
   roles?: Role[];
   userId: number;
   orgId?: number;
-  onBasicRoleChange: (newRole: OrgRole) => void;
+  onBasicRoleChange: (newRole: OrgRole) => void | Promise<unknown>;
   roleOptions: Role[];
   disabled?: boolean;
   basicRoleDisabled?: boolean;

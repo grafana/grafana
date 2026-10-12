@@ -37,7 +37,7 @@ export function UserRolesEditor({ user, basicRole }: { user: OverviewUser; basic
   if ((!canEditBasic && !canEditDirect) || !isBasicRole(basicRole)) {
     return null;
   }
-  const updateBasic = (role: OrgRole) => updateBasicRole({ userId: user.id, updateOrgUserCommand: { role } });
+  const updateBasic = (role: OrgRole) => updateBasicRole({ userId: user.id, updateOrgUserCommand: { role } }).unwrap();
   return (
     <Stack direction="column" gap={2}>
       {failed && <ActionError error={error} />}

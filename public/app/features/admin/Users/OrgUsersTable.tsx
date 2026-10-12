@@ -43,7 +43,7 @@ const selectors = e2eSelectors.pages.UserListPage.UsersListPage;
 export interface Props {
   users: OrgUser[];
   orgId?: number;
-  onRoleChange: (role: OrgRole, user: OrgUser) => void;
+  onRoleChange: (role: OrgRole, user: OrgUser) => void | Promise<unknown>;
   onRemoveUser: (user: OrgUser) => void;
   fetchData?: FetchDataFunc<OrgUser>;
   changePage: (page: number) => void;

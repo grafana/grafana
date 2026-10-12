@@ -29,17 +29,14 @@ export function OrganizationsTab({ user }: { user: UserDTO }) {
         <ActionError error={adding.error || removing.error || updating.error} />
       )}
       <UserOrgs
-        failedRoleUpdate={
-          updating.isError && updating.originalArgs && updating.requestId
-            ? { orgId: updating.originalArgs.orgId, requestId: updating.requestId }
-            : undefined
-        }
         user={user}
         orgs={orgs}
         isExternalUser={user.isExternallySynced || user.isProvisioned}
         onOrgAdd={(orgId, role) => addOrgUser({ orgId, addOrgUserCommand: { loginOrEmail: user.login, role } })}
         onOrgRemove={(orgId) => removeOrgUser({ orgId, userId: user.uid })}
-        onOrgRoleChange={(orgId, role) => updateOrgRole({ orgId, userId: user.uid, updateOrgUserCommand: { role } })}
+        onOrgRoleChange={(orgId, role) =>
+          updateOrgRole({ orgId, userId: user.uid, updateOrgUserCommand: { role } }).unwrap()
+        }
       />
     </Stack>
   );

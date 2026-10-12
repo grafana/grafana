@@ -18,66 +18,63 @@ interface Props {
   orgs: UserOrg[];
   user?: UserDTO;
   isExternalUser?: boolean;
-  failedRoleUpdate?: { orgId: number; requestId: string };
 
   onOrgRemove: (orgId: number) => void;
-  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
+  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void | Promise<unknown>;
   onOrgAdd: (orgId: number, role: OrgRole) => void;
 }
 
-export const UserOrgs = memo(
-  ({ user, orgs, isExternalUser, failedRoleUpdate, onOrgRoleChange, onOrgRemove, onOrgAdd }: Props) => {
-    const [showAddOrgModal, setShowAddOrgModal] = useState(false);
-    const addToOrgButtonRef = useRef<HTMLButtonElement>(null);
+export const UserOrgs = memo(({ user, orgs, isExternalUser, onOrgRoleChange, onOrgRemove, onOrgAdd }: Props) => {
+  const [showAddOrgModal, setShowAddOrgModal] = useState(false);
+  const addToOrgButtonRef = useRef<HTMLButtonElement>(null);
 
-    const showOrgAddModal = () => {
-      setShowAddOrgModal(true);
-    };
+  const showOrgAddModal = () => {
+    setShowAddOrgModal(true);
+  };
 
-    const dismissOrgAddModal = () => {
-      setShowAddOrgModal(false);
-      addToOrgButtonRef.current?.focus();
-    };
+  const dismissOrgAddModal = () => {
+    setShowAddOrgModal(false);
+    addToOrgButtonRef.current?.focus();
+  };
 
-    const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
+  const canAddToOrg = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd) && !isExternalUser;
 
-    return (
-      <div>
-        <Stack gap={1.5} direction="column">
-          <table className="filter-table form-inline">
-            <tbody>
-              {orgs.map((org, index) => (
-                <OrgRow
-                  key={`${org.orgId}-${index}-${failedRoleUpdate?.orgId === org.orgId ? failedRoleUpdate.requestId : ''}`}
-                  isExternalUser={isExternalUser}
-                  user={user}
-                  org={org}
-                  onOrgRoleChange={onOrgRoleChange}
-                  onOrgRemove={onOrgRemove}
-                />
-              ))}
-            </tbody>
-          </table>
+  return (
+    <div>
+      <Stack gap={1.5} direction="column">
+        <table className="filter-table form-inline">
+          <tbody>
+            {orgs.map((org, index) => (
+              <OrgRow
+                key={`${org.orgId}-${index}`}
+                isExternalUser={isExternalUser}
+                user={user}
+                org={org}
+                onOrgRoleChange={onOrgRoleChange}
+                onOrgRemove={onOrgRemove}
+              />
+            ))}
+          </tbody>
+        </table>
 
-          <div>
-            {canAddToOrg && (
-              <Button variant="secondary" onClick={showOrgAddModal} ref={addToOrgButtonRef}>
-                <Trans i18nKey="admin.user-orgs.add-button">Add user to organization</Trans>
-              </Button>
-            )}
-          </div>
-          <AddToOrgModal
-            user={user}
-            userOrgs={orgs}
-            isOpen={showAddOrgModal}
-            onOrgAdd={onOrgAdd}
-            onDismiss={dismissOrgAddModal}
-          />
-        </Stack>
-      </div>
-    );
-  }
-);
+        <div>
+          {canAddToOrg && (
+            <Button variant="secondary" onClick={showOrgAddModal} ref={addToOrgButtonRef}>
+              <Trans i18nKey="admin.user-orgs.add-button">Add user to organization</Trans>
+            </Button>
+          )}
+        </div>
+        <AddToOrgModal
+          user={user}
+          userOrgs={orgs}
+          isOpen={showAddOrgModal}
+          onOrgAdd={onOrgAdd}
+          onDismiss={dismissOrgAddModal}
+        />
+      </Stack>
+    </div>
+  );
+});
 UserOrgs.displayName = 'UserOrgs';
 
 const getOrgRowStyles = (theme: GrafanaTheme2) => {
@@ -114,7 +111,7 @@ interface OrgRowProps {
   org: UserOrg;
   isExternalUser?: boolean;
   onOrgRemove: (orgId: number) => void;
-  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void;
+  onOrgRoleChange: (orgId: number, newRole: OrgRole) => void | Promise<unknown>;
 }
 
 const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }: OrgRowProps) => {
@@ -146,9 +143,13 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
     setCurrentRole(newRole);
   };
 
-  const handleOrgRoleSave = () => {
-    onOrgRoleChange(org.orgId, currentRole);
-    setIsChangingRole(false);
+  const handleOrgRoleSave = async () => {
+    try {
+      await onOrgRoleChange(org.orgId, currentRole);
+      setIsChangingRole(false);
+    } catch {
+      setCurrentRole(org.role);
+    }
   };
 
   const handleCancelClick = () => {
@@ -156,7 +157,7 @@ const OrgRow = memo(({ user, org, isExternalUser, onOrgRemove, onOrgRoleChange }
   };
 
   const handleBasicRoleChange = (newRole: OrgRole) => {
-    onOrgRoleChange(org.orgId, newRole);
+    return onOrgRoleChange(org.orgId, newRole);
   };
 
   const authSource = user?.authLabels?.length && user?.authLabels[0];

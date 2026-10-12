@@ -24,7 +24,7 @@ export interface Props {
   basicRoleDisabledMessage?: string;
   showBasicRole?: boolean;
   onRolesChange: (newRoles: Role[]) => void;
-  onBasicRoleChange?: (newRole: OrgRole) => void;
+  onBasicRoleChange?: (newRole: OrgRole) => void | Promise<unknown>;
   canUpdateRoles?: boolean;
   /**
    * Set {@link RolePickerMenu}'s button to display either `Apply` (apply=true) or `Update` (apply=false)
@@ -176,15 +176,20 @@ export const RolePicker = ({
     setSelectedBuiltInRole(role);
   };
 
-  const onUpdate = (newRoles: Role[], newBuiltInRole?: OrgRole) => {
-    if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
-      onBasicRoleChange(newBuiltInRole);
-    }
+  const onUpdate = async (newRoles: Role[], newBuiltInRole?: OrgRole) => {
     if (canUpdateRoles) {
       onRolesChange(newRoles);
     }
     setQuery('');
     setOpen(false);
+    if (onBasicRoleChange && newBuiltInRole && newBuiltInRole !== basicRole) {
+      try {
+        await onBasicRoleChange(newBuiltInRole);
+      } catch {
+        // The caller reports the mutation error; discard the rejected selection here.
+        setSelectedBuiltInRole(basicRole);
+      }
+    }
   };
 
   const getOptions = () => {
