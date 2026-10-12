@@ -6,8 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana-plugin-sdk-go/config"
-
+	authnlib "github.com/grafana/authlib/authn"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -19,27 +18,23 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
-	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 // ProxyDependencies bundles the proxy-only services the datasource frontend
 // proxy needs. It is wired as a single dependency so RegisterAPIService doesn't
-// have to thread each one through its signature. MT resolves the configuration
-// and request validator for the current tenant before constructing the proxy.
+// have to thread each one through its signature. The request validator is not
+// here because it is shared with the health endpoint (see DataSourceAPIBuilder).
 type ProxyDependencies struct {
-	RequestValidator validations.DataSourceRequestValidator
-	// Resolve supplies tenant- and request-specific dependencies in MT.
-	Resolve            func(context.Context, *http.Request) (*ProxyDependencies, error)
-	RouteAccessChecker pluginproxy.RouteAccessChecker
 	ProxyCfg           *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider httpclient.Provider
-	GrafanaConfig      *config.GrafanaCfg
-	// TransportConfigKey changes when provider configuration changes between requests.
-	TransportConfigKey string
 	OAuthTokenService  *oauthtoken.Service
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
+	// IDTokenDeriver mints X-Grafana-Id from a requester's OBO access token when the requester
+	// carries no id token of its own. Nil disables that fallback (see
+	// proxyutil.ApplyForwardIDHeader).
+	IDTokenDeriver authnlib.IDTokenDeriver
 }
 
 // ProvideProxyDependencies is the wire provider for ProxyDependencies.
@@ -56,23 +51,23 @@ func ProvideProxyDependencies(
 		OAuthTokenService:  oAuthTokenService,
 		Tracer:             tracer,
 		Features:           features,
+		// Single-tenant Grafana mints its own id token at the edge, so requester always carries
+		// one and this fallback is never needed on the wire-injected (ST) path.
+		IDTokenDeriver: nil,
 	}
 }
 
 type subProxyREST struct {
-	builder    *DataSourceAPIBuilder
-	transports *proxyTransportCache
+	builder *DataSourceAPIBuilder
 }
 
-var _ = rest.Connecter(&subProxyREST{})
+var _ rest.Connecter = (*subProxyREST)(nil)
 
 func (r *subProxyREST) New() runtime.Object {
 	return &metav1.Status{}
 }
 
-func (r *subProxyREST) Destroy() {
-	r.transports.close()
-}
+func (r *subProxyREST) Destroy() {}
 
 func (r *subProxyREST) ConnectMethods() []string {
 	unique := map[string]bool{}
@@ -112,21 +107,6 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		// The apiserver request context carries the authenticated identity that
 		// NewDataSourceProxy reads via identity.GetRequester.
 		req = req.WithContext(ctx)
-		deps := deps
-		if deps.Resolve != nil {
-			var err error
-			deps, err = deps.Resolve(ctx, req)
-			if err != nil {
-				m.SetError()
-				responder.Error(err)
-				return
-			}
-		}
-		if deps.GrafanaConfig != nil {
-			req = req.WithContext(config.WithGrafanaConfig(req.Context(), deps.GrafanaConfig))
-		}
-		loader.transports = r.transports
-		loader.transportConfigKey = deps.TransportConfigKey
 
 		ds, err := loader.DataSource(req.Context())
 		if err != nil {
@@ -140,27 +120,9 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 		jsonData, _ := ds.Spec.JSONData().(map[string]any)
-		if deps.GrafanaConfig != nil && datasources.IsSecureSocksDSProxyEnabled(jsonData) {
-			proxyCfg, err := deps.GrafanaConfig.Proxy()
-			if err != nil || proxyCfg.ClientCfg == nil {
-				m.SetError()
-				responder.Error(apierrors.NewBadRequest("PDC is not configured for this datasource proxy"))
-				return
-			}
-		}
-		validate := r.builder.validateDataSourceRequest
-		if deps.RequestValidator != nil {
-			validate = deps.RequestValidator.Validate
-		}
-		if err := validate(ds.Spec.URL(), jsonData, req); err != nil {
+		if err := r.builder.validateDataSourceRequest(ds.Spec.URL(), jsonData, req); err != nil {
 			m.SetError()
 			responder.Error(apierrors.NewForbidden(r.builder.datasourceResourceInfo.GroupResource(), name, err))
-			return
-		}
-
-		if ds.Spec.IsOAuthPassThruEnabled() && deps.OAuthTokenService == nil {
-			m.SetError()
-			responder.Error(apierrors.NewBadRequest("OAuth passthrough is not supported by this datasource proxy"))
 			return
 		}
 
@@ -174,7 +136,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.OAuthTokenService,
 			deps.Tracer,
 			deps.Features,
-			pluginproxy.WithRouteAccessChecker(deps.RouteAccessChecker),
+			deps.IDTokenDeriver,
 		)
 		if err != nil {
 			m.SetError()

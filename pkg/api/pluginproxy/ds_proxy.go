@@ -2,7 +2,6 @@ package pluginproxy
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
+	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -51,30 +52,23 @@ type HTTPContext struct {
 	UserToken *usertoken.UserToken
 }
 
-// RouteAccessChecker checks a plugin route action for the requested datasource.
-type RouteAccessChecker func(context.Context, identity.Requester, string, string) (bool, error)
-
-type DataSourceProxyOption func(*DataSourceProxy)
-
-func WithRouteAccessChecker(check RouteAccessChecker) DataSourceProxyOption {
-	return func(p *DataSourceProxy) { p.routeAccessChecker = check }
-}
-
 type DataSourceProxy struct {
-	routeAccessChecker RouteAccessChecker
-	ds                 *datasourcesV0.DataSource
-	requester          identity.Requester
-	dataSource         DataSourceLoader
-	ctx                HTTPContext
-	targetUrl          *url.URL
-	proxyPath          string
-	matchedRoute       *plugins.Route
-	pluginRoutes       []*plugins.Route
-	settings           *DataSourceProxySettings
-	clientProvider     httpclient.Provider
-	oAuthTokenService  oauthtoken.OAuthTokenService
-	tracer             tracing.Tracer
-	features           featuremgmt.FeatureToggles
+	ds                *datasourcesV0.DataSource
+	requester         identity.Requester
+	dataSource        DataSourceLoader
+	ctx               HTTPContext
+	targetUrl         *url.URL
+	proxyPath         string
+	matchedRoute      *plugins.Route
+	pluginRoutes      []*plugins.Route
+	settings          *DataSourceProxySettings
+	clientProvider    httpclient.Provider
+	oAuthTokenService oauthtoken.OAuthTokenService
+	tracer            tracing.Tracer
+	features          featuremgmt.FeatureToggles
+	// idTokenDeriver mints X-Grafana-Id from requester's OBO access token when requester carries
+	// no id token of its own. Nil disables that fallback (see proxyutil.ApplyForwardIDHeader).
+	idTokenDeriver authnlib.IDTokenDeriver
 }
 
 type httpClient interface {
@@ -86,8 +80,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 	pluginRoutes []*plugins.Route, ctx HTTPContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
-	opts ...DataSourceProxyOption,
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles, idTokenDeriver authnlib.IDTokenDeriver,
 ) (*DataSourceProxy, error) {
 	ds, err := dataSource.DataSource(ctx.Req.Context())
 	if err != nil {
@@ -104,7 +97,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to get requester from context: %w", err)
 	}
 
-	p := &DataSourceProxy{
+	return &DataSourceProxy{
 		ds:                ds,
 		requester:         requester,
 		dataSource:        dataSource,
@@ -117,11 +110,8 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		oAuthTokenService: oAuthTokenService,
 		tracer:            tracer,
 		features:          features,
-	}
-	for _, opt := range opts {
-		opt(p)
-	}
-	return p, nil
+		idTokenDeriver:    idTokenDeriver,
+	}, nil
 }
 
 func newHTTPClient() httpClient {
@@ -312,12 +302,12 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 
 			idToken, ok := token.Extra("id_token").(string)
 			if ok && idToken != "" {
-				req.Header.Set("X-ID-Token", idToken)
+				req.Header.Set(backend.OAuthIdentityIDTokenHeaderName, idToken)
 			}
 		}
 	}
 
-	proxyutil.ApplyForwardIDHeader(req, proxy.requester)
+	proxyutil.ApplyForwardIDHeader(req.Context(), req, proxy.requester, proxy.idTokenDeriver)
 }
 
 // dsInfo builds the DSInfo that ApplyRoute needs from a v0 datasource.
@@ -416,14 +406,6 @@ func (proxy *DataSourceProxy) validateRequest() error {
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	if route.ReqAction != "" {
-		if proxy.routeAccessChecker != nil {
-			allowed, err := proxy.routeAccessChecker(proxy.ctx.Req.Context(), proxy.requester, proxy.ds.Name, route.ReqAction)
-			if err != nil {
-				ctxLogger.Error("Failed to authorize datasource proxy route", "action", route.ReqAction, "error", err)
-				return false
-			}
-			return allowed
-		}
 		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
 		hasAccess := routeEval.Evaluate(proxy.requester.GetPermissions())
 		if !hasAccess {
