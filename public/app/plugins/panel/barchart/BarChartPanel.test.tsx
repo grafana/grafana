@@ -22,7 +22,7 @@ import {
   VizOrientation,
 } from '@grafana/schema';
 import { setTestFlags } from '@grafana/test-utils/unstable';
-import { type AdHocFilterSelectionUpdate } from '@grafana/ui';
+import { type AdHocFilterModel, type AdHocFilterSelectionUpdate } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
@@ -36,11 +36,10 @@ let onAddAdHocFilterMock: jest.Mock;
 let selectionContextForTest: Record<string, unknown> = {};
 
 interface MockTooltipProps {
-  clickMode?: 'pin' | 'select';
-  onSelect?: (seriesIdx: number, dataIdx: number, modifiers: { meta: boolean; shift: boolean }) => void;
-  selectHint?: React.ReactNode;
-  selectPinnable?: boolean;
+  onSelect?: (seriesIdx: number, dataIdx: number) => void;
+  selectOnly?: boolean;
   getDataLinks?: (seriesIdx: number, dataIdx: number) => unknown[];
+  getAdHocFilters?: (seriesIdx: number, dataIdx: number) => AdHocFilterModel[];
   // method syntax so the mock's typed render is assignable
   render?(...args: never[]): React.ReactNode;
 }
@@ -314,7 +313,7 @@ describe('BarChartPanel', () => {
     });
   });
 
-  describe('BI selection', () => {
+  describe('Cross filter selection', () => {
     /** A fake selection store standing in for the dashboard's ad hoc filter variable */
     function setUpSelectionContext(initial?: string[]) {
       let owned = initial;
@@ -349,11 +348,13 @@ describe('BarChartPanel', () => {
     const lastTooltip = () => tooltipPropsForTest.at(-1)!;
     const getSelection = () => jest.mocked(prepConfig).mock.calls.at(-1)![0].getSelection!();
 
-    const clickBar = async (dataIdx: number, modifiers = { meta: false, shift: false }) => {
+    const altClickBar = async (dataIdx: number) => {
       await act(async () => {
-        lastTooltip().onSelect!(1, dataIdx, modifiers);
+        lastTooltip().onSelect!(1, dataIdx);
       });
     };
+
+    const getFilterAction = (dataIdx: number) => lastTooltip().getAdHocFilters!(1, dataIdx)[0];
 
     const renderSelectable = (optionsOverrides?: Partial<Options>) =>
       renderBarChartPanel(
@@ -362,7 +363,7 @@ describe('BarChartPanel', () => {
       );
 
     beforeEach(() => {
-      setTestFlags({ 'dashboard.biMode': true });
+      setTestFlags({ 'dashboard.crossFilterSelection': true });
       jest.mocked(prepConfig).mockClear();
       renderTooltipContentForTest = false;
     });
@@ -371,19 +372,24 @@ describe('BarChartPanel', () => {
       act(() => setTestFlags({}));
     });
 
-    it('uses select mode with the Alt-click hint', () => {
+    it('keeps the default tooltip and adds Alt-click selection', () => {
       setUpSelectionContext();
       renderSelectable();
 
-      expect(lastTooltip().clickMode).toBe('select');
-      expect(lastTooltip().selectHint).toBe('Alt-click to pin');
+      expect(lastTooltip().onSelect).toBeDefined();
+      expect(lastTooltip().selectOnly).toBeUndefined();
     });
 
-    it('writes a replace selection for the clicked category', async () => {
+    it('turns the tooltip filter action into a selection of the bar, with the Alt-click hint', async () => {
       const { onSetAdHocFilterSelection } = setUpSelectionContext();
       renderSelectable();
 
-      await clickBar(1);
+      const action = getFilterAction(1);
+      expect(action).toEqual(
+        expect.objectContaining({ key: 'x', value: 'b', hint: 'Alt-click bars to filter directly and select several' })
+      );
+
+      await act(async () => action.onClick());
 
       expect(onSetAdHocFilterSelection).toHaveBeenCalledWith({
         key: 'x',
@@ -391,48 +397,57 @@ describe('BarChartPanel', () => {
         clickedValue: 'b',
         mode: 'replace',
       });
+      expect(onAddAdHocFilterMock).not.toHaveBeenCalled();
       expect(getSelection()).toEqual(new Set([1]));
     });
 
-    it('clears when the sole selected bar is clicked, without rebuilding the config', async () => {
-      const { onSetAdHocFilterSelection } = setUpSelectionContext(['a']);
+    it('replaces an Alt-click selection from the filter action', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext(['a', 'c']);
       renderSelectable();
 
-      expect(getSelection()).toEqual(new Set([0]));
+      await act(async () => getFilterAction(1).onClick());
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledWith(
+        expect.objectContaining({ values: ['b'], mode: 'replace' })
+      );
+    });
+
+    it('toggles values with Alt-click without rebuilding the config', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext(['a']);
+      renderSelectable();
       const configBuilds = jest.mocked(prepConfig).mock.calls.length;
 
-      await clickBar(0);
+      await altClickBar(2);
 
-      expect(onSetAdHocFilterSelection).toHaveBeenCalledWith(expect.objectContaining({ values: [], mode: 'replace' }));
-      expect(getSelection()).toBeNull();
+      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
+        expect.objectContaining({ values: ['a', 'c'], clickedValue: 'c', mode: 'toggle' })
+      );
+
+      await altClickBar(0);
+
+      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
+        expect.objectContaining({ values: ['c'], clickedValue: 'a', mode: 'toggle' })
+      );
+      expect(getSelection()).toEqual(new Set([2]));
       expect(jest.mocked(prepConfig).mock.calls.length).toBe(configBuilds);
     });
 
-    it('adds a Shift range from the anchor and toggles with Ctrl/Cmd', async () => {
-      const { onSetAdHocFilterSelection } = setUpSelectionContext();
+    it('clears when the last selected bar is Alt-clicked', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext(['a']);
       renderSelectable();
 
-      await clickBar(0);
-      await clickBar(2, { meta: false, shift: true });
+      await altClickBar(0);
 
-      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
-        expect.objectContaining({ values: ['a', 'b', 'c'], clickedValue: 'c', mode: 'range' })
-      );
-
-      await clickBar(1, { meta: true, shift: false });
-
-      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
-        expect.objectContaining({ values: ['a', 'c'], clickedValue: 'b', mode: 'toggle' })
-      );
-      expect(getSelection()).toEqual(new Set([0, 2]));
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledWith(expect.objectContaining({ values: [] }));
+      expect(getSelection()).toBeNull();
     });
 
-    it('takes ownership with the clicked value when another panel owns the selection', async () => {
+    it('starts its own selection when another panel owns the key', async () => {
       // the context reports no selection for this panel even though a filter exists
       const { onSetAdHocFilterSelection } = setUpSelectionContext(undefined);
       renderSelectable();
 
-      await clickBar(0);
+      await altClickBar(0);
 
       expect(onSetAdHocFilterSelection).toHaveBeenCalledWith(expect.objectContaining({ values: ['a'] }));
     });
@@ -455,29 +470,14 @@ describe('BarChartPanel', () => {
       expect(listeners.size).toBe(0);
     });
 
-    it('still mounts a select-mode tooltip plugin that renders nothing when the tooltip is hidden', () => {
+    it('still mounts a select-only tooltip plugin when the tooltip is hidden', () => {
       setUpSelectionContext();
       renderSelectable({ tooltip: { ...defaultPanelOptions.tooltip, mode: TooltipDisplayMode.None } });
 
       expect(tooltipPropsForTest).not.toHaveLength(0);
-      expect(lastTooltip().clickMode).toBe('select');
+      expect(lastTooltip().selectOnly).toBe(true);
+      expect(lastTooltip().onSelect).toBeDefined();
       expect(lastTooltip().render!()).toBeNull();
-      // nothing to pin, but one-click links still win
-      expect(lastTooltip().selectPinnable).toBe(false);
-      expect(lastTooltip().getDataLinks).toBeDefined();
-    });
-
-    it('drops the Shift anchor when another panel takes over the selection', async () => {
-      const { onSetAdHocFilterSelection, setOwned } = setUpSelectionContext();
-      renderSelectable();
-
-      await clickBar(0);
-      act(() => setOwned(undefined));
-      await clickBar(2, { meta: false, shift: true });
-
-      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
-        expect.objectContaining({ values: ['c'], mode: 'range' })
-      );
     });
 
     it('publishes writes in click order even when the earlier write is slower', async () => {
@@ -497,8 +497,8 @@ describe('BarChartPanel', () => {
         .mockImplementation(async (update) => apply(update));
       renderSelectable();
 
-      await clickBar(0);
-      await clickBar(1, { meta: true, shift: false });
+      await altClickBar(0);
+      await altClickBar(1);
 
       // the second write waits for the first; the pending selection already shows the latest click
       expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(1);
@@ -520,8 +520,8 @@ describe('BarChartPanel', () => {
       onSetAdHocFilterSelection.mockImplementation(() => new Promise<void>((resolve) => resolvers.push(resolve)));
       renderSelectable();
 
-      await clickBar(0);
-      await clickBar(1, { meta: true, shift: false });
+      await altClickBar(0);
+      await altClickBar(1);
 
       // the first write completes without publishing; the newer pending selection must stay
       await act(async () => resolvers[0]());
@@ -542,8 +542,8 @@ describe('BarChartPanel', () => {
       );
       const view = renderSelectable();
 
-      await clickBar(0);
-      await clickBar(1, { meta: true, shift: false });
+      await altClickBar(0);
+      await altClickBar(1);
       expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(1);
 
       view.unmount();
@@ -557,8 +557,8 @@ describe('BarChartPanel', () => {
       onSetAdHocFilterSelection.mockRejectedValueOnce(new Error('write failed'));
       renderSelectable();
 
-      await clickBar(0);
-      await clickBar(2);
+      await altClickBar(0);
+      await altClickBar(2);
 
       expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(2);
       expect(getOwned()).toEqual(['c']);
@@ -566,27 +566,34 @@ describe('BarChartPanel', () => {
     });
 
     it('gives the bars no selection getter when not selectable', () => {
-      act(() => setTestFlags({ 'dashboard.biMode': false }));
+      act(() => setTestFlags({ 'dashboard.crossFilterSelection': false }));
       setUpSelectionContext();
       renderSelectable();
 
       expect(jest.mocked(prepConfig).mock.calls.at(-1)![0].getSelection).toBeUndefined();
     });
 
-    it('keeps pin mode when the category field is not filterable', () => {
+    it('does not select when the category field is not filterable', () => {
       setUpSelectionContext();
       renderBarChartPanel(undefined, { legend: { ...baseLegend, showLegend: false } });
 
-      expect(lastTooltip().clickMode).toBe('pin');
-      expect(lastTooltip().selectHint).toBeUndefined();
+      expect(lastTooltip().onSelect).toBeUndefined();
     });
 
-    it('keeps pin mode when the toggle is off', () => {
-      act(() => setTestFlags({ 'dashboard.biMode': false }));
-      setUpSelectionContext();
+    it('keeps the default filter action when the toggle is off', () => {
+      act(() => setTestFlags({ 'dashboard.crossFilterSelection': false }));
+      const { onSetAdHocFilterSelection } = setUpSelectionContext();
       renderSelectable();
 
-      expect(lastTooltip().clickMode).toBe('pin');
+      expect(lastTooltip().onSelect).toBeUndefined();
+
+      const action = getFilterAction(1);
+      expect(action.hint).toBeUndefined();
+
+      action.onClick();
+
+      expect(onAddAdHocFilterMock).toHaveBeenCalledWith({ key: 'x', operator: '=', value: 'b' });
+      expect(onSetAdHocFilterSelection).not.toHaveBeenCalled();
     });
   });
 

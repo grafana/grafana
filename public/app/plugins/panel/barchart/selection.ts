@@ -1,71 +1,41 @@
-export type SelectionMode = 'replace' | 'toggle' | 'range';
+export type SelectionMode = 'replace' | 'toggle';
 
 export interface SelectionClickInput {
   /** Category values in display order */
   categories: string[];
   /** Values this panel currently selects, or undefined when it owns no selection for the key */
   current: string[] | undefined;
-  /** Category value that anchors Shift ranges, or null */
-  anchor: string | null;
   /** Category value of the clicked bar */
   clicked: string;
-  /** Ctrl or Cmd was held */
-  meta: boolean;
-  /** Shift was held */
-  shift: boolean;
+  /** Toggle the clicked value (Alt-click) instead of selecting only it (the tooltip's filter action) */
+  toggle: boolean;
 }
 
 export interface SelectionClickResult {
   /** Next selected values in display order; empty clears the selection */
   values: string[];
   mode: SelectionMode;
-  /** Next anchor */
-  anchor: string | null;
 }
 
 /**
  * Applies a bar click to a selection.
  *
- * - Plain click replaces the selection; clicking the sole selected value clears it.
- * - Ctrl/Cmd-click toggles one value.
- * - Shift-click adds every category from the anchor to the clicked one, inclusive.
- * - Plain and Ctrl/Cmd clicks move the anchor; Shift does not.
- * - When the panel owns no selection (`current` is undefined), a plain click takes ownership and never clears.
+ * - Toggle (Alt-click) adds or removes one value; when the panel owns no selection it starts a new one.
+ * - Replace (the tooltip's filter action) selects only the clicked value.
  */
 export function applySelectionClick({
   categories,
   current,
-  anchor,
   clicked,
-  meta,
-  shift,
+  toggle,
 }: SelectionClickInput): SelectionClickResult {
+  if (!toggle) {
+    return { values: [clicked], mode: 'replace' };
+  }
+
   const selected = current ?? [];
-
-  if (shift) {
-    const from = anchor == null ? -1 : categories.indexOf(anchor);
-    const to = categories.indexOf(clicked);
-
-    if (from === -1 || to === -1) {
-      // no usable anchor: start a range at the clicked value
-      return { values: inDisplayOrder(categories, union(selected, [clicked])), mode: 'range', anchor: clicked };
-    }
-
-    const range = categories.slice(Math.min(from, to), Math.max(from, to) + 1);
-    return { values: inDisplayOrder(categories, union(selected, range)), mode: 'range', anchor };
-  }
-
-  if (meta) {
-    const values = selected.includes(clicked) ? selected.filter((v) => v !== clicked) : [...selected, clicked];
-    return { values: inDisplayOrder(categories, values), mode: 'toggle', anchor: clicked };
-  }
-
-  const isSoleSelected = current !== undefined && selected.length === 1 && selected[0] === clicked;
-  return { values: isSoleSelected ? [] : [clicked], mode: 'replace', anchor: clicked };
-}
-
-function union(a: string[], b: string[]): string[] {
-  return Array.from(new Set([...a, ...b]));
+  const values = selected.includes(clicked) ? selected.filter((v) => v !== clicked) : [...selected, clicked];
+  return { values: inDisplayOrder(categories, values), mode: 'toggle' };
 }
 
 /** Sorts values by category order; values missing from the categories keep their order at the end */

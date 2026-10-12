@@ -11,7 +11,10 @@ import {
   mockPrometheus,
 } from './bi-cross-filter-utils';
 
-test.use({ viewport: { width: 1280, height: 1600 }, openFeature: { flags: { 'dashboard.biMode': true } } });
+test.use({
+  viewport: { width: 1280, height: 1600 },
+  openFeature: { flags: { 'dashboard.crossFilterSelection': true } },
+});
 
 let dashboardUID: string;
 
@@ -23,14 +26,15 @@ test.afterAll(async ({ request }) => {
   await deleteBiDashboard(request, dashboardUID);
 });
 
-test.describe('Dashboard BI cross filtering (flag on)', { tag: ['@dashboards'] }, () => {
-  test('bar clicks filter the other panels but not their own', async ({ page, gotoDashboardPage, selectors }) => {
+test.describe('Dashboard cross filter selection (flag on)', { tag: ['@dashboards'] }, () => {
+  test('bar selections filter the other panels but not their own', async ({ page, gotoDashboardPage, selectors }) => {
     const sent = await mockPrometheus(page);
     const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
     const byRegion = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Revenue by region'));
     const byProduct = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Revenue by product'));
     const details = dashboardPage.getByGrafanaSelector(selectors.components.Panels.Panel.title('Details'));
     const filterBar = dashboardPage.getByGrafanaSelector(selectors.pages.Dashboard.SubMenu.submenuItem);
+    const portal = dashboardPage.getByGrafanaSelector(selectors.components.Portal.container);
     const rows = details.locator('[role="row"]');
     const filtersParam = () => new URL(page.url()).searchParams.getAll('var-Filters').join(' ');
 
@@ -48,9 +52,12 @@ test.describe('Dashboard BI cross filtering (flag on)', { tag: ['@dashboards'] }
       return exprsSince(sent, since, grouping);
     };
 
-    // A click on North filters the product chart and the table; the region chart's own query stays unfiltered.
-    let since = sent.length;
+    // A plain click still pins the tooltip; its filter action selects North, which filters the product chart and
+    // the table while the region chart's own query stays unfiltered.
     await clickBar(page, byRegion, REGIONS, 0);
+    await expect(portal.getByText(/^(Alt|Option)-click bars to filter directly and select several$/)).toBeVisible();
+    let since = sent.length;
+    await portal.getByRole('button', { name: "Filter for 'North'" }).click();
     await expect.poll(() => latestExpr(sent, 'product'), 'product chart is filtered').toContain('region="North"');
     await expect.poll(() => latestExpr(sent, 'region,product'), 'table is filtered').toContain('region="North"');
     for (const expr of await selfQueriesSince(since, 'region')) {
@@ -59,9 +66,9 @@ test.describe('Dashboard BI cross filtering (flag on)', { tag: ['@dashboards'] }
     await expect(rows, '3 North rows plus header').toHaveCount(4);
     await expect(filterBar.filter({ hasText: 'region' }).filter({ hasText: 'North' })).toBeVisible();
 
-    // Cmd/Ctrl-click South adds it: one multi-value filter.
+    // Alt-click South adds it without pinning the tooltip: one multi-value filter.
     since = sent.length;
-    await clickBar(page, byRegion, REGIONS, 1, ['ControlOrMeta']);
+    await clickBar(page, byRegion, REGIONS, 1, ['Alt']);
     await expect.poll(() => latestExpr(sent, 'region,product')).toContain('region=~"North|South"');
     for (const expr of await selfQueriesSince(since, 'region')) {
       expect(expr).not.toContain('region=');
@@ -70,9 +77,9 @@ test.describe('Dashboard BI cross filtering (flag on)', { tag: ['@dashboards'] }
     // Scenes escapes the '|' of '=|' in the URL as '__gfp__'.
     expect(filtersParam()).toMatch(/region\|=(\||__gfp__)\|North\|South/);
 
-    // A click in the product chart filters the region chart in turn, but not itself.
+    // An Alt-click in the product chart filters the region chart in turn, but not itself.
     since = sent.length;
-    await clickBar(page, byProduct, PRODUCTS, 0);
+    await clickBar(page, byProduct, PRODUCTS, 0, ['Alt']);
     await expect
       .poll(() => latestExpr(sent, 'region'), 'region chart is filtered by product')
       .toContain('product="Widget"');

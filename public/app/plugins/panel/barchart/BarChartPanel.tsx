@@ -4,7 +4,7 @@ import type uPlot from 'uplot';
 import { type PanelProps, VizOrientation } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
-import { useFlagDashboardBiMode } from '@grafana/runtime/internal';
+import { useFlagDashboardCrossFilterSelection } from '@grafana/runtime/internal';
 import {
   type AdHocFilterItem,
   type AdHocFilterModel,
@@ -19,6 +19,7 @@ import {
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
 import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
+import { getAltKey } from 'app/core/utils/browser';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
@@ -44,7 +45,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     getAdHocFilterSelection,
     subscribeToAdHocFilterSelection,
   } = usePanelContext();
-  const isBiMode = useFlagDashboardBiMode();
+  const isCrossFilterSelectionEnabled = useFlagDashboardCrossFilterSelection();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
@@ -101,7 +102,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   // the prepared category field; selection filters on its values
   const categoryField = vizSeries[0]?.fields[0];
   const selectable =
-    isBiMode &&
+    isCrossFilterSelectionEnabled &&
     categoryField?.config.filterable === true &&
     onSetAdHocFilterSelection != null &&
     getAdHocFilterSelection != null &&
@@ -168,21 +169,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     plotRef.current?.redraw(false);
   }, [selectedIndices]);
 
-  // Shift-click anchor; a category value, dropped when it leaves the data or this panel loses its selection
-  // (another panel takes over, the pill is removed, or a plain click clears it)
-  const anchorRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (anchorRef.current == null) {
-      return;
-    }
-
-    if (!categories.includes(anchorRef.current) || (ownedSelection === undefined && pendingSelection == null)) {
-      anchorRef.current = null;
-    }
-  }, [categories, ownedSelection, pendingSelection]);
-
-  const onSelect = (dataIdx: number, meta: boolean, shift: boolean) => {
+  const onSelect = (dataIdx: number, toggle: boolean) => {
     if (selectionKey == null || onSetAdHocFilterSelection == null) {
       return;
     }
@@ -197,13 +184,10 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       categories,
       // the latest intended selection: a queued write's, else what the filter holds now
       current: pendingSelectionRef.current?.values ?? getAdHocFilterSelection?.(selectionKey),
-      anchor: anchorRef.current,
       clicked,
-      meta,
-      shift,
+      toggle,
     });
 
-    anchorRef.current = next.anchor;
     setPendingSelection({ values: next.values });
     const seq = ++writeSeqRef.current;
     const generation = lifecycleRef.current.generation;
@@ -314,19 +298,15 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
             <TooltipPlugin2
               config={builder}
               hoverMode={TooltipHoverMode.xOne}
-              clickMode="select"
-              selectPinnable={false}
-              getDataLinks={getDataLinks}
-              onSelect={(_seriesIdx, dataIdx, { meta, shift }) => onSelect(dataIdx, meta, shift)}
+              selectOnly
+              onSelect={(_seriesIdx, dataIdx) => onSelect(dataIdx, true)}
               render={() => null}
             />
           )}
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
               config={builder}
-              clickMode={selectable ? 'select' : 'pin'}
-              onSelect={(_seriesIdx, dataIdx, { meta, shift }) => onSelect(dataIdx, meta, shift)}
-              selectHint={selectable ? t('bar-chart.tooltip.select-hint', 'Alt-click to pin') : undefined}
+              onSelect={selectable ? (_seriesIdx, dataIdx) => onSelect(dataIdx, true) : undefined}
               maxWidth={options.tooltip.maxWidth}
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
@@ -342,6 +322,23 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                 // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
                 // are derived from a data source, but are not present in the data source.
                 // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
+                if (selectable) {
+                  return [
+                    {
+                      key: xField.name,
+                      operator: FILTER_FOR_OPERATOR,
+                      value: String(xField.values[dataIdx]),
+                      // filters the other panels and highlights the bar here, like Alt-click
+                      onClick: () => onSelect(dataIdx, false),
+                      hint: t(
+                        'bar-chart.tooltip.filter-hint',
+                        '{{altKey}}-click bars to filter directly and select several',
+                        { altKey: getAltKey() }
+                      ),
+                    },
+                  ];
+                }
+
                 if (xField.config.filterable && onAddAdHocFilter != null) {
                   const adHocFilterItem: AdHocFilterItem = {
                     key: xField.name,

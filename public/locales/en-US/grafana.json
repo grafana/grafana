@@ -4311,7 +4311,7 @@
   },
   "bar-chart": {
     "tooltip": {
-      "select-hint": "Alt-click to pin"
+      "filter-hint": "{{altKey}}-click bars to filter directly and select several"
     },
     "warn": {
       "missing-numeric": "No numeric fields found",

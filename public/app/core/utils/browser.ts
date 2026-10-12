@@ -41,3 +41,7 @@ function userAgentIsApple() {
 export function getModKey() {
   return userAgentIsApple() ? '⌘' : 'ctrl';
 }
+
+export function getAltKey() {
+  return userAgentIsApple() ? 'Option' : 'Alt';
+}

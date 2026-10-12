@@ -2,7 +2,10 @@ import { test, expect } from '@grafana/plugin-e2e';
 
 import { REGIONS, clickBar, deleteBiDashboard, importBiDashboard, mockPrometheus } from './bi-cross-filter-utils';
 
-test.use({ viewport: { width: 1280, height: 1600 }, openFeature: { flags: { 'dashboard.biMode': false } } });
+test.use({
+  viewport: { width: 1280, height: 1600 },
+  openFeature: { flags: { 'dashboard.crossFilterSelection': false } },
+});
 
 let dashboardUID: string;
 
@@ -14,7 +17,7 @@ test.afterAll(async ({ request }) => {
   await deleteBiDashboard(request, dashboardUID);
 });
 
-test.describe('Dashboard BI cross filtering (flag off)', { tag: ['@dashboards'] }, () => {
+test.describe('Dashboard cross filter selection (flag off)', { tag: ['@dashboards'] }, () => {
   test('clicking a bar pins the tooltip and does not filter', async ({ page, gotoDashboardPage, selectors }) => {
     await mockPrometheus(page);
     const dashboardPage = await gotoDashboardPage({ uid: dashboardUID });
