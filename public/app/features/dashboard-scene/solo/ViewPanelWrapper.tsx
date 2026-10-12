@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import { useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
-import { NewSceneObjectAddedEvent, type SceneDataProvider, type VizPanel, useSceneObjectState } from '@grafana/scenes';
+import {
+  NewSceneObjectAddedEvent,
+  SceneObjectRemovedEvent,
+  type SceneDataProvider,
+  type VizPanel,
+  useSceneObjectState,
+} from '@grafana/scenes';
 import { SceneContext, SceneContextObject } from '@grafana/scenes-react';
 
 import { getDashboardSceneLike } from '../scene/types/dashboard';
@@ -32,6 +38,10 @@ function ViewPanelWithPane({ panel, dataProvider }: { panel: VizPanel; dataProvi
   // Register the pane for URL synchronization without opening it.
   useEffect(() => {
     sidebar.publishEvent(new NewSceneObjectAddedEvent(viewPanelPane), true);
+
+    return () => {
+      sidebar.publishEvent(new SceneObjectRemovedEvent(viewPanelPane), true);
+    };
   }, [sidebar, viewPanelPane]);
 
   // Handle manual toggling of the pane via the sidebar buttons

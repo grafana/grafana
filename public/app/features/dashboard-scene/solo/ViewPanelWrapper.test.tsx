@@ -1,10 +1,15 @@
 import { render } from '@testing-library/react';
 
 import { useFlagGrafanaViewPanelPane } from '@grafana/runtime/internal';
-import { NewSceneObjectAddedEvent, useSceneObjectState, type VizPanel } from '@grafana/scenes';
+import {
+  NewSceneObjectAddedEvent,
+  SceneObjectRemovedEvent,
+  useSceneObjectState,
+  type VizPanel,
+} from '@grafana/scenes';
 
 import { getDashboardSceneLike } from '../scene/types/dashboard';
-import { ViewPanelSidePane } from './ViewPanelSidePane';
+import { bySeriesMode, ViewPanelSidePane } from './ViewPanelSidePane';
 
 import { ViewPanelWrapper } from './ViewPanelWrapper';
 
@@ -58,7 +63,7 @@ describe('ViewPanelWrapper', () => {
       sceneObject === panel ? { $data: dataProvider } : { fanoutMode: undefined }
     );
 
-    render(<ViewPanelWrapper panel={panel} showControlsPane />);
+    const { unmount } = render(<ViewPanelWrapper panel={panel} showControlsPane />);
 
     expect(sidebar.openPane).not.toHaveBeenCalled();
     const publishedEvent = sidebar.publishEvent.mock.calls[0][0];
@@ -66,5 +71,16 @@ describe('ViewPanelWrapper', () => {
     expect(publishedEvent).toBeInstanceOf(NewSceneObjectAddedEvent);
     expect(publishedEvent.payload).toBeInstanceOf(ViewPanelSidePane);
     expect(sidebar.publishEvent).toHaveBeenCalledWith(publishedEvent, true);
+
+    const pane = publishedEvent.payload as ViewPanelSidePane;
+    pane.updateFromUrl({ fanout: bySeriesMode });
+    expect(pane.state.fanoutMode).toBe(bySeriesMode);
+    expect(sidebar.openPane).not.toHaveBeenCalled();
+
+    unmount();
+    const removedEvent = sidebar.publishEvent.mock.calls[1][0];
+    expect(removedEvent).toBeInstanceOf(SceneObjectRemovedEvent);
+    expect(removedEvent.payload).toBe(pane);
+    expect(sidebar.publishEvent).toHaveBeenLastCalledWith(removedEvent, true);
   });
 });
