@@ -436,6 +436,26 @@ it('updates the basic role from the Roles tab and refreshes the table', async ()
   await waitFor(() => expect(within(screen.getByRole('table')).getByText('Editor')).toBeInTheDocument());
 });
 
+it('restores the saved organization role when a role update fails', async () => {
+  jest
+    .spyOn(contextSrv, 'hasPermission')
+    .mockImplementation((action) => action !== AccessControlAction.ActionUserRolesAdd);
+  server.use(
+    http.get('/api/access-control/roles', () => HttpResponse.json([])),
+    http.patch('/api/orgs/1/users/alice', () =>
+      HttpResponse.json({ message: 'Cannot remove last organization admin' }, { status: 400 })
+    )
+  );
+  const { user } = setup('organizations');
+  const picker = await screen.findByTestId('role-picker');
+  await user.click(within(picker).getByText('Viewer'));
+  await user.click(screen.getByText('Editor'));
+  await user.click(screen.getByRole('button', { name: 'Update' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Cannot remove last organization admin');
+  await waitFor(() => expect(within(screen.getByTestId('role-picker')).getByText('Viewer')).toBeInTheDocument());
+  expect(within(screen.getByTestId('role-picker')).queryByText('Editor')).not.toBeInTheDocument();
+});
+
 it('does not offer basic-role editing when the specific org user lacks write permission', async () => {
   jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(false);
   server.use(

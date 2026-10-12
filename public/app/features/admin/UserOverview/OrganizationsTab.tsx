@@ -29,6 +29,11 @@ export function OrganizationsTab({ user }: { user: UserDTO }) {
         <ActionError error={adding.error || removing.error || updating.error} />
       )}
       <UserOrgs
+        failedRoleUpdate={
+          updating.isError && updating.originalArgs && updating.requestId
+            ? { orgId: updating.originalArgs.orgId, requestId: updating.requestId }
+            : undefined
+        }
         user={user}
         orgs={orgs}
         isExternalUser={user.isExternallySynced || user.isProvisioned}
