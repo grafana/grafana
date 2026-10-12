@@ -71,8 +71,8 @@ func (s *LegacyService) UpdateTeam(ctx context.Context, cmd *team.UpdateTeamComm
 	// The command only carries the internal ID; the notification needs the UID.
 	// The update has committed, so look it up even if the request has been cancelled.
 	if s.watch.Enabled() {
-		if t, err := s.store.GetByID(context.WithoutCancel(ctx), &team.GetTeamByIDQuery{OrgID: cmd.OrgID, ID: cmd.ID}); err == nil {
-			s.watch.Publish(ctx, legacywatch.Modified, teamResource, cmd.OrgID, t.UID, 0)
+		if uid, err := s.store.GetUID(context.WithoutCancel(ctx), cmd.OrgID, cmd.ID); err == nil {
+			s.watch.Publish(ctx, legacywatch.Modified, teamResource, cmd.OrgID, uid, 0)
 		}
 	}
 	return nil
@@ -84,15 +84,8 @@ func (s *LegacyService) DeleteTeam(ctx context.Context, cmd *team.DeleteTeamComm
 		attribute.Int64("teamID", cmd.ID),
 	))
 	defer span.End()
-	// The command only carries the internal ID; the notification needs the UID,
-	// which is gone once the row is.
-	var uid string
-	if s.watch.Enabled() {
-		if t, err := s.store.GetByID(ctx, &team.GetTeamByIDQuery{OrgID: cmd.OrgID, ID: cmd.ID}); err == nil {
-			uid = t.UID
-		}
-	}
-	if err := s.store.Delete(ctx, cmd); err != nil {
+	uid, err := s.store.Delete(ctx, cmd)
+	if err != nil {
 		return err
 	}
 	s.watch.Publish(ctx, legacywatch.Deleted, teamResource, cmd.OrgID, uid, 0)

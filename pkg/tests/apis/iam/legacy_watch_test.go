@@ -380,3 +380,115 @@ func TestIntegrationLegacyWatchNotifications(t *testing.T) {
 		expect(t, resourcepb.WatchNotification_ADDED, gvrUsers, found.Result.UID)
 	})
 }
+
+// TestIntegrationLegacyWatchNotificationsDisabled checks that with NATS running
+// but grafana.publishLegacySQLEvents off, legacy writes still succeed and
+// nothing is announced.
+func TestIntegrationLegacyWatchNotificationsDisabled(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+
+	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
+		AppModeProduction:      false,
+		DisableAnonymous:       true,
+		RBACSingleOrganization: true,
+		EnableFeatureToggles: []string{
+			featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs,
+			featuremgmt.FlagKubernetesTeamsApi,
+			featuremgmt.FlagKubernetesUsersApi,
+		},
+		DisableFeatureToggles: []string{featuremgmt.FlagGrafanaPublishLegacySQLEvents},
+		NATSEnabled:           true,
+		NATSListenAddress:     "127.0.0.1",
+		NATSClientPort:        natsserver.RANDOM_PORT,
+		NATSClusterPort:       natsserver.RANDOM_PORT,
+	})
+
+	nc, err := natsclient.Connect(strings.Join(helper.GetEnv().NATSConfig.URLs(), ","))
+	require.NoError(t, err)
+	t.Cleanup(nc.Close)
+
+	var received atomic.Int32
+	const sentinel = "legacysql.watch.v1.test.sentinel"
+	sentinelSeen := make(chan struct{}, 1)
+	sub, err := nc.Subscribe(resourcewatch.SubjectAllLegacyResources, func(msg *natsclient.Msg) {
+		if msg.Subject == sentinel {
+			sentinelSeen <- struct{}{}
+			return
+		}
+		received.Add(1)
+	})
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = sub.Unsubscribe() })
+	require.NoError(t, nc.Flush())
+
+	ctx := context.Background()
+	users := helper.GetResourceClient(apis.ResourceClientArgs{User: helper.Org1.Admin, GVR: gvrUsers})
+	_, err = users.Resource.Create(ctx, helper.LoadYAMLOrJSON(`{
+		"apiVersion": "iam.grafana.app/v0alpha1",
+		"kind": "User",
+		"metadata": {"name": "watchoffk8s"},
+		"spec": {"login": "watch-off-k8s", "email": "watch-off-k8s@example.com", "title": "Watch Off", "provisioned": false, "role": "None"}
+	}`), metav1.CreateOptions{})
+	require.NoError(t, err)
+
+	type createUserResponse struct {
+		ID int64 `json:"id"`
+	}
+	createdUser := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/admin/users",
+		Body:   []byte(`{"name": "Watch Off Legacy", "email": "watch-off-legacy@example.com", "login": "watch-off-legacy", "password": "password123"}`),
+	}, &createUserResponse{})
+	require.Equal(t, http.StatusOK, createdUser.Response.StatusCode, "body: %s", string(createdUser.Body))
+	roleChanged := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPatch,
+		Path:   fmt.Sprintf("/api/org/users/%d", createdUser.Result.ID),
+		Body:   []byte(`{"role": "Editor"}`),
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, roleChanged.Response.StatusCode, "body: %s", string(roleChanged.Body))
+
+	type createTeamResponse struct {
+		TeamID int64 `json:"teamId"`
+	}
+	createdTeam := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   "/api/teams",
+		Body:   []byte(`{"name": "watch-off-team", "email": "watch-off-team@example.com"}`),
+	}, &createTeamResponse{})
+	require.Equal(t, http.StatusOK, createdTeam.Response.StatusCode, "body: %s", string(createdTeam.Body))
+	teamID := createdTeam.Result.TeamID
+	added := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPost,
+		Path:   fmt.Sprintf("/api/teams/%d/members", teamID),
+		Body:   []byte(fmt.Sprintf(`{"userId": %d}`, createdUser.Result.ID)),
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, added.Response.StatusCode, "body: %s", string(added.Body))
+	updatedTeam := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodPut,
+		Path:   fmt.Sprintf("/api/teams/%d", teamID),
+		Body:   []byte(`{"name": "watch-off-team-renamed", "email": "watch-off-team@example.com"}`),
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, updatedTeam.Response.StatusCode, "body: %s", string(updatedTeam.Body))
+	deletedTeam := apis.DoRequest(helper, apis.RequestParams{
+		User:   helper.Org1.Admin,
+		Method: http.MethodDelete,
+		Path:   fmt.Sprintf("/api/teams/%d", teamID),
+	}, &struct{}{})
+	require.Equal(t, http.StatusOK, deletedTeam.Response.StatusCode, "body: %s", string(deletedTeam.Body))
+
+	// The sentinel shows the subscription is live; then give any stray
+	// notification from the server's own connection time to arrive.
+	require.NoError(t, nc.Publish(sentinel, nil))
+	select {
+	case <-sentinelSeen:
+	case <-time.After(10 * time.Second):
+		t.Fatal("sentinel not received")
+	}
+	require.Never(t, func() bool { return received.Load() > 0 }, time.Second, 50*time.Millisecond,
+		"no legacy watch notification may be published with the flag off")
+}
