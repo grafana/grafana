@@ -17,16 +17,19 @@ export interface VizTooltipHeaderProps {
    * Defaults to `false`.
    */
   isPinned?: boolean;
+  /** Short help text shown under the header row */
+  hint?: string;
 }
 
 /** @alpha */
 export const VizTooltipHeader = ({
   item: { label, value, color, colorIndicator },
   isPinned = false,
+  hint,
 }: VizTooltipHeaderProps) => {
   const styles = useStyles2(getStyles);
   return (
-    <div className={styles}>
+    <div className={styles.wrapper}>
       <VizTooltipRow
         label={label}
         value={value}
@@ -35,15 +38,22 @@ export const VizTooltipHeader = ({
         marginRight={'22px'}
         isPinned={isPinned}
       />
+      {hint != null && <div className={styles.hint}>{hint}</div>}
     </div>
   );
 };
 
-const getStyles = (theme: GrafanaTheme2) =>
-  css({
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     padding: theme.spacing(1),
     lineHeight: 1,
-  });
+  }),
+  hint: css({
+    marginTop: theme.spacing(0.75),
+    color: theme.colors.text.secondary,
+    fontSize: theme.typography.bodySmall.fontSize,
+  }),
+});

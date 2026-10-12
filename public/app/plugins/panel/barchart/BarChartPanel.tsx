@@ -330,11 +330,6 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                       value: String(xField.values[dataIdx]),
                       // filters the other panels and highlights the bar here, like Alt-click
                       onClick: () => onSelect(dataIdx, false),
-                      hint: t(
-                        'bar-chart.tooltip.filter-hint',
-                        '{{altKey}}-click bars to filter directly and select several',
-                        { altKey: getAltKey() }
-                      ),
                     },
                   ];
                 }
@@ -371,10 +366,26 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     maxHeight={options.tooltip.maxHeight}
                     replaceVariables={replaceVariables}
                     dataLinks={dataLinks}
-                    adHocFilters={adHocFilters}
+                    adHocFilters={
+                      selectable
+                        ? // the pin would otherwise hold the cursor until this chart's re-run query returns
+                          adHocFilters?.map((filter) => ({
+                            ...filter,
+                            onClick: () => {
+                              filter.onClick();
+                              dismiss();
+                            },
+                          }))
+                        : adHocFilters
+                    }
                     hideZeros={options.tooltip.hideZeros}
                     canExecuteActions={userCanExecuteActions}
                     assistantContext={getAssistantTooltipContext(props, info.series)}
+                    headerHint={
+                      selectable
+                        ? t('bar-chart.tooltip.select-hint', '{{altKey}}-click to filter', { altKey: getAltKey() })
+                        : undefined
+                    }
                   />
                 );
               }}

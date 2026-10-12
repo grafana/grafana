@@ -55,7 +55,7 @@ test.describe('Dashboard cross filter selection (flag on)', { tag: ['@dashboards
     // A plain click still pins the tooltip; its filter action selects North, which filters the product chart and
     // the table while the region chart's own query stays unfiltered.
     await clickBar(page, byRegion, REGIONS, 0);
-    await expect(portal.getByText(/^(Alt|Option)-click bars to filter directly and select several$/)).toBeVisible();
+    await expect(portal.getByText(/^(Alt|Option)-click to filter$/)).toBeVisible();
     let since = sent.length;
     await portal.getByRole('button', { name: "Filter for 'North'" }).click();
     await expect.poll(() => latestExpr(sent, 'product'), 'product chart is filtered').toContain('region="North"');

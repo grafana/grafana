@@ -36,6 +36,10 @@ test.describe('Dashboard cross filter selection (flag off)', { tag: ['@dashboard
     // Only a pinned tooltip has a close button; a hover tooltip lingers briefly, so check for it explicitly.
     const close = dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByLabel('Close');
     await expect(close, 'pinned tooltip has a close button').toBeVisible();
+    await expect(
+      dashboardPage.getByGrafanaSelector(selectors.components.Portal.container).getByText(/-click to filter$/),
+      'no selection hint'
+    ).toHaveCount(0);
     await expect(details.locator('[role="row"]'), 'table is unfiltered').toHaveCount(13);
     expect(new URL(page.url()).searchParams.getAll('var-Filters').join(''), 'no filter in the URL').toBe('');
 

@@ -355,6 +355,10 @@ describe('BarChartPanel', () => {
     };
 
     const getFilterAction = (dataIdx: number) => lastTooltip().getAdHocFilters!(1, dataIdx)[0];
+    const getHeaderHint = () => {
+      const tooltip = lastTooltip().render!() as React.ReactElement<{ headerHint?: string }>;
+      return tooltip.props.headerHint;
+    };
 
     const renderSelectable = (optionsOverrides?: Partial<Options>) =>
       renderBarChartPanel(
@@ -372,22 +376,21 @@ describe('BarChartPanel', () => {
       act(() => setTestFlags({}));
     });
 
-    it('keeps the default tooltip and adds Alt-click selection', () => {
+    it('keeps the default tooltip, adds Alt-click selection and names it in the tooltip header', () => {
       setUpSelectionContext();
       renderSelectable();
 
       expect(lastTooltip().onSelect).toBeDefined();
       expect(lastTooltip().selectOnly).toBeUndefined();
+      expect(getHeaderHint()).toBe('Alt-click to filter');
     });
 
-    it('turns the tooltip filter action into a selection of the bar, with the Alt-click hint', async () => {
+    it('turns the tooltip filter action into a selection of the bar', async () => {
       const { onSetAdHocFilterSelection } = setUpSelectionContext();
       renderSelectable();
 
       const action = getFilterAction(1);
-      expect(action).toEqual(
-        expect.objectContaining({ key: 'x', value: 'b', hint: 'Alt-click bars to filter directly and select several' })
-      );
+      expect(action).toEqual(expect.objectContaining({ key: 'x', value: 'b' }));
 
       await act(async () => action.onClick());
 
@@ -399,6 +402,24 @@ describe('BarChartPanel', () => {
       });
       expect(onAddAdHocFilterMock).not.toHaveBeenCalled();
       expect(getSelection()).toEqual(new Set([1]));
+    });
+
+    it('closes the pinned tooltip when the filter action is used', () => {
+      setUpSelectionContext();
+      renderSelectable();
+
+      const dismiss = jest.fn();
+      const filters = [{ key: 'x', operator: '=', value: 'b', onClick: jest.fn() }];
+      const tooltip = (
+        lastTooltip().render as unknown as (...args: unknown[]) => React.ReactElement<{
+          adHocFilters: AdHocFilterModel[];
+        }>
+      )({}, [0, 1], 1, true, dismiss, null, false, [], filters);
+
+      tooltip.props.adHocFilters[0].onClick();
+
+      expect(filters[0].onClick).toHaveBeenCalled();
+      expect(dismiss).toHaveBeenCalled();
     });
 
     it('replaces an Alt-click selection from the filter action', async () => {
@@ -578,6 +599,7 @@ describe('BarChartPanel', () => {
       renderBarChartPanel(undefined, { legend: { ...baseLegend, showLegend: false } });
 
       expect(lastTooltip().onSelect).toBeUndefined();
+      expect(getHeaderHint()).toBeUndefined();
     });
 
     it('keeps the default filter action when the toggle is off', () => {
@@ -586,11 +608,9 @@ describe('BarChartPanel', () => {
       renderSelectable();
 
       expect(lastTooltip().onSelect).toBeUndefined();
+      expect(getHeaderHint()).toBeUndefined();
 
-      const action = getFilterAction(1);
-      expect(action.hint).toBeUndefined();
-
-      action.onClick();
+      getFilterAction(1).onClick();
 
       expect(onAddAdHocFilterMock).toHaveBeenCalledWith({ key: 'x', operator: '=', value: 'b' });
       expect(onSetAdHocFilterSelection).not.toHaveBeenCalled();

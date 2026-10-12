@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { Fragment, type ReactNode, useMemo } from 'react';
+import { type ReactNode, useMemo } from 'react';
 
 import {
   type ActionModel,
@@ -23,8 +23,6 @@ import { type AdHocFilterItem } from '../Table/TableNG/types';
 /** @alpha */
 export interface AdHocFilterModel extends AdHocFilterItem {
   onClick: () => void;
-  /** Shown under the filter button */
-  hint?: string;
 }
 
 /** @alpha */
@@ -130,14 +128,11 @@ export const VizTooltipFooter = ({
       {!hasOneClickLink && !hasOneClickAction && adHocFilters.length > 0 && (
         <div className={styles.footerSection}>
           {adHocFilters.map((item, index) => (
-            <Fragment key={index}>
-              <Button icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
-                <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">
-                  Filter for &apos;{{ value: item.value }}&apos;
-                </Trans>
-              </Button>
-              {item.hint != null && <div className={styles.hint}>{item.hint}</div>}
-            </Fragment>
+            <Button key={index} icon="filter" variant="secondary" size="sm" onClick={item.onClick}>
+              <Trans i18nKey="grafana-ui.viz-tooltip.footer-filter-for-value">
+                Filter for &apos;{{ value: item.value }}&apos;
+              </Trans>
+            </Button>
           ))}
         </div>
       )}
@@ -203,11 +198,6 @@ const getStyles = (theme: GrafanaTheme2) => ({
       whiteSpace: 'normal',
       textAlign: 'left',
     },
-  }),
-  hint: css({
-    marginTop: theme.spacing(0.5),
-    color: theme.colors.text.secondary,
-    fontSize: theme.typography.bodySmall.fontSize,
   }),
   oneClickWrapper: css({
     display: 'flex',
