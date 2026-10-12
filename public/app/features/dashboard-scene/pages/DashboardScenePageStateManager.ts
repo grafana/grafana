@@ -503,9 +503,8 @@ abstract class DashboardScenePageStateManagerBase<T>
       const message = getMessageFromError(err);
       const messageId = getMessageIdFromError(err);
 
-      // Nested v2 fetch sync copies the previous dashboard back onto this manager
-      // before this catch runs. Clear it again so the error page is what renders.
       this.setState({
+        // do not leave the previous dashboard mounted if fetch fails
         dashboard: undefined,
         isLoading: false,
         loadError: {

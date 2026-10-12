@@ -13,7 +13,7 @@ import {
 import { setPluginImportUtils } from '@grafana/runtime';
 import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneDataNode, SceneDataTransformer, sceneGraph, VizPanel } from '@grafana/scenes';
-import { setTestFlags, testWithFlags } from '@grafana/test-utils/unstable';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
 import type { DashboardScene } from '../../scene/DashboardScene';
@@ -1555,8 +1555,6 @@ describe('Panel mutation commands', () => {
   });
 
   describe('MOVE_PANEL', () => {
-    testWithFlags({ dashboardNewLayouts: true });
-
     it('repositions panel within current group using layoutItem', async () => {
       const scene = buildPanelScene();
       const client = new DashboardMutationClient(scene);

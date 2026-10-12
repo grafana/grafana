@@ -4,7 +4,7 @@ import { type SetupServer } from 'msw/node';
 
 import { type DashboardHit } from '@grafana/api-clients/rtkq/dashboard/v0alpha1';
 import { setBackendSrv } from '@grafana/runtime';
-import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getCustomSearchHandler } from '@grafana/test-utils/handlers';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
@@ -17,7 +17,7 @@ import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/
 import { resetHistorianState } from 'app/features/alerting/unified/mocks/server/handlers/historian';
 import { resetUserStorage } from 'app/features/alerting/unified/mocks/server/handlers/userStorage';
 import { resetAppPluginMetas } from 'app/features/alerting/unified/testSetup/plugins';
-import { type DashboardDTO } from 'app/types/dashboard';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { type FolderDTO } from 'app/types/folders';
 import {
   type PromRulesResponse,
@@ -238,95 +238,6 @@ export function mockFolderApi(server: SetupServer) {
   };
 }
 
-type LoosePanel = {
-  id?: number;
-  title?: string;
-  type?: string;
-  collapsed?: boolean;
-  panels?: LoosePanel[];
-  libraryPanel?: { uid: string; name: string };
-};
-
-// The picker lists v2 elements. Rows are layout, not elements. Panels copied without an id get the
-// next free id, matching DashboardModel.ensurePanelsHaveUniqueIds.
-function visualPanels(panels: LoosePanel[] | undefined): LoosePanel[] {
-  const visual: LoosePanel[] = [];
-  for (const panel of panels ?? []) {
-    if (panel.type === 'row') {
-      if (panel.collapsed) {
-        visual.push(...visualPanels(panel.panels));
-      }
-      continue;
-    }
-    visual.push(panel);
-  }
-  return visual;
-}
-
-function withIds(panels: LoosePanel[]): Array<LoosePanel & { id: number }> {
-  const existing = panels.map((panel) => panel.id).filter((id): id is number => typeof id === 'number');
-  let next = existing.length > 0 ? Math.max(...existing) + 1 : 1;
-  return panels.map((panel) => {
-    if (typeof panel.id === 'number') {
-      return { ...panel, id: panel.id };
-    }
-    const id = next++;
-    return { ...panel, id };
-  });
-}
-
-function toV2DashboardResource(response: DashboardDTO) {
-  const elements: Record<string, unknown> = {};
-  for (const panel of withIds(visualPanels(response.dashboard.panels))) {
-    const name = `panel-${panel.id}`;
-    if (panel.libraryPanel) {
-      elements[name] = {
-        kind: 'LibraryPanel',
-        spec: {
-          id: panel.id,
-          title: panel.title ?? '',
-          libraryPanel: { uid: panel.libraryPanel.uid, name: panel.libraryPanel.name },
-        },
-      };
-      continue;
-    }
-
-    elements[name] = {
-      kind: 'Panel',
-      spec: {
-        id: panel.id,
-        title: panel.title ?? '',
-        description: '',
-        links: [],
-        data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
-        vizConfig: {
-          kind: 'VizConfig',
-          group: panel.type ?? 'timeseries',
-          version: '1.0.0',
-          spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
-        },
-      },
-    };
-  }
-
-  return {
-    apiVersion: 'dashboard.grafana.app/v2beta1',
-    kind: 'DashboardWithAccessInfo' as const,
-    metadata: {
-      name: response.dashboard.uid ?? '',
-      generation: response.dashboard.version ?? 1,
-      creationTimestamp: new Date().toISOString(),
-      annotations: response.meta.folderTitle ? { 'grafana.app/folderTitle': response.meta.folderTitle } : {},
-    },
-    access: response.meta,
-    spec: {
-      ...defaultSpec(),
-      title: response.dashboard.title ?? '',
-      elements,
-    },
-  };
-}
-
 export function mockDashboardApi(server: SetupServer) {
   return {
     search: (results: DashboardSearchItem[]) => {
@@ -370,13 +281,11 @@ export function mockDashboardApi(server: SetupServer) {
 
       server.use(getCustomSearchHandler([...folderHits, ...dashboards]));
     },
-    dashboard: (response: DashboardDTO) => {
-      const k8sResponse = toV2DashboardResource(response);
+    dashboard: (dashboard: DashboardWithAccessInfo<DashboardV2Spec>) => {
       server.use(
-        http.get(`/api/dashboards/uid/${response.dashboard.uid}`, () => HttpResponse.json(response)),
         http.get(
-          `/apis/dashboard.grafana.app/:version/namespaces/:namespace/dashboards/${response.dashboard.uid}/dto`,
-          () => HttpResponse.json(k8sResponse)
+          `/apis/dashboard.grafana.app/:version/namespaces/:namespace/dashboards/${dashboard.metadata.name}/dto`,
+          () => HttpResponse.json(dashboard)
         )
       );
     },

@@ -342,7 +342,7 @@ describe('APPLY_SPEC keeps the rebuilt layout draggable', () => {
   // Regression: the rebuild swaps in a freshly-deserialized layout manager whose grid is not
   // draggable/resizable by default. Only the pre-rebuild body ever got `editModeChanged(true)`
   // (via entering edit mode), so panels stayed frozen in the new tree until the command also
-  // called it on the swapped-in body. With new layouts, that correction lands inside a 10ms timeout.
+  // called it on the swapped-in body. That correction lands inside a 10ms timeout.
   function isDraggable(scene: DashboardScene) {
     return (scene.state.body as DefaultGridLayoutManager).state.grid.state.isDraggable;
   }

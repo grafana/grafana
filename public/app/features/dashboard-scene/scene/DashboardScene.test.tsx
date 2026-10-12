@@ -393,9 +393,7 @@ describe('DashboardScene', () => {
         expect(scene.state.meta.version).toEqual(2);
       });
 
-      it('Should exit edit mode after saving from unsaved changes modal when dashboardNewLayouts is enabled', async () => {
-        setTestFlags({ dashboardNewLayouts: true });
-
+      it('Should exit edit mode after saving from unsaved changes modal', async () => {
         scene.setState({ meta: { ...scene.state.meta, canSave: true } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
@@ -424,13 +422,10 @@ describe('DashboardScene', () => {
         } finally {
           publishSpy.mockRestore();
           hasActualSaveChangesSpy.mockRestore();
-          setTestFlags({});
         }
       });
 
       it('Should not show Save option in unsaved changes modal when user cannot save', () => {
-        setTestFlags({ dashboardNewLayouts: true });
-
         scene.setState({ meta: { ...scene.state.meta, canSave: false } });
 
         const publishSpy = jest.spyOn(appEvents, 'publish');
@@ -449,7 +444,6 @@ describe('DashboardScene', () => {
 
         publishSpy.mockRestore();
         hasActualSaveChangesSpy.mockRestore();
-        setTestFlags({});
       });
 
       it('Should start the detect changes worker', () => {
@@ -833,24 +827,45 @@ describe('DashboardScene', () => {
 
       it('Should paste a panel', () => {
         scene.activateSidebar();
-        store.set(LS_PANEL_COPY_KEY, JSON.stringify({ key: 'panel-7' }));
-        jest.mocked(buildGridItemForPanel).mockReturnValue(
-          new DashboardGridItem({
-            key: 'griditem-9',
-            body: new VizPanel({
-              title: 'Panel A',
-              key: 'panel-9',
-              pluginId: 'table',
-            }),
+        store.set(
+          LS_PANEL_COPY_KEY,
+          JSON.stringify({
+            elements: {
+              'panel-1': {
+                kind: 'Panel',
+                spec: {
+                  id: 1,
+                  title: 'Panel A',
+                  description: '',
+                  links: [],
+                  data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+                  vizConfig: {
+                    kind: 'VizConfig',
+                    group: 'table',
+                    version: '',
+                    spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+                  },
+                },
+              },
+            },
+            gridItem: {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: { kind: 'ElementReference', name: 'panel-1' },
+              },
+            },
           })
         );
 
         scene.pastePanel();
 
-        expect(buildGridItemForPanel).toHaveBeenCalledTimes(1);
-
-        const addedPanel = findVizPanelByKey(scene, 'panel-9')!;
+        const addedPanel = findVizPanelByKey(scene, 'panel-7')!;
         expect(addedPanel).toBeDefined();
+        expect(addedPanel.state.title).toBe('Panel A');
         expect(store.exists(LS_PANEL_COPY_KEY)).toBe(false);
       });
 

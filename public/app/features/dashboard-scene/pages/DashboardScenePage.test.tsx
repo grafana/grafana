@@ -1,7 +1,6 @@
 import { OpenFeatureProvider } from '@openfeature/react-sdk';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { cloneDeep } from 'lodash';
 import { useParams } from 'react-router-dom-v5-compat';
 import { of } from 'rxjs';
 import { TestProvider } from 'test/helpers/TestProvider';
@@ -19,25 +18,27 @@ import {
 } from '@grafana/runtime';
 import { setGetObservablePluginLinks, setPanelPluginMetas } from '@grafana/runtime/internal';
 import { VizPanel } from '@grafana/scenes';
-import { type Dashboard, type LibraryPanel } from '@grafana/schema';
-import { defaultSpec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { type LibraryPanel } from '@grafana/schema';
+import {
+  type GridLayoutItemKind,
+  type Spec as DashboardV2Spec,
+  defaultPanelSpec,
+  defaultSpec,
+} from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
 import { getRouteComponentProps } from 'app/core/navigation/mocks/routeProps';
 import { type GrafanaRouteComponentProps } from 'app/core/navigation/types';
-import { type DashboardLoaderSrv, setDashboardLoaderSrv } from 'app/features/dashboard/services/DashboardLoaderSrv';
+import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import * as libraryPanels from 'app/features/library-panels/state/api';
 import { DASHBOARD_FROM_LS_KEY, DashboardRoutes } from 'app/types/dashboard';
 
 import { setPublicDashboardConfigFn } from '../../dashboard/components/PublicDashboard/usePublicDashboardConfig';
 import { dashboardViews } from '../scene/dashboardViewRegistry';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
-import { createDeferred, setupLoadDashboardMockReject, setupLoadDashboardRuntimeErrorMock } from '../utils/test-utils';
+import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScenePage, type Props } from './DashboardScenePage';
-import {
-  DashboardScenePageStateManagerV2,
-  getDashboardScenePageStateManager,
-} from './DashboardScenePageStateManager';
+import { DashboardScenePageStateManagerV2, getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
 const mockBackendGet = jest.fn();
 
@@ -103,45 +104,6 @@ function setup({ routeProps }: { routeProps?: Partial<GrafanaRouteComponentProps
   return { rerender, context, props, unmount: renderResult.unmount };
 }
 
-const simpleDashboard: Dashboard = {
-  title: 'My cool dashboard',
-  uid: 'my-dash-uid',
-  schemaVersion: 30,
-  version: 1,
-  panels: [
-    {
-      id: 1,
-      type: 'custom-viz-panel',
-      title: 'Panel A',
-      options: {
-        content: `Content A`,
-      },
-      gridPos: {
-        x: 0,
-        y: 0,
-        w: 10,
-        h: 10,
-      },
-      targets: [],
-    },
-    {
-      id: 2,
-      type: 'custom-viz-panel',
-      title: 'Panel B',
-      options: {
-        content: `Content B`,
-      },
-      gridPos: {
-        x: 0,
-        y: 10,
-        w: 10,
-        h: 10,
-      },
-      targets: [],
-    },
-  ],
-};
-
 const panelPlugin = getPanelPlugin(
   {
     skipDataQuery: true,
@@ -163,70 +125,63 @@ setPluginImportUtils({
   getPanelPluginFromCache: (id: string) => undefined,
 });
 
-const loadDashboardMock = jest.fn();
+interface TestPanel {
+  id: number;
+  title: string;
+  content: string;
+  libraryPanel?: { uid: string; name: string };
+}
 
-setDashboardLoaderSrv({
-  loadDashboard: loadDashboardMock,
-  // disabling type checks since this is a test util
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-} as unknown as DashboardLoaderSrv);
+const defaultPanels: TestPanel[] = [
+  { id: 1, title: 'Panel A', content: 'Content A' },
+  { id: 2, title: 'Panel B', content: 'Content B' },
+];
 
-function buildV2Dashboard(
-  panels: Array<{ id: number; title: string; content: string }> = [
-    { id: 1, title: 'Panel A', content: 'Content A' },
-    { id: 2, title: 'Panel B', content: 'Content B' },
-  ],
-  version = 1
-) {
-  const elements: Record<string, unknown> = {};
-  const items = panels.map((panel, index) => {
-    const name = `panel-${panel.id}`;
-    elements[name] = {
-      kind: 'Panel',
-      spec: {
-        id: panel.id,
-        title: panel.title,
-        description: '',
-        links: [],
-        data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
-        vizConfig: {
-          kind: 'VizConfig',
-          group: 'custom-viz-panel',
-          version: '',
-          spec: { options: { content: panel.content }, fieldConfig: { defaults: {}, overrides: [] } },
-        },
-      },
-    };
-    return {
+function buildV2Dashboard({
+  panels = defaultPanels,
+  version = 1,
+  access = {},
+}: { panels?: TestPanel[]; version?: number; access?: DashboardWithAccessInfo<DashboardV2Spec>['access'] } = {}) {
+  const elements: DashboardV2Spec['elements'] = {};
+  const items: GridLayoutItemKind[] = [];
+
+  panels.forEach(({ id, title, content, libraryPanel }, index) => {
+    const name = `panel-${id}`;
+    elements[name] = libraryPanel
+      ? { kind: 'LibraryPanel', spec: { id, title, libraryPanel } }
+      : {
+          kind: 'Panel',
+          spec: {
+            ...defaultPanelSpec(),
+            id,
+            title,
+            vizConfig: {
+              kind: 'VizConfig',
+              group: 'custom-viz-panel',
+              version: '',
+              spec: { options: { content }, fieldConfig: { defaults: {}, overrides: [] } },
+            },
+          },
+        };
+    items.push({
       kind: 'GridLayoutItem',
-      spec: {
-        x: 0,
-        y: index * 10,
-        width: 10,
-        height: 10,
-        element: { kind: 'ElementReference', name },
-      },
-    };
+      spec: { x: 0, y: index * 10, width: 10, height: 10, element: { kind: 'ElementReference', name } },
+    });
   });
 
-  return {
+  const dashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     apiVersion: 'dashboard.grafana.app/v2beta1',
-    kind: 'DashboardWithAccessInfo' as const,
+    kind: 'DashboardWithAccessInfo',
     metadata: {
       name: 'my-dash-uid',
       generation: version,
       resourceVersion: String(version),
       creationTimestamp: '2024-01-01T00:00:00Z',
-      annotations: {},
     },
-    spec: {
-      ...defaultSpec(),
-      title: 'My cool dashboard',
-      elements,
-      layout: { kind: 'GridLayout' as const, spec: { items } },
-    },
-    access: { url: '' },
+    spec: { ...defaultSpec(), title: 'My cool dashboard', elements, layout: { kind: 'GridLayout', spec: { items } } },
+    access,
   };
+  return dashboard;
 }
 
 function setDashboardResponse(resource: unknown) {
@@ -255,8 +210,6 @@ describe('DashboardScenePage', () => {
     getDashboardScenePageStateManager('v2').clearDashboardCache();
     getDashboardScenePageStateManager().clearDashboardCache();
     getDashboardScenePageStateManager().clearSceneCache();
-    loadDashboardMock.mockClear();
-    loadDashboardMock.mockResolvedValue({ dashboard: simpleDashboard, meta: { slug: '123' } });
     // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
@@ -282,7 +235,6 @@ describe('DashboardScenePage', () => {
   });
 
   it('keeps the page loader until the editor is ready and opens it only once when the URL normalizes', async () => {
-    loadDashboardMock.mockResolvedValue({ dashboard: cloneDeep(simpleDashboard), meta: { slug: '123' } });
     const pending = createDeferred<void>();
     const original = dashboardViews.editPanel;
     const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
@@ -594,13 +546,7 @@ describe('DashboardScenePage', () => {
     getDashboardScenePageStateManager().clearDashboardCache();
     getDashboardScenePageStateManager('v2').clearDashboardCache();
     setDashboardResponse(
-      buildV2Dashboard(
-        [
-          { id: 1, title: 'Updated title', content: 'Content A' },
-          { id: 2, title: 'Panel B', content: 'Content B' },
-        ],
-        2
-      )
+      buildV2Dashboard({ version: 2, panels: [{ ...defaultPanels[0], title: 'Updated title' }, defaultPanels[1]] })
     );
 
     props.location.state = { routeReloadCounter: 1 };
@@ -683,7 +629,7 @@ describe('DashboardScenePage', () => {
 
   describe('empty state', () => {
     it('Shows empty state when dashboard is empty', async () => {
-      setDashboardResponse(buildV2Dashboard([]));
+      setDashboardResponse(buildV2Dashboard({ panels: [] }));
       setup();
 
       expect(await screen.findByText('Select layout')).toBeInTheDocument();
@@ -743,8 +689,6 @@ describe('DashboardScenePage', () => {
 
     it('should show controls', async () => {
       getDashboardScenePageStateManager().clearDashboardCache();
-      loadDashboardMock.mockClear();
-      loadDashboardMock.mockResolvedValue({ dashboard: { uid: 'my-dash-uid', panels: [] }, meta: {} });
 
       setup();
 
@@ -777,7 +721,6 @@ describe('DashboardScenePage', () => {
         },
         isHandled: true,
       };
-      setupLoadDashboardMockReject(notFound);
       mockBackendGet.mockRejectedValue(notFound);
 
       setup();
@@ -803,7 +746,6 @@ describe('DashboardScenePage', () => {
         },
         isHandled: true,
       };
-      setupLoadDashboardMockReject(serverError);
       mockBackendGet.mockRejectedValue(serverError);
 
       setup();
@@ -813,7 +755,6 @@ describe('DashboardScenePage', () => {
     });
 
     it('should render error alert for runtime errors', async () => {
-      setupLoadDashboardRuntimeErrorMock();
       mockBackendGet.mockImplementation(() => {
         throw new Error('Runtime error');
       });
@@ -848,13 +789,12 @@ describe('DashboardScenePage', () => {
 });
 
 function mockPendingLibraryPanel() {
-  const dashboard = buildV2Dashboard();
-  dashboard.spec.elements['panel-1'] = {
-    kind: 'LibraryPanel',
-    spec: { id: 1, title: 'Panel A', libraryPanel: { uid: 'library-a', name: 'Library A' } },
-  };
-  dashboard.access = { url: '', canEdit: true };
-  setDashboardResponse(dashboard);
+  setDashboardResponse(
+    buildV2Dashboard({
+      panels: [{ ...defaultPanels[0], libraryPanel: { uid: 'library-a', name: 'Library A' } }, defaultPanels[1]],
+      access: { url: '', canEdit: true },
+    })
+  );
   const pending = createDeferred<LibraryPanel>();
   const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
   const libraryPanel: LibraryPanel = {

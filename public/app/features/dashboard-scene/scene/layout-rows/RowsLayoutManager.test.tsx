@@ -190,7 +190,7 @@ describe('RowsLayoutManager', () => {
       const layout = newRow.getLayout();
       expect(layout).toBeInstanceOf(DefaultGridLayoutManager);
 
-      // editModeChanged applies isDraggable/isResizable inside a 10ms timeout when new layouts are on.
+      // editModeChanged applies isDraggable/isResizable inside a 10ms timeout.
       await new Promise((resolve) => setTimeout(resolve, 20));
 
       const grid = (layout as DefaultGridLayoutManager).state.grid;
