@@ -75,7 +75,7 @@ export function getInitialNavTree(): NavModelItem[] {
 // retain the plugin's file-alt fallback, regardless of backend deployment order.
 function applyPagesIcon(tree: NavModelItem[]): void {
   for (const item of tree) {
-    if (item.pluginID === 'grafana-assistant-app' && item.url === `${config.appSubUrl}/a/grafana-assistant-app/pages`) {
+    if (item.pluginId === 'grafana-assistant-app' && item.url === `${config.appSubUrl}/a/grafana-assistant-app/pages`) {
       item.icon = 'pages';
     }
     if (item.children) {

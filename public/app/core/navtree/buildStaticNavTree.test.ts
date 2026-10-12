@@ -548,7 +548,7 @@ describe('Pages navigation icon', () => {
     setup({ config: { appSubUrl } });
     const pages: NavModelItem = {
       text: 'Pages',
-      pluginID: 'grafana-assistant-app',
+      pluginId: 'grafana-assistant-app',
       url: `${appSubUrl}/a/grafana-assistant-app/pages`,
       icon: 'file-alt',
     };
