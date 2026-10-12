@@ -48,5 +48,5 @@ func (m *QueryDataFormatMiddleware) keepArrow(ctx context.Context, pluginID stri
 	if _, ok := m.arrowPlugins[pluginID]; ok {
 		return true
 	}
-	return !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDatasourcesJsonQueryDataFormat, true, openfeature.TransactionContext(ctx))
+	return !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDatasourcesJsonQueryDataFormat, false, openfeature.TransactionContext(ctx))
 }
