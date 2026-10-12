@@ -469,8 +469,9 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
     this._editSessionSource = source;
 
-    // Save this state
-    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false });
+    // Save this state. A plan's building screen is transient: the build's first write enters edit
+    // mode while it is still up, and discarding must not bring it back with nothing left to end it.
+    this._initialState = sceneUtils.cloneSceneObjectState(this.state, { isDirty: false, planning: undefined });
     this._initialUrlState = locationService.getLocation();
 
     // Switch to edit mode

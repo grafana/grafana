@@ -17,6 +17,13 @@ import { DashboardMutationClient } from '../DashboardMutationClient';
 
 import { renderPlanContractFixture, renderPlanNestedTabsContractFixture } from './renderPlanContractFixture';
 
+// A dashboard built from a spec carries the built-in annotation layer, which looks up its
+// datasource on activation. Nothing here queries data, so that lookup never settles.
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({ get: () => new Promise(() => {}), getInstanceSettings: () => undefined }),
+}));
+
 setPluginImportUtils({
   importPanelPlugin: (id: string) => Promise.resolve(getPanelPlugin({ id })),
   getPanelPluginFromCache: (id: string) => getPanelPlugin({ id }),
@@ -30,6 +37,10 @@ function setup(overrides: Partial<DashboardSceneState> = {}) {
   cleanUpPreviousScene = scene.activate();
   const client = new DashboardMutationClient(scene);
   return { scene, client };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
 }
 
 afterEach(() => {
@@ -553,6 +564,49 @@ describe('other mutation commands, while a plan preview is active', () => {
     expect(result.success).toBe(true);
     expect(scene.state.body.getVizPanels().map((panel) => panel.state.title)).toEqual(['New panel']);
     expect(phaseWhenPanelsLanded[0]).toBe('building');
+    expect(scene.state.planning).toBeUndefined();
+  });
+
+  it('does not bring the building screen back when the first write is discarded', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+    await client.execute({
+      type: 'ADD_PANEL',
+      payload: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            title: 'New panel',
+            vizConfig: { group: 'timeseries', spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } } },
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+          },
+        },
+      },
+    });
+    expect(scene.state.isEditing).toBe(true);
+
+    scene.exitEditMode({ skipConfirm: true, restoreInitialState: true });
+
+    expect(scene.state.planning).toBeUndefined();
+  });
+
+  it('does not bring the building screen back when the first APPLY_SPEC is undone', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+    const current = await client.execute({ type: 'GET_SPEC', payload: {} });
+    if (!current.success || !isRecord(current.data) || !isRecord(current.data.spec)) {
+      throw new Error('Expected GET_SPEC to return the current spec');
+    }
+
+    const applied = await client.execute({
+      type: 'APPLY_SPEC',
+      payload: { spec: { ...current.data.spec, title: 'Built dashboard' } },
+    });
+    expect(applied.success).toBe(true);
+    expect(scene.state.planning).toBeUndefined();
+
+    scene.state.sidebar.undoAction();
+
     expect(scene.state.planning).toBeUndefined();
   });
 
