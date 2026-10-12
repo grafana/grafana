@@ -46,7 +46,7 @@ func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		ctx, span := tracing.Start(ctx, "folder.parents")
+		ctx, span := tracer.Start(ctx, "folders.subParentsREST.Connect")
 		defer span.End()
 
 		if name == folder.GeneralFolderUID || name == folder.SharedWithMeFolderUID {
@@ -56,12 +56,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		getCtx, getSpan := tracing.Start(ctx, "folder.parents.get")
-		obj, err := r.getter.Get(getCtx, name, &metav1.GetOptions{})
-		if err != nil {
-			_ = tracing.Error(getSpan, err)
-		}
-		getSpan.End()
+		obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
 		if err != nil {
 			responder.Error(tracing.Error(span, err))
 			return
@@ -73,12 +68,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		parentsCtx, parentsSpan := tracing.Start(ctx, "folder.parents.lookupParents")
-		info, err := r.parents(parentsCtx, folderObj)
-		if err != nil {
-			_ = tracing.Error(parentsSpan, err)
-		}
-		parentsSpan.End()
+		info, err := r.parents(ctx, folderObj)
 		if err != nil {
 			responder.Error(tracing.Error(span, err))
 			return

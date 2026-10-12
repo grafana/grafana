@@ -65,13 +65,8 @@ func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ctx, span := tracing.Start(ctx, "folder.counts")
-	getCtx, getSpan := tracing.Start(ctx, "folder.counts.get")
-	_, err := r.getter.Get(getCtx, name, &v1.GetOptions{})
-	if err != nil {
-		_ = tracing.Error(getSpan, err)
-	}
-	getSpan.End()
+	ctx, span := tracer.Start(ctx, "folders.subCountREST.Connect")
+	_, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 	if err != nil {
 		_ = tracing.Error(span, err)
 		span.End()
@@ -86,7 +81,7 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			return
 		}
 
-		statsCtx, statsSpan := tracing.Start(ctx, "folder.counts.stats")
+		statsCtx, statsSpan := tracer.Start(ctx, "folders.subCountREST.Connect.GetStats")
 		stats, err := r.searcher.GetStats(statsCtx, &resourcepb.ResourceStatsRequest{
 			Namespace: ns.Value,
 			Kinds:     countedKinds,

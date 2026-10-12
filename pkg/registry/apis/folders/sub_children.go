@@ -58,16 +58,11 @@ func (r *subChildrenREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
-	ctx, span := tracing.Start(ctx, "folder.children")
+	ctx, span := tracer.Start(ctx, "folders.subChildrenREST.Connect")
 	if name == folder.GeneralFolderUID {
 		name = ""
 	} else {
-		getCtx, getSpan := tracing.Start(ctx, "folder.children.get")
-		_, err := r.getter.Get(getCtx, name, &v1.GetOptions{})
-		if err != nil {
-			_ = tracing.Error(getSpan, err)
-		}
-		getSpan.End()
+		_, err := r.getter.Get(ctx, name, &v1.GetOptions{})
 		if err != nil {
 			_ = tracing.Error(span, err)
 			span.End()
@@ -91,7 +86,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		}
 
 		gvr := folders.FolderResourceInfo.GroupVersionResource()
-		searchCtx, searchSpan := tracing.Start(ctx, "folder.children.search")
+		searchCtx, searchSpan := tracer.Start(ctx, "folders.subChildrenREST.Connect.Search")
 		resp, err := r.searcher.Search(searchCtx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{

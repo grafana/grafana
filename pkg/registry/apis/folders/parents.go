@@ -17,6 +17,9 @@ type parentsGetter = func(ctx context.Context, folder *folders.Folder) (*folders
 
 func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 	return func(ctx context.Context, folder *folders.Folder) (*folders.FolderInfoList, error) {
+		ctx, span := tracer.Start(ctx, "folders.getParents")
+		defer span.End()
+
 		info := &folders.FolderInfoList{
 			Items: []folders.FolderInfo{},
 		}
@@ -49,14 +52,12 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 			}
 
 			if found[item.Parent] {
-				return nil, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent)
+				return nil, tracing.Error(span, folderLegacy.ErrCyclicReference.Errorf("cyclic folder references found: %s", item.Parent))
 			}
 
-			getCtx, span := tracing.Start(ctx, "folder.parents.getParent")
-			obj, e2 := getter.Get(getCtx, item.Parent, &metav1.GetOptions{})
+			obj, e2 := getter.Get(ctx, item.Parent, &metav1.GetOptions{})
 			if e2 != nil {
 				_ = tracing.Error(span, e2)
-				span.End()
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
@@ -68,7 +69,6 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 			parentFolder, ok := obj.(*folders.Folder)
 			if !ok {
 				err := tracing.Errorf(span, "expected folder, found: %T", obj)
-				span.End()
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
 					Detached:    true,
@@ -76,8 +76,6 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 				})
 				break
 			}
-			span.End()
-
 			found[parentFolder.Name] = true
 			folder = parentFolder
 		}
