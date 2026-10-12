@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -17,6 +18,7 @@ import (
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/login"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -675,6 +677,15 @@ func doDisplayTests(t *testing.T, helper *apis.K8sTestHelper) {
 		}, res)
 
 		require.Equal(t, 200, rsp.Response.StatusCode)
+		var rawDisplay struct {
+			Items []map[string]json.RawMessage `json:"display"`
+		}
+		require.NoError(t, json.Unmarshal(rsp.Body, &rawDisplay))
+		require.Greater(t, len(rawDisplay.Items), 1)
+		for _, item := range rawDisplay.Items {
+			require.NotContains(t, item, "authenticatedBy")
+			require.NotContains(t, item, "email")
+		}
 		require.ElementsMatch(t, []string{adminUID, adminIDKey, "0", "anonymous:", "api-key:my-key", "bogus:1"}, res.Keys)
 		require.Equal(t, []string{"bogus:1"}, res.InvalidKeys)
 
@@ -751,6 +762,9 @@ func doSelfTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.Equal(t, wantID, res.InternalID)
 		require.NotEmpty(t, res.Role)
 		require.Equal(t, string(caller.Identity.GetOrgRole()), res.Role)
+		require.Equal(t, login.PasswordAuthModule, res.AuthenticatedBy)
+		require.Equal(t, caller.Identity.GetEmail(), res.Email)
+		require.NotEmpty(t, res.Email)
 	}
 
 	t.Run("self endpoint returns the calling user's display info", func(t *testing.T) {

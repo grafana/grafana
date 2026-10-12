@@ -1,11 +1,17 @@
 import { waitFor } from '@testing-library/react';
 
-import { locationService } from '@grafana/runtime';
+import { getPanelPlugin } from '@grafana/data/test';
+import { locationService, setPluginImportUtils } from '@grafana/runtime';
 import { NewSceneObjectAddedEvent, SceneQueryRunner, UrlSyncManager, VizPanel } from '@grafana/scenes';
+import { type LibraryPanel } from '@grafana/schema';
+import * as libraryPanels from 'app/features/library-panels/state/api';
 
 import * as panelEditor from '../panel-edit/openPanelEditor';
+import { createDeferred } from '../utils/test-utils';
 
 import { DashboardScene } from './DashboardScene';
+import { LibraryPanelBehavior } from './LibraryPanelBehavior';
+import { dashboardViews } from './dashboardViewRegistry';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
 import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
@@ -13,6 +19,58 @@ import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
 describe('DashboardSceneUrlSync', () => {
+  describe('library panel editor loading', () => {
+    beforeAll(() => {
+      setPluginImportUtils({
+        importPanelPlugin: async () => getPanelPlugin({}),
+        getPanelPluginFromCache: () => undefined,
+      });
+    });
+    it.each(['loaded', 'failed', 'cancelled'] as const)(
+      'finishes loading when the library panel is %s',
+      async (outcome) => {
+        const pending = createDeferred<LibraryPanel>();
+        const fetchPanel = jest.spyOn(libraryPanels, 'getLibraryPanel').mockReturnValue(pending.promise);
+        const behavior = new LibraryPanelBehavior({ uid: 'library-a', name: 'Library A' });
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'text', $behaviors: [behavior] });
+        const scene = new DashboardScene({ body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+        try {
+          scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+          expect(scene.state.loadingView).toBe('editPanel');
+          expect(fetchPanel).toHaveBeenCalledWith('library-a', true);
+          if (outcome === 'cancelled') {
+            scene.urlSync?.updateFromUrl({ editPanel: null });
+            expect(behavior.isActive).toBe(false);
+            expect(panel.isActive).toBe(false);
+          }
+          if (outcome === 'failed') {
+            pending.reject(new Error('Library panel unavailable'));
+          } else {
+            pending.resolve({
+              uid: 'library-a',
+              name: 'Library A',
+              type: 'text',
+              version: 1,
+              model: { type: 'text', title: 'Library A', options: {}, fieldConfig: { defaults: {}, overrides: [] } },
+            });
+          }
+          await waitFor(() => expect(scene.state.loadingView).toBeUndefined());
+          if (outcome === 'loaded') {
+            expect(scene.state.editPanel?.state.panelRef.resolve()).toBe(panel);
+          } else if (outcome === 'failed') {
+            expect(panel.state._pluginLoadError).toBe('Unable to load library panel: library-a');
+          } else {
+            expect(scene.state.editPanel).toBeUndefined();
+          }
+          expect(behavior.isActive).toBe(false);
+          expect(panel.isActive).toBe(false);
+        } finally {
+          scene.cancelPendingViews();
+          fetchPanel.mockRestore();
+        }
+      }
+    );
+  });
   describe('Given a standard scene', () => {
     it('Should set UNSAFE_fitPanels when url has autofitpanels', () => {
       const scene = buildTestScene();
@@ -263,6 +321,45 @@ describe('DashboardSceneUrlSync', () => {
   });
 
   describe('entering edit mode', () => {
+    it('retains the newer URL hold when an older request for the same panel completes', async () => {
+      const scene = buildTestScene();
+      const first = createDeferred<void>();
+      const second = createDeferred<void>();
+      const original = dashboardViews.editPanel;
+      const ready = [first, second];
+      const loadEditor = jest.spyOn(dashboardViews, 'editPanel').mockImplementation((...args) => {
+        const view = original(...args);
+        const pending = ready.shift()!;
+        return {
+          ...view,
+          load: async (signal) => {
+            await pending.promise;
+            return view.load(signal);
+          },
+        };
+      });
+      const openEditor = jest.spyOn(panelEditor, 'openPanelEditor');
+      try {
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        scene.urlSync?.updateFromUrl({ editPanel: null });
+        scene.urlSync?.updateFromUrl({ editPanel: 'panel-1' });
+        first.resolve();
+        await openEditor.mock.results[0].value;
+        expect(scene.state.loadingView).toBe('editPanel');
+        expect(scene.urlSync?.getUrlState().editPanel).toBe('panel-1');
+        second.resolve();
+        await openEditor.mock.results[1].value;
+        expect(scene.state.editPanel?.getUrlKey()).toBe('1');
+        expect(scene.state.loadingView).toBeUndefined();
+      } finally {
+        first.resolve();
+        second.resolve();
+        scene.cancelPendingViews();
+        openEditor.mockRestore();
+        loadEditor.mockRestore();
+      }
+    });
+
     it('preserves a deep-linked panel editor while entering dashboard edit mode', async () => {
       locationService.push('/d/test/test?editPanel=1');
       const scene = buildTestScene();

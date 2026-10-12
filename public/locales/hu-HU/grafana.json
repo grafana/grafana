@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Új felhasználói környezet használata",
-        "view-previous-experience": "Vissza az előző felhasználói környezethez"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Ismeretlen szabálytípus",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Összes összecsukása",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Összes kibontása"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Az összes tartomány megjelenítése",
     "signal-card": {
-      "collapse-aria-label": "Adatforrás-böngésző összecsukása {{refId}} lekérdezéshez",
-      "expand-aria-label": "Adatforrás-böngésző kibontása {{refId}} lekérdezéshez",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Ugrás a(z) {{refId}} lekérdezéshez ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Mégse",
       "confirm-discard": "Elvetés",
@@ -13235,6 +13245,7 @@
       "redo-action": "Újra: {{action}}",
       "remove-query": "Lekérdezés eltávolítása",
       "remove-tag": "Címke eltávolítása",
+      "rename": "",
       "reset-cell-time-range": "Jegyzetfüzet időtartományának használata",
       "select-query": "Lekérdezés kijelölése",
       "set-cell-time-range": "Panel időtartományának beállítása",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Mezők rendezése egy keretben."
       },
+      "drag-handle-label": "",
       "label-field": "Mező",
       "label-reverse": "Fordított",
       "name": {
         "sort-by": "Rendezés alapja"
       },
-      "placeholder-select-field": "Mező kijelölése"
+      "placeholder-select-field": "Mező kijelölése",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

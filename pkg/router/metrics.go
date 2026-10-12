@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/sony/gobreaker/v2"
 )
 
@@ -95,8 +96,10 @@ func (m *routerMetrics) discoveryResult(group, result string) {
 // newPluginGRPCRequestDuration returns the histogram of gRPC calls to plugin
 // deployments, registered with reg unless it is nil. Local plugins are
 // measured by the plugin client's grafana_plugin_request_* metrics instead.
-func newPluginGRPCRequestDuration(reg prometheus.Registerer) *prometheus.HistogramVec {
+// The source const label lets plugins_url and core_url register on one registry.
+func newPluginGRPCRequestDuration(reg prometheus.Registerer, source string) *prometheus.HistogramVec {
 	h := prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		ConstLabels:                     prometheus.Labels{"source": source},
 		Namespace:                       "grafana",
 		Subsystem:                       "router",
 		Name:                            "plugin_grpc_request_duration_seconds",
@@ -109,6 +112,18 @@ func newPluginGRPCRequestDuration(reg prometheus.Registerer) *prometheus.Histogr
 		reg.MustRegister(h)
 	}
 	return h
+}
+
+// newPluginGRPCRequestRetries returns the counter of retried unary gRPC calls
+// to plugin deployments, registered with reg unless it is nil. Like the
+// request duration, the source const label lets plugins_url and core_url
+// register on one registry.
+func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prometheus.CounterVec {
+	return promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
+		ConstLabels: prometheus.Labels{"source": source},
+		Name:        "grafana_router_plugin_grpc_request_retries_total",
+		Help:        "Retries of unary gRPC calls to plugin deployments, by plugin and gRPC method.",
+	}, []string{"plugin_id", "method"})
 }
 
 // requestGroup returns the group a request is for: the group of an

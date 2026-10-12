@@ -3068,7 +3068,7 @@
       },
       "toggle": {
         "use-new-experience": "Использовать новый интерфейс",
-        "view-previous-experience": "К предыдущему интерфейсу"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Неизвестный тип правила",
       "checking-data-sources_one": "",
@@ -3098,6 +3098,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Свернуть всё",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Развернуть всё"
     },
     "rule-list-v2": {
@@ -9104,8 +9109,8 @@
     },
     "show-all-spans": "Показать все диапазоны",
     "signal-card": {
-      "collapse-aria-label": "Свернуть обозреватель источника данных для запроса {{refId}}",
-      "expand-aria-label": "Развернуть обозреватель источника данных для запроса {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Перейти к запросу {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13352,6 +13357,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Отменить",
       "confirm-discard": "Отменить",
@@ -13433,6 +13443,7 @@
       "redo-action": "Повторить: {{action}}",
       "remove-query": "Удалить запрос",
       "remove-tag": "Удалить тег",
+      "rename": "",
       "reset-cell-time-range": "Использовать временной диапазон блокнота",
       "select-query": "Выбрать запрос",
       "set-cell-time-range": "Установить временной диапазон панели",
@@ -17990,15 +18001,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Сортируйте поля в фрейме."
       },
+      "drag-handle-label": "",
       "label-field": "Поле",
       "label-reverse": "Изменить на обратное",
       "name": {
         "sort-by": "Сортировать по"
       },
-      "placeholder-select-field": "Выбрать поле"
+      "placeholder-select-field": "Выбрать поле",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

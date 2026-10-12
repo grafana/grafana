@@ -21,7 +21,8 @@ import { NotebookAnalytics } from '../analytics/main';
 import { NOTEBOOK_AUTOSAVE_CONFLICT_RESOLUTION, NOTEBOOK_AUTOSAVE_FAILED_REASON } from '../analytics/types';
 import { createNotebook, NotebookConflictError, updateNotebook } from '../api/notebookResource';
 import { transformNotebookSceneToSaveModel } from '../serialization/transformNotebookSceneToSaveModel';
-import { defaultVisualizationPanelKind } from '../types';
+import { transformNotebookToScene } from '../serialization/transformNotebookToScene';
+import { defaultSpec as defaultNotebookSpec, defaultVisualizationPanelKind } from '../types';
 
 import { changedCellTimeRange } from './NotebookAutosave';
 import { NotebookScene } from './NotebookScene';
@@ -146,6 +147,33 @@ function buildSceneWithPanelOverride(timeFrom: string) {
   });
 
   return { scene, cell, panel };
+}
+
+/**
+ * Two cells referencing one panel element, each with its own panel. A layout may legally do this —
+ * NotebookLayoutManager.setElementBody only renames a converted cell when a sibling still shares the
+ * name — and anything keyed by element name keeps just one of them.
+ */
+function buildSceneWithSharedElementName() {
+  const cells = [1, 2].map(
+    (panelId) =>
+      new NotebookCellItem({
+        elementName: 'panel1',
+        source: 'user',
+        body: new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), panelId)),
+      })
+  );
+
+  const scene = new NotebookScene({
+    uid: 'nb-1',
+    title: 'My notebook',
+    body: new NotebookLayoutManager({ cells }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    timePicker: new SceneTimePicker({}),
+    refreshPicker: new SceneRefreshPicker({ refresh: '', intervals: ['10s'] }),
+  });
+
+  return { scene, firstCell: cells[0] };
 }
 
 /** What reading does to a panel: picking a colour off the legend writes a field override. */
@@ -788,6 +816,247 @@ describe('NotebookAutosave', () => {
 
       expect(jest.mocked(updateNotebook).mock.calls[0][1].title).toBe('Renamed while editing');
       expect(savedPanelTimeFrom()).toEqual(['2h']);
+    });
+  });
+
+  describe('discardViewOnlyTimeChanges', () => {
+    /** A notebook that has been read and closed, so autosave has a baseline and has stopped. */
+    function readAndClose(scene: NotebookScene) {
+      const release = scene.activate();
+      release();
+    }
+
+    it('puts the saved time range back once the notebook is closed', () => {
+      const scene = buildScene();
+      readAndClose(scene);
+
+      scene.state.$timeRange.onTimeRangeChange(rangeUtil.convertRawToRange({ from: 'now-1h', to: 'now' }));
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-6h');
+      // The resolved value has to come back with the raw range, or the picker reads `Last 6 hours` over
+      // an hour of data.
+      const { from, to } = scene.state.$timeRange.state.value;
+      expect(to.diff(from, 'hours')).toBe(6);
+    });
+
+    it('puts the saved auto-refresh interval back', () => {
+      const scene = buildScene();
+      readAndClose(scene);
+
+      scene.state.refreshPicker.setState({ refresh: '10s' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.refreshPicker.state.refresh).toBe('');
+    });
+
+    it('leaves the range alone while the notebook is still on screen', () => {
+      const scene = buildScene();
+      deactivate = scene.activate();
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-1h');
+    });
+
+    it('leaves the range alone before the notebook has a baseline to go back to', () => {
+      const scene = buildScene();
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-1h');
+    });
+
+    it('keeps a range a writer edited whose save is still waiting on the debounce', () => {
+      const scene = buildScene();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      deactivate();
+      deactivate = undefined;
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-1h');
+    });
+
+    it('keeps a range a writer edited whose save failed, so the retry still sends it', async () => {
+      jest.mocked(updateNotebook).mockRejectedValue(new Error('nope'));
+      const scene = buildScene();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+      expect(scene.autosave.state.status).toBe('error');
+
+      deactivate();
+      deactivate = undefined;
+      scene.autosave.discardViewOnlyTimeChanges();
+      expect(scene.state.$timeRange.state.from).toBe('now-1h');
+
+      jest.mocked(updateNotebook).mockResolvedValue({ generation: 2 });
+      scene.autosave.retry();
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(jest.mocked(updateNotebook).mock.calls.at(-1)?.[1].timeSettings.from).toBe('now-1h');
+    });
+
+    it("puts back a cell's own time range a reader set", () => {
+      const { scene, cell } = buildSceneWithPanel();
+      readAndClose(scene);
+
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(cell.state.$timeRange).toBeUndefined();
+    });
+
+    it("keeps a cell's own time range a writer set in edit mode", () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      deactivate();
+      deactivate = undefined;
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+    });
+
+    it("keeps a cell's own time range a writer set whose save failed, so the retry still sends it", async () => {
+      jest.mocked(updateNotebook).mockRejectedValue(new Error('nope'));
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+      expect(scene.autosave.state.status).toBe('error');
+
+      deactivate();
+      deactivate = undefined;
+      scene.autosave.discardViewOnlyTimeChanges();
+      expect(cell.state.$timeRange?.state.from).toBe('now-24h');
+
+      jest.mocked(updateNotebook).mockResolvedValue({ generation: 2 });
+      scene.autosave.retry();
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+      expect(savedCellTimeRanges().at(-1)).toEqual({ from: 'now-24h', to: 'now' });
+    });
+
+    it('restores the cell range of every cell sharing an element name, not only the last', () => {
+      const { scene, firstCell } = buildSceneWithSharedElementName();
+      readAndClose(scene);
+
+      scene.state.body.setCellTimeRange(firstCell, { from: 'now-24h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(firstCell.state.$timeRange).toBeUndefined();
+    });
+
+    // Holding off for the whole of any save would skip the restore for that visit: nothing runs it
+    // again when the request lands, so the reader's range would stay until the next navigation.
+    it("drops a reader's range on a reopen while a save carrying something else is in flight", () => {
+      let settle = () => {};
+      jest
+        .mocked(updateNotebook)
+        .mockReturnValue(new Promise((resolve) => (settle = () => resolve({ generation: 2 }))));
+
+      const scene = buildScene();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+      editFirstCell(scene, 'an edit of its content, not of its time range');
+      scene.onExitEditMode();
+      expect(scene.autosave.state.status).toBe('saving');
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      deactivate();
+      deactivate = undefined;
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-6h');
+      settle();
+    });
+
+    // Converting a cell to a panel does not touch the cell's own range, so it is not in
+    // cellTimeRangesEdited and its entry is carried forward. Carrying the panel with it would leave the
+    // entry naming the panel the cell had before, and the identity check would skip it from then on.
+    it('still restores a cell whose panel was replaced after an earlier save', async () => {
+      const scene = buildScene();
+      deactivate = scene.activate();
+      const [cell] = scene.state.body.state.cells;
+
+      scene.onEnterEditMode();
+      cell.setElementBody(new VizPanel(buildVizPanelState(defaultVisualizationPanelKind(), 1)), 'md1');
+      await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+      expect(scene.autosave.state.status).toBe('saved');
+      scene.onExitEditMode();
+
+      deactivate();
+      deactivate = undefined;
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(cell.state.$timeRange).toBeUndefined();
+    });
+
+    // The notebook's own range and a cell's are tracked separately, so an unsaved edit to one must not
+    // decide the other.
+    it("discards a reader's cell range even while the notebook's own range is a writer's unsaved edit", () => {
+      const { scene, cell } = buildSceneWithPanel();
+      deactivate = scene.activate();
+      scene.onEnterEditMode();
+      scene.state.$timeRange.setState({ from: 'now-12h', to: 'now' });
+
+      deactivate();
+      deactivate = undefined;
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(cell.state.$timeRange).toBeUndefined();
+      // The writer's own edit is still theirs, waiting to be written.
+      expect(scene.state.$timeRange.state.from).toBe('now-12h');
+    });
+
+    // Url sync applies `?from=&to=` to the scene before the page activates it, so a baseline taken at
+    // activation would adopt the deep link as the notebook's own range and put it back for everyone.
+    it("baselines the notebook's own range, not one a deep link applied before activation", () => {
+      const scene = transformNotebookToScene({
+        apiVersion: 'notebook.grafana.app/v2beta1',
+        kind: 'Notebook',
+        metadata: { name: 'nb-1', resourceVersion: '1', generation: 1, creationTimestamp: '2026-07-01T00:00:00Z' },
+        spec: { ...defaultNotebookSpec(), title: 'My notebook' },
+      });
+      expect(scene.state.$timeRange.state.from).toBe('now-6h');
+
+      scene.state.$timeRange.setState({ from: 'now-1h', to: 'now' });
+      readAndClose(scene);
+
+      scene.state.$timeRange.setState({ from: 'now-30m', to: 'now' });
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(scene.state.$timeRange.state.from).toBe('now-6h');
+    });
+
+    // setCellTimeRange clears the panel's own one-sided override to make room for the cell range, so a
+    // restore that only put the cell range back would cost the notebook a timeFrom it has.
+    it("puts back the panel's own one-sided override the reader's cell range displaced", () => {
+      const { scene, cell, panel } = buildSceneWithPanelOverride('2h');
+      readAndClose(scene);
+      const override = panel.state.$timeRange;
+
+      scene.state.body.setCellTimeRange(cell, { from: 'now-24h', to: 'now' });
+      expect(panel.state.$timeRange).toBeUndefined();
+
+      scene.autosave.discardViewOnlyTimeChanges();
+
+      expect(cell.state.$timeRange).toBeUndefined();
+      expect(panel.state.$timeRange).toBe(override);
     });
   });
 

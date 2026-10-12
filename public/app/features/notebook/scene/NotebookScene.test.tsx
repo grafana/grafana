@@ -459,28 +459,19 @@ describe('NotebookScene', () => {
       });
     });
 
-    it('clears history when the notebook body is replaced', () => {
-      const scene = buildScene(false);
-      activate(scene);
-      scene.state.body.addCell('code', 1);
-      const replacement = new NotebookLayoutManager({ cells: [] });
+    // A different notebook is never the same scene instance swapping its body under itself — it's a
+    // distinct NotebookScene, built fresh by transformNotebookToScene, with its own editHistory that
+    // was never going to know about the first one's stack in the first place.
+    it('gives a different notebook scene its own independent edit history', () => {
+      const first = buildScene(false, 'nb1');
+      activate(first);
+      first.state.body.addCell('code', 1);
+      expect(first.editHistory.state.canUndo).toBe(true);
 
-      scene.setState({ body: replacement });
+      const second = buildScene(false, 'nb2');
+      activate(second);
 
-      expect(scene.editHistory.state.canUndo).toBe(false);
-      replacement.addCell('code', 0);
-      expect(scene.editHistory.state.canUndo).toBe(true);
-    });
-
-    it('records history for a body replaced before activation', () => {
-      const scene = buildScene(false);
-      const replacement = new NotebookLayoutManager({ cells: [] });
-      scene.setState({ body: replacement });
-
-      activate(scene);
-      replacement.addCell('code', 0);
-
-      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(second.editHistory.state.canUndo).toBe(false);
     });
 
     it('keeps history across a deactivation and activation', () => {
@@ -763,6 +754,157 @@ describe('NotebookScene', () => {
       );
 
       expect(scene.state.body.state.title).toBe('Rebuilt');
+    });
+
+    it('records a title change so it can be undone', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.state.body.state.title).toBe('My notebook');
+    });
+
+    it('coalesces rapid title changes into one undo action', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q'));
+      act(() => scene.onTitleChange('Q3'));
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+
+      // One undo reverts the whole rename, not just the last keystroke.
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('drops a title edit that returns to its starting value', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('starts a new undo step after the coalescing window', () => {
+      jest.useFakeTimers();
+      try {
+        const scene = buildScene(false);
+        act(() => scene.activate());
+
+        act(() => scene.onTitleChange('Q3 latency regression'));
+        act(() => jest.advanceTimersByTime(801));
+        act(() => scene.onTitleChange('Q4 latency regression'));
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('Q3 latency regression');
+
+        act(() => scene.editHistory.undo());
+        expect(scene.state.title).toBe('My notebook');
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('does not record a no-op title change', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      expect(scene.editHistory.state.canUndo).toBe(true);
+      // A single undo should clear the one real change, not a second no-op entry.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits an active content edit first, so it lands as its own undo step under the title change', () => {
+      const scene = buildScene(false);
+      const cell = scene.state.body.state.cells[0];
+      act(() => scene.activate());
+      act(() => scene.state.body.setCellContent(cell, { kind: 'Markdown', spec: { text: 'Updated' } }));
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(cell.state.content).toEqual({ kind: 'Markdown', spec: { text: 'Hello' } });
+    });
+
+    it('starts a fresh pending edit after a tag change, instead of extending the buried one', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onTagsChange(['incident']));
+      // Without the commit above, this would extend the buried rename and silently discard it instead
+      // of recording a new step, since editHistory.discard only acts on the top of the stack.
+      act(() => scene.onTitleChange('My notebook'));
+
+      expect(scene.editHistory.state.undoLabel).toBe('Rename notebook');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.tags).toEqual([]);
+      expect(scene.state.title).toBe('Q3 latency regression');
+
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit before leaving edit mode', () => {
+      const scene = buildScene(false);
+      act(() => scene.activate());
+      act(() => scene.onEnterEditMode());
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => scene.onExitEditMode());
+      act(() => scene.onEnterEditMode());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed by onExitEditMode.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
+    });
+
+    it('commits a pending title edit on deactivation', () => {
+      const scene = buildScene(false);
+      const deactivate = scene.activate();
+
+      act(() => scene.onTitleChange('Q3 latency regression'));
+      act(() => deactivate());
+      act(() => scene.activate());
+      act(() => scene.onTitleChange('Q4 latency regression'));
+
+      // Two renames, not one coalesced step: the first was sealed on deactivation.
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('Q3 latency regression');
+      act(() => scene.editHistory.undo());
+      expect(scene.state.title).toBe('My notebook');
+      expect(scene.editHistory.state.canUndo).toBe(false);
     });
   });
 });

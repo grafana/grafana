@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Utilizar la nueva experiencia",
-        "view-previous-experience": "Volver a la experiencia anterior"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Tipo de regla desconocido",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Contraer todo",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Expandir todo"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Mostrar todos los intervalos",
     "signal-card": {
-      "collapse-aria-label": "Contraer el explorador de fuentes de datos para la consulta {{refId}}",
-      "expand-aria-label": "Expandir el explorador de fuentes de datos para la consulta {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Ir a la consulta {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Cancelar",
       "confirm-discard": "Descartar",
@@ -13235,6 +13245,7 @@
       "redo-action": "Rehacer: {{action}}",
       "remove-query": "Eliminar consulta",
       "remove-tag": "Quitar etiqueta",
+      "rename": "",
       "reset-cell-time-range": "Usar el intervalo de tiempo del cuaderno",
       "select-query": "Seleccionar consulta",
       "set-cell-time-range": "Definir el intervalo de tiempo del panel",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Ordenar campos en un marco."
       },
+      "drag-handle-label": "",
       "label-field": "Campo",
       "label-reverse": "Reverso",
       "name": {
         "sort-by": "Ordenar por"
       },
-      "placeholder-select-field": "Seleccionar campo"
+      "placeholder-select-field": "Seleccionar campo",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {
