@@ -22,7 +22,7 @@ function isBasicRole(role: string): role is OrgRole {
 
 export function UserRolesEditor({ user, basicRole }: { user: OverviewUser; basicRole: string }) {
   const [editing, setEditing] = useState(false);
-  const [updateBasicRole, { isError: failed, isLoading: pending }] = useUpdateOrgUserForCurrentOrgMutation();
+  const [updateBasicRole, { isError: failed, isLoading: pending, error }] = useUpdateOrgUserForCurrentOrgMutation();
   const licensed = contextSrv.licensedAccessControlEnabled();
   const canEditBasic = !getBasicRoleDisabled({ ...user, accessControl: user.orgAccessControl });
   const canEditDirect =
@@ -40,7 +40,7 @@ export function UserRolesEditor({ user, basicRole }: { user: OverviewUser; basic
   const updateBasic = (role: OrgRole) => updateBasicRole({ userId: user.id, updateOrgUserCommand: { role } });
   return (
     <Stack direction="column" gap={2}>
-      {failed && <ActionError />}
+      {failed && <ActionError error={error} />}
       {editing ? (
         <Stack gap={2}>
           {canEditDirect ? (

@@ -23,7 +23,7 @@ export function AuthenticationTab({ user }: { user: UserDTO }) {
   }
   return (
     <Stack direction="column" gap={2}>
-      {syncing.isError && <ActionError />}
+      {syncing.isError && <ActionError error={syncing.error} />}
       <UserLdapSyncInfo user={user} ldapSyncInfo={status} onUserSync={() => syncUser({ userId: user.id })} />
     </Stack>
   );

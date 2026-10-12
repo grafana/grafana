@@ -25,7 +25,9 @@ export function OrganizationsTab({ user }: { user: UserDTO }) {
   }
   return (
     <Stack direction="column" gap={2}>
-      {(adding.isError || removing.isError || updating.isError) && <ActionError />}
+      {(adding.isError || removing.isError || updating.isError) && (
+        <ActionError error={adding.error || removing.error || updating.error} />
+      )}
       <UserOrgs
         user={user}
         orgs={orgs}

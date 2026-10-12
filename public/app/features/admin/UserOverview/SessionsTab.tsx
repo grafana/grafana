@@ -22,7 +22,7 @@ export function SessionsTab({ uid }: { uid: string }) {
   }
   return (
     <Stack direction="column" gap={2}>
-      {(revoking.isError || revokingAll.isError) && <ActionError />}
+      {(revoking.isError || revokingAll.isError) && <ActionError error={revoking.error || revokingAll.error} />}
       <UserSessions
         sessions={sessions}
         onSessionRevoke={(authTokenId) => revokeSession({ userId: uid, revokeAuthTokenCmd: { authTokenId } })}

@@ -135,7 +135,7 @@ export function UserDetails({ user }: { user: OverviewUser }) {
 
   return (
     <Stack direction="column" gap={3}>
-      {failed && <ActionError />}
+      {failed && <ActionError error={mutation.error} />}
       <table className="filter-table form-inline">
         <tbody>
           {fields.map((field) => (

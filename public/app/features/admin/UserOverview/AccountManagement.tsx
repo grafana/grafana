@@ -17,7 +17,9 @@ export function AccountManagement({ user }: { user: UserDTO }) {
   const [enableUser, enabling] = useAdminEnableUserMutation();
   return (
     <Stack direction="column" gap={3}>
-      {(deletion.isError || disabling.isError || enabling.isError) && <ActionError />}
+      {(deletion.isError || disabling.isError || enabling.isError) && (
+        <ActionError error={deletion.error || disabling.error || enabling.error} />
+      )}
       <UserAccountActions
         user={user}
         onUserDelete={async () => {

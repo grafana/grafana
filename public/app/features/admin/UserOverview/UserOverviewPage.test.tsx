@@ -183,7 +183,7 @@ it('closes the delete confirmation after a failed deletion and allows retrying',
   const { user } = setup();
   await user.click(await screen.findByRole('button', { name: 'Delete user' }));
   await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete user' }));
-  await screen.findByRole('alert');
+  expect(await screen.findByRole('alert')).toHaveTextContent('Cannot delete user');
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Delete user' }));
   expect(screen.getByRole('dialog')).toBeInTheDocument();
