@@ -150,6 +150,7 @@ func TupleStringWithoutCondition(tuple *openfgav1.TupleKey) string {
 type RolePermission struct {
 	Action     string
 	Kind       string
+	Attribute  string
 	Identifier string
 }
 
@@ -205,7 +206,7 @@ func ConvertRolePermissionsToTuples(roleUID string, permissions []RolePermission
 		}
 
 		// Convert RBAC action/kind to Zanzana tuples.
-		translated, ok := TranslateToResourceTuples(subject, perm.Action, perm.Kind, perm.Identifier)
+		translated, ok := TranslateToResourceTuples(subject, perm.Action, perm.Kind, perm.Attribute, perm.Identifier)
 		if !ok {
 			// Skip permissions that can't be translated
 			log.New("zanzana").Debug("skipping permission that can't be translated", "permission", perm)
@@ -246,10 +247,11 @@ func RoleToTuples(roleUID string, permissions []*authzextv1.RolePermission) ([]*
 	rolePerms := make([]RolePermission, 0, len(permissions))
 	for _, perm := range permissions {
 		// Split the scope to get kind, attribute, identifier
-		kind, _, identifier := splitScope(perm.Scope)
+		kind, attribute, identifier := splitScope(perm.Scope)
 		rolePerms = append(rolePerms, RolePermission{
 			Action:     perm.Action,
 			Kind:       kind,
+			Attribute:  attribute,
 			Identifier: identifier,
 		})
 	}

@@ -359,7 +359,12 @@ func lookupActionMapping(kind, action string) (resourceTranslation, actionMappin
 
 // TranslateToResourceTuples keeps action sets compact where the model supports
 // their semantics, expanding grants only where a generic action set differs.
-func TranslateToResourceTuples(subject, action, kind, name string) ([]*openfgav1.TupleKey, bool) {
+func TranslateToResourceTuples(subject, action, kind, attribute, name string) ([]*openfgav1.TupleKey, bool) {
+	// Service-account objects are keyed by UID. Without ID-to-UID resolution,
+	// a concrete ID scope could grant access to a different, numeric-UID account.
+	if kind == KindServiceAccounts && attribute == "id" && name != "*" {
+		return nil, false
+	}
 	translation, m, ok := lookupActionMapping(kind, action)
 	if !ok {
 		return nil, false

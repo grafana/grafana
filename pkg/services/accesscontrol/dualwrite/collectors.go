@@ -130,7 +130,7 @@ func folderTreeCollector(folderService folder.Service) legacyTupleCollector {
 func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		query := `
-			SELECT u.uid as user_uid, u.is_service_account as is_service_account, t.uid as team_uid, p.action, p.kind, p.identifier, r.org_id, br.role as basic_role_name
+			SELECT u.uid as user_uid, u.is_service_account as is_service_account, t.uid as team_uid, p.action, p.kind, p.attribute, p.identifier, r.org_id, br.role as basic_role_name
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN user_role ur ON r.id = ur.role_id
@@ -145,6 +145,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 		type Permission struct {
 			Action           string `xorm:"action"`
 			Kind             string
+			Attribute        string
 			Identifier       string
 			UserUID          string `xorm:"user_uid"`
 			IsServiceAccount bool   `xorm:"is_service_account"`
@@ -178,7 +179,7 @@ func managedPermissionsCollector(store db.DB, kind string) legacyTupleCollector 
 				continue
 			}
 
-			translated, ok := zanzana.TranslateToResourceTuples(subject, p.Action, p.Kind, p.Identifier)
+			translated, ok := zanzana.TranslateToResourceTuples(subject, p.Action, p.Kind, p.Attribute, p.Identifier)
 			if !ok {
 				continue
 			}
@@ -344,7 +345,7 @@ func roleBindingsCollector(store db.DB) legacyTupleCollector {
 func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 	return func(ctx context.Context, orgID int64) (map[string]map[string]*openfgav1.TupleKey, error) {
 		var query = `
-			SELECT r.uid as role_uid, p.action, p.kind, p.identifier
+			SELECT r.uid as role_uid, p.action, p.kind, p.attribute, p.identifier
 			FROM permission p
 			INNER JOIN role r ON p.role_id = r.id
 			LEFT JOIN builtin_role br ON r.id  = br.role_id
@@ -355,6 +356,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 		type Permission struct {
 			Action     string `xorm:"action"`
 			Kind       string
+			Attribute  string
 			Identifier string
 			RoleUID    string `xorm:"role_uid"`
 		}
@@ -373,6 +375,7 @@ func rolePermissionsCollector(store db.DB) legacyTupleCollector {
 			rolePermissionsMap[p.RoleUID] = append(rolePermissionsMap[p.RoleUID], zanzana.RolePermission{
 				Action:     p.Action,
 				Kind:       p.Kind,
+				Attribute:  p.Attribute,
 				Identifier: p.Identifier,
 			})
 		}

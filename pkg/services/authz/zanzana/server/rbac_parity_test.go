@@ -1333,16 +1333,19 @@ func TestIntegrationRBACParityServiceAccountIDScopes(t *testing.T) {
 	}
 	// Numeric UIDs are legitimate names, but must never be mistaken for database
 	// IDs. No account has ID 404, even though an account has that UID.
+	// Unlike RBAC, Zanzana intentionally drops concrete ID scopes until it can
+	// resolve them safely; even a valid database ID must grant nothing.
 	scopes := []struct {
-		name  string
-		scope string
-		uid   string
-		all   bool
+		name        string
+		scope       string
+		uid         string
+		all         bool
+		unsupported bool
 	}{
-		{name: "database ID targets account A", scope: "serviceaccounts:id:42", uid: "account-a"},
+		{name: "database ID fails closed in Zanzana", scope: "serviceaccounts:id:42", uid: "account-a", unsupported: true},
 		{name: "UID targets account A", scope: "serviceaccounts:uid:account-a", uid: "account-a"},
 		{name: "numeric UID targets account B", scope: "serviceaccounts:uid:42", uid: "42"},
-		{name: "missing ID must not target numeric UID", scope: "serviceaccounts:id:404"},
+		{name: "missing ID must not target numeric UID", scope: "serviceaccounts:id:404", unsupported: true},
 		{name: "numeric UID needs no matching database ID", scope: "serviceaccounts:uid:404", uid: "404"},
 		{name: "ID wildcard", scope: "serviceaccounts:id:*", all: true},
 		{name: "UID wildcard", scope: "serviceaccounts:uid:*", all: true},
@@ -1388,7 +1391,7 @@ func TestIntegrationRBACParityServiceAccountIDScopes(t *testing.T) {
 								require.Equal(t, allowed, rbacRes.GetAllowed(), "RBAC answer changed")
 								res, err := srv.Check(newContextWithNamespace(), parityWithNamespace(req, namespace))
 								require.NoError(t, err)
-								assert.Equal(t, allowed, res.GetAllowed(), "Zanzana must distinguish database IDs from UIDs")
+								assert.Equal(t, allowed && !scope.unsupported, res.GetAllowed(), "Zanzana must fail closed for concrete ID scopes")
 							})
 						}
 						t.Run("List", func(t *testing.T) {
@@ -1416,6 +1419,9 @@ func TestIntegrationRBACParityServiceAccountIDScopes(t *testing.T) {
 							}
 							res, err := srv.List(newContextWithNamespace(), parityWithNamespace(req, namespace))
 							require.NoError(t, err)
+							if scope.unsupported {
+								expected = parityListResult{}
+							}
 							assert.Equal(t, normalizeParityList(expected), toParityListResult(res), "Zanzana must list UIDs, not database IDs")
 						})
 					})
@@ -1428,6 +1434,9 @@ func TestIntegrationRBACParityServiceAccountIDScopes(t *testing.T) {
 					for engine, response := range map[string]*authzv1.BatchCheckResponse{"RBAC": rbacRes, "Zanzana": res} {
 						require.Len(t, response.GetResults(), len(expectedBatch), engine)
 						for id, allowed := range expectedBatch {
+							if engine == "Zanzana" && scope.unsupported {
+								allowed = false
+							}
 							t.Run(engine+"/"+id, func(t *testing.T) {
 								require.Contains(t, response.GetResults(), id)
 								result := response.GetResults()[id]
@@ -1687,9 +1696,9 @@ func writeParityTuples(t *testing.T, srv *Server, ns string, permissions []acces
 // into Zanzana: split the scope into kind + identifier and hand both to the
 // shared translation table.
 func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openfgav1.TupleKey, bool) {
-	kind, identifier := perm.Kind, perm.Identifier
+	kind, attribute, identifier := perm.Kind, perm.Attribute, perm.Identifier
 	if kind == "" && perm.Scope != "" {
-		kind, _, identifier = accesscontrol.SplitScope(perm.Scope)
+		kind, attribute, identifier = accesscontrol.SplitScope(perm.Scope)
 	}
 
 	// Grants with no scope (stack roles) or a bare "*" carry no kind, so recover
@@ -1705,7 +1714,7 @@ func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openf
 			common.KindUsers,
 			common.KindFolders,
 		} {
-			if tuple, ok := common.TranslateToResourceTuples(subject, perm.Action, candidate, "*"); ok {
+			if tuple, ok := common.TranslateToResourceTuples(subject, perm.Action, candidate, "*", "*"); ok {
 				return tuple, true
 			}
 		}
@@ -1715,7 +1724,7 @@ func permissionToTuples(subject string, perm accesscontrol.Permission) ([]*openf
 	if identifier == "" {
 		identifier = "*"
 	}
-	return common.TranslateToResourceTuples(subject, perm.Action, kind, identifier)
+	return common.TranslateToResourceTuples(subject, perm.Action, kind, attribute, identifier)
 }
 
 // ---------------------------------------------------------------------------
