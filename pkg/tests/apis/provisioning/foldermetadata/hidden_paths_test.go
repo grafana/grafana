@@ -136,6 +136,42 @@ func TestIntegrationProvisioning_HiddenPaths_MetadataRename(t *testing.T) {
 	helper.RequireRepoDashboardCount(t, repoName, 1)
 }
 
+func TestIntegrationProvisioning_HiddenPaths_KeepTypeChange(t *testing.T) {
+	helper := sharedGitHelper(t)
+	const repoName = "keep-type-change"
+	_, local := helper.CreateFolderlessTargetGitRepo(t, repoName, map[string][]byte{
+		"dashboard.json": common.DashboardJSON("visible-root", "Root", 1),
+		"empty/.keep":    {},
+	})
+	common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+	folderUID := common.RequireRepoFolderTitle(t, helper.Folders, repoName, "empty")
+
+	for _, tc := range []struct {
+		name, path string
+		outcome    common.SyncOption
+	}{
+		{"file to directory", "empty/.keep/dashboard.json", common.Succeeded()},
+		{"directory to file", "empty/.keep", common.Warning()},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := local.Git("rm", "-r", "empty/.keep")
+			require.NoError(t, err)
+			require.NoError(t, local.CreateFile(tc.path, string(common.DashboardJSON("hidden-dashboard", "Hidden", 1))))
+			commitHiddenPathChanges(t, local)
+
+			common.SyncAndWait(t, helper, common.Repo(repoName), common.Incremental, tc.outcome)
+			helper.RequireRepoDashboardCount(t, repoName, 1)
+			common.RequireRepoFolders(t, helper.Folders, repoName, []string{"empty"})
+			common.RequireRepoFolderUID(t, helper.Folders, repoName, folderUID)
+
+			common.SyncAndWait(t, helper, common.Repo(repoName), common.Warning())
+			helper.RequireRepoDashboardCount(t, repoName, 1)
+			common.RequireRepoFolders(t, helper.Folders, repoName, []string{"empty"})
+			common.RequireRepoFolderUID(t, helper.Folders, repoName, folderUID)
+		})
+	}
+}
+
 func requireNoHiddenPathWarnings(t *testing.T, job *unstructured.Unstructured) {
 	t.Helper()
 	warnings, _, err := unstructured.NestedStringSlice(job.Object, "status", "warnings")
