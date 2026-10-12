@@ -7,11 +7,8 @@ import { type GrafanaTheme2, locationUtil, renderMarkdown, textUtil } from '@gra
 import { Trans, t } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Alert, Button, LinkButton, Spinner, Stack, Tab, TabsBar, Text, useStyles2 } from '@grafana/ui';
-import {
-  type RepositoryView,
-  type ResourceListItem,
-  useLazyGetRepositoryResourcesQuery,
-} from 'app/api/clients/provisioning/v0alpha1';
+import { useLazyGetFolderQuery } from 'app/api/clients/folder/v1beta1';
+import { type RepositoryView, useLazyGetRepositoryFilesWithPathQuery } from 'app/api/clients/provisioning/v0alpha1';
 import { useMermaidDiagrams } from 'app/core/hooks/useMermaidDiagrams';
 import { DIAGRAM_CLASS } from 'app/core/utils/mermaid';
 
@@ -19,6 +16,7 @@ import { useFolderDocs } from '../../hooks/useFolderDocs';
 import { type FolderReadmeStatus, useFolderReadme } from '../../hooks/useFolderReadme';
 import { type FolderDoc, FOLDER_DOC_TAB_PARAM, getDocTabLabel } from '../../utils/folderDocConventions';
 import { getRepoEditFileUrl, getRepoNewFileUrl } from '../../utils/git';
+import { getManagerIdentity, getSourcePath, isManagedByRepository } from '../../utils/managedResource';
 import { splitFrontmatter } from '../../utils/markdownFrontmatter';
 import { RESOURCE_PATH_ATTR, rewriteRelativeMarkdownLinks } from '../../utils/markdownLinks';
 import { createGrafanaLinkResolver } from '../../utils/markdownResourceLinks';
@@ -227,11 +225,11 @@ function RenderedMarkdown({
   syncFinished: number | undefined;
 }) {
   const styles = useStyles2(getStyles);
-  // Links to JSON/YAML files or folders are tagged during rewrite; the resource
-  // listing is fetched lazily only when the user first clicks one of them.
-  const [fetchResources, { data: resourcesData }] = useLazyGetRepositoryResourcesQuery();
+  const [fetchFile] = useLazyGetRepositoryFilesWithPathQuery();
+  const [fetchFolder] = useLazyGetFolderQuery();
   const repositoryName = repository.name;
   const repositoryPath = repository.path;
+  const repositoryTarget = repository.target;
 
   // The parent re-renders on every intersection change; keep marked and the
   // sanitizer off the scroll path.
@@ -252,48 +250,62 @@ function RenderedMarkdown({
   const containerRef = useRef<HTMLDivElement>(null);
   // Only the latest async (first-click) resolution navigates, so overlapping
   // clicks can't race and push an earlier link's destination after a later one.
-  const navTokenRef = useRef(0);
-  // Latest listing, read synchronously in the click handler so we only take over
-  // navigation when there is an in-app route.
-  const itemsRef = useRef<ResourceListItem[] | undefined>(undefined);
-  itemsRef.current = resourcesData?.items;
+  const navigationRef = useRef({ token: 0 });
+  const routesRef = useRef(new Map<string, string | undefined>());
 
-  // Refresh the cached listing when a sync completes: it may add or rename
-  // resources without changing the README, which would otherwise leave stale
-  // links falling back to the host. Only refetch once we've loaded it, to stay
-  // lazy for READMEs whose links are never clicked.
+  // A sync or repository change can invalidate previously resolved paths.
   useEffect(() => {
-    if (itemsRef.current) {
-      void fetchResources({ name: repositoryName }, false);
-    }
-  }, [syncFinished, repositoryName, fetchResources]);
+    const navigation = navigationRef.current;
+    routesRef.current.clear();
+    return () => {
+      navigation.token++;
+    };
+  }, [syncFinished, repositoryName, repositoryPath, repositoryTarget]);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) {
       return;
     }
+    const navigation = navigationRef.current;
 
-    const routeFor = (items: ResourceListItem[], repoPath: string) =>
-      createGrafanaLinkResolver(items, repositoryPath)(repoPath);
+    const routeFor = createGrafanaLinkResolver(
+      (query) => fetchFile({ name: repositoryName, ...query }, false).unwrap(),
+      repositoryPath,
+      async () => {
+        if (repositoryTarget !== 'folder') {
+          return undefined;
+        }
+        // Folder-targeted repositories use the repository name as their root folder UID.
+        const folder = await fetchFolder({ name: repositoryName }, false).unwrap();
+        if (
+          !isManagedByRepository(folder) ||
+          getManagerIdentity(folder) !== repositoryName ||
+          getSourcePath(folder)?.replace(/\/$/, '')
+        ) {
+          return undefined;
+        }
+        return folder.metadata.name;
+      }
+    );
 
-    // First click before the listing is cached: resolve asynchronously. This is
+    // The first lookup of a path resolves asynchronously. This is
     // the only path that may navigate the current tab on a host fallback (a
     // window.open after the await would be treated as non-user-initiated and
     // blocked); once cached, clicks resolve synchronously below.
-    const resolveAsync = async (href: string | null, repoPath: string) => {
-      const token = ++navTokenRef.current;
-      let items: ResourceListItem[] = [];
+    const resolveAsync = async (href: string | null, repoPath: string, token: number) => {
+      let route: string | undefined;
       try {
-        const result = await fetchResources({ name: repositoryName }, true).unwrap();
-        items = result.items ?? [];
+        route = await routeFor(repoPath);
+        if (token === navigation.token) {
+          routesRef.current.set(repoPath, route);
+        }
       } catch {
         // Ignore — fall back to the host link below.
       }
-      if (token !== navTokenRef.current) {
+      if (token !== navigation.token) {
         return; // A later click superseded this one.
       }
-      const route = routeFor(items, repoPath);
       if (route) {
         locationService.push(route);
         FolderReadmeEvents.linkClicked({ repositoryType, outcome: 'in_app' });
@@ -320,12 +332,12 @@ function RenderedMarkdown({
       const plainClick = e.button === 0 && !e.metaKey && !e.ctrlKey && !e.shiftKey && !e.altKey;
 
       if (repoPath && plainClick) {
-        const items = itemsRef.current;
-        if (items) {
+        const token = ++navigation.token;
+        if (routesRef.current.has(repoPath)) {
           // Cached: resolve synchronously and take over navigation only when
           // there is an in-app route, so unresolved links keep their native
           // (new-tab) behavior — consistent with untagged links beside them.
-          const route = routeFor(items, repoPath);
+          const route = routesRef.current.get(repoPath);
           if (route) {
             e.preventDefault();
             locationService.push(route);
@@ -333,9 +345,8 @@ function RenderedMarkdown({
             return;
           }
         } else {
-          // Listing not loaded yet — resolve asynchronously for this first click.
           e.preventDefault();
-          void resolveAsync(href, repoPath);
+          void resolveAsync(href, repoPath, token);
           return;
         }
       }
@@ -348,8 +359,11 @@ function RenderedMarkdown({
     };
 
     el.addEventListener('click', handleClick);
-    return () => el.removeEventListener('click', handleClick);
-  }, [repositoryType, repositoryName, repositoryPath, fetchResources]);
+    return () => {
+      el.removeEventListener('click', handleClick);
+      navigation.token++;
+    };
+  }, [repositoryType, repositoryName, repositoryPath, repositoryTarget, fetchFile, fetchFolder]);
 
   // React resets innerHTML whenever this object's identity changes, which would
   // wipe the diagrams the hook swapped in — so only hand it a new one when the html changes.
