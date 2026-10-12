@@ -199,6 +199,7 @@ The SQL conversion path:
 
 - The query result appears as a single data frame, without labels, and maps directly to a tabular format.
 - If the frame type is present and is either numeric, wide time series, or multi-frame time series (for example: labeled formats), Grafana automatically converts the data into a table structure.
+- Time values are in UTC, whatever the time zone of the Grafana server or the data source. Functions that turn a time into text, such as `CAST(time AS CHAR)` and `FROM_UNIXTIME`, return the UTC date and time.
 
 ## Data source response formats
 
