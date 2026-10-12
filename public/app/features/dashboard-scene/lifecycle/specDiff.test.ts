@@ -17,13 +17,13 @@ describe('diffDashboardSpecs', () => {
       elements: { a: panel(1, 'Rate'), b: panel(2, 'Errors') },
       layout: { kind: 'GridLayout' },
     };
-    const fork = {
+    const proposed = {
       title: 'API',
       elements: { a: panel(1, 'Rate', 'sum(up)'), c: panel(3, 'CPU') },
       layout: { kind: 'GridLayout' },
     };
 
-    const changes = diffDashboardSpecs(base, fork);
+    const changes = diffDashboardSpecs(base, proposed);
 
     expect(changes).toEqual([
       { type: 'edited', target: 'panel', name: 'Rate', parts: ['queries'], panelKey: 'panel-1' },
@@ -50,8 +50,8 @@ describe('diffDashboardSpecs', () => {
 
   it('diffs classic dashboards and treats moves as a layout change', () => {
     const base = { panels: [{ id: 1, type: 'stat', title: 'Up', gridPos: { x: 0, y: 0, w: 6, h: 4 } }] };
-    const fork = { panels: [{ id: 1, type: 'stat', title: 'Up', gridPos: { x: 6, y: 0, w: 6, h: 4 } }] };
+    const proposed = { panels: [{ id: 1, type: 'stat', title: 'Up', gridPos: { x: 6, y: 0, w: 6, h: 4 } }] };
 
-    expect(diffDashboardSpecs(base, fork)).toEqual([{ type: 'edited', target: 'layout', name: 'layout' }]);
+    expect(diffDashboardSpecs(base, proposed)).toEqual([{ type: 'edited', target: 'layout', name: 'layout' }]);
   });
 });

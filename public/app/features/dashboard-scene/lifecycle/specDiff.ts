@@ -59,7 +59,7 @@ const SETTINGS_FIELDS = [
 
 /**
  * Summarises the difference between two dashboard specs, v2 (elements + layout) or
- * classic (panels + templating), for the fork Compare view and change highlights.
+ * classic (panels + templating), for the pending changes Compare view and change highlights.
  */
 export function diffDashboardSpecs(base: unknown, next: unknown): SpecChange[] {
   const before = isRecord(base) ? base : {};

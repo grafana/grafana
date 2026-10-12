@@ -62,8 +62,8 @@ export const FlagKeys = {
   AlertingUIUseFullyCompatBackendFilters: "alertingUIUseFullyCompatBackendFilters",
   /** Enables new analytics framework */
   AnalyticsFramework: "analyticsFramework",
-  /** Enables dashboard drafts and forks: private unpublished dashboards and working copies that are published or merged explicitly, used by Grafana Assistant */
-  AssistantDashboardArtifactsDraftsAndForks: "assistant.dashboard.artifactsDraftsAndForks",
+  /** Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant */
+  AssistantDashboardDraftsAndPendingChanges: "assistant.dashboard.draftsAndPendingChanges",
   /** Enables the assistant-powered Generate dashboard prompt and the plan card that approves the dashboard before it is built */
   AssistantDashboardPlanning: "assistant.dashboardPlanning",
   /** Enables the template dashboard assistant */
@@ -645,14 +645,14 @@ export const useFlagAnalyticsFramework = (options?: ReactFlagEvaluationOptions):
 };
 
 /**
- * Enables dashboard drafts and forks: private unpublished dashboards and working copies that are published or merged explicitly, used by Grafana Assistant
+ * Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant
  *
  * **Details:**
- * - flag key: `assistant.dashboard.artifactsDraftsAndForks`
+ * - flag key: `assistant.dashboard.draftsAndPendingChanges`
  * - default value: `false`
  */
-export const useFlagAssistantDashboardArtifactsDraftsAndForks = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("assistant.dashboard.artifactsDraftsAndForks", false, options).value;
+export const useFlagAssistantDashboardDraftsAndPendingChanges = (options?: ReactFlagEvaluationOptions): boolean => {
+  return useFlag("assistant.dashboard.draftsAndPendingChanges", false, options).value;
 };
 
 /**

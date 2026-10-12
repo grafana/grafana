@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
@@ -18,12 +18,17 @@ export interface DashboardViewProps {
   controlsBackground?: string;
   /** The dashboard title, reported when it loads, for a host that labels a tab with it. */
   onTitleChange?: (title: string) => void;
+  /**
+   * Pending changes to preview, by the id their plugin's loader knows them by (see
+   * grafana/dashboard/pending-changes/v1).
+   */
+  pendingChanges?: string;
 }
 
 /**
  * EXPOSED COMPONENT (stable): `grafana/dashboard-view/v1`
  *
- * A saved dashboard rendered outside the dashboard route, with its draft or fork
+ * A saved dashboard rendered outside the dashboard route, with its draft or pending changes
  * banner, for a host such as the Grafana Assistant Workspace canvas. Viewing only:
  * editing happens on the dashboard page (Open in Grafana).
  *
@@ -31,16 +36,21 @@ export interface DashboardViewProps {
  * never clears or replaces the dashboard the route has open. Treat props and visible
  * behavior as a stable contract; breaking changes go to a new v2 component.
  */
-export function DashboardView({ uid, controlsBackground, onTitleChange }: DashboardViewProps) {
+export function DashboardView({ uid, controlsBackground, onTitleChange, pendingChanges }: DashboardViewProps) {
   const stateManager = useMemo(() => new UnifiedDashboardScenePageStateManager({}), []);
   const { dashboard, loadError } = stateManager.useState();
 
   useEffect(() => {
-    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded });
+    stateManager.loadDashboard({ uid, route: DashboardRoutes.Embedded, pendingChanges });
     return () => {
       stateManager.clearState();
     };
-  }, [stateManager, uid]);
+  }, [stateManager, uid, pendingChanges]);
+
+  const reload = useCallback(
+    () => stateManager.reloadDashboardFresh({ uid, route: DashboardRoutes.Embedded, pendingChanges }),
+    [stateManager, uid, pendingChanges]
+  );
 
   useEffect(() => {
     if (dashboard?.state.title) {
@@ -58,10 +68,18 @@ export function DashboardView({ uid, controlsBackground, onTitleChange }: Dashbo
   if (!dashboard) {
     return <Spinner />;
   }
-  return <DashboardViewRenderer model={dashboard} controlsBackground={controlsBackground} />;
+  return <DashboardViewRenderer model={dashboard} controlsBackground={controlsBackground} reload={reload} />;
 }
 
-function DashboardViewRenderer({ model, controlsBackground }: { model: DashboardScene; controlsBackground?: string }) {
+function DashboardViewRenderer({
+  model,
+  controlsBackground,
+  reload,
+}: {
+  model: DashboardScene;
+  controlsBackground?: string;
+  reload: () => Promise<void>;
+}) {
   const [isActive, setIsActive] = useState(false);
   const { controls, body } = model.useState();
   const styles = useStyles2(getStyles, controlsBackground);
@@ -77,7 +95,7 @@ function DashboardViewRenderer({ model, controlsBackground }: { model: Dashboard
 
   return (
     <div className={styles.root}>
-      <DashboardLifecycleBanner dashboard={model} placement="embedded" />
+      <DashboardLifecycleBanner dashboard={model} placement="embedded" reload={reload} />
       <div className={cx(styles.canvas, controls && styles.canvasWithControls)}>
         {controls && (
           <div className={styles.controls}>

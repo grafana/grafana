@@ -9,7 +9,7 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { changedPanelKeys, type SpecChange } from './specDiff';
 
 /**
- * Outlines the panels a fork adds or edits. Decorates the rendered panels by their
+ * Outlines the panels pending changes add or edit. Decorates the rendered panels by their
  * scene key instead of changing scene state, so highlighting never marks the dashboard dirty.
  */
 export function useChangeHighlights(dashboard: DashboardScene, changes: SpecChange[] | undefined) {

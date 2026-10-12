@@ -1,16 +1,20 @@
 /**
  * RELOAD_FROM_SERVER — reload the open dashboard from the server after something
- * else (for example Grafana Assistant editing a draft or fork through the HTTP API)
- * saved a newer version. Refuses to discard unsaved changes in the open scene: it
- * reports them instead, so the caller can let the user decide.
+ * else (for example Grafana Assistant editing a draft or pending changes through the HTTP API)
+ * saved a newer version, optionally switching which pending changes the page previews.
+ * Refuses to discard unsaved changes in the open scene: it reports them instead, so the
+ * caller can let the user decide.
  */
 
 import { locationService } from '@grafana/runtime';
+import { DashboardRoutes } from 'app/types/dashboard';
+
+import { PENDING_CHANGES_QUERY_PARAM, pendingChangesIdFromLocation } from '../../lifecycle/pendingChangePreview';
 
 import { payloads } from './schemas';
 import { readOnly, type MutationCommand } from './types';
 
-export const reloadFromServerCommand: MutationCommand<Record<string, never>> = {
+export const reloadFromServerCommand: MutationCommand<{ pendingChanges?: string | null }> = {
   name: 'RELOAD_FROM_SERVER',
   description: payloads.reloadFromServer.description ?? '',
 
@@ -19,7 +23,7 @@ export const reloadFromServerCommand: MutationCommand<Record<string, never>> = {
   permission: readOnly,
   readOnly: true,
 
-  handler: async (_payload, context) => {
+  handler: async (payload, context) => {
     const { scene } = context;
     const uid = scene.state.uid;
     if (!uid) {
@@ -28,13 +32,16 @@ export const reloadFromServerCommand: MutationCommand<Record<string, never>> = {
     if (scene.state.isDirty) {
       return { success: true, data: { reloaded: false, reason: 'unsaved-changes' }, changes: [] };
     }
+    const preview = payload.pendingChanges;
+    if (preview !== undefined && (preview ?? undefined) !== pendingChangesIdFromLocation()) {
+      // The page loads a new scene for the other preview (DashboardScenePage); replace: same page.
+      locationService.partial({ [PENDING_CHANGES_QUERY_PARAM]: preview }, true);
+      return { success: true, data: { reloaded: false, reason: 'switched-preview' }, changes: [] };
+    }
     try {
       const { getDashboardScenePageStateManager } = await import('../../pages/DashboardScenePageStateManager');
-      const manager = getDashboardScenePageStateManager();
-      // Both caches: a second reload seconds after the first would otherwise reuse its response.
-      manager.clearDashboardCache();
-      manager.removeSceneCache(uid);
-      await manager.reloadDashboard(locationService.getSearchObject());
+      // A full load, so new or updated pending changes show too.
+      await getDashboardScenePageStateManager().reloadDashboardFresh({ uid, route: DashboardRoutes.Normal });
       return { success: true, data: { reloaded: true }, changes: [] };
     } catch (error) {
       return { success: false, error: error instanceof Error ? error.message : String(error), changes: [] };

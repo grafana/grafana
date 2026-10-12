@@ -984,12 +984,12 @@
     },
     {
       "metadata": {
-        "name": "assistant.dashboard.artifactsDraftsAndForks",
-        "resourceVersion": "1791630553664",
-        "creationTimestamp": "2026-10-10T11:09:13Z"
+        "name": "assistant.dashboard.draftsAndPendingChanges",
+        "resourceVersion": "1791811949469",
+        "creationTimestamp": "2026-10-12T13:32:29Z"
       },
       "spec": {
-        "description": "Enables dashboard drafts and forks: private unpublished dashboards and working copies that are published or merged explicitly, used by Grafana Assistant",
+        "description": "Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "expression": "false"

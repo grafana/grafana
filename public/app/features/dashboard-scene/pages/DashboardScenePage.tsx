@@ -72,6 +72,8 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
   const { dashboard, isLoading, loadError } = stateManager.useState();
   // After scene migration is complete and we get rid of old dashboard we should refactor dashboardWatcher so this route reload is not need
   const routeReloadCounter = (location.state as any)?.routeReloadCounter;
+  // Selects which pending changes the same dashboard previews (see pendingChangePreview.ts).
+  const pendingChanges = queryParams.pendingChanges;
   const prevParams = useRef<Params<string>>(params);
 
   useScenesFlickeringFix();
@@ -116,6 +118,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     queryParams.gnetId,
     queryParams.dashboardTemplateUid,
     queryParams.editTemplate,
+    pendingChanges,
   ]);
 
   useEffect(() => {

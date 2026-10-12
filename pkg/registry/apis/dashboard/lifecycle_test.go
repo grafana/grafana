@@ -35,20 +35,17 @@ func lifecycleDashboard(name string, generation int64, labels, annotations map[s
 }
 
 func TestMutateDashboardLifecycle(t *testing.T) {
-	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAssistantDashboardArtifactsDraftsAndForks)
+	featuremgmt.WithEnabledFlags(t, featuremgmt.FlagAssistantDashboardDraftsAndPendingChanges)
 	ctx := lifecycleUser("alice", identity.RoleViewer)
 	attrs := func(obj, old runtime.Object, op admission.Operation) admission.Attributes {
 		return admission.NewAttributesRecord(obj, old, dashv2.DashboardResourceInfo.GroupVersionKind(), "default", "d1",
 			dashv2.DashboardResourceInfo.GroupVersionResource(), "", op, nil, false, nil)
 	}
 
-	t.Run("drops forged fork metadata on create", func(t *testing.T) {
-		obj := lifecycleDashboard("d1", 0, map[string]string{
-			utils.LabelKeyLifecycle: utils.LifecycleFork, utils.LabelKeyLifecycleOwner: "bob", utils.LabelKeyForkOf: "other",
-		}, map[string]string{utils.AnnoKeyForkBase: "3"})
+	t.Run("drops a forged owner on create", func(t *testing.T) {
+		obj := lifecycleDashboard("d1", 0, map[string]string{utils.LabelKeyLifecycleOwner: "bob"}, nil)
 		require.NoError(t, mutateDashboardLifecycle(ctx, attrs(obj, nil, admission.Create)))
-		require.Empty(t, obj.Labels, "a copy of a fork becomes a regular dashboard")
-		require.NotContains(t, obj.Annotations, utils.AnnoKeyForkBase)
+		require.Empty(t, obj.Labels, "a regular dashboard has no owner")
 
 		draft := lifecycleDashboard("d1", 0, map[string]string{utils.LabelKeyLifecycle: utils.LifecycleDraft, utils.LabelKeyLifecycleOwner: "bob"}, nil)
 		require.NoError(t, mutateDashboardLifecycle(ctx, attrs(draft, nil, admission.Create)))
@@ -61,14 +58,13 @@ func TestMutateDashboardLifecycle(t *testing.T) {
 		require.Equal(t, "alice", obj.Labels[utils.LabelKeyLifecycleOwner])
 	})
 
-	t.Run("a regular save can't change lifecycle metadata", func(t *testing.T) {
+	t.Run("a regular save can't publish a draft or change its owner", func(t *testing.T) {
 		old := lifecycleDashboard("d1", 2, map[string]string{
-			utils.LabelKeyLifecycle: utils.LifecycleFork, utils.LabelKeyLifecycleOwner: "alice", utils.LabelKeyForkOf: "orig",
-		}, map[string]string{utils.AnnoKeyForkBase: "7"})
-		obj := lifecycleDashboard("d1", 2, map[string]string{utils.LabelKeyLifecycle: utils.LifecyclePublished}, nil)
+			utils.LabelKeyLifecycle: utils.LifecycleDraft, utils.LabelKeyLifecycleOwner: "alice",
+		}, nil)
+		obj := lifecycleDashboard("d1", 2, map[string]string{utils.LabelKeyLifecycle: utils.LifecyclePublished, utils.LabelKeyLifecycleOwner: "bob"}, nil)
 		require.NoError(t, mutateDashboardLifecycle(ctx, attrs(obj, old, admission.Update)))
 		require.Equal(t, old.Labels, obj.Labels)
-		require.Equal(t, "7", obj.Annotations[utils.AnnoKeyForkBase])
 	})
 }
 
@@ -109,23 +105,18 @@ func TestLifecycleSearchRequirements(t *testing.T) {
 	require.Equal(t, utils.LabelKeyLifecycle, reqs[0].Key)
 	require.Equal(t, string(selection.NotIn), reqs[0].Operator)
 
-	reqs = lifecycleSearchRequirements(url.Values{"forkOf": {"orig"}}, user)
-	require.ElementsMatch(t, []string{utils.LabelKeyLifecycle, utils.LabelKeyLifecycleOwner, utils.LabelKeyForkOf},
-		[]string{reqs[0].Key, reqs[1].Key, reqs[2].Key})
-	require.Equal(t, []string{"alice"}, reqs[1].Values, "only the requester's own forks")
+	reqs = lifecycleSearchRequirements(url.Values{"lifecycle": {"draft"}}, user)
+	require.ElementsMatch(t, []string{utils.LabelKeyLifecycle, utils.LabelKeyLifecycleOwner}, []string{reqs[0].Key, reqs[1].Key})
+	require.Equal(t, []string{"alice"}, reqs[1].Values, "only the requester's own drafts")
 }
 
-func TestMergeRefusesWhenOriginalMoved(t *testing.T) {
+func TestUnknownLifecycleStaysPrivate(t *testing.T) {
 	store := &getOnlyStorage{objects: map[string]runtime.Object{
-		"fork": lifecycleDashboard("fork", 3, map[string]string{
-			utils.LabelKeyLifecycle: utils.LifecycleFork, utils.LabelKeyLifecycleOwner: "alice", utils.LabelKeyForkOf: "orig",
-		}, map[string]string{utils.AnnoKeyForkBase: "12"}),
-		"orig": lifecycleDashboard("orig", 14, nil, nil),
+		"old": lifecycleDashboard("old", 1, map[string]string{
+			utils.LabelKeyLifecycle: "retired-value", utils.LabelKeyLifecycleOwner: "alice",
+		}, nil),
 	}}
-	c := &lifecycleConnector{store: newLifecycleGuard(store, dashv2.DashboardResourceInfo.GroupResource()), resource: dashv2.DashboardResourceInfo.GroupResource(), op: lifecycleMerge}
-
-	_, err := c.merge(lifecycleUser("alice", identity.RoleEditor), "fork", lifecycleRequest{})
-	require.True(t, apierrors.IsConflict(err), err)
-	status := err.(apierrors.APIStatus).Status()
-	require.Contains(t, status.Details.Causes, metav1.StatusCause{Type: "currentGeneration", Message: "14"})
+	guard := newLifecycleGuard(store, dashv2.DashboardResourceInfo.GroupResource())
+	_, err := guard.Get(lifecycleUser("bob", identity.RoleEditor), "old", &metav1.GetOptions{})
+	require.True(t, apierrors.IsNotFound(err), "a value this server doesn't know is never shown to others")
 }

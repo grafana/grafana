@@ -969,7 +969,18 @@ export const payloads = {
     'Open a dashboard plan preview and render query-less sample panels for the whole plan in one call. The dashboard never enters edit mode while previewing.'
   ),
   endPlanning: endPlanningPayloadSchema.describe('End the plan preview and clear the dashboard back to empty'),
-  reloadFromServer: emptyPayloadSchema.describe(
-    'Reload the open dashboard from the server, for example after a newer version was saved through the HTTP API. Does nothing and reports reloaded=false when the open dashboard has unsaved changes.'
-  ),
+  reloadFromServer: z
+    .object({
+      pendingChanges: z
+        .string()
+        .nullable()
+        .optional()
+        .describe(
+          'Preview these pending changes instead (see the pendingChanges URL parameter); null shows the saved dashboard. Omit to keep what the page shows.'
+        ),
+    })
+    .strict()
+    .describe(
+      'Reload the open dashboard from the server, for example after a newer version was saved through the HTTP API. Does nothing and reports reloaded=false when the open dashboard has unsaved changes.'
+    ),
 };

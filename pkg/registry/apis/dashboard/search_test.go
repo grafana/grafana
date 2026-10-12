@@ -1590,10 +1590,10 @@ func TestConvertHttpSearchRequestToResourceSearchRequest(t *testing.T) {
 				result.QueryFields = nil
 			}
 
-			// Every search hides dashboard drafts and forks unless it asks for them.
+			// Every search hides dashboard drafts unless it asks for them.
 			if tt.expected.Options != nil && tt.expected.Options.Labels == nil {
 				tt.expected.Options.Labels = []*resourcepb.Requirement{
-					{Key: utils.LabelKeyLifecycle, Operator: "notin", Values: []string{utils.LifecycleDraft, utils.LifecycleFork}},
+					{Key: utils.LabelKeyLifecycle, Operator: "notin", Values: []string{utils.LifecycleDraft}},
 				}
 			}
 

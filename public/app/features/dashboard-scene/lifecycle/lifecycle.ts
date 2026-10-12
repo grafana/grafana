@@ -5,21 +5,15 @@ import { type DashboardScene } from '../scene/DashboardScene';
 // Keep in sync with pkg/apimachinery/utils/meta.go.
 export const LabelKeyLifecycle = 'grafana.app/lifecycle';
 export const LabelKeyLifecycleOwner = 'grafana.app/lifecycle-owner';
-export const LabelKeyForkOf = 'grafana.app/fork-of';
-export const AnnoKeyForkBase = 'grafana.app/fork-base';
 export const AnnoKeyOrigin = 'grafana.app/origin';
 export const AnnoKeyOriginRef = 'grafana.app/origin-ref';
 export const AnnoKeyUpdatedTimestamp = 'grafana.app/updatedTimestamp';
 
-export type DashboardLifecycle = 'draft' | 'fork' | 'published';
+export type DashboardLifecycle = 'draft' | 'published';
 
 export interface DashboardLifecycleInfo {
   lifecycle: DashboardLifecycle;
-  /** Name of the dashboard a fork was created from. */
-  forkOf?: string;
-  /** Generation of the original the fork is based on. */
-  forkBase?: number;
-  /** Product that created the draft or fork, for display ("assistant"). */
+  /** Product that created the draft, for display ("assistant"). */
   origin?: string;
   originRef?: string;
   /** Last write, used for the expiry hint. */
@@ -42,13 +36,10 @@ export function lifecycleFromMetadata(meta: LifecycleMeta | undefined): Dashboar
   const labels = meta?.labels ?? {};
   const annotations = meta?.annotations ?? {};
   const value = labels[LabelKeyLifecycle];
-  const lifecycle: DashboardLifecycle = value === 'draft' || value === 'fork' ? value : 'published';
-  const base = Number(stringAnnotation(annotations, AnnoKeyForkBase));
+  const lifecycle: DashboardLifecycle = value === 'draft' ? 'draft' : 'published';
   const updated = stringAnnotation(annotations, AnnoKeyUpdatedTimestamp) ?? meta?.creationTimestamp;
   return {
     lifecycle,
-    forkOf: lifecycle === 'fork' ? labels[LabelKeyForkOf] : undefined,
-    forkBase: Number.isFinite(base) && base > 0 ? base : undefined,
     origin: stringAnnotation(annotations, AnnoKeyOrigin),
     originRef: stringAnnotation(annotations, AnnoKeyOriginRef),
     updatedAt: updated ? new Date(updated) : undefined,
@@ -59,7 +50,7 @@ export function getDashboardLifecycle(dashboard: DashboardScene): DashboardLifec
   return lifecycleFromMetadata(dashboard.state.meta.k8s);
 }
 
-/** Days until an idle draft or fork moves to Recently deleted, for the default 30-day window. */
+/** Days until an idle draft moves to Recently deleted, or idle pending changes are discarded. */
 export const DRAFT_IDLE_DAYS = 30;
 
 export function daysUntilExpiry(updatedAt: Date | undefined, now = new Date()): number | undefined {
@@ -71,13 +62,14 @@ export function daysUntilExpiry(updatedAt: Date | undefined, now = new Date()): 
 }
 
 /** Label shown next to the dashboard title in the breadcrumbs. */
-export function getLifecycleBreadcrumbLabel(labels: Record<string, string> | undefined): string | undefined {
-  switch (labels?.[LabelKeyLifecycle]) {
-    case 'draft':
-      return t('dashboard-scene.lifecycle.breadcrumb-draft', 'Draft');
-    case 'fork':
-      return t('dashboard-scene.lifecycle.breadcrumb-fork', 'Fork');
-    default:
-      return undefined;
+export function getLifecycleBreadcrumbLabel(
+  labels: Record<string, string> | undefined,
+  previewingPendingChanges = false
+): string | undefined {
+  if (labels?.[LabelKeyLifecycle] === 'draft') {
+    return t('dashboard-scene.lifecycle.breadcrumb-draft', 'Draft');
   }
+  return previewingPendingChanges
+    ? t('dashboard-scene.lifecycle.breadcrumb-pending-changes', 'Pending changes')
+    : undefined;
 }

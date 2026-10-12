@@ -4,13 +4,13 @@ import (
 	"time"
 )
 
-// DashboardDraftsSettings configures the expiry of dashboard drafts and forks.
+// DashboardDraftsSettings configures the expiry of dashboard drafts.
 type DashboardDraftsSettings struct {
-	// IdleTTL is how long a draft or fork may go without a write before it moves to trash.
+	// IdleTTL is how long a draft may go without a write before it moves to trash.
 	IdleTTL time.Duration
-	// CleanupInterval is how often expired drafts and forks are looked for.
+	// CleanupInterval is how often expired drafts are looked for.
 	CleanupInterval time.Duration
-	// BatchSize is how many drafts and forks are listed per request.
+	// BatchSize is how many drafts are listed per request.
 	BatchSize int64
 }
 

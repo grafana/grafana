@@ -14,7 +14,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
-// lifecycleGuard hides dashboard drafts and forks from everyone except their owner
+// lifecycleGuard hides dashboard drafts from everyone except their owner
 // and org admins. Folder permissions can't be narrowed per dashboard, so the rule is
 // enforced on top of the regular storage: a hidden dashboard reads as not found.
 type lifecycleGuard struct {

@@ -990,9 +990,9 @@ const (
 	// Controls whether the frontend OFREP client and the OpenFeature provider config use the root /ofrep/v1 route instead of the namespaced route
 	FlagGrafanaOfrepRootUrl = "grafana.ofrepRootUrl"
 
-	// FlagAssistantDashboardArtifactsDraftsAndForks
-	// Enables dashboard drafts and forks: private unpublished dashboards and working copies that are published or merged explicitly, used by Grafana Assistant
-	FlagAssistantDashboardArtifactsDraftsAndForks = "assistant.dashboard.artifactsDraftsAndForks"
+	// FlagAssistantDashboardDraftsAndPendingChanges
+	// Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant
+	FlagAssistantDashboardDraftsAndPendingChanges = "assistant.dashboard.draftsAndPendingChanges"
 
 	// FlagFeaturesBulkFlagEvalFiltering
 	// Filters bulk OFREP flag evaluations to public-metadata flags only

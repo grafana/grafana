@@ -61,6 +61,11 @@ import {
   isRedirectResponse,
 } from 'app/types/dashboard';
 
+import {
+  loadPendingChangePreview,
+  type PendingChangePreview,
+  pendingChangesIdFromLocation,
+} from '../lifecycle/pendingChangePreview';
 import { type PanelEditor } from '../panel-edit/PanelEditor';
 import { type DashboardScene } from '../scene/DashboardScene';
 import { buildNewDashboardSaveModel, buildNewDashboardSaveModelV2 } from '../serialization/buildNewDashboardSaveModel';
@@ -118,6 +123,9 @@ interface DashboardCacheEntry<T> {
   cacheKey: string;
 }
 
+/** Pending changes previews, which never go through the scene cache (see withPendingChanges). */
+const pendingChangesPreviews = new WeakSet<object>();
+
 export interface LoadDashboardOptions {
   uid: string;
   route: DashboardRoutes;
@@ -128,6 +136,11 @@ export interface LoadDashboardOptions {
   editTemplate?: boolean;
   defaultVariables?: VariableKind[];
   defaultLinks?: DashboardLink[];
+  /**
+   * Pending changes to preview (see pendingChangePreview.ts). The dashboard page reads them
+   * from its URL instead.
+   */
+  pendingChanges?: string;
 }
 
 type HomeDashboardDTO = DashboardDTO & {
@@ -622,7 +635,10 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
     // Provisioning previews are cached under the file path (options.uid for this route), which
     // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
     // preview when the same file is revisited at a different ref.
-    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
+    const skipSceneCache =
+      options.route === DashboardRoutes.Public ||
+      options.route === DashboardRoutes.Provisioning ||
+      (rsp !== null && pendingChangesPreviews.has(rsp));
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -1103,7 +1119,10 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
     // Provisioning previews are cached under the file path (options.uid for this route), which
     // doesn't encode the ref/commit being previewed - reusing that cache could show a stale
     // preview when the same file is revisited at a different ref.
-    const skipSceneCache = options.route === DashboardRoutes.Public || options.route === DashboardRoutes.Provisioning;
+    const skipSceneCache =
+      options.route === DashboardRoutes.Public ||
+      options.route === DashboardRoutes.Provisioning ||
+      (rsp !== null && pendingChangesPreviews.has(rsp));
 
     if (!skipSceneCache) {
       const fromCache = this.getSceneFromCache(options.uid);
@@ -1431,9 +1450,51 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async fetchDashboard(options: LoadDashboardOptions) {
-    return this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
-      manager.fetchDashboard(options)
-    );
+    const id =
+      options.pendingChanges ?? (options.route === DashboardRoutes.Normal ? pendingChangesIdFromLocation() : undefined);
+    const [rsp, preview] = await Promise.all([
+      this.withVersionHandling<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null>((manager) =>
+        manager.fetchDashboard(options)
+      ),
+      options.route === DashboardRoutes.Normal || options.route === DashboardRoutes.Embedded
+        ? loadPendingChangePreview(options.uid, id)
+        : undefined,
+    ]);
+    return this.withPendingChanges(rsp, options, preview);
+  }
+
+  /**
+   * Swaps in the pending changes the load asked for, unless the requester is viewing the
+   * original (see pendingChangePreview.ts). The preview is a read-only v2 dashboard that never
+   * goes through the scene cache: it shares the saved dashboard's version.
+   */
+  private async withPendingChanges(
+    rsp: DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null,
+    options: LoadDashboardOptions,
+    preview: PendingChangePreview | undefined
+  ): Promise<DashboardDTO | DashboardWithAccessInfo<DashboardV2Spec> | null> {
+    if (!rsp || !preview?.previewing) {
+      return rsp;
+    }
+    try {
+      const saved = isDashboardV2Resource(rsp) ? rsp : await this.v2Manager.fetchDashboard(options);
+      if (!saved || !isDashboardV2Resource(saved)) {
+        preview.previewing = false;
+        return rsp;
+      }
+      const previewRsp = {
+        ...saved,
+        // A copy: building the scene adds defaults to the spec it is given, and the banner
+        // diffs the pending changes as saved.
+        spec: structuredClone(preview.pending.proposed),
+        access: { ...saved.access, canEdit: false, canSave: false, canDelete: false },
+      };
+      pendingChangesPreviews.add(previewRsp);
+      return previewRsp;
+    } catch {
+      preview.previewing = false;
+      return rsp;
+    }
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap) {
@@ -1537,6 +1598,13 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     } else {
       this.v1Manager.setDashboardCache(cacheKey, dashboard);
     }
+  }
+
+  /** Loads the dashboard again without the response or scene it has cached, after a write made elsewhere. */
+  public async reloadDashboardFresh(options: LoadDashboardOptions): Promise<void> {
+    this.clearDashboardCache();
+    this.removeSceneCache(options.uid);
+    await this.loadDashboard(options);
   }
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {

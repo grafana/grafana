@@ -21,13 +21,14 @@ const dashboardDraftsCleanupLockName = "dashboard-drafts-cleanup"
 var dashboardDraftsExpired = promauto.NewCounterVec(prometheus.CounterOpts{
 	Namespace: "grafana",
 	Name:      "dashboard_drafts_expired_total",
-	Help:      "Dashboard drafts and forks moved to trash after going idle.",
+	Help:      "Dashboard drafts moved to trash after going idle.",
 }, []string{"lifecycle"})
 
-// startDashboardDraftsCleanupJob moves dashboard drafts and forks that went without
-// a write for [dashboard_drafts] idle_ttl to trash, where they stay restorable for
-// the trash retention period. It runs whether or not the feature flag is on, so
-// drafts created while it was on still expire after it is turned off.
+// startDashboardDraftsCleanupJob deletes dashboard drafts that went without a write for
+// [dashboard_drafts] idle_ttl. They move to trash, where they stay restorable for the
+// trash retention period. It runs
+// whether or not the feature flag is on, so what was created while it was on still
+// expires after it is turned off.
 func (dr *DashboardServiceImpl) startDashboardDraftsCleanupJob(ctx context.Context) chan struct{} {
 	done := make(chan struct{})
 	settings := dr.cfg.DashboardDrafts
@@ -85,7 +86,7 @@ func (dr *DashboardServiceImpl) cleanupOrgExpiredDashboardDrafts(ctx context.Con
 	var expired []*unstructured.Unstructured
 	for {
 		list, err := dr.k8sclient.List(ctx, orgID, v1.ListOptions{
-			LabelSelector: fmt.Sprintf("%s in (%s,%s)", utils.LabelKeyLifecycle, utils.LifecycleDraft, utils.LifecycleFork),
+			LabelSelector: fmt.Sprintf("%s=%s", utils.LabelKeyLifecycle, utils.LifecycleDraft),
 			Limit:         dr.cfg.DashboardDrafts.BatchSize,
 			Continue:      continueToken,
 		})
@@ -115,19 +116,24 @@ func (dr *DashboardServiceImpl) cleanupOrgExpiredDashboardDrafts(ctx context.Con
 	return errors.Join(errs...)
 }
 
-// isIdleDraft reports whether a draft or fork has gone without a write since cutoff.
+// isIdleDraft reports whether a draft has gone without a write since cutoff.
 func isIdleDraft(item *unstructured.Unstructured, cutoff time.Time) bool {
-	lifecycle := item.GetLabels()[utils.LabelKeyLifecycle]
-	if lifecycle != utils.LifecycleDraft && lifecycle != utils.LifecycleFork {
+	if item.GetLabels()[utils.LabelKeyLifecycle] != utils.LifecycleDraft {
 		return false
 	}
+	last := lastWrite(item)
+	return !last.IsZero() && last.Before(cutoff)
+}
+
+// lastWrite is when an object was last written; zero when unknown.
+func lastWrite(item *unstructured.Unstructured) time.Time {
+	last := item.GetCreationTimestamp().Time
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
-		return false
+		return last
 	}
-	last := item.GetCreationTimestamp().Time
 	if updated, err := meta.GetUpdatedTimestamp(); err == nil && updated != nil && updated.After(last) {
 		last = *updated
 	}
-	return !last.IsZero() && last.Before(cutoff)
+	return last
 }

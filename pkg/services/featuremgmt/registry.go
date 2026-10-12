@@ -3148,8 +3148,8 @@ var (
 			Generate:    Generate{React: true},
 		},
 		{
-			Name:        "assistant.dashboard.artifactsDraftsAndForks",
-			Description: "Enables dashboard drafts and forks: private unpublished dashboards and working copies that are published or merged explicitly, used by Grafana Assistant",
+			Name:        "assistant.dashboard.draftsAndPendingChanges",
+			Description: "Enables dashboard drafts and pending changes: private unpublished dashboards, and private changes to a dashboard that their author previews and applies explicitly, used by Grafana Assistant",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaDashboardsSquad,
 			Expression:  "false",

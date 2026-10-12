@@ -21,8 +21,8 @@ import { diffDashboardSpecs, type SpecChange } from './specDiff';
 
 interface Props {
   title: string;
-  forkSpec?: unknown;
-  /** The original as it was when forked; equal to latestSpec when history no longer has it. */
+  proposedSpec?: unknown;
+  /** The dashboard as it was when the changes started; equal to latestSpec when history no longer has it. */
   baseSpec?: unknown;
   latestSpec?: unknown;
   baseGeneration?: number;
@@ -32,10 +32,10 @@ interface Props {
 
 type Against = 'base' | 'latest';
 
-/** Fork vs. its original: a readable change list, plus the raw JSON diff. */
+/** Pending changes vs. the saved dashboard: a readable change list, plus the raw JSON diff. */
 export function CompareDrawer({
   title,
-  forkSpec,
+  proposedSpec,
   baseSpec,
   latestSpec,
   baseGeneration,
@@ -46,12 +46,12 @@ export function CompareDrawer({
   const [tab, setTab] = useState<'changes' | 'json'>('changes');
   const [against, setAgainst] = useState<Against>('base');
   const reference = against === 'base' ? baseSpec : latestSpec;
-  const changes = useMemo(() => diffDashboardSpecs(reference, forkSpec), [reference, forkSpec]);
-  const loading = forkSpec === undefined || reference === undefined;
+  const changes = useMemo(() => diffDashboardSpecs(reference, proposedSpec), [reference, proposedSpec]);
+  const loading = proposedSpec === undefined || reference === undefined;
 
   return (
     <Drawer
-      title={t('dashboard-scene.lifecycle.compare-title', 'Compare with “{{title}}”', { title })}
+      title={t('dashboard-scene.lifecycle.compare-title', 'Your pending changes to “{{title}}”', { title })}
       onClose={onClose}
       size="md"
       tabs={
@@ -81,10 +81,10 @@ export function CompareDrawer({
                 value: 'base',
                 label:
                   baseGeneration !== undefined
-                    ? t('dashboard-scene.lifecycle.compare-base', 'Version {{version}} (when you forked)', {
+                    ? t('dashboard-scene.lifecycle.compare-base', 'Version {{version}} (when the changes started)', {
                         version: baseGeneration,
                       })
-                    : t('dashboard-scene.lifecycle.compare-base-unknown', 'When you forked'),
+                    : t('dashboard-scene.lifecycle.compare-base-unknown', 'When the changes started'),
               },
               { value: 'latest', label: t('dashboard-scene.lifecycle.compare-latest', 'Latest version') },
             ]}
@@ -101,7 +101,7 @@ export function CompareDrawer({
             <MonacoDiffEditor
               language="json"
               original={JSON.stringify(reference, null, 2)}
-              modified={JSON.stringify(forkSpec, null, 2)}
+              modified={JSON.stringify(proposedSpec, null, 2)}
               height="70vh"
             />
           </div>
@@ -116,7 +116,7 @@ function ChangeList({ changes, onSelectPanel }: { changes: SpecChange[]; onSelec
   if (changes.length === 0) {
     return (
       <Text color="secondary">
-        <Trans i18nKey="dashboard-scene.lifecycle.compare-empty">This fork has no changes.</Trans>
+        <Trans i18nKey="dashboard-scene.lifecycle.compare-empty">There are no changes.</Trans>
       </Text>
     );
   }

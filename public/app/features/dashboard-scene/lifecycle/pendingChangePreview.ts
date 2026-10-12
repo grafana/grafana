@@ -1,0 +1,160 @@
+import { locationService } from '@grafana/runtime';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
+import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { getPluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { getAppPluginConfigs, getExtensionPointPluginDependencies } from 'app/features/plugins/extensions/utils';
+import { preloadPlugins } from 'app/features/plugins/pluginPreloader';
+
+/**
+ * Pending changes preview. Grafana doesn't store pending changes: the plugin that proposed
+ * them (Grafana Assistant) keeps them and registers a loader at
+ * PENDING_CHANGES_EXTENSION_POINT. A dashboard opens with one set of them, read-only, under a
+ * banner, when the page URL has `?pendingChanges=<id>` or the embedded dashboard view is given
+ * an id. **Show original** switches to the saved dashboard; the choice is kept per dashboard
+ * and id for the browser tab, so a reload keeps it. The page and the embedded view share this
+ * state.
+ */
+
+/** Plugins register a DashboardPendingChangesLoader here (addFunction). */
+export const PENDING_CHANGES_EXTENSION_POINT = 'grafana/dashboard/pending-changes/v1';
+
+/** The dashboard page query parameter naming the pending changes to preview. */
+export const PENDING_CHANGES_QUERY_PARAM = 'pendingChanges';
+
+export type ApplyPendingChangesResult = { applied: true } | { applied: false; currentGeneration: number };
+
+/** One set of pending changes to a dashboard, as its plugin supplies them. */
+export interface DashboardPendingChanges {
+  /** The dashboard version the changes start from. */
+  baseGeneration: number;
+  /** The full proposed v2 dashboard spec. */
+  proposed: DashboardV2Spec;
+  /** Where the changes were made, shown in the banner, for example "from the chat “Latency”". */
+  source?: string;
+  /**
+   * Saves the changes to the dashboard as the requester, then forgets them. Without force,
+   * reports the dashboard's current version instead when it moved on from baseGeneration.
+   */
+  apply(options: { force: boolean }): Promise<ApplyPendingChangesResult>;
+  /** Forgets the changes; the dashboard isn't affected. */
+  discard(): Promise<void>;
+  /** Opens where the changes were made, to bring them up to date with the dashboard. */
+  update?(): void;
+}
+
+export type DashboardPendingChangesLoader = (request: {
+  uid: string;
+  id: string;
+}) => Promise<DashboardPendingChanges | null>;
+
+const ORIGINAL_VIEW_KEY = 'grafana.dashboard.pendingChanges.showOriginal';
+
+export interface PendingChangePreview {
+  id: string;
+  pending: DashboardPendingChanges;
+  /** True while the scene shows the proposed spec; false while it shows the saved dashboard. */
+  previewing: boolean;
+}
+
+const previews = new Map<string, PendingChangePreview>();
+
+const viewKey = (uid: string, id: string) => `${uid}/${id}`;
+
+function originalViews(): Set<string> {
+  try {
+    const raw = window.sessionStorage.getItem(ORIGINAL_VIEW_KEY);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return new Set(Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/** Whether the requester chose to see the saved dashboard instead of these pending changes. */
+function isShowingOriginal(uid: string, id: string): boolean {
+  return originalViews().has(viewKey(uid, id));
+}
+
+export function setShowOriginal(uid: string, id: string, showOriginal: boolean) {
+  const views = originalViews();
+  if (showOriginal) {
+    views.add(viewKey(uid, id));
+  } else {
+    views.delete(viewKey(uid, id));
+  }
+  try {
+    window.sessionStorage.setItem(ORIGINAL_VIEW_KEY, JSON.stringify([...views]));
+  } catch {
+    // Without session storage the choice lasts until the next reload.
+  }
+}
+
+/** The pending changes state of a dashboard as last loaded, if it has any. */
+export function getPendingChangePreview(uid: string | undefined): PendingChangePreview | undefined {
+  return uid ? previews.get(uid) : undefined;
+}
+
+export function isPreviewingPendingChanges(uid: string | undefined): boolean {
+  return Boolean(getPendingChangePreview(uid)?.previewing);
+}
+
+function pendingChangesEnabled(): boolean {
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.AssistantDashboardDraftsAndPendingChanges, false);
+}
+
+/** The id of the pending changes the dashboard page URL asks for. */
+export function pendingChangesIdFromLocation(): string | undefined {
+  const value = locationService.getSearchObject()[PENDING_CHANGES_QUERY_PARAM];
+  return typeof value === 'string' && value ? value : undefined;
+}
+
+function isLoader(fn: unknown): fn is DashboardPendingChangesLoader {
+  return typeof fn === 'function';
+}
+
+/**
+ * The registered loaders. Loads the plugins that declare one (plugin.json addedFunctions) first,
+ * as usePluginFunctions does: a dashboard opened straight from a link can load before them.
+ */
+async function getLoaders(): Promise<DashboardPendingChangesLoader[]> {
+  const pluginIds = await getExtensionPointPluginDependencies(PENDING_CHANGES_EXTENSION_POINT);
+  if (pluginIds.length === 0) {
+    return [];
+  }
+  await preloadPlugins(await getAppPluginConfigs(pluginIds));
+  const { addedFunctionsRegistry } = await getPluginExtensionRegistries();
+  const state = await addedFunctionsRegistry.getState();
+  return (state[PENDING_CHANGES_EXTENSION_POINT] ?? []).flatMap((item) => (isLoader(item.fn) ? [item.fn] : []));
+}
+
+/**
+ * Loads the pending changes `id` names before the dashboard is shown, and records whether
+ * the scene should show them. Failures leave the saved dashboard on screen.
+ */
+export async function loadPendingChangePreview(
+  uid: string | undefined,
+  id: string | undefined
+): Promise<PendingChangePreview | undefined> {
+  if (!uid) {
+    return undefined;
+  }
+  previews.delete(uid);
+  if (!id || !pendingChangesEnabled()) {
+    return undefined;
+  }
+  for (const load of await getLoaders()) {
+    const pending = await load({ uid, id }).catch(() => null);
+    if (pending) {
+      const preview = { id, pending, previewing: !isShowingOriginal(uid, id) };
+      previews.set(uid, preview);
+      return preview;
+    }
+  }
+  return undefined;
+}
+
+/** Forgets a dashboard's pending changes after they were applied or discarded. */
+export function clearPendingChangePreview(uid: string, id: string) {
+  previews.delete(uid);
+  setShowOriginal(uid, id, false);
+}

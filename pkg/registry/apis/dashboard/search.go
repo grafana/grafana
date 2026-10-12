@@ -1251,35 +1251,24 @@ func searchResponseHasField(response *resourcepb.ResourceSearchResponse, name st
 	})
 }
 
-// lifecycleSearchRequirements hides dashboard drafts and forks from search unless the
-// request asks for them with lifecycle=draft|fork, and then returns only the requester's
-// own. forkOf=<name> narrows that to the forks of one dashboard.
+// lifecycleSearchRequirements hides dashboard drafts from search unless the request asks
+// for them with lifecycle=draft, and then returns only the requester's own.
 func lifecycleSearchRequirements(queryParams url.Values, user identity.Requester) []*resourcepb.Requirement {
-	var lifecycles []string
+	wantDrafts := false
 	for _, v := range queryParams["lifecycle"] {
-		for _, l := range strings.Split(v, ",") {
-			if l == utils.LifecycleDraft || l == utils.LifecycleFork {
-				lifecycles = append(lifecycles, l)
-			}
+		if slices.Contains(strings.Split(v, ","), utils.LifecycleDraft) {
+			wantDrafts = true
 		}
 	}
-	forkOf := queryParams.Get("forkOf")
-	if forkOf != "" && !slices.Contains(lifecycles, utils.LifecycleFork) {
-		lifecycles = append(lifecycles, utils.LifecycleFork)
-	}
-	if len(lifecycles) == 0 {
+	if !wantDrafts {
 		return []*resourcepb.Requirement{{
 			Key:      utils.LabelKeyLifecycle,
 			Operator: string(selection.NotIn),
-			Values:   []string{utils.LifecycleDraft, utils.LifecycleFork},
+			Values:   []string{utils.LifecycleDraft},
 		}}
 	}
-	requirements := []*resourcepb.Requirement{
-		{Key: utils.LabelKeyLifecycle, Operator: string(selection.In), Values: lifecycles},
+	return []*resourcepb.Requirement{
+		{Key: utils.LabelKeyLifecycle, Operator: string(selection.Equals), Values: []string{utils.LifecycleDraft}},
 		{Key: utils.LabelKeyLifecycleOwner, Operator: string(selection.Equals), Values: []string{user.GetIdentifier()}},
 	}
-	if forkOf != "" {
-		requirements = append(requirements, &resourcepb.Requirement{Key: utils.LabelKeyForkOf, Operator: string(selection.Equals), Values: []string{forkOf}})
-	}
-	return requirements
 }

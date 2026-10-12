@@ -29,7 +29,7 @@ func TestIsIdleDraft(t *testing.T) {
 	recent := now.Add(-2 * 24 * time.Hour)
 
 	require.True(t, isIdleDraft(item(utils.LifecycleDraft, old, time.Time{}), cutoff))
-	require.True(t, isIdleDraft(item(utils.LifecycleFork, old, old), cutoff))
+	require.True(t, isIdleDraft(item(utils.LifecycleDraft, old, old), cutoff))
 	require.False(t, isIdleDraft(item(utils.LifecycleDraft, old, recent), cutoff), "a recent write resets the clock")
 	require.False(t, isIdleDraft(item(utils.LifecyclePublished, old, time.Time{}), cutoff), "published dashboards never expire")
 	require.False(t, isIdleDraft(item("", old, time.Time{}), cutoff))
