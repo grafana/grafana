@@ -223,7 +223,6 @@ export const availableIconsIndex = {
   monitor: true,
   'multi-step': true,
   'open-telemetry': true,
-  pages: true,
   palette: true,
   'panel-add': true,
   paragraph: true,
