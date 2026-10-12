@@ -1154,7 +1154,9 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "apps", Type: "page", AddToNav: true, Role: identity.RoleAdmin},
 				},
 			}}
-			tree := navtree.NavTreeRoot{}
+			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
+			explore := &navtree.NavLink{Id: navtree.NavIDExplore, SortWeight: navtree.WeightExplore}
+			tree := navtree.NavTreeRoot{Children: []*navtree.NavLink{dashboards, explore}}
 			service.processAppPlugin(plugin, reqCtx, &tree)
 			ai := tree.FindById("plugin-page-" + assistantAppID)
 			require.NotNil(t, ai)
@@ -1172,7 +1174,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 			require.True(t, pages.IsNew)
 			require.Equal(t, assistantAppID, pages.PluginID)
 			tree.Sort()
-			require.Equal(t, []*navtree.NavLink{ai, pages}, tree.Children)
+			require.Equal(t, []*navtree.NavLink{dashboards, pages, explore, ai}, tree.Children)
 		})
 	}
 }

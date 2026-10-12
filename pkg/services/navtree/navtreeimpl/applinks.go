@@ -595,7 +595,7 @@ func (s *ServiceImpl) readNavigationSettings() {
 	s.navigationAppPathConfig = map[string]NavigationAppConfig{
 		"/a/grafana-assistant-app/pages": {
 			SectionID:  navtree.NavIDRoot,
-			SortWeight: navtree.WeightAssistant + 1,
+			SortWeight: navtree.WeightDashboard + 1,
 			IsNew:      true,
 		},
 		"/a/grafana-auth-app": {
