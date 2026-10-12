@@ -178,17 +178,21 @@ func (s *LegacySearchService) search(ctx context.Context, ns types.NamespaceInfo
 	if enforced {
 		options.RolePrefixes = nil
 	}
-	var filter []int64
-	if options.UserID > 0 {
-		filter = []int64{options.UserID}
-	}
-	roles, err := s.store.GetUsersBasicRoles(ctx, ns, filter)
-	if err != nil {
-		return nil, err
-	}
-	if options.UserID > 0 {
-		if _, ok := roles[options.UserID]; !ok {
-			return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", options.UserID, ns.OrgID)
+	var roles map[int64][]string
+	if !enforced {
+		var filter []int64
+		if options.UserID > 0 {
+			filter = []int64{options.UserID}
+		}
+		var err error
+		roles, err = s.store.GetUsersBasicRoles(ctx, ns, filter)
+		if err != nil {
+			return nil, err
+		}
+		if options.UserID > 0 {
+			if _, ok := roles[options.UserID]; !ok {
+				return nil, fmt.Errorf("found no basic roles for user %d in organisation %d", options.UserID, ns.OrgID)
+			}
 		}
 	}
 	if s.actions != nil {
@@ -198,6 +202,17 @@ func (s *LegacySearchService) search(ctx context.Context, ns types.NamespaceInfo
 	stored, err := s.store.SearchUsersPermissions(ctx, ns, options)
 	if err != nil {
 		return nil, err
+	}
+	if enforced {
+		// Licensed searches include stored global grants even for targets without
+		// organization membership, and retain empty records for positive targets.
+		roles = make(map[int64][]string, len(stored)+1)
+		for id := range stored {
+			roles[id] = nil
+		}
+		if options.UserID > 0 {
+			roles[options.UserID] = nil
+		}
 	}
 	static := map[string]*accesscontrol.RoleDTO{}
 	if !enforced {

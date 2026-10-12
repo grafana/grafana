@@ -285,3 +285,61 @@ func TestIntegrationSharedLoaderSearchDiscardsPartialSQLResults(t *testing.T) {
 	require.ErrorContains(t, err, boom.Error())
 	require.Empty(t, enumerated.Permissions)
 }
+
+func TestIntegrationSharedLoaderSearchMembership(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, enforced := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enforced=%t", enforced), func(t *testing.T) {
+			sql := db.NewTestStore(t)
+			seedSearchLoaderUser(t, sql, searchLoaderCallerID, "401", org.RoleNone)
+			seedSearchLoaderUser(t, sql, searchLoaderTargetID, "global-target", org.RoleNone)
+			const emptyTargetID = searchLoaderTargetID + 1
+			seedSearchLoaderUser(t, sql, emptyTargetID, "empty-target", org.RoleNone)
+			require.NoError(t, sql.WithDbSession(t.Context(), func(sess *db.Session) error {
+				now := time.Now()
+				if _, err := sess.Insert(&org.Org{ID: 2, Name: "Other search organization", Created: now, Updated: now}); err != nil {
+					return err
+				}
+				if _, err := sess.Exec("UPDATE org_user SET org_id = ? WHERE user_id IN (?, ?)", 2, searchLoaderTargetID, emptyTargetID); err != nil {
+					return err
+				}
+				_, err := sess.Exec("UPDATE "+sql.Quote("user")+" SET org_id = ? WHERE id IN (?, ?)", 2, searchLoaderTargetID, emptyTargetID)
+				return err
+			}))
+			seedGrant(t, sql, "managed:membership-caller", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"})
+			seedGrant(t, sql, "managed:membership-global", 0, searchLoaderTargetID, ac.Permission{Action: "test:read", Scope: "tests:id:global"})
+			cfg := loaderConfig(false)
+			client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: enforced}, nil), cfg)
+			for _, tc := range []struct {
+				name    string
+				target  int64
+				action  string
+				granted bool
+			}{
+				{"global assignment in bulk search", 0, "test:read", true},
+				{"global assignment in target search", searchLoaderTargetID, "test:read", true},
+				{"target without matching action", searchLoaderTargetID, "test:missing", false},
+				{"nonmember without grants", emptyTargetID, "test:read", false},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					req := searchLoaderRequest()
+					req.UserID, req.Action = tc.target, tc.action
+					got, err := client.LegacySearchUsersPermissions(t.Context(), ac.LegacySearchPermissionCaller("default"), req)
+					if !enforced && tc.target > 0 {
+						require.Equal(t, codes.Internal, status.Code(err))
+						require.Nil(t, got.Permissions)
+						return
+					}
+					require.NoError(t, err)
+					want := map[int64][]types.Permission{}
+					if enforced && tc.granted {
+						want[searchLoaderTargetID] = []types.Permission{{Action: "test:read", Scope: "tests:id:global"}}
+					} else if enforced && tc.target > 0 {
+						want[tc.target] = []types.Permission{}
+					}
+					require.Equal(t, want, got.Permissions)
+				})
+			}
+		})
+	}
+}
