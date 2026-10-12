@@ -2,6 +2,7 @@ package pluginproxy
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -52,6 +53,15 @@ type HTTPContext struct {
 	UserToken *usertoken.UserToken
 }
 
+// RouteAccessChecker checks a plugin route action for the requested datasource.
+type RouteAccessChecker func(context.Context, identity.Requester, string, string) (bool, error)
+
+type DataSourceProxyOption func(*DataSourceProxy)
+
+func WithRouteAccessChecker(check RouteAccessChecker) DataSourceProxyOption {
+	return func(p *DataSourceProxy) { p.routeAccessChecker = check }
+}
+
 type DataSourceProxy struct {
 	ds                *datasourcesV0.DataSource
 	requester         identity.Requester
@@ -69,6 +79,8 @@ type DataSourceProxy struct {
 	// idTokenDeriver mints X-Grafana-Id from requester's OBO access token when requester carries
 	// no id token of its own. Nil disables that fallback (see proxyutil.ApplyForwardIDHeader).
 	idTokenDeriver authnlib.IDTokenDeriver
+
+	routeAccessChecker RouteAccessChecker
 }
 
 type httpClient interface {
@@ -81,6 +93,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService,
 	tracer tracing.Tracer, features featuremgmt.FeatureToggles, idTokenDeriver authnlib.IDTokenDeriver,
+	opts ...DataSourceProxyOption,
 ) (*DataSourceProxy, error) {
 	ds, err := dataSource.DataSource(ctx.Req.Context())
 	if err != nil {
@@ -97,7 +110,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		return nil, fmt.Errorf("failed to get requester from context: %w", err)
 	}
 
-	return &DataSourceProxy{
+	p := &DataSourceProxy{
 		ds:                ds,
 		requester:         requester,
 		dataSource:        dataSource,
@@ -111,7 +124,11 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		tracer:            tracer,
 		features:          features,
 		idTokenDeriver:    idTokenDeriver,
-	}, nil
+	}
+	for _, opt := range opts {
+		opt(p)
+	}
+	return p, nil
 }
 
 func newHTTPClient() httpClient {
@@ -406,6 +423,14 @@ func (proxy *DataSourceProxy) validateRequest() error {
 func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
 	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
 	if route.ReqAction != "" {
+		if proxy.routeAccessChecker != nil {
+			allowed, err := proxy.routeAccessChecker(proxy.ctx.Req.Context(), proxy.requester, proxy.ds.Name, route.ReqAction)
+			if err != nil {
+				ctxLogger.Error("Failed to authorize datasource proxy route", "action", route.ReqAction, "error", err)
+				return false
+			}
+			return allowed
+		}
 		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
 		hasAccess := routeEval.Evaluate(proxy.requester.GetPermissions())
 		if !hasAccess {
