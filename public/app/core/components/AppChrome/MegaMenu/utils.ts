@@ -409,7 +409,8 @@ export function resolveBookmark(nodes: NavModelItem[], url: string): NavModelIte
     return exact;
   }
   // Only app-relative paths are eligible; never turn an arbitrary stored URL into a link.
-  if (!url.startsWith('/a/') || /[\\\s]/.test(url)) {
+  const appPrefix = `${config.appSubUrl}/a/`;
+  if (!url.startsWith(appPrefix) || /[\\\s]/.test(url)) {
     return null;
   }
   let parsed: URL;
@@ -428,7 +429,7 @@ export function resolveBookmark(nodes: NavModelItem[], url: string): NavModelIte
         continue;
       }
       if (
-        item.url?.startsWith('/a/') &&
+        item.url?.startsWith(appPrefix) &&
         parsed.pathname.startsWith(`${item.url.replace(/\/$/, '')}/`) &&
         (!parent?.url || item.url.length > parent.url.length)
       ) {

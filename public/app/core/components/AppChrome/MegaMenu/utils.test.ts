@@ -500,6 +500,24 @@ describe('dynamic app bookmarks', () => {
   const pages: NavModelItem = { id: 'pages', text: 'Pages', url: '/a/example-app/pages', icon: 'file-alt' };
   const tree: NavModelItem[] = [{ id: 'app', text: 'Example', url: '/a/example-app', children: [pages] }];
 
+  it('resolves stored app routes on a subpath installation', () => {
+    const originalSubUrl = config.appSubUrl;
+    config.appSubUrl = '/grafana';
+    try {
+      const parent: NavModelItem = { ...pages, url: '/grafana/a/example-app/pages' };
+      expect(resolveBookmark([parent], '/grafana/a/example-app/pages/service-health-123')).toEqual({
+        id: 'bookmark:/grafana/a/example-app/pages/service-health-123',
+        text: 'service-health-123',
+        url: '/grafana/a/example-app/pages/service-health-123',
+        icon: 'file-alt',
+        parentItem: parent,
+      });
+      expect(resolveBookmark(tree, '/a/example-app/pages/service-health-123')).toBeNull();
+    } finally {
+      config.appSubUrl = originalSubUrl;
+    }
+  });
+
   it('keeps registered navigation metadata', () => {
     expect(resolveBookmark(tree, '/a/example-app/pages')).toBe(pages);
   });
