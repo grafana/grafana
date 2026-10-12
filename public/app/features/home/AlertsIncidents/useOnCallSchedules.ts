@@ -80,9 +80,10 @@ const isPending = (query: { isFetching: boolean; currentData?: unknown }) =>
  * depends on them); the schedule lists load only while `loadRosters` is true, since they can cost several
  * requests per team and most visitors never open the tab.
  *
- * Refresh policy: both sources refetch on homepage mount and each time the tab opens, while anything cached
- * stays on screen. Between refreshes only the clock moves: the user's shift labels and the badge follow it;
- * rosters are the snapshot from the last refresh. No polling, like the alerts and incidents tabs.
+ * Refresh policy: both sources refetch on homepage mount and each time the tab opens, and while the tab is open
+ * in a focused window they poll at the clock's cadence, so a shift boundary moves the roster along with the
+ * user's label. Anything cached stays on screen meanwhile. With the tab closed only the clock moves: the badge
+ * follows it, and at local midnight it refetches the next window.
  */
 export function useOnCallSchedules({ loadRosters }: { loadRosters: boolean }): OnCallSchedulesData {
   const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
@@ -95,16 +96,21 @@ export function useOnCallSchedules({ loadRosters }: { loadRosters: boolean }): O
   // and at local midnight it changes `date`, which refetches the next window.
   const [now, setNow] = useState(() => Date.now());
   useInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
+  // Polling only while the tab shows the data: a background homepage shouldn't cost the engine a request a minute.
+  const queryOptions = {
+    refetchOnMountOrArgChange: true,
+    pollingInterval: loadRosters ? CLOCK_TICK_MS : 0,
+    skipPollingIfUnfocused: true,
+  };
 
   const ready = !pluginLoading && !!installed;
   const userTz = resolveUserTimeZone(now);
   const date = dateTimeFormat(now, { format: 'YYYY-MM-DD' });
-  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? { pluginId, date, userTz } : skipToken, {
-    refetchOnMountOrArgChange: true,
-  });
-  const schedules = onCallApi.useGetRelatedSchedulesQuery(ready && loadRosters ? { pluginId } : skipToken, {
-    refetchOnMountOrArgChange: true,
-  });
+  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? { pluginId, date, userTz } : skipToken, queryOptions);
+  const schedules = onCallApi.useGetRelatedSchedulesQuery(
+    ready && loadRosters ? { pluginId } : skipToken,
+    queryOptions
+  );
   // The rosters refetch on their own when the tab opens (their args go from skipped to set); the shifts need a
   // nudge, or a roster fetched now could contradict a shift fetched at page load after an override or a swap.
   useUpdateEffect(() => {

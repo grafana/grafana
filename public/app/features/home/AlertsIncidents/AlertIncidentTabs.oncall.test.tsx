@@ -1,3 +1,4 @@
+import userEvent from '@testing-library/user-event';
 import { act, render, screen, waitFor, within } from 'test/test-utils';
 
 import { PluginIncludeType, setTimeZoneResolver } from '@grafana/data';
@@ -162,6 +163,33 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(screen.getByText('Backend')).toBeInTheDocument();
     await waitFor(() => expect(eventCalls).toHaveLength(eventCallsAfterFirstOpen + 1));
     expect(listCalls.filter((call) => call.filter === 'mine')).toHaveLength(2);
+  });
+
+  it('polls both sources every minute while the tab is open, and stops once it closes', async () => {
+    jest.useFakeTimers({ doNotFake: ['Date'] });
+    try {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+      const { eventCalls, listCalls } = mockOnCall({ byTeam: TEAM_SCHEDULES });
+      render(<AlertIncidentTabsWithData />);
+
+      await user.click(await screen.findByRole('tab', { name: /on call/i }));
+      expect(await screen.findByText('Backend')).toBeInTheDocument();
+      const eventsSoFar = eventCalls.length;
+      const listsSoFar = listCalls.length;
+
+      act(() => jest.advanceTimersByTime(60_000));
+      await waitFor(() => expect(eventCalls).toHaveLength(eventsSoFar + 1));
+      // mine, team:T1, team:T2
+      await waitFor(() => expect(listCalls).toHaveLength(listsSoFar + 3));
+
+      await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
+      act(() => jest.advanceTimersByTime(60_000));
+      await act(async () => {});
+      expect(eventCalls).toHaveLength(eventsSoFar + 1);
+      expect(listCalls).toHaveLength(listsSoFar + 3);
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it('lists your schedules first, then team schedules with someone on call', async () => {
