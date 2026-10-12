@@ -1,10 +1,18 @@
 /* eslint-disable @grafana/no-get-data-source-srv */
-import { getDataSourceSrv, type RuntimeDataSourceRegistration } from '@grafana/runtime';
-import { registerRuntimeDataSourceInstance as rtRegisterRuntimeDataSourceInstance } from '@grafana/runtime/unstable';
+import {
+  getDataSourceSrv,
+  type RuntimeDataSourceRegistration,
+  registerRuntimeDataSourceInstance as stableRegisterRuntimeDataSourceInstance,
+} from '@grafana/runtime';
+import { registerRuntimeDataSourceInstance as unstableRegisterRuntimeDataSourceInstance } from '@grafana/runtime/unstable';
 
 export function registerRuntimeDataSourceInstance(entry: RuntimeDataSourceRegistration): void {
-  if (typeof rtRegisterRuntimeDataSourceInstance === 'function') {
-    return rtRegisterRuntimeDataSourceInstance(entry);
+  if (typeof stableRegisterRuntimeDataSourceInstance === 'function') {
+    return stableRegisterRuntimeDataSourceInstance(entry);
+  }
+
+  if (typeof unstableRegisterRuntimeDataSourceInstance === 'function') {
+    return unstableRegisterRuntimeDataSourceInstance(entry);
   }
 
   return backwardsCompatibleRegisterRuntimeDataSourceInstance(entry);

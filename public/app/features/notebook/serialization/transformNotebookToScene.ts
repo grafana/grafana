@@ -49,5 +49,9 @@ export function transformNotebookToScene(resource: Resource<NotebookSpec>): Note
     savedGeneration: resource.metadata.generation,
   });
 
+  // The resource's time settings, for the same reason: url sync applies any `?from=&to=` to the scene
+  // before the page activates it, so a baseline taken then would be the reader's deep link.
+  scene.autosave.recordLoadedTimeSettings(timeSettings);
+
   return scene;
 }

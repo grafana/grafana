@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -11,42 +12,25 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/grafana/grafana-app-sdk/app"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/definition"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func TestIsPluginAPIGroup(t *testing.T) {
-	for group, want := range map[string]bool{
+func TestIsAppPluginID(t *testing.T) {
+	for id, want := range map[string]bool{
 		"grafana-example-app":      true,
-		"example.ext.grafana.app":  true,
-		"a.b.ext.grafana.app":      true,
-		".ext.grafana.app":         false,
+		"example.ext.grafana.app":  false,
 		"dashboard.grafana.app":    false,
-		"folder.grafana.app":       false,
 		"apps":                     false,
-		"example.grafana.app":      false,
 		"grafana-example.app":      false,
-		"ext.grafana.app":          false,
 		"":                         false,
-		"apiextensions.k8s.io":     false,
 		"grafana-example-app.evil": false,
 	} {
-		require.Equal(t, want, isPluginAPIGroup(group), group)
+		require.Equal(t, want, isAppPluginID(id), id)
 	}
-}
-
-func TestReconcileSkipsGroupsNotAccepted(t *testing.T) {
-	loader := &mutableLoader{backends: []Backend{
-		&fakeBackend{group: metav1.APIGroup{Name: "dashboard.grafana.app"}, key: "1"},
-		&fakeBackend{group: metav1.APIGroup{Name: "grafana-example-app"}, key: "1"},
-	}}
-	router := NewGrafanaRouter(loader, nil)
-	router.acceptGroup = isPluginAPIGroup
-	require.NoError(t, router.reconcile(t.Context()))
-	require.False(t, router.KnownGroup("dashboard.grafana.app"))
-	require.True(t, router.KnownGroup("grafana-example-app"))
 }
 
 func TestReconcileRecoversFromBackendPanic(t *testing.T) {
@@ -61,33 +45,33 @@ func TestReconcileRecoversFromBackendPanic(t *testing.T) {
 	require.True(t, router.KnownGroup("grafana-example-app"))
 }
 
-func TestMiddlewareServesOnlyPluginGroups(t *testing.T) {
-	for _, tc := range []struct {
-		name      string
-		target    []string
-		flags     []any
-		restricts bool
-	}{
-		{name: "middleware", flags: []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, restricts: true},
-		{name: "standalone router target", target: []string{"router"}, restricts: false},
-		{name: "standalone target with the middleware flag", target: []string{"router"}, flags: []any{featuremgmt.FlagGrafanaUseRouterMiddleware}, restricts: false},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			cfg := setting.NewCfg()
-			cfg.Target = tc.target
-			if len(tc.target) > 0 {
-				cfg.ExtJWTAuth.JWKSUrl = "https://jwks.invalid/keys"
-				cfg.ExtJWTAuth.Audiences = []string{"grafana"}
-			}
-			svc, err := ProvideService(cfg, featuremgmt.WithFeatures(tc.flags...), stubLoader{}, prometheus.NewRegistry())
-			require.NoError(t, err)
-			require.Equal(t, tc.restricts, svc.router.acceptGroup != nil)
-		})
+// The router gradually takes over groups from the embedded API server, so in
+// middleware mode a group it serves replaces the embedded server's, core
+// groups included.
+func TestMiddlewareReplacesEmbeddedGroups(t *testing.T) {
+	served := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
+	loader := &mutableLoader{backends: []Backend{
+		&fakeBackend{group: metav1.APIGroup{Name: "playlist.grafana.app"}, key: "1", handler: served},
+	}}
+	svc, err := ProvideService(setting.NewCfg(), featuremgmt.WithFeatures(featuremgmt.FlagGrafanaUseRouterMiddleware), loader, prometheus.NewRegistry())
+	require.NoError(t, err)
+	require.True(t, svc.middleware)
+	require.NoError(t, svc.router.reconcile(t.Context()))
+
+	embedded := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusTeapot) })
+	serve := func(target string) int {
+		recorder := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodGet, target, nil)
+		req = req.WithContext(identity.WithRequester(req.Context(), &identity.StaticRequester{}))
+		svc.HandleFunc(recorder, req, embedded)
+		return recorder.Code
 	}
+	require.Equal(t, http.StatusNoContent, serve("/apis/playlist.grafana.app/v0alpha1/namespaces/default/playlists"))
+	require.Equal(t, http.StatusTeapot, serve("/apis/dashboard.grafana.app/v1/namespaces/default/dashboards"))
 }
 
-func TestNewPluginBackendRejectsNonPluginGroups(t *testing.T) {
-	for _, group := range []string{"dashboard.grafana.app", "example.grafana.app"} {
+func TestNewPluginBackendRejectsInvalidManifestGroups(t *testing.T) {
+	for _, group := range []string{"dashboard.grafana.app", "folder.grafana.app"} {
 		t.Run(group, func(t *testing.T) {
 			plugin := definition.PluginDefinition{
 				JSONData: plugins.JSONData{ID: "test-app"},

@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -25,6 +27,7 @@ type fakeBlobStore struct {
 	put      *resourcepb.PutBlobRequest
 	get      *resourcepb.GetBlobRequest
 	putRsp   *resourcepb.PutBlobResponse
+	putErr   error
 	value    []byte
 	checkGet func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error)
 }
@@ -32,7 +35,7 @@ type fakeBlobStore struct {
 func (f *fakeBlobStore) PutBlob(_ context.Context, req *resourcepb.PutBlobRequest, _ ...grpc.CallOption) (*resourcepb.PutBlobResponse, error) {
 	f.put = req
 	f.value = req.Value
-	return f.putRsp, nil
+	return f.putRsp, f.putErr
 }
 
 func (f *fakeBlobStore) GetBlob(ctx context.Context, req *resourcepb.GetBlobRequest, _ ...grpc.CallOption) (*resourcepb.GetBlobResponse, error) {
@@ -84,6 +87,31 @@ func TestMoveDashboardToBlob(t *testing.T) {
 
 		require.NoError(t, moveDashboardToBlob(ctx, store, snap))
 
+		require.NotNil(t, snap.Spec.Dashboard)
+		require.Nil(t, snap.Blobs.Dashboard)
+	})
+
+	t.Run("keeps the dashboard inline when the blob store returns gRPC 501", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{Code: http.StatusNotImplemented, Message: "blob store not configured"}
+		st, err := status.New(codes.Unimplemented, failure.Message).WithDetails(failure)
+		require.NoError(t, err)
+		store := &fakeBlobStore{putErr: st.Err()}
+		snap := newBlobTestSnapshot()
+
+		require.NoError(t, moveDashboardToBlob(ctx, store, snap))
+		require.NotNil(t, snap.Spec.Dashboard)
+		require.Nil(t, snap.Blobs.Dashboard)
+	})
+
+	t.Run("returns a Kubernetes status for other gRPC errors", func(t *testing.T) {
+		failure := &resourcepb.ErrorResult{Code: http.StatusForbidden, Message: "denied"}
+		st, err := status.New(codes.PermissionDenied, failure.Message).WithDetails(failure)
+		require.NoError(t, err)
+		snap := newBlobTestSnapshot()
+
+		err = moveDashboardToBlob(ctx, &fakeBlobStore{putErr: st.Err()}, snap)
+
+		require.True(t, apierrors.IsForbidden(err), "expected Kubernetes 403, got %v", err)
 		require.NotNil(t, snap.Spec.Dashboard)
 		require.Nil(t, snap.Blobs.Dashboard)
 	})
@@ -223,6 +251,20 @@ func TestLoadDashboardContent(t *testing.T) {
 
 		require.Error(t, err)
 		require.Nil(t, dash)
+	})
+
+	t.Run("missing streamed blob returns a Kubernetes 404", func(t *testing.T) {
+		snap := newBlobTestSnapshot()
+		snap.Spec.Dashboard = nil
+		snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "missing"}
+		store := &fakeBlobStore{checkGet: func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+			return nil, status.Error(codes.NotFound, "blob not found")
+		}}
+
+		dash, err := loadDashboardContent(ctx, store, snap)
+
+		require.Nil(t, dash)
+		require.True(t, apierrors.IsNotFound(err), "expected Kubernetes 404, got %v", err)
 	})
 
 	for _, tc := range []struct {

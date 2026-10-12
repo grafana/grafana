@@ -2218,6 +2218,18 @@ Set the default data source UID to use for query execution when importing Promet
 
 <hr>
 
+### `[recording_rules]`
+
+#### `max_write_batch_size`
+
+Set the maximum size, in bytes (estimated from label names and values), of a single recording rule write request. Grafana splits larger payloads into several requests sent in parallel, so a failure can leave a partial write. The default value of `0` disables splitting. Any other value must be at least `65536` (64 KiB).
+
+#### `max_write_concurrency`
+
+Set the maximum number of requests of a split recording rule write that may be in flight at once. This setting has no effect unless `max_write_batch_size` is set. The default value of `0` uses the client default. The value must be between `0` and `32`.
+
+<hr>
+
 ### `[annotations]`
 
 #### `cleanupjob_batchsize`

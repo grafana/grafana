@@ -707,11 +707,6 @@
       "count": 1
     }
   },
-  "public/app/AppWrapper.tsx": {
-    "@grafana/no-config-feature-toggles": {
-      "count": 1
-    }
-  },
   "public/app/app.ts": {
     "@grafana/no-config-feature-toggles": {
       "count": 4
@@ -1882,9 +1877,6 @@
   "public/app/features/dashboard/api/ResponseTransformers.ts": {
     "@grafana/no-config-datasources": {
       "count": 1
-    },
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
     }
   },
   "public/app/features/dashboard/components/GenAI/hooks.ts": {
@@ -2574,11 +2566,6 @@
     }
   },
   "public/app/features/transformers/editors/ReduceTransformerEditor.tsx": {
-    "@typescript-eslint/consistent-type-assertions": {
-      "count": 1
-    }
-  },
-  "public/app/features/transformers/editors/SortByTransformerEditor.tsx": {
     "@typescript-eslint/consistent-type-assertions": {
       "count": 1
     }

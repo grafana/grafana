@@ -947,7 +947,7 @@ export interface FeatureToggles {
   foldersAppPlatformAPI?: boolean;
   /**
   * Applies OTel formatting templates to displayed logs
-  * @default false
+  * @default true
   */
   otelLogsFormatting?: boolean;
   /**
@@ -1212,18 +1212,13 @@ export interface FeatureToggles {
   */
   analyticsFramework?: boolean;
   /**
-  * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
-  * @default false
-  */
-  datasourcesApiServerEnableHealthEndpointFrontend?: boolean;
-  /**
   * Redirect datasource health requests from the legacy API routes to the new datasource api group endpoints.
   * @default false
   */
   datasourcesApiServerEnableHealthEndpointRedirect?: boolean;
   /**
   * Enables an inline version of Log Details that creates no new scrolls
-  * @default false
+  * @default true
   */
   inlineLogDetailsNoScrolls?: boolean;
   /**
@@ -1243,7 +1238,7 @@ export interface FeatureToggles {
   streamingForwardTeamHeadersTempo?: boolean;
   /**
   * Aligns query splitting chunks with UTC midnight
-  * @default false
+  * @default true
   */
   lokiAlignedQuerySplitting?: boolean;
   /**

@@ -407,7 +407,7 @@ func TestTokenFromOtherListPath(t *testing.T) {
 	require.False(t, tokenFromOtherListPath(sqlScanToken, false))
 }
 
-func TestDecodeListSearchRows(t *testing.T) {
+func TestDecodeSearchListPage(t *testing.T) {
 	const resourceVersion = int64(1958241239561142273)
 	key := &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: "a"}
 	want := []listSearchRow{{key: key, resourceVersion: resourceVersion, sortFields: []string{"title", "a"}}}
@@ -444,14 +444,14 @@ func TestDecodeListSearchRows(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			rows, err := decodeListSearchRows(test.response)
+			page, err := decodeSearchListPage(test.response, 0)
 			require.NoError(t, err)
-			require.Equal(t, want, rows)
+			require.Equal(t, want, page.rows)
 		})
 	}
 }
 
-func TestDecodeListSearchRowsRejectsMalformedResponses(t *testing.T) {
+func TestDecodeSearchListPageRejectsMalformedResponses(t *testing.T) {
 	for _, test := range []struct {
 		name     string
 		response *resourcepb.ResourceSearchResponse
@@ -476,7 +476,7 @@ func TestDecodeListSearchRowsRejectsMalformedResponses(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			_, err := decodeListSearchRows(test.response)
+			_, err := decodeSearchListPage(test.response, 0)
 			require.Error(t, err)
 		})
 	}
@@ -1577,11 +1577,11 @@ func (b *batchFakeBackend) BatchReadResource(_ context.Context, requests []Batch
 	}, nil
 }
 
-func TestDecodeListSearchRowsReadsTheFolderHint(t *testing.T) {
+func TestDecodeSearchListPageReadsTheFolderHint(t *testing.T) {
 	key := func(name string) *resourcepb.ResourceKey {
 		return &resourcepb.ResourceKey{Namespace: "nsx", Group: "grp", Resource: "res", Name: name}
 	}
-	rows, err := decodeListSearchRows(&resourcepb.ResourceSearchResponse{
+	page, err := decodeSearchListPage(&resourcepb.ResourceSearchResponse{
 		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		Fields: []*resourcepb.ResourceSearchField{
 			{Name: SEARCH_FIELD_TITLE, Type: resourcepb.ResourceSearchField_STRING},
@@ -1597,12 +1597,13 @@ func TestDecodeListSearchRowsReadsTheFolderHint(t *testing.T) {
 				{FieldIndex: 0, StringValues: []string{"title"}},
 			}},
 		},
-	})
+	}, 0)
 
 	require.NoError(t, err)
-	require.Len(t, rows, 2)
-	require.Equal(t, "folder-1", rows[0].folder)
-	require.Equal(t, "", rows[1].folder)
+	require.True(t, page.folderIndexed)
+	require.Len(t, page.rows, 2)
+	require.Equal(t, "folder-1", page.rows[0].folder)
+	require.Equal(t, "", page.rows[1].folder)
 }
 
 // The index can still hold a row for an object storage no longer has: deleted,
@@ -1642,4 +1643,213 @@ func TestListSkipsSearchRowsStorageNoLongerHas(t *testing.T) {
 		versions = append(versions, item.ResourceVersion)
 	}
 	require.Equal(t, []int64{first, last}, versions)
+}
+
+// folderAccess denies by folder and counts both kinds of call.
+type folderAccess struct {
+	deny            map[string]bool
+	checks, batches int
+	checkedFolders  []string
+}
+
+func (a *folderAccess) Check(_ context.Context, _ claims.AuthInfo, _ claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	a.checks++
+	a.checkedFolders = append(a.checkedFolders, folder)
+	return claims.CheckResponse{Allowed: !a.deny[folder]}, nil
+}
+
+func (a *folderAccess) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	a.batches++
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		results[c.CorrelationID] = claims.BatchCheckResult{Allowed: !a.deny[c.Folder]}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func (a *folderAccess) Compile(context.Context, claims.AuthInfo, claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(string, string) bool { return true }, nil, nil
+}
+
+// Rows are authorized in one batch on the folder the index recorded, before any
+// is read, the way the store list authorizes keys before fetching values.
+func TestListWithSelectorsAuthorizesRowsBeforeReadingThem(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	const total = readChunkSize*2 + 5
+	rows := make([]*resourcepb.ResourceSearchRow, 0, total)
+	for i := range total {
+		folder := "open"
+		if i%5 == 0 {
+			folder = "closed"
+		}
+		rows = append(rows, folderSearchRow(appsKey(fmt.Sprintf("item-%02d", i)), int64(i+1), folder, fmt.Sprintf("s%02d", i)))
+	}
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(100, rows)}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	backend := &batchFakeBackend{fakeBackend: &fakeBackend{}}
+	s.backend = backend
+	access := &folderAccess{deny: map[string]bool{"closed": true}}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, total-5)
+	require.Equal(t, 1, access.batches)
+	require.Len(t, backend.pulledNames, total-5, "denied rows are never read")
+	require.NotContains(t, backend.pulledNames, "item-00")
+}
+
+// A row whose stored folder differs from the one the index recorded is checked
+// again in its stored folder, so a stale index cannot grant access.
+func TestListWithSelectorsRechecksRowsStoredInAnotherFolder(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	moved := seedResource(t, backend, ctx, "moved", "private")
+	kept := seedResource(t, backend, ctx, "kept", "open")
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(kept, []*resourcepb.ResourceSearchRow{
+		// The index still has "moved" in the folder it used to be in.
+		folderSearchRow(appsKey("moved"), moved, "open", "moved"),
+		folderSearchRow(appsKey("kept"), kept, "open", "kept"),
+	})}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	s.backend = backend
+	access := &folderAccess{deny: map[string]bool{"private": true}}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, kept, resp.Items[0].ResourceVersion)
+	require.Equal(t, []string{"private"}, access.checkedFolders, "only the moved row is checked again, in its stored folder")
+}
+
+// Without authorize_before_fetch_enabled every row is read, then authorized on
+// its own in its stored folder, as before.
+func TestListWithSelectorsAuthorizesRowsAfterReadingThemByDefault(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	open := seedResource(t, backend, ctx, "open", "open")
+	closed := seedResource(t, backend, ctx, "closed", "closed")
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(closed, []*resourcepb.ResourceSearchRow{
+		folderSearchRow(appsKey("open"), open, "open", "s1"),
+		folderSearchRow(appsKey("closed"), closed, "closed", "s2"),
+	})}, 1<<20)
+	s.backend = backend
+	access := &folderAccess{deny: map[string]bool{"closed": true}}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, open, resp.Items[0].ResourceVersion)
+	require.Zero(t, access.batches)
+	require.Equal(t, []string{"open", "closed"}, access.checkedFolders, "one check per row, in its stored folder")
+}
+
+func TestListWithSelectorsWithoutIndexedFoldersAuthorizesAfterReading(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	rv := seedResource(t, backend, ctx, "item", "open")
+	for _, format := range []resourcepb.ResourceSearchRequest_ResultFormat{
+		resourcepb.ResourceSearchRequest_RESOURCE_TABLE,
+		resourcepb.ResourceSearchRequest_FIELD_VALUES,
+	} {
+		t.Run(format.String(), func(t *testing.T) {
+			searchResp := &resourcepb.ResourceSearchResponse{
+				ResourceVersion: rv,
+				ResultFormat:    format,
+				Results: &resourcepb.ResourceTable{Rows: []*resourcepb.ResourceTableRow{
+					{Key: appsKey("item"), ResourceVersion: rv},
+				}},
+				Rows: []*resourcepb.ResourceSearchRow{{Key: appsKey("item"), ResourceVersion: rv}},
+			}
+			s := createTestServer(&stubSearchClient{resp: searchResp}, 1<<20)
+			s.authorizeBeforeFetchEnabled = true
+			s.backend = backend
+			access := &folderAccess{deny: map[string]bool{"": true}}
+			s.access = access
+
+			resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+				Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+			})
+
+			require.NoError(t, err)
+			require.Nil(t, resp.Error)
+			require.Len(t, resp.Items, 1)
+			require.Zero(t, access.batches, "an unknown folder must not be authorized as root")
+			require.Equal(t, []string{"open"}, access.checkedFolders)
+		})
+	}
+}
+
+// k6Access behaves like authlib for a user: the single Check hides the k6 folder,
+// BatchCheck has no such rule and allows it.
+type k6Access struct {
+	checked []string
+	batches int
+}
+
+func (a *k6Access) Check(_ context.Context, _ claims.AuthInfo, req claims.CheckRequest, folder string) (claims.CheckResponse, error) {
+	a.checked = append(a.checked, req.Name)
+	return claims.CheckResponse{Allowed: req.Name != k6FolderUID && folder != k6FolderUID}, nil
+}
+
+func (a *k6Access) BatchCheck(_ context.Context, _ claims.AuthInfo, req claims.BatchCheckRequest) (claims.BatchCheckResponse, error) {
+	a.batches++
+	results := make(map[string]claims.BatchCheckResult, len(req.Checks))
+	for _, c := range req.Checks {
+		results[c.CorrelationID] = claims.BatchCheckResult{Allowed: true}
+	}
+	return claims.BatchCheckResponse{Results: results}, nil
+}
+
+func (a *k6Access) Compile(context.Context, claims.AuthInfo, claims.ListRequest) (claims.ItemChecker, claims.Zookie, error) {
+	return func(string, string) bool { return true }, nil, nil
+}
+
+// Until authlib's BatchCheck hides the k6 folder, rows in it or naming it keep
+// the single check that does.
+func TestListWithSelectorsKeepsTheSingleCheckForTheK6Folder(t *testing.T) {
+	ctx := identity.WithServiceIdentityContext(context.Background(), 1)
+	backend := setupTestStorageBackend(t)
+	inK6 := seedResource(t, backend, ctx, "perf-dash", k6FolderUID)
+	named := seedResource(t, backend, ctx, k6FolderUID, "open")
+	open := seedResource(t, backend, ctx, "team-dash", "open")
+	moved := seedResource(t, backend, ctx, "moved-dash", k6FolderUID)
+
+	s := createTestServer(&stubSearchClient{resp: folderSearchResponse(moved, []*resourcepb.ResourceSearchRow{
+		folderSearchRow(appsKey("perf-dash"), inK6, k6FolderUID, "s1"),
+		folderSearchRow(appsKey(k6FolderUID), named, "open", "s2"),
+		folderSearchRow(appsKey("team-dash"), open, "open", "s3"),
+		// The index still has it where it was before it moved into the k6 folder.
+		folderSearchRow(appsKey("moved-dash"), moved, "open", "s4"),
+	})}, 1<<20)
+	s.authorizeBeforeFetchEnabled = true
+	s.backend = backend
+	access := &k6Access{}
+	s.access = access
+
+	resp, err := s.listWithSelectors(ctx, &resourcepb.ListRequest{
+		Options: &resourcepb.ListOptions{Key: appsKey(""), Fields: []*resourcepb.Requirement{{Key: "spec.foo"}}},
+	})
+
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.Len(t, resp.Items, 1)
+	require.Equal(t, open, resp.Items[0].ResourceVersion)
+	require.Equal(t, 1, access.batches)
+	require.Equal(t, []string{"perf-dash", k6FolderUID, "moved-dash"}, access.checked, "only the k6 rows take the single check")
 }

@@ -2,7 +2,7 @@ package backgroundsvcs
 
 import (
 	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	infranats "github.com/grafana/grafana/pkg/infra/nats"
 	"github.com/grafana/grafana/pkg/infra/remotecache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -64,7 +64,7 @@ func ProvideBackgroundServiceRegistry(
 	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService, tracing *tracing.TracingService,
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
 	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
-	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
+	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metricsservice.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, //nolint:staticcheck // SA1019: Legacy envelope encryption for single-tenant feature
 	StorageService store.StorageService, // nolint:staticcheck
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,

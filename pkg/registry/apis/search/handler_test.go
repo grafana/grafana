@@ -304,6 +304,19 @@ func TestGlobalHandler_FiltersByResourceType(t *testing.T) {
 	assert.Equal(t, []string{"folder.grafana.app/folders"}, client.got.Options.Fields[0].Values)
 }
 
+func TestGlobalHandler_SearchesAFolderAndEverythingBelowIt(t *testing.T) {
+	client := &fakeIndexClient{resp: emptyResponse()}
+	h := NewHandler(client, testProvider(), noop.NewTracerProvider().Tracer(""))
+
+	w := doGlobalRequest(t, h, globalQuery(
+		`{"filter": {"field": "`+resource.SEARCH_FIELD_FOLDER_TREE+`", "operator": "In", "values": ["team-a"]}}`))
+	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
+
+	require.Len(t, client.got.Options.Fields, 1)
+	assert.Equal(t, resource.SEARCH_FIELD_FOLDER_TREE, client.got.Options.Fields[0].Key)
+	assert.Equal(t, []string{"team-a"}, client.got.Options.Fields[0].Values)
+}
+
 // Sorting by time is offered on this index and nowhere else, so a request that
 // only makes sense here is accepted here.
 func TestGlobalHandler_SortsByTime(t *testing.T) {

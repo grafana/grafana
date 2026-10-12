@@ -2999,7 +2999,7 @@
       },
       "toggle": {
         "use-new-experience": "Gunakan pengalaman baru",
-        "view-previous-experience": "Kembali ke pengalaman sebelumnya"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Jenis aturan tidak diketahui",
       "checking-data-sources_other": "",
@@ -3017,6 +3017,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Ciutkan semua",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Perluas semua"
     },
     "rule-list-v2": {
@@ -8930,8 +8935,8 @@
     },
     "show-all-spans": "Tampilkan semua rentang",
     "signal-card": {
-      "collapse-aria-label": "Ciutkan penjelajah sumber data untuk kueri {{refId}}",
-      "expand-aria-label": "Perluas penjelajah sumber data untuk kueri {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Lompat ke kueri {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13055,6 +13060,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Batalkan",
       "confirm-discard": "Buang",
@@ -13136,6 +13146,7 @@
       "redo-action": "Ulangi: {{action}}",
       "remove-query": "Hapus kueri",
       "remove-tag": "Hapus tag",
+      "rename": "",
       "reset-cell-time-range": "Gunakan rentang waktu notebook",
       "select-query": "Pilih kueri",
       "set-cell-time-range": "Atur rentang waktu panel",
@@ -17600,15 +17611,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Urutkan bidang dalam bingkai."
       },
+      "drag-handle-label": "",
       "label-field": "Bidang",
       "label-reverse": "Balik",
       "name": {
         "sort-by": "Urutkan berdasarkan"
       },
-      "placeholder-select-field": "Pilih bidang"
+      "placeholder-select-field": "Pilih bidang",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {
