@@ -153,6 +153,15 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
 	}
 
+	// Parent lookups mark ancestors they cannot load as Detached so reads can
+	// still display incomplete hierarchies. Reject these chains on create to
+	// avoid adding another orphan or bypassing depth validation.
+	for _, parent := range parents.Items {
+		if parent.Detached {
+			return folder.ErrBadRequest.Errorf("cannot create folder under missing or unreadable ancestor %s", parent.Name)
+		}
+	}
+
 	if hasK6Ancestor(parents, f.Name) && !isServiceAccount(ctx) {
 		return folder.ErrFolderCannotBeCreatedInK6.Errorf("folders may not be created in the k6 project")
 	}
