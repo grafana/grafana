@@ -22,7 +22,7 @@ jest.mock('@grafana/assistant', () => ({
 
 const mockGetAssistantChatIdToContinue = jest.fn();
 
-jest.mock('app/core/components/AssistantTooltip/assistantSidebarState', () => ({
+jest.mock('app/core/assistant/assistantSidebarState', () => ({
   getAssistantChatIdToContinue: () => mockGetAssistantChatIdToContinue(),
 }));
 

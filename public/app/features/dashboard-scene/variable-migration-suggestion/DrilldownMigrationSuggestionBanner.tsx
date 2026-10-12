@@ -7,7 +7,7 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { useFlagGrafanaDrilldownMigrationAssistantSuggestion } from '@grafana/runtime/internal';
 import { Alert, Button, useStyles2 } from '@grafana/ui';
-import { getAssistantChatIdToContinue } from 'app/core/components/AssistantTooltip/assistantSidebarState';
+import { getAssistantChatIdToContinue } from 'app/core/assistant/assistantSidebarState';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
