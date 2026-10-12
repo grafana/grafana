@@ -66,18 +66,17 @@ function withSuccessAlertCheck<ApiArg extends {}, Def extends { query?: (arg: Ap
 export const legacyAPI = userUIDAPI.enhanceEndpoints<never, UserDefinitions>({
   endpoints: {
     updateUser: { onQueryStarted: invalidateIAMUser },
-    adminDisableUser: { onQueryStarted: invalidateIAMUser },
-    adminEnableUser: { onQueryStarted: invalidateIAMUser },
-    adminUpdateUserPermissions: { onQueryStarted: invalidateIAMUser },
-    updateOrgUser: { onQueryStarted: invalidateIAMUser },
-    updateOrgUserForCurrentOrg: { onQueryStarted: invalidateIAMUser },
-    addOrgUser: { onQueryStarted: invalidateIAMUser },
-    removeOrgUser: { onQueryStarted: invalidateIAMUser },
-    postSyncUserWithLdap: { onQueryStarted: invalidateIAMUser },
+    adminDisableUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_users', 'users'] },
+    adminEnableUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_users', 'users'] },
+    adminUpdateUserPermissions: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_users', 'users'] },
+    updateOrgUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['orgs', 'org', 'users'] },
+    updateOrgUserForCurrentOrg: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['org', 'users'] },
+    addOrgUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['orgs', 'org', 'users'] },
+    removeOrgUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['orgs', 'org', 'users'] },
+    postSyncUserWithLdap: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_ldap', 'org', 'users'] },
     getUserById: (definition) => {
       const query = definition.query!;
       definition.query = (arg) => ({ ...query(arg), params: { accesscontrol: true } });
-      definition.providesTags = ['users', 'admin_users', 'admin_ldap'];
     },
     getOrgUsersForCurrentOrg: (definition) => {
       const query = definition.query!;
@@ -85,9 +84,7 @@ export const legacyAPI = userUIDAPI.enhanceEndpoints<never, UserDefinitions>({
         const options = query(arg);
         return { ...options, params: { ...options.params, accesscontrol: true } };
       };
-      definition.providesTags = ['org', 'orgs', 'admin_ldap'];
     },
-    getUserOrgList: { providesTags: ['users', 'orgs', 'org', 'admin_ldap'] },
     adminGetUserAuthTokens: {
       transformResponse: (sessions: UserSession[]) => [...sessions].reverse(),
     },
