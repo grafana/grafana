@@ -220,7 +220,11 @@ func testIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T, useG
 			calls := f.store.searches.Load()
 			require.Positive(t, calls)
 			f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: before})
-			require.Equal(t, calls, f.store.searches.Load(), "warm request must avoid a store search")
+			if useGRPC {
+				require.Greater(t, f.store.searches.Load(), calls, "repeated RPC searches must query current grants")
+			} else {
+				require.Equal(t, calls, f.store.searches.Load(), "warm legacy request must avoid a store search")
+			}
 
 			switch change {
 			case grantChange:
@@ -248,6 +252,12 @@ func testIntegrationSearchUsersPermissions_CacheHitsAndExpiry(t *testing.T, useG
 				}))
 			default:
 				t.Fatalf("unsupported change case: %s", change)
+			}
+
+			if useGRPC {
+				f.assertSearch(t, caller, query, searchPermissionsResponse{usr.ID: after})
+				require.Greater(t, f.store.searches.Load(), calls, "mutations must be visible without cache flushing or expiry")
+				return
 			}
 
 			// Raw store changes bypass mutation hooks; expiry must still refresh cached results.

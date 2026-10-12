@@ -7,7 +7,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	authzlib "github.com/grafana/authlib/authz"
 	"github.com/grafana/authlib/types"
@@ -16,13 +15,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/infra/localcache"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 const LegacySearchDelegatedGrant = "authz.grafana.app/legacyuserpermissions:search"
@@ -34,13 +29,12 @@ type LegacySearchService struct {
 	store              store.SearchPermissionStore
 	staticRoles        func(context.Context) map[string]*accesscontrol.RoleDTO
 	actions            accesscontrol.ActionResolver
-	cache              *localcache.CacheService
 	enforcementEnabled func() bool
 	callerPermissions  func(context.Context, types.NamespaceInfo, *authzv1.LegacyPermissionIdentity, bool) ([]accesscontrol.Permission, error)
 }
 
-func NewLegacySearchService(searchStore store.SearchPermissionStore, staticRoles func(context.Context) map[string]*accesscontrol.RoleDTO, actions accesscontrol.ActionResolver, cache *localcache.CacheService) *LegacySearchService {
-	return &LegacySearchService{store: searchStore, staticRoles: staticRoles, actions: actions, cache: cache}
+func NewLegacySearchService(searchStore store.SearchPermissionStore, staticRoles func(context.Context) map[string]*accesscontrol.RoleDTO, actions accesscontrol.ActionResolver) *LegacySearchService {
+	return &LegacySearchService{store: searchStore, staticRoles: staticRoles, actions: actions}
 }
 
 func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySearchUsersPermissionsRequest, stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer) error {
@@ -92,7 +86,7 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 		callerPermissions, err = s.callerPermissions(ctx, ns, caller, enforced)
 	} else {
 		var result map[int64][]accesscontrol.Permission
-		result, err = s.search(ctx, ns, accesscontrol.SearchOptions{UserID: callerID, Action: accesscontrol.ActionUsersPermissionsRead}, enforced, false)
+		result, err = s.search(ctx, ns, accesscontrol.SearchOptions{UserID: callerID, Action: accesscontrol.ActionUsersPermissionsRead}, enforced)
 		callerPermissions = result[callerID]
 	}
 	if err != nil {
@@ -103,7 +97,7 @@ func (s *LegacySearchService) LegacySearchUsersPermissions(req *authzv1.LegacySe
 	if options.UserID > 0 && !visible(options.UserID) {
 		return status.Error(codes.PermissionDenied, "target permission search denied")
 	}
-	results, err := s.search(ctx, ns, options, enforced, true)
+	results, err := s.search(ctx, ns, options, enforced)
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())
 	}
@@ -159,21 +153,10 @@ func streamSearchResults(ctx context.Context, stream authzv1.LegacyAuthzService_
 	return nil
 }
 
-func (s *LegacySearchService) search(ctx context.Context, ns types.NamespaceInfo, options accesscontrol.SearchOptions, enforced, cacheTarget bool) (map[int64][]accesscontrol.Permission, error) {
-	cacheKey := ""
-	if cacheTarget && options.UserID > 0 && s.cache != nil {
-		key, err := accesscontrol.GetSearchPermissionCacheKey(log.New("authz-permission-search"), &user.SignedInUser{UserID: options.UserID, OrgID: ns.OrgID}, options)
-		if err == nil {
-			cacheKey = fmt.Sprintf("%s/legacy-search/%t/%s", ns.Value, enforced, key)
-		}
-		if cacheKey != "" {
-			if cached, ok := s.cache.Get(cacheKey); ok {
-				metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheHit).Inc()
-				return map[int64][]accesscontrol.Permission{options.UserID: cached.([]accesscontrol.Permission)}, nil
-			}
-			metrics.MAccessSearchUserPermissionsCacheUsage.WithLabelValues(accesscontrol.CacheMiss).Inc()
-		}
-	}
+func (s *LegacySearchService) search(ctx context.Context, ns types.NamespaceInfo, options accesscontrol.SearchOptions, enforced bool) (map[int64][]accesscontrol.Permission, error) {
+	// Role and membership mutations do not invalidate filtered search results,
+	// and self-permission reload only refreshes enumeration caches. Read current
+	// grants on each search until invalidation can cross the RPC boundary.
 	options.RolePrefixes = []string{accesscontrol.ManagedRolePrefix, accesscontrol.ExternalServiceRolePrefix}
 	if enforced {
 		options.RolePrefixes = nil
@@ -244,9 +227,6 @@ func (s *LegacySearchService) search(ctx context.Context, ns types.NamespaceInfo
 		if len(permissions) > 0 || options.UserID > 0 {
 			results[id] = permissions
 		}
-	}
-	if cacheKey != "" {
-		s.cache.Set(cacheKey, results[options.UserID], 60*time.Second)
 	}
 	return results, nil
 }

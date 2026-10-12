@@ -28,7 +28,7 @@ func newLoaderSearchService(loader *Loader) *LegacySearchService {
 		}
 		return roles
 	}
-	search := NewLegacySearchService(store.NewSQLPermissionStore(legacysql.NewDatabaseProvider(loader.store.sql), tracer), staticRoles, loader.actions, loader.cache)
+	search := NewLegacySearchService(store.NewSQLPermissionStore(legacysql.NewDatabaseProvider(loader.store.sql), tracer), staticRoles, loader.actions)
 	search.enforcementEnabled = func() bool { return loader.license.FeatureEnabled("accesscontrol.enforcement") }
 	search.callerPermissions = func(ctx context.Context, ns types.NamespaceInfo, assertion *authzv1.LegacyPermissionIdentity, enforced bool) ([]ac.Permission, error) {
 		namespace := ns.Value

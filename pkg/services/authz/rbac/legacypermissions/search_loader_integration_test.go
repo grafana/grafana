@@ -83,7 +83,7 @@ func TestIntegrationSharedLoaderSearchLicenseTransitions(t *testing.T) {
 			for _, phase := range []struct {
 				name    string
 				enabled bool
-			}{{"license off", false}, {"license enabled after cached search", true}, {"license disabled after cached search", false}} {
+			}{{"license off", false}, {"license enabled after previous search", true}, {"license disabled after previous search", false}} {
 				t.Run(phase.name, func(t *testing.T) {
 					license.enabled = phase.enabled
 					want := []types.Permission{{Action: "test:read", Scope: "tests:id:managed"}, {Action: "test:read", Scope: "tests:id:global"}}
@@ -105,7 +105,7 @@ func TestIntegrationSharedLoaderSearchLicenseTransitions(t *testing.T) {
 					require.ElementsMatch(t, wantEnumeration, enumerated.Permissions)
 				})
 			}
-			require.Len(t, cache.Items(), 2, "licensed and unlicensed target snapshots must occupy different cache entries")
+			require.Empty(t, cache.Items(), "search must not leave uninvalidated target snapshots")
 		})
 	}
 }
@@ -200,7 +200,7 @@ func TestIntegrationSharedLoaderSearchRequesterVisibilitySources(t *testing.T) {
 				}
 				cfg := loaderConfig(true)
 				client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: enforced}, migrated), cfg)
-				for _, phase := range []string{"uncached target", "cached target"} {
+				for _, phase := range []string{"uncached target", "repeated target"} {
 					t.Run(phase, func(t *testing.T) {
 						result, err := client.LegacySearchUsersPermissions(t.Context(), ac.LegacySearchPermissionCaller("default"), req)
 						require.NoError(t, err)

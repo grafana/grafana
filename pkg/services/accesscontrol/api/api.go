@@ -8,6 +8,8 @@ import (
 	"strconv"
 
 	"go.opentelemetry.io/otel"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	claims "github.com/grafana/authlib/types"
 
@@ -132,6 +134,9 @@ func (api *AccessControlAPI) searchUsersPermissions(c *contextmodel.ReqContext) 
 	// Always query legacy as the baseline — not all permissions are migrated to Zanzana yet.
 	permissions, err := api.Service.SearchUsersPermissions(ctx, c.SignedInUser, searchOptions)
 	if err != nil {
+		if status.Code(err) == codes.PermissionDenied {
+			return response.Error(http.StatusForbidden, "permission search denied", err)
+		}
 		return response.Error(http.StatusInternalServerError, "could not get org user permissions", err)
 	}
 
