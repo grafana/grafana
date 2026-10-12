@@ -15364,8 +15364,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15407,8 +15406,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15447,8 +15445,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15490,8 +15487,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15533,8 +15529,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15579,8 +15574,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15633,8 +15627,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -15789,8 +15782,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -20775,6 +20767,15 @@
         "operationId": "getOrgUsersForCurrentOrg",
         "parameters": [
           {
+            "description": "Filter by the exact numerical user ID within the current organization.",
+            "in": "query",
+            "name": "userId",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
             "in": "query",
             "name": "query",
             "schema": {
@@ -21536,8 +21537,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -21581,8 +21581,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25208,8 +25207,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25244,8 +25242,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25297,8 +25294,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
@@ -25335,8 +25331,7 @@
             "name": "user_id",
             "required": true,
             "schema": {
-              "format": "int64",
-              "type": "integer"
+              "type": "string"
             }
           }
         ],
