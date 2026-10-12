@@ -2832,15 +2832,18 @@
     {
       "metadata": {
         "name": "grafana.newPanelQueryErrorsUI",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-19T08:30:47Z"
+        "resourceVersion": "1791798499805",
+        "creationTimestamp": "2026-06-19T08:30:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-12 09:48:19.805299 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables a new UI for query errors and notices",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
