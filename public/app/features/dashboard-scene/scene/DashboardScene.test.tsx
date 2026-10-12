@@ -1868,15 +1868,15 @@ describe('DashboardScene', () => {
       setTestFlags({});
     });
 
-    it('returns the filters unchanged while BI mode is off', () => {
+    it('returns the filters unchanged while cross filter selection is off', () => {
       const filters = [stamped('panel-1'), ordinary];
 
       expect(scene.enrichDataRequestFilters(runner('data-query-runner'), filters)).toBe(filters);
     });
 
-    describe('with BI mode on', () => {
+    describe('with cross filter selection on', () => {
       beforeEach(() => {
-        setTestFlags({ 'dashboard.biMode': true });
+        setTestFlags({ 'dashboard.crossFilterSelection': true });
       });
 
       it("drops only the requesting panel's own selection", () => {

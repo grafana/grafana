@@ -1343,11 +1343,11 @@ export class DashboardScene
   }
 
   /**
-   * Called by the SceneQueryRunner with the ad hoc filters it is about to send. In BI mode a panel's own
+   * Called by the SceneQueryRunner with the ad hoc filters it is about to send. With cross filter selection on, a panel's own
    * cross filter selection must not filter that panel, so filters stamped by the requesting panel are dropped.
    */
   public enrichDataRequestFilters(source: SceneObject, filters: AdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
-    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardBiMode, false)) {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardCrossFilterSelection, false)) {
       return filters;
     }
 

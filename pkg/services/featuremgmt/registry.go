@@ -678,8 +678,8 @@ var (
 			Expression:  "false",
 		},
 		{
-			Name:        "dashboard.biMode",
-			Description: "Business intelligence interactions on dashboards: clicking a bar chart selects values and filters the other panels instead of pinning the tooltip",
+			Name:        "dashboard.crossFilterSelection",
+			Description: "Cross filtering between panels: Alt-click (Option-click on macOS) selects and multi-selects values that filter the other panels, while the selecting panel highlights them instead of filtering itself",
 			Stage:       FeatureStageExperimental,
 			Generate:    Generate{React: true},
 			Owner:       grafanaDashboardsSquad,

@@ -30,7 +30,7 @@ declare module "@openfeature/core" {
     | "useKubernetesShortURLsAPI"
     | "dashboardNewLayouts"
     | "dashboard.notebooks"
-    | "dashboard.biMode"
+    | "dashboard.crossFilterSelection"
     | "dashboardUndoRedo"
     | "perPanelNonApplicableDrilldowns"
     | "feedbackButton"

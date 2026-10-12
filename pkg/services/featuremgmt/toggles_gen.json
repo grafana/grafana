@@ -1418,12 +1418,12 @@
     },
     {
       "metadata": {
-        "name": "dashboard.biMode",
-        "resourceVersion": "1790943864475",
-        "creationTimestamp": "2026-10-02T12:24:24Z"
+        "name": "dashboard.crossFilterSelection",
+        "resourceVersion": "1791819699824",
+        "creationTimestamp": "2026-10-12T15:41:39Z"
       },
       "spec": {
-        "description": "Business intelligence interactions on dashboards: clicking a bar chart selects values and filters the other panels instead of pinning the tooltip",
+        "description": "Cross filtering between panels: Alt-click (Option-click on macOS) selects and multi-selects values that filter the other panels, while the selecting panel highlights them instead of filtering itself",
         "stage": "experimental",
         "codeowner": "@grafana/dashboards-squad",
         "frontend": true,
