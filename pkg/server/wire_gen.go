@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -127,7 +128,7 @@ func InitializeDashboardStats(cfg *setting.Cfg, features featuremgmt.FeatureTogg
 // wire_subinject_oss.go:
 
 var ossBaseCLISet = wire.NewSet(
-	NewModuleRunner, metrics.WireSet, featuremgmt.ProvideManagerService, featuremgmt.ProvideToggles, hooks.ProvideService, setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)), licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)), configprovider.ProvideService,
+	NewModuleRunner, metricsservice.WireSet, featuremgmt.ProvideManagerService, featuremgmt.ProvideToggles, hooks.ProvideService, setting.ProvideProvider, wire.Bind(new(setting.Provider), new(*setting.OSSImpl)), licensing.ProvideService, wire.Bind(new(licensing.Licensing), new(*licensing.OSSLicensingService)), configprovider.ProvideService,
 )
 
 var moduleServerSet = wire.NewSet(

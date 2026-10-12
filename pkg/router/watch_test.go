@@ -108,10 +108,6 @@ func newWatchRig(t *testing.T, kind string, middleware bool) *watchRig {
 		upstreamURL, err := url.Parse(upstream.URL)
 		require.NoError(t, err)
 		switch kind {
-		case "forward":
-			b, err := NewForwardBackend(metav1.APIGroup{Name: watchGroup}, forwardSpec(upstream.URL), "1", &http.Transport{})
-			require.NoError(t, err)
-			backends = append(backends, b)
 		case "aggregate":
 			b, err := newAggregateBackend("target", metav1.APIGroup{Name: watchGroup}, upstreamURL, &http.Transport{})
 			require.NoError(t, err)
@@ -184,7 +180,7 @@ func requireCleanEnd(t *testing.T, events *bufio.Reader) {
 }
 
 func TestWatchThroughEveryBackendAndMode(t *testing.T) {
-	for _, kind := range []string{"forward", "aggregate", "single-tenant", "in-process"} {
+	for _, kind := range []string{"aggregate", "single-tenant", "in-process"} {
 		for _, middleware := range []bool{false, true} {
 			mode := "standalone"
 			if middleware {
@@ -307,7 +303,7 @@ func histogramCount(t *testing.T, observer prometheus.Observer) uint64 {
 }
 
 func TestWatchEndsWhenItsBackendChanges(t *testing.T) {
-	for _, kind := range []string{"forward", "in-process"} {
+	for _, kind := range []string{"aggregate", "in-process"} {
 		t.Run(kind, func(t *testing.T) {
 			rig := newWatchRig(t, kind, false)
 			loader := rig.service.router.loader.(*mutableLoader)
@@ -331,7 +327,7 @@ func TestWatchEndsWhenItsBackendChanges(t *testing.T) {
 }
 
 func TestWatchEndsWhenTheServiceStops(t *testing.T) {
-	for _, kind := range []string{"forward", "single-tenant", "in-process"} {
+	for _, kind := range []string{"aggregate", "single-tenant", "in-process"} {
 		t.Run(kind, func(t *testing.T) {
 			rig := newWatchRig(t, kind, false)
 			events := openWatch(t.Context(), t, rig.url+watchPath+"?watch=true")
@@ -343,7 +339,7 @@ func TestWatchEndsWhenTheServiceStops(t *testing.T) {
 }
 
 func TestUpgradeRequestsAreRejected(t *testing.T) {
-	for _, kind := range []string{"forward", "single-tenant", "in-process"} {
+	for _, kind := range []string{"aggregate", "single-tenant", "in-process"} {
 		t.Run(kind, func(t *testing.T) {
 			rig := newWatchRig(t, kind, false)
 			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)

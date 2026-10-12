@@ -1,18 +1,20 @@
 # Router: Metrics review follow-ups
 
-Status: proposed
+Status: in progress. Done: M1 (#134524), M3 (#134532), M4 (#134486). Not pursued: M2, M8.
+Open: M5–M7, M9–M12 (checked against `main` on 2026-10-10).
 Package: `pkg/router`
 
 Changes from a review of request coverage, async failure modes and cardinality. No label carries a
 user, namespace, stack ID or slug, so nothing here is unbounded; the items close coverage gaps and
 cut series cost. Keep `specs/2026-09-26-router-metrics.md` in sync with each change.
 
-Scope is the standalone router, which gets its plugins from `plugins_url`. Local plugins, which
+Scope is the standalone router, which gets its plugins from `plugins_url` and its core APIs from `core_url`. Local plugins, which
 only the middleware mode serves, are out of scope.
 
 ## Required
 
-- [x] **M1. Add a request counter and drop `status_code` from the duration histogram.**
+- [x] **M1. Add a request counter and drop `status_code` from the duration histogram.** Done in
+  #134524.
   - Add `grafana_router_http_requests_total{group,verb,route,status_code}`, counting every request,
     watches included, when it finishes.
   - Drop `status_code` from `grafana_router_http_request_duration_seconds`, or reduce it to a class
@@ -31,14 +33,15 @@ only the middleware mode serves, are out of scope.
     metric. The router gets the plugin process's raw v3 client (`v3.NewLazyClient`), which bypasses
     Grafana's plugin client middleware.
 
-- [x] **M3. Count backends dropped during a load.** Added the gauge
+- [x] **M3. Count backends dropped during a load.** Done in #134532. Added the gauge
   `grafana_router_skipped_backends{source}`, rebuilt on each load like `shadowed_groups`, counting
-  the skips in `combineByName` and the `plugins_url` and aggregate polls. It has no `reason` label:
+  the skips in the `plugins_url`, `core_url` and aggregate polls (`combineByName`, also counted at
+  first, was removed with the RouteBackend source in #134652). It has no `reason` label:
   each skip is already logged with its error. Add one, from a fixed set, if alerting needs to tell
   skips apart.
   - Not counted: per-group `Backend.Load` failures in `reconcile`. They happen in the router, not a
-    loader, keep the group's last-known-good backend, and already count in
-    `reconcile_errors_total`.
+    loader, keep the group's last-known-good backend, are retried with backoff,
+    and already count in `reconcile_errors_total`.
 
 ## Recommended
 

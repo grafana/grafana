@@ -755,6 +755,8 @@ export class NotebookLayoutManager
 
   private executeEdit(action: NotebookEditAction): void {
     this.commitPendingEdits();
+    // The title's own pending edit lives on the parent scene, not here.
+    this.notebookScene?.commitTitleEdit();
     const history = this.editHistory;
     if (history) {
       history.execute(action);

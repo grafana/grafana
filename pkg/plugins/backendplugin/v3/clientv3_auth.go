@@ -35,18 +35,21 @@ func NewTokenExchanger(token, tokenExchangeURL string) (authnlib.TokenExchanger,
 	return exchanger, nil
 }
 
-// WithAuthentication returns client with caller authentication for pluginID.
-// Each request carries an access token exchanged for the caller, with the
-// plugin ID as its audience, which the plugin accepts for every API group it
-// serves. Requests made as Grafana's own service identity use Grafana's
+// WithAuthentication returns client with caller authentication for the plugin
+// or app serving groups. Each request carries an access token exchanged for the
+// caller. Its audience is pluginID, which the plugin accepts for every API
+// group it serves, or without a plugin ID, such as for a core app, the
+// request's API group. Requests for any other group fail before a token is
+// minted. Requests made as Grafana's own service identity use Grafana's
 // service token. A nil exchanger returns client unchanged.
-func WithAuthentication(client appclientv3.Client, pluginID string, exchanger authnlib.TokenExchanger) (appclientv3.Client, error) {
+func WithAuthentication(client appclientv3.Client, pluginID string, groups []string, exchanger authnlib.TokenExchanger) (appclientv3.Client, error) {
 	if exchanger == nil || client == nil {
 		return client, nil
 	}
 	return appgrpcplugin.WithAuthentication(client, appgrpcplugin.ClientV3Options{
 		TokenExchanger:    exchanger,
 		PluginID:          pluginID,
+		Groups:            groups,
 		IsServiceIdentity: identity.IsServiceIdentity,
 	})
 }

@@ -7,7 +7,7 @@
 //
 // It is kept separate from NavID (rather than deriving order from it) because
 // it also positions weight-only anchors that have no NavID (assistant, sigil,
-// aiAndMl, cmab, application, asserts, dataConnections, plugin, ...) and groups
+// workflows, aiAndMl, cmab, application, asserts, dataConnections, plugin, ...) and groups
 // several NavIDs under one weight (savedItems ← starred/bookmarks, config ←
 // cfg, dataConnections ← connections).
 const NAV_ORDER = [
@@ -22,6 +22,7 @@ const NAV_ORDER = [
   'sigil',
   'alerting',
   'alertsAndIncidents',
+  'workflows',
   'aiAndMl',
   'adaptiveTelemetry',
   'cmab',

@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
-	"github.com/grafana/grafana/pkg/infra/metrics"
+	"github.com/grafana/grafana/pkg/infra/metricsservice"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/authz"
@@ -32,7 +32,7 @@ import (
 
 var ossBaseCLISet = wire.NewSet(
 	NewModuleRunner,
-	metrics.WireSet,
+	metricsservice.WireSet,
 	featuremgmt.ProvideManagerService,
 	featuremgmt.ProvideToggles,
 	hooks.ProvideService,

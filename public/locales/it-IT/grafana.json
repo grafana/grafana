@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Usa la nuova esperienza",
-        "view-previous-experience": "Torna all'esperienza precedente"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Tipo di regola sconosciuto",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Riduci tutto",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Ingrandisci tutto"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Mostra tutti gli intervalli",
     "signal-card": {
-      "collapse-aria-label": "Comprimi Esploratore origine dei dati per query {{refId}}",
-      "expand-aria-label": "Espandi esploratore origine dei dati per query {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Vai alla query {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Annulla",
       "confirm-discard": "Ignora",
@@ -13235,6 +13245,7 @@
       "redo-action": "Ripeti: {{action}}",
       "remove-query": "Rimuovi query",
       "remove-tag": "Rimuovi tag",
+      "rename": "",
       "reset-cell-time-range": "Usa l'intervallo di tempo del notebook",
       "select-query": "Seleziona query",
       "set-cell-time-range": "Imposta intervallo di tempo del pannello",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Ordina i campi in un frame."
       },
+      "drag-handle-label": "",
       "label-field": "Campo",
       "label-reverse": "Inverti",
       "name": {
         "sort-by": "Ordina per"
       },
-      "placeholder-select-field": "Seleziona campo"
+      "placeholder-select-field": "Seleziona campo",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {
