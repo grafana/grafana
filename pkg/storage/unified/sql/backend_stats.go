@@ -17,7 +17,7 @@ import (
 const folderBatchSize = 500
 
 // Support getting resource stats using SQL as fallback when the indexer is not running
-var _ resource.StatsGetter = &backend{}
+var _ resource.StatsGetter = (*backend)(nil)
 
 // GetStats implements resource.ResourceIndexServer.
 // This will use the SQL index to count values

@@ -14,10 +14,10 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 
+	v3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/plugins/auth"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
-	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -450,7 +450,7 @@ func (p *Plugin) Client() (PluginClient, bool) {
 	return nil, false
 }
 
-func (p *Plugin) ClientV3(ctx context.Context) (v3.ClientV3, bool) {
+func (p *Plugin) ClientV3(ctx context.Context) (v3.Client, bool) {
 	client, ok := p.client.(backendplugin.PluginV3)
 	if !ok {
 		return nil, false

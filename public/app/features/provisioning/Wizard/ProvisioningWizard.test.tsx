@@ -7,7 +7,8 @@ import { act, render, waitFor } from 'test/test-utils';
 
 import { PROVISIONING_API_BASE as BASE } from '@grafana/test-utils/handlers';
 import server from '@grafana/test-utils/server';
-import { type Repository } from 'app/api/clients/provisioning/v0alpha1';
+import { type Repository, provisioningAPIv0alpha1 } from 'app/api/clients/provisioning/v0alpha1';
+import { configureStore } from 'app/store/configureStore';
 
 import { useCreateOrUpdateRepository } from '../hooks/useCreateOrUpdateRepository';
 import { createJob, createRepository } from '../mocks/factories';
@@ -77,7 +78,7 @@ async function navigateToConnectionStep(
   }
 
   if ((type === 'bitbucket' || type === 'git') && data?.tokenUser) {
-    await pasteIntoInput(user, screen.getByPlaceholderText('username'), data.tokenUser);
+    await pasteIntoInput(user, screen.getByPlaceholderText(type === 'git' ? 'git' : 'username'), data.tokenUser);
   }
 
   if (type !== 'local' && data?.url) {
@@ -580,6 +581,79 @@ describe('ProvisioningWizard', () => {
         expect(screen.queryByText('Repository status unhealthy')).not.toBeInTheDocument();
       });
     });
+
+    it('enters the synchronize step in the loading state after the bootstrap save bumps the generation', async () => {
+      // Real submission hook: the bootstrap save must perform the actual connection test + PUT round-trip
+      const { useCreateOrUpdateRepository: realUseCreateOrUpdateRepository } = jest.requireActual<{
+        useCreateOrUpdateRepository: typeof useCreateOrUpdateRepository;
+      }>('../hooks/useCreateOrUpdateRepository');
+      mockUseCreateOrUpdateRepository.mockImplementation(realUseCreateOrUpdateRepository);
+
+      let stored = createRepository({ metadata: { resourceVersion: '5' } }); // generation 1, observedGeneration 1
+      const saved = createRepository({ metadata: { generation: 2, resourceVersion: '6' } }); // observedGeneration still 1
+      let savingBootstrap = false;
+      let releaseLists = () => {};
+      const listsReleased = new Promise<void>((resolve) => (releaseLists = resolve));
+
+      server.use(
+        http.post(`${BASE}/repositories`, () => HttpResponse.json(stored)),
+        http.put(`${BASE}/repositories/:name`, () => {
+          if (savingBootstrap) {
+            stored = saved; // the bootstrap step changes title/target: spec change, generation bump
+          }
+          return HttpResponse.json(stored);
+        }),
+        http.get(`${BASE}/repositories`, async () => {
+          const snapshot = stored; // read at request time, like a server does
+          if (savingBootstrap) {
+            await listsReleased; // only the PUT response can reach the cache until released
+          }
+          return HttpResponse.json({
+            items: [snapshot],
+            metadata: { resourceVersion: snapshot.metadata?.resourceVersion },
+          });
+        })
+      );
+
+      const store = configureStore();
+      const { user } = render(
+        <StepStatusProvider>
+          <ProvisioningWizard type="github" />
+        </StepStatusProvider>,
+        { store }
+      );
+      await navigateToBootstrapStep(user);
+
+      savingBootstrap = true;
+      await user.click(screen.getByRole('button', { name: /Synchronize with external storage/i }));
+      expect(
+        await screen.findByRole('heading', { name: /4\. Synchronize with external storage/i })
+      ).toBeInTheDocument();
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      // The list refetch triggered by the save lands; the step must stay loading until a watch
+      // event reports the new generation as reconciled.
+      const selectRepositoryList = provisioningAPIv0alpha1.endpoints.listRepository.select({
+        fieldSelector: 'metadata.name=test-repo-abc123',
+        watch: true,
+      });
+      releaseLists();
+      await waitFor(() => expect(selectRepositoryList(store.getState()).isLoading).toBe(false));
+      expect(screen.getByText('Checking repository status...')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Begin synchronization/i })).not.toBeInTheDocument();
+
+      act(() => {
+        getMockLiveSrv().emitWatchEvent('repositories', {
+          type: 'MODIFIED',
+          object: createRepository({
+            metadata: { generation: 2, resourceVersion: '7' },
+            status: { observedGeneration: 2 },
+          }),
+        });
+      });
+      expect(await screen.findByRole('button', { name: /Begin synchronization/i })).toBeEnabled();
+    });
   });
 
   describe('Synchronization Step', () => {
@@ -877,7 +951,7 @@ describe('ProvisioningWizard', () => {
       const { user } = setup(<ProvisioningWizard type="git" />);
 
       await typeIntoTokenField(user, 'token or password', 'test-token');
-      await pasteIntoInput(user, screen.getByPlaceholderText('username'), 'test-user');
+      await pasteIntoInput(user, screen.getByPlaceholderText('git'), 'test-user');
       await pasteIntoInput(
         user,
         screen.getByRole('textbox', { name: /Repository URL/i }),

@@ -10,8 +10,16 @@ import { type DataSourceWithBackend, isFetchError } from '@grafana/runtime';
 import { getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { PromApplication } from 'app/types/unified-alerting-dto';
 
+import { type MetricsDiskScope } from './metricsFilter';
 import { probeProxyGet, resolveBackendInstance, withDeadline } from './probeUtils';
-import { readLabeledScalar, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
+import {
+  quotePromString,
+  readLabeledScalar,
+  readScalar,
+  readSeries,
+  runInstantQueries,
+  runRangeQuery,
+} from './promQuery';
 import { DATA_LOOKBACK_HOURS } from './solutionDataProbes';
 
 /** Stats window for the logs card (design-fixed), distinct from the 24h sparkline lookback. */
@@ -51,11 +59,15 @@ interface TempoTagValuesResponse {
   tagValues?: Array<{ value?: string }>;
 }
 
-// Failures are expected (endpoint disabled, 403s) and handled by the caller; never toast.
-function getResource<T>(instance: DataSourceWithBackend, path: string, params: Record<string, unknown>): Promise<T> {
+// Failures are expected (endpoint disabled, 403s): they resolve to null and never toast.
+function getResource<T>(
+  instance: DataSourceWithBackend,
+  path: string,
+  params: Record<string, unknown>
+): Promise<T | null> {
   return withDeadline(DETAIL_QUERY_TIMEOUT_MS, undefined, (signal) =>
     instance.getResource<T>(path, params, { showErrorAlert: false, abortSignal: signal })
-  );
+  ).catch(() => null);
 }
 
 // Points are [unix ms, value]; a real trend needs at least two of them.
@@ -91,11 +103,9 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
   const labels = await getResource<{ data?: unknown }>(instance, 'labels', {
     start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
     end,
-  })
-    .then((res) =>
-      Array.isArray(res?.data) ? res.data.filter((label): label is string => typeof label === 'string') : null
-    )
-    .catch(() => null);
+  }).then((res) =>
+    Array.isArray(res?.data) ? res.data.filter((label): label is string => typeof label === 'string') : null
+  );
   const label = pickLogsLabel(labels);
   if (!label) {
     return empty;
@@ -105,16 +115,14 @@ export async function fetchLogsActivity(ds: Pick<DataSourceInstanceListItem, 'ui
   // aggregateBy=labels totals by label NAME, not value — one series; Loki's series limit cannot truncate it.
   const aggregate = { aggregateBy: 'labels', targetLabels: label };
   const [volume, volumeRange] = await Promise.all([
-    getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, ...aggregate }).catch(
-      () => null
-    ),
+    getResource<LokiVolumeResponse>(instance, 'index/volume', { query, start: statsStart, end, ...aggregate }),
     getResource<LokiVolumeRangeResponse>(instance, 'index/volume_range', {
       query,
       start: end - DATA_LOOKBACK_HOURS * 3600 * NS_IN_S,
       end,
       step: '30m',
       ...aggregate,
-    }).catch(() => null),
+    }),
   ]);
   const volumes = volume?.data?.result;
   // Sum the (single-series) matrix into ingest buckets (timestamps are unix seconds).
@@ -237,7 +245,7 @@ export interface MetricsActivity {
   count: MetricsCount | null;
   /** Ingest rate (stack-scoped usage metrics, else Prometheus self-monitoring). */
   dataPointsPerMinute: number | null;
-  /** node_exporter host count. */
+  /** node_exporter host count, less the disk scope's excluded hosts. */
   hosts: number | null;
   /** Active-series trend over the last 24h. */
   seriesSparkline: FieldSparkline | null;
@@ -247,11 +255,29 @@ export interface MetricsActivity {
 const DISK_PRESSURE_RATIO = 0.9;
 const DISK_ETA_MAX_HOURS = 48;
 
+// Pseudo filesystems are always excluded; they read as full without being a problem.
 const FS_EXCLUDE = 'fstype!~"tmpfs|overlay|squashfs|iso9660|ramfs"';
-// Per-filesystem fill ratio; pseudo filesystems excluded.
-const FS_USED = `(1 - node_filesystem_avail_bytes{${FS_EXCLUDE}} / node_filesystem_size_bytes{${FS_EXCLUDE}})`;
-/** Counts hosts whose fullest real filesystem exceeds the card threshold. */
-export const METRICS_DISK_PRESSURE_QUERY = `max by (instance) (${FS_USED}) > ${DISK_PRESSURE_RATIO}`;
+
+// The one place the scope becomes matchers; a parsed filter is already trimmed and validated.
+function exclusionMatchers(scope: MetricsDiskScope | null): string[] {
+  return (scope?.excludes ?? []).map(({ label, regex }) => `${label}!~${quotePromString(regex)}`);
+}
+
+// `{fixed…, pseudo-filesystem exclusion, scope exclusions…}`, so every disk query narrows alike.
+function filesystemSelector(scope: MetricsDiskScope | null, fixed: string[] = []): string {
+  return `{${[...fixed, FS_EXCLUDE, ...exclusionMatchers(scope)].join(',')}}`;
+}
+
+/** Per-filesystem fill ratio (0..1) that the disk alert is built on. */
+export function diskRatioExpr(scope: MetricsDiskScope | null): string {
+  const selector = filesystemSelector(scope);
+  return `(1 - node_filesystem_avail_bytes${selector} / node_filesystem_size_bytes${selector})`;
+}
+
+/** Hosts whose fullest real filesystem exceeds the card threshold. */
+export function diskPressureQuery(scope: MetricsDiskScope | null): string {
+  return `max by (instance) (${diskRatioExpr(scope)}) > ${DISK_PRESSURE_RATIO}`;
+}
 
 // 0, negatives and NaN read as absent: cards show a number or nothing, never "0".
 function positive(value: number | null | undefined): number | null {
@@ -265,33 +291,35 @@ async function fetchActiveSeries(instance: DataSourceWithBackend): Promise<numbe
     'label_names[]': '__name__',
     // Mimir defaults count_method to inmemory, which also counts stale series held in open TSDB heads.
     count_method: 'active',
-  })
-    .then((res) => positive(Number(res?.series_count_total)))
-    .catch(() => null);
+  }).then((res) => positive(Number(res?.series_count_total)));
   if (cardinality != null) {
     return cardinality;
   }
-  return getResource<{ data?: { headStats?: { numSeries?: unknown } } }>(instance, 'api/v1/status/tsdb', {})
-    .then((res) => positive(Number(res?.data?.headStats?.numSeries)))
-    .catch(() => null);
+  return getResource<{ data?: { headStats?: { numSeries?: unknown } } }>(instance, 'api/v1/status/tsdb', {}).then(
+    (res) => positive(Number(res?.data?.headStats?.numSeries))
+  );
 }
 
 // Fallback primary only: the 7d name list runs to megabytes on large tenants.
 function fetchMetricNameCount(instance: DataSourceWithBackend, start: number, end: number): Promise<number | null> {
-  return getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end })
-    .then((res) => (Array.isArray(res?.data) ? res.data.length : null))
-    .catch(() => null);
+  return getResource<{ data?: unknown }>(instance, 'api/v1/label/__name__/values', { start, end }).then((res) =>
+    Array.isArray(res?.data) ? res.data.length : null
+  );
 }
 
 // Linear ETA until the shown (fullest) filesystem fills. Growing/steady filesystems drop
-// out via `> 0`; past the clamp a linear estimate is noise.
+// out via `> 0`; past the clamp a linear estimate is noise. Instance labels repeat across
+// clusters, so the scope applies here too or an excluded twin could supply the ETA.
 export async function fetchMetricsDiskHoursToFull(
   instanceLabel: string,
   mountpoint: string,
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  scope: MetricsDiskScope | null
 ): Promise<number | null> {
-  const esc = (v: string) => v.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const selector = `{instance="${esc(instanceLabel)}",mountpoint="${esc(mountpoint)}",${FS_EXCLUDE}}`;
+  const selector = filesystemSelector(scope, [
+    `instance=${quotePromString(instanceLabel)}`,
+    `mountpoint=${quotePromString(mountpoint)}`,
+  ]);
   const hours = await runInstantQueries(
     {
       eta: `min((node_filesystem_avail_bytes${selector} / -deriv(node_filesystem_avail_bytes${selector}[6h])) > 0) / 3600`,
@@ -304,13 +332,15 @@ export async function fetchMetricsDiskHoursToFull(
   return hours != null && hours > 0 && hours <= DISK_ETA_MAX_HOURS ? hours : null;
 }
 
+/** Disk pressure across the fleet; `scope` null = every real filesystem. */
 export async function fetchMetricsDiskPressure(
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  scope: MetricsDiskScope | null
 ): Promise<MetricsDiskPressure | null> {
   const frames = await runInstantQueries(
     {
-      diskHosts: `count(${METRICS_DISK_PRESSURE_QUERY})`,
-      diskWorst: `topk(1, ${FS_USED})`,
+      diskHosts: `count(${diskPressureQuery(scope)})`,
+      diskWorst: `topk(1, ${diskRatioExpr(scope)})`,
     },
     ds,
     { timeoutMs: DETAIL_QUERY_TIMEOUT_MS, partial: true }
@@ -410,12 +440,13 @@ function fetchUsageStats(usage: UsageQueries): Promise<UsageStats | null> {
 }
 
 /**
- * Active-series count (or the metric-name count when none resolves), node_exporter host count,
- * and the 24h active-series sparkline. Every field fails soft to null; the card drops when nothing
- * renderable remains. Never a matcher-less series query — cardinality on large tenants is prohibitive.
+ * Active-series count (or the metric-name count when none resolves), host count, and the 24h
+ * active-series sparkline. Every field fails soft to null; the card drops when nothing renderable
+ * remains. Never a matcher-less series query — cardinality on large tenants is prohibitive.
  */
 export async function fetchMetricsActivity(
-  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>
+  ds: Pick<DataSourceInstanceListItem, 'uid' | 'type'>,
+  scope: MetricsDiskScope | null
 ): Promise<MetricsActivity> {
   const empty: MetricsActivity = { count: null, dataPointsPerMinute: null, hosts: null, seriesSparkline: null };
   const instance = await resolveBackendInstance(ds.uid);
@@ -438,8 +469,14 @@ export async function fetchMetricsActivity(
       const names = await fetchMetricNameCount(instance, start, end);
       return names != null ? { kind: 'names', value: names } : null;
     });
+  // One series per host keeps this cheap. The scope's matchers apply so an excluded host leaves
+  // both figures; filesystem-only labels are absent here, so those matchers change nothing.
+  const matchers = exclusionMatchers(scope);
   const fleet = runInstantQueries(
-    { ...(mimir ? {} : { dpm: PROM_DPM_QUERY }), hosts: 'count(node_uname_info)' },
+    {
+      ...(mimir ? {} : { dpm: PROM_DPM_QUERY }),
+      hosts: `count(node_uname_info${matchers.length > 0 ? `{${matchers.join(',')}}` : ''})`,
+    },
     ds,
     // partial: readers are null-safe; one failed query keeps the rest.
     { partial: true }

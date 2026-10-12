@@ -26,7 +26,7 @@ var (
 	registerStatusReaderMetricsOnce sync.Once
 
 	migrationLogBootstrapFailuresMetric = metricutil.NewCounterStartingAtZero(prometheus.CounterOpts{
-		Name: "migration_status_reader_bootstrap_failures_total",
+		Name: "grafana_migration_status_reader_bootstrap_failures_total",
 		Help: "Total number of failures when ensuring the migration log table exists at startup",
 	})
 )

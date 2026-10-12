@@ -24,7 +24,7 @@ import { notifyApp } from '../../../../core/reducers/appNotification';
 import { PAGE_SIZE } from '../../../../features/browse-dashboards/api/constants';
 import { refetchChildren } from '../../../../features/browse-dashboards/state/actions';
 import { handleError } from '../../../utils';
-import { createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
+import { applyWatchEvent, createOnCacheEntryAdded } from '../utils/createOnCacheEntryAdded';
 
 const handleProvisioningFormError = (e: unknown, dispatch: ThunkDispatch, title: string) => {
   if (typeof e === 'object' && e && 'error' in e && isFetchError(e.error)) {
@@ -178,6 +178,9 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     createRepositoryTest: {
+      // Testing a submitted spec touches nothing on the server, so the generated
+      // invalidation would only refetch every Repository-tagged query for nothing.
+      invalidatesTags: [],
       onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
         try {
           await queryFulfilled;
@@ -227,9 +230,18 @@ export const provisioningAPIv0alpha1 = generatedAPI.enhanceEndpoints({
       },
     },
     replaceRepository: {
-      onQueryStarted: async (_, { queryFulfilled, dispatch }) => {
+      onQueryStarted: async (_, { queryFulfilled, dispatch, getState }) => {
         try {
-          await queryFulfilled;
+          const { data } = await queryFulfilled;
+          // Cached lists must show the saved object before the invalidation refetch or watch
+          // event lands; apply the response like a watch MODIFIED event.
+          for (const args of generatedAPI.util.selectCachedArgsForQuery(getState(), 'listRepository')) {
+            dispatch(
+              generatedAPI.util.updateQueryData('listRepository', args, (draft) => {
+                applyWatchEvent(draft.items, { type: 'MODIFIED', object: data });
+              })
+            );
+          }
           dispatch(
             notifyApp(
               createSuccessNotification(

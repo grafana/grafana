@@ -116,6 +116,7 @@ func (l *LegacyBindingStore) Update(ctx context.Context, name string, objInfo re
 	updateCmd := legacy.UpdateTeamMemberCommand{
 		UID:        teamBindingObj.Name,
 		Permission: permission,
+		TeamUID:    teamBindingObj.Spec.TeamRef.Name,
 	}
 
 	_, err = l.store.UpdateTeamMember(ctx, ns, updateCmd)
@@ -136,13 +137,18 @@ func (l *LegacyBindingStore) Delete(ctx context.Context, name string, deleteVali
 	}
 
 	// Check if the team binding exists
-	_, err = l.Get(ctx, name, nil)
+	existing, err := l.Get(ctx, name, nil)
 	if err != nil {
 		return nil, false, err
 	}
+	var teamUID string
+	if binding, ok := existing.(*iamv0alpha1.TeamBinding); ok {
+		teamUID = binding.Spec.TeamRef.Name
+	}
 
 	err = l.store.DeleteTeamMember(ctx, ns, legacy.DeleteTeamMemberCommand{
-		UID: name,
+		UID:     name,
+		TeamUID: teamUID,
 	})
 	if err != nil {
 		return nil, false, err

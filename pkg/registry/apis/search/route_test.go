@@ -72,11 +72,11 @@ func requestExample(t *testing.T, r Route) string {
 func TestOperationIDs(t *testing.T) {
 	versions := []string{"v0alpha1", "v1", "v1beta1", "v2alpha1", "v2beta1"}
 
-	// Both endpoints are mounted on every served version, so the IDs have to stay
+	// Endpoints can be mounted on every served version, so the IDs have to stay
 	// distinct across endpoints as well as versions once the specs are merged.
 	seen := map[string]bool{}
 	for _, v := range versions {
-		for _, id := range []string{searchOperationID("Dashboard", v), trashOperationID("Dashboard", v)} {
+		for _, id := range []string{searchOperationID("Dashboard", v), trashOperationID("Dashboard", v), hybridSearchOperationID("Dashboard", v)} {
 			require.False(t, seen[id], "duplicate operation ID %q", id)
 			seen[id] = true
 

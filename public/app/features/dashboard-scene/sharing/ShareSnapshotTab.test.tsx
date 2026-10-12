@@ -1,3 +1,6 @@
+import { screen } from '@testing-library/react';
+import { render } from 'test/test-utils';
+
 import { SceneTimeRange } from '@grafana/scenes';
 import { type notifyApp } from 'app/core/reducers/appNotification';
 import {
@@ -12,12 +15,9 @@ import { DashboardScene } from '../scene/DashboardScene';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { DashboardInteractions } from '../utils/interactions';
 
-import {
-  formatSnapshotSize,
-  getExpireOptions,
-  getSnapshotPayloadSizeBytes,
-  ShareSnapshotTab,
-} from './ShareSnapshotTab';
+import { ShareSnapshot } from './ShareButton/share-snapshot/ShareSnapshot';
+import { formatSnapshotSize, getSnapshotPayloadSizeBytes, ShareSnapshotTab } from './ShareSnapshotTab';
+import { getExpireOptions } from './snapshotOptions';
 
 jest.mock('app/features/dashboard/services/SnapshotSrv', () => ({
   getDashboardSnapshotSrv: jest.fn(),
@@ -41,6 +41,29 @@ describe('ShareSnapshotTab', () => {
     jest.clearAllMocks();
     createSnapshot = jest.fn().mockResolvedValue({ key: 'abc', url: '/dashboard/snapshot/abc', deleteUrl: '' });
     jest.mocked(getDashboardSnapshotSrv).mockReturnValue(buildSnapshotSrv(createSnapshot));
+  });
+
+  it.each([
+    { view: 'modal', Model: ShareSnapshotTab },
+    { view: 'drawer', Model: ShareSnapshot },
+  ])('publishes the edited name and expiration from the $view', async ({ Model }) => {
+    const tab = parentToScene((scene) => new Model({ dashboardRef: scene.getRef() }));
+    const { user } = render(<tab.Component model={tab} />);
+
+    const nameInput = await screen.findByRole('textbox', { name: 'Snapshot name' });
+    expect(nameInput).toHaveValue('my dashboard');
+    await user.clear(nameInput);
+    await user.type(nameInput, 'renamed snapshot');
+    await user.click(screen.getByRole('radio', { name: '1 Hour' }));
+    await user.click(screen.getByRole('button', { name: /publish snapshot/i }));
+
+    expect(await screen.findByRole('button', { name: /^Copy/ })).toBeEnabled();
+    expect(createSnapshot).toHaveBeenCalledTimes(1);
+    expect(createSnapshot.mock.calls[0][0]).toMatchObject({
+      name: 'renamed snapshot',
+      expires: ONE_HOUR,
+      external: false,
+    });
   });
 
   describe('expire option persistence', () => {

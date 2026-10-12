@@ -13,7 +13,7 @@ import (
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	"github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -56,8 +56,8 @@ func ValidateRuleNode(
 		return nil, errors.New("alert rule title cannot be empty")
 	}
 
-	if len(ruleNode.GrafanaManagedAlert.Title) > store.AlertRuleMaxTitleLength {
-		return nil, fmt.Errorf("alert rule title is too long. Max length is %d", store.AlertRuleMaxTitleLength)
+	if len(ruleNode.GrafanaManagedAlert.Title) > rules.AlertRuleMaxTitleLength {
+		return nil, fmt.Errorf("alert rule title is too long. Max length is %d", rules.AlertRuleMaxTitleLength)
 	}
 
 	queries := AlertQueriesFromApiAlertQueries(ruleNode.GrafanaManagedAlert.Data)
@@ -342,8 +342,8 @@ func ValidateRuleGroup(
 
 	isNoGroupRuleGroup := ngmodels.IsNoGroupRuleGroup(ruleGroupConfig.Name)
 
-	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength && !isNoGroupRuleGroup {
-		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
+	if len(ruleGroupConfig.Name) > rules.AlertRuleMaxRuleGroupNameLength && !isNoGroupRuleGroup {
+		return nil, fmt.Errorf("rule group name is too long. Max length is %d", rules.AlertRuleMaxRuleGroupNameLength)
 	}
 
 	interval, err := validateGroupInterval(ruleGroupConfig.Interval, limits)

@@ -1,7 +1,24 @@
 # Router passive circuit breaker — design
 
-Status: approved (brainstorming), pending implementation plan
+Status: implemented; mechanics superseded. The decisions (passive only, `sony/gobreaker`, the
+rejected alternatives and the 502/503/504 failure set) still hold. Current behavior is described
+in `pkg/router/AGENTS.md` ("The circuit breaker is passive only").
 Package: `pkg/router`
+
+> **What changed since this was written (as of 2026-10-10):**
+>
+> - The breaker is gobreaker's two-step breaker (`Allow`/`done`). The outcome is reported as soon as
+>   the status is written, so a watch can't hold the half-open trial slot (#133630).
+> - A labeled `proxyFailure` counts regardless of status, and so does a panic. A rejected backend
+>   redirect does not count (#133627). Only `errCallerGone` (the caller's own context ending) is
+>   excluded; a response-header timeout still counts.
+> - Plugin backends break only on plugin client calls, and only reachability errors count (#133943).
+>   The ST fallback keeps one breaker per destination host and group.
+> - Breaker state and transitions are metrics (`grafana_router_breaker_state`,
+>   `grafana_router_breaker_transitions_total`).
+> - A failed reconcile is retried with backoff (#133646), so the retry gap described below is fixed.
+> - `lastRV` is now `lastKey` (`Backend.Key()`). `RouteBackend`, forward backends and the
+>   `tlsCacheKey` transport cache no longer exist (#134652).
 
 ## Problem
 

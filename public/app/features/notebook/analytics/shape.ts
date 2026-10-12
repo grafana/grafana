@@ -3,7 +3,7 @@ import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRu
 
 import { type NotebookScene } from '../scene/NotebookScene';
 import { type NotebookCellItem } from '../scene/layout-notebook/NotebookCellItem';
-import { isEmptyMarkdown } from '../scene/layout-notebook/isEmptyMarkdown';
+import { isEmptyMarkdown } from '../scene/layout-notebook/cellEmptiness';
 import { type PanelElement } from '../types';
 
 import { type AddedPanelShape, type NotebookShape } from './types';

@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
@@ -34,8 +35,12 @@ func (s *server) tryFieldSelector(ctx context.Context, req *resourcepb.ListReque
 		for _, name := range names {
 			read.Key.Name = name
 			found, err := s.Read(ctx, read)
-			if err != nil {
-				return &resourcepb.ListResponse{Error: AsErrorResult(err)}
+			if err = ErrorFromResponse(found.GetError(), err); err != nil {
+				result := AsErrorResult(err)
+				if result.Code == http.StatusNotFound {
+					continue
+				}
+				return &resourcepb.ListResponse{Error: result}
 			}
 			if len(found.Value) > 0 {
 				rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{

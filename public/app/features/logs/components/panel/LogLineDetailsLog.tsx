@@ -82,7 +82,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
             <span className={styles.actions}>
               {onClickFilterString && (
                 <IconButton
-                  name="search-plus"
+                  name="filter-plus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterLogLine}
                   tooltip={t('logs.log-line-details.filter-for-log-line', 'Filter for this log line')}
@@ -90,7 +90,7 @@ export const LogLineDetailsLog = memo(({ log: originalLog, prettifyJSON, syntaxH
               )}
               {onClickFilterOutString && (
                 <IconButton
-                  name="search-minus"
+                  name="filter-minus"
                   size={fontSize === 'small' ? 'sm' : undefined}
                   onClick={filterOutLogLine}
                   tooltip={t('logs.log-line-details.filter-out-log-line', 'Filter out this log line')}

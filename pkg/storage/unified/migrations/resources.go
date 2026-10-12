@@ -87,12 +87,7 @@ func successfulMigrationExists(ctx context.Context, sqlStore db.DB, migrationID 
 	return count > 0, nil
 }
 
-func buildResourceKey(gr schema.GroupResource, namespace string, registry *MigrationRegistry) *resourcepb.ResourceKey {
-	// TODO: commenting this out so migrations can handle
-	// dynamically registered group names
-	//if !registry.HasResource(gr) {
-	//	return nil
-	//}
+func buildResourceKey(gr schema.GroupResource, namespace string) *resourcepb.ResourceKey {
 	return &resourcepb.ResourceKey{
 		Namespace: namespace,
 		Group:     gr.Group,

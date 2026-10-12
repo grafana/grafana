@@ -45,7 +45,7 @@ func NewInstrumentedBucket(bucket CDKBucket, reg prometheus.Registerer) *Instrum
 	b := &InstrumentedBucket{
 		bucket: bucket,
 		latency: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:    "cdk_blobstorage_latency_seconds",
+			Name:    "grafana_cdk_blobstorage_latency_seconds",
 			Help:    "Time spent on blob storage operations, by operation and status.",
 			Buckets: prometheus.ExponentialBuckets(0.008, 4, 7),
 

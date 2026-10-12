@@ -170,13 +170,22 @@ func authzLoadFields(trash bool) []string {
 // authzResources builds the resource-type -> verb map used to authorize hits.
 // The primary resource uses the verb implied by req.Permission; federated
 // resources are read-only.
+//
+// A hit whose resource type is absent from the map is dropped, so a
+// namespace-wide index has to list every type it covers. Each hit is still
+// authorized against its own type and group, read from its document id.
 func (b *bleveIndex) authzResources(req *resourcepb.ResourceSearchRequest) map[string]string {
 	verb := utils.VerbGet
 	if req.Permission == int64(dashboardaccess.PERMISSION_EDIT) {
 		verb = utils.VerbUpdate
 	}
-	resources := map[string]string{
-		b.key.Resource: verb,
+	resources := map[string]string{}
+	if b.key.IsGlobal() {
+		for _, gr := range resource.GlobalSearchResourceTypes() {
+			resources[gr.Resource] = verb
+		}
+	} else {
+		resources[b.key.Resource] = verb
 	}
 	for _, federated := range req.Federated {
 		resources[federated.Resource] = utils.VerbGet
@@ -378,6 +387,9 @@ func (b *bleveIndex) runPostFilterAuthz(
 			// authorized count is still exact. candidates never exceeds the
 			// number of hits walked, so this can only under-claim.
 			exhausted = candidates >= int64(firstRes.Total)
+			if !exhausted {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("candidate_budget").Inc()
+			}
 			break
 		}
 		// Window returned fewer hits than requested -> no more matches: every
@@ -541,6 +553,9 @@ func (b *bleveIndex) aggregateFacetsFromTop(
 		if candidates >= maxCandidates {
 			// Like the page scan: a budget that covered every match leaves
 			// nothing unsampled, so the facets are the complete authorized set.
+			if candidates < int64(firstRes.Total) {
+				b.indexMetrics.SearchAuthEvents.WithLabelValues("facet_budget").Inc()
+			}
 			return agg, authorized, candidates >= int64(firstRes.Total), nil
 		}
 		if len(res.Hits) < windowReq.Size || len(res.Hits) == 0 {

@@ -12,7 +12,7 @@ import (
 
 const rootStorageTypeDisk = "disk"
 
-var _ storageRuntime = &rootStorageDisk{}
+var _ storageRuntime = (*rootStorageDisk)(nil)
 
 type rootStorageDisk struct {
 	settings *StorageLocalDiskConfig

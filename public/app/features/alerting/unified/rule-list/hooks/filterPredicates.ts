@@ -5,6 +5,7 @@ import { isDefaultRoutingTreeName } from '@grafana/alerting';
 import type { Matcher } from 'app/plugins/datasource/alertmanager/types';
 import type { PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
+import { resolveNamedPolicyName } from '../../components/notification-policies/useNotificationPolicyRoute';
 import { type RulesFilter } from '../../search/rulesSearchParser';
 import { labelsMatchMatchers } from '../../utils/alertmanager';
 import { Annotation } from '../../utils/constants';
@@ -218,10 +219,10 @@ export function policyFilter(rule: PromRuleDTO, filterState: RulesFilter): boole
         return false;
       }
     } else {
-      if (!rule.notificationSettings) {
-        return false;
-      }
-      if (filterState.policy !== rule.notificationSettings.policy) {
+      // notificationSettings.policy is the typed field, but some rules still route only via
+      // the legacy __grafana_managed_route__ label (see resolveNamedPolicyName) — fall back to it.
+      const rulePolicy = resolveNamedPolicyName(rule.notificationSettings, rule.labels);
+      if (filterState.policy !== rulePolicy) {
         return false;
       }
     }

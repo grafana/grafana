@@ -30,10 +30,10 @@ func TestUpdateIndexedKindsMetric(t *testing.T) {
 
 	// Live and deleted documents are counted separately, one of each per index.
 	expected := `
-		# HELP index_server_indexed_kinds Number of indexed documents by kind. Live documents and deleted ones the index keeps so they can be found in trash are reported separately.
-		# TYPE index_server_indexed_kinds gauge
-		index_server_indexed_kinds{kind="dashboards",state="live"} 2
-		index_server_indexed_kinds{kind="dashboards",state="deleted"} 2
+		# HELP grafana_index_server_indexed_kinds Number of indexed documents by kind. Live documents and deleted ones the index keeps so they can be found in trash are reported separately.
+		# TYPE grafana_index_server_indexed_kinds gauge
+		grafana_index_server_indexed_kinds{kind="dashboards",state="live"} 2
+		grafana_index_server_indexed_kinds{kind="dashboards",state="deleted"} 2
 	`
 
 	be.updateIndexedKindsMetric(t.Context())

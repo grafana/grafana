@@ -3,6 +3,7 @@ package annotation
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"testing"
 	"time"
 
@@ -66,10 +67,16 @@ func (c *fakeAccessClient) Compile(_ context.Context, _ authtypes.AuthInfo, _ au
 	return nil, nil, nil
 }
 
+// openFGACorrelationID mirrors the validation OpenFGA applies to BatchCheck correlation IDs.
+var openFGACorrelationID = regexp.MustCompile(`^[\w\d-]{1,36}$`)
+
 func (c *fakeAccessClient) BatchCheck(_ context.Context, _ authtypes.AuthInfo, req authtypes.BatchCheckRequest) (authtypes.BatchCheckResponse, error) {
 	c.namespace = req.Namespace
 	results := make(map[string]authtypes.BatchCheckResult, len(req.Checks))
 	for _, item := range req.Checks {
+		if !openFGACorrelationID.MatchString(item.CorrelationID) {
+			return authtypes.BatchCheckResponse{}, fmt.Errorf("invalid correlation id %q", item.CorrelationID)
+		}
 		results[item.CorrelationID] = authtypes.BatchCheckResult{Allowed: c.fn(item)}
 	}
 	return authtypes.BatchCheckResponse{Results: results}, nil
@@ -261,6 +268,24 @@ func TestCanAccessAnnotations(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, 1, dashClient.calls[dashUID], "duplicate dashboard UIDs in batch should be looked up once")
 		assert.Equal(t, 1, dashClient.calls[otherDashUID])
+	})
+
+	t.Run("checks deduped by scope and results mapped back to items", func(t *testing.T) {
+		orgAnno2 := annotationV0.Annotation{
+			ObjectMeta: metav1.ObjectMeta{Name: "org-anno-2", Namespace: ns},
+			Spec:       annotationV0.AnnotationSpec{DashboardUID: new(string)},
+		}
+		var captured []authtypes.BatchCheckItem
+		client := &fakeAccessClient{fn: func(req authtypes.BatchCheckItem) bool {
+			captured = append(captured, req)
+			return req.Name == dashUID
+		}}
+		dashClient := newFakeFolderResolver(map[string]string{dashUID: folderUID, otherDashUID: ""})
+		items := []annotationV0.Annotation{dashAnno, orgAnno, otherDashAnno, dashAnno2, orgAnno2}
+		allowed, err := canAccessAnnotations(ctx, testTracer, client, dashClient, ns, items, utils.VerbList)
+		require.NoError(t, err)
+		assert.Len(t, captured, 3, "one check per unique scope")
+		assert.Equal(t, []bool{true, false, false, true, false}, allowed)
 	})
 
 	t.Run("no auth info returns error", func(t *testing.T) {

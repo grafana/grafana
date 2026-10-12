@@ -2,6 +2,7 @@ import { VizPanel } from '@grafana/scenes';
 
 import { moveGridItem } from '../actions/layout/moveGridItem';
 import { reorderAutoGridItems } from '../actions/layout/reorderAutoGridItems';
+import { activateFullSceneTree } from '../utils/test-utils';
 
 import { DashboardLayoutOrchestrator } from './DashboardLayoutOrchestrator';
 import { DashboardScene } from './DashboardScene';
@@ -9,6 +10,8 @@ import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { AutoGridLayout } from './layout-auto-grid/AutoGridLayout';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
+import { RowItem } from './layout-rows/RowItem';
+import { RowsLayoutManager } from './layout-rows/RowsLayoutManager';
 import { TabItem } from './layout-tabs/TabItem';
 import { TabsLayoutManager } from './layout-tabs/TabsLayoutManager';
 
@@ -395,3 +398,74 @@ function setupWithTwoTabs() {
     dashboard,
   };
 }
+
+describe('cross-tab row dragging', () => {
+  let deactivate: () => void;
+  afterEach(() => deactivate?.());
+
+  it('keeps the row in its source until drop and records an undoable move', () => {
+    const { row, source, sourceTab, destination, tabs, dashboard, orchestrator } = setupRowDrag();
+
+    orchestrator.startRowDrag(row);
+    // Exercise the hover timer's callback without relying on DOM hit testing.
+    orchestrator['_activateTab'](destination.state.key!);
+    expect(tabs.getCurrentTab()).toBe(destination);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+
+    // Unmounting the source drag context must leave pointerup in charge of the move.
+    orchestrator.stopRowDrag();
+    document.body.dispatchEvent(new Event('pointerup', { bubbles: true }));
+
+    expect((destination.getLayout() as RowsLayoutManager).state.rows).toEqual([row]);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(1);
+    expect(orchestrator.state.draggingRow).toBeUndefined();
+
+    dashboard.state.sidebar.undoAction();
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(tabs.getCurrentTab()).toBe(destination);
+  });
+
+  it('leaves the row in its source without recording a move when dropped back on the source tab', () => {
+    const { row, source, sourceTab, destination, tabs, dashboard, orchestrator } = setupRowDrag();
+
+    orchestrator.startRowDrag(row);
+    // Exercise the hover timer's callback without relying on DOM hit testing.
+    orchestrator['_activateTab'](destination.state.key!);
+    expect(tabs.getCurrentTab()).toBe(destination);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+
+    // Unmounting the source drag context must leave pointerup in charge of the move.
+    orchestrator.stopRowDrag();
+    orchestrator['_activateTab'](sourceTab.state.key!);
+    document.body.dispatchEvent(new Event('pointerup', { bubbles: true }));
+
+    expect(sourceTab.getLayout()).toBe(source);
+    expect(source.state.rows).toEqual([row]);
+    expect(row.parent).toBe(source);
+    expect(tabs.getCurrentTab()).toBe(sourceTab);
+    expect(dashboard.state.sidebar.state.undoStack).toHaveLength(0);
+    expect(orchestrator.state.draggingRow).toBeUndefined();
+  });
+
+  function setupRowDrag() {
+    const row = new RowItem({ title: 'Dragged row', layout: AutoGridLayoutManager.createEmpty() });
+    const source = new RowsLayoutManager({ rows: [row] });
+    const sourceTab = new TabItem({ key: 'source-tab', title: 'Source', layout: source });
+    const destination = new TabItem({
+      key: 'destination-tab',
+      title: 'Destination',
+      layout: AutoGridLayoutManager.createEmpty(),
+    });
+    const tabs = new TabsLayoutManager({ tabs: [sourceTab, destination] });
+    const dashboard = new DashboardScene({ isEditing: true, body: tabs });
+    deactivate = activateFullSceneTree(dashboard);
+    const orchestrator = dashboard.state.layoutOrchestrator!;
+
+    return { row, source, sourceTab, destination, tabs, dashboard, orchestrator };
+  }
+});

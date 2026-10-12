@@ -106,13 +106,13 @@ func (moa *MultiOrgAlertmanager) PrepareConfig(
 	// Add managed routes and extra route as managed route to the configuration.
 	// Also add extra inhibition rules to the configuration if extra route exists and doesn't conflict with existing
 	// route
-	prepared.AlertmanagerConfig.Route = legacy_storage.WithManagedRoutes(prepared.AlertmanagerConfig.Route, prepared.ManagedRoutes)
+	routingTree := legacy_storage.WithManagedRoutes(prepared)
 
-	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, onInvalid, moa.featureManager); err != nil {
+	if err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, prepared, routingTree, onInvalid, moa.featureManager); err != nil {
 		return alertingNotify.NotificationsConfiguration{}, err
 	}
 
-	return PostableAPIConfigToNotificationsConfiguration(*prepared, moa.limits)
+	return PostableAPIConfigToNotificationsConfiguration(*prepared, routingTree, moa.limits)
 }
 
 func (moa *MultiOrgAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context, orgId int64) error {
@@ -276,12 +276,14 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 		return definitions.GettableUserConfig{}, fmt.Errorf("failed to decrypt external configurations: %w", err)
 	}
 
+	apiConfig := PostableApiAlertingConfigToAPI(cfg.AlertmanagerConfig, cfg.SortedTimeIntervals())
+
 	if withAutogen {
 		// We validate the notification settings in a similar way to when we POST.
 		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
 		// different than the config currently in-use.
 		// TODO: Preferably, we'd be getting the config directly from the in-memory AM so adding the autogen config would not be necessary.
-		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, cfg, LogInvalidReceivers, moa.featureManager)
+		err := AddAutogenConfig(ctx, moa.logger, moa.configStore, orgID, cfg, apiConfig.Route, LogInvalidReceivers, moa.featureManager)
 		if err != nil {
 			return definitions.GettableUserConfig{}, err
 		}
@@ -290,7 +292,7 @@ func (moa *MultiOrgAlertmanager) gettableUserConfigFromAMConfigString(ctx contex
 	result := definitions.GettableUserConfig{
 		TemplateFiles: v1.TemplatesToTemplateFiles(cfg.Templates),
 		AlertmanagerConfig: definitions.GettableApiAlertingConfig{
-			Config: PostableApiAlertingConfigToAPI(cfg.AlertmanagerConfig, cfg.SortedTimeIntervals()),
+			Config: apiConfig,
 		},
 		ExtraConfigs: ExtraConfigsToAPI(cfg.ExtraConfigs),
 	}

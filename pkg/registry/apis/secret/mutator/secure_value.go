@@ -12,7 +12,7 @@ import (
 
 type secureValueMutator struct{}
 
-var _ contracts.SecureValueMutator = &secureValueMutator{}
+var _ contracts.SecureValueMutator = (*secureValueMutator)(nil)
 
 func ProvideSecureValueMutator() contracts.SecureValueMutator {
 	return &secureValueMutator{}

@@ -10,7 +10,7 @@ import (
 
 var errBadForm = errutil.BadRequest("form-auth.invalid", errutil.WithPublicMessage("bad login data"))
 
-var _ authn.Client = new(Form)
+var _ authn.Client = (*Form)(nil)
 
 func ProvideForm(client authn.PasswordClient) *Form {
 	return &Form{client}
