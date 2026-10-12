@@ -2,6 +2,7 @@ package grpcplugin
 
 import (
 	"context"
+	"reflect"
 	"testing"
 	"time"
 
@@ -125,6 +126,36 @@ func TestClientV2QueryDataDecodesByReplyFormat(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, pluginv2.DataFrameFormat_JSON, fake.gotFormat)
 	requireFrameEqual(t, testFrame(), resp)
+}
+
+func TestClientV2QueryDataJSONTimesMatchArrow(t *testing.T) {
+	first := time.Unix(1700000000, 123456789)
+	second := time.Unix(1700000015, 987654321)
+	frame := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{first, second}),
+		data.NewField("NullableTime", nil, []*time.Time{&second, nil}),
+		data.NewField("Value", nil, []float64{1, 2}),
+	)
+	frame.RefID = "A"
+	resp := &backend.QueryDataResponse{Responses: backend.Responses{"A": {Frames: data.Frames{frame}}}}
+
+	decode := func(format QueryDataFormat) *data.Frame {
+		fake := &fakeDataClient{respond: respondInRequestedFormat(resp)}
+		c := &ClientV2{DataClient: fake, QueryDataFormat: format}
+		decoded, err := c.QueryData(context.Background(), &backend.QueryDataRequest{Queries: []backend.DataQuery{{RefID: "A"}}})
+		require.NoError(t, err)
+		require.Len(t, decoded.Responses["A"].Frames, 1)
+		return decoded.Responses["A"].Frames[0]
+	}
+	arrowFrame := decode(QueryDataFormatArrow)
+	jsonFrame := decode(QueryDataFormatJSON)
+
+	require.True(t, reflect.DeepEqual(arrowFrame, jsonFrame), "JSON and Arrow decode to different frames")
+	for i := range 2 {
+		require.Equal(t, time.Local, jsonFrame.Fields[0].At(i).(time.Time).Location())
+	}
+	require.Equal(t, time.Local, jsonFrame.Fields[1].At(0).(*time.Time).Location())
+	require.Nil(t, jsonFrame.Fields[1].At(1))
 }
 
 func TestClientV2QueryChunkedDataFacadeKeepsChunkedFormat(t *testing.T) {

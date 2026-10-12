@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"sync/atomic"
+	"time"
 
 	"github.com/hashicorp/go-plugin"
 	"google.golang.org/grpc/codes"
@@ -176,7 +177,38 @@ func (c *ClientV2) QueryData(ctx context.Context, req *backend.QueryDataRequest)
 	if err != nil {
 		return nil, err
 	}
-	return backend.FromProto().QueryDataResponse(protoResp)
+	resp, err := backend.FromProto().QueryDataResponse(protoResp)
+	if err != nil {
+		return nil, err
+	}
+	for refID, protoRes := range protoResp.Responses {
+		if protoRes.GetFormat() == pluginv2.DataFrameFormat_JSON {
+			setLocalTimes(resp.Responses[refID].Frames)
+		}
+	}
+	return resp, nil
+}
+
+// setLocalTimes moves every time value in frames to time.Local, the location the Arrow decoder sets.
+func setLocalTimes(frames data.Frames) {
+	for _, frame := range frames {
+		for _, field := range frame.Fields {
+			switch field.Type() {
+			case data.FieldTypeTime:
+				for i := range field.Len() {
+					t := field.PointerAt(i).(*time.Time)
+					*t = t.Local()
+				}
+			case data.FieldTypeNullableTime:
+				for i := range field.Len() {
+					if t := *field.PointerAt(i).(**time.Time); t != nil {
+						*t = t.Local()
+					}
+				}
+			default:
+			}
+		}
+	}
 }
 
 func (c *ClientV2) protoQueryDataFormat(ctx context.Context) pluginv2.DataFrameFormat {
