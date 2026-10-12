@@ -1054,8 +1054,8 @@ func TestStripSensitiveFields(t *testing.T) {
 				Dashboard: dashboard,
 			},
 		}
-		result := stripSensitiveFields(snap)
-		stripped := result.(*dashv0.Snapshot)
+		stripped, err := stripSensitiveFields(snap)
+		require.NoError(t, err)
 		assert.Nil(t, stripped.Spec.DeleteKey)
 		assert.Nil(t, stripped.Spec.Dashboard)
 	})
@@ -1067,7 +1067,8 @@ func TestStripSensitiveFields(t *testing.T) {
 				Dashboard: dashboard,
 			},
 		}
-		_ = stripSensitiveFields(snap)
+		_, err := stripSensitiveFields(snap)
+		require.NoError(t, err)
 		assert.Equal(t, &deleteKey, snap.Spec.DeleteKey)
 		assert.Equal(t, dashboard, snap.Spec.Dashboard)
 	})
@@ -1079,12 +1080,25 @@ func TestStripSensitiveFields(t *testing.T) {
 				{Spec: dashv0.SnapshotSpec{DeleteKey: &deleteKey, Dashboard: dashboard}},
 			},
 		}
-		result := stripSensitiveFieldsFromList(list)
-		stripped := result.(*dashv0.SnapshotList)
+		stripped, err := stripSensitiveFieldsFromList(list)
+		require.NoError(t, err)
 		for _, item := range stripped.Items {
 			assert.Nil(t, item.Spec.DeleteKey)
 			assert.Nil(t, item.Spec.Dashboard)
 		}
+	})
+
+	// Fail closed: an object that is not a v0alpha1 Snapshot/SnapshotList (for
+	// example if a future version becomes the default served type) must return an
+	// error rather than leaking the unstripped object with its sensitive fields.
+	t.Run("fails closed on wrong Get type", func(t *testing.T) {
+		_, err := stripSensitiveFields(&dashv0.SnapshotList{})
+		require.Error(t, err)
+	})
+
+	t.Run("fails closed on wrong List type", func(t *testing.T) {
+		_, err := stripSensitiveFieldsFromList(&dashv0.Snapshot{})
+		require.Error(t, err)
 	})
 }
 

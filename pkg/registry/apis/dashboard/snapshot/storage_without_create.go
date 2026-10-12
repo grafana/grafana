@@ -72,7 +72,7 @@ func (n *storageWrapper) Get(ctx context.Context, name string, options *metav1.G
 	if err != nil {
 		return nil, err
 	}
-	return stripSensitiveFields(obj), nil
+	return stripSensitiveFields(obj)
 }
 func (n *storageWrapper) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
 	obj, err := n.inner.(rest.Lister).List(ctx, options)
@@ -83,9 +83,9 @@ func (n *storageWrapper) List(ctx context.Context, options *internalversion.List
 	if err != nil {
 		return nil, err
 	}
-	list, ok := stripSensitiveFieldsFromList(obj).(*dashv0.SnapshotList)
-	if !ok {
-		return nil, fmt.Errorf("expected SnapshotList, got %T", obj)
+	list, err := stripSensitiveFieldsFromList(obj)
+	if err != nil {
+		return nil, err
 	}
 	if requester.GetOrgRole() != org.RoleAdmin {
 		items := make([]dashv0.Snapshot, 0, len(list.Items))
@@ -165,30 +165,34 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 }
 
 // stripSensitiveFields returns a copy of the Snapshot with deleteKey and dashboard removed from the spec.
-func stripSensitiveFields(obj runtime.Object) runtime.Object {
+// It fails closed: a non-Snapshot object (e.g. served by a future default version) returns an error
+// rather than leaking the original object with its sensitive fields intact.
+func stripSensitiveFields(obj runtime.Object) (*dashv0.Snapshot, error) {
 	snap, ok := obj.(*dashv0.Snapshot)
 	if !ok {
-		return obj
+		return nil, fmt.Errorf("expected *%T, got %T", dashv0.Snapshot{}, obj)
 	}
 	out := snap.DeepCopy()
 	out.Spec.DeleteKey = nil
 	out.Spec.Dashboard = nil
-	return out
+	return out, nil
 }
 
 // stripSensitiveFieldsFromList returns a copy of the SnapshotList with deleteKey and dashboard
 // removed from each item's spec. The dashboard payload can be large and is not needed when listing.
-func stripSensitiveFieldsFromList(obj runtime.Object) runtime.Object {
+// It fails closed: a non-SnapshotList object (e.g. served by a future default version) returns an
+// error rather than leaking the original list with its sensitive fields intact.
+func stripSensitiveFieldsFromList(obj runtime.Object) (*dashv0.SnapshotList, error) {
 	list, ok := obj.(*dashv0.SnapshotList)
 	if !ok {
-		return obj
+		return nil, fmt.Errorf("expected *%T, got %T", dashv0.SnapshotList{}, obj)
 	}
 	out := list.DeepCopy()
 	for i := range out.Items {
 		out.Items[i].Spec.DeleteKey = nil
 		out.Items[i].Spec.Dashboard = nil
 	}
-	return out
+	return out, nil
 }
 
 var deleteExternalHTTPClient = &http.Client{Timeout: 5 * time.Second}
