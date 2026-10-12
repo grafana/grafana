@@ -21,6 +21,7 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -78,9 +79,16 @@ func TestCreateSnapshotRequiresDashboardRead(t *testing.T) {
 
 func TestSnapshotListPreservesLegacyOwnership(t *testing.T) {
 	list := &dashv0.SnapshotList{ListMeta: metav1.ListMeta{Continue: "next-page", RemainingItemCount: new(int64(10))}}
-	for _, entry := range []struct{ name, creator string }{{"uid-owned", "user:alice"}, {"legacy-owned", "user:1"}, {"other", "user:bob"}, {"unassigned", ""}} {
+	for _, entry := range []struct{ name, creator, canonical string }{
+		{"uid-owned", "user:alice", ""}, {"legacy-owned", "user:1", ""},
+		{"unified-owned", "", "user:alice"}, {"conflicting", "user:alice", "user:bob"},
+		{"other", "user:bob", ""}, {"unassigned", "", ""},
+	} {
 		snap := dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: entry.name}, Spec: dashv0.SnapshotSpec{DeleteKey: new("secret"), Dashboard: map[string]any{"title": "dashboard"}}}
 		snap.SetCreatedBy(entry.creator)
+		if entry.canonical != "" {
+			snap.Annotations[utils.AnnoKeyCreatedBy] = entry.canonical
+		}
 		list.Items = append(list.Items, snap)
 	}
 	for _, tc := range []struct {
@@ -88,9 +96,9 @@ func TestSnapshotListPreservesLegacyOwnership(t *testing.T) {
 		requester *user.SignedInUser
 		want      []string
 	}{
-		{"editor", &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice", OrgRole: org.RoleEditor}, []string{"uid-owned", "legacy-owned"}},
-		{"viewer", &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice", OrgRole: org.RoleViewer}, []string{"uid-owned", "legacy-owned"}},
-		{"admin", &user.SignedInUser{OrgID: 1, UserID: 2, OrgRole: org.RoleAdmin}, []string{"uid-owned", "legacy-owned", "other", "unassigned"}},
+		{"editor", &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice", OrgRole: org.RoleEditor}, []string{"uid-owned", "legacy-owned", "unified-owned"}},
+		{"viewer", &user.SignedInUser{OrgID: 1, UserID: 1, UserUID: "alice", OrgRole: org.RoleViewer}, []string{"uid-owned", "legacy-owned", "unified-owned"}},
+		{"admin", &user.SignedInUser{OrgID: 1, UserID: 2, OrgRole: org.RoleAdmin}, []string{"uid-owned", "legacy-owned", "unified-owned", "conflicting", "other", "unassigned"}},
 		{"no creator match", &user.SignedInUser{OrgID: 1, UserID: 3}, []string{}},
 		{"anonymous cannot own snapshots", &user.SignedInUser{OrgID: 1, IsAnonymous: true}, []string{}},
 		{"legacy service account", &user.SignedInUser{OrgID: 1, UserID: 1, IsServiceAccount: true}, []string{"legacy-owned"}},
@@ -113,7 +121,7 @@ func TestSnapshotListPreservesLegacyOwnership(t *testing.T) {
 			if tc.requester.OrgRole != org.RoleAdmin {
 				require.Nil(t, got.RemainingItemCount)
 			}
-			require.Len(t, list.Items, 4)
+			require.Len(t, list.Items, 6)
 			require.NotNil(t, list.Items[0].Spec.DeleteKey)
 		})
 	}
@@ -122,13 +130,16 @@ func TestSnapshotListPreservesLegacyOwnership(t *testing.T) {
 func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 	for _, tc := range []struct {
 		name                                                                             string
-		creator                                                                          string
+		creator, canonical                                                               string
 		permissions                                                                      []ac.Permission
 		writeErr                                                                         error
 		emptyDashboard, dashboardID, blob, blobError, crossOrg, crossOrgRequest, allowed bool
 	}{
 		{name: "noncreator cannot delete without dashboard edit", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "creator can delete without dashboard edit", creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
+		{name: "unified storage creator can delete without dashboard edit", canonical: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
+		{name: "unified storage creator still needs snapshot delete", canonical: "user:alice"},
+		{name: "canonical creator takes precedence", creator: "user:alice", canonical: "user:bob", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "legacy creator can delete", creator: "user:1", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
 		{name: "dashboard editor can delete", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}, {Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:source"}}, allowed: true},
 		{name: "dashboard ID takes precedence over UID", dashboardID: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}, {Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:uid:source"}}},
@@ -141,6 +152,7 @@ func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 		{name: "blob-backed snapshot is not treated as empty", blob: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "blob-backed creator can delete", blob: true, creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
 		{name: "creator can delete with unavailable blob", blob: true, blobError: true, creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
+		{name: "unified storage creator can delete with unavailable blob", blob: true, blobError: true, canonical: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
 		{name: "noncreator cannot delete with unavailable blob", blob: true, blobError: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "cross org is rejected even for creator", creator: "user:alice", crossOrg: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "caller cannot select another org namespace", creator: "user:alice", crossOrg: true, crossOrgRequest: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
@@ -150,6 +162,9 @@ func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 				t.Run(endpoint, func(t *testing.T) {
 					snap := &dashv0.Snapshot{ObjectMeta: metav1.ObjectMeta{Name: "snapshot", Namespace: authlib.OrgNamespaceFormatter(1)}, Spec: dashv0.SnapshotSpec{DeleteKey: new("secret")}}
 					snap.SetCreatedBy(tc.creator)
+					if tc.canonical != "" {
+						snap.Annotations[utils.AnnoKeyCreatedBy] = tc.canonical
+					}
 					if !tc.emptyDashboard {
 						snap.Spec.Dashboard = map[string]any{"uid": "source"}
 					}

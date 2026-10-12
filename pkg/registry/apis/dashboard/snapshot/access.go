@@ -10,6 +10,7 @@ import (
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -21,7 +22,10 @@ func snapshotOwnedBy(snap *dashv0.Snapshot, requester identity.Requester) bool {
 	if !requester.IsIdentityType(authlib.TypeUser, authlib.TypeServiceAccount) {
 		return false
 	}
-	creator := snap.GetCreatedBy()
+	creator := snap.Annotations[utils.AnnoKeyCreatedBy]
+	if creator == "" {
+		creator = snap.GetCreatedBy()
+	}
 	if creator == "" {
 		return false
 	}
