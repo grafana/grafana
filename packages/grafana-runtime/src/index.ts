@@ -98,7 +98,9 @@ export {
 } from './services/pluginMeta/hooks';
 export { getListedPanelPluginIds, getPanelPluginVersion, isPanelPluginInstalled } from './services/pluginMeta/panels';
 export { isAppPluginEnabled } from './services/pluginSettings/settings';
-export { useAppPluginEnabled } from './services/pluginSettings/hooks';
+export { useAppPluginEnabled, usePluginSettings } from './services/pluginSettings/hooks';
+export { getPluginSettings } from './services/pluginSettings/getPluginSettings';
+export { updateAppPluginSettings } from './services/pluginSettings/updateAppPluginSettings';
 export { createOpenFeatureOFREPWebProvider, createOpenFeatureLocalStorageProvider } from './utils/openfeature';
 export {
   type GetDataSourceInstanceListFilters,
