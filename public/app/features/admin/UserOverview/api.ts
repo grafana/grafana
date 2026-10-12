@@ -16,13 +16,36 @@ import { teamDtoToTeam } from 'app/features/teams/hooks';
 import { AccessControlAction } from 'app/types/accessControl';
 import { type UserDTO } from 'app/types/user';
 
-export type OverviewUser = UserDTO & {
-  role: string;
+export type UserAccount = UserDTO & { createdAt?: string };
+
+export type UserIdentity = Pick<
+  UserDTO,
+  | 'id'
+  | 'uid'
+  | 'login'
+  | 'name'
+  | 'email'
+  | 'isGrafanaAdmin'
+  | 'isDisabled'
+  | 'isProvisioned'
+  | 'isExternal'
+  | 'isExternallySynced'
+  | 'authLabels'
+> & {
   createdAt?: string;
-  lastSeenAt?: string;
-  hasProfile: boolean;
-  orgAccessControl?: UserDTO['accessControl'];
 };
+
+export type UserMembership = UserIdentity & {
+  role: string;
+  lastSeenAt?: string;
+  accessControl?: UserDTO['accessControl'];
+};
+
+export interface UserSection<T> {
+  data?: T;
+  error?: unknown;
+  isLoading: boolean;
+}
 
 export interface RoleAssignment {
   id: string;
@@ -116,55 +139,65 @@ const overviewAPI = generatedAPI.injectEndpoints({
 export const { useGetOverviewTeamsQuery } = overviewAPI;
 
 export function useUserOverview(uid: string) {
+  const result = useGetUserByIdQuery(
+    contextSrv.hasPermission(AccessControlAction.UsersRead) ? { userId: uid } : skipToken
+  );
+  const account: UserSection<UserAccount> = {
+    data: result.currentData,
+    error: result.error,
+    isLoading: result.isFetching,
+  };
+  const membership = useUserMembership(uid, account.data);
+  return { account, membership };
+}
+
+function useUserMembership(uid: string, account?: UserAccount): UserSection<UserMembership> {
   // These flags are LegacyFrontend-only until their backend registry entries are migrated.
   // eslint-disable-next-line @grafana/no-config-feature-toggles
   const enabled = config.featureToggles.kubernetesUsersApi || config.featureToggles.kubernetesUsersReadApi;
   const discovery = discoveryAPI.useGetOverviewCapabilitiesQuery(enabled ? undefined : skipToken);
   const useIAM = enabled && discovery.currentData?.users;
   const iam = useGetUserQuery(useIAM ? { name: uid } : skipToken);
-  const profileQuery = useGetUserByIdQuery(
-    contextSrv.hasPermission(AccessControlAction.UsersRead) ? { userId: uid } : skipToken
-  );
-  const profile = profileQuery.currentData;
   const resource = iam.currentData;
-  const login = profile?.login ?? resource?.spec.login;
+  const login = account?.login ?? resource?.spec.login;
   const canSearchMembers = !!login && contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
   const members = useGetOrgUsersForCurrentOrgQuery(canSearchMembers ? { query: login, limit: 100 } : skipToken);
   const member = members.currentData?.find((member) => member.uid === uid);
+  // Older backends can ignore the exact-ID filter. A full page without a match
+  // cannot establish that the user is absent from the organization.
+  const incomplete = !member && (members.currentData?.length ?? 0) >= 100;
   const orgs = useGetUserOrgListQuery(
-    profile && (!enabled || discovery.currentData) && !useIAM && !member && (!canSearchMembers || members.isSuccess)
-      ? { userId: uid }
-      : skipToken
+    members.isSuccess && !member && !incomplete && !resource ? { userId: uid } : skipToken
   );
-  const user: OverviewUser | undefined =
-    (!enabled || discovery.currentData) && !discovery.error && !iam.error && (profile || resource)
+  const org = orgs.currentData?.find((org) => org.orgId === contextSrv.user.orgId);
+  const data: UserMembership | undefined =
+    (resource || member || org) && (account || resource)
       ? {
-          ...profile,
-          id: profile?.id ?? Number(resource?.metadata.labels?.['grafana.app/deprecatedInternalID']),
+          id: account?.id ?? Number(resource?.metadata.labels?.['grafana.app/deprecatedInternalID']),
           uid,
           login: login ?? '',
-          name: profile?.name ?? resource?.spec.title ?? '',
-          email: profile?.email ?? resource?.spec.email ?? '',
-          role:
-            member?.role ??
-            resource?.spec.role ??
-            orgs.currentData?.find((org) => org.orgId === contextSrv.user.orgId)?.role ??
-            '',
-          isGrafanaAdmin: profile?.isGrafanaAdmin ?? resource?.spec.grafanaAdmin ?? false,
-          isDisabled: profile?.isDisabled ?? resource?.spec.disabled ?? false,
-          isProvisioned: profile?.isProvisioned ?? resource?.spec.provisioned ?? false,
-          isExternallySynced: member?.isExternallySynced ?? profile?.isExternallySynced,
-          isExternal: profile ? !!profile.isExternal : !!resource?.spec.externalAuthInfo?.length,
-          authLabels: profile?.authLabels ?? resource?.spec.externalAuthInfo?.map((auth) => auth.module),
-          createdAt: resource?.metadata.creationTimestamp ?? profile?.createdAt ?? profile?.created,
+          name: account?.name ?? resource?.spec.title ?? '',
+          email: account?.email ?? resource?.spec.email ?? '',
+          role: member?.role ?? resource?.spec.role ?? org?.role ?? '',
+          isGrafanaAdmin: account?.isGrafanaAdmin ?? resource?.spec.grafanaAdmin ?? false,
+          isDisabled: account?.isDisabled ?? resource?.spec.disabled ?? false,
+          isProvisioned: account?.isProvisioned ?? resource?.spec.provisioned ?? false,
+          isExternallySynced: member?.isExternallySynced ?? account?.isExternallySynced,
+          isExternal: account ? !!account.isExternal : !!resource?.spec.externalAuthInfo?.length,
+          authLabels: account?.authLabels ?? resource?.spec.externalAuthInfo?.map((auth) => auth.module),
+          createdAt: resource?.metadata.creationTimestamp ?? account?.createdAt ?? account?.created,
           lastSeenAt: resource ? new Date((resource.status?.lastSeenAt ?? 0) * 1000).toISOString() : member?.lastSeenAt,
-          hasProfile: !!profile,
-          orgAccessControl: member?.accessControl,
+          accessControl: member?.accessControl,
         }
       : undefined;
   return {
-    user,
-    isLoading: discovery.isFetching || iam.isFetching || profileQuery.isFetching,
-    error: discovery.error || iam.error || profileQuery.error || members.error || orgs.error,
+    data,
+    isLoading: discovery.isFetching || iam.isFetching || members.isFetching || orgs.isFetching,
+    error:
+      discovery.error ||
+      iam.error ||
+      members.error ||
+      orgs.error ||
+      (incomplete ? new Error('The organization user lookup returned an incomplete result.') : undefined),
   };
 }

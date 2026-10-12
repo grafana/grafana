@@ -14,7 +14,7 @@ import { AccessControlAction } from 'app/types/accessControl';
 
 import { AccountManagement } from './AccountManagement';
 import { ActionError } from './ActionError';
-import { type OverviewUser } from './api';
+import { type UserAccount, type UserIdentity, type UserMembership } from './api';
 
 type EditableField = 'name' | 'email' | 'login' | 'password' | 'isGrafanaAdmin';
 interface DetailField {
@@ -24,7 +24,15 @@ interface DetailField {
   locked?: string;
 }
 
-export function UserDetails({ user }: { user: OverviewUser }) {
+export function UserDetails({
+  user,
+  account,
+  membership,
+}: {
+  user: UserIdentity;
+  account?: UserAccount;
+  membership?: UserMembership;
+}) {
   const [editing, setEditing] = useState<EditableField | null>(null);
   const [value, setValue] = useState('');
   const [updateProfile, profileUpdate] = useUpdateUserMutation();
@@ -40,14 +48,15 @@ export function UserDetails({ user }: { user: OverviewUser }) {
   const provisioned = user.isProvisioned;
   const external = user.isExternal || provisioned;
   const synced = external ? t('admin.user-overview.managed-externally', 'Managed externally') : undefined;
-  const can = (action: AccessControlAction) => user.hasProfile && contextSrv.hasPermissionInMetadata(action, user);
+  const can = (action: AccessControlAction) => !!account && contextSrv.hasPermissionInMetadata(action, account);
   const canEditProfile = can(AccessControlAction.UsersWrite) && !external;
   const canEditPassword = can(AccessControlAction.UsersPasswordUpdate) && !external;
   const canEditAdmin =
-    can(AccessControlAction.UsersPermissionsUpdate) && !user.isGrafanaAdminExternallySynced && !provisioned;
+    can(AccessControlAction.UsersPermissionsUpdate) && !account?.isGrafanaAdminExternallySynced && !provisioned;
   const isAdmin = user.isGrafanaAdmin;
-  const created = user.createdAt;
-  const lastSeen = user.lastSeenAt ? Date.parse(user.lastSeenAt) : 0;
+  const created = membership?.createdAt ?? account?.createdAt ?? account?.created ?? user.createdAt;
+  const lastSeenAt = membership?.lastSeenAt;
+  const lastSeen = lastSeenAt ? Date.parse(lastSeenAt) : 0;
   const never = !lastSeen || (created && lastSeen < new Date(created).getTime());
   const fields: DetailField[] = [
     {
@@ -79,7 +88,7 @@ export function UserDetails({ user }: { user: OverviewUser }) {
     { label: t('admin.user-overview.created', 'Created'), value: created ? dateTimeFormat(created) : undefined },
     {
       label: t('admin.user-overview.last-active', 'Last active'),
-      value: !user.lastSeenAt
+      value: !lastSeenAt
         ? undefined
         : never
           ? t('admin.user-overview.never', 'Never')
@@ -90,11 +99,11 @@ export function UserDetails({ user }: { user: OverviewUser }) {
       value: isAdmin ? yes : no,
       edit: canEditAdmin ? 'isGrafanaAdmin' : undefined,
       locked:
-        user.isGrafanaAdminExternallySynced || provisioned
+        account?.isGrafanaAdminExternallySynced || provisioned
           ? t('admin.user-overview.managed-externally', 'Managed externally')
           : undefined,
     },
-    ...(user.hasProfile
+    ...(account
       ? [
           {
             label: t('admin.user-profile.label-numerical-identifier', 'Numerical identifier'),
@@ -108,7 +117,7 @@ export function UserDetails({ user }: { user: OverviewUser }) {
   ];
 
   const save = async () => {
-    if (!user.hasProfile || !editing) {
+    if (!account || !editing) {
       return;
     }
     const field = editing;
@@ -165,7 +174,7 @@ export function UserDetails({ user }: { user: OverviewUser }) {
           ))}
         </tbody>
       </table>
-      {user.hasProfile && <AccountManagement user={user} />}
+      {account && <AccountManagement user={account} />}
     </Stack>
   );
 }

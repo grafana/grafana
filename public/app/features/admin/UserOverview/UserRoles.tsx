@@ -12,11 +12,12 @@ import { LoadError } from './LoadError';
 import { TeamLink } from './TeamLink';
 import { UserRolesEditor } from './UserRolesEditor';
 import { UserTable } from './UserTable';
-import { type OverviewUser, type RoleAssignment, useGetOverviewTeamsQuery } from './api';
+import { type UserIdentity, type UserMembership, type RoleAssignment, useGetOverviewTeamsQuery } from './api';
 
 const collator = new Intl.Collator();
 
-export function UserRoles({ user }: { user: OverviewUser }) {
+export function UserRoles({ user, membership }: { user: UserIdentity; membership?: UserMembership }) {
+  const basicRole = membership?.role;
   const licensed = contextSrv.licensedAccessControlEnabled();
   const canReadUserRoles = contextSrv.hasPermission(AccessControlAction.ActionUserRolesList);
   const canReadTeamRoles = contextSrv.hasPermission(AccessControlAction.ActionTeamsRolesList);
@@ -34,11 +35,11 @@ export function UserRoles({ user }: { user: OverviewUser }) {
   );
   const assignments = useMemo<RoleAssignment[]>(
     () => [
-      ...(user.role
+      ...(basicRole
         ? [
             {
               id: 'basic',
-              role: user.role === 'None' ? t('admin.user-overview.no-basic-role', 'No basic role') : user.role,
+              role: basicRole === 'None' ? t('admin.user-overview.no-basic-role', 'No basic role') : basicRole,
               type: 'direct' as const,
             },
           ]
@@ -63,7 +64,7 @@ export function UserRoles({ user }: { user: OverviewUser }) {
         )
       ),
     ],
-    [user.role, directRoles.currentData, teams.currentData, roles.currentData]
+    [basicRole, directRoles.currentData, teams.currentData, roles.currentData]
   );
   const columns = useMemo<Array<Column<RoleAssignment>>>(() => {
     const assignmentType = (assignment: RoleAssignment) =>
@@ -103,7 +104,7 @@ export function UserRoles({ user }: { user: OverviewUser }) {
   }, [user.login]);
   return (
     <Stack direction="column" gap={2}>
-      {!!user.id && <UserRolesEditor user={user} basicRole={user.role} />}
+      {!!user.id && membership && <UserRolesEditor user={membership} basicRole={membership.role} />}
       {licensed && (!canReadUserRoles || !canReadTeamRoles) && (
         <Alert
           severity="warning"

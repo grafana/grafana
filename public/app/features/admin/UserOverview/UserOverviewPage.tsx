@@ -2,7 +2,7 @@ import { useLocation, useParams, useSearchParams } from 'react-router-dom-v5-com
 
 import { t } from '@grafana/i18n';
 import { featureEnabled } from '@grafana/runtime';
-import { Alert, Stack } from '@grafana/ui';
+import { Alert, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
@@ -14,16 +14,16 @@ import { SessionsTab } from './SessionsTab';
 import { UserDetails } from './UserDetails';
 import { UserRoles } from './UserRoles';
 import { UserTeams } from './UserTeams';
-import { useUserOverview } from './api';
+import { useUserOverview, type UserSection } from './api';
 
 export default function UserOverviewPage() {
   const { pathname } = useLocation();
   const { id: uid = '' } = useParams();
   const [params] = useSearchParams();
   const tab = params.get('tab') ?? 'details';
-  const overview = useUserOverview(uid);
-  const user = overview.user;
-  const profile = user?.hasProfile ? user : undefined;
+  const { account, membership } = useUserOverview(uid);
+  const profile = account.data;
+  const user = profile ?? membership.data;
   const canReadSessions = contextSrv.hasPermission(AccessControlAction.UsersAuthTokenList);
   const showOrganizations = profile && contextSrv.hasPermission(AccessControlAction.OrgsRead);
   const showAuthentication =
@@ -62,10 +62,10 @@ export default function UserOverviewPage() {
           : [],
       }}
     >
-      <Page.Contents isLoading={!user && overview.isLoading}>
+      <Page.Contents isLoading={!user && (account.isLoading || membership.isLoading)}>
         {!user ? (
-          overview.error ? (
-            <LoadError error={overview.error} />
+          account.error || membership.error ? (
+            <LoadError error={account.error || membership.error} />
           ) : (
             <Alert severity="warning" title={t('admin.user-overview.not-found', 'This information is not available')} />
           )
@@ -73,12 +73,24 @@ export default function UserOverviewPage() {
           <>
             {active === 'details' && (
               <Stack direction="column" gap={3}>
-                <UserDetails key={uid} user={user} />
-                {Boolean(overview.error) && <LoadError error={overview.error} />}
+                <UserDetails key={uid} user={user} account={profile} membership={membership.data} />
+                <SectionStatus section={account} />
+                <SectionStatus section={membership} />
               </Stack>
             )}
             {active === 'teams' && <UserTeams uid={uid} />}
-            {active === 'roles' && <UserRoles user={user} />}
+            {active === 'roles' && (
+              <Stack direction="column" gap={2}>
+                <SectionStatus section={membership} />
+                <UserRoles user={user} membership={membership.data} />
+                {!membership.data && !membership.isLoading && !membership.error && (
+                  <Alert
+                    severity="warning"
+                    title={t('admin.user-overview.not-found', 'This information is not available')}
+                  />
+                )}
+              </Stack>
+            )}
             {active === 'organizations' && profile && <OrganizationsTab user={profile} />}
             {active === 'sessions' && <SessionsTab uid={uid} />}
             {active === 'authentication' && profile && <AuthenticationTab user={profile} />}
@@ -86,5 +98,14 @@ export default function UserOverviewPage() {
         )}
       </Page.Contents>
     </Page>
+  );
+}
+
+function SectionStatus({ section }: { section: UserSection<unknown> }) {
+  return (
+    <>
+      {section.isLoading && <Text>{t('admin.user-overview.loading', 'Loading…')}</Text>}
+      {Boolean(section.error) && <LoadError error={section.error} />}
+    </>
   );
 }

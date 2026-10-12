@@ -14,17 +14,17 @@ import { OrgRolePicker } from '../OrgRolePicker';
 import { getBasicRoleDisabled } from '../Users/userRolePermissions';
 
 import { ActionError } from './ActionError';
-import { type OverviewUser } from './api';
+import { type UserMembership } from './api';
 
 function isBasicRole(role: string): role is OrgRole {
   return Object.values(OrgRole).some((value) => value === role);
 }
 
-export function UserRolesEditor({ user, basicRole }: { user: OverviewUser; basicRole: string }) {
+export function UserRolesEditor({ user, basicRole }: { user: UserMembership; basicRole: string }) {
   const [editing, setEditing] = useState(false);
   const [updateBasicRole, { isError: failed, isLoading: pending, error }] = useUpdateOrgUserForCurrentOrgMutation();
   const licensed = contextSrv.licensedAccessControlEnabled();
-  const canEditBasic = !getBasicRoleDisabled({ ...user, accessControl: user.orgAccessControl });
+  const canEditBasic = !getBasicRoleDisabled(user);
   const canEditDirect =
     licensed &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesList) &&

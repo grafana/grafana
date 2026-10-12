@@ -555,19 +555,67 @@ it.each([false, true])(
   }
 );
 
-it.each([403, 500])('does not switch to legacy data when IAM returns %s', async (status) => {
+it.each([403, 404, 500])(
+  'keeps the account visible and shows the membership error when IAM returns %s',
+  async (status) => {
+    const message =
+      status === 403
+        ? 'You do not have permission'
+        : status === 404
+          ? 'This information is not available'
+          : 'Unable to load';
+    server.use(
+      http.get(
+        '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice',
+        () => new HttpResponse(null, { status })
+      )
+    );
+    const { user } = setup();
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(await screen.findByText('Alice Example')).toBeInTheDocument();
+    await user.click(screen.getByRole('tab', { name: 'Roles' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+  }
+);
+
+it('keeps account management available when discovery fails', async () => {
   server.use(
-    http.get(
-      '/apis/iam.grafana.app/v0alpha1/namespaces/:namespace/users/alice',
-      () => new HttpResponse(null, { status })
+    http.get('/apis', () => new HttpResponse(null, { status: 500 })),
+    http.get('/api/users/alice', () =>
+      HttpResponse.json({ ...profile, accessControl: { [AccessControlAction.UsersWrite]: true } })
     )
   );
   setup();
-  expect(await screen.findByRole('alert')).toHaveTextContent(
-    status === 403 ? 'You do not have permission' : 'Unable to load'
+  expect(await screen.findByText('Alice Example')).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Edit Name' })).toBeInTheDocument();
+  expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load');
+});
+
+it('keeps IAM membership details visible when the account request fails', async () => {
+  server.use(http.get('/api/users/alice', () => new HttpResponse(null, { status: 403 })));
+  setup();
+  expect(await screen.findByText('Alice Example')).toBeInTheDocument();
+  expect(await screen.findByText('Never')).toBeInTheDocument();
+  expect(await screen.findByRole('alert')).toHaveTextContent('You do not have permission');
+  expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
+});
+
+it('treats a full membership page without the user as unknown', async () => {
+  config.featureToggles.kubernetesUsersApi = false;
+  const orgRequests = jest.fn();
+  server.use(
+    http.get('/api/org/users', () =>
+      HttpResponse.json(Array.from({ length: 100 }, (_, index) => ({ ...profile, uid: `other-${index}` })))
+    ),
+    http.get('/api/users/alice/orgs', () => {
+      orgRequests();
+      return HttpResponse.json([]);
+    })
   );
-  expect(screen.queryByText('Alice Example')).not.toBeInTheDocument();
-  expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  setup();
+  expect(await screen.findByText('Alice Example')).toBeInTheDocument();
+  expect(await screen.findByRole('alert')).toHaveTextContent('Unable to load');
+  expect(orgRequests).not.toHaveBeenCalled();
 });
 
 it('supports IAM user reads alongside legacy team membership reads', async () => {
