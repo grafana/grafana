@@ -13,7 +13,7 @@ import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors';
 import { type ShiftWindow, nextShift } from './shiftTiming';
 
-export interface OnCallScheduleRow {
+interface OnCallScheduleRow {
   id: string;
   name: string;
   /** Who is on call right now; the signed-in user first when present. */

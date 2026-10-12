@@ -10,8 +10,8 @@ import {
 } from 'app/features/alerting/unified/api/onCallApi';
 
 // Trailing slashes match getProxyApiUrl('/schedules/') exactly.
-export const CURRENT_USER_EVENTS_PATH = '/api/plugins/:pluginId/resources/schedules/current_user_events/';
-export const SCHEDULES_PATH = '/api/plugins/:pluginId/resources/schedules/';
+const CURRENT_USER_EVENTS_PATH = '/api/plugins/:pluginId/resources/schedules/current_user_events/';
+const SCHEDULES_PATH = '/api/plugins/:pluginId/resources/schedules/';
 
 export const me: OnCallShortUser = {
   pk: 'U1',

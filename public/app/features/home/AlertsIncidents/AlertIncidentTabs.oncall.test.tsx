@@ -9,6 +9,7 @@ import { ctaClicked, tabChanged } from '../analytics/main';
 import {
   ALERTS_INCIDENTS_TAB_STORAGE_KEY,
   INCIDENTS_TAB_ID,
+  ON_CALL_TAB_ID,
   type AlertIncidentSwitchHandle,
 } from './AlertIncidentTabs';
 import {
@@ -136,7 +137,7 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(listCalls).toEqual([]);
 
     await user.click(screen.getByRole('tab', { name: /on call/i }));
-    expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: 'on-call' });
+    expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: ON_CALL_TAB_ID });
 
     expect(await screen.findByText('Backend')).toBeInTheDocument();
     expect(sortedCalls(listCalls)).toEqual([
@@ -395,7 +396,7 @@ describe('AlertIncidentTabs On call tab', () => {
 
   describe('remembered tab', () => {
     it('reopens on the stored tab, selected before the plugin probe settles', async () => {
-      window.localStorage.setItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY, 'on-call');
+      window.localStorage.setItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY, ON_CALL_TAB_ID);
       mockOnCall({ byTeam: TEAM_SCHEDULES });
       render(<AlertIncidentTabsWithData />);
 
@@ -407,7 +408,7 @@ describe('AlertIncidentTabs On call tab', () => {
     });
 
     it('falls back to Firing alerts once the probe says the stored tab is unavailable', async () => {
-      window.localStorage.setItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY, 'on-call');
+      window.localStorage.setItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY, ON_CALL_TAB_ID);
       render(<AlertIncidentTabsWithData />);
 
       expect(await screen.findByText('CPU Critical')).toBeInTheDocument();
@@ -428,7 +429,7 @@ describe('AlertIncidentTabs On call tab', () => {
 
       await user.click(await screen.findByRole('tab', { name: /on call/i }));
       expect(await screen.findByText('Backend')).toBeInTheDocument();
-      expect(window.localStorage.getItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY)).toBe('on-call');
+      expect(window.localStorage.getItem(ALERTS_INCIDENTS_TAB_STORAGE_KEY)).toBe(ON_CALL_TAB_ID);
 
       await act(async () => {
         handle?.switch(INCIDENTS_TAB_ID, false);

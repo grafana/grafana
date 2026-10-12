@@ -6,7 +6,8 @@ import { useStyles2, Text, Stack, Link } from '@grafana/ui';
 
 interface ListRowProps {
   title: string;
-  subtitle?: string;
+  // Rendered inside a secondary bodySmall paragraph; a nested Text can restyle part or all of it.
+  subtitle?: ReactNode;
   prefix?: ReactNode;
   trailing?: ReactNode;
   // isCompact is used to make the row leaner (less spacing)

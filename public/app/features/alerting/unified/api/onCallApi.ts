@@ -19,10 +19,10 @@ interface OnCallPaginatedResult<T> {
   total_pages: number;
 }
 
-export const SHIFTS_LOOKAHEAD_DAYS = 30;
+const SHIFTS_LOOKAHEAD_DAYS = 30;
 export const SCHEDULE_PAGE_SIZE = 100;
 // Org-wide teams can own hundreds of schedules; the homepage stops a team's list after this many pages.
-export const SCHEDULE_MAX_PAGES = 5;
+const SCHEDULE_MAX_PAGES = 5;
 
 /** Short user shape OnCall embeds in a schedule's `on_call_now`. */
 export interface OnCallShortUser {

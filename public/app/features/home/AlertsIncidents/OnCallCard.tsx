@@ -32,7 +32,12 @@ export function OnCallCard({ data }: { data: OnCallSchedulesData }) {
         <ListRow
           isCompact
           title={row.name}
-          subtitle={row.shift && formatShiftTiming(row.shift, now)}
+          subtitle={
+            row.shift && (
+              // Green only while the user's own shift is running: the row-level counterpart of the header badge.
+              <Text color={row.shift.isCurrent ? 'success' : undefined}>{formatShiftTiming(row.shift, now)}</Text>
+            )
+          }
           trailing={<OnCallNowChip users={row.onCallNow} />}
           href={canAccess ? createBridgeURL(pluginId, `/schedules/${row.id}`) : undefined}
           onClick={() =>
