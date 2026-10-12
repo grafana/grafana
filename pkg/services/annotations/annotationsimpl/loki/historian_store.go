@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	historymodel "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -40,10 +41,6 @@ var (
 	ErrLokiStoreNotFound = errutil.NotFound("annotations.loki.notFound")
 )
 
-type RuleStore interface {
-	GetRuleByID(ctx context.Context, query ngmodels.GetAlertRuleByIDQuery) (result *ngmodels.AlertRule, err error)
-}
-
 type lokiQueryClient interface {
 	RangeQuery(ctx context.Context, query string, start, end, limit int64) (lokiclient.QueryRes, error)
 	MaxQuerySize() int
@@ -54,10 +51,10 @@ type LokiHistorianStore struct {
 	client    lokiQueryClient
 	db        db.DB
 	log       log.Logger
-	ruleStore RuleStore
+	ruleStore rulestore.RuleByIDReader
 }
 
-func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore RuleStore, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
+func NewLokiHistorianStore(cfg setting.UnifiedAlertingStateHistorySettings, db db.DB, ruleStore rulestore.RuleByIDReader, log log.Logger, tracer tracing.Tracer, reg prometheus.Registerer) *LokiHistorianStore {
 	if !useStore(cfg) {
 		return nil
 	}

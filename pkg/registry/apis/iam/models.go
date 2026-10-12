@@ -1,7 +1,6 @@
 package iam
 
 import (
-	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -30,7 +29,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
@@ -88,8 +86,8 @@ type IdentityAccessManagementAPIBuilder struct {
 
 	dual                              dualwrite.Service
 	unified                           resource.ResourceClient
-	userSearchClient                  resourcepb.ResourceIndexClient
-	teamSearchClient                  resourcepb.ResourceIndexClient
+	userSearchClient                  *dualwrite.Selector[user.SearchBackend]
+	teamSearchClient                  *dualwrite.Selector[team.SearchBackend]
 	userSearchHandler                 *user.SearchHandler
 	teamSearchHandler                 *team.SearchHandler
 	resourcePermissionsSearchHandler  *resourcepermission.ResourcePermissionsSearchHandler
@@ -125,10 +123,7 @@ type IdentityAccessManagementAPIBuilder struct {
 	// kind's storage mode engages MT-Settings.
 	ssoSettingsClient settingsvc.Service
 
-	// ofClient preserves the legacy feature-flag path when no explicit startup
-	// feature snapshot is supplied.
-	ofClient openfeature.IClient
-	features *Features
+	features Features
 
 	apiConfig Config
 }
@@ -136,12 +131,4 @@ type IdentityAccessManagementAPIBuilder struct {
 // Config holds IAM-specific configuration
 type Config struct {
 	SingleOrganization bool
-}
-
-type APIServiceOption func(*IdentityAccessManagementAPIBuilder)
-
-func WithFeatures(features Features) APIServiceOption {
-	return func(builder *IdentityAccessManagementAPIBuilder) {
-		builder.features = &features
-	}
 }

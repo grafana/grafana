@@ -29,5 +29,15 @@ snapshotV0alpha1: {
 			// The raw dashboard (unstructured for now)
 			dashboard?: [string]: _
 		}
+		blobs: {
+			dashboard?: #BlobReference
+		}
 	}
+}
+
+#BlobReference: {
+	uid:          string
+	size?:        int64
+	hash?:        string
+	contentType?: string
 }

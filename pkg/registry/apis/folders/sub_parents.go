@@ -18,8 +18,8 @@ type subParentsREST struct {
 	parents parentsGetter
 }
 
-var _ = rest.Connecter(&subParentsREST{})
-var _ = rest.StorageMetadata(&subParentsREST{})
+var _ rest.Connecter = (*subParentsREST)(nil)
+var _ rest.StorageMetadata = (*subParentsREST)(nil)
 
 func (r *subParentsREST) New() runtime.Object {
 	return &folders.FolderInfoList{}

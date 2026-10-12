@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"strings"
@@ -5041,6 +5042,7 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 		expectedBranch string
 		wantError      bool
 		errorContains  string
+		expectedError  error
 	}{
 		{
 			name: "returns main when main branch exists",
@@ -5108,6 +5110,36 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 			wantError:     true,
 			errorContains: "list refs",
 		},
+		{
+			name: "maps wrapped nanogit unauthorized error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, fmt.Errorf("list refs: send ls-refs command: %w",
+					client.NewUnauthorizedError("POST", "git-upload-pack", errors.New("got status code 401: 401 Unauthorized"))))
+			},
+			wantError:     true,
+			errorContains: "list refs",
+			expectedError: repository.ErrUnauthorized,
+		},
+		{
+			name: "maps wrapped nanogit permission denied error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, fmt.Errorf("list refs: send ls-refs command: %w",
+					client.NewPermissionDeniedError("POST", "git-upload-pack", errors.New("got status code 403: 403 Forbidden"))))
+			},
+			wantError:     true,
+			errorContains: "list refs",
+			expectedError: repository.ErrPermissionDenied,
+		},
+		{
+			name: "maps wrapped nanogit server unavailable error",
+			setupMock: func(mockClient *mocks.FakeClient) {
+				mockClient.ListRefsReturns(nil, fmt.Errorf("list refs: send ls-refs command: %w",
+					client.NewServerUnavailableError("POST", http.StatusServiceUnavailable, errors.New("got status code 503: 503 Service Unavailable"))))
+			},
+			wantError:     true,
+			errorContains: "list refs",
+			expectedError: repository.ErrServerUnavailable,
+		},
 	}
 
 	for _, tt := range tests {
@@ -5135,6 +5167,10 @@ func TestGitRepository_GetDefaultBranch(t *testing.T) {
 			if tt.wantError {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.errorContains)
+				if tt.expectedError != nil {
+					require.ErrorIs(t, err, tt.expectedError)
+					require.EqualError(t, err, "list refs: "+tt.expectedError.Error())
+				}
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.expectedBranch, branch)

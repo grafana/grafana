@@ -1,26 +1,23 @@
 package team
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math"
+	"slices"
 	"strconv"
 	"strings"
 
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
-	"google.golang.org/grpc"
 
+	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
-	"github.com/grafana/grafana/pkg/registry/apis/iam/legacysort"
+	"github.com/grafana/grafana/pkg/services/search/model"
 	"github.com/grafana/grafana/pkg/services/team"
-	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
 	teamsortopts "github.com/grafana/grafana/pkg/services/team/sortopts"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
 
 const (
@@ -28,34 +25,26 @@ const (
 	TeamResourceGroup = "iam.grafana.app"
 )
 
-// TeamSortFieldMapping returns a mapping of unified search field names to legacy SQL sort key names.
-// Used by both ConvertToSortOptions (unified→legacy) and ConvertToSortParams (legacy→unified).
+// TeamSortFieldMapping maps team-search sort fields to legacy SQL sort keys.
 func TeamSortFieldMapping() map[string]string {
 	return map[string]string{
-		resource.SEARCH_FIELD_TITLE: "name",
-		builders.TEAM_SEARCH_EMAIL:  "email",
+		"title": "name",
+		"email": "email",
 	}
 }
 
-// LegacyTeamSearchClient is a client for searching for teams in the legacy search engine.
-type LegacyTeamSearchClient struct {
-	resourcepb.ResourceIndexClient
+var _ SearchBackend = (*legacySearchClient)(nil)
+
+type legacySearchClient struct {
 	teamService team.Service
-	log         log.Logger
 	tracer      trace.Tracer
 }
 
-// NewLegacyTeamSearchClient creates a new LegacyTeamSearchClient.
-func NewLegacyTeamSearchClient(teamService team.Service, tracer trace.Tracer) *LegacyTeamSearchClient {
-	return &LegacyTeamSearchClient{
-		teamService: teamService,
-		log:         log.New("grafana-apiserver.teams.legacy-search"),
-		tracer:      tracer,
-	}
+func NewLegacyTeamSearchClient(teamService team.Service, tracer trace.Tracer) *legacySearchClient {
+	return &legacySearchClient{teamService: teamService, tracer: tracer}
 }
 
-// Search searches for teams in the legacy search engine.
-func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+func (c *legacySearchClient) Search(ctx context.Context, req SearchQuery) (*iamv0.GetSearchTeamsResponse, error) {
 	ctx, span := c.tracer.Start(ctx, "team.legacysearch")
 	defer span.End()
 
@@ -70,20 +59,17 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 	if req.Limit < 1 {
 		req.Limit = common.DefaultListLimit
 	}
-
 	if req.Page > math.MaxInt32 || req.Page < 0 {
 		return nil, fmt.Errorf("invalid page number: %d", req.Page)
 	}
 
-	title, err := titleFromRequirements(req.Options)
-	if err != nil {
-		return nil, err
-	}
-
-	uids := valuesFromRequirements(req.Options, resource.SEARCH_FIELD_NAME)
-	teamIds, err := legacyIDsFromRequirements(req.Options)
-	if err != nil {
-		return nil, err
+	var teamIDs []int64
+	for _, value := range req.TeamIDs {
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid legacy team ID %q: %w", value, err)
+		}
+		teamIDs = append(teamIDs, id)
 	}
 
 	query := &team.SearchTeamsQuery{
@@ -91,11 +77,11 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		Limit:        int(req.Limit),
 		Page:         int(req.Page),
 		Query:        req.Query,
-		Name:         title,
-		UIDs:         uids,
-		TeamIds:      teamIds,
+		Name:         req.Title,
+		UIDs:         req.UIDs,
+		TeamIds:      teamIDs,
 		OrgID:        signedInUser.GetOrgID(),
-		SortOpts:     legacysort.ConvertToSortOptions(req.SortBy, TeamSortFieldMapping(), teamsortopts.SortOptionsByQueryParam),
+		SortOpts:     legacyTeamSortOptions(req.Sort),
 	}
 
 	res, err := c.teamService.SearchTeams(ctx, query)
@@ -105,145 +91,46 @@ func (c *LegacyTeamSearchClient) Search(ctx context.Context, req *resourcepb.Res
 		return nil, err
 	}
 
-	columns := getColumns(req.Fields)
-	list := &resourcepb.ResourceSearchResponse{
-		Results: &resourcepb.ResourceTable{
-			Columns: columns,
-		},
-	}
-
-	namespace := signedInUser.GetNamespace()
-
+	result := &iamv0.GetSearchTeamsResponse{GetSearchTeamsBody: iamv0.GetSearchTeamsBody{
+		Offset:    req.Offset,
+		TotalHits: res.TotalCount,
+		Hits:      make([]iamv0.GetSearchTeamsTeamHit, 0, len(res.Teams)),
+	}}
 	for _, t := range res.Teams {
-		cells := createCells(t, req.Fields)
-		list.Results.Rows = append(list.Results.Rows, &resourcepb.ResourceTableRow{
-			Key:   getResourceKey(t, namespace),
-			Cells: cells,
+		result.Hits = append(result.Hits, iamv0.GetSearchTeamsTeamHit{
+			Name:        t.UID,
+			Title:       t.Name,
+			Email:       t.Email,
+			Provisioned: t.IsProvisioned,
+			ExternalUID: t.ExternalUID,
+			InternalId:  &t.ID,
 		})
 	}
-
-	list.TotalHits = res.TotalCount
-
-	return list, nil
+	return result, nil
 }
 
-func getResourceKey(t *team.TeamDTO, namespace string) *resourcepb.ResourceKey {
-	return &resourcepb.ResourceKey{
-		Namespace: namespace,
-		Group:     TeamResourceGroup,
-		Resource:  TeamResource,
-		Name:      t.UID,
-	}
-}
-
-var teamColumns = resource.TableColumnsByName(builders.TeamSearchFields)
-
-func getColumns(fields []string) []*resourcepb.ResourceTableColumnDefinition {
-	columns := getDefaultColumns()
-
-	for _, field := range fields {
-		if field == teamsearch.LegacyIDField {
-			columns = append(columns, &resourcepb.ResourceTableColumnDefinition{
-				Name: teamsearch.LegacyIDField,
-				Type: resourcepb.ResourceTableColumnDefinition_STRING,
-			})
-			continue
+func legacyTeamSortOptions(sortBy []string) []model.SortOption {
+	mapping := TeamSortFieldMapping()
+	opts := []model.SortOption{}
+	for _, field := range sortBy {
+		direction := "asc"
+		if strings.HasPrefix(field, "-") {
+			field = field[1:]
+			direction = "desc"
 		}
-		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
-		if col, ok := teamColumns[fieldName]; ok {
-			columns = append(columns, col)
+		field = strings.TrimPrefix(field, "fields.")
+		if mapped, ok := mapping[field]; ok {
+			field = mapped
+		}
+		if opt, ok := teamsortopts.SortOptionsByQueryParam[field+"-"+direction]; ok {
+			opts = append(opts, opt)
 		}
 	}
-
-	return columns
-}
-
-func getDefaultColumns() []*resourcepb.ResourceTableColumnDefinition {
-	searchFields := resource.StandardSearchFields()
-	return []*resourcepb.ResourceTableColumnDefinition{
-		searchFields.Field(resource.SEARCH_FIELD_NAME),
-		searchFields.Field(resource.SEARCH_FIELD_TITLE),
-	}
-}
-
-func createCells(t *team.TeamDTO, fields []string) [][]byte {
-	cells := createDefaultCells(t)
-	for _, field := range fields {
-		if field == teamsearch.LegacyIDField {
-			cells = append(cells, []byte(strconv.FormatInt(t.ID, 10)))
-			continue
+	slices.SortFunc(opts, func(a, b model.SortOption) int {
+		if order := cmp.Compare(a.Index, b.Index); order != 0 {
+			return order
 		}
-		fieldName := strings.TrimPrefix(field, resource.SEARCH_FIELD_PREFIX)
-		switch fieldName {
-		case builders.TEAM_SEARCH_EMAIL:
-			cells = append(cells, []byte(t.Email))
-		case builders.TEAM_SEARCH_PROVISIONED:
-			cells = append(cells, []byte(strconv.FormatBool(t.IsProvisioned)))
-		case builders.TEAM_SEARCH_EXTERNAL_UID:
-			cells = append(cells, []byte(t.ExternalUID))
-		}
-	}
-	return cells
-}
-
-func createDefaultCells(t *team.TeamDTO) [][]byte {
-	return [][]byte{
-		[]byte(t.UID),
-		[]byte(t.Name),
-	}
-}
-
-func titleFromRequirements(opts *resourcepb.ListOptions) (string, error) {
-	if opts == nil {
-		return "", nil
-	}
-	for _, r := range opts.Fields {
-		if r != nil && r.Key == resource.SEARCH_FIELD_TITLE {
-			if len(r.Values) != 1 {
-				return "", fmt.Errorf("title filter requires exactly one value, got %d", len(r.Values))
-			}
-			return r.Values[0], nil
-		}
-	}
-	return "", nil
-}
-
-func valuesFromRequirements(opts *resourcepb.ListOptions, key string) []string {
-	if opts == nil {
-		return nil
-	}
-	for _, r := range opts.Fields {
-		if r != nil && r.Key == key && len(r.Values) > 0 {
-			return r.Values
-		}
-	}
-	return nil
-}
-
-func valuesFromLabels(opts *resourcepb.ListOptions, key string) []string {
-	if opts == nil {
-		return nil
-	}
-	for _, r := range opts.Labels {
-		if r != nil && r.Key == key && len(r.Values) > 0 {
-			return r.Values
-		}
-	}
-	return nil
-}
-
-func legacyIDsFromRequirements(opts *resourcepb.ListOptions) ([]int64, error) {
-	values := valuesFromLabels(opts, resource.SEARCH_FIELD_LEGACY_ID)
-	if len(values) == 0 {
-		return nil, nil
-	}
-	ids := make([]int64, 0, len(values))
-	for _, v := range values {
-		id, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid legacy team ID %q: %w", v, err)
-		}
-		ids = append(ids, id)
-	}
-	return ids, nil
+		return cmp.Compare(a.Name, b.Name)
+	})
+	return opts
 }

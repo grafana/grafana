@@ -608,6 +608,16 @@ func (r *SearchFieldsRegistry) For(key LowerGroupResource) (selectableFields []s
 	return r.selectableFields[key], r.searchFieldsHashes[key], r.searchFieldsProvider[key]
 }
 
+// ForKey is For for a whole index key. A namespace-wide index declares its own
+// fields and covers a fixed set of resource types, so none of its inputs come
+// from a manifest.
+func (r *SearchFieldsRegistry) ForKey(key NamespacedResource) (selectableFields []string, hash string, provider SearchFieldsProvider) {
+	if key.IsGlobal() {
+		return nil, GlobalSearchFieldsHash(), nil
+	}
+	return r.For(NewLowerGroupResource(key.Group, key.Resource))
+}
+
 // Replace atomically swaps all three maps. Callers must not mutate the maps
 // afterwards. A live-manifest source uses this to reload search fields.
 func (r *SearchFieldsRegistry) Replace(

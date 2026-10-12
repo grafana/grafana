@@ -33,9 +33,9 @@ import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getTopPlacementLabel } from '../../utils/getTopPlacementLabel';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
+import { getVariableEditor } from './editableVariablesRegistry';
 import {
   type EditableVariableType,
-  getVariableEditor,
   hasVariableOptions,
   isEditableVariableType,
   validateVariableName,

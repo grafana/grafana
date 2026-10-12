@@ -11,6 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	iamv0alpha1 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -75,6 +76,11 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		expectedName := iamv0alpha1.EncodeName(userUID, "ldap")
 		require.Equal(t, expectedName, created.GetName())
 
+		createdMeta, err := utils.MetaAccessor(created)
+		require.NoError(t, err)
+		internalID := createdMeta.GetDeprecatedInternalID() // nolint:staticcheck
+		require.NotZero(t, internalID, "create should assign a DeprecatedInternalID")
+
 		createdSpec := created.Object["spec"].(map[string]interface{})
 		require.Equal(t, userUID, createdSpec["userRef"].(map[string]interface{})["name"])
 		require.Equal(t, "ldap", createdSpec["authModule"])
@@ -102,6 +108,10 @@ func doAuthInfoCRUDTestsUsingTheNewAPIs(t *testing.T, helper *apis.K8sTestHelper
 		fetchedAfter, err := authInfoClient.Resource.Get(ctx, expectedName, metav1.GetOptions{})
 		require.NoError(t, err)
 		require.Equal(t, "cn=updated,dc=example,dc=com", fetchedAfter.Object["spec"].(map[string]interface{})["authID"])
+
+		fetchedAfterMeta, err := utils.MetaAccessor(fetchedAfter)
+		require.NoError(t, err)
+		require.Equal(t, internalID, fetchedAfterMeta.GetDeprecatedInternalID(), "the internal ID must stay stable across updates") // nolint:staticcheck
 	})
 
 	t.Run("should not create authinfo for a non-existent user", func(t *testing.T) {

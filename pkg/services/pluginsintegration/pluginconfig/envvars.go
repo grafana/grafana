@@ -290,6 +290,10 @@ func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 	return vars
 }
 
+// insecureSkipAuthenticationSetting makes a plugin serve plugin protocol v3
+// requests without verifying them. It is only passed on in development mode.
+const insecureSkipAuthenticationSetting = "insecure_skip_authentication"
+
 func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	const customConfigPrefix = "GF_PLUGIN"
 
@@ -298,6 +302,10 @@ func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	env := make([]string, 0, len(pluginSettings))
 	for k, v := range pluginSettings {
 		if k == "path" || strings.ToLower(k) == "id" {
+			continue
+		}
+		if strings.EqualFold(k, insecureSkipAuthenticationSetting) && !p.cfg.DevMode {
+			p.logger.Warn("Ignoring insecure_skip_authentication outside development mode", "pluginId", pluginID)
 			continue
 		}
 

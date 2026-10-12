@@ -158,3 +158,43 @@ func TestAugmentWebServices_SharesWebServiceWithBuilderRoutes(t *testing.T) {
 	assert.Equal(t, http.StatusOK, dispatch(t, container, http.MethodPost, base+"search"))
 	assert.Equal(t, "Search", extraReached)
 }
+
+// Handlers negotiate the response themselves, so a route that declares a JSON
+// response can still stream server-sent events.
+func TestAugmentWebServices_DoesNotRejectUndeclaredAccept(t *testing.T) {
+	container := newContainer()
+
+	var reached string
+	route := postRoute("widgets/stream", &reached, "Stream")
+	route.Spec.Post.Responses = &spec3.Responses{
+		ResponsesProps: spec3.ResponsesProps{
+			Default: &spec3.Response{
+				ResponseProps: spec3.ResponseProps{
+					Content: map[string]*spec3.MediaType{"application/json": {}},
+				},
+			},
+		},
+	}
+	err := AugmentWebServicesWithCustomRoutes(container, nil, nil, enabledConfig(testGV),
+		GroupVersionRoutes{
+			GroupVersion: testGV,
+			Routes:       &APIRoutes{Namespace: []APIRouteHandler{route}},
+		})
+	require.NoError(t, err)
+
+	for _, accept := range []string{"", "application/json", "text/event-stream"} {
+		t.Run(accept, func(t *testing.T) {
+			reached = ""
+			req := httptest.NewRequest(http.MethodPost,
+				"/apis/example.grafana.app/v1/namespaces/default/widgets/stream", nil)
+			if accept != "" {
+				req.Header.Set("Accept", accept)
+			}
+			rec := httptest.NewRecorder()
+			container.ServeHTTP(rec, req)
+
+			assert.Equal(t, http.StatusOK, rec.Code)
+			assert.Equal(t, "Stream", reached)
+		})
+	}
+}

@@ -14,9 +14,10 @@ import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
-import { PanelInspectDrawer } from '../inspect/PanelInspectDrawer';
+import { duplicatePanel } from '../actions/layout/duplicatePanel';
+import { openPanelInspector } from '../inspect/panelInspectorOpener';
 import { buildShareUrl } from '../sharing/ShareButton/utils';
-import { ShareDrawer } from '../sharing/ShareDrawer/ShareDrawer';
+import { openShareDrawer } from '../sharing/ShareDrawer/openShareDrawer';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { DashboardInteractions } from '../utils/interactions';
 import { findVizPanelByPathId } from '../utils/pathId';
@@ -89,12 +90,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       if (refuseWhilePlanning(scene)) {
         return;
       }
-      const drawer = new ShareDrawer({
+      await openShareDrawer(scene, {
         shareView: shareDashboardType.embed,
         panelRef: vizPanel.getRef(),
       });
-
-      scene.showModal(drawer);
     }),
   });
 
@@ -109,12 +108,10 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         if (refuseWhilePlanning(scene)) {
           return;
         }
-        const drawer = new ShareDrawer({
+        await openShareDrawer(scene, {
           shareView: shareDashboardType.snapshot,
           panelRef: vizPanel.getRef(),
         });
-
-        scene.showModal(drawer);
       }),
     });
   }
@@ -126,7 +123,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       if (refuseWhilePlanning(scene)) {
         return;
       }
-      scene.showModal(new PanelInspectDrawer({ panelRef: vizPanel.getRef(), currentTab: InspectTab.Data }));
+      await openPanelInspector(vizPanel, InspectTab.Data);
     }),
   });
 
@@ -294,7 +291,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
       onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
         DashboardInteractions.panelActionClicked('duplicate', getPanelIdForVizPanel(vizPanel), 'keyboard');
         if (scene.state.isEditing) {
-          scene.duplicatePanel(vizPanel);
+          duplicatePanel(vizPanel);
         }
       }),
     });

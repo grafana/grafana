@@ -6,15 +6,11 @@ import { fileURLToPath } from 'node:url';
 
 import { getEnvConfig } from '../cli/env-util.ts';
 
-import CorsWorkerPlugin from './plugins/CorsWorkerPlugin.ts';
 import E2ESelectorsPlugin from './plugins/E2ESelectorsPlugin.ts';
 
 const require = createRequire(import.meta.url);
 const grafanaRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-// The ini parser also returns booleans, which EnvironmentPlugin types as strings but
-// JSON.stringifies the same way.
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const envConfig = getEnvConfig(grafanaRoot) as Record<string, string>;
+const envConfig = getEnvConfig(grafanaRoot);
 
 export type Env = Record<string, string | true | undefined>;
 
@@ -28,6 +24,7 @@ export const PUBLIC_PATH = 'public/build/rspack/';
 export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
   return {
     test: /\.tsx?$/,
+    resourceQuery: { not: [/text-panel-runtime/] },
     use: {
       loader: 'builtin:swc-loader',
       options: {
@@ -43,8 +40,8 @@ export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
   };
 }
 
-export const sassRule: RuleSetRule = {
-  test: /\.(sa|sc|c)ss$/,
+export const cssRule: RuleSetRule = {
+  test: /\.css$/,
   use: [
     {
       loader: rspack.CssExtractRspackPlugin.loader,
@@ -55,29 +52,8 @@ export const sassRule: RuleSetRule = {
     {
       loader: 'css-loader',
       options: {
-        importLoaders: 2,
         url: true,
         sourceMap: false,
-      },
-    },
-    {
-      loader: 'postcss-loader',
-      options: {
-        sourceMap: false,
-        postcssOptions: {
-          // postcss.config.js is shared with the webpack build and lives next to it
-          config: path.resolve(import.meta.dirname, '../webpack'),
-        },
-      },
-    },
-    {
-      loader: 'sass-loader',
-      options: {
-        sourceMap: false,
-        sassOptions: {
-          // silencing these warnings since we're planning to remove sass when angular is gone
-          silenceDeprecations: ['import', 'global-builtin'],
-        },
       },
     },
   ],
@@ -106,8 +82,8 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
 
     entry: {
       app: './public/app/index.ts',
-      dark: './public/sass/grafana.dark.scss',
-      light: './public/sass/grafana.light.scss',
+      dark: './public/sass/grafana.dark.css',
+      light: './public/sass/grafana.light.css',
     },
     experiments: {
       // Required to load WASM modules.
@@ -185,7 +161,6 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         /@kusto[\\/]language-service[\\/]bridge\.min\.js/.test(warning.module.readableIdentifier()),
     ],
     plugins: [
-      new CorsWorkerPlugin(),
       new E2ESelectorsPlugin(),
       new rspack.ProvidePlugin({
         Buffer: ['buffer', 'Buffer'],
@@ -213,8 +188,13 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         },
       },
       rules: [
+        {
+          resourceQuery: /text-panel-runtime/,
+          type: 'javascript/auto',
+          use: path.resolve(grafanaRoot, 'scripts/webpack/loaders/textPanelRuntime.cjs'),
+        },
         createSwcRule({ reactRefresh: hmr }),
-        sassRule,
+        cssRule,
         {
           test: require.resolve('jquery'),
           loader: 'expose-loader',
