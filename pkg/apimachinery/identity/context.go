@@ -243,7 +243,7 @@ var serviceIdentityTokenPermissions = []string{
 	// Allow access to all apiextensions.k8s.io resources
 	"*.ext.grafana.app:*",
 
-	// Allow access to app plugin API groups, named by plugin ID (requires authlib support for the *-app wildcard)
+	// Allow access to app plugin API groups, which are named by plugin ID
 	"*-app:*",
 
 	// Named explicitly: the *.ext.grafana.app wildcard only matches single-segment prefixes.

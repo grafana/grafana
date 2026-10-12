@@ -414,14 +414,13 @@ func TestPluginBackendCoreGroups(t *testing.T) {
 }
 
 func TestPluginBackendManifestGroupValidation(t *testing.T) {
-	valid := map[string]bool{"example.ext.grafana.app": true, "example-app": true}
-	for _, group := range []string{"example.ext.grafana.app", "example-app", "other-app", "grafana-example-app", "", "example.ext.grafana.com", "folder.grafana.app", "-app", "example.example-app", "example-app.grafana.app"} {
+	for _, group := range []string{"example.ext.grafana.app", "", "example.ext.grafana.com", "folder.grafana.app", "example-app"} {
 		t.Run(group, func(t *testing.T) {
 			backend, err := testPluginBackend(t, definition.PluginDefinition{
 				JSONData:  plugins.JSONData{ID: "example-app"},
 				Manifests: []*app.ManifestData{{AppName: "example", Group: group, Versions: []app.ManifestVersion{{Name: "v1", Served: true}}}},
 			}, nil, PluginDependencies{})
-			if valid[group] {
+			if group == "example.ext.grafana.app" {
 				require.NoError(t, err)
 				require.Equal(t, group, backend.Group().Name)
 			} else {
@@ -488,25 +487,6 @@ func TestInitPluginRolesSkipsRoutableCoreGroups(t *testing.T) {
 	service := &recordingManifestRoleService{}
 	require.NoError(t, initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service}))
 	require.Zero(t, service.calls, "a core group keeps the roles its own app declares")
-}
-
-func TestInitPluginRolesRequiresOwnAppGroup(t *testing.T) {
-	bundle := func(id string) *plugins.FoundBundle {
-		return &plugins.FoundBundle{Primary: plugins.FoundPlugin{
-			JSONData: plugins.JSONData{ID: id, Type: plugins.TypeApp},
-			FS: plugins.NewInMemoryFS(map[string][]byte{
-				"app-sdk-manifest.json": []byte(`{"apiVersion":"apps.grafana.app/v1alpha2","spec":{"appName":"owner","group":"owner-app","versions":[{"name":"v1","served":true,"kinds":[{"kind":"Thing","plural":"things","scope":"Namespaced"}]}]}}`),
-			}),
-		}}
-	}
-	source := &pluginfakes.FakeSourceRegistry{ListFunc: func(context.Context) []plugins.PluginSource {
-		return []plugins.PluginSource{&pluginfakes.FakePluginSource{DiscoverFunc: func(context.Context) ([]*plugins.FoundBundle, error) {
-			return []*plugins.FoundBundle{bundle("owner-app"), bundle("other-app")}, nil
-		}}}
-	}}
-	service := &recordingManifestRoleService{}
-	require.NoError(t, initLocalPlugins(t.Context(), PluginLoaderDependencies{PluginSources: source, ACService: service}))
-	require.Equal(t, 1, service.calls, "only the plugin whose ID is the group may declare its roles")
 }
 
 func TestInitPluginRolesDoesNotLoadSchemas(t *testing.T) {

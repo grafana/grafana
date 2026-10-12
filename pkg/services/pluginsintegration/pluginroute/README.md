@@ -65,8 +65,8 @@ The registration honors:
 - manifest-declared version routes and kind subresource routes, forwarded to
   the plugin's v3 route service.
 
-The manifest group must be a DNS name (`ValidateManifest`); the router also
-requires it to end in `.ext.grafana.app` or equal the plugin ID. Only served versions are exposed, with the preferred
+The manifest group must be a DNS name ending in `.ext.grafana.app`
+(`ValidateManifest`). Only served versions are exposed, with the preferred
 version first. The generated OpenAPI document uses each kind's schema for
 request bodies, responses, and examples.
 

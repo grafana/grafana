@@ -193,7 +193,7 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 				// A core group keeps the roles its own app declares.
 				continue
 			}
-			if !isPluginManifestGroup(plugin.JSONData.ID, group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
+			if !isPluginManifestGroup(group) || len(validation.IsDNS1123Subdomain(group)) > 0 {
 				logging.FromContext(ctx).Warn("router: skipping roles for invalid manifest group", "pluginId", plugin.JSONData.ID, "group", group)
 				continue
 			}
@@ -278,21 +278,15 @@ func pluginManifestKeyData(plugin definition.PluginDefinition, manifest *app.Man
 	}{plugin, manifest, host})
 }
 
-// pluginManifestGroupSuffix is required on manifest groups other than the
-// plugin's own ID: unified storage always enforces RBAC on it, and no core
-// Grafana group uses it.
+// pluginManifestGroupSuffix is required on manifest groups: unified storage
+// always enforces RBAC on it, and no core Grafana group uses it.
 const pluginManifestGroupSuffix = ".ext.grafana.app"
 
-// isPluginManifestGroup reports whether pluginID may serve group: a name
-// followed by pluginManifestGroupSuffix, or the plugin's own ID. Unified storage
-// also always enforces RBAC on app plugin IDs (see alwaysEnforced in
-// pkg/storage/unified/resource), but any plugin could claim another's ID, so
-// only the owning plugin may serve it.
-func isPluginManifestGroup(pluginID, group string) bool {
-	if name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix); ok {
-		return name != ""
-	}
-	return group == pluginID && isAppPluginID(group) && strings.HasSuffix(group, "-app")
+// isPluginManifestGroup reports whether group is a plugin manifest group: a
+// name followed by pluginManifestGroupSuffix.
+func isPluginManifestGroup(group string) bool {
+	name, ok := strings.CutSuffix(group, pluginManifestGroupSuffix)
+	return ok && name != ""
 }
 
 // isAppPluginID reports whether id has the shape of an app plugin ID: it
@@ -319,7 +313,7 @@ func (PluginLoader) Notify(context.Context) (<-chan struct{}, error) {
 var routableCoreGroups = []string{"playlist.grafana.app", "example.grafana.app"}
 
 // newPluginBackend builds the backend for one plugin manifest. Its group must be
-// a plugin group (see isPluginManifestGroup) or one of routableCoreGroups.
+// a plugin group (*.ext.grafana.app) or one of routableCoreGroups.
 func newPluginBackend(pluginID string, manifest *app.ManifestData, client PluginClientProvider, deps PluginDependencies, key []byte) (_ *PluginBackend, err error) {
 	// The plugin API builder panics on an invalid manifest. Plugins are loaded
 	// inside the reconcile loop, so a panic here would stop it for every group.
@@ -332,8 +326,8 @@ func newPluginBackend(pluginID string, manifest *app.ManifestData, client Plugin
 	if manifest == nil {
 		return nil, fmt.Errorf("plugin %q: missing manifest", pluginID)
 	}
-	if !isPluginManifestGroup(pluginID, manifest.Group) && !slices.Contains(routableCoreGroups, manifest.Group) {
-		return nil, fmt.Errorf("plugin %q: API group %q must end in %s, equal the plugin ID, or be a routable core group", pluginID, manifest.Group, pluginManifestGroupSuffix)
+	if !isPluginManifestGroup(manifest.Group) && !slices.Contains(routableCoreGroups, manifest.Group) {
+		return nil, fmt.Errorf("plugin %q: API group %q must end in %s, or be a routable core group", pluginID, manifest.Group, pluginManifestGroupSuffix)
 	}
 	if err := pluginroute.ValidateManifest(pluginID, manifest); err != nil {
 		return nil, err
