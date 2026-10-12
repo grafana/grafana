@@ -9,9 +9,9 @@ import { type DashboardScene } from '../scene/DashboardScene';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 
-export type MigrationSuggestionConfidence = 'high' | 'low';
+type MigrationSuggestionConfidence = 'high' | 'low';
 
-export interface MigrationSuggestionCandidateUsage {
+interface MigrationSuggestionCandidateUsage {
   kind: 'filter' | 'groupBy';
   key?: string;
   operator?: string;
