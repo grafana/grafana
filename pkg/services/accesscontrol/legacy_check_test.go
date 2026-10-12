@@ -21,10 +21,25 @@ func TestLegacyCheck_Evaluators(t *testing.T) {
 		cases         []accesscontrol.EvaluationTestCase
 		pendingReason string
 	}{
-		{name: "Permission", cases: accesscontrol.PermissionEvaluateTestCases},
-		{name: "All", cases: accesscontrol.AllEvaluateTestCases, pendingReason: "pending: LegacyCheck request and server do not support EvalAll"},
-		{name: "Any", cases: accesscontrol.AnyEvaluateTestCases, pendingReason: "pending: LegacyCheck request and server do not support EvalAny"},
-		{name: "Combined", cases: accesscontrol.CombinedEvaluateTestCases, pendingReason: "pending: LegacyCheck request and server do not support nested EvalAll/EvalAny expressions"},
+		{
+			name:  "Permission",
+			cases: accesscontrol.PermissionEvaluateTestCases,
+		},
+		{
+			name:          "All",
+			cases:         accesscontrol.AllEvaluateTestCases,
+			pendingReason: "pending: server-side EvalAll and the AccessControl empty-permission guard",
+		},
+		{
+			name:          "Any",
+			cases:         accesscontrol.AnyEvaluateTestCases,
+			pendingReason: "pending: server-side EvalAny",
+		},
+		{
+			name:          "Combined",
+			cases:         accesscontrol.CombinedEvaluateTestCases,
+			pendingReason: "pending: server-side nested expressions and the AccessControl empty-permission guard",
+		},
 	}
 	for _, group := range groups {
 		t.Run(group.name, func(t *testing.T) {
