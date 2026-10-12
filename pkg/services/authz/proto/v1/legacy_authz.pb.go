@@ -400,8 +400,9 @@ type LegacyPermissionIdentity struct {
 	// Preserve the trusted requester's shared-cache key, including empty values.
 	CacheKey *string `protobuf:"bytes,9,opt,name=cache_key,json=cacheKey,proto3,oneof" json:"cache_key,omitempty"`
 	// Original namespace for legacy resolution, not a tenant scope override.
-	// When nonempty it must match the request namespace, except org--1 for
-	// self-managed no_org_membership evaluation. Empty differs from absent.
+	// When nonempty it must match the request namespace, except self-managed
+	// org-0 for global_org or org--1 for no_org_membership evaluation.
+	// Empty differs from absent.
 	RequesterNamespace *string `protobuf:"bytes,10,opt,name=requester_namespace,json=requesterNamespace,proto3,oneof" json:"requester_namespace,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache

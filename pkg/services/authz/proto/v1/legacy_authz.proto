@@ -80,8 +80,9 @@ message LegacyPermissionIdentity {
   // Preserve the trusted requester's shared-cache key, including empty values.
   optional string cache_key = 9;
   // Original namespace for legacy resolution, not a tenant scope override.
-  // When nonempty it must match the request namespace, except org--1 for
-  // self-managed no_org_membership evaluation. Empty differs from absent.
+  // When nonempty it must match the request namespace, except self-managed
+  // org-0 for global_org or org--1 for no_org_membership evaluation.
+  // Empty differs from absent.
   optional string requester_namespace = 10;
 }
 

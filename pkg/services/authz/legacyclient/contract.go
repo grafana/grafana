@@ -44,7 +44,7 @@ type LegacyPermissionIdentity struct {
 	// RequesterNamespace preserves the original namespace used by legacy
 	// Zanzana resolution, including an explicit empty value. It does not select
 	// tenant scope; a nonempty value must match the request Namespace, except
-	// org--1 for self-managed NoOrgMembership evaluation.
+	// org-0 for self-managed GlobalOrg or org--1 for NoOrgMembership evaluation.
 	RequesterNamespace *string
 }
 

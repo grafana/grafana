@@ -86,6 +86,7 @@ func TestIntegrationGetUserPermissions_ContractRequesterSources(t *testing.T) {
 				{"api-key", user.SignedInUser{ApiKeyID: 7, OrgID: 1, OrgRole: org.RoleViewer}, []accesscontrol.Permission{baseline, grant}},
 				{"no-unique-id", user.SignedInUser{OrgID: 1, OrgRole: org.RoleNone}, []accesscontrol.Permission{baseline}},
 				{"global-only", user.SignedInUser{UserID: 7, OrgID: 0, OrgRole: org.RoleViewer}, []accesscontrol.Permission{baseline}},
+				{"global-only-mapped-namespace", user.SignedInUser{UserID: 7, OrgID: 0, OrgRole: org.RoleViewer, Namespace: "org-0"}, []accesscontrol.Permission{baseline}},
 			} {
 				t.Run(tc.name, func(t *testing.T) {
 					got, err := s.GetUserPermissions(context.Background(), &tc.requester, accesscontrol.Options{})

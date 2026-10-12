@@ -39,9 +39,9 @@ func GetLegacyUserPermissions(ctx context.Context, client legacyclient.Service, 
 	namespace := originalNamespace
 	global := usr.GetOrgID() == GlobalOrgID
 	noOrgMembership := usr.GetOrgID() == -1
-	// The self-managed missing-membership namespace is requester state, not a
-	// transport tenant. Preserve it in Identity while using an instance anchor.
-	if noOrgMembership && cfg.StackID == "" && namespace == authlib.OrgNamespaceFormatter(-1) {
+	// Self-managed global and missing-membership namespaces are requester state,
+	// not transport tenants. Preserve them in Identity using an instance anchor.
+	if (global || noOrgMembership) && cfg.StackID == "" && namespace == authlib.OrgNamespaceFormatter(usr.GetOrgID()) {
 		namespace = ""
 	}
 	if namespace == "" {

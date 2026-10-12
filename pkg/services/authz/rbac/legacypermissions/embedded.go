@@ -77,8 +77,10 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	}
 	namespace := req.Namespace
 	if original := req.Identity.RequesterNamespace; original != nil {
-		missingOrgNamespace := req.NoOrgMembership && s.cfg.StackID == "" && *original == types.OrgNamespaceFormatter(-1)
-		if *original != "" && *original != req.Namespace && !missingOrgNamespace {
+		sentinelNamespace := s.cfg.StackID == "" &&
+			((req.GlobalOrg && *original == types.OrgNamespaceFormatter(ac.GlobalOrgID)) ||
+				(req.NoOrgMembership && *original == types.OrgNamespaceFormatter(-1)))
+		if *original != "" && *original != req.Namespace && !sentinelNamespace {
 			return status.Error(codes.PermissionDenied, "requester namespace does not match tenant scope")
 		}
 		namespace = *original

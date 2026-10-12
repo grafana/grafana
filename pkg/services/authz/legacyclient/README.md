@@ -14,7 +14,7 @@ Both embedded permission RPCs share one AuthZ-owned `legacypermissions.Loader`. 
 
 - Caller service identity is separate from the target identity. Role, Grafana Admin status, team IDs, contextual groups, cache key, and original requester namespace are trusted Grafana assertions, not end-user overrides.
 - Request namespace identifies the instance and ordinary org. `GlobalOrg` selects org zero; `NoOrgMembership` preserves org `-1`. The flags are mutually exclusive and never bypass tenant validation. Cloud keeps its stack namespace. Self-managed sentinel evaluations without a concrete namespace use `default` only as a private transport anchor, never as the evaluation org.
-- An explicitly empty original requester namespace differs from absence and preserves legacy Zanzana resolution. A nonempty value must match request namespace, except `org--1` for self-managed `NoOrgMembership` calls. Preserve that sentinel for the loader; do not make it a valid transport namespace.
+- An explicitly empty original requester namespace differs from absence and preserves legacy Zanzana resolution. A nonempty value must match request namespace, except self-managed `org-0` for `GlobalOrg` or `org--1` for `NoOrgMembership` calls. Preserve those sentinels for the loader; do not make them valid transport namespaces.
 - Preserve the original requester cache key so existing Access Control invalidation reaches the loader's cache entry.
 - `ReloadCache` refreshes legacy caches; `SkipZanzanaCache` bypasses only Zanzana cache reads and writes. The client has no permission cache.
 - Preserve duplicate action/scope pairs and empty scopes. Publish only a complete snapshot after successful EOF; discard partial results on any error. Preserve cancellation and deadlines.
