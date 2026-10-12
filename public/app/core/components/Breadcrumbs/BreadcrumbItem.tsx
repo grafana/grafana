@@ -3,9 +3,10 @@ import { css, cx } from '@emotion/css';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { reportInteraction } from '@grafana/runtime';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { type Breadcrumb } from './types';
+import { useBreadcrumbTruncation } from './useBreadcrumbTruncation';
 
 type Props = Breadcrumb & {
   isCurrent: boolean;
@@ -15,6 +16,7 @@ type Props = Breadcrumb & {
 
 export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props) {
   const styles = useStyles2(getStyles);
+  const { breadcrumbRef, isTruncated } = useBreadcrumbTruncation(text, isCurrent);
 
   const onBreadcrumbClick = () => {
     reportInteraction('grafana_breadcrumb_clicked', { url: href });
@@ -23,25 +25,23 @@ export function BreadcrumbItem({ href, isCurrent, text, index, flexGrow }: Props
   return (
     <li className={styles.breadcrumbWrapper} style={{ flexGrow }}>
       {isCurrent ? (
-        <span
-          data-testid={Components.Breadcrumbs.breadcrumb(text)}
-          className={styles.breadcrumb}
-          aria-current="page"
-          title={text}
-        >
-          {text}
-        </span>
+        <Tooltip ref={breadcrumbRef} content={text} placement="bottom" show={isTruncated ? undefined : false}>
+          <span data-testid={Components.Breadcrumbs.breadcrumb(text)} className={styles.breadcrumb} aria-current="page">
+            {text}
+          </span>
+        </Tooltip>
       ) : (
         <>
-          <a
-            onClick={onBreadcrumbClick}
-            data-testid={Components.Breadcrumbs.breadcrumb(text)}
-            className={cx(styles.breadcrumb, styles.breadcrumbLink)}
-            title={text}
-            href={href}
-          >
-            {text}
-          </a>
+          <Tooltip ref={breadcrumbRef} content={text} placement="bottom" show={isTruncated ? undefined : false}>
+            <a
+              onClick={onBreadcrumbClick}
+              data-testid={Components.Breadcrumbs.breadcrumb(text)}
+              className={cx(styles.breadcrumb, styles.breadcrumbLink)}
+              href={href}
+            >
+              {text}
+            </a>
+          </Tooltip>
           <div className={styles.separator} aria-hidden={true}>
             <Icon name="angle-right" />
           </div>
