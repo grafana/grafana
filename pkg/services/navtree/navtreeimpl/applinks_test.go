@@ -1151,7 +1151,7 @@ func TestAssistantPagesTopLevelNavigation(t *testing.T) {
 				Type: plugins.TypeApp,
 				Includes: []*plugins.Includes{
 					{Name: "Assistant", Path: "/a/grafana-assistant-app/workspace", Type: "page", AddToNav: true},
-					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "apps", Type: "page", AddToNav: true, Role: identity.RoleAdmin},
+					{Name: "Pages", Path: "/a/grafana-assistant-app/pages", Icon: "file-alt", Type: "page", AddToNav: true, Role: identity.RoleAdmin},
 				},
 			}}
 			dashboards := &navtree.NavLink{Id: navtree.NavIDDashboards, SortWeight: navtree.WeightDashboard}
