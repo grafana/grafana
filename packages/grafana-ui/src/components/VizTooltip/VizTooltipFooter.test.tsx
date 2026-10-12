@@ -59,6 +59,24 @@ describe('VizTooltipFooter', () => {
     expect(onFilterClick).toHaveBeenCalled();
   });
 
+  it('should render an ad hoc filter hint under its button', () => {
+    const adHocFilter: AdHocFilterModel = {
+      key: 'testKey',
+      operator: '=',
+      value: 'testValue',
+      onClick: jest.fn(),
+      hint: 'Alt-click to select several',
+    };
+
+    render(
+      <MemoryRouter>
+        <VizTooltipFooter dataLinks={[]} adHocFilters={[adHocFilter]} />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Alt-click to select several')).toBeInTheDocument();
+  });
+
   it('should not render ad hoc filter button when there are one-click links', () => {
     const onFilterClick = jest.fn();
     const onClick = jest.fn();
