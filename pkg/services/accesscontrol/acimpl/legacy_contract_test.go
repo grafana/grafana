@@ -53,6 +53,7 @@ func TestIntegrationLegacyRoutingContracts(t *testing.T) {
 				name string
 				run  func(*testing.T)
 			}{
+				{"delegation-precedence", TestIntegrationGetUserPermissions_ContractDelegationPrecedence},
 				{"sources", TestIntegrationGetUserPermissions_ContractSources},
 				{"requester-sources", TestIntegrationGetUserPermissions_ContractRequesterSources},
 				{"no-org-membership", TestIntegrationGetUserPermissions_ContractNoOrgMembership},

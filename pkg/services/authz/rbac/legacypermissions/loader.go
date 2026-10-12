@@ -94,6 +94,10 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 		excludeRedundantManagedPermissions: l.features.IsEnabledGlobally(featuremgmt.FlagExcludeRedundantManagedPermissions),
 	}
 	started := time.Now()
+	// OSS timing includes Zanzana merging; licensed Enterprise measures only RBAC loading.
+	if !settings.enforcementEnabled {
+		defer func() { metrics.MAccessPermissionsSummary.Observe(time.Since(started).Seconds()) }()
+	}
 	cached := l.cfg.RBAC.PermissionCache && user.HasUniqueId()
 	var permissions []ac.Permission
 	var err error
@@ -110,7 +114,9 @@ func (l *Loader) GetUserPermissions(ctx context.Context, user identity.Requester
 			permissions = value.([]ac.Permission)
 		}
 	}
-	metrics.MAccessPermissionsSummary.Observe(time.Since(started).Seconds())
+	if settings.enforcementEnabled {
+		metrics.MAccessPermissionsSummary.Observe(time.Since(started).Seconds())
+	}
 	if err != nil {
 		return nil, err
 	}

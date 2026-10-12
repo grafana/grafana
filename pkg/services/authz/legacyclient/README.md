@@ -18,9 +18,25 @@ Both embedded permission RPCs share one AuthZ-owned `legacypermissions.Loader`. 
 - Preserve the original requester cache key so existing Access Control invalidation reaches the loader's cache entry.
 - `ReloadCache` refreshes legacy caches; `SkipZanzanaCache` bypasses only Zanzana cache reads and writes. The client has no permission cache.
 - Preserve duplicate action/scope pairs and empty scopes. Publish only a complete snapshot after successful EOF; discard partial results on any error. Preserve cancellation and deadlines.
-- Never fall back to the old RPC or local enumeration on transport errors. The default-off `authz.legacyUserPermissions` OpenFeature toggle selects the old or embedded path in Access Control.
+- Never fall back to the old RPC or local enumeration on transport errors. The default-off `authz.legacyUserPermissions` OpenFeature toggle selects the old or embedded local path in Access Control only after the existing AuthZ delegation gate. For single-org, non-global requests with the permissions API enabled, that API remains authoritative (including empty results and failures), regardless of the legacy toggle or Enterprise license.
 
 The generated service/messages and this client can be removed together once legacy enumeration is retired. Existing authlib Check/List, the older permission RPC, and Grafana's extension service remain unchanged.
+
+## Transaction compatibility and remote migration
+
+The private legacy client preserves the caller's SQL session in-process. Some existing callers, such as receiver permission copying during a contact-point rename, refresh permissions before their enclosing transaction commits. Without the shared session, enumeration reads the old committed grants and caches a snapshot missing the renamed receiver's permissions. `ReloadCache` does not make uncommitted writes visible to another SQL session.
+
+Only the SQL session and tracing context are forwarded; unrelated caller context values and authentication are not. Transaction-bound calls wait for the handler to finish using the session before returning, including on cancellation, so the caller cannot commit, roll back, or close a session still in use. This restores local RBAC compatibility, not stronger transaction/cache isolation: refreshed permission snapshots can still be cached before commit and survive a later rollback.
+
+Before migrating these callers to remote AuthZ enumeration:
+
+1. Separate permission mutation from refresh. Keep copying/deleting grants inside the transaction; refresh only after the **outermost transaction commits**, using a non-transaction context. Do not refresh after rollback.
+2. Refresh through the selected AuthZ client with `ReloadCache`, covering direct-user, team, and basic-role contributions. Clearing only the direct-user cache is insufficient for the receiver flow.
+3. Handle post-commit refresh failures separately from mutation failures: a failed RPC cannot undo the committed rename. Define the failure/retry behavior explicitly.
+4. Define read-after-write freshness. A refresh against the same primary can observe committed writes, but bypassing caches does not resolve replica lag or asynchronous synchronization.
+5. Replace the embedded transaction-visibility assumption in the affected caller tests with post-commit refresh tests, and verify immediate access after rename through the remote client.
+
+SQL session forwarding and its handler-completion tracking are embedded-only compatibility mechanisms. Do not serialize the session into gRPC metadata or expose this trusted-assertion RPC on a network server as a shortcut to remote enumeration.
 
 ## Validation
 

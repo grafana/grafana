@@ -178,17 +178,23 @@ func (s *Service) GetUserPermissions(ctx context.Context, user identity.Requeste
 	ctx, span := tracer.Start(ctx, "accesscontrol.acimpl.GetUserPermissions")
 	defer span.End()
 
-	timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
-	defer timer.ObserveDuration()
-
-	if accesscontrol.LegacyUserPermissionsEnabled(ctx) {
-		return accesscontrol.GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
+	delegate := s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled
+	legacy := !delegate && accesscontrol.LegacyUserPermissionsEnabled(ctx)
+	// The legacy loader owns timing on this route.
+	if !legacy {
+		timer := prometheus.NewTimer(metrics.MAccessPermissionsSummary)
+		defer timer.ObserveDuration()
 	}
-	if s.cfg.RBAC.SingleOrganization && user.GetOrgID() != accesscontrol.GlobalOrgID && s.userPermissionsAPIEnabled {
+
+	if delegate {
 		if s.userPermissionsClient == nil {
 			return nil, fmt.Errorf("AuthZ user permissions client is not configured")
 		}
 		return s.userPermissionsClient.GetUserPermissions(ctx, user, options)
+	}
+	// The legacy toggle replaces local enumeration, not the delegated authority.
+	if legacy {
+		return accesscontrol.GetLegacyUserPermissions(ctx, s.legacyClient, user, options, s.cfg)
 	}
 	return s.getLocalUserPermissions(ctx, user, options)
 }

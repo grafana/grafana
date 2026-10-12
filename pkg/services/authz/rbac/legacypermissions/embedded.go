@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
@@ -16,11 +17,63 @@ import (
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/authz/legacyclient"
 	authzv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type embeddedCallKey struct{}
+type embeddedTransactionCallKey struct{}
+
+// A canceled gRPC client can return before its handler exits. A caller-owned SQL
+// session must not be committed, rolled back or closed while the handler uses it.
+type embeddedTransactionCall struct {
+	mu             sync.Mutex
+	started        bool
+	clientReturned bool
+	done           chan struct{}
+}
+
+func (c *embeddedTransactionCall) start() bool {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.clientReturned {
+		return false
+	}
+	c.started = true
+	return true
+}
+
+func (c *embeddedTransactionCall) wait() {
+	c.mu.Lock()
+	c.clientReturned = true
+	started := c.started
+	c.mu.Unlock()
+	if started {
+		<-c.done
+	}
+}
+
+type embeddedClient struct{ EmbeddedClient }
+
+func (c *embeddedClient) LegacyGetUserPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+		call := &embeddedTransactionCall{done: make(chan struct{})}
+		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
+		defer call.wait()
+	}
+	return c.EmbeddedClient.LegacyGetUserPermissions(ctx, caller, req)
+}
+
+func (c *embeddedClient) LegacySearchUsersPermissions(ctx context.Context, caller types.AuthInfo, req legacyclient.LegacySearchUsersPermissionsRequest) (legacyclient.LegacySearchUsersPermissionsResponse, error) {
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+		call := &embeddedTransactionCall{done: make(chan struct{})}
+		ctx = context.WithValue(ctx, embeddedTransactionCallKey{}, call)
+		defer call.wait()
+	}
+	return c.EmbeddedClient.LegacySearchUsersPermissions(ctx, caller, req)
+}
+
 type embeddedStream struct {
 	grpc.ServerStream
 	ctx context.Context
@@ -49,13 +102,26 @@ func NewEmbeddedClient(loader *Loader, cfg *setting.Cfg) EmbeddedClient {
 		ctx := stream.Context()
 		if clientCtx := inprocgrpc.ClientContext(ctx); clientCtx != nil {
 			ctx = trace.ContextWithSpanContext(ctx, trace.SpanContextFromContext(clientCtx))
+			// Legacy callers can refresh before committing permission mutations.
+			// Preserve their SQL session without forwarding unrelated context values.
+			// TODO: Before routing these callers to remote AuthZ, move permission
+			// refreshes (including receiver permission copying) after the outermost
+			// transaction commits. SQL sessions cannot be shared over remote gRPC.
+			if sess, ok := clientCtx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+				call, ok := clientCtx.Value(embeddedTransactionCallKey{}).(*embeddedTransactionCall)
+				if !ok || !call.start() {
+					return status.Error(codes.Canceled, "embedded transaction call already returned")
+				}
+				defer close(call.done)
+				ctx = context.WithValue(ctx, sqlstore.ContextSessionKey{}, sess)
+			}
 		}
 		ctx = context.WithValue(ctx, embeddedCallKey{}, guard)
 		ctx = types.WithAuthInfo(ctx, ac.LegacySearchPermissionCaller("*"))
 		return handler(srv, embeddedStream{ServerStream: stream, ctx: ctx})
 	})
 	authzv1.RegisterLegacyAuthzServiceServer(channel, server)
-	return legacyclient.NewLegacyClient(channel)
+	return &embeddedClient{EmbeddedClient: legacyclient.NewLegacyClient(channel)}
 }
 
 func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {

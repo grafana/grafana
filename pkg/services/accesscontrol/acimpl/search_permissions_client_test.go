@@ -79,10 +79,11 @@ func TestServiceSearchFlagDoesNotChangeUserPermissionsRouting(t *testing.T) {
 					for _, orgID := range []int64{0, 2} {
 						t.Run(fmt.Sprintf("search=%t/legacy=%t/singleOrg=%t/api=%t/org=%d", search, legacy, singleOrg, apiEnabled, orgID), func(t *testing.T) {
 							configureSearchFlags(t, search, legacy)
+							enumeration := &routingEnumerationClient{}
 							service := &Service{
 								cfg: setting.NewCfg(), cache: localcache.ProvideService(), log: log.New("test"),
 								store: &actest.FakeStore{}, roles: accesscontrol.BuildBasicRoleDefinitions(), features: featuremgmt.WithFeatures(),
-								actionResolver: resourcepermissions.NewActionSetService(), legacyClient: &routingEnumerationClient{},
+								actionResolver: resourcepermissions.NewActionSetService(), legacyClient: enumeration,
 							}
 							service.cfg.RBAC.SingleOrganization = singleOrg
 							service.userPermissionsAPIEnabled = apiEnabled
@@ -91,10 +92,16 @@ func TestServiceSearchFlagDoesNotChangeUserPermissionsRouting(t *testing.T) {
 							caller := &user.SignedInUser{UserID: 1, UserUID: "caller", OrgID: orgID}
 							_, err := service.GetUserPermissions(t.Context(), caller, accesscontrol.Options{})
 							require.NoError(t, err)
-							if !legacy && singleOrg && apiEnabled && orgID != 0 {
+							if singleOrg && apiEnabled && orgID != 0 {
 								require.Equal(t, 1, rpc.calls)
+								require.Zero(t, enumeration.calls)
 							} else {
 								require.Zero(t, rpc.calls)
+								if legacy {
+									require.Equal(t, 1, enumeration.calls)
+								} else {
+									require.Zero(t, enumeration.calls)
+								}
 							}
 						})
 					}
@@ -104,8 +111,9 @@ func TestServiceSearchFlagDoesNotChangeUserPermissionsRouting(t *testing.T) {
 	}
 }
 
-type routingEnumerationClient struct{}
+type routingEnumerationClient struct{ calls int }
 
-func (*routingEnumerationClient) LegacyGetUserPermissions(context.Context, types.AuthInfo, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+func (c *routingEnumerationClient) LegacyGetUserPermissions(context.Context, types.AuthInfo, legacyclient.LegacyGetUserPermissionsRequest) (legacyclient.LegacyGetUserPermissionsResponse, error) {
+	c.calls++
 	return legacyclient.LegacyGetUserPermissionsResponse{}, nil
 }

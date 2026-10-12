@@ -343,3 +343,36 @@ func TestIntegrationSharedLoaderSearchMembership(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationSharedLoaderSearchTransaction(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	for _, enforced := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enforced=%t", enforced), func(t *testing.T) {
+			sql := db.NewTestStore(t)
+			seedSearchLoaderUser(t, sql, searchLoaderCallerID, "401", org.RoleNone)
+			seedSearchLoaderUser(t, sql, searchLoaderTargetID, "target-one", org.RoleNone)
+			seedGrant(t, sql, "managed:caller-search", 1, searchLoaderCallerID, ac.Permission{Action: ac.ActionUsersPermissionsRead, Scope: "users:*"})
+			seedGrant(t, sql, "managed:target-search", 1, searchLoaderTargetID, ac.Permission{Action: "test:read", Scope: "tests:id:before"})
+			cfg := loaderConfig(true)
+			client := legacypermissions.NewEmbeddedClient(legacypermissions.NewLoader(sql, legacypermissions.NewRoleCatalog(), resourcepermissions.NewActionSetService(), localcache.New(0, 0), cfg, featuremgmt.WithFeatures(), &enforcementLicense{enabled: enforced}, nil), cfg)
+			check := func(ctx context.Context, scope string) {
+				t.Helper()
+				result, err := client.LegacySearchUsersPermissions(ctx, ac.LegacySearchPermissionCaller("default"), searchLoaderRequest())
+				require.NoError(t, err)
+				require.Equal(t, []types.Permission{{Action: "test:read", Scope: scope}}, result.Permissions[searchLoaderTargetID])
+			}
+			check(t.Context(), "tests:id:before")
+			rollback := errors.New("rollback target mutation")
+			err := sql.InTransaction(t.Context(), func(ctx context.Context) error {
+				require.NoError(t, sql.WithDbSession(ctx, func(sess *db.Session) error {
+					_, err := sess.Exec("UPDATE permission SET scope = ? WHERE scope = ?", "tests:id:after", "tests:id:before")
+					return err
+				}))
+				check(ctx, "tests:id:after")
+				return rollback
+			})
+			require.ErrorIs(t, err, rollback)
+			check(t.Context(), "tests:id:before")
+		})
+	}
+}
