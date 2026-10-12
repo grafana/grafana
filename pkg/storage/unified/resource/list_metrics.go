@@ -1,6 +1,8 @@
 package resource
 
 import (
+	"context"
+
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -53,6 +55,94 @@ func annotateListRequest(span trace.Span, path, selectorType string, requestedLi
 		)
 	}
 	span.SetAttributes(attrs...)
+}
+
+const (
+	listStopExhausted  = "exhausted"
+	listStopByteLimit  = "byte_limit"
+	listStopCountLimit = "count_limit"
+	listStopError      = "error"
+)
+
+type listBodyStatsKey struct{}
+
+// These count logical KV requests and yielded values, not database rows or
+// driver read-ahead. The KV implementation may omit missing keys or retry reads.
+type listBodyStats struct {
+	supported         bool
+	bodyKeysRequested int
+	bodiesConsumed    int
+	stopReason        string
+}
+
+func withListBodyStats(ctx context.Context) (context.Context, *listBodyStats) {
+	stats := &listBodyStats{stopReason: listStopExhausted}
+	return context.WithValue(ctx, listBodyStatsKey{}, stats), stats
+}
+
+func listBodyStatsFromContext(ctx context.Context) *listBodyStats {
+	stats, _ := ctx.Value(listBodyStatsKey{}).(*listBodyStats)
+	return stats
+}
+
+// withoutListBodyStats hides the list's body stats from work done on the list's
+// behalf that does not return bodies, such as an in-process search building a
+// missing index.
+func withoutListBodyStats(ctx context.Context) context.Context {
+	if listBodyStatsFromContext(ctx) == nil {
+		return ctx
+	}
+	return context.WithValue(ctx, listBodyStatsKey{}, (*listBodyStats)(nil))
+}
+
+// reportSearchListBodies opts a search-backed list into the body stats when its
+// bodies are read from a KV backend, as a KV-backed store list is. It is marked
+// when the path is chosen rather than on the first read, so a list whose search
+// returns no rows is still counted.
+func (s *server) reportSearchListBodies(ctx context.Context) {
+	if stats := listBodyStatsFromContext(ctx); stats != nil && supportsDeletedBatchReads(s.backend) {
+		stats.supported = true
+	}
+}
+
+func setListStopReason(ctx context.Context, reason string) {
+	if stats := listBodyStatsFromContext(ctx); stats != nil {
+		stats.stopReason = reason
+	}
+}
+
+func (s *server) recordListBodyStats(span trace.Span, stats *listBodyStats, path string, rsp *resourcepb.ListResponse, err error) {
+	if !stats.supported {
+		return
+	}
+	switch path {
+	case listPathStoreAuthorizeFirst, listPathStoreFetchFirst, listPathSearchFallbackAuthorizeFirst, listPathSearchFallbackFetchFirst,
+		listPathSearch, listPathTrashSearch:
+	default:
+		return
+	}
+
+	returned := 0
+	if err != nil || rsp == nil || rsp.GetError() != nil {
+		stats.stopReason = listStopError
+	} else {
+		returned = len(rsp.Items)
+	}
+	span.SetAttributes(
+		attribute.Int("list.body_keys_requested", stats.bodyKeysRequested),
+		attribute.Int("list.bodies_consumed", stats.bodiesConsumed),
+		attribute.String("list.stop_reason", stats.stopReason),
+	)
+	if s.storageMetrics == nil {
+		return
+	}
+	labels := []string{path, stats.stopReason}
+	s.storageMetrics.ListBodyKeysRequested.WithLabelValues(labels...).Add(float64(stats.bodyKeysRequested))
+	s.storageMetrics.ListBodiesConsumed.WithLabelValues(labels...).Add(float64(stats.bodiesConsumed))
+	s.storageMetrics.ListItemsReturned.WithLabelValues(labels...).Add(float64(returned))
+	if stats.stopReason != listStopError {
+		s.storageMetrics.ListUnusedBodyRequests.WithLabelValues(labels...).Observe(float64(max(0, stats.bodyKeysRequested-returned)))
+	}
 }
 
 func listSelectorType(req *resourcepb.ListRequest) string {

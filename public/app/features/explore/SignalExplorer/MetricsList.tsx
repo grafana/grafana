@@ -1,16 +1,17 @@
 import { css } from '@emotion/css';
-import { memo, useCallback, useId, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { type DataSourceRef, type GrafanaTheme2, type TimeRange } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Button, FilterInput, ScrollContainer, Text, useStyles2 } from '@grafana/ui';
+import { Button, FilterInput, ScrollContainer, Spinner, Text, useStyles2 } from '@grafana/ui';
 
 import { MetricLabels } from './MetricLabels';
 import { MetricRow } from './MetricRow';
 import { blockId } from './blockId';
 import { dsKey, rangeKey } from './data/metricResourceClient';
 import { useMetricCatalog } from './data/useMetricCatalog';
+import { useLoadMoreSentinel } from './hooks/useLoadMoreSentinel';
 import { useVisibleBatch } from './hooks/useVisibleBatch';
 import {
   trackSignalExplorerMetricExpanded,
@@ -18,6 +19,9 @@ import {
   trackSignalExplorerSearchPerformed,
 } from './tracking';
 import { type MetricSelection } from './types';
+
+/** How long the row count has to hold still before the screen reader status announces it. */
+export const STATUS_SETTLE_MS = 300;
 
 interface Props {
   /** The owning card's query, named back to the explorer so it knows whose row was selected. */
@@ -47,8 +51,9 @@ interface Props {
  * SignalCard.
  *
  * Only a batch of the list reaches the DOM at a time — a real catalog runs to tens of thousands of
- * names. Searching is the catalog hook's job, not this component's: the list being searched is the
- * whole datasource's catalog, which this component never holds.
+ * names — and the next batch is added as the end of the list scrolls into view. Searching is the
+ * catalog hook's job, not this component's: the list being searched is the whole datasource's
+ * catalog, which this component never holds.
  *
  * A row's chevron expands it to its label keys and a label key to its values. One metric and one label
  * at a time: every open row holds a request open, and both lists are unbounded. The row's name is a
@@ -109,14 +114,15 @@ export const MetricsList = memo(function MetricsList({
   // Stable across the re-renders the memo above cannot absorb, so the plain components below can take
   // a ref object without one identity change per render turning into a refetch.
   const dsRef = useMemo<DataSourceRef>(() => ({ uid: dsUid, type: dsType }), [dsUid, dsType]);
-  const { metrics, loading, error } = useMetricCatalog(dsRef, timeRange, { searchText: searchTerm });
+  const { metrics, truncated, loading, error } = useMetricCatalog(dsRef, timeRange, { searchText: searchTerm });
 
   // The last term reported. `loading` is a dependency below and rises again on every refetch — a
   // range change, a card switching datasource, an invalidation — and none of those are a search.
   const reportedTermRef = useRef<string | null>(null);
 
   // `FilterInput` fires per keystroke, so a term only becomes an event once the user stops typing.
-  // Filtering is synchronous, so `metrics` already matches `searchTerm` by the time this runs.
+  // `loading` also covers a search still waiting on the datasource, so once it drops `metrics`
+  // matches `searchTerm`.
   useDebounce(
     () => {
       if (!searchTerm) {
@@ -169,8 +175,71 @@ export const MetricsList = memo(function MetricsList({
 
   // Paging resets on anything that swaps the catalog out for a different one — the search, but also
   // the datasource and the range. An offset into the old list means nothing in the new one.
-  const { visibleCount, showMore } = useVisibleBatch(`${dsKey(dsRef)}|${rangeKey(timeRange)}|${searchTerm}`);
+  const pagingKey = `${dsKey(dsRef)}|${rangeKey(timeRange)}|${searchTerm}`;
+  const { visibleCount, showMore } = useVisibleBatch(pagingKey);
   const visible = metrics.slice(0, visibleCount);
+  // While rows are showing, a line of text above them would push the list down and back on every
+  // keystroke of a server-side search, so the input carries the signal instead.
+  const refreshing = loading && metrics.length > 0;
+  const setSentinel = useLoadMoreSentinel(showMore, visibleCount);
+
+  // Loading on request moves focus to the first new row: otherwise it stays on the control, now below
+  // the rows it added, and a screen reader user has to walk back up to find them.
+  const listRef = useRef<HTMLUListElement>(null);
+  const focusRowRef = useRef<number | null>(null);
+  const loadMore = () => {
+    focusRowRef.current = visible.length;
+    showMore();
+  };
+  useLayoutEffect(() => {
+    const index = focusRowRef.current;
+    focusRowRef.current = null;
+    if (index !== null) {
+      listRef.current?.children[index]?.querySelector<HTMLElement>('button')?.focus();
+    }
+  }, [visibleCount]);
+
+  // The search box sits outside the scroll region, so a new list would otherwise open at the old
+  // offset: clamped near the bottom of the first batch, with the end in view loading another.
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (scrollerRef.current) {
+      scrollerRef.current.scrollTop = 0;
+    }
+  }, [pagingKey]);
+
+  // Rows arrive on scroll with nothing announcing them, so without this a screen reader user cannot
+  // tell a list that ends from one with more to load. Silent while loading, since the counts are not
+  // yet the answer, and on error, which announces itself. Named by query, because several cards can
+  // be open at once and a range change reloads them all together.
+  let statusText = '';
+  if (!loading && !error) {
+    if (metrics.length === 0) {
+      statusText = t('explore.metrics-list.no-metrics-status', 'Query {{refId}}: no metrics found', { refId });
+    } else if (truncated) {
+      // The count is where the series limit cut the catalog off, not how many metrics there are.
+      statusText = t('explore.metrics-list.visible-count-truncated', '', {
+        refId,
+        visible: visible.length,
+        count: metrics.length,
+        defaultValue_one: 'Query {{refId}}: showing {{visible}} of at least {{count}} metric',
+        defaultValue_other: 'Query {{refId}}: showing {{visible}} of at least {{count}} metrics',
+      });
+    } else {
+      statusText = t('explore.metrics-list.visible-count', '', {
+        refId,
+        visible: visible.length,
+        count: metrics.length,
+        defaultValue_one: 'Query {{refId}}: showing {{visible}} of {{count}} metric',
+        defaultValue_other: 'Query {{refId}}: showing {{visible}} of {{count}} metrics',
+      });
+    }
+  }
+
+  // Settled before it is announced: the count moves on every keystroke and every batch of a fill,
+  // and a live region speaks each change, queued behind the user's own typing echo.
+  const [announcedStatus, setAnnouncedStatus] = useState('');
+  useDebounce(() => setAnnouncedStatus(statusText), STATUS_SETTLE_MS, [statusText]);
 
   return (
     <div className={styles.wrapper}>
@@ -179,8 +248,9 @@ export const MetricsList = memo(function MetricsList({
         onChange={setSearchTerm}
         escapeRegex={false}
         placeholder={t('explore.metrics-list.search-placeholder', 'Search metrics')}
+        suffix={refreshing ? <Spinner inline /> : undefined}
       />
-      {loading && (
+      {loading && !refreshing && (
         <Text color="secondary" variant="bodySmall">
           {t('explore.metrics-list.loading', 'Loading metrics…')}
         </Text>
@@ -197,10 +267,10 @@ export const MetricsList = memo(function MetricsList({
           {t('explore.metrics-list.no-metrics', 'No metrics found')}
         </Text>
       )}
-      <ScrollContainer>
+      <ScrollContainer ref={scrollerRef}>
         {/* Only once there is a row to put in it: an empty list is still announced as a list. */}
         {visible.length > 0 && (
-          <ul className={styles.list}>
+          <ul ref={listRef} className={styles.list}>
             {visible.map((metric) => {
               const expanded = metric.name === expandedMetric;
               const labelsId = blockId(listId, 'labels', metric.name);
@@ -230,20 +300,26 @@ export const MetricsList = memo(function MetricsList({
             })}
           </ul>
         )}
-        {/* Inside the scroll region on purpose: it belongs to the end of the list, not to the card. */}
+        {/* Inside the scroll region on purpose: it marks the end of the list, not of the card. Scrolling
+            it into view loads the next batch; it is also a real control, because screen reader browse
+            mode and tabbing to the last row never scroll it into view. */}
         {metrics.length > visible.length && (
           <Button
-            className={styles.showMore}
+            ref={setSentinel}
+            className={styles.loadMore}
             size="sm"
             variant="secondary"
             fill="text"
-            aria-label={t('explore.metrics-list.show-more-metrics', 'Show more metrics')}
-            onClick={showMore}
+            onClick={loadMore}
           >
-            {t('explore.metrics-list.show-more', 'Show more')}
+            {t('explore.metrics-list.load-more-metrics', 'Load more metrics')}
           </Button>
         )}
       </ScrollContainer>
+      {/* Always mounted, because a live region inserted along with its text is often not announced. */}
+      <div className="sr-only" role="status">
+        {announcedStatus}
+      </div>
     </div>
   );
 });
@@ -265,9 +341,21 @@ const getStyles = (theme: GrafanaTheme2) => {
       margin: 0,
       padding: 0,
     }),
-    showMore: css({
-      label: 'metrics-list-show-more',
+    loadMore: css({
+      label: 'metrics-list-load-more',
       alignSelf: 'flex-start',
+      flexShrink: 0,
+      // Hidden in place rather than lifted out of the flow like `sr-only`: the observer watches it, so
+      // it has to scroll with the rows. 1px, because a zero-area target reports unreliable ratios.
+      '&:not(:focus-visible)': {
+        width: 1,
+        height: 1,
+        padding: 0,
+        border: 0,
+        overflow: 'hidden',
+        clipPath: 'inset(50%)',
+        whiteSpace: 'nowrap',
+      },
     }),
   };
 };

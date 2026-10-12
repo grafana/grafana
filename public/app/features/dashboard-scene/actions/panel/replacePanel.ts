@@ -14,6 +14,7 @@ export function replacePanel({ source, oldPanel, newPanel }: ReplacePanelProps) 
   newPanel.setState({ key: oldPanel.state.key });
 
   edit({
+    meta: { actionId: 'panel.replace' },
     description: t('dashboard.edit-actions.replace-panel', 'Replace panel'),
     source,
     addedObject: newPanel,

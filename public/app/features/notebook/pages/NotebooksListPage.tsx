@@ -30,7 +30,6 @@ export function NotebooksListPage() {
     rows,
     totalCount,
     isTotalExact,
-    loadedCount,
     isTruncated,
     isLoadingMore,
     isFiltered,
@@ -42,7 +41,6 @@ export function NotebooksListPage() {
     canFilterByMe,
     tagFilter,
     setTagFilter,
-    loadedTags,
     addTagFilter,
     isLoading,
     isReloading,
@@ -183,9 +181,6 @@ export function NotebooksListPage() {
                     <NotebookTagsField
                       value={tagFilter}
                       onChange={setTagFilter}
-                      // Where the search route is not served the facet cannot answer, and these are
-                      // the only tags there are to offer.
-                      fallbackTags={loadedTags}
                       placeholder={t('notebooks.list.tag-filter-placeholder', 'Filter by tag')}
                     />
                     {canFilterByMe && (
@@ -206,7 +201,6 @@ export function NotebooksListPage() {
                     ) : (
                       <CountSummary
                         shown={rows.length}
-                        loadedCount={loadedCount}
                         totalCount={totalCount}
                         isTotalExact={isTotalExact}
                         isTruncated={isTruncated}
@@ -249,22 +243,16 @@ const COUNT_SKELETON_WIDTH = 120;
 interface CountSummaryProps {
   /** Rows on screen. */
   shown: number;
-  /** Rows the request returned, before client-side filtering. */
-  loadedCount: number;
-  /** Matches the server counted, or undefined when it reports no total. */
-  totalCount: number | undefined;
+  /** Matches the server counted. */
+  totalCount: number;
   isTotalExact: boolean;
   isTruncated: boolean;
   /** Pages are still arriving, so every number here is still climbing. */
   isLoadingMore: boolean;
 }
 
-/**
- * Says how much of the library is on screen, phrased by what the serving path can honestly claim.
- * Nothing here invents a total: when the server does not report one, the size of the window it
- * returned is all there is to say.
- */
-function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncated, isLoadingMore }: CountSummaryProps) {
+/** Says how much of the library is on screen, phrased by what the server can honestly claim. */
+function CountSummary({ shown, totalCount, isTotalExact, isTruncated, isLoadingMore }: CountSummaryProps) {
   const matches = (
     <Text variant="bodySmall" color="secondary">
       {t('notebooks.list.count', '', {
@@ -276,7 +264,7 @@ function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncate
   );
 
   // Say so rather than letting the count climb on its own, which reads as a miscount.
-  if (isLoadingMore && totalCount !== undefined) {
+  if (isLoadingMore) {
     return (
       <Text variant="bodySmall" color="secondary">
         {t('notebooks.list.count-loading', 'Loading {{shown}} of {{total}}...', { shown, total: totalCount })}
@@ -286,23 +274,6 @@ function CountSummary({ shown, loadedCount, totalCount, isTotalExact, isTruncate
 
   if (!isTruncated) {
     return matches;
-  }
-
-  // No server-side total: two numbers, because how many were loaded and how many of those matched
-  // are different facts, and folding them into one would misreport both.
-  if (totalCount === undefined) {
-    return (
-      <>
-        <Text variant="bodySmall" color="secondary">
-          {t('notebooks.list.count-truncated', '', {
-            count: loadedCount,
-            defaultValue_one: 'First {{count}} notebook loaded',
-            defaultValue_other: 'First {{count}} notebooks loaded',
-          })}
-        </Text>
-        {matches}
-      </>
-    );
   }
 
   return (

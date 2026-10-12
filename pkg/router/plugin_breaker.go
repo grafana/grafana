@@ -53,9 +53,7 @@ func allowPluginCall(ctx context.Context) (func(error), error) {
 	}
 	done, err := cb.Allow()
 	if err != nil {
-		if outcome, ok := ctx.Value(requestOutcomeKey{}).(*requestOutcome); ok && outcome != nil {
-			outcome.failure = failureBreakerOpen
-		}
+		setContextFailure(ctx, failureBreakerOpen)
 		return nil, apierrors.NewServiceUnavailable("plugin backend unavailable")
 	}
 	// Streaming calls report on their first response and again when they end.

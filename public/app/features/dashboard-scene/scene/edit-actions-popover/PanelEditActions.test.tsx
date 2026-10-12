@@ -237,6 +237,19 @@ describe('<PanelEditActionsWrapper />', () => {
     );
   }
 
+  test('when the user clicks Settings, the edit popover source is reported', async () => {
+    const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'panel-1' });
+    new DashboardScene({ isEditing: true, body: DefaultGridLayoutManager.fromVizPanels([panel]) });
+    jest.spyOn(DashboardInteractions, 'panelActionClicked').mockImplementation();
+    renderPanelEditActionsWrapper(panel);
+    const user = userEvent.setup();
+
+    await hoverAndRest(screen.getByTestId('reference-child'));
+    await user.click(screen.getByRole('button', { name: 'Settings' }));
+
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('settings', 1, 'edit_popover');
+  });
+
   describe('when the user clicks Settings ', () => {
     test('the panel is selected via the sidebar', async () => {
       const panel = new VizPanel({ title: 'Test panel', pluginId: 'timeseries', key: 'test-panel' });
@@ -361,6 +374,7 @@ describe('<PanelEditActionsWrapper />', () => {
 
     expect(removePanel).toHaveBeenCalledWith(panel);
     expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledWith('delete', 1, 'edit_popover');
+    expect(DashboardInteractions.panelActionClicked).toHaveBeenCalledTimes(1);
   });
 
   describe('when a layout provider supplies a portal root', () => {

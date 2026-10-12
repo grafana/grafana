@@ -54,9 +54,9 @@
       "reset-symbol-client-secret": "Obnovit"
     },
     "auxiliary-logs-toggle": {
-      "aria-label-enable-auxiliary-logs": "",
-      "description-auxiliary-logs": "",
-      "label-enable-auxiliary-logs": ""
+      "aria-label-enable-auxiliary-logs": "Pomocné protokoly",
+      "description-auxiliary-logs": "Povolení této funkce zapříčiní vznik nákladů Azure Monitor na dotaz na panelech dashboardů, které dotazují tabulky nakonfigurované pro <2>pomocné protokoly</2>. Pomocné protokoly nemají SLA pro dobu odezvy, jsou určeny pouze pro ad hoc dotazy a prozkoumávání dat a neměly by se používat pro dashboardy vyžadující data v reálném čase ani pro upozorňování.",
+      "label-enable-auxiliary-logs": "Povolit pomocné protokoly"
     },
     "azure-cheat-sheet": {
       "aria-label-raw-query": "Nezpracovaný dotaz: {{queryDisplayName}}",
@@ -187,47 +187,47 @@
       "tooltip-limit": "Omezte počet vrácených řádků (výchozí hodnota je 1 000)."
     },
     "logs-management": {
-      "body-auxiliary-logs-queries": "",
+      "body-auxiliary-logs-queries": "Opravdu chcete přepnout na pomocné protokoly?",
       "body-basic-logs-queries": "Opravdu chcete přepnout na Základní protokoly?",
       "confirmText-confirm": "Potvrdit",
-      "description-auxiliary-logs-queries": "",
+      "description-auxiliary-logs-queries": "Dotazy na pomocné protokoly jsou zpoplatněny na základě množství naskenovaných dat. Pomocné protokoly nemají SLA pro dobu odezvy a neměly by se používat pro dashboardy vyžadující data v reálném čase ani pro upozorňování.",
       "description-basic-logs-queries": "Dotazy na základní protokoly jsou zpoplatněny na základě množství naskenovaných dat.",
-      "label-analytics": "",
-      "label-auxiliary": "",
-      "label-basic": "",
+      "label-analytics": "Analytika",
+      "label-auxiliary": "Pomocné",
+      "label-basic": "Základní",
       "label-logs": "Protokoly",
-      "title-auxiliary-logs-queries": "",
+      "title-auxiliary-logs-queries": "Dotazy na pomocné protokoly",
       "title-basic-logs-queries": "Dotazy na základní protokoly",
       "tooltip-logs": "Určuje, zda se má spustit dotaz Základní protokoly nebo Analytické protokoly.",
-      "tooltip-logs-all": "",
-      "tooltip-logs-aux": ""
+      "tooltip-logs-all": "Určuje, zda se má spustit dotaz typu Analytické protokoly, Základní protokoly nebo Pomocné protokoly.",
+      "tooltip-logs-aux": "Určuje, zda se má spustit dotaz typu Analytické protokoly nebo Pomocné protokoly."
     },
     "logs-query-builder": {
       "title-no-tables": "Zdroj byl úspěšně načten, ale bez tabulek"
     },
     "logs-query-editor": {
       "learn-more": "Další informace",
-      "notice-auxiliary-single-resource": "",
-      "notice-basic-single-resource": "",
-      "notice-same-resource-type": "",
-      "tier-switch-body-analytics": "",
-      "tier-switch-body-auxiliary": "",
-      "tier-switch-body-basic": "",
-      "tier-switch-revert": "",
-      "tier-switch-title": "",
+      "notice-auxiliary-single-resource": "Při použití pomocných protokolů můžete vybrat vždy pouze jeden zdroj.",
+      "notice-basic-single-resource": "Při použití základních protokolů můžete vybrat vždy pouze jeden zdroj.",
+      "notice-same-resource-type": "Můžete vybrat pouze položky stejného typu zdroje.",
+      "tier-switch-body-analytics": "<0>{{tableName}}</0> je tabulka analýzy.",
+      "tier-switch-body-auxiliary": "<0>{{tableName}}</0> je tabulka pomocných protokolů – je zpoplatněna za každý naskenovaný GiB, nemá SLA pro dobu odezvy a není vhodná pro scénáře v reálném čase ani pro scénáře s upozorňováním.",
+      "tier-switch-body-basic": "<0>{{tableName}}</0> je tabulka základních protokolů – je zpoplatněna za každý naskenovaný GiB.",
+      "tier-switch-revert": "Vrátit zpět na {{fromTier}}",
+      "tier-switch-title": "Úroveň dotazu nastavena na {{toTier}}",
       "view-query": "Zobrazit dotaz na Azure Portal",
-      "warning-auxiliary-data-ingested": "",
-      "warning-auxiliary-raw": "",
-      "warning-basic-raw": "",
-      "warning-data-ingested": ""
+      "warning-auxiliary-data-ingested": "Tento dotaz na pomocné protokoly zpracovává {{dataIngested}} GiB při spuštění. Pomocné protokoly nemají SLA pro dobu odezvy a nejsou vhodné pro scénáře v reálném čase ani pro scénáře s upozorňováním. ",
+      "warning-auxiliary-raw": "Toto je dotaz na pomocné protokoly – používá koncový bod vyhledávání, je zpoplatněn za každý naskenovaný GiB, nemá SLA pro dobu odezvy a není vhodný pro scénáře v reálném čase ani pro scénáře s upozorňováním. Tabulky plánu analýzy nelze v tomto režimu dotazovat (pro ně použijte úroveň Analýza). ",
+      "warning-basic-raw": "Toto je dotaz na základní protokoly – používá koncový bod vyhledávání a je zpoplatněn za každý naskenovaný GiB. Tabulky plánu analýzy nelze v tomto režimu dotazovat (pro ně použijte úroveň Analýza). ",
+      "warning-data-ingested": "Tento dotaz zpracovává {{dataIngested}} GiB při spuštění. "
     },
     "logs-table-section": {
-      "description-auxiliary-disabled": "",
-      "description-auxiliary-enabled": "",
-      "description-basic-disabled": "",
-      "description-basic-enabled": "",
-      "description-plan-unavailable": "",
-      "label-all-columns": ""
+      "description-auxiliary-disabled": "Tato tabulka je v plánu Pomocné protokoly. Chcete-li ji dotazovat, povolte v nastavení zdroje dat možnost „Pomocné protokoly“.",
+      "description-auxiliary-enabled": "Výběrem této tabulky přepnete režim dotazu na pomocné protokoly",
+      "description-basic-disabled": "Tato tabulka je v plánu Základní protokoly. Chcete-li ji dotazovat, povolte v nastavení zdroje dat možnost „Základní protokoly“.",
+      "description-basic-enabled": "Výběrem této tabulky přepnete režim dotazu na základní protokoly",
+      "description-plan-unavailable": "Tuto tabulku nelze vybrat, protože se nepodařilo určit její plán protokolů.",
+      "label-all-columns": "Všechny sloupce"
     },
     "metric-name-field": {
       "label-metric": "Metrika"
@@ -356,8 +356,8 @@
     },
     "variable-editor": {
       "aria-label-select-custom-namespace": "Vyberte vlastní jmenný prostor",
-      "aria-label-select-dimension-name": "",
-      "aria-label-select-metric-name": "",
+      "aria-label-select-dimension-name": "Vybrat název dimenze",
+      "aria-label-select-metric-name": "Vybrat název metriky",
       "aria-label-select-namespace": "Vyberte jmenný prostor",
       "aria-label-select-query-type": "Vyberte typ dotazu",
       "aria-label-select-region": "Vyberte oblast",
@@ -365,8 +365,8 @@
       "aria-label-select-resource-group": "Vyberte skupinu zdrojů",
       "aria-label-select-subscription": "Vyberte předplatné",
       "label-custom-namespace": "Vlastní jmenný prostor",
-      "label-dimension-name": "",
-      "label-metric-name": "",
+      "label-dimension-name": "Název dimenze",
+      "label-metric-name": "Název metriky",
       "label-namespace": "Jmenný prostor",
       "label-query-type": "Typ dotazu",
       "label-region": "Oblast",

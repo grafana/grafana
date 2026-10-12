@@ -1723,14 +1723,29 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(30*time.Second))
 
+	assertListedTimes := func(t *testing.T, expected map[resource.NamespacedResource]time.Time) map[resource.NamespacedResource]time.Time {
+		t.Helper()
+		times, err := backend.ListResourceLastImportTimes(ctx)
+		require.NoError(t, err)
+		for key, single := range expected {
+			require.False(t, single.IsZero())
+			require.Equal(t, single, times[key], "resource %s", key)
+		}
+		return times
+	}
+
 	t.Run("no imported times by default", func(t *testing.T) {
-		lastImportTime, err := backend.GetResourceLastImportTime(ctx, resource.NamespacedResource{
+		key := resource.NamespacedResource{
 			Namespace: nsPrefix + "-not-imported",
 			Group:     "dashboards",
 			Resource:  "dashboard",
-		})
+		}
+		lastImportTime, err := backend.GetResourceLastImportTime(ctx, key)
 		require.NoError(t, err)
 		require.True(t, lastImportTime.IsZero())
+		times, err := backend.ListResourceLastImportTimes(ctx)
+		require.NoError(t, err)
+		require.NotContains(t, times, key)
 	})
 
 	t.Run("last imported time after bulk import", func(t *testing.T) {
@@ -1765,6 +1780,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		result := collectLastImportedTimes(t, backend, ctx, collections)
 		require.Len(t, result, len(collections))
+		assertListedTimes(t, result)
 
 		now := time.Now()
 
@@ -1805,11 +1821,13 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		const delta = 5 * time.Second
 		// Verify that last imported times are combination of both bulk imports
 		result1 := collectLastImportedTimes(t, backend, ctx, collections1)
+		assertListedTimes(t, result1)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], firstImport, delta)
 		require.WithinDuration(t, result1[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
 
 		// Sleep a bit to make sure that the last import time generated for dashboards in ns1 is different from before.
 		// Since we use DATETIME type in SQL, we need to wait at least one second.
+		t.Log("waiting 1s so the second import has a newer timestamp")
 		time.Sleep(1 * time.Second)
 
 		// Do another bulk import, without overwriting existing resources. We import into ns1-dashboards (same as before),
@@ -1840,6 +1858,8 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 		allCollections = append(allCollections, collections1...)
 		allCollections = append(allCollections, collections2...)
 		result2 := collectLastImportedTimes(t, backend, ctx, allCollections)
+		times := assertListedTimes(t, result2)
+		require.NotContains(t, times, resource.NamespacedResource{Namespace: ns2, Group: "dashboards", Resource: "dashboard"})
 
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}], secondImport, delta)
 		require.WithinDuration(t, result2[resource.NamespacedResource{Namespace: ns1, Group: "folders", Resource: "folder"}], firstImport, delta)
@@ -1851,7 +1871,7 @@ func runTestIntegrationGetResourceLastImportTime(t *testing.T, backend resource.
 
 		// Last import time for ns1 dashboard has been updated
 		ns1DashboardsKey := resource.NamespacedResource{Namespace: ns1, Group: "dashboards", Resource: "dashboard"}
-		require.NotEqual(t, result1[ns1DashboardsKey], result2[ns1DashboardsKey])
+		require.True(t, result2[ns1DashboardsKey].After(result1[ns1DashboardsKey]))
 	})
 }
 

@@ -1476,6 +1476,14 @@ export type BitbucketConnectionConfig = {
   /** The workspace the OAuth consumer belongs to */
   workspace: string;
 };
+export type GitOAuthConnectionConfig = {
+  /** The provider's OAuth authorization endpoint (e.g. `https://gitlab.example.com/oauth/authorize`). */
+  authURL: string;
+  /** The OAuth scopes to request, granting git read and write access. */
+  scopes?: string[];
+  /** The provider's OAuth token endpoint (e.g. `https://gitlab.example.com/oauth/token`). */
+  tokenURL: string;
+};
 export type GitHubConnectionConfig = {
   /** GitHub App ID */
   appID: string;
@@ -1507,6 +1515,8 @@ export type ConnectionSpec = {
   bitbucket?: BitbucketConnectionConfig;
   /** The connection description */
   description?: string;
+  /** Generic git OAuth app connection configuration Only applicable when provider is "gitOAuth" */
+  gitOAuth?: GitOAuthConnectionConfig;
   /** GitHub connection configuration Only applicable when provider is "github" */
   github?: GitHubConnectionConfig;
   /** GitHub Enterprise Server connection configuration Only applicable when provider is "githubEnterprise" */
@@ -1521,12 +1531,20 @@ export type ConnectionSpec = {
     
     Possible enum values:
      - `"bitbucketOAuth"`
+     - `"gitOAuth"`
      - `"github"`
      - `"githubEnterprise"`
      - `"githubEnterpriseOAuth"`
      - `"githubOAuth"`
      - `"gitlabOAuth"` */
-  type: 'bitbucketOAuth' | 'github' | 'githubEnterprise' | 'githubEnterpriseOAuth' | 'githubOAuth' | 'gitlabOAuth';
+  type:
+    | 'bitbucketOAuth'
+    | 'gitOAuth'
+    | 'github'
+    | 'githubEnterprise'
+    | 'githubEnterpriseOAuth'
+    | 'githubOAuth'
+    | 'gitlabOAuth';
   /** The connection URL */
   url?: string;
   /** Webhook configuration for this connection */
@@ -2085,6 +2103,8 @@ export type SyncStatus = {
   incremental?: boolean;
   /** The ID for the job that ran this sync */
   job?: string;
+  /** When the controller last attempted a sync or an interval check (Unix milliseconds). */
+  lastChecked?: number;
   /** The repository ref when the last successful sync ran */
   lastRef?: string;
   /** Summary messages (will be shown to users) */
@@ -2328,6 +2348,7 @@ export type RepositoryViewList = {
   /** AvailableConnectionTypes is the list of connection types supported in this instance */
   availableConnectionTypes?: (
     | 'bitbucketOAuth'
+    | 'gitOAuth'
     | 'github'
     | 'githubEnterprise'
     | 'githubEnterpriseOAuth'

@@ -18,7 +18,7 @@ jest.mock('../../dashboard/api/utils', () => ({
 }));
 
 jest.mock('../serialization/transformSaveModelSchemaV2ToScene', () => ({
-  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {} })),
+  transformSaveModelSchemaV2ToScene: jest.fn(() => ({ state: {}, forEachChild: jest.fn() })),
 }));
 
 jest.mock('@grafana/scenes', () => {

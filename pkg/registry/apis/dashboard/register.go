@@ -132,6 +132,7 @@ type DashboardsAPIBuilder struct {
 	publicDashboardService   publicdashboards.Service
 	snapshotService          dashboardsnapshots.Service
 	snapshotOptions          dashv0.SnapshotSharingOptions
+	snapshotBlobs            resourcepb.BlobStoreClient
 	snapshotStorage          rest.Storage             // for dual-write support in routes
 	homeDashboard            home.HomeDashboardGetter // On-prem home dashboard support
 	namespacer               request.NamespaceMapper
@@ -1379,10 +1380,11 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 		if err != nil {
 			return err
 		}
+		b.snapshotBlobs = b.unified
 		snapshotWrapper := snapshot.NewStorageWrapper(snapshotDualWrite, b.snapshotOptions)
 		storage[snapshots.StoragePath()] = snapshotWrapper
 		b.snapshotStorage = snapshotDualWrite // for use in routes (needs rest.Creater)
-		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite)
+		storage[snapshots.StoragePath("dashboard")], err = snapshot.NewDashboardREST(snapshotDualWrite, b.snapshotBlobs)
 		if err != nil {
 			return err
 		}
@@ -1707,9 +1709,7 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 		legacySearchRoutes := b.search.GetAPIRoutes(defs)
 		snapshotAPIRoutes := snapshot.GetRoutes(b.snapshotOptions, b.accessControl, defs,
-			func() rest.Storage {
-				return b.snapshotStorage
-			}, b.dashboardService)
+			func() rest.Storage { return b.snapshotStorage }, b.dashboardService, b.snapshotBlobs, b.snapshotReadFromUnified)
 		routes.Namespace = append(routes.Namespace, legacySearchRoutes.Namespace...)
 		routes.Namespace = append(routes.Namespace, snapshotAPIRoutes.Namespace...)
 	}
@@ -1718,6 +1718,17 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 		return nil
 	}
 	return routes
+}
+
+func (b *DashboardsAPIBuilder) snapshotReadFromUnified(ctx context.Context) (bool, error) {
+	if b.isStandalone {
+		return true, nil
+	}
+	// A legacy-only instance retains its initial store even after migration changes the mode.
+	if _, legacyOnly := b.snapshotStorage.(*snapshot.SnapshotLegacyStore); legacyOnly {
+		return false, nil
+	}
+	return b.dualWriter.ReadFromUnified(ctx, dashv0.SnapshotResourceInfo.GroupResource())
 }
 
 // GetPolicyRuleEvaluator defines the rules for logging auditing events from the API server.

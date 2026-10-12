@@ -88,6 +88,19 @@ func TestGetBaseFrontendSettings(t *testing.T) {
 		assert.Equal(t, "loki", settings.UnifiedAlerting.AlertStateHistoryBackend)
 	})
 
+	t.Run("reports whether unified alerting notification history is enabled", func(t *testing.T) {
+		for _, enabled := range []bool{true, false} {
+			cfg := setting.NewCfg()
+			cfg.UnifiedAlerting.NotificationHistory.Enabled = enabled
+
+			license := &licensing.OSSLicensingService{Cfg: cfg}
+
+			settings, err := GetBaseFrontendSettings(newTestReqContext(), cfg, license, nil)
+			require.NoError(t, err)
+			assert.Equal(t, enabled, settings.UnifiedAlerting.NotificationHistoryEnabled)
+		}
+	})
+
 	t.Run("populates plugins CDN base URL when the CDN is enabled", func(t *testing.T) {
 		cfg := setting.NewCfg()
 		license := &licensing.OSSLicensingService{Cfg: cfg}

@@ -4,7 +4,7 @@ import { type ConnectionFormData } from '../types';
 
 import { isOAuthConnectionType } from './connectionOAuth';
 
-export type ConnectionProvider = 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket';
+export type ConnectionProvider = 'github' | 'githubEnterprise' | 'gitlab' | 'bitbucket' | 'git';
 
 export function toConnectionType(provider: ConnectionProvider, kind: 'app' | 'oauth'): ConnectionFormData['type'] {
   if (provider === 'github') {
@@ -13,11 +13,14 @@ export function toConnectionType(provider: ConnectionProvider, kind: 'app' | 'oa
   if (provider === 'githubEnterprise') {
     return kind === 'oauth' ? 'githubEnterpriseOAuth' : 'githubEnterprise';
   }
+  if (provider === 'git') {
+    return 'gitOAuth';
+  }
   return provider === 'gitlab' ? 'gitlabOAuth' : 'bitbucketOAuth';
 }
 
 // All connection kinds (app and OAuth) that can serve repositories of this provider.
-// gitlab/bitbucket have no app kind, so both lookups return the same OAuth type.
+// gitlab/bitbucket/git have no app kind, so both lookups return the same OAuth type.
 export function connectionTypesForProvider(provider: ConnectionProvider): Array<ConnectionFormData['type']> {
   const app = toConnectionType(provider, 'app');
   const oauth = toConnectionType(provider, 'oauth');
@@ -39,6 +42,9 @@ export function getConnectionFormDefaults(type: string | undefined, data?: Conne
       clientSecret: '',
       workspace: data?.spec?.bitbucket?.workspace || '',
       serverUrl: data?.spec?.githubEnterpriseOAuth?.serverUrl || (type === 'gitlabOAuth' && data?.spec?.url) || '',
+      authURL: data?.spec?.gitOAuth?.authURL || '',
+      tokenURL: data?.spec?.gitOAuth?.tokenURL || '',
+      scopes: data?.spec?.gitOAuth?.scopes ?? [],
     };
   }
 
@@ -99,6 +105,15 @@ export function connectionSpecFromForm(form: ConnectionFormData): ConnectionSpec
           : {}),
         ...(form.type === 'bitbucketOAuth' ? { bitbucket: { workspace: form.workspace ?? '' } } : {}),
         ...(form.type === 'gitlabOAuth' && form.serverUrl ? { url: form.serverUrl } : {}),
+        ...(form.type === 'gitOAuth'
+          ? {
+              gitOAuth: {
+                authURL: form.authURL ?? '',
+                tokenURL: form.tokenURL ?? '',
+                scopes: form.scopes ?? [],
+              },
+            }
+          : {}),
       };
   }
 }

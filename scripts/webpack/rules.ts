@@ -16,6 +16,7 @@ export const esbuildOptions: LoaderOptions = {
 
 export const esbuildRule: RuleSetRule = {
   test: /\.tsx?$/,
+  resourceQuery: { not: [/text-panel-runtime/] },
   use: {
     loader: 'esbuild-loader',
     options: esbuildOptions,

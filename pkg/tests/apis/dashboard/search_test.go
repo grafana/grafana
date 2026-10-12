@@ -24,6 +24,7 @@ import (
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
@@ -31,6 +32,22 @@ import (
 )
 
 func TestIntegrationSearchDevDashboards(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchDevDashboards)
+}
+
+func TestIntegrationSearchOwnerReferences(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchOwnerReferences)
+}
+
+func TestIntegrationSearchCreatedBy(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchCreatedBy)
+}
+
+func TestIntegrationSearchPermissionFiltering(t *testing.T) {
+	testinfra.RunWithFeatureToggle(t, featuremgmt.FlagAuthzUseLegacyCheck, testIntegrationSearchPermissionFiltering)
+}
+
+func testIntegrationSearchDevDashboards(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -225,7 +242,7 @@ func TestIntegrationSearchDevDashboards(t *testing.T) {
 	}
 }
 
-func TestIntegrationSearchOwnerReferences(t *testing.T) {
+func testIntegrationSearchOwnerReferences(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -321,7 +338,7 @@ func TestIntegrationSearchOwnerReferences(t *testing.T) {
 	assert.Contains(t, foundHit.OwnerReferences, "iam.grafana.app/User/test-user")
 }
 
-func TestIntegrationSearchCreatedBy(t *testing.T) {
+func testIntegrationSearchCreatedBy(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 	ctx := context.Background()
 
@@ -421,7 +438,7 @@ func TestIntegrationSearchCreatedBy(t *testing.T) {
 	}
 }
 
-func TestIntegrationSearchPermissionFiltering(t *testing.T) {
+func testIntegrationSearchPermissionFiltering(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
 	// Only run for Unified Storage modes that support search (Mode4+)

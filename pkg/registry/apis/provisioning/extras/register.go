@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection"
 	ghconnection "github.com/grafana/grafana/apps/provisioning/pkg/connection/github"
 	"github.com/grafana/grafana/apps/provisioning/pkg/connection/githuboauth"
+	"github.com/grafana/grafana/apps/provisioning/pkg/connection/gitoauth"
 	"github.com/grafana/grafana/apps/provisioning/pkg/quotas"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository"
 	"github.com/grafana/grafana/apps/provisioning/pkg/repository/git"
@@ -62,7 +63,7 @@ func ProvideProvisioningOSSRepositoryExtras(
 }
 
 func ProvideProvisioningOSSConnectionExtras(
-	_ *setting.Cfg,
+	cfg *setting.Cfg,
 	decryptSvc decrypt.DecryptService,
 	ghFactory ghconnection.GithubFactory,
 	ghRepoFactory *github.Factory,
@@ -72,6 +73,9 @@ func ProvideProvisioningOSSConnectionExtras(
 	return []connection.Extra{
 		ghconnection.Extra(decrypter, ghFactory),
 		githuboauth.Extra(decrypter, ghRepoFactory),
+		// http:// OAuth endpoints are only allowed in development or when explicitly opted in,
+		// since the client secret and tokens would otherwise travel in cleartext.
+		gitoauth.Extra(decrypter, cfg.Env == setting.Dev || cfg.ProvisioningAllowInsecure),
 	}
 }
 

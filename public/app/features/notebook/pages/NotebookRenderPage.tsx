@@ -79,6 +79,8 @@ function NotebookRenderDocument({ scene }: { scene: NotebookScene }) {
     // `abandon` is one-way, which is why the page evicts this scene from the cache on unmount.
     scene.autosave.abandon();
     scene.state.refreshPicker.setState({ refresh: '' });
+    // The sheet has no time picker, so the header has to say which range the panels show.
+    scene.state.body.setState({ showTimeRange: true });
 
     return deactivate;
   }, [scene]);

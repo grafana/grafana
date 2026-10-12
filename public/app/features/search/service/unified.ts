@@ -69,11 +69,7 @@ export type SearchAPIResponse = {
 const folderViewSort = 'name_sort';
 
 export class UnifiedSearcher implements GrafanaSearcher {
-  locationInfo: Promise<Record<string, LocationInfo>>;
-
-  constructor() {
-    this.locationInfo = loadLocationInfo();
-  }
+  private locationInfo = loadLocationInfo();
 
   async search(query: SearchQuery): Promise<QueryResponse> {
     if (query.facet?.length) {
@@ -115,7 +111,12 @@ export class UnifiedSearcher implements GrafanaSearcher {
     return resp.facets?.tags?.terms || [];
   }
 
-  async getLocationInfo() {
+  getLocationInfo() {
+    return this.locationInfo;
+  }
+
+  reloadLocationInfo() {
+    this.locationInfo = loadLocationInfo();
     return this.locationInfo;
   }
 
@@ -254,7 +255,7 @@ export class UnifiedSearcher implements GrafanaSearcher {
       return rsp;
     }
     // sync the location info (folders)
-    this.locationInfo = loadLocationInfo();
+    this.reloadLocationInfo();
     // recheck for missing folders
     const hasMissing = await this.isFolderCacheStale(rsp.hits);
     if (!hasMissing) {

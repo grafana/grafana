@@ -170,7 +170,7 @@ import (
 // Delete namespace
 //
 //     Responses:
-//       202: Ack
+//       202: DeleteRuleGroupResponse
 //       403: ForbiddenError
 
 // swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace} ruler RouteDeleteNamespaceRulesConfig
@@ -211,7 +211,7 @@ import (
 // Delete rule group
 //
 //     Responses:
-//       202: Ack
+//       202: DeleteRuleGroupResponse
 //       403: ForbiddenError
 
 // swagger:route Delete /ruler/{DatasourceUID}/api/v1/rules/{Namespace}/{Groupname} ruler RouteDeleteRuleGroupConfig
@@ -739,4 +739,13 @@ type UpdateNamespaceRulesRequest struct {
 // swagger:model
 type UpdateNamespaceRulesResponse struct {
 	Message string `json:"message"`
+	Updated int    `json:"updated"`
+	Skipped int    `json:"skipped"`
+}
+
+// swagger:model
+type DeleteRuleGroupResponse struct {
+	Message string `json:"message"`
+	Deleted int    `json:"deleted"`
+	Skipped int    `json:"skipped"`
 }
