@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import { useDialog } from '@react-aria/dialog';
 import { FocusScope } from '@react-aria/focus';
 import { useOverlay } from '@react-aria/overlays';
@@ -15,7 +16,7 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { sceneGraph } from '@grafana/scenes';
-import { Icon, IconButton, getPortalContainer, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
+import { Icon, IconButton, getPortalContainer, Portal, TimePickerTooltip, Tooltip, useStyles2 } from '@grafana/ui';
 
 import { TimePickerContent } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerContent';
 import { getQuickOptions } from '../../../../../../../packages/grafana-ui/src/components/DateTimePickers/options';
@@ -32,9 +33,7 @@ interface Props {
   cell: NotebookCellItem;
 }
 
-// Same overlay mechanics TimeRangePicker itself uses for its own dropdown — an absolutely
-// positioned panel next to a `position: relative` container, not Toggletip's tooltip-bubble chrome
-// (border/background/arrow), which visually clashes with TimePickerContent's own panel styling.
+// Keep the native picker surface and position it within the viewport, even after a long panel title.
 export function NotebookCellTimeRangeControl({ cell }: Props) {
   const { $timeRange } = cell.useState();
   const [open, setOpen] = useState(false);
@@ -55,6 +54,13 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
   );
   const { dialogProps } = useDialog({}, overlayRef);
 
+  const { refs, floatingStyles } = useFloating({
+    open,
+    placement: 'bottom-start',
+    middleware: [offset(4), flip(), shift({ padding: 8 })],
+    whileElementsMounted: autoUpdate,
+  });
+
   const ancestorTimeZone = getAncestorTimeZone(cell);
   const fiscalYearStartMonth = getAncestorFiscalYearStartMonth(cell);
   const committed = $timeRange ? buildCellTimeRangeSpec($timeRange) : seedFromAncestor(cell);
@@ -69,10 +75,20 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
     interpolation: { escapeValue: false },
   });
 
+  const displayLabel =
+    isDateTime(value.raw.from) || isDateTime(value.raw.to)
+      ? t('notebook.cell.time-range.custom', 'Custom range')
+      : rangeUtil.describeTimeRange(committed, ancestorTimeZone, getQuickRanges(cell));
+
   const rawTrigger = $timeRange ? (
     <button type="button" className={styles.label} aria-label={lockedLabel} onClick={() => setOpen((prev) => !prev)}>
       <Icon name="lock" size="sm" />
-      <span className={styles.labelText}>{lockedLabel}</span>
+      <span className={styles.labelText}>
+        {t('notebook.cell.time-range.locked', 'Locked: {{range}}', {
+          range: displayLabel,
+          interpolation: { escapeValue: false },
+        })}
+      </span>
     </button>
   ) : (
     <IconButton
@@ -103,7 +119,13 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
 
   return (
     <span className={styles.container} ref={containerRef}>
-      <span ref={triggerRef} className={styles.trigger}>
+      <span
+        ref={(element) => {
+          triggerRef.current = element;
+          refs.setReference(element);
+        }}
+        className={styles.trigger}
+      >
         {$timeRange ? (
           <span className={styles.pill}>
             {trigger}
@@ -131,11 +153,22 @@ export function NotebookCellTimeRangeControl({ cell }: Props) {
             className={styles.backdrop}
             {...underlayProps}
           />
-          <FocusScope contain autoFocus restoreFocus>
-            <section className={styles.content} ref={overlayRef} {...overlayProps} {...dialogProps}>
-              <NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />
-            </section>
-          </FocusScope>
+          <Portal>
+            <FocusScope contain autoFocus restoreFocus>
+              <section
+                className={styles.content}
+                style={floatingStyles}
+                ref={(element) => {
+                  overlayRef.current = element;
+                  refs.setFloating(element);
+                }}
+                {...overlayProps}
+                {...dialogProps}
+              >
+                <NotebookCellTimeRangePopoverContent cell={cell} onClose={() => setOpen(false)} />
+              </section>
+            </FocusScope>
+          </Portal>
         </>
       )}
     </span>
@@ -157,19 +190,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     transform: 'translateY(1px)',
   }),
   content: css({
-    position: 'absolute',
-    top: '100%',
-    right: 0,
-    marginTop: theme.spacing(0.5),
-    zIndex: theme.zIndex.dropdown,
-    [theme.breakpoints.down('sm')]: {
-      position: 'fixed',
-      top: '50%',
-      right: '50%',
-      marginTop: 0,
-      transform: 'translate(50%, -50%)',
-      zIndex: theme.zIndex.modal,
-    },
+    zIndex: theme.zIndex.modal,
   }),
   backdrop: css({
     display: 'none',
@@ -211,6 +232,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   labelText: css({
+    maxWidth: 180,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    '@container notebook-chart (max-width: 600px)': {
+      display: 'none',
+    },
     [theme.breakpoints.down('md')]: {
       display: 'none',
     },

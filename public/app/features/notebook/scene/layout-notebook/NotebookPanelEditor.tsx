@@ -17,6 +17,7 @@ import { isNotebookScene } from '../isNotebookScene';
 import { type NotebookCellItem } from './NotebookCellItem';
 import { NotebookVizSuggestions } from './NotebookVizSuggestions';
 import { PanelQueryEditor } from './PanelQueryEditor';
+import { NotebookCellTimeRangeControl } from './edit/NotebookCellTimeRangeControl';
 
 interface Props {
   cell: NotebookCellItem;
@@ -38,13 +39,15 @@ export function NotebookPanelEditor({ cell, panel, autoFocus, children, isEditin
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [panel, queries, datasource, timeRange]
   );
+  const [titleTarget, setTitleTarget] = useState<HTMLSpanElement | null>(null);
   const [headerTarget, setHeaderTarget] = useState<HTMLDivElement | null>(null);
   // Use the native panel header so its title, status, and menu keep their normal behavior.
   // The portal keeps these controls in the editor's React context without storing callbacks in scene state.
   useEffect(() => {
     const previous = panel.state.headerActions;
-    panel.setState({ headerActions: <div ref={setHeaderTarget} /> });
-    return () => panel.setState({ headerActions: previous });
+    const previousTitleItems = panel.state.titleItems;
+    panel.setState({ headerActions: <div ref={setHeaderTarget} />, titleItems: <span ref={setTitleTarget} /> });
+    return () => panel.setState({ headerActions: previous, titleItems: previousTitleItems });
   }, [panel]);
   const { isAvailable: assistantAvailable } = useAssistant();
   const [queriesOpen, setQueriesOpen] = useState(Boolean(autoFocus));
@@ -61,7 +64,7 @@ export function NotebookPanelEditor({ cell, panel, autoFocus, children, isEditin
       scene?.commitTitleEdit();
       // Load and migrate on a clone so the asynchronous plugin import cannot partially update the chart.
       const next = panel.clone();
-      next.setState({ headerActions: undefined });
+      next.setState({ headerActions: undefined, titleItems: undefined });
       await next.changePluginType(suggestion.pluginId, suggestion.options, suggestion.fieldConfig);
       const action = {
         label: t('notebook.cell.visualization.change', 'Change visualization'),
@@ -85,6 +88,7 @@ export function NotebookPanelEditor({ cell, panel, autoFocus, children, isEditin
 
   return (
     <div className={styles.block}>
+      {titleTarget && createPortal(<NotebookCellTimeRangeControl cell={cell} />, titleTarget)}
       {headerTarget &&
         createPortal(
           <div className={styles.toolbar}>
@@ -192,6 +196,8 @@ export function NotebookPanelEditor({ cell, panel, autoFocus, children, isEditin
 
 const getStyles = (theme: GrafanaTheme2) => ({
   block: css({
+    containerType: 'inline-size',
+    containerName: 'notebook-chart',
     // Flatten only this chart's chrome; the surrounding notebook already provides a surface.
     '& section[data-testid^="data-testid Panel header"]': {
       background: 'transparent',

@@ -125,11 +125,6 @@ function PanelCell({
         autoFocus={autoFocus}
         isEditing={isEditing && isEditableQueryPanel(panel)}
       >
-        {showStandaloneClock && (
-          <Box display="flex" justifyContent="flex-end">
-            <NotebookCellTimeRangeControl cell={cell} />
-          </Box>
-        )}
         {visualization}
       </NotebookPanelEditor>
     );

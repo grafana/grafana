@@ -17,7 +17,7 @@ function buildCell(timeRange?: SceneTimeRange) {
   new NotebookScene({
     title: 'Test notebook',
     body: new NotebookLayoutManager({ cells: [cell] }),
-    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now' }),
+    $timeRange: new SceneTimeRange({ from: 'now-6h', to: 'now', timeZone: 'utc' }),
     timePicker: new SceneTimePicker({}),
     refreshPicker: new SceneRefreshPicker({}),
   });
@@ -39,6 +39,15 @@ describe('NotebookCellTimeRangeControl', () => {
 
     expect(screen.getByText('Locked: Last 24 hours')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sync back to notebook time range' })).toBeInTheDocument();
+  });
+
+  it('shortens an absolute range while keeping the original bounds in the picker', async () => {
+    const cell = buildCell(new SceneTimeRange({ from: '2026-10-11T10:00:00Z', to: '2026-10-12T12:00:00Z' }));
+    const { user } = render(<NotebookCellTimeRangeControl cell={cell} />);
+
+    await user.click(screen.getByText('Locked: Custom range'));
+    expect(screen.getByRole('textbox', { name: 'From' })).toHaveValue('2026-10-11 10:00:00');
+    expect(screen.getByRole('textbox', { name: 'To' })).toHaveValue('2026-10-12 12:00:00');
   });
 
   it('opens the real time range picker content in one click, with no separate nested trigger', async () => {
