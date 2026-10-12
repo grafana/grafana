@@ -1,13 +1,18 @@
 import { type ReactNode } from 'react';
 
-import { AlertLabels } from '@grafana/alerting/unstable';
 import { t } from '@grafana/i18n';
-import { Box, Stack, Text, TextLink, Tooltip } from '@grafana/ui';
+import { Stack, Text, TextLink, Tooltip } from '@grafana/ui';
 
-import { ProvisioningBadge } from '../../components/Provisioning';
-import { PluginOriginBadge } from '../../plugins/PluginOriginBadge';
 import { getDataSourceByUid } from '../../utils/datasource';
 import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
+import { DataSourcesMeta } from '../shared/DataSourcesMeta';
+import { FolderPath } from '../shared/FolderPath';
+import { IntervalIndicator } from '../shared/IntervalIndicator';
+import { LabelsMeta } from '../shared/LabelsMeta';
+import { PluginOriginBadge } from '../shared/PluginOriginBadge';
+import { ProvisioningBadge } from '../shared/ProvisioningBadge';
+import { RuleListItem } from '../shared/RuleListItem';
+import { RuleStatusIcon } from '../shared/RuleStatusIcon';
 import { useFolderPath, useFullRecordingRuleState } from '../shared/caches';
 
 import { type RecordingRuleSearchHit } from './searchHit';
@@ -16,8 +21,7 @@ const GRAFANA_ORIGIN_LABEL = '__grafana_origin';
 
 interface RecordingRuleRowProps {
   hit: RecordingRuleSearchHit;
-  /** Folder path is shown in List mode only - Folders mode already shows it on the folder
-   * row (recording-rules-page.md "Rule row"). */
+  /** Folder path is shown in List mode only - Folders mode already shows it on the folder row. */
   showFolderPath: boolean;
   actions?: ReactNode;
 }
@@ -28,83 +32,90 @@ interface RecordingRuleRowProps {
  * summary, Silence, or Declare-incident information - Recording rules have none of those.
  */
 export function RecordingRuleRow({ hit, showFolderPath, actions }: RecordingRuleRowProps) {
-  const path = useFolderPath(showFolderPath ? hit.folderUid : undefined);
   const fullRule = useFullRecordingRuleState(hit.uid);
+  const folderPath = useFolderPath(showFolderPath ? hit.folderUid : undefined);
 
   const pluginId = hit.labels[GRAFANA_ORIGIN_LABEL];
   const isProvisioned = fullRule.status === 'loaded' && isK8sEntityProvisioned(fullRule.rule);
+  const hasQueriedDataSources = hit.dataSourceUids.some((uid) => getDataSourceByUid(uid) !== undefined);
+  const hasDisplayLabels = Object.keys(hit.labels).some((key) => key !== GRAFANA_ORIGIN_LABEL);
+  const titleId = `recording-rule-title-${hit.uid}`;
 
-  const displayLabels = Object.fromEntries(
-    Object.entries(hit.labels).filter(([key]) => key !== GRAFANA_ORIGIN_LABEL)
-  );
-  const labelCount = Object.keys(displayLabels).length;
-
-  const dataSources = Array.from(new Set(hit.dataSourceUids))
-    .map(getDataSourceByUid)
-    .filter((ds): ds is NonNullable<typeof ds> => ds !== undefined);
-  const targetDataSource = hit.targetDataSourceUid ? getDataSourceByUid(hit.targetDataSourceUid) : undefined;
-
-  const unavailable = t('alerting.gma-rule-list.recording-rules.unavailable', 'Unavailable');
+  const recordsTo =
+    hit.metric || hit.targetDataSourceUid ? (
+      <RecordsTo metric={hit.metric} targetDataSourceUid={hit.targetDataSourceUid} />
+    ) : null;
 
   return (
-    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={2}>
-      <Stack direction="column" gap={0.25} grow={1} minWidth={0}>
+    <RuleListItem
+      aria-labelledby={titleId}
+      icon={<RuleStatusIcon kind="recording" health={hit.health} paused={hit.paused} />}
+      title={
         <Stack direction="row" alignItems="center" gap={1}>
-          <TextLink href={`/alerting/grafana/${hit.uid}/view`} inline={false}>
+          <TextLink
+            id={titleId}
+            href={`/alerting/grafana/${encodeURIComponent(hit.uid)}/view`}
+            color="primary"
+            inline={false}
+          >
             {hit.title}
           </TextLink>
-          {pluginId && <PluginOriginBadge pluginId={pluginId} size="sm" />}
-          {!pluginId && isProvisioned && <ProvisioningBadge />}
-          <Text color="secondary" variant="bodySmall">
-            {hit.health ?? unavailable}
-            {hit.paused && ` · ${t('alerting.gma-rule-list.recording-rules.paused', 'Paused')}`}
-          </Text>
+          {pluginId ? <PluginOriginBadge pluginId={pluginId} size="sm" /> : isProvisioned && <ProvisioningBadge />}
         </Stack>
-        <Text color="secondary" variant="bodySmall">
-          {t('alerting.gma-rule-list.recording-rules.metric-and-target', 'Records {{metric}} to {{target}}', {
-            metric: hit.metric ?? unavailable,
-            target: targetDataSource?.name ?? unavailable,
-          })}
-        </Text>
-        {hit.lastError && (
+      }
+      description={
+        hit.lastError ? (
           <Tooltip content={hit.lastError}>
-            <Text color="secondary" variant="bodySmall" truncate element="p">
+            <Text variant="bodySmall" color="error" weight="light" truncate element="p">
               {hit.lastError}
             </Text>
           </Tooltip>
-        )}
-        <Stack direction="row" alignItems="center" gap={1} wrap="wrap">
-          {dataSources.length > 0 && (
-            <Stack direction="row" alignItems="center" gap={0.5}>
-              {dataSources.map((ds) => (
-                <Tooltip key={ds.uid} content={ds.name}>
-                  <img alt={`${ds.name} logo`} src={ds.meta.info.logos.small} width={16} height={16} />
-                </Tooltip>
-              ))}
-            </Stack>
-          )}
-          {labelCount > 0 && (
-            <Tooltip content={<AlertLabels labels={displayLabels} size="sm" />} interactive placement="right">
-              <Text color="secondary" variant="bodySmall">
-                {t('alerting.gma-rule-list.recording-rules.label-count', '', {
-                  count: labelCount,
-                  defaultValue_one: '{{count}} label',
-                  defaultValue_other: '{{count}} labels',
-                })}
-              </Text>
-            </Tooltip>
-          )}
-          <Text color="secondary" variant="bodySmall">
-            {t('alerting.gma-rule-list.recording-rules.interval-unavailable', 'Interval: Unavailable')}
-          </Text>
-          {showFolderPath && (
-            <Text color="secondary" variant="bodySmall">
-              {path ? path.join(' / ') : ''}
-            </Text>
-          )}
-        </Stack>
-      </Stack>
-      {actions && <Box shrink={0}>{actions}</Box>}
+        ) : (
+          recordsTo
+        )
+      }
+      // Items are gated here on their data because the list item only drops falsy entries, so an
+      // element that renders nothing would still leave a stray separator.
+      meta={[
+        folderPath && folderPath.length > 0 && <FolderPath key="folder" segments={folderPath} />,
+        hit.lastError && recordsTo,
+        hasQueriedDataSources && <DataSourcesMeta key="data-sources" uids={hit.dataSourceUids} />,
+        hasDisplayLabels && <LabelsMeta key="labels" labels={hit.labels} />,
+      ]}
+      // The effective interval depends on sequence membership, which the search hit does not carry
+      // yet; showing the stored per-rule interval would be wrong for sequence members.
+      metaRight={<IntervalIndicator interval={undefined} />}
+      actions={actions}
+    />
+  );
+}
+
+function RecordsTo({ metric, targetDataSourceUid }: { metric?: string; targetDataSourceUid?: string }) {
+  const target = targetDataSourceUid ? getDataSourceByUid(targetDataSourceUid) : undefined;
+
+  // An unresolvable target UID leaves nothing to say when the metric is also missing.
+  if (!target && !metric) {
+    return null;
+  }
+
+  let text: string;
+  if (target && metric) {
+    text = t('alerting.gma-rule-list.recording-rules.metric-and-target', 'Records {{metric}} to {{target}}', {
+      metric,
+      target: target.name,
+    });
+  } else if (target) {
+    text = t('alerting.gma-rule-list.recording-rules.target-only', 'Records to {{target}}', { target: target.name });
+  } else {
+    text = t('alerting.gma-rule-list.recording-rules.metric-only', 'Records {{metric}}', { metric });
+  }
+
+  return (
+    <Stack direction="row" alignItems="center" gap={0.5} wrap={false}>
+      {target && <img alt="" src={target.meta.info.logos.small} width={16} height={16} />}
+      <Text variant="bodySmall" color="secondary" truncate>
+        {text}
+      </Text>
     </Stack>
   );
 }

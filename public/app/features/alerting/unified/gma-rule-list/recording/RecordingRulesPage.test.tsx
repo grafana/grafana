@@ -142,7 +142,7 @@ describe('RecordingRulesPage', () => {
 
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByText('Infra')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getAllByText('3')).not.toHaveLength(0));
+    expect(await screen.findByText('3 recording rules')).toBeInTheDocument();
   });
 
   // REC-2
@@ -159,7 +159,7 @@ describe('RecordingRulesPage', () => {
     render(<RecordingRulesPage />);
     await screen.findByText('Team Alerts');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Team Alerts', expanded: false }));
+    await userEvent.click(screen.getByRole('button', { name: 'Expand Team Alerts', expanded: false }));
 
     expect(await screen.findByText('cpu_usage:avg')).toBeInTheDocument();
     expect(lastFolderFilter).toEqual(['folder-1']);

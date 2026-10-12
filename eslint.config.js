@@ -439,13 +439,31 @@ module.exports = [
                 'The GMA-only rule list is a greenfield implementation; the legacy combined rule list is a behavioral reference only, not a source of reusable code.',
             },
             {
+              group: [
+                '**/components/MetaText',
+                '**/components/MoreButton',
+                '**/components/Provisioning',
+                '**/plugins/PluginOriginBadge',
+              ],
+              message:
+                'The GMA-only rule list must not reuse the legacy list presentational components; use the equivalents in gma-rule-list/shared instead.',
+            },
+            {
+              group: ['**/utils/misc'],
+              importNames: ['makeFolderAlertsLink'],
+              message:
+                'makeFolderAlertsLink belongs to the legacy list; use makeFolderRulesLink from gma-rule-list/shared instead.',
+            },
+            {
               group: ['**/api/alertRuleApi', '**/api/prometheusApi'],
-              message: 'The GMA-only rule list must not depend on legacy rule APIs; use the generated rules.alerting client instead.',
+              message:
+                'The GMA-only rule list must not depend on legacy rule APIs; use the generated rules.alerting client instead.',
             },
             {
               group: ['@grafana/api-clients/rtkq/rules.alerting*'],
               importNamePattern: '.*SearchRules.*',
-              message: '/searchRules is deprecated; use the generated /alertrules/search and /recordingrules/search operations instead.',
+              message:
+                '/searchRules is deprecated; use the generated /alertrules/search and /recordingrules/search operations instead.',
             },
           ],
         }),

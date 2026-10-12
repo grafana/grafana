@@ -1,12 +1,21 @@
+import { css } from '@emotion/css';
 import { type ReactNode } from 'react';
+import Skeleton from 'react-loading-skeleton';
 
+import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Box, IconButton, Stack, Text } from '@grafana/ui';
+import { Icon, IconButton, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 
+import { FolderPath } from './FolderPath';
 import { useFolderPath } from './caches';
+import { makeFolderRulesLink } from './folderLinks';
 
 interface FolderListRowProps {
   folderUid: string;
+  /** Folder's own title from the folder search hit, so the row is readable before `/parents` resolves. */
+  title: string;
+  /** Which rule kind the count refers to; only used for the count label. */
+  kind: 'alert' | 'recording';
   /** The rule kind's direct count for this folder (e.g. Alert rules only, never
    * descendant/Recording counts) - undefined while its `/counts` lookup is pending. */
   ruleCount: number | undefined;
@@ -17,30 +26,96 @@ interface FolderListRowProps {
 }
 
 /**
- * Shared Folders-mode row: full folder path (from `/parents`, so folders with the same title
- * stay distinguishable) plus the rule-kind-specific direct count, expandable to show that
- * folder's rules. Shared because both the Alert and Recording pages need the same behavior
- * here - only the count and the expanded content are rule-kind-specific.
+ * Shared Folders-mode row (renders its own `<li>`): chevron, folder title linking to the folder's
+ * alert view, the parent path for nested folders, and the rule-kind-specific direct count.
+ * Expandable to show that folder's rules. Only the count and the expanded content are
+ * rule-kind-specific, which is why both pages share it.
  */
-export function FolderListRow({ folderUid, ruleCount, expanded, onToggle, children }: FolderListRowProps) {
+export function FolderListRow({ folderUid, title, kind, ruleCount, expanded, onToggle, children }: FolderListRowProps) {
+  const styles = useStyles2(getStyles);
   const path = useFolderPath(folderUid);
-  const pathLabel = path ? path.join(' / ') : folderUid;
+  // The last segment is the folder itself, already shown as the title.
+  const parents = path ? path.slice(0, -1) : [];
 
   return (
-    <div>
-      <Stack direction="row" alignItems="center" gap={1}>
-        <IconButton
-          name={expanded ? 'angle-down' : 'angle-right'}
-          aria-expanded={expanded}
-          aria-label={pathLabel}
-          onClick={onToggle}
-        />
-        <Text>{pathLabel}</Text>
-        <Text color="secondary">{ruleCount ?? t('alerting.gma-rule-list.folder-row.count-unavailable', '–')}</Text>
-      </Stack>
-      {/* Indented past the folder's own icon+label so its rules read as nested under it,
-          rather than as siblings starting at the same edge. */}
-      {expanded && <Box paddingLeft={6}>{children}</Box>}
-    </div>
+    <li className={styles.wrapper}>
+      <div className={styles.header}>
+        <Stack direction="row" alignItems="center" gap={1}>
+          <Stack direction="row" alignItems="center" gap={0.5} flex="1" minWidth={0}>
+            <IconButton
+              name={expanded ? 'angle-down' : 'angle-right'}
+              aria-expanded={expanded}
+              aria-label={
+                expanded
+                  ? t('alerting.gma-rule-list.folder-row.collapse', 'Collapse {{title}}', { title })
+                  : t('alerting.gma-rule-list.folder-row.expand', 'Expand {{title}}', { title })
+              }
+              onClick={onToggle}
+            />
+            <Icon name="folder" />
+            <TextLink href={makeFolderRulesLink(folderUid, title)} color="primary" inline={false}>
+              {title}
+            </TextLink>
+            {parents.length > 0 && <FolderPath segments={parents} showIcon={false} />}
+          </Stack>
+          <Text variant="bodySmall" color="secondary">
+            {ruleCount === undefined ? <Skeleton width={64} /> : countLabel(kind, ruleCount)}
+          </Text>
+        </Stack>
+      </div>
+      {expanded && (
+        <ul role="group" className={styles.group}>
+          {children}
+        </ul>
+      )}
+    </li>
   );
 }
+
+function countLabel(kind: 'alert' | 'recording', count: number): string {
+  if (kind === 'alert') {
+    return t('alerting.gma-rule-list.folder-row.alert-rule-count', '', {
+      count,
+      defaultValue_one: '{{count}} alert rule',
+      defaultValue_other: '{{count}} alert rules',
+    });
+  }
+  return t('alerting.gma-rule-list.folder-row.recording-rule-count', '', {
+    count,
+    defaultValue_one: '{{count}} recording rule',
+    defaultValue_other: '{{count}} recording rules',
+  });
+}
+
+const getStyles = (theme: GrafanaTheme2) => ({
+  wrapper: css({
+    listStyle: 'none',
+    display: 'flex',
+    flexDirection: 'column',
+  }),
+  header: css({
+    padding: theme.spacing(1, 1.5),
+
+    '&:hover': {
+      background: theme.colors.action.hover,
+      borderRadius: theme.shape.radius.default,
+    },
+  }),
+  // The guide line sits at the chevron's centre so nested rows read as belonging to the folder.
+  group: css({
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    paddingLeft: theme.spacing(4),
+    position: 'relative',
+
+    '&:before': {
+      content: "''",
+      position: 'absolute',
+      top: 0,
+      bottom: 0,
+      left: theme.spacing(2.5),
+      borderLeft: `solid 1px ${theme.colors.border.weak}`,
+    },
+  }),
+});

@@ -1,4 +1,9 @@
+import { t } from '@grafana/i18n';
+import { LinkButton, Stack } from '@grafana/ui';
+
 import { AlertRuleActionsMenu } from '../actions/AlertRuleActionsMenu';
+import { ruleEditUrl } from '../actions/ruleLinks';
+import { useRuleActionAbilities } from '../actions/useRuleActionAbilities';
 import { invalidateFullAlertRule, useFullAlertRuleState } from '../shared/caches';
 import { refreshRuleLists } from '../shared/refreshRuleLists';
 
@@ -7,17 +12,27 @@ interface AlertRuleActionsProps {
 }
 
 /**
- * Wires the shared full-rule enrichment state and the refresh path into FE-prereq's action
- * menu, so the page and its rows don't need to know how the menu decides ability/provenance or
- * how a mutation invalidates the affected caches - only that one happened.
+ * Wires the shared full-rule enrichment state and the refresh path into the action menu, so the
+ * page and its rows don't need to know how the menu decides ability/provenance or how a
+ * mutation invalidates the affected caches - only that one happened.
  */
 export function AlertRuleActions({ ruleUid }: AlertRuleActionsProps) {
   const resourceState = useFullAlertRuleState(ruleUid);
+  const abilities = useRuleActionAbilities(resourceState);
 
   const onMutated = () => {
     invalidateFullAlertRule(ruleUid);
     refreshRuleLists('alert');
   };
 
-  return <AlertRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} onMutated={onMutated} buttonSize="sm" />;
+  return (
+    <Stack direction="row" gap={0} wrap="nowrap">
+      {abilities.edit.available && (
+        <LinkButton href={ruleEditUrl(ruleUid)} size="sm" variant="secondary" fill="text">
+          {t('alerting.gma-rule-list.alert-rules.edit', 'Edit')}
+        </LinkButton>
+      )}
+      <AlertRuleActionsMenu ruleUid={ruleUid} resourceState={resourceState} onMutated={onMutated} buttonSize="sm" />
+    </Stack>
+  );
 }

@@ -125,9 +125,13 @@ describe('AlertRulesPage', () => {
 
     expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
     expect(screen.getByText('Infra')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getAllByText('3')).not.toHaveLength(0));
+    expect(await screen.findByText('3 alert rules')).toBeInTheDocument();
     // Collapsed: no rule rows or per-folder rule requests have happened yet.
-    expect(screen.queryByRole('link')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Team Alerts' })).toHaveAttribute(
+      'href',
+      '/dashboards/f/folder-1/team-alerts/alerting'
+    );
+    expect(screen.queryByText('CPU high')).not.toBeInTheDocument();
   });
 
   // SEARCH-7: the folder filter is the one filter Folders mode supports, and it scopes the
@@ -169,7 +173,7 @@ describe('AlertRulesPage', () => {
 
     expect(ruleSearchCalls).toBe(0);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Team Alerts', expanded: false }));
+    await userEvent.click(screen.getByRole('button', { name: 'Expand Team Alerts', expanded: false }));
 
     await screen.findByText('CPU high');
     expect(ruleSearchCalls).toBe(1);
@@ -223,7 +227,10 @@ describe('AlertRulesPage', () => {
       http.post(ALERT_SEARCH_URL, () => {
         call += 1;
         if (call === 1) {
-          return HttpResponse.json({ items: [ruleItem('rule-1', 'CPU high', 'folder-1')], metadata: { continue: 'tok' } });
+          return HttpResponse.json({
+            items: [ruleItem('rule-1', 'CPU high', 'folder-1')],
+            metadata: { continue: 'tok' },
+          });
         }
         return HttpResponse.json({ message: 'boom' }, { status: 500 });
       })

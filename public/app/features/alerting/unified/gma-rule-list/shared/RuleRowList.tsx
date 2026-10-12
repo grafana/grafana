@@ -9,12 +9,8 @@ const listStyle: CSSProperties = { listStyle: 'none', margin: 0, padding: 0 };
 /**
  * Wraps a page's folder or rule rows in a real `<ul>` so screen readers report the group as a
  * list with a size, rather than an unordered run of divs. Each row must still be wrapped in
- * `<li>` by the caller (`RuleRowListItem` below) - this only owns the `<ul>` itself.
+ * `<li>` by the caller (`RuleListItem` renders its own) - this only owns the `<ul>` itself.
  */
 export function RuleRowList({ children }: { children: ReactNode }) {
   return <ul style={listStyle}>{children}</ul>;
-}
-
-export function RuleRowListItem({ children }: { children: ReactNode }) {
-  return <li>{children}</li>;
 }

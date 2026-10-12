@@ -4,7 +4,7 @@ import { Button, LoadingPlaceholder, Stack } from '@grafana/ui';
 
 import { buildRecordingRuleSearchQuery } from '../search/searchQuery';
 import { type Criteria } from '../search/types';
-import { RuleRowList, RuleRowListItem } from '../shared/RuleRowList';
+import { RuleRowList } from '../shared/RuleRowList';
 import { useContinuationSearch } from '../shared/useContinuationSearch';
 
 import { RecordingRuleActions } from './RecordingRuleActions';
@@ -39,15 +39,11 @@ export function ListView({ criteria, resetKey }: ListViewProps) {
   );
 
   if (isLoading) {
-    return (
-      <LoadingPlaceholder text={t('alerting.gma-rule-list.recording-rules.loading-rules', 'Loading rules...')} />
-    );
+    return <LoadingPlaceholder text={t('alerting.gma-rule-list.recording-rules.loading-rules', 'Loading rules...')} />;
   }
 
   if (error) {
-    return (
-      <div role="alert">{t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load rules')}</div>
-    );
+    return <div role="alert">{t('alerting.gma-rule-list.recording-rules.rules-error', 'Failed to load rules')}</div>;
   }
 
   if (rows.length === 0) {
@@ -58,9 +54,12 @@ export function ListView({ criteria, resetKey }: ListViewProps) {
     <Stack direction="column" gap={0.5}>
       <RuleRowList>
         {rows.map((hit) => (
-          <RuleRowListItem key={hit.uid}>
-            <RecordingRuleRow hit={hit} showFolderPath actions={<RecordingRuleActions ruleUid={hit.uid} />} />
-          </RuleRowListItem>
+          <RecordingRuleRow
+            key={hit.uid}
+            hit={hit}
+            showFolderPath
+            actions={<RecordingRuleActions ruleUid={hit.uid} />}
+          />
         ))}
       </RuleRowList>
       {Boolean(loadMoreError) && (

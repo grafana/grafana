@@ -4,9 +4,9 @@ import { type RecordingRule } from '@grafana/api-clients/rtkq/rules.alerting/v0a
 import { t } from '@grafana/i18n';
 import { type ComponentSize, Dropdown, Menu } from '@grafana/ui';
 
-import MoreButton from '../../components/MoreButton';
 import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
 import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
+import { MoreButton } from '../shared/MoreButton';
 
 import { DeleteRuleConfirmModal } from './DeleteRuleConfirmModal';
 import { useDuplicateRuleAction } from './DuplicateRuleAction';
@@ -29,7 +29,12 @@ interface RecordingRuleActionsMenuProps {
  * Declare incident, or enrichment items - Recording rules have no alert state, instances, or
  * notification routing to attach any of those to.
  */
-export function RecordingRuleActionsMenu({ ruleUid, resourceState, onMutated, buttonSize }: RecordingRuleActionsMenuProps) {
+export function RecordingRuleActionsMenu({
+  ruleUid,
+  resourceState,
+  onMutated,
+  buttonSize,
+}: RecordingRuleActionsMenuProps) {
   const abilities = useRuleActionAbilities(resourceState);
   const { setPaused, isPending: pausePending } = useRecordingRulePauseResume(ruleUid);
   const { deleteRule, isPending: deletePending } = useDeleteRecordingRule(ruleUid);
@@ -85,7 +90,7 @@ export function RecordingRuleActionsMenu({ ruleUid, resourceState, onMutated, bu
   return (
     <>
       <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
-        <MoreButton size={buttonSize} />
+        <MoreButton fill="text" size={buttonSize} />
       </Dropdown>
       {duplicateConfirmModal}
       <DeleteRuleConfirmModal

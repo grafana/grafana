@@ -5,10 +5,10 @@ import { contextSrv as ctx } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { LogMessages } from '../../Analytics';
-import MoreButton from '../../components/MoreButton';
 import { AIAlertRuleButtonComponent } from '../../enterprise-components/AI/AIGenAlertRuleButton/addAIAlertRuleButton';
 import { createReturnTo } from '../../hooks/useReturnTo';
 import { createRelativeUrl } from '../../utils/url';
+import { MoreButton } from '../shared/MoreButton';
 
 /**
  * Page-header actions for the GMA-only Alert rules page. Import/export-all/bulk/group actions,
@@ -20,6 +20,16 @@ export function AlertRulesHeaderActions() {
 
   return (
     <Stack direction="row" gap={1}>
+      {canCreate && (
+        <LinkButton
+          variant="primary"
+          href={createRelativeUrl('/alerting/new/alerting', { returnTo })}
+          icon="plus"
+          onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
+        >
+          <Trans i18nKey="alerting.gma-rule-list.actions.new-alert-rule">New alert rule</Trans>
+        </LinkButton>
+      )}
       {canCreate && <AIAlertRuleButtonComponent />}
       <Dropdown
         overlay={
@@ -34,17 +44,8 @@ export function AlertRulesHeaderActions() {
         }
         placement="bottom-end"
       >
-        <MoreButton />
+        <MoreButton size="md" />
       </Dropdown>
-      {canCreate && (
-        <LinkButton
-          href={createRelativeUrl('/alerting/new/alerting', { returnTo })}
-          icon="plus"
-          onClick={() => logInfo(LogMessages.alertRuleFromScratch)}
-        >
-          <Trans i18nKey="alerting.gma-rule-list.actions.new-alert-rule">New alert rule</Trans>
-        </LinkButton>
-      )}
     </Stack>
   );
 }

@@ -41,4 +41,13 @@ describe('AlertRulesHeaderActions', () => {
     expect(screen.queryByRole('menuitem', { name: /export all/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('menuitem', { name: /import/i })).not.toBeInTheDocument();
   });
+
+  it('places New alert rule before the More menu button', () => {
+    grantUserPermissions([AccessControlAction.AlertingRuleCreate]);
+    render(<AlertRulesHeaderActions />);
+
+    const newRule = screen.getByRole('link', { name: /new alert rule/i });
+    const more = screen.getByRole('button', { name: /more/i });
+    expect(newRule.compareDocumentPosition(more)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  });
 });

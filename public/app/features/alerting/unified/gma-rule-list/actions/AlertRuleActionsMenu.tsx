@@ -6,7 +6,6 @@ import { config } from '@grafana/runtime';
 import { type ComponentSize, Dropdown, Menu } from '@grafana/ui';
 import { AnnoKeyFolder } from 'app/features/apiserver/types';
 
-import MoreButton from '../../components/MoreButton';
 import { AnalyzeK8sRuleButton } from '../../components/assistant/AnalyzeK8sRuleButton';
 import { EnrichmentDrawerExtension } from '../../components/rule-list/extensions/EnrichmentDrawerExtension';
 import SilenceGrafanaRuleDrawer from '../../components/silences/SilenceGrafanaRuleDrawer';
@@ -16,6 +15,7 @@ import { useCanSilenceInFolder, useGrafanaRulesSilenceSupport } from '../../hook
 import { EnrichmentAction } from '../../hooks/abilities/types';
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { isK8sEntityProvisioned } from '../../utils/k8s/utils';
+import { MoreButton } from '../shared/MoreButton';
 
 import { DeleteRuleConfirmModal } from './DeleteRuleConfirmModal';
 import { useDuplicateRuleAction } from './DuplicateRuleAction';
@@ -121,7 +121,7 @@ export function AlertRuleActionsMenu({ ruleUid, resourceState, onMutated, button
   return (
     <>
       <Dropdown overlay={<Menu>{menuItems}</Menu>} placement="bottom-end">
-        <MoreButton size={buttonSize} />
+        <MoreButton fill="text" size={buttonSize} />
       </Dropdown>
       {showSilenceDrawer && (
         <AlertmanagerProvider accessType="instance">

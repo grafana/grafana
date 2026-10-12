@@ -44,27 +44,48 @@ describe('AlertRuleRow', () => {
   beforeEach(() => {
     clearAllEnrichmentCaches();
     mockFullRule();
-    server.use(http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ items: [{ name: 'folder-1', title: 'Team Alerts' }] })));
+    server.use(
+      http.get(FOLDER_PARENTS_URL, () => HttpResponse.json({ items: [{ name: 'folder-1', title: 'Team Alerts' }] }))
+    );
   });
 
-  it('shows Unavailable for state and health when the search hit has neither', async () => {
+  it.each([
+    { name: 'firing', props: { state: 'Firing', health: 'OK' }, label: 'Firing' },
+    { name: 'errored', props: { state: 'Healthy', health: 'Error' }, label: 'Failed to evaluate rule' },
+    { name: 'paused', props: { state: 'Healthy', health: 'OK', paused: true }, label: 'Paused' },
+    { name: 'without status', props: {}, label: 'Status unavailable' },
+  ])('shows the $name status icon with its accessible name', async ({ props, label }) => {
+    render(<AlertRuleRow hit={baseHit(props)} showFolderPath={false} />);
+
+    expect(await screen.findByLabelText(label)).toBeInTheDocument();
+  });
+
+  it('never prints state or health as text', async () => {
+    render(<AlertRuleRow hit={baseHit({ state: 'Firing', health: 'Error' })} showFolderPath={false} />);
+
+    expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();
+    expect(screen.queryByText(/Firing|Error|Unavailable/)).not.toBeInTheDocument();
+  });
+
+  it('links the title to the rule view and labels the list item with it', async () => {
+    render(
+      <ul>
+        <AlertRuleRow hit={baseHit()} showFolderPath={false} />
+      </ul>
+    );
+
+    expect(await screen.findByRole('link', { name: 'CPU high' })).toHaveAttribute(
+      'href',
+      '/alerting/grafana/rule-1/view'
+    );
+    expect(screen.getByRole('listitem', { name: 'CPU high' })).toBeInTheDocument();
+  });
+
+  it('does not render an interval while the effective interval is unknown', async () => {
     render(<AlertRuleRow hit={baseHit()} showFolderPath={false} />);
 
-    // Two "Unavailable"s: state and health, joined by " · ".
-    expect(await screen.findAllByText(/Unavailable/)).toHaveLength(2);
-  });
-
-  it('never shows Healthy for a rule with no persisted health', () => {
-    render(<AlertRuleRow hit={baseHit()} showFolderPath={false} />);
-
-    expect(screen.queryByText(/Healthy/)).not.toBeInTheDocument();
-  });
-
-  it('shows the persisted state and health when the search hit provides them', async () => {
-    render(<AlertRuleRow hit={baseHit({ state: 'Alerting', health: 'Error' })} showFolderPath={false} />);
-
-    expect(await screen.findByText(/Alerting/)).toBeInTheDocument();
-    expect(screen.getByText(/Error/)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'CPU high' })).toBeInTheDocument();
+    expect(screen.queryByText(/interval/i)).not.toBeInTheDocument();
   });
 
   it('shows the folder path only when showFolderPath is true', async () => {
@@ -78,10 +99,64 @@ describe('AlertRuleRow', () => {
   });
 
   it('shows the last error in place of the summary annotation when both are present', () => {
-    render(<AlertRuleRow hit={baseHit({ lastError: 'connection refused', summary: 'CPU too high' })} showFolderPath={false} />);
+    render(
+      <AlertRuleRow
+        hit={baseHit({ lastError: 'connection refused', summary: 'CPU too high' })}
+        showFolderPath={false}
+      />
+    );
 
     expect(screen.getByText('connection refused')).toBeInTheDocument();
     expect(screen.queryByText('CPU too high')).not.toBeInTheDocument();
+  });
+
+  it('shows the summary when there is no last error', () => {
+    render(<AlertRuleRow hit={baseHit({ summary: 'CPU too high' })} showFolderPath={false} />);
+
+    expect(screen.getByText('CPU too high')).toBeInTheDocument();
+  });
+
+  it('orders metadata as folder path, data source, labels, routing', async () => {
+    setupDataSources(mockDataSource({ uid: 'prom-1', name: 'Prometheus prod' }));
+    render(<AlertRuleRow hit={baseHit({ dataSourceUids: ['prom-1'], labels: { team: 'infra' } })} showFolderPath />);
+
+    const folder = await screen.findByText('Team Alerts');
+    const dataSource = screen.getByRole('link', { name: 'Prometheus prod' });
+    const labels = screen.getByText('1 label');
+    const routing = screen.getByText('Default policy');
+    const precedes = (a: Node, b: Node) => Boolean(a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING);
+    expect(precedes(folder, dataSource)).toBe(true);
+    expect(precedes(dataSource, labels)).toBe(true);
+    expect(precedes(labels, routing)).toBe(true);
+  });
+
+  it('omits label and data source items when the rule has none', () => {
+    render(<AlertRuleRow hit={baseHit()} showFolderPath={false} />);
+
+    expect(screen.queryByText(/label/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/data source/)).not.toBeInTheDocument();
+  });
+
+  it('renders one separator fewer than metadata items when labels and data sources are absent', async () => {
+    render(<AlertRuleRow hit={baseHit()} showFolderPath />);
+
+    // Folder path and routing remain: two items, so exactly one separator.
+    expect(await screen.findByText('Team Alerts')).toBeInTheDocument();
+    expect(screen.getByText('Default policy')).toBeInTheDocument();
+    expect(screen.getAllByText('|')).toHaveLength(1);
+  });
+
+  it('renders no separator when routing is the only metadata item', async () => {
+    render(<AlertRuleRow hit={baseHit()} showFolderPath={false} />);
+
+    expect(await screen.findByText('Default policy')).toBeInTheDocument();
+    expect(screen.queryByText('|')).not.toBeInTheDocument();
+  });
+
+  it('hides routing for a paused rule', () => {
+    render(<AlertRuleRow hit={baseHit({ paused: true })} showFolderPath={false} />);
+
+    expect(screen.queryByText('Default policy')).not.toBeInTheDocument();
   });
 
   it('shows Default policy when no notification type is set', () => {
@@ -96,7 +171,11 @@ describe('AlertRuleRow', () => {
         showFolderPath={false}
       />
     );
-    expect(screen.getByText('Delivered to on-call-team')).toBeInTheDocument();
+    expect(screen.getByText('Delivered to')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'on-call-team' })).toHaveAttribute(
+      'href',
+      '/alerting/notifications?search=on-call-team&tab=contact_points&alertmanager=grafana'
+    );
   });
 
   it('shows the named policy for NamedRoutingTree', () => {
@@ -114,7 +193,7 @@ describe('AlertRuleRow', () => {
 
     render(<AlertRuleRow hit={baseHit({ dataSourceUids: ['prom-1'] })} showFolderPath={false} />);
 
-    expect(screen.getByAltText('Prometheus prod logo')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Prometheus prod' })).toBeInTheDocument();
   });
 
   it('shows the label count and omits __grafana_origin from it', () => {

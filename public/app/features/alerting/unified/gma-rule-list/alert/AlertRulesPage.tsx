@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { t } from '@grafana/i18n';
-import { Box, RadioButtonGroup, Stack } from '@grafana/ui';
+import { Box, Divider, RadioButtonGroup, Stack } from '@grafana/ui';
 
 import { withPageErrorBoundary } from '../../withPageErrorBoundary';
 import { AlertRulesHeaderActions } from '../actions/AlertRulesHeaderActions';
@@ -93,54 +93,60 @@ function AlertRulesPage() {
       deletedHref="/alerting/rules/alert/deleted"
       primaryAction={<AlertRulesHeaderActions />}
     >
-      <Stack direction="column" gap={2}>
-        <Stack direction="row" gap={2} alignItems="center">
-          <Box grow={1} minWidth={0}>
-            <RuleSearchInput query={query} onApply={onApplyQuery} tokens={alertTokens} issues={issues} />
-          </Box>
-          <Box shrink={0}>
-            <RadioButtonGroup
-              value={mode}
-              onChange={setMode}
-              options={[
-                {
-                  icon: 'folder',
-                  label: t('alerting.gma-rule-list.alert-rules.view-folders', 'Folders'),
-                  value: 'folders',
-                },
-                { icon: 'list-ul', label: t('alerting.gma-rule-list.alert-rules.view-list', 'List'), value: 'list' },
-              ]}
-            />
-          </Box>
-          <Box shrink={0}>
-            {savedSearchesReady ? (
-              <ConnectedSavedSearches
-                useSavedSearches={useAlertRulesSavedSearches}
-                kind="alert"
-                query={query}
-                parseForKind={(q) => parse(q, alertTokens).criteria}
-                resolvers={legacyRuleListNameResolvers}
-                setCriteria={setCriteria}
-                getHref={(search) => `/alerting/rules/alert?search=${encodeURIComponent(search.query)}`}
+      <Box paddingTop={2}>
+        <Stack direction="column" gap={2}>
+          <Stack direction="row" gap={2} alignItems="center">
+            <Box grow={1} minWidth={0}>
+              <RuleSearchInput query={query} onApply={onApplyQuery} tokens={alertTokens} issues={issues} />
+            </Box>
+            <Box shrink={0}>
+              {savedSearchesReady ? (
+                <ConnectedSavedSearches
+                  useSavedSearches={useAlertRulesSavedSearches}
+                  kind="alert"
+                  query={query}
+                  parseForKind={(q) => parse(q, alertTokens).criteria}
+                  resolvers={legacyRuleListNameResolvers}
+                  setCriteria={setCriteria}
+                  getHref={(search) => `/alerting/rules/alert?search=${encodeURIComponent(search.query)}`}
+                />
+              ) : (
+                <SavedSearchesLoadingPlaceholder query={query} />
+              )}
+            </Box>
+            <Box shrink={0}>
+              <RadioButtonGroup
+                value={mode}
+                onChange={setMode}
+                options={[
+                  {
+                    icon: 'folder',
+                    label: t('alerting.gma-rule-list.alert-rules.view-folders', 'Folders'),
+                    value: 'folders',
+                  },
+                  { icon: 'list-ul', label: t('alerting.gma-rule-list.alert-rules.view-list', 'List'), value: 'list' },
+                ]}
               />
-            ) : (
-              <SavedSearchesLoadingPlaceholder query={query} />
-            )}
-          </Box>
+            </Box>
+          </Stack>
+          <Stack direction="row" gap={2}>
+            <AlertRulesFilterSidebar
+              criteria={criteria}
+              onChange={setCriteria}
+              onClear={onClear}
+              hasActiveFilters={hasActiveFilters}
+              issues={issues}
+            />
+            {/* The flex wrapper gives the divider a definite height to fill; on its own it collapses to zero. */}
+            <Box display="flex">
+              <Divider direction="vertical" spacing={0} />
+            </Box>
+            <Box grow={1} minWidth={0}>
+              <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} resetKey={resetKey} />
+            </Box>
+          </Stack>
         </Stack>
-        <Stack direction="row" gap={2}>
-          <AlertRulesFilterSidebar
-            criteria={criteria}
-            onChange={setCriteria}
-            onClear={onClear}
-            hasActiveFilters={hasActiveFilters}
-            issues={issues}
-          />
-          <Box grow={1} minWidth={0}>
-            <AlertRulesBody canSearch={canSearch} mode={mode} criteria={criteria} resetKey={resetKey} />
-          </Box>
-        </Stack>
-      </Stack>
+      </Box>
     </RulesPageShell>
   );
 }
