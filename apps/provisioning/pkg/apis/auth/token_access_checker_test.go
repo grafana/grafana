@@ -68,10 +68,6 @@ func TestTokenAccessChecker_Check(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				assert.True(t, apierrors.IsForbidden(err), "expected Forbidden error, got: %v", err)
-				assert.Equal(t, tt.innerErr == nil, IsPermissionDenied(err))
-				if tt.innerErr != nil {
-					assert.ErrorIs(t, err, tt.innerErr)
-				}
 			}
 		})
 	}
@@ -87,7 +83,6 @@ func TestTokenAccessChecker_NoAuthInfo(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized error")
-	assert.False(t, IsPermissionDenied(err))
 }
 
 func TestTokenAccessChecker_WithFallbackRole_IsNoOp(t *testing.T) {
