@@ -1,28 +1,36 @@
-import { useImperativeHandle, useRef, useState, type Ref } from 'react';
+import { useImperativeHandle, useRef, type Ref } from 'react';
 
-import { t } from '@grafana/i18n';
-import { Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+import { t, Trans } from '@grafana/i18n';
+import { Badge, Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
+import { useStoredString } from 'app/core/hooks/useStored';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 
 import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
+import { FooterAction, FooterActions } from '../FooterActions';
 import { HomeSection } from '../HomeSection';
-import { tabChanged } from '../analytics/main';
+import { ctaClicked, tabChanged } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { LabelFilterCombobox } from './LabelFilterCombobox';
+import { OnCallCard } from './OnCallCard';
 import { type FilterSelection } from './filterSelection';
 import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { useIncidentFilterOptions } from './useIncidentFilterOptions';
 import { type IncidentsData } from './useIncidents';
+import { useOnCallSchedules } from './useOnCallSchedules';
 
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
 export const INCIDENTS_TAB_ID = 'incidents' as const;
+export const ON_CALL_TAB_ID = 'on-call' as const;
 
-type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID;
+type TabId = typeof ALERTS_TAB_ID | typeof INCIDENTS_TAB_ID | typeof ON_CALL_TAB_ID;
+
+// Survives reloads; the filters next to it use the same `grafana.home.*` key convention.
+export const ALERTS_INCIDENTS_TAB_STORAGE_KEY = 'grafana.home.alertsIncidents.tab';
 
 // Prefixed because these land in the global DOM id namespace, and the bare tab ids are
 // generic enough to collide with plugin content on the same page.
@@ -32,6 +40,23 @@ const tabElementId = (id: TabId) => `alerts-incidents-tab-${id}`;
 export type AlertIncidentSwitchHandle = {
   switch: (tab: TabId, scroll?: boolean) => void;
 };
+
+/** The remembered tab when it is currently available; otherwise alerts, else incidents (the previous fixed default). */
+function resolveActiveTab(
+  stored: string,
+  {
+    canViewAlerts,
+    canViewIncidents,
+    canViewOnCall,
+  }: { canViewAlerts: boolean; canViewIncidents: boolean; canViewOnCall: boolean }
+): TabId {
+  const available: TabId[] = [
+    ...(canViewAlerts ? [ALERTS_TAB_ID] : []),
+    ...(canViewIncidents ? [INCIDENTS_TAB_ID] : []),
+    ...(canViewOnCall ? [ON_CALL_TAB_ID] : []),
+  ];
+  return available.find((id) => id === stored) ?? (canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
+}
 
 export function AlertIncidentTabs({
   alertsData,
@@ -53,8 +78,13 @@ export function AlertIncidentTabs({
   const canViewIncidents = !!incidentsData.enabled;
   const canViewAlerts = alertsData.enabled;
 
-  // Default to alerts tab if alerts are available, otherwise default to incidents tab
-  const [activeTab, setActiveTab] = useState<TabId>(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
+  const [storedTab, setActiveTab] = useStoredString(ALERTS_INCIDENTS_TAB_STORAGE_KEY, '');
+  // Keyed on the stored value, not `activeTab`: whether this tab is available comes from the hook itself. When
+  // the plugin is absent the hook has no teams to load anyway, so the two conditions select the same requests.
+  // The IRM probe is memoized per plugin id, so this second usePluginBridge(Irm) costs no request.
+  const onCallData = useOnCallSchedules({ skip: storedTab !== ON_CALL_TAB_ID });
+  const canViewOnCall = !!onCallData.enabled;
+  const activeTab = resolveActiveTab(storedTab, { canViewAlerts, canViewIncidents, canViewOnCall });
   const { count, hasAlerts, hasTeams, teamsLoading, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
@@ -73,6 +103,8 @@ export function AlertIncidentTabs({
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
     canViewIncidents && !incidentsLoading && !incidentsError && activeTab === INCIDENTS_TAB_ID;
+  const isOnCallActionsVisible =
+    canViewOnCall && !onCallData.loading && !onCallData.error && onCallData.canAccess && activeTab === ON_CALL_TAB_ID;
 
   const containerRef = useRef<HTMLDivElement>(null);
   useImperativeHandle(
@@ -85,11 +117,11 @@ export function AlertIncidentTabs({
         }
       },
     }),
-    []
+    [setActiveTab]
   );
 
-  // Hide the tabs if neither alerts nor incidents are available
-  if (!canViewAlerts && !canViewIncidents) {
+  // Hide the tabs if none of alerts, incidents, or OnCall schedules are available
+  if (!canViewAlerts && !canViewIncidents && !canViewOnCall) {
     return null;
   }
 
@@ -143,6 +175,9 @@ export function AlertIncidentTabs({
           },
         ]
       : []),
+    ...(canViewOnCall
+      ? [{ id: ON_CALL_TAB_ID, label: t('home.alerts-incidents.on-call-tab-label', 'On call schedules') }]
+      : []),
   ];
   const filter = tabs.find((tab) => tab.id === activeTab)?.filter;
 
@@ -152,6 +187,7 @@ export function AlertIncidentTabs({
         <Text element="h2" variant="h5">
           {title}
         </Text>
+        {onCallData.isOnCall && <Badge text={t('home.alerts-incidents.on-call-now', 'On call now')} color="green" />}
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>
@@ -183,6 +219,7 @@ export function AlertIncidentTabs({
             <ScrollContainer showScrollIndicators>
               {activeTab === ALERTS_TAB_ID && <FiringAlertsCard data={alertsData} hideFooterActions />}
               {activeTab === INCIDENTS_TAB_ID && <IncidentsCard data={incidentsData} hideFooterActions />}
+              {activeTab === ON_CALL_TAB_ID && <OnCallCard data={onCallData} />}
             </ScrollContainer>
           </Box>
 
@@ -205,6 +242,18 @@ export function AlertIncidentTabs({
                 canDeclare={incidentsCanDeclare}
                 canAccess={incidentsCanAccess}
               />
+            )}
+
+            {/* On call tab footer */}
+            {isOnCallActionsVisible && (
+              <FooterActions>
+                <FooterAction
+                  href={onCallData.schedulesHref}
+                  onClick={() => ctaClicked({ surface: 'oncall_card', action: 'view_schedules', placement: 'footer' })}
+                >
+                  <Trans i18nKey="home.alerts-incidents.view-schedules">View schedules</Trans>
+                </FooterAction>
+              </FooterActions>
             )}
           </Box>
         </TabContent>

@@ -11117,10 +11117,13 @@
       "incident-filter-all": "All incidents",
       "incident-filter-label": "Filter incidents by label",
       "incident-tab-label": "Incidents",
+      "on-call-now": "On call now",
+      "on-call-tab-label": "On call schedules",
       "team-filter-your-teams": "Your teams",
       "title": "Alerts & incidents",
       "title-alerts": "Alerts",
-      "title-incidents": "Incidents"
+      "title-incidents": "Incidents",
+      "view-schedules": "View schedules"
     },
     "dashboard-tabs": {
       "most-used": "Most used",
@@ -11193,6 +11196,15 @@
       "error-title": "Could not load recent blog posts",
       "read-more": "Read more from the Grafana Labs blog",
       "title": "Latest from the blog"
+    },
+    "on-call-card": {
+      "current-shift": "You're on call until {{end}}",
+      "empty": "No on-call shifts for you or your teams in the next 30 days.",
+      "next-shift": "Your next shift {{start}}–{{end}}",
+      "next-shift-multi-day": "Your next shift {{start}} – {{end}}",
+      "nobody-on-call": "Nobody on call",
+      "on-call-now-more": "{{name}} +{{more}}",
+      "title": "On call schedules"
     },
     "overview": {
       "available": {
@@ -11389,6 +11401,11 @@
         "title": "Monitor uptime from the outside"
       },
       "title": "Recommendations for your stack"
+    },
+    "schedules": {
+      "error-failed": "Could not load schedules",
+      "error-forbidden": "You don't have access to IRM schedules",
+      "error-not-available": "Grafana IRM is not available"
     },
     "solutions": {
       "cta": {

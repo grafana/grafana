@@ -83,6 +83,18 @@ export type CtaClicked = EventVariants<
         }
     ))
   | ({
+      surface: 'oncall_card';
+    } & (
+      | {
+          action: 'my_shift_detail' | 'team_schedule_detail';
+          placement: 'list';
+        }
+      | {
+          action: 'view_schedules';
+          placement: 'footer';
+        }
+    ))
+  | ({
       surface: 'news_card';
     } & (
       | {

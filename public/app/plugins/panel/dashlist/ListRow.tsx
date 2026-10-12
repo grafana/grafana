@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import type { ReactNode } from 'react';
+import type { ComponentProps, ReactNode } from 'react';
 
 import type { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Text, Stack, Link } from '@grafana/ui';
@@ -7,6 +7,8 @@ import { useStyles2, Text, Stack, Link } from '@grafana/ui';
 interface ListRowProps {
   title: string;
   subtitle?: string;
+  // Subtitle text color; secondary by default. Lets a row flag a live state without a badge.
+  subtitleColor?: ComponentProps<typeof Text>['color'];
   prefix?: ReactNode;
   trailing?: ReactNode;
   // isCompact is used to make the row leaner (less spacing)
@@ -23,6 +25,7 @@ interface ListRowProps {
 export function ListRow({
   title,
   subtitle,
+  subtitleColor = 'secondary',
   trailing,
   isCompact,
   oneRow,
@@ -34,7 +37,7 @@ export function ListRow({
   const styles = useStyles2(getStyles);
 
   const subtitleDisplay = subtitle && (
-    <Text truncate color="secondary" variant="bodySmall" element="p">
+    <Text truncate color={subtitleColor} variant="bodySmall" element="p">
       {subtitle}
     </Text>
   );
