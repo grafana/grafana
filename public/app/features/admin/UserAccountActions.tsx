@@ -34,7 +34,10 @@ export function UserAccountActions({ user, onUserDelete, onUserDisable, onUserEn
             title={t('admin.user-profile.title-delete-user', 'Delete user')}
             body={t('admin.user-profile.body-delete', 'Are you sure you want to delete this user?')}
             confirmText={t('admin.user-profile.confirmText-delete-user', 'Delete user')}
-            onConfirm={() => onUserDelete(user.uid)}
+            onConfirm={() => {
+              setShowDeleteModal(false);
+              onUserDelete(user.uid);
+            }}
             onDismiss={() => {
               setShowDeleteModal(false);
               deleteUserRef.current?.focus();
@@ -57,7 +60,10 @@ export function UserAccountActions({ user, onUserDelete, onUserDisable, onUserEn
             title={t('admin.user-profile.title-disable-user', 'Disable user')}
             body={t('admin.user-profile.body-disable', 'Are you sure you want to disable this user?')}
             confirmText={t('admin.user-profile.confirmText-disable-user', 'Disable user')}
-            onConfirm={() => onUserDisable(user.uid)}
+            onConfirm={() => {
+              setShowDisableModal(false);
+              onUserDisable(user.uid);
+            }}
             onDismiss={() => {
               setShowDisableModal(false);
               disableUserRef.current?.focus();

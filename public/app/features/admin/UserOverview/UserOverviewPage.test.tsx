@@ -137,7 +137,7 @@ it('shows read-only details and preserves never-logged-in semantics', async () =
   expect(screen.queryByRole('button', { name: 'Enable user' })).not.toBeInTheDocument();
 });
 
-it('confirms account disabling and refreshes the available actions', async () => {
+it('does not reopen the disable confirmation after enabling the account again', async () => {
   let saved = {
     ...profile,
     accessControl: { [AccessControlAction.UsersDisable]: true, [AccessControlAction.UsersEnable]: true },
@@ -149,6 +149,10 @@ it('confirms account disabling and refreshes the available actions', async () =>
       disable();
       saved = { ...saved, isDisabled: true };
       return HttpResponse.json({ message: 'User disabled' });
+    }),
+    http.post('/api/admin/users/alice/enable', () => {
+      saved = { ...saved, isDisabled: false };
+      return HttpResponse.json({ message: 'User enabled' });
     })
   );
   const { user } = setup();
@@ -158,6 +162,31 @@ it('confirms account disabling and refreshes the available actions', async () =>
   expect(await screen.findByRole('button', { name: 'Enable user' })).toBeInTheDocument();
   expect(disable).toHaveBeenCalledTimes(1);
   expect(screen.getByText('Disabled')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Enable user' }));
+  expect(await screen.findByRole('button', { name: 'Disable user' })).toBeInTheDocument();
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Disable user' }));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  expect(disable).toHaveBeenCalledTimes(1);
+});
+
+it('closes the delete confirmation after a failed deletion and allows retrying', async () => {
+  server.use(
+    http.get('/api/users/alice', () =>
+      HttpResponse.json({
+        ...profile,
+        accessControl: { [AccessControlAction.UsersDelete]: true },
+      })
+    ),
+    http.delete('/api/admin/users/alice', () => HttpResponse.json({ message: 'Cannot delete user' }, { status: 400 }))
+  );
+  const { user } = setup();
+  await user.click(await screen.findByRole('button', { name: 'Delete user' }));
+  await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete user' }));
+  await screen.findByRole('alert');
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Delete user' }));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
 });
 
 it('cancels account deletion without sending a request and restores focus', async () => {
