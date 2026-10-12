@@ -3,7 +3,12 @@ import { byRole } from 'testing-library-selector';
 
 import { config } from '@grafana/runtime';
 
+import { usePluginBridge } from '../hooks/usePluginBridge';
+
 import { WatchersBanner, getWatchersBannerDismissedKey } from './WatchersBanner';
+
+jest.mock('../hooks/usePluginBridge');
+const mockUsePluginBridge = jest.mocked(usePluginBridge);
 
 const dismissedKey = getWatchersBannerDismissedKey(config.bootData.user.orgId);
 
@@ -16,6 +21,7 @@ const ui = {
 describe('WatchersBanner', () => {
   beforeEach(() => {
     localStorage.removeItem(dismissedKey);
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: true });
   });
 
   it('renders the banner with a CTA to the Watchers page', () => {
@@ -23,6 +29,22 @@ describe('WatchersBanner', () => {
 
     expect(ui.banner.get()).toBeInTheDocument();
     expect(ui.openButton.get()).toHaveAttribute('href', expect.stringContaining('/a/grafana-assistant-app/watchers'));
+  });
+
+  it('does not render when the Assistant plugin is not installed', () => {
+    mockUsePluginBridge.mockReturnValue({ loading: false, installed: false });
+
+    render(<WatchersBanner />);
+
+    expect(ui.banner.query()).not.toBeInTheDocument();
+  });
+
+  it('does not render while the plugin check is loading', () => {
+    mockUsePluginBridge.mockReturnValue({ loading: true });
+
+    render(<WatchersBanner />);
+
+    expect(ui.banner.query()).not.toBeInTheDocument();
   });
 
   it('persists dismissal and hides the banner when dismissed', async () => {
