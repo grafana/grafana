@@ -567,6 +567,16 @@ describe('other mutation commands, while a plan preview is active', () => {
     expect(scene.state.planning).toBeUndefined();
   });
 
+  it('keeps the building screen up when the first build write is rejected', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+
+    const result = await client.execute({ type: 'ADD_PANEL', payload: { panel: { invalid: true } } });
+
+    expect(result.success).toBe(false);
+    expect(scene.state.planning?.phase).toBe('building');
+  });
+
   it('does not bring the building screen back when the first write is discarded', async () => {
     const { scene, client } = setup();
     await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
