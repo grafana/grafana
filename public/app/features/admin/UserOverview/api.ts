@@ -154,7 +154,7 @@ export function useUserOverview(uid: string) {
           isExternal: profile ? !!profile.isExternal : !!resource?.spec.externalAuthInfo?.length,
           authLabels: profile?.authLabels ?? resource?.spec.externalAuthInfo?.map((auth) => auth.module),
           createdAt: resource?.metadata.creationTimestamp ?? profile?.createdAt ?? profile?.created,
-          lastSeenAt: resource ? new Date((resource.status?.lastSeenAt ?? 0) * 1000).toISOString() : undefined,
+          lastSeenAt: resource ? new Date((resource.status?.lastSeenAt ?? 0) * 1000).toISOString() : member?.lastSeenAt,
           hasProfile: !!profile,
           orgAccessControl: member?.accessControl,
         }

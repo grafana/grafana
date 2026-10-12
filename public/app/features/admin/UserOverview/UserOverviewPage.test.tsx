@@ -593,6 +593,17 @@ it('supports IAM user reads alongside legacy team membership reads', async () =>
   expect(await screen.findByRole('link', { name: 'Platform' })).toBeInTheDocument();
 });
 
+it('preserves the legacy organization member last-active timestamp', async () => {
+  config.featureToggles.kubernetesUsersApi = false;
+  server.use(
+    http.get('/api/org/users', () =>
+      HttpResponse.json([{ ...profile, role: 'Viewer', lastSeenAt: '1970-01-01T00:00:00Z' }])
+    )
+  );
+  setup();
+  expect(await screen.findByText('Never')).toBeInTheDocument();
+});
+
 it('keeps legacy reads when rollout flags are off despite advertised IAM APIs', async () => {
   config.featureToggles.kubernetesUsersApi = false;
   setTestFlags({ kubernetesTeamsApi: false });
