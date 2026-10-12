@@ -1,7 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import type uPlot from 'uplot';
 
 import { type PanelProps, VizOrientation } from '@grafana/data';
+import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
+import { useFlagDashboardCrossFilterSelection } from '@grafana/runtime/internal';
 import {
   type AdHocFilterItem,
   type AdHocFilterModel,
@@ -16,11 +19,13 @@ import {
 } from '@grafana/ui';
 import { FILTER_FOR_OPERATOR, TooltipHoverMode } from '@grafana/ui/internal';
 import { getAssistantTooltipContext } from 'app/core/components/AssistantTooltip/buildAssistantContext';
+import { getAltKey } from 'app/core/utils/browser';
 
 import { TimeSeriesTooltip } from '../timeseries/TimeSeriesTooltip';
 
 import { BarChartLegend, hasVisibleLegendSeries } from './BarChartLegend';
 import { type Options } from './panelcfg.gen';
+import { applySelectionClick, getSelectedIndices } from './selection';
 import { prepConfig, prepSeries } from './utils';
 
 const charWidth = measureText('M', UPLOT_AXIS_FONT_SIZE).width;
@@ -33,7 +38,14 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   // const { dataLinkPostProcessor } = usePanelContext();
 
   const theme = useTheme2();
-  const { onAddAdHocFilter, canExecuteActions } = usePanelContext();
+  const {
+    onAddAdHocFilter,
+    canExecuteActions,
+    onSetAdHocFilterSelection,
+    getAdHocFilterSelection,
+    subscribeToAdHocFilterSelection,
+  } = usePanelContext();
+  const isCrossFilterSelectionEnabled = useFlagDashboardCrossFilterSelection();
 
   const userCanExecuteActions = useMemo(() => canExecuteActions?.() ?? false, [canExecuteActions]);
 
@@ -87,6 +99,117 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     [info.series]
   );
 
+  // the prepared category field; selection filters on its values
+  const categoryField = vizSeries[0]?.fields[0];
+  const selectable =
+    isCrossFilterSelectionEnabled &&
+    categoryField?.config.filterable === true &&
+    onSetAdHocFilterSelection != null &&
+    getAdHocFilterSelection != null &&
+    subscribeToAdHocFilterSelection != null;
+  const selectionKey = selectable ? categoryField.name : undefined;
+
+  const categories = useMemo(() => categoryField?.values.map((v) => String(v)) ?? [], [categoryField]);
+
+  // re-read the selection whenever ad hoc filters change
+  const [selectionVersion, onSelectionChanged] = useReducer((v: number) => v + 1, 0);
+  // the selection the latest click wrote, shown until that write completes; mirrored in a ref so rapid clicks
+  // build on it before React re-renders
+  const [pendingSelection, setPendingSelectionState] = useState<{ values: string[] } | null>(null);
+  const pendingSelectionRef = useRef<{ values: string[] } | null>(null);
+  const setPendingSelection = (pending: { values: string[] } | null) => {
+    pendingSelectionRef.current = pending;
+    setPendingSelectionState(pending);
+  };
+  // writes run one after another, so the filter ends up as the latest click left it
+  const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
+  // identifies the latest write, so only its completion clears the pending selection
+  const writeSeqRef = useRef(0);
+  // bumped on unmount, so queued writes from an unmounted panel neither start nor update state
+  const lifecycleRef = useRef({ generation: 0 });
+
+  useEffect(() => {
+    const lifecycle = lifecycleRef.current;
+    return () => {
+      lifecycle.generation++;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectable) {
+      return;
+    }
+
+    return subscribeToAdHocFilterSelection(onSelectionChanged);
+  }, [selectable, subscribeToAdHocFilterSelection]);
+
+  const ownedSelection = useMemo(
+    () => (selectionKey == null ? undefined : getAdHocFilterSelection?.(selectionKey)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [selectionKey, getAdHocFilterSelection, selectionVersion]
+  );
+  const currentSelection = selectionKey == null ? undefined : (pendingSelection?.values ?? ownedSelection);
+
+  const selectedIndices = useMemo(
+    () => getSelectedIndices(categories, currentSelection),
+    [categories, currentSelection]
+  );
+
+  // read by the bars draw hook, so a selection change needs only a redraw, not a new config
+  const selectedIndicesRef = useRef<Set<number> | null>(null);
+  selectedIndicesRef.current = selectedIndices;
+  const getSelection = useCallback(() => selectedIndicesRef.current, []);
+
+  const plotRef = useRef<uPlot | null>(null);
+  const setPlot = useCallback((u: uPlot) => {
+    plotRef.current = u;
+  }, []);
+
+  useEffect(() => {
+    plotRef.current?.redraw(false);
+  }, [selectedIndices]);
+
+  const onSelect = (dataIdx: number, toggle: boolean) => {
+    if (selectionKey == null || onSetAdHocFilterSelection == null) {
+      return;
+    }
+
+    const clicked = categories[dataIdx];
+
+    if (clicked == null) {
+      return;
+    }
+
+    const next = applySelectionClick({
+      categories,
+      // the latest intended selection: a queued write's, else what the filter holds now
+      current: pendingSelectionRef.current?.values ?? getAdHocFilterSelection?.(selectionKey),
+      clicked,
+      toggle,
+    });
+
+    setPendingSelection({ values: next.values });
+    const seq = ++writeSeqRef.current;
+    const generation = lifecycleRef.current.generation;
+    const isLive = () => generation === lifecycleRef.current.generation;
+
+    const update = { key: selectionKey, values: next.values, clickedValue: clicked, mode: next.mode };
+
+    writeQueueRef.current = writeQueueRef.current
+      .then(() => (isLive() ? onSetAdHocFilterSelection(update) : undefined))
+      .catch(() => {})
+      .finally(() => {
+        if (!isLive()) {
+          return;
+        }
+
+        if (seq === writeSeqRef.current) {
+          setPendingSelection(null);
+        }
+        onSelectionChanged();
+      });
+  };
+
   const xGroupsCount = vizSeries[0]?.length ?? 0;
   const seriesCount = vizSeries[0]?.fields.length ?? 0;
   const totalSeries = Math.max(0, (info.series[0]?.fields.length ?? 0) - 1);
@@ -95,7 +218,17 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     () => {
       return xGroupsCount === 0
         ? { builder: null, prepData: null }
-        : prepConfig({ series: vizSeries, totalSeries, color: info.color, orientation, options, timeZone, theme });
+        : prepConfig({
+            series: vizSeries,
+            totalSeries,
+            color: info.color,
+            orientation,
+            options,
+            timeZone,
+            theme,
+            // only selectable panels pay for the veil
+            getSelection: selectable ? getSelection : undefined,
+          });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -121,6 +254,7 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       xField,
       colorByField,
       xTickLabelMaxLength, // maybe not?
+      selectable,
       // props.fieldConfig, // usePrevious hideFrom on all fields?
     ]
   );
@@ -142,6 +276,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
     );
   }
 
+  const getDataLinks = (seriesIdx: number, dataIdx: number) =>
+    vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? [];
+
   const legendComp =
     legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
@@ -155,17 +292,26 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
       legend={legendComp}
     >
       {(vizWidth, vizHeight) => (
-        <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight}>
+        <UPlotChart config={builder!} data={plotData} width={vizWidth} height={vizHeight} plotRef={setPlot}>
+          {selectable && props.options.tooltip.mode === TooltipDisplayMode.None && (
+            // no visible tooltip, but clicks still select
+            <TooltipPlugin2
+              config={builder}
+              hoverMode={TooltipHoverMode.xOne}
+              selectOnly
+              onSelect={(_seriesIdx, dataIdx) => onSelect(dataIdx, true)}
+              render={() => null}
+            />
+          )}
           {props.options.tooltip.mode !== TooltipDisplayMode.None && (
             <TooltipPlugin2
               config={builder}
+              onSelect={selectable ? (_seriesIdx, dataIdx) => onSelect(dataIdx, true) : undefined}
               maxWidth={options.tooltip.maxWidth}
               hoverMode={
                 options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
               }
-              getDataLinks={(seriesIdx, dataIdx) =>
-                vizSeries[0].fields[seriesIdx].getLinks?.({ valueRowIndex: dataIdx }) ?? []
-              }
+              getDataLinks={getDataLinks}
               getAdHocFilters={(_seriesIdx, dataIdx) => {
                 const xField = vizSeries[0].fields[0];
 
@@ -176,6 +322,18 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                 // Fields may later be marked as not filterable. For example, fields created from Grafana Transforms that
                 // are derived from a data source, but are not present in the data source.
                 // We choose `xField` here because it contains the label-value pair, rather than `field` which is the numeric Value.
+                if (selectable) {
+                  return [
+                    {
+                      key: xField.name,
+                      operator: FILTER_FOR_OPERATOR,
+                      value: String(xField.values[dataIdx]),
+                      // filters the other panels and highlights the bar here, like Alt-click
+                      onClick: () => onSelect(dataIdx, false),
+                    },
+                  ];
+                }
+
                 if (xField.config.filterable && onAddAdHocFilter != null) {
                   const adHocFilterItem: AdHocFilterItem = {
                     key: xField.name,
@@ -208,10 +366,26 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
                     maxHeight={options.tooltip.maxHeight}
                     replaceVariables={replaceVariables}
                     dataLinks={dataLinks}
-                    adHocFilters={adHocFilters}
+                    adHocFilters={
+                      selectable
+                        ? // the pin would otherwise hold the cursor until this chart's re-run query returns
+                          adHocFilters?.map((filter) => ({
+                            ...filter,
+                            onClick: () => {
+                              filter.onClick();
+                              dismiss();
+                            },
+                          }))
+                        : adHocFilters
+                    }
                     hideZeros={options.tooltip.hideZeros}
                     canExecuteActions={userCanExecuteActions}
                     assistantContext={getAssistantTooltipContext(props, info.series)}
+                    headerHint={
+                      selectable
+                        ? t('bar-chart.tooltip.select-hint', '{{altKey}}-click to filter', { altKey: getAltKey() })
+                        : undefined
+                    }
                   />
                 );
               }}

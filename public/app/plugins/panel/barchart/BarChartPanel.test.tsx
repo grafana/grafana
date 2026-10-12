@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from 'test/test-utils';
+import { act, render, screen } from 'test/test-utils';
 
 import {
   ActionType,
@@ -21,15 +21,36 @@ import {
   VisibilityMode,
   VizOrientation,
 } from '@grafana/schema';
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { type AdHocFilterModel, type AdHocFilterSelectionUpdate } from '@grafana/ui';
 
 import { getPanelProps } from '../test-utils';
 
 import { BarChartPanel } from './BarChartPanel';
 import { defaultOptions, type Options } from './panelcfg.gen';
 import { applyBarChartFieldDefaults } from './test-helpers';
+import { prepConfig } from './utils';
 
 let canExecuteActionsForTest = false;
 let onAddAdHocFilterMock: jest.Mock;
+let selectionContextForTest: Record<string, unknown> = {};
+
+interface MockTooltipProps {
+  onSelect?: (seriesIdx: number, dataIdx: number) => void;
+  selectOnly?: boolean;
+  getDataLinks?: (seriesIdx: number, dataIdx: number) => unknown[];
+  getAdHocFilters?: (seriesIdx: number, dataIdx: number) => AdHocFilterModel[];
+  // method syntax so the mock's typed render is assignable
+  render?(...args: never[]): React.ReactNode;
+}
+let tooltipPropsForTest: MockTooltipProps[] = [];
+// re-rendering the real tooltip contents logs an unrelated React.Fragment ref warning, so selection tests skip them
+let renderTooltipContentForTest = true;
+
+jest.mock('./utils', () => {
+  const actual = jest.requireActual('./utils');
+  return { ...actual, prepConfig: jest.fn(actual.prepConfig) };
+});
 
 jest.mock('@grafana/ui', () => {
   return {
@@ -37,6 +58,7 @@ jest.mock('@grafana/ui', () => {
     usePanelContext: jest.fn().mockImplementation(() => ({
       canExecuteActions: () => canExecuteActionsForTest,
       onAddAdHocFilter: onAddAdHocFilterMock,
+      ...selectionContextForTest,
     })),
     TooltipPlugin2: (props: {
       getDataLinks?: (seriesIdx: number, dataIdx: number) => [];
@@ -53,11 +75,14 @@ jest.mock('@grafana/ui', () => {
         adHocFilters?: unknown[]
       ) => React.ReactNode;
     }) => {
+      tooltipPropsForTest.push(props);
       const dataIdxs: Array<number | null> = [0, 0];
       const seriesIdx = 1;
       const dataLinks = props.getDataLinks?.(seriesIdx, 0) ?? [];
       const adHocFilters = props.getAdHocFilters?.(seriesIdx, 0) ?? [];
-      const content = props.render?.({}, dataIdxs, seriesIdx, true, jest.fn(), null, false, dataLinks, adHocFilters);
+      const content =
+        renderTooltipContentForTest &&
+        props.render?.({}, dataIdxs, seriesIdx, true, jest.fn(), null, false, dataLinks, adHocFilters);
       return <div data-testid="barchart-tooltip-plugin">{content}</div>;
     },
   };
@@ -102,6 +127,9 @@ describe('BarChartPanel', () => {
   beforeEach(() => {
     canExecuteActionsForTest = false;
     onAddAdHocFilterMock = jest.fn();
+    selectionContextForTest = {};
+    tooltipPropsForTest = [];
+    renderTooltipContentForTest = true;
   });
 
   const defaultFieldConfig: FieldConfigSource = {
@@ -282,6 +310,310 @@ describe('BarChartPanel', () => {
       renderBarChartPanel({ series: [frameWithFilterableX] }, { legend: { ...baseLegend, showLegend: false } });
 
       expect(screen.getByText(/Filter for/i)).toBeVisible();
+    });
+  });
+
+  describe('Cross filter selection', () => {
+    /** A fake selection store standing in for the dashboard's ad hoc filter variable */
+    function setUpSelectionContext(initial?: string[]) {
+      let owned = initial;
+      const listeners = new Set<() => void>();
+      const apply = (update: AdHocFilterSelectionUpdate) => {
+        owned = update.values.length > 0 ? update.values : undefined;
+        listeners.forEach((l) => l());
+      };
+      const onSetAdHocFilterSelection = jest.fn(async (update: AdHocFilterSelectionUpdate) => apply(update));
+
+      selectionContextForTest = {
+        onSetAdHocFilterSelection,
+        getAdHocFilterSelection: jest.fn(() => owned),
+        subscribeToAdHocFilterSelection: jest.fn((onChange: () => void) => {
+          listeners.add(onChange);
+          return () => listeners.delete(onChange);
+        }),
+      };
+
+      return {
+        onSetAdHocFilterSelection,
+        listeners,
+        apply,
+        getOwned: () => owned,
+        setOwned: (values: string[] | undefined) => {
+          owned = values;
+          listeners.forEach((l) => l());
+        },
+      };
+    }
+
+    const lastTooltip = () => tooltipPropsForTest.at(-1)!;
+    const getSelection = () => jest.mocked(prepConfig).mock.calls.at(-1)![0].getSelection!();
+
+    const altClickBar = async (dataIdx: number) => {
+      await act(async () => {
+        lastTooltip().onSelect!(1, dataIdx);
+      });
+    };
+
+    const getFilterAction = (dataIdx: number) => lastTooltip().getAdHocFilters!(1, dataIdx)[0];
+    const getHeaderHint = () => {
+      const tooltip = lastTooltip().render!() as React.ReactElement<{ headerHint?: string }>;
+      return tooltip.props.headerHint;
+    };
+
+    const renderSelectable = (optionsOverrides?: Partial<Options>) =>
+      renderBarChartPanel(
+        { series: [createBarChartPanelFrameWithFilterableX()] },
+        { legend: { ...baseLegend, showLegend: false }, ...optionsOverrides }
+      );
+
+    beforeEach(() => {
+      setTestFlags({ 'dashboard.crossFilterSelection': true });
+      jest.mocked(prepConfig).mockClear();
+      renderTooltipContentForTest = false;
+    });
+
+    afterEach(() => {
+      act(() => setTestFlags({}));
+    });
+
+    it('keeps the default tooltip, adds Alt-click selection and names it in the tooltip header', () => {
+      setUpSelectionContext();
+      renderSelectable();
+
+      expect(lastTooltip().onSelect).toBeDefined();
+      expect(lastTooltip().selectOnly).toBeUndefined();
+      expect(getHeaderHint()).toBe('Alt-click to filter');
+    });
+
+    it('turns the tooltip filter action into a selection of the bar', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext();
+      renderSelectable();
+
+      const action = getFilterAction(1);
+      expect(action).toEqual(expect.objectContaining({ key: 'x', value: 'b' }));
+
+      await act(async () => action.onClick());
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledWith({
+        key: 'x',
+        values: ['b'],
+        clickedValue: 'b',
+        mode: 'replace',
+      });
+      expect(onAddAdHocFilterMock).not.toHaveBeenCalled();
+      expect(getSelection()).toEqual(new Set([1]));
+    });
+
+    it('closes the pinned tooltip when the filter action is used', () => {
+      setUpSelectionContext();
+      renderSelectable();
+
+      const dismiss = jest.fn();
+      const filters = [{ key: 'x', operator: '=', value: 'b', onClick: jest.fn() }];
+      const tooltip = (
+        lastTooltip().render as unknown as (...args: unknown[]) => React.ReactElement<{
+          adHocFilters: AdHocFilterModel[];
+        }>
+      )({}, [0, 1], 1, true, dismiss, null, false, [], filters);
+
+      tooltip.props.adHocFilters[0].onClick();
+
+      expect(filters[0].onClick).toHaveBeenCalled();
+      expect(dismiss).toHaveBeenCalled();
+    });
+
+    it('replaces an Alt-click selection from the filter action', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext(['a', 'c']);
+      renderSelectable();
+
+      await act(async () => getFilterAction(1).onClick());
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledWith(
+        expect.objectContaining({ values: ['b'], mode: 'replace' })
+      );
+    });
+
+    it('toggles values with Alt-click without rebuilding the config', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext(['a']);
+      renderSelectable();
+      const configBuilds = jest.mocked(prepConfig).mock.calls.length;
+
+      await altClickBar(2);
+
+      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
+        expect.objectContaining({ values: ['a', 'c'], clickedValue: 'c', mode: 'toggle' })
+      );
+
+      await altClickBar(0);
+
+      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
+        expect.objectContaining({ values: ['c'], clickedValue: 'a', mode: 'toggle' })
+      );
+      expect(getSelection()).toEqual(new Set([2]));
+      expect(jest.mocked(prepConfig).mock.calls.length).toBe(configBuilds);
+    });
+
+    it('clears when the last selected bar is Alt-clicked', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext(['a']);
+      renderSelectable();
+
+      await altClickBar(0);
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledWith(expect.objectContaining({ values: [] }));
+      expect(getSelection()).toBeNull();
+    });
+
+    it('starts its own selection when another panel owns the key', async () => {
+      // the context reports no selection for this panel even though a filter exists
+      const { onSetAdHocFilterSelection } = setUpSelectionContext(undefined);
+      renderSelectable();
+
+      await altClickBar(0);
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledWith(expect.objectContaining({ values: ['a'] }));
+    });
+
+    it('re-reads the selection when filters change elsewhere', async () => {
+      const { setOwned } = setUpSelectionContext(['a']);
+      renderSelectable();
+
+      act(() => setOwned(['b', 'c']));
+
+      expect(getSelection()).toEqual(new Set([1, 2]));
+    });
+
+    it('unsubscribes on unmount', () => {
+      const { listeners } = setUpSelectionContext();
+      const view = renderSelectable();
+
+      expect(listeners.size).toBe(1);
+      view.unmount();
+      expect(listeners.size).toBe(0);
+    });
+
+    it('still mounts a select-only tooltip plugin when the tooltip is hidden', () => {
+      setUpSelectionContext();
+      renderSelectable({ tooltip: { ...defaultPanelOptions.tooltip, mode: TooltipDisplayMode.None } });
+
+      expect(tooltipPropsForTest).not.toHaveLength(0);
+      expect(lastTooltip().selectOnly).toBe(true);
+      expect(lastTooltip().onSelect).toBeDefined();
+      expect(lastTooltip().render!()).toBeNull();
+    });
+
+    it('publishes writes in click order even when the earlier write is slower', async () => {
+      const { onSetAdHocFilterSelection, apply, getOwned } = setUpSelectionContext();
+      let releaseFirst: () => void = () => {};
+      // the first write is slow; any later one would finish at once, overtaking it if both ran together
+      onSetAdHocFilterSelection
+        .mockImplementationOnce(
+          (update) =>
+            new Promise<void>((resolve) => {
+              releaseFirst = () => {
+                apply(update);
+                resolve();
+              };
+            })
+        )
+        .mockImplementation(async (update) => apply(update));
+      renderSelectable();
+
+      await altClickBar(0);
+      await altClickBar(1);
+
+      // the second write waits for the first; the pending selection already shows the latest click
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(1);
+      expect(getSelection()).toEqual(new Set([0, 1]));
+
+      await act(async () => releaseFirst());
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(2);
+      expect(onSetAdHocFilterSelection).toHaveBeenLastCalledWith(
+        expect.objectContaining({ values: ['a', 'b'], mode: 'toggle' })
+      );
+      expect(getOwned()).toEqual(['a', 'b']);
+      expect(getSelection()).toEqual(new Set([0, 1]));
+    });
+
+    it('keeps the newest pending selection while an earlier write is in flight', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext();
+      const resolvers: Array<() => void> = [];
+      onSetAdHocFilterSelection.mockImplementation(() => new Promise<void>((resolve) => resolvers.push(resolve)));
+      renderSelectable();
+
+      await altClickBar(0);
+      await altClickBar(1);
+
+      // the first write completes without publishing; the newer pending selection must stay
+      await act(async () => resolvers[0]());
+      expect(getSelection()).toEqual(new Set([0, 1]));
+
+      await act(async () => resolvers[1]());
+      expect(getSelection()).toBeNull();
+    });
+
+    it('never starts a queued write after the panel unmounts', async () => {
+      const { onSetAdHocFilterSelection } = setUpSelectionContext();
+      let releaseFirst: () => void = () => {};
+      onSetAdHocFilterSelection.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            releaseFirst = resolve;
+          })
+      );
+      const view = renderSelectable();
+
+      await altClickBar(0);
+      await altClickBar(1);
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(1);
+
+      view.unmount();
+      await act(async () => releaseFirst());
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(1);
+    });
+
+    it('applies a later write after an earlier one fails', async () => {
+      const { onSetAdHocFilterSelection, getOwned } = setUpSelectionContext();
+      onSetAdHocFilterSelection.mockRejectedValueOnce(new Error('write failed'));
+      renderSelectable();
+
+      await altClickBar(0);
+      await altClickBar(2);
+
+      expect(onSetAdHocFilterSelection).toHaveBeenCalledTimes(2);
+      expect(getOwned()).toEqual(['c']);
+      expect(getSelection()).toEqual(new Set([2]));
+    });
+
+    it('gives the bars no selection getter when not selectable', () => {
+      act(() => setTestFlags({ 'dashboard.crossFilterSelection': false }));
+      setUpSelectionContext();
+      renderSelectable();
+
+      expect(jest.mocked(prepConfig).mock.calls.at(-1)![0].getSelection).toBeUndefined();
+    });
+
+    it('does not select when the category field is not filterable', () => {
+      setUpSelectionContext();
+      renderBarChartPanel(undefined, { legend: { ...baseLegend, showLegend: false } });
+
+      expect(lastTooltip().onSelect).toBeUndefined();
+      expect(getHeaderHint()).toBeUndefined();
+    });
+
+    it('keeps the default filter action when the toggle is off', () => {
+      act(() => setTestFlags({ 'dashboard.crossFilterSelection': false }));
+      const { onSetAdHocFilterSelection } = setUpSelectionContext();
+      renderSelectable();
+
+      expect(lastTooltip().onSelect).toBeUndefined();
+      expect(getHeaderHint()).toBeUndefined();
+
+      getFilterAction(1).onClick();
+
+      expect(onAddAdHocFilterMock).toHaveBeenCalledWith({ key: 'x', operator: '=', value: 'b' });
+      expect(onSetAdHocFilterSelection).not.toHaveBeenCalled();
     });
   });
 

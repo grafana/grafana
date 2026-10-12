@@ -385,6 +385,124 @@ describe('TooltipPlugin2', () => {
     });
   });
 
+  describe('onSelect', () => {
+    const hover = async (overrides?: Partial<React.ComponentProps<typeof TooltipPlugin2>>) => {
+      const onSelect = jest.fn();
+      const setup = setUp(undefined, { onSelect, ...overrides });
+
+      await act(async () => {
+        setup.initCallback(setup.mockUPlot);
+        setup.setLegendCallback(setup.mockUPlot);
+        setup.setSeriesCallback(setup.mockUPlot, 1);
+      });
+
+      const click = async (init?: MouseEventInit) => {
+        await act(async () => {
+          setup.mockUPlot.over.dispatchEvent(new MouseEvent('click', init));
+          // let a deferred pin run
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        });
+      };
+
+      return { ...setup, onSelect, click };
+    };
+
+    it('calls onSelect on Alt-click and does not pin', async () => {
+      const { onSelect, click } = await hover();
+
+      await click({ altKey: true });
+
+      expect(onSelect).toHaveBeenCalledWith(1, 5);
+      expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+    });
+
+    it('still pins on a plain click', async () => {
+      const { onSelect, click } = await hover();
+
+      await click();
+
+      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+      expect(onSelect).not.toHaveBeenCalled();
+    });
+
+    it('still selects a time range on Ctrl/Cmd-click', async () => {
+      const render = jest.fn(() => <span>Tooltip content</span>);
+      const { onSelect, click, mockUPlot } = await hover({ render });
+      Object.assign(mockUPlot, { posToVal: jest.fn(() => 1000) });
+
+      await click({ metaKey: true });
+
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(render).toHaveBeenLastCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ from: expect.any(Number) }),
+        expect.anything(),
+        expect.anything(),
+        expect.anything()
+      );
+    });
+
+    it('selects on Alt-click over a one-click link instead of following it', async () => {
+      const windowOpen = jest.spyOn(window, 'open').mockImplementation(() => null);
+      const getDataLinks = jest.fn(() => [
+        {
+          href: 'https://example.com/oneclick',
+          title: 'One-click link',
+          target: '_blank' as const,
+          origin: {},
+          oneClick: true,
+        },
+      ]);
+      const { onSelect, click } = await hover({ getDataLinks, render: renderFirstDataLinkTitle });
+
+      await click({ altKey: true });
+
+      expect(windowOpen).not.toHaveBeenCalled();
+      expect(onSelect).toHaveBeenCalledWith(1, 5);
+
+      await click();
+
+      expect(windowOpen).toHaveBeenCalledWith('https://example.com/oneclick', '_blank');
+
+      windowOpen.mockRestore();
+    });
+
+    it('pins on Alt-click without onSelect, as before', async () => {
+      const { click } = await hover({ onSelect: undefined });
+
+      await click({ altKey: true });
+
+      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+    });
+
+    describe('selectOnly', () => {
+      it('renders no tooltip', async () => {
+        await hover({ selectOnly: true });
+
+        expect(screen.queryByText('Tooltip content')).not.toBeInTheDocument();
+      });
+
+      it('selects on Alt-click and ignores other clicks', async () => {
+        const render = jest.fn(() => <span>Tooltip content</span>);
+        const { onSelect, click } = await hover({ selectOnly: true, render });
+
+        await click();
+        await click({ metaKey: true });
+
+        expect(onSelect).not.toHaveBeenCalled();
+        expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument();
+
+        await click({ altKey: true });
+
+        expect(onSelect).toHaveBeenCalledWith(1, 5);
+      });
+    });
+  });
+
   describe('housekeeping', () => {
     it('should disconnect observables on unmount', () => {
       const disconnectSpy = jest.spyOn(ResizeObserver.prototype, 'disconnect');
