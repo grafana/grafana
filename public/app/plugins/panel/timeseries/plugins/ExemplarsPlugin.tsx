@@ -1,4 +1,5 @@
-import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { isEqual } from 'lodash';
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type uPlot from 'uplot';
 
 import {
@@ -33,6 +34,16 @@ export const ExemplarsPlugin = ({
 
   const [lockedExemplar, setLockedExemplar] = useState<ExemplarSelection | undefined>();
   const consumedRequests = useRef(new Set<string>());
+  const currentLockedExemplar = useMemo(
+    () => findExemplarSelection(exemplars, lockedExemplar),
+    [exemplars, lockedExemplar]
+  );
+
+  useEffect(() => {
+    if (currentLockedExemplar !== lockedExemplar) {
+      setLockedExemplar(currentLockedExemplar);
+    }
+  }, [currentLockedExemplar, lockedExemplar]);
 
   useEffect(() => {
     for (const dataFrame of exemplars) {
@@ -104,7 +115,7 @@ export const ExemplarsPlugin = ({
       return (
         <ExemplarMarker
           setLockedExemplar={setLockedExemplar}
-          lockedExemplar={lockedExemplar && exemplars.includes(lockedExemplar.dataFrame) ? lockedExemplar : undefined}
+          lockedExemplar={currentLockedExemplar}
           timeZone={timeZone}
           dataFrame={dataFrame}
           frameIndex={0}
@@ -116,7 +127,7 @@ export const ExemplarsPlugin = ({
         />
       );
     },
-    [visibleSeries, lockedExemplar, exemplars, timeZone, config, maxHeight, maxWidth]
+    [visibleSeries, currentLockedExemplar, timeZone, config, maxHeight, maxWidth]
   );
 
   return (
@@ -128,6 +139,47 @@ export const ExemplarsPlugin = ({
       mapEventToXYCoords={mapExemplarToXYCoords}
     />
   );
+};
+
+const findExemplarSelection = (
+  exemplars: DataFrame[],
+  selection: ExemplarSelection | undefined
+): ExemplarSelection | undefined => {
+  if (!selection || exemplars.includes(selection.dataFrame)) {
+    return selection;
+  }
+
+  const { dataFrame: previousFrame, rowIndex: previousRowIndex } = selection;
+  for (const dataFrame of exemplars) {
+    if (
+      dataFrame.refId !== previousFrame.refId ||
+      dataFrame.name !== previousFrame.name ||
+      dataFrame.fields.length !== previousFrame.fields.length
+    ) {
+      continue;
+    }
+
+    const fields = previousFrame.fields.map((previousField) =>
+      dataFrame.fields.find(
+        (field) =>
+          field.name === previousField.name &&
+          field.type === previousField.type &&
+          isEqual(field.labels, previousField.labels)
+      )
+    );
+    for (let rowIndex = 0; rowIndex < dataFrame.length; rowIndex++) {
+      if (
+        fields.every(
+          (field, index) =>
+            field && isEqual(field.values[rowIndex], previousFrame.fields[index].values[previousRowIndex])
+        )
+      ) {
+        return { dataFrame, rowIndex };
+      }
+    }
+  }
+
+  return undefined;
 };
 
 export type VisibleExemplarLabels = { labels: LabelWithExemplarUIData[]; totalSeriesCount: number };

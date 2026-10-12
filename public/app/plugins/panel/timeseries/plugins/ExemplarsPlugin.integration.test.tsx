@@ -8,6 +8,7 @@ import {
   applyFieldOverrides,
   createDataFrame,
   createTheme,
+  type DataFrame,
   FieldConfigOptionsRegistry,
   FieldType,
   HttpRequestMethod,
@@ -198,7 +199,22 @@ describe('ExemplarsPlugin', () => {
       runPlotHooks(new uPlot(uPlotProps as uPlot.Options));
     }
 
-    return result;
+    const rerenderExemplars = (exemplars: DataFrame[]) => {
+      const processed = applyFieldOverrides({
+        data: exemplars,
+        fieldConfig: { defaults: {}, overrides: [] },
+        replaceVariables: (value) => value,
+        theme: createTheme(),
+        fieldConfigRegistry: new FieldConfigOptionsRegistry(),
+      });
+      result.rerender(
+        <div>
+          <ExemplarsPlugin config={configWithDefaults} timeZone="browser" {...props} exemplars={processed} />
+        </div>
+      );
+    };
+
+    return { ...result, rerenderExemplars };
   };
 
   it('renders nothing before uPlot hooks', () => {
@@ -217,17 +233,16 @@ describe('ExemplarsPlugin', () => {
       ],
       meta: { custom: { experimentalOpenExemplar: { requestId: 'navigation-1', rowIndex: 1 } } },
     });
-    const updateData = () =>
-      result.rerender(
-        <div>
-          <ExemplarsPlugin config={config} timeZone="browser" exemplars={[{ ...sample }]} />
-        </div>
-      );
+    const updateData = () => result.rerenderExemplars([sample]);
 
     updateData();
     expect(await screen.findByText('exact-trace')).toBeVisible();
     expect(screen.getByLabelText('Close')).toBeVisible();
     expect(screen.queryByText('wrong-trace')).not.toBeInTheDocument();
+
+    updateData();
+    expect(screen.getByText('exact-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
 
     await userEvent.click(screen.getByLabelText('Close'));
     updateData();
@@ -235,6 +250,24 @@ describe('ExemplarsPlugin', () => {
     expect(getMarker(1)).toBeVisible();
     expect(screen.queryByText('exact-trace')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Close')).not.toBeInTheDocument();
+  });
+
+  it('keeps a clicked exemplar pinned across replacement frames', async () => {
+    const sample = createDataFrame({
+      refId: 'A',
+      fields: [
+        { name: 'Time', values: [1670418750000, 1670418750000] },
+        { name: 'Value', values: [0.5, 0.5] },
+        { name: 'traceID', type: FieldType.string, values: ['other-trace', 'selected-trace'] },
+      ],
+    });
+    const result = setUp({ exemplars: [sample] });
+    await userEvent.setup({ skipHover: true }).click(getMarker(1));
+
+    result.rerenderExemplars([sample]);
+    expect(screen.getByText('selected-trace')).toBeVisible();
+    expect(screen.getByLabelText('Close')).toBeVisible();
+    expect(screen.queryByText('other-trace')).not.toBeInTheDocument();
   });
 
   it('consumes a request present before chart initialization once the markers render', async () => {
