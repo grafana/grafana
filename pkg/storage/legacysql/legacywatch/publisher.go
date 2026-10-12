@@ -30,6 +30,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcewatch"
@@ -90,7 +91,7 @@ func ProvideDisabledPublisher() *Publisher {
 }
 
 func (p *Publisher) onNotification(ctx context.Context, n *LegacyWatchNotification) error {
-	p.Publish(ctx, n.Type, n.Resource, n.OrgID, n.Name, n.ResourceVersion)
+	p.publish(ctx, n.Type, n.Resource, n.OrgID, n.Name, n.ResourceVersion)
 	return nil
 }
 
@@ -108,14 +109,28 @@ func (p *Publisher) Enabled() bool {
 // resourceVersion is the row's updated time in milliseconds, or 0 when the
 // caller does not have it; consumers re-fetch the object, so it is advisory.
 //
-// Call it only after the write has committed. A writer running inside a caller's
-// transaction cannot know that, so a notification may precede the commit (or
-// announce a rolled back write); consumers that re-fetch then see the old state.
+// Call it after the write. When ctx carries a transaction the writer joined
+// (e.g. SCIM calling the user service inside InTransaction), the write is not
+// committed yet: the notification is queued on that transaction instead, so it
+// is published once the outermost transaction commits and dropped on rollback.
 func (p *Publisher) Publish(ctx context.Context, typ resourcepb.WatchNotification_Type, gr schema.GroupResource, orgID int64, name string, resourceVersion int64) {
 	if !p.Enabled() || name == "" {
 		return
 	}
+	if sess, ok := ctx.Value(sqlstore.ContextSessionKey{}).(*sqlstore.DBSession); ok && sess != nil {
+		sess.PublishAfterCommit(&LegacyWatchNotification{
+			Type:            typ,
+			Resource:        gr,
+			OrgID:           orgID,
+			Name:            name,
+			ResourceVersion: resourceVersion,
+		})
+		return
+	}
+	p.publish(ctx, typ, gr, orgID, name, resourceVersion)
+}
 
+func (p *Publisher) publish(ctx context.Context, typ resourcepb.WatchNotification_Type, gr schema.GroupResource, orgID int64, name string, resourceVersion int64) {
 	namespace := p.namespace(orgID)
 	subject := resourcewatch.LegacySubject(gr.WithVersion(""), namespace)
 	payload, err := proto.Marshal(&resourcepb.WatchNotification{

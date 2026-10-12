@@ -10,6 +10,9 @@ import (
 	"google.golang.org/protobuf/proto"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -80,5 +83,53 @@ func TestPublisher(t *testing.T) {
 		bus := &fakeBus{enabled: true, err: errors.New("boom")}
 		NewPublisher(bus, claims.OrgNamespaceFormatter).Publish(context.Background(), Added, users, 1, "u1", 0)
 		require.Len(t, bus.messages, 1)
+	})
+}
+
+// A writer that joined a caller's transaction (e.g. SCIM wrapping the user
+// service in InTransaction) must not announce before that transaction commits.
+func TestPublisherInTransaction(t *testing.T) {
+	tracer := tracing.InitializeTracerForTest()
+	events := bus.ProvideBus(tracer)
+	store := sqlstore.NewTestStore(t, sqlstore.WithTracer(tracer, events), sqlstore.WithoutMigrator())
+	nats := &fakeBus{enabled: true}
+	p := NewPublisher(nats, claims.OrgNamespaceFormatter)
+	events.AddEventListener(p.onNotification)
+	ctx := context.Background()
+
+	t.Run("publishes once the transaction commits", func(t *testing.T) {
+		nats.messages = nil
+		err := store.InTransaction(ctx, func(ctx context.Context) error {
+			p.Publish(ctx, Modified, users, 1, "u1", 0)
+			require.Empty(t, nats.messages)
+			return nil
+		})
+		require.NoError(t, err)
+		require.Len(t, nats.messages, 1)
+		require.Equal(t, "legacysql.watch.v1.iam.grafana.app.default.users", nats.messages[0].subject)
+	})
+
+	t.Run("waits for the outermost transaction", func(t *testing.T) {
+		nats.messages = nil
+		err := store.InTransaction(ctx, func(ctx context.Context) error {
+			require.NoError(t, store.InTransaction(ctx, func(ctx context.Context) error {
+				p.Publish(ctx, Modified, users, 1, "u1", 0)
+				return nil
+			}))
+			require.Empty(t, nats.messages)
+			return nil
+		})
+		require.NoError(t, err)
+		require.Len(t, nats.messages, 1)
+	})
+
+	t.Run("drops the notification on rollback", func(t *testing.T) {
+		nats.messages = nil
+		err := store.InTransaction(ctx, func(ctx context.Context) error {
+			p.Publish(ctx, Modified, users, 1, "u1", 0)
+			return errors.New("rollback")
+		})
+		require.Error(t, err)
+		require.Empty(t, nats.messages)
 	})
 }
