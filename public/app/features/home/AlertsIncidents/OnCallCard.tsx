@@ -1,31 +1,34 @@
 import { css } from '@emotion/css';
 
 import { type GrafanaTheme2 } from '@grafana/data';
-import { t } from '@grafana/i18n';
+import { t, Trans } from '@grafana/i18n';
 import { Text, type UserView, UsersIndicator, useStyles2 } from '@grafana/ui';
-import { type OnCallShortUser } from 'app/features/alerting/unified/api/onCallApi';
+import { type OnCallShortUser, SHIFTS_LOOKAHEAD_DAYS } from 'app/features/alerting/unified/api/onCallApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { ListRow } from 'app/plugins/panel/dashlist/ListRow';
 
+import { FooterAction, FooterActions } from '../FooterActions';
 import { ctaClicked } from '../analytics/main';
 
 import { SummaryCard } from './SummaryCard';
 import { scheduleErrorTitle } from './scheduleErrors';
 import { formatShiftTiming } from './shiftTiming';
-import { type OnCallSchedulesData } from './useOnCallSchedules';
+import { useOnCallSchedules } from './useOnCallSchedules';
 
 const MAX_AVATARS = 3;
 
-/** Render-only card body; data comes from useOnCallSchedules so callers control where the hook runs. */
-export function OnCallCard({ data }: { data: OnCallSchedulesData }) {
-  const { pluginId, canAccess, now, rows, loading, error, refetch } = data;
+/** The "On call" list. Mounting it starts the schedule requests, so they cost nothing while another tab is open. */
+export function OnCallCard({ now }: { now: number }) {
+  const { pluginId, canAccess, rows, loading, error, refetch } = useOnCallSchedules(now);
 
   return (
     <SummaryCard
       title={t('home.alerts-incidents.on-call-tab-label', 'On call schedules')}
       loading={loading}
       error={error ? { title: scheduleErrorTitle(error), onRetry: () => refetch() } : undefined}
-      emptyMessage={t('home.on-call-card.empty', 'No on-call shifts for you or your teams in the next 30 days.')}
+      emptyMessage={t('home.on-call-card.empty', 'No on-call shifts for you or your teams in the next {{days}} days.', {
+        days: SHIFTS_LOOKAHEAD_DAYS,
+      })}
       items={rows}
       getItemKey={(row) => row.id}
       renderItem={(row) => (
@@ -50,6 +53,19 @@ export function OnCallCard({ data }: { data: OnCallSchedulesData }) {
         />
       )}
     />
+  );
+}
+
+export function ViewSchedulesButton({ href }: { href: string }) {
+  return (
+    <FooterActions>
+      <FooterAction
+        href={href}
+        onClick={() => ctaClicked({ surface: 'oncall_card', action: 'view_schedules', placement: 'footer' })}
+      >
+        <Trans i18nKey="home.on-call-card.view-schedules">View schedules</Trans>
+      </FooterAction>
+    </FooterActions>
   );
 }
 

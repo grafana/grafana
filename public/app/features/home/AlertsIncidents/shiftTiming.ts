@@ -24,10 +24,13 @@ const DAY_KEY = 'YYYY-MM-DD';
 const CLOCK = 'HH:mm';
 const DATE_CLOCK = 'MMM D, HH:mm';
 
+/** The calendar day of `ts` in the user's time zone, as the engine's `date` param spells it. */
+export const dayKey = (ts: number) => dateTimeFormat(ts, { format: DAY_KEY });
+
 // Today in the user's zone → clock only; any other day → date and clock. Weekday names alone are
 // ambiguous across a 30-day window.
 function clock(ts: number, now: number): string {
-  const today = dateTimeFormat(ts, { format: DAY_KEY }) === dateTimeFormat(now, { format: DAY_KEY });
+  const today = dayKey(ts) === dayKey(now);
   return dateTimeFormat(ts, { format: today ? CLOCK : DATE_CLOCK });
 }
 
@@ -36,7 +39,7 @@ export function formatShiftTiming(shift: ShiftWindow, now: number): string {
     return t('home.on-call-card.current-shift', "You're on call until {{end}}", { end: clock(shift.end, now) });
   }
   const start = clock(shift.start, now);
-  if (dateTimeFormat(shift.start, { format: DAY_KEY }) === dateTimeFormat(shift.end, { format: DAY_KEY })) {
+  if (dayKey(shift.start) === dayKey(shift.end)) {
     return t('home.on-call-card.next-shift', 'Your next shift {{start}}–{{end}}', {
       start,
       end: dateTimeFormat(shift.end, { format: CLOCK }),

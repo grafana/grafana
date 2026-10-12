@@ -1,17 +1,25 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
-import { useInterval, useUpdateEffect } from 'react-use';
+import { useInterval } from 'react-use';
 
-import { dateTimeFormat, getTimeZone, getTimeZoneInfo } from '@grafana/data';
+import { getTimeZone, getTimeZoneInfo } from '@grafana/data';
 import { contextSrv } from 'app/core/services/context_srv';
-import { onCallApi, type OnCallScheduleDTO, type OnCallShortUser } from 'app/features/alerting/unified/api/onCallApi';
+import {
+  onCallApi,
+  type OnCallScheduleDTO,
+  type OnCallShortUser,
+  type OnCallUserScheduleEvents,
+} from 'app/features/alerting/unified/api/onCallApi';
 import { createBridgeURL } from 'app/features/alerting/unified/components/PluginBridge';
 import { canAccessPluginPage, usePluginBridge } from 'app/features/alerting/unified/hooks/usePluginBridge';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 
 import { HOME_CARD_MAX_ITEMS } from './constants';
 import { type ScheduleLoadError, classifyScheduleError } from './scheduleErrors';
-import { type ShiftWindow, nextShift } from './shiftTiming';
+import { type ShiftWindow, dayKey, nextShift } from './shiftTiming';
+
+const PLUGIN_ID = SupportedPlugin.Irm;
+const CLOCK_TICK_MS = 60_000;
 
 interface OnCallScheduleRow {
   id: string;
@@ -22,29 +30,64 @@ interface OnCallScheduleRow {
   shift?: ShiftWindow;
 }
 
-export interface OnCallSchedulesData {
-  pluginId: SupportedPlugin.Irm;
-  /** Whether the user may open the plugin's schedules pages; rows and footer render as plain text otherwise. */
-  canAccess: boolean;
-  schedulesHref: string;
-  /** The instant rows were derived at; shift times format against the same clock. */
-  now: number;
-  /** The user's schedules first (running shift, then soonest upcoming), then team schedules by name. */
-  rows: OnCallScheduleRow[];
-  /** True while one of the user's shifts is running; never derived from stale data after a failed refetch. */
-  isOnCall: boolean;
+export interface MyShiftsData {
   /** Undefined while the plugin probe is in flight. */
   enabled: boolean | undefined;
+  /** Whether the user may open the plugin's schedules pages; the footer link renders only then. */
+  canAccess: boolean;
+  schedulesHref: string;
+  /** True while one of the user's shifts is running; never derived from stale data after a failed refetch. */
+  isOnCall: boolean;
+}
+
+export interface OnCallSchedulesData {
+  pluginId: SupportedPlugin.Irm;
+  /** Whether the user may open the plugin's schedules pages; rows render as plain text otherwise. */
+  canAccess: boolean;
+  /** The user's schedules first (running shift, then soonest upcoming), then team schedules by name. */
+  rows: OnCallScheduleRow[];
   loading: boolean;
   error: ScheduleLoadError | undefined;
   refetch: () => void;
 }
 
-const CLOCK_TICK_MS = 60_000;
+/**
+ * Wall clock ticking once a minute. A shift can start or end while the homepage sits open; evaluating shifts
+ * against this clock moves the badge and labels without a fetch, and at local midnight it loads the next window.
+ */
+export function useMinuteClock(): number {
+  const [now, setNow] = useState(() => Date.now());
+  useInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
+  return now;
+}
+
+function useIrmPlugin() {
+  const { installed, loading, settings } = usePluginBridge(PLUGIN_ID);
+  const schedulesHref = createBridgeURL(PLUGIN_ID, '/schedules');
+  return {
+    loading,
+    // Queries wait for the probe, so the hooks can run before it is known whether IRM is installed.
+    ready: !loading && !!installed,
+    enabled: loading ? undefined : !!installed,
+    schedulesHref,
+    // Same gate as incident links: no access to the plugin's schedules page means plain text, not a link that 403s.
+    canAccess: settings ? canAccessPluginPage(settings, schedulesHref) : false,
+  };
+}
 
 // The engine resolves user_tz with pytz, so it needs an IANA name: never 'browser'/'utc'/''.
 function resolveUserTimeZone(now: number): string {
   return getTimeZoneInfo(getTimeZone(), now)?.ianaName || getTimeZoneInfo('browser', now)?.ianaName || 'UTC';
+}
+
+// Both hooks build their args here so they subscribe to one cache entry.
+function currentUserEventsArgs(now: number) {
+  return { pluginId: PLUGIN_ID, date: dayKey(now), userTz: resolveUserTimeZone(now) };
+}
+
+/** The running or next shift per schedule id; undefined where every shift in the window has ended. */
+function toShifts(schedules: OnCallUserScheduleEvents[] | undefined, now: number) {
+  return new Map((schedules ?? []).map((schedule) => [schedule.id, nextShift(schedule.events, now)]));
 }
 
 /** Schedules with a shift of the user's ahead or someone on call now; the user's shifts lead, then by name. */
@@ -75,54 +118,40 @@ const isPending = (query: { isFetching: boolean; currentData?: unknown }) =>
   query.isFetching && query.currentData === undefined;
 
 /**
- * Everything the homepage "On call" view shows: the user's own shifts in the next 30 days and the schedules of
- * the teams those belong to, with who is on call right now. The user's shifts load eagerly (the header badge
- * depends on them); the schedule lists load only while `loadRosters` is true, since they can cost several
- * requests per team and most visitors never open the tab.
- *
- * Refresh policy: both sources refetch on homepage mount and each time the tab opens, and while the tab is open
- * in a focused window they poll at the clock's cadence, so a shift boundary moves the roster along with the
- * user's label. Anything cached stays on screen meanwhile. With the tab closed only the clock moves: the badge
- * follows it, and at local midnight it refetches the next window.
+ * The header's view of the user's shifts in the next 30 days. Loads with the homepage and never polls on its own;
+ * the list's subscription below refreshes the shared cache entry whenever the tab is open.
  */
-export function useOnCallSchedules({ loadRosters }: { loadRosters: boolean }): OnCallSchedulesData {
-  const { installed, loading: pluginLoading, settings } = usePluginBridge(SupportedPlugin.Irm);
-  const pluginId = SupportedPlugin.Irm;
-  const schedulesHref = createBridgeURL(pluginId, '/schedules');
-  // Same gate as incident links: no access to the plugin's schedules page means plain text, not a link that 403s.
-  const canAccess = settings ? canAccessPluginPage(settings, schedulesHref) : false;
+export function useMyShifts(now: number): MyShiftsData {
+  const { ready, enabled, canAccess, schedulesHref } = useIrmPlugin();
+  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? currentUserEventsArgs(now) : skipToken, {
+    refetchOnMountOrArgChange: true,
+  });
+  const shifts = useMemo(() => toShifts(events.currentData, now), [events.currentData, now]);
+  return {
+    enabled,
+    canAccess,
+    schedulesHref,
+    isOnCall: !events.error && [...shifts.values()].some((shift) => shift?.isCurrent),
+  };
+}
 
-  // A shift can start or end while the homepage sits open; the minute tick re-derives rows and badge,
-  // and at local midnight it changes `date`, which refetches the next window.
-  const [now, setNow] = useState(() => Date.now());
-  useInterval(() => setNow(Date.now()), CLOCK_TICK_MS);
-  // Polling only while the tab shows the data: a background homepage shouldn't cost the engine a request a minute.
+/**
+ * Everything the "On call" list shows: the user's shifts and the schedules of the teams those belong to, with who
+ * is on call right now. Run it where the list renders: mounting refetches both sources, and while mounted in a
+ * focused window they poll at the clock's cadence, so a shift boundary moves the roster along with the user's
+ * label. Unmounting stops the polling. Anything cached stays on screen meanwhile.
+ */
+export function useOnCallSchedules(now: number): OnCallSchedulesData {
+  const { loading: pluginLoading, ready, canAccess } = useIrmPlugin();
   const queryOptions = {
     refetchOnMountOrArgChange: true,
-    pollingInterval: loadRosters ? CLOCK_TICK_MS : 0,
+    pollingInterval: CLOCK_TICK_MS,
     skipPollingIfUnfocused: true,
   };
+  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? currentUserEventsArgs(now) : skipToken, queryOptions);
+  const schedules = onCallApi.useGetRelatedSchedulesQuery(ready ? { pluginId: PLUGIN_ID } : skipToken, queryOptions);
 
-  const ready = !pluginLoading && !!installed;
-  const userTz = resolveUserTimeZone(now);
-  const date = dateTimeFormat(now, { format: 'YYYY-MM-DD' });
-  const events = onCallApi.useGetCurrentUserEventsQuery(ready ? { pluginId, date, userTz } : skipToken, queryOptions);
-  const schedules = onCallApi.useGetRelatedSchedulesQuery(
-    ready && loadRosters ? { pluginId } : skipToken,
-    queryOptions
-  );
-  // The rosters refetch on their own when the tab opens (their args go from skipped to set); the shifts need a
-  // nudge, or a roster fetched now could contradict a shift fetched at page load after an override or a swap.
-  useUpdateEffect(() => {
-    if (loadRosters && !events.isUninitialized) {
-      events.refetch();
-    }
-  }, [loadRosters]);
-
-  const shifts = useMemo(
-    () => new Map((events.currentData ?? []).map((schedule) => [schedule.id, nextShift(schedule.events, now)])),
-    [events.currentData, now]
-  );
+  const shifts = useMemo(() => toShifts(events.currentData, now), [events.currentData, now]);
   const rows = useMemo(
     () => toRows(schedules.currentData ?? [], shifts, contextSrv.user.login),
     [schedules.currentData, shifts]
@@ -130,21 +159,15 @@ export function useOnCallSchedules({ loadRosters }: { loadRosters: boolean }): O
 
   const error = events.error ?? schedules.error;
   return {
-    pluginId,
+    pluginId: PLUGIN_ID,
     canAccess,
-    schedulesHref,
-    now,
     rows,
-    isOnCall: !events.error && [...shifts.values()].some((shift) => shift?.isCurrent),
-    enabled: pluginLoading ? undefined : !!installed,
     loading: pluginLoading || isPending(events) || isPending(schedules),
     error: error ? classifyScheduleError(error) : undefined,
+    // Both queries start together, so either error leaves both refetchable.
     refetch: () => {
-      for (const query of [events, schedules]) {
-        if (query.error) {
-          query.refetch();
-        }
-      }
+      events.refetch();
+      schedules.refetch();
     },
   };
 }

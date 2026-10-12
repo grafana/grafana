@@ -1,28 +1,27 @@
 import { type ComponentProps, type ReactNode, useImperativeHandle, useRef, type Ref } from 'react';
 
 import { isTruthy } from '@grafana/data';
-import { t, Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n';
 import { Badge, Box, ScrollContainer, Stack, Tab, TabContent, TabsBar, Text } from '@grafana/ui';
 import { useStoredString } from 'app/core/hooks/useStored';
 import { ACTIVE_INCIDENTS_QUERY_LIMIT } from 'app/features/alerting/unified/api/incidentsApi';
 
 import { DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN } from '../DashboardTabs/types';
-import { FooterAction, FooterActions } from '../FooterActions';
 import { HomeSection } from '../HomeSection';
-import { ctaClicked, tabChanged } from '../analytics/main';
+import { tabChanged } from '../analytics/main';
 
 import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
 import { LabelFilterCombobox } from './LabelFilterCombobox';
-import { OnCallCard } from './OnCallCard';
+import { OnCallCard, ViewSchedulesButton } from './OnCallCard';
 import { type FilterSelection } from './filterSelection';
 import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { useIncidentFilterOptions } from './useIncidentFilterOptions';
 import { type IncidentsData } from './useIncidents';
-import { useOnCallSchedules } from './useOnCallSchedules';
+import { useMinuteClock, useMyShifts } from './useOnCallSchedules';
 
 export const ALERTS_TAB_ID = 'firing-alerts' as const;
 export const INCIDENTS_TAB_ID = 'incidents' as const;
@@ -75,8 +74,9 @@ export function AlertIncidentTabs({
   const canViewAlerts = alertsData.enabled;
 
   const [storedTab, setActiveTab] = useStoredString(ALERTS_INCIDENTS_TAB_STORAGE_KEY, '');
-  // Team rosters cost several requests, so they load only while this is the remembered tab.
-  const onCallData = useOnCallSchedules({ loadRosters: storedTab === ON_CALL_TAB_ID });
+  // One clock for badge and list, so a shift boundary flips both in the same render.
+  const now = useMinuteClock();
+  const onCall = useMyShifts(now);
   const { count, hasAlerts, hasTeams, teamsLoading, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
@@ -106,14 +106,14 @@ export function AlertIncidentTabs({
     [setActiveTab]
   );
 
-  // A tab whose availability is still unknown (plugin probe in flight) stays on offer while it is the
+  // An IRM tab whose availability is still unknown (plugin probe in flight) stays on offer while it is the
   // remembered one, so a reload doesn't paint another tab first; it drops out if the probe says no.
   const isOffered = (id: TabId, enabled: boolean | undefined) => enabled ?? id === storedTab;
 
   // Each tab keeps its own selection: alerts filter by any alert rule label, incidents by any
   // incident label, so a shared pick would often name a value the other tab can't hold.
   const tabs: TabDefinition[] = [
-    isOffered(ALERTS_TAB_ID, canViewAlerts) && {
+    canViewAlerts && {
       id: ALERTS_TAB_ID,
       label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
       counter: loading ? undefined : count,
@@ -161,20 +161,12 @@ export function AlertIncidentTabs({
         />
       ),
     },
-    isOffered(ON_CALL_TAB_ID, onCallData.enabled) && {
+    isOffered(ON_CALL_TAB_ID, onCall.enabled) && {
       id: ON_CALL_TAB_ID,
       label: t('home.alerts-incidents.on-call-tab-label', 'On call schedules'),
-      content: <OnCallCard data={onCallData} />,
-      footer: onCallData.canAccess && !onCallData.loading && !onCallData.error && (
-        <FooterActions>
-          <FooterAction
-            href={onCallData.schedulesHref}
-            onClick={() => ctaClicked({ surface: 'oncall_card', action: 'view_schedules', placement: 'footer' })}
-          >
-            <Trans i18nKey="home.alerts-incidents.view-schedules">View schedules</Trans>
-          </FooterAction>
-        </FooterActions>
-      ),
+      content: <OnCallCard now={now} />,
+      // A static link to the plugin page: it needs no load state, only the page access check.
+      footer: onCall.canAccess && <ViewSchedulesButton href={onCall.schedulesHref} />,
     },
   ].filter(isTruthy);
 
@@ -197,7 +189,7 @@ export function AlertIncidentTabs({
         <Text element="h2" variant="h5">
           {title}
         </Text>
-        {onCallData.isOnCall && <Badge text={t('home.alerts-incidents.on-call-now', 'On call now')} color="green" />}
+        {onCall.isOnCall && <Badge text={t('home.alerts-incidents.on-call-now', 'On call now')} color="green" />}
       </Stack>
 
       <HomeSection paddingX={2} paddingY={1} display="flex" direction="column" grow={1}>

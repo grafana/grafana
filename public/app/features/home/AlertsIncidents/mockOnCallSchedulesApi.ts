@@ -71,26 +71,23 @@ export function mockCurrentUserEventsError(status: number) {
   server.use(http.get(CURRENT_USER_EVENTS_PATH, () => HttpResponse.json({ detail: 'error' }, { status })));
 }
 
-export interface ScheduleListCall {
-  /** `'mine'` or `team:<id>`. */
-  filter: string;
-  page: number;
-}
+export type ScheduleListCall = { filter: 'mine'; page: number } | { filter: 'team'; teams: string[]; page: number };
 
 /** Which list a request asks for; undefined for an unfiltered (whole-org) request, which the homepage never makes. */
-function listFilter(params: URLSearchParams): string | undefined {
-  const team = params.get('team');
-  if (team !== null) {
-    return `team:${team}`;
+function listCall(params: URLSearchParams): ScheduleListCall | undefined {
+  const page = Number(params.get('page') ?? 1);
+  const teams = params.getAll('team');
+  if (teams.length > 0) {
+    return { filter: 'team', teams, page };
   }
-  return params.get('mine') === 'true' ? 'mine' : undefined;
+  return params.get('mine') === 'true' ? { filter: 'mine', page } : undefined;
 }
 
 /**
- * Answers the schedule list. `?mine=true` serves `mine`; `?team=<id>` serves `byTeam[id]` (missing team → []);
- * a request with neither gets a 400, so dropping the filter in production fails loudly instead of being served
- * the personal fixture. Pages are sliced at `perpage`; `totalPages` (default: computed) lets a test claim more
- * pages than the data holds. Returns `{ filter, page }` per call.
+ * Answers the schedule list. `?mine=true` serves `mine`; `?team=<id>` (repeatable) serves the `byTeam` entries of
+ * those ids (missing team → nothing); a request with neither gets a 400, so dropping the filter in production fails
+ * loudly instead of being served the personal fixture. Pages are sliced at `perpage`; `totalPages` (default:
+ * computed) lets a test claim more pages than the data holds. Returns one `ScheduleListCall` per call.
  */
 export function mockSchedules({
   mine = [],
@@ -105,15 +102,14 @@ export function mockSchedules({
   server.use(
     http.get(SCHEDULES_PATH, ({ request }) => {
       const params = new URL(request.url).searchParams;
-      const filter = listFilter(params);
-      if (filter === undefined) {
+      const call = listCall(params);
+      if (!call) {
         return HttpResponse.json({ detail: 'unfiltered schedule list' }, { status: 400 });
       }
-      const page = Number(params.get('page') ?? 1);
+      calls.push(call);
+      const { page } = call;
       const perpage = Number(params.get('perpage') ?? SCHEDULE_PAGE_SIZE);
-      calls.push({ filter, page });
-      const team = params.get('team');
-      const all = team === null ? mine : (byTeam[team] ?? []);
+      const all = call.filter === 'mine' ? mine : call.teams.flatMap((team) => byTeam[team] ?? []);
       return HttpResponse.json({
         count: all.length,
         next: null,
@@ -128,11 +124,11 @@ export function mockSchedules({
   return calls;
 }
 
-/** Fails every list request, or only those matching `filter` (`'mine'` | `team:<id>`) when given. */
-export function mockSchedulesError(status: number, filter?: string) {
+/** Fails every list request, or only the `mine` or `team` list when `filter` is given. */
+export function mockSchedulesError(status: number, filter?: ScheduleListCall['filter']) {
   server.use(
     http.get(SCHEDULES_PATH, ({ request }) => {
-      if (filter !== undefined && listFilter(new URL(request.url).searchParams) !== filter) {
+      if (filter !== undefined && listCall(new URL(request.url).searchParams)?.filter !== filter) {
         // No response: MSW falls through to the next matching handler.
         return undefined;
       }

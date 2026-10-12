@@ -1,4 +1,4 @@
-import { range, uniq, uniqBy } from 'lodash';
+import { compact, range, uniq, uniqBy } from 'lodash';
 
 import { type FetchError, getBackendSrv, isFetchError } from '@grafana/runtime';
 
@@ -19,9 +19,9 @@ interface OnCallPaginatedResult<T> {
   total_pages: number;
 }
 
-const SHIFTS_LOOKAHEAD_DAYS = 30;
+export const SHIFTS_LOOKAHEAD_DAYS = 30;
 export const SCHEDULE_PAGE_SIZE = 100;
-// Org-wide teams can own hundreds of schedules; the homepage stops a team's list after this many pages.
+// Org-wide teams can own hundreds of schedules; the homepage stops the team list after this many pages.
 const SCHEDULE_MAX_PAGES = 5;
 
 /** Short user shape OnCall embeds in a schedule's `on_call_now`. */
@@ -98,10 +98,10 @@ function grafanaOnCallIntegrationsRequest(pluginId: string) {
 }
 
 // Page 1 reports total_pages; later pages load in parallel. `next` links point at the engine host, so
-// the page number, not the link, drives pagination.
+// the page number, not the link, drives pagination. Repeated `team` params OR together on the engine.
 async function fetchSchedulePages(
   pluginId: string,
-  filter: { mine: true } | { team: string },
+  filter: { mine: true } | { team: string[] },
   abortSignal: AbortSignal,
   maxPages = Infinity
 ): Promise<OnCallScheduleDTO[]> {
@@ -167,11 +167,9 @@ export const onCallApi = alertingApi.injectEndpoints({
         try {
           // The user's own list is read in full: every schedule they have a shift on must be in it.
           const mine = await fetchSchedulePages(pluginId, { mine: true }, signal);
-          const teamIds = uniq(mine.flatMap((schedule) => (schedule.team ? [schedule.team] : [])));
-          const teams = await Promise.all(
-            teamIds.map((team) => fetchSchedulePages(pluginId, { team }, signal, SCHEDULE_MAX_PAGES))
-          );
-          return { data: uniqBy([...mine, ...teams.flat()], 'id') };
+          const team = uniq(compact(mine.map((schedule) => schedule.team)));
+          const ofTeams = team.length ? await fetchSchedulePages(pluginId, { team }, signal, SCHEDULE_MAX_PAGES) : [];
+          return { data: uniqBy([...mine, ...ofTeams], 'id') };
         } catch (error) {
           return { error };
         }

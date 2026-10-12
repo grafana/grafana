@@ -102,10 +102,6 @@ function rowTitles() {
   return panelRows().map((row) => within(row).getAllByText(/\S/, { selector: 'p' })[0].textContent);
 }
 
-function sortedCalls(calls: Array<{ filter: string; page: number }>) {
-  return [...calls].sort((a, b) => (a.filter < b.filter ? -1 : a.filter > b.filter ? 1 : a.page - b.page));
-}
-
 describe('AlertIncidentTabs On call tab', () => {
   beforeAll(() => setTimeZoneResolver(() => 'utc'));
   afterAll(() => setTimeZoneResolver(() => 'browser'));
@@ -141,10 +137,10 @@ describe('AlertIncidentTabs On call tab', () => {
     expect(jest.mocked(tabChanged)).toHaveBeenCalledWith({ tab: ON_CALL_TAB_ID });
 
     expect(await screen.findByText('Backend')).toBeInTheDocument();
-    expect(sortedCalls(listCalls)).toEqual([
+    // One list for every team the user's schedules belong to, read after the user's own list names them.
+    expect(listCalls).toEqual([
       { filter: 'mine', page: 1 },
-      { filter: 'team:T1', page: 1 },
-      { filter: 'team:T2', page: 1 },
+      { filter: 'team', teams: ['T1', 'T2'], page: 1 },
     ]);
   });
 
@@ -179,14 +175,14 @@ describe('AlertIncidentTabs On call tab', () => {
 
       act(() => jest.advanceTimersByTime(60_000));
       await waitFor(() => expect(eventCalls).toHaveLength(eventsSoFar + 1));
-      // mine, team:T1, team:T2
-      await waitFor(() => expect(listCalls).toHaveLength(listsSoFar + 3));
+      // mine, team
+      await waitFor(() => expect(listCalls).toHaveLength(listsSoFar + 2));
 
       await user.click(screen.getByRole('tab', { name: /firing alerts/i }));
       act(() => jest.advanceTimersByTime(60_000));
       await act(async () => {});
       expect(eventCalls).toHaveLength(eventsSoFar + 1);
-      expect(listCalls).toHaveLength(listsSoFar + 3);
+      expect(listCalls).toHaveLength(listsSoFar + 2);
     } finally {
       jest.useRealTimers();
     }
@@ -253,20 +249,20 @@ describe('AlertIncidentTabs On call tab', () => {
   });
 
   describe('pagination', () => {
-    it('reads every page of your own list but stops a team list after five', async () => {
+    it('reads every page of your own list but stops the team list after five', async () => {
       const { listCalls } = mockOnCall({ byTeam: { T1: [S1, S3] }, totalPages: 7 });
       const { user } = render(<AlertIncidentTabsWithData />);
 
       await user.click(await screen.findByRole('tab', { name: /on call/i }));
       expect(await screen.findByText('Old')).toBeInTheDocument();
 
-      const pagesOf = (filter: string) =>
+      const pagesOf = (filter: 'mine' | 'team') =>
         listCalls
           .filter((call) => call.filter === filter)
           .map((call) => call.page)
           .sort((a, b) => a - b);
       expect(pagesOf('mine')).toEqual([1, 2, 3, 4, 5, 6, 7]);
-      expect(pagesOf('team:T1')).toEqual([1, 2, 3, 4, 5]);
+      expect(pagesOf('team')).toEqual([1, 2, 3, 4, 5]);
     });
 
     it('renders schedules from a later page', async () => {
@@ -285,7 +281,7 @@ describe('AlertIncidentTabs On call tab', () => {
       expect(await screen.findByText('Zulu')).toBeInTheDocument();
       expect(
         listCalls
-          .filter((call) => call.filter === 'team:T1')
+          .filter((call) => call.filter === 'team')
           .map((call) => call.page)
           .sort()
       ).toEqual([1, 2]);
@@ -350,12 +346,11 @@ describe('AlertIncidentTabs On call tab', () => {
 
       expect(await screen.findByText(message)).toBeInTheDocument();
       expect(screen.queryByText('On call now')).not.toBeInTheDocument();
-      expect(screen.queryByRole('link', { name: /view schedules/i })).not.toBeInTheDocument();
     });
 
     it('fails the view, keeping the badge, when the schedule list fails', async () => {
       mockOnCall({ byTeam: TEAM_SCHEDULES });
-      mockSchedulesError(500, 'team:T1');
+      mockSchedulesError(500, 'team');
       const { user } = render(<AlertIncidentTabsWithData />);
 
       await user.click(await screen.findByRole('tab', { name: /on call/i }));
@@ -383,7 +378,7 @@ describe('AlertIncidentTabs On call tab', () => {
 
     it('retries the schedule list', async () => {
       mockOnCall({ byTeam: TEAM_SCHEDULES });
-      mockSchedulesError(500, 'team:T1');
+      mockSchedulesError(500, 'team');
       const { user } = render(<AlertIncidentTabsWithData />);
 
       await user.click(await screen.findByRole('tab', { name: /on call/i }));
