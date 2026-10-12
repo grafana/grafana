@@ -29,6 +29,16 @@ import (
 // than reusing any existing unified-storage/authz settings.
 const cloudRouterSection = "cloud_router"
 
+// SetDefaultCoreURL sets core_url to url unless it is configured, in the
+// config or by its environment variable, and reports whether it did.
+func SetDefaultCoreURL(cfg *setting.Cfg, url string) bool {
+	if cfg.SectionWithEnvOverrides(cloudRouterSection).Key("core_url").MustString("") != "" {
+		return false
+	}
+	cfg.Raw.Section(cloudRouterSection).Key("core_url").SetValue(url)
+	return true
+}
+
 // newPluginManifestsTargets builds the targets for plugins_url and core_url,
 // each nil when its URL is unset. core_url serves core APIs (like playlists)
 // in the plugin manifests format, and both share the [router.backend_grpc]
