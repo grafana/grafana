@@ -1,3 +1,10 @@
+/**
+ * The proxy table: which alerting URLs belong to the `grafana-prometheusalerting-app` plugin, and
+ * where in it each one goes.
+ *
+ * Fetched on demand by `withRouteProxy.tsx`, so this module is free to import whatever it needs.
+ * Only the list of paths it covers is loaded up front, in `proxiedPaths.ts`.
+ */
 import { getDataSourceInstanceSettings } from '@grafana/runtime';
 
 import { SupportedPlugin } from '../types/pluginBridges';
