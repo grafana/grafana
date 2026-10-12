@@ -385,7 +385,7 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	}
 	// Keep authentication outside the breaker: token exchange failures do not
 	// indicate whether the plugin is reachable.
-	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID,
+	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID, []string{b.group.Name},
 		withAuthFailureOutcome(appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger)))
 	if err != nil {
 		return nil, err
