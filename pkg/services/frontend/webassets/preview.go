@@ -104,9 +104,9 @@ func ResetPreviewAssetsCache() {
 	previewCache.Purge()
 }
 
-// GetPreviewWebAssets fetches the assets manifest for a preview folder, with all
-// asset URLs rooted at the preview location.
-func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folder string) (dtos.EntryPointAssets, error) {
+// GetPreviewWebAssets fetches the preview manifest for buildDir to support
+// feature-flagged builds.
+func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folder, buildDir string) (dtos.EntryPointAssets, error) {
 	if !preview.Configured() {
 		return dtos.EntryPointAssets{}, fmt.Errorf("preview assets are not configured")
 	}
@@ -116,30 +116,31 @@ func GetPreviewWebAssets(ctx context.Context, preview PreviewAssetsConfig, folde
 		return dtos.EntryPointAssets{}, err
 	}
 
-	if cached, ok := previewCache.Get(assetsURL); ok {
+	cacheKey := assetsURL + webassets.PublicPathFor(buildDir)
+	if cached, ok := previewCache.Get(cacheKey); ok {
 		return cached.assets, cached.err
 	}
 
-	ch := previewFlights.DoChan(assetsURL, func() (any, error) {
+	ch := previewFlights.DoChan(cacheKey, func() (any, error) {
 		// A previous flight may have filled the cache while we waited for the slot.
-		if cached, ok := previewCache.Get(assetsURL); ok {
+		if cached, ok := previewCache.Get(cacheKey); ok {
 			return cached, nil
 		}
 
-		logger.Info("fetching preview assets manifest", "url", assetsURL)
+		logger.Info("fetching preview assets manifest", "url", assetsURL, "buildDir", buildDir)
 		// Detached so one caller disconnecting doesn't cache a context error for
 		// every request in the next TTL window.
 		fetchCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), previewFetchTimeout)
 		defer cancel()
 
-		result, err := webassets.ReadWebAssetsFromCDN(fetchCtx, "build", assetsURL)
+		result, err := webassets.ReadWebAssetsFromCDN(fetchCtx, buildDir, assetsURL)
 
 		entry := cachedPreviewAssets{err: err}
 		if err == nil {
 			entry.assets = *result
 		}
 
-		previewCache.Add(assetsURL, entry)
+		previewCache.Add(cacheKey, entry)
 
 		return entry, nil
 	})

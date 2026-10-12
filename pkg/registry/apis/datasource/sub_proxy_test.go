@@ -45,7 +45,7 @@ func TestSubProxyPDCRouting(t *testing.T) {
 		if err != nil {
 			return
 		}
-		defer conn.Close()
+		defer func() { _ = conn.Close() }()
 		_ = conn.SetDeadline(time.Now().Add(5 * time.Second))
 		var header [2]byte
 		if _, err := io.ReadFull(conn, header[:]); err != nil {

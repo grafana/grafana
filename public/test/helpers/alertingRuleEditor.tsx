@@ -38,7 +38,6 @@ export const ui = {
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
     expr: byTestId('expr'),
     simplifiedRouting: {
-      contactPointRouting: byRole('radio', { name: /select contact point/i }),
       contactPoint: byTestId(selectors.components.AlertRules.contactPointPicker),
       routingOptions: byText(/muting, grouping and timings \(optional\)/i),
     },

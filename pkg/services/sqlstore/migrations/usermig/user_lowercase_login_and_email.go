@@ -17,7 +17,7 @@ func AddLowerCaseUserLoginAndEmail(mg *migrator.Migrator) {
 	mg.AddMigration(LowerCaseUserLoginAndEmail, &UsersLowerCaseLoginAndEmail{})
 }
 
-var _ migrator.CodeMigration = new(UsersLowerCaseLoginAndEmail)
+var _ migrator.CodeMigration = (*UsersLowerCaseLoginAndEmail)(nil)
 
 type UsersLowerCaseLoginAndEmail struct {
 	migrator.MigrationBase

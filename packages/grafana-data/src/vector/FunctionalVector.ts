@@ -176,7 +176,7 @@ export abstract class FunctionalVector<T = unknown> {
   }
 }
 
-const emptyarray: any[] = [];
+const emptyarray: never[] = [];
 
 /**
  * Use functional programming with your vector

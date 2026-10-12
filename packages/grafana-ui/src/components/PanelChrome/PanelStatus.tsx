@@ -84,6 +84,7 @@ interface PanelStatusPopoverProps {
 
 function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }: PanelStatusPopoverProps) {
   const styles = useStyles2(getStyles);
+  const [isOpen, setIsOpen] = React.useState(false);
   const topSeverity = getTopSeverity(items);
   const sortedItems = [...items].sort((a, b) => SEVERITY_RANK[b.severity] - SEVERITY_RANK[a.severity]);
 
@@ -116,7 +117,16 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
         <span />
       )}
       {onInspect ? (
-        <Button size="sm" variant="secondary" fill="text" icon="arrow-right" onClick={onInspect}>
+        <Button
+          size="sm"
+          variant="secondary"
+          fill="text"
+          icon="arrow-right"
+          onClick={(event) => {
+            setIsOpen(false);
+            onInspect(event);
+          }}
+        >
           {t('grafana-ui.panel-chrome.inspect', 'Inspect')}
         </Button>
       ) : (
@@ -126,7 +136,14 @@ function PanelStatusPopover({ items, onInspect, ariaLabel, onInvestigateErrors }
   );
 
   return (
-    <Toggletip content={content} footer={footer} placement="bottom-start">
+    <Toggletip
+      content={content}
+      footer={footer}
+      placement="bottom-start"
+      show={isOpen}
+      onOpen={() => setIsOpen(true)}
+      onClose={() => setIsOpen(false)}
+    >
       <Button
         variant={topSeverity === 'error' ? 'destructive' : 'secondary'}
         className={topSeverity !== 'error' ? styles[`${topSeverity}Button`] : undefined}

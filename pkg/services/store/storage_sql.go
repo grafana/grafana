@@ -13,7 +13,7 @@ import (
 
 const rootStorageTypeSQL = "sql"
 
-var _ storageRuntime = &rootStorageSQL{}
+var _ storageRuntime = (*rootStorageSQL)(nil)
 
 type rootStorageSQL struct {
 	settings *StorageSQLConfig

@@ -45,3 +45,19 @@ export async function detectSignal(probe: () => Promise<DataSourceInstanceListIt
     return { status: 'unknown', datasource: null };
   }
 }
+
+/** Settles every signal; a rejection reads as unknown so one failing producer never blanks the snapshot. */
+export async function settleSignals<K extends string>(
+  signals: Record<K, Promise<SignalStatus>>
+): Promise<Record<K, SignalStatus>>;
+export async function settleSignals(
+  signals: Record<string, Promise<SignalStatus>>
+): Promise<Record<string, SignalStatus>> {
+  const entries = await Promise.all(
+    Object.entries(signals).map(async ([key, signal]) => {
+      const status = await signal.catch(() => 'unknown' as const);
+      return [key, status] as const;
+    })
+  );
+  return Object.fromEntries(entries);
+}

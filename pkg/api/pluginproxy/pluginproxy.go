@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -37,6 +38,10 @@ type PluginProxy struct {
 	tracer           tracing.Tracer
 	transport        *http.Transport
 	features         featuremgmt.FeatureToggles
+	// idTokenDeriver mints X-Grafana-Id from signedInUser's OBO access token when signedInUser
+	// carries no id token of its own. Nil disables that fallback (see
+	// proxyutil.ApplyForwardIDHeader).
+	idTokenDeriver authnlib.IDTokenDeriver
 }
 
 // NewPluginProxy creates a plugin proxy.
@@ -45,7 +50,8 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 	proxyPath string,
 	dataProxyLogging bool, sendUserHeader bool,
 	secureJsonData pluginsettings.DecryptedSecureJSONLoader, tracer tracing.Tracer,
-	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles) (*PluginProxy, error) {
+	transport *http.Transport, accessControl ac.AccessControl, features featuremgmt.FeatureToggles,
+	idTokenDeriver authnlib.IDTokenDeriver) (*PluginProxy, error) {
 	return &PluginProxy{
 		accessControl:    accessControl,
 		ps:               ps,
@@ -60,6 +66,7 @@ func NewPluginProxy(ps *pluginsettings.DTO, routes []*plugins.Route,
 		tracer:           tracer,
 		transport:        transport,
 		features:         features,
+		idTokenDeriver:   idTokenDeriver,
 	}, nil
 }
 
@@ -200,7 +207,7 @@ func (proxy PluginProxy) director(req *http.Request) {
 	req.Header.Set("X-Grafana-Context", string(ctxJSON))
 
 	proxyutil.ApplyUserHeader(proxy.sendUserHeader, req, proxy.signedInUser)
-	proxyutil.ApplyForwardIDHeader(req, proxy.signedInUser)
+	proxyutil.ApplyForwardIDHeader(req.Context(), req, proxy.signedInUser, proxy.idTokenDeriver)
 
 	if err := addHeaders(&req.Header, proxy.matchedRoute, data); err != nil {
 		writeJSONErr(proxy.resp, proxy.req, 500, "Failed to render plugin headers", err)

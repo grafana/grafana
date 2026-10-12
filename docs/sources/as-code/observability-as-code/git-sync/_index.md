@@ -45,7 +45,9 @@ Git Sync functionalities are constantly evolving. [Contact Grafana](https://graf
 
 Git Sync allows you to connect external resources with your Grafana instance. After setup, all synchronized resources live in Git under the provisioned folder, and you can continue to have non-provisioned resources outside that folder.
 
-Git Sync is bidirectional. You can modify provisioned resources both from the Grafana UI or from the synced repository, and changes will be reflected in both places.
+Git Sync is bidirectional, so you can modify provisioned resources both from the Grafana UI or from the synced repository, and changes will be reflected in both places.
+
+![Git Sync architecture](/static/img/docs/ascode/gitsync-architecture.png)
 
 Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitHub Enterprise, GitLab and Bitbucket. Refer to [Usage and performance limitations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits) for further details, including usage tiers.
 

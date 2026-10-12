@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { VariableHide } from '@grafana/data';
@@ -13,11 +13,13 @@ import {
   SwitchVariable,
   TextBoxVariable,
 } from '@grafana/scenes';
+import { ElementSelectionContext } from '@grafana/ui';
 
 import { toControlSourceRef } from '../utils/predefinedVariables';
 
 import { DashboardScene } from './DashboardScene';
 import { SectionVariableControls, VariableControls, VariableValueSelectWrapper } from './VariableControls';
+import { WAIT_FOR_MOUSE_REST_DURATION_MS } from './edit-actions-popover/EditActionsPopover';
 import { AutoGridLayoutManager } from './layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
 import { RowItem } from './layout-rows/RowItem';
@@ -150,7 +152,7 @@ describe('VariableControls', () => {
     expect(inputElement).not.toBeDisabled();
   });
 
-  it('should not show edit/delete hover actions for predefined variables in edit mode', async () => {
+  it('does not open the editor when a predefined variable label is clicked', async () => {
     const user = userEvent.setup();
     const dashboard = buildScene([
       new CustomVariable({
@@ -161,16 +163,77 @@ describe('VariableControls', () => {
     ]);
     dashboard.activate();
     dashboard.setState({ isEditing: true });
+    const selectObject = jest.spyOn(dashboard.state.sidebar, 'selectObject');
 
     render(<VariableControls dashboard={dashboard} />);
 
-    await user.hover(await screen.findByText('globalVar'));
+    await user.click(await screen.findByText('globalVar'));
 
-    expect(screen.queryByLabelText('Edit')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('Delete')).not.toBeInTheDocument();
+    expect(selectObject).not.toHaveBeenCalled();
   });
 
-  it('should show an origin icon for global predefined variables without a description', async () => {
+  it('shows view and remove actions for predefined variables in edit mode', async () => {
+    jest.useFakeTimers();
+    const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime });
+    const variable = new CustomVariable({
+      name: 'globalVar',
+      query: 'a,b',
+      origin: toControlSourceRef({ type: 'global' }),
+    });
+    const dashboard = buildScene([variable]);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+    const selectObject = jest.spyOn(dashboard.state.sidebar, 'selectObject');
+
+    render(
+      <ElementSelectionContext.Provider
+        value={{ enabled: true, selected: [], onSelect: jest.fn(), onClear: jest.fn() }}
+      >
+        <VariableControls dashboard={dashboard} />
+      </ElementSelectionContext.Provider>
+    );
+
+    await user.hover(await screen.findByText('globalVar'));
+    act(() => {
+      jest.advanceTimersByTime(WAIT_FOR_MOUSE_REST_DURATION_MS);
+    });
+
+    expect(screen.getByRole('button', { name: 'View' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Settings' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Duplicate' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'View' }));
+    expect(selectObject).toHaveBeenCalledWith(variable);
+    jest.useRealTimers();
+  });
+
+  it('does not show an origin icon for predefined variables in edit mode', async () => {
+    const dashboard = buildScene([
+      new CustomVariable({
+        name: 'globalVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'global' }),
+      }),
+      new CustomVariable({
+        name: 'folderVar',
+        query: 'a,b',
+        origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
+      }),
+    ]);
+    dashboard.activate();
+    dashboard.setState({ isEditing: true });
+
+    render(<VariableControls dashboard={dashboard} />);
+
+    expect(await screen.findByText('globalVar')).toBeInTheDocument();
+    expect(screen.getByText('folderVar')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Global variable, shared across all dashboards')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Folder variable, inherited from this dashboard's folder")).not.toBeInTheDocument();
+  });
+
+  it('should not show an origin icon for predefined variables in view mode', async () => {
     const dashboard = buildScene([
       new CustomVariable({
         name: 'globalVar',
@@ -183,23 +246,7 @@ describe('VariableControls', () => {
     render(<VariableControls dashboard={dashboard} />);
 
     expect(await screen.findByText('globalVar')).toBeInTheDocument();
-    expect(screen.getByLabelText('Global variable, shared across all dashboards')).toBeInTheDocument();
-  });
-
-  it('should show an origin icon for folder predefined variables without a description', async () => {
-    const dashboard = buildScene([
-      new CustomVariable({
-        name: 'folderVar',
-        query: 'a,b',
-        origin: toControlSourceRef({ type: 'folder', folderUid: 'folder-1' }),
-      }),
-    ]);
-    dashboard.activate();
-
-    render(<VariableControls dashboard={dashboard} />);
-
-    expect(await screen.findByText('folderVar')).toBeInTheDocument();
-    expect(screen.getByLabelText("Folder variable, inherited from this dashboard's folder")).toBeInTheDocument();
+    expect(screen.queryByLabelText('Global variable, shared across all dashboards')).not.toBeInTheDocument();
   });
 
   it('should prefer variablesOverride over dashboard variables', async () => {

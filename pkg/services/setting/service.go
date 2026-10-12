@@ -60,7 +60,7 @@ const DefaultIdleConnTimeout = 30 * time.Second
 
 const (
 	ApiGroup   = "setting.grafana.app"
-	apiVersion = "v1beta1"
+	apiVersion = "v1"
 	resource   = "settings"
 )
 

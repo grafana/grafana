@@ -121,7 +121,19 @@ For an example of the `IsDisabled` method and custom initialization code when th
 
 ## Run Wire (generate code)
 
-Running `make run` calls `make gen-go` on the first run. The `gen-go` in turn calls the Wire binary and generates the code in [`wire_gen.go`](/pkg/server/wire_gen.go). The Wire binary is installed using `go tool` which downloads and installs all the tools needed, including the Wire binary at the specified version.
+Running `make run` calls `make gen-go` on the first run. This runs the repository's Wire generator in `pkg/build/wire` using `go run`. The OSS bootstrap injectors in [`pkg/server/bootstrap/wire/wire_gen.go`](/pkg/server/bootstrap/wire/wire_gen.go) and server injectors in [`pkg/server/wire_gen.go`](/pkg/server/wire_gen.go) are generated together, sharing the same loaded dependency graph. Enterprise injectors are generated separately with the Enterprise build tags when enabled.
+
+Wire reuses Go's current cached type information for dependencies. It loads source for injector packages, Wire itself, packages importing Wire, and their importers so provider sets remain available for analysis. Cache misses are checked from source without compiling dependencies; generation failures retry with all dependency source to support function aliases and preserve diagnostics. Go validates the cached type information against the current sources and build configuration on every run.
+
+Wire uses Go's type checker for name resolution and skips the parser's deprecated object resolution pass. It retains comments only in files importing Wire, where injector documentation may be copied into generated code. Generated files are written only when their contents change, preserving timestamps on repeated runs.
+
+Package loading already parses files and type-checks independent packages concurrently. Its CPU worker limit is initialized from [`GOMAXPROCS`](https://pkg.go.dev/runtime#GOMAXPROCS) when Wire starts. Generation uses the Go runtime's default unless you set `GOMAXPROCS` explicitly:
+
+```bash
+GOMAXPROCS=4 make gen-go
+```
+
+Choose the count using timings on your machine. More workers can add scheduling and allocation contention, so the fastest setting depends on the hardware and workload.
 
 ## OSS vs. Enterprise
 

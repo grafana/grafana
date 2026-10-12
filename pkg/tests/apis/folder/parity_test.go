@@ -97,9 +97,31 @@ func TestIntegrationFolderAPIParity(t *testing.T) {
 		t.Run("admin to accessible parent", func(t *testing.T) {
 			assertMoveParity(t, f, f.helper.Org1.Admin, "parityB1", "parityA", http.StatusOK)
 		})
-		t.Run("editor without dest permission is forbidden (KNOWN GAP)", func(t *testing.T) {
-			t.Skip("validateOnUpdate misses the escalation check; un-skip when fix lands")
+		t.Run("editor without destination permission is forbidden", func(t *testing.T) {
 			assertMoveParity(t, f, f.rbacEditorOnA, "parityA1", "parityB", http.StatusForbidden)
+		})
+		t.Run("editor cannot gain admin by moving a folder under an administered parent", func(t *testing.T) {
+			target := FolderDefinition{
+				Name:    "parity-move-target",
+				Creator: f.helper.Org1.Admin,
+				Permissions: []FolderPermission{{
+					Permission: "Edit",
+					User:       f.helper.Org1.Editor,
+				}},
+			}
+			target.CreateWithLegacyAPI(t, f.helper, "")
+			attacker := FolderDefinition{
+				Name:    "parity-move-attacker",
+				Creator: f.helper.Org1.Editor,
+			}
+			attacker.CreateWithLegacyAPI(t, f.helper, "")
+
+			targetPermissionsStatus, _ := f.legacyGet(t, f.helper.Org1.Editor, "/api/folders/parity-move-target/permissions", nil)
+			require.Equal(t, http.StatusForbidden, targetPermissionsStatus)
+			attackerPermissionsStatus, body := f.legacyGet(t, f.helper.Org1.Editor, "/api/folders/parity-move-attacker/permissions", nil)
+			require.Equal(t, http.StatusOK, attackerPermissionsStatus, string(body))
+
+			assertMoveParity(t, f, f.helper.Org1.Editor, "parity-move-target", "parity-move-attacker", http.StatusForbidden)
 		})
 		t.Run("k6 source folder is rejected", func(t *testing.T) {
 			assertK6SourceMoveParity(t, f, "parityA", http.StatusBadRequest)
@@ -180,9 +202,11 @@ func newParityFixture(t *testing.T) *parityFixture {
 	}
 	create(accesscontrol.K6FolderUID, "")
 
+	// Keep the basic role at None so the scoped grant is the user's only access;
+	// RoleEditor would also grant access to the unrestricted parityB destination.
 	rbacEditorOnA := helper.CreateUser(
 		"parity-elevated-A", apis.Org1,
-		org.RoleEditor,
+		org.RoleNone,
 		[]resourcepermissions.SetResourcePermissionCommand{{
 			Actions:           []string{folder.ActionFoldersRead, folder.ActionFoldersWrite},
 			Resource:          "folders",

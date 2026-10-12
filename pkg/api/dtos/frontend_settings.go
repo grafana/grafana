@@ -7,30 +7,6 @@ import (
 )
 
 type FrontendSettingsAuthDTO struct {
-	AuthProxyEnableLoginToken bool `json:"AuthProxyEnableLoginToken"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	OAuthSkipOrgRoleUpdateSync bool `json:"OAuthSkipOrgRoleUpdateSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	SAMLSkipOrgRoleSync bool `json:"SAMLSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	LDAPSkipOrgRoleSync bool `json:"LDAPSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GoogleSkipOrgRoleSync bool `json:"GoogleSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GenericOAuthSkipOrgRoleSync bool `json:"GenericOAuthSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	JWTAuthSkipOrgRoleSync bool `json:"JWTAuthSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GrafanaComSkipOrgRoleSync bool `json:"GrafanaComSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	AzureADSkipOrgRoleSync bool `json:"AzureADSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GithubSkipOrgRoleSync bool `json:"GithubSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	GitLabSkipOrgRoleSync bool `json:"GitLabSkipOrgRoleSync"`
-	// Deprecated: this is no longer used and will be removed in Grafana 11
-	OktaSkipOrgRoleSync bool `json:"OktaSkipOrgRoleSync"`
-
 	DisableLogin                  bool `json:"disableLogin"`
 	BasicAuthStrongPasswordPolicy bool `json:"basicAuthStrongPasswordPolicy"`
 	DisableSignoutMenu            bool `json:"disableSignoutMenu"`
@@ -106,6 +82,7 @@ type FrontendSettingsUnifiedAlertingDTO struct {
 	MinInterval                              string                                          `json:"minInterval"`
 	StateHistory                             *FrontendSettingsUnifiedAlertingStateHistoryDTO `json:"stateHistory,omitempty"`
 	RecordingRulesEnabled                    bool                                            `json:"recordingRulesEnabled"`
+	NotificationHistoryEnabled               bool                                            `json:"notificationHistoryEnabled"`
 	DefaultRecordingRulesTargetDatasourceUID string                                          `json:"defaultRecordingRulesTargetDatasourceUID,omitempty"`
 
 	// Backward compatibility fields - deprecated

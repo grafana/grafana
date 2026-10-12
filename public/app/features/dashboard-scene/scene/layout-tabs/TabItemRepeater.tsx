@@ -72,6 +72,10 @@ export function TabItemRepeater({ tab, variable }: Props) {
 }
 
 export function performTabRepeats(variable: MultiValueVariable, tab: TabItem, contentChanged: boolean) {
+  if (tab.state.repeatByVariable !== variable.state.name) {
+    return;
+  }
+
   if (sceneGraph.hasVariableDependencyInLoadingState(variable)) {
     dashboardLog.logger('TabItemRepeater', false, 'Skipped dependency in loading state');
     return;

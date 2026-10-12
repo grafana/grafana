@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import {
@@ -87,9 +87,11 @@ beforeEach(() => {
 });
 
 describe('RuntimeDataSourcePickerShim', () => {
-  it('should render the legacy picker when the toggle is disabled', () => {
+  it('should render the legacy picker when the toggle is disabled', async () => {
     useFlagMock.mockReturnValue(false);
     render(<RuntimeDataSourcePickerShim onChange={jest.fn()} current={mockDS.uid} />);
+    // Flush the legacy picker's pending default-data-source resolution.
+    await act(async () => {});
 
     expect(legacyPicker()).toBeInTheDocument();
   });

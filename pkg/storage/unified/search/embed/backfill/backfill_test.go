@@ -223,7 +223,7 @@ func TestBackfill_ObservesItemDuration(t *testing.T) {
 
 	// One successful observation under the (group, resource, status) labels
 	// the production code uses.
-	require.Equal(t, 1, testutil.CollectAndCount(m.BackfillItemDuration, "vector_storage_backfill_item_duration_seconds"))
+	require.Equal(t, 1, testutil.CollectAndCount(m.BackfillItemDuration, "grafana_vector_storage_backfill_item_duration_seconds"))
 }
 
 // TestRunBackfillJob_FolderTitle_PrefixesBreadcrumb covers the wiring: the

@@ -89,14 +89,14 @@ func (d *DiscoveryClientImpl) GetPreferredVesion(gr schema.GroupResource) (schem
 		for _, resource := range apis.APIResources {
 			if resource.Name == gr.Resource {
 				return schema.GroupVersionResource{
-						Group:    gv[0],
-						Version:  gv[1],
-						Resource: resource.Name,
-					}, schema.GroupVersionKind{
-						Group:   gv[0],
-						Version: gv[1],
-						Kind:    resource.Kind,
-					}, nil
+					Group:    gv[0],
+					Version:  gv[1],
+					Resource: resource.Name,
+				}, schema.GroupVersionKind{
+					Group:   gv[0],
+					Version: gv[1],
+					Kind:    resource.Kind,
+				}, nil
 			}
 		}
 	}
@@ -130,14 +130,14 @@ func (d *DiscoveryClientImpl) GetPreferredVersionForKind(gk schema.GroupKind) (s
 		for _, resource := range apis.APIResources {
 			if resource.Kind == gk.Kind {
 				return schema.GroupVersionResource{
-						Group:    group,
-						Version:  version,
-						Resource: resource.Name,
-					}, schema.GroupVersionKind{
-						Group:   group,
-						Version: version,
-						Kind:    resource.Kind,
-					}, nil
+					Group:    group,
+					Version:  version,
+					Resource: resource.Name,
+				}, schema.GroupVersionKind{
+					Group:   group,
+					Version: version,
+					Kind:    resource.Kind,
+				}, nil
 			}
 		}
 	}

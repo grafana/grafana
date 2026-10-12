@@ -15,6 +15,7 @@ import (
 	provisioning "github.com/grafana/grafana/apps/provisioning/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
+	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -131,7 +132,7 @@ func (b *APIBuilder) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 	// TODO: check if lister could list too many repositories or resources
 	stats, err := b.resourceLister.Stats(r.Context(), u.GetNamespace(), "")
-	if err != nil {
+	if err := resource.StatusErrorFromResponse(nil, err); err != nil {
 		errhttp.Write(r.Context(), err, w)
 		return
 	}

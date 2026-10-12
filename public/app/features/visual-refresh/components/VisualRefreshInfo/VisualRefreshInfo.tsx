@@ -5,9 +5,11 @@ import {
   getOFREPWebProvider,
   useFlagGrafanaVisualDesignRefresh,
 } from '@grafana/runtime/internal';
-import { Alert, Button, Stack } from '@grafana/ui';
+import { Alert, Button, Stack, TextLink } from '@grafana/ui';
 
+import { appEvents } from '../../../../core/app_events';
 import { stylesToggled } from '../../analytics/main';
+import { VisualRefreshFeedbackEvent } from '../../events';
 
 const VISUAL_REFRESH_FLAG = FlagKeys.GrafanaVisualDesignRefresh;
 
@@ -31,19 +33,33 @@ export function VisualRefreshInfo() {
     // rather than explicitly set true, we instead remove the override from local storage
     // this prevents users from being stuck in the visual refresh if the rollout flag is later disabled
     getLocalStorageProvider().setFlags({ [VISUAL_REFRESH_FLAG]: force ? undefined : false });
+    if (!force) {
+      appEvents.publish(new VisualRefreshFeedbackEvent({ type: 'return' }));
+    }
   };
 
+  const title = showVisualRefresh
+    ? t('visual-refresh.info.title-visual-refresh', 'Grafana has a new look')
+    : t('visual-refresh.info.title', 'Grafana has a new look. Ready to try it?');
+
   return (
-    <Alert title="" bottomSpacing={0} aria-label={t('visual-refresh.info.title', 'New styles')} severity="info">
+    <Alert title={title} bottomSpacing={0} severity="info">
       <Stack direction="row" alignItems="flex-start" wrap justifyContent="space-between">
-        <Trans i18nKey="visual-refresh.info.description">We&apos;ve had a redesign!</Trans>
+        <span>
+          <Trans i18nKey="visual-refresh.info.description">
+            The new UI is currently in Public Preview.{' '}
+            <TextLink href="https://grafana.com/whats-new/2026-10-26-grafana-visual-ui-refresh/" external>
+              Learn more.
+            </TextLink>
+          </Trans>
+        </span>
         {showVisualRefresh ? (
           <Button icon="arrow-left" onClick={() => handleShowVisualRefresh(false)} variant="secondary" size="sm">
-            <Trans i18nKey="visual-refresh.info.revert">Take me back</Trans>
+            <Trans i18nKey="visual-refresh.info.revert">Use old style</Trans>
           </Button>
         ) : (
-          <Button icon="check" onClick={() => handleShowVisualRefresh(true)} variant="success" size="sm">
-            <Trans i18nKey="visual-refresh.info.apply">Check it out</Trans>
+          <Button icon="arrow-right" onClick={() => handleShowVisualRefresh(true)} variant="secondary" size="sm">
+            <Trans i18nKey="visual-refresh.info.apply">Try new style</Trans>
           </Button>
         )}
       </Stack>

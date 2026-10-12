@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 	"strconv"
 	"strings"
 
@@ -16,7 +15,6 @@ import (
 	"golang.org/x/sync/errgroup"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	k8srest "k8s.io/apiserver/pkg/registry/rest"
 	k8scommon "k8s.io/kube-openapi/pkg/common"
@@ -29,10 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
-	teamsearch "github.com/grafana/grafana/pkg/services/team/search"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
-	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
+	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -60,13 +55,13 @@ var teamAccessControlChecks = []teamAccessControlCheck{
 
 type SearchHandler struct {
 	log          log.Logger
-	client       resourcepb.ResourceIndexClient
+	client       *dualwrite.Selector[SearchBackend]
 	tracer       trace.Tracer
 	accessClient authlib.AccessClient
 	teamGetter   k8srest.Getter
 }
 
-func NewSearchHandler(tracer trace.Tracer, searchClient resourcepb.ResourceIndexClient, accessClient authlib.AccessClient) *SearchHandler {
+func NewSearchHandler(tracer trace.Tracer, searchClient *dualwrite.Selector[SearchBackend], accessClient authlib.AccessClient) *SearchHandler {
 	return &SearchHandler{
 		client:       searchClient,
 		log:          log.New("grafana-apiserver.teams.search"),
@@ -295,47 +290,23 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		limit = common.DefaultListLimit
 	}
 
-	searchRequest := &resourcepb.ResourceSearchRequest{
-		Options: &resourcepb.ListOptions{
-			Key: &resourcepb.ResourceKey{
-				Group:     iamv0alpha1.TeamResourceInfo.GroupResource().Group,
-				Resource:  iamv0alpha1.TeamResourceInfo.GroupResource().Resource,
-				Namespace: requester.GetNamespace(),
-			},
-		},
-		Query:        queryParams.Get("query"),
-		Limit:        int64(limit),
-		Offset:       int64(offset),
-		Page:         int64(page),
-		ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
-		Fields: []string{
-			resource.SEARCH_FIELD_TITLE,
-			builders.TEAM_SEARCH_EMAIL,
-			builders.TEAM_SEARCH_PROVISIONED,
-			builders.TEAM_SEARCH_EXTERNAL_UID,
-			teamsearch.LegacyIDField,
-		},
+	searchRequest := SearchQuery{
+		Namespace: requester.GetNamespace(),
+		Query:     queryParams.Get("query"),
+		Limit:     int64(limit),
+		Offset:    int64(offset),
+		Page:      int64(page),
 	}
 
 	if queryParams.Has("sort") {
 		for _, sortParam := range queryParams["sort"] {
-			currField := sortParam
-			desc := false
-			if strings.HasPrefix(sortParam, "-") {
-				currField = sortParam[1:]
-				desc = true
-			}
-
-			if currField != resource.SEARCH_FIELD_TITLE && !slices.Contains(builders.TeamSortableExtraFields, currField) {
+			currField := strings.TrimPrefix(sortParam, "-")
+			if currField != "title" && currField != "email" {
 				http.Error(w, fmt.Sprintf("invalid sort field: %s", currField), http.StatusBadRequest)
 				return
 			}
 
-			s := &resourcepb.ResourceSearchRequest_Sort{
-				Field: currField,
-				Desc:  desc,
-			}
-			searchRequest.SortBy = append(searchRequest.SortBy, s)
+			searchRequest.Sort = append(searchRequest.Sort, sortParam)
 		}
 	}
 
@@ -344,11 +315,7 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "query and title parameters are mutually exclusive", http.StatusBadRequest)
 			return
 		}
-		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_TITLE,
-			Operator: string(selection.DoubleEquals), // exact match on title
-			Values:   []string{title},
-		})
+		searchRequest.Title = title
 	}
 
 	uids := queryParams["uid"]
@@ -372,30 +339,16 @@ func (s *SearchHandler) DoTeamSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Team UIDs in the legacy store maps to the name field in the unified store.
-	if len(uids) > 0 {
-		searchRequest.Options.Fields = append(searchRequest.Options.Fields, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_NAME,
-			Operator: string(selection.In),
-			Values:   uids,
-		})
-	}
+	searchRequest.UIDs = uids
+	searchRequest.TeamIDs = teamIds
 
-	if len(teamIds) > 0 {
-		searchRequest.Options.Labels = append(searchRequest.Options.Labels, &resourcepb.Requirement{
-			Key:      resource.SEARCH_FIELD_LEGACY_ID,
-			Operator: string(selection.In),
-			Values:   teamIds,
-		})
-	}
-
-	result, err := s.client.Search(ctx, searchRequest)
+	backend, err := s.client.Resolve(ctx)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return
 	}
 
-	searchResults, err := teamsearch.ParseResults(result, searchRequest.Offset)
+	searchResults, err := backend.Search(ctx, searchRequest)
 	if err != nil {
 		errhttp.Write(ctx, err, w)
 		return

@@ -12,6 +12,7 @@ import { Page } from 'app/core/components/Page/Page';
 import { CONNECTIONS_URL, PROVISIONING_URL } from '../constants';
 import { useConnectionStatus } from '../hooks/useConnectionStatus';
 import { type ExternalRepository } from '../types';
+import { canListRepositories } from '../utils/connectionOAuth';
 
 import { ConnectionForm } from './ConnectionForm';
 
@@ -29,7 +30,9 @@ export default function ConnectionFormPage() {
   const connectedRepos = connectedReposQuery.data?.items ?? [];
 
   // Available external repositories from the provider
-  const availableReposQuery = useGetConnectionRepositoriesQuery(isCreate ? skipToken : { name });
+  const availableReposQuery = useGetConnectionRepositoriesQuery(
+    isCreate || !connection || !canListRepositories(connection.spec?.type) ? skipToken : { name }
+  );
   const availableRepos = availableReposQuery.data?.items ?? [];
 
   const notFound = !isCreate && isError && isFetchError(error) && error.status === 404;

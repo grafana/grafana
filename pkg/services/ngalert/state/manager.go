@@ -402,9 +402,17 @@ func (st *Manager) ProcessEvalResults(
 			if imageTaken {
 				return image
 			}
+			imageTaken = true
+			previous := st.cache.getLastScreenshotAttempt(alertRule.GetKey())
+			if !previous.readyForRetry(st.clock) {
+				logger.Info("Skip taking image because last attempt was not successful")
+				// The backoff belongs to the rule, so an instance that starts alerting
+				// during the cooldown doesn't get a capture attempt of its own.
+				return nil
+			}
 			logger.Debug("Taking image", "dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "reason", reason)
 			img, err := takeImage(ctx, st.images, alertRule)
-			imageTaken = true
+			st.cache.setLastScreenshotAttempt(alertRule.GetKey(), newScreenshotAttempt(previous, err, st.clock))
 			if err != nil {
 				logger.Warn("Failed to take an image",
 					"dashboard", alertRule.GetDashboardUID(),

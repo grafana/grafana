@@ -43,7 +43,7 @@ func (r *Resolver) Title(ctx context.Context, namespace, folderUID string) (stri
 		if resp.Error.Code == http.StatusNotFound {
 			return "", nil
 		}
-		return "", resource.GetError(resp.Error)
+		return "", resource.StatusError(resp.Error)
 	}
 
 	var folder struct {

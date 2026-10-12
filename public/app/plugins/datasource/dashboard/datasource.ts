@@ -179,6 +179,8 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
     const series = data.series.map((s) => {
       return {
         ...s,
+        // Lets a panel reading several source panels tell their frames apart, since refIds can collide.
+        meta: { ...s.meta, custom: { ...s.meta?.custom, dashboardSourcePanelId: query.panelId } },
         fields: s.fields.map((field: Field) => ({
           ...field,
           config: {

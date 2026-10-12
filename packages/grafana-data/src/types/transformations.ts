@@ -55,6 +55,13 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
    * This way descriptions can be tailored relative to the underlying data.
    */
   isApplicableDescription?: string | ((data: DataFrame[]) => string);
+  /**
+   * Does the transformation generate a dataframe and thus generates a refID automatically based on incoming data
+   *
+   * A function when it depends on configuration: Reduce only combines frames in series-to-rows mode,
+   * so only that mode has a generated refId to replace.
+   */
+  usesDynamicRefId?: boolean | ((options: TOptions) => boolean);
 }
 
 /**
@@ -63,6 +70,74 @@ export interface DataTransformerInfo<TOptions = any> extends RegistryItemWithOpt
  * @public
  */
 export type CustomTransformOperator = (context: DataTransformContext) => MonoTypeOperatorFunction<DataFrame[]>;
+
+/**
+ * Data handed to a {@link SystemTransformationsSupplier}.
+ *
+ * @alpha
+ */
+export interface SystemTransformationsContext {
+  /** Query result frames, before user transformations and before field overrides */
+  series: DataFrame[];
+}
+
+/**
+ * Read-only transformations a panel requires, grouped by where each runs relative to the
+ * transformations the user configured.
+ *
+ * @alpha
+ */
+export interface SystemTransformations {
+  /**
+   * Run before every user-configured transformation and before field overrides, so the fields
+   * they produce are matchable by overrides and targetable by the user's own transformations.
+   */
+  prepend?: Array<DataTransformerConfig | CustomTransformOperator>;
+  /**
+   * Run after every user-configured transformation, and only after all of them — but still before
+   * field overrides, so the fields they produce are matchable by overrides too.
+   */
+  append?: Array<DataTransformerConfig | CustomTransformOperator>;
+}
+
+/**
+ * {@link SystemTransformations} with both positions filled in: what
+ * `PanelPlugin.getSystemTransformations` returns, so callers handle neither the array shorthand nor a
+ * missing group.
+ *
+ * @alpha
+ */
+export type ResolvedSystemTransformations = Required<SystemTransformations>;
+
+/**
+ * Returns read-only transformations a dashboard panel requires in order to render its data.
+ *
+ * Registered via `PanelPlugin.setSystemTransformations`. An array result is shorthand for
+ * {@link SystemTransformations.prepend}.
+ *
+ * Called once per data update that carries frames, so it may branch on frame shape or `meta`. The
+ * result is cached against that frames array and shared by both positions and by the
+ * transformations editor, so keep the supplier cheap and free of side effects. Those frames are the
+ * entire cache key — nothing else about the panel invalidates it. Empty results pass through without
+ * consulting the supplier, and a supplier that throws is treated as one that registered nothing.
+ *
+ * Grafana dashboards apply only transformations for `DataTopic.Series`. `PanelPlugin` returns all
+ * registered transformations without filtering by topic. `VizPanel` ignores configurations for
+ * annotations or alert states.
+ *
+ * Option strings are not interpolated: scenes skips these entries because they are carried by a
+ * custom transform operator. Transformers that interpolate their own options through
+ * `DataTransformContext.interpolate`, such as `formatTime`, are the exception.
+ *
+ * Reaches Grafana dashboards only. `PanelRenderer` runs no transformations, so Explore,
+ * alerting rule previews and visualization suggestion cards render the untransformed query
+ * result — as do scenes built outside dashboards, which construct their own transformer.
+ *
+ * @alpha
+ */
+export type SystemTransformationsSupplier = (
+  ctx: SystemTransformationsContext
+) => Array<DataTransformerConfig | CustomTransformOperator> | SystemTransformations | undefined;
 
 /**
  * Many transformations can be called with a simple synchronous function.

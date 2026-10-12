@@ -209,7 +209,8 @@ const getStyles = (theme: GrafanaTheme2) => {
       borderLeft: `1px solid ${theme.colors.border.weak}`,
     }),
     showButton: css({
-      position: 'fixed',
+      // Keep the restore button inside the content area when a sidecar reduces its width.
+      position: 'absolute',
       bottom: theme.spacing(2),
       zIndex: theme.zIndex.navbarFixed,
       padding: theme.spacing(1),

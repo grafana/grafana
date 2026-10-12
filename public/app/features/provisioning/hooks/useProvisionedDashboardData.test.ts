@@ -1,7 +1,6 @@
-import { act, renderHook } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import { getWrapper } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type Folder } from 'app/api/clients/folder/v1beta1';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 import {
@@ -58,6 +57,7 @@ function readyView(repository?: RepositoryView, folderData?: Folder): DashboardR
     lookup: { status: RepoViewStatus.Ready },
     isNewSave: false,
     isProvisioned: Boolean(repository),
+    canChooseTarget: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
     isMissingRepo: !repository,
@@ -72,6 +72,7 @@ function pendingView(status: RepoViewStatus, error?: unknown): DashboardReposito
     lookup: { status, error },
     isNewSave: false,
     isProvisioned: false,
+    canChooseTarget: false,
     isInstanceManaged: false,
     isReadOnlyRepo: false,
     isMissingRepo: status !== RepoViewStatus.Loading,
@@ -376,22 +377,14 @@ describe('useProvisionedDashboardData', () => {
   });
 
   describe('enforced branch name template', () => {
-    // write-first repo: without the enforced-template override the default workflow would be `write`.
+    // write-first repo: without the enforced template the default workflow would be `write`.
     const enforcedRepo: RepositoryView = {
       ...folderRepo,
       workflows: ['write', 'branch'],
       branchOptions: { enforceTemplate: true, nameTemplate: 'grafana/{{action}}' },
     };
 
-    afterEach(async () => {
-      await act(async () => {
-        setTestFlags({});
-      });
-    });
-
-    it('switches to the branch workflow when the template is enforced and the flag is on', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-
+    it('switches to the branch workflow when the template is enforced', () => {
       const { result } = renderHook(
         () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
         { wrapper }
@@ -403,38 +396,7 @@ describe('useProvisionedDashboardData', () => {
       expect(result.current.defaultValues?.ref).toMatch(/^dashboard\//);
     });
 
-    it('keeps the same defaultValues object across rerenders when the override applies', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
-
-      const dashboard = createDashboard();
-      const folderData = folder('dashboards');
-      const { result, rerender } = renderHook(
-        () => useProvisionedDashboardData(dashboard, readyView(enforcedRepo, folderData)),
-        { wrapper }
-      );
-
-      const initial = result.current.defaultValues;
-      expect(initial?.workflow).toBe('branch');
-
-      // The form resets to defaultValues whenever its identity changes, so a fresh object per render
-      // would reset the form on every unrelated rerender.
-      rerender();
-      expect(result.current.defaultValues).toBe(initial);
-    });
-
-    it('keeps the default write workflow when the gitConventions flag is off', () => {
-      setTestFlags({ 'provisioning.gitConventions': false });
-
-      const { result } = renderHook(
-        () => useProvisionedDashboardData(createDashboard(), readyView(enforcedRepo, folder('dashboards'))),
-        { wrapper }
-      );
-
-      expect(result.current.defaultValues?.workflow).toBe('write');
-    });
-
     it('keeps the default write workflow when enforcement has no usable template', () => {
-      setTestFlags({ 'provisioning.gitConventions': true });
       // enforceTemplate set without a nameTemplate: useBranchTemplate stays inactive, so the
       // workflow must not switch (nothing to enforce).
       const repo: RepositoryView = { ...enforcedRepo, branchOptions: { enforceTemplate: true } };

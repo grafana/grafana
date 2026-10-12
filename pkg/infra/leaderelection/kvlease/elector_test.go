@@ -69,7 +69,7 @@ func TestKVLeaseElector_ScopesLeaseMetrics(t *testing.T) {
 	// the component label.
 	require.ElementsMatch(t,
 		[]string{"storage", "zanzana_reconciler"},
-		componentLabelValues(t, reg, "lease_manager_acquire_duration_seconds"),
+		componentLabelValues(t, reg, "grafana_lease_manager_acquire_duration_seconds"),
 	)
 }
 

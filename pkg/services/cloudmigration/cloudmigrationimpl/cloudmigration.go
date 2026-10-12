@@ -11,8 +11,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"uuid"
 
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -883,7 +883,7 @@ func (s *Service) getLocalEventId(ctx context.Context) (string, error) {
 		return anonId, nil
 	}
 
-	anonId = uuid.NewString()
+	anonId = uuid.NewV4().String()
 
 	err = s.kvStore.Set(ctx, "anonymous_id", anonId)
 	if err != nil {

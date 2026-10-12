@@ -57,7 +57,7 @@ func (dc *CacheServiceImpl) GetDatasource(
 
 	dc.logger.FromContext(ctx).Debug("Querying for data source via SQL store", "id", datasourceID, "orgId", user.GetOrgID())
 
-	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.GetOrgID()}
+	query := &datasources.GetDataSourceQuery{ID: datasourceID, OrgID: user.GetOrgID()} //nolint:staticcheck // Preserve legacy field compatibility.
 	ss := SqlStore{db: dc.SQLStore, logger: dc.logger}
 	ds, err := ss.GetDataSource(ctx, query)
 	if err != nil {

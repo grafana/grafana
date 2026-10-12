@@ -53,6 +53,7 @@ import {
   type TableSortByFieldState,
   type TableSummaryRow,
   type TypographyCtx,
+  type TextWrapFallback,
 } from './types';
 import {
   getDisplayName,
@@ -419,6 +420,7 @@ export const useNestedRows = (
 };
 
 interface UseHeaderHeightOptions {
+  hasAssistantAction?: boolean;
   lastColumnExtraPadding?: number;
   enabled: boolean;
   fields: Field[];
@@ -446,6 +448,7 @@ export function useHeaderHeight({
   tableRefreshEnabled = false,
   filter,
   lastColumnExtraPadding = 0,
+  hasAssistantAction = false,
 }: UseHeaderHeightOptions): number {
   const measurers = useMemo(() => buildHeaderHeightMeasurers(fields, typographyCtx), [fields, typographyCtx]);
   const filteredKeys = useMemo(() => new Set(Object.values(filter ?? {}).map((f) => f.displayName)), [filter]);
@@ -469,10 +472,20 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
+          hasAssistantAction,
         });
         return Math.floor(width);
       }),
-    [fields, columnWidths, showTypeIcons, noPanelPadding, tableRefreshEnabled, filteredKeys, lastColumnExtraPadding]
+    [
+      fields,
+      columnWidths,
+      showTypeIcons,
+      noPanelPadding,
+      tableRefreshEnabled,
+      filteredKeys,
+      lastColumnExtraPadding,
+      hasAssistantAction,
+    ]
   );
 
   const headerHeight = useMemo(() => {
@@ -494,7 +507,51 @@ export function useHeaderHeight({
   return headerHeight;
 }
 
+export function useTextWrapFallback(data: DataFrame): TextWrapFallback {
+  // A new result may contain only short values despite having the same schema or value buffers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const epoch = useMemo(() => ({ disabled: new Set<string>(), pending: new Set<string>() }), [data]);
+  const [version, setVersion] = useState(0);
+
+  // Height callbacks run inside the grid's render, after columns have already been built. Collect
+  // discoveries without updating another component during render, then repair all heights and
+  // column styles together before paint. Finishing the scan batches discoveries across columns.
+  // Check every commit: pagination and expansion can expose new values without changing fields.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    if (epoch.pending.size > 0) {
+      for (const name of epoch.pending) {
+        epoch.disabled.add(name);
+      }
+      epoch.pending.clear();
+      setVersion((value) => value + 1);
+    }
+  });
+
+  return useMemo(
+    () => ({
+      disabledFields: new Set(epoch.disabled),
+      shouldDisable: (field: Field, value: unknown) => {
+        const name = getDisplayName(field);
+        if (epoch.disabled.has(name) || epoch.pending.has(name)) {
+          return true;
+        }
+        if (value != null && String(value).length > TABLE.MAX_WRAP_TEXT_LENGTH) {
+          epoch.pending.add(name);
+          return true;
+        }
+        return false;
+      },
+    }),
+    // version publishes discoveries as a new immutable snapshot and invalidates height caches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [epoch, version]
+  );
+}
+
 interface UseRowHeightOptions {
+  wrapFallback?: TextWrapFallback;
+  nestedWrapFallback?: TextWrapFallback;
   lastColumnExtraPadding?: number;
   columnWidths: number[];
   fields: Field[];
@@ -523,6 +580,8 @@ const getTrueColWidths = (cw: number[], noPanelPadding = false, lastColumnExtraP
 
 // TODO: maybe there's a way to decouple the nested rows from the top-level rows here.
 export function useRowHeight({
+  wrapFallback,
+  nestedWrapFallback,
   columnWidths,
   fields,
   defaultHeight,
@@ -541,9 +600,10 @@ export function useRowHeight({
 }: UseRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const nestedMeasurers = useMemo(
-    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight),
-    [nestedFields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(nestedFields, typographyCtx, theme, maxHeight, nestedWrapFallback),
+    [nestedFields, typographyCtx, maxHeight, theme, nestedWrapFallback]
   );
+  const hasWrappedNestedCols = (nestedMeasurers?.length ?? 0) > 0;
 
   const totalParentWidth = useMemo(() => columnWidths.reduce((acc, width) => acc + width, 0), [columnWidths]);
   const totalNestedWidth = useMemo(() => nestedColWidths.reduce((acc, width) => acc + width, 0), [nestedColWidths]);
@@ -588,8 +648,8 @@ export function useRowHeight({
   }, [nestedFields, nestedColWidths, defaultNestedHeight, nestedMeasurers, visibleNestedRowCounts]);
 
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
-    [fields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight, wrapFallback),
+    [fields, typographyCtx, maxHeight, theme, wrapFallback]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -638,10 +698,9 @@ export function useRowHeight({
         }
 
         const nestedHeaderHeight = nestedData?.[row.__index]?.meta?.custom?.noHeader ? 0 : defaultNestedHeight;
-        const nestedRowsHeight = nestedRows[row.__index].final.reduce(
-          (acc, row) => acc + getNestedRowHeightWithCache(row),
-          0
-        );
+        const nestedRowsHeight = hasWrappedNestedCols
+          ? nestedRows[row.__index].final.reduce((acc, row) => acc + getNestedRowHeightWithCache(row), 0)
+          : nestedRows[row.__index].final.length * defaultNestedHeight;
         const scrollbarHeight = nestedHasOverflow ? TABLE.SCROLLBAR_AFFORDANCE : 0;
         const nestedTableVerticalPadding = tableRefreshEnabled
           ? REFRESHED_NESTED_TABLE_VERTICAL_PADDING
@@ -660,6 +719,7 @@ export function useRowHeight({
     defaultNestedHeight,
     hasNestedFrames,
     hasWrappedCols,
+    hasWrappedNestedCols,
     nestedFooterHeight,
     nestedHasOverflow,
     nestedRows,
@@ -672,6 +732,7 @@ export function useRowHeight({
 }
 
 interface UseFlatRowHeightOptions {
+  wrapFallback?: TextWrapFallback;
   columnWidths: number[];
   fields: Field[];
   defaultHeight: NonNullable<CSSProperties['height']>;
@@ -685,6 +746,7 @@ interface UseFlatRowHeightOptions {
  * Unlike `useRowHeight`, this does not handle nested frame rows.
  */
 export function useFlatRowHeight({
+  wrapFallback,
   columnWidths,
   fields,
   defaultHeight,
@@ -694,8 +756,8 @@ export function useFlatRowHeight({
 }: UseFlatRowHeightOptions): NonNullable<CSSProperties['height']> | ((row: TableRow) => number) {
   const theme = useTheme2();
   const measurers = useMemo(
-    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight),
-    [fields, typographyCtx, maxHeight, theme]
+    () => buildCellHeightMeasurers(fields, typographyCtx, theme, maxHeight, wrapFallback),
+    [fields, typographyCtx, maxHeight, theme, wrapFallback]
   );
   const hasWrappedCols = (measurers?.length ?? 0) > 0;
 
@@ -798,15 +860,56 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
-  const [scrollbarWidth, setScrollbarWidth] = useState(0);
-
-  const updateScrollbarDimensions = debounce(() => {
-    const el = ref.current?.element;
-    if (el) {
-      setScrollbarWidth(el!.offsetWidth - el!.clientWidth);
+export function useNativeScrollbarWidth(ref: RefObject<DataGridHandle | null>) {
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const grid = ref.current?.element;
+    if (!grid || IS_SAFARI_26) {
+      return;
     }
-  }, 150);
+    // Measuring the grid after applying stable would detect the space we introduced ourselves.
+    // Match its scrollbar styling, but force overflow and an auto gutter on an isolated probe.
+    const probe = document.createElement('div');
+    probe.className = grid.className;
+    probe.setAttribute('role', 'grid');
+    probe.setAttribute('aria-hidden', 'true');
+    Object.assign(probe.style, {
+      position: 'absolute',
+      visibility: 'hidden',
+      pointerEvents: 'none',
+      inset: '0 auto auto 0',
+      width: '100px',
+      height: '100px',
+      inlineSize: '100px',
+      blockSize: '100px',
+      display: 'block',
+      border: '0',
+      padding: '0',
+      contain: 'strict',
+      contentVisibility: 'visible',
+      overflowX: 'hidden',
+      overflowY: 'scroll',
+      scrollbarGutter: 'auto',
+      scrollbarWidth: getComputedStyle(grid).scrollbarWidth,
+    });
+    const content = document.createElement('div');
+    content.style.height = '200px';
+    probe.appendChild(content);
+    grid.parentElement?.appendChild(probe);
+    const measure = () => setWidth(probe.offsetWidth - probe.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(probe);
+    return () => {
+      observer.disconnect();
+      probe.remove();
+    };
+  }, [ref]);
+  return width;
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number, reserveGutter?: boolean) {
+  const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
     const el = ref.current?.element;
@@ -814,14 +917,18 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
       return;
     }
 
-    updateScrollbarDimensions();
+    const measureScrollbarWidth = () => setScrollbarWidth(el.offsetWidth - el.clientWidth);
+    // Reserve scrollbar space before paint; debouncing this first read makes the columns jump.
+    measureScrollbarWidth();
 
+    const updateScrollbarDimensions = debounce(measureScrollbarWidth, 150);
     const resizeObserver = new ResizeObserver(updateScrollbarDimensions);
     resizeObserver.observe(el);
     return () => {
       resizeObserver.disconnect();
+      updateScrollbarDimensions.cancel();
     };
-  }, [ref, height, updateScrollbarDimensions]);
+  }, [ref, height, reserveGutter]);
 
   return scrollbarWidth;
 }
@@ -832,24 +939,35 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
  * scrolls, so nothing otherwise tells them more rows exist.
  *
- * React state updates only when shadow visibility or horizontal scrollbar height changes.
+ * React state updates only when shadow visibility or geometry changes.
  */
 export function useScrollShadows(
   ref: RefObject<DataGridHandle | null>,
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
-  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0 });
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
   const styles = useStyles2(getScrollShadowStyles);
-  const offsetStyles = useStyles2(getScrollShadowOffsetStyles, topOffset, bottomOffset + visibility.scrollbarHeight);
+  const offsetStyles = useStyles2(
+    getScrollShadowOffsetStyles,
+    topOffset,
+    bottomOffset + visibility.scrollbarHeight,
+    visibility.width
+  );
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
     if (!enabled || !el) {
       return;
     }
-    const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
+    const { scrollTop, scrollHeight, clientHeight, offsetHeight, clientWidth } = el;
+    // The grid fills the panel even when its columns don't. Read resolved tracks so resized and
+    // auto-sized columns, including virtualized ones, bound the shadows rather than the panel.
+    const columnWidth = getComputedStyle(el)
+      .gridTemplateColumns.split(' ')
+      .reduce((total, track) => total + (parseFloat(track) || 0), 0);
+    const width = Math.min(columnWidth, clientWidth);
     // A horizontal scrollbar takes its space out of the bottom of the grid's padding box, below
     // both the rows and the sticky footer, so the bottom shadow has to clear it or it sits on the
     // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
@@ -861,9 +979,10 @@ export function useScrollShadows(
     if (
       visibilityRef.current.top !== top ||
       visibilityRef.current.bottom !== bottom ||
-      visibilityRef.current.scrollbarHeight !== scrollbarHeight
+      visibilityRef.current.scrollbarHeight !== scrollbarHeight ||
+      visibilityRef.current.width !== width
     ) {
-      const nextVisibility = { top, bottom, scrollbarHeight };
+      const nextVisibility = { top, bottom, scrollbarHeight, width };
       visibilityRef.current = nextVisibility;
       setVisibility(nextVisibility);
     }
@@ -883,7 +1002,14 @@ export function useScrollShadows(
     // Panel resizing changes what fits without moving the scroll position.
     const resizeObserver = new ResizeObserver(sync);
     resizeObserver.observe(el);
-    return () => resizeObserver.disconnect();
+    // Column resizing inside react-data-grid changes its tracks without resizing the viewport
+    // or necessarily rendering this hook's owner.
+    const mutationObserver = new MutationObserver(sync);
+    mutationObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
   }, [ref, enabled, sync]);
 
   return {
@@ -959,6 +1085,7 @@ export function useHeaderTypographyCtx(theme: GrafanaTheme2): TypographyCtx {
 }
 
 interface UseContentAwareWidthsOptions {
+  hasAssistantAction?: boolean;
   enabled: boolean;
   typographyCtx: TypographyCtx;
   showTypeIcons?: boolean;
@@ -985,6 +1112,7 @@ export function useContentAwareWidths({
   filter,
   noPanelPadding = false,
   preventHorizontalOverflow = false,
+  hasAssistantAction = false,
 }: UseContentAwareWidthsOptions): ContentAwareWidths | undefined {
   const theme = useTheme2();
   const headerTypographyCtx = useHeaderTypographyCtx(theme);
@@ -994,6 +1122,7 @@ export function useContentAwareWidths({
         ? {
             typographyCtx,
             headerTypographyCtx,
+            hasAssistantAction,
             theme,
             showTypeIcons,
             hasHeader,
@@ -1008,6 +1137,7 @@ export function useContentAwareWidths({
       enabled,
       typographyCtx,
       headerTypographyCtx,
+      hasAssistantAction,
       showTypeIcons,
       hasHeader,
       getActions,

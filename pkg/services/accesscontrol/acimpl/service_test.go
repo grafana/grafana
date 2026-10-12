@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/database"
@@ -146,6 +148,7 @@ func TestIntegrationUsageMetrics(t *testing.T) {
 				nil,
 				permreg.ProvidePermissionRegistry(),
 				nil,
+				iam.Features{},
 			)
 			assert.Equal(t, tt.expectedValue, s.GetUsageStats(context.Background())["stats.oss.accesscontrol.enabled.count"])
 		})
@@ -923,14 +926,17 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 				ExpectedUsersRoles:       tt.storedRoles,
 			}
 
-			// Explicit error injection based on test configuration
-			if tt.injectSearchErr {
-				store.ExpectedErr = assert.AnError
-			}
-			if tt.injectBasicErr {
-				store.ExpectedErr = assert.AnError
-			}
 			ac.store = store
+			if tt.injectSearchErr || tt.injectBasicErr {
+				failingStore := actest.NewMockStore(t)
+				if tt.injectBasicErr {
+					failingStore.On("GetUsersBasicRoles", mock.Anything, []int64(nil), int64(2)).Return(nil, assert.AnError).Once()
+				} else {
+					failingStore.On("GetUsersBasicRoles", mock.Anything, []int64(nil), int64(2)).Return(tt.storedRoles, nil).Once()
+					failingStore.On("SearchUsersPermissions", mock.Anything, int64(2), mock.Anything).Return(nil, assert.AnError).Once()
+				}
+				ac.store = failingStore
+			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
 			got, err := ac.SearchUsersPermissions(ctx, siu, tt.searchOption)
