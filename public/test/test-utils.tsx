@@ -19,7 +19,7 @@ import {
   setChromeHeaderHeightHook,
   setLocationService,
 } from '@grafana/runtime';
-import { getTestFeatureFlagClient } from '@grafana/test-utils/unstable';
+import { getTestFeatureFlagClient, setTestFlags } from '@grafana/test-utils/unstable';
 import { GrafanaContext, type GrafanaContextType } from 'app/core/context/GrafanaContext';
 import { ModalsContextProvider } from 'app/core/context/ModalsContextProvider';
 import { configureStore } from 'app/store/configureStore';
@@ -127,8 +127,24 @@ const customRender = (
   };
 };
 
+// Flags this helper has applied to the current test. setTestFlags replaces the whole flag config
+// on every call, and one test can be covered by several testWithFeatureToggles calls, so each call
+// has to pass the accumulated set rather than only its own flags.
+let appliedOpenFeatureFlags: Record<string, boolean> = {};
+
 /**
  * Enables and disables feature toggles `beforeEach` test, and sets back to empty object `afterEach` test
+ *
+ * @deprecated Set flags with `setTestFlags` in a `beforeEach` instead:
+ *
+ * ```ts
+ * beforeEach(() => {
+ *   setTestFlags({ [FlagKeys.MyFlag]: true });
+ * });
+ * ```
+ *
+ * This helper only covers flags that still have a `keyof FeatureToggles` entry, which is a
+ * shrinking subset of the flags the frontend can read.
  */
 export const testWithFeatureToggles = ({
   enable,
@@ -140,14 +156,21 @@ export const testWithFeatureToggles = ({
   beforeEach(() => {
     for (const featureToggle of enable || []) {
       config.featureToggles[featureToggle] = true;
+      appliedOpenFeatureFlags[featureToggle] = true;
     }
     for (const featureToggle of disable || []) {
       config.featureToggles[featureToggle] = false;
+      appliedOpenFeatureFlags[featureToggle] = false;
     }
+
+    // Also set the flags through OpenFeature, so a component that has migrated to the flag hooks
+    // still sees what the test asked for. Without this the test silently asserts the default path.
+    setTestFlags(appliedOpenFeatureFlags);
   });
 
   afterEach(() => {
     config.featureToggles = {};
+    appliedOpenFeatureFlags = {};
   });
 };
 
