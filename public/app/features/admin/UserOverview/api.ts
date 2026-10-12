@@ -160,8 +160,9 @@ function useUserMembership(uid: string, account?: UserAccount): UserSection<User
   const iam = useGetUserQuery(useIAM ? { name: uid } : skipToken);
   const resource = iam.currentData;
   const login = account?.login ?? resource?.spec.login;
-  const canSearchMembers = !!login && contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
-  const members = useGetOrgUsersForCurrentOrgQuery(canSearchMembers ? { query: login, limit: 100 } : skipToken);
+  const id = account?.id ?? Number(resource?.metadata.labels?.['grafana.app/deprecatedInternalID']);
+  const canSearchMembers = id > 0 && contextSrv.hasPermission(AccessControlAction.OrgUsersRead);
+  const members = useGetOrgUsersForCurrentOrgQuery(canSearchMembers ? { userId: id, limit: 100 } : skipToken);
   const member = members.currentData?.find((member) => member.uid === uid);
   // Older backends can ignore the exact-ID filter. A full page without a match
   // cannot establish that the user is absent from the organization.
@@ -173,7 +174,7 @@ function useUserMembership(uid: string, account?: UserAccount): UserSection<User
   const data: UserMembership | undefined =
     (resource || member || org) && (account || resource)
       ? {
-          id: account?.id ?? Number(resource?.metadata.labels?.['grafana.app/deprecatedInternalID']),
+          id,
           uid,
           login: login ?? '',
           name: account?.name ?? resource?.spec.title ?? '',

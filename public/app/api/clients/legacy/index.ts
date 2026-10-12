@@ -10,12 +10,7 @@ import { generatedAPI as iamAPI } from '@grafana/api-clients/rtkq/iam/v0alpha1';
 import { type SyncInfo } from 'app/types/ldap';
 import { type OrgUser, type UserDTO, type UserOrg, type UserSession } from 'app/types/user';
 
-import { type WithUserUIDs } from './userEndpoints';
-
-// The generated schema still describes these UID-compatible path parameters as numbers.
-// eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-const userUIDAPI = generatedAPI as WithUserUIDs<typeof generatedAPI>;
-type Definitions = DefinitionsFromApi<typeof userUIDAPI>;
+type Definitions = DefinitionsFromApi<typeof generatedAPI>;
 type UserDefinitions = {
   getUserById: OverrideResultType<Definitions['getUserById'], UserDTO & { createdAt?: string }>;
   getUserOrgList: OverrideResultType<Definitions['getUserOrgList'], UserOrg[]>;
@@ -63,7 +58,7 @@ function withSuccessAlertCheck<ApiArg extends {}, Def extends { query?: (arg: Ap
   };
 }
 
-export const legacyAPI = userUIDAPI.enhanceEndpoints<never, UserDefinitions>({
+export const legacyAPI = generatedAPI.enhanceEndpoints<never, UserDefinitions>({
   endpoints: {
     updateUser: { onQueryStarted: invalidateIAMUser },
     adminDisableUser: { onQueryStarted: invalidateIAMUser, invalidatesTags: ['admin_users', 'users'] },

@@ -456,6 +456,31 @@ it('restores the saved organization role when a role update fails', async () => 
   expect(within(screen.getByTestId('role-picker')).queryByText('Editor')).not.toBeInTheDocument();
 });
 
+it('restores the saved basic role in the Roles tab after a rejected update', async () => {
+  server.use(
+    http.get('/api/access-control/roles', () => HttpResponse.json([])),
+    http.get('/api/org/users', () =>
+      HttpResponse.json([
+        {
+          ...profile,
+          userId: profile.id,
+          role: 'Viewer',
+          accessControl: { [AccessControlAction.OrgUsersWrite]: true },
+        },
+      ])
+    ),
+    http.patch('/api/org/users/12', () => HttpResponse.json({ message: 'Role update rejected' }, { status: 400 })),
+    http.put('/api/access-control/users/12/roles', () => HttpResponse.json({ message: 'Roles updated' }))
+  );
+  const { user } = setup('roles');
+  await user.click(await screen.findByRole('button', { name: 'Edit roles' }));
+  await user.click(within(await screen.findByTestId('role-picker')).getByText('Viewer'));
+  await user.click(screen.getByText('Editor'));
+  await user.click(screen.getByRole('button', { name: 'Update' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Role update rejected');
+  await waitFor(() => expect(within(screen.getByTestId('role-picker')).getByText('Viewer')).toBeInTheDocument());
+});
+
 it('does not offer basic-role editing when the specific org user lacks write permission', async () => {
   jest.spyOn(contextSrv, 'licensedAccessControlEnabled').mockReturnValue(false);
   server.use(
@@ -598,6 +623,19 @@ it('keeps IAM membership details visible when the account request fails', async 
   expect(await screen.findByText('Never')).toBeInTheDocument();
   expect(await screen.findByRole('alert')).toHaveTextContent('You do not have permission');
   expect(screen.queryByRole('button', { name: /^Edit / })).not.toBeInTheDocument();
+});
+
+it('requests organization membership by exact user ID', async () => {
+  const queries = jest.fn();
+  server.use(
+    http.get('/api/org/users', ({ request }) => {
+      const params = new URL(request.url).searchParams;
+      queries(params.get('userId'), params.get('query'), params.get('accesscontrol'));
+      return HttpResponse.json([{ ...profile, role: 'Viewer' }]);
+    })
+  );
+  setup();
+  await waitFor(() => expect(queries).toHaveBeenCalledWith('12', null, 'true'));
 });
 
 it('treats a full membership page without the user as unknown', async () => {
