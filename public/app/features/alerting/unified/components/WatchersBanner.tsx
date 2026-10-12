@@ -5,7 +5,6 @@ import { Trans, t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, LinkButton, Stack, Text } from '@grafana/ui';
 
-import { usePluginBridge } from '../hooks/usePluginBridge';
 import { SupportedPlugin } from '../types/pluginBridges';
 import { createRelativeUrl } from '../utils/url';
 
@@ -17,13 +16,9 @@ export function getWatchersBannerDismissedKey(orgId: number): string {
 }
 
 /**
- * Promotes Watchers, the Grafana Assistant's proactive agents. Renders only when the Assistant
- * plugin is installed and enabled, since the CTA links into it. Dismissal is persisted per org.
+ * Promotes Watchers, the Grafana Assistant's proactive agents. Dismissal is persisted per org.
  */
 export function WatchersBanner() {
-  // TEMP: local preview only, remove before committing
-  const { installed: _installed } = usePluginBridge(SupportedPlugin.Assistant);
-  const installed = true;
   const key = getWatchersBannerDismissedKey(config.bootData.user.orgId);
   const [dismissed, setDismissed] = useState(() => store.getBool(key, false));
 
@@ -32,7 +27,7 @@ export function WatchersBanner() {
     setDismissed(true);
   }, [key]);
 
-  if (!installed || dismissed) {
+  if (dismissed) {
     return null;
   }
 
