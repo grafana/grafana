@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -38,7 +37,6 @@ type ProxyDependencies struct {
 	GrafanaConfig      *config.GrafanaCfg
 	// TransportConfigKey changes when provider configuration changes between requests.
 	TransportConfigKey string
-	TimeoutDefaults    *sdkhttpclient.TimeoutOptions
 	OAuthTokenService  *oauthtoken.Service
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
@@ -129,7 +127,6 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		loader.transports = r.transports
 		loader.transportConfigKey = deps.TransportConfigKey
-		loader.timeoutDefaults = deps.TimeoutDefaults
 
 		ds, err := loader.DataSource(req.Context())
 		if err != nil {
@@ -178,10 +175,6 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.Tracer,
 			deps.Features,
 			pluginproxy.WithRouteAccessChecker(deps.RouteAccessChecker),
-			pluginproxy.WithDestinationValidator(func(url string) error {
-				// Headers and cookies were filtered on ingress; do not strip route-added authentication.
-				return validate(url, jsonData, nil)
-			}),
 		)
 		if err != nil {
 			m.SetError()

@@ -86,37 +86,3 @@ func proxyTransportFingerprint(settings *backend.DataSourceInstanceSettings, opt
 	}
 	return sha256.Sum256(data), nil
 }
-
-// HTTPClientOptions fills absent datasource values from SDK globals. Replace
-// only those defaults with the current tenant's values; preserve explicit overrides.
-func applyProxyTimeoutDefaults(opts *sdkhttpclient.Options, data map[string]any, defaults sdkhttpclient.TimeoutOptions) {
-	t := *opts.Timeouts
-	if _, ok := data["timeout"]; !ok {
-		t.Timeout = defaults.Timeout
-	}
-	if _, ok := data["dialTimeout"]; !ok {
-		t.DialTimeout = defaults.DialTimeout
-	}
-	if _, ok := data["httpKeepAlive"]; !ok {
-		t.KeepAlive = defaults.KeepAlive
-	}
-	if _, ok := data["httpTLSHandshakeTimeout"]; !ok {
-		t.TLSHandshakeTimeout = defaults.TLSHandshakeTimeout
-	}
-	if _, ok := data["httpExpectContinueTimeout"]; !ok {
-		t.ExpectContinueTimeout = defaults.ExpectContinueTimeout
-	}
-	if _, ok := data["httpMaxConnsPerHost"]; !ok {
-		t.MaxConnsPerHost = defaults.MaxConnsPerHost
-	}
-	if _, ok := data["httpMaxIdleConns"]; !ok {
-		t.MaxIdleConns = defaults.MaxIdleConns
-	}
-	if _, ok := data["httpMaxIdleConnsPerHost"]; !ok {
-		t.MaxIdleConnsPerHost = defaults.MaxIdleConnsPerHost
-	}
-	if _, ok := data["httpIdleConnTimeout"]; !ok {
-		t.IdleConnTimeout = defaults.IdleConnTimeout
-	}
-	opts.Timeouts = &t
-}

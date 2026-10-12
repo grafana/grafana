@@ -28,7 +28,6 @@ type datasourceLoader struct {
 	settings           *backend.DataSourceInstanceSettings
 	transports         *proxyTransportCache
 	transportConfigKey string
-	timeoutDefaults    *sdkhttpclient.TimeoutOptions
 }
 
 var _ pluginproxy.DataSourceLoader = (*datasourceLoader)(nil)
@@ -97,9 +96,6 @@ func (l *datasourceLoader) GetHTTPTransport(ctx context.Context, clientProvider 
 	opts, err := settings.HTTPClientOptions(ctx)
 	if err != nil {
 		return nil, err
-	}
-	if l.timeoutDefaults != nil {
-		applyProxyTimeoutDefaults(&opts, backend.JSONDataFromHTTPClientOptions(opts), *l.timeoutDefaults)
 	}
 	// Without a namespace, do not risk sharing connections between tenants.
 	namespace := krequest.NamespaceValue(ctx)

@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
@@ -38,7 +37,6 @@ var (
 	client = newHTTPClient()
 
 	errPluginProxyRouteAccessDenied = errors.New("plugin proxy route access denied")
-	errPluginProxyDestinationDenied = errors.New("plugin proxy destination access denied")
 )
 
 // maxForwardedUserAgentLen is the maximum byte length of the client User-Agent
@@ -62,11 +60,6 @@ func WithRouteAccessChecker(check RouteAccessChecker) DataSourceProxyOption {
 	return func(p *DataSourceProxy) { p.routeAccessChecker = check }
 }
 
-// WithDestinationValidator checks the resolved URL after route interpolation and before forwarding.
-func WithDestinationValidator(validate func(string) error) DataSourceProxyOption {
-	return func(p *DataSourceProxy) { p.validateDestination = validate }
-}
-
 type DataSourceProxy struct {
 	routeAccessChecker RouteAccessChecker
 	ds                 *datasourcesV0.DataSource
@@ -82,8 +75,6 @@ type DataSourceProxy struct {
 	oAuthTokenService  oauthtoken.OAuthTokenService
 	tracer             tracing.Tracer
 	features           featuremgmt.FeatureToggles
-
-	validateDestination func(string) error
 }
 
 type httpClient interface {
@@ -162,16 +153,6 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		return
 	}
 
-	if proxy.validateDestination != nil {
-		next := transport
-		transport = sdkhttpclient.RoundTripperFunc(func(req *http.Request) (*http.Response, error) {
-			if err := proxy.validateDestination(req.URL.String()); err != nil {
-				return nil, fmt.Errorf("%w: %v", errPluginProxyDestinationDenied, err)
-			}
-			return next.RoundTrip(req)
-		})
-	}
-
 	modifyResponse := func(resp *http.Response) error {
 		if resp.StatusCode == 401 {
 			// The data source rejected the request as unauthorized, convert to 400 (bad request)
@@ -203,16 +184,6 @@ func (proxy *DataSourceProxy) HandleRequest() {
 		proxyutil.WithTransport(transport),
 		proxyutil.WithModifyResponse(modifyResponse),
 	)
-	if proxy.validateDestination != nil {
-		handleError := reverseProxy.ErrorHandler
-		reverseProxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-			if errors.Is(err, errPluginProxyDestinationDenied) {
-				writeJSONErr(w, req, http.StatusForbidden, "Access denied", nil)
-				return
-			}
-			handleError(w, req, err)
-		}
-	}
 
 	proxy.logRequest()
 	ctx, span := proxy.tracer.Start(proxy.ctx.Req.Context(), "datasource reverse proxy")
@@ -364,9 +335,7 @@ func dsInfo(ds *datasourcesV0.DataSource, decryptedValues map[string]string) DSI
 	}
 
 	return DSInfo{
-		ID:        meta.GetDeprecatedInternalID(), // nolint:staticcheck
-		Namespace: ds.Namespace,
-		UID:       ds.Name,
+		ID: meta.GetDeprecatedInternalID(), // nolint:staticcheck
 
 		URL:                     ds.Spec.URL(),
 		Updated:                 updated,
