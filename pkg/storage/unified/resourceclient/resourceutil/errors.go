@@ -25,7 +25,11 @@ func NewResourceVersionExpiredError(rv int64) error {
 		Code:    http.StatusGone,
 		Reason:  string(metav1.StatusReasonExpired),
 	}
-	st := grpcstatus.New(grpccodes.OutOfRange, result.Message)
+	// The HTTP status as the gRPC code (the httpgrpc convention) makes gRPC
+	// instrumentation label an expired watch "410" instead of "error": watches
+	// expire on purpose to bound stale state. Clients detect expiry by the
+	// details, so ones that expect OutOfRange still see it.
+	st := grpcstatus.New(grpccodes.Code(http.StatusGone), result.Message)
 	if withDetails, err := st.WithDetails(result); err == nil {
 		st = withDetails
 	}
