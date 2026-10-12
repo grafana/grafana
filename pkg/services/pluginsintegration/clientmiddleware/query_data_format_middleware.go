@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
-// NewQueryDataFormatMiddleware creates a middleware that keeps the Arrow wire format for QueryData
-// when the datasources.jsonQueryDataFormat toggle is off or the plugin is listed in arrowPlugins.
+// NewQueryDataFormatMiddleware creates a middleware that requests the JSON wire format for QueryData
+// while the datasources.jsonQueryDataFormat toggle is on, and Arrow for plugins listed in arrowPlugins.
 func NewQueryDataFormatMiddleware(arrowPlugins []string) backend.HandlerMiddleware {
 	ids := make(map[string]struct{}, len(arrowPlugins))
 	for _, id := range arrowPlugins {
@@ -33,10 +33,11 @@ type QueryDataFormatMiddleware struct {
 }
 
 func (m *QueryDataFormatMiddleware) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
-	if m.keepArrow(ctx, req.PluginContext.PluginID) {
-		ctx = grpcplugin.WithQueryDataFormat(ctx, grpcplugin.QueryDataFormatArrow)
+	format := grpcplugin.QueryDataFormatArrow
+	if m.requestJSON(ctx, req.PluginContext.PluginID) {
+		format = grpcplugin.QueryDataFormatJSON
 	}
-	return m.BaseHandler.QueryData(ctx, req)
+	return m.BaseHandler.QueryData(grpcplugin.WithQueryDataFormat(ctx, format), req)
 }
 
 // QueryChunkedData passes through unchanged. The chunked request carries its own format.
@@ -44,9 +45,9 @@ func (m *QueryDataFormatMiddleware) QueryChunkedData(ctx context.Context, req *b
 	return m.BaseHandler.QueryChunkedData(ctx, req, w)
 }
 
-func (m *QueryDataFormatMiddleware) keepArrow(ctx context.Context, pluginID string) bool {
+func (m *QueryDataFormatMiddleware) requestJSON(ctx context.Context, pluginID string) bool {
 	if _, ok := m.arrowPlugins[pluginID]; ok {
-		return true
+		return false
 	}
-	return !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDatasourcesJsonQueryDataFormat, false, openfeature.TransactionContext(ctx))
+	return openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagDatasourcesJsonQueryDataFormat, false, openfeature.TransactionContext(ctx))
 }
