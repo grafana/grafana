@@ -1120,7 +1120,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     width: '100%',
   }),
   listEditing: css({
-    gap: 0,
+    gap: theme.spacing(2),
     // Without this, the cell you type in and the cell under the pointer both show their controls. So
     // the pointer wins: this hides the controls on every cell the pointer is not over. Whatever holds
     // focus stays visible, because a tab stop at opacity 0 is a focus trap. A control that pinned

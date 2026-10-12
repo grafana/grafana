@@ -41,8 +41,9 @@ export function NotebookCellAddButton({ index, onAdd, className }: Props) {
 const getStyles = (theme: GrafanaTheme2) => ({
   wrapper: css({
     position: 'absolute',
-    left: theme.spacing(3.5),
-    top: theme.spacing(4),
+    left: 0,
+    top: theme.spacing(1),
+    '@media (hover: none)': { opacity: 1 },
     width: theme.spacing(3),
     height: theme.spacing(3),
     display: 'flex',

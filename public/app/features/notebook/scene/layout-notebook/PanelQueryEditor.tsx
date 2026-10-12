@@ -21,6 +21,7 @@ interface Props {
   cell?: NotebookCellItem;
   /** True right after this cell was inserted or converted — see NotebookCellRenderer's own doc comment. */
   autoFocus?: boolean;
+  suggestVisualization?: boolean;
 }
 
 /**
@@ -29,7 +30,7 @@ interface Props {
  * and re-runs on a time-range change the same way any dashboard panel does. This component only
  * reads and writes that runner's live state — one PanelQueryEditorRow per query.
  */
-export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
+export function PanelQueryEditor({ panel, cell, autoFocus, suggestVisualization = true }: Props) {
   const queryRunner = getQueryRunnerFor(panel);
   const { queries } = queryRunner?.useState() ?? { queries: [] };
   const { data } = sceneGraph.getData(panel).useState();
@@ -41,7 +42,7 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
     if (!queryRunner || queries.length === 0) {
       return;
     }
-    if (!isEqual(lastSuggestedQuery.current, queries[0])) {
+    if (suggestVisualization && !isEqual(lastSuggestedQuery.current, queries[0])) {
       try {
         const suggestion = await getVizSuggestionForQuery(queries[0], range);
         lastSuggestedQuery.current = queries[0];
@@ -53,7 +54,7 @@ export function PanelQueryEditor({ panel, cell, autoFocus }: Props) {
       }
     }
     queryRunner.runQueries();
-  }, [queries, range, panel, queryRunner]);
+  }, [queries, range, panel, queryRunner, suggestVisualization]);
 
   if (!queryRunner || queries.length === 0) {
     return null;

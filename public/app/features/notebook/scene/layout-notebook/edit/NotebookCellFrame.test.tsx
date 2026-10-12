@@ -108,16 +108,20 @@ describe('NotebookCellFrame', () => {
     expect(onAdd).toHaveBeenCalledWith('heading', 1);
   });
 
-  // The actions bar sits in the reserved band at the top of this frame's own box. Hidden but
-  // hit-testable, it would still swallow clicks meant for this cell's own content, so the hidden
-  // state has to be inert and not merely invisible. jsdom does no hit-testing, so this pins the
-  // declaration rather than the collision.
-  it('makes the hidden actions bar inert', async () => {
-    renderFrame({ isEditing: true, onDuplicate: () => {}, onDelete: () => {} });
+  it('opens block actions from the drag handle and invokes duplicate', async () => {
+    const onDuplicate = jest.fn();
+    const { user } = renderFrame({ isEditing: true, onDuplicate, onDelete: jest.fn() });
+    expect(screen.queryByRole('menuitem', { name: 'Duplicate block' })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Block actions' }));
+    await user.click(screen.getByRole('menuitem', { name: 'Duplicate block' }));
+    expect(onDuplicate).toHaveBeenCalledTimes(1);
+  });
 
-    const actions = (await screen.findByRole('button', { name: 'Duplicate block' })).parentElement;
-
-    expect(getComputedStyle(actions!).pointerEvents).toBe('none');
+  it('opens the block menu with Enter', async () => {
+    const { user } = renderFrame({ isEditing: true, onDuplicate: jest.fn(), onDelete: jest.fn() });
+    screen.getByRole('button', { name: 'Block actions' }).focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('menuitem', { name: 'Delete block' })).toBeVisible();
   });
 
   // A Panel or Collapsed cell has no caret of its own to hand ArrowUp/Down or a focus grant to, so

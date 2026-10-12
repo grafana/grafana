@@ -1,10 +1,10 @@
 import { css, cx } from '@emotion/css';
 import { Draggable } from '@hello-pangea/dnd';
-import { type KeyboardEvent, useEffect, useRef } from 'react';
+import { type KeyboardEvent, useEffect, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Dropdown, Icon, useStyles2 } from '@grafana/ui';
 import { getFocusStyles } from '@grafana/ui/internal';
 
 import { type NotebookCellItem } from '../NotebookCellItem';
@@ -14,7 +14,11 @@ import { resolveScrollAlign } from '../cells/focusExtension';
 import { type NotebookBlockType } from './NotebookBlockTypeMenu';
 import { NotebookCellActions } from './NotebookCellActions';
 import { NotebookCellAddButton } from './NotebookCellAddButton';
-import { NOTEBOOK_CELL_CONTROLS_CLASS, NOTEBOOK_CELL_FRAME_CLASS } from './cellClassNames';
+import {
+  NOTEBOOK_CELL_CONTROLS_CLASS,
+  NOTEBOOK_CELL_CONTROLS_PINNED_CLASS,
+  NOTEBOOK_CELL_FRAME_CLASS,
+} from './cellClassNames';
 
 /** Hand-written for the same reason as the class above. */
 export const NOTEBOOK_CELL_CONTENT_CLASS = 'notebook-cell-content';
@@ -110,6 +114,7 @@ export function NotebookCellFrame({
   onNavigate,
 }: Props) {
   const styles = useStyles2(getStyles);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { collapsed, body, content, elementName } = cell.useState();
   // Markdown/Code hand a focus grant to their own editor's caret (via useFocusExtension) and detect
   // an ArrowUp/Down boundary themselves. A Panel or Collapsed cell has no caret to do either with, so
@@ -119,7 +124,10 @@ export function NotebookCellFrame({
   const frameLabel = collapsed
     ? t('notebook.cell.frame.aria-label-collapsed', 'Collapsed block: {{name}}', { name: elementName })
     : t('notebook.cell.frame.aria-label-panel', 'Visualization block: {{name}}', { name: elementName });
-  const dragHandleLabel = t('notebook.cell.drag-handle', 'Drag to reorder');
+  const dragHandleLabel =
+    onDuplicate && onDelete
+      ? t('notebook.cell.block-actions', 'Block actions')
+      : t('notebook.cell.drag-handle', 'Drag to reorder');
 
   const frameRef = useRef<HTMLDivElement>(null);
   const pendingAutoFocus = useRef(Boolean(autoFocus && isEditing && !isEditorCell));
@@ -172,74 +180,85 @@ export function NotebookCellFrame({
   };
 
   return (
-    <Draggable draggableId={cell.state.key!} index={index} isDragDisabled={!isEditing}>
-      {(dragProvided, dragSnapshot) => (
-        <div
-          ref={(node) => {
-            dragProvided.innerRef(node);
-            frameRef.current = node;
-          }}
-          {...dragProvided.draggableProps}
-          tabIndex={isEditing && !isEditorCell ? 0 : undefined}
-          onKeyDown={!isEditorCell ? onFrameKeyDown : undefined}
-          role={!isEditorCell ? 'group' : undefined}
-          aria-label={!isEditorCell ? frameLabel : undefined}
-          className={cx(
-            NOTEBOOK_CELL_FRAME_CLASS,
-            styles.frame,
-            isEditing && styles.frameEditing,
-            !isEditorCell && styles.frameFocusable,
-            dragSnapshot.isDragging && styles.dragging,
-            (dragSnapshot.isDragging || isDragActive) && styles.controlsHidden,
-            dropIndicator === 'top' && styles.dropLineTop,
-            dropIndicator === 'bottom' && styles.dropLineBottom
-          )}
-        >
-          {isEditing && (
-            <div
-              {...dragProvided.dragHandleProps}
-              aria-label={dragHandleLabel}
-              className={cx(styles.handle, NOTEBOOK_CELL_CONTROLS_CLASS)}
-            >
-              {/* Labelled on the handle, not through a Tooltip: Tooltip makes its child a tab stop,
-                  so the icon was a second stop with no name. */}
-              <Icon title={dragHandleLabel} name="draggabledots" size="md" />
+    <Draggable
+      draggableId={cell.state.key!}
+      index={index}
+      isDragDisabled={!isEditing}
+      disableInteractiveElementBlocking
+    >
+      {(dragProvided, dragSnapshot) => {
+        const handle = (
+          <button
+            type="button"
+            {...dragProvided.dragHandleProps}
+            aria-label={dragHandleLabel}
+            title={t(
+              'notebook.cell.handle-help',
+              'Click for block actions; drag to move. Press Space to reorder with the keyboard.'
+            )}
+            className={cx(
+              styles.handle,
+              NOTEBOOK_CELL_CONTROLS_CLASS,
+              menuOpen && [styles.revealed, NOTEBOOK_CELL_CONTROLS_PINNED_CLASS]
+            )}
+          >
+            <Icon name="draggabledots" size="md" />
+          </button>
+        );
+        return (
+          <div
+            ref={(node) => {
+              dragProvided.innerRef(node);
+              frameRef.current = node;
+            }}
+            {...dragProvided.draggableProps}
+            tabIndex={isEditing && !isEditorCell ? 0 : undefined}
+            onKeyDown={!isEditorCell ? onFrameKeyDown : undefined}
+            role={!isEditorCell ? 'group' : undefined}
+            aria-label={!isEditorCell ? frameLabel : undefined}
+            className={cx(
+              NOTEBOOK_CELL_FRAME_CLASS,
+              styles.frame,
+              isEditing && styles.frameEditing,
+              !isEditorCell && styles.frameFocusable,
+              dragSnapshot.isDragging && styles.dragging,
+              (dragSnapshot.isDragging || isDragActive) && styles.controlsHidden,
+              dropIndicator === 'top' && styles.dropLineTop,
+              dropIndicator === 'bottom' && styles.dropLineBottom
+            )}
+          >
+            {isEditing &&
+              (onDuplicate && onDelete ? (
+                <Dropdown
+                  overlay={<NotebookCellActions onDuplicate={onDuplicate} onDelete={onDelete} />}
+                  placement="bottom-start"
+                  onVisibleChange={setMenuOpen}
+                >
+                  {handle}
+                </Dropdown>
+              ) : (
+                handle
+              ))}
+            {isEditing && (
+              <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_CONTROLS_CLASS} />
+            )}
+
+            <div className={NOTEBOOK_CELL_CONTENT_CLASS}>
+              <NotebookCellRenderer
+                cell={cell}
+                isEditing={Boolean(isEditing)}
+                autoFocus={autoFocus}
+                focusRequestId={focusRequestId}
+                caretOffset={caretOffset}
+                scrollAlign={scrollAlign}
+                onAdvance={onAdvance}
+                onFocusRequest={onFocusRequest}
+                onNavigate={onNavigate}
+              />
             </div>
-          )}
-
-          {isEditing && <NotebookCellAddButton index={index} onAdd={onAdd} className={NOTEBOOK_CELL_CONTROLS_CLASS} />}
-
-          {isEditing && onDuplicate && onDelete && (
-            <>
-              <div
-                className={cx(
-                  styles.actionsHoverBridge,
-                  (dragSnapshot.isDragging || isDragActive) && styles.actionsHoverBridgeHidden
-                )}
-              />
-              <NotebookCellActions
-                onDuplicate={onDuplicate}
-                onDelete={onDelete}
-                className={NOTEBOOK_CELL_CONTROLS_CLASS}
-              />
-            </>
-          )}
-
-          <div className={NOTEBOOK_CELL_CONTENT_CLASS}>
-            <NotebookCellRenderer
-              cell={cell}
-              isEditing={Boolean(isEditing)}
-              autoFocus={autoFocus}
-              focusRequestId={focusRequestId}
-              caretOffset={caretOffset}
-              scrollAlign={scrollAlign}
-              onAdvance={onAdvance}
-              onFocusRequest={onFocusRequest}
-              onNavigate={onNavigate}
-            />
           </div>
-        </div>
-      )}
+        );
+      }}
     </Draggable>
   );
 }
@@ -267,10 +286,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   frameEditing: css({
     // Wide enough for the drag handle and the add-cell button side by side — see the same numbers in
-    // NotebookCellActions.tsx, and dragging/dropLine below, which all anchor off this same gutter.
+    // NotebookCellAddButton.tsx, and dragging/dropLine below, which all anchor off this same gutter.
     paddingLeft: theme.spacing(7),
     marginLeft: theme.spacing(-7),
-    paddingTop: theme.spacing(3),
+
     [theme.breakpoints.up('md')]: {
       paddingLeft: theme.spacing(10),
       marginLeft: theme.spacing(-10),
@@ -291,11 +310,14 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
   }),
   handle: css({
+    border: 0,
+    padding: 0,
+    background: 'transparent',
     position: 'absolute',
-    left: 0,
+    left: theme.spacing(3.5),
     width: theme.spacing(3),
     height: theme.spacing(3),
-    top: theme.spacing(4),
+    top: theme.spacing(1),
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -303,6 +325,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     color: theme.colors.text.secondary,
     cursor: 'grab',
     opacity: 0,
+    '@media (hover: none)': { opacity: 1 },
     '&:hover': {
       color: theme.colors.text.primary,
       backgroundColor: theme.colors.action.hover,
@@ -341,28 +364,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
       visibility: 'hidden',
     },
   }),
-  actionsHoverBridge: css({
-    position: 'absolute',
-    // Sits inside this frame's own reserved top padding (frameEditing's paddingTop), never above the
-    // frame's own top edge — that edge is the previous cell's box, and reaching past it here is
-    // exactly what used to let a short previous cell's own content get hovered as if it were this
-    // bridge instead.
-    top: 0,
-    // Starts at the frame's own left edge, covering the gutter/handle column above it too — not just
-    // the span the actions bar itself occupies. Without that, the top-left corner of the widened hit-box
-    // is a dead zone: nothing there answers the hit test, so hovering it doesn't reveal anything, and the
-    // pointer has to drift right past the gutter before the actions bar appears.
-    left: 0,
-    width: theme.spacing(15),
-    [theme.breakpoints.up('md')]: {
-      width: theme.spacing(18),
-    },
-    height: theme.spacing(4),
-    pointerEvents: 'auto',
-  }),
-  actionsHoverBridgeHidden: css({
-    pointerEvents: 'none',
-  }),
+  revealed: css({ opacity: 1 }),
   dropLineTop: css({
     '&::before': dropLine(theme, 'top'),
   }),

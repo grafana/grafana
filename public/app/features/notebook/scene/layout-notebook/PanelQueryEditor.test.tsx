@@ -1,16 +1,21 @@
-import { act } from 'react';
+import { act, type ReactNode } from 'react';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataQuery, type DataSourceInstanceSettings, type DataSourceRef } from '@grafana/data';
+import { getPanelPlugin } from '@grafana/data/test';
+import { setPluginImportUtils } from '@grafana/runtime';
+import { setPanelPluginMetas } from '@grafana/runtime/internal';
 import { SceneRefreshPicker, SceneTimePicker, SceneTimeRange, VizPanel } from '@grafana/scenes';
 import { buildVizPanelState } from 'app/features/dashboard-scene/serialization/layoutSerializers/utils';
 import { getQueryRunnerFor } from 'app/features/dashboard-scene/utils/getQueryRunnerFor';
+import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 import { defaultVisualizationPanelKind } from 'app/features/notebook/types';
 
 import { NotebookScene } from '../NotebookScene';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
+import { NotebookPanelEditor } from './NotebookPanelEditor';
 import { PanelQueryEditor } from './PanelQueryEditor';
 import { setQueryRunnerQueries } from './setQueryRunnerQueries';
 
@@ -175,13 +180,135 @@ function buildPanel(queries?: Array<Record<string, unknown>>) {
 }
 
 beforeEach(() => {
+  jest.mocked(tryGetExploreUrlForPanel).mockReset().mockResolvedValue(undefined);
   resolvedSettings = { uid: 'default-uid', type: 'testdata', name: 'gdev-testdata' };
   getVizSuggestionForQuery.mockReset().mockResolvedValue(undefined);
   defaultQueryForNewType = undefined;
   getDataSourceInstance.mockClear();
 });
 
+// Render the native headerActions slot without loading a visualization plugin in jsdom.
+function ChartWithHeader({ panel, children }: { panel: VizPanel; children: ReactNode }) {
+  const { headerActions } = panel.useState();
+  return (
+    <div>
+      {headerActions as ReactNode}
+      {children}
+    </div>
+  );
+}
+
+jest.mock('./NotebookVizSuggestions', () => ({
+  NotebookVizSuggestions: ({
+    onSelect,
+    onBack,
+  }: {
+    onSelect: (value: { pluginId: string; options: object }) => void;
+    onBack: () => void;
+  }) => (
+    <div>
+      <button onClick={onBack}>Back</button>
+      <button onClick={() => onSelect({ pluginId: 'table', options: { showHeader: false } })}>Suggested table</button>
+    </div>
+  ),
+}));
+
+jest.mock('app/features/dashboard-scene/utils/urlBuilders', () => ({
+  tryGetExploreUrlForPanel: jest.fn().mockResolvedValue(undefined),
+}));
+
 describe('PanelQueryEditor', () => {
+  it.each([undefined, '/explore?test=query'])('shows only permitted Explore actions in view mode: %s', async (url) => {
+    jest.mocked(tryGetExploreUrlForPanel).mockResolvedValue(url);
+    const { panel, cell } = buildPanel();
+    render(
+      <NotebookPanelEditor panel={panel} cell={cell} isEditing={false}>
+        <ChartWithHeader panel={panel}>Chart</ChartWithHeader>
+      </NotebookPanelEditor>
+    );
+    await waitFor(() => expect(tryGetExploreUrlForPanel).toHaveBeenCalled());
+    if (url) {
+      expect(await screen.findByRole('link', { name: 'Open in Explore' })).toHaveAttribute('href', url);
+    } else {
+      expect(screen.queryByRole('link', { name: 'Open in Explore' })).not.toBeInTheDocument();
+    }
+    expect(screen.queryByText('Edit query')).not.toBeInTheDocument();
+    expect(screen.queryByText('Change visualization')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Edit with AI' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Run query', exact: true })).not.toBeInTheDocument();
+  });
+
+  it('changes the chart type while retaining queries and supports undo and redo', async () => {
+    const timeseries = getPanelPlugin({ id: 'timeseries' });
+    const table = getPanelPlugin({ id: 'table' });
+    setPanelPluginMetas({ timeseries: timeseries.meta, table: table.meta });
+    setPluginImportUtils({
+      importPanelPlugin: async (id) => (id === 'table' ? table : timeseries),
+      getPanelPluginFromCache: () => undefined,
+    });
+    const { panel, cell, history } = buildPanel([{ expr: 'up' }]);
+    const queries = getQueryRunnerFor(panel)!.state.queries;
+    const { user } = render(
+      <NotebookPanelEditor cell={cell} panel={panel}>
+        <ChartWithHeader panel={panel}>Chart</ChartWithHeader>
+      </NotebookPanelEditor>
+    );
+    await user.click(screen.getByRole('button', { name: 'Change visualization' }));
+    await user.click(await screen.findByRole('button', { name: 'Suggested table' }));
+    await waitFor(() => expect(cell.state.body?.state.pluginId).toBe('table'));
+    expect(getQueryRunnerFor(cell.state.body!)!.state.queries).toEqual(queries);
+    act(() => {
+      history.undo();
+    });
+    expect(cell.state.body?.state.pluginId).toBe('timeseries');
+    act(() => {
+      history.redo();
+    });
+    expect(cell.state.body?.state.pluginId).toBe('table');
+    expect(getQueryRunnerFor(cell.state.body!)!.state.queries).toEqual(queries);
+  });
+
+  it('hides the query controls until opened and preserves edits when folded again', async () => {
+    const { panel, cell } = buildPanel();
+    const { user } = render(
+      <NotebookPanelEditor panel={panel} cell={cell}>
+        <ChartWithHeader panel={panel}>Chart preview</ChartWithHeader>
+      </NotebookPanelEditor>
+    );
+    expect(screen.getByText('Chart preview')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Query', exact: true })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Run query', exact: true })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Query', exact: true }));
+    await user.click(await screen.findByRole('button', { name: 'edit query A' }));
+    expect(screen.getByTestId('current-query-A')).toHaveTextContent('"expr":"up"');
+    await user.click(screen.getByRole('button', { name: 'Query', exact: true }));
+    expect(screen.queryByRole('button', { name: 'Run query', exact: true })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Query', exact: true }));
+    expect(screen.getByTestId('current-query-A')).toHaveTextContent('"expr":"up"');
+    expect(screen.getByRole('button', { name: 'switch datasource A' })).toBeVisible();
+  });
+
+  it('opens the query editor for a newly inserted visualization', async () => {
+    const { panel, cell } = buildPanel();
+    render(
+      <NotebookPanelEditor panel={panel} cell={cell} autoFocus>
+        <ChartWithHeader panel={panel}>New chart</ChartWithHeader>
+      </NotebookPanelEditor>
+    );
+    expect(await screen.findByRole('button', { name: 'edit query A' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Run query', exact: true })).toBeVisible();
+  });
+
+  it('runs queries without replacing the manually selected visualization', async () => {
+    const { panel, cell } = buildPanel();
+    const runQueries = jest.spyOn(getQueryRunnerFor(panel)!, 'runQueries').mockImplementation(() => {});
+    const { user } = render(<PanelQueryEditor panel={panel} cell={cell} suggestVisualization={false} />);
+    await user.click(screen.getByRole('button', { name: 'Run query', exact: true }));
+    expect(runQueries).toHaveBeenCalledTimes(1);
+    expect(getVizSuggestionForQuery).not.toHaveBeenCalled();
+    expect(panel.state.pluginId).toBe('timeseries');
+  });
+
   it('resolves the panel’s own query datasource', async () => {
     const { panel, cell } = buildPanel();
     render(<PanelQueryEditor panel={panel} cell={cell} />);

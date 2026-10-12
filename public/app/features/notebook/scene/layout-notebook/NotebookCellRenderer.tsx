@@ -12,7 +12,7 @@ import { isLibraryPanel } from 'app/features/dashboard-scene/utils/utils';
 import { type CellContentKind } from 'app/features/notebook/types';
 
 import { type NotebookCellItem } from './NotebookCellItem';
-import { PanelQueryEditor } from './PanelQueryEditor';
+import { NotebookPanelEditor } from './NotebookPanelEditor';
 import { MarkdownCell } from './cells/MarkdownCell';
 import { cellTypeRegistry } from './cells/cellTypeRegistry';
 import { NotebookBlockTypeMenu, type NotebookBlockType } from './edit/NotebookBlockTypeMenu';
@@ -102,22 +102,47 @@ function PanelCell({
   // assigned to it would never get its own activate() call without this.
   const { elementName, $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
 
-  // PanelQueryEditor already mounts its own copy of this control inline, so this one only needs to fill in for the
-  // two cases isEditableQueryPanel excludes (a library panel, or one with transformations),
-  // where there is no query editor to be inline with.
+  const { pluginId } = panel.useState();
+  const panelHeight = ['stat', 'gauge'].includes(pluginId) ? 180 : pluginId === 'barchart' ? 240 : PANEL_HEIGHT;
+
   const showStandaloneClock = isEditing ? !isEditableQueryPanel(panel) : Boolean($timeRange);
+
+  const visualization = (
+    <div
+      className={styles.panel}
+      style={{ height: panelHeight }}
+      data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}
+    >
+      <panel.Component model={panel} />
+    </div>
+  );
+
+  if (getQueryRunnerFor(panel)) {
+    return (
+      <NotebookPanelEditor
+        cell={cell}
+        panel={panel}
+        autoFocus={autoFocus}
+        isEditing={isEditing && isEditableQueryPanel(panel)}
+      >
+        {showStandaloneClock && (
+          <Box display="flex" justifyContent="flex-end">
+            <NotebookCellTimeRangeControl cell={cell} />
+          </Box>
+        )}
+        {visualization}
+      </NotebookPanelEditor>
+    );
+  }
 
   return (
     <Stack direction="column" gap={1}>
-      {isEditing && isEditableQueryPanel(panel) && <PanelQueryEditor cell={cell} panel={panel} autoFocus={autoFocus} />}
       {showStandaloneClock && (
         <Box display="flex" justifyContent="flex-end">
           <NotebookCellTimeRangeControl cell={cell} />
         </Box>
       )}
-      <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}>
-        <panel.Component model={panel} />
-      </div>
+      {visualization}
     </Stack>
   );
 }

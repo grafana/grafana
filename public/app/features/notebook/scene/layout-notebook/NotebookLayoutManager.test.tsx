@@ -433,11 +433,11 @@ describe('NotebookLayoutManager', () => {
   });
 
   describe('cell actions', () => {
-    // The bar is inert until its cell is hovered (see NotebookCellFrame), and jsdom does not apply
-    // :hover styles, so nothing here can reveal it. These tests are about what the buttons do once
-    // reached, not about the reveal, so they opt out of user-event's pointer-events assertion — the
-    // gating itself is pinned in NotebookCellFrame.test.tsx.
-    const reachActions = () => userEvent.setup({ pointerEventsCheck: 0 });
+    const pickAction = async (index: number, name: string) => {
+      const user = userEvent.setup();
+      await user.click(screen.getAllByRole('button', { name: 'Block actions' })[index]);
+      await user.click(screen.getByRole('menuitem', { name }));
+    };
 
     it('does not offer them outside edit mode', () => {
       renderNotebook();
@@ -448,11 +448,11 @@ describe('NotebookLayoutManager', () => {
 
     // renderNotebook's two given cells plus the trailing-invariant cell the bootstrap effect appends
     // after them (its last cell — the collapsed panel — is not an empty markdown cell either).
-    it('offers duplicate and delete on every cell in edit mode', () => {
+    it('offers a block menu on every cell in edit mode', () => {
       renderNotebook(true);
 
-      expect(screen.getAllByRole('button', { name: 'Duplicate block' })).toHaveLength(3);
-      expect(screen.getAllByRole('button', { name: 'Delete block' })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: 'Block actions' })).toHaveLength(3);
+      expect(screen.queryByRole('menuitem', { name: 'Delete block' })).not.toBeInTheDocument();
     });
 
     // Inside the frame, so the existing hover rule reveals them with the rest of the cell's controls
@@ -462,7 +462,7 @@ describe('NotebookLayoutManager', () => {
 
       const frame = (await screen.findByText('Hello notebook')).closest<HTMLElement>('[data-rfd-draggable-id]');
 
-      expect(within(frame!).getByRole('button', { name: 'Duplicate block' })).toBeInTheDocument();
+      expect(within(frame!).getByRole('button', { name: 'Block actions' })).toBeInTheDocument();
     });
 
     // ModalsContextProvider (which test-utils' render supplies) tracks the confirmation but ModalRoot,
@@ -471,7 +471,7 @@ describe('NotebookLayoutManager', () => {
       const publish = jest.spyOn(appEvents, 'publish');
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      await pickAction(1, 'Delete block');
 
       expect(publish).toHaveBeenCalledTimes(1);
       expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
@@ -483,7 +483,7 @@ describe('NotebookLayoutManager', () => {
       const publish = jest.spyOn(appEvents, 'publish');
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b', 'c']), true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      await pickAction(1, 'Delete block');
       act(() => {
         // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
         (publish.mock.calls[0][0] as ShowConfirmModalEvent).payload.onConfirm?.();
@@ -510,7 +510,7 @@ describe('NotebookLayoutManager', () => {
         )
       );
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[1]);
+      await pickAction(1, 'Delete block');
 
       expect(publish).not.toHaveBeenCalled();
       // Plus the trailing-invariant cell appended after 'b'.
@@ -527,7 +527,7 @@ describe('NotebookLayoutManager', () => {
       cell.setState({ collapsed: true });
       const { manager } = renderManager(buildManager([cell], true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Delete block' })[0]);
+      await pickAction(0, 'Delete block');
 
       expect(publish.mock.calls[0][0]).toBeInstanceOf(ShowConfirmModalEvent);
       expect(cellNames(manager)).toEqual(['latency', 'paragraph-1']);
@@ -536,7 +536,7 @@ describe('NotebookLayoutManager', () => {
     it('duplicates the cell directly below itself', async () => {
       const { manager } = renderManager(buildManager(buildNarrativeCells(['a', 'b']), true));
 
-      await reachActions().click(screen.getAllByRole('button', { name: 'Duplicate block' })[0]);
+      await pickAction(0, 'Duplicate block');
 
       // Plus the trailing-invariant cell appended after 'b'.
       expect(cellNames(manager)).toEqual(['a', 'a-copy-1', 'b', 'paragraph-1']);
@@ -879,7 +879,7 @@ describe('NotebookLayoutManager', () => {
     it('renders a named drag handle per cell in edit mode', () => {
       renderNotebook(true);
 
-      expect(screen.getAllByRole('button', { name: 'Drag to reorder' })).toHaveLength(3);
+      expect(screen.getAllByRole('button', { name: 'Block actions' })).toHaveLength(3);
     });
 
     // The handle is a tab stop, which is what gives keyboard users the reorder for free — and the
