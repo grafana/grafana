@@ -226,7 +226,7 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 	getCtx, span := tracing.Start(ctx, "folder.access.get")
 	f, err := r.getter.Get(getCtx, name, &v1.GetOptions{})
 	if err != nil {
-		tracing.Error(span, err)
+		_ = tracing.Error(span, err)
 	}
 	span.End()
 	if err != nil {
@@ -273,7 +273,7 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 			}
 			for _, p := range batch.probes {
 				if err := resp.Results[p.correlationID].Error; err != nil {
-					tracing.Error(span, err)
+					_ = tracing.Error(span, err)
 					break
 				}
 			}

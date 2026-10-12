@@ -64,11 +64,11 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		getCtx, getSpan := tracing.Start(ctx, "folder.children.get")
 		_, err := r.getter.Get(getCtx, name, &v1.GetOptions{})
 		if err != nil {
-			tracing.Error(getSpan, err)
+			_ = tracing.Error(getSpan, err)
 		}
 		getSpan.End()
 		if err != nil {
-			tracing.Error(span, err)
+			_ = tracing.Error(span, err)
 			span.End()
 			return nil, err
 		}
@@ -114,7 +114,7 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 		})
 		err = resource.StatusErrorFromResponse(resp.GetError(), err)
 		if err != nil {
-			tracing.Error(searchSpan, err)
+			_ = tracing.Error(searchSpan, err)
 		}
 		searchSpan.End()
 		if err != nil {

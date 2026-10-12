@@ -69,11 +69,11 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 	getCtx, getSpan := tracing.Start(ctx, "folder.counts.get")
 	_, err := r.getter.Get(getCtx, name, &v1.GetOptions{})
 	if err != nil {
-		tracing.Error(getSpan, err)
+		_ = tracing.Error(getSpan, err)
 	}
 	getSpan.End()
 	if err != nil {
-		tracing.Error(span, err)
+		_ = tracing.Error(span, err)
 		span.End()
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		})
 		err = resource.StatusErrorFromResponse(stats.GetError(), err)
 		if err != nil {
-			tracing.Error(statsSpan, err)
+			_ = tracing.Error(statsSpan, err)
 		}
 		statsSpan.End()
 		if err != nil {

@@ -59,7 +59,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 		getCtx, getSpan := tracing.Start(ctx, "folder.parents.get")
 		obj, err := r.getter.Get(getCtx, name, &metav1.GetOptions{})
 		if err != nil {
-			tracing.Error(getSpan, err)
+			_ = tracing.Error(getSpan, err)
 		}
 		getSpan.End()
 		if err != nil {
@@ -76,7 +76,7 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 		parentsCtx, parentsSpan := tracing.Start(ctx, "folder.parents.lookupParents")
 		info, err := r.parents(parentsCtx, folderObj)
 		if err != nil {
-			tracing.Error(parentsSpan, err)
+			_ = tracing.Error(parentsSpan, err)
 		}
 		parentsSpan.End()
 		if err != nil {

@@ -55,7 +55,7 @@ func newParentsGetter(getter rest.Getter, maxDepth int) parentsGetter {
 			getCtx, span := tracing.Start(ctx, "folder.parents.getParent")
 			obj, e2 := getter.Get(getCtx, item.Parent, &metav1.GetOptions{})
 			if e2 != nil {
-				tracing.Error(span, e2)
+				_ = tracing.Error(span, e2)
 				span.End()
 				info.Items = append(info.Items, folders.FolderInfo{
 					Name:        item.Parent,
