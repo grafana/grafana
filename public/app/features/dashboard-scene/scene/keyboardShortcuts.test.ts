@@ -321,33 +321,42 @@ describe('setupKeyboardShortcuts', () => {
   });
 
   it.each([
-    { mode: 'view' as const, editable: true },
-    { mode: 'view' as const, editable: false },
-    { mode: 'agent' as const, editable: true },
-    { mode: 'agent' as const, editable: false },
-  ])('panel edit shortcut enters Editing from $mode only when editable=$editable', async ({ mode, editable }) => {
-    setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
-    try {
-      const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
-      mockScene.setState({
-        mode,
-        isEditing: true,
-        editable,
-        body: DefaultGridLayoutManager.fromVizPanels([panel]),
-      });
-      jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
-      locationService.replace('/d/test-uid');
-      setupKeyboardShortcuts(mockScene);
-      const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
-      attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
-      const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'e')![0];
-      await binding.onTrigger();
-      expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
-      expect(locationService.getSearchObject().editPanel).toBe(editable ? '1' : undefined);
-    } finally {
-      setTestFlags({});
+    { mode: 'view' as const, editable: true, fullscreen: false },
+    { mode: 'view' as const, editable: true, fullscreen: true },
+    { mode: 'view' as const, editable: false, fullscreen: false },
+    { mode: 'view' as const, editable: false, fullscreen: true },
+    { mode: 'agent' as const, editable: true, fullscreen: false },
+    { mode: 'agent' as const, editable: true, fullscreen: true },
+    { mode: 'agent' as const, editable: false, fullscreen: false },
+    { mode: 'agent' as const, editable: false, fullscreen: true },
+  ])(
+    'panel edit shortcut enters Editing from $mode only when editable=$editable (fullscreen=$fullscreen)',
+    async ({ mode, editable, fullscreen }) => {
+      setTestFlags({ dashboardNewLayouts: true, 'grafana.dashboardPreviewMode': true });
+      try {
+        const panel = new VizPanel({ key: 'panel-1', pluginId: 'text' });
+        mockScene.setState({
+          mode,
+          isEditing: true,
+          editable,
+          viewPanel: fullscreen ? 'panel-1' : undefined,
+          body: DefaultGridLayoutManager.fromVizPanels([panel]),
+        });
+        jest.mocked(findVizPanelByPathId).mockReturnValue(panel);
+        locationService.replace(fullscreen ? '/d/test-uid?viewPanel=panel-1' : '/d/test-uid');
+        setupKeyboardShortcuts(mockScene);
+        const attentionHandler = jest.mocked(appEvents.subscribe).mock.calls[0][1];
+        attentionHandler(new SetPanelAttentionEvent({ panelId: 'panel-1' }));
+        const binding = mockKeybindingSet.addBinding.mock.calls.find(([binding]) => binding.key === 'e')![0];
+        await binding.onTrigger();
+        expect(mockScene.state.mode).toBe(editable ? 'edit' : mode);
+        expect(locationService.getSearchObject().editPanel).toBe(editable ? '1' : undefined);
+        expect(locationService.getSearchObject().viewPanel).toBe(fullscreen && !editable ? 'panel-1' : undefined);
+      } finally {
+        setTestFlags({});
+      }
     }
-  });
+  );
 
   describe('edit mode shortcuts', () => {
     beforeEach(() => {

@@ -1,4 +1,4 @@
-import { act, cleanup, render, renderHook, screen } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
@@ -128,6 +128,26 @@ it('keeps the draft and history when switching modes without additional edits', 
   expect(scene.state.sidebar.state.undoStack).toHaveLength(1);
   expect(scene.getInitialState()?.title).toBe(baseline);
 });
+
+it.each(['panel_menu', 'shortcut', 'navigation'] as const)(
+  'opens the panel editor from fullscreen Viewing via %s',
+  async (trigger) => {
+    const dashboard = setup(true);
+    dashboard.setDashboardMode('edit', 'picker');
+    dashboard.setDashboardMode('view', 'picker');
+    dashboard.urlSync?.updateFromUrl({ viewPanel: 'panel-1' });
+    expect(dashboard.state.viewPanel).toBe('panel-1');
+
+    if (trigger !== 'navigation') {
+      expect(dashboard.setDashboardMode('edit', trigger)).toBe(true);
+    }
+    dashboard.urlSync?.updateFromUrl({ viewPanel: null, editPanel: '1' });
+
+    await waitFor(() => expect(dashboard.state.editPanel?.state.panelRef.resolve().state.title).toBe('Notes'));
+    expect(getDashboardMode(dashboard.state)).toBe('edit');
+    expect(dashboard.state.viewPanel).toBeUndefined();
+  }
+);
 
 it('accepts Assistant writes in View and refuses generic plugin writes', async () => {
   const scene = setup();

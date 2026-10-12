@@ -672,7 +672,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       this.state.planning ||
       this.state.editPanel ||
       this.state.editview ||
-      this.state.viewPanel ||
+      (this.state.viewPanel && mode !== 'edit') ||
       this.state.layoutOrchestrator.isDragging()
     ) {
       return false;
