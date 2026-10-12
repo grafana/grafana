@@ -124,6 +124,13 @@ func (hs *HTTPServer) GetOrgUsersForCurrentOrg(c *contextmodel.ReqContext) respo
 		Limit: c.QueryInt("limit"),
 		User:  c.SignedInUser,
 	}
+	if value := c.Query("userId"); value != "" {
+		id, err := strconv.ParseInt(value, 10, 64)
+		if err != nil || id <= 0 {
+			return response.Error(http.StatusBadRequest, "userId is invalid", err)
+		}
+		query.UserID = id
+	}
 
 	ctx := c.Req.Context()
 	var result *org.SearchOrgUsersQueryResult
@@ -395,24 +402,40 @@ func (hs *HTTPServer) searchOrgUsersUsingK8s(c *contextmodel.ReqContext, query *
 	// auth module for the whole request, not once per page.
 	externallySynced := hs.newExternallySyncedResolver(c.Req.Context(), hs.Cfg)
 
-	if query.Limit > 0 || query.UserID != 0 {
+	if query.Limit > 0 && query.UserID == 0 {
 		return hs.searchOrgUsersPageUsingK8s(c, query, externallySynced)
 	}
 
 	const pageSize = 1000
 	result := &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}
+	read := 0
 	for page := 1; ; page++ {
 		pageQuery := *query
 		pageQuery.Limit = pageSize
 		pageQuery.Page = page
+		// Search has no exact-ID filter in the app platform. Filter each page
+		// without mistaking a missing first-page match for an absent membership.
+		pageQuery.UserID = 0
 
 		pageResult, err := hs.searchOrgUsersPageUsingK8s(c, &pageQuery, externallySynced)
 		if err != nil {
 			return nil, err
 		}
-		result.OrgUsers = append(result.OrgUsers, pageResult.OrgUsers...)
+		read += len(pageResult.OrgUsers)
+		if query.UserID != 0 {
+			for _, member := range pageResult.OrgUsers {
+				if member.UserID == query.UserID {
+					return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{member}, TotalCount: 1}, nil
+				}
+			}
+		} else {
+			result.OrgUsers = append(result.OrgUsers, pageResult.OrgUsers...)
+		}
 
-		if int64(len(result.OrgUsers)) >= pageResult.TotalCount || len(pageResult.OrgUsers) < pageSize {
+		if int64(read) >= pageResult.TotalCount || len(pageResult.OrgUsers) < pageSize {
+			if query.UserID != 0 {
+				return &org.SearchOrgUsersQueryResult{OrgUsers: []*org.OrgUserDTO{}}, nil
+			}
 			result.TotalCount = int64(len(result.OrgUsers))
 			result.Page = 1
 			result.PerPage = len(result.OrgUsers)
@@ -759,6 +782,10 @@ type AddOrgUserParams struct {
 
 // swagger:parameters getOrgUsersForCurrentOrg
 type GetOrgUsersForCurrentOrgParams struct {
+	// Filter by the exact numerical user ID within the current organization.
+	// in:query
+	// required:false
+	UserID int64 `json:"userId"`
 	// in:query
 	// required:false
 	Query string `json:"query"`
@@ -804,7 +831,7 @@ type UpdateOrgUserParams struct {
 	OrgID int64 `json:"org_id"`
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters removeOrgUserForCurrentOrg
@@ -821,7 +848,7 @@ type RemoveOrgUserParams struct {
 	OrgID int64 `json:"org_id"`
 	// in:path
 	// required:true
-	UserID int64 `json:"user_id"`
+	UserID string `json:"user_id"`
 }
 
 // swagger:parameters searchOrgUsers
