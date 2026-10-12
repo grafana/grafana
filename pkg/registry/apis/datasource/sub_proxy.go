@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 
+	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
 	authnlib "github.com/grafana/authlib/authn"
@@ -38,6 +39,7 @@ type ProxyDependencies struct {
 	GrafanaConfig      *config.GrafanaCfg
 	// TransportConfigKey changes when provider configuration changes between requests.
 	TransportConfigKey string
+	TimeoutDefaults    *sdkhttpclient.TimeoutOptions
 	OAuthTokenService  *oauthtoken.Service
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
@@ -135,6 +137,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		}
 		loader.transports = r.transports
 		loader.transportConfigKey = deps.TransportConfigKey
+		loader.timeoutDefaults = deps.TimeoutDefaults
 
 		ds, err := loader.DataSource(req.Context())
 		if err != nil {
