@@ -220,7 +220,7 @@ const EditorForQueryType = ({
       );
 
     default:
-      const type = query.queryType as unknown;
+      const type: unknown = query.queryType;
       return (
         <Alert title={t('components.editor-for-query-type.title-unknown-query-type', 'Unknown query type')}>
           {(type === 'Application Insights' || type === 'Insights Analytics') && (

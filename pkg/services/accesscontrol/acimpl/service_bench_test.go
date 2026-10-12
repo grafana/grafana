@@ -355,7 +355,7 @@ func setupBenchManyTeams(b *testing.B, teamCount int) (*Service, *user.SignedInU
 		UserID:  userID,
 		OrgID:   1,
 		OrgRole: org.RoleViewer,
-		TeamIDs: teamIDs,
+		TeamIDs: teamIDs, //nolint:staticcheck // Exercise legacy field compatibility.
 	}
 
 	return acService, signedInUser

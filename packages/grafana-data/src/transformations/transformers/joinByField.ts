@@ -12,10 +12,12 @@ import { FieldMatcherID } from '../matchers/ids';
 import { DataTransformerID } from './ids';
 import { joinDataFrames } from './joinDataFrames';
 import { JoinMode } from './joinShared';
+import { applyStaticRefId, getTransformationDynamicRefId } from './utils';
 
 export interface JoinByFieldOptions {
   byField?: string; // empty will pick the field automatically
   mode?: JoinMode;
+  refId?: string;
   /**
    * Forward frames that do not have the join field instead of dropping them, so a later
    * join can pick them up. Requires an explicit byField. Off by default: without it, a
@@ -70,13 +72,15 @@ export const joinByFieldTransformer: SynchronousDataTransformerInfo<JoinByFieldO
 
         const joined = joinDataFrames({ frames, joinBy, mode: options.mode });
         if (joined) {
-          const refId = `${DataTransformerID.joinByField}-${frames.map((frame) => frame.refId).join('-')}`;
+          const refId = options.refId ?? getTransformationDynamicRefId(DataTransformerID.joinByField, frames);
           // With a single participant joinDataFrames returns the input frame itself, so copy
           // before naming it rather than renaming a frame the caller still holds.
           return [{ ...joined, refId }, ...unjoined];
         }
       }
-      return data;
+      return applyStaticRefId(data, options.refId);
     };
   },
+
+  usesDynamicRefId: true,
 };

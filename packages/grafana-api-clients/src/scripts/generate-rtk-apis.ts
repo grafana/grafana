@@ -23,10 +23,10 @@ const defaultHooksOptions = {
   mutations: true,
 };
 
-// Every namespaced kind can serve /search and /trash, and no frontend calls them yet, so
-// generating a hook per kind would add clients nobody imports. The dashboard search at
-// `/search` is a different, older endpoint and stays.
-const perResourceSearch = /^\/[^/]+\/(search|trash)$/;
+// Namespaced kinds can serve /search, /trash and /search/hybrid, and no frontend calls them yet, so
+// generating a hook per kind would add clients nobody imports. The dashboard searches at
+// `/search` and `/search/hybrid` are different, older endpoints and stay.
+const perResourceSearch = /^\/[^/]+\/(search(?:\/hybrid)?|trash)$/;
 
 export const withoutPerResourceSearch = (filterEndpoints?: EndpointMatcher): EndpointMatcher => {
   if (Array.isArray(filterEndpoints)) {

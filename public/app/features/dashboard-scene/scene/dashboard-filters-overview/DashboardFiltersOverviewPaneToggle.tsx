@@ -16,12 +16,7 @@ export function DashboardFiltersOverviewPaneToggle({ dashboard }: Props) {
 
   const onClick = async () => {
     reportFiltersOverviewInteraction('opened');
-    await dashboard.showModalAsync(async () => {
-      const { DashboardFiltersOverviewDrawer } = await import(
-        /* webpackChunkName: "dashboard-filters-overview" */ './DashboardFiltersOverviewDrawer'
-      );
-      return new DashboardFiltersOverviewDrawer({});
-    });
+    await dashboard.openFiltersOverview();
   };
 
   const adHocVar = variables.find((v) => sceneUtils.isAdHocVariable(v));

@@ -52,14 +52,83 @@ Use the `loading` prop to indicate that the input is loading. This will add a sp
 
 `Field` provides a `FieldContext` that any descendant can read using the `useFieldContext` hook. This is the recommended way to access field state from a child component.
 
-| Property           | Type                   | Description                                             |
-| ------------------ | ---------------------- | ------------------------------------------------------- |
-| `id`               | `string`               | Resolved input id (`htmlFor` → child id → generated id) |
-| `invalid`          | `boolean \| undefined` | Mirrors the `invalid` prop                              |
-| `disabled`         | `boolean \| undefined` | Mirrors the `disabled` prop                             |
-| `loading`          | `boolean \| undefined` | Mirrors the `loading` prop                              |
-| `aria-describedby` | `string \| undefined`  | Set when both `invalid` and `error` are truthy          |
-| `aria-labelledby`  | `string \| undefined`  | Always `undefined` in `Field`                           |
+<table>
+  <thead>
+    <tr>
+      <th scope="col">Property</th>
+      <th scope="col">Type</th>
+      <th scope="col">Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">
+        <code>id</code>
+      </th>
+      <td>
+        <code>string</code>
+      </td>
+      <td>
+        Resolved input id (<code>htmlFor</code> → child id → generated id)
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">
+        <code>invalid</code>
+      </th>
+      <td>
+        <code>boolean | undefined</code>
+      </td>
+      <td>
+        Mirrors the <code>invalid</code> prop
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">
+        <code>disabled</code>
+      </th>
+      <td>
+        <code>boolean | undefined</code>
+      </td>
+      <td>
+        Mirrors the <code>disabled</code> prop
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">
+        <code>loading</code>
+      </th>
+      <td>
+        <code>boolean | undefined</code>
+      </td>
+      <td>
+        Mirrors the <code>loading</code> prop
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">
+        <code>aria-describedby</code>
+      </th>
+      <td>
+        <code>string | undefined</code>
+      </td>
+      <td>
+        Set when both <code>invalid</code> and <code>error</code> are truthy
+      </td>
+    </tr>
+    <tr>
+      <th scope="row">
+        <code>aria-labelledby</code>
+      </th>
+      <td>
+        <code>string | undefined</code>
+      </td>
+      <td>
+        Always <code>undefined</code> in <code>Field</code>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
 **Example:**
 

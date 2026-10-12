@@ -1157,3 +1157,43 @@ func TestJobProgressRecorderTooManyErrorsConcurrency(t *testing.T) {
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "too many errors")
 }
+
+func TestJobProgressRecorder_UnsupportedPathWarningDoesNotBlockFolderCleanup(t *testing.T) {
+	ctx := context.Background()
+	newRecorder := func() *jobProgressRecorder {
+		return NewJobProgressRecorder(func(context.Context, provisioning.JobStatus) error { return nil }, nil, "").(*jobProgressRecorder)
+	}
+	unsupported := &resources.UnsupportedPathError{Path: "other/Backend & UI.json", Err: assert.AnError}
+
+	t.Run("a removal that carries the warning leaves the folder free to be cleaned up", func(t *testing.T) {
+		recorder := newRecorder()
+		recorder.Record(ctx, NewPathOnlyResult("old/dashboard.json").
+			WithAction(repository.FileActionDeleted).
+			WithWarning(unsupported).
+			Build())
+
+		assert.False(t, recorder.HasDirPathFailedDeletion("old/"))
+	})
+
+	t.Run("a rename that carries the warning does not block either folder", func(t *testing.T) {
+		recorder := newRecorder()
+		recorder.Record(ctx, NewPathOnlyResult("other/Backend & UI.json").
+			WithAction(repository.FileActionRenamed).
+			WithPreviousPath("old/dashboard.json").
+			WithWarning(unsupported).
+			Build())
+
+		assert.False(t, recorder.HasChildPathFailedUpdate("old/"))
+		assert.False(t, recorder.HasChildPathFailedUpdate("other/"))
+	})
+
+	t.Run("control: a failed removal still blocks the folder", func(t *testing.T) {
+		recorder := newRecorder()
+		recorder.Record(ctx, NewPathOnlyResult("old/dashboard.json").
+			WithAction(repository.FileActionDeleted).
+			WithError(assert.AnError).
+			Build())
+
+		assert.True(t, recorder.HasDirPathFailedDeletion("old/"))
+	})
+}

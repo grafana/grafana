@@ -36,15 +36,13 @@ import (
 // handler test can assert on both what went down and what came back.
 type fakeIndex struct {
 	resourcepb.ResourceIndexClient
-	resp    *resourcepb.ResourceSearchResponse
-	err     error
-	got     *resourcepb.ResourceSearchRequest
-	perKind bool
+	resp *resourcepb.ResourceSearchResponse
+	err  error
+	got  *resourcepb.ResourceSearchRequest
 }
 
 func (f *fakeIndex) Search(ctx context.Context, req *resourcepb.ResourceSearchRequest, _ ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
 	f.got = req
-	f.perKind = isPerKindSearch(ctx)
 	if f.err != nil {
 		return nil, f.err
 	}
@@ -123,7 +121,7 @@ func callWithBody(t *testing.T, body string, resp *resourcepb.ResourceSearchResp
 func callWith(t *testing.T, body io.ReadCloser, resp *resourcepb.ResourceSearchResponse) (*httptest.ResponseRecorder, *fakeIndex) {
 	t.Helper()
 	index := &fakeIndex{resp: resp}
-	h := NewHandler(index, &fakeIndex{})
+	h := newUnifiedHandler(index, &fakeIndex{})
 	rec := httptest.NewRecorder()
 	err := WithAPIStatusErrorResponse(h.SearchAlertRules)(context.Background(), rec, &app.CustomRouteRequest{
 		ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
@@ -131,7 +129,7 @@ func callWith(t *testing.T, body io.ReadCloser, resp *resourcepb.ResourceSearchR
 	})
 	require.NoError(t, err)
 	if index.got != nil {
-		require.True(t, index.perKind)
+		require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, index.got.ResultFormat)
 	}
 	return rec, index
 }
@@ -254,7 +252,7 @@ func TestPerKindSearch_requestBody(t *testing.T) {
 	// handler stops early.
 	t.Run("closes the body", func(t *testing.T) {
 		body := readCloser(validBody)
-		h := NewHandler(&fakeIndex{resp: empty}, &fakeIndex{})
+		h := newUnifiedHandler(&fakeIndex{resp: empty}, &fakeIndex{})
 		require.NoError(t, h.SearchAlertRules(context.Background(), httptest.NewRecorder(), &app.CustomRouteRequest{
 			ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
 			Body:               body,
@@ -283,7 +281,7 @@ func TestPerKindSearch_backendErrorInPayload(t *testing.T) {
 	index := &fakeIndex{resp: &resourcepb.ResourceSearchResponse{
 		Error: &resourcepb.ErrorResult{Code: http.StatusBadRequest, Message: "bad field"},
 	}}
-	h := NewHandler(index, &fakeIndex{})
+	h := newUnifiedHandler(index, &fakeIndex{})
 	err := h.SearchAlertRules(context.Background(), httptest.NewRecorder(), &app.CustomRouteRequest{
 		ResourceIdentifier: resource.FullIdentifier{Namespace: "default"},
 		Body:               readCloser(validBody),
@@ -418,13 +416,14 @@ func TestPerKindSearch_fieldValuesFromRealIndex(t *testing.T) {
 			kind := tc.kind(t)
 			translated := buildPerKindSearchRequest(&searchv0.SearchQuery{Fields: tc.fields}, nil, tc.key.Namespace, kind)
 
-			resp, err := index.Search(t.Context(), nil, translated.req, nil, nil)
+			resp, err := index.Search(t.Context(), nil, buildUnifiedRequest(translated), nil, nil)
 			require.NoError(t, err)
 			require.Nil(t, resp.Error)
 			require.Equal(t, resourcepb.ResourceSearchRequest_FIELD_VALUES, resp.ResultFormat)
 
-			items, err := NewHandler(nil, nil).resultItems(t.Context(), tc.key.Namespace, resp, tc.fields, kind)
+			hits, err := NewUnifiedClient(nil).decodeHits(t.Context(), translated, resp)
 			require.NoError(t, err)
+			items := resultItems(&Result{Hits: hits}, tc.fields, kind)
 			require.Len(t, items, 1)
 			assert.Equal(t, tc.key.Name, items[0].Resource.Name)
 			assert.Equal(t, tc.want, items[0].Fields.Object)
@@ -531,7 +530,7 @@ func TestPerKindSearch_recordingRuleEndpoint(t *testing.T) {
 		&resourcepb.ResourceSearchValue{FieldIndex: 1, StringValues: []string{"ds-target"}},
 	)
 	alerts, recordings := &fakeIndex{}, &fakeIndex{resp: resp}
-	h := NewHandler(alerts, recordings)
+	h := newUnifiedHandler(alerts, recordings)
 
 	rec := httptest.NewRecorder()
 	require.NoError(t, h.SearchRecordingRules(context.Background(), rec, &app.CustomRouteRequest{

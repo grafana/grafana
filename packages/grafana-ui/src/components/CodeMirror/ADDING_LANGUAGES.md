@@ -14,11 +14,13 @@ The examples below add Python support. Replace all Python references with the la
 
    Commit the resulting changes to `packages/grafana-ui/package.json` and `yarn.lock`.
 
-2. Add the public language name to `CodeMirrorEditorLanguage` in `types.ts`:
+2. Add the public language ID and display name to `CODE_MIRROR_LANGUAGES` in `languages.ts`:
 
    ```ts
-   export type CodeMirrorEditorLanguage = 'json' | 'python' | 'sql';
+   python: 'Python',
    ```
+
+   `CodeMirrorEditorLanguage` is derived from this registry. Storybook and the notebook picker use it automatically. Keep the registry free of parser imports so consumers can read language metadata without loading language code.
 
 3. Add an asynchronous loader in `languageLoader.ts`. Give the import a stable chunk name and return the extension created by the language package:
 
@@ -36,7 +38,7 @@ The examples below add Python support. Replace all Python references with the la
 
    The cache key must identify the resulting extension. If a language has configuration that changes the extension, include that configuration in the cache key, as the SQL dialect loader does. Thread new configuration through `CodeMirrorEditorProps`, `useLanguageExtension`, and `LoadLanguageOptions` rather than importing the language directly in a consumer.
 
-5. Add the language to `languageOptions` in `CodeEditor.story.tsx` so it can be selected in Storybook, and add focused coverage to `languageLoader.test.ts`.
+5. Add focused loader integration coverage to the existing `languageLoader.test.ts`.
 
 ## Verify the change
 

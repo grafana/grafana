@@ -1,3 +1,14 @@
+<!-- 13.2.3 START -->
+
+# 13.2.3 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+
+<!-- 13.2.3 END -->
 <!-- 13.2.2 START -->
 
 # 13.2.2 (2026-09-15)
@@ -211,6 +222,17 @@
 - **Tag:** Fix crash when picking an out of bounds `colorIndex` [#129579](https://github.com/grafana/grafana/pull/129579), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.2.0 END -->
+<!-- 13.1.7 START -->
+
+# 13.1.7 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+
+<!-- 13.1.7 END -->
 <!-- 13.1.6 START -->
 
 # 13.1.6 (2026-09-15)
@@ -515,6 +537,20 @@
 - **TimeOfDayPicker:** use Combobox [#123777](https://github.com/grafana/grafana/pull/123777), [@leeoniya](https://github.com/leeoniya)
 
 <!-- 13.1.0 END -->
+<!-- 13.0.10 START -->
+
+# 13.0.10 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-81842
+
+# 13.0.10 (2026-09-29)
+
+<!-- 13.0.10 END -->
 <!-- 13.0.9 START -->
 
 # 13.0.9 (2026-09-15)
@@ -1005,6 +1041,22 @@
 - **TextLink:** Fix icon positioning if text wraps [#118233](https://github.com/grafana/grafana/pull/118233), [@ashharrison90](https://github.com/ashharrison90)
 
 <!-- 13.0.0 END -->
+<!-- 12.4.12 START -->
+
+# 12.4.12 (2026-09-29)
+
+### Security
+
+- Security: Fix CVE-2026-13719
+- Security: Fix CVE-2026-13720
+- Security: Fix CVE-2026-81841
+- Security: Fix CVE-2026-81842
+
+### Bug fixes
+
+- **Unified Storage:** Return 403 instead of 500 on namespace mismatch [#133595](https://github.com/grafana/grafana/pull/133595), [@pstibrany](https://github.com/pstibrany)
+
+<!-- 12.4.12 END -->
 <!-- 12.4.11 START -->
 
 # 12.4.11 (2026-09-15)

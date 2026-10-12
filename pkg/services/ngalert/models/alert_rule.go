@@ -1154,6 +1154,10 @@ type ListAlertRulesExtendedQuery struct {
 	ContinueToken  string
 	Compact        bool
 	SortByFullpath bool
+	States         []string
+	ExcludeStates  []string
+	Healths        []string
+	ExcludeHealths []string
 }
 
 // CountAlertRulesQuery is the query for counting alert rules

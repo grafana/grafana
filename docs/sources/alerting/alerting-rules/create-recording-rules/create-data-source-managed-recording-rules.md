@@ -15,17 +15,11 @@ labels:
     - oss
 title: Create data source-managed recording rules
 weight: 402
-refs:
-  create-recording-rules:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-recording-rules/
 ---
 
 # Create data source-managed recording rules
 
-[Recording rules](ref:create-recording-rules) allow you to periodically pre-compute frequently used or computationally expensive queries, saving the results as a new time series metric.
+[Recording rules](/docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-recording-rules/) allow you to periodically pre-compute frequently used or computationally expensive queries, saving the results as a new time series metric.
 
 Alert rules and dashboards can then query the new metric resulting from the recording rule. This is faster than querying real-time data and can help to reduce system load.
 

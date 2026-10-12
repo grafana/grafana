@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/login"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -22,6 +23,10 @@ var _ TokenAuthenticator = (*GrafanaTokenAuthenticator)(nil)
 
 type GrafanaTokenAuthenticator struct {
 	verifier authnlib.Verifier[authnlib.AccessTokenClaims]
+	// wildcardOrgID is the OrgID a "*" namespace token resolves to. Defaults to
+	// GlobalOrgID; cloud overrides it via cfg.ExtJWTAuth.WildcardOrgID since it
+	// runs against org 1 rather than the global org.
+	wildcardOrgID int64
 }
 
 func NewGrafanaTokenAuthenticator(cfg *setting.Cfg) (*GrafanaTokenAuthenticator, error) {
@@ -37,6 +42,7 @@ func NewGrafanaTokenAuthenticator(cfg *setting.Cfg) (*GrafanaTokenAuthenticator,
 		verifier: authnlib.NewAccessTokenVerifier(authnlib.VerifierConfig{
 			AllowedAudiences: cfg.ExtJWTAuth.Audiences,
 		}, keys),
+		wildcardOrgID: cfg.ExtJWTAuth.WildcardOrgID,
 	}, nil
 }
 
@@ -67,7 +73,17 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 	}
 	orgID := ns.OrgID
 	if ns.Value == "*" {
-		orgID = GlobalOrgID
+		orgID = t.wildcardOrgID
+	}
+	var orgRoles map[int64]org.RoleType
+	if claims.Rest.IsOnBehalfOfUser() {
+		actor := claims.Rest.Actor
+		for actor.Actor != nil {
+			actor = actor.Actor
+		}
+		if actor.Role != "" {
+			orgRoles = map[int64]org.RoleType{orgID: org.RoleType(actor.Role)}
+		}
 	}
 	return &grafanaTokenRequester{
 		Identity: Identity{
@@ -80,6 +96,7 @@ func (t *GrafanaTokenAuthenticator) AuthenticateToken(ctx context.Context, token
 			EmailVerified:     info.GetEmailVerified(),
 			Groups:            info.GetGroups(),
 			OrgID:             orgID,
+			OrgRoles:          orgRoles,
 			Namespace:         ns.Value,
 			AuthID:            claims.Subject,
 			AuthenticatedBy:   login.ExtendedJWTModule,

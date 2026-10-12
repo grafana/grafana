@@ -1,6 +1,7 @@
 import { store } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { SceneTimeRange } from '@grafana/scenes';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DASHBOARD_FROM_LS_KEY, type DashboardDTO } from 'app/types/dashboard';
 
@@ -38,7 +39,7 @@ export function addPanelsOnLoadBehavior(scene: DashboardScene) {
     }
   };
 
-  if (!config.featureToggles.dashboardNewLayouts) {
+  if (!isDashboardNewLayoutsEnabled()) {
     addPanels();
     return;
   }

@@ -19,7 +19,7 @@ export interface ProxyContext {
 /**
  * Does this URL belong to the plugin? Kept separate from `ProxyHandler`, and kept synchronous, so
  * that Grafana-managed pages render straight away instead of waiting on a plugin check they'll
- * never need. Every route can answer this from the URL alone.
+ * never need. Every route can answer this from the URL and the current user's permissions alone.
  */
 export type ProxyMatcher = (context: ProxyContext) => boolean;
 

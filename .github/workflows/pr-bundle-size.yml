@@ -81,6 +81,8 @@ jobs:
 
       - name: Set up Node.js
         uses: ./.github/actions/setup-node
+      - name: Install yarn dependencies
+        uses: ./.github/actions/yarn-install
       - name: Build frontend
         uses: ./.github/actions/build-frontend
 
@@ -89,9 +91,10 @@ jobs:
         env:
           OUTPUT_NAME: ${{ matrix.target }}
         run: |
+          stats="$(yarn bundle-size:stats)"
           {
             echo "${OUTPUT_NAME}<<EOF"
-            node scripts/cli/reportBundleSizeStats.mts
+            printf '%s\n' "$stats"
             echo "EOF"
           } >> "$GITHUB_OUTPUT"
 

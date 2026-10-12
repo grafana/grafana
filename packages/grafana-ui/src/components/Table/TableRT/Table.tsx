@@ -202,7 +202,7 @@ export const Table = memo((props: Props) => {
     toggleAllRowsExpanded,
   } = useTable(options, useFilters, useSortBy, useAbsoluteLayout, useResizeColumns, useExpanded, usePagination);
 
-  const extendedState = state as GrafanaTableState;
+  const extendedState: GrafanaTableState = state;
   toggleAllRowsExpandedRef.current = toggleAllRowsExpanded;
 
   /*

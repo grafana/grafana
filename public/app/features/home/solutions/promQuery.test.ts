@@ -3,18 +3,25 @@ import { NEVER, of } from 'rxjs';
 import {
   createDataFrame,
   type DataFrame,
+  type DataSourceApi,
   FieldType,
   getDefaultTimeRange,
   LoadingState,
   type PanelData,
 } from '@grafana/data';
 import { createQueryRunner } from '@grafana/runtime';
+import { getDataSourceInstance } from '@grafana/runtime/unstable';
 
-import { readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
+import { fetchLabelValues, readScalar, readSeries, runInstantQueries, runRangeQuery } from './promQuery';
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
   createQueryRunner: jest.fn(),
+}));
+
+jest.mock('@grafana/runtime/unstable', () => ({
+  ...jest.requireActual('@grafana/runtime/unstable'),
+  getDataSourceInstance: jest.fn(),
 }));
 
 const mockCreateQueryRunner = jest.mocked(createQueryRunner);
@@ -56,6 +63,10 @@ afterEach(() => jest.restoreAllMocks());
 describe('readScalar', () => {
   it('returns the last finite value of the matching frame', () => {
     expect(readScalar([numberFrame('A', [1, 2, 3])], 'A')).toBe(3);
+  });
+
+  it('returns a zero sample as 0, not as a missing value', () => {
+    expect(readScalar([numberFrame('A', [0])], 'A')).toBe(0);
   });
 
   it('returns null when no frame matches the refId', () => {
@@ -224,5 +235,46 @@ describe('runRangeQuery', () => {
     const series = readSeries(frames, 'cpu');
     expect(series).not.toBeNull();
     expect(series!.y!.values).toEqual([1, 2, 3]);
+  });
+});
+
+describe('fetchLabelValues', () => {
+  const mockGetDataSourceInstance = jest.mocked(getDataSourceInstance);
+  const getTagValues = jest.fn();
+
+  beforeEach(() => {
+    getTagValues.mockReset();
+    mockGetDataSourceInstance.mockReset();
+    mockGetDataSourceInstance.mockResolvedValue({ getTagValues } as unknown as DataSourceApi);
+  });
+
+  it('asks the datasource for the values of `key` on `metric` over the last 24h, narrowed by the filters', async () => {
+    getTagValues.mockResolvedValue([{ text: 'team-a', value: 'team-a' }, { text: 'team-b' }]);
+
+    await expect(
+      fetchLabelValues('uid-a', 'namespace', 'kube_pod_info', [{ key: 'cluster', operator: '=', value: 'prod' }])
+    ).resolves.toEqual(['team-a', 'team-b']);
+
+    expect(mockGetDataSourceInstance).toHaveBeenCalledWith({ uid: 'uid-a' });
+    expect(getTagValues).toHaveBeenCalledTimes(1);
+    expect(getTagValues.mock.calls[0][0]).toMatchObject({
+      key: 'namespace',
+      filters: [{ key: 'cluster', operator: '=', value: 'prod' }],
+      queries: [{ refId: 'values', expr: 'kube_pod_info' }],
+      timeRange: { raw: { from: 'now-24h', to: 'now' } },
+    });
+  });
+
+  it('reads a wrapped response and defaults to no filters', async () => {
+    getTagValues.mockResolvedValue({ data: [{ text: 'canary', value: 'canary' }] });
+
+    await expect(fetchLabelValues('uid-a', 'job', 'sm_check_info')).resolves.toEqual(['canary']);
+    expect(getTagValues).toHaveBeenCalledWith(expect.objectContaining({ filters: [] }));
+  });
+
+  it('reads as empty when the datasource cannot list label values', async () => {
+    mockGetDataSourceInstance.mockResolvedValue({} as DataSourceApi);
+
+    await expect(fetchLabelValues('uid-c', 'cluster', 'kube_node_info')).resolves.toEqual([]);
   });
 });

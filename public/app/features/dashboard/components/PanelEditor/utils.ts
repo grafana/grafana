@@ -37,7 +37,7 @@ export const updateDefaultFieldConfigValue = (
   };
 };
 
-export function setOptionImmutably<T extends object>(options: T, path: string | string[], value: any): T {
+export function setOptionImmutably<T extends object>(options: T, path: string | string[], value: unknown): T {
   const splat = !Array.isArray(path) ? path.split('.') : path;
 
   const key = splat.shift()!;

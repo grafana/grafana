@@ -3,8 +3,8 @@
 // +groupName=search.grafana.app
 
 // Package v0alpha1 holds the request/response envelope types for the
-// per-resource search and trash endpoints (POST .../{resource}/search and
-// POST .../{resource}/trash).
+// per-resource search, trash and hybrid search endpoints (POST
+// .../{resource}/search, .../{resource}/trash and .../{resource}/search/hybrid).
 //
 // These are non-stored, RPC-style types: there is no stored object to GET and
 // no conversion machinery between envelope versions. The envelope group

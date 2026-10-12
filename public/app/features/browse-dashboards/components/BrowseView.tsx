@@ -1,5 +1,4 @@
 import { css } from '@emotion/css';
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { skipToken } from '@reduxjs/toolkit/query';
 import { useCallback, useMemo } from 'react';
 
@@ -146,8 +145,7 @@ export function BrowseView({
     [selectedItems, childrenByParentUID]
   );
 
-  const provisioningReadmesEnabled = useBooleanFlagValue('provisioning.readmes', false);
-  const showReadme = provisioningReadmesEnabled && isProvisionedFolder && folderUID;
+  const showReadme = isProvisionedFolder && folderUID;
   const styles = useStyles2(getStyles);
 
   const flatTreeWithReadme = useMemo(() => {

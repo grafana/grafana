@@ -23,8 +23,8 @@ var (
 )
 
 var (
-	_ authn.ContextAwareClient     = new(Anonymous)
-	_ authn.IdentityResolverClient = new(Anonymous)
+	_ authn.ContextAwareClient     = (*Anonymous)(nil)
+	_ authn.IdentityResolverClient = (*Anonymous)(nil)
 )
 
 type Anonymous struct {

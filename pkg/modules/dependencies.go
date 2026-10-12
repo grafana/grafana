@@ -21,7 +21,14 @@ const (
 	FrontendServer          string = "frontend-server"
 	Router                  string = "router"
 	OperatorServer          string = "operator"
+
+	// CloudCoreAppsServer is registered by enterprise builds.
+	CloudCoreAppsServer string = "cloud-core-apps-server"
 )
+
+// CloudCoreAppsServerPath is the path cloud-core-apps-server serves its apps
+// at on the instrumentation server.
+const CloudCoreAppsServerPath = "/cloud-core-apps-server/apps"
 
 var dependencyMap = map[string][]string{
 	MemberlistKV:     {InstrumentationServer},
@@ -47,4 +54,5 @@ var dependencyMap = map[string][]string{
 	FrontendServer:          {},
 	Router:                  {InstrumentationServer, UnifiedBackend},
 	OperatorServer:          {InstrumentationServer},
+	CloudCoreAppsServer:     {InstrumentationServer},
 }

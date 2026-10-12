@@ -1,7 +1,5 @@
 import { type DefaultValues, useForm } from 'react-hook-form';
-import { act, render, screen } from 'test/test-utils';
-
-import { setTestFlags } from '@grafana/test-utils/unstable';
+import { render, screen } from 'test/test-utils';
 
 import { type RepositoryFormData } from '../types';
 
@@ -40,18 +38,6 @@ function Wrapper({ defaultSigningKeyConfigured, defaultValues, onSubmit = () => 
 }
 
 describe('CommitOptionsSection', () => {
-  beforeEach(() => {
-    // Default to the gitConventions flag being enabled; specific tests override.
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
   it('renders collapsed by default, hiding the inner fields', () => {
     render(<Wrapper />);
 
@@ -99,17 +85,6 @@ describe('CommitOptionsSection', () => {
       'commit.singleResourceMessageTemplate'
     );
     expect(screen.getByRole('checkbox')).toHaveAttribute('name', 'commit.enforceTemplate');
-  });
-
-  it('hides the enforce option when the gitConventions flag is off but keeps the message template', async () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    const { user } = render(<Wrapper />);
-
-    await user.click(screen.getByText('Commit options'));
-
-    expect(screen.getByText('Commit message template')).toBeInTheDocument();
-    expect(screen.queryByText('Enforce commit message template')).not.toBeInTheDocument();
-    expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
   });
 
   describe('commit author', () => {

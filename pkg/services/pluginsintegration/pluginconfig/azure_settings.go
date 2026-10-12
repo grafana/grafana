@@ -13,54 +13,39 @@ import (
 // 1. [azure] config section (if the override flag is set)
 // 2. SSO settings from the DB (if they exist)
 // 3. [auth.azuread] config section (if enabled)
+//
+// currSettings is shared by every request of the process, so the merge writes into a copy.
 func mergeAzureSettings(currSettings *azsettings.AzureSettings, azureAdSettings *pluginsso.Settings) *azsettings.AzureSettings {
-	if azureAdSettings != nil {
-		settings := azureAdSettings.Values
-		tokenEndpointSettings := currSettings.UserIdentityTokenEndpoint
-		if tokenEndpointSettings == nil {
-			tokenEndpointSettings = &azsettings.TokenEndpointSettings{}
-			currSettings.UserIdentityTokenEndpoint = tokenEndpointSettings
-		}
-
-		tokenUrl, ok := settings["token_url"].(string)
-		if ok {
-			if !currSettings.UserIdentityTokenEndpoint.TokenUrlOverride {
-				currSettings.UserIdentityTokenEndpoint.TokenUrl = tokenUrl
-			}
-		}
-		clientAuth, ok := settings["client_authentication"].(string)
-		if ok {
-			if !currSettings.UserIdentityTokenEndpoint.ClientAuthenticationOverride {
-				if clientAuth != "none" {
-					currSettings.UserIdentityTokenEndpoint.ClientAuthentication = clientAuth
-				}
-			}
-		}
-		clientId, ok := settings["client_id"].(string)
-		if ok {
-			if !currSettings.UserIdentityTokenEndpoint.ClientIdOverride {
-				currSettings.UserIdentityTokenEndpoint.ClientId = clientId
-			}
-		}
-		clientSecret, ok := settings["client_secret"].(string)
-		if ok {
-			if !currSettings.UserIdentityTokenEndpoint.ClientSecretOverride {
-				currSettings.UserIdentityTokenEndpoint.ClientSecret = clientSecret
-			}
-		}
-		managedIdentityClientId, ok := settings["managed_identity_client_id"].(string)
-		if ok {
-			if !currSettings.UserIdentityTokenEndpoint.ManagedIdentityClientIdOverride {
-				currSettings.UserIdentityTokenEndpoint.ManagedIdentityClientId = managedIdentityClientId
-			}
-		}
-		federatedCredentialAudience, ok := settings["federated_credential_audience"].(string)
-		if ok {
-			if !currSettings.UserIdentityTokenEndpoint.FederatedCredentialAudienceOverride {
-				currSettings.UserIdentityTokenEndpoint.FederatedCredentialAudience = federatedCredentialAudience
-			}
-		}
+	if azureAdSettings == nil || currSettings == nil {
+		return currSettings
 	}
 
-	return currSettings
+	merged := *currSettings
+	tokenEndpoint := azsettings.TokenEndpointSettings{}
+	if currSettings.UserIdentityTokenEndpoint != nil {
+		tokenEndpoint = *currSettings.UserIdentityTokenEndpoint
+	}
+	merged.UserIdentityTokenEndpoint = &tokenEndpoint
+
+	settings := azureAdSettings.Values
+	if tokenUrl, ok := settings["token_url"].(string); ok && !tokenEndpoint.TokenUrlOverride {
+		tokenEndpoint.TokenUrl = tokenUrl
+	}
+	if clientAuth, ok := settings["client_authentication"].(string); ok && !tokenEndpoint.ClientAuthenticationOverride && clientAuth != "none" {
+		tokenEndpoint.ClientAuthentication = clientAuth
+	}
+	if clientId, ok := settings["client_id"].(string); ok && !tokenEndpoint.ClientIdOverride {
+		tokenEndpoint.ClientId = clientId
+	}
+	if clientSecret, ok := settings["client_secret"].(string); ok && !tokenEndpoint.ClientSecretOverride {
+		tokenEndpoint.ClientSecret = clientSecret
+	}
+	if managedIdentityClientId, ok := settings["managed_identity_client_id"].(string); ok && !tokenEndpoint.ManagedIdentityClientIdOverride {
+		tokenEndpoint.ManagedIdentityClientId = managedIdentityClientId
+	}
+	if federatedCredentialAudience, ok := settings["federated_credential_audience"].(string); ok && !tokenEndpoint.FederatedCredentialAudienceOverride {
+		tokenEndpoint.FederatedCredentialAudience = federatedCredentialAudience
+	}
+
+	return &merged
 }

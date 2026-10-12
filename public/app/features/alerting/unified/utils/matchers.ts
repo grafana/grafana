@@ -88,7 +88,7 @@ export function parsePromQLStyleMatcher(matcher: string): Matcher[] {
  * In other words; it accepts both "{ foo=bar, bar=baz }" and "foo=bar,bar=baz"
  * @throws
  */
-export function parsePromQLStyleMatcherLoose(matcher: string): Matcher[] {
+export function parsePromQLStyleMatcherLoose(matcher: string, options?: { trimValue?: boolean }): Matcher[] {
   // split by `,` but not when it's used as a label value
   const commaUnlessQuoted = /,(?=(?:[^"]*"[^"]*")*[^"]*$)/;
   const parts = matcher.replace(/^\{/, '').replace(/\}$/, '').trim().split(commaUnlessQuoted);
@@ -98,7 +98,7 @@ export function parsePromQLStyleMatcherLoose(matcher: string): Matcher[] {
     .map((matcher) => ({
       ...matcher,
       name: unquoteWithUnescape(matcher.name),
-      value: unquoteWithUnescape(matcher.value),
+      value: unquoteWithUnescape(options?.trimValue ? matcher.value.trim() : matcher.value),
     }));
 }
 

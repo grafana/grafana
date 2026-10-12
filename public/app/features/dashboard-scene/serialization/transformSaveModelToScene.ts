@@ -49,6 +49,7 @@ import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavio
 import { PanelNotices } from '../scene/PanelNotices';
 import { VizPanelHeaderActions } from '../scene/VizPanelHeaderActions';
 import { VizPanelSubHeader } from '../scene/VizPanelSubHeader';
+import { dashboardViews } from '../scene/dashboardViewRegistry';
 import { DashboardGridItem, type RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -58,6 +59,7 @@ import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { getIsLazy } from '../scene/layouts-shared/utils';
 import { PanelTimeRange } from '../scene/panel-timerange/PanelTimeRange';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { pluginTransformationsEnabled } from '../scene/systemTransformations';
 import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { DashboardInteractions } from '../utils/interactions';
@@ -414,7 +416,9 @@ export function createDashboardSceneFromDashboardModel(
       preload: dto.preload,
       isDirty: false,
       links: [...(options?.defaultLinks ?? []), ...(oldModel.links ?? [])],
-      meta: oldModel.meta,
+      // buildGridItemForPanel reads only the dashboard panel's own repeat options,
+      // so a library panel definition's repeat options has not been migrated.
+      meta: { ...oldModel.meta, libraryPanelRepeatUnresolved: true },
       tags: oldModel.tags || [],
       title: oldModel.title,
       version: oldModel.version,
@@ -484,6 +488,8 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
   const timeOverrideShown = (panel.timeFrom || panel.timeShift || panel.timeCompare) && !panel.hideTimeOverride;
 
   const vizPanelState: VizPanelState = {
+    // Runtime only, from the rollout flag - it is deliberately not part of the save model.
+    applyPluginTransformations: pluginTransformationsEnabled(),
     key: getVizPanelKeyForPanelId(panel.id),
     title: panel.title?.substring(0, 5000),
     description: panel.description,
@@ -566,12 +572,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 // setup, which would introduce a circular dependency.
 setPanelInspectorOpener(async (panel, tab) => {
   const dashboard = getDashboardSceneFor(panel);
-  await dashboard.showModalAsync(async () => {
-    const { PanelInspectDrawer } = await import(
-      /* webpackChunkName: "panel-inspect" */ '../inspect/PanelInspectDrawer'
-    );
-    return new PanelInspectDrawer({ panelRef: panel.getRef(), currentTab: tab });
-  });
+  await dashboard.loadView(dashboardViews.overlay.inspect(panel, tab));
 });
 
 export function registerPanelInteractionsReporter(scene: DashboardScene) {

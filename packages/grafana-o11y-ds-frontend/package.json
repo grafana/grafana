@@ -59,7 +59,7 @@
     "@types/jest": "^29.5.4",
     "@types/node": "24.10.1",
     "@types/react": "19.2.18",
-    "@types/systemjs": "6.15.3",
+    "@types/systemjs": "^6.15.4",
     "@typescript/native": "npm:typescript@^7.0.2",
     "jest": "^29.6.4",
     "react": "19.2.8",

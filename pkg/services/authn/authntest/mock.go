@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	_ authn.Service              = new(MockService)
-	_ authn.IdentitySynchronizer = new(MockService)
+	_ authn.Service              = (*MockService)(nil)
+	_ authn.IdentitySynchronizer = (*MockService)(nil)
 )
 
 type MockService struct {
@@ -73,10 +73,10 @@ func (m *MockService) SyncIdentity(ctx context.Context, identity *authn.Identity
 }
 
 var (
-	_ authn.HookClient             = new(MockClient)
-	_ authn.LogoutClient           = new(MockClient)
-	_ authn.ContextAwareClient     = new(MockClient)
-	_ authn.IdentityResolverClient = new(MockClient)
+	_ authn.HookClient             = (*MockClient)(nil)
+	_ authn.LogoutClient           = (*MockClient)(nil)
+	_ authn.ContextAwareClient     = (*MockClient)(nil)
+	_ authn.IdentityResolverClient = (*MockClient)(nil)
 )
 
 type MockClient struct {
@@ -155,7 +155,7 @@ func (m *MockClient) ResolveIdentity(ctx context.Context, orgID int64, typ claim
 	return nil, nil
 }
 
-var _ authn.ProxyClient = new(MockProxyClient)
+var _ authn.ProxyClient = (*MockProxyClient)(nil)
 
 type MockProxyClient struct {
 	AuthenticateProxyFunc func(ctx context.Context, r *authn.Request, username string, additional map[string]string) (*authn.Identity, error)

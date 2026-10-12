@@ -1,13 +1,18 @@
+import { act } from '@testing-library/react';
 import { noop } from 'lodash';
 import { type Props } from 'react-virtualized-auto-sizer';
 import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
+import { setTestFlags } from '@grafana/test-utils/unstable';
+import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
+
 import { DashboardSearchItemType } from '../../../../search/types';
 import { mockDashboardApi, setupMswServer } from '../../mockApi';
 import { mockDashboardDto, mockDashboardSearchItem } from '../../mocks';
 
-import { DashboardPicker } from './DashboardPicker';
+import { DashboardPicker, getDashboardFolderTitle, getDashboardTitle, getDashboardUid } from './DashboardPicker';
+import { type DashboardResponse } from './useDashboardQuery';
 
 jest.mock('react-virtualized-auto-sizer', () => {
   return ({ children }: Props) =>
@@ -27,6 +32,8 @@ const ui = {
 
 describe('DashboardPicker', () => {
   beforeEach(() => {
+    // The dashboard mock is a v1 resource. New layouts select the v2 dashboard API, which rejects that shape.
+    setTestFlags({ dashboardNewLayouts: false });
     mockDashboardApi(server).search([
       mockDashboardSearchItem({ uid: 'dash-1', type: DashboardSearchItemType.DashDB, title: 'Dashboard 1' }),
       mockDashboardSearchItem({ uid: 'dash-2', type: DashboardSearchItemType.DashDB, title: 'Dashboard 2' }),
@@ -56,6 +63,13 @@ describe('DashboardPicker', () => {
       })
     );
   });
+
+  afterEach(() => {
+    act(() => {
+      setTestFlags({});
+    });
+  });
+
   it('Renders panels without ids', async () => {
     render(<DashboardPicker isOpen={true} onChange={noop} onDismiss={noop} dashboardUid="dash-2" panelId={2} />);
 
@@ -69,5 +83,30 @@ describe('DashboardPicker', () => {
     panels.forEach((panel) => {
       expect(panel).toBeEnabled();
     });
+  });
+  it('reads title, uid, and folder from a v2 resource', () => {
+    const dashboard = {
+      kind: 'DashboardWithAccessInfo',
+      metadata: {
+        name: 'dash-uid',
+        annotations: { [AnnoKeyFolderTitle]: 'Ops folder' },
+      },
+      spec: { title: 'Ops dashboard', elements: {} },
+    } as DashboardResponse;
+
+    expect(getDashboardTitle(dashboard)).toBe('Ops dashboard');
+    expect(getDashboardUid(dashboard)).toBe('dash-uid');
+    expect(getDashboardFolderTitle(dashboard)).toBe('Ops folder');
+  });
+
+  it('reads title, uid, and folder from a legacy dashboard', () => {
+    const dashboard = {
+      dashboard: { title: 'Legacy dashboard', uid: 'legacy-uid' },
+      meta: { folderTitle: 'Legacy folder' },
+    } as DashboardResponse;
+
+    expect(getDashboardTitle(dashboard)).toBe('Legacy dashboard');
+    expect(getDashboardUid(dashboard)).toBe('legacy-uid');
+    expect(getDashboardFolderTitle(dashboard)).toBe('Legacy folder');
   });
 });

@@ -1,13 +1,11 @@
 import { getAnnotationTooltip } from './getAnnotationTooltip';
 import { type AnnotationVals } from './types';
 
-// AnnotationVals types ids as numbers, but annotations served by the k8s annotations API
-// have string ids (metadata.name), see issue #120097
 function makeAnnoVals(id: number | string | null | undefined, dashboardUID: string | null = 'dash-1'): AnnotationVals {
   return {
     time: [1759388895560],
     text: ['annotation text'],
-    id: [id as number],
+    id: [id ?? null],
     dashboardUID: [dashboardUID],
   };
 }
@@ -69,5 +67,11 @@ describe('getAnnotationTooltip', () => {
     const { onDelete } = getTooltip(makeAnnoVals('aef3b1c2-d5e6'));
     onDelete!();
     expect(onAnnotationDelete).toHaveBeenCalledWith('aef3b1c2-d5e6');
+  });
+
+  it('coerces a numeric legacy id to a string for onAnnotationDelete', () => {
+    const { onDelete } = getTooltip(makeAnnoVals(4683));
+    onDelete!();
+    expect(onAnnotationDelete).toHaveBeenCalledWith('4683');
   });
 });

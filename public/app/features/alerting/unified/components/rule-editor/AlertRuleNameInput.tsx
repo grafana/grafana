@@ -1,5 +1,6 @@
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { isValidRecordingRulesTarget } from '@grafana/alerting/internal';
 import { type DataSourceInstanceSettings } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
@@ -7,7 +8,6 @@ import { Field, Input, Stack, Text } from '@grafana/ui';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { RuleFormType, type RuleFormValues } from '../../types/rule-form';
-import { isValidRecordingRulesTarget } from '../../utils/datasource';
 import { isCloudRecordingRuleByType, isGrafanaRecordingRuleByType, isRecordingRuleByType } from '../../utils/rules';
 
 import { RuleEditorSection } from './RuleEditorSection';

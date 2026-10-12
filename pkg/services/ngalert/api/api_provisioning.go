@@ -24,6 +24,7 @@ import (
 	v1 "github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage/v1"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
+	rulestore "github.com/grafana/grafana/pkg/services/ngalert/store/rules"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -381,7 +382,7 @@ func (srv *ProvisioningSrv) RoutePostAlertRule(c *contextmodel.ReqContext, ar de
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		if errors.Is(err, store.ErrOptimisticLock) {
+		if errors.Is(err, rulestore.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
 		if errors.Is(err, alerting_models.ErrQuotaReached) {
@@ -416,7 +417,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRule(c *contextmodel.ReqContext, ar def
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
 	if err != nil {
-		if errors.Is(err, store.ErrOptimisticLock) {
+		if errors.Is(err, rulestore.ErrOptimisticLock) {
 			return ErrResp(http.StatusConflict, err, "")
 		}
 		return response.ErrOrFallback(http.StatusInternalServerError, "", err)
@@ -530,7 +531,7 @@ func (srv *ProvisioningSrv) RoutePutAlertRuleGroup(c *contextmodel.ReqContext, a
 	if errors.Is(err, alerting_models.ErrAlertRuleFailedValidation) {
 		return ErrResp(http.StatusBadRequest, err, "")
 	}
-	if errors.Is(err, store.ErrOptimisticLock) {
+	if errors.Is(err, rulestore.ErrOptimisticLock) {
 		return ErrResp(http.StatusConflict, err, "")
 	}
 	if errors.Is(err, alerting_models.ErrQuotaReached) {
