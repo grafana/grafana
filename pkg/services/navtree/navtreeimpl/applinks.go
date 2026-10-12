@@ -215,6 +215,19 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				link.Url = s.cfg.AppSubURL + "/plugins/" + plugin.ID + "/page/" + include.Slug
 			}
 
+			if plugin.ID == assistantAppID && include.Path == assistantAppHomePath+"/pages" && include.AddToNav &&
+				ac.HasAccess(s.accessControl, c)(ac.EvalPermission("assistant.ext.grafana.app/pages:create")) {
+				link.Children = append(link.Children, &navtree.NavLink{
+					Id:             "assistant/pages/new",
+					Text:           "New Grafana Page",
+					Icon:           "plus",
+					Url:            s.cfg.AppSubURL + assistantAppHomePath + "/pages/new",
+					PluginID:       assistantAppID,
+					HideFromTabs:   true,
+					IsCreateAction: true,
+				})
+			}
+
 			// Register standalone plugin pages to certain sections using the Grafana config
 			if pathConfig, ok := s.navigationAppPathConfig[include.Path]; ok {
 				if sectionForPage := treeRoot.FindById(pathConfig.SectionID); sectionForPage != nil {
