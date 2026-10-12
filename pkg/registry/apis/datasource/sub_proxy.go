@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana-plugin-sdk-go/config"
 
+	authnlib "github.com/grafana/authlib/authn"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,6 +41,10 @@ type ProxyDependencies struct {
 	OAuthTokenService  *oauthtoken.Service
 	Tracer             tracing.Tracer
 	Features           featuremgmt.FeatureToggles
+	// IDTokenDeriver mints X-Grafana-Id from a requester's OBO access token when the requester
+	// carries no id token of its own. Nil disables that fallback (see
+	// proxyutil.ApplyForwardIDHeader).
+	IDTokenDeriver authnlib.IDTokenDeriver
 }
 
 // ProvideProxyDependencies is the wire provider for ProxyDependencies.
@@ -56,6 +61,9 @@ func ProvideProxyDependencies(
 		OAuthTokenService:  oAuthTokenService,
 		Tracer:             tracer,
 		Features:           features,
+		// Single-tenant Grafana mints its own id token at the edge, so requester always carries
+		// one and this fallback is never needed on the wire-injected (ST) path.
+		IDTokenDeriver: nil,
 	}
 }
 
@@ -64,7 +72,7 @@ type subProxyREST struct {
 	transports *proxyTransportCache
 }
 
-var _ = rest.Connecter(&subProxyREST{})
+var _ rest.Connecter = (*subProxyREST)(nil)
 
 func (r *subProxyREST) New() runtime.Object {
 	return &metav1.Status{}
@@ -174,11 +182,8 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.OAuthTokenService,
 			deps.Tracer,
 			deps.Features,
+			deps.IDTokenDeriver,
 			pluginproxy.WithRouteAccessChecker(deps.RouteAccessChecker),
-			pluginproxy.WithDestinationValidator(func(url string) error {
-				// Headers and cookies were filtered on ingress; do not strip route-added authentication.
-				return validate(url, jsonData, nil)
-			}),
 		)
 		if err != nil {
 			m.SetError()
