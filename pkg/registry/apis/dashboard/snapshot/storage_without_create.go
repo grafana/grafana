@@ -19,8 +19,12 @@ import (
 	"k8s.io/klog/v2"
 
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboardsnapshots"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/org"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
 // storageWrapper wraps a rest.Storage and hides the not supported interfaces
@@ -32,8 +36,10 @@ import (
 // via the dedicated /snapshots/{name}/deletekey subresource and the dashboard
 // via the dedicated /snapshots/{name}/dashboard subresource
 type storageWrapper struct {
-	inner   rest.Storage
-	options dashv0.SnapshotSharingOptions
+	inner         rest.Storage
+	options       dashv0.SnapshotSharingOptions
+	accessControl ac.AccessControl
+	blobs         resourcepb.BlobStoreClient
 }
 
 var (
@@ -47,8 +53,8 @@ var (
 )
 
 // NewStorageWrapper wraps a storage to hide the rest.Creater interface.
-func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions) rest.Storage {
-	return &storageWrapper{inner: s, options: options}
+func NewStorageWrapper(s rest.Storage, options dashv0.SnapshotSharingOptions, accessControl ac.AccessControl, blobs resourcepb.BlobStoreClient) rest.Storage {
+	return &storageWrapper{inner: s, options: options, accessControl: accessControl, blobs: blobs}
 }
 
 func (n *storageWrapper) New() runtime.Object   { return n.inner.New() }
@@ -73,12 +79,35 @@ func (n *storageWrapper) List(ctx context.Context, options *internalversion.List
 	if err != nil {
 		return nil, err
 	}
-	return stripSensitiveFieldsFromList(obj), nil
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	list, ok := stripSensitiveFieldsFromList(obj).(*dashv0.SnapshotList)
+	if !ok {
+		return nil, fmt.Errorf("expected SnapshotList, got %T", obj)
+	}
+	if requester.GetOrgRole() != org.RoleAdmin {
+		items := make([]dashv0.Snapshot, 0, len(list.Items))
+		for _, snap := range list.Items {
+			if snapshotOwnedBy(&snap, requester) {
+				items = append(items, snap)
+			}
+		}
+		list.Items = items
+		// Storage pagination counts include snapshots hidden by creator filtering.
+		list.RemainingItemCount = nil
+	}
+	return list, nil
 }
 func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	// GET the snapshot from inner storage (retains deleteKey, same as the deletekey subresource)
 	// to check if it's external and retrieve the deleteKey before deleting.
-	obj, err := n.inner.(rest.Getter).Get(ctx, name, &metav1.GetOptions{})
+	lookupCtx, err := snapshotLookupContext(ctx, name)
+	if err != nil {
+		return nil, false, err
+	}
+	obj, err := n.inner.(rest.Getter).Get(lookupCtx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
 	}
@@ -87,8 +116,26 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 		return nil, false, fmt.Errorf("expected Snapshot, got %T", obj)
 	}
 
-	// Delete the local snapshot
-	result, deleted, err := n.inner.(rest.GracefulDeleter).Delete(ctx, name, deleteValidation, options)
+	if err := authorizeSnapshotDelete(ctx, snap, n.accessControl, n.blobs); err != nil {
+		return nil, false, err
+	}
+
+	// Unified deletion reads the object again internally. Revalidate that object as
+	// the caller, while keeping storage reads independent of snapshots:read.
+	validate := func(_ context.Context, obj runtime.Object) error {
+		current, ok := obj.(*dashv0.Snapshot)
+		if !ok {
+			return fmt.Errorf("expected Snapshot, got %T", obj)
+		}
+		if err := authorizeSnapshotDelete(ctx, current, n.accessControl, n.blobs); err != nil {
+			return err
+		}
+		if deleteValidation != nil {
+			return deleteValidation(ctx, obj)
+		}
+		return nil
+	}
+	result, deleted, err := n.inner.(rest.GracefulDeleter).Delete(lookupCtx, name, validate, options)
 	if err != nil {
 		return nil, false, err
 	}

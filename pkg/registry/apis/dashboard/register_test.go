@@ -772,7 +772,10 @@ func TestLegacyOnlySnapshotCreateAfterModeChanges(t *testing.T) {
 	}).Return(&dashboards.Dashboard{UID: "dash-1", OrgID: 1}, nil)
 	routes := snapshot.GetRoutes(
 		dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
-		acmock.New().WithPermissions([]accesscontrol.Permission{{Action: dashboards.ActionSnapshotsCreate}}),
+		acmock.New().WithPermissions([]accesscontrol.Permission{
+			{Action: dashboards.ActionSnapshotsCreate},
+			{Action: dashboards.ActionDashboardsRead, Scope: "dashboards:uid:dash-1"},
+		}),
 		map[string]kubecommon.OpenAPIDefinition{},
 		func() rest.Storage { return b.snapshotStorage }, dashboardService, blobs, b.snapshotReadFromUnified,
 	)

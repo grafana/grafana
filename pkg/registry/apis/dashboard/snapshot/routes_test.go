@@ -35,15 +35,21 @@ import (
 
 func testReadFromLegacy(context.Context) (bool, error) { return false, nil }
 
+func snapshotCreatorForTest(orgID int64) *user.SignedInUser {
+	return &user.SignedInUser{UserID: 1, OrgID: orgID, Permissions: map[int64]map[string][]string{
+		orgID: {
+			dashboards.ActionSnapshotsCreate: {""},
+			dashboards.ActionDashboardsRead:  {"dashboards:uid:*"},
+		},
+	}}
+}
+
 func TestCreateSnapshotDashboardValidation(t *testing.T) {
 	setKubernetesSnapshotsToggle(t, true)
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	tests := []struct {
 		name               string
@@ -201,7 +207,7 @@ func TestCreateSnapshotBlobWritesFollowStorageMode(t *testing.T) {
 		body := []byte(`{"dashboard":{"uid":"valid-uid","title":"test"},"name":"test snapshot"}`)
 		req := httptest.NewRequest(http.MethodPost, "/snapshots/create", bytes.NewReader(body))
 		req.Header.Set("Content-Type", "application/json")
-		req = req.WithContext(identity.WithRequester(req.Context(), &user.SignedInUser{UserID: 1, OrgID: orgID}))
+		req = req.WithContext(identity.WithRequester(req.Context(), snapshotCreatorForTest(orgID)))
 		req = mux.SetURLVars(req, map[string]string{"namespace": namespace})
 		recorder := httptest.NewRecorder()
 		routes.Namespace[0].Handler(recorder, req)
@@ -219,10 +225,7 @@ func TestCreateSnapshotDuplicateKeyReturns409(t *testing.T) {
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	dashboardService := dashboards.NewFakeDashboardService(t)
 	dashboardService.On("GetDashboard", mock.Anything, &dashboards.GetDashboardQuery{
@@ -399,10 +402,7 @@ func TestCreateExternalSnapshot(t *testing.T) {
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	// externalSnapshotsK8SAPIPush ON: handler pushes to the external K8s endpoint.
 	setExternalSnapshotsK8SAPIPushToggle(t, true)
@@ -667,10 +667,7 @@ func TestCreateExternalSnapshotLegacy(t *testing.T) {
 	const orgID int64 = 1
 	namespace := authlib.OrgNamespaceFormatter(orgID)
 
-	testUser := &user.SignedInUser{
-		UserID: 1,
-		OrgID:  orgID,
-	}
+	testUser := snapshotCreatorForTest(orgID)
 
 	// externalSnapshotsK8SAPIPush OFF: handler pushes to the legacy /api/snapshots
 	// endpoint on the external server.
@@ -886,14 +883,32 @@ func TestHandleDeleteByKey(t *testing.T) {
 
 		listed := dashv0.Snapshot{}
 		listed.Name = snapshotName
+		listed.Namespace = namespace
+		listed.Spec.DeleteKey = new(deleteKey)
+		listed.Spec.Dashboard = map[string]any{"uid": "unreadable-source"}
+		listed.SetCreatedBy("user:another-user")
 
 		mockStorage := grafanarest.NewMockStorage(t)
 		mockStorage.On("List", mock.Anything, mock.MatchedBy(func(opts *internalversion.ListOptions) bool {
 			return opts != nil && opts.FieldSelector != nil &&
 				opts.FieldSelector.String() == "spec.deleteKey="+deleteKey
-		})).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{listed}}, nil)
+		})).Run(func(args mock.Arguments) {
+			info, ok := authlib.AuthInfoFrom(args.Get(0).(context.Context))
+			require.True(t, ok)
+			require.Equal(t, namespace, info.GetNamespace())
+			requester, err := identity.GetRequester(args.Get(0).(context.Context))
+			require.NoError(t, err)
+			require.True(t, requester.IsIdentityType(authlib.TypeAccessPolicy))
+		}).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{listed}}, nil)
 		mockStorage.On("Delete", mock.Anything, snapshotName, mock.Anything, mock.Anything).
-			Return(&dashv0.Snapshot{}, true, nil)
+			Run(func(args mock.Arguments) {
+				info, ok := authlib.AuthInfoFrom(args.Get(0).(context.Context))
+				require.True(t, ok)
+				require.Equal(t, namespace, info.GetNamespace())
+				requester, err := identity.GetRequester(args.Get(0).(context.Context))
+				require.NoError(t, err)
+				require.True(t, requester.IsIdentityType(authlib.TypeAccessPolicy))
+			}).Return(&dashv0.Snapshot{}, true, nil)
 
 		routes := GetRoutes(
 			dashv0.SnapshotSharingOptions{SnapshotsEnabled: true},
