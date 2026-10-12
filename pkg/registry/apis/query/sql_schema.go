@@ -15,7 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// called by mt query service and also when queryServiceFromUI is enabled, can be both mt and st
+// Called by both multi-tenant and single-tenant query services.
 func (b *QueryAPIBuilder) GetSQLSchemas(w http.ResponseWriter, r *http.Request) {
 	ctx, span := b.tracer.Start(r.Context(), "QueryService.GetSQLSchemas")
 	defer span.End()

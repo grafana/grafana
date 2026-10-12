@@ -35,7 +35,6 @@ declare module "@openfeature/core" {
     | "useKubernetesShortURLsAPI"
     | "kubernetesCorrelations"
     | "queryService"
-    | "queryServiceFromUI"
     | "alertingUIUseBackendFilters"
     | "alertingUIUseFullyCompatBackendFilters"
     | "createAlertRuleFromPanel"
