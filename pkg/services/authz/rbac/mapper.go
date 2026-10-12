@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -259,9 +260,11 @@ func newDatasourceQueryTranslation() translation {
 	dsTranslation := newResourceTranslation("datasources", "uid", false, map[string]bool{utils.VerbCreate: true})
 
 	// Proxy routes carry existing RBAC actions as verbs and retain datasource UID scopes.
-	for _, action := range []string{datasources.ActionQuery, accesscontrol.ActionAlertingRuleExternalRead, accesscontrol.ActionAlertingRuleExternalWrite} {
-		dsTranslation.verbMapping[action] = action
-	}
+	maps.Copy(dsTranslation.verbMapping, map[string]string{
+		datasources.ActionQuery:                       datasources.ActionQuery,
+		accesscontrol.ActionAlertingRuleExternalRead:  accesscontrol.ActionAlertingRuleExternalRead,
+		accesscontrol.ActionAlertingRuleExternalWrite: accesscontrol.ActionAlertingRuleExternalWrite,
+	})
 
 	dsTranslation.actionSetMapping = map[string][]string{
 		// utils.VerbWatch: {"datasources:query"},
