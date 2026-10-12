@@ -57,7 +57,7 @@ const V1_PANEL_PROPERTIES = {
  * Whether the new panel query errors & notices UI (header popover + dedicated inspector tab) is enabled.
  */
 export function isNewPanelQueryErrorsUIEnabled(): boolean {
-  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, false);
+  return getFeatureFlagClient().getBooleanValue(FlagKeys.GrafanaNewPanelQueryErrorsUI, true);
 }
 
 export function findEditPanel(scene: SceneObject, key: string | undefined): VizPanel | null {
