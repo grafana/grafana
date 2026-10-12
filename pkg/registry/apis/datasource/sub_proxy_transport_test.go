@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
@@ -147,6 +148,32 @@ func TestProxyTransportFingerprint(t *testing.T) {
 	changed, err = proxyTransportFingerprint(&settings, opts, "stack-config-1")
 	require.NoError(t, err)
 	require.NotEqual(t, initial, changed)
+}
+
+func TestDatasourceLoaderTenantTimeouts(t *testing.T) {
+	original := sdkhttpclient.DefaultTimeoutOptions
+	for _, tc := range []struct {
+		name, data string
+		want       time.Duration
+	}{
+		{"tenant default", `{}`, 17 * time.Second},
+		{"datasource override", `{"timeout":3}`, 3 * time.Second},
+		{"explicit zero", `{"timeout":0}`, 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var transport *http.Transport
+			provider := httpclient.NewProvider(sdkhttpclient.ProviderOptions{ConfigureTransport: func(_ sdkhttpclient.Options, tr *http.Transport) { transport = tr }})
+			defaults := sdkhttpclient.TimeoutOptions{Timeout: 17 * time.Second, DialTimeout: 8 * time.Second, IdleConnTimeout: 9 * time.Second, MaxConnsPerHost: 7}
+			loader := &datasourceLoader{settings: &backend.DataSourceInstanceSettings{Type: "test", JSONData: []byte(tc.data)}, timeoutDefaults: &defaults}
+			_, err := loader.GetHTTPTransport(t.Context(), provider)
+			require.NoError(t, err)
+			t.Cleanup(transport.CloseIdleConnections)
+			require.Equal(t, tc.want, transport.ResponseHeaderTimeout)
+			require.Equal(t, 9*time.Second, transport.IdleConnTimeout)
+			require.Equal(t, 7, transport.MaxConnsPerHost)
+			require.Equal(t, original, sdkhttpclient.DefaultTimeoutOptions)
+		})
+	}
 }
 
 func TestSubProxyREST_ReusesConnectionsWithCurrentUserHeaders(t *testing.T) {

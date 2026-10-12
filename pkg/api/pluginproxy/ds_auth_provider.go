@@ -14,6 +14,8 @@ import (
 
 type DSInfo struct {
 	ID                      int64
+	Namespace               string
+	UID                     string
 	Updated                 time.Time
 	URL                     string
 	JSONData                map[string]any
