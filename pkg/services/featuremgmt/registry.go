@@ -410,10 +410,10 @@ var (
 		{
 			Name:            "grafana.newPanelQueryErrorsUI",
 			Description:     "Enables a new UI for query errors and notices",
-			Stage:           FeatureStageExperimental,
+			Stage:           FeatureStageGeneralAvailability,
 			Owner:           grafanaDashboardsSquad,
 			RequiresRestart: false,
-			Expression:      "false",
+			Expression:      "true",
 			Generate:        Generate{React: true},
 		},
 
