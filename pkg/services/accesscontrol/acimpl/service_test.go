@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -925,14 +926,17 @@ func TestIntegrationService_SearchUsersPermissions(t *testing.T) {
 				ExpectedUsersRoles:       tt.storedRoles,
 			}
 
-			// Explicit error injection based on test configuration
-			if tt.injectSearchErr {
-				store.ExpectedErr = assert.AnError
-			}
-			if tt.injectBasicErr {
-				store.ExpectedErr = assert.AnError
-			}
 			ac.store = store
+			if tt.injectSearchErr || tt.injectBasicErr {
+				failingStore := actest.NewMockStore(t)
+				if tt.injectBasicErr {
+					failingStore.On("GetUsersBasicRoles", mock.Anything, []int64(nil), int64(2)).Return(nil, assert.AnError).Once()
+				} else {
+					failingStore.On("GetUsersBasicRoles", mock.Anything, []int64(nil), int64(2)).Return(tt.storedRoles, nil).Once()
+					failingStore.On("SearchUsersPermissions", mock.Anything, int64(2), mock.Anything).Return(nil, assert.AnError).Once()
+				}
+				ac.store = failingStore
+			}
 
 			siu := &user.SignedInUser{OrgID: 2, Permissions: map[int64]map[string][]string{2: tt.siuPermissions}}
 			got, err := ac.SearchUsersPermissions(ctx, siu, tt.searchOption)

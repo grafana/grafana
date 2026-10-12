@@ -55,6 +55,7 @@ func TestUserK8sService_Create(t *testing.T) {
 		nilProvider    bool
 		noReqContext   bool
 		expectErr      bool
+		expectErrIs    error
 		expectUser     *user.User
 	}{
 		{
@@ -320,6 +321,42 @@ func TestUserK8sService_Create(t *testing.T) {
 			expectErr: true,
 		},
 		{
+			name:           "maps AlreadyExists from k8s to ErrUserAlreadyExists",
+			requesterOrgID: 1,
+			cmd:            &user.CreateUserCommand{Login: "jdoe"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonAlreadyExists,
+					Message:  "user already exists",
+					Code:     http.StatusConflict,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserAlreadyExists,
+		},
+		{
+			name:           "maps Conflict from k8s to ErrUserAlreadyExists",
+			requesterOrgID: 1,
+			cmd:            &user.CreateUserCommand{Login: "jdoe"},
+			serverResponse: func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(metav1.Status{
+					TypeMeta: metav1.TypeMeta{APIVersion: "v1", Kind: "Status"},
+					Status:   metav1.StatusFailure,
+					Reason:   metav1.StatusReasonConflict,
+					Message:  "login 'jdoe' is already taken",
+					Code:     http.StatusConflict,
+				})
+			},
+			expectErr:   true,
+			expectErrIs: user.ErrUserAlreadyExists,
+		},
+		{
 			name:        "returns error when config provider not initialized",
 			cmd:         &user.CreateUserCommand{Login: "any-user", OrgID: 1},
 			nilProvider: true,
@@ -347,6 +384,9 @@ func TestUserK8sService_Create(t *testing.T) {
 
 			if tt.expectErr {
 				require.Error(t, err)
+				if tt.expectErrIs != nil {
+					require.ErrorIs(t, err, tt.expectErrIs)
+				}
 				return
 			}
 

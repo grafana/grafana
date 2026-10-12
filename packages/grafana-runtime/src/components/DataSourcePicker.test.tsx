@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 
+import { setDataSourceInstanceSettings } from '../services/dataSource/settings';
+
 import { DataSourcePicker, type DataSourcePickerProps, setDataSourcePicker } from './DataSourcePicker';
 
 const mockGetInstanceSettings = jest.fn();
@@ -173,6 +175,7 @@ describe('DataSourcePicker', () => {
       const defaultDs = buildMockDs('default-uid', 'Default Prometheus', true);
       const otherDs = buildMockDs('other-uid', 'Other Prometheus', false);
       mockGetList.mockReturnValue([defaultDs, otherDs]);
+      setDataSourceInstanceSettings({ [defaultDs.name]: defaultDs, [otherDs.name]: otherDs });
 
       render(<DataSourcePicker current={null} onChange={jest.fn()} />);
       await userEvent.click(screen.getByLabelText('Select a data source'));

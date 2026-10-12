@@ -1,4 +1,3 @@
-import { useBooleanFlagValue } from '@openfeature/react-sdk';
 import { useMemo, useState } from 'react';
 
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
@@ -9,12 +8,7 @@ import { RepoViewStatus, type RepositoryViewData } from 'app/features/provisioni
 import { getIsReadOnlyRepo } from 'app/features/provisioning/utils/repository';
 import { type DashboardMeta } from 'app/types/dashboard';
 
-import {
-  getCanPushToConfiguredBranch,
-  getDefaultRef,
-  getDefaultWorkflow,
-  shouldEnforceBranchTemplate,
-} from '../components/defaults';
+import { getCanPushToConfiguredBranch, getDefaultRef, getDefaultWorkflow } from '../components/defaults';
 import { generateNewBranchName } from '../components/utils/newBranchName';
 import { generatePath, slugifyForFilename } from '../components/utils/path';
 import { generateTimestamp } from '../components/utils/timestamp';
@@ -158,7 +152,6 @@ export function useProvisionedDashboardData(
   const { repository, folder, status, error, isNewSave } = view;
   const [params] = useUrlParams();
   const loadedFromRef = params.get('ref') ?? undefined;
-  const gitConventionsEnabled = useBooleanFlagValue('provisioning.gitConventions', false);
   // Minted once per form: it feeds the fallback filename for a save with no title to slugify, and a
   // fresh one per recompute would rewrite that filename
   const [timestamp] = useState(generateTimestamp);
@@ -197,23 +190,6 @@ export function useProvisionedDashboardData(
     ]
   );
 
-  const defaultValues = useMemo(() => {
-    if (defaultValuesResult.status !== RepoViewStatus.Ready) {
-      return null;
-    }
-    const { values, repository: resolvedRepository } = defaultValuesResult;
-    // When the branch name template is enforced, dashboard pushes must go through the branch workflow
-    // so the templated branch is created and sent as `ref`, rather than a direct push that drops it.
-    // getDefaultWorkflow stays a pure default; the enforced case is decided here at the point of use.
-    // useBranchTemplate then fills the `ref`; the generated name keeps the branch default from ever
-    // pointing at the configured branch in the meantime.
-    return values &&
-      shouldEnforceBranchTemplate(resolvedRepository, gitConventionsEnabled) &&
-      values.workflow !== 'branch'
-      ? { ...values, workflow: 'branch' as const, ref: generateNewBranchName('dashboard') }
-      : values;
-  }, [defaultValuesResult, gitConventionsEnabled]);
-
   if (defaultValuesResult.status !== RepoViewStatus.Ready) {
     return {
       canPushToConfiguredBranch: false,
@@ -227,9 +203,9 @@ export function useProvisionedDashboardData(
     };
   }
 
-  const { isNew, repository: resolvedRepository } = defaultValuesResult;
+  const { values, isNew, repository: resolvedRepository } = defaultValuesResult;
   return {
-    defaultValues,
+    defaultValues: values,
     repository: resolvedRepository,
     loadedFromRef,
     canPushToConfiguredBranch: getCanPushToConfiguredBranch(resolvedRepository),

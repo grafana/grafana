@@ -306,8 +306,10 @@ const getProviderConfigs = (): Record<RepoType, Record<string, FieldConfig>> => 
         ...shared.tokenUser,
         description: t(
           'provisioning.git.token-user-description',
-          'The username that will be used to access the repository with the access token'
+          'The username that will be used to access the repository with the access token. Defaults to "git".'
         ),
+        // eslint-disable-next-line @grafana/i18n/no-untranslated-strings
+        placeholder: 'git',
         required: false,
       },
       url: {

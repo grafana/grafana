@@ -72,7 +72,7 @@ func NewResourceClientFromConns(storageCc grpc.ClientConnInterface, indexCc grpc
 		ResourceIndexClient:      resourcepb.NewResourceIndexClient(indexCc),
 		ManagedObjectIndexClient: resourcepb.NewManagedObjectIndexClient(indexCc),
 		BulkStoreClient:          resourcepb.NewBulkStoreClient(storageCc),
-		BlobStoreClient:          resourcepb.NewBlobStoreClient(storageCc),
+		BlobStoreClient:          newBlobStoreClient(storageCc),
 		DiagnosticsClient:        resourcepb.NewDiagnosticsClient(storageCc),
 		QuotasClient:             resourcepb.NewQuotasClient(storageCc),
 	}

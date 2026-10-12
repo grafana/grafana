@@ -1442,6 +1442,10 @@ type watchTestServerOpts struct {
 	StorageMetrics    *StorageMetrics
 	AccessClient      authlib.AccessClient
 	NatsWatchMaxAge   time.Duration
+	// WrapKV wraps the backing store, e.g. to stall reads.
+	WrapKV func(KV) KV
+	// NotifierBufferSize overrides the notifier's buffer; zero keeps the default.
+	NotifierBufferSize int
 }
 
 func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
@@ -1452,14 +1456,18 @@ func newWatchTestServer(t *testing.T, opts watchTestServerOpts) *server {
 	require.NoError(t, err)
 	t.Cleanup(func() { require.NoError(t, db.Close()) })
 
+	var kvStore KV = NewBadgerKV(db)
+	if opts.WrapKV != nil {
+		kvStore = opts.WrapKV(kvStore)
+	}
 	watchExpiry := NewWatchExpiry()
 	store, err := NewKVStorageBackend(KVBackendOptions{
-		KvStore:            NewBadgerKV(db),
+		KvStore:            kvStore,
 		EventSubscriber:    opts.EventSubscriber,
 		EventPublisher:     opts.EventPublisher,
 		EnableNatsNotifier: opts.EventSubscriber != nil,
 		WatchInvalidator:   watchExpiry,
-		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond},
+		WatchOptions:       WatchOptions{SettleDelay: 1 * time.Millisecond, BufferSize: opts.NotifierBufferSize},
 	})
 	require.NoError(t, err)
 
@@ -2291,15 +2299,37 @@ func TestWatchMaxAgeExpiry(t *testing.T) {
 	})
 }
 
-func TestJitteredWatchMaxAge(t *testing.T) {
-	base := 5 * time.Minute
-	lower := time.Duration(float64(base) * (1 - natsWatchMaxAgeJitterFraction))
-	upper := time.Duration(float64(base) * (1 + natsWatchMaxAgeJitterFraction))
-	for i := 0; i < 1000; i++ {
-		got := jitteredWatchMaxAge(t.Context(), base)
-		require.GreaterOrEqual(t, got, lower)
-		require.LessOrEqual(t, got, upper)
+func TestNextWatchMaxAgeExpiry(t *testing.T) {
+	maxAge := 15 * time.Minute
+	now := time.Unix(1_700_000_000, 123)
+	for _, phase := range []time.Duration{0, time.Nanosecond, 7 * time.Minute, maxAge - time.Nanosecond} {
+		d := nextWatchMaxAgeExpiry(now, maxAge, phase)
+		require.Greater(t, d, time.Duration(0))
+		require.LessOrEqual(t, d, maxAge)
+		require.Equal(t, phase, time.Duration(now.Add(d).UnixNano())%maxAge, "expiry must land on the phase")
 	}
+
+	// A watch started exactly at its boundary, e.g. right after being expired,
+	// waits a full period.
+	boundary := time.Unix(0, int64(3*maxAge+7*time.Minute))
+	require.Equal(t, maxAge, nextWatchMaxAgeExpiry(boundary, maxAge, 7*time.Minute))
+}
+
+func TestWatchMaxAgePhase(t *testing.T) {
+	maxAge := 15 * time.Minute
+	key := &resourcepb.ResourceKey{Group: watchTestGroup, Resource: watchTestResource, Namespace: "ns"}
+	user := newWatchTestUser()
+
+	base := watchMaxAgePhase(user, key, maxAge)
+	require.GreaterOrEqual(t, base, time.Duration(0))
+	require.Less(t, base, maxAge)
+	require.Equal(t, base, watchMaxAgePhase(user, key, maxAge))
+
+	other := newWatchTestUser()
+	other.UserUID = "u456"
+	require.NotEqual(t, base, watchMaxAgePhase(other, key, maxAge))
+	otherNS := &resourcepb.ResourceKey{Group: key.Group, Resource: key.Resource, Namespace: "other"}
+	require.NotEqual(t, base, watchMaxAgePhase(user, otherNS, maxAge))
 }
 
 // TestWatchEventMetricsWithSinceRV makes sure that we don't emit watch delay metrics when replaying

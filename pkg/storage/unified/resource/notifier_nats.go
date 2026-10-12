@@ -60,7 +60,8 @@ func watchNotificationTypeToAction(t resourcepb.WatchNotification_Type) (kv.Data
 // Delivery is at-most-once (core NATS, no JetStream): a missed message is never
 // redelivered, and there is no server-side polling backstop when this is the
 // selected notifier (newNotifier returns this OR polling, never both), so
-// recovery invalidates existing watches on reconnect so consumers re-list.
+// recovery invalidates existing watches on reconnect and when a full buffer
+// drops a notification, so consumers re-list.
 // Core NATS also delivers in arrival order, not RV order, so Watch runs
 // arrivals through the same settle buffer as the channel notifier (held for
 // SettleDelay, emitted sorted by RV) to keep downstream RVs monotonic.
@@ -176,6 +177,8 @@ func (n *natsNotifier) Watch(ctx context.Context, opts WatchOptions) <-chan Even
 		case raw <- evt:
 		default:
 			n.drop(dropReasonBufferFull, "dropped watch notification, channel full", "subject", subject)
+			// Every watch missed this write, so force their clients to re-list.
+			n.invalidate()
 		}
 	}
 

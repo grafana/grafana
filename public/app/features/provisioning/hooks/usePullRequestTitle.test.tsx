@@ -1,6 +1,5 @@
-import { act, render, screen, waitFor } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
 import { type WorkflowOption } from '../types';
@@ -41,24 +40,6 @@ function Host({
 }
 
 describe('usePullRequestTitle', () => {
-  beforeEach(() => {
-    setTestFlags({ 'provisioning.gitConventions': true });
-  });
-
-  afterEach(async () => {
-    // setTestFlags fires OpenFeature events that update mounted components, so reset within act().
-    await act(async () => {
-      setTestFlags({});
-    });
-  });
-
-  it('returns an empty string when the flag is off even with a template configured', () => {
-    setTestFlags({ 'provisioning.gitConventions': false });
-    render(<Host repository={makeRepo({ titleTemplate: TEMPLATE })} />);
-
-    expect(screen.getByTestId('pr-title')).toBeEmptyDOMElement();
-  });
-
   it('returns an empty string for the write workflow even with a template', () => {
     render(<Host repository={makeRepo({ titleTemplate: TEMPLATE })} workflow="write" />);
 

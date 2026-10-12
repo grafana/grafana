@@ -159,6 +159,23 @@
     },
     {
       "metadata": {
+        "name": "alerting.ruleReviews",
+        "resourceVersion": "1791369430263",
+        "creationTimestamp": "2026-10-07T09:54:44Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-07 10:37:10.26353 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enable assistant reviews on the alert quality page.",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.ruleStatusSync",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-09-11T20:29:50Z"
@@ -529,7 +546,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryDetail",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-17T11:46:57Z"
+        "creationTimestamp": "2026-03-17T11:46:57Z",
+        "deletionTimestamp": "2026-10-08T11:13:16Z"
       },
       "spec": {
         "description": "Enables the notification history detail page",
@@ -542,7 +560,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryGlobal",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-02-13T19:30:50Z"
+        "creationTimestamp": "2026-02-13T19:30:50Z",
+        "deletionTimestamp": "2026-10-08T11:13:16Z"
       },
       "spec": {
         "description": "Enables the notification history global menu item viewer",
@@ -555,7 +574,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryRuleViewer",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-02-13T09:28:45Z"
+        "creationTimestamp": "2026-02-13T09:28:45Z",
+        "deletionTimestamp": "2026-10-08T11:13:16Z"
       },
       "spec": {
         "description": "Enables the notification history tab in the rule viewer",
@@ -568,7 +588,8 @@
       "metadata": {
         "name": "alertingNotificationHistoryTriage",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-05T16:07:52Z"
+        "creationTimestamp": "2026-03-05T16:07:52Z",
+        "deletionTimestamp": "2026-10-08T11:13:16Z"
       },
       "spec": {
         "description": "Enables the notification history timeline in the triage instance details drawer",
@@ -1054,6 +1075,20 @@
       },
       "spec": {
         "description": "Build the access-control folder tree by listing folders via the unified-storage search index (lightweight UID+parent refs) instead of a full object list, avoiding paged object-list round-trips.",
+        "stage": "experimental",
+        "codeowner": "@grafana/identity-access-team",
+        "hideFromDocs": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "authz.useLegacyCheck",
+        "resourceVersion": "1791463413681",
+        "creationTimestamp": "2026-10-08T12:43:33Z"
+      },
+      "spec": {
+        "description": "Route legacy access-control evaluations through the AuthZ LegacyCheck RPC.",
         "stage": "experimental",
         "codeowner": "@grafana/identity-access-team",
         "hideFromDocs": true,
@@ -1596,6 +1631,34 @@
     },
     {
       "metadata": {
+        "name": "dashboards.libraryPanelRepeatFromServerResolution",
+        "resourceVersion": "1791320467097",
+        "creationTimestamp": "2026-10-06T21:01:07Z"
+      },
+      "spec": {
+        "description": "Migrates a library panel repeat on the frontend only when the server did not already resolve it, instead of deciding from dashboard sharing state",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "dashboards.publicDashboardBadgeFromApi",
+        "resourceVersion": "1791322319214",
+        "creationTimestamp": "2026-10-06T21:31:59Z"
+      },
+      "spec": {
+        "description": "Resolves the dashboard toolbar public-share badge from the public dashboards API instead of the access.isPublic field on /dto",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "datasource.useNewCRUDAPIs",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-04-17T14:59:26Z"
@@ -1653,7 +1716,8 @@
       "metadata": {
         "name": "datasources.apiserver.useNewAPIsForDatasourceResources",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-04-27T12:46:38Z"
+        "creationTimestamp": "2026-04-27T12:46:38Z",
+        "deletionTimestamp": "2026-10-09T13:01:43Z"
       },
       "spec": {
         "description": "Use the new datasource API groups for datasource resource requests, frontend flag",
@@ -1857,7 +1921,8 @@
       "metadata": {
         "name": "datasourcesApiServerEnableHealthEndpointFrontend",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T17:02:42Z"
+        "creationTimestamp": "2026-03-11T17:02:42Z",
+        "deletionTimestamp": "2026-10-09T13:01:43Z"
       },
       "spec": {
         "description": "Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.",
@@ -2150,7 +2215,8 @@
       "metadata": {
         "name": "experimentRecentlyViewedDashboards",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-01-13T15:22:20Z"
+        "creationTimestamp": "2026-01-13T15:22:20Z",
+        "deletionTimestamp": "2026-10-08T15:34:53Z"
       },
       "spec": {
         "description": "A/A test for recently viewed dashboards feature",
@@ -3272,15 +3338,18 @@
     {
       "metadata": {
         "name": "inlineLogDetailsNoScrolls",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-11T11:18:41Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2026-03-11T11:18:41Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables an inline version of Log Details that creates no new scrolls",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -3356,7 +3425,8 @@
       "metadata": {
         "name": "kubernetesAlertingHistorian",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-11-27T16:14:16Z"
+        "creationTimestamp": "2025-11-27T16:14:16Z",
+        "deletionTimestamp": "2026-10-08T11:13:16Z"
       },
       "spec": {
         "description": "Adds support for Kubernetes alerting historian APIs",
@@ -3909,14 +3979,17 @@
     {
       "metadata": {
         "name": "lokiAlignedQuerySplitting",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-03-26T10:03:21Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2026-03-26T10:03:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Aligns query splitting chunks with UTC midnight",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4181,15 +4254,18 @@
     {
       "metadata": {
         "name": "otelLogsFormatting",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-07-16T15:42:14Z"
+        "resourceVersion": "1791554248806",
+        "creationTimestamp": "2025-07-16T15:42:14Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 13:57:28.806833 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Applies OTel formatting templates to displayed logs",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/observability-logs",
         "frontend": true,
-        "expression": "false"
+        "expression": "true"
       }
     },
     {
@@ -4538,7 +4614,8 @@
       "metadata": {
         "name": "provisioning.gitConventions",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-06-09T06:37:58Z"
+        "creationTimestamp": "2026-06-09T06:37:58Z",
+        "deletionTimestamp": "2026-10-08T06:01:07Z"
       },
       "spec": {
         "description": "Enable configurable commit message, branch name, and pull request title conventions for Git Sync",
@@ -4565,7 +4642,8 @@
       "metadata": {
         "name": "provisioning.readmes",
         "resourceVersion": "1789554268270",
-        "creationTimestamp": "2026-05-08T12:52:21Z"
+        "creationTimestamp": "2026-05-08T12:52:21Z",
+        "deletionTimestamp": "2026-10-08T09:32:09Z"
       },
       "spec": {
         "description": "Render the README.md of a Git Sync provisioned folder inline below its dashboards list",
@@ -4966,6 +5044,20 @@
       },
       "spec": {
         "description": "Redirect legacy report service to use the Kubernetes client wrapper",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
+        "requiresRestart": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "reporting.legacySettingServiceUsesK8SClient",
+        "resourceVersion": "1790956413548",
+        "creationTimestamp": "2026-10-02T15:53:33Z"
+      },
+      "spec": {
+        "description": "Redirect legacy report setting service to use the Kubernetes client wrapper",
         "stage": "experimental",
         "codeowner": "@grafana/grafana-operator-experience-squad",
         "requiresRestart": true,
@@ -5633,13 +5725,16 @@
     {
       "metadata": {
         "name": "unifiedNavbars",
-        "resourceVersion": "1789554268270",
-        "creationTimestamp": "2025-04-09T12:51:22Z"
+        "resourceVersion": "1791558064690",
+        "creationTimestamp": "2025-04-09T12:51:22Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-09 15:01:04.690462 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables unified navbars",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-catalog",
+        "codeowner": "@grafana/grafana-frontend-navigation",
         "frontend": true,
         "expression": "false"
       }

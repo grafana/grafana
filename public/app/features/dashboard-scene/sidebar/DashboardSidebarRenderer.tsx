@@ -12,6 +12,7 @@ import {
 } from '@grafana/runtime/internal';
 import { sceneGraph, type SceneVariable, useSceneObjectState } from '@grafana/scenes';
 import { Sidebar, useStyles2, useSidebarContext } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 
 import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
@@ -48,7 +49,9 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
   const sidebarContext = useSidebarContext();
   const viewPanelPane = useFlagGrafanaViewPanelPane();
   const feedbackButton = useFlagFeedbackButton();
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
   const dashboardUndoRedo = useFlagDashboardUndoRedo();
+
   const onOpenAddPane = useCallback(async () => {
     await sidebar.runPaneRequest(async (signal) => {
       const { AddNewPane } = await import(/* webpackChunkName: "dashboard-add-new-pane" */ './add-new/AddNewPane');
@@ -162,7 +165,7 @@ export function DashboardSidebarRenderer({ dashboard }: Props) {
             data-testid={selectors.pages.Dashboard.Sidebar.outlineButton}
             active={openPane instanceof DashboardOutline}
           />
-          {config.featureToggles.dashboardNewLayouts && config.featureToggles.dashboardUnifiedDrilldownControls && (
+          {dashboardNewLayoutsEnabled && config.featureToggles.dashboardUnifiedDrilldownControls && (
             <FiltersOverviewButton sidebar={sidebar} openPane={openPane} />
           )}
           {dashboard.isManaged() && Boolean(meta.canEdit) && <ManagedDashboardNavBarBadge dashboard={dashboard} />}

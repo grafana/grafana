@@ -19,6 +19,7 @@ var errSearchCannotAnswerTrash = errors.New("search cannot answer this trash lis
 func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRequest) (*resourcepb.ListResponse, error) {
 	ctx, span := tracer.Start(ctx, "resource.server.ListTrashFromSearch")
 	defer span.End()
+	s.reportSearchListBodies(ctx)
 	minResourceVersion := ToSnowflakeRV(req.ResourceVersion)
 
 	srq := &resourcepb.ResourceSearchRequest{
@@ -123,7 +124,8 @@ func (s *server) listTrashFromSearch(ctx context.Context, req *resourcepb.ListRe
 			rsp.Items = append(rsp.Items, &resourcepb.ResourceWrapper{
 				Value: item.value.Value, ResourceVersion: item.value.ResourceVersion,
 			})
-			if s.listPageFull(req, rsp, pageBytes) {
+			if reason := s.listLimitStopReason(req, rsp, pageBytes); reason != "" {
+				setListStopReason(ctx, reason)
 				token, err := newSearchContinueToken(item.row.sortFields, page.resourceVersion, sortAscending)
 				if err != nil {
 					return &resourcepb.ListResponse{Error: NewBadRequestError("invalid continue token")}, nil
