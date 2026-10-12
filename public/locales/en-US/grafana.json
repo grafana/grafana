@@ -6105,8 +6105,8 @@
       "visualization-button-tooltip": "Search options"
     },
     "plan-building-overlay": {
-      "quip-blue": "Picking a nice shade of blue…",
       "quip-corners": "Polishing the panel corners…",
+      "quip-green": "Picking a nice shade of green…",
       "quip-gridlines": "Lining up the gridlines…",
       "quip-legend": "Teaching the legend to behave…",
       "quip-metrics": "Asking the metrics nicely…",

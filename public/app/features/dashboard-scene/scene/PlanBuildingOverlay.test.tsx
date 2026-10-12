@@ -23,6 +23,6 @@ describe('PlanBuildingOverlay', () => {
     });
 
     expect(screen.queryByText('Lining up the gridlines…')).not.toBeInTheDocument();
-    expect(screen.getByText('Picking a nice shade of blue…')).toBeInTheDocument();
+    expect(screen.getByText('Picking a nice shade of green…')).toBeInTheDocument();
   });
 });

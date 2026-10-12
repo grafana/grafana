@@ -12,7 +12,7 @@ const QUIP_INTERVAL_MS = 2800;
 function getQuips(): string[] {
   return [
     t('dashboard.plan-building-overlay.quip-gridlines', 'Lining up the gridlines…'),
-    t('dashboard.plan-building-overlay.quip-blue', 'Picking a nice shade of blue…'),
+    t('dashboard.plan-building-overlay.quip-green', 'Picking a nice shade of green…'),
     t('dashboard.plan-building-overlay.quip-metrics', 'Asking the metrics nicely…'),
     t('dashboard.plan-building-overlay.quip-pie-charts', 'Arguing about pie charts…'),
     t('dashboard.plan-building-overlay.quip-legend', 'Teaching the legend to behave…'),

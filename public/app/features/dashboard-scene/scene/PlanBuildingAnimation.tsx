@@ -84,6 +84,8 @@ export function PlanBuildingAnimation() {
 
 function getStyles(theme: GrafanaTheme2) {
   const easing = theme.transitions.easing.easeOut;
+  // The first colour of Grafana's classic palette, so the sketch looks like a default dashboard.
+  const seriesColor = theme.visualization.getColorByName('green');
 
   const outline = PANELS.map((_, index) => {
     const start = FIRST_OUTLINE + index * OUTLINE_STEP;
@@ -132,16 +134,16 @@ function getStyles(theme: GrafanaTheme2) {
       fill: theme.colors.text.disabled,
     }),
     accent: css({
-      fill: theme.colors.primary.main,
+      fill: seriesColor,
     }),
     line: css({
-      stroke: theme.colors.primary.main,
+      stroke: seriesColor,
       strokeWidth: 2,
       strokeLinecap: 'round',
       strokeLinejoin: 'round',
     }),
     bar: css({
-      fill: theme.colors.primary.main,
+      fill: seriesColor,
       opacity: 0.7,
     }),
     outline,
