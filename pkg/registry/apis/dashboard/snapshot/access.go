@@ -73,6 +73,9 @@ func authorizeSnapshotDelete(ctx context.Context, snap *dashv0.Snapshot, accessC
 	if !allowed {
 		return apierrors.NewForbidden(dashv0.SnapshotResourceInfo.GroupResource(), snap.Name, errors.New("access denied"))
 	}
+	if snapshotOwnedBy(snap, requester) {
+		return nil
+	}
 
 	// Deletion must not require snapshots:read or permission to read the blob.
 	content, err := loadDashboardContent(identity.WithServiceIdentityForSingleNamespaceContext(ctx, snap.Namespace), blobs, snap)
@@ -95,7 +98,7 @@ func authorizeSnapshotDelete(ctx context.Context, snap *dashv0.Snapshot, accessC
 	if err != nil && !errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return err
 	}
-	if allowed || snapshotOwnedBy(snap, requester) || errors.Is(err, dashboards.ErrDashboardNotFound) {
+	if allowed || errors.Is(err, dashboards.ErrDashboardNotFound) {
 		return nil
 	}
 	return apierrors.NewForbidden(dashv0.SnapshotResourceInfo.GroupResource(), snap.Name, errors.New("access denied to this snapshot"))

@@ -121,11 +121,11 @@ func TestSnapshotListPreservesLegacyOwnership(t *testing.T) {
 
 func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 	for _, tc := range []struct {
-		name                                                                  string
-		creator                                                               string
-		permissions                                                           []ac.Permission
-		writeErr                                                              error
-		emptyDashboard, dashboardID, blob, crossOrg, crossOrgRequest, allowed bool
+		name                                                                             string
+		creator                                                                          string
+		permissions                                                                      []ac.Permission
+		writeErr                                                                         error
+		emptyDashboard, dashboardID, blob, blobError, crossOrg, crossOrgRequest, allowed bool
 	}{
 		{name: "noncreator cannot delete without dashboard edit", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "creator can delete without dashboard edit", creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
@@ -135,10 +135,13 @@ func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 		{name: "legacy dashboard ID edit permits deletion", dashboardID: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}, {Action: dashboards.ActionDashboardsWrite, Scope: "dashboards:id:123"}}, allowed: true},
 		{name: "creator still needs snapshot delete", creator: "user:alice"},
 		{name: "missing dashboard permits deletion", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, writeErr: dashboards.ErrDashboardNotFound, allowed: true},
-		{name: "unexpected authorization error is not bypassed by ownership", creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, writeErr: errors.New("backend unavailable")},
+		{name: "creator does not need dashboard authorization", creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, writeErr: errors.New("backend unavailable"), allowed: true},
+		{name: "noncreator dashboard authorization error is propagated", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, writeErr: errors.New("backend unavailable")},
 		{name: "empty external snapshot follows legacy deletion policy", emptyDashboard: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
 		{name: "blob-backed snapshot is not treated as empty", blob: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "blob-backed creator can delete", blob: true, creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
+		{name: "creator can delete with unavailable blob", blob: true, blobError: true, creator: "user:alice", permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}, allowed: true},
+		{name: "noncreator cannot delete with unavailable blob", blob: true, blobError: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "cross org is rejected even for creator", creator: "user:alice", crossOrg: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 		{name: "caller cannot select another org namespace", creator: "user:alice", crossOrg: true, crossOrgRequest: true, permissions: []ac.Permission{{Action: dashboards.ActionSnapshotsDelete}}},
 	} {
@@ -157,6 +160,11 @@ func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 					if tc.blob {
 						snap.Spec.Dashboard = nil
 						snap.Blobs.Dashboard = &dashv0.SnapshotBlobReference{Uid: "blob-1"}
+					}
+					if tc.blobError {
+						blobs.checkGet = func(context.Context, *resourcepb.GetBlobRequest) (*resourcepb.GetBlobResponse, error) {
+							return nil, errors.New("blob unavailable")
+						}
 					}
 					if tc.crossOrg {
 						snap.Namespace = authlib.OrgNamespaceFormatter(2)
@@ -207,6 +215,8 @@ func TestSnapshotAdministrativeDeletePolicy(t *testing.T) {
 						require.Error(t, err)
 						if tc.crossOrg {
 							require.True(t, apierrors.IsNotFound(err))
+						} else if tc.blobError {
+							require.ErrorContains(t, err, "blob unavailable")
 						} else if tc.writeErr == nil {
 							require.True(t, apierrors.IsForbidden(err))
 						}
