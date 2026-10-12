@@ -71,10 +71,7 @@ func (c *tokenAccessChecker) Check(ctx context.Context, req authlib.CheckRequest
 			"verb", req.Verb,
 			"error", err.Error(),
 		)
-		return &accessCheckError{
-			StatusError: apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err)),
-			cause:       err,
-		}
+		return apierrors.NewForbidden(gr, req.Name, fmt.Errorf("%s.%s is forbidden: %w", req.Resource, req.Group, err))
 	}
 	if !rsp.Allowed {
 		logger.Debug("access check denied",

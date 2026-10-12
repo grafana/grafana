@@ -107,12 +107,6 @@ func TestSessionAccessChecker_Check(t *testing.T) {
 			requester:     &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
 			expectAllow:   false,
 		},
-		{
-			name:        "no fallback configured, backend failure stays an error",
-			innerErr:    errors.New("access check failed"),
-			requester:   &mockRequester{orgRole: identity.RoleAdmin, identityType: authlib.TypeUser},
-			expectAllow: false,
-		},
 	}
 
 	for _, tt := range tests {
@@ -137,10 +131,6 @@ func TestSessionAccessChecker_Check(t *testing.T) {
 			} else {
 				require.Error(t, err)
 				assert.True(t, apierrors.IsForbidden(err), "expected Forbidden error, got: %v", err)
-				assert.Equal(t, tt.innerErr == nil, IsPermissionDenied(err))
-				if tt.innerErr != nil {
-					assert.ErrorIs(t, err, tt.innerErr)
-				}
 			}
 		})
 	}
@@ -156,7 +146,6 @@ func TestSessionAccessChecker_NoRequester(t *testing.T) {
 
 	require.Error(t, err)
 	assert.True(t, apierrors.IsUnauthorized(err), "expected Unauthorized error")
-	assert.False(t, IsPermissionDenied(err))
 }
 
 func TestSessionAccessChecker_WithFallbackRole_ImmutableOriginal(t *testing.T) {

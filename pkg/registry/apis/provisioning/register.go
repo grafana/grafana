@@ -497,7 +497,7 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 //
 // Repositories:
 //   - CRUD: repositories:create/read/write/delete
-//   - Subresources: files/resources (handler authorization), refs (editor), history/status (admin)
+//   - Subresources: files (any auth), refs (editor), resources/history/status (admin)
 //   - Test: repositories:write
 //   - Jobs subresource: jobs:create/read
 //
@@ -626,11 +626,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 			Namespace: a.GetNamespace(),
 		}, ""))
 
-	// The handler selects the full or permission-filtered listing for the caller.
-	case "resources":
-		return authorizer.DecisionAllow, "", nil
-
-	// Read-only subresources: history, status (admin only).
+	// Read-only subresources: resources, history, status (admin only).
 	//
 	// These expose repository management/inspection views and must be admin-only. We gate
 	// on repositories:write (VerbUpdate) - an admin-only action - rather than
@@ -640,7 +636,7 @@ func (b *APIBuilder) authorizeRepositorySubresource(ctx context.Context, a autho
 	// can manage it"). We keep the repositories resource with the repository Name rather
 	// than proxying through an unrelated resource (e.g. stats), so this remains correct if
 	// access is later scoped to individual repositories.
-	case "history", "status":
+	case "resources", "history", "status":
 		return toAuthorizerDecision(b.accessWithAdmin.Check(ctx, authlib.CheckRequest{
 			Verb:      apiutils.VerbUpdate,
 			Group:     provisioning.GROUP,
@@ -946,7 +942,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 	filesAccess := auth.NewVerbAwareAccessChecker(b.accessWithViewer, b.accessWithEditor)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("files")] = WithTimeout(NewFilesConnector(b, b.parsers, b.clients, filesAccess, b.folderMetadataEnabled, b.maxFileSize), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("refs")] = WithTimeout(NewRefsConnector(b), 30*time.Second)
-	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b.resourceLister, b.clients, b.access, b.accessWithAdmin), 30*time.Second)
+	storage[provisioning.RepositoryResourceInfo.StoragePath("resources")] = WithTimeout(NewListConnector(b, b.resourceLister), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("history")] = WithTimeout(NewHistorySubresource(b), 30*time.Second)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("jobs")] = WithTimeout(NewJobsConnector(b, b, b, jobHistory, b.access, b.clients, b.folderMetadataEnabled, performanceEnabled), 30*time.Second)
 
@@ -1426,7 +1422,7 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 	// update the version with a path
 	sub = oas.Paths.Paths[repoprefix+"/files/{path}"]
 	if sub != nil {
-		sub.Get.Description = "Read value from upstream repository"
+		sub.Get.Description = "Read value from upstream repository, or the existing Grafana folder for a directory path"
 		sub.Get.Parameters = []*spec3.Parameter{ref}
 
 		// Add message to the OpenAPI spec

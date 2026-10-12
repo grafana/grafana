@@ -2906,7 +2906,7 @@
         "tags": [
           "Repository"
         ],
-        "description": "Read value from upstream repository",
+        "description": "Read value from upstream repository, or the existing Grafana folder for a directory path",
         "operationId": "getRepositoryFilesWithPath",
         "parameters": [
           {
