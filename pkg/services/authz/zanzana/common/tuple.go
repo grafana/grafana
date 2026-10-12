@@ -8,6 +8,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folderV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -44,6 +45,7 @@ const (
 )
 
 var (
+	KindSnapshots       string = dashv0.SnapshotResourceInfo.GroupResource().Resource
 	KindNotebooks       string = dashv2beta1.NotebookResourceInfo.GroupResource().Resource
 	KindTeams           string = iamv0.TeamKind().GroupVersionResource().Resource
 	KindUsers           string = iamv0.UserKind().GroupVersionResource().Resource
