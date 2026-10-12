@@ -2866,10 +2866,10 @@ To prevent automatic updates for specific plugins, pin them to a specific versio
 
 Enter a comma-separated list of plugin identifiers that keep the Arrow data frame wire format for query responses.
 
-By default, Grafana asks backend plugins to encode query responses as JSON data frames.
+By default, Grafana asks backend plugins to encode query responses as Arrow data frames.
+When you enable the `datasources.jsonQueryDataFormat` [feature toggle](#feature_toggles), Grafana asks backend plugins for JSON data frames instead.
 JSON uses less memory than Arrow for responses that hold many small frames.
 Grafana always asks plugins in this list for Arrow, which encodes string-heavy responses with fewer allocations.
-To use Arrow for every plugin, disable the `datasources.jsonQueryDataFormat` [feature toggle](#feature_toggles).
 
 <hr>
 

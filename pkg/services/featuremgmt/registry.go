@@ -3414,7 +3414,7 @@ var (
 			Description: "Requests the JSON data frame wire format from backend plugins for unary QueryData",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       grafanaDataSourcesPlugins,
-			Expression:  "true",
+			Expression:  "false",
 			Generate:    Generate{Go: true},
 		},
 

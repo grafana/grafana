@@ -1794,7 +1794,7 @@
         "description": "Requests the JSON data frame wire format from backend plugins for unary QueryData",
         "stage": "preview",
         "codeowner": "@grafana/data-sources-plugins",
-        "expression": "true"
+        "expression": "false"
       }
     },
     {
