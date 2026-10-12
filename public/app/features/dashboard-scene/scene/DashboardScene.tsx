@@ -272,11 +272,10 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     };
   }
 
-  public recordEditMutation() {
+  public recordEditMutation(source: 'user' | 'assistant' = this._assistantWrites > 0 ? 'assistant' : 'user') {
     if (!dashboardModesEnabled() || !this.state.isEditing) {
       return;
     }
-    const source = this._assistantWrites > 0 ? 'assistant' : 'user';
     this.startEditPeriod(source);
     if (this._editSession) {
       const changesKey = source === 'assistant' ? 'assistantChanges' : 'manualChanges';
@@ -334,10 +333,11 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     this._editSession = undefined;
   }
 
-  public async withAssistantWrite<T>(write: () => Promise<T>): Promise<T> {
+  /** Scope synchronous mutations only; asynchronous completion reports its actor explicitly. */
+  public withAssistantWrite<T>(write: () => T): T {
     this._assistantWrites++;
     try {
-      return await write();
+      return write();
     } finally {
       this._assistantWrites--;
     }

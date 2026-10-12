@@ -77,7 +77,6 @@ export const updateAnnotationCommand: MutationCommand<UpdateAnnotationPayload> =
       // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- merge result is structurally an AnnotationQueryKind because both inputs were.
       const merged = mergedRecord as unknown as AnnotationQueryKind;
 
-      const previousState = found.layer.state;
       const newLayer = buildAnnotationLayer(merged);
       const updated = [...set.state.annotationLayers];
       updated[found.index] = newLayer;
@@ -89,8 +88,8 @@ export const updateAnnotationCommand: MutationCommand<UpdateAnnotationPayload> =
         changes: [
           {
             path: `/annotations/${name}`,
-            previousValue: previousState,
-            newValue: merged.spec.name,
+            previousValue: existingKind,
+            newValue: annotationLayerToKind(newLayer),
           },
         ],
       };

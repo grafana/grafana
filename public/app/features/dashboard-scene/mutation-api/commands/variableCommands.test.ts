@@ -182,8 +182,19 @@ describe('Variable mutation commands', () => {
     });
 
     expect(result.success).toBe(true);
-    expect(result.changes.length).toBeGreaterThan(0);
-    expect(result.changes[0].path).toBe('/variables/env');
+    expect(result.changes).toEqual([
+      {
+        path: '/variables/env',
+        previousValue: expect.objectContaining({
+          kind: 'CustomVariable',
+          spec: expect.objectContaining({ name: 'env', query: 'dev,staging,prod' }),
+        }),
+        newValue: expect.objectContaining({
+          kind: 'CustomVariable',
+          spec: expect.objectContaining({ name: 'env', query: 'dev,staging,prod,canary' }),
+        }),
+      },
+    ]);
   });
 
   it('UPDATE_VARIABLE preserves the scene key across the replacement', async () => {

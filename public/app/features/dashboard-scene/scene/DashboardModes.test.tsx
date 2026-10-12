@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { TestProvider } from 'test/helpers/TestProvider';
 
 import { locationService, reportInteraction } from '@grafana/runtime';
-import { sceneGraph } from '@grafana/scenes';
+import { ConstantVariable, SceneVariableSet, sceneGraph } from '@grafana/scenes';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import {
   createDashboardMutationApi,
@@ -13,12 +13,14 @@ import {
 import { applyDashboardSpec } from '../actions/dashboard/applyDashboardSpec';
 import { changeTitle } from '../actions/dashboard/changeTitle';
 import { DashboardMutationClient } from '../mutation-api/DashboardMutationClient';
+import { LAZY_DASHBOARD_COMMANDS } from '../mutation-api/commands/lazyRegistry';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
 import { setDashboardModeAfterSave, consumeDashboardModeAfterSave } from '../saving/dashboardModeAfterSave';
 import { useSaveDashboard } from '../saving/useSaveDashboard';
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { getDashboardResourceText } from '../sidebar/codePaneUtils';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
+import { createDeferred } from '../utils/test-utils';
 
 import { DashboardModePicker } from './DashboardModePicker';
 import { toggleVizPanelLegend } from './PanelMenuBehavior';
@@ -470,6 +472,55 @@ describe('mode instrumentation', () => {
     ]);
   });
 
+  it.each(['annotation', 'variable'])('ignores unchanged Assistant %s updates until a real edit', async (kind) => {
+    const dashboard = setup();
+    if (kind === 'variable') {
+      dashboard.setState({
+        $variables: new SceneVariableSet({ variables: [new ConstantVariable({ name: 'env', value: 'prod' })] }),
+      });
+    }
+    dashboard.onEnterEditMode('assistant');
+    const initialResource = getDashboardResourceText(dashboard);
+    const client = new DashboardMutationClient(dashboard);
+    const update = (changed: boolean) =>
+      client.execute(
+        kind === 'annotation'
+          ? {
+              type: 'UPDATE_ANNOTATION',
+              payload: {
+                name: 'Annotations & Alerts',
+                annotation: { spec: { iconColor: changed ? 'red' : 'rgba(0, 211, 255, 1)' } },
+              },
+            }
+          : {
+              type: 'UPDATE_VARIABLE',
+              payload: {
+                name: 'env',
+                variable: { kind: 'ConstantVariable', spec: { name: 'env', query: changed ? 'dev' : 'prod' } },
+              },
+            },
+        'grafana-assistant-app'
+      );
+
+    expect((await update(false)).success).toBe(true);
+    expect(getDashboardResourceText(dashboard)).toBe(initialResource);
+    expect(events('dashboards_edit_actor_first_change')).toEqual([]);
+    expect(dashboard.getEditSessionTracking().had_assistant_changes).toBe(false);
+
+    expect((await update(true)).success).toBe(true);
+    const spec = JSON.parse(getDashboardResourceText(dashboard)).spec;
+    if (kind === 'annotation') {
+      expect(spec.annotations[0].spec.iconColor).toBe('red');
+    } else {
+      expect(spec.variables[0].spec.query).toBe('dev');
+    }
+    expect(events('dashboards_edit_actor_first_change')).toEqual([
+      expect.objectContaining({ actor: 'assistant', mode: 'agent' }),
+    ]);
+    expect((await update(true)).success).toBe(true);
+    expect(events('dashboards_edit_actor_first_change')).toHaveLength(1);
+  });
+
   it('reports the first Assistant panel update before the later manual mode switch', async () => {
     const dashboard = setup(true);
     const client = new DashboardMutationClient(dashboard);
@@ -767,5 +818,84 @@ describe('mode instrumentation', () => {
     clock.mockReturnValue(2500);
     expect(dashboard.getEditSessionTracking().elapsed_ms).toBe(1500);
     clock.mockRestore();
+  });
+});
+
+describe('actor attribution during Assistant requests', () => {
+  const events = (name: string) =>
+    jest
+      .mocked(reportInteraction)
+      .mock.calls.filter(([event]) => event === name)
+      .map(([, payload]) => payload);
+
+  it.each(['GET_SPEC', 'UPDATE_DASHBOARD_SETTINGS'])(
+    'attributes a manual change to the user while Assistant %s loads',
+    async (type) => {
+      const dashboard = setup();
+      dashboard.setDashboardMode('edit', 'picker');
+      const command = LAZY_DASHBOARD_COMMANDS.find((command) => command.name === type)!;
+      const load = command.load;
+      const loaded = createDeferred<void>();
+      const loadSpy = jest.spyOn(command, 'load').mockImplementation(async () => {
+        await loaded.promise;
+        return load();
+      });
+      const pending = new DashboardMutationClient(dashboard).execute(
+        { type, payload: type === 'GET_SPEC' ? {} : { title: 'Assistant title' } },
+        'grafana-assistant-app'
+      );
+      try {
+        changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'Manual title' });
+        expect(dashboard.state.title).toBe('Manual title');
+        expect(dashboard.getEditSessionTracking()).toMatchObject({
+          had_manual_changes: true,
+          had_assistant_changes: false,
+        });
+      } finally {
+        loaded.resolve();
+        await pending;
+        loadSpy.mockRestore();
+      }
+      expect(events('dashboards_edit_actor_first_change')).toEqual(
+        type === 'GET_SPEC'
+          ? [expect.objectContaining({ actor: 'user' })]
+          : [expect.objectContaining({ actor: 'user' }), expect.objectContaining({ actor: 'assistant' })]
+      );
+    }
+  );
+
+  it('attributes manual takeover while an Assistant panel update awaits plugin loading', async () => {
+    const dashboard = setup(true);
+    const loading = createDeferred<void>();
+    const loaded = createDeferred<void>();
+    const changePlugin = jest.spyOn(dashboard, 'changePanelPlugin').mockImplementation(async (panel, pluginId) => {
+      loading.resolve();
+      await loaded.promise;
+      panel.setState({ pluginId });
+    });
+    const pending = new DashboardMutationClient(dashboard).execute(
+      {
+        type: 'UPDATE_PANEL',
+        payload: { element: { name: 'panel-1' }, panel: { spec: { vizConfig: { group: 'timeseries' } } } },
+      },
+      'grafana-assistant-app'
+    );
+    await loading.promise;
+    try {
+      changeTitle({ source: dashboard, oldValue: 'Original title', newValue: 'Manual title' });
+      expect(getDashboardMode(dashboard.state)).toBe('edit');
+      expect(dashboard.getEditSessionTracking()).toMatchObject({
+        had_manual_changes: true,
+        had_assistant_changes: false,
+      });
+    } finally {
+      loaded.resolve();
+      await pending;
+      changePlugin.mockRestore();
+    }
+    expect(events('dashboards_edit_actor_first_change')).toEqual([
+      expect.objectContaining({ actor: 'user', mode: 'edit' }),
+      expect.objectContaining({ actor: 'assistant', mode: 'edit' }),
+    ]);
   });
 });
