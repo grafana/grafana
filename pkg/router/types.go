@@ -6,6 +6,8 @@ import (
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana-app-sdk/app"
 )
 
 type Backend interface {
@@ -29,6 +31,13 @@ type Backend interface {
 // The result must change only when Key does.
 type DiscoveryProvider interface {
 	Discovery() (apidiscoveryv2.APIGroupDiscovery, bool)
+}
+
+// ManifestProvider is an optional Backend interface for a backend defined by an
+// app manifest. The router publishes the manifest under /discovery. The result
+// must change only when Key does, and callers must not modify it.
+type ManifestProvider interface {
+	Manifest() (*app.ManifestData, bool)
 }
 
 type RoutesLoader interface {

@@ -1,7 +1,8 @@
 # AGENTS.md — Grafana Router
 
 `pkg/router` is Grafana's replacement for kube-aggregator and apiextensions-apiserver: a reverse
-proxy that serves `/apis` and `/openapi/v3` by API group. A `RoutesLoader` supplies routes as
+proxy that serves `/apis` and `/openapi/v3` by API group, and publishes the served groups' app
+manifests under `/apis/discovery`. A `RoutesLoader` supplies routes as
 `[]Backend`. Routes change rarely, as apps and plugins are rolled out or get new versions.
 
 This file holds the current rules. For the reasoning and history behind them, see `specs/`,
@@ -96,6 +97,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
 | Root discovery (`/apis`, `/openapi/v3`) | `discovery.go`, `discovery_handler.go` |
 | Per-group-version OpenAPI cache | `openapi_cache.go` |
+| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go` |
 | Circuit breaker, status recorder | `breaker.go`, `plugin_breaker.go` |
 | dskit service, middleware entry point | `service.go` |
 | Watch handling, upgrade rejection, verb classification | `watch.go` |
@@ -142,6 +144,12 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis` | Synthesized: `APIGroupList`, or `APIGroupDiscoveryList` when the aggregated format is negotiated. |
 | `/openapi/v3` | Synthesized index; per-version URLs are cache-busted with the backend key. |
 | `/openapi/v3/apis/{group}/{version}` | GET and HEAD only (405 otherwise). Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`, or larger than `maxCachedOpenAPIDocBytes`. |
+| `/apis/discovery` | Synthesized: the manifest formats served, each with its paths. |
+| `/apis/discovery/v1alpha2` | Synthesized: links to this version's documents. |
+| `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
+| `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
+| `/apis/discovery/v1alpha2/index.md` | Synthesized markdown index of every served group, for agents. |
+| `/apis/discovery/v1alpha2/index.html` | The same index rendered as a static page, with a CSP that allows no scripts. |
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
   server's, fetched through `next`. A routed group replaces all of the embedded server's versions of
@@ -157,6 +165,19 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
+- **App manifest discovery** (`/apis/discovery`) is built in `publish` with the root documents, from the
+  `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
+  - The version segment is the `AppManifest` kind version the documents use (`v1alpha2`). A new
+    manifest format gets a new tree; don't change the shape of an existing one.
+  - `Operator` and `ExtraPermissions` are dropped: they describe how the app's backend is deployed
+    and authorized, not the API.
+  - `discovery` is matched before group dispatch, so it is never a group, and it is not one in the
+    metrics. It has no dot, so no plugin group can claim it.
+  - Manifest text is plugin-controlled. `mdText` and `mdCode` keep it to one line, unable to break
+    tables or code spans, and bounded in length. The HTML page renders the markdown with raw HTML
+    dropped and only safe links.
+  - It needs authentication like `/apis`, GET and HEAD only. In middleware mode it covers only
+    the router's groups; the embedded server's groups are listed in `/apis` only.
 - **Unknown groups:** fall through to `next`, or to the ST fallback when running standalone.
 - **Size limits:** nothing the router buffers or decodes can grow without bound.
   - `captureWriter` buffers OpenAPI documents up to `maxCachedOpenAPIDocBytes` (32 MiB). A larger

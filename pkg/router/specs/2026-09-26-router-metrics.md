@@ -104,7 +104,7 @@ including watches the router rejects (for example with a 401, or a 400 for a Web
 
 `route` says how the router dispatched the request:
 `backend` (the group's backend), `fallback` (the single-tenant fallback), `discovery` (root
-discovery the router builds), `next` (not the router's; passed on), `invalid` (rejected before
+discovery and `/apis/discovery`, which the router builds), `next` (not the router's; passed on), `invalid` (rejected before
 routing) or `unauthenticated` (rejected because the caller did not authenticate, in the standalone
 router).
 

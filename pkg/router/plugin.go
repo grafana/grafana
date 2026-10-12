@@ -368,6 +368,11 @@ func (b *PluginBackend) Group() metav1.APIGroup {
 // Source implements [Backend].
 func (b *PluginBackend) Source() string { return sourceLocalPlugin }
 
+// Manifest implements [ManifestProvider].
+func (b *PluginBackend) Manifest() (*app.ManifestData, bool) {
+	return b.manifest, b.manifest != nil
+}
+
 func (b *PluginBackend) Key() string {
 	return b.key
 }

@@ -128,8 +128,12 @@ func newPluginGRPCRequestRetries(reg prometheus.Registerer, source string) *prom
 
 // requestGroup returns the group a request is for: the group of an
 // /apis/<group>/... path, or of an /openapi/v3/apis/<group>/<version>
-// document, which is served by the same backend.
+// document, which is served by the same backend. The /apis/discovery tree has
+// no group.
 func requestGroup(path string) string {
+	if isDiscoveryPath(path) {
+		return ""
+	}
 	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
 		return group
 	}

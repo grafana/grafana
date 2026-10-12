@@ -115,6 +115,10 @@ type GrafanaRouter struct {
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
 
+	// manifestDocs is the /discovery tree, rebuilt from served with the root
+	// documents.
+	manifestDocs atomic.Pointer[manifestDocs]
+
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
 	// sync.Map rather than an atomic swap. publish drops entries for groups
@@ -161,6 +165,8 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 	r.apiGroupList.Store(&emptyGroups)
 	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
 	r.openapiIndex.Store(&emptyIndex)
+	emptyManifests := buildManifestDocs(context.Background(), nil)
+	r.manifestDocs.Store(&emptyManifests)
 	return r
 }
 
@@ -185,6 +191,13 @@ func (r *GrafanaRouter) HandleFunc(w http.ResponseWriter, req *http.Request, nex
 
 	req = r.authenticate(w, req)
 	if req == nil {
+		return
+	}
+
+	// Built by the router, and checked before group dispatch so the tree is
+	// never mistaken for a group.
+	if isDiscoveryPath(path) {
+		r.serveManifestDiscovery(w, req)
 		return
 	}
 
@@ -304,6 +317,9 @@ func (r *GrafanaRouter) owns(req *http.Request) bool {
 	case inTree && !canonicalAPIPath(req.URL):
 		return true // HandleFunc rejects it before routing, so it never reaches next
 
+	case isDiscoveryPath(path):
+		return true
+
 	case path == apisPrefix || path == apisPrefix+"/" || path == openapiV3Prefix || path == openapiV3Prefix+"/":
 		return true
 	case strings.HasPrefix(path, apisPrefix+"/"):
@@ -337,7 +353,11 @@ func (r *GrafanaRouter) KnownGroup(group string) bool {
 // If-None-Match against the document's key-derived ETag. Shared by
 // serveAPIGroupList and the /openapi/v3 root doc.
 func serveCachedDoc(w http.ResponseWriter, req *http.Request, doc *cachedDoc) {
-	w.Header().Set("Content-Type", "application/json")
+	contentType := doc.contentType
+	if contentType == "" {
+		contentType = "application/json"
+	}
+	w.Header().Set("Content-Type", contentType)
 	w.Header().Set("ETag", doc.etag)
 	if req.Header.Get("If-None-Match") == doc.etag {
 		w.WriteHeader(http.StatusNotModified)
@@ -675,6 +695,9 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 
 	index := buildOpenAPIV3Index(ctx, backends)
 	r.openapiIndex.Store(&index)
+
+	manifests := buildManifestDocs(ctx, backends)
+	r.manifestDocs.Store(&manifests)
 }
 
 // retainOpenAPIDocs drops cached OpenAPI documents for groups that are no

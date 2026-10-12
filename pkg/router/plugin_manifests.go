@@ -320,3 +320,12 @@ type pluginDeploymentBackend struct {
 
 func (b *pluginDeploymentBackend) Key() string    { return b.key }
 func (b *pluginDeploymentBackend) Source() string { return b.source }
+
+// Manifest implements [ManifestProvider]; the embedded Backend interface does
+// not promote it.
+func (b *pluginDeploymentBackend) Manifest() (*app.ManifestData, bool) {
+	if p, ok := b.Backend.(ManifestProvider); ok {
+		return p.Manifest()
+	}
+	return nil, false
+}

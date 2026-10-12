@@ -22,6 +22,8 @@ import (
 type cachedDoc struct {
 	body []byte
 	etag string
+	// contentType defaults to application/json.
+	contentType string
 }
 
 // quoteETag wraps an opaque value as an HTTP entity tag per RFC 7232 §2.3.
