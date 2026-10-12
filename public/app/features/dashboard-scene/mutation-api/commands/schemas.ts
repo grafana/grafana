@@ -880,7 +880,8 @@ const renderPlanPayloadSchema = z
       .default('preview')
       .describe(
         '"preview" renders the plan with sample data and Build/Dismiss actions. "building" shows a loading ' +
-          'screen instead, while the plan is built; call END_PLANNING before the first write.'
+          'screen instead, while the plan is built: the first write replaces it, and END_PLANNING ends it ' +
+          'when the build writes nothing.'
       ),
   })
   .superRefine((data, ctx) => {

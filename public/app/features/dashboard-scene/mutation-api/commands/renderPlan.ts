@@ -6,7 +6,8 @@
  * there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
  *
  * With phase "building" nothing from the plan renders: the dashboard stays empty behind a loading
- * screen until the builder calls END_PLANNING ahead of its first write.
+ * screen until the build's first write replaces it (see DashboardMutationClient), or END_PLANNING
+ * ends it when the build writes nothing.
  *
  * Never calls enterEditModeIfNeeded: the preview is a static, view-mode surface that must never
  * enter edit mode (see refuseWhilePlanning for the few actions still reachable without it).

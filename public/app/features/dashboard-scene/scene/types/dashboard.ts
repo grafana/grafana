@@ -107,7 +107,8 @@ export interface DashboardPlanPreviewState extends DashboardPlanningBase {
 
 /**
  * The user chose Build and the builder has not written anything yet. The dashboard shows a
- * loading screen, with nothing left to decide, until END_PLANNING clears it.
+ * loading screen, with nothing left to decide, until the build's first write replaces it or
+ * END_PLANNING clears it.
  */
 interface DashboardPlanBuildingState extends DashboardPlanningBase {
   phase: 'building';

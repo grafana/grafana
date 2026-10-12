@@ -525,6 +525,37 @@ describe('other mutation commands, while a plan preview is active', () => {
   // A planning scene is not a mutation target: DashboardMutationClient refuses every mutating
   // command except RENDER_PLAN/END_PLANNING (see DashboardMutationClient.test.ts). Covered here
   // too, so RENDER_PLAN's own test suite proves the isPlanning() it sets actually blocks a write.
+  it('lets the first build write replace a building screen, keeping the screen up until it lands', async () => {
+    const { scene, client } = setup();
+    await client.execute({ type: 'RENDER_PLAN', payload: { ...plan, phase: 'building' } });
+    const phaseWhenPanelsLanded: Array<string | undefined> = [];
+    const subscription = scene.subscribeToState((state, prev) => {
+      if (state.body !== prev.body || state.body.getVizPanels().length > 0) {
+        phaseWhenPanelsLanded.push(state.planning?.phase);
+      }
+    });
+
+    const result = await client.execute({
+      type: 'ADD_PANEL',
+      payload: {
+        panel: {
+          kind: 'Panel',
+          spec: {
+            title: 'New panel',
+            vizConfig: { group: 'timeseries', spec: { options: {}, fieldConfig: { defaults: {}, overrides: [] } } },
+            data: { kind: 'QueryGroup', spec: { queries: [], transformations: [], queryOptions: {} } },
+          },
+        },
+      },
+    });
+    subscription.unsubscribe();
+
+    expect(result.success).toBe(true);
+    expect(scene.state.body.getVizPanels().map((panel) => panel.state.title)).toEqual(['New panel']);
+    expect(phaseWhenPanelsLanded[0]).toBe('building');
+    expect(scene.state.planning).toBeUndefined();
+  });
+
   it('ADD_PANEL is refused, not applied', async () => {
     const { scene, client } = setup();
     await client.execute({ type: 'RENDER_PLAN', payload: plan });
