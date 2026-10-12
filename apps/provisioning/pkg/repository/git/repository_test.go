@@ -5292,3 +5292,94 @@ func TestGitRepository_AuditLog(t *testing.T) {
 	require.Contains(t, output, `"repository_name":"my-repo"`)
 	require.Contains(t, output, `"url":"https://git.example.com/owner/repo.git"`)
 }
+
+func TestGitRepository_HiddenPaths(t *testing.T) {
+	for _, prefix := range []string{"", "configs/", ".configured/"} {
+		for _, tt := range []struct {
+			path     string
+			kind     protocol.ObjectType
+			included bool
+		}{
+			{"dashboard.json", protocol.ObjectTypeBlob, true},
+			{"team.v2", protocol.ObjectTypeTree, true},
+			{"team/dashboard.json", protocol.ObjectTypeBlob, true},
+			{"team/.keep", protocol.ObjectTypeBlob, true},
+			{".config.json", protocol.ObjectTypeBlob, false},
+			{".ci", protocol.ObjectTypeTree, false},
+			{".ci/pipeline.yaml", protocol.ObjectTypeBlob, false},
+			{".ci/_folder.json", protocol.ObjectTypeBlob, false},
+			{".ci/.keep", protocol.ObjectTypeBlob, false},
+			{".github/workflows", protocol.ObjectTypeTree, false},
+			{".github/workflows/lint.yml", protocol.ObjectTypeBlob, false},
+			{"team/.ci/config.json", protocol.ObjectTypeBlob, false},
+			{"team/.hidden & config/_folder.json", protocol.ObjectTypeBlob, false},
+			{"team/.keep", protocol.ObjectTypeTree, false},
+		} {
+			t.Run(prefix+tt.path+string(tt.kind), func(t *testing.T) {
+				mockClient := &mocks.FakeClient{}
+				mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+				mockClient.GetFlatTreeReturns(&nanogit.FlatTree{Entries: []nanogit.FlatTreeEntry{
+					{Path: prefix + tt.path, Type: tt.kind},
+				}}, nil)
+				repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: prefix}, config: &provisioning.Repository{}}
+				entries, err := repo.ReadTree(t.Context(), "main")
+				require.NoError(t, err)
+				if tt.included {
+					require.Len(t, entries, 1)
+					require.Equal(t, tt.path, strings.TrimSuffix(entries[0].Path, "/"))
+				} else {
+					require.Empty(t, entries)
+				}
+
+				for _, status := range []protocol.FileStatus{protocol.FileStatusAdded, protocol.FileStatusModified, protocol.FileStatusDeleted, protocol.FileStatusTypeChanged} {
+					mockClient.CompareCommitsReturns([]nanogit.CommitFile{{Path: prefix + tt.path, Type: tt.kind, Status: status}}, nil)
+					changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+					require.NoError(t, err)
+					if tt.included {
+						require.Len(t, changes, 1, "status %s", status)
+						require.Equal(t, tt.path, changes[0].Path)
+					} else {
+						require.Empty(t, changes, "status %s", status)
+					}
+				}
+			})
+		}
+	}
+}
+
+func TestGitRepository_CompareFiles_HiddenPathRenames(t *testing.T) {
+	for _, prefix := range []string{"", "configs/"} {
+		for _, tt := range []struct {
+			from, to string
+			kind     protocol.ObjectType
+			want     []repository.VersionedFileChange
+		}{
+			{"dashboard.json", ".ci/dashboard.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "dashboard.json", PreviousPath: "dashboard.json", Ref: "feature", PreviousRef: "main"},
+			}},
+			{".ci/dashboard.json", "dashboard.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{
+				{Action: repository.FileActionCreated, Path: "dashboard.json", Ref: "feature"},
+			}},
+			{".ci/old.json", ".ci/new.json", protocol.ObjectTypeBlob, []repository.VersionedFileChange{}},
+			{"team", ".ci", protocol.ObjectTypeTree, []repository.VersionedFileChange{
+				{Action: repository.FileActionDeleted, Path: "team/", PreviousPath: "team/", Ref: "feature", PreviousRef: "main"},
+			}},
+			{".ci", "team", protocol.ObjectTypeTree, []repository.VersionedFileChange{
+				{Action: repository.FileActionCreated, Path: "team/", Ref: "feature"},
+			}},
+			{".ci", ".github", protocol.ObjectTypeTree, []repository.VersionedFileChange{}},
+		} {
+			t.Run(prefix+tt.from+" to "+tt.to, func(t *testing.T) {
+				mockClient := &mocks.FakeClient{}
+				mockClient.GetRefReturns(nanogit.Ref{Hash: hash.Hash{1}}, nil)
+				mockClient.CompareCommitsReturns([]nanogit.CommitFile{{
+					Path: prefix + tt.to, OldPath: prefix + tt.from, Type: tt.kind, Status: protocol.FileStatusRenamed,
+				}}, nil)
+				repo := &gitRepository{client: mockClient, gitConfig: RepositoryConfig{Path: prefix}, config: &provisioning.Repository{}}
+				changes, err := repo.CompareFiles(t.Context(), "main", "feature")
+				require.NoError(t, err)
+				require.Equal(t, tt.want, changes)
+			})
+		}
+	}
+}
