@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"go.opentelemetry.io/otel/attribute"
 	"golang.org/x/sync/errgroup"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -13,6 +14,7 @@ import (
 	foldersV1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
@@ -50,9 +52,12 @@ func (r *subAccessREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subAccessREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.Start(ctx, "folder.access")
+		defer span.End()
+
 		access, err := r.getAccessInfo(ctx, name)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 		} else {
 			responder.Object(200, access)
 		}
@@ -218,7 +223,12 @@ func (r *subAccessREST) getAccessInfo(ctx context.Context, name string) (*folder
 		return r.checkAccess(ctx, ns.Value, user, folder.GeneralFolderUID, "")
 	}
 
-	f, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	getCtx, span := tracing.Start(ctx, "folder.access.get")
+	f, err := r.getter.Get(getCtx, name, &v1.GetOptions{})
+	if err != nil {
+		tracing.Error(span, err)
+	}
+	span.End()
 	if err != nil {
 		return nil, err
 	}
@@ -242,16 +252,30 @@ func (r *subAccessREST) checkAccess(ctx context.Context, namespace string, user 
 	g.SetLimit(maxConcurrentProbeBatches)
 	for i, batch := range folderAccessProbeBatches {
 		g.Go(func() error {
+			first := batch.probes[0]
+			batchCtx, span := tracing.Start(gctx, "folder.access.batchCheck",
+				attribute.String("group", first.group),
+				attribute.String("resource", first.resource),
+				attribute.String("subresource", first.subresource),
+			)
+			defer span.End()
+
 			checks := make([]authlib.BatchCheckItem, len(batch.probes))
 			for j, p := range batch.probes {
 				checks[j] = p.item(name, parent)
 			}
-			resp, err := r.accessClient.BatchCheck(gctx, user, authlib.BatchCheckRequest{
+			resp, err := r.accessClient.BatchCheck(batchCtx, user, authlib.BatchCheckRequest{
 				Namespace: namespace,
 				Checks:    checks,
 			})
 			if err != nil {
-				return err
+				return tracing.Error(span, err)
+			}
+			for _, p := range batch.probes {
+				if err := resp.Results[p.correlationID].Error; err != nil {
+					tracing.Error(span, err)
+					break
+				}
 			}
 			responses[i] = resp
 			return nil

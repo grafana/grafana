@@ -2,7 +2,6 @@ package folders
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -10,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/folder"
 )
 
@@ -46,6 +46,9 @@ func (r *subParentsREST) NewConnectOptions() (runtime.Object, bool, string) {
 
 func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		ctx, span := tracing.Start(ctx, "folder.parents")
+		defer span.End()
+
 		if name == folder.GeneralFolderUID || name == folder.SharedWithMeFolderUID {
 			responder.Object(http.StatusOK, &folders.FolderInfoList{
 				Items: []folders.FolderInfo{},
@@ -53,21 +56,31 @@ func (r *subParentsREST) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		obj, err := r.getter.Get(ctx, name, &metav1.GetOptions{})
+		getCtx, getSpan := tracing.Start(ctx, "folder.parents.get")
+		obj, err := r.getter.Get(getCtx, name, &metav1.GetOptions{})
 		if err != nil {
-			responder.Error(err)
+			tracing.Error(getSpan, err)
+		}
+		getSpan.End()
+		if err != nil {
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
 		folderObj, ok := obj.(*folders.Folder)
 		if !ok {
-			responder.Error(fmt.Errorf("expecting folder, found: %T", folderObj))
+			responder.Error(tracing.Errorf(span, "expecting folder, found: %T", folderObj))
 			return
 		}
 
-		info, err := r.parents(ctx, folderObj)
+		parentsCtx, parentsSpan := tracing.Start(ctx, "folder.parents.lookupParents")
+		info, err := r.parents(parentsCtx, folderObj)
 		if err != nil {
-			responder.Error(err)
+			tracing.Error(parentsSpan, err)
+		}
+		parentsSpan.End()
+		if err != nil {
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 		responder.Object(http.StatusOK, info)

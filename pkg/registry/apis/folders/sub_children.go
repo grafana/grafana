@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -56,27 +57,41 @@ func (r *subChildrenREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Object, responder rest.Responder) (http.Handler, error) {
+	ctx, span := tracing.Start(ctx, "folder.children")
 	if name == folder.GeneralFolderUID {
 		name = ""
-	} else if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
-		return nil, err
+	} else {
+		getCtx, getSpan := tracing.Start(ctx, "folder.children.get")
+		_, err := r.getter.Get(getCtx, name, &v1.GetOptions{})
+		if err != nil {
+			tracing.Error(getSpan, err)
+		}
+		getSpan.End()
+		if err != nil {
+			tracing.Error(span, err)
+			span.End()
+			return nil, err
+		}
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer span.End()
+
 		ns, err := request.NamespaceInfoFrom(ctx, true)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
 		limit, offset, err := parseChildrenPaging(req)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
 		gvr := folders.FolderResourceInfo.GroupVersionResource()
-		resp, err := r.searcher.Search(ctx, &resourcepb.ResourceSearchRequest{
+		searchCtx, searchSpan := tracing.Start(ctx, "folder.children.search")
+		resp, err := r.searcher.Search(searchCtx, &resourcepb.ResourceSearchRequest{
 			Options: &resourcepb.ListOptions{
 				Key: &resourcepb.ResourceKey{
 					Namespace: ns.Value,
@@ -97,15 +112,20 @@ func (r *subChildrenREST) Connect(ctx context.Context, name string, _ runtime.Ob
 			Offset:       offset,
 			ResultFormat: resourcepb.ResourceSearchRequest_FIELD_VALUES,
 		})
-		if err := resource.StatusErrorFromResponse(resp.GetError(), err); err != nil {
+		err = resource.StatusErrorFromResponse(resp.GetError(), err)
+		if err != nil {
+			tracing.Error(searchSpan, err)
+		}
+		searchSpan.End()
+		if err != nil {
 			logging.FromContext(ctx).Error("Failed to search child folders", "namespace", ns.Value, "folder", name, "error", err)
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
 		rows, err := decodeSearchRows(resp)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
