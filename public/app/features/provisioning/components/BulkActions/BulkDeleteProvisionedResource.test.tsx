@@ -6,7 +6,6 @@ import { type Job, type RepositoryView } from 'app/api/clients/provisioning/v0al
 import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import * as currentUser from '../../utils/currentUser';
 
 import { BulkDeleteProvisionedResource } from './BulkDeleteProvisionedResource';
 import { type ResponseType } from './useBulkActionJob';
@@ -516,23 +515,6 @@ describe('BulkDeleteProvisionedResource', () => {
       expect(mockCreateBulkJob).toHaveBeenCalledWith(
         templateRepository,
         expect.objectContaining({ message: 'chore: delete 2 resources edited' })
-      );
-    });
-
-    it('does not append a saved-by trailer when the acting user is known', async () => {
-      jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
-      const trailerRepository: RepositoryView = {
-        ...templateRepository,
-        commit: { singleResourceMessageTemplate: 'chore: {{action}}' },
-      };
-      const { user, mockCreateBulkJob } = setup(trailerRepository);
-
-      await screen.findByRole('button', { name: /Delete/i });
-      await user.click(screen.getByRole('button', { name: /Delete/i }));
-
-      expect(mockCreateBulkJob).toHaveBeenCalledWith(
-        trailerRepository,
-        expect.objectContaining({ message: 'chore: delete' })
       );
     });
   });

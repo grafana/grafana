@@ -1,11 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import {
-  type CommitTemplateVars,
-  getBulkResourceCommitMessage,
-  getSingleResourceCommitMessage,
-  renderCommitMessage,
-} from '../utils/commitMessage';
+import { type CommitTemplateVars, getResourceCommitMessage, renderCommitMessage } from '../utils/commitMessage';
 
 import { useTemplateAutofill } from './useTemplateAutofill';
 
@@ -40,14 +35,8 @@ export function useCommitMessageTemplate({
   const template = repository?.commit?.singleResourceMessageTemplate;
   const locked = repository?.commit?.enforceTemplate ?? false;
 
-  // Enforced repos commit the template, not the field, so drop the comment when locked. Bulk callers
-  // (those that pass a `fallbackMessage`) resolve via the bulk path so the no-template default stays
-  // multi-resource.
-  const resolvedComment = locked ? '' : comment;
-  const message =
-    fallbackMessage === undefined
-      ? getSingleResourceCommitMessage({ comment: resolvedComment, repository, ...vars })
-      : getBulkResourceCommitMessage({ comment: resolvedComment, repository, fallbackMessage, ...vars });
+  // Enforced repos commit the template, not the field, so drop the comment when locked.
+  const message = getResourceCommitMessage({ comment: locked ? '' : comment, repository, fallbackMessage, ...vars });
 
   // Pre-fill only the editable field; enforced repos render `message` read-only instead, so there is
   // nothing to fill. The template tracks live `vars` and the repo usually resolves after the form

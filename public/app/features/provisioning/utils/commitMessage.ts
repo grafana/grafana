@@ -119,46 +119,29 @@ export function renderCommitMessage(
   });
 }
 
-// Shared inputs for resolving a commit message: the template vars plus the editable comment and the
-// repository whose template/default is used. The single- and bulk-resource arg types both build on
-// this rather than one extending the other, so neither reads as a special case of the other.
 type ResourceCommitMessageArgs = CommitTemplateVars & {
   comment: string | undefined;
   repository: RepositoryView | undefined;
-};
-
-/**
- * Resolves the commit message for a single-resource UI operation. Whitespace-
- * only comments are treated as empty and fall through to the repo template
- * (or built-in default), so the user can't accidentally ship blank commits.
- */
-export function getSingleResourceCommitMessage({ comment, repository, ...vars }: ResourceCommitMessageArgs): string {
-  const trimmed = comment?.trim();
-  return trimmed ? trimmed : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars);
-}
-
-type BulkResourceCommitMessageArgs = ResourceCommitMessageArgs & {
   /**
    * Multi-resource default used when no repo template is configured (e.g. "Delete resources"). Used
    * verbatim when it has non-whitespace content; an empty/whitespace-only value is treated as absent
    * and falls through to the built-in default rather than producing a blank commit.
    */
-  fallbackMessage: string;
+  fallbackMessage?: string;
 };
 
 /**
- * Resolves the commit message for a multi-resource (bulk) UI operation. Identical to
- * {@link getSingleResourceCommitMessage} except the no-template fallback is the caller-supplied bulk
- * default (e.g. "Delete resources") instead of the single-resource built-in.
+ * Resolves the commit message for a UI operation: a non-blank comment wins, otherwise the repo template
+ * (or `fallbackMessage` / built-in default). Whitespace-only comments are treated as empty so the user
+ * can't accidentally ship blank commits.
  */
-export function getBulkResourceCommitMessage({
+export function getResourceCommitMessage({
   comment,
   repository,
   fallbackMessage,
   ...vars
-}: BulkResourceCommitMessageArgs): string {
-  const trimmed = comment?.trim();
-  return trimmed
-    ? trimmed
-    : renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars, fallbackMessage);
+}: ResourceCommitMessageArgs): string {
+  return (
+    comment?.trim() || renderCommitMessage(repository?.commit?.singleResourceMessageTemplate, vars, fallbackMessage)
+  );
 }

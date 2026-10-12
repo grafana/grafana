@@ -10,7 +10,6 @@ import { JobStatus } from 'app/features/provisioning/Job/JobStatus';
 import { type DashboardViewItem } from 'app/features/search/types';
 
 import { useSelectionRepoValidation } from '../../hooks/useSelectionRepoValidation';
-import * as currentUser from '../../utils/currentUser';
 import { ProvisioningAwareFolderPicker } from '../Shared/ProvisioningAwareFolderPicker';
 
 import { BulkMoveProvisionedResource } from './BulkMoveProvisionedResource';
@@ -699,23 +698,6 @@ describe('BulkMoveProvisionedResource', () => {
       expect(mockCreateBulkJob).toHaveBeenCalledWith(
         templateRepository,
         expect.objectContaining({ message: 'chore: move 2 resources edited' })
-      );
-    });
-
-    it('does not append a saved-by trailer when the acting user is known', async () => {
-      jest.spyOn(currentUser, 'getCurrentCommitUser').mockReturnValue({ userName: 'Ada Lovelace', userLogin: 'ada' });
-      const trailerRepository: RepositoryView = {
-        ...templateRepository,
-        commit: { singleResourceMessageTemplate: 'chore: {{action}}' },
-      };
-      const { user, mockCreateBulkJob } = setup(trailerRepository);
-
-      await user.click(screen.getByTestId('folder-picker'));
-      await user.click(screen.getByRole('button', { name: /Move/i }));
-
-      expect(mockCreateBulkJob).toHaveBeenCalledWith(
-        trailerRepository,
-        expect.objectContaining({ message: 'chore: move' })
       );
     });
   });

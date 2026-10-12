@@ -1,6 +1,6 @@
 import { type RepositoryView } from 'app/api/clients/provisioning/v0alpha1';
 
-import { getSingleResourceCommitMessage, renderCommitMessage } from './commitMessage';
+import { getResourceCommitMessage, renderCommitMessage } from './commitMessage';
 
 const repoWithTemplate = (template: string | undefined): RepositoryView => ({
   name: 'r',
@@ -130,7 +130,7 @@ describe('renderCommitMessage', () => {
   });
 });
 
-describe('getSingleResourceCommitMessage', () => {
+describe('getResourceCommitMessage', () => {
   const baseVars = {
     action: 'update' as const,
     resourceKind: 'dashboard' as const,
@@ -138,20 +138,19 @@ describe('getSingleResourceCommitMessage', () => {
     title: 'Latency',
   };
 
-  it('uses a non-empty user comment verbatim and does not append a saved-by trailer', () => {
+  it('uses a non-empty comment verbatim even when a template is configured', () => {
     expect(
-      getSingleResourceCommitMessage({
+      getResourceCommitMessage({
         comment: 'My commit message',
         repository: repoWithTemplate('feat: {{title}}'),
         ...baseVars,
-        ...userVars,
       })
     ).toBe('My commit message');
   });
 
   it('trims surrounding whitespace from the comment', () => {
     expect(
-      getSingleResourceCommitMessage({
+      getResourceCommitMessage({
         comment: '  My note  ',
         repository: repoWithTemplate(undefined),
         ...baseVars,
@@ -161,7 +160,7 @@ describe('getSingleResourceCommitMessage', () => {
 
   it('treats whitespace-only comment as empty and falls back to the template', () => {
     expect(
-      getSingleResourceCommitMessage({
+      getResourceCommitMessage({
         comment: '   ',
         repository: repoWithTemplate('feat: {{title}}'),
         ...baseVars,
@@ -171,7 +170,7 @@ describe('getSingleResourceCommitMessage', () => {
 
   it('falls back to the built-in default when no comment and no template are set', () => {
     expect(
-      getSingleResourceCommitMessage({
+      getResourceCommitMessage({
         comment: '',
         repository: repoWithTemplate(undefined),
         ...baseVars,
@@ -181,45 +180,12 @@ describe('getSingleResourceCommitMessage', () => {
 
   it('handles an undefined repository (no template available)', () => {
     expect(
-      getSingleResourceCommitMessage({
+      getResourceCommitMessage({
         comment: undefined,
         repository: undefined,
         ...baseVars,
         action: 'create',
       })
     ).toBe('Create dashboard: Latency');
-  });
-
-  it('does not append a saved-by trailer to the default message', () => {
-    expect(
-      getSingleResourceCommitMessage({
-        comment: undefined,
-        repository: undefined,
-        ...baseVars,
-        ...userVars,
-      })
-    ).toBe('Save dashboard: Latency');
-  });
-
-  it('does not append a saved-by trailer to a template-rendered message', () => {
-    expect(
-      getSingleResourceCommitMessage({
-        comment: '',
-        repository: repoWithTemplate('feat: {{title}}'),
-        ...baseVars,
-        ...userVars,
-      })
-    ).toBe('feat: Latency');
-  });
-
-  it('keeps a trailer that the template already renders', () => {
-    expect(
-      getSingleResourceCommitMessage({
-        comment: '',
-        repository: repoWithTemplate('feat: {{title}}\n\nGrafana-saved-by: {{userName}}'),
-        ...baseVars,
-        ...userVars,
-      })
-    ).toBe('feat: Latency\n\nGrafana-saved-by: Ada Lovelace');
   });
 });
