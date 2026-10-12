@@ -9,6 +9,7 @@ import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
+import { WatchersBanner } from '../components/WatchersBanner';
 import { GrafanaRulesExporter } from '../components/export/GrafanaRulesExporter';
 import { ImportToGMABanner } from '../components/import-to-gma/ImportToGMABanner';
 import { useShowImportToGMARulesBanner } from '../components/import-to-gma/useShowImportToGMARulesBanner';
@@ -41,6 +42,7 @@ function RuleList() {
   return (
     <Stack direction="column">
       {showImportToGMABanner && <ImportToGMABanner />}
+      <WatchersBanner />
       <Stack direction="column" gap={2}>
         <RulesFilter viewMode={viewMode} onViewModeChange={handleViewChange} />
         <Stack direction="row" grow={1} minHeight={0}>
