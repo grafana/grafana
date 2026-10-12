@@ -860,7 +860,55 @@ export function useColumnResize(
   return dataGridResizeHandler;
 }
 
-export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number) {
+export function useNativeScrollbarWidth(ref: RefObject<DataGridHandle | null>) {
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const grid = ref.current?.element;
+    if (!grid || IS_SAFARI_26) {
+      return;
+    }
+    // Measuring the grid after applying stable would detect the space we introduced ourselves.
+    // Match its scrollbar styling, but force overflow and an auto gutter on an isolated probe.
+    const probe = document.createElement('div');
+    probe.className = grid.className;
+    probe.setAttribute('role', 'grid');
+    probe.setAttribute('aria-hidden', 'true');
+    Object.assign(probe.style, {
+      position: 'absolute',
+      visibility: 'hidden',
+      pointerEvents: 'none',
+      inset: '0 auto auto 0',
+      width: '100px',
+      height: '100px',
+      inlineSize: '100px',
+      blockSize: '100px',
+      display: 'block',
+      border: '0',
+      padding: '0',
+      contain: 'strict',
+      contentVisibility: 'visible',
+      overflowX: 'hidden',
+      overflowY: 'scroll',
+      scrollbarGutter: 'auto',
+      scrollbarWidth: getComputedStyle(grid).scrollbarWidth,
+    });
+    const content = document.createElement('div');
+    content.style.height = '200px';
+    probe.appendChild(content);
+    grid.parentElement?.appendChild(probe);
+    const measure = () => setWidth(probe.offsetWidth - probe.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(probe);
+    return () => {
+      observer.disconnect();
+      probe.remove();
+    };
+  }, [ref]);
+  return width;
+}
+
+export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height: number, reserveGutter?: boolean) {
   const [scrollbarWidth, setScrollbarWidth] = useState(0);
 
   useLayoutEffect(() => {
@@ -880,7 +928,7 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
       resizeObserver.disconnect();
       updateScrollbarDimensions.cancel();
     };
-  }, [ref, height]);
+  }, [ref, height, reserveGutter]);
 
   return scrollbarWidth;
 }
@@ -891,24 +939,35 @@ export function useScrollbarWidth(ref: RefObject<DataGridHandle | null>, height:
  * the table's scrollbar is thin and, on platforms that overlay it, invisible until the user
  * scrolls, so nothing otherwise tells them more rows exist.
  *
- * React state updates only when shadow visibility or horizontal scrollbar height changes.
+ * React state updates only when shadow visibility or geometry changes.
  */
 export function useScrollShadows(
   ref: RefObject<DataGridHandle | null>,
   enabled: boolean,
   { topOffset, bottomOffset }: { topOffset: number; bottomOffset: number }
 ) {
-  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0 });
+  const [visibility, setVisibility] = useState({ top: false, bottom: false, scrollbarHeight: 0, width: 0 });
   const visibilityRef = useRef(visibility);
   const styles = useStyles2(getScrollShadowStyles);
-  const offsetStyles = useStyles2(getScrollShadowOffsetStyles, topOffset, bottomOffset + visibility.scrollbarHeight);
+  const offsetStyles = useStyles2(
+    getScrollShadowOffsetStyles,
+    topOffset,
+    bottomOffset + visibility.scrollbarHeight,
+    visibility.width
+  );
 
   const sync = useCallback(() => {
     const el = ref.current?.element;
     if (!enabled || !el) {
       return;
     }
-    const { scrollTop, scrollHeight, clientHeight, offsetHeight } = el;
+    const { scrollTop, scrollHeight, clientHeight, offsetHeight, clientWidth } = el;
+    // The grid fills the panel even when its columns don't. Read resolved tracks so resized and
+    // auto-sized columns, including virtualized ones, bound the shadows rather than the panel.
+    const columnWidth = getComputedStyle(el)
+      .gridTemplateColumns.split(' ')
+      .reduce((total, track) => total + (parseFloat(track) || 0), 0);
+    const width = Math.min(columnWidth, clientWidth);
     // A horizontal scrollbar takes its space out of the bottom of the grid's padding box, below
     // both the rows and the sticky footer, so the bottom shadow has to clear it or it sits on the
     // scrollbar instead of on the last visible row. The grid draws no border (see `getGridStyles`),
@@ -920,9 +979,10 @@ export function useScrollShadows(
     if (
       visibilityRef.current.top !== top ||
       visibilityRef.current.bottom !== bottom ||
-      visibilityRef.current.scrollbarHeight !== scrollbarHeight
+      visibilityRef.current.scrollbarHeight !== scrollbarHeight ||
+      visibilityRef.current.width !== width
     ) {
-      const nextVisibility = { top, bottom, scrollbarHeight };
+      const nextVisibility = { top, bottom, scrollbarHeight, width };
       visibilityRef.current = nextVisibility;
       setVisibility(nextVisibility);
     }
@@ -942,7 +1002,14 @@ export function useScrollShadows(
     // Panel resizing changes what fits without moving the scroll position.
     const resizeObserver = new ResizeObserver(sync);
     resizeObserver.observe(el);
-    return () => resizeObserver.disconnect();
+    // Column resizing inside react-data-grid changes its tracks without resizing the viewport
+    // or necessarily rendering this hook's owner.
+    const mutationObserver = new MutationObserver(sync);
+    mutationObserver.observe(el, { attributes: true, attributeFilter: ['style'] });
+    return () => {
+      resizeObserver.disconnect();
+      mutationObserver.disconnect();
+    };
   }, [ref, enabled, sync]);
 
   return {

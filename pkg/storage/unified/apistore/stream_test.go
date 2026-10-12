@@ -23,7 +23,7 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -154,7 +154,7 @@ func TestStreamDecoderExpiredResourceVersion(t *testing.T) {
 			if canceled {
 				cancel()
 			}
-			client := &errWatchClient{ctx: ctx, err: resource.NewResourceVersionExpiredError(1234)}
+			client := &errWatchClient{ctx: ctx, err: resourceutil.NewResourceVersionExpiredError(1234)}
 			decoder := newStreamDecoder(client, func() runtime.Object { return &unstructured.Unstructured{} }, storage.Everything, &jsonSerializer{}, cancel, false)
 			t.Cleanup(decoder.Close)
 
@@ -218,7 +218,7 @@ func TestStreamDecoderGRPCTermination(t *testing.T) {
 		err     error
 		expired bool
 	}{
-		{name: "expired resource version", err: resource.NewResourceVersionExpiredError(1234), expired: true},
+		{name: "expired resource version", err: resourceutil.NewResourceVersionExpiredError(1234), expired: true},
 		{name: "clean close"},
 		{name: "canceled", err: status.Error(codes.Canceled, "watch canceled")},
 		{name: "max age disconnect", err: status.Error(codes.Unavailable, "transport is closing")},

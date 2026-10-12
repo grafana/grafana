@@ -24,6 +24,7 @@ export const PUBLIC_PATH = 'public/build/rspack/';
 export function createSwcRule({ reactRefresh = false } = {}): RuleSetRule {
   return {
     test: /\.tsx?$/,
+    resourceQuery: { not: [/text-panel-runtime/] },
     use: {
       loader: 'builtin:swc-loader',
       options: {
@@ -187,6 +188,11 @@ export default (env: Env = {}, { hmr = false }: CommonOptions = {}): Configurati
         },
       },
       rules: [
+        {
+          resourceQuery: /text-panel-runtime/,
+          type: 'javascript/auto',
+          use: path.resolve(grafanaRoot, 'scripts/webpack/loaders/textPanelRuntime.cjs'),
+        },
         createSwcRule({ reactRefresh: hmr }),
         cssRule,
         {

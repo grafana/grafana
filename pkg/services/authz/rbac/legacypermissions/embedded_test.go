@@ -7,6 +7,7 @@ import (
 	"github.com/fullstorydev/grpchan/inprocgrpc"
 	"github.com/grafana/authlib/types"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -20,6 +21,7 @@ func TestLegacyHandlerRejectsUntrustedTransport(t *testing.T) {
 	channel := &inprocgrpc.Channel{}
 	authzv1.RegisterLegacyAuthzServiceServer(channel, &embeddedServer{guard: new(int)})
 	ctx := types.WithAuthInfo(context.Background(), ac.LegacyPermissionCaller("*"))
+	//nolint:staticcheck // Exercise the deprecated RPC's private-transport guard.
 	stream, err := authzv1.NewLegacyAuthzServiceClient(channel).LegacyGetUserPermissions(ctx, &authzv1.LegacyGetUserPermissionsRequest{
 		Namespace: "default", Identity: &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "one"},
 	})
@@ -27,6 +29,27 @@ func TestLegacyHandlerRejectsUntrustedTransport(t *testing.T) {
 		_, err = stream.Recv()
 	}
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
+}
+
+func TestEmbeddedEnumerationDoesNotImplementLegacyCheck(t *testing.T) {
+	channel := &inprocgrpc.Channel{}
+	authzv1.RegisterLegacyAuthzServiceServer(channel, &embeddedServer{guard: new(int)})
+	//nolint:staticcheck // Verify isolation from the deprecated check API in the shared service descriptor.
+	_, err := authzv1.NewLegacyAuthzServiceClient(channel).LegacyCheck(t.Context(), &authzv1.LegacyCheckRequest{})
+	require.Equal(t, codes.Unimplemented, status.Code(err))
+}
+
+func TestEmbeddedLegacyRejectsContradictoryScope(t *testing.T) {
+	guard := new(int)
+	server := &embeddedServer{guard: guard, cfg: setting.NewCfg()}
+	// Bypass client preflight, but provide the trusted transport context, so
+	// this asserts the handler's own scope validation before any loader access.
+	stream := embeddedStream{ctx: context.WithValue(t.Context(), embeddedCallKey{}, guard)}
+	err := server.LegacyGetUserPermissions(&authzv1.LegacyGetUserPermissionsRequest{
+		Namespace: "default", GlobalOrg: true, NoOrgMembership: true,
+		Identity: &authzv1.LegacyPermissionIdentity{Type: "user", Uid: "seven"},
+	}, &grpc.GenericServerStream[authzv1.LegacyGetUserPermissionsRequest, authzv1.LegacyGetUserPermissionsResponse]{ServerStream: stream})
+	require.Equal(t, codes.InvalidArgument, status.Code(err))
 }
 
 func TestEmbeddedLegacyNamespaceValidation(t *testing.T) {
@@ -39,9 +62,9 @@ func TestEmbeddedLegacyNamespaceValidation(t *testing.T) {
 			cfg := setting.NewCfg()
 			cfg.StackID = tc.stack
 			client := NewEmbeddedClient(nil, cfg) // Rejection must happen before any load.
-			for _, global := range []bool{false, true} {
+			for _, evaluation := range []struct{ global, noOrgMembership bool }{{}, {global: true}, {noOrgMembership: true}} {
 				result, err := client.LegacyGetUserPermissions(context.Background(), ac.LegacyPermissionCaller("*"), legacyclient.LegacyGetUserPermissionsRequest{
-					Namespace: tc.namespace, GlobalOrg: global, Identity: legacyclient.LegacyPermissionIdentity{Type: types.TypeUser, UID: "one"},
+					Namespace: tc.namespace, GlobalOrg: evaluation.global, NoOrgMembership: evaluation.noOrgMembership, Identity: legacyclient.LegacyPermissionIdentity{Type: types.TypeUser, UID: "one"},
 				})
 				require.Equal(t, codes.PermissionDenied, status.Code(err))
 				require.Empty(t, result.Permissions)

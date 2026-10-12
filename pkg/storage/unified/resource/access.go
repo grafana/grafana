@@ -170,6 +170,10 @@ func (s *searchServer) checkSearchServicePermission(ctx context.Context, id clai
 	if errors.Is(err, ErrServiceCannotDelegate) {
 		mode = "delegated"
 	}
+	if access, ok := s.access.(interface{ IsCompatibleWithRBAC(string, string) bool }); ok && !access.IsCompatibleWithRBAC(group, resource) {
+		s.indexMetrics.SearchServicePermissionExemptions.WithLabelValues(group, resource, mode).Inc()
+		return nil
+	}
 	s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode).Inc()
 	s.log.FromContext(ctx).Error("Search service permission check failed", "error", err,
 		"group", group, "resource", resource, "verb", verb, "subject", id.GetSubject(),

@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam/common"
 	"github.com/grafana/grafana/pkg/registry/apis/iam/legacy"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 	"github.com/grafana/grafana/pkg/services/authz/rbac/store"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
@@ -39,6 +40,7 @@ const (
 
 type Service struct {
 	authzv1.UnimplementedAuthzServiceServer
+	authzextv1.UnimplementedLegacyAuthzServiceServer
 
 	store                    store.Store
 	folderStore              store.FolderStore
@@ -1029,7 +1031,7 @@ func (s *Service) checkPermissionWithMapping(ctx context.Context, scopeMap map[s
 
 	if t.SkipScope(req.Verb) {
 		// Resource doesn't require scope on this verb, so allow if the user has the action
-		return scopeMap[""], nil
+		return scopeMap[""] || scopeMap["*"], nil
 	}
 
 	// Create maps empty parent to general for every folder-capable resource

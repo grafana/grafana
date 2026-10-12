@@ -66,6 +66,9 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	if req == nil || req.Identity == nil {
 		return status.Error(codes.InvalidArgument, "legacy identity is required")
 	}
+	if req.GlobalOrg && req.NoOrgMembership {
+		return status.Error(codes.InvalidArgument, "global org and no org membership are mutually exclusive")
+	}
 	ns, err := types.ParseNamespace(req.Namespace)
 	if err != nil || ns.OrgID < 1 {
 		return status.Error(codes.InvalidArgument, "concrete namespace required")
@@ -79,7 +82,10 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	}
 	namespace := req.Namespace
 	if original := req.Identity.RequesterNamespace; original != nil {
-		if *original != "" && *original != req.Namespace {
+		sentinelNamespace := s.cfg.StackID == "" &&
+			((req.GlobalOrg && *original == types.OrgNamespaceFormatter(ac.GlobalOrgID)) ||
+				(req.NoOrgMembership && *original == types.OrgNamespaceFormatter(-1)))
+		if *original != "" && *original != req.Namespace && !sentinelNamespace {
 			return status.Error(codes.PermissionDenied, "requester namespace does not match tenant scope")
 		}
 		namespace = *original
@@ -87,6 +93,8 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	orgID := ns.OrgID
 	if req.GlobalOrg {
 		orgID = ac.GlobalOrgID
+	} else if req.NoOrgMembership {
+		orgID = -1
 	}
 	requester := &legacyRequester{
 		SignedInUser: &user.SignedInUser{OrgID: orgID, OrgRole: identity.RoleType(req.Identity.OrgRole), IsGrafanaAdmin: req.Identity.IsGrafanaAdmin, TeamIDs: req.Identity.TeamIds}, //nolint:staticcheck // The compatibility contract carries numeric RBAC memberships separately from contextual groups.
@@ -100,9 +108,9 @@ func (s *embeddedServer) LegacyGetUserPermissions(req *authzv1.LegacyGetUserPerm
 	const chunkSize = 1000
 	for start := 0; start < len(permissions); start += chunkSize {
 		end := min(start+chunkSize, len(permissions))
-		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyPermission, 0, end-start)}
+		chunk := &authzv1.LegacyGetUserPermissionsResponse{Permissions: make([]*authzv1.LegacyUserPermission, 0, end-start)}
 		for _, p := range permissions[start:end] {
-			chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyPermission{Action: p.Action, Scope: p.Scope})
+			chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyUserPermission{Action: p.Action, Scope: p.Scope})
 		}
 		if err := stream.Send(chunk); err != nil {
 			return err

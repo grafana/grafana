@@ -45,8 +45,6 @@ const virtualFolderBase = {
   tags: [],
   location: '',
   ds_uid: [],
-  score: 0,
-  explain: {},
 };
 
 async function searchNewAPI(parentUID?: string, page = 1, pageSize = PAGE_SIZE) {

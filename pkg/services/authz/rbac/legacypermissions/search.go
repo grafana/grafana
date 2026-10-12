@@ -146,7 +146,7 @@ func streamSearchResults(ctx context.Context, stream authzv1.LegacyAuthzService_
 			end := min(start+userPermissionsChunkSize, len(permissions))
 			chunk := &authzv1.LegacySearchUsersPermissionsResponse{UserId: id}
 			for _, p := range permissions[start:end] {
-				chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyPermission{Action: p.Action, Scope: p.Scope})
+				chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyUserPermission{Action: p.Action, Scope: p.Scope})
 			}
 			if err := stream.Send(chunk); err != nil {
 				return err

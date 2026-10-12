@@ -581,6 +581,7 @@ const (
 	SEARCH_FIELD_LABELS             = "labels" // All labels, not a specific one
 	SEARCH_FIELD_OWNER_REFERENCES   = "ownerReferences"
 	SEARCH_FIELD_FOLDER             = "folder"
+	SEARCH_FIELD_FOLDER_TREE        = "folderTree" // filter only: the named folders and everything below them, global index only
 	SEARCH_FIELD_CREATED            = "created"
 	SEARCH_FIELD_CREATED_BY         = "createdBy"
 	SEARCH_FIELD_UPDATED            = "updated"

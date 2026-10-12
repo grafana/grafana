@@ -26,9 +26,9 @@ func searchRequest() LegacySearchUsersPermissionsRequest {
 
 func TestClient_LegacySearchUsersPermissionsCompleteSnapshot(t *testing.T) {
 	rpc := &searchTestRPC{responses: []*authzv1.LegacySearchUsersPermissionsResponse{
-		{UserId: 3, Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}},
+		{UserId: 3, Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}},
 		{UserId: 9},
-		{UserId: 3, Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}, {Action: "dashboards:read", Scope: "*"}}},
+		{UserId: 3, Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}, {Action: "dashboards:read", Scope: "*"}}},
 	}}
 	client := &LegacyClient{clientV1: rpc, tracer: noop.Tracer{}}
 	req := searchRequest()
@@ -203,7 +203,7 @@ func TestClient_LegacySearchUsersPermissionsCopiesAssertions(t *testing.T) {
 }
 
 func TestClient_LegacySearchUsersPermissionsStreamValidation(t *testing.T) {
-	valid := &authzv1.LegacySearchUsersPermissionsResponse{UserId: 3, Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}}
+	valid := &authzv1.LegacySearchUsersPermissionsResponse{UserId: 3, Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}
 	for _, tc := range []struct {
 		name             string
 		responses        []*authzv1.LegacySearchUsersPermissionsResponse
@@ -216,7 +216,7 @@ func TestClient_LegacySearchUsersPermissionsStreamValidation(t *testing.T) {
 		{name: "nil stream", nilStream: true, want: ErrInvalidLegacySearchUsersPermissionsResponse},
 		{name: "nil first chunk", responses: []*authzv1.LegacySearchUsersPermissionsResponse{nil}, want: ErrInvalidLegacySearchUsersPermissionsResponse},
 		{name: "nil chunk after data", responses: []*authzv1.LegacySearchUsersPermissionsResponse{valid, nil}, want: ErrInvalidLegacySearchUsersPermissionsResponse},
-		{name: "nil permission after data", responses: []*authzv1.LegacySearchUsersPermissionsResponse{valid, {UserId: 3, Permissions: []*authzv1.LegacyPermission{nil}}}, want: ErrInvalidLegacySearchUsersPermissionsResponse},
+		{name: "nil permission after data", responses: []*authzv1.LegacySearchUsersPermissionsResponse{valid, {UserId: 3, Permissions: []*authzv1.LegacyUserPermission{nil}}}, want: ErrInvalidLegacySearchUsersPermissionsResponse},
 		{name: "zero user ID", responses: []*authzv1.LegacySearchUsersPermissionsResponse{valid, {}}, want: ErrInvalidLegacySearchUsersPermissionsResponse},
 		{name: "negative user ID", responses: []*authzv1.LegacySearchUsersPermissionsResponse{{UserId: -1}}, want: ErrInvalidLegacySearchUsersPermissionsResponse},
 		{name: "unexpected target", responses: []*authzv1.LegacySearchUsersPermissionsResponse{valid, {UserId: 9}}, want: ErrInvalidLegacySearchUsersPermissionsResponse},
@@ -261,7 +261,7 @@ func TestClient_LegacySearchUsersPermissionsWireSnapshot(t *testing.T) {
 		require.Equal(t, "users:", req.ActionPrefix)
 		require.Equal(t, "users:*", req.Scope)
 		for _, id := range []int64{3, 9, 3} {
-			if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: id, Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}}); err != nil {
+			if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: id, Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}); err != nil {
 				return err
 			}
 		}
@@ -280,7 +280,7 @@ func TestClient_LegacySearchUsersPermissionsWireLargeSnapshot(t *testing.T) {
 		for start := 0; start < count; start += 1000 {
 			chunk := &authzv1.LegacySearchUsersPermissionsResponse{UserId: 3}
 			for i := start; i < min(start+1000, count); i++ {
-				chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyPermission{Action: "users:read", Scope: "users:*"})
+				chunk.Permissions = append(chunk.Permissions, &authzv1.LegacyUserPermission{Action: "users:read", Scope: "users:*"})
 			}
 			if err := stream.Send(chunk); err != nil {
 				return err
@@ -300,7 +300,7 @@ func TestClient_LegacySearchUsersPermissionsWireFailuresDiscardChunks(t *testing
 	for _, code := range []codes.Code{codes.Internal, codes.Unavailable, codes.PermissionDenied, codes.InvalidArgument, codes.Canceled, codes.DeadlineExceeded} {
 		t.Run(code.String(), func(t *testing.T) {
 			server := &searchTransportServer{handle: func(_ *authzv1.LegacySearchUsersPermissionsRequest, stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer) error {
-				if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: 3, Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}}); err != nil {
+				if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: 3, Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}); err != nil {
 					return err
 				}
 				return status.Error(code, "failed after chunk")
@@ -315,7 +315,7 @@ func TestClient_LegacySearchUsersPermissionsWireFailuresDiscardChunks(t *testing
 func TestClient_LegacySearchUsersPermissionsWireCancellation(t *testing.T) {
 	entered := make(chan struct{})
 	server := &searchTransportServer{handle: func(_ *authzv1.LegacySearchUsersPermissionsRequest, stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer) error {
-		if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: 3, Permissions: []*authzv1.LegacyPermission{{Action: "users:create"}}}); err != nil {
+		if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: 3, Permissions: []*authzv1.LegacyUserPermission{{Action: "users:create"}}}); err != nil {
 			return err
 		}
 		close(entered)
@@ -392,7 +392,7 @@ func TestClient_LegacySearchUsersPermissionsOlderServer(t *testing.T) {
 	}{
 		{"service absent", nil},
 		{"search method unimplemented", &legacyTransportServer{handle: func(_ *authzv1.LegacyGetUserPermissionsRequest, stream authzv1.LegacyAuthzService_LegacyGetUserPermissionsServer) error {
-			return stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyPermission{{Action: "users:read", Scope: "users:*"}}})
+			return stream.Send(&authzv1.LegacyGetUserPermissionsResponse{Permissions: []*authzv1.LegacyUserPermission{{Action: "users:read", Scope: "users:*"}}})
 		}}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

@@ -12,10 +12,9 @@ import { CreateAndViewAlertsButtons } from './CreateAndViewAlertsButtons';
 import { DeclareAndViewIncidentsButtons } from './DeclareAndViewIncidentsButtons';
 import { FiringAlertsCard } from './FiringAlertsCard';
 import { IncidentsCard } from './IncidentsCard';
-import { TeamFilterCombobox } from './TeamFilterCombobox';
-import { type IncidentFilterSelection, incidentFilterLabel } from './incidentFilter';
-import { type TeamSelection } from './teamFilter';
-import { useAlertTeamLabelValues } from './useAlertTeamLabelValues';
+import { LabelFilterCombobox } from './LabelFilterCombobox';
+import { type FilterSelection } from './filterSelection';
+import { useAlertFilterOptions } from './useAlertFilterOptions';
 import { type FiringAlertsData } from './useFiringAlerts';
 import { useIncidentFilterOptions } from './useIncidentFilterOptions';
 import { type IncidentsData } from './useIncidents';
@@ -37,18 +36,18 @@ export type AlertIncidentSwitchHandle = {
 export function AlertIncidentTabs({
   alertsData,
   incidentsData,
-  alertsTeam,
-  onAlertsTeamChange,
+  alertsFilter,
+  onAlertsFilterChange,
   incidentsFilter,
   onIncidentsFilterChange,
   switchRef,
 }: {
   alertsData: FiringAlertsData;
   incidentsData: IncidentsData;
-  alertsTeam: TeamSelection;
-  onAlertsTeamChange: (team: TeamSelection) => void;
-  incidentsFilter: IncidentFilterSelection;
-  onIncidentsFilterChange: (filter: IncidentFilterSelection) => void;
+  alertsFilter: FilterSelection;
+  onAlertsFilterChange: (filter: FilterSelection) => void;
+  incidentsFilter: FilterSelection;
+  onIncidentsFilterChange: (filter: FilterSelection) => void;
   switchRef?: Ref<AlertIncidentSwitchHandle>;
 }) {
   const canViewIncidents = !!incidentsData.enabled;
@@ -56,7 +55,7 @@ export function AlertIncidentTabs({
 
   // Default to alerts tab if alerts are available, otherwise default to incidents tab
   const [activeTab, setActiveTab] = useState<TabId>(canViewAlerts ? ALERTS_TAB_ID : INCIDENTS_TAB_ID);
-  const { count, hasAlerts, hasTeams, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
+  const { count, hasAlerts, hasTeams, teamsLoading, loading, canCreate, newRuleHref, viewAllHref, error } = alertsData;
   const {
     loading: incidentsLoading,
     error: incidentsError,
@@ -66,9 +65,10 @@ export function AlertIncidentTabs({
     canDeclare: incidentsCanDeclare,
     canAccess: incidentsCanAccess,
   } = incidentsData;
-  // Fetched here rather than in the dropdown so the options survive tab switches.
-  const alertTeamOptions = useAlertTeamLabelValues(canViewAlerts);
-  const incidentOptions = useIncidentFilterOptions(canViewIncidents);
+  // Kept here rather than in the dropdown, which only renders for the active tab.
+  // The alerts dropdown waits for teams: until then it's unknown whether its default is "Your teams".
+  const loadAlertOptions = useAlertFilterOptions(canViewAlerts && !teamsLoading);
+  const loadIncidentOptions = useIncidentFilterOptions(canViewIncidents);
 
   const isAlertActionsVisible = canViewAlerts && !loading && !error && activeTab === ALERTS_TAB_ID;
   const isIncidentsActionsVisible =
@@ -100,7 +100,7 @@ export function AlertIncidentTabs({
         ? t('home.alerts-incidents.title-incidents', 'Incidents')
         : t('home.alerts-incidents.title-alerts', 'Alerts');
 
-  // Each tab keeps its own selection: alerts filter by the `team` label, incidents by any
+  // Each tab keeps its own selection: alerts filter by any alert rule label, incidents by any
   // incident label, so a shared pick would often name a value the other tab can't hold.
   const tabs = [
     ...(canViewAlerts
@@ -110,13 +110,13 @@ export function AlertIncidentTabs({
             label: t('home.alerts-incidents.alert-tab-label', 'Firing alerts'),
             // Undefined while loading so the counter doesn't flash 0 before the alerts arrive.
             counter: loading ? undefined : count,
-            filter: {
-              options: alertTeamOptions,
-              selected: alertsTeam,
-              onChange: onAlertsTeamChange,
+            filter: loadAlertOptions && {
+              loadOptions: loadAlertOptions,
+              selected: alertsFilter,
+              onChange: onAlertsFilterChange,
               offersYourTeams: hasTeams,
-              allOptionLabel: t('home.alerts-incidents.team-filter-all', 'All teams'),
-              ariaLabel: t('home.alerts-incidents.team-filter-label', 'Filter alerts by team'),
+              allOptionLabel: t('home.alerts-incidents.alert-filter-all', 'All alerts'),
+              ariaLabel: t('home.alerts-incidents.alert-filter-label', 'Filter alerts by label'),
             },
           },
         ]
@@ -131,14 +131,13 @@ export function AlertIncidentTabs({
             // the strictly-greater-than cap renders "{limit}+" instead of the misleading exact count.
             counter: incidentsLoading ? undefined : incidentsHasMore ? incidentsCount + 1 : incidentsCount,
             counterCappedAt: ACTIVE_INCIDENTS_QUERY_LIMIT,
-            filter: {
-              options: incidentOptions,
+            filter: loadIncidentOptions && {
+              loadOptions: loadIncidentOptions,
               selected: incidentsFilter,
               onChange: onIncidentsFilterChange,
               // Incidents have no "your teams" scope: the unfiltered default is every active incident.
               offersYourTeams: false,
               allOptionLabel: t('home.alerts-incidents.incident-filter-all', 'All incidents'),
-              selectionLabel: incidentFilterLabel,
               ariaLabel: t('home.alerts-incidents.incident-filter-label', 'Filter incidents by label'),
             },
           },
@@ -176,9 +175,9 @@ export function AlertIncidentTabs({
         <TabContent id={PANEL_ID} role="tabpanel" aria-labelledby={tabElementId(activeTab)}>
           {/* Fixed height so the section doesn't jump between tabs; the list fills whatever the filter row leaves. */}
           <Box display="flex" direction="column" height={`${DASHBOARD_TABS_SCROLL_HEIGHT_REDESIGN}px`}>
-            {filter && filter.options.length > 0 && (
+            {filter && (
               <Box paddingTop={2}>
-                <TeamFilterCombobox {...filter} />
+                <LabelFilterCombobox {...filter} />
               </Box>
             )}
             <ScrollContainer showScrollIndicators>

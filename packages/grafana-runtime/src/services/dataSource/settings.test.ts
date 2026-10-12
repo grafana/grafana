@@ -170,6 +170,18 @@ describe('instanceSettings', () => {
       expect(result?.name).toBe('Bravo');
     });
 
+    it('falls back to the default when ref is undefined', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const result = await getDataSourceInstanceSettings(undefined);
+      expect(result?.name).toBe('Bravo');
+    });
+
+    it('falls back to -- Grafana -- when no instance is the org default', async () => {
+      initDataSourceInstanceSettings(fixtures, '-- Grafana --');
+      const result = await getDataSourceInstanceSettings(null);
+      expect(result?.name).toBe('-- Grafana --');
+    });
+
     it('interpolates template variable refs and preserves the raw ref', async () => {
       initDataSourceInstanceSettings(fixtures, 'Bravo');
       const result = await getDataSourceInstanceSettings('${myds}');
@@ -584,12 +596,33 @@ describe('instanceSettings', () => {
       setTemplateSrv(templateSrv);
     });
 
-    it('returns items sorted alphabetically by name', async () => {
-      initDataSourceInstanceSettings(fixtures, 'Bravo');
+    it('sorts items by name case-insensitively, regardless of insertion order', async () => {
+      const unordered: Record<string, DataSourceInstanceSettings> = {
+        zulu: ds({ id: 30, uid: 'uid-zulu', name: 'zulu' }),
+        Charlie: ds({ id: 31, uid: 'uid-charlie', name: 'Charlie' }),
+        alpha: ds({ id: 32, uid: 'uid-alpha', name: 'alpha' }),
+        Bravo: ds({ id: 33, uid: 'uid-bravo', name: 'Bravo' }),
+      };
+      initDataSourceInstanceSettings(unordered, 'Bravo');
+
       const items = await getDataSourceInstanceList();
-      const names = items.filter((x) => x.name !== '-- Grafana --').map((x) => x.name);
-      const sorted = [...names].sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-      expect(names).toEqual(sorted);
+
+      expect(items.map((x) => x.name)).toEqual(['alpha', 'Bravo', 'Charlie', 'zulu']);
+    });
+
+    it('appends built-in datasources after the sorted items', async () => {
+      const unordered: Record<string, DataSourceInstanceSettings> = {
+        '-- Grafana --': fixtures['-- Grafana --'],
+        '-- Dashboard --': fixtures['-- Dashboard --'],
+        '-- Mixed --': fixtures['-- Mixed --'],
+        Zulu: ds({ id: 30, uid: 'uid-zulu', name: 'Zulu' }),
+        Alpha: ds({ id: 31, uid: 'uid-alpha', name: 'Alpha' }),
+      };
+      initDataSourceInstanceSettings(unordered, 'Alpha');
+
+      const items = await getDataSourceInstanceList({ mixed: true, dashboard: true });
+
+      expect(items.map((x) => x.name)).toEqual(['Alpha', 'Zulu', '-- Mixed --', '-- Dashboard --', '-- Grafana --']);
     });
 
     describe('pluginId and type matching', () => {
@@ -675,32 +708,62 @@ describe('instanceSettings', () => {
 
   describe('getDefaultDataSourceInstanceListItem', () => {
     function listItem(overrides: Partial<DataSourceInstanceListItem>): DataSourceInstanceListItem {
-      return { uid: 'uid', type: 'test-db', name: 'name', meta: ds({}).meta, isDefault: false, ...overrides };
+      return { uid: 'uid', type: 'test-db', name: 'name', meta: ds({}).meta, ...overrides };
     }
 
-    it('returns the flagged item', async () => {
-      const items = [
-        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
-        listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
-      ];
+    it('returns the item whose instance settings are flagged as default', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+      const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-bravo', name: 'Bravo' })];
 
       expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
     });
 
     it('returns undefined when no item is flagged', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
       const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-charlie', name: 'Charlie' })];
 
       expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
     });
 
-    it('returns the first flagged item when more than one is flagged', async () => {
-      const items = [
-        listItem({ uid: 'uid-alpha', name: 'Alpha' }),
-        listItem({ uid: 'uid-bravo', name: 'Bravo', isDefault: true }),
-        listItem({ uid: 'uid-charlie', name: 'Charlie', isDefault: true }),
-      ];
+    it('returns the configured default even when its settings do not carry the flag', async () => {
+      initDataSourceInstanceSettings({ ...fixtures, Bravo: { ...fixtures.Bravo, isDefault: false } }, 'Bravo');
+      const items = [listItem({ uid: 'uid-alpha', name: 'Alpha' }), listItem({ uid: 'uid-bravo', name: 'Bravo' })];
 
       expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+    });
+
+    it('ignores a flag on an instance that is not the configured default', async () => {
+      initDataSourceInstanceSettings({ ...fixtures, Charlie: { ...fixtures.Charlie, isDefault: true } }, 'Bravo');
+      const items = [listItem({ uid: 'uid-charlie', name: 'Charlie' }), listItem({ uid: 'uid-bravo', name: 'Bravo' })];
+
+      expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+    });
+
+    it('returns undefined when the default ref falls back to a built-in', async () => {
+      const grafana = { ...fixtures['-- Grafana --'], meta: { ...fixtures['-- Grafana --'].meta, builtIn: true } };
+      initDataSourceInstanceSettings(
+        { ...fixtures, Bravo: { ...fixtures.Bravo, isDefault: false }, '-- Grafana --': grafana },
+        '-- Grafana --'
+      );
+
+      const items = await getDataSourceInstanceList({ all: true });
+
+      expect(items.map((item) => item.name)).toContain('-- Grafana --');
+      expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+    });
+
+    it('returns undefined for an item whose uid is not a known instance', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      expect(await getDefaultDataSourceInstanceListItem([listItem({ uid: 'uid-unknown' })])).toBeUndefined();
+    });
+
+    it('does not report the list items as carrying the default flag', async () => {
+      initDataSourceInstanceSettings(fixtures, 'Bravo');
+
+      const items = await getDataSourceInstanceList();
+
+      expect(items.every((item) => !('isDefault' in item))).toBe(true);
     });
 
     it('returns undefined for an empty list', async () => {
@@ -1151,7 +1214,6 @@ describe('instanceSettings', () => {
             apiVersion: fixtures.Alpha.apiVersion,
             name: fixtures.Alpha.name,
             meta: fixtures.Alpha.meta,
-            isDefault: fixtures.Alpha.isDefault ?? false,
           },
         ]);
         expect(getList).toHaveBeenCalledWith({ metrics: true });
@@ -1182,6 +1244,59 @@ describe('instanceSettings', () => {
 
         expect(items.length).toBeGreaterThan(0);
         expect(getList).not.toHaveBeenCalled();
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('getDefaultDataSourceInstanceListItem', () => {
+      it('resolves the default from the legacy srv with a single lookup when the new cache misses', async () => {
+        initDataSourceInstanceSettings({}, '');
+        const getList = jest.fn().mockReturnValue([fixtures.Alpha, fixtures.Bravo]);
+        const getInstanceSettings = jest.fn().mockReturnValue(fixtures.Bravo);
+        setDataSourceSrv({ getList, getInstanceSettings } as unknown as DataSourceSrv);
+        const items = await getDataSourceInstanceList({ metrics: true });
+        logWarning.mockClear();
+
+        expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+        expect(getInstanceSettings).toHaveBeenCalledTimes(1);
+        expect(getInstanceSettings).toHaveBeenCalledWith(null, undefined);
+        expect(logWarning).toHaveBeenCalledTimes(1);
+        expect(logWarning).toHaveBeenCalledWith(FALLBACK_TO_LEGACY_SETTINGS_WARNING, { ref: 'default' });
+      });
+
+      it('returns undefined and does not log when both the new cache and the legacy srv miss', async () => {
+        initDataSourceInstanceSettings({}, '');
+        const getInstanceSettings = jest.fn().mockReturnValue(undefined);
+        setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+
+        const items = [{ uid: 'uid-unknown', type: 'test-db', name: 'Unknown', meta: ds({}).meta }];
+
+        expect(await getDefaultDataSourceInstanceListItem(items)).toBeUndefined();
+        expect(getInstanceSettings).toHaveBeenCalledWith(null, undefined);
+        expect(logWarning).not.toHaveBeenCalled();
+      });
+
+      it('never consults the legacy srv when the new cache hits', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const getInstanceSettings = jest.fn();
+        setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+
+        const items = await getDataSourceInstanceList();
+
+        expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+        expect(getInstanceSettings).not.toHaveBeenCalled();
+      });
+
+      it('never consults the legacy srv for a template-variable item the cache resolves', async () => {
+        initDataSourceInstanceSettings(fixtures, 'Bravo');
+        const getInstanceSettings = jest.fn();
+        setDataSourceSrv({ getInstanceSettings } as unknown as DataSourceSrv);
+        const variableItem = { uid: '${myds}', type: 'test-db', name: '${myds}', meta: ds({}).meta };
+
+        const items = [variableItem, ...(await getDataSourceInstanceList())];
+
+        expect((await getDefaultDataSourceInstanceListItem(items))?.name).toBe('Bravo');
+        expect(getInstanceSettings).not.toHaveBeenCalled();
         expect(logWarning).not.toHaveBeenCalled();
       });
     });

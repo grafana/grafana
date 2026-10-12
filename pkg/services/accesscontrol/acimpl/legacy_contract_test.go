@@ -55,6 +55,7 @@ func TestIntegrationLegacyRoutingContracts(t *testing.T) {
 			}{
 				{"sources", TestIntegrationGetUserPermissions_ContractSources},
 				{"requester-sources", TestIntegrationGetUserPermissions_ContractRequesterSources},
+				{"no-org-membership", TestIntegrationGetUserPermissions_ContractNoOrgMembership},
 				{"direct-cache", TestIntegrationGetUserPermissions_ContractDirectCache},
 				{"source-cache-clear", TestIntegrationGetUserPermissions_ContractSourceCacheClear},
 				{"concurrency", TestIntegrationGetUserPermissions_ContractConcurrentIsolation},

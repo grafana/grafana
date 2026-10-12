@@ -71,7 +71,7 @@ type AppPluginRunnerOptions struct {
 
 // AppPluginAPIBuilder serves app settings and their v2 health, resource and proxy endpoints.
 type AppPluginAPIBuilder struct {
-	// the API group -- the group defined in manifest data or the pluginID
+	// The settings API group is the plugin ID.
 	group           string
 	pluginJSON      plugins.JSONData
 	client          PluginClient // will only ever be called with the same plugin id!
@@ -215,7 +215,16 @@ func (b *AppPluginAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.
 
 		// Share one settings store across all versions.
 		unified, err := grafanaregistry.NewRegistryStore(opts.Scheme, settingsRI,
-			opts.StorageOptsGetterFor(settingsRI, apistore.StorageOptions{EnableFolderSupport: false}))
+			opts.StorageOptsGetterFor(settingsRI, apistore.StorageOptions{
+				EnableFolderSupport: false,
+				SharedStorage: &apistore.SharedStorage{
+					Group: apppluginV0.GROUP,
+					Name: &apistore.SharedName{
+						Served: apppluginV0.INSTANCE_NAME,
+						Stored: b.pluginJSON.ID,
+					},
+				},
+			}))
 		if err != nil {
 			return err
 		}

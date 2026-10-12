@@ -25,28 +25,6 @@ import (
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-// drainWake consumes a wake already queued on dirty, if any. It returns nil
-// once dirty is closed, so the caller stops selecting on it.
-func drainWake(dirty <-chan struct{}) <-chan struct{} {
-	if dirty == nil {
-		return nil
-	}
-	select {
-	case _, ok := <-dirty:
-		if !ok {
-			return nil
-		}
-	default:
-	}
-	return dirty
-}
-
-// Backoff for retrying a failed reconcile.
-const (
-	reconcileRetryMin = time.Second
-	reconcileRetryMax = time.Minute
-)
-
 const (
 	apisPrefix      = "/apis"
 	openapiV3Prefix = "/openapi/v3"
@@ -152,11 +130,6 @@ type GrafanaRouter struct {
 
 	// Set before serving by the standalone target; middleware keeps its delegate.
 	unregisteredGroupHandler http.Handler
-
-	// acceptGroup, when set, limits which groups reconcile will serve. Set
-	// before Run; the middleware uses it so the router never shadows a group
-	// the embedded API server owns.
-	acceptGroup func(group string) bool
 
 	// reconciles and reconcileErrors count completed reconciles, and
 	// lastReconcile is when the latest one finished (Unix nanoseconds), for
@@ -533,6 +506,28 @@ func (r *GrafanaRouter) Run(ctx context.Context) error {
 	return nil
 }
 
+// drainWake consumes a wake already queued on dirty, if any. It returns nil
+// once dirty is closed, so the caller stops selecting on it.
+func drainWake(dirty <-chan struct{}) <-chan struct{} {
+	if dirty == nil {
+		return nil
+	}
+	select {
+	case _, ok := <-dirty:
+		if !ok {
+			return nil
+		}
+	default:
+	}
+	return dirty
+}
+
+// Backoff for retrying a failed reconcile.
+const (
+	reconcileRetryMin = time.Second
+	reconcileRetryMax = time.Minute
+)
+
 // storeServing records a completed reconcile's outcome. Errors are logged
 // here; Ready decides whether they affect readiness.
 func (r *GrafanaRouter) storeServing(ctx context.Context, err error) {
@@ -581,7 +576,7 @@ func (r *GrafanaRouter) Alive(context.Context) error {
 func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	rawBackends, err := r.loader.Load(ctx)
 	if err != nil {
-		// Keep serving last-known-good; a later wake retries.
+		// Keep serving last-known-good; Run retries with backoff.
 		return fmt.Errorf("router: load failed, keeping current routes: %w", err)
 	}
 
@@ -590,10 +585,6 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 	seen := make(map[string]struct{}, len(rawBackends))
 	for _, b := range rawBackends {
 		group := b.Group().Name
-		if r.acceptGroup != nil && !r.acceptGroup(group) {
-			logging.FromContext(ctx).Warn("router: group not allowed in this mode, skipping", "group", group)
-			continue
-		}
 		if _, dup := seen[group]; dup {
 			// One backend owns all versions of a group. A duplicate is a config
 			// error; the last one wins rather than crashing the router.
@@ -609,7 +600,7 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 		handler, err := loadBackend(ctx, b)
 		if err != nil {
 			// Keep last-known-good for this group. lastKey is not advanced, so
-			// a later wake retries.
+			// Run's retry loads it again.
 			errs = append(errs, fmt.Errorf("router: backend load failed for group %q, keeping current route: %w", group, err))
 			continue
 		}
@@ -619,8 +610,9 @@ func (r *GrafanaRouter) reconcile(ctx context.Context) error {
 			r.served[group] = r.newHandlerEntry(b, handler, group)
 			continue
 		}
-		// Changed: replace the entry. Connection pools survive through the
-		// loader's shared transports; the breaker is reset (see handlerEntry).
+		// Changed: replace the entry. Connection pools survive because each
+		// source owns its transports and connections, not the backend; the
+		// breaker is reset (see handlerEntry).
 		retired = append(retired, e)
 		r.served[group] = r.newHandlerEntry(b, handler, group)
 	}

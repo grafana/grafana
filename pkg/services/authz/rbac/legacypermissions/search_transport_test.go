@@ -375,7 +375,7 @@ type partialLegacySearchServer struct {
 }
 
 func (s *partialLegacySearchServer) LegacySearchUsersPermissions(_ *authzv1.LegacySearchUsersPermissionsRequest, stream authzv1.LegacyAuthzService_LegacySearchUsersPermissionsServer) error {
-	if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: 2, Permissions: []*authzv1.LegacyPermission{{Action: "test:read", Scope: "tests:id:one"}}}); err != nil {
+	if err := stream.Send(&authzv1.LegacySearchUsersPermissionsResponse{UserId: 2, Permissions: []*authzv1.LegacyUserPermission{{Action: "test:read", Scope: "tests:id:one"}}}); err != nil {
 		return err
 	}
 	return status.Error(codes.Internal, "search interrupted")
