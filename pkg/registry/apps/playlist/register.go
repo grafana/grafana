@@ -8,10 +8,11 @@ import (
 	restclient "k8s.io/client-go/rest"
 
 	authlib "github.com/grafana/authlib/types"
+	"github.com/open-feature/go-sdk/openfeature"
+
 	"github.com/grafana/grafana-app-sdk/app"
 	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/simple"
-	"github.com/open-feature/go-sdk/openfeature"
 
 	"github.com/grafana/grafana/apps/playlist/pkg/apis/manifestdata"
 	playlistapp "github.com/grafana/grafana/apps/playlist/pkg/app"
@@ -50,9 +51,7 @@ func NewAppInstaller(accessClient authlib.AccessClient, enableReconcilers bool) 
 		accessClient: accessClient,
 		logger:       log.New("playlist.api"),
 	}
-	specificConfig := any(&playlistapp.PlaylistConfig{
-		EnableReconcilers: enableReconcilers,
-	})
+	specificConfig := any(&playlistapp.PlaylistConfig{})
 	provider := simple.NewAppProvider(manifestdata.LocalManifest(), specificConfig, playlistapp.New)
 
 	appConfig := app.Config{
