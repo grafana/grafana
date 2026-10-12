@@ -82,7 +82,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `panelTitleSearch`                 | Search for dashboards using panel title                                                                                        |
 | `faroDatasourceSelector`           | Enable the data source selector within the Frontend Apps section of the Frontend Observability                                 |
-| `provisioning.userAttribution`     | Author Git Sync commits as the acting Grafana user                                                                             |
 | `externalServiceAccounts`          | Automatic service account and token setup for plugins                                                                          |
 | `feedbackButton`                   | Enables the feedback button in the dashboard edit sidebar                                                                      |
 | `pdfTables`                        | Enables generating table data as PDF in reporting                                                                              |
