@@ -6,6 +6,7 @@ import (
 
 	authlib "github.com/grafana/authlib/types"
 
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	dashboards "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1"
 	dashv2beta1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2beta1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
@@ -147,6 +148,16 @@ var resourceTranslations = map[string]resourceTranslation{
 			"notebooks:view":  newMapping(RelationSetView, ""),
 			"notebooks:edit":  newMapping(RelationSetEdit, ""),
 			"notebooks:admin": newMapping(RelationSetAdmin, ""),
+		},
+	},
+	KindSnapshots: {
+		typ:      TypeResource,
+		group:    dashv0.SnapshotResourceInfo.GroupResource().Group,
+		resource: dashv0.SnapshotResourceInfo.GroupResource().Resource,
+		mapping: map[string]actionMapping{
+			"snapshots:read":   newUnscopedMapping(RelationGet),
+			"snapshots:create": newUnscopedMapping(RelationCreate),
+			"snapshots:delete": newUnscopedMapping(RelationDelete),
 		},
 	},
 	KindTeams: {
