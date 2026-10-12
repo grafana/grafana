@@ -26,6 +26,8 @@ const (
 	CloudCoreAppsServer string = "cloud-core-apps-server"
 	// CloudPluginOperator is registered by enterprise builds.
 	CloudPluginOperator string = "cloud-plugin-operator"
+	// CloudPluginManifests is registered by enterprise builds.
+	CloudPluginManifests string = "cloud-plugin-manifests"
 )
 
 // CloudCoreAppsServerPath is the path cloud-core-apps-server serves its apps
@@ -58,4 +60,5 @@ var dependencyMap = map[string][]string{
 	OperatorServer:          {InstrumentationServer},
 	CloudCoreAppsServer:     {InstrumentationServer},
 	CloudPluginOperator:     {InstrumentationServer, GRPCServer},
+	CloudPluginManifests:    {InstrumentationServer},
 }
