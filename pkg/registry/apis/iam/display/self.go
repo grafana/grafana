@@ -95,6 +95,11 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	// Empty identities cannot establish ownership of a resolver's display row.
+	if rsp.Identity.Name == "" || authInfo.GetUID() == "" {
+		_ = json.NewEncoder(w).Encode(rsp)
+		return
+	}
 	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil {
 		// GetUID() is already in the "<type>:<identifier>" form the resolvers expect
 		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.

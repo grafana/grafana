@@ -23,6 +23,15 @@ type fakeResolver struct {
 	err     error
 }
 
+type selfAuthInfo struct {
+	authlib.AuthInfo
+	identifier string
+	uid        string
+}
+
+func (a selfAuthInfo) GetIdentifier() string { return a.identifier }
+func (a selfAuthInfo) GetUID() string        { return a.uid }
+
 func TestCurrentUserRoutes(t *testing.T) {
 	routes := NewDisplayHandler().GetAPIRoutes(nil)
 	require.Len(t, routes.Root, 1)
@@ -238,6 +247,39 @@ func TestDisplayHandler_handleSelf(t *testing.T) {
 			})
 		}
 	})
+
+	for _, tc := range []struct {
+		name       string
+		identifier string
+		uid        string
+	}{
+		{name: "empty identifier", uid: "user:"},
+		{name: "empty UID", identifier: "u1"},
+		{name: "empty identifier and UID"},
+	} {
+		t.Run(tc.name+" skips enrichment", func(t *testing.T) {
+			auth := selfAuthInfo{AuthInfo: caller, identifier: tc.identifier, uid: tc.uid}
+			resolver := &fakeResolver{result: &iam.DisplayList{Items: []iam.Display{{
+				Identity:    iam.IdentityRef{Type: authlib.TypeUser, Name: tc.identifier},
+				DisplayName: "Another user", AvatarURL: "/avatar/another", InternalID: 42,
+			}}}}
+			rec := httptest.NewRecorder()
+
+			NewDisplayHandler(resolver).handleSelf(rec, selfRequest(t, auth))
+
+			require.Equal(t, http.StatusOK, rec.Code)
+			require.Nil(t, resolver.gotKeys)
+			var got iam.CurrentUserInfo
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+			require.Equal(t, iam.CurrentUserInfo{
+				Display: iam.Display{
+					Identity:    iam.IdentityRef{Type: authlib.TypeUser, Name: tc.identifier},
+					DisplayName: caller.GetName(),
+				},
+				Namespace: caller.GetNamespace(), Email: caller.GetEmail(), AuthenticatedBy: caller.GetAuthenticatedBy(),
+			}, got)
+		})
+	}
 
 	t.Run("unresolved caller returns information from authentication", func(t *testing.T) {
 		resolver := &fakeResolver{result: &iam.DisplayList{}}
