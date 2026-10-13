@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	utiljson "k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/grafana/authlib/types"
 
@@ -2862,11 +2863,15 @@ func (s *searchServer) indexTrash(ctx context.Context, nsr NamespacedResource, i
 // Fields are listed rather than cleared, so a field added to IndexableDocument
 // later cannot reach trash documents by accident.
 func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (*IndexableDocument, error) {
-	var u unstructured.Unstructured
-	if err := u.UnmarshalJSON(value); err != nil {
+	u, err := decodeForTrash(value)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal deleted object: %w", err)
 	}
-	obj, err := utils.MetaAccessor(&u)
+	return deletedDocumentFrom(key, rv, u)
+}
+
+func deletedDocumentFrom(key *resourcepb.ResourceKey, rv int64, u *unstructured.Unstructured) (*IndexableDocument, error) {
+	obj, err := utils.MetaAccessor(u)
 	if err != nil {
 		return nil, err
 	}
@@ -2904,6 +2909,38 @@ func buildDeletedDocument(key *resourcepb.ResourceKey, rv int64, value []byte) (
 		doc.IsProvisioned = new(true)
 	}
 	return doc, nil
+}
+
+// decodeForTrash decodes only what a trash document reads: kind, metadata and the
+// spec's title, name and tags, skipping the rest of the spec. Anything else falls
+// back to a full decode.
+func decodeForTrash(value []byte) (*unstructured.Unstructured, error) {
+	var partial struct {
+		Kind     string         `json:"kind"`
+		Metadata map[string]any `json:"metadata"`
+		Spec     *struct {
+			Title any `json:"title"`
+			Name  any `json:"name"`
+			Tags  any `json:"tags"`
+		} `json:"spec"`
+	}
+	if err := utiljson.Unmarshal(value, &partial); err != nil || partial.Kind == "" {
+		u := &unstructured.Unstructured{}
+		return u, u.UnmarshalJSON(value)
+	}
+
+	object := map[string]any{"kind": partial.Kind}
+	if partial.Metadata != nil {
+		object["metadata"] = partial.Metadata
+	}
+	if partial.Spec != nil {
+		object["spec"] = map[string]any{
+			"title": partial.Spec.Title,
+			"name":  partial.Spec.Name,
+			"tags":  partial.Spec.Tags,
+		}
+	}
+	return &unstructured.Unstructured{Object: object}, nil
 }
 
 type builderCache struct {
