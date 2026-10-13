@@ -34,8 +34,8 @@ For other installation methods, refer to the [Grafana Operator Installation](htt
 
 Use the following guides to use the Grafana Operator to manage your Grafana instance:
 
-- [Manage data sources, and dashboards with folders using the Grafana Operator](operator-dashboards-folders-datasources/) describes how to add a folders, data sources, and dashboards, using the [Grafana Operator](https://grafana.github.io/grafana-operator/).
-- [Manage Dashboards with GitOps Using ArgoCD](manage-dashboards-argocd/) describes how to create and manage dashboards using ArgoCD and [Grafana Operator](https://grafana.github.io/grafana-operator/).
+- [Manage data sources, and dashboards with folders using the Grafana Operator](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator/operator-dashboards-folders-datasources/) describes how to add a folders, data sources, and dashboards using the Grafana Operator.
+- [Manage Dashboards with GitOps Using ArgoCD](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator/manage-dashboards-argocd/) describes how to create and manage dashboards using ArgoCD and Grafana Operator.
 
 ## Use the Grafana Crossplane provider
 
@@ -53,6 +53,6 @@ To get started with the Grafana Crossplane provider, install Crossplane in the K
 kubectl crossplane install provider grafana/crossplane-provider-grafana:v0.1.0
 ```
 
-During installation of the provider, CRDs for all the resources supported by the Terraform provider are added to the cluster so users can begin defining their Grafana resources as Kubernetes custom resources. The Crossplane provider ensures that whatever is defined in the custom resource definitions is what is visible in Grafana UI. If any changes are made directly in the UI, the changes will be discarded when the provider resyncs. This helps ensure that whatever is defined via code in the cluster will be the source of truth for Grafana resources.
+During installation of the provider, CRDs for all the resources supported by the Terraform provider are added to the cluster so users can begin defining their Grafana resources as Kubernetes custom resources. The Crossplane provider ensures that whatever is defined in the custom resource definitions is what is visible in Grafana UI. If you make any changes directly in the UI, the changes will be discarded when the provider syncs again. This helps ensure that whatever is defined via code in the cluster will be the source of truth for Grafana resources.
 
 For more information, refer to the examples folder in the Grafana Crossplane repository.
