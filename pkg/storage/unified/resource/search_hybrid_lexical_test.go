@@ -113,7 +113,6 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 			} else {
 				wantValues := map[string]any{
 					SEARCH_FIELD_TITLE:        title,
-					SEARCH_FIELD_FOLDER:       "",
 					SEARCH_FIELD_DESCRIPTION:  "Database operations",
 					SEARCH_FIELD_MANAGER_KIND: "provisioning",
 					SEARCH_FIELD_MANAGER_ID:   "repository-1",
@@ -171,10 +170,6 @@ func TestLexicalRerankText(t *testing.T) {
 }
 
 func TestBoundedLexicalFields(t *testing.T) {
-	emptyFields := map[string]any{SEARCH_FIELD_TITLE: "Overview"}
-	for i := range 2000 {
-		emptyFields[fmt.Sprintf("field-%04d", i)] = ""
-	}
 	longName := strings.Repeat("x", maxHybridLexicalBytes)
 	for _, tt := range []struct {
 		name   string
@@ -182,13 +177,13 @@ func TestBoundedLexicalFields(t *testing.T) {
 		check  func(*testing.T, map[string]*structpb.Value)
 	}{
 		{
-			name: "small values are preserved",
+			name: "preserves nonempty values and duplicates",
 			values: map[string]any{
 				SEARCH_FIELD_TITLE: "Overview", "description": "", "messages": []string{"", "é", "é"}, "empty": []string{}, "count": 42,
 			},
 			check: func(t *testing.T, fields map[string]*structpb.Value) {
 				want, err := structpb.NewStruct(map[string]any{
-					SEARCH_FIELD_TITLE: "Overview", "description": "", "messages": []any{"", "é", "é"}, "empty": []any{},
+					SEARCH_FIELD_TITLE: "Overview", "messages": []any{"é", "é"},
 				})
 				require.NoError(t, err)
 				assert.True(t, proto.Equal(want, &structpb.Struct{Fields: fields}))
@@ -211,36 +206,25 @@ func TestBoundedLexicalFields(t *testing.T) {
 			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": []string{"", "first", strings.Repeat("界", maxHybridLexicalBytes), "last"}},
 			check: func(t *testing.T, fields map[string]*structpb.Value) {
 				values := fields["messages"].GetListValue().GetValues()
-				require.Len(t, values, 3)
-				assert.Equal(t, "", values[0].GetStringValue())
-				assert.Equal(t, "first", values[1].GetStringValue())
-				assert.NotEmpty(t, values[2].GetStringValue())
-				assert.True(t, utf8.ValidString(values[2].GetStringValue()))
-				assert.True(t, strings.HasPrefix(strings.Repeat("界", maxHybridLexicalBytes), values[2].GetStringValue()))
+				require.Len(t, values, 2)
+				assert.Equal(t, "first", values[0].GetStringValue())
+				assert.NotEmpty(t, values[1].GetStringValue())
+				assert.True(t, utf8.ValidString(values[1].GetStringValue()))
+				assert.True(t, strings.HasPrefix(strings.Repeat("界", maxHybridLexicalBytes), values[1].GetStringValue()))
 			},
 		},
 		{
-			name:   "empty array elements still consume the budget",
+			name:   "empty arrays are omitted",
 			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", "messages": make([]string, maxHybridLexicalBytes)},
 			check: func(t *testing.T, fields map[string]*structpb.Value) {
-				values := fields["messages"].GetListValue().GetValues()
-				assert.NotEmpty(t, values)
-				assert.Less(t, len(values), maxHybridLexicalBytes)
+				assert.NotContains(t, fields, "messages")
 			},
 		},
 		{
 			name:   "field names consume the budget",
-			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", longName: ""},
+			values: map[string]any{SEARCH_FIELD_TITLE: "Overview", longName: "text"},
 			check: func(t *testing.T, fields map[string]*structpb.Value) {
 				assert.NotContains(t, fields, longName)
-			},
-		},
-		{
-			name:   "many empty fields",
-			values: emptyFields,
-			check: func(t *testing.T, fields map[string]*structpb.Value) {
-				assert.Contains(t, fields, "field-0000")
-				assert.Less(t, len(fields), len(emptyFields))
 			},
 		},
 	} {
@@ -248,7 +232,14 @@ func TestBoundedLexicalFields(t *testing.T) {
 			before, err := json.Marshal(tt.values)
 			require.NoError(t, err)
 			fields := boundedLexicalFields(tt.values)
-			assert.LessOrEqual(t, proto.Size(&resourcepb.HybridSearchResult{Lexical: fields}), maxHybridLexicalBytes)
+			bytes := 0
+			for name, value := range fields {
+				bytes += len(name) + len(value.GetStringValue())
+				for _, item := range value.GetListValue().GetValues() {
+					bytes += len(item.GetStringValue())
+				}
+			}
+			assert.LessOrEqual(t, bytes, maxHybridLexicalBytes)
 			assert.Equal(t, "Overview", fields[SEARCH_FIELD_TITLE].GetStringValue())
 			tt.check(t, fields)
 			for range 3 {
@@ -278,7 +269,6 @@ func TestHybridSearch_LargeLexicalResponseFitsGRPCLimit(t *testing.T) {
 	require.Len(t, resp.Results, len(rows))
 	for _, result := range resp.Results {
 		assert.NotEmpty(t, result.Lexical[SEARCH_FIELD_DESCRIPTION].GetStringValue())
-		assert.LessOrEqual(t, proto.Size(&resourcepb.HybridSearchResult{Lexical: result.Lexical}), maxHybridLexicalBytes)
 	}
 	assert.Less(t, proto.Size(resp), 4*1024*1024, "the complete response must fit the default gRPC receive limit")
 }

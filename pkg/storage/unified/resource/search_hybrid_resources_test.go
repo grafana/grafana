@@ -129,7 +129,6 @@ func TestHybridSearch_MultipleResources_ReranksCombinedResults(t *testing.T) {
 		assert.Equal(t, "same-name", result.Key.Name)
 		lexical, err := structpb.NewStruct(map[string]any{
 			SEARCH_FIELD_TITLE:       titles[i+1],
-			SEARCH_FIELD_FOLDER:      "",
 			SEARCH_FIELD_DESCRIPTION: descriptions[i+1],
 		})
 		require.NoError(t, err)
