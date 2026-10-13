@@ -6,8 +6,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/open-feature/go-sdk/openfeature"
-
 	snapshot "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/response"
@@ -28,7 +26,7 @@ func (hs *HTTPServer) getCreatedSnapshotHandler() web.Handler {
 	namespaceMapper := request.GetNamespaceMapper(hs.Cfg)
 	return func(c *contextmodel.ReqContext) {
 		ctx := c.Req.Context()
-		if !openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagSnapshotsKubernetesSnapshots, false, openfeature.TransactionContext(ctx)) {
+		if !snapshotAPIEnabled(ctx) {
 			hs.CreateDashboardSnapshot(c)
 			return
 		}
@@ -141,11 +139,18 @@ func (hs *HTTPServer) GetDashboardSnapshot(c *contextmodel.ReqContext) response.
 		return response.Error(http.StatusBadRequest, "Empty snapshot key", nil)
 	}
 
-	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
-
-	queryResult, err := hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), query)
-	if err != nil {
-		return response.Err(err)
+	var queryResult *dashboardsnapshots.DashboardSnapshot
+	var err error
+	if snapshotAPIEnabled(c.Req.Context()) {
+		queryResult, err = hs.getSnapshotFromAPI(c, key)
+		if err != nil {
+			return snapshotAPIError(err)
+		}
+	} else {
+		queryResult, err = hs.dashboardsnapshotsService.GetDashboardSnapshot(c.Req.Context(), &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key})
+		if err != nil {
+			return response.Err(err)
+		}
 	}
 
 	snapshot := queryResult
@@ -193,6 +198,13 @@ func (hs *HTTPServer) DeleteDashboardSnapshotByDeleteKey(c *contextmodel.ReqCont
 		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
 	}
 
+	// Preserve the explicit legacy opt-in for anonymous public-mode snapshot hosts.
+	//nolint:staticcheck // not yet migrated to OpenFeature
+	legacyPublic := hs.Cfg.SnapshotPublicMode && hs.Features.IsEnabledGlobally(featuremgmt.FlagExternalSnapshotsSupportLegacyAPI)
+	if snapshotAPIEnabled(c.Req.Context()) && !legacyPublic {
+		return hs.deleteSnapshotFromAPI(c, key, true)
+	}
+
 	err := dashboardsnapshots.DeleteWithKey(c.Req.Context(), key, hs.dashboardsnapshotsService)
 	if err != nil {
 		if errors.Is(err, dashboardsnapshots.ErrBaseNotFound) {
@@ -224,6 +236,10 @@ func (hs *HTTPServer) DeleteDashboardSnapshot(c *contextmodel.ReqContext) respon
 	key := web.Params(c.Req)[":key"]
 	if len(key) == 0 {
 		return response.Error(http.StatusNotFound, "Snapshot not found", nil)
+	}
+
+	if snapshotAPIEnabled(c.Req.Context()) {
+		return hs.deleteSnapshotFromAPI(c, key, false)
 	}
 
 	query := &dashboardsnapshots.GetDashboardSnapshotQuery{Key: key}
@@ -311,9 +327,18 @@ func (hs *HTTPServer) SearchDashboardSnapshots(c *contextmodel.ReqContext) respo
 		SignedInUser: c.SignedInUser,
 	}
 
-	searchQueryResult, err := hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
-	if err != nil {
-		return response.Error(http.StatusInternalServerError, "Search failed", err)
+	var searchQueryResult dashboardsnapshots.DashboardSnapshotsList
+	var err error
+	if snapshotAPIEnabled(c.Req.Context()) {
+		searchQueryResult, err = hs.searchSnapshotsFromAPI(c, query, limit)
+		if err != nil {
+			return snapshotAPIError(err)
+		}
+	} else {
+		searchQueryResult, err = hs.dashboardsnapshotsService.SearchDashboardSnapshots(c.Req.Context(), &searchQuery)
+		if err != nil {
+			return response.Error(http.StatusInternalServerError, "Search failed", err)
+		}
 	}
 
 	dto := make([]*dashboardsnapshots.DashboardSnapshotDTO, len(searchQueryResult))
