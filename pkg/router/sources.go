@@ -45,6 +45,9 @@ type loaderStatus interface {
 	// stackLookups counts single-tenant stack lookups by result; nil without
 	// a single-tenant fallback.
 	stackLookups() map[string]uint64
+	// stackDiscoveryCache counts single-tenant discovery cache lookups by
+	// result; nil without a single-tenant fallback or its discovery cache.
+	stackDiscoveryCache() map[string]uint64
 }
 
 // pollStatus records the outcome of a source's loads. Safe for concurrent use.

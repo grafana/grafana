@@ -176,12 +176,13 @@ func ProvideCloudRoutesLoaderFactory(cfg *setting.Cfg, deps PluginDependencies) 
 		}
 
 		singleTenantFallback, err = newSingleTenantFallback(singleTenantFallbackOptions{
-			cacheSize:        section.Key("st_cache_size").MustInt(defaultSingleTenantCacheSize),
-			breakerCacheSize: section.Key("st_breaker_cache_size").MustInt(defaultSingleTenantBreakerCacheSize),
-			lookupRate:       section.Key("st_lookup_rate").MustFloat64(defaultSingleTenantLookupRate),
-			lookupBurst:      section.Key("st_lookup_burst").MustInt(defaultSingleTenantLookupBurst),
-			resolveHost:      newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
-			discoveryHost:    discoURL,
+			cacheSize:           section.Key("st_cache_size").MustInt(defaultSingleTenantCacheSize),
+			breakerCacheSize:    section.Key("st_breaker_cache_size").MustInt(defaultSingleTenantBreakerCacheSize),
+			lookupRate:          section.Key("st_lookup_rate").MustFloat64(defaultSingleTenantLookupRate),
+			lookupBurst:         section.Key("st_lookup_burst").MustInt(defaultSingleTenantLookupBurst),
+			discoveryCacheBytes: section.Key("st_discovery_cache_bytes").MustInt(defaultSingleTenantDiscoveryCacheBytes),
+			resolveHost:         newGComURLResolver(cfg.GrafanaComAPIURL, cfg.GrafanaComSSOAPIToken),
+			discoveryHost:       discoURL,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("%s: st_discovery_url: %w", cloudRouterSection, err)
@@ -354,6 +355,14 @@ func (l *cloudLoader) stackLookups() map[string]uint64 {
 		return nil
 	}
 	return l.singleTenantFallback.lookupsBy.byResult()
+}
+
+func (l *cloudLoader) stackDiscoveryCache() map[string]uint64 {
+	if l.singleTenantFallback == nil || l.singleTenantFallback.discoveryDocs == nil {
+		return nil
+	}
+	st := l.singleTenantFallback
+	return map[string]uint64{"hit": st.discoveryHits.Load(), "miss": st.discoveryMisses.Load()}
 }
 
 func (l *cloudLoader) sourceStatuses() []sourceStatus {
