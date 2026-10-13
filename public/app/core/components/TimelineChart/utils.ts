@@ -380,9 +380,22 @@ export function prepareTimelineFields(
         fields: frame.fields.filter((f, i) => i !== endFieldIdx),
       };
 
+      // A state that ends when it starts would share its row with its own start after the join,
+      // losing the null that ends it, so it would last until the next state. End it 1ms later
+      // instead, which renders as the narrowest possible box.
+      const startValues = frame.fields[startFieldIdx].values;
+      const endField = frame.fields[endFieldIdx];
       let endFrame: DataFrame = {
         length: frame.length,
-        fields: [frame.fields[endFieldIdx]],
+        fields: [
+          {
+            ...endField,
+            values: endField.values.map((end, i) => {
+              const start = startValues[i];
+              return end != null && start != null && end <= start ? start + 1 : end;
+            }),
+          },
+        ],
       };
 
       frame = outerJoinDataFrames({
