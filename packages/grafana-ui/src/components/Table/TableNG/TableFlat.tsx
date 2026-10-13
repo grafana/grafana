@@ -485,6 +485,7 @@ export function TableFlat(props: TableNGProps) {
       typographyCtx,
       hasColumnSidebar,
       onHideColumn: handleHideColumn,
+      canHideColumn: canHideAnotherColumn,
       onOpenColumnPanel: hasColumnSidebar ? () => setIsColumnVisibilityPanelOpen(true) : undefined,
       // the first column here is a field column, so it's the one carrying the panel-edge inset
       firstColumnExtraPadding: noPanelPadding ? FIRST_COLUMN_EXTRA_PADDING : 0,
@@ -515,6 +516,7 @@ export function TableFlat(props: TableNGProps) {
       typographyCtx,
       hasColumnSidebar,
       handleHideColumn,
+      canHideAnotherColumn,
       noPanelPadding,
     ]
   );

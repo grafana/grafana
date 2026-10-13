@@ -177,6 +177,7 @@ export interface ColumnBuildConfig {
   numFrozenColsFullyInView: number;
   onCellFilterAdded?: TableFilterActionCallback;
   onHideColumn?: (displayName: string) => void;
+  canHideColumn?: boolean;
   onOpenColumnPanel?: () => void;
   onFieldAddToAssistant?: (frame: DataFrame, field: Field) => void;
   onCellAddToAssistant?: (frame: DataFrame, field: Field, rowIndex: number) => void;
@@ -272,6 +273,7 @@ function buildColumnsFromFields(
     getCellActions,
     onCellFilterAdded,
     onHideColumn,
+    canHideColumn = false,
     onOpenColumnPanel,
     onFieldAddToAssistant,
     onCellAddToAssistant,
@@ -630,7 +632,7 @@ function buildColumnsFromFields(
           tableRefreshEnabled={tableRefreshEnabled}
           hasColumnSidebar={hasColumnSidebar}
           onHideColumn={onHideColumn ? () => onHideColumn(displayName) : undefined}
-          canHideColumn={fields.length > 1}
+          canHideColumn={canHideColumn}
           onOpenColumnPanel={onOpenColumnPanel}
           onAddToAssistant={onFieldAddToAssistant ? () => onFieldAddToAssistant(frame, field) : undefined}
           selectFirstCell={() => {
