@@ -1,4 +1,4 @@
-import { SubresourceIntegrityPlugin, type Configuration, type RspackPluginInstance } from '@rspack/core';
+import { SubresourceIntegrityPlugin, type Compiler, type Configuration, type RspackPluginInstance } from '@rspack/core';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -29,6 +29,41 @@ function createConfig(plugins: RspackPluginInstance[]): Configuration {
     },
     plugins,
   };
+}
+
+// Mirrors the ES module output options in rspack.common.ts.
+function createEsmConfig(plugins: RspackPluginInstance[]): Configuration {
+  const config = createConfig(plugins);
+  return {
+    ...config,
+    output: {
+      ...config.output,
+      publicPath: 'auto',
+      module: true,
+      chunkFormat: 'module',
+      chunkLoading: 'import',
+    },
+  };
+}
+
+const RAW_ESM_CHUNK_IMPORT = 'import("./" + __webpack_require__.u(chunkId))';
+
+// Simulates a future rspack runtime template that the plugin no longer recognises.
+class RewriteEsmChunkImportPlugin {
+  apply(compiler: Compiler): void {
+    compiler.hooks.thisCompilation.tap('RewriteEsmChunkImportPlugin', (compilation) => {
+      compilation.hooks.runtimeModule.tap('RewriteEsmChunkImportPlugin', (module) => {
+        if (module.name !== 'module_chunk_loading' || !module.source) {
+          return;
+        }
+        const source = module.source.source.toString();
+        module.source.source = Buffer.from(
+          source.replace(RAW_ESM_CHUNK_IMPORT, 'import(__webpack_require__.p + __webpack_require__.u(chunkId))'),
+          'utf-8'
+        );
+      });
+    });
+  }
 }
 
 function findLazyChunk(assets: Record<string, string>): string {
@@ -67,5 +102,47 @@ describe('FeatureFlaggedSriPlugin', () => {
 
     expect(assets['main.js']).not.toContain('script.integrity =');
     expect(assets['main.js']).not.toContain('__grafanaAssetSriChecksEnabled');
+  });
+
+  describe('ESM output', () => {
+    it('loads lazy chunks through the import map helper behind the feature flag gate', async () => {
+      const { outputFs } = await compile(
+        createEsmConfig([new SubresourceIntegrityPlugin(), new FeatureFlaggedSriPlugin()])
+      );
+      const runtime = readAssets(outputFs, OUTPUT_PATH)['main.js'];
+
+      expect(runtime).not.toContain(RAW_ESM_CHUNK_IMPORT);
+      expect(runtime).toContain('__grafanaSriImport("./" + __webpack_require__.u(chunkId))');
+      expect(runtime).toContain('window.__grafanaAssetSriChecksEnabled');
+      expect(runtime).toContain("type = 'importmap'");
+    });
+
+    it('keeps real sha384 hashes matching the emitted lazy chunk', async () => {
+      const { outputFs } = await compile(
+        createEsmConfig([new SubresourceIntegrityPlugin(), new FeatureFlaggedSriPlugin()])
+      );
+      const assets = readAssets(outputFs, OUTPUT_PATH);
+
+      const expectedDigest = createHash('sha384').update(findLazyChunk(assets)).digest('base64');
+      expect(assets['main.js']).toContain(`sha384-${expectedDigest}`);
+    });
+
+    it('leaves chunk loading untouched when the SubresourceIntegrityPlugin is not registered', async () => {
+      const { outputFs } = await compile(createEsmConfig([new FeatureFlaggedSriPlugin()]));
+      const runtime = readAssets(outputFs, OUTPUT_PATH)['main.js'];
+
+      expect(runtime).toContain(RAW_ESM_CHUNK_IMPORT);
+      expect(runtime).not.toContain('__grafanaAssetSriChecksEnabled');
+    });
+
+    it('fails the build when the chunk import no longer matches the expected runtime template', async () => {
+      const config = createEsmConfig([
+        new SubresourceIntegrityPlugin(),
+        new RewriteEsmChunkImportPlugin(),
+        new FeatureFlaggedSriPlugin(),
+      ]);
+
+      await expect(compile(config)).rejects.toThrow(/module_chunk_loading/);
+    });
   });
 });
