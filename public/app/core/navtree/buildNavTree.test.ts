@@ -162,10 +162,7 @@ describe('buildNavTree', () => {
       ({ orgRole, isGrafanaAdmin, visible }) => {
         setup({ orgRole, isGrafanaAdmin, permissions: DASHBOARD_READER });
 
-        const playlists = findById(
-          findById(buildNavTree(), NavID.dashboards)?.children ?? [],
-          'dashboards/playlists'
-        );
+        const playlists = findById(findById(buildNavTree(), NavID.dashboards)?.children ?? [], 'dashboards/playlists');
         expect(Boolean(playlists)).toBe(visible);
       }
     );
