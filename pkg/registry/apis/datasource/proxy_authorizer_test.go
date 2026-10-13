@@ -10,8 +10,6 @@ import (
 	"github.com/grafana/authlib/authz"
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/api/pluginproxy"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/stretchr/testify/require"
 	krequest "k8s.io/apiserver/pkg/endpoints/request"
@@ -52,12 +50,12 @@ func TestProxyRouteAccessChecker(t *testing.T) {
 			}}
 			check := proxyRouteAccessChecker(client)
 			ctx := krequest.WithNamespace(t.Context(), "stacks-11")
-			allowed, err := check(ctx, user, "ds-1", &plugins.Route{ReqAction: action, ReqRole: org.RoleAdmin})
+			allowed, err := check(ctx, user, "ds-1", action)
 			require.NoError(t, err)
 			require.True(t, allowed)
 			require.Equal(t, 1, calls)
 			// Repeated checks use the authenticated request context.
-			allowed, err = check(ctx, user, "ds-1", &plugins.Route{ReqAction: action, ReqRole: org.RoleAdmin})
+			allowed, err = check(ctx, user, "ds-1", action)
 			require.NoError(t, err)
 			require.True(t, allowed)
 			require.Equal(t, 2, calls)
@@ -67,7 +65,7 @@ func TestProxyRouteAccessChecker(t *testing.T) {
 		check := proxyRouteAccessChecker(proxyAccessClient{check: func(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
 			return authlib.CheckResponse{}, backendErr
 		}})
-		allowed, err := check(krequest.WithNamespace(t.Context(), "stacks-11"), &user.SignedInUser{}, "ds-1", &plugins.Route{ReqAction: "custom:action"})
+		allowed, err := check(krequest.WithNamespace(t.Context(), "stacks-11"), &user.SignedInUser{}, "ds-1", "custom:action")
 		require.False(t, allowed)
 		require.Equal(t, backendErr, err)
 	}
@@ -106,40 +104,14 @@ func TestProxyRouteAccessCheckerTenantScope(t *testing.T) {
 	}}
 	check := proxyRouteAccessChecker(client)
 	for _, namespace := range []string{"default", "org-2", "stacks-11", "stacks-22", "stacks-11"} {
-		allowed, err := check(krequest.WithNamespace(t.Context(), namespace), &user.SignedInUser{}, "same-uid", &plugins.Route{ReqAction: "datasources:query"})
+		allowed, err := check(krequest.WithNamespace(t.Context(), namespace), &user.SignedInUser{}, "same-uid", "datasources:query")
 		require.NoError(t, err)
 		require.True(t, allowed)
 	}
 	require.Equal(t, []string{"default", "org-2", "stacks-11", "stacks-22", "stacks-11"}, namespaces)
 
-	allowed, err := check(t.Context(), &user.SignedInUser{}, "same-uid", &plugins.Route{ReqAction: "datasources:query"})
+	allowed, err := check(t.Context(), &user.SignedInUser{}, "same-uid", "datasources:query")
 	require.Error(t, err)
 	require.False(t, allowed)
 	require.Len(t, namespaces, 5, "a missing namespace must not reach authz")
-}
-
-func TestProxyRouteAccessCheckerWithoutAction(t *testing.T) {
-	for _, tc := range []struct {
-		name    string
-		route   plugins.Route
-		role    org.RoleType
-		allowed bool
-	}{
-		{name: "unrestricted route", allowed: true},
-		{name: "role allowed", route: plugins.Route{ReqRole: org.RoleEditor}, role: org.RoleAdmin, allowed: true},
-		{name: "role denied", route: plugins.Route{ReqRole: org.RoleAdmin}, role: org.RoleViewer},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			calls := 0
-			client := proxyAccessClient{check: func(context.Context, authlib.AuthInfo, authlib.CheckRequest, string) (authlib.CheckResponse, error) {
-				calls++
-				return authlib.CheckResponse{}, errors.New("unexpected authz call")
-			}}
-			check := proxyRouteAccessChecker(client)
-			allowed, err := check(t.Context(), &user.SignedInUser{OrgRole: tc.role}, "ds-1", &tc.route)
-			require.NoError(t, err)
-			require.Equal(t, tc.allowed, allowed)
-			require.Zero(t, calls)
-		})
-	}
 }

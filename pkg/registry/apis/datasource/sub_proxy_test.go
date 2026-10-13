@@ -29,6 +29,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -350,7 +351,7 @@ func TestSubProxyREST_RouteAuthorization(t *testing.T) {
 			provider := &proxyMockDatasourceProvider{ds: ds}
 			provider.instanceSettings = &backend.DataSourceInstanceSettings{UID: "ds-1", Type: "prometheus", URL: backendServer.URL, JSONData: []byte("{}")}
 			b := newProxyTestBuilder(provider)
-			b.pluginJSON = plugins.JSONData{ID: "prometheus", Routes: []*plugins.Route{{Method: "POST", Path: "api/v1/query", ReqAction: "datasources:query"}}}
+			b.pluginJSON = plugins.JSONData{ID: "prometheus", Routes: []*plugins.Route{{Method: "POST", Path: "api/v1/query", ReqAction: "datasources:query", ReqRole: org.RoleAdmin}}}
 			checks := 0
 			b.accessClient = proxyAccessClient{check: func(ctx context.Context, who authlib.AuthInfo, req authlib.CheckRequest, folder string) (authlib.CheckResponse, error) {
 				checks++
@@ -363,8 +364,9 @@ func TestSubProxyREST_RouteAuthorization(t *testing.T) {
 				resolved++
 				return resolvedDeps, nil
 			}}
-			who := &user.SignedInUser{OrgID: 1}
+			who := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer}
 			if !tc.allowed {
+				who.OrgRole = org.RoleAdmin
 				who.Permissions = map[int64]map[string][]string{1: {"datasources:query": {"datasources:*"}}}
 			}
 			ctx := identity.WithRequester(krequest.WithNamespace(t.Context(), "stacks-11"), who)

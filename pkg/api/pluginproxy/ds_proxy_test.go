@@ -1526,9 +1526,36 @@ func TestDataSourceProxyLocalRouteAccess(t *testing.T) {
 			proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{UID: "ds-1"}, nil, "")
 			require.NoError(t, err)
 			require.Equal(t, tc.allowed, proxy.hasAccessToRoute(&tc.route))
-			// Optional dependency wiring must not erase the local default.
+			// A nil checker keeps the legacy permission path.
 			WithRouteAccessChecker(nil)(proxy)
 			require.Equal(t, tc.allowed, proxy.hasAccessToRoute(&tc.route))
+		})
+	}
+}
+
+func TestDataSourceProxyRoleChecksWithoutAction(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		route   plugins.Route
+		role    org.RoleType
+		allowed bool
+	}{
+		{name: "unrestricted route", allowed: true},
+		{name: "role allowed", route: plugins.Route{ReqRole: org.RoleEditor}, role: org.RoleAdmin, allowed: true},
+		{name: "role denied", route: plugins.Route{ReqRole: org.RoleAdmin}, role: org.RoleViewer},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			calls := 0
+			ctx := newReqContext(t)
+			ctx.SignedInUser = &user.SignedInUser{OrgRole: tc.role}
+			proxy, err := setupDSProxyTest(t, ctx, &datasources.DataSource{UID: "ds-1"}, nil, "")
+			require.NoError(t, err)
+			WithRouteAccessChecker(func(context.Context, identity.Requester, string, string) (bool, error) {
+				calls++
+				return false, errors.New("unexpected authz call")
+			})(proxy)
+			require.Equal(t, tc.allowed, proxy.hasAccessToRoute(&tc.route))
+			require.Zero(t, calls)
 		})
 	}
 }

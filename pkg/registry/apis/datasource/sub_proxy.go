@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -215,10 +214,7 @@ func proxyPathFromRequest(req *http.Request, name string) string {
 	return strings.TrimPrefix(after, "/")
 }
 
-func (b *DataSourceAPIBuilder) checkProxyRouteAccess(ctx context.Context, user identity.Requester, uid string, route *plugins.Route) (bool, error) {
-	if route.ReqAction == "" {
-		return pluginproxy.CheckLocalRouteAccess(ctx, user, uid, route)
-	}
+func (b *DataSourceAPIBuilder) checkProxyRouteAccess(ctx context.Context, user identity.Requester, uid, action string) (bool, error) {
 	ns, err := request.NamespaceInfoFrom(ctx, false)
 	if err != nil {
 		return false, err
@@ -228,7 +224,7 @@ func (b *DataSourceAPIBuilder) checkProxyRouteAccess(ctx context.Context, user i
 		Group:     b.GetGroupVersion().Group,
 		Resource:  "datasources",
 		Name:      uid,
-		Verb:      route.ReqAction,
+		Verb:      action,
 	}, "")
 	return result.Allowed, err
 }
