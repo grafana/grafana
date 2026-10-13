@@ -245,3 +245,63 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
+
+func TestSQLServiceNullFromJSONFunction(t *testing.T) {
+	// labels is non-nullable, as from Loki, and one row lacks the key.
+	inputFrame := data.NewFrame("",
+		data.NewField("line", nil, []string{"a", "b"}),
+		data.NewField("labels", nil, []json.RawMessage{
+			json.RawMessage(`{"level":"info"}`),
+			json.RawMessage(`{}`),
+		}),
+	)
+
+	resp := map[string]backend.DataResponse{
+		"A": {Frames: data.Frames{inputFrame}},
+	}
+
+	sqlQuery := func(refID, q string) Query {
+		escaped, err := json.Marshal(q)
+		require.NoError(t, err)
+		return Query{
+			RefID:      refID,
+			DataSource: dataSourceModel(),
+			JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": %s }`, escaped)),
+			TimeRange:  AbsoluteTimeRange{},
+		}
+	}
+
+	queries := []Query{
+		{
+			RefID: "A",
+			DataSource: &datasources.DataSource{
+				OrgID: 1,
+				UID:   "test",
+				Type:  "test",
+			},
+			JSON:      json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange: AbsoluteTimeRange{},
+		},
+		sqlQuery("B", `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A ORDER BY line`),
+		sqlQuery("C", `SELECT COUNT(*) AS n FROM A`),
+	}
+
+	s, req := newMockQueryService(resp, queries)
+	s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+	pl, err := s.BuildPipeline(t.Context(), req)
+	require.NoError(t, err)
+
+	res, err := s.ExecutePipeline(context.Background(), time.Now(), pl)
+	require.NoError(t, err)
+
+	require.NoError(t, res.Responses["B"].Error)
+	require.Len(t, res.Responses["B"].Frames, 1)
+	level := res.Responses["B"].Frames[0].Fields[0]
+	require.Equal(t, data.FieldTypeNullableString, level.Type())
+	require.Equal(t, new("info"), level.At(0))
+	require.Nil(t, level.At(1))
+
+	require.NoError(t, res.Responses["C"].Error)
+	require.Equal(t, int64(2), res.Responses["C"].Frames[0].Fields[0].At(0))
+}
