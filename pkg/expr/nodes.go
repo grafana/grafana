@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 	"time"
 
@@ -23,6 +24,10 @@ import (
 
 // label that is used when all mathexp.Series have 0 labels to make them identifiable by labels. The value of this label is extracted from value field names
 const nameLabelName = "__name__"
+
+// HeaderFromExpression marks data source requests made by the expression
+// service. It matches query.HeaderFromExpression, which pkg/expr cannot import.
+const HeaderFromExpression = "X-Grafana-From-Expr"
 
 var (
 	logger = log.New("expr")
@@ -283,8 +288,9 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 			)
 
 			req := &backend.QueryDataRequest{
-				Headers: firstNode.request.Headers,
+				Headers: maps.Clone(firstNode.request.Headers),
 			}
+			req.SetHTTPHeader(HeaderFromExpression, "true")
 
 			// add all the queries from the node group to the request
 			for _, dn := range nodeGroup {
@@ -398,8 +404,9 @@ func (dn *DSNode) Execute(ctx context.Context, now time.Time, _ mathexp.Vars, s 
 				QueryType:     dn.queryType,
 			},
 		},
-		Headers: dn.request.Headers,
+		Headers: maps.Clone(dn.request.Headers),
 	}
+	req.SetHTTPHeader(HeaderFromExpression, "true")
 
 	responseType := "unknown"
 	respStatus := "success"
