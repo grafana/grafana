@@ -13893,6 +13893,10 @@
       "needs-service-account": "The {{pluginName}} plugin needs a service account to be able to query Grafana. The following list contains the permissions available to the service account:",
       "page-not-found": "Page not found."
     },
+    "plugin-details-canvas-externalization-notice": {
+      "body": "Starting with Grafana 14.0, the Canvas panel will no longer be bundled with Grafana as a core plugin. It will be available as a separate plugin from the plugin catalog. Existing dashboards will keep working.",
+      "title": "Canvas is moving out of core"
+    },
     "plugin-details-deprecated-warning": {
       "title-deprecated": "Deprecated"
     },
