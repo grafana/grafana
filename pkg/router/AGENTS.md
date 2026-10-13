@@ -167,8 +167,14 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   - The fetch keeps only the group that backend owns, and falls back to per-version discovery for
     older backends. Versions that can't be read are listed as `Stale`; after a failed refresh, the
     last good copy is served, marked `Stale`.
-- **App manifest discovery** (`/apis/discovery`) is built in `publish` with the root documents, from the
-  `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
+- **App manifest discovery** (`/apis/discovery`) is published in `publish` with the root documents, from
+  the `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
+  - Keep it cheap, since `publish` runs on every reconcile: `publishManifestDocs` does nothing when
+    the served group/key set is unchanged, and converts only manifests whose backend key is new
+    (`manifestCache`), relying on a manifest changing only with its key.
+  - Each manifest's JSON is held once. The list is streamed from the group documents, with an ETag
+    hashed from theirs, never copied into its own buffer. The markdown and HTML index are rendered
+    on their first request.
   - `discovery` is a real API group that the router serves itself, with no backend. `/apis` lists it
     in both formats, so Kubernetes clients find it like any other group (`kubectl get
     manifests.discovery`). Each `AppManifest` is named by its group.

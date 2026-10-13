@@ -144,11 +144,12 @@ func buildDiscoveryOpenAPI(schemas map[string]any) map[string]any {
 	}
 }
 
-// discoveryOpenAPIEntry is the discovery group's /openapi/v3 index entry,
+// discoveryOpenAPIURL is the discovery group's /openapi/v3 index entry,
 // cache-busted by the document's own content.
+var discoveryOpenAPIURL = openapiV3Prefix + "/" + discoveryOpenAPIPath + "?hash=" + strings.Trim(discoveryOpenAPIDoc.etag, `"`)
+
 func discoveryOpenAPIEntry() (path, serverRelativeURL string) {
-	hash := strings.Trim(discoveryOpenAPIDoc.etag, `"`)
-	return discoveryOpenAPIPath, openapiV3Prefix + "/" + discoveryOpenAPIPath + "?hash=" + hash
+	return discoveryOpenAPIPath, discoveryOpenAPIURL
 }
 
 // serveDiscoveryOpenAPI serves the discovery group's OpenAPI document.

@@ -1,11 +1,13 @@
 package router
 
 import (
+	"bytes"
 	"encoding/json"
 	"maps"
 	"net/http"
 	"net/http/httptest"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -92,7 +94,9 @@ func TestBuildManifestDocs(t *testing.T) {
 	docs := buildManifestDocs(t.Context(), testManifestBackends())
 
 	var list appmanifestv1alpha2.AppManifestList
-	require.NoError(t, json.Unmarshal(docs.list.body, &list))
+	var listBody bytes.Buffer
+	require.NoError(t, docs.writeList(&listBody))
+	require.NoError(t, json.Unmarshal(listBody.Bytes(), &list))
 	require.Equal(t, "AppManifestList", list.Kind)
 	require.Equal(t, appmanifestv1alpha2.GroupVersion.String(), list.APIVersion)
 	require.Len(t, list.Items, 1, "only backends with a manifest are listed")
@@ -111,8 +115,9 @@ func TestBuildManifestDocs(t *testing.T) {
 	require.Nil(t, manifest.Spec.Operator, "deployment details are not published")
 	require.Nil(t, manifest.Spec.ExtraPermissions, "the backend's own permissions are not published")
 
-	index := string(docs.index.body)
-	require.Equal(t, "text/markdown; charset=utf-8", docs.index.contentType)
+	indexDoc, _ := docs.indexDocs()
+	index := string(indexDoc.body)
+	require.Equal(t, "text/markdown; charset=utf-8", indexDoc.contentType)
 	require.Contains(t, index, "| `"+manifestTestGroup+"` | Widgets | v1 | v1 |")
 	require.Contains(t, index, "## Widgets (`"+manifestTestGroup+"`)")
 	require.Contains(t, index, "Manifest: [`/apis/discovery/v1alpha2/manifests/"+manifestTestGroup+"`](/apis/discovery/v1alpha2/manifests/"+manifestTestGroup+")")
@@ -368,8 +373,8 @@ func TestReconcileSkipsTheReservedDiscoveryGroup(t *testing.T) {
 }
 
 func TestRenderIndexHTML(t *testing.T) {
-	docs := buildManifestDocs(t.Context(), testManifestBackends())
-	page := string(docs.indexHTML.body)
+	_, pageDoc := buildManifestDocs(t.Context(), testManifestBackends()).indexDocs()
+	page := string(pageDoc.body)
 	require.True(t, strings.HasPrefix(page, "<!doctype html>"))
 	require.Contains(t, page, "<h1>Grafana API index</h1>")
 	require.Contains(t, page, "<table>")
@@ -391,8 +396,8 @@ func TestManifestTextCannotBreakTheIndex(t *testing.T) {
 	m.AppDisplayName = hostile
 	m.Versions[0].Kinds[0].Kind = hostile
 	m.Versions[0].OpenAPI.Paths["/namespaces/{namespace}/stats"].Get.Summary = hostile
-	docs := buildManifestDocs(t.Context(), backends)
-	page := string(docs.indexHTML.body)
+	_, pageDoc := buildManifestDocs(t.Context(), backends).indexDocs()
+	page := string(pageDoc.body)
 
 	for _, unwanted := range []string{"<a href=\"https://evil", "<img", "<em>", "<strong>", "<b>"} {
 		require.NotContains(t, page, unwanted)
@@ -416,4 +421,85 @@ func TestMDText(t *testing.T) {
 	require.Equal(t, "`GET /a\\|b`", mdCode("GET /a|`b"))
 	require.Equal(t, "`a\\|`", mdCode("a\\|"), "a backslash cannot escape the pipe's escape")
 	require.Empty(t, mdCode(""))
+}
+
+// countingManifestBackend counts how often its manifest is read, which is
+// once per conversion.
+type countingManifestBackend struct {
+	fakeManifestBackend
+	reads *int
+}
+
+func (b *countingManifestBackend) Manifest() (*app.ManifestData, bool) {
+	*b.reads++
+	return b.manifest, true
+}
+
+func TestPublishManifestDocsReusesUnchangedWork(t *testing.T) {
+	reads := 0
+	manifestBackend := func(group, key string) *countingManifestBackend {
+		return &countingManifestBackend{
+			fakeManifestBackend: fakeManifestBackend{
+				fakeBackend: fakeBackend{key: key, group: testAPIGroup(group, "v1")},
+				manifest:    &app.ManifestData{AppName: group, Group: group, Versions: []app.ManifestVersion{{Name: "v1", Served: true}}},
+			},
+			reads: &reads,
+		}
+	}
+	a, b := manifestBackend("a.ext.grafana.app", "a1"), manifestBackend("b.ext.grafana.app", "b1")
+	r := NewGrafanaRouter(stubLoader{}, nil)
+
+	r.publishManifestDocs(t.Context(), []Backend{a, b})
+	first := r.manifestDocs.Load()
+	require.Len(t, first.items, 2)
+
+	reads = 0
+	r.publishManifestDocs(t.Context(), []Backend{b, a})
+	require.Same(t, first, r.manifestDocs.Load(), "an unchanged route set is not rebuilt")
+	require.Zero(t, reads)
+
+	b2 := manifestBackend("b.ext.grafana.app", "b2")
+	b2.manifest.AppDisplayName = "B, revised"
+	r.publishManifestDocs(t.Context(), []Backend{a, b2})
+	second := r.manifestDocs.Load()
+	require.NotSame(t, first, second)
+	require.Same(t, first.manifests["a.ext.grafana.app"], second.manifests["a.ext.grafana.app"], "an unchanged manifest is not converted again")
+	require.NotSame(t, first.manifests["b.ext.grafana.app"], second.manifests["b.ext.grafana.app"])
+	require.NotEqual(t, first.listETag, second.listETag, "the list changes with any of its manifests")
+
+	r.publishManifestDocs(t.Context(), []Backend{a})
+	require.Equal(t, []string{"a1"}, slices.Collect(maps.Keys(r.manifestCache)), "the cache holds only served backends")
+}
+
+func TestServeManifestListStreamsTheGroupDocuments(t *testing.T) {
+	r := NewGrafanaRouter(stubLoader{}, nil)
+	r.publishManifestDocs(t.Context(), testManifestBackends())
+	serve := func(method string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		r.HandleFunc(rec, newAuthenticatedRequest(method, "/apis/discovery/v1alpha2/manifests", nil), http.NotFoundHandler())
+		return rec
+	}
+	rec := serve(http.MethodGet)
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, strconv.Itoa(rec.Body.Len()), rec.Header().Get("Content-Length"))
+	require.True(t, json.Valid(rec.Body.Bytes()))
+
+	head := serve(http.MethodHead)
+	require.Equal(t, rec.Header().Get("Content-Length"), head.Header().Get("Content-Length"))
+	require.Equal(t, rec.Header().Get("ETag"), head.Header().Get("ETag"))
+	require.Zero(t, head.Body.Len())
+
+	empty := httptest.NewRecorder()
+	NewGrafanaRouter(stubLoader{}, nil).HandleFunc(empty, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests", nil), http.NotFoundHandler())
+	var list appmanifestv1alpha2.AppManifestList
+	require.NoError(t, json.Unmarshal(empty.Body.Bytes(), &list))
+	require.Empty(t, list.Items)
+}
+
+func TestManifestIndexIsRenderedOnce(t *testing.T) {
+	docs := buildManifestDocs(t.Context(), testManifestBackends())
+	index, page := docs.indexDocs()
+	again, pageAgain := docs.indexDocs()
+	require.Same(t, index, again)
+	require.Same(t, page, pageAgain)
 }

@@ -128,9 +128,14 @@ type GrafanaRouter struct {
 	apiGroupList atomic.Pointer[cachedDoc]
 	openapiIndex atomic.Pointer[cachedDoc]
 
-	// manifestDocs is the /discovery tree, rebuilt from served with the root
-	// documents.
-	manifestDocs atomic.Pointer[manifestDocs]
+	// manifestDocs is the /discovery tree, published from served with the
+	// root documents. manifestFingerprint is the group/key set it was built
+	// from, and manifestCache each manifest's document by backend key, so
+	// unchanged manifests are not converted again. Both are owned by
+	// reconcile.
+	manifestDocs        atomic.Pointer[manifestDocs]
+	manifestFingerprint string
+	manifestCache       map[string]*cachedDoc
 
 	// openapiDocs caches per-group-version OpenAPI v3 documents, keyed by
 	// "group/version". Serving goroutines write it on cache misses, so it is a
@@ -178,8 +183,7 @@ func NewGrafanaRouter(loader RoutesLoader, tokens authn.TokenAuthenticator) *Gra
 	r.apiGroupList.Store(&emptyGroups)
 	emptyIndex := buildOpenAPIV3Index(context.Background(), nil)
 	r.openapiIndex.Store(&emptyIndex)
-	emptyManifests := buildManifestDocs(context.Background(), nil)
-	r.manifestDocs.Store(&emptyManifests)
+	r.publishManifestDocs(context.Background(), nil)
 	return r
 }
 
@@ -730,8 +734,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	index := buildOpenAPIV3Index(ctx, backends)
 	r.openapiIndex.Store(&index)
 
-	manifests := buildManifestDocs(ctx, backends)
-	r.manifestDocs.Store(&manifests)
+	r.publishManifestDocs(ctx, backends)
 }
 
 // retainOpenAPIDocs drops cached OpenAPI documents for groups that are no

@@ -1,17 +1,20 @@
 package router
 
 import (
-	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"maps"
 	"net/http"
 	"slices"
+	"strconv"
 	"strings"
+	"sync"
 
+	"github.com/russross/blackfriday/v2"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,8 +23,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apiserver/pkg/endpoints"
 	"k8s.io/kube-openapi/pkg/spec3"
-
-	"github.com/russross/blackfriday/v2"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
@@ -48,16 +49,29 @@ const (
 // maxIndexTextLen bounds each manifest-supplied summary in the markdown index.
 const maxIndexTextLen = 200
 
-// manifestDocs holds every /discovery document, built once per reconcile from
-// the served backends.
+// manifestDocs holds the /apis/discovery documents for one set of served
+// backends. publishManifestDocs rebuilds it only when that set changes.
 type manifestDocs struct {
-	list      cachedDoc // AppManifestList of every manifest
-	index     cachedDoc // markdown index for agents
-	indexHTML cachedDoc // the same index rendered for browsers
-	// manifests holds each group's AppManifest. The bodies share list's
-	// backing array, so the manifests are held in memory only once.
-	manifests map[string]cachedDoc
+	// manifests holds each group's AppManifest, and items the same documents
+	// in group order. The list is written from items on request, so each
+	// manifest is held in memory once and never copied into a list buffer.
+	manifests map[string]*cachedDoc
+	items     []*cachedDoc
+	listETag  string
+	listLen   int
+
+	// The index is rendered on its first request, since most route changes
+	// are never followed by one.
+	backends  []Backend
+	indexOnce sync.Once
+	index     cachedDoc // markdown, for agents
+	indexHTML cachedDoc // the same index, for browsers
 }
+
+var (
+	manifestListPrefix = `{"apiVersion":"` + appmanifestv1alpha2.GroupVersion.String() + `","kind":"AppManifestList","metadata":{},"items":[`
+	manifestListSuffix = "]}"
+)
 
 // The discovery group is advertised in /apis like any served group, and its
 // group and version documents are the ones Kubernetes clients expect. Its
@@ -147,16 +161,18 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	case manifestDiscoveryPrefix:
 		serveCachedDoc(w, req, &discoveryResourcesDoc)
 	case manifestDiscoveryList:
-		serveCachedDoc(w, req, &docs.list)
+		serveManifestList(w, req, docs)
 	case manifestDiscoveryStatus:
 		r.serveRouterStatus(w, req)
 	case manifestDiscoveryIndex:
-		serveCachedDoc(w, req, &docs.index)
+		index, _ := docs.indexDocs()
+		serveCachedDoc(w, req, index)
 	case manifestDiscoveryIndexHTML:
 		// The page is static: nothing in it may run or load from elsewhere.
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		serveCachedDoc(w, req, &docs.indexHTML)
+		_, page := docs.indexDocs()
+		serveCachedDoc(w, req, page)
 	default:
 		group, ok := strings.CutPrefix(path, manifestDiscoveryGroups)
 		if !ok || strings.Contains(group, "/") {
@@ -168,51 +184,117 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 			_ = errhttp.Write(req.Context(), apierrors.NewNotFound(manifestsResource, group), w)
 			return
 		}
-		serveCachedDoc(w, req, &doc)
+		serveCachedDoc(w, req, doc)
 	}
 }
 
-// buildManifestDocs converts each served manifest to an AppManifest and
-// renders the markdown index. A manifest that fails to convert is left out of
-// the manifests, but its group stays in the index.
-func buildManifestDocs(ctx context.Context, backends []Backend) manifestDocs {
-	sorted := sortedManifestBackends(backends)
-	docs := manifestDocs{manifests: map[string]cachedDoc{}}
+// serveManifestList writes the AppManifestList from the group documents.
+func serveManifestList(w http.ResponseWriter, req *http.Request, docs *manifestDocs) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("ETag", docs.listETag)
+	if req.Header.Get("If-None-Match") == docs.listETag {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Length", strconv.Itoa(docs.listLen))
+	w.WriteHeader(http.StatusOK)
+	if req.Method != http.MethodHead {
+		_ = docs.writeList(w)
+	}
+}
 
-	var list bytes.Buffer
-	list.WriteString(`{"apiVersion":"` + appmanifestv1alpha2.GroupVersion.String() + `","kind":"AppManifestList","metadata":{},"items":[`)
-	type span struct{ start, end int }
-	spans := map[string]span{}
+func (d *manifestDocs) writeList(w io.Writer) error {
+	if _, err := io.WriteString(w, manifestListPrefix); err != nil {
+		return err
+	}
+	for i, item := range d.items {
+		if i > 0 {
+			if _, err := io.WriteString(w, ","); err != nil {
+				return err
+			}
+		}
+		if _, err := w.Write(item.body); err != nil {
+			return err
+		}
+	}
+	_, err := io.WriteString(w, manifestListSuffix)
+	return err
+}
+
+// indexDocs returns the markdown and HTML index, rendering them once.
+func (d *manifestDocs) indexDocs() (index, page *cachedDoc) {
+	d.indexOnce.Do(func() {
+		markdown := []byte(renderManifestIndex(d.backends, d.manifests))
+		d.index = newCachedDoc("text/markdown; charset=utf-8", markdown)
+		d.indexHTML = newCachedDoc("text/html; charset=utf-8", renderIndexHTML(markdown))
+	})
+	return &d.index, &d.indexHTML
+}
+
+// publishManifestDocs publishes the documents for backends. It does nothing
+// when the served group/key pairs are unchanged, which covers most reconciles,
+// and converts only the manifests whose backend key is new: a manifest changes
+// only when its key does. Called only from the reconcile goroutine.
+func (r *GrafanaRouter) publishManifestDocs(ctx context.Context, backends []Backend) {
+	sorted := sortedManifestBackends(backends)
+	var fingerprint strings.Builder
+	for _, b := range sorted {
+		fingerprint.WriteString(b.Group().Name + "=" + b.Key() + ";")
+	}
+	if r.manifestDocs.Load() != nil && fingerprint.String() == r.manifestFingerprint {
+		return
+	}
+	docs, cache := buildManifestDocsFrom(ctx, sorted, r.manifestCache)
+	r.manifestDocs.Store(docs)
+	r.manifestCache = cache
+	r.manifestFingerprint = fingerprint.String()
+}
+
+// buildManifestDocs builds the documents for backends without a cache.
+func buildManifestDocs(ctx context.Context, backends []Backend) *manifestDocs {
+	docs, _ := buildManifestDocsFrom(ctx, sortedManifestBackends(backends), nil)
+	return docs
+}
+
+// buildManifestDocsFrom converts each served manifest to an AppManifest,
+// reusing the documents in cache, which is keyed by backend key. It returns
+// the cache for the next build, holding only these backends. A manifest that
+// fails to convert is left out of the manifests, but its group stays in the
+// index; the cache remembers the failure, so it is logged once.
+func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[string]*cachedDoc) (*manifestDocs, map[string]*cachedDoc) {
+	docs := &manifestDocs{manifests: map[string]*cachedDoc{}, backends: sorted}
+	next := make(map[string]*cachedDoc, len(sorted))
+	listHash := sha256.New()
+	_, _ = io.WriteString(listHash, manifestListPrefix)
+	docs.listLen = len(manifestListPrefix) + len(manifestListSuffix)
 	for _, b := range sorted {
 		manifest, ok := backendManifest(b)
 		if !ok {
 			continue
 		}
-		body, err := appManifestJSON(manifest)
-		if err != nil {
-			logging.FromContext(ctx).Warn("router: not publishing app manifest", "group", b.Group().Name, "err", err)
+		doc, seen := cache[b.Key()]
+		if !seen {
+			if body, err := appManifestJSON(manifest); err != nil {
+				logging.FromContext(ctx).Warn("router: not publishing app manifest", "group", b.Group().Name, "err", err)
+			} else {
+				converted := newCachedDoc("application/json", body)
+				doc = &converted
+			}
+		}
+		next[b.Key()] = doc // nil remembers a failed conversion
+		if doc == nil {
 			continue
 		}
-		if len(spans) > 0 {
-			list.WriteByte(',')
+		if len(docs.items) > 0 {
+			docs.listLen++ // the separating comma
 		}
-		start := list.Len()
-		list.Write(body)
-		spans[b.Group().Name] = span{start, list.Len()}
+		docs.items = append(docs.items, doc)
+		docs.manifests[b.Group().Name] = doc
+		docs.listLen += len(doc.body)
+		_, _ = io.WriteString(listHash, doc.etag)
 	}
-	list.WriteString("]}")
-
-	listBody := list.Bytes()
-	docs.list = newCachedDoc("application/json", listBody)
-	for group, s := range spans {
-		// Capping the capacity keeps an append to one manifest from writing
-		// into the next.
-		docs.manifests[group] = newCachedDoc("application/json", listBody[s.start:s.end:s.end])
-	}
-	index := []byte(renderManifestIndex(sorted, docs.manifests))
-	docs.index = newCachedDoc("text/markdown; charset=utf-8", index)
-	docs.indexHTML = newCachedDoc("text/html; charset=utf-8", renderIndexHTML(index))
-	return docs
+	docs.listETag = quoteETag(hex.EncodeToString(listHash.Sum(nil))[:16])
+	return docs, next
 }
 
 func backendManifest(b Backend) (*app.ManifestData, bool) {
@@ -250,7 +332,7 @@ func appManifestJSON(manifest *app.ManifestData) ([]byte, error) {
 
 // renderManifestIndex renders the markdown index of every served group, for
 // agents and other clients that read documentation rather than schemas.
-func renderManifestIndex(backends []Backend, published map[string]cachedDoc) string {
+func renderManifestIndex(backends []Backend, published map[string]*cachedDoc) string {
 	var b strings.Builder
 	b.WriteString(`# Grafana API index
 
