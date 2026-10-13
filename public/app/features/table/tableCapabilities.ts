@@ -17,7 +17,7 @@ export function withAdHocTransformCapabilities(
         ...field.config,
         custom: {
           ...field.config.custom,
-          hideable: columnManagementEnabled,
+          hideable: columnManagementEnabled && (field.config.custom?.hideable ?? true),
         },
       },
     })),
