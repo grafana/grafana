@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { type RefObject, useCallback, useMemo, useState } from 'react';
+import { type RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import {
@@ -292,6 +292,23 @@ export function TraceView(props: Props) {
     },
     [openDetail, refocusSpanForSearch, revealSpan, search, setSearch, spanFilterMatches, traceProp]
   );
+
+  // When the page lands with a focusedSpanId in the URL/panelState (e.g. a deep link from
+  // Database Observability), the span is visually highlighted but its ancestors are collapsed
+  // and its detail panel is closed. Auto-reveal ancestors and open the detail so users can
+  // immediately see and inspect the target span.
+  useEffect(() => {
+    if (!focusedSpanId || !traceProp?.spans?.length) {
+      return;
+    }
+    const span = traceProp.spans.find((s) => s.spanID === focusedSpanId);
+    if (!span) {
+      return;
+    }
+    revealSpan(span);
+    openDetail(focusedSpanId);
+    refocusSpanForSearch(focusedSpanId);
+  }, [focusedSpanId, traceProp, revealSpan, openDetail, refocusSpanForSearch]);
 
   // The Summary attributes accordion renders only on summary spans and is otherwise untracked;
   // report each toggle (with the resulting open state) so summary-attribute engagement is observable.
