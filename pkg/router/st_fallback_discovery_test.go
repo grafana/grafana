@@ -374,3 +374,49 @@ func TestCallerScopedGroupsStayAdvertisedWhenNextAnswers(t *testing.T) {
 	require.Contains(t, serve(apisPrefix, aggregatedDiscoveryJSON), "st.grafana.app")
 	require.Contains(t, serve(openapiV3Prefix, ""), "apis/st.grafana.app/v1")
 }
+
+func TestSingleTenantDiscoveryFromLegacyOnlyStack(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+	st.resolveHost = func(context.Context, int64) (singleTenantStack, error) {
+		return singleTenantStack{URL: "https://legacy.example.com"}, nil
+	}
+	st.transport = testFallbackTransport(func(req *http.Request) (*http.Response, error) {
+		group := "default.grafana.app"
+		if req.URL.Host == "legacy.example.com" {
+			// An older stack ignores the aggregated discovery Accept header.
+			group = "legacy.grafana.app"
+		}
+		body, err := json.Marshal(metav1.APIGroupList{
+			TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"},
+			Groups:   []metav1.APIGroup{{Name: group, Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: group + "/v1", Version: "v1"}}}},
+		})
+		require.NoError(t, err)
+		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {"application/json"}}, Body: io.NopCloser(strings.NewReader(string(body)))}, nil
+	})
+	router := NewGrafanaRouter(st, nil)
+	router.unregisteredGroupHandler = st
+	pollDiscovery(t, st)
+	require.NoError(t, router.reconcile(t.Context()))
+
+	serve := func(accept string) *httptest.ResponseRecorder {
+		req := requestWithNamespace(http.MethodGet, apisPrefix, "stacks-123")
+		req.Header.Set("Accept", accept)
+		res := httptest.NewRecorder()
+		router.HandleFunc(res, req, http.NotFoundHandler())
+		return res
+	}
+
+	// client-go offers plain JSON as a fallback, and reads legacy discovery from it.
+	res := serve(aggregatedDiscoveryJSON + ",application/json")
+	require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+	require.Equal(t, "application/json", res.Header().Get("Content-Type"))
+	require.Equal(t, "private", res.Header().Get("Cache-Control"))
+	var list metav1.APIGroupList
+	require.NoError(t, json.Unmarshal(res.Body.Bytes(), &list))
+	require.Equal(t, "APIGroupList", list.Kind)
+	require.Len(t, list.Groups, 1)
+	require.Equal(t, "legacy.grafana.app", list.Groups[0].Name, "never the defaults from the discovery host")
+
+	require.Equal(t, http.StatusNotAcceptable, serve(aggregatedDiscoveryJSON).Code)
+}

@@ -46,6 +46,13 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 		serveCachedDoc(w, req, r.apiGroupList.Load())
 		return
 	}
+	r.serveMergedAPIGroupList(w, req, fallback, scoped)
+}
+
+// serveMergedAPIGroupList serves the source's APIGroupList with the router's
+// groups added. When scoped, the source's answer replaces the caller-scoped
+// defaults.
+func (r *GrafanaRouter) serveMergedAPIGroupList(w http.ResponseWriter, req *http.Request, fallback metav1.APIGroupList, scoped bool) {
 	groups := make(map[string]metav1.APIGroup, len(fallback.Groups))
 	for _, group := range fallback.Groups {
 		groups[group.Name] = group
@@ -66,12 +73,29 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 
 func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	groups := map[string]apidiscoveryv2.APIGroupDiscovery{}
-	var fallback apidiscoveryv2.APIGroupDiscoveryList
+	var raw json.RawMessage
+	var meta metav1.TypeMeta
+	callerScoped, err := r.readRootDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &raw)
+	if err == nil {
+		_ = json.Unmarshal(raw, &meta) // anything undecodable has no Kind, and is ignored
+	}
 	scoped := false
-	if callerScoped, err := r.readRootDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &fallback); err == nil && fallback.Kind == "APIGroupDiscoveryList" {
-		scoped = callerScoped
-		for _, group := range fallback.Items {
-			groups[group.Name] = group
+	switch meta.Kind {
+	case "APIGroupDiscoveryList":
+		var fallback apidiscoveryv2.APIGroupDiscoveryList
+		if json.Unmarshal(raw, &fallback) == nil {
+			scoped = callerScoped
+			for _, group := range fallback.Items {
+				groups[group.Name] = group
+			}
+		}
+	case "APIGroupList":
+		// The caller's stack only serves legacy discovery. Answer in that format,
+		// as kube-apiserver does, rather than with defaults that may not be the
+		// caller's: the client then reads each group version itself.
+		if callerScoped {
+			r.serveLegacyInsteadOfAggregated(w, req, raw)
+			return
 		}
 	}
 	// A backend owns the entire group, including which versions are served.
@@ -218,6 +242,22 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 		}
 	}
 	serveDiscoveryJSON(w, req, fallback)
+}
+
+// serveLegacyInsteadOfAggregated answers an aggregated discovery request with
+// the source's legacy APIGroupList, if the client accepts plain JSON.
+func (r *GrafanaRouter) serveLegacyInsteadOfAggregated(w http.ResponseWriter, req *http.Request, raw json.RawMessage) {
+	var list metav1.APIGroupList
+	if err := json.Unmarshal(raw, &list); err != nil {
+		http.Error(w, "invalid discovery from the caller's stack", http.StatusBadGateway)
+		return
+	}
+	mediaType, ok := negotiation.NegotiateMediaTypeOptions(req.Header.Get("Accept"), discoveryCodecs.SupportedMediaTypes(), negotiation.DefaultEndpointRestrictions)
+	if !ok || mediaType.Accepted.MediaType != "application/json" {
+		http.Error(w, "the caller's stack serves only legacy discovery", http.StatusNotAcceptable)
+		return
+	}
+	r.serveMergedAPIGroupList(w, req, list, true)
 }
 
 // setRootDiscoveryCacheControl keeps root discovery out of shared caches when
