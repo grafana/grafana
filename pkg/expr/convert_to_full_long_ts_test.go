@@ -697,6 +697,33 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 		require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName, "field_Time", "field_host", "host"}, names)
 	})
 
+	for name, extra := range map[string][]*data.Field{
+		"enum fields are dropped": {
+			data.NewField("state", nil, []data.EnumItemIndex{0}),
+			data.NewField("state2", nil, []*data.EnumItemIndex{nil}),
+		},
+		"unnamed fields are dropped": {
+			data.NewField("", nil, []string{"a"}),
+			data.NewField("", nil, []string{"b"}),
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			fields := append([]*data.Field{
+				data.NewField("time", nil, times[:1]),
+				data.NewField("value", nil, []float64{1}),
+			}, extra...)
+			input := data.Frames{data.NewFrame("", fields...).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})}
+
+			output, err := ConvertToFullLong(input)
+			require.NoError(t, err)
+			names := make([]string, 0, len(output[0].Fields))
+			for _, f := range output[0].Fields {
+				names = append(names, f.Name)
+			}
+			require.Equal(t, []string{"time", SQLValueFieldName, SQLMetricFieldName}, names)
+		})
+	}
+
 	t.Run("one field name with two types errors", func(t *testing.T) {
 		input := data.Frames{
 			data.NewFrame("",
