@@ -10,18 +10,21 @@ import {
   DataSourcePlugin,
   type ScopedVars,
 } from '@grafana/data';
-import { type GetDataSourceListFilters, RuntimeDataSource, setTemplateSrv, type TemplateSrv } from '@grafana/runtime';
+import {
+  type GetDataSourceListFilters,
+  RuntimeDataSource,
+  setTemplateSrv,
+  type TemplateSrv,
+  type GetDataSourceInstanceListFilters,
+  getDataSourceInstanceList,
+  getDataSourceInstanceSettings,
+  getDefaultDataSourceInstanceListItem,
+} from '@grafana/runtime';
 import {
   ExpressionDatasourceRef,
   setDataSourceInstanceSettings,
   setExpressionDataSourceInstance,
 } from '@grafana/runtime/internal';
-import {
-  type GetDataSourceInstanceListFilters,
-  getDataSourceInstanceList,
-  getDataSourceInstanceSettings,
-  getDefaultDataSourceInstanceListItem,
-} from '@grafana/runtime/unstable';
 import { dataSource as expressionDatasource } from 'app/features/expressions/ExpressionDatasource';
 import { DatasourceSrv, getNameOrUid } from 'app/features/plugins/datasource_srv';
 

@@ -13,8 +13,8 @@ import {
 } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { OperationsEditorRow } from '@grafana/plugin-ui';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 import { Alert, Field, Select, useStyles2, Spinner, RadioButtonGroup, Stack, InlineSwitch } from '@grafana/ui';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { type PanelModel } from 'app/features/dashboard/state/PanelModel';

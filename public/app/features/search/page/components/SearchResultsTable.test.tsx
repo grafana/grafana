@@ -10,8 +10,8 @@ import {
   type PanelPluginMeta,
   toDataFrame,
 } from '@grafana/data';
+import { useDataSourceInstanceSettings } from '@grafana/runtime';
 import { usePanelPluginMetasMap } from '@grafana/runtime/internal';
-import { useDataSourceInstanceSettings } from '@grafana/runtime/unstable';
 
 import { type DashboardQueryResult, type QueryResponse } from '../../service/types';
 import { DashboardSearchItemType } from '../../types';
@@ -23,8 +23,8 @@ jest.mock('@grafana/runtime/internal', () => ({
   usePanelPluginMetasMap: jest.fn(),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   useDataSourceInstanceSettings: jest.fn(),
 }));
 
