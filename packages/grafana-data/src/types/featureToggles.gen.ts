@@ -626,6 +626,11 @@ export interface FeatureToggles {
   */
   pluginsSriChecks?: boolean;
   /**
+  * Strip Accept-Encoding from CallResource request headers
+  * @default false
+  */
+  pluginsStripAcceptEncoding?: boolean;
+  /**
   * Enables time pickers sync
   * @default false
   */
