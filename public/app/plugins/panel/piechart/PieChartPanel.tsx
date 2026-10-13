@@ -124,7 +124,7 @@ export function PieChartPanel(props: Props) {
 function getLegend(props: Props, displayValues: FieldDisplay[], gradientFills?: Map<FieldDisplay, string>) {
   const legendOptions = props.options.legend ?? defaultLegendOptions;
 
-  if (legendOptions.showLegend === false) {
+  if (legendOptions.showLegend === false || legendOptions.displayMode === LegendDisplayMode.Hidden) {
     return undefined;
   }
 

@@ -5,6 +5,7 @@ import { colorManipulator, FALLBACK_COLOR, type PanelProps } from '@grafana/data
 import { t } from '@grafana/i18n';
 import { PanelDataErrorView } from '@grafana/runtime';
 import {
+  LegendDisplayMode,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPlotChart,
@@ -59,7 +60,7 @@ export const XYChartPanel2 = (props: Props2) => {
 
   // TODO: React.memo()
   const renderLegend = () => {
-    if (!props.options.legend.showLegend) {
+    if (!props.options.legend.showLegend || props.options.legend.displayMode === LegendDisplayMode.Hidden) {
       return null;
     }
 

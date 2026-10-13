@@ -138,6 +138,14 @@ describe('BarGaugePanel', () => {
       expect(getLegend(panelData.options, panelData.data)).toBeNull();
     });
 
+    it('does not render a legend when displayMode is hidden, even if showLegend is enabled', () => {
+      const panelData = buildPanelData({ data: dataWithTwoSeries() });
+      panelData.options.legend.showLegend = true;
+      panelData.options.legend.displayMode = LegendDisplayMode.Hidden;
+
+      expect(getLegend(panelData.options, panelData.data)).toBeNull();
+    });
+
     it('does not render a legend when there is no data', () => {
       const panelData = buildPanelData();
       panelData.options.legend.showLegend = true;

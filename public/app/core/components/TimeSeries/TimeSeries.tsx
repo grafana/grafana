@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 
 import { type DataFrame, type TimeRange } from '@grafana/data';
+import { LegendDisplayMode } from '@grafana/schema';
 import { useTheme2 } from '@grafana/ui';
 import { hasVisibleLegendSeries, PlotLegend, type UPlotConfigBuilder } from '@grafana/ui/internal';
 import { type TimeSeriesLegendOptions } from 'app/plugins/panel/timeseries/panelcfg.gen';
@@ -41,7 +42,11 @@ export function TimeSeries(props: TimeSeriesProps) {
 
   const renderLegend = useCallback(
     (uPlotConfig: UPlotConfigBuilder) => {
-      if (!uPlotConfig || (legend && !legend.showLegend) || !hasVisibleLegendSeries(uPlotConfig, frames)) {
+      if (
+        !uPlotConfig ||
+        (legend && (!legend.showLegend || legend.displayMode === LegendDisplayMode.Hidden)) ||
+        !hasVisibleLegendSeries(uPlotConfig, frames)
+      ) {
         return null;
       }
 

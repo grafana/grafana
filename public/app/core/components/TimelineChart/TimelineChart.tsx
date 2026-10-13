@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { type DataFrame, FALLBACK_COLOR, FieldType, type TimeRange } from '@grafana/data';
 import {
+  LegendDisplayMode,
   type TimelineValueAlignment,
   TooltipDisplayMode,
   type VisibilityMode,
@@ -81,7 +82,13 @@ export const TimelineChart = (props: TimelineProps) => {
 
   const renderLegend = useCallback(
     (config: UPlotConfigBuilder) => {
-      if (!config || !legendItems || !legend || legend.showLegend === false) {
+      if (
+        !config ||
+        !legendItems ||
+        !legend ||
+        legend.showLegend === false ||
+        legend.displayMode === LegendDisplayMode.Hidden
+      ) {
         return null;
       }
 

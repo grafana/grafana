@@ -18,6 +18,7 @@ import {
   AxisPlacement,
   ScaleDirection,
   ScaleOrientation,
+  LegendDisplayMode,
 } from '@grafana/schema';
 import {
   type Themeable2,
@@ -343,7 +344,7 @@ export class Histogram extends React.Component<HistogramProps, State> {
   renderLegend(config: UPlotConfigBuilder) {
     const { legend } = this.props;
 
-    if (!config || legend.showLegend === false) {
+    if (!config || legend.showLegend === false || legend.displayMode === LegendDisplayMode.Hidden) {
       return null;
     }
 

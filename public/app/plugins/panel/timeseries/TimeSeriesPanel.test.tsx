@@ -156,6 +156,13 @@ describe('TimeSeriesPanel', () => {
     expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
   });
 
+  it('should hide legend when displayMode is hidden, even if showLegend is true', () => {
+    renderPanel({ legend: { ...defaultOptions.legend, showLegend: true, displayMode: LegendDisplayMode.Hidden } });
+
+    expect(screen.getByTestId(selectors.components.VizLayout.container)).toBeInTheDocument();
+    expect(screen.queryByTestId(selectors.components.VizLayout.legend)).not.toBeInTheDocument();
+  });
+
   describe('null values in the time field (#130379)', () => {
     // A frame whose time field carries null cells must route to the error view
     // instead of reaching the chart, where zoom-to-data would propagate a null

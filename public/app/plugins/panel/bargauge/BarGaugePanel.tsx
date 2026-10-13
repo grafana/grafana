@@ -11,7 +11,7 @@ import {
   type PanelProps,
   VizOrientation,
 } from '@grafana/data';
-import { BarGaugeSizing, BarGaugeValueMode, BigValueTextMode } from '@grafana/schema';
+import { BarGaugeSizing, BarGaugeValueMode, BigValueTextMode, LegendDisplayMode } from '@grafana/schema';
 import {
   BarGauge,
   DataLinksContextMenu,
@@ -165,7 +165,7 @@ export function calcBarSize(options: Options, orientation: VizOrientation) {
 export function getLegend(options: Options, data: BarGaugePanelProps['data']) {
   const { legend } = options;
 
-  if (legend.showLegend && data && data.series.length > 0) {
+  if (legend.showLegend && legend.displayMode !== LegendDisplayMode.Hidden && data && data.series.length > 0) {
     return <BarGaugeLegend data={data.series} {...legend} />;
   }
 

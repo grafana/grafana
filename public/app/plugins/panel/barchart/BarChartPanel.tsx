@@ -5,6 +5,7 @@ import { PanelDataErrorView } from '@grafana/runtime';
 import {
   type AdHocFilterItem,
   type AdHocFilterModel,
+  LegendDisplayMode,
   TooltipDisplayMode,
   TooltipPlugin2,
   UPLOT_AXIS_FONT_SIZE,
@@ -143,7 +144,9 @@ export const BarChartPanel = (props: PanelProps<Options>) => {
   }
 
   const legendComp =
-    legend.showLegend && hasVisibleLegendSeries(builder, info.series!) ? (
+    legend.showLegend &&
+    legend.displayMode !== LegendDisplayMode.Hidden &&
+    hasVisibleLegendSeries(builder, info.series!) ? (
       <BarChartLegend data={info.series!} colorField={info.color} {...legend} />
     ) : null;
 
