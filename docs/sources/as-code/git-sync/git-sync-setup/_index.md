@@ -12,12 +12,11 @@ labels:
     - cloud
 title: Set up Git Sync
 weight: 300
-canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/git-sync-setup/
+canonical: https://grafana.com/docs/grafana/latest/as-code/observability-as-code/git-sync/git-sync-setup/
 aliases:
-  - ../../observability-as-code/provision-resources/git-sync-setup/
-  - ../../observability-as-code/git-sync/provision-resources/git-sync-setup/
-  - ../../observability-as-code/git-sync/git-sync-setup/git-sync-setup/
-  - ../../observability-as-code/git-sync/git-sync-setup/
+  - ../../../observability-as-code/provision-resources/git-sync-setup/ # /docs/grafana/next/observability-as-code/provision-resources/git-sync-setup/
+  - ../provision-resources/git-sync-setup/
+  - ./git-sync-setup/
 ---
 
 # Set up Git Sync
@@ -30,12 +29,12 @@ Git Sync functionalities are constantly evolving. [Contact Grafana](https://graf
 
 To set up Git Sync and synchronize your Grafana dashboards and folders with a GitHub repository, follow these steps:
 
-1. Read [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-before/) carefully.
-1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui), with [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-terraform/), or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-code/).
+1. Read [Before you begin](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/) carefully.
+1. Set up Git Sync [using the UI](#set-up-git-sync-using-the-ui), with [Terraform](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-terraform/), or [as code](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-code/).
 1. After setup, [check your dashboards have been synced correctly](#check-your-dashboards-in-grafana).
-1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-extend/).
+1. Optionally, you can also [extend Git Sync with webhooks and image rendering](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend/).
 
-Alternatively, on-prem file provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system. Refer to [Provision resources on-prem](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/provision-resources/) for more details.
+Alternatively, on-prem file provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system. Refer to [Provision resources on-prem](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/) for more details.
 
 ## Set up Git Sync using the UI
 
@@ -51,19 +50,19 @@ To set up Git Sync from the Grafana UI, follow these steps:
 
 ## Select your provider
 
-Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitHub Enterprise, GitLab and Bitbucket. Refer to [Compatible providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/usage-limits#compatible-providers) for more details.
+Git Sync is available for any Git provider through a Pure Git repository type, and has specific enhanced integrations for GitHub, GitHub Enterprise, GitLab and Bitbucket. Refer to [Compatible providers](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/usage-limits#compatible-providers) for more details.
 
 Select any of these options to proceed:
 
-- [GitHub](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup#configure-with-github)
-- [GitHub Enterprise (Server and Cloud)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup#configure-with-github-enterprise)
-- [GitLab](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup#configure-with-gitlab)
-- [Bitbucket](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup#configure-with-bitbucket)
-- [Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup#configure-with-pure-git)
+- [GitHub](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github)
+- [GitHub Enterprise (Server and Cloud)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-github-enterprise)
+- [GitLab](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-gitlab)
+- [Bitbucket](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-bitbucket)
+- [Pure Git](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup#configure-with-pure-git)
 
 ### Configure with GitHub
 
-If you want to configure Git Sync for public cloud GitHub, you can connect using a **Personal Access Token** or with **GitHub App**. Whichever you choose, make sure you have the following permissions:
+If you want to configure Git Sync for public cloud GitHub, you can connect using a **Personal Access Token**, with **GitHub App**, or with an [**OAuth App**](#connect-with-an-oauth-app). Whichever you choose, make sure you have the following permissions:
 
 - **Administration**: Read-only permission
   - This enables validation of branch protection rules against the configured branch when users can push directly to it
@@ -76,7 +75,8 @@ If you want to configure Git Sync for public cloud GitHub, you can connect using
 For information on how to set up each method, refer to:
 
 - [Create a new fine-grained personal access token](https://github.com/settings/personal-access-tokens/new). You need a Personal Access Token from an **Admin** role to set up the repository. GitHub only grants the **Webhooks: Read and write** permission to repository admins, so tokens created by non-admin users can't manage the webhooks Git Sync relies on for instantaneous updates and pull request previews.
-- [Create a GitHub App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-before/#create-a-github-app).
+- [Create a GitHub App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-a-github-app).
+- [Create an OAuth App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-an-oauth-app).
 
 #### Connect with a GitHub Personal Access Token
 
@@ -106,7 +106,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitHub Enterprise
 
-Similarly, you can connect to GitHub Enterprise Server or GitHub Enterprise Cloud using a **Personal Access Token** or with **GitHub App**. Refer to [Configure with GitHub](#configure-with-github) for details on the required permissions.
+Similarly, you can connect to GitHub Enterprise Server or GitHub Enterprise Cloud using a **Personal Access Token**, with **GitHub App**, or with an [**OAuth App**](#connect-with-an-oauth-app). Refer to [Configure with GitHub](#configure-with-github) for details on the required permissions.
 
 #### Connect with a GitHub Personal Access Token
 
@@ -139,7 +139,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with GitLab
 
-If you want to configure Git Sync for GitLab, you need a GitLab Personal Access Token. To create one, [sign in to GitLab](https://gitlab.com/users/sign_in) and create a token with these permissions:
+If you want to configure Git Sync for GitLab, you need a GitLab Personal Access Token or an [OAuth App](#connect-with-an-oauth-app). To create a token, [sign in to GitLab](https://gitlab.com/users/sign_in) and create a token with these permissions:
 
 - **Repository**: Read and write permission
 - **User**: Read only permission
@@ -164,7 +164,7 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Bitbucket
 
-If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token with scopes. To create one, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket) and create an API token with these permissions:
+If you want to configure Git Sync for Bitbucket, you need a Bitbucket API token with scopes or an [OAuth App](#connect-with-an-oauth-app). To create a token, [sign in to Bitbucket](https://id.atlassian.com/login?application=bitbucket) and create an API token with these permissions:
 
 - **Repositories**: Read and write permission
 - **Pull requests**: Read and write permission
@@ -189,13 +189,37 @@ Select **Configure repository** to set up your provisioning folder.
 
 ### Configure with Pure Git
 
-If you're using another Git provider, you need to use the Pure Git option to configure your connection with a Personal Access Token:
+If you're using another Git provider, you need to use the Pure Git option to configure your connection with a Personal Access Token or an [OAuth App](#connect-with-an-oauth-app):
 
 1. Paste the access token or password of the Git repository you want to sync in **Access Token**.
 1. Enter a **Username**. Git Sync will use this name to access the Git repository.
 1. Paste the **Repository URL** of your Git repository into the text box.
 
 Select **Configure repository** to set up your provisioning folder.
+
+### Connect with an OAuth App
+
+You can connect GitHub, GitHub Enterprise, GitLab, Bitbucket, and Pure Git repositories with an OAuth App. Grafana authorizes the app once and uses the resulting token for every repository that uses the connection.
+
+Before you begin, make sure that the [OAuth connection type is enabled](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#enable-oauth-connection-types) for your provider, and [create an OAuth App](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-before/#create-an-oauth-app).
+
+To connect with an OAuth App, select **Connect with OAuth App** as the authentication method:
+
+- If you already have an OAuth App connection, select **Choose an existing app**, and select the connection from the **Connection** drop-down menu.
+- If you want to connect with a new OAuth App, select **Connect to a new app**:
+  1. Enter a **Title** for the connection.
+  1. Fill in the fields for your provider:
+     - GitHub: **Client ID** and **Client secret**.
+     - GitHub Enterprise: **Custom server URL**, **Client ID**, and **Client secret**.
+     - GitLab: **Application ID** and **Client secret**.
+     - Bitbucket: **Client ID**, **Workspace**, and **Client secret**.
+     - Pure Git: **Client ID**, **Client secret**, **Authorization URL**, **Token URL**, and **Scopes**. Also enter the **Repository URL**. If your provider expects a specific username with OAuth tokens, enter it in **Username**, for example `x-token-auth` for Bitbucket.
+  1. Click **Create and authorize**. Grafana opens the consent page of your provider in a new tab.
+  1. Approve the access.
+
+Next, select **Configure repository** to set up your provisioning folder.
+
+If the connection later shows as **Disconnected**, for example because the token expired or was revoked, go to the **Connections** tab, select the connection, and click **Reauthorize**.
 
 ## Configure the provisioning repository
 
@@ -212,7 +236,7 @@ Next, sync the external resources you specified in the previous step with your G
 
 To set up synchronization:
 
-1. Select whether you want to store synced resources in a **new folder or at root level** in Grafana. For more information on these options, refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/key-concepts#sync-targets/). The UI provides information about the available resources you can sync.
+1. Select whether you want to store synced resources in a **new folder or at root level** in Grafana. For more information on these options, refer to [Sync targets](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/key-concepts#sync-targets/). The UI provides information about the available resources you can sync.
 1. Enter a **Display name** for your repository connection. All the synced resources from this Git Sync connection will appear under the this name in the Grafana UI.
 1. Click **Synchronize with external storage** to continue.
 1. You can repeat this process for up to 10 connections.
@@ -226,7 +250,7 @@ Select **Choose additional settings** to continue setup.
 To proceed with the sync:
 
 1. Review the known limitations.
-1. You may see the experimental checkbox **Migrate existing resources**, which allows you to migrate your unmanaged dashboards to the provisioned folder. If you don't, refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/add-resources/) to learn how to migrate your existing resources.
+1. You may see the experimental checkbox **Migrate existing resources**, which allows you to migrate your unmanaged dashboards to the provisioned folder. If you don't, refer to [Export non-provisioned resources from Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/add-resources/) to learn how to migrate your existing resources.
 1. Click **Begin synchronization** to create the Git Sync connection. When the process is completed, you'll see a summary of the synced resources.
 
 Click **Choose additional settings** for the final configuration steps.
@@ -256,7 +280,7 @@ In the **Webhook options** menu, you can type in an URL to override the auto-det
 
 You can also check the **Disable webhook integration**. When checked, Grafana doesn't register or receive webhook events, and polls the repository on an interval instead. Use this when your Grafana instance is not reachable from the public internet.
 
-Git providers limit the amount of webhooks they allow in their repositories. Refer to [Webhook limits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-extend#webhook-limits) for more information and to learn how to proceed if you reach these limits.
+Git providers limit the amount of webhooks they allow in their repositories. Refer to [Webhook limits](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend#webhook-limits) for more information and to learn how to proceed if you reach these limits.
 
 ### Signed commit options
 
@@ -320,7 +344,7 @@ Make sure that your synced dashboards are available at the location that you spe
 1. Go to **Dashboards**.
 1. Look for the name of the dashboard in the **Name** column.
 
-Now that your resources are synced, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/use-git-sync/) for more information.
+Now that your resources are synced, you can customize the name, change the branch, and create a pull request (PR) for it. Refer to [Manage provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/) for more information.
 
 ## Update or delete your synced resources
 
@@ -340,8 +364,8 @@ You've successfully set up Git Sync to manage your Grafana dashboards through ve
 
 To learn more about using Git Sync refer to the following documents:
 
-- [Set up instantaneous pulling and dashboard previews in Pull Requests](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/git-sync-setup/set-up-extend)
-- [Work with provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/use-git-sync/)
-- [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/provisioned-dashboards/)
-- [Add existing resources to your synced folder](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/add-resources/)
-- [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/git-sync/scenarios/)
+- [Set up instantaneous pulling and dashboard previews in Pull Requests](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/git-sync/git-sync-setup/set-up-extend)
+- [Work with provisioned repositories with Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/use-git-sync/)
+- [Work with provisioned dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/provisioned-dashboards/)
+- [Add existing resources to your synced folder](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/export-resources/)
+- [Git Sync deployment scenarios](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/observability-as-code/provision-resources/git-sync-deployment-scenarios)
