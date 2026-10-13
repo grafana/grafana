@@ -3,8 +3,7 @@ import { of } from 'rxjs';
 import { render, screen, waitFor } from 'test/test-utils';
 
 import { type DataSourceInstanceListItem } from '@grafana/data';
-import { config, locationService, setBackendSrv } from '@grafana/runtime';
-import { useDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { config, locationService, setBackendSrv, useDataSourceInstanceList } from '@grafana/runtime';
 import server, { setupMockServer } from '@grafana/test-utils/server';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 import { backendSrv } from 'app/core/services/backend_srv';
@@ -41,12 +40,6 @@ const defaultTestDataSource = {
   uid: 'test-data-source-uid',
   type: 'grafana-testdata-datasource',
 } as DataSourceInstanceListItem;
-
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
-  useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
-}));
-
 const mockUseDataSourceInstanceList = jest.mocked(useDataSourceInstanceList);
 
 jest.mock('@grafana/runtime', () => {
@@ -58,6 +51,7 @@ jest.mock('@grafana/runtime', () => {
       push: jest.fn(),
       getHistory: () => actual.locationService,
     },
+    useDataSourceInstanceList: jest.fn(() => ({ isLoading: false, items: [] })),
   };
 });
 

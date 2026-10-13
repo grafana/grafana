@@ -21,7 +21,9 @@ service ResourceIndex {
   // Semantic search
   rpc VectorSearch(VectorSearchRequest) returns (VectorSearchResponse);
 
-  // Hybrid search: RRF fuse lexical and vector with optional reranker.
+  // Hybrid search: RRF fuse lexical and vector results with optional reranking.
+  // Without a vector backend or embedding provider, searches only the regular
+  // resource index using the lexical leg; reranking remains available.
   rpc HybridSearch(HybridSearchRequest) returns (HybridSearchResponse);
 }
 
@@ -350,13 +352,13 @@ message HybridSearchRequest {
   // Resource type to search (namespace + group + resource).
   ResourceKey key = 1;
 
-  // Required. Feeds the lexical leg verbatim; also embedded for the
-  // semantic leg unless semantic_query is set. Max 1000 bytes. Put
+  // Required. Feeds the lexical leg verbatim; also used for semantic search
+  // and reranking unless semantic_query is set. Max 1000 bytes. Put
   // extracted keywords here and natural language in semantic_query.
   string query = 2;
 
-  // Optional richer phrasing embedded for the semantic leg instead of
-  // query. Max 1000 bytes.
+  // Optional richer phrasing used for semantic search and reranking instead
+  // of query. Also used for reranking in lexical-only mode. Max 1000 bytes.
   string semantic_query = 3;
 
   // Top-k: maximum results. Defaults to 50 when zero, capped at 200.
@@ -366,7 +368,7 @@ message HybridSearchRequest {
   // most once, max 1000 values total. Internal collections allow only
   // "uid" and "folder" (all kinds), "datasource_uid" and "language"
   // (dashboards; values: promql, logql, traceql, sql) — enforced
-  // natively by BOTH legs. External collections: "uid" and "folder"
+  // natively by each active leg. External collections: "uid" and "folder"
   // match the row's identity and folder, any other key matches the
   // metadata JSON (containment).
   repeated Requirement filters = 5;
@@ -381,15 +383,15 @@ message HybridSearchRequest {
   string min_relevance = 6;
 
   // Skip the reranking stage even when the server has a reranker
-  // configured, returning RRF-fused ordering directly. For callers that
-  // prefer fusion latency over cross-encoder quality. Setting this
-  // together with min_relevance is INVALID_ARGUMENT (thresholds are
-  // meaningless without reranking).
+  // configured, returning RRF ordering (lexical order in lexical-only mode).
+  // Setting this together with min_relevance is INVALID_ARGUMENT (thresholds
+  // are meaningless without reranking).
   bool skip_rerank = 7;
 }
 
 message HybridSearchResponse {
-  // Top-k fused results, descending score, one row per resource.
+  // Top-k ranked results from lexical and, when configured, semantic search.
+  // Results may be reranked; descending score, one row per resource.
   // Request failures are gRPC status errors (e.g. INVALID_ARGUMENT for
   // bad filters), never payload-embedded errors.
   repeated HybridSearchResult results = 1;

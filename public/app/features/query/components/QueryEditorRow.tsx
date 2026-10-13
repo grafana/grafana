@@ -21,8 +21,13 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { renderLimitedComponents, reportInteraction, usePluginComponents } from '@grafana/runtime';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import {
+  renderLimitedComponents,
+  reportInteraction,
+  usePluginComponents,
+  getDataSourceInstance,
+  getDataSourceInstanceSettings,
+} from '@grafana/runtime';
 import { type DataQuery } from '@grafana/schema';
 import { Badge, ErrorBoundaryAlert, List } from '@grafana/ui';
 import { OperationRowHelp } from 'app/core/components/QueryOperationRow/OperationRowHelp';
@@ -272,7 +277,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
   }
 
   renderPluginEditor = () => {
-    const { query, onChange, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
+    const { query, queries, onRunQuery, onAddQuery, range, app = CoreApp.PanelEditor, history } = this.props;
     const { datasource, data } = this.state;
 
     if (this.isWaitingForDatasourceToLoad() || !datasource) {
@@ -288,7 +293,7 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
             key={datasource?.name}
             query={query}
             datasource={datasource}
-            onChange={onChange}
+            onChange={this.onChange}
             onRunQuery={onRunQuery}
             onAddQuery={onAddQuery}
             data={data}
@@ -308,6 +313,12 @@ export class QueryEditorRow<TQuery extends DataQuery> extends PureComponent<Prop
         </Trans>
       </div>
     );
+  };
+
+  // Editors may hold on to the onChange they got on mount (e.g. a Monaco listener), and the parent's
+  // onChange is recreated each render over that render's queries. Stay stable and forward to the latest.
+  onChange = (query: TQuery) => {
+    this.props.onChange(query);
   };
 
   onRemoveQuery = () => {

@@ -38,6 +38,7 @@ export interface TimeRangePickerProps {
   value: TimeRange;
   timeZone?: TimeZone;
   fiscalYearStartMonth?: number;
+  hideTimeZone?: boolean;
 
   /**
    * If you handle sync state between pickers yourself use this prop to pass the sync button component.
@@ -86,6 +87,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
     onError,
     timeZone,
     fiscalYearStartMonth,
+    hideTimeZone,
     history,
     onChangeTimeZone,
     onChangeFiscalYearStartMonth,
@@ -195,6 +197,7 @@ export function TimeRangePicker(props: TimeRangePickerProps) {
               <TimePickerContent
                 timeZone={timeZone}
                 fiscalYearStartMonth={fiscalYearStartMonth}
+                hideTimeZone={hideTimeZone}
                 value={value}
                 onChange={onChange}
                 quickOptions={quickRanges || getQuickOptions()}

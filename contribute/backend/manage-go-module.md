@@ -35,29 +35,12 @@ make update-workspace
 replace github.com/grafana/grafana/pkg/<my-module> => ../../../<my-module>
 ```
 
-5. Upadte `Dockerfile` to include the new module
+5. Update `Dockerfile` to include the new module, but only in case the parent folder is not being copied already.
    Example:
 
 ```dockerfile
 # Dockerfile
 COPY pkg/your/new/module ./pkg/your/new/module
-```
-
-6. Add module to `dependabot.yml` for dependency updates
-
-Example:
-
-```yaml
-# .github/dependabot.yml
-updates:
-  - package-ecosystem: 'github-actions'
-    directory: '/'
-    schedule:
-      interval: 'daily'
-  - package-ecosystem: 'gomod'
-    directories:
-      - '/'
-      - '/pkg/your/new/module' # Add your new module here
 ```
 
 [!IMPORTANT]

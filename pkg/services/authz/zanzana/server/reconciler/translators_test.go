@@ -103,7 +103,14 @@ func TestTranslateResourcePermissionToTuples(t *testing.T) {
 
 			tuples, err := TranslateResourcePermissionToTuples(toUnstructured(t, rp))
 			require.NoError(t, err)
-			require.Len(t, tuples, 1)
+			if tt.verb == "edit" || tt.verb == "admin" {
+				require.Len(t, tuples, 2)
+				assert.Equal(t, tt.expectedUser, tuples[1].GetUser())
+				assert.Equal(t, "create", tuples[1].GetRelation())
+				assert.Equal(t, "resource:dashboard.grafana.app/dashboards/annotations/dash1", tuples[1].GetObject())
+			} else {
+				require.Len(t, tuples, 1)
+			}
 
 			assert.Equal(t, tt.expectedUser, tuples[0].GetUser())
 			assert.Equal(t, tt.expectedRelation, tuples[0].GetRelation())
@@ -696,12 +703,25 @@ func TestTranslateRoleToTuplesWithComposition(t *testing.T) {
 		// Only own Permissions are used — global role not inherited.
 		require.NotEmpty(t, tuples)
 	})
+
+	for _, kind := range []string{"Role", "", "Unknown", "globalrole"} {
+		t.Run("unsupported ref kind "+kind, func(t *testing.T) {
+			role := &iamv0.Role{
+				ObjectMeta: metav1.ObjectMeta{Name: "invalid-role"},
+				Spec:       iamv0.RoleSpec{RoleRefs: []iamv0.RolespecRoleRef{{Kind: kind, Name: "global-role-a"}}},
+			}
+			tuples, err := TranslateRoleToTuples(toUnstructured(t, role), globalRolePerms)
+			require.Error(t, err)
+			require.ErrorContains(t, err, "expected GlobalRole")
+			assert.Nil(t, tuples)
+		})
+	}
 }
 
 // TestTranslateRoleToTuples_RoleManagementPermissions verifies the reconciler
 // end-to-end (Role CRD → tuples) for the three legacy role-management actions:
 //
-//   - roles:write + permissions:type:delegate → edit on group_resource:.../roles
+//   - roles:write + permissions:type:delegate → create and update on group_resource:.../roles
 //   - roles:delete + permissions:type:delegate → delete on group_resource:.../roles
 //   - roles:read + roles:* → get on both .../roles and .../globalroles
 //
@@ -726,7 +746,8 @@ func TestTranslateRoleToTuples_RoleManagementPermissions(t *testing.T) {
 	require.ElementsMatch(t, tupleKeyStrings([]*openfgav1.TupleKey{
 		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/roles"},
 		{User: "role:role-admin#assignee", Relation: "get", Object: "group_resource:iam.grafana.app/globalroles"},
-		{User: "role:role-admin#assignee", Relation: "edit", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "create", Object: "group_resource:iam.grafana.app/roles"},
+		{User: "role:role-admin#assignee", Relation: "update", Object: "group_resource:iam.grafana.app/roles"},
 		{User: "role:role-admin#assignee", Relation: "delete", Object: "group_resource:iam.grafana.app/roles"},
 	}), tupleKeyStrings(tuples))
 
@@ -1047,4 +1068,11 @@ func TestTranslatedTuplesAreSchemaValid(t *testing.T) {
 			validateTupleAgainstSchema(t, ts, tuple)
 		}
 	})
+}
+
+func TestTranslateFolderCanonicalRoot(t *testing.T) {
+	obj := &unstructured.Unstructured{Object: map[string]interface{}{"metadata": map[string]interface{}{"name": "top-level", "annotations": map[string]interface{}{"grafana.app/folder": "general"}}}}
+	tuples, err := TranslateFolderToTuples(obj)
+	require.NoError(t, err)
+	require.Empty(t, tuples)
 }

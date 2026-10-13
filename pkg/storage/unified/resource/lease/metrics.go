@@ -45,7 +45,7 @@ func NewMetrics(reg prometheus.Registerer, component string) *Metrics {
 	reg = prometheus.WrapRegistererWith(prometheus.Labels{"component": component}, reg)
 	m := &Metrics{
 		AcquireDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "lease_manager_acquire_duration_seconds",
+			Name:                            "grafana_lease_manager_acquire_duration_seconds",
 			Help:                            "Time (in seconds) spent in Acquire calls, labeled by outcome.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -53,12 +53,12 @@ func NewMetrics(reg prometheus.Registerer, component string) *Metrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"outcome"}),
 		AcquireRetries: promauto.With(reg).NewHistogram(prometheus.HistogramOpts{
-			Name:    "lease_manager_acquire_retries",
+			Name:    "grafana_lease_manager_acquire_retries",
 			Help:    "Number of retries performed by Acquire calls that needed at least one retry.",
 			Buckets: []float64{1, 2, 3},
 		}),
 		ReleaseDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "lease_manager_release_duration_seconds",
+			Name:                            "grafana_lease_manager_release_duration_seconds",
 			Help:                            "Time (in seconds) spent in Release calls, labeled by outcome.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -66,15 +66,15 @@ func NewMetrics(reg prometheus.Registerer, component string) *Metrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"outcome"}),
 		RenewalsTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "lease_manager_renewals_total",
+			Name: "grafana_lease_manager_renewals_total",
 			Help: "Total number of successful auto-renewals.",
 		}),
 		LossesTotal: promauto.With(reg).NewCounterVec(prometheus.CounterOpts{
-			Name: "lease_manager_losses_total",
+			Name: "grafana_lease_manager_losses_total",
 			Help: "Total number of leases lost involuntarily, labeled by reason (expired, lost, error).",
 		}, []string{"reason"}),
 		GCDurationSeconds: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
-			Name:                            "lease_manager_gc_duration_seconds",
+			Name:                            "grafana_lease_manager_gc_duration_seconds",
 			Help:                            "Wall-clock duration (in seconds) of a single garbage collection run, labeled by outcome.",
 			Buckets:                         instrument.DefBuckets,
 			NativeHistogramBucketFactor:     1.1,
@@ -82,11 +82,11 @@ func NewMetrics(reg prometheus.Registerer, component string) *Metrics {
 			NativeHistogramMinResetDuration: time.Hour,
 		}, []string{"outcome"}),
 		GCKeysScannedTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "lease_manager_gc_keys_scanned_total",
+			Name: "grafana_lease_manager_gc_keys_scanned_total",
 			Help: "Total number of lease keys scanned by garbage collection.",
 		}),
 		GCKeysDeletedTotal: promauto.With(reg).NewCounter(prometheus.CounterOpts{
-			Name: "lease_manager_gc_keys_deleted_total",
+			Name: "grafana_lease_manager_gc_keys_deleted_total",
 			Help: "Total number of lease keys deleted by garbage collection.",
 		}),
 	}

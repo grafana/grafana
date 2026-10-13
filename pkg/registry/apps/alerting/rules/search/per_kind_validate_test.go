@@ -45,6 +45,12 @@ func perKindFilterLeaf(field, op string, values ...string) searchv0.WhereNode {
 	}
 }
 
+func perKindRegexLeaf(field, pattern string, negate bool) searchv0.WhereNode {
+	return searchv0.WhereNode{
+		Regex: &searchv0.RegexPredicate{Field: field, Pattern: pattern, Negate: negate},
+	}
+}
+
 func perKindTextLeaf(value string) searchv0.WhereNode {
 	return searchv0.WhereNode{Text: &searchv0.TextPredicate{Value: value}}
 }
@@ -181,6 +187,55 @@ func TestPerKindValidateQuery_futureWhereNodes(t *testing.T) {
 	})
 }
 
+func TestPerKindValidateQuery_regexLeaf(t *testing.T) {
+	t.Run("accepts a labels regex at the top level and inside and", func(t *testing.T) {
+		regex := perKindRegexLeaf(fieldLabels, "team=a|b", false)
+		assert.Empty(t, validate(t, whereQuery(&regex)))
+		assert.Empty(t, validate(t, whereQuery(perKindAndNode(
+			perKindTextLeaf("cpu"),
+			perKindFilterLeaf(fieldLabels, perKindFilterOperatorIn, "env=prod"),
+			regex,
+			perKindRegexLeaf(fieldLabels, "severity=crit.*", true),
+		))))
+	})
+
+	t.Run("accepts a labels regex on recording rules", func(t *testing.T) {
+		regex := perKindRegexLeaf(fieldLabels, "team=a", false)
+		assert.Empty(t, validateFor(t, recordingRuleKind(t), whereQuery(&regex)))
+	})
+
+	t.Run("rejects a node that also sets a filter", func(t *testing.T) {
+		// Counting only the filter would answer the query without its regex.
+		node := perKindFilterLeaf(fieldLabels, perKindFilterOperatorIn, "team=a")
+		node.Regex = &searchv0.RegexPredicate{Field: fieldLabels, Pattern: "env=.*"}
+		assert.Equal(t, []string{"where"}, validate(t, whereQuery(&node)))
+	})
+
+	for name, tc := range map[string]struct {
+		field   string
+		pattern string
+		path    string
+	}{
+		"missing field":                {"", "team=a", "where.regex.field"},
+		"unknown field":                {"nope", "team=a", "where.regex.field"},
+		"field not filterable":         {fieldAnnotations, "team=a", "where.regex.field"},
+		"filterable field not labels":  {fieldReceiver, "a.*", "where.regex.field"},
+		"lowercased title":             {fieldTitle, "CPU.*", "where.regex.field"},
+		"missing pattern":              {fieldLabels, "", "where.regex.pattern"},
+		"no literal key":               {fieldLabels, "team", "where.regex.pattern"},
+		"empty key":                    {fieldLabels, "=a", "where.regex.pattern"},
+		"lazy quantifier":              {fieldLabels, "team=crit.*?", "where.regex.pattern"},
+		"word boundary":                {fieldLabels, `team=\bcrit`, "where.regex.pattern"},
+		"case folding after the start": {fieldLabels, "team=a(?i)b", "where.regex.pattern"},
+		"invalid syntax":               {fieldLabels, "team=(a", "where.regex.pattern"},
+	} {
+		t.Run("rejects "+name, func(t *testing.T) {
+			regex := perKindRegexLeaf(tc.field, tc.pattern, false)
+			assert.Equal(t, []string{tc.path}, validate(t, whereQuery(&regex)))
+		})
+	}
+}
+
 func TestPerKindValidateQuery_textLeaf(t *testing.T) {
 	t.Run("requires a value", func(t *testing.T) {
 		for _, v := range []string{"", "   "} {
@@ -272,14 +327,21 @@ func TestPerKindValidateQuery_filterLeaf(t *testing.T) {
 		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldFolder, perKindFilterOperatorIn, "f1", "f2")))
 	})
 
-	// NotIn only round-trips negation on the labels field; on any other field the
-	// legacy backend ignores the operator and would invert the result.
-	t.Run("rejects NotIn except on labels", func(t *testing.T) {
+	// NotIn only round-trips negation on labels, state and health; on any other
+	// field the legacy backend ignores the operator and would invert the result.
+	t.Run("rejects NotIn except on negatable fields", func(t *testing.T) {
 		for _, name := range []string{fieldName, fieldFolder, fieldDatasourceUIDs, fieldReceiver} {
 			assert.Equal(t, []string{"where.filter.operator"},
 				leafErrs(t, perKindFilterLeaf(name, perKindFilterOperatorNotIn, "x")), "field %q", name)
 		}
 		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldLabels, perKindFilterOperatorNotIn, "team=a")))
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldState, perKindFilterOperatorNotIn, "firing")))
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldHealth, perKindFilterOperatorNotIn, "error")))
+	})
+
+	t.Run("state and health accept a set", func(t *testing.T) {
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldState, perKindFilterOperatorIn, "firing", "pending")))
+		assert.Empty(t, leafErrs(t, perKindFilterLeaf(fieldHealth, perKindFilterOperatorIn, "ok", "error")))
 	})
 
 	t.Run("paused must be a boolean", func(t *testing.T) {

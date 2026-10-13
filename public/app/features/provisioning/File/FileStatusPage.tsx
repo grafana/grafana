@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
-import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { urlUtil } from '@grafana/data';
 import { Trans, t } from '@grafana/i18n';
 import { isFetchError } from '@grafana/runtime';
-import { Alert, Button, CodeEditor, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { Alert, Button, DeleteButton, LinkButton, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
+import { CodeMirrorEditor } from '@grafana/ui/unstable';
 import {
   type ResourceWrapper,
   useDeleteRepositoryFilesWithPathMutation,
@@ -152,20 +152,15 @@ function ResourceView({ wrap, repo, repoRef, tab, isReadOnlyRepo }: Props) {
       <TabContent>
         <div>
           <div style={{ height: 700, marginBottom: 10 }}>
-            <AutoSizer disableWidth>
-              {({ height }) => (
-                <CodeEditor
-                  width="100%"
-                  height={height}
-                  language={'json'}
-                  showLineNumbers={true}
-                  showMiniMap={true}
-                  value={jsonView}
-                  onBlur={setJsonView}
-                  onSave={setJsonView}
-                />
-              )}
-            </AutoSizer>
+            <CodeMirrorEditor
+              height="700px"
+              language="json"
+              aria-label={t('provisioning.resource-view.editor-label', 'Resource JSON')}
+              value={jsonView}
+              onChange={setJsonView}
+              onBlur={setJsonView}
+              onSave={setJsonView}
+            />
           </div>
           <Stack alignItems="flex-end" justifyContent="end">
             <Button

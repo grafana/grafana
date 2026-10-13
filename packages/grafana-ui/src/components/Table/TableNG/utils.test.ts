@@ -11,6 +11,7 @@ import {
   type DisplayValue,
   type Field,
   FieldType,
+  getRawDisplayProcessor,
   type GrafanaTheme2,
   type LinkModel,
   type ValueLinkConfig,
@@ -57,11 +58,13 @@ import {
   getDataLinksHeightMeasurer,
   getDefaultRowHeight,
   getDisplayName,
+  getHeaderAffordanceWidth,
   getPillCellHeightMeasurer,
   getRowHeight,
   getTextHeightEstimator,
   getTextHeightMeasurerFromUwrapCount,
   inferPills,
+  isShiftTabToHeader,
   makeStripedRowClass,
   markEdgeColumns,
   migrateTableDisplayModeToCellOptions,
@@ -74,6 +77,26 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
+  it.each([
+    [true, false, 22],
+    [true, true, 22],
+    [false, false, 0],
+  ])('reserves Assistant menu space once (refresh=%s filterable=%s)', (tableRefreshEnabled, filterable, expected) => {
+    const frame = createDataFrame({
+      fields: [
+        { name: 'value', type: FieldType.string, values: [], config: { custom: { sortable: false, filterable } } },
+      ],
+    });
+    expect(
+      getHeaderAffordanceWidth(frame.fields[0], {
+        showTypeIcons: false,
+        tableRefreshEnabled,
+        isFiltered: false,
+        hasAssistantAction: true,
+      })
+    ).toBe(expected);
+  });
+
   describe('inferPills', () => {
     it('returns an empty array for empty/nullish values', () => {
       expect(inferPills('')).toEqual([]);
@@ -1185,6 +1208,8 @@ describe('TableNG utils', () => {
           measureHeight: expect.any(Function),
           estimateHeight: expect.any(Function),
           avgCharWidth: expect.any(Number),
+          numericCharWidth: expect.any(Number),
+          monoCharWidth: expect.any(Number),
         })
       );
       expect(ctx.measureHeight('the quick brown fox jumps over the lazy dog', 100, field, 0, 20)).toEqual(
@@ -1208,6 +1233,15 @@ describe('TableNG utils', () => {
     // (The real uwrap is ESM-only and Jest substitutes an inert stub for it — see `__mocks__/uwrap.ts`.)
     const lineCounter = (test: uWrap['test']): uWrap => ({ test, count: () => 1, each: () => {}, split: () => [] });
     const perCharWidths = lineCounter((text, width) => text.length * CHAR_W > width);
+
+    it('caps the total text passed to canvas and uwrap before splitting lines', () => {
+      const test = jest.fn(() => false);
+      const measureWidth = createFitWidthMeasurer(ctx, lineCounter(test));
+
+      expect(measureWidth('a'.repeat(10_000) + '\n' + 'b'.repeat(20_000))).toBe(79_998);
+      expect(test).toHaveBeenCalledTimes(1);
+      expect(test).toHaveBeenCalledWith('a'.repeat(10_000), 79_998);
+    });
 
     it('returns a width the line counter agrees keeps the text on one line', () => {
       const measureWidth = createFitWidthMeasurer(ctx, perCharWidths);
@@ -1240,6 +1274,14 @@ describe('TableNG utils', () => {
 
   describe('getTextHeightMeasurerFromUwrapCount', () => {
     const field: Field = { name: 'test', type: FieldType.string, config: {}, values: ['foo', 'bar', 'baz'] };
+
+    it.each([9_999, 10_000, 10_001, 28_000])('bounds a %i-character input before counting lines', (length) => {
+      const count = jest.fn(() => 2);
+      const measureHeight = getTextHeightMeasurerFromUwrapCount(count);
+
+      expect(measureHeight('a'.repeat(length), 100, field, 0, 20)).toBe(40);
+      expect(count).toHaveBeenCalledWith('a'.repeat(Math.min(length, 10_000)), 100);
+    });
 
     it('wraps the uwrap count function', () => {
       const measureHeight = getTextHeightMeasurerFromUwrapCount(jest.fn(() => 2));
@@ -1409,6 +1451,8 @@ describe('TableNG utils', () => {
       ctx: {} as CanvasRenderingContext2D,
       count: jest.fn(() => 2),
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
       measureHeight: jest.fn(() => 2),
       estimateHeight: jest.fn(() => 2),
       measureWidth: (text: string) => text.length * 8,
@@ -1455,6 +1499,8 @@ describe('TableNG utils', () => {
       estimateHeight: jest.fn(() => 2),
       measureWidth: (text: string) => text.length * 8,
       avgCharWidth: 7,
+      numericCharWidth: 7,
+      monoCharWidth: 7,
     };
 
     it('sets up text height measurers for each text column if wrapping is on', () => {
@@ -1901,6 +1947,11 @@ describe('TableNG utils', () => {
           width: String(text).length * CHAR_W,
         })) as typeof typographyCtx.ctx.measureText);
       typographyCtx.avgCharWidth = CHAR_W;
+      // numeric/date columns use numericCharWidth and JSON uses monoCharWidth; pin them to CHAR_W too
+      // so the existing char-count math stays deterministic (tests that exercise the difference set
+      // these explicitly).
+      typographyCtx.numericCharWidth = CHAR_W;
+      typographyCtx.monoCharWidth = CHAR_W;
       return typographyCtx;
     };
 
@@ -1943,6 +1994,69 @@ describe('TableNG utils', () => {
 
       expect(width).toBe(75);
       expect(width).toBeLessThan(COLUMN.DEFAULT_WIDTH);
+    });
+
+    it.each([false, true])(
+      'sizes numeric columns by tabular digit width with table.refresh=%s',
+      (tableRefreshEnabled) => {
+        const theme = createTheme();
+        const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+        const widthWith = (numericCharWidth: number) => {
+          const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+          typographyCtx.numericCharWidth = numericCharWidth;
+          // availWidth 1 => no leftover, so the column is sized purely to its content.
+          return computeContentAwareColWidths([numberField], 1, {
+            typographyCtx,
+            headerTypographyCtx: makeTypographyCtx(),
+            showTypeIcons: false,
+            tableRefreshEnabled,
+            theme: { ...theme, flags: { ...theme.flags, tabularNums: true } },
+          })[0];
+        };
+        // A wider tabular digit advance must widen the column; the (equal) avgCharWidth is not used.
+        expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
+      }
+    );
+
+    it.each([false, true])(
+      'uses proportional digit widths when tabularNums is off and table.refresh=%s',
+      (tableRefreshEnabled) => {
+        const theme = createTheme();
+        const numberField: Field = { name: 'N', type: FieldType.number, values: [12345], config: {} };
+        const widthWith = (numericCharWidth: number) => {
+          const typographyCtx = makeTypographyCtx(); // avgCharWidth pinned to CHAR_W
+          typographyCtx.numericCharWidth = numericCharWidth;
+          // With tabular-nums off, numeric columns fall back to avgCharWidth.
+          return computeContentAwareColWidths([numberField], 1, {
+            typographyCtx,
+            headerTypographyCtx: makeTypographyCtx(),
+            showTypeIcons: false,
+            tableRefreshEnabled,
+            theme: { ...theme, flags: { ...theme.flags, tabularNums: false } },
+          })[0];
+        };
+        // Widening the (unused) tabular advance must not change the width when the toggle is off.
+        expect(widthWith(2 * CHAR_W)).toBe(widthWith(CHAR_W));
+      }
+    );
+
+    it('sizes a JSON column by monoCharWidth (its monospace font), not avgCharWidth', () => {
+      const jsonField: Field = {
+        name: 'J',
+        type: FieldType.other,
+        values: [{ hello: 'world' }],
+        config: { custom: { cellOptions: { type: TableCellDisplayMode.JSONView } } },
+      };
+      const widthWith = (monoCharWidth: number) => {
+        const typographyCtx = makeTypographyCtx();
+        typographyCtx.monoCharWidth = monoCharWidth;
+        return computeContentAwareColWidths([jsonField], 1, {
+          typographyCtx,
+          headerTypographyCtx: makeTypographyCtx(),
+          showTypeIcons: false,
+        })[0];
+      };
+      expect(widthWith(2 * CHAR_W)).toBeGreaterThan(widthWith(CHAR_W));
     });
 
     it('keeps a configured width verbatim and grows the auto column into the leftover space', () => {
@@ -2897,6 +3011,32 @@ describe('TableNG utils', () => {
     });
   });
 
+  describe('isShiftTabToHeader', () => {
+    const shiftTab = { shiftKey: true, key: 'Tab' };
+
+    it('is true for Shift+Tab on the first cell of the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, shiftTab, 'c0')).toBe(true);
+    });
+
+    it('is false when the column is not the first column', () => {
+      expect(isShiftTabToHeader({ key: 'c1' }, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when the row is not the first row', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 3 }, shiftTab, 'c0')).toBe(false);
+    });
+
+    it('is false when Shift is not held or the key is not Tab', () => {
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: false, key: 'Tab' }, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, { __index: 0 }, { shiftKey: true, key: 'Enter' }, 'c0')).toBe(false);
+    });
+
+    it('is false when column or row is undefined (keydown outside a data cell)', () => {
+      expect(isShiftTabToHeader(undefined, { __index: 0 }, shiftTab, 'c0')).toBe(false);
+      expect(isShiftTabToHeader({ key: 'c0' }, undefined, shiftTab, 'c0')).toBe(false);
+    });
+  });
+
   describe('displayJsonValue', () => {
     let field: Field;
     beforeEach(() => {
@@ -2934,6 +3074,16 @@ describe('TableNG utils', () => {
 
     it('should render arrays as JSON', () => {
       expect(displayJsonValue(field)([1, 2, 3]).text).toBe('[\n 1,\n 2,\n 3\n]');
+    });
+
+    it.each([false, true])('uses formatted text for circular values (array: %s)', (asArray) => {
+      const value: { name: string; frame?: unknown } = { name: 'nested' };
+      value.frame = value;
+      field.display = getRawDisplayProcessor();
+
+      expect(displayJsonValue(field)(asArray ? [value] : value).text).toBe(
+        asArray ? '[{"name":"nested"}]' : '{"name":"nested"}'
+      );
     });
   });
 

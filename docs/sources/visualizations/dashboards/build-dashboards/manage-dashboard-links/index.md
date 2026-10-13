@@ -72,8 +72,8 @@ To add a link to another dashboard at the top of your current dashboard, follow 
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
-1. Go to the **Links** tab and then click **Add dashboard link**.
+1. In the sidebar, click **View all settings**.
+1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
 
 {{< shared id="add-dashboard-link" >}}
 
@@ -116,8 +116,8 @@ To add a URL link to your dashboard, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
-1. Go to the **Links** tab and then click **Add dashboard link**.
+1. In the sidebar, click **View all settings**.
+1. Go to the **Links** tab and then click **Add dashboard link**. If the dashboard already has links, click **New link**.
 
 {{< shared id="url-dashboard-link" >}}
 
@@ -148,7 +148,7 @@ To edit, duplicate, or delete dashboard link, follow these steps:
 
 1. In the dashboard you want to link, click **Edit**.
 1. In the toolbar, click the **Dashboard options** icon.
-1. In the sidebar, click **Settings**.
+1. In the sidebar, click **View all settings**.
 1. Go to the **Links** tab.
 1. Do one of the following:
    - **Edit** - Click the name of the link and update the link settings.

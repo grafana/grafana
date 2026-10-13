@@ -1,6 +1,4 @@
-import { type TypedVariableModel } from '@grafana/data';
-import { config, DataSourceWithBackend, featureEnabled } from '@grafana/runtime';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { config, DataSourceWithBackend, featureEnabled, getDataSourceInstance } from '@grafana/runtime';
 import { getConfig } from 'app/core/config';
 
 import { type PanelModel } from '../../../state/PanelModel';
@@ -41,15 +39,6 @@ export interface SessionUser {
   lastSeenAtAge: string;
   totalDashboards: number;
 }
-
-// Instance methods
-export const dashboardHasTemplateVariables = (variables: TypedVariableModel[]): boolean => {
-  return variables.length > 0;
-};
-
-export const publicDashboardPersisted = (publicDashboard?: PublicDashboard): boolean => {
-  return publicDashboard?.uid !== '' && publicDashboard?.uid !== undefined;
-};
 
 /**
  * Get unique datasource names from all panels that are not currently supported by public dashboards.

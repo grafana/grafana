@@ -1,10 +1,23 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { type ReactElement, useState } from 'react';
 
+import { EventBusSrv } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
+import { Drawer } from '../Drawer/Drawer';
+
+import { type PanelContext, PanelContextProvider } from './PanelContext';
 import { PanelStatus } from './PanelStatus';
 import { type PanelStatusItem } from './types';
+
+function renderWithPanelContext(ui: ReactElement, context: Partial<PanelContext> = {}) {
+  return render(
+    <PanelContextProvider value={{ eventsScope: 'global', eventBus: new EventBusSrv(), ...context }}>
+      {ui}
+    </PanelContextProvider>
+  );
+}
 
 describe('PanelStatus', () => {
   describe('legacy single message', () => {
@@ -125,6 +138,46 @@ describe('PanelStatus', () => {
       expect(onClick).toHaveBeenCalledTimes(1);
     });
 
+    it.each(['onClick', 'onOpenInspector'] as const)('closes on Inspect through %s and can reopen', async (handler) => {
+      const onInspect = jest.fn();
+      renderWithPanelContext(<PanelStatus items={items} onClick={handler === 'onClick' ? onInspect : undefined} />, {
+        onOpenInspector: handler === 'onOpenInspector' ? onInspect : undefined,
+      });
+      const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('warning'));
+      await userEvent.click(trigger);
+      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      expect(onInspect).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(trigger).toHaveAttribute('aria-expanded', 'false'));
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+      await userEvent.click(trigger);
+      expect(await screen.findByText('Query marked as big')).toBeVisible();
+    });
+
+    it('hands focus to the inspector drawer and returns it to the status trigger on close', async () => {
+      function PanelWithInspector() {
+        const [isOpen, setIsOpen] = useState(false);
+        return (
+          <>
+            <PanelStatus items={items} onClick={() => setIsOpen(true)} />
+            {isOpen && (
+              <Drawer title="Inspect panel" onClose={() => setIsOpen(false)}>
+                <p>Inspector details</p>
+              </Drawer>
+            )}
+          </>
+        );
+      }
+      render(<PanelWithInspector />);
+      const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('warning'));
+      await userEvent.click(trigger);
+      await userEvent.click(await screen.findByRole('button', { name: 'Inspect' }));
+      const drawer = await screen.findByRole('dialog');
+      await waitFor(() => expect(drawer).toContainElement(document.activeElement as HTMLElement));
+      expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId(selectors.components.Drawer.General.close));
+      await waitFor(() => expect(trigger).toHaveFocus());
+    });
+
     it('does not render an assistant button when no onInvestigateErrors is provided', async () => {
       render(<PanelStatus items={items} />);
 
@@ -143,11 +196,9 @@ describe('PanelStatus', () => {
 
     it('renders a single Fix with Assistant button and calls onInvestigateErrors when clicked', async () => {
       const onInvestigateErrors = jest.fn();
-      render(
-        <PanelStatus
-          items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
-          onInvestigateErrors={onInvestigateErrors}
-        />
+      renderWithPanelContext(
+        <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />,
+        { onInvestigateErrors }
       );
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
@@ -160,7 +211,7 @@ describe('PanelStatus', () => {
     it('offers to explain rather than fix when there are no errors to fix', async () => {
       // `items` here is warning + info only, which is the case where the dashboard side asks the
       // assistant to explain the notices instead of fixing anything.
-      render(<PanelStatus items={items} onInvestigateErrors={jest.fn()} />);
+      renderWithPanelContext(<PanelStatus items={items} />, { onInvestigateErrors: jest.fn() });
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('warning')));
 
@@ -169,12 +220,12 @@ describe('PanelStatus', () => {
     });
 
     it('places the assistant button before the Inspect button', async () => {
-      render(
+      renderWithPanelContext(
         <PanelStatus
           items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
           onClick={jest.fn()}
-          onInvestigateErrors={jest.fn()}
-        />
+        />,
+        { onInvestigateErrors: jest.fn() }
       );
 
       await userEvent.click(screen.getByTestId(selectors.components.Panels.Panel.status('error')));
@@ -189,14 +240,12 @@ describe('PanelStatus', () => {
       // The portaled popover content sits elsewhere in the DOM than the trigger, so this only
       // reproduces the real page's Tab order if there's another focusable element right after the
       // trigger for focus to potentially escape to.
-      render(
+      renderWithPanelContext(
         <>
-          <PanelStatus
-            items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]}
-            onInvestigateErrors={jest.fn()}
-          />
+          <PanelStatus items={[{ severity: 'error', text: 'Preparing expression failed' }, ...items]} />
           <button>Next focusable element on the page</button>
-        </>
+        </>,
+        { onInvestigateErrors: jest.fn() }
       );
 
       const trigger = screen.getByTestId(selectors.components.Panels.Panel.status('error'));

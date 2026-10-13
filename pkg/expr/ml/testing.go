@@ -22,7 +22,7 @@ type FakeCommand struct {
 	}
 }
 
-var _ Command = &FakeCommand{}
+var _ Command = (*FakeCommand)(nil)
 
 func (f *FakeCommand) DatasourceUID() string {
 	return "fake-ml-datasource"

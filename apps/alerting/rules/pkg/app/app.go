@@ -84,18 +84,20 @@ func New(cfg app.Config) (app.App, error) {
 	return a, nil
 }
 
-const searchRulesPathSegment = "searchRules"
+// SearchRulesPathSegment is the final segment of the per-kind search routes. The
+// apiserver parses /{resource}/searchRules as a request on an object with this
+// name, which the rules authorizer relies on to treat the search as a read.
+const SearchRulesPathSegment = "searchRules"
 
-// buildSearchRoutes wires the cross-kind and per-kind rule search handlers
+// buildSearchRoutes wires the per-kind rule search handlers
 // (provided by the registry) to their namespaced compatibility routes. A route
 // is skipped when its handler is unset, so manifest validation without a
 // backing instance does not register a nil handler.
 func buildSearchRoutes(cfg config.RuntimeConfig) map[string]simple.AppVersionRouteHandlers {
 	handlers := simple.AppVersionRouteHandlers{}
 	for path, handler := range map[string]simple.AppCustomRouteHandler{
-		"/" + searchRulesPathSegment:                cfg.SearchRulesHandler,
-		"/alertrules/" + searchRulesPathSegment:     cfg.SearchAlertRulesHandler,
-		"/recordingrules/" + searchRulesPathSegment: cfg.SearchRecordingRulesHandler,
+		"/alertrules/" + SearchRulesPathSegment:     cfg.SearchAlertRulesHandler,
+		"/recordingrules/" + SearchRulesPathSegment: cfg.SearchRecordingRulesHandler,
 	} {
 		if handler == nil {
 			continue

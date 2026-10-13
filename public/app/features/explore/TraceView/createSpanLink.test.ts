@@ -192,6 +192,38 @@ describe('createSpanLinkFactory', () => {
       ]);
     });
 
+    it('opens split view with a query rewritten on the original interpolatedParams object', () => {
+      const splitOpenFn = jest.fn();
+      const dsSrv = getDataSourceSrv();
+      const createLink = createSpanLinkFactory({
+        splitOpenFn,
+        traceToLogsOptions: {
+          customQuery: false,
+          datasourceUid: 'lokiUid',
+        },
+        trace: dummyTraceData,
+        dataFrame: dummyDataFrame,
+        logsDataSourceSettings: dsSrv.getInstanceSettings('lokiUid'),
+      });
+
+      const linkDef = createLink!(createTraceSpan())![0];
+      const rewrittenQuery = {
+        expr: '{job="api"} |= "matched"',
+        refId: 't2l:job:trace_id',
+        datasource: { uid: 'other-loki', type: 'loki' },
+      };
+      linkDef.linkModel!.interpolatedParams!.query = rewrittenQuery;
+
+      linkDef.onClick?.({});
+
+      expect(splitOpenFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          datasourceUid: 'other-loki',
+          queries: [rewrittenQuery],
+        })
+      );
+    });
+
     it('with tags that passed in and without tags that are not in the span', () => {
       const createLink = setupSpanLinkFactory({
         tags: [{ key: 'ip' }, { key: 'newTag' }],
