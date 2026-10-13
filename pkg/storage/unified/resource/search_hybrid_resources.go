@@ -11,6 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
+// hybridSearchKeys validates either key or namespace/resources and returns one
+// key per resource so both request formats use the same search flow.
 func hybridSearchKeys(req *resourcepb.HybridSearchRequest) ([]*resourcepb.ResourceKey, error) {
 	invalid := func(message string) error { return status.Error(codes.InvalidArgument, message) }
 	if req == nil {
@@ -68,6 +70,8 @@ func interleaveHybridCandidates(candidates []hybridCandidates) []*resourcepb.Hyb
 	return results
 }
 
+// enrichHybridResults looks up folder titles and manager details only for retained results.
+// External resources have no Bleve index, so they skip manager lookups.
 func (s *searchServer) enrichHybridResults(ctx context.Context, namespace string, candidates []hybridCandidates, results []*resourcepb.HybridSearchResult) {
 	byResource := make(map[GroupResource][]*resourcepb.HybridSearchResult)
 	for _, result := range results {
