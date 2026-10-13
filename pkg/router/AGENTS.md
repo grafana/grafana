@@ -156,10 +156,18 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 - **The ST discovery cache** (`stackDiscoveryCache`) shares what the fallback fetches among every
   caller that the same stack serves, root discovery included. It is keyed by destination, path,
   query, `Accept` and `Accept-Encoding`, and expires entries after
-  `singleTenantDiscoveryCacheTTL`. It stores only a 200 that `cacheableOpenAPIResponse` accepts,
-  so a refused caller never replaces a good entry, and a stack's private or per-caller answer is
-  never shared. It is bounded by `st_discovery_cache_bytes`; a document larger than
-  `maxSingleTenantCachedDiscoveryBytes` streams to the caller and isn't stored.
+  `singleTenantDiscoveryCacheTTL`.
+  - It stores only a 200 that `cacheableOpenAPIResponse` accepts, so a refused caller never
+    replaces a good entry, and a stack's private or per-caller answer is never shared.
+  - Callers choose the keys, so it caches only requests whose query is empty or a single `hash`,
+    and its `st_discovery_cache_bytes` budget counts each entry's key, headers and a fixed
+    overhead (`stackDiscoveryEntryOverhead`) as well as its body.
+  - Concurrent misses share one fetch (`discoveryFetches`), bounded by
+    `singleTenantDiscoveryFetchTimeout`; each caller stops waiting when its own request ends. Only
+    a stored response reaches the other callers. Anything else was an answer for the caller who
+    fetched it, so each of the others fetches its own.
+  - A document larger than `maxSingleTenantCachedDiscoveryBytes` isn't stored. Its key is
+    remembered, so later callers stream it from the stack instead of waiting on a shared fetch.
 - **Caller-scoped backends** (`CallerScopedDiscovery`, such as ST groups) are only defaults: when
   the ST fallback answers root discovery for a request, their groups are left out and its view is
   used. An answer from `next` never replaces them. The router's own discovery and OpenAPI caches

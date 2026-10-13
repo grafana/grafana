@@ -129,8 +129,10 @@ type singleTenantFallback struct {
 	status    pollStatus
 	lookupsBy stackLookupCounts
 
-	// discoveryDocs is nil when discovery is not cached.
+	// discoveryDocs is nil when discovery is not cached. discoveryFetches
+	// shares one fetch among concurrent misses for the same document.
 	discoveryDocs                  *stackDiscoveryCache
+	discoveryFetches               singleflight.Group
 	discoveryHits, discoveryMisses atomic.Uint64
 }
 

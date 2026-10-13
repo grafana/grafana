@@ -141,12 +141,17 @@ func TestStackDiscoveryCacheStoresOnlySharedResponses(t *testing.T) {
 				res := httptest.NewRecorder()
 				st.ServeHTTP(res, requestAs(user, "stacks-123", "/apis/example/v1"))
 				want := respond()
-				require.Equal(t, want.StatusCode, res.Code)
 				body, err := io.ReadAll(want.Body)
 				require.NoError(t, err)
+				require.NoError(t, want.Body.Close())
+				require.Equal(t, want.StatusCode, res.Code)
 				require.Equal(t, string(body), res.Body.String())
 			}
-			require.Len(t, calls(), 2)
+			want := 2
+			if name == "too large to keep" {
+				want = 3 // the first caller fetches again to stream it; later callers stream at once
+			}
+			require.Len(t, calls(), want)
 		})
 	}
 }
@@ -190,11 +195,13 @@ func TestStackDiscoveryCacheExpires(t *testing.T) {
 }
 
 func TestStackDiscoveryCacheByteBudget(t *testing.T) {
-	c, err := newStackDiscoveryCache(10)
-	require.NoError(t, err)
 	entry := func(body string) stackDiscoveryEntry {
 		return stackDiscoveryEntry{body: []byte(body), expiresAt: time.Now().Add(time.Hour)}
 	}
+	// Each one-letter key with a four-byte body costs this much.
+	size := stackDiscoveryEntryOverhead + 1 + 4
+	c, err := newStackDiscoveryCache(2*size + 1)
+	require.NoError(t, err)
 	c.add("a", entry("1234"))
 	c.add("b", entry("1234"))
 	_, ok := c.get("a") // a is now the most recently used
@@ -204,15 +211,143 @@ func TestStackDiscoveryCacheByteBudget(t *testing.T) {
 	require.False(t, ok, "the least recently used entry is evicted to stay within the budget")
 	_, ok = c.get("a")
 	require.True(t, ok)
-	require.Equal(t, 8, c.bytes)
+	require.Equal(t, 2*size, c.bytes)
 
 	// Replacing an entry accounts for the old one.
 	c.add("a", entry("12"))
-	require.Equal(t, 6, c.bytes)
+	require.Equal(t, 2*size-2, c.bytes)
 	// An entry larger than the budget evicts everything, itself included.
-	c.add("d", entry(strings.Repeat("x", 11)))
+	c.add("d", entry(strings.Repeat("x", 2*size)))
 	require.Zero(t, c.entries.Len())
 	require.Zero(t, c.bytes)
+}
+
+func TestStackDiscoveryCacheCountsKeysAndHeaders(t *testing.T) {
+	c, err := newStackDiscoveryCache(1 << 20)
+	require.NoError(t, err)
+	key := strings.Repeat("k", 100)
+	c.add(key, stackDiscoveryEntry{
+		header: http.Header{"Content-Type": {"application/json"}}, body: []byte("body"), etag: `"etag"`,
+		expiresAt: time.Now().Add(time.Hour),
+	})
+	require.Equal(t, stackDiscoveryEntryOverhead+len(key)+len("Content-Type")+len("application/json")+len("body")+len(`"etag"`), c.bytes)
+
+	// Tiny entries can't exceed the budget in number, whatever their keys.
+	small, err := newStackDiscoveryCache(10 * stackDiscoveryEntryOverhead)
+	require.NoError(t, err)
+	for i := range 100 {
+		small.add(strings.Repeat("k", i), stackDiscoveryEntry{expiresAt: time.Now().Add(time.Hour)})
+	}
+	require.LessOrEqual(t, small.entries.Len(), 10)
+	require.LessOrEqual(t, small.bytes, small.limit)
+}
+
+func TestStackDiscoveryCacheOnlyKeysOnHash(t *testing.T) {
+	st, calls := cachingFallback(t, func(*http.Request) *http.Response { return discoveryResponse(nil, "ok") })
+	for _, tc := range []struct {
+		path   string
+		cached bool
+	}{
+		{"/apis/example/v1", true},
+		{"/openapi/v3/apis/example/v1?hash=abc", true},
+		{"/apis/example/v1?x=1", false},
+		{"/openapi/v3/apis/example/v1?hash=abc&x=1", false},
+		{"/openapi/v3/apis/example/v1?hash=a&hash=b", false},
+	} {
+		for range 2 {
+			st.ServeHTTP(httptest.NewRecorder(), requestAs("alice", "stacks-123", tc.path))
+		}
+		want := 2
+		if tc.cached {
+			want = 1
+		}
+		require.Len(t, calls(), want, tc.path)
+	}
+}
+
+func TestStackDiscoveryCacheMissesShareOneFetch(t *testing.T) {
+	for _, cacheable := range []bool{true, false} {
+		name := "cacheable"
+		if !cacheable {
+			name = "not cacheable"
+		}
+		t.Run(name, func(t *testing.T) {
+			synctest.Test(t, func(t *testing.T) {
+				release := make(chan struct{})
+				st, calls := cachingFallback(t, func(req *http.Request) *http.Response {
+					if req.Header.Get("X-Leader") != "" {
+						<-release
+					}
+					header := http.Header{}
+					if !cacheable {
+						header.Set("Cache-Control", "private")
+					}
+					return discoveryResponse(header, "for "+req.Header.Get("X-Caller"))
+				})
+				users := []string{"alice", "bob", "carol"}
+				bodies := make([]string, len(users))
+				var wg sync.WaitGroup
+				for i, user := range users {
+					req := requestAs(user, "stacks-123", "/apis/example/v1")
+					req.Header.Set("X-Caller", user)
+					if i == 0 {
+						req.Header.Set("X-Leader", "1")
+					}
+					wg.Go(func() {
+						res := httptest.NewRecorder()
+						st.ServeHTTP(res, req)
+						bodies[i] = res.Body.String()
+					})
+					if i == 0 {
+						synctest.Wait() // alice's fetch is in flight, and the others join it
+					}
+				}
+				synctest.Wait()
+				close(release)
+				wg.Wait()
+
+				if cacheable {
+					require.Len(t, calls(), 1)
+					require.Equal(t, []string{"for alice", "for alice", "for alice"}, bodies)
+					return
+				}
+				// A response the stack kept private is only ever for the caller who fetched it.
+				require.Len(t, calls(), 3)
+				require.Equal(t, []string{"for alice", "for bob", "for carol"}, bodies)
+			})
+		})
+	}
+}
+
+func TestStackDiscoveryCacheWaiterLeaves(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		release := make(chan struct{})
+		st, calls := cachingFallback(t, func(*http.Request) *http.Response {
+			<-release
+			return discoveryResponse(nil, "ok")
+		})
+		leader := httptest.NewRecorder()
+		var wg sync.WaitGroup
+		wg.Go(func() { st.ServeHTTP(leader, requestAs("alice", "stacks-123", "/apis/example/v1")) })
+		synctest.Wait()
+
+		waiter := requestAs("bob", "stacks-123", "/apis/example/v1")
+		ctx, cancel := context.WithCancel(waiter.Context())
+		waiter = waiter.WithContext(ctx)
+		done := make(chan struct{})
+		go func() {
+			st.ServeHTTP(httptest.NewRecorder(), waiter)
+			close(done)
+		}()
+		synctest.Wait()
+		cancel()
+		<-done // bob stops waiting on alice's fetch
+
+		close(release)
+		wg.Wait()
+		require.Equal(t, "ok", leader.Body.String())
+		require.Len(t, calls(), 1)
+	})
 }
 
 func TestNewSingleTenantFallbackDiscoveryCacheSize(t *testing.T) {
