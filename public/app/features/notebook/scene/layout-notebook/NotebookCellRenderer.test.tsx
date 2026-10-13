@@ -1,7 +1,10 @@
-import { act, render, screen } from 'test/test-utils';
+import { seedDataSources } from 'test/helpers/seedDataSources';
+import { MockDataSourceApi } from 'test/mocks/datasource_srv';
+import { act, fireEvent, render, screen, waitFor, within } from 'test/test-utils';
 
-import { getPanelPlugin } from '@grafana/data/test';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { type DataSourceInstanceSettings, EventBusSrv, PluginType } from '@grafana/data';
+import { getMockPlugin, getPanelPlugin } from '@grafana/data/test';
+import { setAppEvents, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import {
   SceneDataTransformer,
   SceneQueryRunner,
@@ -12,6 +15,7 @@ import {
 } from '@grafana/scenes';
 import { LibraryPanelBehavior } from 'app/features/dashboard-scene/scene/LibraryPanelBehavior';
 import * as libraryPanelsApi from 'app/features/library-panels/state/api';
+import { runRequest } from 'app/features/query/state/runRequest';
 
 import { NotebookScene } from '../NotebookScene';
 
@@ -19,8 +23,10 @@ import { NotebookCellItem } from './NotebookCellItem';
 import { isEditableQueryPanel, NotebookCellRenderer } from './NotebookCellRenderer';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
 
+setAppEvents(new EventBusSrv());
+setRunRequest(runRequest);
 setPluginImportUtils({
-  importPanelPlugin: () => Promise.resolve(getPanelPlugin({})),
+  importPanelPlugin: () => Promise.resolve(getPanelPlugin({}, () => <div>Visualization</div>)),
   getPanelPluginFromCache: () => undefined,
 });
 
@@ -215,7 +221,21 @@ describe('NotebookCellRenderer', () => {
     });
   });
 
-  describe('the time-range control', () => {
+  describe('panel controls', () => {
+    beforeEach(() => {
+      const settings: DataSourceInstanceSettings = {
+        uid: 'mock',
+        name: 'Mock',
+        type: 'mock',
+        meta: { ...getMockPlugin({ id: 'mock', type: PluginType.datasource }), metrics: true },
+        jsonData: {},
+        access: 'proxy',
+        readOnly: false,
+        isDefault: true,
+      };
+      seedDataSources([{ settings, api: new MockDataSourceApi(settings) }], { legacySrv: 'mock' });
+    });
+
     function buildPanelCellInLayout(panel: VizPanel) {
       const cell = new NotebookCellItem({ elementName: 'panel-1', source: 'user', body: panel });
       new NotebookScene({
@@ -227,6 +247,115 @@ describe('NotebookCellRenderer', () => {
       });
       return cell;
     }
+
+    it('starts existing query editors closed and opens them below the visualization', async () => {
+      const cell = buildPanelCellInLayout(
+        new VizPanel({
+          key: 'panel-1',
+          title: 'Latency',
+          pluginId: 'timeseries',
+          $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
+        })
+      );
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+
+      const toggle = await screen.findByRole('button', { name: 'Edit query' });
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      expect(screen.queryByRole('button', { name: 'Run query' })).not.toBeInTheDocument();
+
+      act(() => toggle.focus());
+      await user.keyboard('{Enter}');
+      const run = await screen.findByRole('button', { name: 'Run query' });
+      expect(run).toBeVisible();
+      expect(
+        screen.getByText('Visualization').compareDocumentPosition(run) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Hide query editor' })).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('starts the query editor open for a newly inserted visualization', async () => {
+      const cell = buildPanelCellInLayout(
+        new VizPanel({
+          key: 'panel-1',
+          pluginId: 'timeseries',
+          $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
+        })
+      );
+      render(<NotebookCellRenderer cell={cell} isEditing={true} autoFocus={true} />);
+
+      expect(await screen.findByRole('button', { name: 'Run query' })).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Hide query editor' })).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('keeps the query form mounted when it is hidden and reopened', async () => {
+      const cell = buildPanelCellInLayout(
+        new VizPanel({
+          key: 'panel-1',
+          pluginId: 'timeseries',
+          $data: new SceneQueryRunner({ queries: [{ refId: 'A' }] }),
+        })
+      );
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} autoFocus={true} />);
+      const run = await screen.findByRole('button', { name: 'Run query' });
+
+      const toggle = screen.getByRole('button', { name: 'Hide query editor' });
+      act(() => toggle.focus());
+      await user.keyboard('{Enter}');
+      expect(run).toBeInTheDocument();
+      expect(run).not.toBeVisible();
+      await user.keyboard('{Enter}');
+      expect(screen.getByRole('button', { name: 'Run query' })).toBe(run);
+      expect(run).toBeVisible();
+    });
+
+    it('keeps the time-range control available when the query editor is hidden', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+      render(<NotebookCellRenderer cell={cell} isEditing={true} autoFocus={true} />);
+
+      expect(await screen.findByRole('button', { name: 'Update time range' })).toBeInTheDocument();
+      act(() => cell.onTimeRangeChange({ from: 'now-24h', to: 'now' }));
+      expect(await screen.findByRole('button', { name: 'Locked: Last 24 hours' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Update time range' })).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Hide query editor' }));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Locked: Last 24 hours' }));
+      expect(await screen.findByRole('textbox', { name: 'From' })).toHaveValue('now-24h');
+    });
+
+    it('replaces the clock with a locked range above the panel and restores it on removal', async () => {
+      const panel = new VizPanel({
+        key: 'panel-1',
+        title: 'Latency',
+        pluginId: 'timeseries',
+        $data: new SceneQueryRunner({ queries: [] }),
+      });
+      const cell = buildPanelCellInLayout(panel);
+      const { user } = render(<NotebookCellRenderer cell={cell} isEditing={true} />);
+      const clock = await screen.findByRole('button', { name: 'Update time range' });
+      act(() => clock.focus());
+      await user.keyboard('{Enter}');
+      await user.click(screen.getByRole('checkbox', { name: 'Last 24 hours' }));
+
+      const badge = await screen.findByRole('button', { name: 'Locked: Last 24 hours' });
+      const title = screen.getByRole('heading', { name: 'Latency' });
+      expect(badge.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Update time range' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+      await user.click(badge);
+      const picker = await screen.findByRole('dialog', { name: 'Panel time range' });
+      expect(within(picker).getByRole('textbox', { name: 'From' })).toHaveValue('now-24h');
+      await user.click(within(picker).getByRole('button', { name: 'Remove time lock' }));
+      expect(await screen.findByRole('button', { name: 'Update time range' })).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Locked: Last 24 hours' })).not.toBeInTheDocument();
+      expect(panel.state.subHeader).toBeUndefined();
+      expect(cell.state.$timeRange).toBeUndefined();
+    });
 
     it('mounts for a library panel while editing, even though it has no query editor', async () => {
       const panel = new VizPanel({
@@ -269,8 +398,8 @@ describe('NotebookCellRenderer', () => {
       expect(screen.queryByRole('button', { name: /time range/i })).not.toBeInTheDocument();
     });
 
-    it('shows the "Locked: ..." trigger in view mode once the cell has its own time range', async () => {
-      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries' });
+    it('shows a read-only locked range in view mode without edit or remove actions', async () => {
+      const panel = new VizPanel({ key: 'panel-1', pluginId: 'timeseries', hoverHeader: true });
       const cell = new NotebookCellItem({
         elementName: 'panel-1',
         source: 'user',
@@ -287,7 +416,8 @@ describe('NotebookCellRenderer', () => {
 
       render(<NotebookCellRenderer cell={cell} isEditing={false} />);
 
-      expect(await screen.findByRole('button', { name: /locked/i })).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText('Locked: Last 24 hours')).toBeInTheDocument());
+      expect(screen.queryByRole('button', { name: /locked|time range|remove time lock/i })).not.toBeInTheDocument();
     });
 
     it('resolves a cell time range set while mounted, instead of leaving it at its placeholder default', async () => {

@@ -1,10 +1,18 @@
 import { css, cx } from '@emotion/css';
-import { type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type ReactNode, type RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import { CoreApp, type GrafanaTheme2, type PanelPluginVisualizationSuggestion } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { getDataSourceInstance } from '@grafana/runtime';
-import { sceneGraph, SceneReactObject, type SceneObject, type SceneQueryRunner, type VizPanel } from '@grafana/scenes';
+import {
+  isSceneObject,
+  sceneGraph,
+  SceneReactObject,
+  type SceneObject,
+  type SceneQueryRunner,
+  type VizPanel,
+} from '@grafana/scenes';
 import { type DataQuery } from '@grafana/schema';
 import { Button, IconButton, Input, LinkButton, Spinner, Stack, Text, Toggletip, useStyles2 } from '@grafana/ui';
 import { getUpdatedHoverHeader } from 'app/features/dashboard-scene/scene/panel-timerange/utils';
@@ -25,6 +33,8 @@ interface Props {
   autoSuggest?: RefObject<boolean>;
   onToggleQueryEditor?: () => void;
   queryEditorOpen?: boolean;
+  queryEditorId?: string;
+  timeRangeControl?: ReactNode;
   onDuplicate?: () => void;
   onDelete?: () => void;
 }
@@ -37,6 +47,8 @@ export function NotebookPanelActions({
   autoSuggest,
   onToggleQueryEditor,
   queryEditorOpen,
+  queryEditorId,
+  timeRangeControl,
   onDuplicate,
   onDelete,
 }: Props) {
@@ -45,8 +57,24 @@ export function NotebookPanelActions({
   const [renaming, setRenaming] = useState(false);
   const [draft, setDraft] = useState(title);
   const [originalTitle, setOriginalTitle] = useState(title);
+  const [headerTarget, setHeaderTarget] = useState<HTMLDivElement | null>(null);
   const renameFinished = useRef(false);
   const canEditPanel = isEditing && !isLibraryPanel(panel);
+  useEffect(() => {
+    const previous = panel.state.headerActions;
+    const previousItems = Array.isArray(previous)
+      ? previous
+      : previous
+        ? [isSceneObject(previous) ? previous : new SceneReactObject({ reactNode: previous })]
+        : [];
+    const headerActions = [...previousItems, new SceneReactObject({ reactNode: <div ref={setHeaderTarget} /> })];
+    panel.setState({ headerActions });
+    return () => {
+      if (panel.state.headerActions === headerActions) {
+        panel.setState({ headerActions: previous });
+      }
+    };
+  }, [panel]);
   const startRename = useCallback(() => {
     renameFinished.current = false;
     setOriginalTitle(panel.state.title);
@@ -105,6 +133,62 @@ export function NotebookPanelActions({
     setRenaming(false);
   };
 
+  const toolbar = (
+    <div
+      className={cx(
+        styles.toolbar,
+        !headerTarget && (isEditing ? styles.toolbarEditing : styles.toolbarViewing),
+        headerTarget && styles.headerToolbar,
+        NOTEBOOK_CELL_CONTROLS_CLASS
+      )}
+      data-notebook-panel-actions
+    >
+      <Stack direction="row" gap={0.5} alignItems="center">
+        {timeRangeControl}
+        {canEditPanel && onToggleQueryEditor && (
+          <IconButton
+            name="database"
+            size="sm"
+            tooltip={
+              queryEditorOpen
+                ? t('notebooks.panel.hide-query', 'Hide query editor')
+                : t('notebooks.panel.edit-query', 'Edit query')
+            }
+            aria-pressed={queryEditorOpen}
+            aria-expanded={queryEditorOpen}
+            aria-controls={queryEditorId}
+            onClick={onToggleQueryEditor}
+          />
+        )}
+        {canEditPanel && (
+          <VizSuggestionsButton
+            cell={cell}
+            panel={panel}
+            lastSuggestedQuery={lastSuggestedQuery}
+            autoSuggest={autoSuggest}
+          />
+        )}
+        <PanelExploreLink panel={panel} />
+        {isEditing && onDuplicate && onDelete && (
+          <>
+            <IconButton
+              name="copy"
+              size="sm"
+              tooltip={t('notebook.cell.duplicate', 'Duplicate block')}
+              onClick={onDuplicate}
+            />
+            <IconButton
+              name="trash-alt"
+              size="sm"
+              tooltip={t('notebook.cell.delete', 'Delete block')}
+              onClick={onDelete}
+            />
+          </>
+        )}
+      </Stack>
+    </div>
+  );
+
   return (
     <>
       {canEditPanel && renaming && (
@@ -137,55 +221,7 @@ export function NotebookPanelActions({
           />
         </div>
       )}
-      <div
-        className={cx(
-          styles.toolbar,
-          isEditing ? styles.toolbarEditing : styles.toolbarViewing,
-          NOTEBOOK_CELL_CONTROLS_CLASS
-        )}
-        data-notebook-panel-actions
-      >
-        <Stack direction="row" gap={0.5} alignItems="center">
-          {canEditPanel && onToggleQueryEditor && (
-            <IconButton
-              name="database"
-              size="sm"
-              tooltip={
-                queryEditorOpen
-                  ? t('notebooks.panel.hide-query', 'Hide query editor')
-                  : t('notebooks.panel.edit-query', 'Edit query')
-              }
-              aria-pressed={queryEditorOpen}
-              onClick={onToggleQueryEditor}
-            />
-          )}
-          {canEditPanel && (
-            <VizSuggestionsButton
-              cell={cell}
-              panel={panel}
-              lastSuggestedQuery={lastSuggestedQuery}
-              autoSuggest={autoSuggest}
-            />
-          )}
-          <PanelExploreLink panel={panel} />
-          {isEditing && onDuplicate && onDelete && (
-            <>
-              <IconButton
-                name="copy"
-                size="sm"
-                tooltip={t('notebook.cell.duplicate', 'Duplicate block')}
-                onClick={onDuplicate}
-              />
-              <IconButton
-                name="trash-alt"
-                size="sm"
-                tooltip={t('notebook.cell.delete', 'Delete block')}
-                onClick={onDelete}
-              />
-            </>
-          )}
-        </Stack>
-      </div>
+      {headerTarget ? createPortal(toolbar, headerTarget) : toolbar}
     </>
   );
 }
@@ -426,6 +462,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
     padding: theme.spacing(0.25, 0.5),
     paddingLeft: theme.spacing(1),
     boxShadow: theme.shadows.z1,
+  }),
+  headerToolbar: css({
+    position: 'static',
   }),
   toolbarViewing: css({
     top: theme.spacing(0.5),
