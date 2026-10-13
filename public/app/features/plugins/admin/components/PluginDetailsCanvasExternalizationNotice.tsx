@@ -27,10 +27,10 @@ export function PluginDetailsCanvasExternalizationNotice({ className, plugin }: 
       className={className}
     >
       <Trans i18nKey="plugins.plugin-details-canvas-externalization-notice.body">
-        Starting with Grafana 14.0, the Canvas panel will no longer be bundled with Grafana as a core plugin. It will be
-        available as a separate plugin from the plugin catalog. Existing dashboards will keep working.{' '}
+        Starting with Grafana 14.0, the canvas visualization will no longer be a core plugin. It will ship as a
+        standalone plugin that updates separately from Grafana. Existing dashboards will keep working.{' '}
         <TextLink href={CANVAS_PLUGIN_UPDATES_DOCS_URL} external>
-          Learn how to try the standalone plugin
+          Learn more
         </TextLink>
       </Trans>
     </Alert>
