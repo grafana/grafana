@@ -38,9 +38,11 @@ export class RowItems implements EditableDashboardElement {
       { actionId: 'row.remove', scope: 'multiple' }
     );
 
-    this._rows.forEach((row) => row.onDelete());
-
-    endBatch(this._dashboard);
+    try {
+      this._rows.forEach((row) => row.onDelete());
+    } finally {
+      endBatch(this._dashboard);
+    }
   }
 
   public onHeaderHiddenToggle(value: boolean, indeterminate: boolean) {

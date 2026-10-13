@@ -117,6 +117,33 @@ func TestParseAggregateTargets_EnvOverrides(t *testing.T) {
 	require.Equal(t, []aggregateTargetConfig{{Name: "custom", URL: "https://env.invalid", Audience: "env-audience", PollInterval: 2 * time.Minute, InsecureSkipVerify: true}}, targets)
 }
 
+func TestParseAggregateTargets_Auth(t *testing.T) {
+	cfg := setting.NewCfg()
+	addAggregateSection(t, cfg, "open", map[string]string{"url": "https://open.invalid", "discovery_auth": "none"})
+	addAggregateSection(t, cfg, "signed", map[string]string{"url": "https://signed.invalid", "discovery_auth": "cap_token", "audience": "signed"})
+	targets, err := parseAggregateTargets(cfg)
+	require.NoError(t, err)
+	require.Equal(t, []aggregateTargetConfig{
+		{Name: "open", URL: "https://open.invalid", DiscoveryAuth: discoveryAuthNone, PollInterval: defaultAggregatePollInterval},
+		{Name: "signed", URL: "https://signed.invalid", Audience: "signed", DiscoveryAuth: discoveryAuthCAPToken, PollInterval: defaultAggregatePollInterval},
+	}, targets)
+}
+
+func TestParseAggregateTargets_InvalidAuth(t *testing.T) {
+	for name, values := range map[string]map[string]string{
+		"unknown value":      {"url": "https://example.invalid", "discovery_auth": "basic"},
+		"none with audience": {"url": "https://example.invalid", "discovery_auth": "none", "audience": "x"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			cfg := setting.NewCfg()
+			addAggregateSection(t, cfg, "custom", values)
+			_, err := parseAggregateTargets(cfg)
+			require.ErrorContains(t, err, "router.aggregate.custom: ")
+			require.ErrorContains(t, err, "discovery_auth")
+		})
+	}
+}
+
 func TestParseAggregateTargets_InvalidPollInterval(t *testing.T) {
 	for _, value := range []string{"invalid", "0s", "-1m"} {
 		t.Run(value, func(t *testing.T) {
