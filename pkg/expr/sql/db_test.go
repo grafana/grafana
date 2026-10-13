@@ -612,8 +612,8 @@ func TestQueryFrames_NullFromNonNullableColumn(t *testing.T) {
 		},
 		{
 			name:     "JSON_UNQUOTE of a missing key in the first row",
-			query:    `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A ORDER BY line DESC`,
-			expected: data.NewField("level", nil, []*string{&errLevel, nil, &info}),
+			query:    `SELECT JSON_UNQUOTE(JSON_EXTRACT(labels, '$.level')) AS level FROM A WHERE line != 'a' ORDER BY line`,
+			expected: data.NewField("level", nil, []*string{nil, &errLevel}),
 		},
 		{
 			name:     "JSON_LENGTH of an empty array",
