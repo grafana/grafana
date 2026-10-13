@@ -63,6 +63,7 @@ func TestPublicSnapshotDashboardRemoteClient(t *testing.T) {
 			// covered by TestPublicSnapshotMetadataWithStandaloneRemoteClient.
 			getter := grafanarest.NewMockStorage(t)
 			getter.On("Get", mock.Anything, snap.Name, mock.Anything).Return(snap, nil)
+			getter.On("List", mock.Anything, mock.Anything).Return(&dashv0.SnapshotList{Items: []dashv0.Snapshot{*snap}}, nil)
 			r, err := NewDashboardREST(getter, client)
 			require.NoError(t, err)
 			ctx := k8srequest.WithNamespace(t.Context(), "default")

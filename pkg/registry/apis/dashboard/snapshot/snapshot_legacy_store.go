@@ -2,13 +2,16 @@ package snapshot
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 
 	"github.com/open-feature/go-sdk/openfeature"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	dashV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
@@ -128,6 +131,28 @@ func (s *SnapshotLegacyStore) List(ctx context.Context, options *internalversion
 			return &dashV0.SnapshotList{
 				Items: []dashV0.Snapshot{*convertSnapshotToK8sResource(snap, s.Namespacer)},
 			}, nil
+		}
+	}
+
+	if options.FieldSelector != nil {
+		if name, found := options.FieldSelector.RequiresExactMatch("metadata.name"); found {
+			snap, err := s.Service.GetDashboardSnapshot(ctx, &dashboardsnapshots.GetDashboardSnapshotQuery{Key: name})
+			if errors.Is(err, dashboardsnapshots.ErrBaseNotFound) || apierrors.IsNotFound(err) {
+				return &dashV0.SnapshotList{}, nil
+			}
+			if err != nil {
+				return nil, err
+			}
+			if snap == nil {
+				return &dashV0.SnapshotList{}, nil
+			}
+			item := convertSnapshotToK8sResource(snap, s.Namespacer)
+			// Public key resolution lists across namespaces; ordinary LIST stays org-scoped.
+			namespace := k8srequest.NamespaceValue(ctx)
+			if (namespace != "" && item.Namespace != namespace) || !options.FieldSelector.Matches(SnapshotToSelectableFields(item)) {
+				return &dashV0.SnapshotList{}, nil
+			}
+			return &dashV0.SnapshotList{Items: []dashV0.Snapshot{*item}}, nil
 		}
 	}
 

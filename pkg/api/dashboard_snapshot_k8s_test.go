@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"testing"
 	"time"
 
@@ -159,6 +160,30 @@ func TestDeleteSnapshotFromAPI(t *testing.T) {
 			require.Contains(t, string(result.Body()), "Snapshot deleted")
 		})
 	}
+}
+
+func TestSearchSnapshotsFromAPIFiltersBeforeLegacyLimit(t *testing.T) {
+	hs, c := snapshotAPIContext(t, "/api/dashboard/snapshots?query=matching%25&limit=1")
+	items := []map[string]any{
+		{"metadata": map[string]any{"name": "unrelated-1"}, "spec": map[string]any{"title": "other"}},
+		{"metadata": map[string]any{"name": "unrelated-2"}, "spec": map[string]any{"title": "other"}},
+		{"metadata": map[string]any{"name": "matching-key"}, "spec": map[string]any{"title": "matching dashboard"}},
+	}
+	hs.clientConfigProvider = &mockDirectRestConfigProvider{host: "http://localhost", transport: snapshotAPIRoundTripper(func(r *http.Request) (*http.Response, error) {
+		limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+		require.NoError(t, err)
+		require.Greater(t, limit, 0)
+		limit = min(limit, len(items))
+		body, err := json.Marshal(map[string]any{"items": items[:limit]})
+		require.NoError(t, err)
+		return snapshotAPIResponse(r, 200, string(body)), nil
+	})}
+	result := hs.SearchDashboardSnapshots(c)
+	require.Equal(t, http.StatusOK, result.Status(), string(result.Body()))
+	var list []dashboardsnapshots.DashboardSnapshotDTO
+	require.NoError(t, json.Unmarshal(result.Body(), &list))
+	require.Len(t, list, 1)
+	require.Equal(t, "matching-key", list[0].Key)
 }
 
 func TestSearchSnapshotsFromAPIPaginatesFilteredResults(t *testing.T) {

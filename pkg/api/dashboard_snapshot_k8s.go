@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
 	"strings"
@@ -129,8 +130,9 @@ func (hs *HTTPServer) searchSnapshotsFromAPI(c *contextmodel.ReqContext, query s
 	}
 	result := make(dashboardsnapshots.DashboardSnapshotsList, 0)
 	continuation := ""
+	pageLimit := limit
 	for {
-		value, err := snapshotRequest(client, http.MethodGet, namespace).Param("limit", fmt.Sprint(limit-len(result))).Param("continue", continuation).Do(ctx).Raw()
+		value, err := snapshotRequest(client, http.MethodGet, namespace).Param("limit", fmt.Sprint(pageLimit)).Param("continue", continuation).Do(ctx).Raw()
 		if err != nil {
 			return nil, err
 		}
@@ -148,12 +150,23 @@ func (hs *HTTPServer) searchSnapshotsFromAPI(c *contextmodel.ReqContext, query s
 			}
 		}
 		if list.Continue == "" {
+			// Legacy LIST truncates without a continuation token and cannot filter by title.
+			// Grow the fetched prefix until filtering fills the limit or exhausts the rows.
+			if query != "" && continuation == "" && len(list.Items) >= pageLimit {
+				if pageLimit > math.MaxInt/2 {
+					return nil, fmt.Errorf("snapshot search limit is too large")
+				}
+				pageLimit *= 2
+				result = result[:0]
+				continue
+			}
 			return result, nil
 		}
 		if list.Continue == continuation {
 			return nil, fmt.Errorf("snapshot pagination did not advance")
 		}
 		continuation = list.Continue
+		pageLimit = limit - len(result)
 	}
 }
 
