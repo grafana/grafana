@@ -55,13 +55,17 @@ type HTTPContext struct {
 	UserToken *usertoken.UserToken
 }
 
-// RouteAccessChecker checks a plugin route action for the requested datasource.
-type RouteAccessChecker func(context.Context, identity.Requester, string, string) (bool, error)
+// RouteAccessChecker checks access to a plugin route for the requested datasource.
+type RouteAccessChecker func(context.Context, identity.Requester, string, *plugins.Route) (bool, error)
 
 type DataSourceProxyOption func(*DataSourceProxy)
 
 func WithRouteAccessChecker(check RouteAccessChecker) DataSourceProxyOption {
-	return func(p *DataSourceProxy) { p.routeAccessChecker = check }
+	return func(p *DataSourceProxy) {
+		if check != nil {
+			p.routeAccessChecker = check
+		}
+	}
 }
 
 // WithDestinationValidator checks the resolved URL after route interpolation and before forwarding.
@@ -119,19 +123,20 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 	}
 
 	p := &DataSourceProxy{
-		ds:                ds,
-		requester:         requester,
-		dataSource:        dataSource,
-		pluginRoutes:      pluginRoutes,
-		ctx:               ctx,
-		proxyPath:         proxyPath,
-		targetUrl:         targetURL,
-		settings:          settings,
-		clientProvider:    clientProvider,
-		oAuthTokenService: oAuthTokenService,
-		tracer:            tracer,
-		features:          features,
-		idTokenDeriver:    idTokenDeriver,
+		ds:                 ds,
+		requester:          requester,
+		dataSource:         dataSource,
+		pluginRoutes:       pluginRoutes,
+		ctx:                ctx,
+		proxyPath:          proxyPath,
+		targetUrl:          targetURL,
+		settings:           settings,
+		clientProvider:     clientProvider,
+		oAuthTokenService:  oAuthTokenService,
+		tracer:             tracer,
+		features:           features,
+		idTokenDeriver:     idTokenDeriver,
+		routeAccessChecker: CheckLocalRouteAccess,
 	}
 	for _, opt := range opts {
 		opt(p)
@@ -448,31 +453,31 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	return nil
 }
 
-func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
-	ctxLogger := logger.FromContext(proxy.ctx.Req.Context())
+// CheckLocalRouteAccess evaluates plugin route requirements against local user permissions.
+func CheckLocalRouteAccess(_ context.Context, requester identity.Requester, uid string, route *plugins.Route) (bool, error) {
+	// An action takes precedence over a legacy role requirement.
 	if route.ReqAction != "" {
-		if proxy.routeAccessChecker != nil {
-			allowed, err := proxy.routeAccessChecker(proxy.ctx.Req.Context(), proxy.requester, proxy.ds.Name, route.ReqAction)
-			if err != nil {
-				ctxLogger.Error("Failed to authorize datasource proxy route", "action", route.ReqAction, "error", err)
-				return false
-			}
-			return allowed
-		}
-		routeEval := pluginac.GetDataSourceRouteEvaluator(proxy.ds.Name, route.ReqAction)
-		hasAccess := routeEval.Evaluate(proxy.requester.GetPermissions())
-		if !hasAccess {
-			ctxLogger.Debug("plugin route is covered by RBAC, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "path", route.Path, "method", route.Method)
-		}
-		return hasAccess
+		evaluator := pluginac.GetDataSourceRouteEvaluator(uid, route.ReqAction)
+		return evaluator.Evaluate(requester.GetPermissions()), nil
 	}
 	if route.ReqRole.IsValid() {
-		if hasUserRole := proxy.requester.GetOrgRole().Includes(route.ReqRole); !hasUserRole {
-			ctxLogger.Debug("plugin route is covered by org role, user doesn't have access", "route", proxy.ctx.Req.URL.Path, "role", route.ReqRole, "path", route.Path, "method", route.Method)
-			return false
-		}
+		return requester.GetOrgRole().Includes(route.ReqRole), nil
 	}
-	return true
+	return true, nil
+}
+
+func (proxy *DataSourceProxy) hasAccessToRoute(route *plugins.Route) bool {
+	ctx := proxy.ctx.Req.Context()
+	ctxLogger := logger.FromContext(ctx)
+	allowed, err := proxy.routeAccessChecker(ctx, proxy.requester, proxy.ds.Name, route)
+	if err != nil {
+		ctxLogger.Error("Failed to authorize datasource proxy route", "action", route.ReqAction, "error", err)
+		return false
+	}
+	if !allowed {
+		ctxLogger.Debug("user doesn't have access to plugin route", "route", proxy.ctx.Req.URL.Path, "action", route.ReqAction, "role", route.ReqRole, "path", route.Path, "method", route.Method)
+	}
+	return allowed
 }
 
 func (proxy *DataSourceProxy) logRequest() {
