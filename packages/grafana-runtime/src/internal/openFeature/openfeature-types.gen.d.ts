@@ -69,6 +69,7 @@ declare module "@openfeature/core" {
     | "dashboardValidatorApp"
     | "dashboardTemplates"
     | "grafana.customDashboardTemplates"
+    | "grafana.smtpSettingsPage"
     | "dashboardTemplatesAssistantButton"
     | "suggestedDashboardsAssistantButton"
     | "alertingListViewV2"

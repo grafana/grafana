@@ -1071,6 +1071,14 @@ var (
 			Expression:  "false",
 		},
 		{
+			Name:        "grafana.smtpSettingsPage",
+			Description: "Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service",
+			Stage:       FeatureStagePrivatePreview,
+			Owner:       grafanaBackendServicesSquad,
+			Generate:    Generate{Go: true, React: true},
+			Expression:  "false",
+		},
+		{
 			Name:        "dashboardTemplatesAssistantButton",
 			Description: "Enables the Assistant button in the dashboard templates card",
 			Stage:       FeatureStageExperimental,
