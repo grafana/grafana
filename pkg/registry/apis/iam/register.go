@@ -722,10 +722,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 		return err
 	}
 
-	authInfoStore := rest.Storage(authInfoUniStore)
+	guardedUniStore := authinfo.NewGuardedStore(authInfoUniStore)
+	authInfoStore := rest.Storage(guardedUniStore)
 
 	if b.authInfoLegacyStore != nil {
-		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, authInfoUniStore)
+		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, guardedUniStore)
 		if err != nil {
 			return err
 		}
