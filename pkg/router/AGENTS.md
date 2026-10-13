@@ -153,8 +153,11 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   `st_discovery_url`, served from the snapshot without a request. Group and version discovery
   (`/apis/<g>[/<v>]`, `/openapi/v3/apis/<g>/<v>`) follow the same rule.
 - **Caller-scoped backends** (`CallerScopedDiscovery`, such as ST groups) are only defaults: when
-  the discovery source answers for a request, their groups are left out and the source's view is
-  used. Their aggregated discovery and OpenAPI documents are never cached across callers.
+  the ST fallback answers root discovery for a request, their groups are left out and its view is
+  used. In middleware mode `next` never serves them, so they are kept. Their aggregated discovery
+  and OpenAPI documents are never cached across callers.
+  - Root discovery through the fallback is bounded by `discoveryFetchTimeout`, and is sent with
+    `Cache-Control: private`.
 - **Aggregated discovery** is built without a request per backend per call:
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.

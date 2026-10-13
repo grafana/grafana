@@ -264,6 +264,9 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 		res := httptest.NewRecorder()
 		router.HandleFunc(res, req, http.NotFoundHandler())
 		require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+		if isRootDiscoveryPath(path) {
+			require.Equal(t, "private", res.Header().Get("Cache-Control"))
+		}
 		return res
 	}
 	groupList := func(namespace string) []string {
@@ -325,4 +328,49 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 			require.Equal(t, []string{tc.host + path}, calls)
 		}
 	})
+}
+
+func TestCallerScopedGroupsStayAdvertisedWhenNextAnswers(t *testing.T) {
+	st := &fallbackBackend{
+		group: metav1.APIGroup{Name: "st.grafana.app", Versions: []metav1.GroupVersionForDiscovery{{GroupVersion: "st.grafana.app/v1", Version: "v1"}}},
+		discovery: &apidiscoveryv2.APIGroupDiscovery{
+			ObjectMeta: metav1.ObjectMeta{Name: "st.grafana.app"},
+			Versions:   []apidiscoveryv2.APIVersionDiscovery{{Version: "v1", Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent}},
+		},
+		key: "st:1",
+		st:  http.NotFoundHandler(),
+	}
+	router := NewGrafanaRouter(stubLoader{}, nil)
+	router.served[st.group.Name] = &handlerEntry{backend: st, handler: http.NotFoundHandler(), lastKey: st.key, breaker: newGroupBreaker(st.group.Name)}
+	router.publish(t.Context())
+
+	// In middleware mode next is the embedded server, which answers root
+	// discovery without the ST groups.
+	next := http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		var body any
+		switch {
+		case req.URL.Path == apisPrefix && strings.Contains(req.Header.Get("Accept"), "apidiscovery.k8s.io"):
+			w.Header().Set("Content-Type", aggregatedDiscoveryJSON)
+			body = apidiscoveryv2.APIGroupDiscoveryList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupDiscoveryList", APIVersion: "apidiscovery.k8s.io/v2"}}
+		case req.URL.Path == apisPrefix:
+			body = metav1.APIGroupList{TypeMeta: metav1.TypeMeta{Kind: "APIGroupList", APIVersion: "v1"}}
+		default:
+			body = handler3.OpenAPIV3Discovery{Paths: map[string]handler3.OpenAPIV3DiscoveryGroupVersion{}}
+		}
+		require.NoError(t, json.NewEncoder(w).Encode(body))
+	})
+	serve := func(path, accept string) string {
+		req := requestWithNamespace(http.MethodGet, path, "stacks-123")
+		if accept != "" {
+			req.Header.Set("Accept", accept)
+		}
+		res := httptest.NewRecorder()
+		router.HandleFunc(res, req, next)
+		require.Equal(t, http.StatusOK, res.Code, res.Body.String())
+		return res.Body.String()
+	}
+	require.Contains(t, serve(apisPrefix, "application/json"), "st.grafana.app")
+	require.Contains(t, serve(apisPrefix, aggregatedDiscoveryJSON), "st.grafana.app")
+	require.Contains(t, serve(openapiV3Prefix, ""), "apis/st.grafana.app/v1")
 }

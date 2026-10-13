@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -32,6 +33,7 @@ var discoveryCodecs = func() serializer.CodecFactory {
 
 func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	w.Header().Set("Vary", "Accept")
+	r.setRootDiscoveryCacheControl(w, next)
 	mediaType, _ := negotiation.NegotiateMediaTypeOptions(req.Header.Get("Accept"), discoveryCodecs.SupportedMediaTypes(), aggregated.DiscoveryEndpointRestrictions)
 	if aggregated.IsAggregatedDiscoveryGVK(mediaType.Convert) {
 		r.serveAggregatedDiscovery(w, req, next)
@@ -39,7 +41,8 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 	}
 
 	var fallback metav1.APIGroupList
-	if _, err := readDiscovery(req, r.discoverySource(next), apisPrefix, "application/json", &fallback); err != nil || fallback.Kind != "APIGroupList" {
+	scoped, err := r.readRootDiscovery(req, next, apisPrefix, "application/json", &fallback)
+	if err != nil || fallback.Kind != "APIGroupList" {
 		serveCachedDoc(w, req, r.apiGroupList.Load())
 		return
 	}
@@ -49,7 +52,7 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 	}
 	for name, entry := range *r.snapshot.Load() {
 		// The source answered for this caller, so it replaces the defaults.
-		if !entry.callerScoped {
+		if !entry.callerScoped || !scoped {
 			groups[name] = entry.group
 		}
 	}
@@ -64,9 +67,9 @@ func (r *GrafanaRouter) serveAPIGroupList(w http.ResponseWriter, req *http.Reque
 func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *http.Request, next http.Handler) {
 	groups := map[string]apidiscoveryv2.APIGroupDiscovery{}
 	var fallback apidiscoveryv2.APIGroupDiscoveryList
-	answered := false
-	if _, err := readDiscovery(req, r.discoverySource(next), apisPrefix, aggregatedDiscoveryJSON, &fallback); err == nil && fallback.Kind == "APIGroupDiscoveryList" {
-		answered = true
+	scoped := false
+	if callerScoped, err := r.readRootDiscovery(req, next, apisPrefix, aggregatedDiscoveryJSON, &fallback); err == nil && fallback.Kind == "APIGroupDiscoveryList" {
+		scoped = callerScoped
 		for _, group := range fallback.Items {
 			groups[group.Name] = group
 		}
@@ -83,7 +86,7 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 	fetches := make([]*fetch, 0, len(snapshot))
 	var wg sync.WaitGroup
 	for name, entry := range snapshot {
-		if entry.callerScoped && answered {
+		if entry.callerScoped && scoped {
 			continue
 		}
 		if entry.discovery != nil {
@@ -120,7 +123,32 @@ func (r *GrafanaRouter) serveAggregatedDiscovery(w http.ResponseWriter, req *htt
 			manager.SetGroupVersionPriority(metav1.GroupVersion{Group: group.Name, Version: version.Version}, 1000, len(group.Versions)-i)
 		}
 	}
+	if _, callerScoped := r.discoverySource(next); callerScoped {
+		w = &privateCacheWriter{ResponseWriter: w}
+	}
 	manager.ServeHTTP(w, req)
+}
+
+// privateCacheWriter replaces the Cache-Control: public that the aggregated
+// discovery handler always sets, for a response that depends on the caller.
+type privateCacheWriter struct {
+	http.ResponseWriter
+	wroteHeader bool
+}
+
+func (p *privateCacheWriter) WriteHeader(code int) {
+	if !p.wroteHeader {
+		p.wroteHeader = true
+		p.Header().Set("Cache-Control", "private")
+	}
+	p.ResponseWriter.WriteHeader(code)
+}
+
+func (p *privateCacheWriter) Write(b []byte) (int, error) {
+	if !p.wroteHeader {
+		p.WriteHeader(http.StatusOK)
+	}
+	return p.ResponseWriter.Write(b)
 }
 
 // backendDiscovery asks a backend for its group's aggregated discovery.
@@ -164,20 +192,22 @@ func backendDiscovery(req *http.Request, name string, entry servingEntry) (_ api
 }
 
 func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Request, next http.Handler) {
+	r.setRootDiscoveryCacheControl(w, next)
 	var fallback handler3.OpenAPIV3Discovery
-	if _, err := readDiscovery(req, r.discoverySource(next), openapiV3Prefix, "application/json", &fallback); err != nil || fallback.Paths == nil {
+	scoped, err := r.readRootDiscovery(req, next, openapiV3Prefix, "application/json", &fallback)
+	if err != nil || fallback.Paths == nil {
 		serveCachedDoc(w, req, r.openapiIndex.Load())
 		return
 	}
 	handlers := *r.snapshot.Load()
 	for path := range fallback.Paths {
 		group, _, ok := parseOpenAPIGroupVersionPath(openapiV3Prefix + "/" + path)
-		if entry, owned := handlers[group]; ok && owned && !entry.callerScoped {
+		if entry, owned := handlers[group]; ok && owned && (!entry.callerScoped || !scoped) {
 			delete(fallback.Paths, path)
 		}
 	}
 	for _, entry := range handlers {
-		if entry.callerScoped {
+		if entry.callerScoped && scoped {
 			continue
 		}
 		for _, gv := range entry.group.Versions {
@@ -188,6 +218,30 @@ func (r *GrafanaRouter) serveOpenAPIIndex(w http.ResponseWriter, req *http.Reque
 		}
 	}
 	serveDiscoveryJSON(w, req, fallback)
+}
+
+// setRootDiscoveryCacheControl keeps root discovery out of shared caches when
+// it depends on the caller: credentials may arrive in X-Access-Token, which a
+// cache keyed on Authorization would not tell apart.
+func (r *GrafanaRouter) setRootDiscoveryCacheControl(w http.ResponseWriter, next http.Handler) {
+	if _, scoped := r.discoverySource(next); scoped {
+		w.Header().Set("Cache-Control", "private")
+	}
+}
+
+// readRootDiscovery reads root discovery from the source of unserved groups.
+// scoped reports whether the answer replaces the caller-scoped defaults.
+func (r *GrafanaRouter) readRootDiscovery(req *http.Request, next http.Handler, path, accept string, into any) (scoped bool, err error) {
+	source, scoped := r.discoverySource(next)
+	if scoped {
+		// The fallback forwards to the caller's stack, and a slow stack must
+		// not hold discovery open when the defaults are available.
+		ctx, cancel := context.WithTimeout(req.Context(), discoveryFetchTimeout)
+		defer cancel()
+		req = req.WithContext(ctx)
+	}
+	_, err = readDiscovery(req, source, path, accept, into)
+	return scoped, err
 }
 
 func readDiscovery(req *http.Request, handler http.Handler, path, accept string, into any) (int, error) {

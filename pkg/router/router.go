@@ -286,11 +286,14 @@ func (r *GrafanaRouter) serveUnregisteredGroup(w http.ResponseWriter, req *http.
 
 // discoverySource is where root discovery reads the groups the router does
 // not serve: the unregistered-group handler when one is set, otherwise next.
-func (r *GrafanaRouter) discoverySource(next http.Handler) http.Handler {
+// callerScoped reports whether the source answers for the caller, so its
+// answer replaces the defaults of caller-scoped backends. next never serves
+// those groups, so its answer must not hide them.
+func (r *GrafanaRouter) discoverySource(next http.Handler) (source http.Handler, callerScoped bool) {
 	if r.unregisteredGroupHandler != nil {
-		return r.unregisteredGroupHandler
+		return r.unregisteredGroupHandler, true
 	}
-	return next
+	return next, false
 }
 
 // groupFromPath returns the group segment of an /apis/<group>[/...] path.

@@ -33,10 +33,10 @@ type DiscoveryProvider interface {
 
 // CallerScopedDiscovery is an optional Backend interface for a backend whose
 // discovery depends on the caller. What the router advertises for it is only
-// a default: when the source of unserved groups (the unregistered-group
-// handler, or next) answers root discovery for a request, that answer
-// replaces the default. Its discovery and OpenAPI documents are never cached
-// across callers.
+// a default: when the unregistered-group handler answers root discovery for a
+// request, that answer replaces the default. next never serves these groups,
+// so its answer is merged with them instead. Its discovery and OpenAPI
+// documents are never cached across callers.
 type CallerScopedDiscovery interface {
 	CallerScopedDiscovery()
 }
