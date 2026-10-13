@@ -36,6 +36,7 @@ import { type DashboardLayoutManager } from '../scene/types/DashboardLayoutManag
 import { toControlSourceRef } from '../utils/predefinedVariables';
 import { activateFullSceneTree, createDeferred } from '../utils/test-utils';
 
+import { MAX_UNDO_ACTIONS } from './DashboardSidebar';
 import { DashboardStateChangedEvent } from './events';
 import { DashboardOutline } from './outline/DashboardOutline';
 import { type DashboardSidebarLike } from './types';
@@ -550,6 +551,114 @@ describe('DashboardSidebar', () => {
         'grafana_dashboard_redo',
         expect.objectContaining({ redoDepth: 2 })
       );
+    });
+  });
+
+  describe('undo stack limit', () => {
+    function pushActions(scene: DashboardScene, count: number, calls: string[] = [], prefix = 'action') {
+      for (let i = 0; i < count; i++) {
+        edit({
+          meta: { actionId: 'test.acttion' },
+          source: scene,
+          description: `${prefix} ${i}`,
+          perform: () => calls.push(`perform-${prefix}-${i}`),
+          undo: () => calls.push(`undo-${prefix}-${i}`),
+        });
+      }
+    }
+
+    function pushBatch(scene: DashboardScene, description: string, count: number, calls: string[] = []) {
+      startBatch(scene, description, { actionId: 'test.batch' });
+      pushActions(scene, count, calls, description);
+      endBatch(scene);
+    }
+
+    it(`keeps only the newest ${MAX_UNDO_ACTIONS} actions, dropping the oldest`, () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const calls: string[] = [];
+
+      pushActions(scene, MAX_UNDO_ACTIONS + 5, calls);
+
+      expect(sidebar.state.undoStack).toHaveLength(MAX_UNDO_ACTIONS);
+      expect(sidebar.state.undoStack[0].description).toBe('action 5');
+      expect(sidebar.state.undoStack.at(-1)?.description).toBe(`action ${MAX_UNDO_ACTIONS + 4}`);
+
+      calls.length = 0;
+      for (let i = 0; i < MAX_UNDO_ACTIONS + 5; i++) {
+        sidebar.undoAction();
+      }
+
+      // Undo stops at the oldest retained entry; the dropped ones are never undone.
+      expect(calls).toHaveLength(MAX_UNDO_ACTIONS);
+      expect(calls[0]).toBe(`undo-action-${MAX_UNDO_ACTIONS + 4}`);
+      expect(calls.at(-1)).toBe('undo-action-5');
+      expect(sidebar.state.redoStack).toHaveLength(MAX_UNDO_ACTIONS);
+    });
+
+    it('does not drop entries when undoing and redoing at the limit', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      pushActions(scene, MAX_UNDO_ACTIONS - 3);
+      pushBatch(scene, 'batch', 3);
+      sidebar.undoAction();
+      sidebar.undoAction();
+      sidebar.redoAction();
+      sidebar.redoAction();
+
+      expect(sidebar.state.undoStack).toHaveLength(MAX_UNDO_ACTIONS - 2);
+      expect(sidebar.state.undoStack[0].description).toBe('action 0');
+      expect(sidebar.state.undoStack.at(-1)?.description).toBe('batch');
+      expect(sidebar.state.redoStack).toHaveLength(0);
+    });
+
+    it('counts every action in a batch against the limit', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+
+      pushActions(scene, MAX_UNDO_ACTIONS - 1);
+      pushBatch(scene, 'batch', 3);
+
+      // 99 single actions + a batch of 3 is 2 over the limit, so the 2 oldest actions go
+      expect(sidebar.state.undoStack).toHaveLength(MAX_UNDO_ACTIONS - 2);
+      expect(sidebar.state.undoStack[0].description).toBe('action 2');
+      expect(sidebar.state.undoStack.at(-1)?.description).toBe('batch');
+    });
+
+    it('drops a batch as a whole, never just some of its actions', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const calls: string[] = [];
+
+      pushBatch(scene, 'batch', 3, calls);
+      pushActions(scene, MAX_UNDO_ACTIONS - 2, calls);
+
+      // One action over the limit, but the oldest entry is a batch of 3, so all of it goes
+      expect(sidebar.state.undoStack).toHaveLength(MAX_UNDO_ACTIONS - 2);
+      expect(sidebar.state.undoStack[0].description).toBe('action 0');
+
+      calls.length = 0;
+      for (let i = 0; i < MAX_UNDO_ACTIONS; i++) {
+        sidebar.undoAction();
+      }
+      expect(calls.filter((call) => call.startsWith('undo-batch'))).toHaveLength(0);
+    });
+
+    it('keeps the newest entry even when it is a batch larger than the limit', () => {
+      const scene = buildTestScene();
+      const sidebar = scene.state.sidebar;
+      const calls: string[] = [];
+
+      pushActions(scene, 5);
+      pushBatch(scene, 'big batch', MAX_UNDO_ACTIONS + 10, calls);
+
+      expect(sidebar.state.undoStack).toHaveLength(1);
+      expect(sidebar.state.undoStack[0].description).toBe('big batch');
+
+      calls.length = 0;
+      sidebar.undoAction();
+      expect(calls).toHaveLength(MAX_UNDO_ACTIONS + 10);
     });
   });
 

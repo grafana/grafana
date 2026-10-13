@@ -50,6 +50,7 @@ import {
   STRIPED_ROW_CLASS,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import type { TextAlign } from './styles';
 import type {
   TableRow,
@@ -1364,6 +1365,7 @@ export interface ContentAwareColWidthsOptions {
   filter?: FilterType;
   isFiltered?: (field: Field) => boolean;
   hasColumnSidebar?: boolean;
+  reorderable?: boolean;
   /** The first column carries extra inline-start padding to line up with the panel title. */
   noPanelPadding?: boolean;
   /**
@@ -1472,23 +1474,8 @@ export function isFieldFilterable(field: Field): boolean {
 }
 
 /** @internal */
-export function isFieldReorderable(field: Field): boolean {
-  return field.config.custom?.reorderable ?? false;
-}
-
-/** @internal */
 export function isFieldHideable(field: Field): boolean {
   return field.config.custom?.hideable ?? false;
-}
-
-/** Whether any field can be managed by the column sidebar. @internal */
-export function canManageColumns(fields: Field[]): boolean {
-  return fields.some((field) => isFieldReorderable(field) || isFieldHideable(field));
-}
-
-/** Whether the column menu has an action to show. @internal */
-export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): boolean {
-  return isFieldFilterable(field) || isFieldHideable(field) || hasColumnSidebar;
 }
 
 /**
@@ -1504,12 +1491,12 @@ export function isColumnMenuVisible(field: Field, hasColumnSidebar: boolean): bo
  * that shifts every other column's share of the leftover space).
  */
 export interface HeaderAffordanceOptions {
-  hasAssistantAction?: boolean;
+  hasColumnOptions?: boolean;
   showTypeIcons: boolean;
   tableRefreshEnabled: boolean;
   /** Whether a filter is currently active on this column — only the refreshed header marks that. */
   isFiltered: boolean;
-  hasColumnSidebar?: boolean;
+  reorderable?: boolean;
 }
 
 /**
@@ -1525,8 +1512,8 @@ export function getHeaderAffordanceWidth(
     showTypeIcons,
     tableRefreshEnabled,
     isFiltered,
-    hasColumnSidebar = false,
-    hasAssistantAction,
+    hasColumnOptions = false,
+    reorderable = false,
   }: HeaderAffordanceOptions
 ): number {
   const isFilterable = isFieldFilterable(field);
@@ -1538,9 +1525,9 @@ export function getHeaderAffordanceWidth(
   // `headerTooltip` renders its info button in both header variants, and like the sort arrow above it
   // is there for as long as the option is set rather than only while some state holds.
   width += field.config.custom?.headerTooltip ? HEADER_TOOLTIP_SPACE : 0;
-  width += isFieldReorderable(field) ? HEADER_DRAG_HANDLE_SPACE : 0;
+  width += reorderable ? HEADER_DRAG_HANDLE_SPACE : 0;
   if (tableRefreshEnabled) {
-    width += isColumnMenuVisible(field, hasColumnSidebar) || hasAssistantAction ? HEADER_MENU_SPACE : 0;
+    width += hasColumnOptions ? HEADER_MENU_SPACE : 0;
     // an active filter additionally marks itself with a persistent icon. Unlike the arrow, that icon
     // only exists while the filter holds, so its space is reserved only then (the widths recompute
     // when the filter changes).
@@ -1848,6 +1835,7 @@ export function computeContentAwareColWidths(
     isFiltered,
     sampleSize,
     hasColumnSidebar = false,
+    reorderable = false,
     noPanelPadding = false,
     preventHorizontalOverflow = false,
   }: ContentAwareColWidthsOptions
@@ -1896,8 +1884,14 @@ export function computeContentAwareColWidths(
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: isFiltered?.(field) ?? filteredKeys.has(getDisplayName(field)),
-          hasColumnSidebar,
-          hasAssistantAction,
+          reorderable,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: isFieldFilterable(field),
+              hideable: isFieldHideable(field),
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         })
       : 0;
 

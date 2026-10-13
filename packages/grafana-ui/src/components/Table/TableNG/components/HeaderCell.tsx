@@ -18,15 +18,9 @@ import { Filter } from '../Filter/Filter';
 import { FilterPopup } from '../Filter/FilterPopup';
 import { useFilterPopupState } from '../Filter/useFilterPopupState';
 import { HEADER_DRAG_HANDLE_WIDTH, TABLE } from '../constants';
+import { getColumnMenuOptions } from '../menuOptions';
 import { type FilterType, type TableRow, type TableSummaryRow } from '../types';
-import {
-  getDisplayName,
-  isColumnMenuVisible,
-  isFieldFilterable,
-  isFieldHideable,
-  isFieldReorderable,
-  isSortableField,
-} from '../utils';
+import { getDisplayName, isFieldFilterable, isFieldHideable, isSortableField } from '../utils';
 
 import { HeaderCellMenu } from './HeaderCellMenu';
 
@@ -83,11 +77,16 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
   const displayName = getDisplayName(field);
   const filterable = isFieldFilterable(field);
   const hideable = isFieldHideable(field);
-  const reorderable = isFieldReorderable(field);
+  const reorderable = column.draggable ?? false;
   const hideHeader = field.config.custom?.hideHeader ?? false;
   const headerTooltip = field.config.custom?.headerTooltip;
 
-  const canOpenColumnPanel = Boolean(onOpenColumnPanel) && Boolean(hasColumnSidebar);
+  const columnOptions = getColumnMenuOptions({
+    filterable,
+    hideable: hideable && Boolean(onHideColumn),
+    hasColumnSidebar: Boolean(hasColumnSidebar && onOpenColumnPanel),
+    hasAssistantAction: Boolean(onAddToAssistant),
+  });
 
   // The menu item and active-filter icon share this popup.
   const filterIconRef = useRef<HTMLButtonElement>(null);
@@ -236,16 +235,16 @@ export const HeaderCell: React.FC<HeaderCellProps> = ({
           {label}
         </Stack>
 
-        {(isColumnMenuVisible(field, Boolean(hasColumnSidebar)) || onAddToAssistant) && (
+        {columnOptions.length > 0 && (
           <Stack direction="row" gap={0.5} alignItems="center" height={HEADER_LINE_BOX} shrink={0}>
             <HeaderCellMenu
               displayName={displayName}
-              filterable={filterable}
+              groups={columnOptions}
               hasActiveFilter={hasActiveFilter}
               onOpenFilter={openFilter}
               onHideColumn={hideable ? onHideColumn : undefined}
               canHideColumn={canHideColumn}
-              onOpenColumnPanel={canOpenColumnPanel ? onOpenColumnPanel : undefined}
+              onOpenColumnPanel={onOpenColumnPanel}
               onAddToAssistant={onAddToAssistant}
             />
           </Stack>

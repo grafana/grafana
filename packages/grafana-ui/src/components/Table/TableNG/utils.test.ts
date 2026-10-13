@@ -67,7 +67,6 @@ import {
   makeStripedRowClass,
   markEdgeColumns,
   filterFieldsByHiddenColumns,
-  isColumnMenuVisible,
   migrateTableDisplayModeToCellOptions,
   orderFieldsByDisplayNames,
   parseStyleJson,
@@ -79,6 +78,22 @@ import {
 } from './utils';
 
 describe('TableNG utils', () => {
+  it.each([true, false])('uses supplied menu availability for width (hasColumnOptions=%s)', (hasColumnOptions) => {
+    const field: Field = {
+      name: 'A',
+      type: FieldType.string,
+      values: [],
+      config: { custom: { sortable: false, filterable: true, hideable: true } },
+    };
+    expect(
+      getHeaderAffordanceWidth(field, {
+        showTypeIcons: false,
+        tableRefreshEnabled: true,
+        isFiltered: false,
+        hasColumnOptions,
+      })
+    ).toBe(hasColumnOptions ? 22 : 0);
+  });
   it.each([
     [true, false, 22],
     [true, true, 22],
@@ -94,7 +109,7 @@ describe('TableNG utils', () => {
         showTypeIcons: false,
         tableRefreshEnabled,
         isFiltered: false,
-        hasAssistantAction: true,
+        hasColumnOptions: true,
       })
     ).toBe(expected);
   });
@@ -1931,31 +1946,6 @@ describe('TableNG utils', () => {
     });
   });
 
-  describe('isColumnMenuVisible', () => {
-    const fieldWith = (custom: Record<string, boolean>): Field => ({
-      name: 'A',
-      type: FieldType.string,
-      values: [],
-      config: { custom },
-    });
-
-    it('is visible when the column is filterable, with nothing else', () => {
-      expect(isColumnMenuVisible(fieldWith({ filterable: true }), false)).toBe(true);
-    });
-
-    it('is visible when the column is hideable, even if it cannot be filtered', () => {
-      expect(isColumnMenuVisible(fieldWith({ hideable: true }), false)).toBe(true);
-    });
-
-    it('is visible when the table has a sidebar, even on a column that can do nothing itself', () => {
-      expect(isColumnMenuVisible(fieldWith({}), true)).toBe(true);
-    });
-
-    it('is hidden for a column that can do nothing, on a table with no sidebar', () => {
-      expect(isColumnMenuVisible(fieldWith({ reorderable: true }), false)).toBe(false);
-    });
-  });
-
   describe('computeContentAwareColWidths', () => {
     // Deterministic text measurement: every glyph is CHAR_W px wide, so a string of length L is
     // CHAR_W * L. Header widths are canvas-measured, so we mock measureText; body/pill content is
@@ -2652,11 +2642,10 @@ describe('TableNG utils', () => {
     });
 
     it('reserves header space for the drag handle on a reorderable column', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
-      ];
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       // 32px label + 22px sort + 20px drag handle + 13px chrome.
       const widths = computeContentAwareColWidths(fields, 80, {
+        reorderable: true,
         typographyCtx: makeTypographyCtx(),
         headerTypographyCtx: makeTypographyCtx(),
       });
@@ -2759,14 +2748,13 @@ describe('TableNG utils', () => {
     });
 
     it('reserves both the drag handle and the menu on a reorderable column with a sidebar', () => {
-      const fields: Field[] = [
-        { name: 'Name', type: FieldType.string, values: ['a'], config: { custom: { reorderable: true } } },
-      ];
+      const fields: Field[] = [{ name: 'Name', type: FieldType.string, values: ['a'], config: {} }];
       expect(
         computeContentAwareColWidths(fields, 100, {
           typographyCtx: makeTypographyCtx(),
           headerTypographyCtx: makeTypographyCtx(),
           tableRefreshEnabled: true,
+          reorderable: true,
           hasColumnSidebar: true,
         })
       ).toEqual([109]);
@@ -2861,29 +2849,6 @@ describe('TableNG utils', () => {
       });
 
       // Without the fix this comes back [73, 82] — B truncated below its own 82.4 need.
-      expect(widths).toEqual([73, 83]);
-    });
-
-    it('rounds a header-bound column up rather than truncating it via cumulative rounding on overflow', () => {
-      // Fractional header widths must round independently when the columns already overflow.
-      const typographyCtx = createTypographyContext(14, 'sans-serif', 0.15);
-      const headerWidths: Record<string, number> = { A: 37.5, B: 47.4 };
-      jest
-        .spyOn(typographyCtx.ctx, 'measureText')
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        .mockImplementation(((text: string) => ({
-          width: headerWidths[String(text)],
-        })) as typeof typographyCtx.ctx.measureText);
-
-      const fields: Field[] = [
-        { name: 'A', type: FieldType.string, values: ['x'], config: {} },
-        { name: 'B', type: FieldType.string, values: ['x'], config: {} },
-      ];
-      const widths = computeContentAwareColWidths(fields, 110, {
-        typographyCtx: makeTypographyCtx(),
-        headerTypographyCtx: typographyCtx,
-      });
-
       expect(widths).toEqual([73, 83]);
     });
 
@@ -3067,6 +3032,20 @@ describe('TableNG utils', () => {
       const [only] = markEdgeColumns([col('a')]);
       expect(only.headerCellClass).toContain(FIRST_COLUMN_CLASS);
       expect(only.headerCellClass).toContain(LAST_COLUMN_CLASS);
+    });
+
+    it('keeps edge markers out of columns reused in a reordered view', () => {
+      const a = col('a', { headerCellClass: 'a' });
+      const b = col('b', { headerCellClass: 'b' });
+      const c = col('c', { headerCellClass: 'c' });
+
+      const original = markEdgeColumns([a, b, c]);
+      const reordered = markEdgeColumns([b, a, c]);
+
+      expect(original[0].headerCellClass).toBe(`a ${FIRST_COLUMN_CLASS}`);
+      expect(reordered[0].headerCellClass).toBe(`b ${FIRST_COLUMN_CLASS}`);
+      expect(reordered[1].headerCellClass).toBe('a');
+      expect([a.headerCellClass, b.headerCellClass, c.headerCellClass]).toEqual(['a', 'b', 'c']);
     });
 
     it('keeps existing classes, including ones computed per row', () => {

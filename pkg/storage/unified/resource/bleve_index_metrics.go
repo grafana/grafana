@@ -19,6 +19,7 @@ type BleveIndexMetrics struct {
 	UpdatedDocuments     prometheus.Histogram
 	SearchUpdateWaitTime *prometheus.HistogramVec
 	RebuildQueueLength   prometheus.Gauge
+	ReconcileQueueLength prometheus.Gauge
 
 	GlobalReconcileDuration *prometheus.HistogramVec
 
@@ -137,6 +138,10 @@ func ProvideIndexMetrics(reg prometheus.Registerer) *BleveIndexMetrics {
 		RebuildQueueLength: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
 			Name: "grafana_index_server_rebuild_queue_length",
 			Help: "Number of indexes waiting for rebuild",
+		}),
+		ReconcileQueueLength: promauto.With(reg).NewGauge(prometheus.GaugeOpts{
+			Name: "grafana_index_server_global_reconcile_queue_length",
+			Help: "Number of global search indexes waiting to be compared with storage",
 		}),
 		GlobalReconcileDuration: promauto.With(reg).NewHistogramVec(prometheus.HistogramOpts{
 			Name:                            "grafana_index_server_global_reconcile_duration_seconds",

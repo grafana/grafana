@@ -151,6 +151,61 @@ func (fm *FolderManager) SetTree(tree FolderTree) {
 	fm.tree = tree
 }
 
+// FindExistingAncestor resolves directories nearest-first and validates repository
+// ownership. It returns the folder's metadata.name and found=true for a matching
+// stored folder. If none is found, including at an implicit root, it returns
+// ("", false, nil). Folders with mismatched ownership or source paths are skipped.
+// Repository and storage lookup errors are returned separately.
+func (fm *FolderManager) FindExistingAncestor(ctx context.Context, dir, ref string) (folderID string, found bool, err error) {
+	cfg := fm.repo.Config()
+	folderCtx, _, err := identity.WithProvisioningIdentity(ctx, cfg.Namespace)
+	if err != nil {
+		return "", false, fmt.Errorf("create identity for ancestor lookup: %w", err)
+	}
+
+	rootFolder := RootFolder(cfg)
+	var ancestor string
+	err = safepath.WalkUp(ctx, dir, func(ctx context.Context, dir string) (bool, error) {
+		folderID := rootFolder
+		if dir != "" {
+			// Invalid metadata must not fall back to a cached folder or hash-derived UID.
+			var err error
+			folderID, err = GetFolderID(ctx, fm.repo, dir, ref, fm.folderMetadataEnabled)
+			if err != nil {
+				return false, fmt.Errorf("resolve ancestor %q: %w", dir, err)
+			}
+		}
+		if folderID == "" {
+			// Instance and folderless roots have no folder UID; stop without finding an ancestor.
+			return true, nil
+		}
+		obj, err := fm.GetFolder(folderCtx, folderID)
+		if apierrors.IsNotFound(err) {
+			return false, nil
+		}
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder %q: %w", folderID, err)
+		}
+		meta, err := utils.MetaAccessor(obj)
+		if err != nil {
+			return false, fmt.Errorf("get ancestor folder metadata: %w", err)
+		}
+		manager, _ := meta.GetManagerProperties()
+		source, _ := meta.GetSourceProperties()
+		// A matching UID alone does not establish repository and directory ownership.
+		// Repository roots legitimately have no source path annotation.
+		if !isManagedByRepository(manager, cfg.Name) || safepath.EnsureTrailingSlash(source.Path) != dir {
+			return false, nil
+		}
+		ancestor = folderID
+		return true, nil
+	})
+	if err != nil {
+		return "", false, err
+	}
+	return ancestor, ancestor != "", nil
+}
+
 // EnsureFolderPathExist creates the folder structure in the cluster.
 func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath, ref string, opts ...EnsurePathOption) (parent string, err error) {
 	epCfg := newEnsurePathConfig(opts)

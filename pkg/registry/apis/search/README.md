@@ -2,7 +2,7 @@
 
 For Grafana engineers who own a kind and want it searchable. You need to know your kind; you do not need to know anything about Bleve or the index.
 
-The endpoint is `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search`. It is on by default (`[grafana-apiserver] enable_search_api`, default `true`), so you can make a kind searchable without asking the search and storage team.
+The endpoint is `POST /apis/{group}/{version}/namespaces/{namespace}/{resource}/search`. Grafana always registers it for eligible kinds, so you can make a kind searchable without asking the search and storage team. The former `[grafana-apiserver] enable_search_api` and `enable_trash_api` settings no longer control route registration.
 
 This is `v0alpha1`. Shapes can change.
 
@@ -289,7 +289,7 @@ Individual results are then filtered per item using the same access client that 
 
 - **Unified storage only**, and a kind whose data has not migrated returns an empty result rather than an error. This is the most common reason search appears not to work, see the prerequisite at the top.
 - **The first request for a kind may wait for an index build.** Indexes are created on demand.
-- **Trash is limited to dashboards today**, so a kind gets `/search` only. `/trash` is on deployment-wide (`enable_trash_api` defaults to `true`), but a kind also has to be accepted by `resource.TrashSearchAllowed`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
+- **Trash is limited to dashboards today**, so other kinds get `/search` only. A kind has to be accepted by `resource.TrashSearchAllowed` to get `/trash`. That policy grows as the access rule trash uses is checked against more kinds. Once your kind is allowed, `trash: false` opts back out.
 - **Sorting** works on any indexed field that declares `sort`. One exception: non-string retrieve-only fields fall back to the `name` tie-breaker instead of failing, so `created` and `updated` cannot be sorted on.
 - **A field without `retrieve` cannot be returned**, even if you can filter on it.
 
@@ -317,12 +317,7 @@ The route is absent when `search.hybrid` is omitted or false, or the kind is
 cluster-scoped. The same rules apply to core APIs, app plugins and manifest-backed
 custom resource definitions.
 
-`[grafana-apiserver] enable_hybrid_api` defaults to `true` and can disable these
-routes deployment-wide. Standalone API servers expose the equivalent flag
-`--grafana-apiserver-enable-hybrid-api=false`. This switch and the manifest's
-`search.hybrid` setting are independent of lexical search and trash: hybrid can
-remain available when `enable_search_api`, `enable_trash_api` or
-`search.endpoint` is false.
+`[grafana-apiserver] enable_hybrid_api` defaults to `true` and can disable these routes deployment-wide. Standalone API servers expose the equivalent flag `--grafana-apiserver-enable-hybrid-api=false`. This switch and the manifest's `search.hybrid` setting are independent of lexical search and trash: hybrid can remain available when `search.endpoint` or `search.trash` is false.
 
 Route availability does not enroll a resource for embeddings. The `embed.fields`
 declaration and `vector_allowed_internal_collections` setting below control that

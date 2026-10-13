@@ -20,7 +20,6 @@ function makeField(overrides: Partial<Field> = {}): Field {
   };
 }
 
-const reorderableField = () => makeField({ config: { custom: { reorderable: true } } });
 const hideableField = () => makeField({ config: { custom: { hideable: true } } });
 
 const column = { key: 'Field1' } as Column<TableRow, TableSummaryRow>;
@@ -96,7 +95,9 @@ describe('HeaderCell', () => {
   });
 
   it('collapses the reorder drag handle until the header cell is hovered', () => {
-    const { container } = render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled />);
+    const { container } = render(
+      <HeaderCell {...baseProps} field={makeField()} column={{ ...column, draggable: true }} tableRefreshEnabled />
+    );
     const handle = container.querySelector('button[aria-hidden="true"]')!;
     const styles = window.getComputedStyle(handle);
     expect(styles.width).toBe('0px');
@@ -319,13 +320,30 @@ describe('HeaderCell', () => {
     });
 
     it('omits the menu for reordering without a sidebar', () => {
-      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled />);
+      render(
+        <HeaderCell {...baseProps} field={makeField()} column={{ ...column, draggable: true }} tableRefreshEnabled />
+      );
       expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
     });
 
     it('shows the menu when the sidebar is available', () => {
-      render(<HeaderCell {...baseProps} field={reorderableField()} tableRefreshEnabled hasColumnSidebar />);
+      render(
+        <HeaderCell
+          {...baseProps}
+          field={makeField()}
+          column={{ ...column, draggable: true }}
+          tableRefreshEnabled
+          hasColumnSidebar
+          onOpenColumnPanel={jest.fn()}
+        />
+      );
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('does not render an empty menu when column action callbacks are missing', () => {
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled hasColumnSidebar />);
+      expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
     });
 
     it('opens the sidebar from Manage columns', async () => {
@@ -333,7 +351,8 @@ describe('HeaderCell', () => {
       render(
         <HeaderCell
           {...baseProps}
-          field={reorderableField()}
+          field={makeField()}
+          column={{ ...column, draggable: true }}
           tableRefreshEnabled
           hasColumnSidebar
           onOpenColumnPanel={onOpenColumnPanel}
@@ -344,6 +363,35 @@ describe('HeaderCell', () => {
       await userEvent.click(await screen.findByText('Manage columns'));
       expect(onOpenColumnPanel).toHaveBeenCalledTimes(1);
     });
+
+    it.each([
+      {
+        filterable: true,
+        expected: ['Filter values', '', 'Hide column', 'Manage columns', '', 'Add to Assistant'],
+      },
+      { filterable: false, expected: ['Hide column', 'Manage columns', '', 'Add to Assistant'] },
+    ])(
+      'groups column actions separately from filters and Assistant (filterable=$filterable)',
+      async ({ filterable, expected }) => {
+        render(
+          <HeaderCell
+            {...baseProps}
+            field={makeField({ config: { custom: { filterable, hideable: true } } })}
+            tableRefreshEnabled
+            hasColumnSidebar
+            onHideColumn={jest.fn()}
+            canHideColumn
+            onOpenColumnPanel={jest.fn()}
+            onAddToAssistant={jest.fn()}
+          />
+        );
+
+        await userEvent.click(screen.getByLabelText(menuLabel));
+        const menu = await screen.findByRole('menu', { name: menuLabel });
+        // Dividers have no text; their positions define the visible action groups.
+        expect(Array.from(menu.children, (child) => child.textContent)).toEqual(expected);
+      }
+    );
 
     it('omits Manage columns when no columns are manageable', async () => {
       const onOpenColumnPanel = jest.fn();

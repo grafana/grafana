@@ -51,6 +51,14 @@ describe('TableCellActions', () => {
         'Filter out value',
         'Add to Assistant',
       ]);
+      expect(Array.from(screen.getByRole('menu').children, (child) => child.textContent)).toEqual([
+        'Inspect value',
+        '',
+        'Filter for value',
+        'Filter out value',
+        '',
+        'Add to Assistant',
+      ]);
     });
 
     it('preserves inline actions when refresh is disabled even with an Assistant callback', () => {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/infra/nats"
@@ -652,4 +654,172 @@ func TestWatchShutdownPreservesInvalidation(t *testing.T) {
 			require.NoError(t, srv.Watch(req, newMockWatchServer(ctx)), "a draining server must not start another watch")
 		})
 	}
+}
+
+// subjectsSubscriber records every subscription, unlike fakeEventSubscriber,
+// which keeps the last.
+type subjectsSubscriber struct {
+	mu           sync.Mutex
+	subjects     []string
+	handlers     []func(subject string, data []byte)
+	onReconnects []func()
+	subs         []*fakeSubscription
+}
+
+func (f *subjectsSubscriber) Enabled() bool { return true }
+
+func (f *subjectsSubscriber) Subscribe(_ context.Context, subject string, handler func(subject string, data []byte), onReconnect func()) (Subscription, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	sub := &fakeSubscription{}
+	f.subjects = append(f.subjects, subject)
+	f.handlers = append(f.handlers, handler)
+	f.onReconnects = append(f.onReconnects, onReconnect)
+	f.subs = append(f.subs, sub)
+	return sub, nil
+}
+
+// Only the covered types are subscribed to, each delivered key comes straight
+// through without waiting, and cancelling unsubscribes.
+func TestWatchWrittenKeys(t *testing.T) {
+	sub := &subjectsSubscriber{}
+	backend := &kvStorageBackend{keysSubscriber: sub, log: logging.DefaultLogger}
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	var reconnects atomic.Int32
+	keys, err := backend.WatchWrittenKeys(ctx, []schema.GroupResource{
+		{Group: "dashboard.grafana.app", Resource: "dashboards"},
+		{Group: "folder.grafana.app", Resource: "folders"},
+	}, func(namespace string) {
+		if namespace == "" {
+			reconnects.Add(1)
+		}
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []string{
+		"us.watch.v1.dashboard.grafana.app.*.dashboards",
+		"us.watch.v1.folder.grafana.app.*.folders",
+	}, sub.subjects)
+
+	sub.handlers[0]("us.watch.v1.dashboard.grafana.app.ns.dashboards", mustMarshalNotification(t, &resourcepb.WatchNotification{
+		Type: resourcepb.WatchNotification_MODIFIED, Namespace: "ns", Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a", ResourceVersion: 11,
+	}))
+	select {
+	case key := <-keys:
+		assert.Equal(t, "ns", key.Namespace)
+		assert.Equal(t, "dashboard.grafana.app", key.Group)
+		assert.Equal(t, "dashboards", key.Resource)
+		assert.Equal(t, "dash-a", key.Name)
+	case <-time.After(time.Second):
+		t.Fatal("the key was not delivered at once")
+	}
+
+	// A message that cannot be read is skipped.
+	sub.handlers[1]("us.watch.v1.folder.grafana.app.ns.folders", []byte("not a notification"))
+	select {
+	case key := <-keys:
+		t.Fatalf("unexpected key %v", key)
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	// A reconnect of either subscription is reported.
+	sub.onReconnects[1]()
+	require.Eventually(t, func() bool { return reconnects.Load() == 1 }, time.Second, 10*time.Millisecond)
+
+	cancel()
+	require.Eventually(t, func() bool {
+		for _, s := range sub.subs {
+			if !s.wasUnsubscribed() {
+				return false
+			}
+		}
+		return true
+	}, time.Second, 10*time.Millisecond)
+}
+
+// Without the NATS subscriber there are no written keys to watch.
+func TestWatchWrittenKeysNeedsTheSubscriber(t *testing.T) {
+	backend := &kvStorageBackend{log: logging.DefaultLogger}
+	_, err := backend.WatchWrittenKeys(t.Context(), []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, func(string) {})
+	require.Error(t, err)
+}
+
+// readyAfterSubscription is confirmed by the server only once ready is closed.
+type readyAfterSubscription struct {
+	fakeSubscription
+	ready chan struct{}
+}
+
+func (f *readyAfterSubscription) WaitReady(ctx context.Context) error {
+	select {
+	case <-f.ready:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+// A reconnect is reported once, however many subscriptions saw it, and only
+// once the server has confirmed all of them: before that, a write could be
+// missed both by the bus and by whatever the report starts.
+func TestReportReconnectsWaitsForEverySubscription(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		first := &readyAfterSubscription{ready: make(chan struct{})}
+		second := &readyAfterSubscription{ready: make(chan struct{})}
+		close(first.ready)
+		reconnected := make(chan struct{}, 1)
+		var reports atomic.Int32
+
+		go reportReconnects(t.Context(), []Subscription{first, second}, reconnected, func() { reports.Add(1) })
+		reconnected <- struct{}{}
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		assert.Zero(t, reports.Load(), "not reported while one subscription is unconfirmed")
+
+		close(second.ready)
+		time.Sleep(time.Minute)
+		synctest.Wait()
+		assert.Equal(t, int32(1), reports.Load())
+	})
+}
+
+// A key dropped because the consumer is not keeping up reports its namespace as
+// having lost keys, so that index can be reconciled rather than left stale.
+func TestWatchWrittenKeysReportsDroppedKeys(t *testing.T) {
+	sub := &subjectsSubscriber{}
+	backend := &kvStorageBackend{keysSubscriber: sub, log: logging.DefaultLogger}
+	var mu sync.Mutex
+	var lost []string
+	_, err := backend.WatchWrittenKeys(t.Context(), []schema.GroupResource{{Group: "dashboard.grafana.app", Resource: "dashboards"}}, func(namespace string) {
+		mu.Lock()
+		defer mu.Unlock()
+		lost = append(lost, namespace)
+	})
+	require.NoError(t, err)
+
+	notification := func(namespace string) []byte {
+		return mustMarshalNotification(t, &resourcepb.WatchNotification{
+			Type: resourcepb.WatchNotification_MODIFIED, Namespace: namespace, Group: "dashboard.grafana.app", Resource: "dashboards", Name: "dash-a",
+		})
+	}
+	// Nothing reads the keys, so these fill the buffer and exactly the next one
+	// is dropped. It is in another namespace, so the report shows which it was.
+	for range writtenKeysBufferSize {
+		sub.handlers[0]("us.watch.v1.dashboard.grafana.app.ns.dashboards", notification("ns"))
+	}
+	sub.handlers[0]("us.watch.v1.dashboard.grafana.app.other.dashboards", notification("other"))
+
+	mu.Lock()
+	defer mu.Unlock()
+	assert.Equal(t, []string{"other"}, lost)
+}
+
+// Shadow mode is for observation only, so with the NATS notifier off, written
+// keys are not watched from the bus even when a subscriber is wired, and global
+// search keeps the watch stream.
+func TestWatchWrittenKeysNeedsTheNatsNotifier(t *testing.T) {
+	sub := &subjectsSubscriber{}
+	assert.Nil(t, keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifierShadow: true}))
+	assert.Equal(t, EventSubscriber(sub), keysSubscriber(KVBackendOptions{EventSubscriber: sub, EnableNatsNotifier: true}))
 }
