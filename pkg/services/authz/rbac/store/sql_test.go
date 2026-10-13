@@ -132,7 +132,7 @@ func TestIdentityQueries(t *testing.T) {
 					}, true),
 				},
 				{
-					Name: "all_user_permissions_force_index",
+					Name: "all_user_permissions_with_index_option_enabled",
 					Data: getPermissions(&PermissionsQuery{
 						UserID: 1,
 						OrgID:  1,
