@@ -40,11 +40,11 @@ type CaptureAttempt struct {
 
 // newScreenshotAttempt records the outcome of a capture against the rule's previous attempt.
 // A successful capture returns nil, which clears any outstanding backoff.
-func newScreenshotAttempt(previous *CaptureAttempt, err error, c clock.Clock) *CaptureAttempt {
+func newScreenshotAttempt(previous *CaptureAttempt, err error, completedAt time.Time) *CaptureAttempt {
 	if err == nil {
 		return nil
 	}
-	attempt := &CaptureAttempt{lastAttempt: c.Now()}
+	attempt := &CaptureAttempt{lastAttempt: completedAt}
 	if !IsRetryableError(err) {
 		// Errors that aren't retryable back off for zero time, so the next
 		// evaluation tries again.

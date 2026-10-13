@@ -23,7 +23,8 @@ var (
 	ResendDelay = 30 * time.Second
 )
 
-type takeImageFn func(reason string) *ngModels.Image
+// takeImageFn reports when earlier work or backoff defers the requested capture.
+type takeImageFn func(reason string) (image *ngModels.Image, deferred bool)
 
 // AlertInstanceManager defines the interface for querying the current alert instances.
 type AlertInstanceManager interface {
@@ -398,9 +399,23 @@ func (st *Manager) ProcessEvalResults(
 	{
 		var image *ngModels.Image
 		var imageTaken bool
-		fn = func(reason string) *ngModels.Image {
+		var captureReason string
+		var captureDeferred bool
+		// Observe completion before new instances can request a capture. A rule owns
+		// one unobserved attempt, so omitted instances cannot count a failure again.
+		if pending := st.cache.getPendingImage(alertRule.GetKey()); pending != nil {
+			if _, err, done := pending.Capture.Result(); done {
+				st.cache.setPendingImage(alertRule.GetKey(), nil)
+				previous := st.cache.getLastScreenshotAttempt(alertRule.GetKey())
+				st.cache.setLastScreenshotAttempt(alertRule.GetKey(), newScreenshotAttempt(previous, err, pending.Capture.CompletedAt()))
+			} else {
+				image, imageTaken = pending, true
+				captureDeferred = true
+			}
+		}
+		fn = func(reason string) (*ngModels.Image, bool) {
 			if imageTaken {
-				return image
+				return image, captureDeferred || image != nil && image.Capture != nil && captureReason != reason
 			}
 			imageTaken = true
 			previous := st.cache.getLastScreenshotAttempt(alertRule.GetKey())
@@ -408,20 +423,26 @@ func (st *Manager) ProcessEvalResults(
 				logger.Info("Skip taking image because last attempt was not successful")
 				// The backoff belongs to the rule, so an instance that starts alerting
 				// during the cooldown doesn't get a capture attempt of its own.
-				return nil
+				captureDeferred = true
+				return nil, true
 			}
+			captureReason = reason
 			logger.Debug("Taking image", "dashboard", alertRule.GetDashboardUID(), "panel", alertRule.GetPanelID(), "reason", reason)
 			img, err := takeImage(ctx, st.images, alertRule)
-			st.cache.setLastScreenshotAttempt(alertRule.GetKey(), newScreenshotAttempt(previous, err, st.clock))
+			if img != nil && img.Capture != nil {
+				st.cache.setPendingImage(alertRule.GetKey(), img)
+			} else {
+				st.cache.setLastScreenshotAttempt(alertRule.GetKey(), newScreenshotAttempt(previous, err, st.clock.Now()))
+			}
 			if err != nil {
 				logger.Warn("Failed to take an image",
 					"dashboard", alertRule.GetDashboardUID(),
 					"panel", alertRule.GetPanelID(), "reason", reason,
 					"error", err)
-				return nil
+				return nil, false
 			}
 			image = img
-			return image
+			return image, false
 		}
 	}
 
@@ -611,7 +632,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 			// By setting 'ResolvedAt' we trigger the scheduler to send a 'resolved' alert to the Alertmanager.
 			if s.ShouldBeResolved(oldState) {
 				s.ResolvedAt = &evaluatedAt
-				s.Image = takeImageFn("stale state") // Potentially nil
+				s.Image, _ = takeImageFn("stale state") // Potentially nil
 			}
 
 			staleStates[s.CacheID] = struct{}{}

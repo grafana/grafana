@@ -25,6 +25,7 @@ const emptyLabelKeyPrefix = "__empty_label_key__"
 type ruleStates struct {
 	states             map[data.Fingerprint]*State
 	lastCaptureAttempt *CaptureAttempt
+	pendingImage       *ngModels.Image
 }
 
 type cache struct {
@@ -53,6 +54,27 @@ func (c *cache) getLastScreenshotAttempt(ruleKey ngModels.AlertRuleKey) *Capture
 		return nil
 	}
 	return rs.lastCaptureAttempt
+}
+
+func (c *cache) getPendingImage(ruleKey ngModels.AlertRuleKey) *ngModels.Image {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	if rs := c.states[ruleKey.OrgID][ruleKey.UID]; rs != nil {
+		return rs.pendingImage
+	}
+	return nil
+}
+
+func (c *cache) setPendingImage(ruleKey ngModels.AlertRuleKey, image *ngModels.Image) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	if c.states[ruleKey.OrgID] == nil {
+		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
+	}
+	if c.states[ruleKey.OrgID][ruleKey.UID] == nil {
+		c.states[ruleKey.OrgID][ruleKey.UID] = &ruleStates{states: make(map[data.Fingerprint]*State)}
+	}
+	c.states[ruleKey.OrgID][ruleKey.UID].pendingImage = image
 }
 
 func (c *cache) setLastScreenshotAttempt(ruleKey ngModels.AlertRuleKey, attempt *CaptureAttempt) {
@@ -324,6 +346,7 @@ func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
 	// so it has to outlive the states map being replaced here.
 	if existing, ok := c.states[ruleKey.OrgID][ruleKey.UID]; ok {
 		s.lastCaptureAttempt = existing.lastCaptureAttempt
+		s.pendingImage = existing.pendingImage
 	}
 	c.states[ruleKey.OrgID][ruleKey.UID] = &s
 }

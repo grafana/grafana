@@ -82,6 +82,23 @@ Restart Grafana for the changes to take effect.
 
 ## Advanced configuration
 
+To render and upload screenshots in the background, enable the experimental `alerting.asyncImageUpload` feature toggle:
+
+```ini
+[feature_toggles]
+alerting.asyncImageUpload = true
+```
+
+This feature requires `capture = true`. Grafana creates an image token before rendering the screenshot and updates the stored image after rendering and uploading finish. Alert evaluation continues while the screenshot is prepared. Screenshots still follow `max_concurrent_screenshots`. Rendering and uploading share the `capture_timeout` budget. Saving the completed image has a separate timeout of the same duration, so an upload timeout can still leave the local screenshot available.
+
+Grafana evaluates the feature toggle for each image request using the caller's evaluation context. Changes from your feature flag provider apply to subsequent requests. Requests with the feature disabled wait for any shared capture already in progress. If you change the configuration file, restart Grafana for the change to take effect.
+
+On the next evaluation, Grafana refreshes alert state with the completed screenshot or retries a failed capture. Timeouts use the existing retry backoff from the time the capture fails, shared by all instances of the rule. Grafana retains resolution screenshot requests while an earlier capture is pending and processes them on a later evaluation.
+
+Set `upload_external_image_storage = true` to upload screenshots in the background using your configured `[external_image_storage]` provider. After the upload completes, Grafana-managed notifications resolve the image token to the uploaded screenshot URL.
+
+Notifications sent before the screenshot is ready can omit the image. If a missing alert instance's state is removed while its screenshot is pending, Grafana can't retry a failed screenshot for that instance. External Alertmanagers cannot resolve Grafana image tokens, so the initial alert sent to them doesn't include a screenshot URL. Keep this feature disabled if every notification must wait for its screenshot.
+
 We recommend that `max_concurrent_screenshots` is less than or equal to `concurrent_render_request_limit`. The default value for both `max_concurrent_screenshots` and `concurrent_render_request_limit` is `5`:
 
     # The maximum number of screenshots that can be taken at the same time. This option is different from

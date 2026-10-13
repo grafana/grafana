@@ -50,7 +50,8 @@ type State struct {
 
 	// Image contains an optional image for the state. It tends to be included in notifications
 	// as a visualization to show why the alert fired.
-	Image *models.Image
+	Image                *models.Image
+	pendingResolvedImage bool
 
 	// Annotations contains the annotations from the alert rule. If an annotation is templated
 	// then the template is first evaluated to derive the final annotation.
@@ -128,6 +129,7 @@ func (a *State) Copy() *State {
 		LatestResult:         a.LatestResult,
 		Error:                a.Error,
 		Image:                a.Image,
+		pendingResolvedImage: a.pendingResolvedImage,
 		Annotations:          annotationsCopy,
 		Labels:               labelsCopy,
 		Values:               a.Values,
@@ -801,6 +803,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	newState.State = existingState.State
 	newState.StateReason = existingState.StateReason
 	newState.Image = existingState.Image
+	newState.pendingResolvedImage = existingState.pendingResolvedImage
 	newState.LatestResult = existingState.LatestResult
 	newState.Error = existingState.Error
 	newState.Values = existingState.Values
@@ -879,8 +882,23 @@ func (a *State) transition(alertRule *models.AlertRule, result eval.Result, extr
 		a.ResolvedAt = nil
 	}
 
-	if reason := shouldTakeImage(a.State, oldState, a.Image, newlyResolved); reason != "" {
-		image := takeImageFn(reason)
+	if a.Image != nil && a.Image.Capture != nil {
+		if image, err, done := a.Image.Capture.Result(); done {
+			a.Image = nil
+			if err == nil {
+				a.Image = &image
+			}
+		}
+	}
+	if a.State != eval.Normal {
+		a.pendingResolvedImage = false
+	}
+	if reason := shouldTakeImage(a.State, oldState, a.Image, newlyResolved || a.pendingResolvedImage); reason != "" {
+		image, deferred := takeImageFn(reason)
+		if reason == "resolved" {
+			// A firing capture may still be pending when the one-time resolution occurs.
+			a.pendingResolvedImage = deferred && (a.pendingResolvedImage || image != nil)
+		}
 		if image != nil {
 			a.Image = image
 		}

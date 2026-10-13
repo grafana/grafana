@@ -18,6 +18,14 @@ var (
 	// Register each toggle here
 	standardFeatureFlags = []FeatureFlag{
 		{
+			Name:        "alerting.asyncImageUpload",
+			Description: "Render and upload alerting screenshots asynchronously",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+			Generate:    Generate{Go: true},
+		},
+		{
 			Name:        "panelTitleSearch",
 			Description: "Search for dashboards using panel title",
 			Stage:       FeatureStagePublicPreview,

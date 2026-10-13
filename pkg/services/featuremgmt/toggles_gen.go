@@ -7,6 +7,10 @@
 package featuremgmt
 
 const (
+	// FlagAlertingAsyncImageUpload
+	// Render and upload alerting screenshots asynchronously
+	FlagAlertingAsyncImageUpload = "alerting.asyncImageUpload"
+
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"

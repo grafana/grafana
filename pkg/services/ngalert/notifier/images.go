@@ -36,6 +36,9 @@ func (t tokenStore) GetImage(ctx context.Context, token string) (*alertingImages
 		}
 		return nil, err
 	}
+	if !image.HasPath() && !image.HasURL() {
+		return nil, alertingImages.ErrImageNotFound
+	}
 
 	return &alertingImages.Image{
 		ID:  token,

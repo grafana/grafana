@@ -522,7 +522,7 @@ func TestNeedsSending(t *testing.T) {
 func TestTransitionSetsResolvedAt(t *testing.T) {
 	evaluatedAt := time.Now()
 	logger := log.NewNopLogger()
-	noImage := func(string) *ngmodels.Image { return nil }
+	noImage := func(string) (*ngmodels.Image, bool) { return nil, false }
 
 	baseRule := &ngmodels.AlertRule{
 		IntervalSeconds: 60,

@@ -2,10 +2,12 @@ package models
 
 import (
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestImage_ExtendDuration(t *testing.T) {
@@ -18,6 +20,28 @@ func TestImage_ExtendDuration(t *testing.T) {
 	// can shorten the duration too
 	i.ExtendDuration(-time.Minute)
 	assert.Equal(t, d, i.ExpiresAt)
+}
+
+func TestImageCaptureResult(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		capture, complete := NewImageCapture()
+		_, err, done := capture.Result()
+		require.NoError(t, err)
+		require.False(t, done)
+		require.True(t, capture.CompletedAt().IsZero())
+		image := Image{Token: "token", Path: "screenshot.png"}
+		completedAt := time.Now()
+		go complete(image, nil, completedAt)
+		synctest.Wait()
+		for range 2 {
+			got, err, done := capture.Result()
+			require.True(t, done)
+			require.NoError(t, err)
+			require.Equal(t, image, got)
+			require.Equal(t, completedAt, capture.CompletedAt())
+			got.Path = "modified.png"
+		}
+	})
 }
 
 func TestImage_HasExpired(t *testing.T) {

@@ -74,6 +74,22 @@
     },
     {
       "metadata": {
+        "name": "alerting.asyncImageUpload",
+        "resourceVersion": "1791910405794",
+        "creationTimestamp": "2026-10-13T15:21:01Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2026-10-13 16:53:25.794434 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Render and upload alerting screenshots asynchronously",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alerting.dataSourceManagedRouteProxy",
         "resourceVersion": "1789551536572",
         "creationTimestamp": "2026-09-18T11:05:55Z"

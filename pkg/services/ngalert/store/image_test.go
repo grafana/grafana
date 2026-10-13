@@ -84,6 +84,30 @@ func TestIntegrationSaveAndGetImage(t *testing.T) {
 	assert.Nil(t, result2)
 }
 
+func TestIntegrationSavePlaceholderImage(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	_, dbstore, _ := tests.SetupTestEnv(t, baseIntervalSeconds)
+	ctx := context.Background()
+	image := models.Image{}
+	require.NoError(t, dbstore.SaveImage(ctx, &image))
+	require.NotEmpty(t, image.Token)
+	pending, err := dbstore.GetImage(ctx, image.Token)
+	require.NoError(t, err)
+	require.Empty(t, pending.Path)
+	require.Empty(t, pending.URL)
+
+	image.Path = "screenshot.png"
+	image.URL = "https://example.com/screenshot.png"
+	require.NoError(t, dbstore.SaveImage(ctx, &image))
+	completed, err := dbstore.GetImage(ctx, pending.Token)
+	require.NoError(t, err)
+	require.Equal(t, pending.ID, completed.ID)
+	require.Equal(t, pending.CreatedAt, completed.CreatedAt)
+	require.Equal(t, pending.ExpiresAt, completed.ExpiresAt)
+	require.Equal(t, image.Path, completed.Path)
+	require.Equal(t, image.URL, completed.URL)
+}
+
 func TestIntegrationGetImages(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 

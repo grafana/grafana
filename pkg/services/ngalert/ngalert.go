@@ -775,6 +775,9 @@ func (ng *AlertNG) Run(ctx context.Context) error {
 	ng.Log.Debug("Starting", "execute_alerts", ng.Cfg.UnifiedAlerting.ExecuteAlerts)
 
 	children, subCtx := errgroup.WithContext(ctx)
+	children.Go(func() error {
+		return ng.ImageService.Run(subCtx)
+	})
 
 	// Run backfill job in background
 	children.Go(func() error {

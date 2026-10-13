@@ -435,6 +435,6 @@ func TestAlertInstanceToState(t *testing.T) {
 		},
 	}
 
-	require.Empty(t, cmp.Diff(expected, state, cmpopts.IgnoreFields(State{}, "Error")))
+	require.Empty(t, cmp.Diff(expected, state, cmp.AllowUnexported(State{}), cmpopts.IgnoreFields(State{}, "Error")))
 	require.EqualError(t, state.Error, "some error")
 }

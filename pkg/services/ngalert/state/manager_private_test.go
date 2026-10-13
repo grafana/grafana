@@ -354,7 +354,7 @@ func TestProcessEvalResults_StateTransitions(t *testing.T) {
 				}
 				delete(expectedTransitionsMap, transition.CacheID)
 				if !assert.ObjectsAreEqual(expected, transition) {
-					assert.Failf(t, fmt.Sprintf("expected and actual transitions at time [t%d] are not equal", tn), "CacheID: %s\nDiff: %s", transition.CacheID, cmp.Diff(expected, transition, cmpopts.EquateErrors()))
+					assert.Failf(t, fmt.Sprintf("expected and actual transitions at time [t%d] are not equal", tn), "CacheID: %s\nDiff: %s", transition.CacheID, cmp.Diff(expected, transition, cmp.AllowUnexported(State{}), cmpopts.EquateErrors()))
 				}
 			}
 			if len(expectedTransitionsMap) > 0 {

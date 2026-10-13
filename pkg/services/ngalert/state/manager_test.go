@@ -293,7 +293,7 @@ func TestIntegrationWarmStateCache(t *testing.T) {
 				}
 				return a.Error() == b.Error()
 			})
-			if diff := cmp.Diff(entry, cacheEntry, cmpopts.IgnoreFields(state.State{}, "LatestResult"), errorComparer); diff != "" {
+			if diff := cmp.Diff(entry, cacheEntry, cmp.AllowUnexported(state.State{}), cmpopts.IgnoreFields(state.State{}, "LatestResult"), errorComparer); diff != "" {
 				t.Errorf("Result mismatch (-want +got):\n%s", diff)
 				t.FailNow()
 			}
@@ -1825,7 +1825,7 @@ func TestProcessEvalResults(t *testing.T) {
 				}
 				delete(expectedStates, actual.CacheID)
 				if !assert.ObjectsAreEqual(expected, actual) {
-					assert.Failf(t, "expected and actual states are not equal", "Diff: %s", cmp.Diff(expected, actual, cmpopts.EquateErrors()))
+					assert.Failf(t, "expected and actual states are not equal", "Diff: %s", cmp.Diff(expected, actual, cmp.AllowUnexported(state.State{}), cmpopts.EquateErrors()))
 				}
 			}
 
