@@ -153,7 +153,6 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		metric  string
 		display *string
 		labels  data.Labels
-		aux     []auxCell
 	}
 
 	var rows []row
@@ -178,9 +177,12 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		if timeField == nil {
 			return nil, fmt.Errorf("missing time field")
 		}
-		frameAux, err := auxCols.addSeries(frame.Fields, timeField, false, nil)
-		if err != nil {
-			return nil, err
+		var frameAux int32
+		if aux := auxFieldsOf(frame.Fields, timeField); len(aux) > 0 {
+			var err error
+			if frameAux, err = auxCols.addSeries(aux); err != nil {
+				return nil, err
+			}
 		}
 		for _, f := range frame.Fields {
 			if !f.Type().Numeric() {
@@ -205,8 +207,8 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 					metric:  f.Name,
 					display: display,
 					labels:  f.Labels,
-					aux:     auxCellsAt(frameAux, i),
 				})
+				auxCols.addRow(len(rows)-1, frameAux, i)
 				for k := range f.Labels {
 					labelKeysSet[k] = struct{}{}
 				}
@@ -219,11 +221,11 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		labelKeys = append(labelKeys, k)
 	}
 	sort.Strings(labelKeys)
-	sort.SliceStable(rows, func(i, j int) bool {
-		if rows[i].t.Equal(rows[j].t) {
-			return rows[i].metric < rows[j].metric
+	sortFullLongRows(rows, auxCols.rows, func(a, b *row) bool {
+		if a.t.Equal(b.t) {
+			return a.metric < b.metric
 		}
-		return rows[i].t.Before(rows[j].t)
+		return a.t.Before(b.t)
 	})
 
 	times := make([]time.Time, len(rows))
@@ -261,13 +263,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
 	auxFields := auxCols.fields(fields, labelKeys, len(rows))
-	for i, r := range rows {
-		for _, c := range r.aux {
-			if v, ok := c.field.ConcreteAt(c.idx); ok {
-				auxFields[c.col].SetConcrete(i, v)
-			}
-		}
-	}
+	auxCols.fill(auxFields)
 	fields = append(fields, auxFields...)
 	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
@@ -302,7 +298,6 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 		metric  string
 		display *string
 		labels  data.Labels
-		aux     []auxCell
 	}
 
 	var (
@@ -313,20 +308,29 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	)
 
 	// In wide frames, a non-numeric field belongs to the series with the same labels.
-	seriesAux := map[string][]auxRef{}
-	for _, f := range frame.Fields {
-		if !f.Type().Numeric() {
-			continue
+	var seriesAux map[string]int32
+	if aux := auxFieldsOf(frame.Fields, timeField); len(aux) > 0 {
+		bySeries := map[string][]*data.Field{}
+		for _, f := range aux {
+			key := f.Labels.String()
+			bySeries[key] = append(bySeries[key], f)
 		}
-		key := f.Labels.String()
-		if _, ok := seriesAux[key]; ok {
-			continue
+		// Register columns in the order of the value fields, so column order is stable.
+		seriesAux = map[string]int32{}
+		for _, f := range frame.Fields {
+			if !f.Type().Numeric() {
+				continue
+			}
+			key := f.Labels.String()
+			if _, done := seriesAux[key]; done {
+				continue
+			}
+			series, err := auxCols.addSeries(bySeries[key])
+			if err != nil {
+				return nil, err
+			}
+			seriesAux[key] = series
 		}
-		refs, err := auxCols.addSeries(frame.Fields, timeField, true, f.Labels)
-		if err != nil {
-			return nil, err
-		}
-		seriesAux[key] = refs
 	}
 
 	// Collect all label keys
@@ -356,6 +360,10 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 			display = &s
 			hasDisplayCol = true
 		}
+		var aux int32
+		if seriesAux != nil {
+			aux = seriesAux[f.Labels.String()]
+		}
 		for i := range timeLen {
 			t := timeField.At(i).(time.Time)
 			v, err := f.FloatAt(i)
@@ -369,16 +377,16 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 				metric:  f.Name,
 				display: display,
 				labels:  f.Labels,
-				aux:     auxCellsAt(seriesAux[f.Labels.String()], i),
 			})
+			auxCols.addRow(len(rows)-1, aux, i)
 		}
 	}
 
-	sort.SliceStable(rows, func(i, j int) bool {
-		if rows[i].t.Equal(rows[j].t) {
-			return rows[i].metric < rows[j].metric
+	sortFullLongRows(rows, auxCols.rows, func(a, b *row) bool {
+		if a.t.Equal(b.t) {
+			return a.metric < b.metric
 		}
-		return rows[i].t.Before(rows[j].t)
+		return a.t.Before(b.t)
 	})
 
 	times := make([]time.Time, len(rows))
@@ -416,13 +424,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
 	auxFields := auxCols.fields(fields, labelKeys, len(rows))
-	for i, r := range rows {
-		for _, c := range r.aux {
-			if v, ok := c.field.ConcreteAt(c.idx); ok {
-				auxFields[c.col].SetConcrete(i, v)
-			}
-		}
-	}
+	auxCols.fill(auxFields)
 	fields = append(fields, auxFields...)
 	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
@@ -474,8 +476,13 @@ func labelColumnNames(labelKeys []string, generated []*data.Field) map[string]st
 // row's own series. Fields with the same name share a column, compared without
 // case, since the SQL engine compares column names that way.
 type auxColumns struct {
-	cols  []auxColumn
-	index map[string]int
+	cols   []auxColumn
+	index  map[string]int
+	series [][]auxRef
+	// rows runs parallel to the converter's rows, and packs each row's series
+	// (index plus one, 0 for none) and source index. It stays nil until a row
+	// has aux fields, so numeric-only inputs do no extra work.
+	rows []uint64
 }
 
 type auxColumn struct {
@@ -488,31 +495,35 @@ type auxRef struct {
 	field *data.Field
 }
 
-type auxCell struct {
-	col   int
-	field *data.Field
-	idx   int
-}
-
 func newAuxColumns() *auxColumns {
 	return &auxColumns{index: map[string]int{}}
 }
 
-// addSeries registers the non-numeric fields of one series, other than its time
-// field. With matchLabels, only fields with the given labels belong to the series.
-func (a *auxColumns) addSeries(fields []*data.Field, timeField *data.Field, matchLabels bool, labels data.Labels) ([]auxRef, error) {
-	var refs []auxRef
-	seen := map[string]struct{}{}
+// auxFieldsOf returns the fields that become their own columns: non-numeric
+// fields other than the time field.
+func auxFieldsOf(fields []*data.Field, timeField *data.Field) []*data.Field {
+	var out []*data.Field
 	for _, f := range fields {
 		if f == timeField || f.Type().Numeric() {
 			continue
 		}
-		if matchLabels && !f.Labels.Equals(labels) {
-			continue
-		}
+		out = append(out, f)
+	}
+	return out
+}
+
+// addSeries registers the non-numeric fields of one series. It returns the
+// series' index plus one, or 0 when the series has no such fields.
+func (a *auxColumns) addSeries(fields []*data.Field) (int32, error) {
+	if len(fields) == 0 {
+		return 0, nil
+	}
+	var refs []auxRef
+	seen := map[string]struct{}{}
+	for _, f := range fields {
 		key := strings.ToLower(f.Name)
 		if _, dup := seen[key]; dup {
-			return nil, fmt.Errorf("field %q appears more than once in one series", f.Name)
+			return 0, fmt.Errorf("field %q appears more than once in one series", f.Name)
 		}
 		seen[key] = struct{}{}
 
@@ -523,24 +534,63 @@ func (a *auxColumns) addSeries(fields []*data.Field, timeField *data.Field, matc
 			a.index[key] = col
 			a.cols = append(a.cols, auxColumn{name: f.Name, typ: typ})
 		} else if a.cols[col].typ != typ {
-			return nil, fmt.Errorf("field %q has type %s in one series and %s in another", f.Name, a.cols[col].typ, typ)
+			return 0, fmt.Errorf("field %q has type %s in one series and %s in another", f.Name, a.cols[col].typ, typ)
 		}
 		refs = append(refs, auxRef{col: col, field: f})
 	}
-	return refs, nil
+	a.series = append(a.series, refs)
+	return int32(len(a.series)), nil
 }
 
-func auxCellsAt(refs []auxRef, idx int) []auxCell {
-	if len(refs) == 0 {
-		return nil
+func (a *auxColumns) addRow(rowIdx int, series int32, srcIdx int) {
+	if a.rows == nil {
+		if series == 0 {
+			return
+		}
+		a.rows = make([]uint64, rowIdx, rowIdx+1)
 	}
-	cells := make([]auxCell, 0, len(refs))
-	for _, r := range refs {
-		if idx < r.field.Len() {
-			cells = append(cells, auxCell{col: r.col, field: r.field, idx: idx})
+	a.rows = append(a.rows, uint64(series)<<32|uint64(uint32(srcIdx)))
+}
+
+// fill sets each row's aux values in the fields from auxColumns.fields.
+func (a *auxColumns) fill(out []*data.Field) {
+	for i, packed := range a.rows {
+		series := packed >> 32
+		if series == 0 {
+			continue
+		}
+		srcIdx := int(uint32(packed))
+		for _, ref := range a.series[series-1] {
+			if srcIdx >= ref.field.Len() {
+				continue
+			}
+			if v, ok := ref.field.ConcreteAt(srcIdx); ok {
+				out[ref.col].SetConcrete(i, v)
+			}
 		}
 	}
-	return cells
+}
+
+// sortFullLongRows sorts rows stably, and keeps aux, when set, in step with them.
+func sortFullLongRows[R any](rows []R, aux []uint64, less func(a, b *R) bool) {
+	if aux == nil {
+		sort.SliceStable(rows, func(i, j int) bool { return less(&rows[i], &rows[j]) })
+		return
+	}
+	sort.Stable(rowsWithAux[R]{rows: rows, aux: aux, less: less})
+}
+
+type rowsWithAux[R any] struct {
+	rows []R
+	aux  []uint64
+	less func(a, b *R) bool
+}
+
+func (r rowsWithAux[R]) Len() int           { return len(r.rows) }
+func (r rowsWithAux[R]) Less(i, j int) bool { return r.less(&r.rows[i], &r.rows[j]) }
+func (r rowsWithAux[R]) Swap(i, j int) {
+	r.rows[i], r.rows[j] = r.rows[j], r.rows[i]
+	r.aux[i], r.aux[j] = r.aux[j], r.aux[i]
 }
 
 // fields returns one empty nullable field per column. A name that matches a

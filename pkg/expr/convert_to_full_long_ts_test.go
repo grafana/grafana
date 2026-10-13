@@ -1,6 +1,7 @@
 package expr
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -713,4 +714,26 @@ func TestConvertTimeSeriesToFullLongNonNumericFields(t *testing.T) {
 		_, err := ConvertToFullLong(input)
 		require.ErrorContains(t, err, `field "updated" has type`)
 	})
+}
+
+func BenchmarkConvertTimeSeriesWideToFullLongNumericOnly(b *testing.B) {
+	for _, size := range []struct{ series, rows int }{{100, 1000}, {2000, 100}, {5000, 20}} {
+		times := make([]time.Time, size.rows)
+		for i := range times {
+			times[i] = time.Unix(int64(i), 0)
+		}
+		fields := []*data.Field{data.NewField("time", nil, times)}
+		for s := 0; s < size.series; s++ {
+			fields = append(fields, data.NewField("value", data.Labels{"host": fmt.Sprintf("h%d", s)}, make([]float64, size.rows)))
+		}
+		frames := data.Frames{data.NewFrame("", fields...).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesWide})}
+
+		b.Run(fmt.Sprintf("%dx%d", size.series, size.rows), func(b *testing.B) {
+			for b.Loop() {
+				if _, err := ConvertToFullLong(frames); err != nil {
+					b.Fatal(err)
+				}
+			}
+		})
+	}
 }
