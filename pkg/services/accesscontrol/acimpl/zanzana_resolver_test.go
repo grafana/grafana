@@ -988,7 +988,8 @@ func TestListPermissions_PermissionManagementActionsScoping(t *testing.T) {
 	}
 }
 
-// Distinct resource lists expose accidental reuse of a base-resource grant for a subresource.
+// Return different UIDs per subresource so tests fail if the resolver
+// omits or sends the wrong Subresource in a List request.
 type datasourceSubresourceZanzanaClient struct {
 	fakeZanzanaClient
 }

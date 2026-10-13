@@ -108,10 +108,6 @@ type MapperRegistry interface {
 	// Get returns the permission mapper for the given group and resource.
 	// If no translation is found, it returns false.
 	Get(group, resource, subresource string) (Mapping, bool)
-	// GetAPIResourceName returns the API resource name (e.g. "repositories") for the given group and resource.
-	// Use this to send the canonical resource name in Check requests instead of legacy names (e.g. "provisioning.repositories").
-	// Returns ("", false) if no translation is found.
-	GetAPIResourceName(group, resource string) (string, bool)
 	// GetAll returns all the translations for the given group
 	GetAll(group string) []Mapping
 	// ResourceMappings returns registered translations with their API resource names.
@@ -805,37 +801,6 @@ func NewMapperRegistry() MapperRegistry {
 	return mapper
 }
 
-// findGroupKey returns the registry key for group, using exact match first,
-// then wildcard match. A wildcard key has the form "*.<suffix>" (e.g. "*.datasource.grafana.app");
-// group matches if it has that suffix, is longer than the suffix (non-empty prefix), and the prefix
-// contains no dot (so "loki.datasource.grafana.app" matches but "foo.loki.datasource.grafana.app" does not).
-// Group starting with "*" never matches (so we never exact-match a wildcard registry key as input).
-func (m mapper) findGroupKey(group string) (string, bool) {
-	if strings.HasPrefix(group, "*") {
-		return "", false
-	}
-	if _, ok := m[group]; ok {
-		return group, true
-	}
-	for key := range m {
-		// is this a wildcard key?
-		if len(key) < 2 || key[0] != '*' || key[1] != '.' {
-			continue
-		}
-		suffix := key[1:]                              // remove the leading "*"
-		prefix, ok := strings.CutSuffix(group, suffix) // loki.datasource.grafana.app -> loki
-		if !ok || prefix == "" {
-			continue
-		}
-		// prefix must be a single segment (no nested dots)
-		if strings.Contains(prefix, ".") {
-			continue
-		}
-		return key, true
-	}
-	return "", false
-}
-
 // newPermissionsDelegationTranslation maps a delegation check to the RBAC
 // action being delegated. It mirrors the static permissions entry, except the
 // action comes from the request rather than a fixed verb mapping, so holding
@@ -865,7 +830,7 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 		return newPermissionsDelegationTranslation(subresource), true
 	}
 
-	groupKey, ok := m.findGroupKey(group)
+	resources, ok := m[group]
 	if !ok {
 		return nil, false
 	}
@@ -875,45 +840,12 @@ func (m mapper) Get(group, resource, subresource string) (Mapping, bool) {
 		lookupResource = resource + "/" + subresource
 	}
 
-	resources := m[groupKey]
 	t, ok := resources[lookupResource]
 	if !ok {
 		return nil, false
 	}
 
 	return &t, true
-}
-
-func (m mapper) GetAPIResourceName(group, resource string) (string, bool) {
-	baseResource, subresource, _ := strings.Cut(resource, "/")
-	group, baseResource, subresource = datasourcek8s.AuthorizationResource(group, baseResource, subresource)
-	resource = baseResource
-	if subresource != "" {
-		resource += "/" + subresource
-	}
-	groupKey, ok := m.findGroupKey(group)
-	if !ok {
-		return "", false
-	}
-	resources := m[groupKey]
-	if _, ok := resources[resource]; ok {
-		return resource, true
-	}
-	// Fall back to matching on the translation's scope resource. Iterate in sorted
-	// key order so the result is deterministic when several API resources share the
-	// same scope resource (e.g. rules.alerting.grafana.app alertrules/recordingrules/
-	// rulesequences all map to "alert.rules"); map iteration order must never decide it.
-	apiResources := make([]string, 0, len(resources))
-	for apiResource := range resources {
-		apiResources = append(apiResources, apiResource)
-	}
-	slices.Sort(apiResources)
-	for _, apiResource := range apiResources {
-		if resources[apiResource].Resource() == resource {
-			return apiResource, true
-		}
-	}
-	return "", false
 }
 
 func (m mapper) GetAll(group string) []Mapping {
@@ -930,12 +862,11 @@ func (m mapper) GetAll(group string) []Mapping {
 }
 
 func (m mapper) ResourceMappings(group string) []ResourceMapping {
-	groupKey, ok := m.findGroupKey(group)
+	resources, ok := m[group]
 	if !ok {
 		return nil
 	}
 
-	resources := m[groupKey]
 	mappings := make([]ResourceMapping, 0, len(resources))
 	for apiResource, t := range resources {
 		mapping := t

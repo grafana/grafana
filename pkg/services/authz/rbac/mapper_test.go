@@ -2,7 +2,6 @@ package rbac
 
 import (
 	"context"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,9 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 )
-
-// Test-only wildcard pattern; not used in the real mapper.
-const testWildcardPattern = "*.test.grafana.app"
 
 func TestMapperRegistry_DatasourceAliases(t *testing.T) {
 	reg := NewMapperRegistry()
@@ -89,9 +85,6 @@ func TestMapperRegistry_QueryAliases(t *testing.T) {
 				_, ok := alias.Action(verb)
 				assert.False(t, ok, "query must not grant verb %q", verb)
 			}
-			name, ok := reg.GetAPIResourceName(group, "query")
-			require.True(t, ok)
-			assert.Equal(t, "datasources/query", name)
 
 			_, ok = reg.Get(group, "query", "caching")
 			assert.False(t, ok, "query aliases must not accept subresources")
@@ -255,92 +248,26 @@ func TestMapperRegistry_Playlist(t *testing.T) {
 	assert.False(t, mapping.HasFolderSupport(), "playlists are not folder-scoped")
 }
 
-// TestFindGroupKey_WildcardMatching exercises findGroupKey via a minimal mapper.
-// It covers: exact match, wildcard match, group starts with *, key not wildcard (continue),
-// suffix mismatch, empty group, and no match.
-func TestFindGroupKey_WildcardMatching(t *testing.T) {
-	tests := []struct {
-		requestedGroup string
-		keys           []string // keys in mapper (exact and/or wildcard)
-		expectedKey    string
-		matches        bool
-	}{
-		// Exact match: requested group is a key in the mapper
-		{"exact.grafana.app", []string{"exact.grafana.app"}, "exact.grafana.app", true},
-		// Wildcard match: group has suffix of wildcard key and is longer than suffix
-		{"foo.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
-		{"bar.test.grafana.app", []string{testWildcardPattern}, testWildcardPattern, true},
-		// group with nested dots does not match wildcard
-		{"bar.baz.test.grafana.app", []string{testWildcardPattern}, "", false},
-		// Group starts with *: never matches
-		{"*.test.grafana.app", []string{testWildcardPattern}, "", false},
-		// Key not a wildcard (no *.): iterate and continue, no match
-		{"foo.test.grafana.app", []string{"dashboard.grafana.app"}, "", false},
-		{"foo.test.grafana.app", []string{"*"}, "", false},
-		// Suffix mismatch or group not longer than suffix
-		{"dashboard.grafana.app", []string{testWildcardPattern}, "", false},
-		{"test.grafana.app", []string{testWildcardPattern}, "", false},
-		{"", []string{testWildcardPattern}, "", false},
-		// Exact match preferred over wildcard when both exist
-		{"foo.test.grafana.app", []string{"foo.test.grafana.app", testWildcardPattern}, "foo.test.grafana.app", true},
-	}
-	for _, tt := range tests {
-		t.Run(tt.requestedGroup+"_"+strings.Join(tt.keys, ","), func(t *testing.T) {
-			m := make(mapper)
-			for _, k := range tt.keys {
-				m[k] = map[string]translation{"r": newResourceTranslation("r", "uid", false, nil)}
+func TestMapperRegistry_InvalidDatasourceGroups(t *testing.T) {
+	reg := NewMapperRegistry()
+	for _, group := range []string{
+		"*.datasource.grafana.app",
+		"foo.bar.datasource.grafana.app",
+		"loki.datasource.grafana.app.evil",
+		"unknown.grafana.app",
+		"",
+	} {
+		t.Run(group, func(t *testing.T) {
+			for _, subresource := range []string{"", "query", "caching"} {
+				_, ok := reg.Get(group, "datasources", subresource)
+				assert.False(t, ok)
 			}
-			key, ok := m.findGroupKey(tt.requestedGroup)
-			assert.Equal(t, tt.matches, ok)
-			assert.Equal(t, tt.expectedKey, key)
+			assert.Empty(t, reg.ResourceMappings(group))
 		})
 	}
 }
 
-func TestMapperRegistry_WildcardGroup(t *testing.T) {
-	// Test-only mapper with *.test.grafana.app; exercises full wildcard behavior (match + deny)
-	tr := newResourceTranslation("testresources", "uid", false, nil)
-	m := mapper{
-		testWildcardPattern: {
-			"testresources": tr,
-		},
-	}
-	var reg MapperRegistry = m
-
-	// Matching groups get the mapping
-	for _, group := range []string{"foo.test.grafana.app", "bar.test.grafana.app", "baz.test.grafana.app"} {
-		t.Run("matches_"+group, func(t *testing.T) {
-			mapping, ok := reg.Get(group, "testresources", "")
-			require.True(t, ok, "Get(%q, \"testresources\") should find mapping", group)
-			require.NotNil(t, mapping)
-			assert.Equal(t, "testresources:uid:", mapping.Prefix())
-			all := reg.GetAll(group)
-			require.Len(t, all, 1)
-			assert.Equal(t, mapping.Prefix(), all[0].Prefix())
-		})
-	}
-
-	// Wildcard as input, wrong suffix, no prefix, or unknown group must not resolve
-	denyCases := []struct {
-		name  string
-		group string
-	}{
-		{"wildcard_input", testWildcardPattern},
-		{"wrong_suffix", "foo.test.grafana.app.evil"},
-		{"no_prefix", "test.grafana.app"},
-		{"unknown_group", "unknown.grafana.app"},
-	}
-	for _, tc := range denyCases {
-		t.Run("deny_"+tc.name, func(t *testing.T) {
-			_, ok := reg.Get(tc.group, "testresources", "")
-			assert.False(t, ok, "Get(%q) must not return a mapping", tc.group)
-			all := reg.GetAll(tc.group)
-			assert.Empty(t, all, "GetAll(%q) must not return any mappings", tc.group)
-		})
-	}
-}
-
-func TestMapperRegistry_ExactMatchPreferred(t *testing.T) {
+func TestMapperRegistry_ExactGroup(t *testing.T) {
 	reg := NewMapperRegistry()
 
 	// Exact group keys still work
@@ -762,100 +689,6 @@ func TestMapperRegistry_PermissionsDelegation(t *testing.T) {
 		_, ok := reg.Get("iam.grafana.app", "permissions", "status")
 		assert.False(t, ok)
 	})
-}
-
-// TestGetAPIResourceName covers resolving a legacy scope resource back to an API resource name:
-//   - an exact key match wins over the shared-scope fallback (e.g. dashboards vs dashboards/annotations);
-//   - unknown group / unknown scope resource return false;
-//   - when several API resources share one scope resource, the fallback returns the sorted-first
-//     key deterministically (the regression this PR fixes). Each case is asserted repeatedly so a
-//     regression to Go's per-range map iteration order would eventually flip the result and fail.
-func TestGetAPIResourceName(t *testing.T) {
-	t.Run("datasource aliases use the shared registry", func(t *testing.T) {
-		registry := NewMapperRegistry()
-		require.NotContains(t, registry.GetGroups(), "*.datasource.grafana.app")
-		for _, resource := range []string{"datasources", "datasources/query", "datasources/caching"} {
-			name, ok := registry.GetAPIResourceName("loki.datasource.grafana.app", resource)
-			require.True(t, ok)
-			require.Equal(t, resource, name)
-		}
-		mappings := registry.ResourceMappings("datasource.grafana.app")
-		require.Len(t, mappings, 3)
-		for _, mapping := range mappings {
-			_, ok := registry.GetAPIResourceName("loki.datasource.grafana.app", mapping.APIResource)
-			require.True(t, ok, mapping.APIResource)
-		}
-	})
-	// Synthetic group whose keys (in non-sorted literal order) all share one scope resource,
-	// so the only stable answer is the sorted-first key "aaa".
-	syntheticSharedScope := mapper{
-		"example.grafana.app": {
-			"zzz": newResourceTranslation("shared", "uid", false, nil),
-			"aaa": newResourceTranslation("shared", "uid", false, nil),
-			"mmm": newResourceTranslation("shared", "uid", false, nil),
-		},
-	}
-
-	tests := []struct {
-		name     string
-		reg      MapperRegistry
-		group    string
-		resource string
-		wantName string
-		wantOK   bool
-	}{
-		{
-			name:     "exact key match wins over shared-scope fallback",
-			reg:      NewMapperRegistry(),
-			group:    "dashboard.grafana.app",
-			resource: "dashboards",
-			wantName: "dashboards",
-			wantOK:   true,
-		},
-		{
-			name:     "unknown group returns false",
-			reg:      NewMapperRegistry(),
-			group:    "does.not.exist.grafana.app",
-			resource: "dashboards",
-			wantOK:   false,
-		},
-		{
-			name:     "unknown scope resource returns false",
-			reg:      NewMapperRegistry(),
-			group:    "dashboard.grafana.app",
-			resource: "no-such-resource",
-			wantOK:   false,
-		},
-		{
-			// Real config: alertrules/recordingrules/rulesequences all map to "alert.rules".
-			name:     "real shared scope resource resolves to sorted-first key",
-			reg:      NewMapperRegistry(),
-			group:    "rules.alerting.grafana.app",
-			resource: "alert.rules",
-			wantName: "alertrules",
-			wantOK:   true,
-		},
-		{
-			name:     "synthetic shared scope resource resolves to sorted-first key",
-			reg:      syntheticSharedScope,
-			group:    "example.grafana.app",
-			resource: "shared",
-			wantName: "aaa",
-			wantOK:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			// Repeat to defeat Go's per-range map iteration randomization: a
-			// non-deterministic implementation would eventually return a different key.
-			for range 100 {
-				name, ok := tt.reg.GetAPIResourceName(tt.group, tt.resource)
-				assert.Equal(t, tt.wantOK, ok)
-				assert.Equal(t, tt.wantName, name)
-			}
-		})
-	}
 }
 
 func TestMapperRegistry_ResourceMappings_UnknownGroup(t *testing.T) {
