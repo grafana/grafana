@@ -41,6 +41,7 @@ import {
 import { type PanelContext } from '../../PanelChrome';
 
 import { getCellRenderer, getCellSpecificStyles } from './Cells/renderers';
+import { getCellMenuOptions } from './cellMenuOptions';
 import { HeaderCell } from './components/HeaderCell';
 import { SummaryCell } from './components/SummaryCell';
 import { TableCellActions } from './components/TableCellActions';
@@ -354,8 +355,9 @@ function buildColumnsFromFields(
     const wrappingDisabled = wrapFallback?.disabledFields.has(displayName) ?? false;
     const cellInspect = wrappingDisabled || isCellInspectEnabled(field);
     const showFilters = Boolean(field.config.filterable && onCellFilterAdded != null);
-    const showAssistant = tableRefreshEnabled && onCellAddToAssistant != null;
-    const showActions = cellInspect || showFilters || showAssistant;
+    const showAssistant = Boolean(tableRefreshEnabled && onCellAddToAssistant != null);
+    const cellMenuOptions = getCellMenuOptions({ cellInspect, showFilters, hasAssistantAction: showAssistant });
+    const showActions = cellMenuOptions.length > 0;
     const width = widths[i];
     const contentWidth =
       width -
@@ -488,6 +490,7 @@ function buildColumnsFromFields(
           />
           {showActions && (
             <TableCellActions
+              groups={cellMenuOptions}
               tableRefreshEnabled={tableRefreshEnabled}
               field={field}
               value={value}

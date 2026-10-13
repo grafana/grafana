@@ -31,6 +31,23 @@ function setup(overrides: Partial<TableCellActionsProps> = {}) {
 
 describe('TableCellActions', () => {
   describe('refreshed menu', () => {
+    it('renders supplied groups in order and invokes the matching action', async () => {
+      const { onCellFilterAdded } = setup({
+        tableRefreshEnabled: true,
+        groups: [['filterOut', 'inspect'], ['assistant']],
+        onAddToAssistant: jest.fn(),
+      });
+      await userEvent.click(screen.getByRole('button', { name: 'Cell actions' }));
+      expect(Array.from(screen.getByRole('menu').children, (child) => child.textContent)).toEqual([
+        'Filter out value',
+        'Inspect value',
+        '',
+        'Add to Assistant',
+      ]);
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Filter out value' }));
+      expect(onCellFilterAdded).toHaveBeenCalledWith({ key: 'Field1', operator: FILTER_OUT_OPERATOR, value: 'hello' });
+    });
+
     it('invokes Assistant from an Assistant-only menu by keyboard', async () => {
       const onAddToAssistant = jest.fn();
       setup({ tableRefreshEnabled: true, cellInspect: false, showFilters: false, onAddToAssistant });
@@ -49,6 +66,14 @@ describe('TableCellActions', () => {
         'Inspect value',
         'Filter for value',
         'Filter out value',
+        'Add to Assistant',
+      ]);
+      expect(Array.from(screen.getByRole('menu').children, (child) => child.textContent)).toEqual([
+        'Inspect value',
+        '',
+        'Filter for value',
+        'Filter out value',
+        '',
         'Add to Assistant',
       ]);
     });
