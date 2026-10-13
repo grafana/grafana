@@ -551,3 +551,35 @@ func TestConvertMixedNumericAndTimeSeriesMultiToFullLong(t *testing.T) {
 		})
 	}
 }
+
+// Prometheus and Tempo append exemplar frames with no frame type after the series.
+func TestConvertTimeSeriesMultiToFullLongSkipsOtherFrameTypes(t *testing.T) {
+	series := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{time.Unix(10, 0), time.Unix(20, 0)}),
+		data.NewField("rate", data.Labels{"job": "a"}, []float64{1.0, 2.0}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+	exemplars := data.NewFrame("exemplar",
+		data.NewField("Time", nil, []time.Time{time.Unix(15, 0)}),
+		data.NewField("Value", nil, []float64{9.0}),
+		data.NewField("trace_id", nil, []string{"abc"}),
+	)
+	table := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{time.Unix(15, 0)}),
+		data.NewField("other", nil, []float64{7.0}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTable})
+
+	expected := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(10, 0), time.Unix(20, 0)}),
+		data.NewField(SQLValueFieldName, nil, []*float64{new(1.0), new(2.0)}),
+		data.NewField(SQLMetricFieldName, nil, []string{"rate", "rate"}),
+		data.NewField("job", nil, []*string{new("a"), new("a")}),
+	)
+	expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+	output, err := ConvertToFullLong(data.Frames{series, exemplars, table})
+	require.NoError(t, err)
+	require.Len(t, output, 1)
+	if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+	}
+}
