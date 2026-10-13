@@ -3,6 +3,7 @@ package expr
 import (
 	"context"
 	"encoding/json"
+	"maps"
 	"sync"
 	"testing"
 	"time"
@@ -96,7 +97,7 @@ func TestDatasourceRequestsAreMarkedAsFromExpression(t *testing.T) {
 
 				var original map[string]string
 				if tt.headers != nil {
-					req.Headers = tt.headers
+					req.Headers = maps.Clone(tt.headers)
 					original = map[string]string{}
 					for k, v := range tt.headers {
 						original[k] = v
