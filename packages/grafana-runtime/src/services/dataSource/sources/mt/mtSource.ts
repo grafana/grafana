@@ -10,10 +10,11 @@ import { getDatasourcePluginMetas } from '../../../pluginMeta/datasources';
 import {
   DIRECT_ACCESS_UNSUPPORTED_WARNING,
   MISSING_PLUGIN_DROPPED_WARNING,
+  MT_FILL_FAILED,
   MT_SETTINGS_FETCH_FAILED,
   MT_SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
 } from '../../constants';
-import { DataSourceSettingsFetchError } from '../../errors';
+import { DataSourceListFetchError, DataSourceSettingsFetchError } from '../../errors';
 import { logDataSourceInstanceError, logDataSourceWarning } from '../../logging';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from '../types';
 
@@ -62,8 +63,13 @@ export class MTDataSource implements DataSourceCacheSource {
    * change that caused the refresh. The new fetch cancels the old one, and every caller of the old
    * one gets the new result.
    */
-  refreshList(): Promise<DataSourceListSnapshot> {
-    return this.getList(true);
+  async refreshList(): Promise<DataSourceListSnapshot> {
+    try {
+      return await this.getList(true);
+    } catch (error) {
+      logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'reload', source: this.kind });
+      throw new DataSourceListFetchError(error);
+    }
   }
 
   async loadSettings(uid: string): Promise<DataSourceInstanceSettings | undefined> {
