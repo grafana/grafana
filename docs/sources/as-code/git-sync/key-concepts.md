@@ -17,6 +17,7 @@ menuTitle: Key concepts
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/key-concepts/
 aliases:
+  - ../../observability-as-code/git-sync/key-concepts/
 ---
 
 # Git Sync key concepts

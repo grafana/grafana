@@ -8,6 +8,8 @@ menuTitle: Terraform
 title: Grafana Terraform provider
 weight: 300
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/
+aliases:
+  - ../infrastructure-as-code/terraform/
 ---
 
 # Grafana Terraform provider

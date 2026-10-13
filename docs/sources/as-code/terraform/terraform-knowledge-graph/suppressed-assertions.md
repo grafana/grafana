@@ -9,6 +9,8 @@ keywords:
   - Suppressed Assertions
   - Alert Suppression
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/suppressed-assertions/
+aliases:
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/suppressed-assertions/
 ---
 
 # Configure suppressed assertions using Terraform

@@ -10,6 +10,8 @@ keywords:
   - Trace Correlation
   - Tempo
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/trace-configurations/
+aliases:
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/trace-configurations/
 ---
 
 # Configure trace correlation using Terraform

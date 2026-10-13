@@ -8,6 +8,8 @@ keywords:
 title: Create and manage dashboards using Terraform and GitHub Actions
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/dashboards-github-action/
+aliases:
+  - ../../infrastructure-as-code/terraform/dashboards-github-action/
 ---
 
 # Create and manage dashboards using Terraform and GitHub Actions

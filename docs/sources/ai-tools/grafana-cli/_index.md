@@ -32,6 +32,7 @@ weight: 100
 canonical: https://grafana.com/docs/grafana/latest/ai-tools/grafana-cli/
 aliases:
   - ../../observability-as-code/grafana-cli/ # /docs/grafana/next/observability-as-code/grafana-cli/
+  - ../../as-code/observability-as-code/grafana-cli/
 ---
 
 # Introduction to Grafana CLI tools

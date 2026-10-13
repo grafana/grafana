@@ -11,6 +11,8 @@ keywords:
   - Resource Thresholds
   - Health Thresholds
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/thresholds/
+aliases:
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/thresholds/
 ---
 
 # Configure thresholds using Terraform

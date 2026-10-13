@@ -19,6 +19,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/use-git-sync
 aliases:
   - ../../../observability-as-code/provision-resources/use-git-sync/ # /docs/grafana/next/observability-as-code/provision-resources/use-git-sync/
   - ../provision-resources/use-git-sync/
+  - ../../observability-as-code/git-sync/use-git-sync/
 refs:
   roles-and-permissions:
     - pattern: /docs/grafana/

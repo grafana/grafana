@@ -5,6 +5,7 @@ description: Run multiple Grafana instances serving traffic simultaneously, sync
 weight: 50
 aliases:
   - ../../provision-resources/git-sync-deployment-scenarios/high-availability
+  - ../../../observability-as-code/git-sync/scenarios/high-availability/
 ---
 
 # Git Sync for high availability environments

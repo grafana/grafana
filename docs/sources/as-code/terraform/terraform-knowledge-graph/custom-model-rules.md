@@ -10,6 +10,8 @@ keywords:
   - Entity Models
   - Prometheus
 canonical: https://grafana.com/docs/grafana/latest/as-code/terraform/terraform-knowledge-graph/custom-model-rules/
+aliases:
+  - ../../../infrastructure-as-code/terraform/terraform-knowledge-graph/custom-model-rules/
 ---
 
 # Create custom model rules using Terraform

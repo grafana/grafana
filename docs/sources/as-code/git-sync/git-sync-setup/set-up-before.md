@@ -15,6 +15,7 @@ title: Setup prerequisites
 weight: 110
 canonical: https://grafana.com/docs/grafana/latest/as-code/git-sync/git-sync-setup/set-up-before/
 aliases:
+  - ../../../observability-as-code/git-sync/git-sync-setup/set-up-before/
 ---
 
 # Before you begin
