@@ -25,6 +25,9 @@ export interface SourcePanel {
   sections: SourceSection[];
 }
 
+/** Reading plugin metas copies every panel plugin's meta, and a plugin's meta doesn't change while Grafana runs. */
+const skipsDataQueryByPluginId = new Map<string, boolean>();
+
 /** Long enough for slow datasources; a panel that still hasn't loaded is reported as not loaded. */
 export const LOAD_TIMEOUT_MS = 30_000;
 /** Off-screen panels were never measured, and their query resolution depends on a width. */
@@ -43,8 +46,17 @@ export function getSourcePanels(dashboard: DashboardSceneLike): SourcePanel[] {
     if (plugin) {
       return Boolean(plugin.meta.skipDataQuery);
     }
-    metas ??= getPanelPluginMetasMapSync();
-    return Boolean(metas[panel.state.pluginId]?.skipDataQuery);
+    const { pluginId } = panel.state;
+    let skips = skipsDataQueryByPluginId.get(pluginId);
+    if (skips === undefined) {
+      metas ??= getPanelPluginMetasMapSync();
+      const meta = metas[pluginId];
+      skips = Boolean(meta?.skipDataQuery);
+      if (meta) {
+        skipsDataQueryByPluginId.set(pluginId, skips);
+      }
+    }
+    return skips;
   };
 
   const sources: SourcePanel[] = [];
