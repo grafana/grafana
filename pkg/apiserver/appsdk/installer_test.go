@@ -24,6 +24,7 @@ import (
 	"k8s.io/component-base/metrics/legacyregistry"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/util"
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -184,6 +185,11 @@ func TestDefaultInstaller_GetOpenAPIDefinitions(t *testing.T) {
 	res := installer.GetOpenAPIDefinitions(refCallback)
 	require.Equal(t, len(expected), len(res))
 	assert.Equal(t, expected, res)
+	options, _, _ := (&SubresourceConnector{}).NewConnectOptions()
+	optionsName := util.GetCanonicalTypeName(options)
+	assert.Equal(t, "com.github.grafana.grafana.pkg.apiserver.appsdk.ResourceCallOptions", optionsName)
+	require.Contains(t, res, optionsName)
+	assert.Contains(t, res[optionsName].Schema.Properties, "path")
 }
 
 // TestEmptyObject_OpenAPIDefinitionKeyMatchesModelName guards the invariant
