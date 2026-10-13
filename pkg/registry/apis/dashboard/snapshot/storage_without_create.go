@@ -177,6 +177,33 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 
 type externalSnapshotDeleteURLKey struct{}
 
+func externalSnapshotDeleteEndpoint(externalURL, deleteKey string, kubernetes bool) (string, error) {
+	parsed, err := url.Parse(externalURL)
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return "", fmt.Errorf("invalid external delete URL %q", externalURL)
+	}
+	legacyPath := "/api/snapshots-delete/"
+	kubernetesPath := "/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
+		dashv0.SnapshotResourceInfo.GroupResource().Resource + "/delete/"
+	targetPath, sourcePath := legacyPath, kubernetesPath
+	if kubernetes {
+		targetPath, sourcePath = kubernetesPath, legacyPath
+	}
+	if strings.Contains(parsed.Path, targetPath) {
+		return externalURL, nil
+	}
+	basePath := ""
+	if index := strings.LastIndex(parsed.Path, sourcePath); index >= 0 {
+		basePath = parsed.Path[:index]
+	}
+	parsed.Path = strings.TrimRight(basePath, "/") + targetPath + deleteKey
+	parsed.RawPath = ""
+	parsed.RawQuery = ""
+	parsed.ForceQuery = false
+	parsed.Fragment = ""
+	return parsed.String(), nil
+}
+
 func deleteSnapshotFromExternalHost(ctx context.Context, snap *dashv0.Snapshot, options dashv0.SnapshotSharingOptions) (string, error) {
 	if snap.Spec.External == nil || !*snap.Spec.External || snap.Spec.DeleteKey == nil || options.ExternalSnapshotURL == "" {
 		return "", nil
@@ -269,13 +296,16 @@ func deleteExternalSnapshotLegacy(externalURL string) error {
 	if !strings.Contains(externalURL, "/api/snapshots-delete/") {
 		parsed, err := url.Parse(externalURL)
 		if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-			return fmt.Errorf("invalid external delete URL %q: %w", externalURL, err)
+			return fmt.Errorf("invalid external delete URL %q", externalURL)
 		}
 		deleteKey := path.Base(strings.TrimRight(parsed.Path, "/"))
 		if deleteKey == "" || deleteKey == "." || deleteKey == "/" {
 			return fmt.Errorf("could not extract delete key from URL %q", externalURL)
 		}
-		requestURL = parsed.Scheme + "://" + parsed.Host + "/api/snapshots-delete/" + deleteKey
+		requestURL, err = externalSnapshotDeleteEndpoint(externalURL, deleteKey, false)
+		if err != nil {
+			return err
+		}
 	}
 
 	req, err := http.NewRequest(http.MethodGet, requestURL, nil)

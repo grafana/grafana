@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -81,20 +80,18 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 	// changed, but skip a duplicate request only when the effective endpoint matches.
 	completedDeleteURL, _ := ctx.Value(externalSnapshotDeleteURLKey{}).(string)
 	if snap.ExternalDeleteURL != "" {
-		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
-			parsed, err := url.Parse(snap.ExternalDeleteURL)
-			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-				return nil, false, fmt.Errorf("invalid external delete URL %q", snap.ExternalDeleteURL)
+		kubernetesPush := openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx))
+		deleteURL, err := externalSnapshotDeleteEndpoint(snap.ExternalDeleteURL, snap.DeleteKey, kubernetesPush)
+		if err != nil {
+			return nil, false, err
+		}
+		if completedDeleteURL != deleteURL {
+			if kubernetesPush {
+				err = deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken)
+			} else {
+				err = deleteExternalSnapshotLegacy(deleteURL)
 			}
-			prefix := dashV0.SnapshotResourceInfo.GroupResource().Resource
-			deleteURL := parsed.Scheme + "://" + parsed.Host + "/apis/" + dashV0.GROUP + "/" + dashV0.VERSION + "/namespaces/default/" + prefix + "/delete/" + snap.DeleteKey
-			if completedDeleteURL != deleteURL {
-				if err := deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
-					return nil, false, err
-				}
-			}
-		} else if completedDeleteURL != snap.ExternalDeleteURL {
-			if err := deleteExternalSnapshotLegacy(snap.ExternalDeleteURL); err != nil {
+			if err != nil {
 				return nil, false, err
 			}
 		}

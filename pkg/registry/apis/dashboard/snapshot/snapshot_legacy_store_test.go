@@ -127,7 +127,7 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		assert.Empty(t, receivedReq.Header.Get("Authorization"))
 	})
 
-	t.Run("rebuilds URL using domain from ExternalDeleteURL even when stored path is wrong", func(t *testing.T) {
+	t.Run("preserves base path when rebuilding a legacy URL", func(t *testing.T) {
 		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
 		var receivedReq *http.Request
@@ -137,19 +137,32 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		}))
 		defer server.Close()
 
-		// Stored URL has a stale/wrong legacy path; with the toggle ON the store should
-		// extract just the domain and rebuild the new k8s path.
-		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
+		store := makeStore(t, server.URL+"/snapshots/api/snapshots-delete/"+deleteKey)
 
 		_, _, err := store.Delete(ctxForOrg(1), "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.NotNil(t, receivedReq)
 		assert.Equal(t, http.MethodDelete, receivedReq.Method)
-		assert.Equal(t, "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey, receivedReq.URL.Path)
+		assert.Equal(t, "/snapshots/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey, receivedReq.URL.Path)
 	})
 
 	t.Run("wrapper already deleted from stored endpoint", func(t *testing.T) {
 		deleteURL := "https://snapshots.example.com/api/snapshots-delete/" + deleteKey
+		store := makeStore(t, deleteURL)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, deleteURL)
+		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, deleted)
+	})
+
+	t.Run("wrapper already deleted from a Kubernetes endpoint with a base path", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, true)
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			t.Error("legacy store repeated deletion through a different path")
+			w.WriteHeader(http.StatusInternalServerError)
+		}))
+		defer server.Close()
+		deleteURL := server.URL + "/snapshots/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/" + deleteKey
 		store := makeStore(t, deleteURL)
 		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, deleteURL)
 		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
