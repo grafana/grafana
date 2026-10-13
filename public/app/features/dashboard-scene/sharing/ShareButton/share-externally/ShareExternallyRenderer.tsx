@@ -1,11 +1,13 @@
 import { css } from '@emotion/css';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { type GrafanaTheme2, type SelectableValue } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
+import { config, isFetchError } from '@grafana/runtime';
 import { type SceneComponentProps } from '@grafana/scenes';
 import { Button, ClipboardButton, Divider, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import {
   useDeletePublicDashboardMutation,
@@ -47,8 +49,15 @@ export function ShareExternallyRenderer({ model }: SceneComponentProps<ShareExte
   const styles = useStyles2(getStyles);
   const dashboard = getDashboardSceneFor(model);
 
-  const { data: publicDashboard, isLoading } = useGetPublicDashboardQuery(dashboard.state.uid!);
+  const { data: publicDashboard, isLoading, error } = useGetPublicDashboardQuery(dashboard.state.uid!);
   const [deletePublicDashboard, { isLoading: isDeleteLoading }] = useDeletePublicDashboardMutation();
+
+  const notifyApp = useAppNotification();
+  useEffect(() => {
+    if (isFetchError(error) && config.publicDashboardsEnabled) {
+      notifyApp.error(error.data.message);
+    }
+  }, [error, notifyApp]);
 
   const onRevokeClick = () => {
     setShowRevokeAccess(true);

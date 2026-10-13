@@ -1,10 +1,11 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
+import { HttpResponse, http } from 'msw';
 import { render } from 'test/test-utils';
 
 import { getDefaultTimeRange, LoadingState } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { setPluginImportUtils } from '@grafana/runtime';
+import { type BackendSrv, getBackendSrv, setBackendSrv, setPluginImportUtils } from '@grafana/runtime';
 import {
   CustomVariable,
   SceneQueryRunner,
@@ -13,8 +14,12 @@ import {
   VizPanel,
   type VizPanelState,
 } from '@grafana/scenes';
+import { setupMockServer } from '@grafana/test-utils/server';
+import { backendSrv } from 'app/core/services/backend_srv';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
+import { configureStore } from 'app/store/configureStore';
+import { AppNotificationSeverity } from 'app/types/appNotifications';
 
 import { contextSrv } from '../../../../../core/services/context_srv';
 import { DashboardScene } from '../../../scene/DashboardScene';
@@ -82,12 +87,45 @@ describe('Alerts', () => {
   });
 });
 
+describe('Public dashboard request', () => {
+  const server = setupMockServer();
+  let previousBackendSrv: BackendSrv;
+
+  beforeAll(() => {
+    previousBackendSrv = getBackendSrv();
+    setBackendSrv(backendSrv);
+  });
+
+  afterAll(() => {
+    setBackendSrv(previousBackendSrv);
+  });
+
+  it('shows an error notification when the request fails', async () => {
+    server.use(
+      http.get('/api/dashboards/uid/dash-1/public-dashboards', () =>
+        HttpResponse.json({ message: 'Server error' }, { status: 500 })
+      )
+    );
+    const store = configureStore();
+
+    await buildAndRenderScenario({ store });
+
+    await waitFor(() =>
+      expect(Object.values(store.getState().appNotifications.byId)).toEqual([
+        expect.objectContaining({ severity: AppNotificationSeverity.Error, title: 'Server error' }),
+      ])
+    );
+  });
+});
+
 async function buildAndRenderScenario({
   overrides,
   panelOverrides,
+  store,
 }: {
   overrides?: Partial<DashboardSceneState>;
   panelOverrides?: Partial<VizPanelState>;
+  store?: ReturnType<typeof configureStore>;
 }) {
   const drawer = new ShareDrawer({ shareView: shareDashboardType.publicDashboard });
 
@@ -112,7 +150,7 @@ async function buildAndRenderScenario({
 
   activateFullSceneTree(scene);
 
-  render(<drawer.Component model={drawer} />);
+  render(<drawer.Component model={drawer} />, { store });
 
   await screen.findByTestId(shareExternallySelector.container);
 
