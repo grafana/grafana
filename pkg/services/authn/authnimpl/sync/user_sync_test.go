@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/open-feature/go-sdk/openfeature"
 	"github.com/open-feature/go-sdk/openfeature/memprovider"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/sync/singleflight"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	types "k8s.io/apimachinery/pkg/types"
@@ -2817,4 +2819,39 @@ func TestUserSync_SyncUserHook_SkipsAnonymousIdentity(t *testing.T) {
 	require.NoError(t, err)
 	assert.False(t, createCalled, "anonymous identity must not create a user")
 	assert.False(t, updateCalled, "anonymous identity must not update a user")
+}
+
+func TestUserSync_SyncLastSeenHook(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		lastSeen time.Time
+		interval time.Duration
+		update   bool
+	}{
+		{"recent", time.Now(), 5 * time.Minute, false},
+		{"stale", time.Now().Add(-10 * time.Minute), 5 * time.Minute, true},
+		{"unknown", time.Time{}, 5 * time.Minute, true},
+		{"future", time.Now().Add(time.Minute), 5 * time.Minute, false},
+		{"custom interval", time.Now().Add(-time.Minute), 30 * time.Second, true},
+		{"zero interval", time.Now().Add(-time.Second), 0, true},
+	} {
+		for _, typ := range []claims.IdentityType{claims.TypeUser, claims.TypeServiceAccount} {
+			t.Run(tc.name+"/"+string(typ), func(t *testing.T) {
+				svc := usertest.NewMockService(t)
+				if tc.update {
+					svc.On("UpdateLastSeenAt", mock.Anything, &user.UpdateUserLastSeenAtCommand{UserID: 5, OrgID: 2}).Return(nil).Once()
+				}
+				s := &UserSync{
+					cfg:         &setting.Cfg{UserLastSeenUpdateInterval: tc.interval},
+					userService: svc, tracer: tracing.InitializeTracerForTest(),
+					log: log.New("test"), lastSeenSF: &singleflight.Group{},
+				}
+				id := &authn.Identity{ID: "5", Type: typ, OrgID: 2, LastSeenAt: tc.lastSeen}
+				require.NoError(t, s.SyncLastSeenHook(context.Background(), id, &authn.Request{}))
+				if !tc.update {
+					svc.AssertNotCalled(t, "UpdateLastSeenAt", mock.Anything, mock.Anything)
+				}
+			})
+		}
+	}
 }

@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/open-feature/go-sdk/openfeature"
@@ -413,6 +414,11 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	}
 
 	if !id.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		return nil
+	}
+
+	// FetchSyncedUserHook already loaded last seen; avoid another lookup while it is fresh.
+	if !id.LastSeenAt.IsZero() && time.Since(id.LastSeenAt) <= s.cfg.UserLastSeenUpdateInterval {
 		return nil
 	}
 
