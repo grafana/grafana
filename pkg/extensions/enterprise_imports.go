@@ -154,6 +154,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
 	_ "github.com/grafana/grafana/pkg/apis/service/v0alpha1"
+	_ "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	_ "github.com/grafana/grafana/pkg/apiserver/auditing"
 	_ "github.com/grafana/grafana/pkg/apiserver/endpoints/filters"
 	_ "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
