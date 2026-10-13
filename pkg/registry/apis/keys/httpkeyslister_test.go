@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
-	keysv0 "github.com/grafana/grafana/pkg/apis/keys/v0alpha1"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 )
 
 // recordedRequest is what the server saw, so a test can assert the shape the
@@ -21,18 +21,18 @@ import (
 type recordedRequest struct {
 	method string
 	path   string
-	opts   keysv0.ListKeyRequest
+	opts   storagev0.ListKeyRequest
 }
 
 // serveKeys stands up an apiserver-shaped endpoint. handler returns the status and
 // body for each successive request, so a test can page or degrade mid-stream.
-func serveKeys(t *testing.T, handler func(i int, opts keysv0.ListKeyRequest) (int, any), opts ...ListerOption) (Lister, *[]recordedRequest) {
+func serveKeys(t *testing.T, handler func(i int, opts storagev0.ListKeyRequest) (int, any), opts ...ListerOption) (Lister, *[]recordedRequest) {
 	t.Helper()
 	var seen []recordedRequest
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Strict, like the endpoint: a field the request type lacks would be refused there.
-		var opts keysv0.ListKeyRequest
+		var opts storagev0.ListKeyRequest
 		dec := json.NewDecoder(r.Body)
 		dec.DisallowUnknownFields()
 		require.NoError(t, dec.Decode(&opts))
@@ -85,7 +85,7 @@ func drain(t *testing.T, lister Lister) ([]Key, error) {
 // The endpoint takes a POST with the paging fields and nothing else; it refuses a
 // request carrying anything it does not read.
 func TestHTTPLister_RequestShape(t *testing.T) {
-	lister, seen := serveKeys(t, func(int, keysv0.ListKeyRequest) (int, any) {
+	lister, seen := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 		return http.StatusOK, keysPage("100", "", partial("ns1", "a", "10"))
 	})
 
@@ -104,7 +104,7 @@ func TestHTTPLister_RequestShape(t *testing.T) {
 }
 
 func TestHTTPLister_FollowsContinue(t *testing.T) {
-	lister, seen := serveKeys(t, func(i int, _ keysv0.ListKeyRequest) (int, any) {
+	lister, seen := serveKeys(t, func(i int, _ storagev0.ListKeyRequest) (int, any) {
 		if i == 0 {
 			return http.StatusOK, keysPage("100", "tok", partial("ns1", "a", "10"))
 		}
@@ -136,7 +136,7 @@ func TestHTTPLister_TreatsAbsentRouteAsUnsupported(t *testing.T) {
 		"method not allowed": http.StatusMethodNotAllowed,
 	} {
 		t.Run(name, func(t *testing.T) {
-			lister, _ := serveKeys(t, func(int, keysv0.ListKeyRequest) (int, any) {
+			lister, _ := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 				return code, metav1.Status{Status: metav1.StatusFailure, Code: int32(code)}
 			})
 
@@ -149,7 +149,7 @@ func TestHTTPLister_TreatsAbsentRouteAsUnsupported(t *testing.T) {
 // A refusal is not an absent endpoint. Falling back on it would turn a
 // misconfigured identity into a permanently more expensive re-list, silently.
 func TestHTTPLister_SurfacesForbidden(t *testing.T) {
-	lister, _ := serveKeys(t, func(int, keysv0.ListKeyRequest) (int, any) {
+	lister, _ := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 		return http.StatusForbidden, metav1.Status{Status: metav1.StatusFailure, Code: http.StatusForbidden, Reason: metav1.StatusReasonForbidden}
 	})
 
@@ -160,7 +160,7 @@ func TestHTTPLister_SurfacesForbidden(t *testing.T) {
 
 // Something else answered the path: a 200 whose body is not the projection.
 func TestHTTPLister_RefusesAnotherKind(t *testing.T) {
-	lister, _ := serveKeys(t, func(int, keysv0.ListKeyRequest) (int, any) {
+	lister, _ := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 		return http.StatusOK, map[string]any{"kind": "ConnectionList", "items": []any{}}
 	})
 
@@ -170,7 +170,7 @@ func TestHTTPLister_RefusesAnotherKind(t *testing.T) {
 
 // An item with no name would key every entry the same in the informer's Store.
 func TestHTTPLister_RefusesItemWithoutName(t *testing.T) {
-	lister, _ := serveKeys(t, func(int, keysv0.ListKeyRequest) (int, any) {
+	lister, _ := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 		return http.StatusOK, keysPage("100", "", partial("ns1", "", "10"))
 	})
 
@@ -181,7 +181,7 @@ func TestHTTPLister_RefusesItemWithoutName(t *testing.T) {
 // The informer arbitrates its snapshot against the list version, so one it cannot
 // read has to fail the tick rather than pass a zero.
 func TestHTTPLister_RefusesUnreadableResourceVersion(t *testing.T) {
-	lister, _ := serveKeys(t, func(int, keysv0.ListKeyRequest) (int, any) {
+	lister, _ := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 		return http.StatusOK, keysPage("not-a-number", "", partial("ns1", "a", "10"))
 	})
 
@@ -193,7 +193,7 @@ func TestHTTPLister_RefusesUnreadableResourceVersion(t *testing.T) {
 // The route forwards Limit to storage, which clamps it, so a smaller page is the
 // caller's way of bounding one response rather than a hard guarantee.
 func TestHTTPLister_PageSize(t *testing.T) {
-	lister, seen := serveKeys(t, func(int, keysv0.ListKeyRequest) (int, any) {
+	lister, seen := serveKeys(t, func(int, storagev0.ListKeyRequest) (int, any) {
 		return http.StatusOK, keysPage("100", "", partial("ns", "a", "1"))
 	}, WithPageSize(7))
 

@@ -28,7 +28,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	keysv0 "github.com/grafana/grafana/pkg/apis/keys/v0alpha1"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -214,8 +214,8 @@ func (h *Handler) requireClusterWideServiceCaller(ctx context.Context, kind kind
 }
 
 // An empty body means all defaults.
-func decodeListKeyRequest(r *http.Request) (*keysv0.ListKeyRequest, error) {
-	opts := &keysv0.ListKeyRequest{}
+func decodeListKeyRequest(r *http.Request) (*storagev0.ListKeyRequest, error) {
+	opts := &storagev0.ListKeyRequest{}
 
 	body := http.MaxBytesReader(nil, r.Body, maxRequestBody)
 	dec := json.NewDecoder(body)
@@ -231,11 +231,11 @@ func decodeListKeyRequest(r *http.Request) (*keysv0.ListKeyRequest, error) {
 		return nil, apierrors.NewBadRequest("request body must contain a single JSON object")
 	}
 
-	if opts.APIVersion != "" && opts.APIVersion != keysv0.APIVERSION {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("apiVersion must be %q, got %q", keysv0.APIVERSION, opts.APIVersion))
+	if opts.APIVersion != "" && opts.APIVersion != storagev0.APIVERSION {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("apiVersion must be %q, got %q", storagev0.APIVERSION, opts.APIVersion))
 	}
-	if opts.Kind != "" && opts.Kind != keysv0.KindListKeyRequest {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("kind must be %q, got %q", keysv0.KindListKeyRequest, opts.Kind))
+	if opts.Kind != "" && opts.Kind != storagev0.KindListKeyRequest {
+		return nil, apierrors.NewBadRequest(fmt.Sprintf("kind must be %q, got %q", storagev0.KindListKeyRequest, opts.Kind))
 	}
 	if opts.Limit < 0 {
 		return nil, apierrors.NewBadRequest("limit must not be negative")

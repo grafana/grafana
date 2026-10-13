@@ -14,15 +14,15 @@ import (
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	return map[string]common.OpenAPIDefinition{
-		"github.com/grafana/grafana/pkg/apis/keys/v0alpha1.ListKeyRequest": schema_pkg_apis_keys_v0alpha1_ListKeyRequest(ref),
+		"github.com/grafana/grafana/pkg/apis/storage/v0alpha1.ListKeyRequest": schema_pkg_apis_storage_v0alpha1_ListKeyRequest(ref),
 	}
 }
 
-func schema_pkg_apis_keys_v0alpha1_ListKeyRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
+func schema_pkg_apis_storage_v0alpha1_ListKeyRequest(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
-				Description: "ListKeyRequest is the request body for POST .../{resource}/list-keys. Every field is optional. When set, apiVersion must be keys.grafana.app/v0alpha1 and kind must be ListKeyRequest. Other fields are rejected because selectors, watch and timeouts cannot be evaluated without reading objects.",
+				Description: "ListKeyRequest is the request body for POST .../{resource}/list-keys. Every field is optional. When set, apiVersion must be storage.grafana.app/v0alpha1 and kind must be ListKeyRequest. Other fields are rejected because selectors, watch and timeouts cannot be evaluated without reading objects.",
 				Type:        []string{"object"},
 				Properties: map[string]spec.Schema{
 					"kind": {

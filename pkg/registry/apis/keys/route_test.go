@@ -53,7 +53,7 @@ func TestListKeysRoute_PublishesReferencedSchemas(t *testing.T) {
 	require.NotEmpty(t, r.Schemas)
 
 	for _, want := range []string{
-		"com.github.grafana.grafana.pkg.apis.keys.v0alpha1.ListKeyRequest",
+		"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyRequest",
 		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadataList",
 		// Reached transitively.
 		"io.k8s.apimachinery.pkg.apis.meta.v1.PartialObjectMetadata",
@@ -83,7 +83,7 @@ func TestListKeysRoute_RequestSchemaExposesOnlySupportedFields(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			ref := r.Spec.Post.RequestBody.Content["application/json"].Schema.Ref.String()
-			require.Equal(t, componentPrefix+"com.github.grafana.grafana.pkg.apis.keys.v0alpha1.ListKeyRequest", ref)
+			require.Equal(t, componentPrefix+"com.github.grafana.grafana.pkg.apis.storage.v0alpha1.ListKeyRequest", ref)
 
 			schema, ok := r.Schemas[ref[len(componentPrefix):]]
 			require.True(t, ok)

@@ -10,13 +10,13 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	commonv0 "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	keysv0 "github.com/grafana/grafana/pkg/apis/keys/v0alpha1"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 )
 
 const componentPrefix = "#/components/schemas/"
 
 // Go names, because that is how the generated definitions are keyed.
-const listKeyRequestGoName = "github.com/grafana/grafana/pkg/apis/keys/v0alpha1." + keysv0.KindListKeyRequest
+const listKeyRequestGoName = "github.com/grafana/grafana/pkg/apis/storage/v0alpha1." + storagev0.KindListKeyRequest
 
 // The response is a standard meta.k8s.io/v1 type.
 var partialListGoName = metav1.PartialObjectMetadataList{}.OpenAPIModelName()
@@ -25,7 +25,7 @@ var partialListGoName = metav1.PartialObjectMetadataList{}.OpenAPIModelName()
 // with the route. Dependencies are followed rather than listed because a missing
 // one renders as an empty model with no error.
 func envelopeSchemas(roots ...string) map[string]spec.Schema {
-	defs := keysv0.GetOpenAPIDefinitions(schemaRef)
+	defs := storagev0.GetOpenAPIDefinitions(schemaRef)
 	maps.Copy(defs, commonv0.GetOpenAPIDefinitions(schemaRef))
 
 	out := map[string]spec.Schema{}

@@ -13,7 +13,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	keysv0 "github.com/grafana/grafana/pkg/apis/keys/v0alpha1"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 )
 
 // listKeysKind is spelled out rather than taken from the response, so a body that
@@ -43,7 +43,7 @@ func NewHTTPLister(client rest.Interface, gvr schema.GroupVersionResource, opts 
 // gated by server config, and a POST to an unmounted path resolves to the object
 // handler, so neither status means the request itself was wrong.
 func (l httpLister) page(ctx context.Context, token string) (*metav1.PartialObjectMetadataList, error) {
-	body, err := json.Marshal(keysv0.ListKeyRequest{Limit: l.cfg.PageSize, Continue: token})
+	body, err := json.Marshal(storagev0.ListKeyRequest{Limit: l.cfg.PageSize, Continue: token})
 	if err != nil {
 		return nil, err
 	}

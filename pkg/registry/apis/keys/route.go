@@ -8,7 +8,7 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	keysv0 "github.com/grafana/grafana/pkg/apis/keys/v0alpha1"
+	storagev0 "github.com/grafana/grafana/pkg/apis/storage/v0alpha1"
 )
 
 // ConfigSection and ConfigKey name the ini setting that turns the endpoint on.
@@ -85,7 +85,7 @@ func listKeysRouteSpec(kindName, version string, namespaced bool) *spec3.PathPro
 				RequestBody: &spec3.RequestBody{
 					RequestBodyProps: spec3.RequestBodyProps{
 						Required: false,
-						Description: "A " + keysv0.KindListKeyRequest + " carrying limit, continue and resourceVersion, " +
+						Description: "A " + storagev0.KindListKeyRequest + " carrying limit, continue and resourceVersion, " +
 							"optionally with apiVersion and kind. Any other field is rejected.",
 						Content: jsonContent(listKeyRequestGoName),
 					},

@@ -3,7 +3,7 @@ package v0alpha1
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 const (
-	GROUP      = "keys.grafana.app"
+	GROUP      = "storage.grafana.app"
 	VERSION    = "v0alpha1"
 	APIVERSION = GROUP + "/" + VERSION
 
@@ -11,7 +11,7 @@ const (
 )
 
 // ListKeyRequest is the request body for POST .../{resource}/list-keys.
-// Every field is optional. When set, apiVersion must be keys.grafana.app/v0alpha1
+// Every field is optional. When set, apiVersion must be storage.grafana.app/v0alpha1
 // and kind must be ListKeyRequest. Other fields are rejected because selectors,
 // watch and timeouts cannot be evaluated without reading objects.
 //

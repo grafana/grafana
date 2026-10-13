@@ -149,7 +149,7 @@ func TestListKeys_TranslatesRequest(t *testing.T) {
 		// Kubernetes reads "0" as "any version", which is what latest gives.
 		"resource version zero": {body: `{"resourceVersion":"0"}`, wantRV: 0},
 		"declared envelope": {
-			body:      `{"apiVersion":"keys.grafana.app/v0alpha1","kind":"ListKeyRequest","limit":5}`,
+			body:      `{"apiVersion":"storage.grafana.app/v0alpha1","kind":"ListKeyRequest","limit":5}`,
 			wantLimit: 5,
 		},
 		"all three": {
@@ -186,7 +186,7 @@ func TestListKeys_RejectsUnsupportedFields(t *testing.T) {
 		"wrong kind":       {body: `{"kind":"ListOptions"}`, wantInMsg: "kind"},
 		"wrong apiVersion": {body: `{"apiVersion":"meta.k8s.io/v1"}`, wantInMsg: "apiVersion"},
 		"right kind, wrong version": {
-			body: `{"apiVersion":"keys.grafana.app/v1","kind":"ListKeyRequest"}`, wantInMsg: "apiVersion",
+			body: `{"apiVersion":"storage.grafana.app/v1","kind":"ListKeyRequest"}`, wantInMsg: "apiVersion",
 		},
 		"unknown field":           {body: `{"nonsense":true}`, wantInMsg: "nonsense"},
 		"supported plus rejected": {body: `{"limit":5,"labelSelector":"team=a"}`, wantInMsg: "labelSelector"},
