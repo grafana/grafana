@@ -3022,10 +3022,10 @@ var (
 		{
 			Name:         "datetime.useLuxon",
 			Description:  "Uses the Luxon-backed compatibility implementation for Grafana date and time APIs",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStageGeneralAvailability,
 			Owner:        grafanaFrontendPlatformSquad,
 			HideFromDocs: true,
-			Expression:   "false",
+			Expression:   "true",
 			Generate:     Generate{Go: true},
 		},
 		{
