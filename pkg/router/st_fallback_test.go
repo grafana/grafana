@@ -752,3 +752,47 @@ func TestNewGComURLResolver(t *testing.T) {
 		})
 	}
 }
+
+func TestPrivateCacheControl(t *testing.T) {
+	for _, tc := range []struct {
+		in   []string
+		want string
+	}{
+		{nil, "private"},
+		{[]string{"public"}, "private"},
+		{[]string{"public, max-age=60"}, "max-age=60, private"},
+		{[]string{"private"}, "private"},
+		{[]string{"no-cache", "Public"}, "no-cache, private"},
+		{[]string{"no-store"}, "no-store"},
+	} {
+		require.Equal(t, tc.want, privateCacheControl(tc.in), "%q", tc.in)
+	}
+}
+
+func TestSingleTenantDiscoveryIsNeverSharedCacheable(t *testing.T) {
+	st := newTestSingleTenantFallback(t)
+	st.discoveryHost = testFallbackURL(t, "https://discovery.example.com")
+	st.resolveHost = func(_ context.Context, stackID int64) (singleTenantStack, error) {
+		if stackID == 123 {
+			return singleTenantStack{URL: "https://stack.example.com"}, nil
+		}
+		return singleTenantStack{}, nil
+	}
+	st.transport = testFallbackTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Cache-Control": {"public, max-age=60"}}, Body: io.NopCloser(strings.NewReader("ok"))}, nil
+	})
+	for _, tc := range []struct {
+		namespace, path, want string
+	}{
+		{"stacks-123", "/apis/example/v1", "max-age=60, private"},
+		{"stacks-123", "/openapi/v3/apis/example/v1", "max-age=60, private"},
+		{"*", "/apis/example/v1", "max-age=60, private"},
+		// Resources are namespaced, so their URL already names the stack.
+		{"stacks-123", "/apis/example/v1/namespaces/stacks-123/widgets", "public, max-age=60"},
+	} {
+		recorder := httptest.NewRecorder()
+		st.ServeHTTP(recorder, requestWithNamespace(http.MethodGet, tc.path, tc.namespace))
+		require.Equal(t, http.StatusOK, recorder.Code, tc.path)
+		require.Equal(t, tc.want, recorder.Header().Get("Cache-Control"), "%s as %s", tc.path, tc.namespace)
+	}
+}

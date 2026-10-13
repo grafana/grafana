@@ -338,6 +338,7 @@ func isSingleTenantDiscoveryPath(path string) bool {
 	return ok
 }
 
+// forward proxies req to host. An empty group means discovery.
 func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, w http.ResponseWriter, req *http.Request) {
 	proxy := &httputil.ReverseProxy{
 		Rewrite: func(pr *httputil.ProxyRequest) {
@@ -352,10 +353,41 @@ func (st *singleTenantFallback) forward(host *singleTenantTarget, group string, 
 			if err := checkStackOrigin(resp, host.slug); err != nil {
 				return err
 			}
+			if group == "" {
+				// The same discovery URL answers each caller from their own
+				// stack, and a shared cache keyed on Authorization would not
+				// tell X-Access-Token callers apart.
+				resp.Header.Set("Cache-Control", privateCacheControl(resp.Header.Values("Cache-Control")))
+			}
 			return rejectBackendRedirects(resp)
 		},
 	}
 	serveThroughBreaker(st.breakerForDestination(host.url, group), group, proxy, w, req)
+}
+
+// privateCacheControl keeps a response's Cache-Control directives, but makes
+// it private: public is dropped, and private is added unless no-store already
+// keeps the response out of every cache.
+func privateCacheControl(values []string) string {
+	var directives []string
+	noStore := false
+	for _, value := range values {
+		for directive := range strings.SplitSeq(value, ",") {
+			directive = strings.TrimSpace(directive)
+			name, _, _ := strings.Cut(directive, "=")
+			switch strings.ToLower(name) {
+			case "", "public", "private":
+				continue
+			case "no-store":
+				noStore = true
+			}
+			directives = append(directives, directive)
+		}
+	}
+	if !noStore {
+		directives = append(directives, "private")
+	}
+	return strings.Join(directives, ", ")
 }
 
 // checkStackOrigin guards against the connection reaching the wrong stack (for

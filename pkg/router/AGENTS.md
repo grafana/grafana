@@ -157,8 +157,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   the ST fallback answers root discovery for a request, their groups are left out and its view is
   used. An answer from `next` never replaces them. Their aggregated discovery
   and OpenAPI documents are never cached across callers.
-  - Root discovery through the fallback is bounded by `discoveryFetchTimeout`, and is sent with
-    `Cache-Control: private`.
+  - Root discovery through the fallback is bounded by `discoveryFetchTimeout`.
+  - All discovery through the fallback, root or proxied, is sent with `Cache-Control: private`,
+    so a shared cache can't serve one caller's documents to another.
 - **Aggregated discovery** is built without a request per backend per call:
   - A `DiscoveryProvider` backend supplies its group's resources itself. Aggregate and ST backends
     keep them from their polls, which use the router's own identity, and they are part of the key.
