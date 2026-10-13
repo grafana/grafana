@@ -32,6 +32,12 @@ func ConvertToFullLong(frames data.Frames) (data.Frames, error) {
 		return nil, fmt.Errorf("input frame missing FrameMeta.Type")
 	}
 
+	// Prometheus "Both" queries mix instant (numeric-multi) and range (timeseries-multi)
+	// frames in any order. Only the time-series converter keeps the rows of both.
+	if inputType == data.FrameTypeNumericMulti && hasFrameType(frames, data.FrameTypeTimeSeriesMulti) {
+		inputType = data.FrameTypeTimeSeriesMulti
+	}
+
 	switch inputType {
 	case data.FrameTypeNumericMulti:
 		return convertNumericMultiToFullLong(frames)
@@ -410,6 +416,15 @@ func labelColumnNames(labelKeys []string, generated []*data.Field) map[string]st
 		names[k] = name
 	}
 	return names
+}
+
+func hasFrameType(frames data.Frames, t data.FrameType) bool {
+	for _, f := range frames {
+		if f.Meta != nil && f.Meta.Type == t {
+			return true
+		}
+	}
+	return false
 }
 
 func supportedToLongConversion(inputType data.FrameType) bool {

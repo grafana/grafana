@@ -516,3 +516,38 @@ func TestConvertToFullLongLabelNamedLikeGeneratedColumn(t *testing.T) {
 		})
 	}
 }
+
+// Prometheus "Both" queries return numeric-multi (instant) and timeseries-multi
+// (range) frames under one RefID, in either order.
+func TestConvertMixedNumericAndTimeSeriesMultiToFullLong(t *testing.T) {
+	instant := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{time.Unix(30, 0)}),
+		data.NewField("up", data.Labels{"job": "a"}, []float64{1.0}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericMulti})
+	rng := data.NewFrame("",
+		data.NewField("Time", nil, []time.Time{time.Unix(10, 0), time.Unix(20, 0)}),
+		data.NewField("up", data.Labels{"job": "a"}, []float64{2.0, 3.0}),
+	).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti})
+
+	expected := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(10, 0), time.Unix(20, 0), time.Unix(30, 0)}),
+		data.NewField(SQLValueFieldName, nil, []*float64{new(2.0), new(3.0), new(1.0)}),
+		data.NewField(SQLMetricFieldName, nil, []string{"up", "up", "up"}),
+		data.NewField("job", nil, []*string{new("a"), new("a"), new("a")}),
+	)
+	expected.Meta = &data.FrameMeta{Type: timeseriesFullLongType}
+
+	for name, input := range map[string]data.Frames{
+		"instant first": {instant, rng},
+		"range first":   {rng, instant},
+	} {
+		t.Run(name, func(t *testing.T) {
+			output, err := ConvertToFullLong(input)
+			require.NoError(t, err)
+			require.Len(t, output, 1)
+			if diff := cmp.Diff(expected, output[0], data.FrameTestCompareOptions()...); diff != "" {
+				require.FailNowf(t, "Result mismatch (-want +got):%s", diff)
+			}
+		})
+	}
+}
