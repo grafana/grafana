@@ -2,10 +2,9 @@ import { cloneDeep } from 'lodash';
 
 import { type NavModelItem } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getAppPluginMetasSync } from '@grafana/runtime/internal';
 import { alertingNavEntry } from 'app/features/alerting/unified/navigation/alerting.navEntry';
 
-import { mergePluginNavIntoTree } from './buildPluginNav';
+import { appsNavEntry } from './buildPluginNav';
 import { getRegisteredNavEntries } from './registry';
 import { adminNavEntry } from './sections/admin.navEntry';
 import { connectionsNavEntry } from './sections/connections.navEntry';
@@ -19,7 +18,6 @@ import { bookmarksNavEntry, starredNavEntry } from './sections/savedItems.navEnt
 import {
   appendIntoSection,
   applyAppSubUrl,
-  arePluginNavItemsEnabled,
   buildEntries,
   isClientNavTreeEnabled,
   type NavEntryBuilder,
@@ -32,9 +30,14 @@ import {
  * the flag is on, or the server-provided tree otherwise.
  *
  * This runs during configureStore, which app.ts calls only after it has awaited
- * both the app plugin metas and the user's permissions — the plugin merge needs
- * the first, and its access checks need the second. That is why the metas can be
- * read synchronously here.
+ * both the app plugin metas and the user's permissions — the app plugin section
+ * needs the first, and the permission gates need the second. That is why the
+ * metas can be read synchronously further down.
+ *
+ * Prune after buildStaticNavTree has sorted, not before: pruning first removes
+ * siblings, and the index fallback in sortNavTree would then number the
+ * remaining unweighted ones differently. applyAppSubUrl goes last of all, and
+ * runs exactly once over the finished tree.
  */
 export function getInitialNavTree(): NavModelItem[] {
   if (!isClientNavTreeEnabled()) {
@@ -44,22 +47,16 @@ export function getInitialNavTree(): NavModelItem[] {
     return cloneDeep(config.bootData?.navTree ?? []);
   }
 
-  if (!arePluginNavItemsEnabled()) {
-    return pruneEmptyNavSections(applyAppSubUrl(buildStaticNavTree()));
-  }
-
-  // mergePluginNavIntoTree prunes and sorts, so the shells it attaches to
-  // survive until it has had its chance to fill them
-  return applyAppSubUrl(mergePluginNavIntoTree(getAppPluginMetasSync(), buildStaticNavTree()));
+  return applyAppSubUrl(pruneEmptyNavSections(buildStaticNavTree()));
 }
 
 /**
- * The static sections of the nav tree: each entry declares the gate that makes
- * it visible and how to build it. Home is not listed — it is unconditional and
- * seeds the tree. The entries are defined in ./sections; this module only
- * composes them.
+ * Every section of the nav tree: each entry declares the gate that makes it
+ * visible and how to build it. Home is not listed — it is unconditional and
+ * seeds the tree. The entries live in ./sections, except the app plugin section
+ * in ./buildPluginNav; this module only composes them.
  */
-const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
+const NAV_ENTRIES: NavEntryBuilder[] = [
   starredNavEntry,
   dashboardsNavEntry,
   exploreNavEntry,
@@ -68,19 +65,21 @@ const STATIC_NAV_ENTRIES: NavEntryBuilder[] = [
   profileNavEntry,
   alertingNavEntry,
   connectionsNavEntry,
+  appsNavEntry,
   adminNavEntry,
   helpNavEntry,
   bookmarksNavEntry,
 ];
 
 /**
- * Builds the static (non-plugin) portion of the nav tree, sorted, with urls
- * app-sub-url relative: callers apply the prefix once via applyAppSubUrl at
- * the end of their pipeline. Nav items registered via addNavEntries (e.g. by
- * the enterprise bundle) are appended into their target sections.
+ * Builds the nav tree, sorted, with urls app-sub-url relative: callers apply
+ * the prefix once via applyAppSubUrl at the end of their pipeline. Nav items
+ * registered via addNavEntries (e.g. by the enterprise bundle) are appended
+ * into their target sections before the sort. Attachment shells that ended up
+ * empty are left in place for getInitialNavTree to prune.
  */
 export function buildStaticNavTree(): NavModelItem[] {
-  const tree = [getHomeNode(), ...buildEntries(STATIC_NAV_ENTRIES)];
+  const tree = [getHomeNode(), ...buildEntries(NAV_ENTRIES)];
   return sortNavTree(applyRegisteredNavEntries(tree));
 }
 

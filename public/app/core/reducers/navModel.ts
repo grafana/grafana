@@ -3,8 +3,6 @@ import { type AnyAction, createAction } from '@reduxjs/toolkit';
 import { type NavIndex, type NavModel, type NavModelItem } from '@grafana/data';
 
 import { getInitialNavTree } from '../navtree/buildStaticNavTree';
-import { NavID } from '../navtree/constants';
-import { sortAppsByText } from '../navtree/utils';
 import { getNavSubTitle, getNavTitle } from '../utils/navBarItem-translations';
 
 export const HOME_NAV_ID = 'home';
@@ -21,13 +19,6 @@ export function buildInitialState(): NavIndex {
   // set home as parent for the other rootNodes
   // need to use the translated home node from the navIndex
   buildNavIndex(navIndex, otherRootNodes, navIndex[HOME_NAV_ID]);
-
-  // After buildNavIndex, so the sort sees the translated text. The array is the
-  // one the parent node holds too, so reassigning it keeps the two in step.
-  const apps = navIndex[NavID.apps];
-  if (apps?.children) {
-    apps.children = sortAppsByText(apps.children);
-  }
 
   return navIndex;
 }

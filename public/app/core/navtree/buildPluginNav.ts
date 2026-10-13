@@ -5,60 +5,90 @@ import {
   type PluginInclude,
   PluginIncludeType,
 } from '@grafana/data';
+import { getAppPluginMetasSync } from '@grafana/runtime/internal';
 import { contextSrv } from 'app/core/services/context_srv';
+import { getNavTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction } from 'app/types/accessControl';
 
-import { MORE_APPS_SHELL, NavID, NavWeight } from './constants';
-import { appendIntoSection, pluginPageId, pruneEmptyNavSections, sortNavTree } from './utils';
+import { NavID, NavWeight } from './constants';
+import { arePluginNavItemsEnabled, type NavEntryBuilder, pluginPageId } from './utils';
+
+// Whether the user may see one of an app's pages. An include declaring an RBAC
+// action is gated on that action; otherwise the user's org role must rank at or
+// above the include's role. The action is evaluated unscoped: the frontend
+// permissions map flattens scopes away, so the per-plugin scope the server
+// applies (plugins:id:*) cannot be checked here.
+const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
+
+// Both nav slices build from the order this produces, so sort here rather than
+// in either of them. The keys come from getNavTitle, which is also what
+// translateNav and buildNavIndex display, so the sorted order and the rendered
+// order cannot drift apart.
+const collator = new Intl.Collator();
 
 /**
- * Merges app-plugin nav items into a static nav tree and returns a new tree.
- * The Go equivalent is addAppLinks in
+ * The "More apps" section: every app plugin's nav items, under its own
+ * plugin.json name. The Go equivalent is addAppLinks in
  * pkg/services/navtree/navtreeimpl/applinks.go.
  *
- * Every app lands in "More apps" under its own plugin.json name.
- *
- * `staticTree` must come straight from buildStaticNavTree: a tree that already
- * holds plugin items gains them a second time, and the urls must still be
- * app-sub-url relative, because the caller applies that prefix once after this
- * returns.
+ * Urls are app-sub-url relative, because getInitialNavTree applies that prefix
+ * once over the whole tree. The section is built whether or not any app ends up
+ * in it, and pruneEmptyNavSections removes it when none does.
  *
  * Permanent divergences from the Go builder: per-org plugin enablement and the
  * assistant's jsonData gating are not readable client-side; includes are
  * appended flat rather than nested under their path ancestor; and page includes
  * with no path have no URL to link to.
  */
-export function mergePluginNavIntoTree(apps: AppPluginConfig[], staticTree: NavModelItem[]): NavModelItem[] {
-  let tree = staticTree;
+export const appsNavEntry: NavEntryBuilder = {
+  // arePluginNavItemsEnabled() has to come first. getAppPluginMetasSync() throws
+  // in development builds before app.ts has filled the cache, and buildEntries
+  // catches that, so the section would disappear with only a console error.
+  when: () => arePluginNavItemsEnabled() && contextSrv.hasPermission(AccessControlAction.PluginsAppAccess),
+  build: (): NavModelItem => ({
+    text: 'More apps',
+    icon: 'layer-group',
+    subTitle: 'App plugins that extend the Grafana experience',
+    id: NavID.apps,
+    sortWeight: NavWeight.apps,
+    url: '/apps',
+    children: buildAppLinks(getAppPluginMetasSync()),
+  }),
+};
 
-  if (contextSrv.hasPermission(AccessControlAction.PluginsAppAccess)) {
-    for (const app of apps) {
-      try {
-        tree = addAppToTree(tree, app);
-      } catch (error) {
-        console.warn('[navtree] failed to build nav for app plugin', app.id, error);
+/**
+ * Builds one nav link per app plugin, ordered by the title the user reads.
+ *
+ * A failed app costs only itself: these run while the redux store is being
+ * created, so letting one malformed plugin meta throw would take the whole
+ * section with it.
+ *
+ * An app with no accessible nav children is left out. That is decided on
+ * navChildren, before the default nav is folded out: an app whose only page IS
+ * its default nav still belongs in the tree, as a link with no children of its
+ * own. The Go builder orders these two steps the same way.
+ */
+function buildAppLinks(apps: AppPluginConfig[]): NavModelItem[] {
+  const links: NavModelItem[] = [];
+
+  for (const app of apps) {
+    try {
+      const { appLink, navChildren } = buildAppLink(app);
+      if (navChildren.length === 0) {
+        continue;
       }
+      links.push(appLink);
+    } catch (error) {
+      console.warn('[navtree] failed to build nav for app plugin', app.id, error);
     }
   }
 
-  return sortNavTree(pruneEmptyNavSections(tree));
-}
-
-/**
- * Builds the nav items for one app plugin and returns a new tree with the app
- * link placed into the "More apps" section.
- *
- * An app with no accessible nav children is not part of the tree. That is
- * decided on navChildren, before the default nav is folded out: an app whose
- * only page IS its default nav still belongs in the tree, as a link with no
- * children of its own. The Go builder orders these two steps the same way.
- */
-function addAppToTree(tree: NavModelItem[], app: AppPluginConfig): NavModelItem[] {
-  const { appLink, navChildren } = buildAppLink(app);
-  if (navChildren.length === 0) {
-    return tree;
-  }
-  return placeInMoreApps(tree, appLink);
+  // Resolve each title once rather than inside the comparator, which would call
+  // t() O(n log n) times
+  return links
+    .map((link) => ({ link, title: getNavTitle(link.id) ?? link.text }))
+    .sort((a, b) => collator.compare(a.title, b.title))
+    .map(({ link }) => link);
 }
 
 /**
@@ -111,6 +141,9 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildre
       id: pluginPageId(app.id),
       img: app.info?.logos?.small,
       subTitle: app.info?.description,
+      // Every app link carries the same weight, so sortNavTree sees a tie at
+      // every comparison and its stable sort keeps the order set above. Giving
+      // apps distinct weights here would silently override it.
       sortWeight: NavWeight.plugin,
       isSection: true,
       pluginId: app.id,
@@ -122,23 +155,7 @@ function buildAppLink(app: AppPluginConfig): { appLink: NavModelItem; navChildre
   };
 }
 
-/**
- * Appends the app link to the "More apps" section, creating that section from
- * its shell if this is the first app to be merged in. Returns a new tree.
- */
-function placeInMoreApps(tree: NavModelItem[], appLink: NavModelItem): NavModelItem[] {
-  const placed = appendIntoSection(tree, NavID.apps, [appLink]);
-  return placed ?? [...tree, { ...MORE_APPS_SHELL, children: [appLink] }];
-}
-
-// Whether the user may see one of an app's pages. An include declaring an RBAC
-// action is gated on that action; otherwise the user's org role must rank at or
-// above the include's role. The action is evaluated unscoped: the frontend
-// permissions map flattens scopes away, so the per-plugin scope the server
-// applies (plugins:id:*) cannot be checked here.
 function hasAccessToInclude(include: PluginInclude): boolean {
-  const ORG_ROLE_RANK: Record<string, number> = { None: 0, Viewer: 1, Editor: 2, Admin: 3 };
-
   if (include.action) {
     return contextSrv.hasPermission(include.action);
   }

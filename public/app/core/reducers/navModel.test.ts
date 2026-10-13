@@ -1,10 +1,8 @@
-import { type NavIndex, PluginIncludeType } from '@grafana/data';
+import { type NavIndex } from '@grafana/data';
 
 import { reducerTester } from '../../../test/core/redux/reducerTester';
-import { NavID } from '../navtree/constants';
-import { setupNavTestApps, setupNavTestState } from '../navtree/test-utils';
 
-import { buildInitialState, navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
+import { navIndexReducer, updateNavIndex, updateConfigurationSubtitle } from './navModel';
 
 describe('navModelReducer', () => {
   describe('when updateNavIndex is dispatched', () => {
@@ -102,35 +100,5 @@ describe('navModelReducer', () => {
           users: { ...users, parentItem: newCfg },
         });
     });
-  });
-});
-
-// The /apps landing page renders its cards from navIndex while the mega menu
-// reads the tree, so the two have to agree on the order of "More apps".
-describe('buildInitialState', () => {
-  const app = (id: string, name: string) => ({
-    id,
-    name,
-    includes: [{ type: PluginIncludeType.page, name: 'Page', path: `/a/${id}`, addToNav: true }],
-  });
-
-  beforeEach(() => {
-    setupNavTestState({
-      permissions: ['plugins.app:access'],
-      orgRole: 'Admin',
-      openFeatureFlags: { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true },
-    });
-  });
-
-  afterEach(() => {
-    setupNavTestApps();
-  });
-
-  it('orders the indexed More apps children by translated text', () => {
-    setupNavTestApps([app('c-app', 'Charlie'), app('a-app', 'Alpha'), app('b-app', 'Bravo')]);
-
-    const apps = buildInitialState()[NavID.apps];
-
-    expect(apps.children?.map((child) => child.text)).toEqual(['Alpha', 'Bravo', 'Charlie']);
   });
 });

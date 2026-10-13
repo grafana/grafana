@@ -583,23 +583,23 @@ describe('getInitialNavTree', () => {
     expect(ids(getInitialNavTree())).toEqual(['server-built']);
   });
 
-  // The merge reads the app metas synchronously, so these cover what used to be
-  // the job of the asynchronous merge: app.ts primes the cache and fetches the
-  // user's permissions before the store is configured, and this is where both
-  // land in the tree.
-  describe('plugin merge', () => {
+  // The apps section reads the app metas synchronously: app.ts fills the cache
+  // and fetches the user's permissions before the store is configured, and this
+  // is where both land in the tree.
+  describe('apps section', () => {
     const bothFlags = { 'grafana.multiTenantNavTree': true, 'plugins.useMTPlugins': true };
-    const someApp = {
-      id: 'some-app',
-      name: 'Some app',
-      includes: [{ type: PluginIncludeType.page, name: 'Overview', path: '/a/some-app/overview', addToNav: true }],
-    };
+    const appWithPage = (id: string, name: string) => ({
+      id,
+      name,
+      includes: [{ type: PluginIncludeType.page, name: 'Overview', path: `/a/${id}/overview`, addToNav: true }],
+    });
+    const someApp = appWithPage('some-app', 'Some app');
 
     afterEach(() => {
       setupApps();
     });
 
-    it('merges the primed app metas into More apps', () => {
+    it('builds More apps from the app metas in the cache', () => {
       setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
       setupApps([someApp]);
 
@@ -609,7 +609,7 @@ describe('getInitialNavTree', () => {
       expect(ids(apps?.children ?? [])).toEqual(['plugin-page-some-app']);
     });
 
-    it('omits plugin items when the plugin merge is disabled', () => {
+    it('omits the section when the plugin nav is disabled', () => {
       setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: clientBuildOnly });
       setupApps([someApp]);
 
@@ -618,14 +618,29 @@ describe('getInitialNavTree', () => {
 
     // In a fully multi-tenant deployment the permissions come from the AuthZ API
     // rather than bootdata, so a user without app access must get no plugin items
-    it('omits plugin items for a user without app access', () => {
+    it('omits the section for a user without app access', () => {
       setup({ openFeatureFlags: bothFlags });
       setupApps([someApp]);
 
       expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
     });
 
-    it('prunes the empty shells but keeps the section the merge filled', () => {
+    // The section is built every time and pruned when empty, where the server
+    // builds it only once it has an app to put in it. Same end state.
+    it('prunes the section when no app has nav children', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([
+        {
+          id: 'hidden-app',
+          name: 'Hidden app',
+          includes: [{ type: PluginIncludeType.page, name: 'Hidden', path: '/a/hidden-app', addToNav: false }],
+        },
+      ]);
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+    });
+
+    it('prunes the empty shells but keeps the apps section', () => {
       setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
       setupApps([someApp]);
 
@@ -635,9 +650,9 @@ describe('getInitialNavTree', () => {
       expect(findById(tree, NavID.apps)).toBeDefined();
     });
 
-    // The merge returns sub-url relative urls and getInitialNavTree applies the
-    // prefix, so a node the merge created must come out prefixed exactly once
-    it('applies the app sub url once to the sections the merge creates', () => {
+    // The builder returns sub-url relative urls and getInitialNavTree applies the
+    // prefix, so a node the builder created must come out prefixed exactly once
+    it('applies the app sub url once to the apps section', () => {
       setup({
         permissions: [AccessControlAction.PluginsAppAccess],
         openFeatureFlags: bothFlags,
@@ -646,6 +661,29 @@ describe('getInitialNavTree', () => {
       setupApps([someApp]);
 
       expect(findById(getInitialNavTree(), NavID.apps)?.url).toBe('/grafana/apps');
+    });
+
+    // buildEntries swallows a throw from build(), so without the flag gate in
+    // when() an uninitialised cache would make the section vanish silently
+    it('does not read the app metas cache when the plugin nav is disabled', () => {
+      const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: clientBuildOnly });
+      setupApps();
+
+      expect(findById(getInitialNavTree(), NavID.apps)).toBeUndefined();
+      expect(error).not.toHaveBeenCalled();
+      error.mockRestore();
+    });
+
+    // sortNavTree recurses into the section, and only leaves its order alone
+    // because every app link carries the same weight
+    it('keeps the apps in title order through the whole pipeline', () => {
+      setup({ permissions: [AccessControlAction.PluginsAppAccess], openFeatureFlags: bothFlags });
+      setupApps([appWithPage('c-app', 'Charlie'), appWithPage('a-app', 'Alpha'), appWithPage('b-app', 'Bravo')]);
+
+      const apps = findById(getInitialNavTree(), NavID.apps);
+
+      expect((apps?.children ?? []).map((child) => child.text)).toEqual(['Alpha', 'Bravo', 'Charlie']);
     });
   });
 });

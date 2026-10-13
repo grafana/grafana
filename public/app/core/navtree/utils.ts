@@ -43,26 +43,6 @@ export function arePluginNavItemsEnabled(): boolean {
   return isClientNavTreeEnabled() && getFeatureFlagClient().getBooleanValue(FlagKeys.PluginsUseMTPlugins, false);
 }
 
-// Apps in "More apps" all carry the same plugin sort weight, so the merge leaves
-// them in whatever order the metas API returned. Order them by the text the user
-// actually reads — which means running after the translation pass, since that is
-// what resolves the text from the nav id.
-const appTextCollator = new Intl.Collator();
-
-/** Orders a "More apps" children array by translated text. Returns a new array. */
-export const sortAppsByText = (children: NavModelItem[]): NavModelItem[] =>
-  [...children].sort((a, b) => appTextCollator.compare(a.text, b.text));
-
-/**
- * Applies sortAppsByText to the "More apps" section of a tree. Returns a new tree.
- * Both nav slices apply this: the menu reads the tree and the /apps landing page
- * reads navIndex, so sorting only one of them lists the same apps in two orders.
- */
-export const sortMoreApps = (tree: NavModelItem[]): NavModelItem[] =>
-  tree.map((node) =>
-    node.id === NavID.apps && node.children ? { ...node, children: sortAppsByText(node.children) } : node
-  );
-
 export const hasAny = (...actions: string[]) => userHasAnyPermission(actions, contextSrv.user);
 export const isSignedIn = () => contextSrv.isSignedIn;
 export const anonymousOrSignedIn = () => isSignedIn() || config.anonymousEnabled;
@@ -102,7 +82,11 @@ const PRUNABLE_ADMIN_SECTIONS: NavId[] = [NavID.cfgGeneral, NavID.cfgPlugins, Na
 // Top-level sections built unconditionally as attachment targets, pruned when
 // nothing attached. Mirrors the server's RemoveEmptyConnectionsSection and
 // RemoveEmptyDrilldownSection, plus Administration once its subsections go.
-const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown];
+//
+// "More apps" has no RemoveEmpty* to mirror: the server builds that section only
+// once it has an app to put in it. The client builds it every time and prunes it
+// here instead, which reaches the same end state.
+const PRUNABLE_SECTIONS: NavId[] = [NavID.cfg, NavID.connections, NavID.drilldown, NavID.apps];
 
 /** Depth-first search of a nav tree by item id */
 export function findNavById(nodes: NavModelItem[], id: string): NavModelItem | undefined {
