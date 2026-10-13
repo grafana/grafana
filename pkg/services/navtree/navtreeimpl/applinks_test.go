@@ -1458,7 +1458,7 @@ func TestAssistantPagesCreateAction(t *testing.T) {
 			require.NotNil(t, action)
 			require.Equal(t, "New Grafana Page", action.Text)
 			require.Equal(t, tt.subURL+assistantAppHomePath+"/pages/new", action.Url)
-			require.Equal(t, "plus", action.Icon)
+			require.Equal(t, "pages", action.Icon)
 			require.Equal(t, assistantAppID, action.PluginID)
 			require.True(t, action.IsCreateAction)
 			require.True(t, action.HideFromTabs)

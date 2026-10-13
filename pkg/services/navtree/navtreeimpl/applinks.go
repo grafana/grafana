@@ -274,7 +274,7 @@ func (s *ServiceImpl) processAppPlugin(plugin pluginstore.Plugin, c *contextmode
 				link.Children = append(link.Children, &navtree.NavLink{
 					Id:             "assistant/pages/new",
 					Text:           "New Grafana Page",
-					Icon:           "plus",
+					Icon:           "pages",
 					Url:            s.cfg.AppSubURL + assistantAppHomePath + "/pages/new",
 					PluginID:       assistantAppID,
 					HideFromTabs:   true,
