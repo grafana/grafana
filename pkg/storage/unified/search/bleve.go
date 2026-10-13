@@ -3026,7 +3026,7 @@ func (b *bleveIndex) toBleveSearchRequest(ctx context.Context, req *resourcepb.R
 			expirationThreshold = t
 		}
 	}
-	searchrequest.Query = scopeQuery(combineFilterAndTextQueries(filters, textQuery), req.IsDeleted, expirationThreshold)
+	searchrequest.Query = scopeQuery(wrapInFolderSets(filters, textQuery), req.IsDeleted, expirationThreshold)
 
 	// postFilter applies authorization after ranking in runPostFilterAuthz, so
 	// skip the in-searcher wrapper here and let bleve return unfiltered ranked hits.
