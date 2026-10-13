@@ -119,12 +119,13 @@ export function getQueryFilter(datasource?: DataSourceApi) {
       if (!q.datasource) {
         return true;
       }
-      // Due to legacy URLs, `datasource` in queries may be a string. This logic should probably be in the migration
-      if (typeof q.datasource === 'string') {
-        return q.datasource === datasource?.uid || q.datasource === datasource?.name;
-      }
+      // A query's datasource may be a bare string (legacy URLs) or a ref whose `uid` actually holds
+      // the datasource name (datasource links configured with a name instead of a uid). Both forms
+      // resolve by name, so both have to match the root datasource by name as well as by uid.
+      // This logic should probably be in the migration.
+      const uidOrName = typeof q.datasource === 'string' ? q.datasource : q.datasource.uid;
 
-      return q.datasource.uid === datasource?.uid;
+      return uidOrName === datasource?.uid || uidOrName === datasource?.name;
     };
   }
 }
