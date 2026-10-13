@@ -21,12 +21,8 @@ jest.mock('react-virtualized-auto-sizer', () => ({
 
 jest.mock('@grafana/ui', () => ({
   ...jest.requireActual('@grafana/ui'),
-  CodeEditor: () => <div data-testid="monaco-editor" />,
-}));
-
-jest.mock('@grafana/ui', () => ({
-  ...jest.requireActual('@grafana/ui'),
   __esModule: true,
+  CodeEditor: () => <div data-testid="monaco-editor" />,
   CodeMirrorEditor: ({
     value,
     language,
