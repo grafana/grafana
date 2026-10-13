@@ -14,10 +14,13 @@ describe('BreadcrumbItem', () => {
     }));
     const user = userEvent.setup();
     render(
-      <ul>
-        <BreadcrumbItem text="Long dashboard title" href="/dashboard" isCurrent={false} index={0} flexGrow={10} />
-        <BreadcrumbItem text="Settings" href="/dashboard/settings" isCurrent={true} index={1} flexGrow={10} />
-      </ul>
+      <>
+        <ul>
+          <BreadcrumbItem text="Long dashboard title" href="/dashboard" isCurrent={false} index={0} flexGrow={10} />
+          <BreadcrumbItem text="Settings" href="/dashboard/settings" isCurrent={true} index={1} flexGrow={10} />
+        </ul>
+        <button>Next</button>
+      </>
     );
 
     const truncatedBreadcrumb = screen.getByRole('link', { name: 'Long dashboard title' });
@@ -30,5 +33,10 @@ describe('BreadcrumbItem', () => {
     await user.hover(fullBreadcrumb);
     expect(fullBreadcrumb).toHaveAttribute('aria-current', 'page');
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+
+    await user.tab();
+    expect(truncatedBreadcrumb).toHaveFocus();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveFocus();
   });
 });

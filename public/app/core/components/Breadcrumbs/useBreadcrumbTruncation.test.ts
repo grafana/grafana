@@ -10,16 +10,8 @@ describe('useBreadcrumbTruncation', () => {
 
   beforeEach(() => {
     Object.assign(measurements, { clientWidth: 100, scrollWidth: 100, elementWidth: 100, textWidth: 100 });
-    element = document.createElement('span');
-    Object.defineProperties(element, {
-      clientWidth: { get: () => measurements.clientWidth },
-      scrollWidth: { get: () => measurements.scrollWidth },
-    });
+    element = createMeasuredElement();
     const rect = element.getBoundingClientRect();
-    jest.spyOn(element, 'getBoundingClientRect').mockImplementation(() => ({
-      ...rect,
-      width: measurements.elementWidth,
-    }));
     const range = document.createRange();
     range.getBoundingClientRect = () => ({ ...rect, width: measurements.textWidth });
     jest.spyOn(document, 'createRange').mockReturnValue(range);
@@ -33,6 +25,20 @@ describe('useBreadcrumbTruncation', () => {
   afterEach(() => {
     jest.restoreAllMocks();
   });
+
+  function createMeasuredElement() {
+    const element = document.createElement('span');
+    Object.defineProperties(element, {
+      clientWidth: { get: () => measurements.clientWidth },
+      scrollWidth: { get: () => measurements.scrollWidth },
+    });
+    const rect = element.getBoundingClientRect();
+    jest.spyOn(element, 'getBoundingClientRect').mockImplementation(() => ({
+      ...rect,
+      width: measurements.elementWidth,
+    }));
+    return element;
+  }
 
   function renderTruncationHook(initialProps = { text: 'Dashboard', isCurrent: true }) {
     return renderHook(
@@ -114,6 +120,22 @@ describe('useBreadcrumbTruncation', () => {
     Object.assign(measurements, { scrollWidth: 200, textWidth: 200 });
     rerender({ text: 'A longer dashboard title', isCurrent: true });
     expect(result.current.isTruncated).toBe(true);
+  });
+
+  it('observes the replacement element when truncation changes the tooltip wrapper', () => {
+    const { result } = renderTruncationHook();
+    expect(observer.observe).toHaveBeenCalledWith(element);
+
+    element = createMeasuredElement();
+    Object.assign(measurements, { scrollWidth: 200, textWidth: 200 });
+    act(() => resize());
+
+    expect(result.current.isTruncated).toBe(true);
+    expect(jest.mocked(observer.observe).mock.calls.at(-1)?.[0]).toBe(element);
+
+    Object.assign(measurements, { clientWidth: 200, elementWidth: 200 });
+    act(() => resize());
+    expect(result.current.isTruncated).toBe(false);
   });
 
   it('checks truncation again when the current breadcrumb becomes a link', () => {
