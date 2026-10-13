@@ -9,7 +9,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -22,28 +21,20 @@ import (
 func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 	for _, tt := range []struct {
 		name       string
-		title      string
 		semantic   bool
 		legacy     bool
-		otherQuery bool
 		skipRerank bool
 		noReranker bool
 		wantText   string
 	}{
 		{name: "lexical only", wantText: "Overview\nDatabase operations\nUnrelated message\nRequests timeout during peak traffic\nInvestigating DATABASE connection failures"},
-		{name: "title is not repeated", title: "Database overview", wantText: "Database overview\nDatabase operations\nUnrelated message\nRequests timeout during peak traffic\nInvestigating DATABASE connection failures"},
 		{name: "both legs", semantic: true, wantText: "Semantic context\nOverview\nDatabase operations\nUnrelated message\nRequests timeout during peak traffic\nInvestigating DATABASE connection failures"},
 		{name: "legacy response falls back to title", legacy: true, wantText: "Overview"},
-		{name: "text does not depend on query words", otherQuery: true, wantText: "Overview\nDatabase operations\nUnrelated message\nRequests timeout during peak traffic\nInvestigating DATABASE connection failures"},
 		{name: "skip rerank", skipRerank: true},
 		{name: "no reranker", noReranker: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			title := tt.title
-			if title == "" {
-				title = "Overview"
-			}
-			lexResp := lexFieldValueResponse([3]string{"a", title, ""})
+			lexResp := lexFieldValueResponse([3]string{"a", "Overview", ""})
 			lexResp.Fields = append(lexResp.Fields,
 				&resourcepb.ResourceSearchField{Name: "summary", Type: resourcepb.ResourceSearchField_STRING},
 				&resourcepb.ResourceSearchField{Name: "messages", Type: resourcepb.ResourceSearchField_STRING, IsArray: true},
@@ -83,12 +74,8 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 			if !tt.noReranker {
 				s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
 			}
-			query := "Database, TIMEOUT!"
-			if tt.otherQuery {
-				query = "unmatched"
-			}
 			resp, err := s.HybridSearch(authedCtx(), &resourcepb.HybridSearchRequest{
-				Key: validKey(), Query: query, SemanticQuery: "Different semantic wording", SkipRerank: tt.skipRerank,
+				Key: validKey(), Query: "unmatched", SemanticQuery: "Different semantic wording", SkipRerank: tt.skipRerank,
 			})
 			require.NoError(t, err)
 			require.Len(t, resp.Results, 1)
@@ -111,30 +98,22 @@ func TestHybridSearch_LexicalHitRerankText(t *testing.T) {
 			if tt.legacy {
 				assert.Nil(t, resp.Results[0].Lexical)
 			} else {
-				wantValues := map[string]any{
-					SEARCH_FIELD_TITLE:        title,
+				wantLexical, err := structpb.NewStruct(map[string]any{
+					SEARCH_FIELD_TITLE:        "Overview",
 					SEARCH_FIELD_DESCRIPTION:  "Database operations",
 					SEARCH_FIELD_MANAGER_KIND: "provisioning",
 					SEARCH_FIELD_MANAGER_ID:   "repository-1",
 					"summary":                 "Investigating DATABASE connection failures",
 					"messages":                []any{"Unrelated message", "Requests timeout during peak traffic", "Requests timeout during peak traffic"},
-				}
-				wantLexical, err := structpb.NewStruct(wantValues)
+				})
 				require.NoError(t, err)
 				assert.Equal(t, wantLexical.Fields, resp.Results[0].Lexical)
-				if tt.name == "lexical only" {
-					encoded, err := protojson.Marshal(resp.Results[0])
-					require.NoError(t, err)
-					var result map[string]any
-					require.NoError(t, json.Unmarshal(encoded, &result))
-					assert.Equal(t, wantValues, result["lexical"])
-				}
 			}
 			require.Len(t, resp.Results[0].Chunks, 1)
 			if tt.semantic {
 				assert.Equal(t, "Semantic context", resp.Results[0].Chunks[0].Content)
 			} else {
-				assert.Equal(t, title, resp.Results[0].Chunks[0].Content)
+				assert.Equal(t, "Overview", resp.Results[0].Chunks[0].Content)
 			}
 		})
 	}

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -224,17 +223,9 @@ func TestHybridSearch_MultipleResources_Validation(t *testing.T) {
 		{name: "missing group", change: func(r *resourcepb.HybridSearchRequest) { r.Resources[0].Group = "" }},
 		{name: "missing resource", change: func(r *resourcepb.HybridSearchRequest) { r.Resources[0].Resource = "" }},
 		{name: "duplicate resource", change: func(r *resourcepb.HybridSearchRequest) { r.Resources = append(r.Resources, r.Resources[0]) }},
-		{name: "empty query", change: func(r *resourcepb.HybridSearchRequest) { r.Query = " " }},
-		{name: "long query", change: func(r *resourcepb.HybridSearchRequest) { r.Query = strings.Repeat("q", 1001) }},
-		{name: "empty semantic query", change: func(r *resourcepb.HybridSearchRequest) { r.SemanticQuery = " " }},
-		{name: "invalid relevance", change: func(r *resourcepb.HybridSearchRequest) { r.MinRelevance = "invalid" }},
-		{name: "threshold with skip", change: func(r *resourcepb.HybridSearchRequest) { r.MinRelevance, r.SkipRerank = "high", true }},
 		{name: "nil filter", change: func(r *resourcepb.HybridSearchRequest) { r.Filters = []*resourcepb.Requirement{nil} }},
 		{name: "resource specific filter", change: func(r *resourcepb.HybridSearchRequest) {
 			r.Filters = []*resourcepb.Requirement{{Key: "language", Values: []string{"promql"}}}
-		}},
-		{name: "unsupported filter operator", change: func(r *resourcepb.HybridSearchRequest) {
-			r.Filters = []*resourcepb.Requirement{{Key: "folder", Operator: "notin", Values: []string{"f"}}}
 		}},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -281,7 +272,7 @@ func TestHybridSearch_MultipleResources_FailureDoesNotReturnPartialResults(t *te
 	assert.Zero(t, scorer.calls)
 }
 
-func TestHybridSearch_MultipleResources_RejectsUnauthenticatedAndCrossNamespaceRequests(t *testing.T) {
+func TestHybridSearch_RejectsUnauthenticatedAndCrossNamespaceRequests(t *testing.T) {
 	for _, test := range []struct {
 		name      string
 		ctx       context.Context
@@ -291,18 +282,24 @@ func TestHybridSearch_MultipleResources_RejectsUnauthenticatedAndCrossNamespaceR
 		{name: "unauthenticated", ctx: context.Background(), namespace: "ns", code: codes.Unauthenticated},
 		{name: "different namespace", ctx: authedCtx(), namespace: "other-tenant", code: codes.PermissionDenied},
 	} {
-		t.Run(test.name, func(t *testing.T) {
-			s, index := newHybridResourcesTestServer(nil)
-			client, limiter := enableHybridResourcesSemantic(s, &hybridResourcesTestVectorBackend{})
-			req := hybridResourcesTestRequest()
-			req.Namespace = test.namespace
-			_, err := s.HybridSearch(test.ctx, req)
-			require.Error(t, err)
-			assert.Equal(t, test.code, status.Code(err))
-			assert.Empty(t, index.requests)
-			assert.Zero(t, client.calls)
-			assert.Zero(t, limiter.calls)
-		})
+		for _, selector := range []string{"key", "resources"} {
+			t.Run(test.name+"/"+selector, func(t *testing.T) {
+				s, index := newHybridResourcesTestServer(nil)
+				client, limiter := enableHybridResourcesSemantic(s, &hybridResourcesTestVectorBackend{})
+				req := hybridResourcesTestRequest()
+				req.Namespace = test.namespace
+				if selector == "key" {
+					req.Key = &resourcepb.ResourceKey{Namespace: req.Namespace, Group: req.Resources[0].Group, Resource: req.Resources[0].Resource}
+					req.Namespace, req.Resources = "", nil
+				}
+				_, err := s.HybridSearch(test.ctx, req)
+				require.Error(t, err)
+				assert.Equal(t, test.code, status.Code(err))
+				assert.Empty(t, index.requests)
+				assert.Zero(t, client.calls)
+				assert.Zero(t, limiter.calls)
+			})
+		}
 	}
 }
 

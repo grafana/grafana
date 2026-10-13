@@ -1029,44 +1029,6 @@ func TestHybridSearch_CollectionResolution(t *testing.T) {
 	})
 }
 
-func TestHybridSearch_NamespaceMismatchIsForbidden(t *testing.T) {
-	// A caller authenticated for one namespace must not burn another
-	// tenant's rate budget or embed quota.
-	limiter := &recordingRateLimiter{}
-	emb := &fakeTextEmbedder{dim: 4}
-	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-	s.embedder = newTestEmbedder(emb)
-	s.rateLimiter = limiter
-	s.rateLimitPerTenant = 100
-	s.rateLimitWindow = time.Minute
-
-	ctx := authlib.WithAuthInfo(context.Background(),
-		&identity.StaticRequester{UserID: 1, UserUID: "u", Namespace: "other-tenant", Type: authlib.TypeUser},
-	)
-	_, err := s.HybridSearch(ctx, &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.PermissionDenied, status.Code(err))
-	assert.False(t, limiter.called, "cross-tenant request must not consume rate budget")
-	assert.Empty(t, emb.gotIn.Texts, "cross-tenant request must not consume embed quota")
-}
-
-func TestHybridSearch_UnauthenticatedDoesNotConsumeRateBudget(t *testing.T) {
-	limiter := &recordingRateLimiter{}
-	s, _, _ := newHybridTestServer(lexTableResponse(), &fakeVectorBackend{})
-	s.rateLimiter = limiter
-	s.rateLimitPerTenant = 100
-	s.rateLimitWindow = time.Minute
-
-	_, err := s.HybridSearch(context.Background(), &resourcepb.HybridSearchRequest{
-		Key: validKey(), Query: "q",
-	})
-	require.Error(t, err)
-	assert.Equal(t, codes.Unauthenticated, status.Code(err))
-	assert.False(t, limiter.called, "unauthenticated request must not consume rate budget")
-}
-
 func TestHybridSearch_CallerCancellationReturnsCanceled(t *testing.T) {
 	// A canceled caller context maps to Canceled regardless of which leg
 	// failed or how it wrapped the error.

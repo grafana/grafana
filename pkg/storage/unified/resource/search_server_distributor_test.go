@@ -196,12 +196,26 @@ func TestDistributorCheckHealth(t *testing.T) {
 	}
 }
 
+func newDistributorForwardingTestServer(t *testing.T, client ResourceClient) *distributorServer {
+	t.Helper()
+	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
+	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
+			return &RingClient{Client: client}, nil
+		}), nil, gokitlog.NewNopLogger())
+	return &distributorServer{
+		ring:           testRing,
+		searchRingRead: newSearchRingReadOp(false),
+		clientPool:     pool,
+		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
+	}
+}
+
 // VectorSearch must forward the incoming gRPC metadata (which carries the access
 // token) when distributing to a search instance. Dropping it makes the downstream
 // authenticator reject the call with "missing required token".
 func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
-	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
-
 	var gotMD metadata.MD
 	mockClient := NewMockResourceClient(t)
 	mockClient.EXPECT().VectorSearch(mock.Anything, mock.Anything).RunAndReturn(
@@ -209,20 +223,7 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 			gotMD, _ = metadata.FromOutgoingContext(ctx)
 			return &resourcepb.VectorSearchResponse{}, nil
 		})
-
-	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
-		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
-			return &RingClient{Client: mockClient}, nil
-		}), nil, gokitlog.NewNopLogger())
-
-	ds := &distributorServer{
-		ring:           testRing,
-		searchRingRead: newSearchRingReadOp(false),
-		clientPool:     pool,
-		tracing:        noop.NewTracerProvider().Tracer("test"),
-		log:            log.NewNopLogger(),
-	}
-
+	ds := newDistributorForwardingTestServer(t, mockClient)
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-access-token", "the-token"))
 	_, err := ds.VectorSearch(ctx, &resourcepb.VectorSearchRequest{
 		Key:   &resourcepb.ResourceKey{Namespace: "stacks-11794"},
@@ -262,7 +263,6 @@ func TestDistributorHybridSearchForwardsNamespaceAndCredentials(t *testing.T) {
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
-			testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
 			want := &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{{Title: "Monitoring"}}}
 			mockClient := NewMockResourceClient(t)
 			mockClient.EXPECT().HybridSearch(mock.Anything, test.request).RunAndReturn(
@@ -274,17 +274,7 @@ func TestDistributorHybridSearchForwardsNamespaceAndCredentials(t *testing.T) {
 					require.Equal(t, []string{"the-token"}, md.Get("x-access-token"))
 					return want, nil
 				}).Once()
-			pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
-				ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
-					return &RingClient{Client: mockClient}, nil
-				}), nil, gokitlog.NewNopLogger())
-			ds := &distributorServer{
-				ring:           testRing,
-				searchRingRead: newSearchRingReadOp(false),
-				clientPool:     pool,
-				tracing:        noop.NewTracerProvider().Tracer("test"),
-				log:            log.NewNopLogger(),
-			}
+			ds := newDistributorForwardingTestServer(t, mockClient)
 			ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("x-access-token", "the-token"))
 			response, err := ds.HybridSearch(ctx, test.request)
 			require.NoError(t, err)

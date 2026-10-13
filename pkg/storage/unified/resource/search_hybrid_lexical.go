@@ -17,6 +17,9 @@ const maxLexicalRerankTextBytes = 4096
 // Bound the returned fields separately from the text sent to the reranker.
 const maxHybridLexicalBytes = 4096
 
+// hybridLexicalFields selects standard and manifest text fields for lexical search.
+// queryFields controls matching; rerankFields selects retrievable values returned
+// by that same search for reranking, and is empty when reranking is disabled.
 func (s *searchServer) hybridLexicalFields(key *resourcepb.ResourceKey, skipRerank bool) (queryFields []*resourcepb.ResourceSearchRequest_QueryField, rerankFields []string) {
 	definitions := StandardSearchFieldDefinitions()
 	if s.searchFields != nil {
@@ -39,7 +42,10 @@ func (s *searchServer) hybridLexicalFields(key *resourcepb.ResourceKey, skipRera
 	return queryFields, rerankFields
 }
 
-// Keep title first so other fields cannot consume its text budget.
+// boundedLexicalFields converts strings and string arrays into result fields,
+// sharing a 4 KiB budget across field names and values. Title takes priority,
+// then fields are sorted by name so truncation is deterministic. Empty values
+// are omitted, and truncation preserves UTF-8.
 func boundedLexicalFields(values map[string]any) map[string]*structpb.Value {
 	names := make([]string, 1, len(values)+1)
 	names[0] = SEARCH_FIELD_TITLE
@@ -87,6 +93,9 @@ func boundedLexicalFields(values map[string]any) map[string]*structpb.Value {
 	return fields
 }
 
+// lexicalRerankText builds reranker context from returned lexical fields, excluding
+// folder/manager metadata and duplicate or empty text. Title comes first, then
+// fields in name order; the combined text is capped at 4 KiB.
 func lexicalRerankText(fields map[string]*structpb.Value) string {
 	// Keep title first and make truncation deterministic despite map iteration order.
 	names := make([]string, 1, len(fields)+1)
