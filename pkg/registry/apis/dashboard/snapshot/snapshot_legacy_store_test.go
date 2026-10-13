@@ -148,6 +148,14 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		assert.Equal(t, "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey, receivedReq.URL.Path)
 	})
 
+	t.Run("wrapper already deleted remotely", func(t *testing.T) {
+		store := makeStore(t, "not-a-url")
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeletedKey{}, true)
+		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, deleted)
+	})
+
 	t.Run("returns error on invalid ExternalDeleteURL", func(t *testing.T) {
 		setExternalSnapshotsK8SAPIPushToggle(t, true)
 
