@@ -282,6 +282,20 @@ func executeDSNodesGrouped(ctx context.Context, now time.Time, vars mathexp.Vars
 				attribute.String("datasource.uid", firstNode.datasource.UID),
 			)
 
+			// A panic gets an error for each node in the group that has no
+			// result yet, so the rest of the request still runs.
+			defer func() {
+				if p := recover(); p != nil {
+					logger.Error("Panic while querying data source", "error", p, "stack", log.Stack(1))
+					for _, dn := range nodeGroup {
+						if _, ok := vars[dn.refID]; !ok {
+							vars[dn.refID] = mathexp.Results{Error: makePanicError(dn.refID, p)}
+						}
+					}
+					span.SetStatus(codes.Error, "panic while querying data source")
+				}
+			}()
+
 			req := &backend.QueryDataRequest{
 				Headers: firstNode.request.Headers,
 			}

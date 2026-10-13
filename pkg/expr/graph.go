@@ -19,6 +19,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
 	"github.com/grafana/grafana/pkg/expr/sql"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
@@ -152,7 +153,7 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 			return vars, makeUnexpectedNodeTypeError(node.RefID(), node.NodeType().String())
 		}
 
-		res, err := execNode.Execute(c, now, vars, s)
+		res, err := executeNode(c, execNode, now, vars, s)
 		if err != nil {
 			res.Error = err
 		}
@@ -161,6 +162,20 @@ func (dp *DataPipeline) execute(c context.Context, now time.Time, s *Service) (m
 		span.End()
 	}
 	return vars, nil
+}
+
+// executeNode runs node.Execute and turns a panic into an error for that
+// node. Core plugins run in-process without the recovery that the plugin SDK
+// gives external plugins, so without this one panic fails the whole request.
+func executeNode(ctx context.Context, node ExecutableNode, now time.Time, vars mathexp.Vars, s *Service) (res mathexp.Results, err error) {
+	defer func() {
+		if p := recover(); p != nil {
+			logger.FromContext(ctx).Error("Panic while executing node", "refId", node.RefID(), "error", p, "stack", log.Stack(1))
+			res = mathexp.Results{}
+			err = makePanicError(node.RefID(), p)
+		}
+	}()
+	return node.Execute(ctx, now, vars, s)
 }
 
 // GetDatasourceTypes returns an unique list of data source types used in the query. Machine learning node is encoded as `ml_<type>`, e.g. ml_outlier
