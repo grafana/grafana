@@ -130,6 +130,12 @@ func TestDeleteSnapshotFromAPI(t *testing.T) {
 	for _, byKey := range []bool{false, true} {
 		t.Run(fmt.Sprint(byKey), func(t *testing.T) {
 			hs, c := snapshotAPIContext(t, "/api/snapshots/snapshot-key")
+			if !byKey {
+				service := dashboardsnapshots.NewMockService(t)
+				service.On("GetDashboardSnapshot", mock.Anything, &dashboardsnapshots.GetDashboardSnapshotQuery{Key: "snapshot-key"}).
+					Return(&dashboardsnapshots.DashboardSnapshot{ID: 42}, nil)
+				hs.dashboardsnapshotsService = service
+			}
 			calls := 0
 			hs.clientConfigProvider = &mockDirectRestConfigProvider{host: "http://localhost", transport: snapshotAPIRoundTripper(func(r *http.Request) (*http.Response, error) {
 				calls++
@@ -150,6 +156,13 @@ func TestDeleteSnapshotFromAPI(t *testing.T) {
 			require.Equal(t, 200, result.Status(), string(result.Body()))
 			require.Equal(t, 1, calls)
 			require.Contains(t, string(result.Body()), "Snapshot deleted")
+			if !byKey {
+				var body struct {
+					ID int64 `json:"id"`
+				}
+				require.NoError(t, json.Unmarshal(result.Body(), &body))
+				require.Equal(t, int64(42), body.ID)
+			}
 		})
 	}
 }

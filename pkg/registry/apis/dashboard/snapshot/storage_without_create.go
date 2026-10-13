@@ -177,12 +177,6 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 
 type externalSnapshotDeleteURLKey struct{}
 
-func sameURLHost(first, second string) bool {
-	firstURL, firstErr := url.Parse(first)
-	secondURL, secondErr := url.Parse(second)
-	return firstErr == nil && secondErr == nil && firstURL.Host != "" && strings.EqualFold(firstURL.Host, secondURL.Host)
-}
-
 func deleteSnapshotFromExternalHost(ctx context.Context, snap *dashv0.Snapshot, options dashv0.SnapshotSharingOptions) (string, error) {
 	if snap.Spec.External == nil || !*snap.Spec.External || snap.Spec.DeleteKey == nil || options.ExternalSnapshotURL == "" {
 		return "", nil

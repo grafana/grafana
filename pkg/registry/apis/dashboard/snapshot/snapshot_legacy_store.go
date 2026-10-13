@@ -77,23 +77,23 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 		return nil, false, s.ResourceInfo.NewNotFound(name)
 	}
 
-	// Delete the external one first. The stored ExternalDeleteURL may have an outdated
-	// path format (e.g. created with externalSnapshotsK8SAPIPush in the opposite
-	// state), so each branch extracts the host and rebuilds the URL with the
-	// deleteKey in its own expected format.
-	deleteURL, _ := ctx.Value(externalSnapshotDeleteURLKey{}).(string)
-	if snap.ExternalDeleteURL != "" && !sameURLHost(deleteURL, snap.ExternalDeleteURL) {
+	// Delete the external one first. Rebuild old URLs when the configured protocol
+	// changed, but skip a duplicate request only when the effective endpoint matches.
+	completedDeleteURL, _ := ctx.Value(externalSnapshotDeleteURLKey{}).(string)
+	if snap.ExternalDeleteURL != "" {
 		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
 			parsed, err := url.Parse(snap.ExternalDeleteURL)
 			if err != nil || parsed.Scheme == "" || parsed.Host == "" {
-				return nil, false, fmt.Errorf("invalid external delete URL: %w", err)
+				return nil, false, fmt.Errorf("invalid external delete URL %q", snap.ExternalDeleteURL)
 			}
 			prefix := dashV0.SnapshotResourceInfo.GroupResource().Resource
 			deleteURL := parsed.Scheme + "://" + parsed.Host + "/apis/" + dashV0.GROUP + "/" + dashV0.VERSION + "/namespaces/default/" + prefix + "/delete/" + snap.DeleteKey
-			if err := deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
-				return nil, false, err
+			if completedDeleteURL != deleteURL {
+				if err := deleteExternalSnapshot(deleteURL, s.ExternalSnapshotToken); err != nil {
+					return nil, false, err
+				}
 			}
-		} else {
+		} else if completedDeleteURL != snap.ExternalDeleteURL {
 			if err := deleteExternalSnapshotLegacy(snap.ExternalDeleteURL); err != nil {
 				return nil, false, err
 			}
