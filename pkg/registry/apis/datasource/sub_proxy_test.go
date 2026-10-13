@@ -247,6 +247,7 @@ func TestSubProxyREST_RemoteRouteAuthorization(t *testing.T) {
 		{"allowed with no legacy permissions", true, nil, 200},
 		{"denied despite legacy admin permissions", false, nil, 403},
 		{"authz error fails closed", false, errors.New("unavailable"), 403},
+		{"authz error overrides allowance", true, errors.New("unavailable"), 403},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			forwarded := 0
@@ -264,10 +265,10 @@ func TestSubProxyREST_RemoteRouteAuthorization(t *testing.T) {
 			b := newProxyTestBuilder(provider)
 			b.pluginJSON = plugins.JSONData{ID: "prometheus", Routes: []*plugins.Route{{Method: "POST", Path: "api/v1/query", ReqAction: "datasources:query"}}}
 			checks := 0
-			b.proxyDeps.RouteAccessChecker = func(ctx context.Context, who identity.Requester, uid, action string) (bool, error) {
+			b.proxyDeps.RouteAccessChecker = func(ctx context.Context, who identity.Requester, uid string, route *plugins.Route) (bool, error) {
 				checks++
 				require.Equal(t, "ds-1", uid)
-				require.Equal(t, "datasources:query", action)
+				require.Equal(t, "datasources:query", route.ReqAction)
 				return tc.allowed, tc.err
 			}
 			resolved := 0
@@ -288,7 +289,7 @@ func TestSubProxyREST_RemoteRouteAuthorization(t *testing.T) {
 			require.Equal(t, tc.status, rec.Code)
 			require.Equal(t, 1, checks)
 			require.Equal(t, 1, resolved)
-			if tc.allowed {
+			if tc.status == http.StatusOK {
 				require.Equal(t, 1, forwarded)
 			} else {
 				require.Zero(t, forwarded)
