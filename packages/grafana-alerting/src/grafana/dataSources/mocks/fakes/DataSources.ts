@@ -3,6 +3,8 @@ import { keyBy } from 'lodash';
 
 import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
 import { config } from '@grafana/runtime';
+// Test-only: this file is never bundled, so the published package keeps no /internal import.
+// eslint-disable-next-line no-restricted-imports
 import { setDataSourceInstanceSettings } from '@grafana/runtime/internal';
 
 export const DataSourceInstanceSettingsFactory = Factory.define<DataSourceInstanceSettings>(({ sequence }) => ({
