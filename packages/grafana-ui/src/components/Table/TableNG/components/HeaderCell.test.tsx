@@ -334,9 +334,16 @@ describe('HeaderCell', () => {
           column={{ ...column, draggable: true }}
           tableRefreshEnabled
           hasColumnSidebar
+          onOpenColumnPanel={jest.fn()}
         />
       );
       expect(screen.getByLabelText(menuLabel)).toBeInTheDocument();
+    });
+
+    it('does not render an empty menu when column action callbacks are missing', () => {
+      render(<HeaderCell {...baseProps} field={hideableField()} tableRefreshEnabled hasColumnSidebar />);
+      expect(screen.getByRole('button', { name: 'Field1' })).toBeInTheDocument();
+      expect(screen.queryByLabelText(menuLabel)).not.toBeInTheDocument();
     });
 
     it('opens the sidebar from Manage columns', async () => {

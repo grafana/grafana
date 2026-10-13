@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import memoize from 'micro-memoize';
-import { useCallback, useRef } from 'react';
+import { Fragment, useCallback, useRef } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -10,11 +10,12 @@ import { useStyles2 } from '../../../../themes/ThemeContext';
 import { Dropdown } from '../../../Dropdown/Dropdown';
 import { IconButton } from '../../../IconButton/IconButton';
 import { Menu } from '../../../Menu/Menu';
+import { type ColumnOption } from '../menuOptions';
 
 interface HeaderCellMenuProps {
+  groups: ColumnOption[][];
   onAddToAssistant?: () => void;
   displayName: string;
-  filterable: boolean;
   /** Whether this column currently has an active filter — swaps the menu item's label to reflect it. */
   hasActiveFilter?: boolean;
   /** Opens the column's filter popup, anchored to the passed element. */
@@ -33,7 +34,7 @@ interface HeaderCellMenuProps {
  */
 export function HeaderCellMenu({
   displayName,
-  filterable,
+  groups,
   hasActiveFilter,
   onOpenFilter,
   onHideColumn,
@@ -51,58 +52,62 @@ export function HeaderCellMenu({
   const overlay = useCallback(
     () => (
       <Menu ariaLabel={menuLabel}>
-        {filterable && (
-          <Menu.Item
-            label={
-              hasActiveFilter
-                ? t('grafana-ui.table.column-menu-update-filter', 'Update filter')
-                : t('grafana-ui.table.column-menu-filter', 'Filter values')
-            }
-            icon="filter"
-            testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem}
-            onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
-          />
-        )}
-        {filterable && (onHideColumn || onOpenColumnPanel) && <Menu.Divider />}
-        {onHideColumn && (
-          <Menu.Item
-            label={t('grafana-ui.table.column-menu-hide', 'Hide column')}
-            icon="eye-slash"
-            disabled={!canHideColumn}
-            testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.hideItem}
-            onClick={onHideColumn}
-          />
-        )}
-        {onOpenColumnPanel && (
-          <Menu.Item
-            label={t('grafana-ui.table.column-menu-manage-columns', 'Manage columns')}
-            icon="columns"
-            testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.manageColumnsItem}
-            onClick={onOpenColumnPanel}
-          />
-        )}
-        {onAddToAssistant && (
-          <>
-            {(filterable || onHideColumn || onOpenColumnPanel) && <Menu.Divider />}
-            <Menu.Item
-              label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
-              icon="ai-sparkle"
-              onClick={onAddToAssistant}
-            />
-          </>
-        )}
+        {groups.map((group, index) => (
+          <Fragment key={group[0]}>
+            {index > 0 && <Menu.Divider />}
+            {group.map((option) => {
+              switch (option) {
+                case 'filter':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={
+                        hasActiveFilter
+                          ? t('grafana-ui.table.column-menu-update-filter', 'Update filter')
+                          : t('grafana-ui.table.column-menu-filter', 'Filter values')
+                      }
+                      icon="filter"
+                      testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.filterItem}
+                      onClick={() => onOpenFilter(wrapperRef.current?.querySelector('button') ?? null)}
+                    />
+                  );
+                case 'hide':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={t('grafana-ui.table.column-menu-hide', 'Hide column')}
+                      icon="eye-slash"
+                      disabled={!canHideColumn}
+                      testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.hideItem}
+                      onClick={onHideColumn}
+                    />
+                  );
+                case 'manage':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={t('grafana-ui.table.column-menu-manage-columns', 'Manage columns')}
+                      icon="columns"
+                      testId={selectors.components.Panels.Visualization.TableNG.headerColumnMenu.manageColumnsItem}
+                      onClick={onOpenColumnPanel}
+                    />
+                  );
+                case 'assistant':
+                  return (
+                    <Menu.Item
+                      key={option}
+                      label={t('grafana-ui.table.add-to-assistant', 'Add to Assistant')}
+                      icon="ai-sparkle"
+                      onClick={onAddToAssistant}
+                    />
+                  );
+              }
+            })}
+          </Fragment>
+        ))}
       </Menu>
     ),
-    [
-      filterable,
-      hasActiveFilter,
-      menuLabel,
-      onOpenFilter,
-      onHideColumn,
-      canHideColumn,
-      onOpenColumnPanel,
-      onAddToAssistant,
-    ]
+    [groups, hasActiveFilter, menuLabel, onOpenFilter, onHideColumn, canHideColumn, onOpenColumnPanel, onAddToAssistant]
   );
 
   return (

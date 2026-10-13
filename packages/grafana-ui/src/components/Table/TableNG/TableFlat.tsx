@@ -13,7 +13,7 @@ import { useSplitter } from '../../Splitter/useSplitter';
 import { type DataLinksActionsTooltipState } from '../cellUtils';
 
 import { TableDataGrid } from './TableDataGrid';
-import { ColumnVisibilitySidePanel, type SidebarColumn } from './components/ColumnVisibilitySidePanel';
+import { TableSidebar, type SidebarColumn } from './components/TableSidebar';
 import { COLUMN_SETTLE_MS, FIRST_COLUMN_EXTRA_PADDING, getPaginationChromeHeight, TABLE } from './constants';
 import {
   useColumnResize,
@@ -670,7 +670,7 @@ export function TableFlat(props: TableNGProps) {
           overflow: 'hidden',
         }}
       >
-        <ColumnVisibilitySidePanel
+        <TableSidebar
           columns={sidebarColumns}
           reorderable={reorderable}
           hiddenColumns={hiddenColumns}

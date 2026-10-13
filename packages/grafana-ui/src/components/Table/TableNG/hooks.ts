@@ -42,6 +42,7 @@ import {
   SCROLL_SHADOW_THRESHOLD,
   TABLE,
 } from './constants';
+import { getColumnMenuOptions } from './menuOptions';
 import { getScrollShadowOffsetStyles, getScrollShadowStyles, IS_SAFARI_26 } from './styles';
 import {
   type FilterType,
@@ -476,9 +477,14 @@ export function useHeaderHeight({
           showTypeIcons,
           tableRefreshEnabled,
           isFiltered: filteredKeys.has(getDisplayName(field)),
-          hasColumnSidebar,
           reorderable,
-          hasAssistantAction,
+          hasColumnOptions:
+            getColumnMenuOptions({
+              filterable: field.config.custom?.filterable,
+              hideable: field.config.custom?.hideable,
+              hasColumnSidebar,
+              hasAssistantAction,
+            }).length > 0,
         });
         return Math.floor(width);
       }),

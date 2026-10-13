@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 
-import { ColumnVisibilitySidePanel } from './ColumnVisibilitySidePanel';
+import { TableSidebar } from './TableSidebar';
 
 function createDataTransfer() {
   return {
@@ -33,7 +33,7 @@ function Harness({
   const [hiddenColumns, setHiddenColumns] = useState<ReadonlySet<string>>(initialHidden);
 
   return (
-    <ColumnVisibilitySidePanel
+    <TableSidebar
       columns={columns}
       reorderable={reorderable}
       hiddenColumns={hiddenColumns}
@@ -54,7 +54,7 @@ function Harness({
   );
 }
 
-describe('ColumnVisibilitySidePanel', () => {
+describe('TableSidebar', () => {
   it('removes all reorder controls when reordering is disabled', () => {
     const { rerender } = render(<Harness />);
     expect(screen.getByRole('button', { name: 'Reorder Column A' })).toBeVisible();
@@ -69,7 +69,9 @@ describe('ColumnVisibilitySidePanel', () => {
     render(<Harness reorderable={false} />);
 
     const row = screen.getByTestId(selectors.components.Panels.Visualization.TableNG.columnsSidebar.row('Column A'));
-    expect(row.firstElementChild).toContainElement(screen.getByLabelText('Hide Column A'));
+    const rowContents = row.firstElementChild;
+    expect(rowContents?.firstElementChild).toContainElement(screen.getByLabelText('Hide Column A'));
+    expect(rowContents).toHaveStyle({ display: 'flex', alignItems: 'center', gap: '8px' });
     expect(row).toHaveStyle({ paddingLeft: '12px' });
   });
 
@@ -135,19 +137,19 @@ describe('ColumnVisibilitySidePanel', () => {
       onClose: jest.fn(),
     };
 
-    const { rerender } = render(<ColumnVisibilitySidePanel {...props} />);
+    const { rerender } = render(<TableSidebar {...props} />);
     const panel = screen.getByRole('group', { name: 'Column visibility' });
     const contents = panel.firstElementChild!;
     expect(window.getComputedStyle(contents).opacity).toBe('');
 
-    rerender(<ColumnVisibilitySidePanel {...props} willCloseOnRelease />);
+    rerender(<TableSidebar {...props} willCloseOnRelease />);
     expect(window.getComputedStyle(contents).opacity).toBe('0.5');
   });
 
   it('closes from the close button', async () => {
     const onClose = jest.fn();
     render(
-      <ColumnVisibilitySidePanel
+      <TableSidebar
         columns={columns}
         hiddenColumns={new Set()}
         onToggleColumn={jest.fn()}
