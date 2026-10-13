@@ -17,19 +17,27 @@ const manifestDiscoveryStatus = manifestDiscoveryPrefix + "/status"
 // authenticated caller can read it, so it holds no credentials, addresses,
 // URLs or error text: only names, states and counts.
 type routerStatusDoc struct {
+	Ready        bool               `json:"ready"`
+	Reconciler   reconcilerDoc      `json:"reconciler"`
+	Breakers     breakerSettingsDoc `json:"breakers"`
+	Groups       []groupStatusDoc   `json:"groups"`
+	Sources      []sourceStatus     `json:"sources,omitempty"`
+	Shadowed     []shadowedGroup    `json:"shadowed,omitempty"`
+	StackLookups map[string]uint64  `json:"stackLookups,omitempty"`
+}
+
+// reconcilerDoc reports the reconcile loop.
+type reconcilerDoc struct {
+	// Phase is the loop's state: starting (before the first reconcile),
+	// serving, stopped, or crashed.
 	Phase string `json:"phase"`
-	Ready bool   `json:"ready"`
-	// LastReconcileFailed is whether the latest reconcile left some group
-	// on its last-known-good backend.
-	LastReconcileFailed bool               `json:"lastReconcileFailed"`
-	LastReconcile       *time.Time         `json:"lastReconcile,omitempty"`
-	Reconciles          uint64             `json:"reconciles"`
-	ReconcileErrors     uint64             `json:"reconcileErrors"`
-	Breakers            breakerSettingsDoc `json:"breakers"`
-	Groups              []groupStatusDoc   `json:"groups"`
-	Sources             []sourceStatus     `json:"sources,omitempty"`
-	Shadowed            []shadowedGroup    `json:"shadowed,omitempty"`
-	StackLookups        map[string]uint64  `json:"stackLookups,omitempty"`
+	// Last is when the latest reconcile finished, and LastFailed whether it
+	// left some group on its last-known-good backend.
+	Last       *time.Time `json:"last,omitempty"`
+	LastFailed bool       `json:"lastFailed"`
+	// Total and Errors count reconciles since the router started.
+	Total  uint64 `json:"total"`
+	Errors uint64 `json:"errors"`
 }
 
 type breakerSettingsDoc struct {
@@ -93,20 +101,22 @@ func (r *GrafanaRouter) serveRouterStatus(w http.ResponseWriter, req *http.Reque
 
 func (r *GrafanaRouter) routerStatus(req *http.Request) routerStatusDoc {
 	doc := routerStatusDoc{
-		Phase:           phaseNames[starting],
-		Ready:           r.Ready(req.Context()) == nil,
-		Reconciles:      r.reconciles.Load(),
-		ReconcileErrors: r.reconcileErrors.Load(),
-		Breakers:        breakerSettingsDoc{OpenAfterConsecutiveFailures: breakerOpenAfter, OpenFor: breakerOpenFor.String()},
-		Groups:          []groupStatusDoc{},
+		Ready: r.Ready(req.Context()) == nil,
+		Reconciler: reconcilerDoc{
+			Phase:  phaseNames[starting],
+			Total:  r.reconciles.Load(),
+			Errors: r.reconcileErrors.Load(),
+		},
+		Breakers: breakerSettingsDoc{OpenAfterConsecutiveFailures: breakerOpenAfter, OpenFor: breakerOpenFor.String()},
+		Groups:   []groupStatusDoc{},
 	}
 	if s := r.state.Load(); s != nil {
-		doc.Phase = phaseNames[s.phase]
-		doc.LastReconcileFailed = s.err != nil
+		doc.Reconciler.Phase = phaseNames[s.phase]
+		doc.Reconciler.LastFailed = s.err != nil
 	}
 	if ns := r.lastReconcile.Load(); ns != 0 {
 		t := time.Unix(0, ns).UTC()
-		doc.LastReconcile = &t
+		doc.Reconciler.Last = &t
 	}
 	if status, ok := r.loader.(loaderStatus); ok {
 		doc.Sources = status.sourceStatuses()

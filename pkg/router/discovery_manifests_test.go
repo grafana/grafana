@@ -124,7 +124,8 @@ func TestBuildManifestDocs(t *testing.T) {
 	require.Contains(t, index, "| Widget | `widgets` | Namespaced |")
 	require.Contains(t, index, "- `GET /apis/"+manifestTestGroup+"/v1/namespaces/{namespace}/stats`: Widget stats \\| totals per namespace\n",
 		"manifest text stays on one line and cannot break a table")
-	require.Contains(t, index, "OpenAPI: `/openapi/v3/apis/"+manifestTestGroup+"/v1?hash=widgets-key`")
+	require.Contains(t, index, "OpenAPI: [`/openapi/v3/apis/"+manifestTestGroup+"/v1`](/openapi/v3/apis/"+manifestTestGroup+"/v1?hash=widgets-key)",
+		"a link, with the cache-busting hash only in its target")
 
 	require.Contains(t, index, "## `gadgets.example.com`")
 	require.Contains(t, index, "No app manifest is published for this group")
@@ -152,8 +153,8 @@ func TestServeManifestDiscovery(t *testing.T) {
 		{"/apis/discovery", http.StatusOK, "application/json"},
 		{"/apis/discovery/v1alpha2", http.StatusOK, "application/json"},
 		{"/apis/discovery/v1alpha2/", http.StatusOK, "application/json"},
-		{"/apis/discovery/v1alpha2/index.md", http.StatusOK, "text/markdown; charset=utf-8"},
-		{"/apis/discovery/v1alpha2/index.html", http.StatusOK, "text/html; charset=utf-8"},
+		{"/apis/discovery/v1alpha2/AGENTS.md", http.StatusOK, "text/markdown; charset=utf-8"},
+		{"/apis/discovery/v1alpha2/AGENTS", http.StatusOK, "text/html; charset=utf-8"},
 		{"/apis/discovery/v1alpha2/manifests/" + manifestTestGroup, http.StatusOK, "application/json"},
 		{"/apis/discovery/v1alpha2/manifests/gadgets.example.com", http.StatusNotFound, ""},
 		{"/apis/discovery/v1alpha2/manifests", http.StatusOK, "application/json"},
@@ -221,7 +222,7 @@ func TestServeManifestDiscovery(t *testing.T) {
 	})
 
 	t.Run("not a group", func(t *testing.T) {
-		require.True(t, r.owns(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2/index.md", nil)))
+		require.True(t, r.owns(httptest.NewRequest(http.MethodGet, "/apis/discovery/v1alpha2/AGENTS.md", nil)))
 		require.False(t, r.owns(httptest.NewRequest(http.MethodGet, "/apis/discoveryx", nil)))
 		require.Empty(t, requestGroup("/apis/discovery/v1alpha2"), "no group metric label")
 		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discoveryx/v1", nil))
@@ -229,7 +230,7 @@ func TestServeManifestDiscovery(t *testing.T) {
 	})
 
 	t.Run("html page cannot run anything", func(t *testing.T) {
-		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/index.html", nil))
+		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/AGENTS", nil))
 		require.Equal(t, "default-src 'none'; style-src 'unsafe-inline'", rec.Header().Get("Content-Security-Policy"))
 		require.Equal(t, "nosniff", rec.Header().Get("X-Content-Type-Options"))
 	})
@@ -277,6 +278,8 @@ func TestDiscoveryGroupWithKubernetesClients(t *testing.T) {
 	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/manifests")
 	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/manifests/{name}")
 	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/status")
+	require.Contains(t, doc.Paths.Paths["/apis/discovery/v1alpha2/AGENTS.md"].Get.Responses.StatusCodeResponses[200].Content, "text/markdown")
+	require.NotContains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/AGENTS", "the page is for browsers, not API clients")
 	found := ""
 	for name, s := range doc.Components.Schemas {
 		gvks, _ := s.Extensions["x-kubernetes-group-version-kind"].([]any)
@@ -412,6 +415,14 @@ func TestManifestTextCannotBreakTheIndex(t *testing.T) {
 		}
 	}
 	require.Contains(t, page, "[x](https://evil.example)", "the text itself survives, as text")
+}
+
+func TestIndexLinksEscapeNamesAndKeys(t *testing.T) {
+	odd := &fakeBackend{key: "k) [x](https://evil.example)", group: testAPIGroup("a(b) c", "v1")}
+	index := renderManifestIndex([]Backend{odd}, nil)
+	require.Contains(t, index, "OpenAPI: [`/openapi/v3/apis/a(b) c/v1`](/openapi/v3/apis/a%28b%29%20c/v1?hash=k%29+%5Bx%5D%28https%3A%2F%2Fevil.example%29)")
+	_, page := (&manifestDocs{backends: []Backend{odd}}).indexDocs()
+	require.NotContains(t, string(page.body), `href="https://evil`)
 }
 
 func TestMDText(t *testing.T) {

@@ -72,11 +72,12 @@ func TestRouterStatus(t *testing.T) {
 	failBreaker(t, r.served["broken.ext.grafana.app"].breaker, breakerOpenAfter)
 
 	doc, groups := readStatus(t, r)
-	require.Equal(t, "serving", doc.Phase)
+	require.Equal(t, "serving", doc.Reconciler.Phase)
 	require.True(t, doc.Ready)
-	require.False(t, doc.LastReconcileFailed)
-	require.Equal(t, uint64(1), doc.Reconciles)
-	require.NotNil(t, doc.LastReconcile)
+	require.False(t, doc.Reconciler.LastFailed)
+	require.Equal(t, uint64(1), doc.Reconciler.Total)
+	require.Zero(t, doc.Reconciler.Errors)
+	require.NotNil(t, doc.Reconciler.Last)
 	require.Equal(t, breakerSettingsDoc{OpenAfterConsecutiveFailures: breakerOpenAfter, OpenFor: "1m0s"}, doc.Breakers)
 	require.Len(t, doc.Groups, 5, "discovery is the router's own, not a routed group")
 
@@ -133,10 +134,10 @@ func TestRouterStatus(t *testing.T) {
 
 	t.Run("before the first reconcile", func(t *testing.T) {
 		doc, _ := readStatus(t, NewGrafanaRouter(stubLoader{}, nil))
-		require.Equal(t, "starting", doc.Phase)
+		require.Equal(t, "starting", doc.Reconciler.Phase)
 		require.False(t, doc.Ready)
 		require.Empty(t, doc.Groups)
-		require.Nil(t, doc.LastReconcile)
+		require.Nil(t, doc.Reconciler.Last)
 	})
 }
 

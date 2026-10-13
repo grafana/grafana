@@ -9,6 +9,7 @@ import (
 	"io"
 	"maps"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -20,7 +21,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apiserver/pkg/endpoints"
 	"k8s.io/kube-openapi/pkg/spec3"
 
@@ -36,14 +36,14 @@ import (
 // new version rather than changing this one. The router serves the group
 // itself; "discovery" has no dot, so no plugin group can claim it.
 const (
-	discoveryGroup             = "discovery"
-	discoveryPrefix            = apisPrefix + "/" + discoveryGroup
-	manifestDiscoveryVersion   = appmanifestv1alpha2.APIVersion
-	manifestDiscoveryPrefix    = discoveryPrefix + "/" + manifestDiscoveryVersion
-	manifestDiscoveryIndex     = manifestDiscoveryPrefix + "/index.md"
-	manifestDiscoveryIndexHTML = manifestDiscoveryPrefix + "/index.html"
-	manifestDiscoveryList      = manifestDiscoveryPrefix + "/manifests"
-	manifestDiscoveryGroups    = manifestDiscoveryList + "/"
+	discoveryGroup           = "discovery"
+	discoveryPrefix          = apisPrefix + "/" + discoveryGroup
+	manifestDiscoveryVersion = appmanifestv1alpha2.APIVersion
+	manifestDiscoveryPrefix  = discoveryPrefix + "/" + manifestDiscoveryVersion
+	discoveryAgentsMD        = manifestDiscoveryPrefix + "/AGENTS.md"
+	discoveryAgentsHTML      = manifestDiscoveryPrefix + "/AGENTS"
+	manifestDiscoveryList    = manifestDiscoveryPrefix + "/manifests"
+	manifestDiscoveryGroups  = manifestDiscoveryList + "/"
 )
 
 // maxIndexTextLen bounds each manifest-supplied summary in the markdown index.
@@ -164,10 +164,10 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		serveManifestList(w, req, docs)
 	case manifestDiscoveryStatus:
 		r.serveRouterStatus(w, req)
-	case manifestDiscoveryIndex:
+	case discoveryAgentsMD:
 		index, _ := docs.indexDocs()
 		serveCachedDoc(w, req, index)
-	case manifestDiscoveryIndexHTML:
+	case discoveryAgentsHTML:
 		// The page is static: nothing in it may run or load from elsewhere.
 		w.Header().Set("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
 		w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -342,6 +342,7 @@ Grafana's APIs follow Kubernetes API conventions. Every request needs the same c
 
 - ` + "`GET " + manifestDiscoveryList + "`" + ` (the ` + "`manifests`" + ` resource of the ` + "`" + discoveryGroup + "`" + ` group, so ` + "`kubectl get manifests." + discoveryGroup + "`" + ` works too): every app manifest listed below, as an ` + "`AppManifestList` (`" + appmanifestv1alpha2.GroupVersion.String() + "`)" + `.
 - ` + "`GET " + manifestDiscoveryGroups + "{group}`" + `: one group's ` + "`AppManifest`" + `, with its kinds, schemas, custom routes and roles.
+- ` + "`GET " + discoveryAgentsMD + "`" + `: this index; ` + "`" + discoveryAgentsHTML + "`" + ` renders it for browsers.
 - ` + "`GET " + manifestDiscoveryStatus + "`" + `: the router's live status, for debugging: each group's source, breaker and backend.
 - ` + "`GET /apis`" + `: Kubernetes API discovery. Send ` + "`Accept: " + aggregatedDiscoveryJSON + "`" + ` to get every resource in one response. Groups listed there but not here publish no manifest.
 - ` + "`GET /openapi/v3/apis/{group}/{version}`" + `: the OpenAPI v3 document for one group version.
@@ -351,7 +352,7 @@ Grafana's APIs follow Kubernetes API conventions. Every request needs the same c
 - Namespaced: ` + "`/apis/{group}/{version}/namespaces/{namespace}/{resource}[/{name}]`" + `
 - Cluster-scoped: ` + "`/apis/{group}/{version}/{resource}[/{name}]`" + `
 
-A list request returns a ` + "`{Kind}List`" + `; a watch adds ` + "`?watch=true`" + ` to a list path.
+A list request returns a ` + "`{Kind}List`" + `;.
 `)
 
 	b.WriteString("\n## Groups\n\n| Group | App | Preferred version | Versions |\n| --- | --- | --- | --- |\n")
@@ -380,7 +381,7 @@ A list request returns a ` + "`{Kind}List`" + `; a watch adds ` + "`?watch=true`
 		}
 		fmt.Fprintf(&b, "\n## %s\n\n", title)
 		if _, ok := published[group.Name]; ok {
-			b.WriteString("Manifest: " + mdLink(manifestDiscoveryGroups, group.Name) + "\n")
+			b.WriteString("Manifest: " + mdLink(manifestDiscoveryGroups+group.Name, manifestDiscoveryGroups+url.PathEscape(group.Name)) + "\n")
 		} else {
 			b.WriteString("No app manifest is published for this group; see `/apis` and OpenAPI for its resources.\n")
 		}
@@ -412,7 +413,10 @@ func writeGroupVersions(b *strings.Builder, backend Backend, manifest *app.Manif
 		if gv.Version == group.PreferredVersion.Version {
 			heading += " (preferred)"
 		}
-		fmt.Fprintf(b, "\n### %s\n\nOpenAPI: %s\n", mdText(heading), mdCode(openapiV3Prefix+"/apis/"+gv.GroupVersion+"?hash="+backend.Key()))
+		// The hash only busts caches, so it goes in the link, not its text.
+		path := openapiV3Prefix + "/apis/" + group.Name + "/" + gv.Version
+		target := openapiV3Prefix + "/apis/" + url.PathEscape(group.Name) + "/" + url.PathEscape(gv.Version) + "?hash=" + url.QueryEscape(backend.Key())
+		fmt.Fprintf(b, "\n### %s\n\nOpenAPI: %s\n", mdText(heading), mdLink(path, target))
 
 		switch {
 		case manifest != nil:
@@ -548,13 +552,11 @@ func mdText(s string) string {
 	return mdEscaper.Replace(s)
 }
 
-// mdLink links to prefix+group when the group is a valid name, so it can
-// carry nothing but name characters into the link; otherwise it is plain code.
-func mdLink(prefix, group string) string {
-	if len(validation.IsDNS1123Subdomain(group)) > 0 {
-		return mdCode(prefix + group)
-	}
-	return "[" + mdCode(prefix+group) + "](" + prefix + group + ")"
+// mdLink links text, shown as code, to target. The caller URL-escapes every
+// part of target it did not write itself, which leaves nothing in it that can
+// end the link.
+func mdLink(text, target string) string {
+	return "[" + mdCode(text) + "](" + target + ")"
 }
 
 // mdCode renders s as an inline code span that can sit in a table cell.
