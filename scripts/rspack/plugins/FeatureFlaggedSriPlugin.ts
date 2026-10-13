@@ -14,6 +14,8 @@ const ESM_CHUNK_IMPORT_REGEX = /\bimport\(\s*("\.\/"\s*\+\s*__webpack_require__\
 // checks lazy chunks against an import map's "integrity" entries. The map is added once, on the
 // first chunk load, because sriHashes is not guaranteed to be populated when this module runs.
 // Keys must be absolute URLs; the relative chunk specifier resolves against this runtime chunk.
+// The first chunk loads before Grafana registers its default Trusted Types policy, so the map
+// text needs a policy of its own. It only ever holds build-time chunk names and hashes.
 const ESM_SRI_IMPORT_HELPER = `
 var __grafanaSriImportMapAdded = false;
 var __grafanaSriImport = (chunkSpecifier) => {
@@ -30,7 +32,11 @@ var __grafanaSriImport = (chunkSpecifier) => {
     if (nonce) {
       importMap.nonce = nonce;
     }
-    importMap.textContent = '{"integrity":{' + entries.join(',') + '}}';
+    var importMapText = '{"integrity":{' + entries.join(',') + '}}';
+    if (typeof trustedTypes !== 'undefined' && trustedTypes.createPolicy) {
+      importMapText = trustedTypes.createPolicy('grafana#sri-import-map', { createScript: (script) => script }).createScript(importMapText);
+    }
+    importMap.textContent = importMapText;
     document.head.appendChild(importMap);
   }
   return import(chunkSpecifier);

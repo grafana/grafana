@@ -117,6 +117,15 @@ describe('FeatureFlaggedSriPlugin', () => {
       expect(runtime).toContain("type = 'importmap'");
     });
 
+    it('passes the import map text through its own Trusted Types policy', async () => {
+      const { outputFs } = await compile(
+        createEsmConfig([new SubresourceIntegrityPlugin(), new FeatureFlaggedSriPlugin()])
+      );
+      const runtime = readAssets(outputFs, OUTPUT_PATH)['main.js'];
+
+      expect(runtime).toContain("trustedTypes.createPolicy('grafana#sri-import-map'");
+    });
+
     it('keeps real sha384 hashes matching the emitted lazy chunk', async () => {
       const { outputFs } = await compile(
         createEsmConfig([new SubresourceIntegrityPlugin(), new FeatureFlaggedSriPlugin()])
