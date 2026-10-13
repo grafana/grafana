@@ -1,7 +1,7 @@
 import { Factory } from 'fishery';
 import { keyBy } from 'lodash';
 
-import { type DataSourceInstanceSettings, type DataSourcePluginMeta } from '@grafana/data';
+import { type DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 // Test-only: this file is never bundled, so the published package keeps no /internal import.
 // eslint-disable-next-line no-restricted-imports
@@ -16,7 +16,23 @@ export const DataSourceInstanceSettingsFactory = Factory.define<DataSourceInstan
   url: '',
   readOnly: false,
   jsonData: {},
-  meta: { id: 'prometheus', name: 'Prometheus', type: 'datasource', alerting: true } as DataSourcePluginMeta,
+  meta: {
+    id: 'prometheus',
+    name: 'Prometheus',
+    type: PluginType.datasource,
+    module: '',
+    baseUrl: '',
+    alerting: true,
+    info: {
+      author: { name: '' },
+      description: '',
+      links: [],
+      logos: { small: '', large: '' },
+      screenshots: [],
+      updated: '',
+      version: '',
+    },
+  },
 }));
 
 /**

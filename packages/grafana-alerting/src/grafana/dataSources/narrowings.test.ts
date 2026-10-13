@@ -2,8 +2,8 @@ import { type DataSourceJsonData } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
 
-import { DataSourceInstanceSettingsFactory, setupDataSources } from './mocks/fakes/DataSources';
 import { getDataSourcesWithValidRecordingTarget } from './narrowings';
+import { DataSourceInstanceSettingsFactory, setupDataSources } from './testSetup/DataSources';
 
 jest.mock('@grafana/runtime/unstable', () => {
   const actual = jest.requireActual('@grafana/runtime/unstable');
