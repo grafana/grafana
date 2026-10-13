@@ -171,7 +171,9 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	errhttp.Write(ctx, apierrors.NewUnauthorized("unable to resolve current identity"), w)
+	// Did not find a user
+	w.WriteHeader(http.StatusUnauthorized)
+	_ = json.NewEncoder(w).Encode(rsp)
 }
 
 type delegatedAuthInfo struct {

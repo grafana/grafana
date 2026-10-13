@@ -25,9 +25,17 @@ describe('IAM endpoint routing', () => {
         expect.objectContaining({ url: '/apis/iam.grafana.app/v0alpha1/whoami', method: 'GET' })
       );
 
-      await store.dispatch(generatedAPI.endpoints.getCurrentUserDisplay.initiate()).unwrap();
+      await store.dispatch(generatedAPI.endpoints.getCurrentUserDisplay.initiate({})).unwrap();
       expect(fetch).toHaveBeenLastCalledWith(
         expect.objectContaining({ url: `/apis/iam.grafana.app/v0alpha1/namespaces/${config.namespace}/users/~` })
+      );
+
+      await store.dispatch(generatedAPI.endpoints.getCurrentUserDisplay.initiate({ permissions: true })).unwrap();
+      expect(fetch).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          url: `/apis/iam.grafana.app/v0alpha1/namespaces/${config.namespace}/users/~`,
+          params: { permissions: true },
+        })
       );
 
       await store.dispatch(generatedAPI.endpoints.getDisplayMapping.initiate({ key: ['user:u1'] })).unwrap();
