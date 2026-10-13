@@ -48,6 +48,13 @@ export interface DashboardPanelInfo {
   pluginId: string;
   /** The tabs and rows the panel sits in, outermost first. */
   sections: DashboardSectionInfo[];
+  /**
+   * The panel reuses another panel's results (the `-- Dashboard --` data source), so time-range and variable
+   * captures would report the live data and are refused per panel.
+   */
+  reusesDashboardQuery: boolean;
+  /** Names of the dashboard variables the panel's queries use. A variable capture loads only these panels. */
+  variableNames: string[];
 }
 
 /** @alpha */

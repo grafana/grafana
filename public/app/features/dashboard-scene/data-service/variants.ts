@@ -75,16 +75,22 @@ export function usesDashboardQueries(panel: VizPanel): boolean {
 }
 
 export function usesVariable(panel: VizPanel, name: string): boolean {
+  return getVariableNames(panel).includes(name);
+}
+
+/** The variables the panel's data providers depend on, from the outer provider inwards. */
+export function getVariableNames(panel: VizPanel): string[] {
+  const names = new Set<string>();
   for (
     let provider: SceneDataProvider | undefined = sceneGraph.getData(panel);
     provider;
     provider = provider.state.$data
   ) {
-    if (provider.variableDependency?.hasDependencyOn(name)) {
-      return true;
+    for (const name of provider.variableDependency?.getNames() ?? []) {
+      names.add(name);
     }
   }
-  return false;
+  return [...names];
 }
 
 function hasMeasuredWidth(provider: SceneDataProvider): boolean {
@@ -155,6 +161,10 @@ export function loadVariantData(
   signal: AbortSignal
 ): Promise<PanelData | undefined> {
   return withLoadSlot(async () => {
+    // Loads queued behind the limit start in a burst once the caller aborts, so they must not run queries.
+    if (signal.aborted) {
+      return undefined;
+    }
     const copy = sceneGraph.getData(panel).clone();
     for (let provider: SceneDataProvider | undefined = copy; provider; provider = provider.state.$data) {
       provider.setState({ data: undefined });

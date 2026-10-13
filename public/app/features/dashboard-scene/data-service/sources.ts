@@ -127,6 +127,10 @@ function getRunnerState(provider: SceneDataProvider): { bypassed: boolean; measu
 }
 
 async function loadPanel(panel: VizPanel, signal: AbortSignal): Promise<void> {
+  // Activating runs the panel's queries, and an aborted caller no longer wants them.
+  if (signal.aborted) {
+    return;
+  }
   const provider = sceneGraph.getData(panel);
   const { bypassed, measured } = getRunnerState(provider);
   // Activation is reference counted: if the viewer opens the tab meanwhile, the panel stays active.

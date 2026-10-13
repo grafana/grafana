@@ -27,6 +27,7 @@ import { dashboardDeactivations } from './lifecycle';
 import { getVizPanelExploreUrl, revealVizPanel } from './navigation';
 import { ALL_PANELS_REF, parseSectionRef, resolveSourceRefs } from './sections';
 import { getSourcePanels } from './sources';
+import { getVariableNames, usesDashboardQueries } from './variants';
 
 /** State changes that can change what a capture or the panel list returns. */
 const CHANGE_KEYS = [
@@ -86,6 +87,8 @@ export class DashboardDataServiceImpl implements DashboardDataService {
           description: source.description,
           pluginId: source.pluginId,
           sections: toSectionInfo(source),
+          reusesDashboardQuery: usesDashboardQueries(source.panel),
+          variableNames: getVariableNames(source.panel),
         }))
       : [];
   }
