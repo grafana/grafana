@@ -168,7 +168,7 @@ func TestSubProxyREST_ValidatesFinalDestination(t *testing.T) {
 			deps, err := builder.proxyDependencies(t.Context(), nil)
 			require.NoError(t, err)
 			deps.RequestValidator = validator
-			storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
+			storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
 			t.Cleanup(storage.Destroy)
 			ctx := krequest.WithNamespace(proxyTestContext(), "stacks-1")
 			// A cached transport must still use the current request's destination policy.
@@ -194,7 +194,7 @@ func TestSubProxyREST_ValidatesFinalDestination(t *testing.T) {
 				ds.Spec.URL(), target.URL + "/values",
 				ds.Spec.URL(), target.URL + "/values",
 			}, validator.checked)
-			require.Equal(t, 1, storage.transports.entries.Len())
+			require.Equal(t, 1, storage.transports.entries.EstimatedSize())
 		})
 	}
 }
