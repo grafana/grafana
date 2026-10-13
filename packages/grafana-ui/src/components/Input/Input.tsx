@@ -53,13 +53,15 @@ export const Input = forwardRef<HTMLInputElement, Props>((props, ref) => {
     invalid: invalidProp,
     loading: loadingProp,
     width = 0,
-    size = 'md',
+    size: sizeProp,
     id: idProp,
     disabled: disabledProp,
     'aria-describedby': ariaDescribedByProp,
     'aria-labelledby': ariaLabelledByProp,
     ...restProps
   } = props;
+
+  const size = sizeProp === 'sm' ? 'sm' : 'md';
 
   const fieldContext = useFieldContext();
   const invalid = invalidProp ?? fieldContext.invalid;
