@@ -63,7 +63,7 @@ func TestHandlerReturnsCurrentUserPermissions(t *testing.T) {
 	}, got)
 	require.Equal(t, "org-1", client.request.Namespace)
 	require.False(t, client.request.SkipCache)
-	require.Equal(t, []string{userPermissionsDelegatedGrant}, client.info.GetTokenDelegatedPermissions())
+	require.Equal(t, []string{UserPermissionsDelegatedGrant}, client.info.GetTokenDelegatedPermissions())
 	require.Equal(t, []string{"team-uid"}, client.info.GetGroups())
 }
 

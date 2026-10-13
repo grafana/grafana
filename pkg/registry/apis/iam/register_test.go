@@ -61,7 +61,7 @@ func TestGetAPIRoutes_UserPermissionsGate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			b := &IdentityAccessManagementAPIBuilder{
 				features:        Features{UserPermissionsAPI: tt.enabled},
-				display:         display.NewDisplayHandler(),
+				display:         display.NewDisplayHandler(nil, false),
 				userPermissions: userpermissions.NewHandler(noopUserPermissionsClient{}, false),
 			}
 			routes := b.GetAPIRoutes(legacyiamv0.SchemeGroupVersion)

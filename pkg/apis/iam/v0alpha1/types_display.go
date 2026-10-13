@@ -49,17 +49,21 @@ func (Display) OpenAPIModelName() string {
 type CurrentUserInfo struct {
 	Display `json:",inline"`
 
-	// Role is the org role of the identity in the active organization
-	// (Admin/Editor/Viewer/None).
-	Role string `json:"role,omitempty"`
-	// AuthenticatedBy is the authentication provider used for the current identity.
-	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
-
 	// Namespace is the namespace of the current identity.
 	Namespace string `json:"namespace,omitempty"`
 
+	// Role is the org role of the identity in the active organization
+	// (Admin/Editor/Viewer/None).
+	Role string `json:"role,omitempty"`
+
+	// AuthenticatedBy is the authentication provider used for the current identity.
+	AuthenticatedBy string `json:"authenticatedBy,omitempty"`
+
 	// Email is the email address for the current identity.
 	Email string `json:"email,omitempty"`
+
+	// +listType=atomic
+	Permissions []UserPermission `json:"permissions"`
 }
 
 func (CurrentUserInfo) OpenAPIModelName() string {

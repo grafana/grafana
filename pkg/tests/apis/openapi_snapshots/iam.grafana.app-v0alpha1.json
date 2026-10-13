@@ -3499,6 +3499,16 @@
               "type": "string"
             },
             "example": "default"
+          },
+          {
+            "name": "permissions",
+            "in": "query",
+            "description": "Include permissions in the response (deprecated)",
+            "deprecated": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": "true"
           }
         ],
         "responses": {
@@ -5856,7 +5866,8 @@
         "type": "object",
         "required": [
           "identity",
-          "displayName"
+          "displayName",
+          "permissions"
         ],
         "properties": {
           "authenticatedBy": {
@@ -5891,6 +5902,11 @@
           "namespace": {
             "description": "Namespace is the namespace of the current identity.",
             "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {},
+            "x-kubernetes-list-type": "atomic"
           },
           "role": {
             "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",

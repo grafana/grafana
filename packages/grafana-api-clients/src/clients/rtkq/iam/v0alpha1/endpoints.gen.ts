@@ -433,7 +433,12 @@ const injectedRtkApi = api
         providesTags: ['User'],
       }),
       getCurrentUserDisplay: build.query<GetCurrentUserDisplayApiResponse, GetCurrentUserDisplayApiArg>({
-        query: () => ({ url: `/users/~` }),
+        query: (queryArg) => ({
+          url: `/users/~`,
+          params: {
+            permissions: queryArg.permissions,
+          },
+        }),
         providesTags: ['User'],
       }),
       getCurrentUserPermissions: build.query<GetCurrentUserPermissionsApiResponse, GetCurrentUserPermissionsApiArg>({
@@ -901,7 +906,10 @@ export type GetUserTeamsApiArg = {
   continue?: string;
 };
 export type GetCurrentUserDisplayApiResponse = /** status 200 undefined */ CurrentUserInfo;
-export type GetCurrentUserDisplayApiArg = void;
+export type GetCurrentUserDisplayApiArg = {
+  /** Include permissions in the response (deprecated) */
+  permissions?: boolean;
+};
 export type GetCurrentUserPermissionsApiResponse = /** status 200 undefined */ UserPermissions;
 export type GetCurrentUserPermissionsApiArg = void;
 export type GetWhoAmIApiResponse = /** status 200 undefined */ CurrentUserInfo;
@@ -1276,6 +1284,7 @@ export type CurrentUserInfo = {
   internalId?: number;
   /** Namespace is the namespace of the current identity. */
   namespace?: string;
+  permissions: any[];
   /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). */
   role?: string;
 };

@@ -67,6 +67,13 @@ func schema_pkg_apis_iam_v0alpha1_CurrentUserInfo(ref common.ReferenceCallback) 
 							Format:      "int64",
 						},
 					},
+					"namespace": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Namespace is the namespace of the current identity.",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
 					"role": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",
@@ -81,13 +88,6 @@ func schema_pkg_apis_iam_v0alpha1_CurrentUserInfo(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
-					"namespace": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Namespace is the namespace of the current identity.",
-							Type:        []string{"string"},
-							Format:      "",
-						},
-					},
 					"email": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Email is the email address for the current identity.",
@@ -95,12 +95,29 @@ func schema_pkg_apis_iam_v0alpha1_CurrentUserInfo(ref common.ReferenceCallback) 
 							Format:      "",
 						},
 					},
+					"permissions": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-list-type": "atomic",
+							},
+						},
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Ref: ref(UserPermission{}.OpenAPIModelName()),
+									},
+								},
+							},
+						},
+					},
 				},
-				Required: []string{"identity", "displayName"},
+				Required: []string{"identity", "displayName", "permissions"},
 			},
 		},
 		Dependencies: []string{
-			IdentityRef{}.OpenAPIModelName()},
+			IdentityRef{}.OpenAPIModelName(), UserPermission{}.OpenAPIModelName()},
 	}
 }
 

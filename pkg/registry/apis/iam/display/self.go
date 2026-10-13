@@ -13,6 +13,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/iam/userpermissions"
 	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
@@ -39,6 +40,15 @@ func (r *DisplayHandler) selfRouteSpec() *spec3.PathProps {
 							Example:     "default",
 							Description: "workspace",
 							Schema:      spec.StringProperty(),
+						},
+					}, {
+						ParameterProps: spec3.ParameterProps{
+							Name:        "permissions",
+							In:          "query",
+							Example:     "true",
+							Description: "Include permissions in the response (deprecated)",
+							Schema:      spec.BoolProperty(),
+							Deprecated:  true, // Avoid this for new applications
 						},
 					},
 				},
@@ -96,10 +106,45 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	// Empty identities cannot establish ownership of a resolver's display row.
-	if rsp.Identity.Name == "" || authInfo.GetUID() == "" {
+	anonymous := authInfo.GetIdentityType() == authlib.TypeAnonymous
+	if !anonymous && (rsp.Identity.Name == "" || authInfo.GetUID() == "") {
+		errhttp.Write(ctx, apierrors.NewUnauthorized("unable to resolve current identity"), w)
+		return
+	}
+
+	// Fetch the permissions for the current user
+	if req.URL.Query().Get("permissions") == "true" && r.client != nil && rsp.Namespace != "" {
+		groups := authInfo.GetGroups()
+		if r.useExternalGroups {
+			if externalGroupsInfo, ok := authInfo.(interface{ GetExternalGroups() []string }); ok {
+				groups = externalGroupsInfo.GetExternalGroups()
+			}
+		}
+
+		response, err := r.client.GetUserPermissions(ctx, delegatedAuthInfo{
+			AuthInfo: authInfo,
+			groups:   groups,
+		}, authlib.GetUserPermissionsRequest{
+			Namespace: rsp.Namespace,
+		})
+		if err != nil {
+			errhttp.Write(ctx, err, w)
+			return
+		}
+
+		rsp.Permissions = make([]iam.UserPermission, 0, len(response.Permissions))
+		for _, permission := range response.Permissions {
+			rsp.Permissions = append(rsp.Permissions, iam.UserPermission{Action: permission.Action, Scope: permission.Scope})
+		}
+	}
+
+	// Anonymous access is established by authentication; it has no user row to resolve.
+	if anonymous {
+		rsp.Display = parseKeys([]string{string(authlib.TypeAnonymous) + ":"}).disp[0]
 		_ = json.NewEncoder(w).Encode(rsp)
 		return
 	}
+
 	if ns, err := authlib.ParseNamespace(authInfo.GetNamespace()); err == nil {
 		// GetUID() is already in the "<type>:<identifier>" form the resolvers expect
 		// (e.g. "user:u000000001"), so the caller identifies itself purely from context.
@@ -126,5 +171,18 @@ func (r *DisplayHandler) handleSelf(w http.ResponseWriter, req *http.Request) {
 		}
 	}
 
-	_ = json.NewEncoder(w).Encode(rsp)
+	errhttp.Write(ctx, apierrors.NewUnauthorized("unable to resolve current identity"), w)
+}
+
+type delegatedAuthInfo struct {
+	authlib.AuthInfo
+	groups []string
+}
+
+func (i delegatedAuthInfo) GetGroups() []string {
+	return i.groups
+}
+
+func (delegatedAuthInfo) GetTokenDelegatedPermissions() []string {
+	return []string{userpermissions.UserPermissionsDelegatedGrant}
 }

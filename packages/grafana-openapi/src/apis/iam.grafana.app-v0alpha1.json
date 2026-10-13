@@ -3094,7 +3094,18 @@
         "tags": ["User"],
         "description": "Show display information for the currently authenticated identity. Deprecated: use /apis/iam.grafana.app/v0alpha1/whoami instead.",
         "operationId": "getCurrentUserDisplay",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "permissions",
+            "in": "query",
+            "description": "Include permissions in the response (deprecated)",
+            "deprecated": true,
+            "schema": {
+              "type": "boolean"
+            },
+            "example": "true"
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -5139,7 +5150,7 @@
       },
       "CurrentUserInfo": {
         "type": "object",
-        "required": ["identity", "displayName"],
+        "required": ["identity", "displayName", "permissions"],
         "properties": {
           "authenticatedBy": {
             "description": "AuthenticatedBy is the authentication provider used for the current identity.",
@@ -5173,6 +5184,11 @@
           "namespace": {
             "description": "Namespace is the namespace of the current identity.",
             "type": "string"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {},
+            "x-kubernetes-list-type": "atomic"
           },
           "role": {
             "description": "Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None).",

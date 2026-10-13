@@ -193,6 +193,8 @@ func RegisterAPIService(
 			SingleOrganization: cfg.RBAC.SingleOrganization,
 		},
 		display: display.NewDisplayHandler(
+			userPermissionsClient,                     // permissions
+			cfg.IDUseExternalGroupsForGroupsClaim,     // external groups?
 			display.NewLegacyDisplayProvider(store),   // Do legacy first
 			display.NewSearchDisplayProvider(unified), // then use search index
 		),
@@ -251,6 +253,7 @@ func NewAPIService(
 		externalGroupReconciler: legacy.NoopExternalGroupReconciler{},
 		teamBindingLegacyStore:  teambinding.NewLegacyBindingStore(store, tracingService),
 		display: display.NewDisplayHandler(
+			userPermissionsClient, false,
 			display.NewLegacyDisplayProvider(store),
 			// TODO: include the search client here
 		),
