@@ -371,7 +371,8 @@ func TestDatasourceWriter(t *testing.T) {
 
 		// makeWriter calls the mock provider with the constructed HTTPOptions.
 		// We inspect the options that were passed to New() to verify SigV4 is present.
-		_, _ = writer.makeWriter(context.Background(), 1, "amp-sigv4")
+		_, err := writer.makeWriter(context.Background(), 1, "amp-sigv4")
+		require.NoError(t, err)
 
 		require.Equal(t, 1, mockProvider.callCount)
 		require.NotNil(t, mockProvider.lastOptions)
