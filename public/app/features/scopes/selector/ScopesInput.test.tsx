@@ -47,4 +47,47 @@ describe('ScopesTooltip', () => {
     renderTooltip({ disabled: true });
     expect(screen.queryByTestId('scopes-selector-input-clear')).not.toBeInTheDocument();
   });
+
+  describe('metadata', () => {
+    const metadataNodes: NodesMap = {
+      'node-1': {
+        metadata: { name: 'node-1' },
+        spec: { nodeType: 'leaf', title: 'Test Node', parentName: '', description: 'Production cluster' },
+      },
+    };
+    const metadataScopes: ScopesMap = {
+      'scope-1': {
+        metadata: { name: 'scope-1' },
+        spec: { title: 'Test Scope', filters: [{ key: 'cluster', operator: 'equals', value: 'prod' }] },
+      },
+    };
+
+    it('shows the node description and scope filters', () => {
+      renderTooltip({ nodes: metadataNodes, scopes: metadataScopes });
+
+      expect(screen.getByText('Production cluster')).toBeInTheDocument();
+      expect(screen.getByText('cluster = prod')).toBeInTheDocument();
+    });
+
+    it('separates the metadata from the Remove all button with a divider', () => {
+      renderTooltip({ nodes: metadataNodes, scopes: metadataScopes });
+
+      expect(screen.getByRole('separator')).toBeInTheDocument();
+      expect(screen.getByTestId('scopes-selector-input-clear')).toBeInTheDocument();
+    });
+
+    it('shows no divider when the Remove all button is hidden', () => {
+      renderTooltip({ nodes: metadataNodes, scopes: metadataScopes, onRemoveAllClick: undefined });
+
+      expect(screen.getByText('Production cluster')).toBeInTheDocument();
+      expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+    });
+
+    it('shows no divider when there is no metadata above the Remove all button', () => {
+      renderTooltip();
+
+      expect(screen.getByTestId('scopes-selector-input-clear')).toBeInTheDocument();
+      expect(screen.queryByRole('separator')).not.toBeInTheDocument();
+    });
+  });
 });
