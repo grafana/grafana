@@ -44,6 +44,14 @@ const loggerName = "provisioning-repository-controller"
 
 const (
 	maxAttempts = 3
+
+	// buildTimeout bounds a single repository build. Building constructs the
+	// provider client, which can call the remote host (resolving a project id,
+	// for instance), and an unreachable host leaves that dial to TCP retry for
+	// minutes. Health goes stale after recentUnhealthyDuration, so an attempt
+	// that outlives it is re-triggered by the very next delivery and one
+	// unreachable repository then occupies a worker continuously.
+	buildTimeout = 30 * time.Second
 )
 
 //go:generate mockery --name finalizerProcessor --structname MockFinalizerProcessor --inpackage --filename finalizer_mock.go --with-expecter
@@ -885,6 +893,29 @@ func repoSpanAttrs(obj *provisioning.Repository) trace.SpanStartOption {
 	)
 }
 
+// build constructs the repository under a bounded context so a single attempt
+// cannot run for as long as an unreachable host takes to fail (see
+// buildTimeout). The context is cancelled before build returns, so the
+// repository it hands back must not retain it -- none of the providers do:
+// they use it for decryption and for the client's own setup calls only.
+func (rc *RepositoryController) build(ctx context.Context, obj *provisioning.Repository) (repository.Repository, error) {
+	ctx, span := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
+	defer span.End()
+
+	buildCtx, cancel := context.WithTimeout(ctx, buildTimeout)
+	defer cancel()
+
+	repo, err := rc.repoFactory.Build(buildCtx, obj)
+	// Name the deadline in the error: it reaches the user as a health message,
+	// where a bare "context deadline exceeded" says nothing. Only our own
+	// deadline qualifies -- a cancelled parent (shutdown) must stay as it is.
+	if err != nil && ctx.Err() == nil && buildCtx.Err() != nil {
+		return nil, fmt.Errorf("timed out after %s: %w", buildTimeout, err)
+	}
+
+	return repo, err
+}
+
 // repoType is a named return so processNextWorkItem can attribute its
 // failure/retry log lines to a repository type. It stays empty until the object
 // is resolved below (an unparsable key or a not-found repository yields "").
@@ -1193,9 +1224,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 	}
 
 	phase = reconcilePhaseBuild
-	buildCtx, buildSpan := rc.tracer.Start(ctx, "provisioning.controller.build", repoSpanAttrs(obj))
-	repo, err := rc.repoFactory.Build(buildCtx, obj)
-	buildSpan.End()
+	repo, err := rc.build(ctx, obj)
 	if err != nil {
 		// The token references a stored secret that could not be decrypted (e.g. an
 		// orphaned reference whose secret was deleted). When the token is minted from a
@@ -1242,7 +1271,7 @@ func (rc *RepositoryController) process(key string) (repoType string, err error)
 			obj = obj.DeepCopy()
 			obj.Secure.Token = common.InlineSecureValue{Create: token}
 
-			repo, err = rc.repoFactory.Build(ctx, obj)
+			repo, err = rc.build(ctx, obj)
 		}
 		if err != nil {
 			buildHealthStatus := provisioning.HealthStatus{

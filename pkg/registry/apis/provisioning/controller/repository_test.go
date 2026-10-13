@@ -11,6 +11,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -2381,6 +2382,98 @@ func TestRepositoryController_process_DeleteDecryptFailureFastRetries(t *testing
 	_, err := rc.process("default/test-repo")
 	require.Error(t, err, "a decrypt outage during delete must surface for fast retry, not be swallowed")
 	require.ErrorIs(t, err, repository.ErrSecretDecryptFailed)
+}
+
+// TestRepositoryController_build_TimesOut verifies that a build against an
+// unreachable host gives up after buildTimeout instead of riding the dial's own
+// retry for minutes, and that the deadline is named in the error the user ends
+// up reading on status.health.
+func TestRepositoryController_build_TimesOut(t *testing.T) {
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).RunAndReturn(
+		func(ctx context.Context, _ *provisioning.Repository) (repository.Repository, error) {
+			// Stand in for a dial to a host that never answers.
+			<-ctx.Done()
+			return nil, fmt.Errorf("create gitlab client: %w", ctx.Err())
+		})
+
+	// The tracer is built outside the bubble: its span processor runs a
+	// goroutine that would outlive the test and trip synctest's deadlock check.
+	rc := &RepositoryController{
+		repoFactory: mockFactory,
+		tracer:      tracing.InitializeTracerForTest(),
+	}
+
+	synctest.Test(t, func(t *testing.T) {
+		start := time.Now()
+		repo, err := rc.build(t.Context(), &provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+			Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+		})
+
+		require.Error(t, err)
+		assert.Nil(t, repo)
+		assert.Equal(t, buildTimeout, time.Since(start), "the build must not outlive buildTimeout")
+		assert.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.Contains(t, err.Error(), "timed out after 30s")
+	})
+}
+
+// TestRepositoryController_build_SucceedsWithinTimeout verifies the success path
+// is untouched, and pins the contract the timeout relies on: the build context is
+// cancelled as soon as build returns, so a provider must not retain it.
+func TestRepositoryController_build_SucceedsWithinTimeout(t *testing.T) {
+	built := repository.NewMockRepository(t)
+	var buildCtx context.Context
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).RunAndReturn(
+		func(ctx context.Context, _ *provisioning.Repository) (repository.Repository, error) {
+			buildCtx = ctx
+			require.NoError(t, ctx.Err(), "the build must run with a live context")
+			return built, nil
+		})
+
+	rc := &RepositoryController{
+		repoFactory: mockFactory,
+		tracer:      tracing.InitializeTracerForTest(),
+	}
+
+	repo, err := rc.build(t.Context(), &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	})
+
+	require.NoError(t, err)
+	assert.Same(t, built, repo)
+	assert.ErrorIs(t, buildCtx.Err(), context.Canceled, "the build context must not outlive the build")
+}
+
+// TestRepositoryController_build_ParentCancellationIsNotATimeout verifies a
+// shutdown is reported as what it is: labelling it "timed out" would read as a
+// repository problem on status.health.
+func TestRepositoryController_build_ParentCancellationIsNotATimeout(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+
+	mockFactory := repository.NewMockFactory(t)
+	mockFactory.EXPECT().Build(mock.Anything, mock.Anything).RunAndReturn(
+		func(ctx context.Context, _ *provisioning.Repository) (repository.Repository, error) {
+			cancel()
+			return nil, fmt.Errorf("create gitlab client: %w", ctx.Err())
+		})
+
+	rc := &RepositoryController{
+		repoFactory: mockFactory,
+		tracer:      tracing.InitializeTracerForTest(),
+	}
+
+	_, err := rc.build(ctx, &provisioning.Repository{
+		ObjectMeta: metav1.ObjectMeta{Name: "test-repo", Namespace: "default"},
+		Spec:       provisioning.RepositorySpec{Type: provisioning.LocalRepositoryType},
+	})
+
+	require.Error(t, err)
+	assert.ErrorIs(t, err, context.Canceled)
+	assert.NotContains(t, err.Error(), "timed out")
 }
 
 // TestRepositoryController_process_UserCausedBuildFailure verifies that a Build
