@@ -272,7 +272,7 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 	groupList := func(namespace string) []string {
 		var list metav1.APIGroupList
 		require.NoError(t, json.Unmarshal(serve(namespace, apisPrefix, "application/json").Body.Bytes(), &list))
-		var names []string
+		names := make([]string, 0, len(list.Groups))
 		for _, g := range list.Groups {
 			names = append(names, g.Name)
 			if g.Name == "mt.grafana.app" {
@@ -284,7 +284,7 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 	aggregated := func(namespace string) []string {
 		var list apidiscoveryv2.APIGroupDiscoveryList
 		require.NoError(t, json.Unmarshal(serve(namespace, apisPrefix, aggregatedDiscoveryJSON).Body.Bytes(), &list))
-		var names []string
+		names := make([]string, 0, len(list.Items))
 		for _, g := range list.Items {
 			names = append(names, g.Name)
 		}
@@ -294,7 +294,7 @@ func TestSingleTenantDiscoveryIsScopedToTheCallersStack(t *testing.T) {
 	openAPIIndex := func(namespace string) []string {
 		var index handler3.OpenAPIV3Discovery
 		require.NoError(t, json.Unmarshal(serve(namespace, openapiV3Prefix, "").Body.Bytes(), &index))
-		var paths []string
+		paths := make([]string, 0, len(index.Paths))
 		for path := range index.Paths {
 			paths = append(paths, path)
 		}

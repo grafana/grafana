@@ -115,7 +115,8 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 
 `ProvideRoutesLoader` picks exactly one loader:
 
-1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is configured (see Settings).
+1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is
+   configured (see Settings). Never in middleware mode, where the cloud sources are ignored.
 2. **Otherwise the local plugin loader**, when plugin sources are available.
 3. **Otherwise the dummy loader**, which serves two static dummy groups.
 
@@ -154,7 +155,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   (`/apis/<g>[/<v>]`, `/openapi/v3/apis/<g>/<v>`) follow the same rule.
 - **Caller-scoped backends** (`CallerScopedDiscovery`, such as ST groups) are only defaults: when
   the ST fallback answers root discovery for a request, their groups are left out and its view is
-  used. In middleware mode `next` never serves them, so they are kept. Their aggregated discovery
+  used. An answer from `next` never replaces them. Their aggregated discovery
   and OpenAPI documents are never cached across callers.
   - Root discovery through the fallback is bounded by `discoveryFetchTimeout`, and is sent with
     `Cache-Control: private`.
@@ -211,7 +212,7 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
   alongside it with `newCompositeService`, so both start and stop together.
 - **Middleware:** with the `grafana.useRouterMiddleware` feature flag, the embedded API server calls
   `Service.HandleFunc` after Grafana authentication, and the regular API server handler serves as
-  `next`. The ST fallback is not used in this mode.
+  `next`. The cloud loader, and with it the ST fallback, is not used in this mode.
 - **No `http.Server` in this package.** The caller owns the listener, TLS, and the security of the
   port.
 - **Wire:** keep `wire.go` and each edition's `wireExts*.go` in sync with the generated files, so
