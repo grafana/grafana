@@ -50,6 +50,8 @@ export function TableSidebar({
       className={css(styles.container, willCloseOnRelease && styles.containerWillClose)}
       aria-label={t('grafana-ui.table.column-visibility', 'Column visibility')}
       data-testid={sidebarSelectors.container}
+      onPointerDown={(event) => event.stopPropagation()}
+      onPointerUp={(event) => event.stopPropagation()}
     >
       <div className={styles.header}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" gap={0} height="100%">

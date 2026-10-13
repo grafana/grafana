@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 
+import { type DataFrame } from '@grafana/data';
+
 import { type PanelRuntimeTransformations } from '../../../PanelChrome/PanelContext';
 import { type TableNGProps } from '../types';
 
@@ -12,9 +14,10 @@ export function useColumnTransformations(
   sourceIndex: number,
   api: PanelRuntimeTransformations | undefined,
   owner: string,
-  enabled = sourceIndex >= 0
+  enabled = sourceIndex >= 0,
+  sourceSeries: readonly DataFrame[] | undefined = api?.getSourceSeries(owner)
 ) {
-  const { transformations, sourceSeries, update } = useTableTransformations(api, owner);
+  const { transformations, update } = useTableTransformations(api, owner);
   useEffect(() => {
     if (enabled && sourceSeries && transformations.length > 0) {
       update((current) => ensureVisibleColumnPerFrame(current, sourceSeries));

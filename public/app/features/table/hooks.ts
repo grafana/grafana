@@ -26,7 +26,7 @@ import { getCellActions } from './utils';
 
 type GetActions = (frame: DataFrame, field: Field, rowIndex: number) => Array<ActionModel<Field>>;
 
-const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
+export const TABLE_TRANSFORMATIONS_OWNER = 'grafana:table-view';
 
 /**
  * Caches per-field display names on the data frames. TableNG's `getDisplayName` relies on the cached
@@ -142,12 +142,17 @@ export function useTableRefreshNewFeatures(): boolean {
 }
 
 /** Returns column state when column controls are supported for the selected frame. */
-export function useAdHocColumnState(frames: DataFrame[], frameIndex: number, enabled: boolean) {
+export function useAdHocColumnState(
+  frames: DataFrame[],
+  frameIndex: number,
+  enabled: boolean,
+  configuredSourceSeries?: readonly DataFrame[]
+) {
   const api = usePanelContext().adHocTransformations;
-  const sourceSeries = api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
+  const sourceSeries = configuredSourceSeries ?? api?.getSourceSeries(TABLE_TRANSFORMATIONS_OWNER);
   const sourceIndex = getEligibleColumnSourceIndex(frames, frameIndex, sourceSeries, enabled);
 
-  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER, enabled);
+  return useColumnTransformations(sourceIndex, api, TABLE_TRANSFORMATIONS_OWNER, enabled, sourceSeries);
 }
 
 function getEligibleColumnSourceIndex(
