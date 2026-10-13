@@ -21,6 +21,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
+	"github.com/grafana/grafana/pkg/storage/unified/resourceclient/resourceutil"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
 
@@ -80,10 +81,11 @@ func newMetrics(reg prometheus.Registerer) *accessMetrics {
 // answer on its own, without asking the authz service. That denial is
 // indistinguishable from the user lacking access, so a deployment mistake shows
 // up as missing results rather than as a failure.
-var ErrServiceCannotDelegate = errors.New("this service's token has no delegated permission for the resource")
+// Defined in resourceutil so AsErrorResult can map it to 403.
+var ErrServiceCannotDelegate = resourceutil.ErrServiceCannotDelegate
 
 // ErrServicePermissionMissing distinguishes a service denial from a user denial.
-var ErrServicePermissionMissing = errors.New("this service's token has no permission for the resource")
+var ErrServicePermissionMissing = resourceutil.ErrServicePermissionMissing
 
 func checkServiceTokenPermissions(id claims.AuthInfo, group, resource, verb string) error {
 	res := authz.CheckServicePermissions(id, group, resource, verb)

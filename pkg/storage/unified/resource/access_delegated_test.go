@@ -336,7 +336,7 @@ func TestSearchServicePermissions(t *testing.T) {
 			// No index is configured: the failure must precede any index lookup.
 			resp, err := s.Search(ctx, req)
 			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
+			require.Equal(t, int32(http.StatusForbidden), resp.Error.GetCode())
 			require.Contains(t, resp.Error.GetMessage(), tc.wantPermission)
 		})
 	}
@@ -493,7 +493,7 @@ func TestSearchPermissionFailureMonitoring(t *testing.T) {
 				Namespace: "stacks-1", Group: "dashboard.grafana.app", Resource: "dashboards",
 			}}})
 			require.NoError(t, err)
-			require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
+			require.Equal(t, int32(http.StatusForbidden), resp.Error.GetCode())
 			require.Equal(t, 1.0, testutil.ToFloat64(s.indexMetrics.SearchServicePermissionFailures.WithLabelValues(mode)))
 			require.Equal(t, 1, logger.ErrorLogs.Calls)
 			require.Contains(t, logger.ErrorLogs.Ctx, "dashboard.grafana.app/dashboards:get")
@@ -523,7 +523,7 @@ func TestSearchServicePermissionsDoesNotDependOnClient(t *testing.T) {
 				t.Run(mode, func(t *testing.T) {
 					resp, err := s.Search(authlib.WithAuthInfo(t.Context(), id), req)
 					require.NoError(t, err)
-					require.Equal(t, int32(http.StatusInternalServerError), resp.Error.GetCode())
+					require.Equal(t, int32(http.StatusForbidden), resp.Error.GetCode())
 					require.Contains(t, resp.Error.GetMessage(), "dashboard.grafana.app/dashboards:get")
 				})
 			}
