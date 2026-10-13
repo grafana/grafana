@@ -3,10 +3,9 @@ import { renderHook, waitFor } from '@testing-library/react';
 import {
   getDataSourcesWithValidRecordingTarget,
   useDataSourcesWithValidRecordingTarget,
-  useDataSourcesWithValidRecordingTargetByUid,
 } from '@grafana/alerting/unstable';
 
-import { DataSourceInstanceSettingsFactory, setupDataSources } from './grafana/dataSources/mocks/fakes/DataSources';
+import { DataSourceInstanceSettingsFactory, setupDataSources } from './grafana/dataSources/testSetup/DataSources';
 
 // Exercises the published entry point, not the implementation module, so a dropped or renamed
 // export in unstable.ts fails here.
@@ -33,12 +32,5 @@ describe('@grafana/alerting/unstable recording rule target API', () => {
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.items.map((ds) => ds.uid)).toEqual(['prom']);
-  });
-
-  it('useDataSourcesWithValidRecordingTargetByUid keys the valid targets by uid once loaded', async () => {
-    const { result } = renderHook(() => useDataSourcesWithValidRecordingTargetByUid());
-
-    await waitFor(() => expect(result.current.isLoading).toBe(false));
-    expect([...result.current.byUid.keys()]).toEqual(['prom']);
   });
 });

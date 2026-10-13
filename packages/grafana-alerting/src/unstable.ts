@@ -38,10 +38,7 @@ export { matchLabelsSet, matchLabels, isLabelMatch, type LabelMatchDetails } fro
 // Data sources
 // These bundle the discovery code, which imports @grafana/runtime/unstable (>=13.2, a declared peer).
 export { getDataSourcesWithValidRecordingTarget } from './grafana/dataSources/narrowings';
-export {
-  useDataSourcesWithValidRecordingTarget,
-  useDataSourcesWithValidRecordingTargetByUid,
-} from './grafana/dataSources/hooks';
+export { useDataSourcesWithValidRecordingTarget } from './grafana/dataSources/hooks';
 
 // API endpoints
 export { generatedAPI as notificationsAPIv1beta1 } from '@grafana/api-clients/rtkq/notifications.alerting/v1beta1';
