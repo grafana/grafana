@@ -5,6 +5,7 @@ import { DataFrameType, store, type GrafanaTheme2, type TimeRange } from '@grafa
 import { t, Trans } from '@grafana/i18n';
 import { Box, Counter, Icon, useStyles2 } from '@grafana/ui';
 
+import { OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME } from '../fieldSelector/logFields';
 import { type FieldDef } from '../logParser';
 import { ServiceHexagonIcon } from '../otel/ServiceHexagonIcon';
 import {
@@ -54,6 +55,7 @@ export const LogLineDetailsOTelComponent = ({
   const labelsWithLinks: LabelWithLinks[] = useMemo(
     () =>
       Object.keys(log.labels)
+        .filter((label) => label !== OTEL_LOG_LINE_ATTRIBUTES_FIELD_NAME)
         .sort()
         .map((label) => ({
           key: label,
