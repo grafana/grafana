@@ -92,7 +92,7 @@ func TestProxyTransportCacheExpiresUnusedEntries(t *testing.T) {
 		time.Sleep(2 * time.Minute)
 		synctest.Wait()
 		require.Equal(t, 1, closed)
-		require.Equal(t, 1, cache.entries.EstimatedSize())
+		require.Equal(t, 1, len(cache.entries))
 		reused, err = cache.get(active, [32]byte{}, build)
 		require.NoError(t, err)
 		require.Same(t, first, reused)
@@ -100,7 +100,7 @@ func TestProxyTransportCacheExpiresUnusedEntries(t *testing.T) {
 		time.Sleep(6 * time.Minute)
 		synctest.Wait()
 		require.Equal(t, 2, closed)
-		require.Zero(t, cache.entries.EstimatedSize())
+		require.Zero(t, len(cache.entries))
 		cache.close()
 		synctest.Wait() // The cleanup goroutine must exit when storage is destroyed.
 		require.Equal(t, 2, closed)
@@ -149,7 +149,10 @@ func TestProxyTransportCacheExpiryAllowsActiveRequestToFinish(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("request did not reach upstream")
 	}
-	cache.entries.SetExpiresAfter(proxyTransportKey{}, time.Nanosecond)
+	cache.mu.Lock()
+	cache.entries[proxyTransportKey{}].lastUsed = time.Now().Add(-proxyTransportIdleTimeout)
+	cache.mu.Unlock()
+	cache.expire()
 	next, err := cache.get(proxyTransportKey{}, [32]byte{}, build)
 	require.NoError(t, err)
 	require.NotSame(t, first, next)
@@ -160,6 +163,58 @@ func TestProxyTransportCacheExpiryAllowsActiveRequestToFinish(t *testing.T) {
 		require.NoError(t, err)
 	case <-time.After(5 * time.Second):
 		t.Fatal("active request did not finish after cache expiry")
+	}
+}
+
+func TestProxyTransportCacheExpiresOnLookupBeforeCleanup(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		cache := newProxyTransportCache()
+		defer cache.close()
+		closed := 0
+		build := func() (http.RoundTripper, func(), error) {
+			return &http.Transport{}, func() { closed++ }, nil
+		}
+		synctest.Wait()
+		time.Sleep(30 * time.Second)
+		first, err := cache.get(proxyTransportKey{}, [32]byte{}, build)
+		require.NoError(t, err)
+		time.Sleep(proxyTransportIdleTimeout)
+		synctest.Wait()
+		require.Zero(t, closed) // The next cleanup tick has not run yet.
+		next, err := cache.get(proxyTransportKey{}, [32]byte{}, build)
+		require.NoError(t, err)
+		require.NotSame(t, first, next)
+		require.Equal(t, 1, closed)
+	})
+}
+
+func TestProxyTransportCacheConcurrentShutdown(t *testing.T) {
+	cache := newProxyTransportCache()
+	var built, closed atomic.Int32
+	build := func() (http.RoundTripper, func(), error) {
+		built.Add(1)
+		return &http.Transport{}, func() { closed.Add(1) }, nil
+	}
+	_, err := cache.get(proxyTransportKey{}, [32]byte{}, build)
+	require.NoError(t, err)
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Go(func() {
+			_, err := cache.get(proxyTransportKey{}, [32]byte{}, build)
+			if err != nil {
+				require.ErrorContains(t, err, "closed")
+			}
+			cache.expire()
+			cache.close()
+		})
+	}
+	wg.Wait()
+	require.Equal(t, built.Load(), closed.Load())
+	require.Empty(t, cache.entries)
+	select {
+	case <-cache.done:
+	default:
+		t.Fatal("cleanup goroutine still running after close")
 	}
 }
 
@@ -216,7 +271,7 @@ func TestProxyTransportCacheDoesNotCacheErrors(t *testing.T) {
 		})
 		require.ErrorContains(t, err, "bad certificate")
 	}
-	require.Zero(t, cache.entries.EstimatedSize())
+	require.Zero(t, len(cache.entries))
 }
 
 func TestProxyTransportFingerprint(t *testing.T) {
