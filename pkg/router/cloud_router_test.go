@@ -339,6 +339,66 @@ func TestProvideCloudRoutesLoaderFactory_PluginsURLRejectsNonAbsoluteURL(t *test
 	require.ErrorContains(t, err, "must be absolute")
 }
 
+// TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS checks that each
+// plugin manifests source polls an HTTPS endpoint with its own TLS settings.
+func TestProvideCloudRoutesLoaderFactory_PluginManifestsTLS(t *testing.T) {
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"plugins":[]}`))
+	}))
+	t.Cleanup(srv.Close)
+	caFile := filepath.Join(t.TempDir(), "ca.crt")
+	require.NoError(t, os.WriteFile(caFile, pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: srv.Certificate().Raw}), 0o600))
+
+	targets := func(t *testing.T, kv map[string]string) (pluginsTarget, coreTarget *pluginManifestsTarget) {
+		t.Helper()
+		kv["plugins_url"] = srv.URL + "/plugins"
+		kv["core_url"] = srv.URL + "/core"
+		loaderIface, err := ProvideCloudRoutesLoaderFactory(cfgWithCloudRouterSection(t, kv), PluginDependencies{})
+		require.NoError(t, err)
+		loader, ok := loaderIface.(*cloudLoader)
+		require.True(t, ok)
+		return loader.pluginsTarget, loader.coreTarget
+	}
+	poll := func(target *pluginManifestsTarget) error {
+		_, err := fetchPluginManifests(context.Background(), target.client, target.url)
+		return err
+	}
+
+	t.Run("an unknown CA is rejected", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{})
+		require.ErrorContains(t, poll(pluginsTarget), "certificate")
+		require.ErrorContains(t, poll(coreTarget), "certificate")
+	})
+
+	t.Run("ca_file trusts the CA for its own source only", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{"plugins_ca_file": caFile})
+		require.NoError(t, poll(pluginsTarget))
+		require.ErrorContains(t, poll(coreTarget), "certificate")
+
+		pluginsTarget, coreTarget = targets(t, map[string]string{"core_ca_file": caFile})
+		require.ErrorContains(t, poll(pluginsTarget), "certificate")
+		require.NoError(t, poll(coreTarget))
+	})
+
+	t.Run("insecure skips verification", func(t *testing.T) {
+		pluginsTarget, coreTarget := targets(t, map[string]string{"plugins_insecure": "true", "core_insecure": "true"})
+		require.NoError(t, poll(pluginsTarget))
+		require.NoError(t, poll(coreTarget))
+	})
+
+	t.Run("a missing ca_file is a startup error", func(t *testing.T) {
+		for _, prefix := range []string{"plugins", "core"} {
+			cfg := cfgWithCloudRouterSection(t, map[string]string{
+				prefix + "_url":     srv.URL,
+				prefix + "_ca_file": "/does/not/exist.crt",
+			})
+			_, err := ProvideCloudRoutesLoaderFactory(cfg, PluginDependencies{})
+			require.ErrorContains(t, err, prefix+"_url: reading ca_file")
+		}
+	})
+}
+
 // TestCloudLoader_PluginsAndAggregateCombineInLoad exercises plugins_url
 // alongside an aggregate target, confirming Load() combines
 // backends from both rather than treating them as mutually exclusive (the

@@ -42,7 +42,8 @@ func SetDefaultCoreURL(cfg *setting.Cfg, url string) bool {
 // newPluginManifestsTargets builds the targets for plugins_url and core_url,
 // each nil when its URL is unset. core_url serves core APIs (like playlists)
 // in the plugin manifests format, and both share the [router.backend_grpc]
-// connection settings.
+// connection settings. Each has its own TLS settings for its poll, from
+// plugins_ca_file/plugins_insecure and core_ca_file/core_insecure.
 func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection, deps PluginDependencies) (pluginsTarget, coreTarget *pluginManifestsTarget, err error) {
 	pluginsURL := section.Key("plugins_url").MustString("")
 	coreURL := section.Key("core_url").MustString("")
@@ -58,20 +59,43 @@ func newPluginManifestsTargets(cfg *setting.Cfg, section *setting.DynamicSection
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
+		client, err := newPluginManifestsClient(section, "plugins")
+		if err != nil {
+			return nil, nil, err
+		}
 		pluginsTarget, err = newPluginManifestsTarget(pluginsKeyPrefix, sourcePluginsURL, pluginsURL,
-			patterns, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, grpcConfig, deps)
+			patterns, client, grpcConfig, deps)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
 	}
 	if coreURL != "" {
+		client, err := newPluginManifestsClient(section, "core")
+		if err != nil {
+			return nil, nil, err
+		}
 		coreTarget, err = newPluginManifestsTarget(coreKeyPrefix, sourceCoreURL, coreURL,
-			nil, &http.Client{Timeout: defaultAggregateDiscoveryTimeout}, grpcConfig, deps)
+			nil, client, grpcConfig, deps)
 		if err != nil {
 			return nil, nil, fmt.Errorf("%s: %w", cloudRouterSection, err)
 		}
 	}
 	return pluginsTarget, coreTarget, nil
+}
+
+// newPluginManifestsClient builds the client that polls a plugin manifests
+// source, with TLS from its <prefix>_ca_file and <prefix>_insecure keys.
+func newPluginManifestsClient(section *setting.DynamicSection, prefix string) (*http.Client, error) {
+	tlsCfg, err := buildAggregateTLSConfig(
+		section.Key(prefix+"_ca_file").MustString(""),
+		section.Key(prefix+"_insecure").MustBool(false),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %s_url: %w", cloudRouterSection, prefix, err)
+	}
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.TLSClientConfig = tlsCfg
+	return &http.Client{Timeout: defaultAggregateDiscoveryTimeout, Transport: transport}, nil
 }
 
 // ProvideCloudRoutesLoaderFactory builds the cloud RoutesLoader from the
@@ -416,17 +440,18 @@ func newAggregateBaseTransport(tlsCfg *tls.Config) *http.Transport {
 	return t
 }
 
-// buildAggregateTLSConfig builds the TLS config for one aggregate target from
-// its per-target ca_file/insecure settings. insecure wins over caFile if both
-// are set.
+// buildAggregateTLSConfig builds the TLS config for one aggregate target or
+// plugin manifests source from its ca_file/insecure settings. insecure wins
+// over caFile if both are set.
 func buildAggregateTLSConfig(caFile string, insecure bool) (*tls.Config, error) {
 	// nosemgrep: problem-based-packs.insecure-transport.go-stdlib.bypass-tls-verification.bypass-tls-verification
 	tlsCfg := &tls.Config{MinVersion: tls.VersionTLS12}
 	switch {
 	case insecure:
-		// Operator-gated via router.aggregate.<name> insecure: only enable for a
-		// target reached over a link that's actually trusted, since this
-		// disables both CA and hostname verification (MITM exposure).
+		// Operator-gated via router.aggregate.<name> insecure (or
+		// plugins_insecure/core_insecure): only enable for a target reached
+		// over a link that's actually trusted, since this disables both CA
+		// and hostname verification (MITM exposure).
 		tlsCfg.InsecureSkipVerify = true // #nosec G402 -- operator-gated, trusted-link only
 	case caFile != "":
 		caData, err := os.ReadFile(caFile) // #nosec G304 -- operator-supplied config path, not user input
