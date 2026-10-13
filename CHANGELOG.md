@@ -2,6 +2,13 @@
 
 # 13.0.11 (2026-10-13)
 
+### Security
+
+- Security: Fix CVE-2026-15577
+- Security: Fix CVE-2026-33374
+- Security: Fix CVE-2026-93294
+- Security: Fix CVE-2026-95502
+
 ### Features and enhancements
 
 - **Alerting:** Strip sensitive headers from oauth2 cross-host redirects [#134426](https://github.com/grafana/grafana/pull/134426), [@JacobsonMT](https://github.com/JacobsonMT)
