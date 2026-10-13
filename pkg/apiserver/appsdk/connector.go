@@ -2,14 +2,12 @@ package appsdk
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -171,22 +169,7 @@ func (h *handlerWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Body:               req.Body,
 	})
 	if err != nil {
-		j, e := json.Marshal(err)
-		if e != nil {
-			logging.FromContext(req.Context()).Error("unable to marshal error JSON", "error", err)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		if cast, ok := err.(apierrors.APIStatus); ok {
-			w.WriteHeader(int(cast.Status().Code))
-		} else {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		_, e = w.Write(j)
-		if e != nil {
-			sanitizedPath := strings.ReplaceAll(req.URL.Path, "\n", "")
-			sanitizedPath = strings.ReplaceAll(sanitizedPath, "\r", "")
-			logging.FromContext(req.Context()).Error("unable to write response", "error", err, "url", sanitizedPath)
-		}
+		writeCustomRouteError(w, err)
 	}
 }
 

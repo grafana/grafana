@@ -8,6 +8,7 @@ import (
 	"maps"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 
@@ -291,6 +292,71 @@ func TestDefaultInstaller_InstallAPIs(t *testing.T) {
 		assert.NotNil(t, err)
 		assert.EqualError(t, err, "failed to create store for kind Test: failed completing storage options for Test: options for tests.test.ext.grafana.app must have RESTOptions set")
 	})
+}
+
+func TestDefaultInstaller_SubresourceRouteNotFound(t *testing.T) {
+	md := app.ManifestData{
+		Group: TestKind.Group(),
+		Versions: []app.ManifestVersion{{
+			Name: TestKind.Version(), Served: true,
+			Kinds: []app.ManifestVersionKind{{
+				Kind: TestKind.Kind(), Plural: TestKind.Plural(),
+				Routes: map[string]spec3.PathProps{"/foo": {Get: &spec3.Operation{}}},
+			}},
+		}},
+	}
+	installer, err := NewDefaultAppInstaller(simple.NewAppProvider(app.NewEmbeddedManifest(md), nil, nil), app.Config{}, &mockGoTypeResolver{
+		KindToGoTypeFunc: func(string, string) (resource.Kind, bool) { return TestKind, true },
+	})
+	require.NoError(t, err)
+	installer.app = &MockApp{CallCustomRouteFunc: func(context.Context, app.CustomRouteResponseWriter, *app.CustomRouteRequest) error {
+		return fmt.Errorf("route lookup: %w", app.ErrCustomRouteNotFound)
+	}}
+	var connector *SubresourceConnector
+	server := &MockGenericAPIServer{InstallAPIGroupFunc: func(info *genericapiserver.APIGroupInfo) error {
+		connector = info.VersionedResourcesStorageMap[TestKind.Version()][TestKind.Plural()+"/foo"].(*SubresourceConnector)
+		return nil
+	}}
+	require.NoError(t, installer.InstallAPIs(server, &plainOptsGetter{}))
+	require.NotNil(t, connector)
+	h := handlerWrapper{
+		id:        resource.FullIdentifier{Name: "example"},
+		handler:   connector.Route.Handler,
+		urlToPath: func(u *url.URL) string { return u.Path },
+	}
+	w := httptest.NewRecorder()
+	h.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/foo", nil))
+	assert.Equal(t, http.StatusNotFound, w.Code)
+	assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+	var status metav1.Status
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &status))
+	assert.Equal(t, metav1.TypeMeta{Kind: "Status", APIVersion: "v1"}, status.TypeMeta)
+	assert.Equal(t, metav1.StatusFailure, status.Status)
+	assert.Equal(t, int32(http.StatusNotFound), status.Code)
+	assert.Equal(t, metav1.StatusReasonNotFound, status.Reason)
+	assert.Contains(t, status.Message, "subresource 'foo' not found")
+	assert.Equal(t, &metav1.StatusDetails{Group: TestKind.Group(), Kind: TestKind.Kind(), Name: "example"}, status.Details)
+}
+
+func TestCopySpecSchema_PatternProperties(t *testing.T) {
+	for _, withProperties := range []bool{false, true} {
+		t.Run(fmt.Sprintf("with properties=%t", withProperties), func(t *testing.T) {
+			in := spec.Schema{SchemaProps: spec.SchemaProps{
+				PatternProperties: map[string]spec.Schema{
+					"^x-": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}},
+				},
+			}}
+			if withProperties {
+				in.Properties = map[string]spec.Schema{"name": {SchemaProps: spec.SchemaProps{Type: []string{"string"}}}}
+			}
+			out := copySpecSchema(&in)
+			require.Equal(t, in, out)
+			out.PatternProperties["^x-"].Type[0] = "number"
+			assert.Equal(t, "string", in.PatternProperties["^x-"].Type[0])
+			delete(out.PatternProperties, "^x-")
+			assert.Contains(t, in.PatternProperties, "^x-")
+		})
+	}
 }
 
 func TestDefaultInstaller_AdmissionPlugin(t *testing.T) {

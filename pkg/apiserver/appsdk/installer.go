@@ -484,8 +484,7 @@ func (r *defaultInstaller) InstallAPIs(server GenericAPIServer, optsGetter gener
 							}
 							err = a.CallCustomRoute(ctx, writer, request)
 							if errors.Is(err, app.ErrCustomRouteNotFound) {
-								writer.WriteHeader(http.StatusNotFound)
-								fullError := apierrors.StatusError{
+								return &apierrors.StatusError{
 									ErrStatus: metav1.Status{
 										Status: metav1.StatusFailure,
 										Code:   http.StatusNotFound,
@@ -497,7 +496,6 @@ func (r *defaultInstaller) InstallAPIs(server GenericAPIServer, optsGetter gener
 										},
 										Message: fmt.Sprintf("%s.%s/%s subresource '%s' not found", kind.ManifestKind.Plural, gv.Group, gv.Version, route),
 									}}
-								return json.NewEncoder(writer).Encode(fullError)
 							}
 							return err
 						},
@@ -767,13 +765,15 @@ func instrumentRouteFunc(verb, group, apiVersion, resourceName, staticScope stri
 	})
 }
 
-func writeCustomRouteError(resp *restful.Response, err error) {
+func writeCustomRouteError(resp http.ResponseWriter, err error) {
 	code := int32(http.StatusInternalServerError)
 	reason := metav1.StatusReasonInternalError
 	message := err.Error()
+	var details *metav1.StatusDetails
 	var apiStatus apierrors.APIStatus
 	if errors.As(err, &apiStatus) {
 		st := apiStatus.Status()
+		details = st.Details
 		if st.Code != 0 {
 			code = st.Code
 		}
@@ -787,10 +787,12 @@ func writeCustomRouteError(resp *restful.Response, err error) {
 	resp.Header().Set("Content-Type", "application/json")
 	resp.WriteHeader(int(code))
 	_ = json.NewEncoder(resp).Encode(metav1.Status{
-		Status:  metav1.StatusFailure,
-		Code:    code,
-		Reason:  reason,
-		Message: message,
+		TypeMeta: metav1.TypeMeta{Kind: "Status", APIVersion: "v1"},
+		Status:   metav1.StatusFailure,
+		Code:     code,
+		Reason:   reason,
+		Message:  message,
+		Details:  details,
 	})
 }
 
@@ -1400,7 +1402,7 @@ func copySpecSchema(in *spec.Schema) spec.Schema {
 	if in.PatternProperties != nil {
 		out.PatternProperties = make(map[string]spec.Schema)
 		for k, v := range in.PatternProperties {
-			out.Properties[k] = copySpecSchema(&v)
+			out.PatternProperties[k] = copySpecSchema(&v)
 		}
 	}
 	if in.Dependencies != nil {
