@@ -9,16 +9,16 @@ import (
 )
 
 // Remote deployments bypass the legacy app-access permission check because local
-// plugin settings are unavailable. Authentication remains in authenticatingWrapper;
+// plugin settings are unavailable. Authentication is handled by the router;
 // this implementation grants app access regardless of the requester or scope.
 type pluginManifestAccessControl struct{}
 
 var _ accesscontrol.AccessControl = pluginManifestAccessControl{}
 
 func (pluginManifestAccessControl) Evaluate(_ context.Context, _ identity.Requester, evaluator accesscontrol.Evaluator) (bool, error) {
-	return evaluator.EvaluateCustom(func(action string, _ ...string) (bool, error) {
-		return action == pluginaccesscontrol.ActionAppAccess, nil
-	})
+	return evaluator.Evaluate(map[string][]string{
+		pluginaccesscontrol.ActionAppAccess: {"*"},
+	}), nil
 }
 
 func (pluginManifestAccessControl) RegisterScopeAttributeResolver(string, accesscontrol.ScopeAttributeResolver) {

@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
+import { useFlagDashboardsPublicDashboardBadgeFromApi } from '@grafana/runtime/internal';
 import { Badge, useStyles2 } from '@grafana/ui';
 import { useGetPublicDashboardQuery } from 'app/features/dashboard/api/publicDashboardApi';
 
@@ -21,16 +22,22 @@ export const PublicDashboardBadge = ({ dashboard }: ToolbarActionProps) => {
   );
 };
 
-// Used in old architecture
-export const PublicDashboardBadgeLegacy = PublicDashboardBadgeInternal;
-
 function PublicDashboardBadgeInternal({ uid, hasPublicDashboard }: { uid: string; hasPublicDashboard?: boolean }) {
+  // When enabled, always call the public dashboard API to check if the dashboard is a public dashboard
+  // and decouple the usage of `meta.publicDashboardEnabled`
+  const fromApi = useFlagDashboardsPublicDashboardBadgeFromApi();
+
   const { data: publicDashboard } = useGetPublicDashboardQuery(uid, {
-    skip: hasPublicDashboard !== undefined && !hasPublicDashboard,
+    skip: !fromApi && hasPublicDashboard !== undefined && !hasPublicDashboard,
   });
   const styles = useStyles2(getStyles);
 
-  const showBadge = hasPublicDashboard !== undefined ? hasPublicDashboard : !!publicDashboard;
+  let showBadge: boolean;
+  if (fromApi) {
+    showBadge = !!publicDashboard;
+  } else {
+    showBadge = hasPublicDashboard !== undefined ? hasPublicDashboard : !!publicDashboard;
+  }
 
   if (!showBadge) {
     return null;

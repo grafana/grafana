@@ -163,6 +163,8 @@ repository: {
 					started?: int
 					// When the sync job finished
 					finished?: int
+					// When the controller last attempted a sync or an interval check (Unix milliseconds).
+					lastChecked?: int
 					// When the next sync check is scheduled
 					scheduled?: int
 					// Summary messages (will be shown to users)

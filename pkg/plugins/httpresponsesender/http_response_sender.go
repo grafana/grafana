@@ -62,4 +62,4 @@ func (s *HTTPResponseSender) Send(resp *backend.CallResourceResponse) error {
 	return nil
 }
 
-var _ backend.CallResourceResponseSender = &HTTPResponseSender{}
+var _ backend.CallResourceResponseSender = (*HTTPResponseSender)(nil)

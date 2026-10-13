@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/dskit/services"
 	"golang.org/x/sync/errgroup"
 
+	appclientv3 "github.com/grafana/grafana-app-sdk/plugin/client/v3"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	v3 "github.com/grafana/grafana/pkg/plugins/backendplugin/v3"
@@ -181,7 +182,7 @@ func (s *Service) plugin(ctx context.Context, pluginID string) (*plugins.Plugin,
 	return p, true
 }
 
-func (s *Service) ClientV3(ctx context.Context, pluginID string) (v3.ClientV3, bool) {
+func (s *Service) ClientV3(ctx context.Context, pluginID string) (appclientv3.Client, bool) {
 	if err := s.AwaitRunning(ctx); err != nil {
 		log.New(ServiceName).FromContext(ctx).Error("Failed to get plugin", "error", err)
 		return nil, false

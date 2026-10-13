@@ -674,6 +674,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
         const field = frame.fields[seriesIdx];
 
         if (
+          series.show &&
           field.config.custom?.showValues &&
           // @ts-ignore points.show() is always callable on the instance (but may be boolean when passed to uPlot as init option)
           (series.points?.show?.(u, seriesIdx) ||

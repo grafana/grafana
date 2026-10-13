@@ -2,9 +2,15 @@ package display
 
 import (
 	"encoding/binary"
+	"errors"
+	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	authlib "github.com/grafana/authlib/types"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
@@ -12,6 +18,33 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	"github.com/grafana/grafana/pkg/storage/unified/search/builders"
 )
+
+func TestGetDisplayListSearchErrors(t *testing.T) {
+	plainErr := errors.New("index down")
+	for name, input := range map[string]struct {
+		resp *resourcepb.ResourceSearchResponse
+		err  error
+	}{
+		"embedded": {resp: &resourcepb.ResourceSearchResponse{Error: &resourcepb.ErrorResult{
+			Code: http.StatusServiceUnavailable, Message: "index unavailable",
+		}}},
+		"transport": {err: status.Error(codes.Unavailable, "index unavailable")},
+		"plain":     {err: plainErr},
+	} {
+		t.Run(name, func(t *testing.T) {
+			client := resource.NewMockResourceClient(t)
+			client.EXPECT().Search(mock.Anything, mock.Anything).Return(input.resp, input.err).Twice()
+			provider := NewSearchDisplayProvider(client)
+			result, err := provider.GetDisplayList(t.Context(), authlib.NamespaceInfo{Value: "stacks-1"}, []string{"user:user-1"})
+			require.Nil(t, result)
+			if name == "plain" {
+				require.ErrorIs(t, err, plainErr)
+			} else {
+				require.True(t, apierrors.IsServiceUnavailable(err), "got %v", err)
+			}
+		})
+	}
+}
 
 func TestBuildSearchJobsRequestsFieldValues(t *testing.T) {
 	provider := &SearchDisplayProvider{}

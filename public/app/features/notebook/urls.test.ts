@@ -4,6 +4,7 @@ import { HistoryWrapper, config, locationService, setLocationService } from '@gr
 
 import {
   isNotebookEditUrl,
+  notebookRenderUrl,
   notebookEditHref,
   notebookEditUrl,
   notebookShareUrl,
@@ -78,6 +79,13 @@ describe('notebook urls', () => {
     locationService.push(`/notebooks/nb1${search}`);
 
     expect(isNotebookEditUrl()).toBe(expected);
+  });
+
+  it('nests the render route under the notebook it renders', () => {
+    setHistory(1);
+
+    expect(notebookRenderUrl('nb1')).toBe('/notebooks/nb1/render');
+    expect(notebookRenderUrl('nb1').startsWith(`${notebookViewUrl('nb1')}/`)).toBe(true);
   });
 
   it('builds an absolute share url', () => {

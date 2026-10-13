@@ -185,6 +185,28 @@ func newDashboardTranslation() translation {
 	return dashTranslation
 }
 
+// Snapshot permissions are unscoped in Grafana RBAC; storage checks must use
+// those actions rather than falling back to K8s-native resource permissions.
+func newSnapshotTranslation() translation {
+	return translation{
+		resource: "snapshots",
+		verbMapping: map[string]string{
+			utils.VerbGet:    "snapshots:read",
+			utils.VerbList:   "snapshots:read",
+			utils.VerbWatch:  "snapshots:read",
+			utils.VerbCreate: "snapshots:create",
+			utils.VerbDelete: "snapshots:delete",
+		},
+		skipScopeOnVerb: map[string]bool{
+			utils.VerbGet:    true,
+			utils.VerbList:   true,
+			utils.VerbWatch:  true,
+			utils.VerbCreate: true,
+			utils.VerbDelete: true,
+		},
+	}
+}
+
 // newNotebookTranslation creates a translation for notebooks. Notebooks have their own
 // notebooks:* actions and a notebooks:uid: scope, but are folder-scoped like dashboards, so
 // their verbs map onto the folder action sets (folders:view/edit/admin) and folder grants
@@ -269,6 +291,24 @@ func newDatasourceQueryTranslation() translation {
 		utils.VerbSetPermissions:   {"datasources:admin"},
 	}
 	return dsTranslation
+}
+
+// newAppSettingsTranslation matches the legacy plugin settings permissions, scoped by plugin ID
+func newAppSettingsTranslation() translation {
+	return translation{
+		resource:  "plugins",
+		attribute: "id",
+		verbMapping: map[string]string{
+			utils.VerbGet:              "plugins.app:access",
+			utils.VerbList:             "plugins.app:access",
+			utils.VerbWatch:            "plugins.app:access",
+			utils.VerbCreate:           "plugins:write",
+			utils.VerbUpdate:           "plugins:write",
+			utils.VerbPatch:            "plugins:write",
+			utils.VerbDelete:           "plugins:write",
+			utils.VerbDeleteCollection: "plugins:write",
+		},
+	}
 }
 
 // newServiceAccountTranslation creates a translation for service accounts and maps actions to action sets.
@@ -549,6 +589,7 @@ func NewMapperRegistry() MapperRegistry {
 		},
 		"dashboard.grafana.app": {
 			"dashboards":    newDashboardTranslation(),
+			"snapshots":     newSnapshotTranslation(),
 			"notebooks":     newNotebookTranslation(),
 			"librarypanels": newLibraryPanelTranslation(),
 			"variables":     newVariableTranslation(),
@@ -587,7 +628,7 @@ func NewMapperRegistry() MapperRegistry {
 		"playlist.grafana.app": {
 			// Playlists only define two actions (playlists:read / playlists:write) and are
 			// neither folder-scoped nor scope-checked by their own authorizer, so writes map
-			// to playlists:write and create skips scope. This lets the provisioning export
+			// to playlists:write and every verb skips scope. This lets the provisioning export
 			// preflight (run under the requesting user) authorize playlists like other kinds.
 			"playlists": translation{
 				resource:  "playlists",
@@ -603,7 +644,7 @@ func NewMapperRegistry() MapperRegistry {
 					utils.VerbDeleteCollection: "playlists:write",
 				},
 				folderSupport:   false,
-				skipScopeOnVerb: map[string]bool{utils.VerbCreate: true},
+				skipScopeOnVerb: skipScopeOnAllVerbs,
 			},
 		},
 		"iam.grafana.app": {
@@ -708,7 +749,10 @@ func NewMapperRegistry() MapperRegistry {
 				skipScopeOnVerb: nil,
 			},
 		},
-		"datasource.grafana.app": { // duplicate the query group here
+		"datasource.grafana.app": {
+			// Unified storage keeps every datasource type under this group
+			"datasources": newDatasourceQueryTranslation(),
+			// duplicate the query group here
 			"query": translation{
 				resource:  "datasources",
 				attribute: "uid",
@@ -718,9 +762,6 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
-		},
-		"*.datasource.grafana.app": {
-			"datasources": newDatasourceQueryTranslation(),
 			"datasources/query": translation{
 				resource:  "datasources",
 				attribute: "uid",
@@ -730,10 +771,39 @@ func NewMapperRegistry() MapperRegistry {
 				folderSupport:   false,
 				skipScopeOnVerb: nil,
 			},
+			// Only datasources:admin carries the caching actions.
+			"datasources/caching": translation{
+				resource:  "datasources",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbGet:              "datasources.caching:read",
+					utils.VerbList:             "datasources.caching:read",
+					utils.VerbWatch:            "datasources.caching:read",
+					utils.VerbCreate:           "datasources.caching:write",
+					utils.VerbUpdate:           "datasources.caching:write",
+					utils.VerbPatch:            "datasources.caching:write",
+					utils.VerbDelete:           "datasources.caching:write",
+					utils.VerbDeleteCollection: "datasources.caching:write",
+				},
+				actionSetMapping: map[string][]string{
+					utils.VerbGet:              {"datasources:admin"},
+					utils.VerbList:             {"datasources:admin"},
+					utils.VerbWatch:            {"datasources:admin"},
+					utils.VerbCreate:           {"datasources:admin"},
+					utils.VerbUpdate:           {"datasources:admin"},
+					utils.VerbPatch:            {"datasources:admin"},
+					utils.VerbDelete:           {"datasources:admin"},
+					utils.VerbDeleteCollection: {"datasources:admin"},
+				},
+				folderSupport:   false,
+				skipScopeOnVerb: nil,
+			},
 		},
 		"plugins.grafana.app": {
 			"plugins": newResourceTranslation("plugins.plugins", "uid", false, nil),
 			"metas":   newResourceTranslation("plugins.metas", "uid", false, nil),
+			// Unified storage keeps every app plugin's settings here, named by plugin ID
+			"app": newAppSettingsTranslation(),
 		},
 		"advisor.grafana.app": {
 			"checks":       newResourceTranslation("advisor.checks", "uid", false, nil),
@@ -750,6 +820,12 @@ func NewMapperRegistry() MapperRegistry {
 			"settings": newSettingsTranslation(),
 		},
 	})
+
+	mapper["*.datasource.grafana.app"] = map[string]translation{
+		"datasources":         mapper["datasource.grafana.app"]["datasources"],
+		"datasources/query":   mapper["datasource.grafana.app"]["datasources/query"],
+		"datasources/caching": mapper["datasource.grafana.app"]["datasources/caching"],
+	}
 
 	return mapper
 }

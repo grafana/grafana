@@ -6,7 +6,7 @@ import { Trans, t } from '@grafana/i18n';
 import { type SceneObjectRef, type VizPanel } from '@grafana/scenes';
 import { Alert, Button, Divider, Field, Input, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
 
-import { getExpireOptions } from '../../ShareSnapshotTab';
+import { getExpireOptions } from '../../snapshotOptions';
 
 const DASHBOARD_SNAPSHOT_URL =
   'https://grafana.com/docs/grafana/latest/visualizations/dashboards/share-dashboards-panels/#share-a-snapshot';

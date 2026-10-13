@@ -8,7 +8,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
@@ -35,8 +37,8 @@ type subCountREST struct {
 }
 
 var (
-	_ = rest.Connecter(&subCountREST{})
-	_ = rest.StorageMetadata(&subCountREST{})
+	_ rest.Connecter       = (*subCountREST)(nil)
+	_ rest.StorageMetadata = (*subCountREST)(nil)
 )
 
 func (r *subCountREST) New() runtime.Object {
@@ -63,27 +65,36 @@ func (r *subCountREST) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 func (r *subCountREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
-	if _, err := r.getter.Get(ctx, name, &v1.GetOptions{}); err != nil {
+	ctx, span := tracer.Start(ctx, "folders.subCountREST.Connect")
+	_, err := r.getter.Get(ctx, name, &v1.GetOptions{})
+	if err != nil {
+		_ = tracing.Error(span, err)
+		span.End()
 		return nil, err
 	}
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		defer span.End()
+
 		ns, err := request.NamespaceInfoFrom(ctx, true)
 		if err != nil {
-			responder.Error(err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 
-		stats, err := r.searcher.GetStats(ctx, &resourcepb.ResourceStatsRequest{
+		statsCtx, statsSpan := tracer.Start(ctx, "folders.subCountREST.Connect.GetStats")
+		stats, err := r.searcher.GetStats(statsCtx, &resourcepb.ResourceStatsRequest{
 			Namespace: ns.Value,
 			Kinds:     countedKinds,
 			Folder:    []string{name},
 		})
+		err = resource.StatusErrorFromResponse(stats.GetError(), err)
 		if err != nil {
-			responder.Error(err)
-			return
+			_ = tracing.Error(statsSpan, err)
 		}
-		if stats.Error != nil {
-			responder.Error(resource.GetError(stats.Error))
+		statsSpan.End()
+		if err != nil {
+			logging.FromContext(ctx).Error("Failed to get folder descendant counts", "namespace", ns.Value, "folder", name, "error", err)
+			responder.Error(tracing.Error(span, err))
 			return
 		}
 		rsp := &folders.DescendantCounts{

@@ -212,7 +212,7 @@ var (
 	pk, _ = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 )
 
-var _ authnlib.Verifier[authnlib.IDTokenClaims] = &mockIDVerifier{}
+var _ authnlib.Verifier[authnlib.IDTokenClaims] = (*mockIDVerifier)(nil)
 
 type mockIDVerifier struct {
 	Claims idTokenClaims
@@ -223,7 +223,7 @@ func (m *mockIDVerifier) Verify(ctx context.Context, token string) (*idTokenClai
 	return &m.Claims, m.Error
 }
 
-var _ authnlib.Verifier[authnlib.AccessTokenClaims] = &mockVerifier{}
+var _ authnlib.Verifier[authnlib.AccessTokenClaims] = (*mockVerifier)(nil)
 
 type mockVerifier struct {
 	Claims accessTokenClaims

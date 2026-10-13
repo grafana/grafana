@@ -161,6 +161,8 @@ describe('LogsTable', () => {
   it('should not render `tsNs` column', async () => {
     setup(undefined, getMockLokiFrame());
 
+    expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
+
     await waitFor(() => {
       const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
 
@@ -192,6 +194,8 @@ describe('LogsTable', () => {
 
   it('should not render `labels`', async () => {
     setup();
+
+    expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
 
     await waitFor(() => {
       const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
@@ -255,6 +259,8 @@ describe('LogsTable', () => {
         getMockLokiFrameDataPlane()
       );
 
+      expect(await screen.findByRole('columnheader', { name: /timestamp/ })).toBeInTheDocument();
+
       await waitFor(() => {
         const columns = screen.queryAllByRole('columnheader', { name: 'labels' });
 
@@ -272,6 +278,8 @@ describe('LogsTable', () => {
         },
         getMockLokiFrameDataPlane()
       );
+
+      expect(await screen.findByRole('columnheader', { name: /timestamp/ })).toBeInTheDocument();
 
       await waitFor(() => {
         const columns = screen.queryAllByRole('columnheader', { name: 'tsNs' });
@@ -398,6 +406,8 @@ describe('LogsTable', () => {
       });
 
       setup({ logsFrame }, testFrame);
+
+      expect(await screen.findByRole('columnheader', { name: /Time/ })).toBeInTheDocument();
 
       await waitFor(() => {
         expect(partialSpy).toHaveBeenCalled();

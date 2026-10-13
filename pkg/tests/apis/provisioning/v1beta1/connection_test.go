@@ -358,26 +358,39 @@ func TestIntegrationV1Beta1Connection_Update(t *testing.T) {
 	_, err = client.Resource.Create(t.Context(), unstructuredObj, metav1.CreateOptions{})
 	require.NoError(t, err)
 
-	// Get the current object
-	current, err := client.Resource.Get(t.Context(), "test-update-connection", metav1.GetOptions{})
-	require.NoError(t, err)
+	// Read-modify-write with retry on 409 conflicts: the ConnectionController's async /status
+	// patches bump the object's RV, so an Update guarded by a stale RV can lose the race. Re-fetch
+	// the latest RV inside the loop so each attempt applies against current state.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		current, err := client.Resource.Get(t.Context(), "test-update-connection", metav1.GetOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	currentConn, err := common.FromUnstructured[provisioning.Connection](current)
-	require.NoError(t, err)
+		currentConn, err := common.FromUnstructured[provisioning.Connection](current)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	// Update the AppID
-	currentConn.Spec.GitHub.AppID = "999999"
+		// Update the AppID
+		currentConn.Spec.GitHub.AppID = "999999"
 
-	unstructuredObj, err = common.ToUnstructured(currentConn)
-	require.NoError(t, err)
+		unstructuredObj, err := common.ToUnstructured(currentConn)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	updated, err := client.Resource.Update(t.Context(), unstructuredObj, metav1.UpdateOptions{})
-	require.NoError(t, err)
-	require.NotNil(t, updated)
+		updated, err := client.Resource.Update(t.Context(), unstructuredObj, metav1.UpdateOptions{})
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	updatedConn, err := common.FromUnstructured[provisioning.Connection](updated)
-	require.NoError(t, err)
-	require.Equal(t, "999999", updatedConn.Spec.GitHub.AppID)
+		updatedConn, err := common.FromUnstructured[provisioning.Connection](updated)
+		if !assert.NoError(collect, err) {
+			return
+		}
+		assert.Equal(collect, "999999", updatedConn.Spec.GitHub.AppID)
+	}, common.WaitTimeoutDefault, common.WaitIntervalDefault)
 
 	// Verify the update persisted
 	retrieved, err := client.Resource.Get(t.Context(), "test-update-connection", metav1.GetOptions{})
