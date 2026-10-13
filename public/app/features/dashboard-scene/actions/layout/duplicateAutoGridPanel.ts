@@ -10,7 +10,7 @@ export function duplicateAutoGridPanel(layout: AutoGridLayoutManager, panel: Viz
   const grid = layout.state.layout;
   const gridItem = grid.state.children.find((child) => child === panel.parent);
   if (!gridItem) {
-    console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
+    console.error('Trying to duplicate a panel that is not inside an AutoGridItem');
     return;
   }
 
@@ -37,6 +37,7 @@ export function duplicateAutoGridPanel(layout: AutoGridLayoutManager, panel: Viz
       grid.setState({ children: newChildren });
     },
     undo: () => {
+      // Undoing a cross-layout move can replace the wrapper; retain the current one for redo.
       newGridItem =
         grid.state.children.find((child) => child.state.body.state.key === newPanel.state.key) ?? newGridItem;
       grid.setState({

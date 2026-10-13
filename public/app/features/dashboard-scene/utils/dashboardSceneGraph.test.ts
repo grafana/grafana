@@ -12,7 +12,6 @@ import { type DashboardSceneState } from '../scene/types/dashboard';
 
 import { dashboardSceneGraph } from './dashboardSceneGraph';
 import { findVizPanelByKey } from './findVizPanel';
-import { getNextPanelId } from './getNextPanelId';
 
 describe('dashboardSceneGraph', () => {
   describe('getPanelLinks', () => {
@@ -66,24 +65,6 @@ describe('dashboardSceneGraph', () => {
       const cursorSync = dashboardSceneGraph.getCursorSync(scene);
 
       expect(cursorSync).toBeUndefined();
-    });
-  });
-
-  describe('getNextPanelId', () => {
-    it('should get next panel id in a simple 3 panel layout', () => {
-      const scene = buildTestScene();
-      const id = getNextPanelId(scene);
-
-      expect(id).toBe(3);
-    });
-
-    it('should return 1 if no panels are found', () => {
-      const scene = buildTestScene();
-
-      const grid = scene.state.body as DefaultGridLayoutManager;
-      grid.state.grid.setState({ children: [] });
-      const id = getNextPanelId(scene);
-      expect(id).toBe(1);
     });
   });
 });
