@@ -1,20 +1,33 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { css as cssReact, Global } from '@emotion/react';
+import { useLayoutEffect, useState } from 'react';
 
 import { type GrafanaTheme2, PluginExtensionPoints } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
 import { useTheme2 } from '@grafana/ui';
+import { type ExtensionSidebarPresentation } from 'app/types/events';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { getComponentMetaFromComponentId } from './extensionSidebarUtils';
 
+/**
+ * Space the floating sidebar covers at the bottom of the page, set on the document root while it floats.
+ * Page scroll containers pad by it so their last row can scroll above the bar.
+ */
+export const EXTENSION_FLOATING_INSET_VAR = '--extension-floating-inset';
+
 type ExtensionSidebarComponentProps = {
   props?: Record<string, unknown>;
+  extensionSidebarPresentation?: ExtensionSidebarPresentation;
 };
 
 export function ExtensionSidebar() {
-  const styles = getStyles(useTheme2());
-  const { dockedComponentId, props = {} } = useExtensionSidebarContext();
+  const theme = useTheme2();
+  const styles = getStyles(theme);
+  const { dockedComponentId, presentation, props = {} } = useExtensionSidebarContext();
+  const [wrapper, setWrapper] = useState<HTMLDivElement | null>(null);
+  const floating = presentation === 'floating';
+  useFloatingInset(floating ? wrapper : null, theme.spacing.gridSize * 3);
   const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
     extensionPointId: PluginExtensionPoints.ExtensionSidebar,
   });
@@ -37,14 +50,15 @@ export function ExtensionSidebar() {
   }
 
   return (
-    <div className={styles.sidebarWrapper}>
+    <div ref={setWrapper} className={cx(styles.sidebarWrapper, floating && styles.sidebarWrapperFloating)}>
       <div className={styles.content}>
         {/* When the sidebar is open, we don't want the body to scroll */}
         {/* Need type assertion here due to the use of !important */}
         {/* see https://github.com/frenic/csstype/issues/114#issuecomment-697201978 */}
         {/* eslint-disable-next-line @typescript-eslint/consistent-type-assertions */}
         <Global styles={[cssReact({ body: { overflowY: 'unset !important' as 'unset' } })]} />
-        <ExtensionComponent {...props} />
+        {/* The presentation is a prop, not a key: changing it re-renders the same instance. */}
+        <ExtensionComponent {...props} extensionSidebarPresentation={presentation} />
       </div>
     </div>
   );
@@ -82,9 +96,43 @@ const getStyles = (theme: GrafanaTheme2) => {
         },
       }
     ),
+    // The extension draws the floating surface itself; core adds no background, border or shadow.
+    sidebarWrapperFloating: css({
+      backgroundColor: 'transparent',
+      border: 'none',
+      borderRadius: 'unset',
+      height: 'auto',
+      width: '100%',
+      margin: 0,
+      overflow: 'visible',
+      [theme.breakpoints.down('sm')]: {
+        height: 'auto',
+        margin: 0,
+        width: '100%',
+      },
+    }),
     content: css({
       flex: 1,
       minHeight: 0,
     }),
   };
 };
+
+function useFloatingInset(element: HTMLElement | null, bottomGap: number) {
+  useLayoutEffect(() => {
+    if (!element) {
+      return;
+    }
+    const root = document.documentElement;
+    const update = () => {
+      root.style.setProperty(EXTENSION_FLOATING_INSET_VAR, `${element.getBoundingClientRect().height + bottomGap}px`);
+    };
+    update();
+    const observer = typeof ResizeObserver === 'undefined' ? undefined : new ResizeObserver(update);
+    observer?.observe(element);
+    return () => {
+      observer?.disconnect();
+      root.style.removeProperty(EXTENSION_FLOATING_INSET_VAR);
+    };
+  }, [element, bottomGap]);
+}

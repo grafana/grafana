@@ -5,7 +5,13 @@ import { PluginExtensionPoints, store } from '@grafana/data';
 import { getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { type ExtensionPointPluginMeta } from 'app/features/plugins/extensions/appUtils';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
-import { CloseExtensionSidebarEvent, OpenExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
+import {
+  CloseExtensionSidebarEvent,
+  type ExtensionSidebarPresentation,
+  OpenExtensionSidebarEvent,
+  SetExtensionSidebarPresentationEvent,
+  ToggleExtensionSidebarEvent,
+} from 'app/types/events';
 
 import { DEFAULT_EXTENSION_SIDEBAR_WIDTH, MAX_EXTENSION_SIDEBAR_WIDTH, MIN_EXTENSION_SIDEBAR_WIDTH } from './constants';
 import { EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, getComponentMetaFromComponentId } from './extensionSidebarUtils';
@@ -47,6 +53,11 @@ export type ExtensionSidebarContextType = {
    * Set the width of the extension sidebar.
    */
   setExtensionSidebarWidth: (width: number) => void;
+  /**
+   * How the open sidebar is laid out. `floating` takes no width from the page; the container and the
+   * extension component stay mounted when this changes.
+   */
+  presentation: ExtensionSidebarPresentation;
 
   props?: Record<string, unknown>;
 };
@@ -58,6 +69,7 @@ const ExtensionSidebarContext = createContext<ExtensionSidebarContextType>({
   availableComponents: new Map(),
   extensionSidebarWidth: DEFAULT_EXTENSION_SIDEBAR_WIDTH,
   setExtensionSidebarWidth: () => {},
+  presentation: 'docked',
 });
 
 export function useExtensionSidebarContext() {
@@ -70,6 +82,7 @@ interface ExtensionSidebarContextProps {
 
 export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarContextProps) => {
   const [props, setProps] = useState<Record<string, unknown> | undefined>(undefined);
+  const [presentation, setPresentation] = useState<ExtensionSidebarPresentation>('docked');
   const storedDockedPluginId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
   const [extensionSidebarWidth, setExtensionSidebarWidth] = useLocalStorage(
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
@@ -208,6 +221,13 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     };
   }, [setDockedComponentWithProps, availableComponents, dockedComponentId]);
 
+  useEffect(() => {
+    const subscription = getAppEvents().subscribe(SetExtensionSidebarPresentationEvent, (event) =>
+      setPresentation(event.payload.presentation)
+    );
+    return () => subscription.unsubscribe();
+  }, []);
+
   // update the stored docked component id when it changes
   useEffect(() => {
     // wait for the plugin links to be loaded before we update the stored docked component id
@@ -246,6 +266,7 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
           MAX_EXTENSION_SIDEBAR_WIDTH
         ),
         setExtensionSidebarWidth,
+        presentation,
         props,
       }}
     >

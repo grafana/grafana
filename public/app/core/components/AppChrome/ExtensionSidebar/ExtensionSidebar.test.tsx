@@ -5,7 +5,7 @@ import { config, usePluginComponents } from '@grafana/runtime';
 import { type AddedComponentRegistryItem } from 'app/features/plugins/extensions/registry/AddedComponentsRegistry';
 import { createComponentWithMeta } from 'app/features/plugins/extensions/usePluginComponents';
 
-import { ExtensionSidebar } from './ExtensionSidebar';
+import { EXTENSION_FLOATING_INSET_VAR, ExtensionSidebar } from './ExtensionSidebar';
 import { type ExtensionSidebarContextType, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import { getComponentIdFromComponentMeta } from './extensionSidebarUtils';
 
@@ -22,7 +22,11 @@ jest.mock('./ExtensionSidebarProvider', () => ({
 const mockUsePluginComponents = jest.mocked(usePluginComponents);
 const mockUseExtensionSidebarContext = jest.mocked(useExtensionSidebarContext);
 
-const MockComponent = () => <div data-testid="working-component">Mock Component</div>;
+const MockComponent = ({ extensionSidebarPresentation }: { extensionSidebarPresentation?: string }) => (
+  <div data-testid="working-component" data-presentation={extensionSidebarPresentation}>
+    Mock Component
+  </div>
+);
 const pluginId = 'test-plugin';
 const extensionPointId = 'grafana/extension-sidebar/v0-alpha';
 
@@ -47,6 +51,7 @@ const extensionSidebarContextMock: ExtensionSidebarContextType = {
   availableComponents: new Map(),
   extensionSidebarWidth: 300,
   setExtensionSidebarWidth: jest.fn(),
+  presentation: 'docked',
 };
 
 const addedComponentRegistryItemMock: AddedComponentRegistryItem = {
@@ -139,5 +144,24 @@ describe('ExtensionSidebar', () => {
     const { container } = render(<ExtensionSidebar />);
     expect(container.firstChild).toBeInTheDocument();
     expect(screen.getByText('Mock Component')).toBeInTheDocument();
+  });
+
+  it('tells the extension its presentation and publishes the floating inset only while floating', () => {
+    mockUsePluginComponents.mockReturnValue({
+      components: [createComponentWithMeta(addedComponentRegistryItemMock, extensionPointId)],
+      isLoading: false,
+    });
+    mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'floating' });
+
+    const { rerender } = render(<ExtensionSidebar />);
+    const component = screen.getByTestId('working-component');
+    expect(component).toHaveAttribute('data-presentation', 'floating');
+    expect(document.documentElement.style.getPropertyValue(EXTENSION_FLOATING_INSET_VAR)).toMatch(/px$/);
+
+    mockUseExtensionSidebarContext.mockReturnValue({ ...extensionSidebarContextMock, presentation: 'docked' });
+    rerender(<ExtensionSidebar />);
+    expect(screen.getByTestId('working-component')).toBe(component);
+    expect(component).toHaveAttribute('data-presentation', 'docked');
+    expect(document.documentElement.style.getPropertyValue(EXTENSION_FLOATING_INSET_VAR)).toBe('');
   });
 });

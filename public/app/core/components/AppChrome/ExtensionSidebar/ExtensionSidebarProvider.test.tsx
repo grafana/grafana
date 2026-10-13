@@ -3,7 +3,12 @@ import { useAsync } from 'react-use';
 
 import { store, EventBusSrv, type EventBus, type ExtensionInfo } from '@grafana/data';
 import { getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
-import { OpenExtensionSidebarEvent, CloseExtensionSidebarEvent, ToggleExtensionSidebarEvent } from 'app/types/events';
+import {
+  OpenExtensionSidebarEvent,
+  CloseExtensionSidebarEvent,
+  SetExtensionSidebarPresentationEvent,
+  ToggleExtensionSidebarEvent,
+} from 'app/types/events';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 import {
@@ -467,7 +472,7 @@ describe('ExtensionSidebarProvider', () => {
   });
 
   it('should unsubscribe from all event subscriptions on unmount', () => {
-    const unsubscribeMocks = [jest.fn(), jest.fn(), jest.fn()];
+    const unsubscribeMocks = [jest.fn(), jest.fn(), jest.fn(), jest.fn()];
     let callIndex = 0;
 
     subscribeSpy.mockImplementation(() => ({
@@ -486,6 +491,25 @@ describe('ExtensionSidebarProvider', () => {
     expect(unsubscribeMocks[0]).toHaveBeenCalled();
     expect(unsubscribeMocks[1]).toHaveBeenCalled();
     expect(unsubscribeMocks[2]).toHaveBeenCalled();
+    expect(unsubscribeMocks[3]).toHaveBeenCalled();
+  });
+
+  it('switches presentation on SetExtensionSidebarPresentationEvent', () => {
+    const PresentationComponent = () => (
+      <div data-testid="presentation">{useExtensionSidebarContext().presentation}</div>
+    );
+    render(
+      <ExtensionSidebarContextProvider>
+        <PresentationComponent />
+      </ExtensionSidebarContextProvider>
+    );
+    expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
+
+    act(() => getAppEvents().publish(new SetExtensionSidebarPresentationEvent({ presentation: 'floating' })));
+    expect(screen.getByTestId('presentation')).toHaveTextContent('floating');
+
+    act(() => getAppEvents().publish(new SetExtensionSidebarPresentationEvent({ presentation: 'docked' })));
+    expect(screen.getByTestId('presentation')).toHaveTextContent('docked');
   });
 
   it('should subscribe to location service observable', () => {
