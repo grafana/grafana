@@ -61,6 +61,7 @@ import {
 } from 'app/types/dashboard';
 
 import {
+  isPreviewingPendingChanges,
   loadPendingChangePreview,
   type PendingChangePreview,
   pendingChangesIdFromLocation,
@@ -1497,6 +1498,11 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async reloadDashboard(queryParams: UrlQueryMap) {
+    // A pending changes preview shows the proposed spec, which doesn't depend on the query
+    // params; reloading would swap in the saved dashboard under the preview's banner.
+    if (isPreviewingPendingChanges(this.state.dashboard?.state.uid)) {
+      return;
+    }
     return this.withVersionHandling((manager) => {
       if (manager instanceof DashboardScenePageStateManagerV2) {
         // V2 reload needs state synced into the active manager before reloading.

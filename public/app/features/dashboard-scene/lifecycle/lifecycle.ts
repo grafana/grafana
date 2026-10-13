@@ -1,4 +1,5 @@
 import { t } from '@grafana/i18n';
+import { FlagKeys, getFeatureFlagClient } from '@grafana/runtime/internal';
 
 import { type DashboardScene } from '../scene/DashboardScene';
 
@@ -60,12 +61,15 @@ export function daysUntilExpiry(updatedAt: Date | undefined, now = new Date()): 
   return Math.max(0, Math.ceil(DRAFT_IDLE_DAYS - elapsed));
 }
 
-/** Label shown next to the dashboard title in the breadcrumbs. */
+/** Label shown next to the dashboard title in the breadcrumbs. Like the banner, nothing for a draft without `dashboard.drafts`. */
 export function getLifecycleBreadcrumbLabel(
   labels: Record<string, string> | undefined,
   previewingPendingChanges = false
 ): string | undefined {
   if (labels?.[LabelKeyLifecycle] === 'draft') {
+    if (!getFeatureFlagClient().getBooleanValue(FlagKeys.DashboardDrafts, false)) {
+      return undefined;
+    }
     return t('dashboard-scene.lifecycle.breadcrumb-draft', 'Draft');
   }
   return previewingPendingChanges
