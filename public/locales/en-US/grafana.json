@@ -5591,6 +5591,10 @@
       "ungroup-rows": "Ungroup rows",
       "ungroup-tabs": "Ungroup tabs"
     },
+    "composer": {
+      "apply-undo-title": "Assistant Composer edit",
+      "untitled-panel": "Panel {{panelId}}"
+    },
     "conditional-rendering": {
       "conditions": {
         "data": {

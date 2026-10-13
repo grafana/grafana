@@ -26,7 +26,8 @@ export function DashboardModePicker({ dashboard }: { dashboard: DashboardScene }
     state.editPanel ||
     state.editview ||
     state.viewPanel ||
-    state.planning;
+    state.planning ||
+    mode === 'composer';
   useEffect(() => {
     if (!hidden && !disabled) {
       dashboard.trackModePickerShown();
