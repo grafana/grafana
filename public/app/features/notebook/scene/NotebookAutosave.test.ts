@@ -674,6 +674,41 @@ describe('NotebookAutosave', () => {
     expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
   });
 
+  it('awaitInFlightSave returns without bringing a waiting edit forward', async () => {
+    const scene = activateEditing();
+    editFirstCell(scene, 'Waiting for the debounce');
+
+    await scene.autosave.awaitInFlightSave();
+
+    expect(updateNotebook).not.toHaveBeenCalled();
+    expect(scene.autosave.state.status).toBe('pending');
+  });
+
+  it('awaitInFlightSave waits for a save that is already running, and does not throw when it failed', async () => {
+    let finishSave = () => {};
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          finishSave = () => reject(new NotebookConflictError('the object has been modified'));
+        })
+    );
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    let settled = false;
+    const waiting = scene.autosave.awaitInFlightSave().then(() => {
+      settled = true;
+    });
+    await Promise.resolve();
+    expect(settled).toBe(false);
+
+    finishSave();
+    await waiting;
+
+    expect(settled).toBe(true);
+  });
+
   it('does not raise the conflict prompt once the scene has deactivated, so it cannot appear on a page the user navigated to', async () => {
     let finishSave = () => {};
     jest.mocked(updateNotebook).mockImplementationOnce(

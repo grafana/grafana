@@ -109,10 +109,11 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
         scene.autosave.state.savedResourceVersion !== undefined &&
         payload.onConflict !== 'overwrite'
       ) {
-        // Let this scene's own save land first. Otherwise the server can already hold a version this
-        // scene wrote but has not yet recorded, which would read as someone else's save. A failed save
-        // is not this check's business: the write below reports its own.
-        await scene.autosave.awaitPendingSave().catch(() => undefined);
+        // Let a save of this scene's own that is already running land first. Otherwise the server can
+        // already hold a version this scene wrote but has not yet recorded, which would read as someone
+        // else's save. Only one already running: bringing a waiting edit forward could conflict and raise
+        // the overwrite modal for it while this check is about to ask the person in the chat.
+        await scene.autosave.awaitInFlightSave();
         const serverVersion = await readNotebookResourceVersion(scene.state.uid);
         // Read after the request, not before: a save that finished during it moved both versions.
         const savedVersion = scene.autosave.state.savedResourceVersion;

@@ -508,6 +508,20 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
   }
 
   /**
+   * Waits for the save already running, if there is one. Unlike `awaitPendingSave` it never brings a
+   * waiting edit forward, and it does not throw when a save failed.
+   *
+   * For a caller that needs `savedResourceVersion` to be settled and has no business saving someone's
+   * edit: starting that save here could conflict and raise the overwrite modal over a request that is
+   * about to put the same question to the person somewhere else.
+   */
+  public async awaitInFlightSave(): Promise<void> {
+    while (this.inFlightSave) {
+      await this.inFlightSave;
+    }
+  }
+
+  /**
    * Brings forward the save the debounce was already going to make, for a caller about to read the
    * notebook back from the server. Unlike `saveDocumentChange` it claims nothing on the way.
    *

@@ -692,6 +692,24 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       expect(result.success).toBe(true);
     });
 
+    it('does not save a waiting manual edit while checking, so the modal and the chat never both ask', async () => {
+      const scene = staleScene();
+      const publish = jest.spyOn(appEvents, 'publish');
+      // The person's own edit, still inside the autosave debounce when the assistant's request arrives.
+      scene.onEnterEditMode();
+      scene.state.body.setCellContent(scene.state.body.state.cells[0], {
+        kind: 'Markdown',
+        spec: { text: 'typed by hand' },
+      });
+      const client = new NotebookMutationClient(scene);
+
+      const result = await client.execute({ type: 'APPLY_NOTEBOOK_SPEC', payload: { spec: spec() } });
+
+      expect(result.data).toMatchObject({ conflict: true });
+      expect(updateNotebook).not.toHaveBeenCalled();
+      expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+    });
+
     it('applies when the server version cannot be read, leaving the save to carry its own precondition', async () => {
       const scene = notebookScene();
       scene.autosave.setState({ savedResourceVersion: '5' });
