@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -170,8 +171,22 @@ func (h *handlerWrapper) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		Body:               req.Body,
 	})
 	if err != nil {
-		_ = errhttp.Write(req.Context(), err, w)
+		writeCustomRouteError(req.Context(), err, w)
 	}
+}
+
+func writeCustomRouteError(ctx context.Context, err error, w http.ResponseWriter) {
+	// Force a k8s error shape
+	if _, ok := err.(apierrors.APIStatus); !ok {
+		err = &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Code:    int32(http.StatusInternalServerError),
+				Reason:  metav1.StatusReasonInternalError,
+				Message: err.Error(),
+			},
+		}
+	}
+	_ = errhttp.Write(ctx, err, w)
 }
 
 // CovertURLValuesToResourceCallOptions reads from the input *url.Values and assigns fields in the out *ResourceCallOptions

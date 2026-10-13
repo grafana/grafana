@@ -40,7 +40,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
-	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
 // ManagedKindResolver resolves a kind and version into a resource.Kind instance.
@@ -693,7 +692,7 @@ func (r *defaultInstaller) registerResourceRouteOperation(ws *restful.WebService
 	routeFunc := restful.RouteFunction(func(req *restful.Request, resp *restful.Response) {
 		a, err := r.App()
 		if err != nil {
-			_ = errhttp.Write(req.Request.Context(), err, resp)
+			writeCustomRouteError(req.Request.Context(), err, resp)
 			return
 		}
 		identifier := resource.FullIdentifier{
@@ -712,7 +711,7 @@ func (r *defaultInstaller) registerResourceRouteOperation(ws *restful.WebService
 			Body:               req.Request.Body,
 		})
 		if err != nil {
-			_ = errhttp.Write(req.Request.Context(), err, resp)
+			writeCustomRouteError(req.Request.Context(), err, resp)
 			return
 		}
 	})
