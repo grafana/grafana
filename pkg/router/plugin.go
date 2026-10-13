@@ -207,6 +207,9 @@ func initLocalPlugins(ctx context.Context, deps PluginLoaderDependencies) error 
 
 type PluginLoader struct {
 	deps PluginLoaderDependencies
+	// coreApps are served ahead of the local plugins, so a plugin that serves
+	// the same group replaces them.
+	coreApps []coreApp
 }
 
 func loadLocalPluginDefinitions(ctx context.Context, registry sources.Registry, schemas bool) ([]definition.PluginDefinition, error) {
@@ -237,7 +240,11 @@ func (pl PluginLoader) Load(ctx context.Context) ([]Backend, error) {
 		return nil, err
 	}
 
-	return pl.prepareBackends(ctx, pluginDefs)
+	backends, err := pl.prepareBackends(ctx, pluginDefs)
+	if err != nil {
+		return nil, err
+	}
+	return append(coreAppBackends(ctx, pl.coreApps, pl.deps.PluginDependencies), backends...), nil
 }
 
 func (pl PluginLoader) prepareBackends(ctx context.Context, pluginDefs []definition.PluginDefinition) ([]Backend, error) {
@@ -359,6 +366,9 @@ type PluginBackend struct {
 	manifest *app.ManifestData
 	client   PluginClientProvider
 	deps     PluginDependencies
+	// inProcess clients call the app directly: there is no connection to
+	// break on, and no token to exchange.
+	inProcess bool
 }
 
 func (b *PluginBackend) Group() metav1.APIGroup {
@@ -377,18 +387,20 @@ func (b *PluginBackend) Load(ctx context.Context) (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	if clientV2 != nil {
-		clientV2 = &breakerPluginClient{Client: clientV2}
-	}
-	if clientV3 != nil {
-		clientV3 = &breakerPluginClientV3{Client: clientV3}
-	}
-	// Keep authentication outside the breaker: token exchange failures do not
-	// indicate whether the plugin is reachable.
-	clientV3, err = v3.WithAuthentication(clientV3, b.pluginID, []string{b.group.Name},
-		withAuthFailureOutcome(appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger)))
-	if err != nil {
-		return nil, err
+	if !b.inProcess {
+		if clientV2 != nil {
+			clientV2 = &breakerPluginClient{Client: clientV2}
+		}
+		if clientV3 != nil {
+			clientV3 = &breakerPluginClientV3{Client: clientV3}
+		}
+		// Keep authentication outside the breaker: token exchange failures do not
+		// indicate whether the plugin is reachable.
+		clientV3, err = v3.WithAuthentication(clientV3, b.pluginID, []string{b.group.Name},
+			withAuthFailureOutcome(appplugin.ClientV3TokenExchanger(b.deps.Cfg, b.pluginID, b.deps.TokenExchanger)))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	cfg := b.deps.Cfg

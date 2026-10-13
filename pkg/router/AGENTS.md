@@ -107,6 +107,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Aggregate targets (`router.aggregate.<name>`) | `aggregate_*.go` |
 | Managed plugins (`plugins_url`) and core APIs (`core_url`) | `plugin_manifests.go`, `plugin_manifests_ac.go` |
 | Local plugin loader, `PluginBackend` and plugin roles | `plugin.go`, `plugin_roles.go` |
+| Core apps served in middleware mode, in-process v3 client | `core_apps.go` |
 | Single-tenant (ST) fallback | `st_fallback.go` |
 | Storage and loopback clients for plugin backends | `storage.go`, `restconfig.go` |
 | Dummy loader (the default when nothing is configured) | `dummy.go` |
@@ -116,7 +117,9 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 `ProvideRoutesLoader` picks exactly one loader:
 
 1. **The cloud loader**, when any `[cloud_router]` source or `[router.aggregate.<name>]` target is configured (see Settings).
-2. **Otherwise the local plugin loader**, when plugin sources are available.
+2. **Otherwise the local plugin loader**, when plugin sources are available. In middleware mode it
+   also serves the core apps in `coreApps()` (playlists), ahead of the local plugins, so a plugin
+   serving the same group replaces them.
 3. **Otherwise the dummy loader**, which serves two static dummy groups.
 
 The cloud loader merges its sources by group. When sources conflict, later entries override
@@ -132,7 +135,24 @@ earlier ones:
    authenticate `X-Access-Token`.
 
 Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
-`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `p:<hash>` or `st:<hash>`.
+`managed:<pluginId>:<hash>`, `core:<pluginId>:<hash>`, `coreapp:<appId>:<hash>`, `p:<hash>` or
+`st:<hash>`.
+
+## Core apps
+
+In middleware mode the router intercepts core APIs from the embedded API server, starting with
+playlists. A core app is served as a `PluginBackend` built from the app's generated manifest, with
+no plugin client: its admission and conversion hooks call the app-sdk `app.App` in-process, through
+the `appadapter` adapters a plugin process serves them with (`inProcessClientV3`). In-process
+clients skip the plugin breaker and token exchange. Custom routes are not supported yet, because the
+v3 route service streams its response.
+
+- A core app's group must be in `routableCoreGroups`.
+- Like `core_url` deployments, core apps get no plugin settings, plugin client or app-access check
+  (`pluginManifestAccessControl`); unified storage decides access to their resources.
+- Manifest kinds are folder scoped by default. Set `notFolderScoped` for an app whose resources have
+  no folder, such as playlists. Copy the manifest before changing it: the embedded server shares it.
+- The app is built without reconcilers. They keep running in the embedded server's app installer.
 
 ## Serving and discovery
 

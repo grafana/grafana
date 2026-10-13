@@ -10,6 +10,7 @@ const (
 	sourceSingleTenant  = "single-tenant"
 	sourcePluginsURL    = "plugins_url"
 	sourceCoreURL       = "core_url"
+	sourceCoreApp       = "core-app"
 	sourceLocalPlugin   = "local-plugin"
 	sourceDummy         = "dummy"
 	aggregateSourceName = "aggregate:"
