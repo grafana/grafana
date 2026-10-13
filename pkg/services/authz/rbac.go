@@ -139,7 +139,7 @@ func ProvideAuthZClients(
 			legacy.NewLegacySQLStores(sql),
 			store.NewUnionPermissionStore(
 				store.NewStaticPermissionStore(acService),
-				store.NewSQLPermissionStore(sql, tracer),
+				store.NewSQLPermissionStore(sql, tracer, cfg != nil && cfg.DatabaseForcePermissionRoleActionIndex),
 			),
 			userPermissionsEvaluator,
 			nil,
@@ -398,7 +398,7 @@ func RegisterRBACAuthZService(
 		db,
 		folderStore,
 		legacy.NewLegacySQLStores(db),
-		store.NewSQLPermissionStore(db, tracer),
+		store.NewSQLPermissionStore(db, tracer, cfg.ForcePermissionRoleActionIndex),
 		nil,
 		userPermissionsResolver,
 		actionResolver,
