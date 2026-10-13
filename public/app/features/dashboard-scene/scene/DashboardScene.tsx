@@ -76,7 +76,7 @@ import { duplicatePanel } from '../actions/layout/duplicatePanel';
 import { edit } from '../actions/utils/edit';
 import { type ComposerSession } from '../composer/ComposerSession';
 import { clearPendingComposerEnterRequest } from '../composer/composerEntryRequests';
-import { dashboardDeactivations } from '../data-service/lifecycle';
+import { endDashboardVisit, startDashboardVisit } from '../data-service/lifecycle';
 import { getLifecycleBreadcrumbLabel } from '../lifecycle/lifecycle';
 import {
   getPendingChangePreview,
@@ -501,6 +501,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const isNew = pathname === '/dashboard/new';
 
     window.__grafanaSceneContext = this;
+    startDashboardVisit(this);
 
     this._initializePanelSearch();
 
@@ -608,7 +609,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       presentationSubscription.unsubscribe();
       destroyMutationClient();
       window.__grafanaSceneContext = prevSceneContext;
-      dashboardDeactivations.next(this.state.key ?? '');
+      endDashboardVisit(this);
       clearKeyBindings();
       this._changeTracker.terminate();
       this.deactivateSidebar();

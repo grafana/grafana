@@ -19,7 +19,7 @@ export interface DashboardSectionInfo {
  * @alpha
  */
 export interface DashboardInfo {
-  /** Unique per loaded dashboard instance, so callers can scope state to one visit. */
+  /** Unique per visit: opening the same dashboard again gives a new key, so callers can scope state to one visit. */
   instanceKey: string;
   uid?: string;
   title: string;
@@ -191,7 +191,16 @@ export interface DashboardPanelCapture {
 }
 
 /** @alpha */
-export type DashboardDataEvent = { type: 'changed' } | { type: 'deactivated'; instanceKey: string };
+export type DashboardDataEvent =
+  | {
+      type: 'changed';
+      /**
+       * Keys of the panels whose data or settings changed. Undefined when the change can affect every panel, such
+       * as a time range, variable, layout, or dashboard change.
+       */
+      panelKeys?: string[];
+    }
+  | { type: 'deactivated'; instanceKey: string };
 
 /**
  * Read-only access to the dashboard currently open, in plain serializable data, for plugins that reason about
@@ -206,7 +215,10 @@ export interface DashboardDataService {
   getDashboard(): DashboardInfo | undefined;
   /** Panels whose data can be captured, in layout order: panels with queries, excluding repeat clones. */
   getPanels(): DashboardPanelInfo[];
-  /** Variables that have a list of values, such as query, custom, and interval variables. */
+  /**
+   * Variables whose values are picked from a list of options, such as query, custom, and data source variables.
+   * Others, such as interval and text box variables, are left out.
+   */
   getVariables(): DashboardVariableInfo[];
   /** Resolves panel keys and section references to the panels they cover now, without reading data. */
   resolveSources(refs: string[]): DashboardSourceResolution;
@@ -221,7 +233,7 @@ export interface DashboardDataService {
   getExploreUrl(panelKey: string, timeWindow: { from: string; to: string }): Promise<string | undefined>;
   /**
    * Subscribes to the dashboard open now. `changed` fires at most once per animation frame on panel data, time
-   * range, variable, filter, and layout changes; `deactivated` fires when that dashboard is left.
+   * range, variable, filter, layout, edit mode, and save changes; `deactivated` fires when that dashboard is left.
    */
   subscribe(listener: (event: DashboardDataEvent) => void): () => void;
 }

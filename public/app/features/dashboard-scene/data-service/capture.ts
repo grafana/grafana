@@ -185,9 +185,10 @@ export async function capturePanels(
     })
   );
 
+  // Field overrides don't touch annotations, so they are read without applying them again.
   const capturedData = panels.flatMap((panel) => {
     const source = panel.status === 'done' ? byKey.get(panel.key) : undefined;
-    return (source && getPanelData(source.panel)) ?? [];
+    return (source && sceneGraph.getData(source.panel).state.data) ?? [];
   });
   const variables = getVariableValues(dashboard);
   return {

@@ -7,6 +7,7 @@ import {
   SceneVariableSet,
   sceneGraph,
   type SceneDataProvider,
+  type SceneObject,
   type SceneObjectState,
   type VizPanel,
 } from '@grafana/scenes';
@@ -51,6 +52,16 @@ class VariantContext extends SceneObjectBase<VariantContextState> {
   public getSystemTransformations(ctx: { series: DataFrame[] }) {
     return this.host.getSystemTransformations(ctx);
   }
+}
+
+/** A variant's copy runs under its host panel, so its state changes bubble up through the dashboard. */
+export function isInVariant(object: SceneObject): boolean {
+  for (let current: SceneObject | undefined = object; current; current = current.parent) {
+    if (current instanceof VariantContext) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function getInnermostProvider(provider: SceneDataProvider): SceneDataProvider {
