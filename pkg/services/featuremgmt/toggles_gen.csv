@@ -297,7 +297,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-05-06,grafana.scenesFlickeringFix,GA,@grafana/dashboards-squad,false,false,true
 2026-06-17,grafana.viewPanelPane,preview,@grafana/dashboards-squad,false,false,true
-2026-09-28,grafana.dashboardInsights,experimental,@grafana/dashboards-squad,false,false,true
 2026-04-09,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-08-13,flameGraph.tableNg,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-03-11,inlineLogDetailsNoScrolls,GA,@grafana/observability-logs,false,false,true
