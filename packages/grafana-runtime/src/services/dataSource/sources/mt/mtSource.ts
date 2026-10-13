@@ -1,5 +1,6 @@
 import { type DataSourceInstanceListItem, type DataSourceInstanceSettings } from '@grafana/data';
 
+import { isFetchError } from '../../../backendSrv';
 import { getDatasourcePluginMetas } from '../../../pluginMeta/datasources';
 import {
   DIRECT_ACCESS_UNSUPPORTED_WARNING,
@@ -11,7 +12,7 @@ import { DataSourceSettingsFetchError } from '../../errors';
 import { logDataSourceInstanceError, logDataSourceWarning } from '../../logging';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from '../types';
 
-import { fetchConnections, fetchDataSourceResource, MTRequestError } from './api';
+import { fetchConnections, fetchDataSourceResource } from './api';
 import { toInstanceSettings, toListSnapshot } from './mappers';
 import { type DataSourceConnection } from './types';
 
@@ -53,7 +54,7 @@ export class MTDataSource implements DataSourceCacheSource {
     } catch (error) {
       logDataSourceInstanceError(SETTINGS_FETCH_FAILED, error, {
         uid,
-        status: error instanceof MTRequestError ? String(error.status) : 'network',
+        status: isFetchError(error) ? String(error.status) : 'network',
       });
       throw new DataSourceSettingsFetchError(uid, error);
     }

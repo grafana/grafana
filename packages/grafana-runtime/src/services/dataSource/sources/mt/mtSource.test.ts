@@ -4,6 +4,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { config } from '../../../../config';
 import { FlagKeys } from '../../../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../../../utils/getCachedPromise';
+import { type BackendSrv, setBackendSrv } from '../../../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../../../dataSourceSrv';
 import { setLogger } from '../../../logging/registry';
 import { setDatasourcePluginMetas } from '../../../pluginMeta/datasources';
@@ -57,23 +58,21 @@ const promResource: DataSourceResource = {
 
 type Route = { status: number; body?: unknown };
 let routes: Record<string, Route>;
-const fetchMock = jest.fn(async (url: string) => {
+// Rejects the way backendSrv does: with a FetchError-shaped value.
+const backendGet = jest.fn(async (url: string) => {
   const route = routes[url] ?? { status: 404 };
-  return {
-    ok: route.status >= 200 && route.status < 300,
-    status: route.status,
-    statusText: route.status === 200 ? 'OK' : 'Error',
-    json: async () => route.body,
-  };
+  if (route.status < 200 || route.status >= 300) {
+    throw Object.assign(new Error('Error'), { status: route.status, statusText: 'Error', data: {} });
+  }
+  return route.body;
 });
 
 function callsTo(url: string): number {
-  return fetchMock.mock.calls.filter(([calledUrl]) => calledUrl === url).length;
+  return backendGet.mock.calls.filter(([calledUrl]) => calledUrl === url).length;
 }
 
 const logWarning = jest.fn();
 const logError = jest.fn();
-const originalFetch = global.fetch;
 
 beforeAll(() => {
   setTestFlags({
@@ -83,18 +82,17 @@ beforeAll(() => {
     [FlagKeys.PluginsUseMTPlugins]: true,
     [FlagKeys.DatasourcesConfigUiUseNewDatasourceCRUDAPIs]: true,
   });
-  global.fetch = fetchMock as unknown as typeof fetch;
+  setBackendSrv({ get: backendGet } as unknown as BackendSrv);
 });
 
 afterAll(() => {
   setTestFlags({});
-  global.fetch = originalFetch;
 });
 
 beforeEach(() => {
   _resetForTests();
   invalidateCachedPromisesCache();
-  fetchMock.mockClear();
+  backendGet.mockClear();
   logWarning.mockClear();
   logError.mockClear();
   setLogger('grafana/runtime.plugins.datasource', {
@@ -179,6 +177,14 @@ describe('settings', () => {
     expect(callsTo(PROM_URL)).toBe(1);
   });
 
+  it('requests through backendSrv without its error toast', async () => {
+    initDataSourceInstanceSettings({}, '');
+
+    await getDataSourceInstanceSettings('uid-prom');
+
+    expect(backendGet).toHaveBeenCalledWith(PROM_URL, undefined, undefined, { showErrorAlert: false });
+  });
+
   it('resolves the default ref through the default label', async () => {
     initDataSourceInstanceSettings({}, '');
 
@@ -189,7 +195,7 @@ describe('settings', () => {
     initDataSourceInstanceSettings({}, '');
 
     expect((await getDataSourceInstanceSettings('-- Grafana --'))?.uid).toBe('grafana');
-    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([CONNECTIONS_URL]);
+    expect(backendGet.mock.calls.map(([url]) => url)).toEqual([CONNECTIONS_URL]);
   });
 
   it('never makes a per-uid request for getDataSourceInstanceListItem', async () => {

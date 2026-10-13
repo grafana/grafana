@@ -8,6 +8,7 @@ import { setTestFlags } from '@grafana/test-utils/unstable';
 import { config } from '../../../config';
 import { FlagKeys } from '../../../internal/openFeature/openfeature.gen';
 import { invalidateCachedPromisesCache } from '../../../utils/getCachedPromise';
+import { type BackendSrv, setBackendSrv } from '../../backendSrv';
 import { type DataSourceSrv, setDataSourceSrv } from '../../dataSourceSrv';
 import { setDatasourcePluginMetas } from '../../pluginMeta/datasources';
 import { getDataSourceInstanceListItem } from '../listItem';
@@ -233,11 +234,8 @@ function normalize(answers: Answers) {
   };
 }
 
-const originalFetch = global.fetch;
-
 afterAll(() => {
   setTestFlags({});
-  global.fetch = originalFetch;
 });
 
 beforeEach(() => {
@@ -266,12 +264,14 @@ async function answersFromMT(): Promise<Answers> {
     'apis/query.grafana.app/v0alpha1/namespaces/default/connections': { items: connections() },
     ...resources(),
   };
-  global.fetch = jest.fn(async (url: string) => ({
-    ok: url in byUrl,
-    status: url in byUrl ? 200 : 404,
-    statusText: '',
-    json: async () => byUrl[url],
-  })) as unknown as typeof fetch;
+  setBackendSrv({
+    get: jest.fn(async (url: string) => {
+      if (!(url in byUrl)) {
+        throw Object.assign(new Error('Not found'), { status: 404, data: {} });
+      }
+      return byUrl[url];
+    }),
+  } as unknown as BackendSrv);
 
   initDataSourceInstanceSettings({}, '');
   return collectAnswers();
