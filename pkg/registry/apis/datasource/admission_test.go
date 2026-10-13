@@ -189,9 +189,13 @@ func TestDataSourceUpdateAdmission(t *testing.T) {
 		{name: "PUT echoes stored rules", verb: "update", oldJSON: map[string]any{"teamHttpHeaders": header}, newJSON: map[string]any{"teamHttpHeaders": header}, wantHeader: true},
 		{name: "PUT omits stored rules", verb: "update", oldJSON: map[string]any{"teamHttpHeaders": header}, newJSON: map[string]any{"httpMethod": "POST"}, wantHeader: true},
 		{name: "PUT adds rules", verb: "update", newJSON: map[string]any{"teamHttpHeaders": header}, wantError: true},
+		{name: "PUT adds null rules", verb: "update", newJSON: map[string]any{"teamHttpHeaders": nil}, wantError: true},
+		{name: "PUT echoes stored null rules", verb: "update", oldJSON: map[string]any{"teamHttpHeaders": nil}, newJSON: map[string]any{"teamHttpHeaders": nil}, wantHeader: true},
+		{name: "PUT omits stored null rules", verb: "update", oldJSON: map[string]any{"teamHttpHeaders": nil}, newJSON: map[string]any{"httpMethod": "POST"}, wantHeader: true},
 		{name: "PUT changes rules", verb: "update", oldJSON: map[string]any{"teamHttpHeaders": header}, newJSON: map[string]any{"teamHttpHeaders": changed}, wantError: true},
 		{name: "PUT sets rules to null", verb: "update", oldJSON: map[string]any{"teamHttpHeaders": header}, newJSON: map[string]any{"teamHttpHeaders": nil}, wantError: true},
 		{name: "PATCH removes rules", verb: "patch", oldJSON: map[string]any{"teamHttpHeaders": header}, newJSON: map[string]any{"httpMethod": "POST"}, wantError: true},
+		{name: "PATCH removes stored null rules", verb: "patch", oldJSON: map[string]any{"teamHttpHeaders": nil}, newJSON: map[string]any{"httpMethod": "POST"}, wantError: true},
 		{name: "PATCH changes unrelated field", verb: "patch", oldJSON: map[string]any{"teamHttpHeaders": header}, newJSON: map[string]any{"teamHttpHeaders": header, "httpMethod": "POST"}, wantHeader: true},
 	}
 	for _, tt := range tests {
@@ -215,7 +219,7 @@ func TestDataSourceUpdateAdmission(t *testing.T) {
 			_, present := jsonData["teamHttpHeaders"]
 			require.Equal(t, tt.wantHeader, present)
 			if tt.wantHeader {
-				require.Equal(t, header, jsonData["teamHttpHeaders"])
+				require.Equal(t, tt.oldJSON["teamHttpHeaders"], jsonData["teamHttpHeaders"])
 			}
 		})
 	}

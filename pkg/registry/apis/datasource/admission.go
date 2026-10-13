@@ -70,27 +70,34 @@ func (b *DataSourceAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 	storedHeaders, storedHasHeaders := storedJSONData["teamHttpHeaders"]
 	proposedJSONData, _ := proposed.Spec.JSONData().(map[string]any)
 	proposedHeaders, proposedHasHeaders := proposedJSONData["teamHttpHeaders"]
-	if proposedHasHeaders && (!storedHasHeaders || !reflect.DeepEqual(proposedHeaders, storedHeaders)) {
-		return invalidTeamHTTPHeadersUpdate(proposed, &b.datasourceResourceInfo)
-	}
-	// The proposed object either echoes the stored rules or has no rules.
-	// Only a missing proposed field alongside stored rules needs more handling.
-	if !storedHasHeaders || proposedHasHeaders {
+	// The field is unchanged when the key exists in both objects or neither,
+	// and its values are equal. A missing key and an explicit null both return
+	// nil from a map lookup, so comparing the values alone is insufficient.
+	if proposedHasHeaders == storedHasHeaders && reflect.DeepEqual(proposedHeaders, storedHeaders) {
 		return nil
 	}
+	if proposedHasHeaders {
+		return invalidTeamHTTPHeadersUpdate(proposed, &b.datasourceResourceInfo)
+	}
 
-	// The proposed object is the result after applying the PATCH to the stored
-	// object, not the fields sent in the PATCH body. An unrelated PATCH retains
-	// the stored rules; if they are absent here, the PATCH removed them (possibly
-	// by replacing all of jsonData).
+	// Here, stored has teamHttpHeaders and proposed omits the key entirely.
+	// Explicit null or empty values were handled above as unchanged echoes or
+	// forbidden changes. For PATCH, proposed is the full result after applying
+	// the patch to stored, not the PATCH body.
+	// An unrelated PATCH retains the field, so its absence means the PATCH removed
+	// it (possibly by replacing all of jsonData), which must be rejected.
+	// PUT normally replaces the whole object, including removing omitted fields.
+	// We deliberately preserve omitted LBAC rules for compatibility with legacy
+	// datasource updates. The Kubernetes converter leaves the internal
+	// AllowLBACRuleUpdates flag false, so legacy writes call RetainExistingLBACRules.
+	// This lets unrelated datasource edits preserve rules managed through the
+	// dedicated LBAC API. The retention helper copies the stored rules into the
+	// proposed JSON:
+	// https://github.com/grafana/grafana/blob/054d246e5104058959de1aa165e7bc520778b89e/pkg/services/datasources/service/datasource.go#L1129-L1153
 	requestInfo, hasRequestInfo := request.RequestInfoFrom(ctx)
 	if hasRequestInfo && requestInfo.Verb == "patch" {
 		return invalidTeamHTTPHeadersUpdate(proposed, &b.datasourceResourceInfo)
 	}
-	// A PUT replaces the whole object. Carry forward the protected field so an
-	// unrelated datasource edit cannot remove rules that belong to TeamLBACRule.
-	// This matches the legacy SQL update's RetainExistingLBACRules behavior:
-	// https://github.com/grafana/grafana/blob/054d246e5104058959de1aa165e7bc520778b89e/pkg/services/datasources/service/datasource.go#L1129-L1153
 	proposedJSONData = maps.Clone(proposedJSONData)
 	if proposedJSONData == nil {
 		proposedJSONData = make(map[string]any)
