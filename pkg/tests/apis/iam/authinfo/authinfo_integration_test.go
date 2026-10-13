@@ -30,9 +30,7 @@ import (
 func TestIntegrationAuthInfo(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
 
-	// Mode5 is excluded: it serves straight from unified storage, bypassing LegacyStore
-	// (and every domain rule enforced there) since nothing populates that store yet.
-	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3}
+	modes := []rest.DualWriterMode{rest.Mode0, rest.Mode1, rest.Mode3, rest.Mode5}
 	for _, mode := range modes {
 		t.Run(fmt.Sprintf("DualWriterMode %d", mode), func(t *testing.T) {
 			helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
@@ -60,7 +58,7 @@ func TestIntegrationAuthInfo(t *testing.T) {
 			doAuthInfoAuthzTests(t, helper)
 			doAuthInfoListRequiresFieldSelectorTest(t, helper)
 			doAuthInfoListByAuthIDTest(t, helper)
-			doAuthInfoDeleteTests(t, helper)
+			doAuthInfoDeleteTests(t, helper, mode)
 			doAuthInfoUserDeleteCascadeTest(t, helper, mode)
 		})
 	}
@@ -262,7 +260,7 @@ func doAuthInfoListByAuthIDTest(t *testing.T, helper *apis.K8sTestHelper) {
 	})
 }
 
-func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
+func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper, mode rest.DualWriterMode) {
 	t.Run("delete removes the object and its user_auth row", func(t *testing.T) {
 		ctx := context.Background()
 		userUID := createTestUser(t, helper, "authinfo-delete-user", "authinfo-delete-user@example.com")
@@ -271,7 +269,12 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
 		authID := "delete-test-" + userUID
 		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+		}
+		if mode >= rest.Mode1 {
+			requireAuthInfoInUnified(t, helper, created.GetName(), true, "sanity check: the object should reach unified storage")
+		}
 
 		err = authInfoClient.Resource.Delete(ctx, created.GetName(), metav1.DeleteOptions{})
 		require.NoError(t, err)
@@ -282,7 +285,12 @@ func doAuthInfoDeleteTests(t *testing.T, helper *apis.K8sTestHelper) {
 		require.ErrorAs(t, err, &statusErr)
 		require.Equal(t, int32(404), statusErr.ErrStatus.Code)
 
-		require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once the object is deleted")
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once the object is deleted")
+		}
+		if mode >= rest.Mode1 {
+			requireAuthInfoInUnified(t, helper, created.GetName(), false, "AuthInfo object should be gone from unified storage")
+		}
 	})
 
 	t.Run("delete of an already-deleted object is a not-found", func(t *testing.T) {
@@ -330,14 +338,12 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, m
 		authID := "cascade-test-" + userUID
 		created, err := authInfoClient.Resource.Create(ctx, createAuthInfoObject(helper, userUID, "ldap", authID), metav1.CreateOptions{})
 		require.NoError(t, err)
-		require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(1), countUserAuthRowsByAuthID(t, helper, authID), "sanity check: the row should exist right after creation")
+		}
 		if mode >= rest.Mode1 {
 			// Dual-write modes write to unified storage in the background.
-			require.EventuallyWithT(t, func(c *assert.CollectT) {
-				exists, err := authInfoExistsInUnified(helper, created.GetName())
-				require.NoError(c, err)
-				assert.True(c, exists)
-			}, 5*time.Second, 50*time.Millisecond, "sanity check: the object should reach unified storage")
+			requireAuthInfoInUnified(t, helper, created.GetName(), true, "sanity check: the object should reach unified storage")
 		}
 
 		userClient := helper.GetResourceClient(apis.ResourceClientArgs{
@@ -348,7 +354,9 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, m
 		err = userClient.Resource.Delete(ctx, userUID, metav1.DeleteOptions{})
 		require.NoError(t, err)
 
-		require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once its user is deleted")
+		if mode < rest.Mode4 {
+			require.Equal(t, int64(0), countUserAuthRowsByAuthID(t, helper, authID), "user_auth row should be gone once its user is deleted")
+		}
 
 		list, err := authInfoClient.Resource.List(ctx, metav1.ListOptions{
 			FieldSelector: fmt.Sprintf("spec.userRef.name=%s", userUID),
@@ -363,13 +371,19 @@ func doAuthInfoUserDeleteCascadeTest(t *testing.T, helper *apis.K8sTestHelper, m
 
 		// Reads in dual-write modes are served from legacy, so check unified storage directly.
 		if mode >= rest.Mode1 {
-			require.EventuallyWithT(t, func(c *assert.CollectT) {
-				exists, err := authInfoExistsInUnified(helper, created.GetName())
-				require.NoError(c, err)
-				assert.False(c, exists)
-			}, 5*time.Second, 50*time.Millisecond, "AuthInfo object should be gone from unified storage")
+			requireAuthInfoInUnified(t, helper, created.GetName(), false, "AuthInfo object should be gone from unified storage")
 		}
 	})
+}
+
+// requireAuthInfoInUnified waits for the object to be present (or absent) in unified storage.
+func requireAuthInfoInUnified(t *testing.T, helper *apis.K8sTestHelper, name string, want bool, msg string) {
+	t.Helper()
+	require.EventuallyWithT(t, func(c *assert.CollectT) {
+		exists, err := authInfoExistsInUnified(helper, name)
+		require.NoError(c, err)
+		assert.Equal(c, want, exists)
+	}, 5*time.Second, 50*time.Millisecond, msg)
 }
 
 func authInfoExistsInUnified(helper *apis.K8sTestHelper, name string) (bool, error) {
