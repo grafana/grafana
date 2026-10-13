@@ -1,21 +1,29 @@
-import { type Compilation, type Compiler, SubresourceIntegrityPlugin, WebpackError } from '@rspack/core';
+import {
+  type Compilation,
+  type Compiler,
+  RuntimeGlobals,
+  SubresourceIntegrityPlugin,
+  WebpackError,
+} from '@rspack/core';
 
 const PLUGIN_NAME = 'FeatureFlaggedSRIPlugin';
+// rspack runtime module names live inside the native binding
 const LOAD_SCRIPT_RUNTIME_MODULE_NAME = 'load_script';
 const ESM_CHUNK_LOADING_RUNTIME_MODULE_NAME = 'module_chunk_loading';
-
-// Match on both script.integrity and script.crossOrigin.
+const SRI_HASHES = `${RuntimeGlobals.require}.sriHashes`;
 const SRI_ATTRIBUTES_REGEX =
   /(?<indent>[ \t]*)(?<sriAttributes>script\.integrity = .+;\r?\n[ \t]*script\.crossOrigin = .+;)/;
+const ESM_CHUNK_IMPORT_REGEX = new RegExp(
+  `\\bimport\\(\\s*("\\./"\\s*\\+\\s*${escapeRegExp(RuntimeGlobals.getChunkScriptFilename)}\\(chunkId\\))\\s*\\)`
+);
 
-const ESM_CHUNK_IMPORT_REGEX = /\bimport\(\s*("\.\/"\s*\+\s*__webpack_require__\.u\(chunkId\))\s*\)/;
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
-// A dynamic import() cannot carry an integrity attribute, so in ESM output the browser only
-// checks lazy chunks against an import map's "integrity" entries. The map is added once, on the
-// first chunk load, because sriHashes is not guaranteed to be populated when this module runs.
-// Keys must be absolute URLs; the relative chunk specifier resolves against this runtime chunk.
-// The first chunk loads before Grafana registers its default Trusted Types policy, so the map
-// text needs a policy of its own. It only ever holds build-time chunk names and hashes.
+// import() can't carry integrity, so lazy chunks are checked through an import map instead.
+// It is built on the first chunk load because sriHashes may not be populated before then, and it
+// needs its own Trusted Types policy because Grafana registers the default one after that load.
 const ESM_SRI_IMPORT_HELPER = `
 var __grafanaSriImportMapAdded = false;
 var __grafanaSriImport = (chunkSpecifier) => {
@@ -23,12 +31,12 @@ var __grafanaSriImport = (chunkSpecifier) => {
     __grafanaSriImportMapAdded = true;
     var baseUrl = new URL('./', import.meta.url).href;
     var entries = [];
-    for (var sriChunkId in __webpack_require__.sriHashes) {
-      entries.push(JSON.stringify(baseUrl + __webpack_require__.u(sriChunkId)) + ':' + JSON.stringify(__webpack_require__.sriHashes[sriChunkId]));
+    for (var sriChunkId in ${SRI_HASHES}) {
+      entries.push(JSON.stringify(baseUrl + ${RuntimeGlobals.getChunkScriptFilename}(sriChunkId)) + ':' + JSON.stringify(${SRI_HASHES}[sriChunkId]));
     }
     var importMap = document.createElement('script');
     importMap.type = 'importmap';
-    var nonce = __webpack_require__.nc || window.nonce;
+    var nonce = ${RuntimeGlobals.scriptNonce} || window.nonce;
     if (nonce) {
       importMap.nonce = nonce;
     }
