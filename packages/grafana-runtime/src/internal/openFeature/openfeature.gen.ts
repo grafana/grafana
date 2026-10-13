@@ -1358,10 +1358,10 @@ export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEval
  *
  * **Details:**
  * - flag key: `grafana.newPanelQueryErrorsUI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
+  return useFlag("grafana.newPanelQueryErrorsUI", true, options).value;
 };
 
 /**
