@@ -39,6 +39,25 @@ With all of these dynamic elements, there's almost no limit to what a canvas can
 We'd love your feedback on the canvas visualization. Please check out the [open Github issues](https://github.com/grafana/grafana/issues?page=1&q=is%3Aopen+is%3Aissue+label%3Aarea%2Fpanel%2Fcanvas) and [submit a new feature request](https://github.com/grafana/grafana/issues/new?assignees=&labels=type%2Ffeature-request,area%2Fpanel%2Fcanvas&title=Canvas:&projects=grafana-dataviz&template=1-feature_requests.md) as needed.
 {{< /admonition >}}
 
+## Plugin updates
+
+Starting with Grafana 14.0, the canvas visualization is a standalone plugin instead of a core plugin. This enables more frequent updates independent of Grafana releases. Existing dashboards that use canvas continue to work.
+
+To try the standalone plugin before Grafana 14.0, add the following to your [configuration file](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/):
+
+```ini
+[plugin.canvas]
+as_external = true
+```
+
+Grafana bundles the standalone plugin, so you don't need to install it. If you use a slim Docker image, install the plugin from **Administration > Plugins and data > Plugins** first.
+
+Restart Grafana to load the standalone plugin. To go back to the core plugin, remove `as_external = true` and restart Grafana.
+
+{{< admonition type="note" >}}
+On Grafana Cloud, the canvas plugin is managed by Grafana and updates automatically.
+{{< /admonition >}}
+
 ## Configure a canvas visualization
 
 The following video shows you how to create and configure a canvas visualization:

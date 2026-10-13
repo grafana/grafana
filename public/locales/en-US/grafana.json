@@ -13894,7 +13894,7 @@
       "page-not-found": "Page not found."
     },
     "plugin-details-canvas-externalization-notice": {
-      "body": "Starting with Grafana 14.0, the Canvas panel will no longer be bundled with Grafana as a core plugin. It will be available as a separate plugin from the plugin catalog. Existing dashboards will keep working.",
+      "body": "Starting with Grafana 14.0, the Canvas panel will no longer be bundled with Grafana as a core plugin. It will be available as a separate plugin from the plugin catalog. Existing dashboards will keep working. <2>Learn how to try the standalone plugin</2>",
       "title": "Canvas is moving out of core"
     },
     "plugin-details-deprecated-warning": {
