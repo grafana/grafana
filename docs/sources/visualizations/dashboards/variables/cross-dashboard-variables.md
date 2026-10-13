@@ -9,7 +9,7 @@ labels:
     - enterprise
     - oss
 title: Cross-dashboard variables
-description: Add variables that can you can use across dashboards, globally or by folder.
+description: Add variables that you can use across dashboards, globally or by folder.
 weight: 150
 ---
 
@@ -42,7 +42,7 @@ Variables in other folders aren't available to that dashboard.
 
 <!-- prettier-ignore-start -->
 
-To create cross-dashboard variables, follow the these steps:
+To create cross-dashboard variables, follow these steps:
 
 1. Navigate to **Dashboards > Variables**.
 1. Click **+ New variable**.
@@ -55,7 +55,7 @@ To create cross-dashboard variables, follow the these steps:
    | Name          | Enter a name for the variable.                                                                                                         |
    | Label         | (Optional) Enter the display name for the variable drop-down list. If you leave this empty, then the variable name is used.            |
    | Description   | <p>(Optional) Enter a description of the variable. When you add a description, an info icon appears next to the variable name on the dashboard. Hover your cursor over the icon to display the description.</p><p>Descriptions support links. You can use Markdown-style links like `[link text](https://example.com)`, or paste bare URLs like `https://example.com`. Only `http` and `https` URLs render as clickable links—other protocols display as plain text.</p>  |
-   | Display       | Choose where the variable displays:<ul><li>**Above dashboard**: The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.</li><li>**Above dashboard, label hidden**: The variable drop-down list displays above the dashboard, but without showing the name of the variable.</li><li>**Controls menu**: The variable displays in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.</li><li>**Hidden**: No variable drop-down list displays on the dashboard.</li><ul>           |
+   | Display       | Choose where the variable displays:<ul><li>**Above dashboard**: The variable drop-down list displays above the dashboard with the variable **Name** or **Label** value. This is the default.</li><li>**Above dashboard, label hidden**: The variable drop-down list displays above the dashboard, but without showing the name of the variable.</li><li>**Controls menu**: The variable displays in the dashboard controls menu instead of above the dashboard. The dashboard controls menu appears as a button in the dashboard toolbar.</li><li>**Hidden**: No variable drop-down list displays on the dashboard.</li></ul>           |
 
 1. Click one of the following links to complete the steps for adding your selected variable type:
    - [Query](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/visualizations/dashboards/variables/add-template-variables/#add-a-query-variable)
