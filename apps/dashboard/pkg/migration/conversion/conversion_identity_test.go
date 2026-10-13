@@ -40,6 +40,31 @@ func (p identityRequiredLibraryElementProvider) GetLibraryElementInfo(ctx contex
 	return p.LibraryElementIndexProvider.GetLibraryElementInfo(ctx)
 }
 
+type requestContext struct {
+	requestNamespace  string
+	identityNamespace string
+	orgID             int64
+	service           bool
+}
+
+type identityRecordingDataSourceProvider struct {
+	schemaversion.DataSourceIndexProvider
+	context []requestContext
+}
+
+func (p *identityRecordingDataSourceProvider) Index(ctx context.Context) *schemaversion.DatasourceIndex {
+	reqContext := requestContext{
+		requestNamespace: request.NamespaceValue(ctx),
+		service:          identity.IsServiceIdentity(ctx),
+	}
+	if requester, err := identity.GetRequester(ctx); err == nil {
+		reqContext.identityNamespace = requester.GetNamespace()
+		reqContext.orgID = requester.GetOrgID()
+	}
+	p.context = append(p.context, reqContext)
+	return p.DataSourceIndexProvider.Index(ctx)
+}
+
 func initIdentityRequiredMigrator(t *testing.T) (identityRequiredDataSourceProvider, identityRequiredLibraryElementProvider) {
 	t.Helper()
 
@@ -59,7 +84,27 @@ func newIdentityRequiredScheme(t *testing.T) *runtime.Scheme {
 	return scheme
 }
 
-func TestMigrate_WithoutIdentityWritesDatasourceNameIntoUID(t *testing.T) {
+func newDatasourceByNameV0Dashboard(namespace string) *dashv0.Dashboard {
+	return &dashv0.Dashboard{
+		ObjectMeta: metav1.ObjectMeta{Namespace: namespace, Name: "datasource-by-name"},
+		Spec: dashv0.DashboardSpec{
+			Object: map[string]interface{}{
+				"title":         "Datasource by name",
+				"schemaVersion": 32,
+				"panels": []interface{}{
+					map[string]interface{}{
+						"id":         1,
+						"type":       "timeseries",
+						"datasource": "Non Default Test Datasource Name",
+						"targets":    []interface{}{map[string]interface{}{"refId": "A"}},
+					},
+				},
+			},
+		},
+	}
+}
+
+func TestMigrate_WithoutIdentityWritesNilDatasourceType(t *testing.T) {
 	initIdentityRequiredMigrator(t)
 
 	dash := map[string]interface{}{
@@ -92,26 +137,8 @@ func TestMigrate_WithoutIdentityWritesDatasourceNameIntoUID(t *testing.T) {
 func TestConvertDashboard_V0_to_V1_ResolvesDatasourceNamesWithServiceIdentity(t *testing.T) {
 	scheme := newIdentityRequiredScheme(t)
 
-	v0Dash := &dashv0.Dashboard{
-		ObjectMeta: metav1.ObjectMeta{Namespace: "default", Name: "datasource-by-name"},
-		Spec: dashv0.DashboardSpec{
-			Object: map[string]interface{}{
-				"title":         "Datasource by name",
-				"schemaVersion": 32,
-				"panels": []interface{}{
-					map[string]interface{}{
-						"id":         1,
-						"type":       "timeseries",
-						"datasource": "Non Default Test Datasource Name",
-						"targets":    []interface{}{map[string]interface{}{"refId": "A"}},
-					},
-				},
-			},
-		},
-	}
-
 	var v1Dash dashv1.Dashboard
-	require.NoError(t, scheme.Convert(v0Dash, &v1Dash, nil))
+	require.NoError(t, scheme.Convert(newDatasourceByNameV0Dashboard("default"), &v1Dash, nil))
 
 	panels, ok := v1Dash.Spec.Object["panels"].([]interface{})
 	require.True(t, ok)
@@ -122,6 +149,37 @@ func TestConvertDashboard_V0_to_V1_ResolvesDatasourceNamesWithServiceIdentity(t 
 	require.True(t, ok, "panel datasource should be a reference, got %v", panel["datasource"])
 	assert.Equal(t, "non-default-test-ds-uid", ds["uid"])
 	assert.Equal(t, "loki", ds["type"])
+}
+
+func TestConvertDashboard_V0_to_V1_DatasourceProviderGetsDashboardNamespaceAndServiceIdentity(t *testing.T) {
+	tests := []struct {
+		namespace string
+		expected  requestContext
+	}{
+		{namespace: "stacks-123", expected: requestContext{requestNamespace: "stacks-123", identityNamespace: "stacks-123", orgID: 1, service: true}},
+		{namespace: "org-2", expected: requestContext{requestNamespace: "org-2", identityNamespace: "org-2", orgID: 2, service: true}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.namespace, func(t *testing.T) {
+			dsProvider := &identityRecordingDataSourceProvider{
+				DataSourceIndexProvider: migrationtestutil.NewDataSourceProvider(migrationtestutil.StandardTestConfig),
+			}
+			leProvider := migrationtestutil.NewTestLibraryElementProvider()
+			migration.ResetForTesting()
+			migration.Initialize(dsProvider, leProvider, migration.DefaultCacheTTL)
+			scheme := runtime.NewScheme()
+			require.NoError(t, RegisterConversions(scheme, dsProvider, leProvider))
+
+			var v1Dash dashv1.Dashboard
+			require.NoError(t, scheme.Convert(newDatasourceByNameV0Dashboard(tt.namespace), &v1Dash, nil))
+
+			require.NotEmpty(t, dsProvider.context, "the provider should have namespace and identity")
+			for _, actual := range dsProvider.context {
+				assert.Equal(t, tt.expected, actual)
+			}
+		})
+	}
 }
 
 func TestConvertDashboard_V1_to_V2alpha1_ResolvesLibraryPanelRepeatWithServiceIdentity(t *testing.T) {
