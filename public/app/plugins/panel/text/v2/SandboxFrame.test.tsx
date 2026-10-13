@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
 
-import { SandboxFrame, type SandboxFrameProps } from './SandboxFrame';
+import { SandboxFrame, type SandboxFrameProps, WATCHDOG_TIMEOUT_MS } from './SandboxFrame';
 import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { textSandboxPolicy } from './sandboxPolicy';
 import { TEXT_FRAME_PROTOCOL } from './sandboxProtocol';
@@ -59,6 +59,7 @@ it.each([
   expect(control?.getAttribute('content')).toBe('off');
   expect(shell.head.firstElementChild).toBe(control);
   expect(control!.compareDocumentPosition(shell.querySelector('script')!)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+  expect(shell.body.childNodes).toHaveLength(1);
 });
 
 it('mounts visibly immediately but sends data only after the current runtime is ready', async () => {
@@ -154,6 +155,9 @@ it('accumulates normalized violations across rendering and errors while continui
   notify(element, 'blocked', { resources: [first] });
   expect(options.onState).toHaveBeenCalledTimes(count);
   notify(element, 'error');
+  const errorCount = jest.mocked(options.onState).mock.calls.length;
+  notify(element, 'error');
+  expect(options.onState).toHaveBeenCalledTimes(errorCount);
   notify(element, 'blocked', { resources: [first, second] });
   notify(element, 'rendered');
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [first, second] });
@@ -221,7 +225,7 @@ it('fails closed if bootstrap or rendering never completes', async () => {
   render(<SandboxFrame {...options} />);
   const element = await frame();
   expect(element.srcdoc).not.toContain('Private content');
-  act(() => jest.advanceTimersByTime(15000));
+  act(() => jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS));
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
   expect(element).toBeInTheDocument();
 });
@@ -270,6 +274,9 @@ it('reports runtime loading failure without navigating the frame', async () => {
   const element = await frame();
   expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
   expect(element).not.toHaveAttribute('srcdoc');
+  const errorCount = jest.mocked(options.onState).mock.calls.length;
+  act(() => jest.runAllTimers());
+  expect(options.onState).toHaveBeenCalledTimes(errorCount);
 });
 
 it('discards bootstrap completion for a replaced document', async () => {
@@ -403,7 +410,7 @@ it.each(['error', 'timeout'] as const)('discards pending Mermaid source after %s
   notify(element, 'ready');
   notify(element, 'mermaid-needed');
   if (failure === 'timeout') {
-    act(() => jest.advanceTimersByTime(15000));
+    act(() => jest.advanceTimersByTime(WATCHDOG_TIMEOUT_MS));
   } else {
     notify(element, 'error');
   }
@@ -431,6 +438,9 @@ it('fails closed on a forbidden shell policy and preserves TrustedHTML branding 
     const denied = await frame();
     expect(options.onState).toHaveBeenLastCalledWith({ status: 'error', resources: [] });
     expect(denied).not.toHaveAttribute('srcdoc');
+    const errorCount = jest.mocked(options.onState).mock.calls.length;
+    act(() => jest.runAllTimers());
+    expect(options.onState).toHaveBeenCalledTimes(errorCount);
     view.rerender(<SandboxFrame {...options} html="<p>Refreshed secret</p>" />);
     await frame();
     expect(createPolicy).toHaveBeenCalledWith('grafana-text-panel-shell', expect.any(Object));

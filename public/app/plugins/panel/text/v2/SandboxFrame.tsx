@@ -7,7 +7,7 @@ import { loadSandboxMermaid, loadSandboxRuntime } from './loadSandboxRuntime';
 import { resourceOrigin, type BlockedResource, type TextSandboxState } from './sandboxPolicy';
 import { isFrameNotification, TEXT_FRAME_PROTOCOL, type RenderCommand, type MermaidCommand } from './sandboxProtocol';
 
-const WATCHDOG_TIMEOUT_MS = 15_000;
+export const WATCHDOG_TIMEOUT_MS = 15_000;
 
 let shellPolicy: Pick<TrustedTypePolicy, 'createHTML'> | undefined;
 
@@ -42,8 +42,7 @@ export function SandboxFrame(props: SandboxFrameProps) {
 
 function FrameDocument(props: SandboxFrameProps) {
   const { title, onState, onHeight } = props;
-  const { iframeRef, sandboxState, dimensions } = useFrameRuntime(props);
-  const protectedFrame = props.policy !== undefined;
+  const { iframeRef, sandboxState, dimensions, protectedFrame } = useFrameRuntime(props);
 
   // Keep reporting separate from runtime setup: state or consumer changes must not restart the frame's protocol.
   useLayoutEffect(() => {
@@ -96,14 +95,14 @@ function useFrameRuntime({
   const [nonce] = useState(() => document.querySelector<HTMLScriptElement>('script[nonce]')?.nonce || randomChannel());
   const protectedFrame = policy !== undefined;
 
-  // Install the listener and start its timeout before loading the runtime, so bootstrap hangs are covered too.
-  // This stays separate from reporting effects, whose changing consumers must not reset the controller.
   useLayoutEffect(() => {
     if (!iframeRef.current) {
       return;
     }
     const controller = createFrameController({
       iframe: iframeRef.current,
+      policy,
+      nonce,
       protectedFrame,
       renderCommand: {
         protocol: TEXT_FRAME_PROTOCOL,
@@ -114,7 +113,8 @@ function useFrameRuntime({
         mermaid,
         diagramError,
       },
-      onStatus: (status) => setSandboxState((current) => ({ ...current, status })),
+      onStatus: (status) =>
+        setSandboxState((current) => (current.status === status ? current : { ...current, status })),
       onResize: setDimensions,
       onBlocked: (incoming) =>
         setSandboxState((current) => {
@@ -123,42 +123,15 @@ function useFrameRuntime({
         }),
     });
     return controller.dispose;
-  }, [channel, diagramError, globalCss, html, mermaid, protectedFrame]);
+  }, [channel, diagramError, globalCss, html, mermaid, nonce, policy, protectedFrame]);
 
-  // Bootstrap and listening could share an effect, but keeping them separate isolates navigation from protocol setup.
-  // Preserve their order: the controller must be listening before srcdoc can execute and send ready.
-  useLayoutEffect(() => {
-    let disposed = false;
-    void loadSandboxRuntime()
-      .then((runtimeSource) => {
-        if (disposed || !iframeRef.current) {
-          return;
-        }
-        // Do not navigate to an empty srcdoc: it can race the runtime navigation in Chromium.
-        const shell = buildFrameShell({
-          runtimeSource,
-          policy,
-          nonce,
-          channel,
-          parentOrigin: window.location.origin,
-        });
-        assignFrameShell(iframeRef.current, shell);
-      })
-      .catch(() => {
-        if (!disposed) {
-          setSandboxState((current) => ({ ...current, status: 'error' }));
-        }
-      });
-    return () => {
-      disposed = true;
-    };
-  }, [channel, nonce, policy]);
-
-  return { iframeRef, sandboxState, dimensions };
+  return { iframeRef, sandboxState, dimensions, protectedFrame };
 }
 
 interface FrameControllerOptions {
   iframe: HTMLIFrameElement;
+  policy?: string;
+  nonce: string;
   protectedFrame: boolean;
   renderCommand: RenderCommand;
   onStatus: (status: TextSandboxState['status']) => void;
@@ -168,6 +141,8 @@ interface FrameControllerOptions {
 
 function createFrameController({
   iframe,
+  policy,
+  nonce,
   protectedFrame,
   renderCommand,
   onStatus,
@@ -182,9 +157,27 @@ function createFrameController({
   const expectedOrigin = protectedFrame ? 'null' : window.location.origin;
   // Opaque-origin frames require '*'; commands still target only this document's WindowProxy.
   const targetOrigin = protectedFrame ? '*' : window.location.origin;
-  // if the iframe takes more than 15s to initialize, mark it as failed to avoid a permament hang.
   const watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
   window.addEventListener('message', onMessage);
+  void loadSandboxRuntime()
+    .then((runtimeSource) => {
+      if (disposed) {
+        return;
+      }
+      const shell = buildFrameShell({
+        runtimeSource,
+        policy,
+        nonce,
+        channel: renderCommand.channel,
+        parentOrigin: window.location.origin,
+      });
+      assignFrameShell(iframe, shell);
+    })
+    .catch(() => {
+      if (!disposed) {
+        fail();
+      }
+    });
 
   function onMessage(event: MessageEvent) {
     const message = event.data;
@@ -305,21 +298,7 @@ function buildFrameShell({
   const policyAttribute = escapedPolicy === undefined ? '' : ` data-policy="${escapedPolicy}"`;
   const scriptSource = runtimeSource.replace(/<\/script/gi, '<\\/script');
 
-  return `<!doctype html>
-<html>
-  <head>
-    <meta http-equiv="x-dns-prefetch-control" content="off">
-    ${cspMeta}
-    <base target="_blank">
-  </head>
-  <body>
-    <script
-      nonce="${escape(nonce)}"
-      data-channel="${escape(channel)}"
-      data-parent-origin="${escape(parentOrigin)}"${policyAttribute}
-    >${scriptSource}</script>
-  </body>
-</html>`;
+  return `<!doctype html><html><head><meta http-equiv="x-dns-prefetch-control" content="off">${cspMeta}<base target="_blank"></head><body><script nonce="${escape(nonce)}" data-channel="${escape(channel)}" data-parent-origin="${escape(parentOrigin)}"${policyAttribute}>${scriptSource}</script></body></html>`;
 }
 
 function assignFrameShell(iframe: HTMLIFrameElement, shell: string) {
