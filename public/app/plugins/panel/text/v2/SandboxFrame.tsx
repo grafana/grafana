@@ -215,14 +215,18 @@ function createFrameController({
 
   function sendRender(documentId: string) {
     // Protected frames verify CSP violation delivery before sending ready and receiving panel data.
-    if (renderedDocument === documentId || hasFailed) {
+    if (renderedDocument === documentId) {
       return;
     }
-    // Moving an iframe within the DOM reloads its srcdoc, and the new document needs the render command again.
+    // Moving an iframe within the DOM reloads its srcdoc. The new document passed its own CSP check, so it is a
+    // fresh attempt even if the previous one failed.
     if (renderedDocument !== undefined) {
+      hasFailed = false;
       mermaidRequested = false;
       clearTimeout(watchdog);
       watchdog = window.setTimeout(fail, WATCHDOG_TIMEOUT_MS);
+    } else if (hasFailed) {
+      return;
     }
     renderedDocument = documentId;
     iframe.contentWindow?.postMessage(renderCommand, targetOrigin);
@@ -234,9 +238,12 @@ function createFrameController({
     }
     mermaidRequested = true;
     const target = iframe.contentWindow;
+    // A reloaded document requests its own copy; a late result for the previous one must not fail it.
+    const requestedBy = renderedDocument;
+    const isCurrent = () => !disposed && renderedDocument === requestedBy;
     void loadSandboxMermaid()
       .then((source) => {
-        if (disposed || hasFailed || !target || iframe.contentWindow !== target) {
+        if (!isCurrent() || hasFailed || !target || iframe.contentWindow !== target) {
           return;
         }
         const command: MermaidCommand = {
@@ -248,7 +255,7 @@ function createFrameController({
         target.postMessage(command, targetOrigin);
       })
       .catch(() => {
-        if (!disposed) {
+        if (isCurrent()) {
           fail();
         }
       });
