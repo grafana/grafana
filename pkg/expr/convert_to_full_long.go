@@ -500,12 +500,13 @@ func newAuxColumns() *auxColumns {
 }
 
 // auxFieldsOf returns the fields that become their own columns: non-numeric
-// fields other than the time field. Enum fields are left out, as before, since
-// the SQL engine has no enum type.
+// fields other than the time field. Enum fields and unnamed fields are left
+// out, as before: the SQL engine has no enum type, and an unnamed field has no
+// column name.
 func auxFieldsOf(fields []*data.Field, timeField *data.Field) []*data.Field {
 	var out []*data.Field
 	for _, f := range fields {
-		if f == timeField || f.Type().Numeric() {
+		if f == timeField || f.Name == "" || f.Type().Numeric() {
 			continue
 		}
 		switch f.Type() {
