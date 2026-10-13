@@ -163,7 +163,7 @@ export function AlertIncidentTabs({
     },
     isOffered(ON_CALL_TAB_ID, onCall.enabled) && {
       id: ON_CALL_TAB_ID,
-      label: t('home.alerts-incidents.on-call-tab-label', 'On call schedules'),
+      label: t('home.alerts-incidents.on-call-tab-label', 'My on call schedules'),
       content: <OnCallCard now={now} />,
       // A static link to the plugin page: it needs no load state, only the page access check.
       footer: onCall.canAccess && <ViewSchedulesButton href={onCall.schedulesHref} />,

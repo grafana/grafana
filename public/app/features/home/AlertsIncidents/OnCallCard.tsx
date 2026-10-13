@@ -23,7 +23,7 @@ export function OnCallCard({ now }: { now: number }) {
 
   return (
     <SummaryCard
-      title={t('home.alerts-incidents.on-call-tab-label', 'On call schedules')}
+      title={t('home.alerts-incidents.on-call-tab-label', 'My on call schedules')}
       loading={loading}
       error={error ? { title: scheduleErrorTitle(error), onRetry: () => refetch() } : undefined}
       emptyMessage={t('home.on-call-card.empty', 'No on-call shifts for you or your teams in the next {{days}} days.', {
