@@ -2,6 +2,7 @@ import {
   type Spec as DashboardV2Spec,
   defaultSpec as defaultDashboardV2Spec,
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
+import { setTestFlags } from '@grafana/test-utils/unstable';
 import { AnnoKeyFolder, AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { setDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -70,6 +71,15 @@ describe('validateUid', () => {
     });
   });
   describe('Dashboards API v1', () => {
+    beforeEach(() => {
+      // validateUid calls getDashboardAPI() with no format, so the flag selects the v2 mock.
+      setTestFlags({ dashboardNewLayouts: false });
+    });
+
+    afterEach(() => {
+      setTestFlags({});
+    });
+
     it('should return a message with the existing dashboard title and folder title', async () => {
       const result = await validateUid('dashboard-uid');
       expect(result).toBe(`Dashboard named 'Legacy Dashboard' in folder 'Folder title' has the same UID`);

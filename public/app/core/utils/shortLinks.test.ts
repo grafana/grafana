@@ -1,8 +1,6 @@
 import { type CurrentUserDTO, type LogRowModel } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { FlagKeys } from '@grafana/runtime/internal';
 import { SceneTimeRange } from '@grafana/scenes';
-import { setTestFlags } from '@grafana/test-utils/unstable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { createLogRow } from 'app/features/logs/components/mocks/logRow';
 
@@ -17,17 +15,6 @@ import {
   getLogsPermalinkRange,
   buildShortUrl,
 } from './shortLinks';
-
-jest.mock('@grafana/runtime', () => ({
-  ...jest.requireActual('@grafana/runtime'),
-  getBackendSrv: () => {
-    return {
-      post: () => {
-        return Promise.resolve({ url: 'https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1' });
-      },
-    };
-  },
-}));
 
 jest.mock('app/store/store', () => ({
   dispatch: jest.fn((action) => {
@@ -52,7 +39,14 @@ beforeEach(() => {
   });
 
   document.execCommand = jest.fn();
-  setTestFlags({ [FlagKeys.UseKubernetesShortURLsAPI]: false });
+
+  // `createShortLink` builds the returned URL from `window.location` + `appSubUrl`, so
+  // both need to be deterministic here rather than inherited from jsdom or another test.
+  Object.defineProperty(window, 'location', {
+    value: { protocol: 'https:', host: 'www.test.grafana.com' },
+    writable: true,
+  });
+  config.appSubUrl = '';
 
   // Set the base org id via `jest.replaceProperty` on `config.bootData.user`
   // (auto-restored after each test). We spread the existing user so any other
@@ -70,25 +64,7 @@ beforeEach(() => {
 });
 
 describe('createShortLink', () => {
-  it('creates short link', async () => {
-    const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
-    expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
-  });
-});
-
-describe('createShortLink using k8s API', () => {
-  it('creates short link', async () => {
-    // Mock window.location for k8s API test
-    const mockLocation = {
-      protocol: 'https:',
-      host: 'www.test.grafana.com',
-    };
-    Object.defineProperty(window, 'location', {
-      value: mockLocation,
-      writable: true,
-    });
-
-    setTestFlags({ [FlagKeys.UseKubernetesShortURLsAPI]: true });
+  it('returns the /goto URL for the ShortURL created via the k8s API', async () => {
     const shortUrl = await createShortLink('d/edhmipji89b0gb/welcome?orgId=1&from=now-6h&to=now&timezone=browser');
     expect(shortUrl).toBe('https://www.test.grafana.com/goto/bewyw48durgu8d?orgId=1');
   });
@@ -97,11 +73,6 @@ describe('createShortLink using k8s API', () => {
 describe('createShortLink retries after failure', () => {
   it('retries after k8s API failure instead of returning cached rejection', async () => {
     jest.spyOn(console, 'error').mockImplementation();
-
-    setTestFlags({ [FlagKeys.UseKubernetesShortURLsAPI]: true });
-
-    const mockLocation = { protocol: 'https:', host: 'www.test.grafana.com' };
-    Object.defineProperty(window, 'location', { value: mockLocation, writable: true });
 
     const { dispatch } = require('app/store/store');
     // dispatch is called for: 1) initiate (fail), 2) notifyApp (error), 3) initiate (success)

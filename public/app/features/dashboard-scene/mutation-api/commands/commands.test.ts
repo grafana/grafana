@@ -1,4 +1,6 @@
+import { LAZY_DASHBOARD_COMMANDS } from './lazyRegistry';
 import { DASHBOARD_COMMANDS } from './registry';
+import { DASHBOARD_COMMAND_SCHEMAS } from './schemaRegistry';
 
 describe('Command consistency', () => {
   it('every command has an UPPER_CASE name', () => {
@@ -40,6 +42,7 @@ describe('Command consistency', () => {
         cmd.name === 'ENTER_EDIT_MODE' ||
         cmd.name === 'GET_LAYOUT' ||
         cmd.name === 'LIST_PANELS' ||
+        cmd.name === 'GET_PANEL_ERRORS' ||
         cmd.name === 'GET_DASHBOARD_INFO'
       ) {
         const result = cmd.payloadSchema.safeParse({});
@@ -62,6 +65,7 @@ describe('Command consistency', () => {
       'GET_DASHBOARD_INFO',
       'GET_LAYOUT',
       'GET_METADATA_ANNOTATIONS',
+      'GET_PANEL_ERRORS',
       'GET_SPEC',
       'LIST_ANNOTATIONS',
       'LIST_PANELS',
@@ -84,5 +88,26 @@ describe('Command consistency', () => {
       'UPDATE_TAB',
       'UPDATE_VARIABLE',
     ]);
+  });
+
+  it('keeps lazy command loaders and the synchronous schema registry aligned', async () => {
+    const eagerCommands = new Map(DASHBOARD_COMMANDS.map((command) => [command.name, command]));
+
+    expect(LAZY_DASHBOARD_COMMANDS.map((command) => command.name)).toEqual(
+      DASHBOARD_COMMANDS.map((command) => command.name)
+    );
+    expect(DASHBOARD_COMMAND_SCHEMAS.map((command) => command.name)).toEqual(
+      DASHBOARD_COMMANDS.map((command) => command.name)
+    );
+
+    for (const schemaRegistration of DASHBOARD_COMMAND_SCHEMAS) {
+      expect(schemaRegistration.payloadSchema).toBe(eagerCommands.get(schemaRegistration.name)?.payloadSchema);
+    }
+
+    for (const lazyCommand of LAZY_DASHBOARD_COMMANDS) {
+      const loadedCommand = await lazyCommand.load();
+      expect(loadedCommand).toBe(eagerCommands.get(lazyCommand.name));
+      expect(lazyCommand.readOnly ?? false).toBe(loadedCommand.readOnly ?? false);
+    }
   });
 });

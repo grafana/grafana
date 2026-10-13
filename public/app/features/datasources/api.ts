@@ -83,7 +83,6 @@ const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
     url: dsSettings.url ? dsSettings.url : '',
     basicAuth: dsSettings.basicAuth ? dsSettings.basicAuth : false,
     basicAuthUser: dsSettings.basicAuthUser ? dsSettings.basicAuthUser : '',
-    isDefault: dsSettings.isDefault,
     user: dsSettings.user ? dsSettings.user : '',
     database: dsSettings.database ? dsSettings.database : '',
   };
@@ -91,6 +90,9 @@ const convertLegacyDatasourceSettingsPartialToK8sDatasourceSettings = (
     spec: k8sSpec,
     apiVersion: dsSettings.type + '.datasource.grafana.app/' + version,
   };
+  if (dsSettings.isDefault) {
+    dsK8sSettings.metadata = { labels: { default: 'true' } };
+  }
   return dsK8sSettings;
 };
 
@@ -106,6 +108,9 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     labels: { 'grafana.app/deprecatedInternalID': dsSettings.id.toString() },
     annotations: {},
   };
+  if (dsSettings.isDefault) {
+    k8sMetadata.labels['default'] = 'true';
+  }
   let k8sSpec: DatasourceInstanceK8sSpec = {
     access: dsSettings.access,
     jsonData: dsSettings.jsonData ?? {},
@@ -113,7 +118,6 @@ export const convertLegacyDatasourceSettingsToK8sDatasourceSettings = (
     url: dsSettings.url,
     basicAuth: dsSettings.basicAuth,
     basicAuthUser: dsSettings.basicAuthUser,
-    isDefault: dsSettings.isDefault,
     readOnly: dsSettings.readOnly,
     user: dsSettings.user ? dsSettings.user : '',
     database: dsSettings.database ? dsSettings.database : '',
@@ -162,7 +166,7 @@ export const convertK8sDatasourceSettingsToLegacyDatasourceSettings = (
     database: dsK8sSettings.spec.database,
     basicAuth: dsK8sSettings.spec.basicAuth,
     basicAuthUser: dsK8sSettings.spec.basicAuthUser,
-    isDefault: dsK8sSettings.spec.isDefault ? true : false,
+    isDefault: dsK8sSettings.spec.isDefault === true || dsK8sSettings.metadata.labels?.default === 'true',
     // DataSourceSettings.jsonData is non-optional and consumers (e.g. the
     // grafana/datasources/config extension point) dereference it without guarding.
     jsonData: dsK8sSettings.spec.jsonData ?? {},

@@ -1,6 +1,6 @@
 import { act, render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
+import { setPluginComponentsHook, setPluginLinksHook, setReturnToPreviousHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { setupMswServer } from '../mockApi';
@@ -8,6 +8,8 @@ import { grantUserPermissions } from '../mocks';
 import { setPrometheusRules } from '../mocks/server/configure';
 import { alertingFactory } from '../mocks/server/db';
 import { type RulesFilter } from '../search/rulesSearchParser';
+import { setupPrometheusAlertingPlugin } from '../testSetup/prometheusAlertingPlugin';
+import { SupportedPlugin } from '../types/pluginBridges';
 
 import { FilterView } from './FilterView';
 
@@ -17,6 +19,8 @@ jest.mock('@grafana/assistant', () => ({
 
 setPluginLinksHook(() => ({ links: [], isLoading: false }));
 setPluginComponentsHook(() => ({ components: [], isLoading: false }));
+const returnToPrevious = jest.fn();
+setReturnToPreviousHook(() => returnToPrevious);
 
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
@@ -36,6 +40,7 @@ const mimirDs = alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' }
 const prometheusDs = alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 beforeEach(() => {
+  returnToPrevious.mockClear();
   setPrometheusRules(mimirDs, mimirGroups);
   setPrometheusRules(prometheusDs, prometheusGroups);
 });
@@ -218,3 +223,33 @@ function installControllableIntersectionObserver() {
     leaveNode: (element: Element) => fire(element, false),
   };
 }
+
+describe('RuleList - FilterView with the Prometheus Alerting plugin', () => {
+  setupPrometheusAlertingPlugin();
+
+  it('leaves data source managed rules out and says where they went', async () => {
+    render(<FilterView filterState={getFilter({ dataSourceNames: ['Mimir'] })} />);
+
+    expect(await screen.findByRole('link', { name: /view rules in prometheus alerting/i })).toHaveAttribute(
+      'href',
+      `/a/${SupportedPlugin.PrometheusAlerting}/rules`
+    );
+
+    // The only data source in the filter is one the plugin owns, so nothing is left to list.
+    await loadMoreResults();
+    expect(screen.queryAllByRole('treeitem')).toHaveLength(0);
+  });
+
+  it('offers to run the same search in the plugin when nothing matched', async () => {
+    const { user } = render(<FilterView filterState={getFilter({ groupName: 'non-existing-group' })} />);
+
+    await loadMoreResults();
+
+    expect(await screen.findByText(/No matching rules found/)).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /search data source managed rules/i });
+    expect(link).toHaveAttribute('href', `/a/${SupportedPlugin.PrometheusAlerting}/rules`);
+    link.addEventListener('click', (event) => event.preventDefault());
+    await user.click(link);
+    expect(returnToPrevious).toHaveBeenCalledWith('Alert rules');
+  });
+});

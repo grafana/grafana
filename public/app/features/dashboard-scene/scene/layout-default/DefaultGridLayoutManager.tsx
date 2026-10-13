@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { AppEvents, type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config, getAppEvents } from '@grafana/runtime';
+import { getAppEvents } from '@grafana/runtime';
 import {
   type SceneObjectState,
   SceneGridLayout,
@@ -11,7 +11,6 @@ import {
   SceneGridRow,
   VizPanel,
   sceneGraph,
-  sceneUtils,
   type SceneComponentProps,
   type SceneGridItemLike,
   useSceneObjectState,
@@ -21,6 +20,7 @@ import {
 import { type Spec as DashboardV2Spec } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { useStyles2 } from '@grafana/ui';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import DashboardEmpty from 'app/features/dashboard/dashgrid/DashboardEmpty/DashboardEmpty';
 
 import { addElement } from '../../actions/element/addElement';
@@ -129,7 +129,7 @@ export class DefaultGridLayoutManager
   }
 
   private _activationHandler() {
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       this._subs.add(
         this.subscribeToEvent(SceneGridLayoutDragStartEvent, ({ payload: { evt, panel } }) => {
           const gridItem = panel.parent;
@@ -156,7 +156,7 @@ export class DefaultGridLayoutManager
     vizPanel.clearParent();
 
     // With new edit mode we add panels to the bottom of the grid
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       const emptySpace = findSpaceForNewPanel(this.state.grid);
       const newGridItem = new DashboardGridItem({
         ...emptySpace,
@@ -165,6 +165,7 @@ export class DefaultGridLayoutManager
       });
 
       addElement({
+        meta: { actionId: 'panel.add', scope: 'custom-grid' },
         addedObject: vizPanel,
         source: this,
         perform: () => {
@@ -204,8 +205,9 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       edit({
+        meta: { actionId: 'panel.paste', scope: 'custom-grid' },
         description: t('dashboard.edit-actions.paste-panel', 'Paste panel'),
         addedObject: newGridItem.state.body,
         source: this,
@@ -248,95 +250,18 @@ export class DefaultGridLayoutManager
       return;
     }
 
-    if (!config.featureToggles.dashboardNewLayouts) {
+    if (!isDashboardNewLayoutsEnabled()) {
       // No undo/redo support in legacy edit mode
       layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) });
       return;
     }
 
     removeElement({
+      meta: { actionId: 'panel.remove', scope: 'custom-grid' },
       removedObject: gridItem.state.body,
       source: this,
       perform: () => layout.setState({ children: layout.state.children.filter((child) => child !== gridItem) }),
       undo: () => layout.setState({ children: [...layout.state.children, gridItem] }),
-    });
-  }
-
-  public duplicatePanel(vizPanel: VizPanel) {
-    const gridItem = vizPanel.parent;
-    if (!(gridItem instanceof DashboardGridItem)) {
-      console.error('Trying to duplicate a panel that is not inside a DashboardGridItem');
-      return;
-    }
-
-    let panelState;
-    let panelData;
-    let newGridItem;
-
-    const newPanelId = dashboardSceneGraph.getNextPanelId(this);
-    const grid = this.state.grid;
-
-    if (gridItem instanceof DashboardGridItem) {
-      panelState = sceneUtils.cloneSceneObjectState(gridItem.state.body.state);
-      panelData = sceneGraph.getData(gridItem.state.body).clone();
-    } else {
-      panelState = sceneUtils.cloneSceneObjectState(vizPanel.state);
-      panelData = sceneGraph.getData(vizPanel).clone();
-    }
-
-    // when we duplicate a panel we don't want to clone the alert state
-    delete panelData.state.data?.alertState;
-
-    const newPanel = new VizPanel({
-      ...panelState,
-      $data: panelData,
-      key: getVizPanelKeyForPanelId(newPanelId),
-    });
-
-    newGridItem = new DashboardGridItem({
-      x: gridItem.state.x,
-      y: gridItem.state.y,
-      height: gridItem.state.height,
-      itemHeight: gridItem.state.height,
-      width: gridItem.state.width,
-      variableName: gridItem.state.variableName,
-      repeatDirection: gridItem.state.repeatDirection,
-      maxPerRow: gridItem.state.maxPerRow,
-      key: getGridItemKeyForPanelId(newPanelId),
-      body: newPanel,
-    });
-
-    // No undo/redo support in legacy edit mode
-    if (!config.featureToggles.dashboardNewLayouts) {
-      if (gridItem.parent instanceof SceneGridRow) {
-        const row = gridItem.parent;
-
-        row.setState({ children: [...row.state.children, newGridItem] });
-        grid.forceRender();
-        return;
-      }
-
-      grid.setState({ children: [...grid.state.children, newGridItem] });
-      this.publishEvent(new NewObjectAddedToCanvasEvent(newPanel), true);
-      return;
-    }
-
-    const parent = gridItem.parent instanceof SceneGridRow ? gridItem.parent : grid;
-    edit({
-      description: t('dashboard.edit-actions.duplicate-panel', 'Duplicate panel'),
-      addedObject: newGridItem.state.body,
-      source: this,
-      perform: () => {
-        const oldGridItemIndex = parent.state.children.indexOf(gridItem);
-        const newChildrenArray = [...parent.state.children];
-        newChildrenArray.splice(oldGridItemIndex + 1, 0, newGridItem);
-        parent.setState({ children: newChildrenArray });
-      },
-      undo: () => {
-        parent.setState({
-          children: parent.state.children.filter((child) => child !== newGridItem),
-        });
-      },
     });
   }
 
@@ -434,7 +359,7 @@ export class DefaultGridLayoutManager
       forceRenderChildren(this.state.grid, true);
     };
 
-    if (config.featureToggles.dashboardNewLayouts) {
+    if (isDashboardNewLayoutsEnabled()) {
       // We do this in a timeout to wait a bit with enabling dragging as dragging enables grid animations
       // if we show the sidebar without animations it opens much faster and feels more responsive
       setTimeout(updateResizeAndDragging, 10);
@@ -669,7 +594,8 @@ function DefaultGridLayoutManagerRenderer({ model }: SceneComponentProps<Default
   const { isEditing } = dashboard.useState();
   const hasClonedParents = isRepeatCloneOrChildOf(model);
   const styles = useStyles2(getStyles);
-  const showCanvasActions = isEditing && config.featureToggles.dashboardNewLayouts && !hasClonedParents;
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  const showCanvasActions = isEditing && dashboardNewLayoutsEnabled && !hasClonedParents;
   const soloPanelContext = useSoloPanelContext();
 
   if (soloPanelContext) {
@@ -711,6 +637,10 @@ SceneGridRow.Component = SceneGridRowRenderer;
 
 function SceneGridRowRenderer({ model }: SceneComponentProps<SceneGridRow>) {
   const soloPanelContext = useSoloPanelContext();
+
+  if (soloPanelContext?.renderRow) {
+    return soloPanelContext.renderRow(model, <OriginalSceneGridRowRenderer model={model} />);
+  }
 
   if (soloPanelContext) {
     return model.state.children.map((child) => <child.Component model={child} key={child.state.key!} />);

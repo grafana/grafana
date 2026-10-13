@@ -1,8 +1,8 @@
 /**
  * RENDER_PLAN command
  *
- * Renders a whole dashboard plan in one call: rows or tabs, each with query-less placeholder
- * panels, plus any stand-in variables. A plan preview renders once and is never edited, so
+ * Renders a whole dashboard plan in one call: rows or tabs (optionally with rows nested inside a
+ * tab), each with query-less placeholder panels, plus any stand-in variables. A plan preview renders once and is never edited, so
  * there is nothing to build up incrementally the way ADD_ROW/ADD_TAB/ADD_PANEL do.
  *
  * Never calls enterEditModeIfNeeded: the preview is a static, view-mode surface that must never
@@ -45,13 +45,11 @@ function buildPlanPanel(title: string, vizType: string, id: number): VizPanel {
   // buildVizPanel attaches a dropdown menu unconditionally. A preview panel must have none: a
   // plugin's View pane can mutate and persist panel options (e.g. timeseries legend toggles)
   // with no isPlanning() gate. Clearing menu removes PanelChrome's button entirely.
-  vizPanel.setState({ key: getVizPanelKeyForPanelId(id), menu: undefined });
-
-  // buildVizPanel's sample-vs-spec merge lets a real spec's options/fieldConfig win over the
-  // sample, but this payload never has real ones, so the synthetic empty spec would clobber the
-  // sample it just set. Re-apply it rather than change that merge for every other caller.
-  const sample = getPlanningPanelData(title, vizType);
-  vizPanel.setState({ options: sample.options, fieldConfig: sample.fieldConfig });
+  // buildVizPanel preserves a real spec's options/fieldConfig, but this payload never has real
+  // ones: its synthetic empty spec would clobber the sample's visualization settings. Apply the
+  // sample here rather than change that behavior for every other caller. Its synthetic $data
+  // also stays in this lazy command instead of loading with the shared serializer.
+  vizPanel.setState({ ...getPlanningPanelData(title, vizType), key: getVizPanelKeyForPanelId(id), menu: undefined });
 
   return vizPanel;
 }
@@ -85,17 +83,21 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
 
     try {
       let nextPanelId = 1;
-      const buildSection = (section: RenderPlanPayload['sections'][number]) =>
+      const buildSection = (section: Pick<RenderPlanPayload['sections'][number], 'panels'>) =>
         DefaultGridLayoutManager.fromVizPanels(
           section.panels.map((panel) => buildPlanPanel(panel.title, panel.vizType, nextPanelId++))
         );
+      const buildTab = (section: RenderPlanPayload['sections'][number]) =>
+        section.sections?.length
+          ? new RowsLayoutManager({
+              rows: section.sections.map((row) => new RowItem({ title: row.title, layout: buildSection(row) })),
+            })
+          : buildSection(section);
 
       const body =
         payload.layout === 'tabs'
           ? new TabsLayoutManager({
-              tabs: payload.sections.map(
-                (section) => new TabItem({ title: section.title, layout: buildSection(section) })
-              ),
+              tabs: payload.sections.map((section) => new TabItem({ title: section.title, layout: buildTab(section) })),
             })
           : new RowsLayoutManager({
               rows: payload.sections.map(
@@ -143,7 +145,6 @@ export const renderPlanCommand: MutationCommand<RenderPlanPayload> = {
         planning: {
           planId,
           planTitle: payload.title,
-          panelCount: payload.sections.reduce((count, section) => count + section.panels.length, 0),
           onBuild: () => notify('build'),
           onDismiss: () => notify('dismiss'),
         },

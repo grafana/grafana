@@ -4,15 +4,14 @@ import { useCallback, useEffect } from 'react';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { Button, useStyles2, Text, Box, Stack, TextLink, Icon, FilterPill, Tooltip, Spinner } from '@grafana/ui';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { type DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { AssistantDashboardEmpty } from 'app/features/dashboard-prompt/AssistantDashboardEmpty';
 import { useDashboardGenerationAvailable } from 'app/features/dashboard-prompt/useDashboardGenerationAvailable';
 import { DashboardScene } from 'app/features/dashboard-scene/scene/DashboardScene';
 import { AutoGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from 'app/features/dashboard-scene/scene/layout-default/DefaultGridLayoutManager';
-import { AddNewPane } from 'app/features/dashboard-scene/sidebar/add-new/AddNewPane';
 
 import { DashboardEmptyExtensionPoint } from './DashboardEmptyExtensionPoint';
 import {
@@ -36,12 +35,13 @@ const InternalDashboardEmpty = ({
   onImportDashboard,
 }: InternalProps) => {
   const styles = useStyles2(getStyles);
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
 
   return (
     <>
       <Stack alignItems="center" justifyContent="center">
         <div className={`${styles.wrapper} ${styles.wrapperMaxWidth}`}>
-          {config.featureToggles.dashboardNewLayouts && dashboard instanceof DashboardScene ? (
+          {dashboardNewLayoutsEnabled && dashboard instanceof DashboardScene ? (
             <NewLayoutEmpty dashboard={dashboard} styles={styles} />
           ) : (
             <OldLayoutEmpty
@@ -77,13 +77,25 @@ const NewLayoutEmpty = ({ dashboard, styles }: NewLayoutEmptyProps) => {
     if (generationLoading || generationAvailable) {
       return;
     }
+
+    let cancelled = false;
     if (
       isEditingNewDashboard &&
       dashboard.getEditSessionSource() !== 'assistant' &&
       sidebar.state.openPane?.getId() !== 'add'
     ) {
-      sidebar.openPane(new AddNewPane({}));
+      import(
+        /* webpackChunkName: "dashboard-add-new-pane" */ 'app/features/dashboard-scene/sidebar/add-new/AddNewPane'
+      ).then(({ AddNewPane }) => {
+        if (!cancelled && sidebar.state.openPane?.getId() !== 'add') {
+          sidebar.openPane(new AddNewPane({}));
+        }
+      });
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [isEditingNewDashboard, dashboard, sidebar, generationLoading, generationAvailable]);
 
   if (generationLoading) {

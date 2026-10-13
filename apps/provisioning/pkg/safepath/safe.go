@@ -77,6 +77,26 @@ func IsSafe(path string) error {
 	return nil
 }
 
+// IsHidden reports whether any component of path starts with '.' -- checked
+// independently of IsSafe, whose other checks (invalid characters, '%', ...)
+// can fire first and mask a hidden path behind a different error. "." and
+// ".." are traversal, not hidden -- same precedence as IsSafe, so a
+// traversal attempt is never waved through as merely hidden.
+func IsHidden(path string) bool {
+	parts := Split(path)
+	for _, part := range parts {
+		if part == "." || part == ".." {
+			return false
+		}
+	}
+	for _, part := range parts {
+		if strings.HasPrefix(part, ".") {
+			return true
+		}
+	}
+	return false
+}
+
 // SanitizeSegment converts an arbitrary folder title into a single path segment
 // that satisfies IsSafe. Characters outside the allowed set ([a-zA-Z0-9 _.-])
 // are dropped, and leading/trailing spaces and dots are trimmed so the result

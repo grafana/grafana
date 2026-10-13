@@ -68,6 +68,7 @@ func BuildForServedGroupVersions(
 	handler := keysapi.NewHandler(store, tracer)
 	scopes := map[schema.GroupVersion]*routeScopes{}
 	mounted := map[schema.GroupVersionResource]bool{}
+	optedOut := listKeysOptOuts(manifests, served)
 
 	for _, m := range manifests {
 		if m == nil {
@@ -87,6 +88,9 @@ func BuildForServedGroupVersions(
 				}
 				resourceName := resource.ManifestResourceName(kind)
 				gvr := gv.WithResource(resourceName)
+				if optedOut[gvr] {
+					continue
+				}
 				if mounted[gvr] {
 					continue
 				}
@@ -103,6 +107,30 @@ func BuildForServedGroupVersions(
 	}
 
 	return toGroupVersionRoutes(scopes)
+}
+
+func listKeysOptOuts(
+	manifests []*app.ManifestData,
+	served map[schema.GroupVersion]bool,
+) map[schema.GroupVersionResource]bool {
+	optedOut := map[schema.GroupVersionResource]bool{}
+	for _, m := range manifests {
+		if m == nil {
+			continue
+		}
+		for _, version := range m.Versions {
+			gv := schema.GroupVersion{Group: m.Group, Version: version.Name}
+			if !version.Served || !served[gv] {
+				continue
+			}
+			for _, kind := range version.Kinds {
+				if !kind.HasListKeysEndpoint() {
+					optedOut[gv.WithResource(resource.ManifestResourceName(kind))] = true
+				}
+			}
+		}
+	}
+	return optedOut
 }
 
 // The scopes share a path and differ only in where they mount.

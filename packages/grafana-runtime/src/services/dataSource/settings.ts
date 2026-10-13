@@ -13,6 +13,7 @@ import { getBackendSrv } from '../backendSrv';
 import { getDataSourceSrv, type GetDataSourceListFilters } from '../dataSourceSrv';
 import { getTemplateSrv } from '../templateSrv';
 
+import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { FALLBACK_TO_LEGACY_LIST_WARNING, FALLBACK_TO_LEGACY_SETTINGS_WARNING } from './constants';
 import { getExpressionDataSourceSettings, _resetForTests as resetExpressionDs } from './expressionDs';
 import { describeRef, logDataSourceWarning } from './logging';
@@ -46,6 +47,15 @@ function populateMaps(settings: Record<string, DataSourceInstanceSettings>) {
   }
 }
 
+function replaceInstanceSettings(
+  settings: Record<string, DataSourceInstanceSettings>,
+  defaultDatasourceName: string
+): void {
+  populateMaps(settings);
+  defaultName = defaultDatasourceName;
+  notifyDataSourceCacheChanged();
+}
+
 /**
  * Populate the instance-settings cache from boot data. Intended to be called
  * exactly once at application startup via the `@grafana/runtime/internal` export.
@@ -57,8 +67,7 @@ export function initDataSourceInstanceSettings(
   settings: Record<string, DataSourceInstanceSettings>,
   defaultDsName: string
 ): void {
-  defaultName = defaultDsName;
-  populateMaps(settings);
+  replaceInstanceSettings(settings, defaultDsName);
 }
 
 /**
@@ -79,8 +88,10 @@ export function setDataSourceInstanceSettings(
   }
 
   _resetForTests();
-  populateMaps(structuredClone(settings));
-  defaultName = defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? '';
+  replaceInstanceSettings(
+    structuredClone(settings),
+    defaultDatasourceName ?? Object.values(settings).find((ds) => ds.isDefault)?.name ?? ''
+  );
 }
 
 /**
@@ -93,8 +104,7 @@ const RELOAD_CACHE_KEY = 'grafana-runtime:ds-reload';
 
 async function fetchAndPopulate(): Promise<void> {
   const settings = await getBackendSrv().get('/api/frontend/settings');
-  populateMaps(settings.datasources);
-  defaultName = settings.defaultDatasource;
+  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
 }
 
 async function performReload(): Promise<void> {
@@ -135,14 +145,16 @@ interface SyncDataSourceSettings {
  */
 export function syncDataSourceInstanceSettings(settings: SyncDataSourceSettings): void {
   clearPluginCache();
-  populateMaps(settings.datasources);
-  defaultName = settings.defaultDatasource;
+  replaceInstanceSettings(settings.datasources, settings.defaultDatasource);
 }
 
 /**
  * Look up the instance settings for a data source from the in-memory cache
  * populated at boot. Call {@link reloadDataSourceInstanceSettings} to refresh
  * the cache from the backend.
+ *
+ * A `null`, `undefined` or `'default'` ref resolves to the configured default data source, which is
+ * `-- Grafana --` when no instance is the org default.
  *
  * `scopedVars` are used when `ref` contains a template variable (e.g. `$ds`).
  *
@@ -212,7 +224,6 @@ export function toListItem(settings: DataSourceInstanceSettings): DataSourceInst
     apiVersion: settings.apiVersion,
     name: settings.name,
     meta: settings.meta,
-    isDefault: settings.isDefault ?? false,
   };
 }
 
@@ -222,16 +233,21 @@ function matchesType(item: DataSourceInstanceListItem, type: string): boolean {
 }
 
 /**
- * Resolve the item flagged as the default data source, or `undefined` when the list holds none.
+ * Resolve the item whose data source is the org default, or `undefined` when the list holds none.
  *
- * At most one instance per org carries the flag, so a filtered list need not contain it.
+ * A filtered list need not contain the org default.
  *
  * @public
  */
 export async function getDefaultDataSourceInstanceListItem(
   items: DataSourceInstanceListItem[]
 ): Promise<DataSourceInstanceListItem | undefined> {
-  return items.find((item) => item.isDefault);
+  // A `default` ref falls back to `-- Grafana --` when no instance is the default, which is not an org default.
+  const defaultSettings = await getDataSourceInstanceSettings(null);
+  if (!defaultSettings || defaultSettings.meta.builtIn) {
+    return undefined;
+  }
+  return items.find((item) => item.uid === defaultSettings.uid);
 }
 
 /**

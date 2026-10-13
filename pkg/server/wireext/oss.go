@@ -152,6 +152,7 @@ var BasicSet = wire.NewSet(
 	wire.Bind(new(sandbox.Sandbox), new(*sandbox.Service)),
 	wire.Struct(new(unified.Options), "*"),
 	resource.NewGCGate,
+	resource.NewWatchExpiry,
 	unified.ProvideUnifiedStorageClient,
 	sql.ProvideExperimentalKV,
 	sql.ProvideKV,

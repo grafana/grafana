@@ -18,7 +18,7 @@ func AddServiceAccountsAllowSameLoginCrossOrgs(mg *migrator.Migrator) {
 	mg.AddMigration(AllowSameLoginCrossOrgs, &ServiceAccountsSameLoginCrossOrgs{})
 }
 
-var _ migrator.CodeMigration = new(ServiceAccountsSameLoginCrossOrgs)
+var _ migrator.CodeMigration = (*ServiceAccountsSameLoginCrossOrgs)(nil)
 
 type ServiceAccountsSameLoginCrossOrgs struct {
 	sess    *xorm.Session

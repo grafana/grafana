@@ -23,7 +23,8 @@ import (
 const emptyLabelKeyPrefix = "__empty_label_key__"
 
 type ruleStates struct {
-	states map[data.Fingerprint]*State
+	states             map[data.Fingerprint]*State
+	lastCaptureAttempt *CaptureAttempt
 }
 
 type cache struct {
@@ -42,6 +43,30 @@ func newCache() *cache {
 	return &cache{
 		states: make(map[int64]map[string]*ruleStates),
 	}
+}
+
+func (c *cache) getLastScreenshotAttempt(ruleKey ngModels.AlertRuleKey) *CaptureAttempt {
+	c.mtxStates.RLock()
+	defer c.mtxStates.RUnlock()
+	rs, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if !ok {
+		return nil
+	}
+	return rs.lastCaptureAttempt
+}
+
+func (c *cache) setLastScreenshotAttempt(ruleKey ngModels.AlertRuleKey, attempt *CaptureAttempt) {
+	c.mtxStates.Lock()
+	defer c.mtxStates.Unlock()
+	if _, ok := c.states[ruleKey.OrgID]; !ok {
+		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
+	}
+	rs, ok := c.states[ruleKey.OrgID][ruleKey.UID]
+	if !ok {
+		rs = &ruleStates{states: make(map[data.Fingerprint]*State)}
+		c.states[ruleKey.OrgID][ruleKey.UID] = rs
+	}
+	rs.lastCaptureAttempt = attempt
 }
 
 func (c *cache) reset() {
@@ -294,6 +319,11 @@ func (c *cache) setRuleStates(ruleKey ngModels.AlertRuleKey, s ruleStates) {
 	defer c.mtxStates.Unlock()
 	if _, ok := c.states[ruleKey.OrgID]; !ok {
 		c.states[ruleKey.OrgID] = make(map[string]*ruleStates)
+	}
+	// The capture attempt belongs to the rule, not to a particular set of states,
+	// so it has to outlive the states map being replaced here.
+	if existing, ok := c.states[ruleKey.OrgID][ruleKey.UID]; ok {
+		s.lastCaptureAttempt = existing.lastCaptureAttempt
 	}
 	c.states[ruleKey.OrgID][ruleKey.UID] = &s
 }

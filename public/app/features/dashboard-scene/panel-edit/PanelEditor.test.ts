@@ -2,7 +2,6 @@ import { of } from 'rxjs';
 
 import { type DataQueryRequest, type DataSourceApi, LoadingState, type PanelPlugin, store } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
-import { config } from '@grafana/runtime';
 import {
   type CancelActivationHandler,
   CustomVariable,
@@ -26,9 +25,9 @@ import { UNCONFIGURED_PANEL_PLUGIN_ID } from '../scene/UnconfiguredPanel';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { vizPanelToPanel } from '../serialization/transformSceneToSaveModel';
+import { findVizPanelByKey } from '../utils/findVizPanel';
 import { getQueryRunnerFor } from '../utils/getQueryRunnerFor';
 import { activateFullSceneTree } from '../utils/test-utils';
-import { findVizPanelByKey } from '../utils/utils';
 
 import { PanelDataPane } from './PanelDataPane/PanelDataPane';
 import { PanelDataPaneNext } from './PanelEditNext/PanelDataPaneNext';
@@ -220,11 +219,11 @@ describe('PanelEditor', () => {
 
   describe('When the scene is rebuilt underneath the editor', () => {
     beforeAll(() => {
-      config.featureToggles.dashboardNewLayouts = true;
+      setTestFlags({ dashboardNewLayouts: true });
     });
 
     afterAll(() => {
-      config.featureToggles.dashboardNewLayouts = false;
+      setTestFlags({});
     });
 
     /** Replace the layout tree wholesale, as APPLY_SPEC and the json/code editors do. */
