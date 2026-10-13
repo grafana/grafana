@@ -96,7 +96,7 @@ func hasK6Ancestor(info *folders.FolderInfoList, self string) bool {
 	return false
 }
 
-func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int) error {
+func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGetter, maxDepth int, dryRun bool) error {
 	id := f.Name
 
 	if slices.Contains([]string{
@@ -151,6 +151,16 @@ func validateOnCreate(ctx context.Context, f *folders.Folder, getter parentsGett
 	parents, err := getter(ctx, f)
 	if err != nil {
 		return fmt.Errorf("unable to create folder inside parent: %w", err)
+	}
+
+	// Git Sync previews use dry-run creates with parents that may only exist
+	// on a repository branch. Require a complete chain only when persisting.
+	if !dryRun {
+		for _, parent := range parents.Items {
+			if parent.Detached {
+				return folder.ErrBadRequest.Errorf("cannot create folder under missing or unreadable ancestor %s", parent.Name)
+			}
+		}
 	}
 
 	if hasK6Ancestor(parents, f.Name) && !isServiceAccount(ctx) {

@@ -210,7 +210,13 @@ var appManifestData = app.ManifestData{
 					Plural:     "Snapshots",
 					Scope:      "Namespaced",
 					Conversion: false,
-					Schema:     &versionSchemaSnapshotv0alpha1,
+					Storage: &app.ManifestVersionKindStorage{
+						ListKeys: func(b bool) *bool { return &b }(false),
+					},
+					Search: &app.ManifestVersionKindSearch{
+						Endpoint: func(b bool) *bool { return &b }(false),
+					},
+					Schema: &versionSchemaSnapshotv0alpha1,
 				},
 			},
 		},
