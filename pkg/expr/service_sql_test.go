@@ -323,3 +323,166 @@ func TestSQLServiceZeroRowNumericWide(t *testing.T) {
 		})
 	}
 }
+
+func TestSQLServiceGroupByDatasource(t *testing.T) {
+	labeledMulti := func() data.Frames {
+		return data.Frames{
+			data.NewFrame("",
+				data.NewField("time", nil, []time.Time{time.Unix(1, 0), time.Unix(2, 0)}),
+				data.NewField("cpu", data.Labels{"host": "a"}, []float64{1, 2}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+			data.NewFrame("",
+				data.NewField("time", nil, []time.Time{time.Unix(1, 0), time.Unix(2, 0)}),
+				data.NewField("cpu", data.Labels{"host": "b"}, []float64{3, 4}),
+			).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
+		}
+	}
+	table := func() data.Frames {
+		return data.Frames{data.NewFrame("",
+			data.NewField("a", nil, []float64{1, 2}),
+			data.NewField("b", nil, []string{"x", "y"}),
+		)}
+	}
+	zeroRowWide := func() data.Frames {
+		return data.Frames{data.NewFrame("",
+			data.NewField("name", nil, []string{}),
+			data.NewField("salary", nil, []float64{}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericWide})}
+	}
+
+	fieldNames := func(f *data.Frame) []string {
+		names := make([]string, 0, len(f.Fields))
+		for _, field := range f.Fields {
+			names = append(names, field.Name)
+		}
+		return names
+	}
+
+	toggles := []struct {
+		name     string
+		features featuremgmt.FeatureToggles
+	}{
+		{name: "toggle off", features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)},
+		{name: "toggle on", features: featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions, featuremgmt.FlagSseGroupByDatasource)},
+	}
+
+	panelCases := []struct {
+		name       string
+		frames     data.Frames
+		sql        string
+		dataType   string
+		wantFields []string
+		wantRows   int
+	}{
+		{
+			name:       "labeled multi-frame input keeps all series and labels",
+			frames:     labeledMulti(),
+			sql:        "SELECT * FROM A ORDER BY host, time",
+			dataType:   string(data.FrameTypeTimeSeriesMulti),
+			wantFields: []string{"time", SQLValueFieldName, SQLMetricFieldName, "host"},
+			wantRows:   4,
+		},
+		{
+			name:       "table input keeps all columns and rows",
+			frames:     table(),
+			sql:        "SELECT * FROM A",
+			dataType:   "missing",
+			wantFields: []string{"a", "b"},
+			wantRows:   2,
+		},
+		{
+			name:       "zero-row numeric-wide input returns zero rows",
+			frames:     zeroRowWide(),
+			sql:        "SELECT * FROM A",
+			dataType:   string(data.FrameTypeNumericWide),
+			wantFields: []string{SQLMetricFieldName, SQLValueFieldName},
+			wantRows:   0,
+		},
+	}
+
+	for _, toggle := range toggles {
+		t.Run(toggle.name, func(t *testing.T) {
+			for _, tc := range panelCases {
+				t.Run(tc.name, func(t *testing.T) {
+					resp := map[string]backend.DataResponse{"A": {Frames: tc.frames}}
+					s, req := newMockQueryServiceWithMetricsRegistry(resp, newDSAndSQLQueries(t, tc.sql, "", "A"), prometheus.NewPedanticRegistry())
+					s.features = toggle.features
+
+					pl, err := s.BuildPipeline(t.Context(), req)
+					require.NoError(t, err)
+					rsp, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+					require.NoError(t, err)
+
+					require.NoError(t, rsp.Responses["A"].Error)
+					require.NoError(t, rsp.Responses["S"].Error)
+					require.Len(t, rsp.Responses["S"].Frames, 1)
+					out := rsp.Responses["S"].Frames[0]
+					require.Equal(t, tc.wantFields, fieldNames(out))
+					require.Equal(t, tc.wantRows, out.Rows())
+
+					require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandInputCount, "ok", "true", "test", tc.dataType)+
+						counterVal(t, s.metrics.SqlCommandInputCount, "ok", "false", "test", tc.dataType))
+				})
+			}
+
+			t.Run("alerting gets one number per label set", func(t *testing.T) {
+				resp := map[string]backend.DataResponse{"A": {Frames: labeledMulti()}}
+				s, req := newMockQueryService(resp, newDSAndSQLQueries(t,
+					"SELECT host, MAX(__value__) AS v FROM A GROUP BY host ORDER BY host", "alerting", "A"))
+				s.features = toggle.features
+
+				pl, err := s.BuildPipeline(t.Context(), req)
+				require.NoError(t, err)
+				rsp, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+				require.NoError(t, err)
+
+				require.NoError(t, rsp.Responses["S"].Error)
+				got := map[string]float64{}
+				for _, f := range rsp.Responses["S"].Frames {
+					require.Len(t, f.Fields, 1)
+					v, err := f.Fields[0].FloatAt(0)
+					require.NoError(t, err)
+					got[f.Fields[0].Labels["host"]] = v
+				}
+				require.Equal(t, map[string]float64{"a": 2, "b": 4}, got)
+			})
+
+			t.Run("math input from the same data source is still converted", func(t *testing.T) {
+				resp := map[string]backend.DataResponse{
+					"A": {Frames: table()},
+					"C": {Frames: data.Frames{data.NewFrame("",
+						data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+						data.NewField("value", data.Labels{"host": "a"}, []float64{2}),
+					)}},
+				}
+				queries := newDSAndSQLQueries(t, "SELECT * FROM A", "", "A", "C")
+				queries = append(queries, Query{
+					RefID:      "M",
+					DataSource: dataSourceModel(),
+					JSON:       json.RawMessage(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "math", "expression": "$C * 2" }`),
+				})
+				s, req := newMockQueryService(resp, queries)
+				s.features = toggle.features
+
+				pl, err := s.BuildPipeline(t.Context(), req)
+				require.NoError(t, err)
+				rsp, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+				require.NoError(t, err)
+
+				require.NoError(t, rsp.Responses["S"].Error)
+				require.Len(t, rsp.Responses["S"].Frames, 1)
+				require.Equal(t, []string{"a", "b"}, fieldNames(rsp.Responses["S"].Frames[0]))
+				require.Equal(t, 2, rsp.Responses["S"].Frames[0].Rows())
+
+				require.NoError(t, rsp.Responses["M"].Error)
+				require.Len(t, rsp.Responses["M"].Frames, 1)
+				m := rsp.Responses["M"].Frames[0]
+				require.Equal(t, []string{"Time", "M"}, fieldNames(m))
+				require.Equal(t, data.Labels{"host": "a"}, m.Fields[1].Labels)
+				v, err := m.Fields[1].FloatAt(0)
+				require.NoError(t, err)
+				require.Equal(t, 4.0, v)
+			})
+		})
+	}
+}
