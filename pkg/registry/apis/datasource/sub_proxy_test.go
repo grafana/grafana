@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -111,6 +112,92 @@ func (m *proxyMockDatasourceProvider) GetDataSource(ctx context.Context, uid str
 type allowAllValidator struct{}
 
 func (allowAllValidator) Validate(_ string, _ map[string]any, _ *http.Request) error { return nil }
+
+type proxyDestinationValidator struct {
+	destination string
+	deny        bool
+	checked     []string
+	ingress     int
+}
+
+func (v *proxyDestinationValidator) Validate(url string, _ map[string]any, req *http.Request) error {
+	v.checked = append(v.checked, url)
+	if req != nil {
+		v.ingress++
+		req.Header.Del("Authorization")
+	}
+	if v.deny && strings.HasPrefix(url, v.destination) {
+		return errors.New("destination denied")
+	}
+	return nil
+}
+
+func TestSubProxyREST_ValidatesFinalDestination(t *testing.T) {
+	for _, dynamic := range []bool{false, true} {
+		name := "static route URL"
+		if dynamic {
+			name = "URL from datasource jsonData"
+		}
+		t.Run(name, func(t *testing.T) {
+			var forwarded atomic.Int32
+			authHeaders := make(chan string, 2)
+			target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				forwarded.Add(1)
+				authHeaders <- req.Header.Get("Authorization")
+				w.WriteHeader(http.StatusOK)
+			}))
+			t.Cleanup(target.Close)
+			ds := &datasourceV0.DataSource{}
+			ds.Name = "ds-1"
+			ds.Spec.SetURL("http://configured.example")
+			ds.Spec.SetJSONData(map[string]any{"apiUrl": target.URL})
+			provider := &proxyMockDatasourceProvider{ds: ds}
+			provider.instanceSettings = &backend.DataSourceInstanceSettings{
+				UID: ds.Name, Type: "test", URL: ds.Spec.URL(), JSONData: []byte(`{}`),
+			}
+			builder := newProxyTestBuilder(provider)
+			routeURL := target.URL
+			if dynamic {
+				routeURL = "{{ .JsonData.apiUrl }}"
+			}
+			builder.pluginJSON.Routes = []*plugins.Route{{
+				Method: http.MethodGet, Path: "query", URL: routeURL,
+				Headers: []plugins.Header{{Name: "Authorization", Content: "Bearer route-token"}},
+			}}
+			validator := &proxyDestinationValidator{destination: target.URL}
+			deps, err := builder.proxyDependencies(t.Context(), nil)
+			require.NoError(t, err)
+			deps.RequestValidator = validator
+			storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
+			t.Cleanup(storage.Destroy)
+			ctx := krequest.WithNamespace(proxyTestContext(), "stacks-1")
+			// A cached transport must still use the current request's destination policy.
+			for _, want := range []int{http.StatusOK, http.StatusForbidden, http.StatusOK} {
+				validator.deny = want == http.StatusForbidden
+				responder := &resourceMockResponder{}
+				handler, err := storage.Connect(ctx, ds.Name, nil, responder)
+				require.NoError(t, err)
+				rec := httptest.NewRecorder()
+				req := httptest.NewRequest(http.MethodGet, "/datasources/ds-1/proxy/query/values", nil)
+				req.Header.Set("Authorization", "Bearer incoming-token")
+				handler.ServeHTTP(rec, req)
+				require.NoError(t, responder.lastErr)
+				require.Equal(t, want, rec.Code)
+			}
+			require.EqualValues(t, 2, forwarded.Load(), "denied requests must not contact the destination")
+			for range 2 {
+				require.Equal(t, "Bearer route-token", <-authHeaders, "final validation must preserve route authentication")
+			}
+			require.Equal(t, 3, validator.ingress, "only filter headers on ingress")
+			require.Equal(t, []string{
+				ds.Spec.URL(), target.URL + "/values",
+				ds.Spec.URL(), target.URL + "/values",
+				ds.Spec.URL(), target.URL + "/values",
+			}, validator.checked)
+			require.Equal(t, 1, len(storage.transports.entries))
+		})
+	}
+}
 
 func newProxyTestBuilder(provider PluginDatasourceProvider) *DataSourceAPIBuilder {
 	return &DataSourceAPIBuilder{
