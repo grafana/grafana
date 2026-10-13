@@ -185,7 +185,7 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.Tracer,
 			deps.Features,
 			deps.IDTokenDeriver,
-			pluginproxy.WithRouteAccessChecker(r.builder.checkProxyRouteAccess),
+			r.builder.checkProxyRouteAccess,
 		)
 		if err != nil {
 			m.SetError()
