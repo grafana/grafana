@@ -5905,7 +5905,9 @@
           },
           "permissions": {
             "type": "array",
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.iam.v0alpha1.UserPermission"
+            },
             "x-kubernetes-list-type": "atomic"
           },
           "role": {

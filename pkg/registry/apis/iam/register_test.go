@@ -18,6 +18,8 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	"k8s.io/kube-openapi/pkg/spec3"
+	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	authlib "github.com/grafana/authlib/types"
 	iamv0 "github.com/grafana/grafana/apps/iam/pkg/apis/iam/v0alpha1"
@@ -505,4 +507,22 @@ func TestNewLocalStore_EnforcesVersionCap(t *testing.T) {
 	require.Error(t, err, "write above the group's maxAllowedVersion cap must be rejected")
 	require.True(t, apierrors.IsBadRequest(err), "expected a 4xx, got %v", err)
 	require.Contains(t, err.Error(), "v0alpha1", "message should name the cap version")
+}
+
+func TestPostProcessOpenAPI_PermissionItems(t *testing.T) {
+	b := &IdentityAccessManagementAPIBuilder{}
+	oas, err := b.PostProcessOpenAPI(&spec3.OpenAPI{
+		Info:       &spec.Info{},
+		Components: &spec3.Components{Schemas: map[string]*spec.Schema{}},
+	})
+	require.NoError(t, err)
+	for _, name := range []string{"UserPermissions", "CurrentUserInfo"} {
+		t.Run(name, func(t *testing.T) {
+			permissions := oas.Components.Schemas[legacyiamv0.OpenAPIPrefix+name].Properties["permissions"]
+			require.Equal(t, spec.StringOrArray{"array"}, permissions.Type)
+			require.NotNil(t, permissions.Items)
+			require.NotNil(t, permissions.Items.Schema)
+			require.Equal(t, "#/components/schemas/"+legacyiamv0.OpenAPIPrefix+"UserPermission", permissions.Items.Schema.Ref.String())
+		})
+	}
 }

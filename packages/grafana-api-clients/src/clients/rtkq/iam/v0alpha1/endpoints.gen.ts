@@ -1270,6 +1270,10 @@ export type GetUserTeamsResponse = {
   kind?: string;
   metadata: any;
 };
+export type UserPermission = {
+  action: string;
+  scope: string;
+};
 export type CurrentUserInfo = {
   /** AuthenticatedBy is the authentication provider used for the current identity. */
   authenticatedBy?: string;
@@ -1284,13 +1288,9 @@ export type CurrentUserInfo = {
   internalId?: number;
   /** Namespace is the namespace of the current identity. */
   namespace?: string;
-  permissions: any[];
+  permissions: UserPermission[];
   /** Role is the org role of the identity in the active organization (Admin/Editor/Viewer/None). */
   role?: string;
-};
-export type UserPermission = {
-  action: string;
-  scope: string;
 };
 export type UserPermissions = {
   permissions: UserPermission[];

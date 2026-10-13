@@ -5187,7 +5187,9 @@
           },
           "permissions": {
             "type": "array",
-            "items": {},
+            "items": {
+              "$ref": "#/components/schemas/UserPermission"
+            },
             "x-kubernetes-list-type": "atomic"
           },
           "role": {
