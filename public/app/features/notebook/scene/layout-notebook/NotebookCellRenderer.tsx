@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { offset, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useId, useRef, useState } from 'react';
 
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
@@ -120,26 +120,19 @@ function PanelCell({
   // assigned to it would never get its own activate() call without this.
   const { elementName, $timeRange } = useSceneObjectState(cell, { shouldActivateOrKeepAlive: true });
 
-  const [queryEditorOpen, setQueryEditorOpen] = useState(true);
+  const [queryEditorOpen, setQueryEditorOpen] = useState(Boolean(autoFocus));
+  const [queryEditorMounted, setQueryEditorMounted] = useState(Boolean(autoFocus));
+  const queryEditorId = useId();
+  const hasTimeRange = Boolean($timeRange);
   const lastSuggestedQuery = useRef<DataQuery | undefined>(undefined);
   const autoSuggest = useRef(Boolean(autoFocus));
   const canEditQuery = isEditing && isEditableQueryPanel(panel);
-  const showStandaloneClock = isEditing ? !canEditQuery || !queryEditorOpen : Boolean($timeRange);
 
   return (
     <Stack direction="column" gap={1}>
-      {canEditQuery && queryEditorOpen && (
-        <PanelQueryEditor
-          cell={cell}
-          panel={panel}
-          autoFocus={autoFocus}
-          lastSuggestedQuery={lastSuggestedQuery}
-          autoSuggest={autoSuggest}
-        />
-      )}
-      {showStandaloneClock && (
-        <Box display="flex" justifyContent="flex-end">
-          <NotebookCellTimeRangeControl cell={cell} />
+      {hasTimeRange && (
+        <Box display="flex">
+          <NotebookCellTimeRangeControl cell={cell} popoverAlign="start" isEditing={isEditing} />
         </Box>
       )}
       <div className={styles.panel} data-testid={selectors.pages.Notebooks.Item.panelCell(elementName)}>
@@ -149,13 +142,35 @@ function PanelCell({
           isEditing={isEditing}
           lastSuggestedQuery={lastSuggestedQuery}
           autoSuggest={autoSuggest}
-          onToggleQueryEditor={canEditQuery ? () => setQueryEditorOpen((open) => !open) : undefined}
+          onToggleQueryEditor={
+            canEditQuery
+              ? () => {
+                  setQueryEditorMounted(true);
+                  setQueryEditorOpen((open) => !open);
+                }
+              : undefined
+          }
           queryEditorOpen={queryEditorOpen}
+          queryEditorId={queryEditorId}
+          timeRangeControl={isEditing && !hasTimeRange && <NotebookCellTimeRangeControl cell={cell} />}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
         />
         <panel.Component model={panel} />
       </div>
+      {canEditQuery && (
+        <div id={queryEditorId} hidden={!queryEditorOpen} className={styles.queryEditor}>
+          {queryEditorMounted && (
+            <PanelQueryEditor
+              cell={cell}
+              panel={panel}
+              autoFocus={true}
+              lastSuggestedQuery={lastSuggestedQuery}
+              autoSuggest={autoSuggest}
+            />
+          )}
+        </div>
+      )}
     </Stack>
   );
 }
@@ -367,6 +382,12 @@ function CollapsedCell({ name }: { name: string }) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
+  queryEditor: css({
+    border: `1px solid ${theme.colors.border.weak}`,
+    borderRadius: theme.shape.radius.default,
+    padding: theme.spacing(2),
+    background: theme.colors.background.secondary,
+  }),
   panel: css({
     height: PANEL_HEIGHT,
     position: 'relative',

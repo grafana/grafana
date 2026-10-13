@@ -143,6 +143,40 @@ describe('NotebookPanelActions', () => {
     expect(onDelete).toHaveBeenCalledTimes(1);
   });
 
+  it.each(['react', 'scene', 'array'] as const)(
+    'preserves %s header actions and title controls',
+    async (representation) => {
+      const { cell, panel } = buildPanelCell();
+      const headerNode = <span>Existing header action</span>;
+      const headerObject = new SceneReactObject({ reactNode: headerNode });
+      const existingHeader =
+        representation === 'react' ? headerNode : representation === 'scene' ? headerObject : [headerObject];
+      const existingTitle = new SceneReactObject({ reactNode: <span>Existing title control</span> });
+      panel.setState({ headerActions: existingHeader, titleItems: [existingTitle] });
+      const { unmount } = render(<NotebookPanelActions cell={cell} panel={panel} isEditing={true} />);
+      const header = render(
+        <div data-testid="panel-header">
+          {(panel.state.headerActions as SceneObject[]).map((action, index) => (
+            <action.Component key={index} model={action} />
+          ))}
+        </div>
+      );
+
+      const toolbar = await screen.findByRole('button', { name: 'Change visualization' });
+      expect(screen.getByTestId('panel-header')).toContainElement(toolbar);
+      expect(screen.getByTestId('panel-header')).toContainElement(screen.getByText('Existing header action'));
+      expect(panel.state.titleItems).toContain(existingTitle);
+      if (representation !== 'react') {
+        expect(headerObject.parent).toBe(panel);
+      }
+
+      unmount();
+      expect(panel.state.headerActions).toBe(existingHeader);
+      expect(panel.state.titleItems).toEqual([existingTitle]);
+      header.unmount();
+    }
+  );
+
   it('toggles the query editor when available', async () => {
     const { cell, panel } = buildPanelCell();
     const onToggleQueryEditor = jest.fn();
