@@ -24,12 +24,12 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/api/routing"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	iamv0 "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	searchv0 "github.com/grafana/grafana/pkg/apis/search/v0alpha1"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/apiserver/auditing"
 	grafanaresponsewriter "github.com/grafana/grafana/pkg/apiserver/endpoints/responsewriter"
 	"github.com/grafana/grafana/pkg/infra/db"

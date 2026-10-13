@@ -8,13 +8,13 @@ import (
 	"path/filepath"
 
 	authlib "github.com/grafana/authlib/types"
-	appsdkapiserver "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/prometheus/client_golang/prometheus"
 
 	pluginsapp "github.com/grafana/grafana/apps/plugins/pkg/app"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/meta"
 	"github.com/grafana/grafana/apps/plugins/pkg/app/metrics"
+	appsdkapiserver "github.com/grafana/grafana/pkg/apiserver/appsdk"
 	"github.com/grafana/grafana/pkg/configprovider"
 	"github.com/grafana/grafana/pkg/plugins/pluginassets/modulehash"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"

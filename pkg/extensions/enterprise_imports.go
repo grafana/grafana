@@ -77,7 +77,6 @@ import (
 	_ "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	_ "github.com/grafana/grafana-app-sdk/app/manifestdata"
 	_ "github.com/grafana/grafana-app-sdk/k8s"
-	_ "github.com/grafana/grafana-app-sdk/k8s/apiserver"
 	_ "github.com/grafana/grafana-app-sdk/logging"
 	_ "github.com/grafana/grafana-app-sdk/operator"
 	_ "github.com/grafana/grafana-app-sdk/plugin/client/v3"
