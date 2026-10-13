@@ -152,9 +152,10 @@ func TrashSearchAllowed(group, resource string) bool {
 	return resourceAllowed(trashSearchAllowlist, group, resource)
 }
 
+// shouldUseSearchForTrash ignores search_backed_list_resources: a store trash
+// list scans the whole history, so search is the default for approved kinds.
 func (s *server) shouldUseSearchForTrash(req *resourcepb.ListRequest) bool {
 	if req.Source != resourcepb.ListRequest_TRASH ||
-		!s.searchBackedListResources.Allowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!TrashSearchAllowed(req.Options.Key.Group, req.Options.Key.Resource) ||
 		!supportsDeletedBatchReads(s.backend) ||
 		(s.searchClient == nil && s.search == nil) ||

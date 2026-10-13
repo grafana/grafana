@@ -3068,7 +3068,7 @@
       },
       "toggle": {
         "use-new-experience": "Użyj nowego interfejsu",
-        "view-previous-experience": "Przywróć poprzedni interfejs"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Nieznany typ reguły",
       "checking-data-sources_one": "",
@@ -3098,6 +3098,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Zwiń wszystko",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Rozwiń wszystko"
     },
     "rule-list-v2": {
@@ -9104,8 +9109,8 @@
     },
     "show-all-spans": "Pokaż wszystkie zakresy",
     "signal-card": {
-      "collapse-aria-label": "Zwiń eksploratora źródeł danych dla zapytania {{refId}}",
-      "expand-aria-label": "Rozwiń eksploratora źródeł danych dla zapytania {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Przejdź do zapytania {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13352,6 +13357,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Anuluj",
       "confirm-discard": "Odrzuć",
@@ -13433,6 +13443,7 @@
       "redo-action": "Ponów: {{action}}",
       "remove-query": "Usuń zapytanie",
       "remove-tag": "Usuń tag",
+      "rename": "",
       "reset-cell-time-range": "Użyj zakresu czasu notatnika",
       "select-query": "Wybierz zapytanie",
       "set-cell-time-range": "Ustaw zakres czasu panelu",
@@ -17990,15 +18001,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Sortuj pola w ramce."
       },
+      "drag-handle-label": "",
       "label-field": "Pole",
       "label-reverse": "Odwróć",
       "name": {
         "sort-by": "Sortuj według"
       },
-      "placeholder-select-field": "Wybierz pole"
+      "placeholder-select-field": "Wybierz pole",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

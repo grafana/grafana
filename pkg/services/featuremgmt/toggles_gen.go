@@ -367,6 +367,10 @@ const (
 	// Enables custom dashboard templates for enterprise
 	FlagGrafanaCustomDashboardTemplates = "grafana.customDashboardTemplates"
 
+	// FlagGrafanaSmtpSettingsPage
+	// Enables the SMTP settings admin page, which edits a stack's SMTP config through the settings service
+	FlagGrafanaSmtpSettingsPage = "grafana.smtpSettingsPage"
+
 	// FlagAlertingNavigationV2
 	// Enables the new Alerting navigation structure with improved menu grouping
 	FlagAlertingNavigationV2 = "alertingNavigationV2"
@@ -733,6 +737,10 @@ const (
 	// FlagAwsDatasourcesHttpProxy
 	// Enables http proxy settings for aws datasources
 	FlagAwsDatasourcesHttpProxy = "awsDatasourcesHttpProxy"
+
+	// FlagGrafanaPublishLegacySQLEvents
+	// Publish watch events when values are saved to legacy SQL tables
+	FlagGrafanaPublishLegacySQLEvents = "grafana.publishLegacySQLEvents"
 
 	// FlagPluginsUseMTPlugins
 	// Enables plugins decoupling from bootdata

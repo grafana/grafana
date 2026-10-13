@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Neue Benutzeroberfläche verwenden",
-        "view-previous-experience": "Zurück zur vorherigen Oberfläche"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Unbekannter Regeltyp",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Alle einklappen",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Alle ausklappen"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Alle Spannen anzeigen",
     "signal-card": {
-      "collapse-aria-label": "Datenquellen-Explorer einklappen für die Abfrage {{refId}}",
-      "expand-aria-label": "Datenquellen-Explorer ausklappen für die Abfrage {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Zur Abfrage {{refId}} ({{datasourceName}}) springen"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Abbrechen",
       "confirm-discard": "Verwerfen",
@@ -13235,6 +13245,7 @@
       "redo-action": "Wiederherstellen: {{action}}",
       "remove-query": "Abfrage entfernen",
       "remove-tag": "Tag entfernen",
+      "rename": "",
       "reset-cell-time-range": "Zeitbereich des Notizbuchs verwenden",
       "select-query": "Abfrage auswählen",
       "set-cell-time-range": "Panel-Zeitbereich einstellen",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Sortieren Sie Felder in einem Frame."
       },
+      "drag-handle-label": "",
       "label-field": "Feld",
       "label-reverse": "Rückwärts",
       "name": {
         "sort-by": "Sortieren nach"
       },
-      "placeholder-select-field": "Feld auswählen"
+      "placeholder-select-field": "Feld auswählen",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

@@ -3068,7 +3068,7 @@
       },
       "toggle": {
         "use-new-experience": "Použít nové prostředí",
-        "view-previous-experience": "Vrátit se k předchozímu prostředí"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Neznámý typ pravidla",
       "checking-data-sources_one": "",
@@ -3098,6 +3098,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Sbalit vše",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Rozbalit vše"
     },
     "rule-list-v2": {
@@ -9104,8 +9109,8 @@
     },
     "show-all-spans": "Zobrazit všechny rozsahy",
     "signal-card": {
-      "collapse-aria-label": "Sbalit průzkumníka zdroje dat pro dotaz {{refId}}",
-      "expand-aria-label": "Rozbalit průzkumníka zdroje dat pro dotaz {{refId}}",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "Přejít na dotaz {{refId}} ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13352,6 +13357,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "Zrušit",
       "confirm-discard": "Zahodit",
@@ -13433,6 +13443,7 @@
       "redo-action": "Opakovat: {{action}}",
       "remove-query": "Odebrat dotaz",
       "remove-tag": "Odebrat tag",
+      "rename": "",
       "reset-cell-time-range": "Použít časový rozsah zápisníku",
       "select-query": "Vybrat dotaz",
       "set-cell-time-range": "Nastavit časový rozsah panelu",
@@ -17990,15 +18001,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Seřadit pole v rámci."
       },
+      "drag-handle-label": "",
       "label-field": "Pole",
       "label-reverse": "Dozadu",
       "name": {
         "sort-by": "Řadit podle"
       },
-      "placeholder-select-field": "Vyberte pole"
+      "placeholder-select-field": "Vyberte pole",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

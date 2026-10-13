@@ -3022,7 +3022,7 @@
       },
       "toggle": {
         "use-new-experience": "Yeni deneyimi kullan",
-        "view-previous-experience": "Önceki deneyime geri dön"
+        "view-previous-experience-deprecated": ""
       },
       "unknown-rule-type": "Bilinmeyen kural türü",
       "checking-data-sources_one": "",
@@ -3044,6 +3044,11 @@
     },
     "rule-list-v1": {
       "collapse-all": "Tümünü daralt",
+      "deprecation-notice": {
+        "body": "",
+        "switch-button": "",
+        "title": ""
+      },
       "expand-all": "Tümünü genişlet"
     },
     "rule-list-v2": {
@@ -8988,8 +8993,8 @@
     },
     "show-all-spans": "Tüm aralıkları göster",
     "signal-card": {
-      "collapse-aria-label": "{{refId}} sorgusu için veri kaynağı gezginini daralt",
-      "expand-aria-label": "{{refId}} sorgusu için veri kaynağı gezginini genişlet",
+      "collapse-aria-label": "",
+      "expand-aria-label": "",
       "jump-to-query-label": "{{refId}} sorgusuna git ({{datasourceName}})"
     },
     "signal-explorer": {
@@ -13154,6 +13159,11 @@
       "saving-title": "",
       "stay": ""
     },
+    "mutation-api": {
+      "apply-spec": {
+        "undo-label": ""
+      }
+    },
     "panel-changes": {
       "confirm-cancel": "İptal et",
       "confirm-discard": "Vazgeç",
@@ -13235,6 +13245,7 @@
       "redo-action": "{{action}} işlemini yinele",
       "remove-query": "Sorguyu kaldır",
       "remove-tag": "Etiketi kaldır",
+      "rename": "",
       "reset-cell-time-range": "Not defteri zaman aralığını kullan",
       "select-query": "Sorgu seç",
       "set-cell-time-range": "Panel zaman aralığını ayarla",
@@ -17730,15 +17741,19 @@
       }
     },
     "sort-by-transformer-editor": {
+      "add-sort-field": "",
+      "all-fields-used": "",
       "description": {
         "sort-fields": "Alanları bir çerçevede sıralayın."
       },
+      "drag-handle-label": "",
       "label-field": "Alan",
       "label-reverse": "Geri döndür",
       "name": {
         "sort-by": "Sıralama ölçütü"
       },
-      "placeholder-select-field": "Gönderi seçim alanı"
+      "placeholder-select-field": "Gönderi seçim alanı",
+      "remove-sort-field": ""
     },
     "supplier": {
       "description": {

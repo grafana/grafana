@@ -10,7 +10,7 @@ import {
   type PluginMetaInfo,
   PluginType,
 } from '@grafana/data';
-import { getDataSourceInstanceList } from '@grafana/runtime/unstable';
+import { getDataSourceInstanceList } from '@grafana/runtime';
 import { setTestFlags } from '@grafana/test-utils/unstable';
 
 import { ConnectionPicker } from './ConnectionPicker';
@@ -50,8 +50,8 @@ const otherDS = createDataSource('Other DS', 'other-uid', 'prometheus');
 
 const allDataSources = [infinityDS1, infinityDS2, otherDS];
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstanceList: jest.fn(),
 }));
 
