@@ -40,7 +40,10 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
   real `http.Flusher` (plus `CloseNotify`) to serve watches. Two exceptions to "one per group":
   plugin backends break only on plugin client calls, where only reachability errors count
   (`plugin_breaker.go`), and the ST fallback keeps one breaker per destination host and group. A
-  rejected backend redirect is not a breaker failure.
+  rejected backend redirect is not a breaker failure. Read a group breaker's state from its
+  `breakerView` (`servingEntry.breakerState`), never `breaker.State()`: gobreaker's `State` moves an
+  open breaker whose timeout passed to half-open, so a metrics scrape or status read would change
+  it. Only requests may move a breaker. `Counts()` is a pure read.
 - **Each poll loop has exactly one pacing source**: its `cooldown`. Don't add a second ticker. A
   failed poll changes nothing; the previous snapshot keeps serving.
 - **Proxy hygiene:**
@@ -179,6 +182,9 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     in both formats, so Kubernetes clients find it like any other group (`kubectl get
     manifests.discovery`). Each `AppManifest` is named by its group.
   - Errors are Kubernetes `Status` objects; watch and writes are refused with 405.
+  - The list applies `labelSelector` (manifests have no labels) and `fieldSelector` (only
+    `metadata.name`), and rejects others with a 400. It ignores `limit` and returns the whole list
+    without a `continue` token, which clients accept.
   - The status page (`discovery_status.go`) is readable by any authenticated caller, so it holds
     only names, states and counts: never credentials, addresses, URLs or error text, which carry
     internal hosts. A backend that serves a plugin's APIs reports the plugin through the optional

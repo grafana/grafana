@@ -299,6 +299,9 @@ func TestDiscoveryGroupWithKubernetesClients(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, list.Items, 1)
 	require.Equal(t, manifestTestGroup, list.Items[0].GetName())
+	list, err = dynamicClient.Resource(gvr).List(t.Context(), metav1.ListOptions{FieldSelector: "metadata.name!=" + manifestTestGroup})
+	require.NoError(t, err)
+	require.Empty(t, list.Items, "the server applies the selector")
 	obj, err := dynamicClient.Resource(gvr).Get(t.Context(), manifestTestGroup, metav1.GetOptions{})
 	require.NoError(t, err)
 	require.Equal(t, "AppManifest", obj.GetKind())
@@ -567,6 +570,57 @@ func TestServeManifestListStreamsTheGroupDocuments(t *testing.T) {
 	var list appmanifestv1alpha2.AppManifestList
 	require.NoError(t, json.Unmarshal(empty.Body.Bytes(), &list))
 	require.Empty(t, list.Items)
+}
+
+func TestServeManifestListAppliesSelectors(t *testing.T) {
+	second := &fakeManifestBackend{
+		fakeBackend: fakeBackend{key: "second", group: testAPIGroup("second.ext.grafana.app", "v1")},
+		manifest:    &app.ManifestData{AppName: "second", Group: "second.ext.grafana.app", Versions: []app.ManifestVersion{{Name: "v1", Served: true}}},
+	}
+	r := NewGrafanaRouter(stubLoader{}, nil)
+	r.publishManifestDocs(t.Context(), append(testManifestBackends(), second))
+	list := func(query string) (*httptest.ResponseRecorder, []string) {
+		rec := httptest.NewRecorder()
+		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests?"+query, nil), http.NotFoundHandler())
+		var l appmanifestv1alpha2.AppManifestList
+		if rec.Code == http.StatusOK {
+			require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &l))
+			require.Equal(t, strconv.Itoa(rec.Body.Len()), rec.Header().Get("Content-Length"))
+		}
+		names := make([]string, 0, len(l.Items))
+		for _, item := range l.Items {
+			names = append(names, item.Name)
+		}
+		return rec, names
+	}
+	all := []string{"second.ext.grafana.app", manifestTestGroup}
+
+	for query, want := range map[string][]string{
+		"":          {"second.ext.grafana.app", manifestTestGroup},
+		"limit=500": all,
+		"fieldSelector=metadata.name%3D" + manifestTestGroup:                      {manifestTestGroup},
+		"fieldSelector=metadata.name!%3D" + manifestTestGroup:                     {"second.ext.grafana.app"},
+		"fieldSelector=metadata.name%3Dmissing":                                   {},
+		"labelSelector=app%3Dx":                                                   {},
+		"labelSelector=!app":                                                      all,
+		"labelSelector=!app&fieldSelector=metadata.name%3Dsecond.ext.grafana.app": {"second.ext.grafana.app"},
+	} {
+		rec, names := list(query)
+		require.Equal(t, http.StatusOK, rec.Code, query)
+		require.ElementsMatch(t, want, names, query)
+	}
+
+	unfiltered, _ := list("")
+	filtered, _ := list("fieldSelector=metadata.name%3D" + manifestTestGroup)
+	require.NotEqual(t, unfiltered.Header().Get("ETag"), filtered.Header().Get("ETag"))
+
+	for _, query := range []string{"fieldSelector=spec.group%3Dx", "fieldSelector=metadata.name", "labelSelector=a%3D%3D%3Db", "labelSelector=a+in+(b"} {
+		rec, _ := list(query)
+		require.Equal(t, http.StatusBadRequest, rec.Code, query)
+		var status metav1.Status
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status), query)
+		require.Equal(t, metav1.StatusReasonBadRequest, status.Reason, query)
+	}
 }
 
 func TestManifestIndexIsRenderedOnce(t *testing.T) {

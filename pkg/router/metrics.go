@@ -280,7 +280,7 @@ func (c *routerCollector) Collect(ch chan<- prometheus.Metric) {
 		if _, perDestination := entry.handler.(interface{ managesCircuitBreaking() }); perDestination || entry.breaker == nil {
 			continue
 		}
-		current := entry.breaker.State()
+		current := entry.breakerState()
 		for _, state := range breakerStates {
 			value := 0.0
 			if state == current {

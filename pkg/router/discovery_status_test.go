@@ -6,8 +6,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"testing/synctest"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus/testutil"
+	"github.com/sony/gobreaker/v2"
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 
@@ -154,4 +157,38 @@ func TestPluginBackendStatus(t *testing.T) {
 
 	_, ok = (&pluginDeploymentBackend{Backend: &fakeBackend{}}).PluginStatus()
 	require.False(t, ok, "no plugin, so no plugin property")
+}
+
+// TestStatusReadsDoNotMoveBreakers checks that reading an open breaker, from
+// the status page or a metrics scrape, leaves it for a request to move.
+// gobreaker's own State would move it to half-open once its timeout passed.
+func TestStatusReadsDoNotMoveBreakers(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		const group = "flaky.ext.grafana.app"
+		backend := &fakeBackend{key: "flaky", group: testAPIGroup(group, "v1"), handler: http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})}
+		r := NewGrafanaRouter(staticLoader{backends: []Backend{backend}}, nil)
+		var transitions []string
+		r.onBreakerChange = func(_ string, to gobreaker.State) { transitions = append(transitions, to.String()) }
+		require.NoError(t, r.reconcile(t.Context()))
+		failBreaker(t, r.served[group].breaker, breakerOpenAfter)
+		require.Equal(t, []string{"open"}, transitions)
+
+		time.Sleep(breakerOpenFor + time.Second)
+		for range 2 {
+			_, groups := readStatus(t, r)
+			require.Equal(t, "open", groups[group].Breaker.State)
+			require.Equal(t, "unavailable", groups[group].Health)
+			require.NotNil(t, groups[group].Breaker.RetryAt)
+			require.True(t, groups[group].Breaker.RetryAt.Before(time.Now()), "the next request is the trial")
+			_ = testutil.CollectAndCount(newRouterCollector(r))
+		}
+		require.Equal(t, []string{"open"}, transitions, "reads move nothing")
+
+		rec := httptest.NewRecorder()
+		r.HandleFunc(rec, newAuthenticatedRequest(http.MethodGet, "/apis/"+group+"/v1/things", nil), http.NotFoundHandler())
+		require.Equal(t, []string{"open", "half-open", "closed"}, transitions, "the request is the trial, and it succeeded")
+		_, groups := readStatus(t, r)
+		require.Equal(t, "ok", groups[group].Health)
+		require.Nil(t, groups[group].Breaker.RetryAt)
+	})
 }

@@ -40,8 +40,10 @@ type handlerEntry struct {
 	lastKey string
 
 	// breaker is replaced when the key changes, since the target may have
-	// moved and its old trip state no longer applies.
-	breaker *groupBreaker
+	// moved and its old trip state no longer applies. breakerView follows its
+	// state; read that instead of breaker.State, which can change it.
+	breaker     *groupBreaker
+	breakerView *breakerView
 
 	// watches scopes the watches served by this handler. reconcile ends it when
 	// the handler is replaced or removed, so those watches move to the new one.
@@ -56,8 +58,15 @@ type handlerEntry struct {
 
 func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group string) *handlerEntry {
 	watches, endWatches := context.WithCancel(context.Background())
+	view := &breakerView{}
+	onChange := func(group string, to gobreaker.State) {
+		view.record(to)
+		if r.onBreakerChange != nil {
+			r.onBreakerChange(group, to)
+		}
+	}
 	return &handlerEntry{
-		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, r.onBreakerChange),
+		backend: b, handler: handler, lastKey: b.Key(), breaker: newObservedGroupBreaker(group, onChange), breakerView: view,
 		watches: watches, endWatches: endWatches,
 		loadedAt: time.Now(), watching: &atomic.Int64{},
 	}
@@ -67,12 +76,13 @@ func (r *GrafanaRouter) newHandlerEntry(b Backend, handler http.Handler, group s
 // copies what the serving path needs from handlerEntry, which only the
 // reconcile goroutine may read.
 type servingEntry struct {
-	group   metav1.APIGroup
-	handler http.Handler
-	key     string
-	breaker *groupBreaker
-	watches context.Context
-	source  string
+	group       metav1.APIGroup
+	handler     http.Handler
+	key         string
+	breaker     *groupBreaker
+	breakerView *breakerView
+	watches     context.Context
+	source      string
 
 	// discovery is set when the backend is a DiscoveryProvider, so the
 	// group's aggregated discovery needs no request.
@@ -323,6 +333,15 @@ func groupFromPath(path string) string {
 		rest = rest[:i]
 	}
 	return rest
+}
+
+// breakerState is the group breaker's state, read without changing it. Only
+// entries built outside newHandlerEntry, in tests, lack a view.
+func (e servingEntry) breakerState() gobreaker.State {
+	if e.breakerView == nil {
+		return e.breaker.State()
+	}
+	return e.breakerView.State()
 }
 
 // owns reports whether the router answers req itself rather than passing it
@@ -705,7 +724,7 @@ func (r *GrafanaRouter) publish(ctx context.Context) {
 	snap := make(map[string]servingEntry, len(r.served))
 	backends := make([]Backend, 0, len(r.served))
 	for group, e := range r.served {
-		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, watches: e.watches, loadedAt: e.loadedAt, watching: e.watching}
+		entry := servingEntry{handler: e.handler, key: e.lastKey, breaker: e.breaker, breakerView: e.breakerView, watches: e.watches, loadedAt: e.loadedAt, watching: e.watching}
 		if e.backend != nil {
 			entry.group = e.backend.Group()
 			entry.source = e.backend.Source()

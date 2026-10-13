@@ -80,6 +80,10 @@ type breakerStatusDoc struct {
 	// FailuresUntilOpen is how many more consecutive failures open a closed
 	// breaker.
 	FailuresUntilOpen uint32 `json:"failuresUntilOpen,omitempty"`
+	// RetryAt is when an open breaker lets the next request through as a
+	// trial. The breaker stays open until that request arrives, so a time in
+	// the past means the next request is the trial.
+	RetryAt *time.Time `json:"retryAt,omitempty"`
 }
 
 var phaseNames = map[phase]string{starting: "starting", serving: "serving", stopped: "stopped", crashed: "crashed"}
@@ -172,13 +176,18 @@ func breakerStatus(entry servingEntry) (health string, b breakerStatusDoc) {
 	if _, clientScoped := entry.handler.(interface{ breaksOnClientCalls() }); clientScoped {
 		b.Scope = "plugin-calls"
 	}
-	state, counts := entry.breaker.State(), entry.breaker.Counts()
+	state, counts := entry.breakerState(), entry.breaker.Counts()
 	b.State = state.String()
 	b.Requests, b.Successes, b.Failures = counts.Requests, counts.TotalSuccesses, counts.TotalFailures
 	b.ConsecutiveFailures = counts.ConsecutiveFailures
 
 	switch state {
 	case gobreaker.StateOpen:
+		if entry.breakerView != nil {
+			if retryAt, ok := entry.breakerView.RetryAt(); ok {
+				b.RetryAt = &retryAt
+			}
+		}
 		return "unavailable", b
 	case gobreaker.StateHalfOpen:
 		return "recovering", b

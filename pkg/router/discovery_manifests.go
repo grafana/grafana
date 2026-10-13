@@ -19,6 +19,8 @@ import (
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apiserver/pkg/endpoints"
@@ -57,6 +59,7 @@ type manifestDocs struct {
 	// manifest is held in memory once and never copied into a list buffer.
 	manifests map[string]*cachedDoc
 	items     []*cachedDoc
+	names     []string // each item's name, its group
 	listETag  string
 	listLen   int
 
@@ -188,26 +191,93 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 	}
 }
 
-// serveManifestList writes the AppManifestList from the group documents.
+// serveManifestList writes the AppManifestList from the group documents,
+// filtered by labelSelector and fieldSelector as Kubernetes clients expect.
+// Without either, it serves the precomputed list.
 func serveManifestList(w http.ResponseWriter, req *http.Request, docs *manifestDocs) {
+	items, etag, length := docs.items, docs.listETag, docs.listLen
+	selector, err := parseManifestSelector(req.URL.Query())
+	if err != nil {
+		_ = errhttp.Write(req.Context(), apierrors.NewBadRequest(err.Error()), w)
+		return
+	}
+	if selector != nil {
+		items, length = nil, len(manifestListPrefix)+len(manifestListSuffix)
+		for i, item := range docs.items {
+			if selector.matches(docs.names[i]) {
+				if len(items) > 0 {
+					length++ // the separating comma
+				}
+				items = append(items, item)
+				length += len(item.body)
+			}
+		}
+		etag = quoteETag(hashHex(docs.listETag + "\x00" + selector.String()))
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("ETag", docs.listETag)
-	if req.Header.Get("If-None-Match") == docs.listETag {
+	w.Header().Set("ETag", etag)
+	if req.Header.Get("If-None-Match") == etag {
 		w.WriteHeader(http.StatusNotModified)
 		return
 	}
-	w.Header().Set("Content-Length", strconv.Itoa(docs.listLen))
+	w.Header().Set("Content-Length", strconv.Itoa(length))
 	w.WriteHeader(http.StatusOK)
 	if req.Method != http.MethodHead {
-		_ = docs.writeList(w)
+		_ = writeManifestList(w, items)
 	}
 }
 
+// manifestSelector is a list request's label and field selectors. The
+// objects have no labels, and metadata.name is the only field, as for most
+// Kubernetes resources.
+type manifestSelector struct {
+	labels labels.Selector
+	fields fields.Selector
+}
+
+func parseManifestSelector(query url.Values) (*manifestSelector, error) {
+	labelSelector, fieldSelector := query.Get("labelSelector"), query.Get("fieldSelector")
+	if labelSelector == "" && fieldSelector == "" {
+		return nil, nil
+	}
+	s := &manifestSelector{labels: labels.Everything(), fields: fields.Everything()}
+	var err error
+	if labelSelector != "" {
+		if s.labels, err = labels.Parse(labelSelector); err != nil {
+			return nil, fmt.Errorf("invalid labelSelector: %w", err)
+		}
+	}
+	if fieldSelector != "" {
+		if s.fields, err = fields.ParseSelector(fieldSelector); err != nil {
+			return nil, fmt.Errorf("invalid fieldSelector: %w", err)
+		}
+		for _, r := range s.fields.Requirements() {
+			if r.Field != "metadata.name" {
+				return nil, fmt.Errorf("field label not supported: %s", r.Field)
+			}
+		}
+	}
+	return s, nil
+}
+
+func (s *manifestSelector) matches(name string) bool {
+	return s.labels.Matches(labels.Set(nil)) && s.fields.Matches(fields.Set{"metadata.name": name})
+}
+
+func (s *manifestSelector) String() string {
+	return s.labels.String() + "\x00" + s.fields.String()
+}
+
 func (d *manifestDocs) writeList(w io.Writer) error {
+	return writeManifestList(w, d.items)
+}
+
+func writeManifestList(w io.Writer, items []*cachedDoc) error {
 	if _, err := io.WriteString(w, manifestListPrefix); err != nil {
 		return err
 	}
-	for i, item := range d.items {
+	for i, item := range items {
 		if i > 0 {
 			if _, err := io.WriteString(w, ","); err != nil {
 				return err
@@ -289,6 +359,7 @@ func buildManifestDocsFrom(ctx context.Context, sorted []Backend, cache map[stri
 			docs.listLen++ // the separating comma
 		}
 		docs.items = append(docs.items, doc)
+		docs.names = append(docs.names, b.Group().Name)
 		docs.manifests[b.Group().Name] = doc
 		docs.listLen += len(doc.body)
 		_, _ = io.WriteString(listHash, doc.etag)

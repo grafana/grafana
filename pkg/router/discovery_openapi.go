@@ -121,8 +121,12 @@ func buildDiscoveryOpenAPI(schemas map[string]any) map[string]any {
 				"get": map[string]any{
 					"operationId": "listDiscoveryV1alpha2Manifest",
 					"description": "List the app manifest of every served API group that has one.",
-					"tags":        []string{discoveryGroup + "_" + manifestDiscoveryVersion},
-					"responses":   jsonResponse("OK", "AppManifestList"),
+					"parameters": []map[string]any{
+						{"name": "labelSelector", "in": "query", "description": "Select by label. Manifests have no labels.", "schema": map[string]any{"type": "string"}},
+						{"name": "fieldSelector", "in": "query", "description": "Select by field. Only metadata.name, the API group, is supported.", "schema": map[string]any{"type": "string"}},
+					},
+					"tags":      []string{discoveryGroup + "_" + manifestDiscoveryVersion},
+					"responses": jsonResponse("OK", "AppManifestList"),
 				},
 			},
 			discoveryAgentsMD: map[string]any{
