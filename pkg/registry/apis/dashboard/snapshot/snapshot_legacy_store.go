@@ -81,7 +81,8 @@ func (s *SnapshotLegacyStore) Delete(ctx context.Context, name string, deleteVal
 	// path format (e.g. created with externalSnapshotsK8SAPIPush in the opposite
 	// state), so each branch extracts the host and rebuilds the URL with the
 	// deleteKey in its own expected format.
-	if snap.ExternalDeleteURL != "" && ctx.Value(externalSnapshotDeletedKey{}) == nil {
+	deleteURL, _ := ctx.Value(externalSnapshotDeleteURLKey{}).(string)
+	if snap.ExternalDeleteURL != "" && !sameURLHost(deleteURL, snap.ExternalDeleteURL) {
 		if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
 			parsed, err := url.Parse(snap.ExternalDeleteURL)
 			if err != nil || parsed.Scheme == "" || parsed.Host == "" {

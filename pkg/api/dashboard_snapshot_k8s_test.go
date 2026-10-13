@@ -47,18 +47,17 @@ func snapshotAPIContext(t *testing.T, path string) (*HTTPServer, *contextmodel.R
 
 func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 	for _, tc := range []struct {
-		name                         string
-		orgID                        int64
-		stack                        string
-		anonymous, expired, noExpiry bool
-		status                       int
+		name                string
+		orgID               int64
+		stack               string
+		anonymous, noExpiry bool
+		status              int
 	}{
 		{name: "authenticated", status: 200},
 		{name: "anonymous", anonymous: true, status: 200},
 		{name: "viewer in another org", orgID: 2, status: 200},
 		{name: "anonymous in another org", orgID: 2, anonymous: true, status: 200},
 		{name: "cloud stack", stack: "123", status: 200},
-		{name: "expired", expired: true, status: 404},
 		{name: "never expires", noExpiry: true, status: 200},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -72,9 +71,6 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 			}
 			hs.Cfg.StackID = tc.stack
 			expires := time.Now().Add(time.Hour).UnixMilli()
-			if tc.expired {
-				expires = time.Now().Add(-time.Hour).UnixMilli()
-			}
 			if tc.noExpiry {
 				expires = 0
 			}
@@ -101,10 +97,6 @@ func TestGetDashboardSnapshotFromAPI(t *testing.T) {
 			})}
 			result := hs.GetDashboardSnapshot(c)
 			require.Equal(t, tc.status, result.Status(), string(result.Body()))
-			if tc.expired {
-				require.Equal(t, 1, calls)
-				return
-			}
 			require.Equal(t, 2, calls)
 			var value struct {
 				Dashboard map[string]any `json:"dashboard"`

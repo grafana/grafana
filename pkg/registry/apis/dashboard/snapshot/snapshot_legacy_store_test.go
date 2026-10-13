@@ -148,12 +148,28 @@ func TestSnapshotLegacyStore_Delete_External(t *testing.T) {
 		assert.Equal(t, "/apis/dashboard.grafana.app/v0alpha1/namespaces/default/snapshots/delete/"+deleteKey, receivedReq.URL.Path)
 	})
 
-	t.Run("wrapper already deleted remotely", func(t *testing.T) {
-		store := makeStore(t, "not-a-url")
-		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeletedKey{}, true)
+	t.Run("wrapper already deleted from stored host", func(t *testing.T) {
+		store := makeStore(t, "https://snapshots.example.com/api/snapshots-delete/"+deleteKey)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, "https://snapshots.example.com/new/delete/path")
 		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
 		require.NoError(t, err)
 		require.True(t, deleted)
+	})
+
+	t.Run("wrapper deleted from a different host", func(t *testing.T) {
+		setExternalSnapshotsK8SAPIPushToggle(t, false)
+		called := false
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+			called = true
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+		store := makeStore(t, server.URL+"/api/snapshots-delete/"+deleteKey)
+		ctx := context.WithValue(ctxForOrg(1), externalSnapshotDeleteURLKey{}, "https://new.example.com/api/snapshots-delete/"+deleteKey)
+		_, deleted, err := store.Delete(ctx, "snap-1", nil, &metav1.DeleteOptions{})
+		require.NoError(t, err)
+		require.True(t, deleted)
+		require.True(t, called)
 	})
 
 	t.Run("returns error on invalid ExternalDeleteURL", func(t *testing.T) {

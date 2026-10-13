@@ -3,6 +3,7 @@ package snapshot
 import (
 	"context"
 	"fmt"
+	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
@@ -16,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 )
 
+func snapshotExpired(snap *dashv0.Snapshot) bool {
+	return snap.Spec.Expires != nil && *snap.Spec.Expires > 0 && time.UnixMilli(*snap.Spec.Expires).Before(time.Now())
+}
+
 func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, options *metav1.GetOptions) (runtime.Object, error) {
 	namespace := k8srequest.NamespaceValue(ctx)
 	// Public GET is already authorized; storage reads must not depend on viewer credentials.
@@ -23,13 +28,12 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 	if err != nil {
 		return nil, err
 	}
-	obj, err := getter.Get(lookupCtx, name, options)
-	if (err != nil && !apierrors.IsNotFound(err)) || namespace != "default" {
-		return obj, err
+	if namespace != "default" {
+		return getter.Get(lookupCtx, name, options)
 	}
 	lister, ok := getter.(rest.Lister)
 	if !ok {
-		return obj, err
+		return nil, fmt.Errorf("snapshot storage does not support list")
 	}
 
 	// Default is a public placeholder, not the snapshot's owning namespace.
@@ -40,14 +44,6 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 		Limit:         100,
 	}
 	var match *dashv0.Snapshot
-	if err == nil {
-		resolved, ok := obj.(*dashv0.Snapshot)
-		if !ok {
-			return nil, fmt.Errorf("expected Snapshot, got %T", obj)
-		}
-		// LIST checks for ambiguity; it need not repeat a snapshot already resolved by GET.
-		match = resolved.DeepCopy()
-	}
 	for {
 		obj, listErr := lister.List(lookupCtx, listOptions)
 		if listErr != nil {
@@ -59,7 +55,7 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 			return nil, fmt.Errorf("expected SnapshotList, got %T", obj)
 		}
 		for i := range list.Items {
-			if list.Items[i].Name != name {
+			if list.Items[i].Name != name || snapshotExpired(&list.Items[i]) {
 				continue
 			}
 			if match != nil {
@@ -73,9 +69,6 @@ func getPublicSnapshot(ctx context.Context, getter rest.Getter, name string, opt
 		// Check every page: namespace-local uniqueness does not make a public key unique.
 		if list.Continue == "" {
 			if match == nil {
-				if err != nil {
-					return nil, err
-				}
 				return nil, apierrors.NewNotFound(dashv0.SnapshotResourceInfo.GroupResource(), name)
 			}
 			return match, nil

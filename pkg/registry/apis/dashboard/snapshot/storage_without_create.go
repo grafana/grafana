@@ -159,12 +159,12 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 	// A dry-run must never contact the external host.
 	if !dryrun.IsDryRun(options.DryRun) {
 		// Delete remotely first so failures retain the local delete key for retries.
-		if err := deleteSnapshotFromExternalHost(ctx, snap, n.options); err != nil {
+		deleteURL, err := deleteSnapshotFromExternalHost(ctx, snap, n.options)
+		if err != nil {
 			return nil, false, err
 		}
-		// The dual writer may call legacy Delete, which must not send the same request again.
-		if snap.Spec.External != nil && *snap.Spec.External && snap.Spec.DeleteKey != nil && n.options.ExternalSnapshotURL != "" {
-			lookupCtx = context.WithValue(lookupCtx, externalSnapshotDeletedKey{}, true)
+		if deleteURL != "" {
+			lookupCtx = context.WithValue(lookupCtx, externalSnapshotDeleteURLKey{}, deleteURL)
 		}
 	}
 
@@ -175,21 +175,27 @@ func (n *storageWrapper) Delete(ctx context.Context, name string, deleteValidati
 	return result, deleted, nil
 }
 
-type externalSnapshotDeletedKey struct{}
+type externalSnapshotDeleteURLKey struct{}
 
-func deleteSnapshotFromExternalHost(ctx context.Context, snap *dashv0.Snapshot, options dashv0.SnapshotSharingOptions) error {
+func sameURLHost(first, second string) bool {
+	firstURL, firstErr := url.Parse(first)
+	secondURL, secondErr := url.Parse(second)
+	return firstErr == nil && secondErr == nil && firstURL.Host != "" && strings.EqualFold(firstURL.Host, secondURL.Host)
+}
+
+func deleteSnapshotFromExternalHost(ctx context.Context, snap *dashv0.Snapshot, options dashv0.SnapshotSharingOptions) (string, error) {
 	if snap.Spec.External == nil || !*snap.Spec.External || snap.Spec.DeleteKey == nil || options.ExternalSnapshotURL == "" {
-		return nil
+		return "", nil
 	}
 	if openfeature.NewDefaultClient().Boolean(ctx, featuremgmt.FlagExternalSnapshotsK8SAPIPush, false, openfeature.TransactionContext(ctx)) {
 		prefix := dashv0.SnapshotResourceInfo.GroupResource().Resource
 		deleteURL := strings.TrimRight(options.ExternalSnapshotURL, "/") +
 			"/apis/" + dashv0.GROUP + "/" + dashv0.VERSION + "/namespaces/default/" +
 			prefix + "/delete/" + *snap.Spec.DeleteKey
-		return deleteExternalSnapshot(deleteURL, options.ExternalSnapshotToken)
+		return deleteURL, deleteExternalSnapshot(deleteURL, options.ExternalSnapshotToken)
 	}
 	deleteURL := strings.TrimRight(options.ExternalSnapshotURL, "/") + "/api/snapshots-delete/" + *snap.Spec.DeleteKey
-	return deleteExternalSnapshotLegacy(deleteURL)
+	return deleteURL, deleteExternalSnapshotLegacy(deleteURL)
 }
 
 // stripSensitiveFields returns a copy of the Snapshot with deleteKey and dashboard removed from the spec.

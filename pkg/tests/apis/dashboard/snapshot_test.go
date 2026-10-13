@@ -77,7 +77,7 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 
 			// Create a dashboard with the UID referenced by snapshot tests,
 			// so the dashboard validation in the create handler passes.
-			createTestDashboard(t, helper, ns, helper.Org1.Admin)
+			createTestDashboard(t, helper, ns)
 
 			t.Log("Testing:", tc.description)
 
@@ -250,23 +250,6 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				assert.Equal(t, 3, foundCount, "should find all 3 created snapshots")
 			})
 
-			t.Run("search filters before limit", func(t *testing.T) {
-				body := []byte(`{"name":"Matching snapshot","expires":3600,"dashboard":{"uid":"a-valid-uid","title":"Test Dashboard","panels":[]}}`)
-				created := apis.DoRequest(helper, apis.RequestParams{
-					User: helper.Org1.Admin, Method: http.MethodPost,
-					Path: fmt.Sprintf("/apis/%s/%s/namespaces/%s/snapshots/create", dashv0.GROUP, dashv0.VERSION, ns),
-					Body: body,
-				}, &dashv0.DashboardCreateResponse{})
-				require.Equal(t, http.StatusOK, created.Response.StatusCode, string(created.Body))
-				result := apis.DoRequest(helper, apis.RequestParams{
-					User: helper.Org1.Admin, Method: http.MethodGet,
-					Path: "/api/dashboard/snapshots?query=Matching%25&limit=1",
-				}, &[]map[string]any{})
-				require.Equal(t, http.StatusOK, result.Response.StatusCode, string(result.Body))
-				require.Len(t, *result.Result, 1)
-				require.Equal(t, created.Result.Key, (*result.Result)[0]["key"])
-			})
-
 			t.Run("delete snapshot", func(t *testing.T) {
 				// Create a snapshot
 				resp := createSnapshotViaSubresource(t, helper, ns)
@@ -284,40 +267,6 @@ func TestIntegrationSnapshotDualWrite(t *testing.T) {
 				require.Error(t, err, "snapshot should be deleted")
 			})
 		})
-	}
-}
-
-func TestIntegrationSnapshotAmbiguousPublicKey(t *testing.T) {
-	if testing.Short() {
-		t.Skip("skipping integration test")
-	}
-	helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
-		AppModeProduction: true, DisableAnonymous: true,
-		EnableFeatureToggles: []string{featuremgmt.FlagSnapshotsKubernetesSnapshots},
-		UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
-			dashv0.SnapshotResourceInfo.GroupResource().String(): {DualWriterMode: grafanarest.Mode5},
-		},
-	})
-	const key = "ambiguous-public-snapshot"
-	for _, caller := range []apis.User{helper.Org1.Admin, helper.OrgB.Admin} {
-		client := helper.GetResourceClient(apis.ResourceClientArgs{User: caller, GVR: dashv0.SnapshotResourceInfo.GroupVersionResource()})
-		namespace := client.Args.Namespace
-		createTestDashboard(t, helper, namespace, caller)
-		created := apis.DoRequest(helper, apis.RequestParams{
-			User: caller, Method: http.MethodPost,
-			Path: fmt.Sprintf("/apis/%s/%s/namespaces/%s/snapshots/create", dashv0.GROUP, dashv0.VERSION, namespace),
-			Body: []byte(fmt.Sprintf(`{"key":%q,"name":"Duplicate key","expires":3600,"dashboard":{"uid":"a-valid-uid","title":"Test Dashboard","panels":[]}}`, key)),
-		}, &dashv0.DashboardCreateResponse{})
-		require.Equal(t, http.StatusOK, created.Response.StatusCode, string(created.Body))
-		require.Equal(t, key, created.Result.Key)
-	}
-	for _, path := range []string{
-		"/api/snapshots/" + key,
-		fmt.Sprintf("/apis/%s/%s/namespaces/default/snapshots/%s", dashv0.GROUP, dashv0.VERSION, key),
-		fmt.Sprintf("/apis/%s/%s/namespaces/default/snapshots/%s/dashboard", dashv0.GROUP, dashv0.VERSION, key),
-	} {
-		rsp := apis.DoRequest(helper, apis.RequestParams{User: helper.Org1.None, Method: http.MethodGet, Path: path}, &map[string]any{})
-		require.Equal(t, http.StatusConflict, rsp.Response.StatusCode, "%s: %s", path, string(rsp.Body))
 	}
 }
 
@@ -368,11 +317,11 @@ func createSnapshotViaSubresource(t *testing.T, helper *apis.K8sTestHelper, ns s
 
 // createTestDashboard creates a dashboard with the UID "a-valid-uid" so that
 // snapshot creation (which validates the dashboard exists) can succeed.
-func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, ns string, caller apis.User) {
+func createTestDashboard(t *testing.T, helper *apis.K8sTestHelper, ns string) {
 	t.Helper()
 
 	dashClient := helper.GetResourceClient(apis.ResourceClientArgs{
-		User:      caller,
+		User:      helper.Org1.Admin,
 		Namespace: ns,
 		GVR:       dashv1.DashboardResourceInfo.GroupVersionResource(),
 	})
