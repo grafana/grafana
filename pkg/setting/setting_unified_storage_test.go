@@ -10,6 +10,19 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestBlobGarbageCollectionDefaultsAndOverrides(t *testing.T) {
+	cfg := NewCfg()
+	cfg.setUnifiedStorageConfig()
+	require.False(t, cfg.BlobGarbageCollectionEnabled)
+	require.True(t, cfg.BlobGarbageCollectionDryRun)
+
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_enabled").SetValue("true")
+	cfg.Raw.Section("unified_storage").Key("blob_garbage_collection_dry_run").SetValue("false")
+	cfg.setUnifiedStorageConfig()
+	require.True(t, cfg.BlobGarbageCollectionEnabled)
+	require.False(t, cfg.BlobGarbageCollectionDryRun)
+}
+
 func TestResourceVersionMaxWait(t *testing.T) {
 	for _, tc := range []struct {
 		name  string

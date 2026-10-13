@@ -24,16 +24,19 @@ func (b *backend) collectBlobs(ctx context.Context) {
 			store, err = kv.NewSQLKV(b.db.SqlDB(), b.db.DriverName())
 		}
 		if err != nil {
+			b.blobGCMetrics.Record(0, true, err)
 			b.log.Error("initializing blob garbage collection", "error", err)
 			return
 		}
 		b.blobGC = resource.NewBlobGarbageCollector(store, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
 	}
-	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, b.garbageCollection.DryRun, b.blobReferenced)
+	dryRun := b.garbageCollection.DryRun || b.garbageCollection.BlobDryRun
+	count, err := b.blobGC.Collect(ctx, time.Now(), b.garbageCollection.MaxAge, dryRun, b.blobReferenced)
+	b.blobGCMetrics.Record(count, dryRun, err)
 	if err != nil {
 		b.log.Error("blob garbage collection failed", "error", err)
 	}
-	b.log.Info("blob garbage collection finished", "blobs", count, "dryRun", b.garbageCollection.DryRun)
+	b.log.Info("blob garbage collection finished", "blobs", count, "dryRun", dryRun)
 }
 
 func (b *backend) blobReferenced(ctx context.Context, blob kv.BlobKey) (bool, error) {

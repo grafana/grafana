@@ -52,6 +52,8 @@ const defaultGarbageCollectionBatchWait = 1 * time.Second
 type GarbageCollectionConfig struct {
 	Enabled          bool
 	DryRun           bool
+	BlobEnabled      bool
+	BlobDryRun       bool
 	Interval         time.Duration // how often the process runs
 	BatchSize        int           // max number of candidates to delete (unique NGR)
 	BatchWait        time.Duration // wait between batches to avoid overwhelming the datastore
@@ -65,6 +67,8 @@ func NewGarbageCollectionConfig(cfg *setting.Cfg) GarbageCollectionConfig {
 	return GarbageCollectionConfig{
 		Enabled:          cfg.EnableGarbageCollection,
 		DryRun:           cfg.GarbageCollectionDryRun,
+		BlobEnabled:      cfg.BlobGarbageCollectionEnabled,
+		BlobDryRun:       cfg.BlobGarbageCollectionDryRun,
 		Interval:         cfg.GarbageCollectionInterval,
 		BatchSize:        cfg.GarbageCollectionBatchSize,
 		BatchWait:        cfg.GarbageCollectionBatchWait,
@@ -363,6 +367,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		batchTxnTimeout:         opts.BatchTransactionTimeout,
 		garbageCollection:       garbageCollection,
+		blobGCMetrics:           resource.NewBlobGCMetricsIfEnabled(opts.Reg, "sql", garbageCollection.Enabled && garbageCollection.BlobEnabled),
 		blobURL:                 opts.BlobURL,
 		gcGate:                  opts.GCGate,
 		logCalls:                opts.LogCalls,
@@ -429,6 +434,7 @@ type backend struct {
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
 	blobGC            *resource.BlobGarbageCollector
+	blobGCMetrics     *resource.BlobGCMetrics
 	blobURL           string
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
@@ -633,7 +639,9 @@ func (b *backend) initGarbageCollection(ctx context.Context) error {
 }
 
 func (b *backend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) map[string]int64 {
-	defer b.collectBlobs(ctx)
+	if b.garbageCollection.BlobEnabled {
+		defer b.collectBlobs(ctx)
+	}
 	ctx, span := tracer.Start(ctx, "sql.backend.runGarbageCollection")
 	defer span.End()
 	start := time.Now()

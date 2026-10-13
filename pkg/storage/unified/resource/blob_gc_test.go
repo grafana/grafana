@@ -82,6 +82,33 @@ func TestBlobGarbageCollector(t *testing.T) {
 	}
 }
 
+func TestKVBlobGCOptInAndDryRun(t *testing.T) {
+	b := setupTestStorageBackend(t)
+	key := kv.BlobKey{Group: "group", Resource: "resource", Namespace: "default", Name: "snap", UID: "unreferenced"}
+	writer, err := b.kv.Save(t.Context(), kv.BlobDataSection, key.String())
+	require.NoError(t, err)
+	_, err = writer.Write([]byte("image"))
+	require.NoError(t, err)
+	require.NoError(t, writer.Close())
+
+	b.garbageCollection.MaxAge = time.Nanosecond
+	b.runGarbageCollection(t.Context(), time.Now().UnixMicro())
+	require.Nil(t, b.blobGC)
+
+	b.garbageCollection.BlobEnabled = true
+	b.garbageCollection.BlobDryRun = true
+	b.collectBlobs(t.Context())
+	b.collectBlobs(t.Context())
+	reader, err := b.kv.Get(t.Context(), kv.BlobDataSection, key.String())
+	require.NoError(t, err)
+	require.NoError(t, reader.Close())
+
+	b.garbageCollection.BlobDryRun = false
+	b.collectBlobs(t.Context())
+	_, err = b.kv.Get(t.Context(), kv.BlobDataSection, key.String())
+	require.ErrorIs(t, err, kv.ErrNotFound)
+}
+
 func TestBlobGCPreservesProvisioningPreviewURL(t *testing.T) {
 	store := setupBadgerKV(t)
 	key := kv.BlobKey{Group: "provisioning.grafana.app", Resource: "repositories", Namespace: "default", Name: "repo", UID: "preview"}

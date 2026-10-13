@@ -10,12 +10,23 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestBlobGCConfig(t *testing.T) {
+	cfg := setting.NewCfg()
+	require.False(t, NewGarbageCollectionConfig(cfg).BlobEnabled)
+	cfg.BlobGarbageCollectionEnabled = true
+	cfg.BlobGarbageCollectionDryRun = true
+	gc := NewGarbageCollectionConfig(cfg)
+	require.True(t, gc.BlobEnabled)
+	require.True(t, gc.BlobDryRun)
+}
 
 func TestIntegrationExternalBlobGarbageCollection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)
