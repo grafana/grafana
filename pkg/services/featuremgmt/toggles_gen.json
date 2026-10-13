@@ -2552,6 +2552,20 @@
     },
     {
       "metadata": {
+        "name": "grafana.dashboardComposer",
+        "resourceVersion": "1791929842356",
+        "creationTimestamp": "2026-10-13T22:17:22Z"
+      },
+      "spec": {
+        "description": "Enables Composer mode for editing dashboards with Grafana Assistant",
+        "stage": "experimental",
+        "codeowner": "@grafana/dashboards-squad",
+        "frontend": true,
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "grafana.dashboardGlobalVariables",
         "resourceVersion": "1789554268270",
         "creationTimestamp": "2026-08-05T08:40:28Z"
