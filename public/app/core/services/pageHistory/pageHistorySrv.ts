@@ -1,5 +1,6 @@
 import { type Location } from 'history';
 import { throttle } from 'lodash';
+import { distinctUntilChanged } from 'rxjs';
 import * as z from 'zod';
 
 import { locationService } from '@grafana/runtime';
@@ -59,25 +60,16 @@ function toStored({ pathname, search, lastVisited, title }: PageHistoryEntry): S
 }
 
 /**
- * Whether `candidate` is the later revision of the page `existing` describes. A later visit wins; between equal
- * visits a titled row beats an untitled one, since the title arrives after the visit and carries no time of its
- * own; otherwise `existing` stays.
- */
-function supersedes(candidate: PageHistoryEntry, existing: PageHistoryEntry): boolean {
-  const byVisit = (candidate.lastVisited ?? 0) - (existing.lastVisited ?? 0);
-  return byVisit !== 0 ? byVisit > 0 : Boolean(candidate.title) && !existing.title;
-}
-
-/**
- * Per page, keeps the later revision (`supersedes`); `current` is seen first, so it wins exact ties. Result is
- * newest first; rows without a time come last in their given order.
+ * Per page, keeps the latest revision; `current` is seen first, so it wins an exact tie, which only two tabs
+ * stamping the same millisecond can produce. Result is newest first; rows without a time come last in their
+ * given order.
  */
 function mergeByPage(current: PageHistoryEntry[], stored: PageHistoryEntry[]): PageHistoryEntry[] {
   const byKey = new Map<string, PageHistoryEntry>();
   for (const entry of [...current, ...stored]) {
     const key = pageKey(entry);
     const existing = byKey.get(key);
-    if (!existing || supersedes(entry, existing)) {
+    if (!existing || (entry.lastVisited ?? 0) > (existing.lastVisited ?? 0)) {
       byKey.set(key, entry);
     }
   }
@@ -140,6 +132,8 @@ export class PageHistorySrv {
   private entries: PageHistoryEntry[] = [];
   /** Epoch ms of the last clear seen from any tab; rows visited at or before it are dropped. */
   private clearedAt = 0;
+  /** Largest stamp seen so far, from this tab or the stored copy; `now()` goes past it. */
+  private latest = 0;
   /** Memory holds a change that storage has not confirmed. */
   private dirty = false;
   private readonly storage = new UserStorage(STORAGE_SERVICE);
@@ -164,8 +158,11 @@ export class PageHistorySrv {
     const unlisten = locationService
       .getHistory()
       .listen((location, action) => this.apply(location, action === 'REPLACE' && isUrlRewrite(location.state)));
-    // Pages set their nav after they render, so the title arrives after the navigation was recorded.
-    const chromeSubscription = chrome.state.subscribe((state) => this.setTitle(getPageTitle(state)));
+    // Pages set their nav after they render, so the title arrives after the navigation was recorded. Only a nav
+    // change is a page setting its nav; other chrome updates keep the previous page's nav objects.
+    const chromeSubscription = chrome.state
+      .pipe(distinctUntilChanged((a, b) => a.sectionNav === b.sectionNav && a.pageNav === b.pageNav))
+      .subscribe((state) => this.setTitle(getPageTitle(state)));
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden' && this.dirty) {
         void this.writeNow();
@@ -234,6 +231,7 @@ export class PageHistorySrv {
 
   /** Folds the stored copy into memory: the latest clear wins and drops the rows it predates; rows merge by page. */
   private absorb(snapshot: Snapshot): void {
+    this.latest = Math.max(this.latest, snapshot.clearedAt, ...snapshot.entries.map((entry) => entry.lastVisited ?? 0));
     this.clearedAt = Math.max(this.clearedAt, snapshot.clearedAt);
     this.entries = capEntries(
       mergeByPage(this.entries, snapshot.entries).filter(
@@ -278,27 +276,24 @@ export class PageHistorySrv {
     }
 
     // Hash deliberately ignored. Query churn refreshes the search and moves the row to the top.
-    const entry: PageHistoryEntry = {
-      ...page,
-      search: recordableSearch(page, location.search),
-      lastVisited: this.now(),
-      // Kept until the page sets its nav again, in case the user leaves before it does.
-      title: existing?.title,
-    };
-    // A URL too large to store is not recorded; the page's earlier row, if any, stays as it was.
-    if (!fitsEntryCap(toStored(entry))) {
-      return;
-    }
-    this.entries = capEntries([entry, ...this.entries.filter((other) => other !== existing)]);
-    this.persist();
+    this.upsert(
+      {
+        ...page,
+        search: recordableSearch(page, location.search),
+        lastVisited: this.now(),
+        // Kept until the page sets its nav again, in case the user leaves before it does.
+        title: existing?.title,
+      },
+      existing
+    );
   }
 
   /**
-   * Stamps the chrome's title onto the row of the page the user is on, if that page has one. The chrome does
-   * not say which page set its nav, and keeps the previous page's nav across a navigation within one route
-   * (dashboard to dashboard, one app page to another), so a new row can briefly carry the previous page's title;
-   * the page's own nav replaces it once set. A title that would push the row over the size cap is dropped and
-   * the row keeps its URL.
+   * Stamps the chrome's title onto the row of the page the user is on, if that page has one, as a new revision
+   * of that row. The chrome does not say which page a nav belongs to and keeps the previous page's nav across a
+   * navigation within one route (dashboard to dashboard, one app page to another), so a new row stays untitled
+   * until its own page sets its nav. A nav the departed page sets after the navigation still lands on the new
+   * row; the page's own nav replaces it once set.
    */
   private setTitle(title: string | undefined): void {
     if (!title) {
@@ -307,25 +302,35 @@ export class PageHistorySrv {
     const { pathname, search } = locationService.getLocation();
     const page = classifyPage(pathname, search);
     const key = page && pageKey(page);
-    const index = key ? this.entries.findIndex((entry) => pageKey(entry) === key) : -1;
-    if (index === -1 || this.entries[index].title === title) {
+    const existing = key ? this.entries.find((entry) => pageKey(entry) === key) : undefined;
+    if (!existing || existing.title === title) {
       return;
     }
-    const titled = { ...this.entries[index], title };
-    if (!fitsEntryCap(toStored(titled))) {
+    // A title is a revision of the row: it takes a new stamp, so a tab holding the older title loses the merge.
+    this.upsert({ ...existing, title, lastVisited: this.now() }, existing);
+  }
+
+  /**
+   * Puts `entry` at the top in place of `existing`. An entry too large to store is not recorded, so a URL over
+   * the cap leaves the page's earlier row as it was and a title that pushes a row over the cap is dropped.
+   */
+  private upsert(entry: PageHistoryEntry, existing: PageHistoryEntry | undefined): void {
+    if (!fitsEntryCap(toStored(entry))) {
       return;
     }
-    this.entries = this.entries.map((entry, i) => (i === index ? titled : entry));
+    this.entries = capEntries([entry, ...this.entries.filter((other) => other !== existing)]);
     this.persist();
   }
 
   /**
-   * Revision stamp for a change made now: the wall clock, but always past the last clear seen. A device whose
-   * clock lags the one that cleared would otherwise record visits the clear predates, and they would vanish on
-   * every sync until its clock caught up.
+   * Revision stamp for a change made now: the wall clock, but past every stamp seen (visits, titles and clears,
+   * from any tab), so a local change always wins the merge and a title stamped in the same millisecond as its
+   * visit is still the later revision. A device whose clock lags one that cleared would otherwise record visits
+   * the clear predates, and they would vanish on every sync until its clock caught up.
    */
   private now(): number {
-    return Math.max(Date.now(), this.clearedAt + 1);
+    this.latest = Math.max(Date.now(), this.latest + 1);
+    return this.latest;
   }
 
   /** Something changed: written at the end of the current window. */

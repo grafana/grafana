@@ -219,9 +219,10 @@ describe('PageHistorySrv', () => {
     locationService.push('/alerting/list?search=x');
     locationService.push('/dashboards');
 
+    // Every stamp goes past the previous one, even within a millisecond.
     expect(await srv.getEntries()).toEqual([
-      { kind: 'alerting', pathname: '/alerting/list', search: '?search=x', lastVisited: T0 },
-      { kind: 'app', pathname: '/a/grafana-irm-app/incidents', search: '', lastVisited: T0 },
+      { kind: 'alerting', pathname: '/alerting/list', search: '?search=x', lastVisited: T0 + 2 },
+      { kind: 'app', pathname: '/a/grafana-irm-app/incidents', search: '', lastVisited: T0 + 1 },
       { kind: 'app', pathname: '/a/grafana-irm-app/incidents/5987', search: '?x=1', lastVisited: T0 },
     ]);
   });
@@ -245,16 +246,17 @@ describe('PageHistorySrv', () => {
     ]);
 
     await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
+    // A title is a revision of its row: it takes a new stamp.
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({
       clearedAt: 0,
       entries: [
-        { pathname: '/alerting/grafana/abc/view', search: '', lastVisited: T0, title: 'High CPU' },
-        { pathname: '/alerting/list', search: '', lastVisited: T0, title: 'Alert rules' },
+        { pathname: '/alerting/grafana/abc/view', search: '', lastVisited: T0 + 3, title: 'High CPU' },
+        { pathname: '/alerting/list', search: '', lastVisited: T0 + 1, title: 'Alert rules' },
       ],
     });
   });
 
-  it('carries the previous page title onto a new row within one route until the new page sets its nav', async () => {
+  it('leaves a new row within one route untitled until its own page sets its nav', async () => {
     const srv = startAt('/a/grafana-irm-app/incidents/1');
     await srv.getEntries();
     // Both incident pages match `/a/:pluginId/*`, so the chrome keeps the first page's nav across the navigation.
@@ -262,11 +264,14 @@ describe('PageHistorySrv', () => {
     renderPage('Incidents', 'IRM', 'Incident 1');
 
     locationService.push('/a/grafana-irm-app/incidents/2');
-    chrome.setMegaMenuOpen(true); // any chrome change before the new page renders
+    chrome.setMegaMenuOpen(true); // a chrome change before the new page renders is not the new page's nav
 
-    expect((await srv.getEntries())[0]).toEqual(
-      expect.objectContaining({ pathname: '/a/grafana-irm-app/incidents/2', title: 'Incident 1' })
-    );
+    expect((await srv.getEntries())[0]).toEqual({
+      kind: 'app',
+      pathname: '/a/grafana-irm-app/incidents/2',
+      search: '',
+      lastVisited: T0 + 2,
+    });
 
     renderPage('Incidents', 'IRM', 'Incident 2');
 
@@ -367,7 +372,7 @@ describe('PageHistorySrv', () => {
     await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
 
     const expected: PageHistoryEntry[] = [
-      { kind: 'dashboard', uid: 'a', pathname: '/d/a', search: '', lastVisited: T0 },
+      { kind: 'dashboard', uid: 'a', pathname: '/d/a', search: '', lastVisited: T0 + 1 },
       { kind: 'alerting', pathname: '/alerting/list', search: '', lastVisited: T0 },
       { kind: 'dashboard', uid: 'b', pathname: '/d/b', search: '', lastVisited: T0 - 1 },
     ];
@@ -375,23 +380,22 @@ describe('PageHistorySrv', () => {
     expect(await srv.getEntries()).toEqual(expected);
   });
 
-  it('keeps the title another browser stored for a visit this tab holds untitled', async () => {
-    const untitled = { pathname: '/alerting/list', search: '', lastVisited: T0 };
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ clearedAt: 0, entries: [untitled] }));
+  it('adopts the later revision another browser stored for a page this tab holds', async () => {
+    const visit = { pathname: '/alerting/list', search: '', lastVisited: T0 };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ clearedAt: 0, entries: [visit] }));
     const srv = startAt('/');
     await srv.getEntries();
-    // The other browser's page set its nav and it wrote the title.
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ clearedAt: 0, entries: [{ ...untitled, title: 'Alert rules' }] })
-    );
+    // The other browser's page set its nav: a new revision of the same row.
+    const titled = { ...visit, title: 'Alert rules', lastVisited: T0 + 1 };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ clearedAt: 0, entries: [titled] }));
 
+    jest.setSystemTime(T1);
     locationService.push('/d/x');
     await jest.advanceTimersByTimeAsync(PAGE_HISTORY_PERSIST_MS);
 
     expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!).entries).toEqual([
-      { pathname: '/d/x', search: '', lastVisited: T0 },
-      { ...untitled, title: 'Alert rules' },
+      { pathname: '/d/x', search: '', lastVisited: T1 },
+      titled,
     ]);
   });
 
@@ -465,7 +469,21 @@ describe('PageHistorySrv', () => {
     });
   });
 
-  it('clears from a device whose clock lags the last clear', async () => {
+  it('clears the rows it has seen from a device whose clock is ahead', async () => {
+    const srv = startAt('/');
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ clearedAt: 0, entries: [{ pathname: '/d/ahead', search: '', lastVisited: T2 }] })
+    );
+    expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/d/ahead']); // seen while this clock reads T0
+
+    await srv.clear();
+
+    expect(await srv.getEntries()).toEqual([]);
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({ clearedAt: T2 + 1, entries: [] });
+  });
+
+  it('clears from a device whose clock lags the last clear, past the rows it has seen', async () => {
     const srv = startAt('/');
     window.localStorage.setItem(
       STORAGE_KEY,
@@ -473,10 +491,10 @@ describe('PageHistorySrv', () => {
     );
     expect((await srv.getEntries()).map((e) => e.pathname)).toEqual(['/d/abc']);
 
-    await srv.clear(); // this clock reads T0, before the clear already stored
+    await srv.clear(); // this clock reads T0, before the clear and the visit already stored
 
     expect(await srv.getEntries()).toEqual([]);
-    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({ clearedAt: T1 + 1, entries: [] });
+    expect(JSON.parse(window.localStorage.getItem(STORAGE_KEY)!)).toEqual({ clearedAt: T1 + 2, entries: [] });
   });
 
   it('keeps a failed write in memory and retries it with the next change or when the tab is hidden', async () => {

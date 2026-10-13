@@ -17,8 +17,8 @@ export type PageHistoryEntry = PageIdentity & {
   /** Newest `location.search` seen for this page (`''` or `?...`), so a row links back to the exact state. */
   search: string;
   /**
-   * Epoch ms of the last visit or in-page URL update. Absent on rows seeded from the recently-viewed
-   * impressions, which carry no time.
+   * Epoch ms of the row's last revision: a visit, an in-page URL update or the page setting its title. Absent on
+   * rows seeded from the recently-viewed impressions, which carry no time.
    */
   lastVisited?: number;
   /** The title the page gave the chrome (its `pageNav` text, else its section's); absent until the page sets its nav. */
