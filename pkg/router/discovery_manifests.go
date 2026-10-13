@@ -540,10 +540,22 @@ func (r relativeLinksRenderer) RenderNode(w io.Writer, node *blackfriday.Node, e
 	return r.HTMLRenderer.RenderNode(w, node, entering)
 }
 
-// isRelativePath reports whether target is a path on this server. "//host"
-// and "/\\host" are excluded: browsers read both as another host.
+// isRelativePath reports whether target is a path on this server: a single
+// leading "/", and nothing but printable ASCII other than space and
+// backslash. Browsers read "//host" and "/\\host" as another host, and drop
+// tabs and line breaks before parsing, so "/\t/host" means "//host"; any such
+// character fails the check, wherever it is. The index URL-escapes every
+// target, so its own links always pass.
 func isRelativePath(target string) bool {
-	return strings.HasPrefix(target, "/") && !strings.HasPrefix(target, "//") && !strings.HasPrefix(target, "/\\")
+	if len(target) < 1 || target[0] != '/' || (len(target) > 1 && target[1] == '/') {
+		return false
+	}
+	for i := 0; i < len(target); i++ {
+		if c := target[i]; c <= ' ' || c > '~' || c == '\\' {
+			return false
+		}
+	}
+	return true
 }
 
 // mdEscaper backslash-escapes the characters that are active inside a markdown

@@ -458,6 +458,27 @@ func TestRenderIndexHTMLKeepsOnlyRelativeLinks(t *testing.T) {
 	require.Equal(t, "[`/a`](/a)", mdLink("/a", "/a"))
 }
 
+func TestIsRelativePath(t *testing.T) {
+	for _, target := range []string{"/", "/apis/x", "/openapi/v3/apis/a%28b%29%20c/v1?hash=p%3Aabc", "/apis/discovery/v1alpha2/manifests/x.ext.grafana.app"} {
+		require.True(t, isRelativePath(target), target)
+	}
+	for _, target := range []string{
+		"", "apis/x", "https://evil.example", "//evil.example", "/\\evil.example",
+		// Browsers drop tabs and line breaks, so each of these means //evil.example or /\evil.example.
+		"/\t/evil.example", "/\n/evil.example", "/\r/evil.example", "/\r\n\\evil.example",
+		"/ /evil.example", "/x\x00", "/x\x7f", "/é",
+	} {
+		require.False(t, isRelativePath(target), "%q", target)
+	}
+
+	// Nor can a literal, referenced or escaped tab, line break or backslash
+	// after the slash produce a link through the renderer.
+	page := string(renderIndexHTML([]byte("[a](/\t/evil.example/a) [b](/&#9;/evil.example/b) [c](/&#10;&#92;evil.example/c) [d](/%09/evil.example/d) [ok](/apis/x)")))
+	hrefs := regexp.MustCompile(`href="([^"]*)"`).FindAllStringSubmatch(page, -1)
+	require.Len(t, hrefs, 1, page)
+	require.Equal(t, "/apis/x", hrefs[0][1])
+}
+
 func TestIndexLinksEscapeNamesAndKeys(t *testing.T) {
 	odd := &fakeBackend{key: "k) [x](https://evil.example)", group: testAPIGroup("a(b) c", "v1")}
 	index := renderManifestIndex([]Backend{odd}, nil)
