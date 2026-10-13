@@ -245,3 +245,81 @@ func TestSQLServiceErrors(t *testing.T) {
 		require.Equal(t, 1.0, counterVal(t, s.metrics.SqlCommandCount, "error", sql.ErrCategoryQueryTooLong))
 	})
 }
+
+// newDSAndSQLQueries returns one "test" data source query per refID, plus an
+// SQL expression "S" with the given format ("" for panels, "alerting" for alerts).
+func newDSAndSQLQueries(t *testing.T, sqlQuery, format string, dsRefIDs ...string) []Query {
+	t.Helper()
+	escaped, err := json.Marshal(sqlQuery)
+	require.NoError(t, err)
+	queries := make([]Query, 0, len(dsRefIDs)+1)
+	for _, refID := range dsRefIDs {
+		queries = append(queries, Query{
+			RefID:      refID,
+			DataSource: &datasources.DataSource{OrgID: 1, UID: "test", Type: "test"},
+			JSON:       json.RawMessage(`{ "datasource": { "uid": "1" }, "intervalMs": 1000, "maxDataPoints": 1000 }`),
+			TimeRange:  AbsoluteTimeRange{},
+		})
+	}
+	queries = append(queries, Query{
+		RefID:      "S",
+		DataSource: dataSourceModel(),
+		JSON:       json.RawMessage(fmt.Sprintf(`{ "datasource": { "uid": "__expr__", "type": "__expr__"}, "type": "sql", "expression": %s, "format": %q }`, escaped, format)),
+		TimeRange:  AbsoluteTimeRange{},
+	})
+	return queries
+}
+
+func TestSQLServiceZeroRowNumericWide(t *testing.T) {
+	// A filter that matches no rows can produce a zero-row frame that is
+	// still declared numeric-wide.
+	zeroRowWide := func() *data.Frame {
+		return data.NewFrame("",
+			data.NewField("name", nil, []string{}),
+			data.NewField("age", nil, []int64{}),
+			data.NewField("salary", nil, []float64{}),
+		).SetMeta(&data.FrameMeta{Type: data.FrameTypeNumericWide})
+	}
+	sibling := data.NewFrame("",
+		data.NewField("time", nil, []time.Time{time.Unix(1, 0)}),
+		data.NewField("value", nil, []float64{1}),
+	)
+
+	for _, tc := range []struct {
+		name   string
+		format string
+	}{
+		{name: "panel", format: ""},
+		{name: "alerting", format: "alerting"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := map[string]backend.DataResponse{
+				"A": {Frames: data.Frames{zeroRowWide()}},
+				"C": {Frames: data.Frames{sibling}},
+			}
+			s, req := newMockQueryService(resp, newDSAndSQLQueries(t, "SELECT * FROM A", tc.format, "A", "C"))
+			s.features = featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)
+
+			pl, err := s.BuildPipeline(t.Context(), req)
+			require.NoError(t, err)
+
+			rsp, err := s.ExecutePipeline(t.Context(), time.Now(), pl)
+			require.NoError(t, err)
+
+			require.NoError(t, rsp.Responses["A"].Error)
+			require.NoError(t, rsp.Responses["S"].Error)
+			require.Len(t, rsp.Responses["S"].Frames, 1)
+			out := rsp.Responses["S"].Frames[0]
+			require.Equal(t, 0, out.Rows())
+			names := make([]string, 0, len(out.Fields))
+			for _, f := range out.Fields {
+				names = append(names, f.Name)
+			}
+			require.Equal(t, []string{SQLMetricFieldName, SQLValueFieldName}, names)
+
+			require.NoError(t, rsp.Responses["C"].Error)
+			require.Len(t, rsp.Responses["C"].Frames, 1)
+			require.Equal(t, 1, rsp.Responses["C"].Frames[0].Rows())
+		})
+	}
+}
