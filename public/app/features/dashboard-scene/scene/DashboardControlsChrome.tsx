@@ -45,8 +45,7 @@ function getStyles(
   visualRefreshEnabled: boolean,
   newLayoutsEnabled: boolean
 ) {
-  // keep a strip of the dashboard reachable when the controls are taller than viewport
-  // makes controls scrollable
+  // Scroll the controls when they'd be taller than the viewport, so part of the dashboard stays visible.
   const heightCap = {
     maxHeight: `calc(100dvh - ${headerHeight}px - max(20dvh, 200px))`,
     overflowY: 'auto',
@@ -60,10 +59,7 @@ function getStyles(
         // scrollContainer in DashboardSidebarSplitter), so the bar must paint over that strip on
         // every viewport: opaque background plus its own paint order.
         position: 'relative',
-        // The canvas wrapper next to us is also z-index 1 and comes later in DOM order, so it wins the
-        // tie and paints over the time picker and variable overlays, which render inside this wrapper.
-        // Enough to clear it, and low enough to stay under the fixed app top bar that the controls row
-        // scrolls past on narrow viewports.
+        // Above the canvas wrapper (z-index 1, later in the DOM), below the fixed app top bar.
         zIndex: 2,
         background: visualRefreshEnabled ? theme.colors.background.page : theme.colors.background.canvas,
         [theme.breakpoints.up('md')]: {
@@ -71,11 +67,11 @@ function getStyles(
           // above docked dashboard edit Sidebar (zIndex navBarFixed); otherwise time picker popover stays under it.
           zIndex: theme.zIndex.sidemenu,
           top: headerHeight,
-          // Legacy only needs the cap where the bar is sticky; below md it scrolls away with the page.
+          // Legacy only needs the cap while sticky.
           ...heightCap,
         },
       },
-      // New layouts keep the bar outside the scrolling body at every width, so the cap always applies.
+      // New layouts never scroll the bar away, so the cap applies at every width.
       newLayoutsEnabled && heightCap,
       visualRefreshEnabled && {
         borderTopLeftRadius: getInternalRadius(theme, 0, {
