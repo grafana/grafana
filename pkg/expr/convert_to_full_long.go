@@ -153,11 +153,13 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		metric  string
 		display *string
 		labels  data.Labels
+		aux     []auxCell
 	}
 
 	var rows []row
 	labelKeysSet := map[string]struct{}{}
 	hasDisplayCol := false
+	auxCols := newAuxColumns()
 
 	for _, frame := range frames {
 		// Like the dataplane reader, skip frames of other types, such as untyped
@@ -175,6 +177,10 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 		}
 		if timeField == nil {
 			return nil, fmt.Errorf("missing time field")
+		}
+		frameAux, err := auxCols.addSeries(frame.Fields, timeField, false, nil)
+		if err != nil {
+			return nil, err
 		}
 		for _, f := range frame.Fields {
 			if !f.Type().Numeric() {
@@ -199,6 +205,7 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 					metric:  f.Name,
 					display: display,
 					labels:  f.Labels,
+					aux:     auxCellsAt(frameAux, i),
 				})
 				for k := range f.Labels {
 					labelKeysSet[k] = struct{}{}
@@ -253,6 +260,15 @@ func convertTimeSeriesMultiToFullLong(frames data.Frames) (data.Frames, error) {
 	if hasDisplayCol {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
+	auxFields := auxCols.fields(fields, labelKeys, len(rows))
+	for i, r := range rows {
+		for _, c := range r.aux {
+			if v, ok := c.field.ConcreteAt(c.idx); ok {
+				auxFields[c.col].SetConcrete(i, v)
+			}
+		}
+	}
+	fields = append(fields, auxFields...)
 	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
 		fields = append(fields, data.NewField(labelCols[k], nil, labels[k]))
@@ -286,13 +302,32 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 		metric  string
 		display *string
 		labels  data.Labels
+		aux     []auxCell
 	}
 
 	var (
 		rows          []row
 		labelKeysSet  = map[string]struct{}{}
 		hasDisplayCol bool
+		auxCols       = newAuxColumns()
 	)
+
+	// In wide frames, a non-numeric field belongs to the series with the same labels.
+	seriesAux := map[string][]auxRef{}
+	for _, f := range frame.Fields {
+		if !f.Type().Numeric() {
+			continue
+		}
+		key := f.Labels.String()
+		if _, ok := seriesAux[key]; ok {
+			continue
+		}
+		refs, err := auxCols.addSeries(frame.Fields, timeField, true, f.Labels)
+		if err != nil {
+			return nil, err
+		}
+		seriesAux[key] = refs
+	}
 
 	// Collect all label keys
 	for _, f := range frame.Fields {
@@ -334,6 +369,7 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 				metric:  f.Name,
 				display: display,
 				labels:  f.Labels,
+				aux:     auxCellsAt(seriesAux[f.Labels.String()], i),
 			})
 		}
 	}
@@ -379,6 +415,15 @@ func convertTimeSeriesWideToFullLong(frames data.Frames) (data.Frames, error) {
 	if hasDisplayCol {
 		fields = append(fields, data.NewField(SQLDisplayFieldName, nil, displays))
 	}
+	auxFields := auxCols.fields(fields, labelKeys, len(rows))
+	for i, r := range rows {
+		for _, c := range r.aux {
+			if v, ok := c.field.ConcreteAt(c.idx); ok {
+				auxFields[c.col].SetConcrete(i, v)
+			}
+		}
+	}
+	fields = append(fields, auxFields...)
 	labelCols := labelColumnNames(labelKeys, fields)
 	for _, k := range labelKeys {
 		fields = append(fields, data.NewField(labelCols[k], nil, labels[k]))
@@ -422,6 +467,111 @@ func labelColumnNames(labelKeys []string, generated []*data.Field) map[string]st
 		names[k] = name
 	}
 	return names
+}
+
+// auxColumns collects the non-numeric value fields of time series frames, such
+// as a second time field. Each becomes one column that holds the value of the
+// row's own series. Fields with the same name share a column, compared without
+// case, since the SQL engine compares column names that way.
+type auxColumns struct {
+	cols  []auxColumn
+	index map[string]int
+}
+
+type auxColumn struct {
+	name string
+	typ  data.FieldType
+}
+
+type auxRef struct {
+	col   int
+	field *data.Field
+}
+
+type auxCell struct {
+	col   int
+	field *data.Field
+	idx   int
+}
+
+func newAuxColumns() *auxColumns {
+	return &auxColumns{index: map[string]int{}}
+}
+
+// addSeries registers the non-numeric fields of one series, other than its time
+// field. With matchLabels, only fields with the given labels belong to the series.
+func (a *auxColumns) addSeries(fields []*data.Field, timeField *data.Field, matchLabels bool, labels data.Labels) ([]auxRef, error) {
+	var refs []auxRef
+	seen := map[string]struct{}{}
+	for _, f := range fields {
+		if f == timeField || f.Type().Numeric() {
+			continue
+		}
+		if matchLabels && !f.Labels.Equals(labels) {
+			continue
+		}
+		key := strings.ToLower(f.Name)
+		if _, dup := seen[key]; dup {
+			return nil, fmt.Errorf("field %q appears more than once in one series", f.Name)
+		}
+		seen[key] = struct{}{}
+
+		typ := f.Type().NullableType()
+		col, ok := a.index[key]
+		if !ok {
+			col = len(a.cols)
+			a.index[key] = col
+			a.cols = append(a.cols, auxColumn{name: f.Name, typ: typ})
+		} else if a.cols[col].typ != typ {
+			return nil, fmt.Errorf("field %q has type %s in one series and %s in another", f.Name, a.cols[col].typ, typ)
+		}
+		refs = append(refs, auxRef{col: col, field: f})
+	}
+	return refs, nil
+}
+
+func auxCellsAt(refs []auxRef, idx int) []auxCell {
+	if len(refs) == 0 {
+		return nil
+	}
+	cells := make([]auxCell, 0, len(refs))
+	for _, r := range refs {
+		if idx < r.field.Len() {
+			cells = append(cells, auxCell{col: r.col, field: r.field, idx: idx})
+		}
+	}
+	return cells
+}
+
+// fields returns one empty nullable field per column. A name that matches a
+// generated column or a label key gets a "field_" prefix until it is unique, so
+// columns that convert today keep their names.
+func (a *auxColumns) fields(generated []*data.Field, labelKeys []string, n int) []*data.Field {
+	if len(a.cols) == 0 {
+		return nil
+	}
+	taken := make(map[string]struct{}, len(generated)+len(labelKeys)+len(a.cols))
+	for _, f := range generated {
+		taken[strings.ToLower(f.Name)] = struct{}{}
+	}
+	for _, k := range labelKeys {
+		taken[strings.ToLower(k)] = struct{}{}
+	}
+	out := make([]*data.Field, 0, len(a.cols))
+	for _, c := range a.cols {
+		name := c.name
+		for {
+			if _, ok := taken[strings.ToLower(name)]; !ok {
+				break
+			}
+			name = "field_" + name
+		}
+		taken[strings.ToLower(name)] = struct{}{}
+		f := data.NewFieldFromFieldType(c.typ, n)
+		f.Name = name
+		out = append(out, f)
+	}
+	return out
 }
 
 func hasFrameType(frames data.Frames, t data.FrameType) bool {
