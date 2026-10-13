@@ -67,6 +67,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
+	"github.com/grafana/grafana/pkg/storage/legacysql/legacywatch"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
@@ -102,9 +103,10 @@ func RegisterAPIService(
 	mappers *resourcepermission.MappersRegistry,
 	legacyAuthInfoStore *authinfoimpl.Store,
 	remoteCache remotecache.CacheStorage,
+	legacyWatch *legacywatch.Publisher,
 ) (*IdentityAccessManagementAPIBuilder, error) {
 	dbProvider := legacysql.NewDatabaseProvider(sql)
-	store := legacy.NewLegacySQLStores(dbProvider)
+	store := legacy.WithWatchNotifications(legacy.NewLegacySQLStores(dbProvider), legacyWatch)
 	legacyAccessClient := newLegacyAccessClient(ac, store)
 	authorizer := newIAMAuthorizer(
 		accessClient,
@@ -465,6 +467,12 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 		}
 	}
 
+	if enableAuthInfoApi {
+		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
+			return err
+		}
+	}
+
 	if enableUserApi {
 		if err := b.UpdateUsersAPIGroup(opts, storage, enableZanzanaSync, enableTeamsApi); err != nil {
 			return err
@@ -473,12 +481,6 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *ge
 
 	if enableServiceAccountsApi {
 		if err := b.UpdateServiceAccountsAPIGroup(opts, storage, enableZanzanaSync, enableServiceAccountTokensApi); err != nil {
-			return err
-		}
-	}
-
-	if enableAuthInfoApi {
-		if err := b.UpdateAuthInfoAPIGroup(opts, storage); err != nil {
 			return err
 		}
 	}
@@ -720,10 +722,11 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 		return err
 	}
 
-	authInfoStore := rest.Storage(authInfoUniStore)
+	guardedUniStore := authinfo.NewGuardedStore(authInfoUniStore)
+	authInfoStore := rest.Storage(guardedUniStore)
 
 	if b.authInfoLegacyStore != nil {
-		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, authInfoUniStore)
+		dw, err := opts.DualWriteBuilder(authInfoResource.GroupResource(), b.authInfoLegacyStore, guardedUniStore)
 		if err != nil {
 			return err
 		}
@@ -731,6 +734,7 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateAuthInfoAPIGroup(opts builder
 	}
 
 	storage[authInfoResource.StoragePath()] = authInfoStore
+	b.authInfoStorage = authInfoStore
 	return nil
 }
 
@@ -770,6 +774,9 @@ func (b *IdentityAccessManagementAPIBuilder) UpdateUsersAPIGroup(opts builder.AP
 	}
 
 	b.userGetter = userStore
+	if authInfos, ok := b.authInfoStorage.(user.AuthInfoStorage); ok && !readOnly {
+		userStore = user.NewCascadeDeleter(userStore, authInfos)
+	}
 	var userAPIStore rest.Storage = storewrapper.New(
 		userStore,
 		iamv0.UserResourceInfo.GroupResource(),
@@ -1154,6 +1161,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 		return team.ValidateOnCreate(ctx, b.teamSearchClient, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
+	case *iamv0.AuthInfo:
+		return authinfo.ValidateOnCreate(ctx, typedObj, b.userGetter)
 	case *iamv0.ResourcePermission:
 		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
 	case *iamv0.Role:
@@ -1202,6 +1211,12 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 			return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldObj)
 		}
 		return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
+	case *iamv0.AuthInfo:
+		oldAuthInfoObj, ok := oldObj.(*iamv0.AuthInfo)
+		if !ok {
+			return fmt.Errorf("expected old object to be an AuthInfo, got %T", oldObj)
+		}
+		return authinfo.ValidateOnUpdate(ctx, typedObj, oldAuthInfoObj)
 	case *iamv0.Role:
 		oldRoleObj, ok := oldObj.(*iamv0.Role)
 		if !ok {

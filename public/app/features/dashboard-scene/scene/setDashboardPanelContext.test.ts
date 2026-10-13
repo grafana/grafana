@@ -811,7 +811,9 @@ describe('setDashboardPanelContext', () => {
     });
 
     it('is not set when the new panel query errors UI feature flag is disabled', () => {
-      stubFFEnabled(false);
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? false : defaultValue
+      );
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});

@@ -118,8 +118,6 @@ export const FlagKeys = {
   DashboardsPublicDashboardBadgeFromApi: "dashboards.publicDashboardBadgeFromApi",
   /** Shows defined connections for a data source in the plugins detail page */
   DatasourceConnectionsTab: "datasourceConnectionsTab",
-  /** Use the new datasource API groups for datasource resource requests, frontend flag */
-  DatasourcesApiserverUseNewAPIsForDatasourceResources: "datasources.apiserver.useNewAPIsForDatasourceResources",
   /** Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request */
   DatasourcesAzureMonitorBatchAPI: "datasources.azureMonitorBatchAPI",
   /** Use the new datasource API groups for datasource CRUD requests, frontend flag */
@@ -130,8 +128,6 @@ export const FlagKeys = {
   DatasourcesQuerierNewName: "datasources.querier.newName",
   /** Data source query gateway */
   DatasourcesQueryGateway: "datasources.queryGateway",
-  /** Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route. */
-  DatasourcesApiServerEnableHealthEndpointFrontend: "datasourcesApiServerEnableHealthEndpointFrontend",
   /** Enables additional experimental color schemes for visualizations. */
   DatavizExperimentalColorSchemes: "dataviz.experimentalColorSchemes",
   /** Enables tabular numerals for visualization legend values */
@@ -953,17 +949,6 @@ export const useFlagDatasourceConnectionsTab = (options?: ReactFlagEvaluationOpt
 };
 
 /**
- * Use the new datasource API groups for datasource resource requests, frontend flag
- *
- * **Details:**
- * - flag key: `datasources.apiserver.useNewAPIsForDatasourceResources`
- * - default value: `false`
- */
-export const useFlagDatasourcesApiserverUseNewAPIsForDatasourceResources = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasources.apiserver.useNewAPIsForDatasourceResources", false, options).value;
-};
-
-/**
  * Enables the Metrics Batch API for the Azure Monitor data source, allowing up to 50 resources to be queried in a single request
  *
  * **Details:**
@@ -1016,17 +1001,6 @@ export const useFlagDatasourcesQuerierNewName = (options?: ReactFlagEvaluationOp
  */
 export const useFlagDatasourcesQueryGateway = (options?: ReactFlagEvaluationOptions): boolean => {
   return useFlag("datasources.queryGateway", false, options).value;
-};
-
-/**
- * Send Datsource health requests to /apis/ API routes instead of the legacy /api/datasources/uid/{uid}/health route.
- *
- * **Details:**
- * - flag key: `datasourcesApiServerEnableHealthEndpointFrontend`
- * - default value: `false`
- */
-export const useFlagDatasourcesApiServerEnableHealthEndpointFrontend = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("datasourcesApiServerEnableHealthEndpointFrontend", false, options).value;
 };
 
 /**
@@ -1397,10 +1371,10 @@ export const useFlagGrafanaMultiTenantUserPermissions = (options?: ReactFlagEval
  *
  * **Details:**
  * - flag key: `grafana.newPanelQueryErrorsUI`
- * - default value: `false`
+ * - default value: `true`
  */
 export const useFlagGrafanaNewPanelQueryErrorsUI = (options?: ReactFlagEvaluationOptions): boolean => {
-  return useFlag("grafana.newPanelQueryErrorsUI", false, options).value;
+  return useFlag("grafana.newPanelQueryErrorsUI", true, options).value;
 };
 
 /**

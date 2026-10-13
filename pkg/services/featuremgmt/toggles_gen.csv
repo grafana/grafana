@@ -45,7 +45,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-05-21,kubernetesFolderCascadeDelete,experimental,@grafana/search-and-storage,false,false,false
 2026-09-11,kubernetesFolderCountsLegacyStorage,experimental,@grafana/search-and-storage,false,true,false
 2026-05-26,grafana.kubernetesAnnotationsClient,experimental,@grafana/dashboards-squad,false,false,true
-2026-06-19,grafana.newPanelQueryErrorsUI,experimental,@grafana/dashboards-squad,false,false,true
+2026-06-19,grafana.newPanelQueryErrorsUI,GA,@grafana/dashboards-squad,false,false,true
 2025-08-29,useKubernetesShortURLsAPI,GA,@grafana/sharing-squad,false,false,true
 2025-08-29,kubernetesCorrelations,experimental,@grafana/datapro,false,true,false
 2025-10-16,kubernetesLogsDrilldown,experimental,@grafana/observability-logs,false,true,false
@@ -255,6 +255,7 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2025-11-17,transformationsEmptyPlaceholder,preview,@grafana/datapro,false,false,true
 2025-11-18,ttlPluginInstanceManager,experimental,@grafana/grafana-catalog,false,false,true
 2025-11-21,lokiQueryLimitsContext,experimental,@grafana/observability-logs,false,false,true
+2026-10-07,grafana.publishLegacySQLEvents,experimental,@grafana/grafana-app-platform-squad,false,true,false
 2026-05-08,plugins.useMTPlugins,experimental,@grafana/grafana-catalog,false,false,false
 2026-05-15,globalDashboardVariables,experimental,@grafana/dashboards-squad,false,true,false
 2026-08-05,grafana.dashboardGlobalVariables,experimental,@grafana/dashboards-squad,false,false,false
@@ -296,7 +297,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-02-27,analyticsFramework,experimental,@grafana/grafana-frontend-platform,false,false,true
 2026-05-06,grafana.scenesFlickeringFix,GA,@grafana/dashboards-squad,false,false,true
 2026-06-17,grafana.viewPanelPane,preview,@grafana/dashboards-squad,false,false,true
-2026-03-11,datasourcesApiServerEnableHealthEndpointFrontend,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-04-09,datasourcesApiServerEnableHealthEndpointRedirect,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-08-13,flameGraph.tableNg,experimental,@grafana/observability-traces-and-profiling,false,false,true
 2026-03-11,inlineLogDetailsNoScrolls,GA,@grafana/observability-logs,false,false,true
@@ -316,7 +316,6 @@ Created,Name,Stage,Owner,requiresDevMode,RequiresRestart,FrontendOnly
 2026-04-09,clickHouseConfigValidation,experimental,@grafana/data-sources-plugins,false,false,false
 2026-04-17,datasource.useNewCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,false
 2026-04-27,datasources.config.ui.useNewDatasourceCRUDAPIs,experimental,@grafana/grafana-datasources-core-services,false,false,true
-2026-04-27,datasources.apiserver.useNewAPIsForDatasourceResources,experimental,@grafana/grafana-datasources-core-services,false,false,true
 2026-04-20,reporting.anyPageReporting,experimental,@grafana/sharing-squad,false,false,false
 2026-04-23,alerting.rulesAPIV2,experimental,@grafana/alerting-squad,false,false,false
 2026-05-12,alerting.notificationsAPIV1Beta1,experimental,@grafana/alerting-squad,false,false,true
