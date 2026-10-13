@@ -187,6 +187,10 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 			deps.Features,
 			deps.IDTokenDeriver,
 			pluginproxy.WithRouteAccessChecker(r.builder.checkProxyRouteAccess),
+			pluginproxy.WithDestinationValidator(func(url string) error {
+				// Headers and cookies were filtered on ingress; do not strip route-added authentication.
+				return validate(url, jsonData, nil)
+			}),
 		)
 		if err != nil {
 			m.SetError()
