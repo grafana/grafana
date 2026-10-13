@@ -135,6 +135,9 @@ func requestGroup(path string) string {
 		return ""
 	}
 	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
+		if group == discoveryGroup {
+			return ""
+		}
 		return group
 	}
 	return GroupFromPath(path)

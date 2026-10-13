@@ -326,7 +326,7 @@ func (r *GrafanaRouter) owns(req *http.Request) bool {
 		return r.KnownGroup(groupFromPath(path))
 	}
 	if group, _, ok := parseOpenAPIGroupVersionPath(path); ok {
-		return r.KnownGroup(group)
+		return group == discoveryGroup || r.KnownGroup(group)
 	}
 	return false
 }
@@ -378,6 +378,10 @@ func (r *GrafanaRouter) serveOpenAPIV3(w http.ResponseWriter, req *http.Request,
 	if !ok {
 		setRoute(req, routeNext)
 		next.ServeHTTP(w, req)
+		return
+	}
+	if group == discoveryGroup {
+		serveDiscoveryOpenAPI(w, req, version)
 		return
 	}
 	r.serveOpenAPIGroupVersion(w, req, next, group, version)

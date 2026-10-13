@@ -2,14 +2,22 @@ package router
 
 import (
 	"encoding/json"
+	"maps"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/openapi3"
+	"k8s.io/client-go/rest"
+	"k8s.io/kube-openapi/pkg/handler3"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/app"
@@ -146,6 +154,7 @@ func TestServeManifestDiscovery(t *testing.T) {
 		{"/apis/discovery/v1alpha2/manifests", http.StatusOK, "application/json"},
 		{"/apis/discovery/v1alpha2/manifests/", http.StatusOK, "application/json"},
 		{"/apis/discovery/v9", http.StatusNotFound, ""},
+		{"/apis/discovery/v1alpha2/manifests/" + manifestTestGroup + "/status", http.StatusNotFound, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.path, func(t *testing.T) {
@@ -174,16 +183,25 @@ func TestServeManifestDiscovery(t *testing.T) {
 		require.Len(t, list.Items, 1)
 		require.Equal(t, manifestTestGroup, list.Items[0].Spec.Group)
 
-		var version map[string]string
-		rec = serve(newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2", nil))
-		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &version))
-		require.Equal(t, map[string]string{
-			"version":   "v1alpha2",
-			"url":       "/apis/discovery/v1alpha2",
-			"manifests": "/apis/discovery/v1alpha2/manifests",
-			"index":     "/apis/discovery/v1alpha2/index.md",
-			"indexHTML": "/apis/discovery/v1alpha2/index.html",
-		}, version)
+		var group metav1.APIGroup
+		rec = serve(newAuthenticatedRequest(http.MethodGet, "/apis/discovery", nil))
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &group))
+		require.Equal(t, "APIGroup", group.Kind)
+		require.Equal(t, discoveryAPIGroup.PreferredVersion, group.PreferredVersion)
+	})
+
+	t.Run("errors are Kubernetes statuses", func(t *testing.T) {
+		rec := serve(newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests/missing.ext.grafana.app", nil))
+		var status metav1.Status
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
+		require.Equal(t, http.StatusNotFound, rec.Code)
+		require.Equal(t, metav1.StatusReasonNotFound, status.Reason)
+		require.Equal(t, "missing.ext.grafana.app", status.Details.Name)
+
+		rec = serve(newAuthenticatedRequest(http.MethodGet, "/apis/discovery/v1alpha2/manifests?watch=true", nil))
+		require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &status))
+		require.Equal(t, http.StatusMethodNotAllowed, rec.Code)
+		require.Equal(t, metav1.StatusReasonMethodNotAllowed, status.Reason)
 	})
 
 	t.Run("read-only", func(t *testing.T) {
@@ -210,6 +228,114 @@ func TestServeManifestDiscovery(t *testing.T) {
 		require.Equal(t, "default-src 'none'; style-src 'unsafe-inline'", rec.Header().Get("Content-Security-Policy"))
 		require.Equal(t, "nosniff", rec.Header().Get("X-Content-Type-Options"))
 	})
+}
+
+// TestDiscoveryGroupWithKubernetesClients checks that client-go finds the
+// discovery group like any other, in both discovery formats, and that its
+// dynamic client can list and get the manifests.
+func TestDiscoveryGroupWithKubernetesClients(t *testing.T) {
+	r := NewGrafanaRouter(stubLoader{}, nil)
+	for _, b := range testManifestBackends() {
+		r.served[b.Group().Name] = &handlerEntry{backend: b, handler: http.NotFoundHandler(), lastKey: b.Key(), breaker: newGroupBreaker(b.Group().Name)}
+	}
+	r.publish(t.Context())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		r.HandleFunc(w, req.WithContext(authenticatedTestContext(req.Context())), http.NotFoundHandler())
+	}))
+	t.Cleanup(srv.Close)
+	cfg := &rest.Config{Host: srv.URL}
+
+	for _, legacy := range []bool{false, true} {
+		client, err := discovery.NewDiscoveryClientForConfig(cfg)
+		require.NoError(t, err)
+		client.UseLegacyDiscovery = legacy
+		resources, err := client.ServerResourcesForGroupVersion("discovery/v1alpha2")
+		require.NoError(t, err, "legacy=%v", legacy)
+		require.Len(t, resources.APIResources, 1)
+		manifests := resources.APIResources[0]
+		require.Equal(t, "manifests", manifests.Name, "legacy=%v", legacy)
+		require.Equal(t, "AppManifest", manifests.Kind)
+		require.False(t, manifests.Namespaced)
+		require.ElementsMatch(t, []string{"get", "list"}, manifests.Verbs)
+
+		groups, err := client.ServerGroups()
+		require.NoError(t, err)
+		require.True(t, slices.ContainsFunc(groups.Groups, func(g metav1.APIGroup) bool { return g.Name == discoveryGroup }), "legacy=%v", legacy)
+	}
+
+	// kubectl explain reads the group version's OpenAPI document and finds
+	// the schema by the kind discovery reports.
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(cfg)
+	require.NoError(t, err)
+	doc, err := openapi3.NewRoot(discoveryClient.OpenAPIV3()).GVSpec(schema.GroupVersion{Group: discoveryGroup, Version: manifestDiscoveryVersion})
+	require.NoError(t, err)
+	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/manifests")
+	require.Contains(t, doc.Paths.Paths, "/apis/discovery/v1alpha2/manifests/{name}")
+	found := ""
+	for name, s := range doc.Components.Schemas {
+		gvks, _ := s.Extensions["x-kubernetes-group-version-kind"].([]any)
+		for _, gvk := range gvks {
+			if m := gvk.(map[string]any); m["group"] == discoveryGroup && m["version"] == manifestDiscoveryVersion && m["kind"] == "AppManifest" {
+				found = name
+			}
+		}
+	}
+	require.Equal(t, "AppManifest", found)
+
+	dynamicClient, err := dynamic.NewForConfig(cfg)
+	require.NoError(t, err)
+	gvr := schema.GroupVersionResource{Group: discoveryGroup, Version: manifestDiscoveryVersion, Resource: "manifests"}
+	list, err := dynamicClient.Resource(gvr).List(t.Context(), metav1.ListOptions{})
+	require.NoError(t, err)
+	require.Len(t, list.Items, 1)
+	require.Equal(t, manifestTestGroup, list.Items[0].GetName())
+	obj, err := dynamicClient.Resource(gvr).Get(t.Context(), manifestTestGroup, metav1.GetOptions{})
+	require.NoError(t, err)
+	require.Equal(t, "AppManifest", obj.GetKind())
+	require.Equal(t, appmanifestv1alpha2.GroupVersion.String(), obj.GetAPIVersion())
+}
+
+func TestDiscoveryOpenAPI(t *testing.T) {
+	var doc spec3.OpenAPI
+	require.NoError(t, json.Unmarshal(discoveryOpenAPIDoc.body, &doc))
+	schemas := doc.Components.Schemas
+	require.Contains(t, schemas["spec"].Properties, "appName", "the app-sdk's AppManifest spec schema is used")
+	require.Contains(t, schemas["spec"].Properties, "versions")
+	manifest := schemas["AppManifest"]
+	require.ElementsMatch(t, []string{"apiVersion", "kind", "metadata", "spec"}, slices.Collect(maps.Keys(manifest.Properties)))
+	specRef := manifest.Properties["spec"].Ref
+	require.Equal(t, "#/components/schemas/spec", specRef.String())
+	require.NotContains(t, schemas, "status", "the objects carry no status")
+	itemRef := schemas["AppManifestList"].Properties["items"].Items.Schema.Ref
+	require.Equal(t, "#/components/schemas/AppManifest", itemRef.String())
+
+	r := NewGrafanaRouter(stubLoader{}, nil)
+	serve := func(method, path string) *httptest.ResponseRecorder {
+		rec := httptest.NewRecorder()
+		r.HandleFunc(rec, newAuthenticatedRequest(method, path, nil), http.NotFoundHandler())
+		return rec
+	}
+	rec := serve(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2?hash=anything")
+	require.Equal(t, http.StatusOK, rec.Code)
+	require.Equal(t, discoveryOpenAPIDoc.etag, rec.Header().Get("ETag"))
+	require.Equal(t, http.StatusNotFound, serve(http.MethodGet, "/openapi/v3/apis/discovery/v9").Code)
+	require.Equal(t, http.StatusMethodNotAllowed, serve(http.MethodPost, "/openapi/v3/apis/discovery/v1alpha2").Code)
+	require.True(t, r.owns(httptest.NewRequest(http.MethodGet, "/openapi/v3/apis/discovery/v1alpha2", nil)))
+	require.Empty(t, requestGroup("/openapi/v3/apis/discovery/v1alpha2"), "no group metric label")
+
+	var index handler3.OpenAPIV3Discovery
+	require.NoError(t, json.Unmarshal(serve(http.MethodGet, "/openapi/v3").Body.Bytes(), &index))
+	_, url := discoveryOpenAPIEntry()
+	require.Equal(t, url, index.Paths[discoveryOpenAPIPath].ServerRelativeURL)
+}
+
+func TestBuildDiscoveryOpenAPIWithoutSchemas(t *testing.T) {
+	body, err := json.Marshal(buildDiscoveryOpenAPI(nil))
+	require.NoError(t, err)
+	var doc spec3.OpenAPI
+	require.NoError(t, json.Unmarshal(body, &doc))
+	require.Contains(t, doc.Components.Schemas, "AppManifest")
+	require.Contains(t, doc.Components.Schemas, "spec", "the reference stays resolvable")
 }
 
 func TestRenderIndexHTML(t *testing.T) {

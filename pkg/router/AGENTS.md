@@ -97,7 +97,7 @@ especially `specs/2026-09-25-router-design-notes.md`. Open work is tracked in
 | Engine: reconcile loop, dispatch, `Ready`/`Alive` | `router.go`, `types.go` |
 | Root discovery (`/apis`, `/openapi/v3`) | `discovery.go`, `discovery_handler.go` |
 | Per-group-version OpenAPI cache | `openapi_cache.go` |
-| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go` |
+| App manifest discovery (`/apis/discovery`) | `discovery_manifests.go`, `discovery_openapi.go` |
 | Circuit breaker, status recorder | `breaker.go`, `plugin_breaker.go` |
 | dskit service, middleware entry point | `service.go` |
 | Watch handling, upgrade rejection, verb classification | `watch.go` |
@@ -144,11 +144,12 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
 | `/apis` | Synthesized: `APIGroupList`, or `APIGroupDiscoveryList` when the aggregated format is negotiated. |
 | `/openapi/v3` | Synthesized index; per-version URLs are cache-busted with the backend key. |
 | `/openapi/v3/apis/{group}/{version}` | GET and HEAD only (405 otherwise). Proxied, and cached against the backend key unless the response is private, `no-cache` or `no-store`, or larger than `maxCachedOpenAPIDocBytes`. |
-| `/apis/discovery` | Synthesized: the manifest formats served, each with its paths. |
-| `/apis/discovery/v1alpha2` | Synthesized: links to this version's documents. |
+| `/apis/discovery` | Synthesized `APIGroup` for the router's own `discovery` group. |
+| `/apis/discovery/v1alpha2` | Synthesized `APIResourceList`: the cluster-scoped `manifests` resource, kind `apps.grafana.app/v1alpha2` `AppManifest`, verbs `get` and `list`. |
 | `/apis/discovery/v1alpha2/manifests` | Synthesized `AppManifestList` (`apps.grafana.app/v1alpha2`) of every served `ManifestProvider` backend. |
 | `/apis/discovery/v1alpha2/manifests/{group}` | One group's `AppManifest`; 404 for a group without a manifest. |
 | `/apis/discovery/v1alpha2/index.md` | Synthesized markdown index of every served group, for agents. |
+| `/openapi/v3/apis/discovery/v1alpha2` | Synthesized OpenAPI v3 document for the discovery group. |
 | `/apis/discovery/v1alpha2/index.html` | The same index rendered as a static page, with a CSP that allows no scripts. |
 
 - **Middleware mode:** `/apis` and `/openapi/v3` merge the router's groups with the embedded
@@ -167,12 +168,21 @@ Each `Backend.Key()` encodes its source: `aggregate:<target>:<hash>`,
     last good copy is served, marked `Stale`.
 - **App manifest discovery** (`/apis/discovery`) is built in `publish` with the root documents, from the
   `ManifestProvider` backends (plugin backends from every source). Nothing is fetched per request.
+  - `discovery` is a real API group that the router serves itself, with no backend. `/apis` lists it
+    in both formats, so Kubernetes clients find it like any other group (`kubectl get
+    manifests.discovery`). Each `AppManifest` is named by its group.
+  - Errors are Kubernetes `Status` objects; watch and writes are refused with 405.
+  - Its OpenAPI document (`/openapi/v3/apis/discovery/v1alpha2`, also in the `/openapi/v3` index) is
+    built once at startup in `discovery_openapi.go`, from the `AppManifest` schema in the app-sdk's own
+    manifest (`app/manifestdata`). Its schemas carry `x-kubernetes-group-version-kind` for both
+    `discovery` and `apps.grafana.app`, because `kubectl explain` looks a schema up by the kind
+    discovery reports.
   - The version segment is the `AppManifest` kind version the documents use (`v1alpha2`). A new
     manifest format gets a new tree; don't change the shape of an existing one.
   - `Operator` and `ExtraPermissions` are dropped: they describe how the app's backend is deployed
     and authorized, not the API.
-  - `discovery` is matched before group dispatch, so it is never a group, and it is not one in the
-    metrics. It has no dot, so no plugin group can claim it.
+  - `discovery` is matched before group dispatch, so no backend can take it over. It has no dot, so
+    no plugin group can claim it. Its requests have no `group` metric label.
   - Manifest text is plugin-controlled. `mdText` and `mdCode` keep it to one line, unable to break
     tables or code spans, and bounded in length. The HTML page renders the markdown with raw HTML
     dropped and only safe links.

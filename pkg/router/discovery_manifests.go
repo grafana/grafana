@@ -3,6 +3,8 @@ package router
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -11,7 +13,11 @@ import (
 	"strings"
 
 	apidiscoveryv2 "k8s.io/api/apidiscovery/v2"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apiserver/pkg/endpoints"
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/russross/blackfriday/v2"
@@ -19,14 +25,17 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 	appmanifestv1alpha2 "github.com/grafana/grafana-app-sdk/app/appmanifest/v1alpha2"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/util/errhttp"
 )
 
-// The /apis/discovery tree publishes the app manifests of the served groups.
-// The version segment is the version of the AppManifest kind the documents
-// use, so a new manifest format gets a new tree rather than changing this one.
-// "discovery" has no dot, so no plugin group can claim it.
+// The discovery group publishes the app manifests of the served groups as its
+// "manifests" resource, alongside a markdown index. Its version is the version
+// of the AppManifest kind the documents use, so a new manifest format gets a
+// new version rather than changing this one. The router serves the group
+// itself; "discovery" has no dot, so no plugin group can claim it.
 const (
-	discoveryPrefix            = apisPrefix + "/discovery"
+	discoveryGroup             = "discovery"
+	discoveryPrefix            = apisPrefix + "/" + discoveryGroup
 	manifestDiscoveryVersion   = appmanifestv1alpha2.APIVersion
 	manifestDiscoveryPrefix    = discoveryPrefix + "/" + manifestDiscoveryVersion
 	manifestDiscoveryIndex     = manifestDiscoveryPrefix + "/index.md"
@@ -49,27 +58,63 @@ type manifestDocs struct {
 	manifests map[string]cachedDoc
 }
 
-// discoveryVersionDoc links one version's documents; discoveryVersionsDoc
-// lists every version.
+// The discovery group is advertised in /apis like any served group, and its
+// group and version documents are the ones Kubernetes clients expect. Its
+// objects are apps.grafana.app AppManifests, which the resource's group and
+// version say.
 var (
-	discoveryVersion = map[string]string{
-		"version":   manifestDiscoveryVersion,
-		"url":       manifestDiscoveryPrefix,
-		"manifests": manifestDiscoveryList,
-		"index":     manifestDiscoveryIndex,
-		"indexHTML": manifestDiscoveryIndexHTML,
+	discoveryGroupVersion = metav1.GroupVersionForDiscovery{
+		GroupVersion: discoveryGroup + "/" + manifestDiscoveryVersion,
+		Version:      manifestDiscoveryVersion,
 	}
-	discoveryVersionDoc  = newJSONDoc(discoveryVersion)
-	discoveryVersionsDoc = newJSONDoc(map[string]any{"versions": []map[string]string{discoveryVersion}})
+	discoveryAPIGroup = metav1.APIGroup{
+		Name:             discoveryGroup,
+		Versions:         []metav1.GroupVersionForDiscovery{discoveryGroupVersion},
+		PreferredVersion: discoveryGroupVersion,
+	}
+	discoveryResources = []metav1.APIResource{{
+		Name:         "manifests",
+		SingularName: "manifest",
+		Namespaced:   false,
+		Group:        appmanifestv1alpha2.APIGroup,
+		Version:      appmanifestv1alpha2.APIVersion,
+		Kind:         "AppManifest",
+		Verbs:        metav1.Verbs{"get", "list"},
+	}}
+	discoveryGroupDoc = newJSONDoc(metav1.APIGroup{
+		TypeMeta:         metav1.TypeMeta{Kind: "APIGroup", APIVersion: "v1"},
+		Name:             discoveryAPIGroup.Name,
+		Versions:         discoveryAPIGroup.Versions,
+		PreferredVersion: discoveryAPIGroup.PreferredVersion,
+	})
+	discoveryResourcesDoc = newJSONDoc(metav1.APIResourceList{
+		TypeMeta:     metav1.TypeMeta{Kind: "APIResourceList", APIVersion: "v1"},
+		GroupVersion: discoveryGroupVersion.GroupVersion,
+		APIResources: discoveryResources,
+	})
+	discoveryAggregated = func() apidiscoveryv2.APIGroupDiscovery {
+		resources, err := endpoints.ConvertGroupVersionIntoToDiscovery(discoveryResources)
+		utilruntime.Must(err)
+		return apidiscoveryv2.APIGroupDiscovery{
+			ObjectMeta: metav1.ObjectMeta{Name: discoveryGroup},
+			Versions: []apidiscoveryv2.APIVersionDiscovery{{
+				Version:   manifestDiscoveryVersion,
+				Resources: resources,
+				Freshness: apidiscoveryv2.DiscoveryFreshnessCurrent,
+			}},
+		}
+	}()
 )
 
 func newJSONDoc(value any) cachedDoc {
-	body, _ := json.Marshal(value)
+	body, err := json.Marshal(value)
+	utilruntime.Must(err)
 	return newCachedDoc("application/json", body)
 }
 
 func newCachedDoc(contentType string, body []byte) cachedDoc {
-	return cachedDoc{body: body, etag: quoteETag(hashHex(string(body))), contentType: contentType}
+	sum := sha256.Sum256(body)
+	return cachedDoc{body: body, etag: quoteETag(hex.EncodeToString(sum[:])[:16]), contentType: contentType}
 }
 
 // isDiscoveryPath reports whether path is in the /apis/discovery tree.
@@ -77,20 +122,29 @@ func isDiscoveryPath(path string) bool {
 	return path == discoveryPrefix || strings.HasPrefix(path, discoveryPrefix+"/")
 }
 
-// serveManifestDiscovery serves the /apis/discovery tree from the published docs.
+var manifestsResource = schema.GroupResource{Group: discoveryGroup, Resource: "manifests"}
+
+// serveManifestDiscovery serves the /apis/discovery tree from the published
+// docs. Errors are Kubernetes Status objects, as from any other group.
 func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.Request) {
 	setRoute(req, routeDiscovery)
 	if req.Method != http.MethodGet && req.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
-		http.Error(w, "discovery documents are read-only", http.StatusMethodNotAllowed)
+		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, strings.ToLower(req.Method)), w)
+		return
+	}
+	// The documents are static, so there is nothing to watch; a list body
+	// would be misread as a stream of events.
+	if requestVerb(req) == "watch" {
+		_ = errhttp.Write(req.Context(), apierrors.NewMethodNotSupported(manifestsResource, "watch"), w)
 		return
 	}
 	docs := r.manifestDocs.Load()
 	switch path := strings.TrimSuffix(req.URL.Path, "/"); path {
 	case discoveryPrefix:
-		serveCachedDoc(w, req, &discoveryVersionsDoc)
+		serveCachedDoc(w, req, &discoveryGroupDoc)
 	case manifestDiscoveryPrefix:
-		serveCachedDoc(w, req, &discoveryVersionDoc)
+		serveCachedDoc(w, req, &discoveryResourcesDoc)
 	case manifestDiscoveryList:
 		serveCachedDoc(w, req, &docs.list)
 	case manifestDiscoveryIndex:
@@ -102,9 +156,13 @@ func (r *GrafanaRouter) serveManifestDiscovery(w http.ResponseWriter, req *http.
 		serveCachedDoc(w, req, &docs.indexHTML)
 	default:
 		group, ok := strings.CutPrefix(path, manifestDiscoveryGroups)
+		if !ok || strings.Contains(group, "/") {
+			_ = errhttp.Write(req.Context(), apierrors.NewGenericServerResponse(http.StatusNotFound, req.Method, schema.GroupResource{}, "", "", 0, false), w)
+			return
+		}
 		doc, found := docs.manifests[group]
-		if !ok || !found {
-			http.Error(w, "no app manifest is published at this path", http.StatusNotFound)
+		if !found {
+			_ = errhttp.Write(req.Context(), apierrors.NewNotFound(manifestsResource, group), w)
 			return
 		}
 		serveCachedDoc(w, req, &doc)
@@ -197,7 +255,7 @@ Grafana's APIs follow Kubernetes API conventions. Every request needs the same c
 
 ## Discovery
 
-- ` + "`GET " + manifestDiscoveryList + "`" + `: every app manifest listed below, as an ` + "`AppManifestList` (`" + appmanifestv1alpha2.GroupVersion.String() + "`)" + `.
+- ` + "`GET " + manifestDiscoveryList + "`" + ` (the ` + "`manifests`" + ` resource of the ` + "`" + discoveryGroup + "`" + ` group, so ` + "`kubectl get manifests." + discoveryGroup + "`" + ` works too): every app manifest listed below, as an ` + "`AppManifestList` (`" + appmanifestv1alpha2.GroupVersion.String() + "`)" + `.
 - ` + "`GET " + manifestDiscoveryGroups + "{group}`" + `: one group's ` + "`AppManifest`" + `, with its kinds, schemas, custom routes and roles.
 - ` + "`GET /apis`" + `: Kubernetes API discovery. Send ` + "`Accept: " + aggregatedDiscoveryJSON + "`" + ` to get every resource in one response. Groups listed there but not here publish no manifest.
 - ` + "`GET /openapi/v3/apis/{group}/{version}`" + `: the OpenAPI v3 document for one group version.
