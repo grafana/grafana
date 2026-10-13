@@ -2,11 +2,13 @@ package sql
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/resource/kv"
@@ -14,6 +16,30 @@ import (
 	test "github.com/grafana/grafana/pkg/storage/unified/testing"
 	"github.com/grafana/grafana/pkg/util/testutil"
 )
+
+func TestIntegrationExternalBlobGarbageCollection(t *testing.T) {
+	testutil.SkipIntegrationTestInShortMode(t)
+	t.Cleanup(db.CleanupTestDB)
+	storage, _ := newTestBackend(t, GarbageCollectionConfig{Interval: time.Minute, MaxAge: time.Hour, BatchSize: 100})
+	b := storage.(*backend)
+	b.blobURL = "file://" + filepath.ToSlash(t.TempDir())
+	bucket, err := resource.OpenBlobBucket(t.Context(), b.blobURL)
+	require.NoError(t, err)
+	t.Cleanup(func() { require.NoError(t, bucket.Close()) })
+	blobs, err := resource.NewCDKBlobSupport(t.Context(), resource.CDKBlobSupportOptions{Bucket: bucket})
+	require.NoError(t, err)
+	key := &resourcepb.ResourceKey{Group: "group", Resource: "resource", Namespace: "namespace", Name: "snap"}
+	response, err := blobs.PutResourceBlob(t.Context(), &resourcepb.PutBlobRequest{Resource: key, ContentType: "image/png", Value: []byte("image")})
+	require.NoError(t, err)
+	// The first pass only observes the orphan; the second pass collects it.
+	b.collectBlobs(t.Context())
+	require.NotNil(t, b.blobGC)
+	count, err := b.blobGC.Collect(t.Context(), time.Now().Add(2*time.Hour), time.Hour, false, b.blobReferenced)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+	_, err = blobs.GetResourceBlob(t.Context(), key, &utils.BlobInfo{UID: response.Uid, MimeType: "image/png"}, true)
+	require.Error(t, err)
+}
 
 func TestIntegrationBlobGarbageCollection(t *testing.T) {
 	testutil.SkipIntegrationTestInShortMode(t)

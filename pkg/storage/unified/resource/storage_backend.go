@@ -15,6 +15,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 	"uuid"
 
@@ -101,6 +102,7 @@ type kvStorageBackend struct {
 	garbageCollection       GarbageCollectionConfig
 	gcGate                  *GCGate
 	blobGC                  *BlobGarbageCollector
+	blobGCMu                sync.Mutex
 	lastImportStore         *lastImportStore
 	lastImportTimeMaxAge    time.Duration
 	metrics                 *kvBackendMetrics
@@ -781,6 +783,8 @@ func (b *kvStorageBackend) initGarbageCollection(ctx context.Context) error {
 // to be fully removed from the datastore and deletes them in batches.
 func (b *kvStorageBackend) runGarbageCollection(ctx context.Context, cutoffTimeStamp int64) {
 	defer func() {
+		b.blobGCMu.Lock()
+		defer b.blobGCMu.Unlock()
 		if b.blobGC == nil {
 			b.blobGC = NewBlobGarbageCollector(b.kv, b.garbageCollection.BatchSize, b.garbageCollection.BatchWait)
 		}

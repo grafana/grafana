@@ -12,7 +12,17 @@ import (
 
 func (b *backend) collectBlobs(ctx context.Context) {
 	if b.blobGC == nil {
-		store, err := kv.NewSQLKV(b.db.SqlDB(), b.db.DriverName())
+		var store resource.BlobGCStore
+		var err error
+		if b.blobURL != "" {
+			var bucket resource.CDKBucket
+			bucket, err = resource.OpenBlobBucket(ctx, b.blobURL)
+			if err == nil {
+				store = resource.NewCDKBlobGCStore(bucket, "")
+			}
+		} else {
+			store, err = kv.NewSQLKV(b.db.SqlDB(), b.db.DriverName())
+		}
 		if err != nil {
 			b.log.Error("initializing blob garbage collection", "error", err)
 			return

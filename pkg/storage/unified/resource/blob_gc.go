@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"iter"
 	"time"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -15,13 +16,18 @@ import (
 // A restart resets the grace period rather than risking collection of an in-flight upload.
 // Collect must be called serially.
 type BlobGarbageCollector struct {
-	store     kv.KV
+	store     BlobGCStore
 	orphans   map[string]time.Time
 	batchSize int
 	batchWait time.Duration
 }
 
-func NewBlobGarbageCollector(store kv.KV, batchSize int, batchWait time.Duration) *BlobGarbageCollector {
+type BlobGCStore interface {
+	Keys(context.Context, string, kv.ListOptions) iter.Seq2[string, error]
+	Delete(context.Context, string, string) error
+}
+
+func NewBlobGarbageCollector(store BlobGCStore, batchSize int, batchWait time.Duration) *BlobGarbageCollector {
 	if batchSize <= 0 {
 		batchSize = 100
 	}
@@ -59,6 +65,14 @@ func (g *BlobGarbageCollector) Collect(ctx context.Context, now time.Time, grace
 		bk, err := kv.ParseBlobKey(key)
 		if err != nil {
 			errs = append(errs, err)
+			continue
+		}
+		// Provisioning preview images are referenced by PR comment URLs, not by
+		// resource revisions. Their lifetime cannot be inferred from history.
+		// TODO: Replace this exemption with durable URL-reference tracking and a
+		// retention plan for previews already published in PR comments.
+		if bk.Group == "provisioning.grafana.app" && bk.Resource == "repositories" {
+			delete(g.orphans, key)
 			continue
 		}
 		live, err := referenced(ctx, bk)

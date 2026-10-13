@@ -165,6 +165,10 @@ func NewStorageBackend(
 		cfg.SectionWithEnvOverrides("resource_api"))
 
 	if !cfg.EnableSQLKVBackend {
+		blobURL, err := resolvedBlobURL(cfg.SectionWithEnvOverrides("grafana-apiserver").Key("blob_url").MustString(""), cfg.DataPath)
+		if err != nil {
+			return nil, err
+		}
 		return NewBackend(BackendOptions{
 			DBProvider:              eDB,
 			Reg:                     reg,
@@ -173,6 +177,7 @@ func NewStorageBackend(
 			LastImportTimeMaxAge:    cfg.MaxFileIndexAge,
 			GCGate:                  gcGate,
 			GarbageCollection:       NewGarbageCollectionConfig(cfg),
+			BlobURL:                 blobURL,
 			SimulatedNetworkLatency: cfg.SimulatedNetworkLatency,
 			MigrationParquetBuffer:  cfg.MigrationParquetBuffer,
 			MigrationChunkedWrites:  cfg.MigrationChunkedWrites,
@@ -314,6 +319,9 @@ type BackendOptions struct {
 	// an exported method of the SQL backend.
 	// TODO: remove after confirming sql/backend receives no production traffic.
 	LogCalls bool
+
+	// BlobURL selects the same external blob backend as the resource server.
+	BlobURL string
 }
 
 func NewBackend(opts BackendOptions) (Backend, error) {
@@ -355,6 +363,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		lastImportTimeMaxAge:    opts.LastImportTimeMaxAge,
 		batchTxnTimeout:         opts.BatchTransactionTimeout,
 		garbageCollection:       garbageCollection,
+		blobURL:                 opts.BlobURL,
 		gcGate:                  opts.GCGate,
 		logCalls:                opts.LogCalls,
 	}
@@ -420,6 +429,7 @@ type backend struct {
 	garbageCollection GarbageCollectionConfig
 	gcGate            *resource.GCGate
 	blobGC            *resource.BlobGarbageCollector
+	blobURL           string
 
 	// When true, bulk migrations buffer data through a temporary Parquet file
 	migrationParquetBuffer bool
