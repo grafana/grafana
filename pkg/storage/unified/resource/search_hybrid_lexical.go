@@ -14,12 +14,12 @@ import (
 // Bound the extra reranking context across all fields and array elements.
 const maxLexicalRerankTextBytes = 4096
 
-func (s *searchServer) hybridLexicalFields(req *resourcepb.HybridSearchRequest) (queryFields []*resourcepb.ResourceSearchRequest_QueryField, rerankFields []string) {
+func (s *searchServer) hybridLexicalFields(key *resourcepb.ResourceKey, skipRerank bool) (queryFields []*resourcepb.ResourceSearchRequest_QueryField, rerankFields []string) {
 	definitions := StandardSearchFieldDefinitions()
 	if s.searchFields != nil {
-		_, _, provider := s.searchFields.For(NewLowerGroupResource(req.Key.Group, req.Key.Resource))
+		_, _, provider := s.searchFields.For(NewLowerGroupResource(key.Group, key.Resource))
 		if provider != nil {
-			definitions = append(definitions, provider.Fields(schema.GroupVersionResource{Group: req.Key.Group, Resource: req.Key.Resource})...)
+			definitions = append(definitions, provider.Fields(schema.GroupVersionResource{Group: key.Group, Resource: key.Resource})...)
 		}
 	}
 	for _, field := range definitions {
@@ -29,7 +29,7 @@ func (s *searchServer) hybridLexicalFields(req *resourcepb.HybridSearchRequest) 
 		// Bleve expands title into its boosted variants; other text fields need
 		// an explicit boost because the protobuf default is zero.
 		queryFields = append(queryFields, &resourcepb.ResourceSearchRequest_QueryField{Name: field.Name, Boost: 1})
-		if s.reranker != nil && !req.SkipRerank && field.HasCapability(SearchCapabilityRetrieve) {
+		if s.reranker != nil && !skipRerank && field.HasCapability(SearchCapabilityRetrieve) {
 			rerankFields = append(rerankFields, field.Name)
 		}
 	}

@@ -186,18 +186,11 @@ func (ds *distributorServer) HybridSearch(ctx context.Context, r *resourcepb.Hyb
 	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearch")
 	defer span.End()
 
-	var ns string
-	if r.Key != nil {
-		ns = r.Key.Namespace
+	ns := r.GetNamespace()
+	if r.GetKey() != nil {
+		ns = r.GetKey().GetNamespace()
 	}
 	return distributeWithFailover(ctx, ds, ns, "HybridSearch", r, ResourceClient.HybridSearch)
-}
-
-func (ds *distributorServer) HybridSearchResources(ctx context.Context, r *resourcepb.HybridSearchResourcesRequest) (*resourcepb.HybridSearchResponse, error) {
-	ctx, span := ds.tracing.Start(ctx, "distributor.HybridSearchResources")
-	defer span.End()
-
-	return distributeWithFailover(ctx, ds, r.GetNamespace(), "HybridSearchResources", r, ResourceClient.HybridSearchResources)
 }
 
 func (ds *distributorServer) RebuildIndexes(ctx context.Context, r *resourcepb.RebuildIndexesRequest) (*resourcepb.RebuildIndexesResponse, error) {

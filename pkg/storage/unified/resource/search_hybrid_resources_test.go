@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -29,29 +32,41 @@ type hybridResourcesTestIndex struct {
 	responses map[schema.GroupResource]*resourcepb.ResourceSearchResponse
 	errors    map[schema.GroupResource]error
 	requests  map[schema.GroupResource]*resourcepb.ResourceSearchRequest
+	lookups   []*resourcepb.ResourceSearchRequest
+	managers  map[schema.GroupResource]*resourcepb.ResourceSearchResponse
+	folders   *resourcepb.ResourceSearchResponse
+	onSearch  func(context.Context) error
 }
 
-func (h *hybridResourcesTestIndex) Search(_ context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
-	if req.Query == "" {
-		return lexFieldValueResponse(), nil
-	}
-	h.mu.Lock()
-	defer h.mu.Unlock()
+func (h *hybridResourcesTestIndex) Search(ctx context.Context, _ authlib.AccessClient, req *resourcepb.ResourceSearchRequest, _ []ResourceIndex, _ *SearchStats) (*resourcepb.ResourceSearchResponse, error) {
 	key := schema.GroupResource{Group: req.Options.Key.Group, Resource: req.Options.Key.Resource}
-	h.requests[key] = req
-	if err := h.errors[key]; err != nil {
-		return nil, err
+	h.mu.Lock()
+	response, err := h.responses[key], h.errors[key]
+	if req.Query == "" {
+		h.lookups = append(h.lookups, req)
+		response, err = h.folders, nil
+		if slices.Contains(req.Fields, SEARCH_FIELD_MANAGER_KIND) {
+			response = h.managers[key]
+		}
+	} else {
+		h.requests[key] = req
 	}
-	if response := h.responses[key]; response != nil {
-		return response, nil
+	h.mu.Unlock()
+	if req.Query != "" && h.onSearch != nil {
+		if err := h.onSearch(ctx); err != nil {
+			return nil, err
+		}
 	}
-	return lexFieldValueResponse(), nil
+	if response == nil && err == nil {
+		response = lexFieldValueResponse()
+	}
+	return response, err
 }
 
-func hybridResourcesTestRequest() *resourcepb.HybridSearchResourcesRequest {
-	return &resourcepb.HybridSearchResourcesRequest{
+func hybridResourcesTestRequest() *resourcepb.HybridSearchRequest {
+	return &resourcepb.HybridSearchRequest{
 		Namespace: "ns",
-		Resources: []*resourcepb.HybridSearchResourcesRequest_Resource{
+		Resources: []*resourcepb.HybridSearchRequest_Resource{
 			{Group: "dashboard.grafana.app", Resource: "dashboards"},
 			{Group: "folder.grafana.app", Resource: "folders"},
 		},
@@ -64,15 +79,16 @@ func newHybridResourcesTestServer(responses map[schema.GroupResource]*resourcepb
 		responses: responses,
 		errors:    make(map[schema.GroupResource]error),
 		requests:  make(map[schema.GroupResource]*resourcepb.ResourceSearchRequest),
+		managers:  make(map[schema.GroupResource]*resourcepb.ResourceSearchResponse),
 	}
 	s := newTestSearchServer(nil, nil)
 	s.search = &fakeSearchBackend{idx: index}
 	return s, index
 }
 
-func TestHybridSearchResources_ReranksCombinedResults(t *testing.T) {
+func TestHybridSearch_MultipleResources_ReranksCombinedResults(t *testing.T) {
 	req := hybridResourcesTestRequest()
-	req.Resources = append(req.Resources, &resourcepb.HybridSearchResourcesRequest_Resource{
+	req.Resources = append(req.Resources, &resourcepb.HybridSearchRequest_Resource{
 		Group: "other.grafana.app", Resource: "dashboards",
 	})
 	req.SemanticQuery = "database monitoring"
@@ -96,7 +112,7 @@ func TestHybridSearchResources_ReranksCombinedResults(t *testing.T) {
 	scorer := &fakeRerankScorer{scores: []float64{0.1, 0.9, 0.7}}
 	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{High: 0.6})
 
-	response, err := s.HybridSearchResources(authedCtx(), req)
+	response, err := s.HybridSearch(authedCtx(), req)
 	require.NoError(t, err)
 	require.Len(t, response.Results, 2)
 	assert.Equal(t, 1, scorer.calls)
@@ -127,7 +143,7 @@ func TestHybridSearchResources_ReranksCombinedResults(t *testing.T) {
 	}
 }
 
-func TestHybridSearchResources_WithoutReranking(t *testing.T) {
+func TestHybridSearch_MultipleResources_WithoutReranking(t *testing.T) {
 	for _, mode := range []string{"no reranker", "skip rerank", "reranker failure"} {
 		t.Run(mode, func(t *testing.T) {
 			req := hybridResourcesTestRequest()
@@ -146,7 +162,7 @@ func TestHybridSearchResources_WithoutReranking(t *testing.T) {
 				s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
 			}
 
-			response, err := s.HybridSearchResources(authedCtx(), req)
+			response, err := s.HybridSearch(authedCtx(), req)
 			require.NoError(t, err)
 			require.Len(t, response.Results, 3)
 			assert.Equal(t, "dashboard-1", response.Results[0].Key.Name)
@@ -167,9 +183,9 @@ func TestHybridSearchResources_WithoutReranking(t *testing.T) {
 	}
 }
 
-func TestHybridSearchResources_CandidateBudgetIncludesEveryResource(t *testing.T) {
+func TestHybridSearch_MultipleResources_CandidateBudgetIncludesEveryResource(t *testing.T) {
 	req := hybridResourcesTestRequest()
-	req.Resources = append(req.Resources, &resourcepb.HybridSearchResourcesRequest_Resource{
+	req.Resources = append(req.Resources, &resourcepb.HybridSearchRequest_Resource{
 		Group: "rules.alerting.grafana.app", Resource: "alertrules",
 	})
 	req.Limit = 100
@@ -185,7 +201,7 @@ func TestHybridSearchResources_CandidateBudgetIncludesEveryResource(t *testing.T
 	scorer := &fakeRerankScorer{}
 	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
 
-	response, err := s.HybridSearchResources(authedCtx(), req)
+	response, err := s.HybridSearch(authedCtx(), req)
 	require.NoError(t, err)
 	assert.Len(t, response.Results, 100)
 	assert.Equal(t, 1, scorer.calls)
@@ -196,27 +212,29 @@ func TestHybridSearchResources_CandidateBudgetIncludesEveryResource(t *testing.T
 	}
 }
 
-func TestHybridSearchResources_Validation(t *testing.T) {
+func TestHybridSearch_MultipleResources_Validation(t *testing.T) {
 	for _, test := range []struct {
 		name   string
-		change func(*resourcepb.HybridSearchResourcesRequest)
+		change func(*resourcepb.HybridSearchRequest)
 	}{
-		{name: "missing namespace", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Namespace = "" }},
-		{name: "missing resources", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources = nil }},
-		{name: "nil resource", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources[0] = nil }},
-		{name: "missing group", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources[0].Group = "" }},
-		{name: "missing resource", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources[0].Resource = "" }},
-		{name: "duplicate resource", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Resources = append(r.Resources, r.Resources[0]) }},
-		{name: "empty query", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Query = " " }},
-		{name: "long query", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Query = strings.Repeat("q", 1001) }},
-		{name: "empty semantic query", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.SemanticQuery = " " }},
-		{name: "invalid relevance", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.MinRelevance = "invalid" }},
-		{name: "threshold with skip", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.MinRelevance, r.SkipRerank = "high", true }},
-		{name: "nil filter", change: func(r *resourcepb.HybridSearchResourcesRequest) { r.Filters = []*resourcepb.Requirement{nil} }},
-		{name: "resource specific filter", change: func(r *resourcepb.HybridSearchResourcesRequest) {
+		{name: "key with resource list", change: func(r *resourcepb.HybridSearchRequest) { r.Key = validKey() }},
+		{name: "key with namespace", change: func(r *resourcepb.HybridSearchRequest) { r.Key, r.Resources = validKey(), nil }},
+		{name: "missing namespace", change: func(r *resourcepb.HybridSearchRequest) { r.Namespace = "" }},
+		{name: "missing resources", change: func(r *resourcepb.HybridSearchRequest) { r.Resources = nil }},
+		{name: "nil resource", change: func(r *resourcepb.HybridSearchRequest) { r.Resources[0] = nil }},
+		{name: "missing group", change: func(r *resourcepb.HybridSearchRequest) { r.Resources[0].Group = "" }},
+		{name: "missing resource", change: func(r *resourcepb.HybridSearchRequest) { r.Resources[0].Resource = "" }},
+		{name: "duplicate resource", change: func(r *resourcepb.HybridSearchRequest) { r.Resources = append(r.Resources, r.Resources[0]) }},
+		{name: "empty query", change: func(r *resourcepb.HybridSearchRequest) { r.Query = " " }},
+		{name: "long query", change: func(r *resourcepb.HybridSearchRequest) { r.Query = strings.Repeat("q", 1001) }},
+		{name: "empty semantic query", change: func(r *resourcepb.HybridSearchRequest) { r.SemanticQuery = " " }},
+		{name: "invalid relevance", change: func(r *resourcepb.HybridSearchRequest) { r.MinRelevance = "invalid" }},
+		{name: "threshold with skip", change: func(r *resourcepb.HybridSearchRequest) { r.MinRelevance, r.SkipRerank = "high", true }},
+		{name: "nil filter", change: func(r *resourcepb.HybridSearchRequest) { r.Filters = []*resourcepb.Requirement{nil} }},
+		{name: "resource specific filter", change: func(r *resourcepb.HybridSearchRequest) {
 			r.Filters = []*resourcepb.Requirement{{Key: "language", Values: []string{"promql"}}}
 		}},
-		{name: "unsupported filter operator", change: func(r *resourcepb.HybridSearchResourcesRequest) {
+		{name: "unsupported filter operator", change: func(r *resourcepb.HybridSearchRequest) {
 			r.Filters = []*resourcepb.Requirement{{Key: "folder", Operator: "notin", Values: []string{"f"}}}
 		}},
 	} {
@@ -224,7 +242,7 @@ func TestHybridSearchResources_Validation(t *testing.T) {
 			s, index := newHybridResourcesTestServer(nil)
 			req := hybridResourcesTestRequest()
 			test.change(req)
-			response, err := s.HybridSearchResources(authedCtx(), req)
+			response, err := s.HybridSearch(authedCtx(), req)
 			require.Error(t, err)
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
 			assert.Nil(t, response)
@@ -233,22 +251,23 @@ func TestHybridSearchResources_Validation(t *testing.T) {
 	}
 	t.Run("nil request", func(t *testing.T) {
 		s, _ := newHybridResourcesTestServer(nil)
-		_, err := s.HybridSearchResources(authedCtx(), nil)
+		_, err := s.HybridSearch(authedCtx(), nil)
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 	t.Run("more than ten resources", func(t *testing.T) {
 		req := hybridResourcesTestRequest()
-		req.Resources = make([]*resourcepb.HybridSearchResourcesRequest_Resource, 11)
+		req.Resources = make([]*resourcepb.HybridSearchRequest_Resource, 11)
 		for i := range req.Resources {
-			req.Resources[i] = &resourcepb.HybridSearchResourcesRequest_Resource{Group: "g", Resource: fmt.Sprintf("resource-%d", i)}
+			req.Resources[i] = &resourcepb.HybridSearchRequest_Resource{Group: "g", Resource: fmt.Sprintf("resource-%d", i)}
 		}
-		requests, err := hybridResourceRequests(req)
+		s, index := newHybridResourcesTestServer(nil)
+		_, err := s.HybridSearch(authedCtx(), req)
 		require.NoError(t, err)
-		assert.Len(t, requests, len(req.Resources))
+		assert.Len(t, index.requests, len(req.Resources))
 	})
 }
 
-func TestHybridSearchResources_FailureDoesNotReturnPartialResults(t *testing.T) {
+func TestHybridSearch_MultipleResources_FailureDoesNotReturnPartialResults(t *testing.T) {
 	s, index := newHybridResourcesTestServer(map[schema.GroupResource]*resourcepb.ResourceSearchResponse{
 		{Group: "dashboard.grafana.app", Resource: "dashboards"}: lexFieldValueResponse([3]string{"d", "Dashboard", ""}),
 	})
@@ -256,14 +275,14 @@ func TestHybridSearchResources_FailureDoesNotReturnPartialResults(t *testing.T) 
 	scorer := &fakeRerankScorer{}
 	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
 
-	response, err := s.HybridSearchResources(authedCtx(), hybridResourcesTestRequest())
+	response, err := s.HybridSearch(authedCtx(), hybridResourcesTestRequest())
 	require.Error(t, err)
 	assert.Equal(t, codes.Unavailable, status.Code(err))
 	assert.Nil(t, response)
 	assert.Zero(t, scorer.calls)
 }
 
-func TestHybridSearchResources_RejectsUnauthenticatedAndCrossNamespaceRequests(t *testing.T) {
+func TestHybridSearch_MultipleResources_RejectsUnauthenticatedAndCrossNamespaceRequests(t *testing.T) {
 	for _, test := range []struct {
 		name      string
 		ctx       context.Context
@@ -275,12 +294,15 @@ func TestHybridSearchResources_RejectsUnauthenticatedAndCrossNamespaceRequests(t
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			s, index := newHybridResourcesTestServer(nil)
+			client, limiter := enableHybridResourcesSemantic(s, &hybridResourcesTestVectorBackend{})
 			req := hybridResourcesTestRequest()
 			req.Namespace = test.namespace
-			_, err := s.HybridSearchResources(test.ctx, req)
+			_, err := s.HybridSearch(test.ctx, req)
 			require.Error(t, err)
 			assert.Equal(t, test.code, status.Code(err))
 			assert.Empty(t, index.requests)
+			assert.Zero(t, client.calls)
+			assert.Zero(t, limiter.calls)
 		})
 	}
 }
@@ -288,24 +310,57 @@ func TestHybridSearchResources_RejectsUnauthenticatedAndCrossNamespaceRequests(t
 type hybridResourcesTestEmbedder struct {
 	mu sync.Mutex
 	fakeTextEmbedder
+	calls   int
+	onEmbed func(context.Context) error
 }
 
 func (e *hybridResourcesTestEmbedder) EmbedText(ctx context.Context, input embedder.EmbedTextInput) (embedder.EmbedTextOutput, error) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	e.calls++
+	if e.onEmbed != nil {
+		if err := e.onEmbed(ctx); err != nil {
+			return embedder.EmbedTextOutput{}, err
+		}
+	}
 	return e.fakeTextEmbedder.EmbedText(ctx, input)
 }
 
 type hybridResourcesTestVectorBackend struct {
 	vector.VectorBackend
+	mu         sync.Mutex
+	results    map[string][]vector.VectorSearchResult
+	embeddings map[string][]float32
+	missing    string
+	external   string
 }
 
-func (hybridResourcesTestVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
-	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource}, true, nil
+func (b *hybridResourcesTestVectorBackend) ResolveCollection(_ context.Context, group, resource string) (vector.Collection, bool, error) {
+	return vector.Collection{Group: group, Resource: resource, PartitionKey: resource, IsExternal: resource == b.external}, resource != b.missing, nil
 }
 
-func (hybridResourcesTestVectorBackend) Search(_ context.Context, _, _, _ string, _ []float32, _ int, _ ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
+func (b *hybridResourcesTestVectorBackend) Search(_ context.Context, _, _, resource string, dense []float32, _ int, _ ...vector.SearchFilter) ([]vector.VectorSearchResult, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.embeddings == nil {
+		b.embeddings = make(map[string][]float32)
+	}
+	b.embeddings[resource] = dense
+	if b.results != nil {
+		return slices.Clone(b.results[resource]), nil
+	}
 	return []vector.VectorSearchResult{{UID: "same-name", Content: "Database details"}}, nil
+}
+
+func enableHybridResourcesSemantic(s *searchServer, backend *hybridResourcesTestVectorBackend) (*hybridResourcesTestEmbedder, *fakeRateLimiter) {
+	client := &hybridResourcesTestEmbedder{fakeTextEmbedder: fakeTextEmbedder{dim: 4}}
+	s.embedder = newTestEmbedder(&client.fakeTextEmbedder)
+	s.embedder.TextEmbedder = client
+	s.vectorBackend = backend
+	s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, []string{"external.grafana.app/documents"})
+	limiter := &fakeRateLimiter{allow: true}
+	s.rateLimiter, s.rateLimitPerTenant, s.rateLimitWindow = limiter, 100, time.Minute
+	return client, limiter
 }
 
 type hybridResourcesTestAccess struct {
@@ -325,19 +380,15 @@ func (a *hybridResourcesTestAccess) BatchCheck(_ context.Context, _ authlib.Auth
 	return authlib.BatchCheckResponse{Results: results}, nil
 }
 
-func TestHybridSearchResources_SemanticAuthorizationUsesEachResourceType(t *testing.T) {
+func TestHybridSearch_MultipleResources_SemanticAuthorizationUsesEachResourceType(t *testing.T) {
 	s, _ := newHybridResourcesTestServer(nil)
-	client := &hybridResourcesTestEmbedder{fakeTextEmbedder: fakeTextEmbedder{dim: 4}}
-	s.embedder = newTestEmbedder(&client.fakeTextEmbedder)
-	s.embedder.TextEmbedder = client
-	s.vectorBackend = hybridResourcesTestVectorBackend{}
-	s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"dashboard.grafana.app/dashboards", "folder.grafana.app/folders"}, nil)
+	enableHybridResourcesSemantic(s, &hybridResourcesTestVectorBackend{})
 	access := &hybridResourcesTestAccess{AccessClient: authlib.FixedAccessClient(true)}
 	s.access = access
 	scorer := &fakeRerankScorer{}
 	s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
 
-	response, err := s.HybridSearchResources(authedCtx(), hybridResourcesTestRequest())
+	response, err := s.HybridSearch(authedCtx(), hybridResourcesTestRequest())
 	require.NoError(t, err)
 	require.Len(t, response.Results, 1)
 	assert.Equal(t, "folder.grafana.app", response.Results[0].Key.Group)
@@ -354,4 +405,228 @@ func TestHybridSearchResources_SemanticAuthorizationUsesEachResourceType(t *test
 		{Group: "dashboard.grafana.app", Resource: "dashboards"},
 		{Group: "folder.grafana.app", Resource: "folders"},
 	}, checked)
+}
+
+func TestHybridSearch_SingleResourceMatchesLegacyKey(t *testing.T) {
+	for _, mode := range []string{"no reranker", "skip rerank", "reranker failure", "rerank"} {
+		t.Run(mode, func(t *testing.T) {
+			var legacy *resourcepb.HybridSearchResponse
+			for _, useList := range []bool{false, true} {
+				s, _, _ := newHybridTestServer(lexFieldValueResponse(
+					[3]string{"both", "Both", ""}, [3]string{"lexical", "Lexical", ""},
+				), &fakeVectorBackend{results: []vector.VectorSearchResult{
+					{UID: "both", Content: "Both"}, {UID: "semantic", Content: "Semantic"},
+				}})
+				scorer := &fakeRerankScorer{scores: []float64{0.2, 0.9, 0.7}}
+				if mode == "reranker failure" {
+					scorer.err = errors.New("provider unavailable")
+				}
+				if mode != "no reranker" {
+					s.reranker = rerankTestReranker(scorer, rerank.RelevanceThresholds{})
+				}
+				req := &resourcepb.HybridSearchRequest{Key: validKey(), Query: "database", Limit: 2, SkipRerank: mode == "skip rerank"}
+				if useList {
+					req.Namespace, req.Resources, req.Key = req.Key.Namespace, []*resourcepb.HybridSearchRequest_Resource{{Group: "g", Resource: "r"}}, nil
+				}
+				response, err := s.HybridSearch(authedCtx(), req)
+				require.NoError(t, err)
+				require.Len(t, response.Results, 2)
+				if mode == "rerank" {
+					assert.Equal(t, "lexical", response.Results[0].Key.Name)
+					assert.Equal(t, 0.9, response.Results[0].Score)
+				} else {
+					assert.Equal(t, "both", response.Results[0].Key.Name)
+					assert.InDelta(t, 2.0/61, response.Results[0].Score, 1e-12)
+				}
+				if useList {
+					assert.True(t, proto.Equal(legacy, response), "single-target forms must preserve the same results and scores")
+				} else {
+					legacy = response
+				}
+			}
+		})
+	}
+}
+
+func TestHybridSearch_SingleResourcePreservesKindSpecificFilters(t *testing.T) {
+	for _, external := range []bool{false, true} {
+		name := "dashboard language"
+		if external {
+			name = "external metadata"
+		}
+		t.Run(name, func(t *testing.T) {
+			backend := &fakeVectorBackend{}
+			s, index, _ := newHybridTestServer(lexFieldValueResponse(), backend)
+			req := &resourcepb.HybridSearchRequest{
+				Namespace: "ns", Resources: []*resourcepb.HybridSearchRequest_Resource{{Group: "dashboard.grafana.app", Resource: "dashboards"}},
+				Query: "database", Filters: []*resourcepb.Requirement{{Key: "language", Values: []string{"promql"}}},
+			}
+			s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"dashboard.grafana.app/dashboards"}, []string{"g/r"})
+			lexical := &fakeLexicalSearcher{}
+			if external {
+				backend.collection = externalBackend().collection
+				s.externalLexical = lexical
+				req.Resources[0] = &resourcepb.HybridSearchRequest_Resource{Group: "g", Resource: "r"}
+				req.Filters = []*resourcepb.Requirement{{Key: "kind", Values: []string{"alert_rule"}}}
+			}
+
+			_, err := s.HybridSearch(authedCtx(), req)
+			require.NoError(t, err)
+			want := []vector.SearchFilter{{Field: req.Filters[0].Key, Values: req.Filters[0].Values}}
+			assert.Equal(t, want, backend.gotFilters)
+			if external {
+				assert.Equal(t, want, lexical.gotQ.Filters)
+				assert.Nil(t, index.gotReq)
+			} else {
+				require.NotNil(t, index.gotReq)
+				assert.Equal(t, []*resourcepb.Requirement{{Key: SEARCH_FIELD_PREFIX + "ds_types", Operator: "in", Values: languageToDSTypes["promql"]}}, index.gotReq.Options.Fields)
+			}
+		})
+	}
+}
+
+func TestHybridSearch_MultipleResources_SharesEmbeddingWhileLexicalRuns(t *testing.T) {
+	for _, mode := range []string{"success", "caller cancellation", "lexical failure"} {
+		t.Run(mode, func(t *testing.T) {
+			s, index := newHybridResourcesTestServer(nil)
+			backend := &hybridResourcesTestVectorBackend{}
+			client, limiter := enableHybridResourcesSemantic(s, backend)
+			cache := newFakeQueryCache()
+			s.queryCache, s.queryCacheMaxPerTenant = cache, 100
+			lexicalStarted, releaseLexical := make(chan struct{}, 2), make(chan struct{})
+			index.onSearch = func(ctx context.Context) error {
+				lexicalStarted <- struct{}{}
+				select {
+				case <-releaseLexical:
+					if mode == "lexical failure" {
+						return status.Error(codes.Unavailable, "index unavailable")
+					}
+					return nil
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+			embeddingStarted, releaseEmbedding := make(chan struct{}, 2), make(chan struct{})
+			client.onEmbed = func(ctx context.Context) error {
+				embeddingStarted <- struct{}{}
+				select {
+				case <-releaseEmbedding:
+					return nil
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+			ctx, cancel := context.WithTimeout(authedCtx(), 5*time.Second)
+			defer cancel()
+			done := make(chan error, 1)
+			req := hybridResourcesTestRequest()
+			req.SemanticQuery = "database monitoring"
+			go func() { _, err := s.HybridSearch(ctx, req); done <- err }()
+			for _, started := range []<-chan struct{}{embeddingStarted, lexicalStarted, lexicalStarted} {
+				select {
+				case <-started:
+				case <-ctx.Done():
+					t.Fatal("lexical retrieval must overlap the shared embedding call")
+				}
+			}
+			switch mode {
+			case "caller cancellation":
+				cancel()
+			case "lexical failure":
+				close(releaseLexical)
+			default:
+				close(releaseLexical)
+				close(releaseEmbedding)
+			}
+			err := <-done
+			if mode != "success" {
+				want := codes.Canceled
+				if mode == "lexical failure" {
+					want = codes.Unavailable
+				}
+				assert.Equal(t, want, status.Code(err))
+				assert.Empty(t, backend.embeddings)
+			} else {
+				require.NoError(t, err)
+				require.Len(t, backend.embeddings, 2)
+				assert.Equal(t, backend.embeddings["dashboards"], backend.embeddings["folders"])
+				assert.Equal(t, []string{req.SemanticQuery}, client.gotIn.Texts)
+				assert.Equal(t, 1, cache.putCalls)
+			}
+			assert.Equal(t, 1, client.calls)
+			assert.Equal(t, 1, limiter.calls)
+			assert.Equal(t, 1, cache.getCalls)
+		})
+	}
+}
+
+func TestHybridSearch_MultipleResources_ValidatesLaterCollectionBeforeProviderWork(t *testing.T) {
+	for _, external := range []bool{false, true} {
+		t.Run(fmt.Sprintf("external=%v", external), func(t *testing.T) {
+			s, index := newHybridResourcesTestServer(nil)
+			backend := &hybridResourcesTestVectorBackend{missing: "folders"}
+			client, limiter := enableHybridResourcesSemantic(s, backend)
+			want := codes.NotFound
+			if external {
+				backend.missing, backend.external = "", "folders"
+				s.collectionAllowlist = vector.NewCollectionAllowlist([]string{"dashboard.grafana.app/dashboards"}, []string{"folder.grafana.app/folders"})
+				want = codes.InvalidArgument
+			}
+			response, err := s.HybridSearch(authedCtx(), hybridResourcesTestRequest())
+			assert.Equal(t, want, status.Code(err))
+			assert.Nil(t, response)
+			assert.Empty(t, index.requests)
+			assert.Empty(t, backend.embeddings)
+			assert.Zero(t, client.calls)
+			assert.Zero(t, limiter.calls)
+		})
+	}
+}
+
+func TestHybridSearch_MultipleResources_EnrichesOnlyFinalResultsByKind(t *testing.T) {
+	req := hybridResourcesTestRequest()
+	req.Resources = append(req.Resources, &resourcepb.HybridSearchRequest_Resource{Group: "external.grafana.app", Resource: "documents"})
+	req.Limit = 3
+	backend := &hybridResourcesTestVectorBackend{external: "documents", results: make(map[string][]vector.VectorSearchResult)}
+	for _, target := range req.Resources {
+		backend.results[target.Resource] = []vector.VectorSearchResult{
+			{UID: "same-name", Content: target.Resource, Folder: "shared-folder"},
+			{UID: "excluded", Content: "Below limit", Folder: "excluded-folder"},
+		}
+	}
+	s, index := newHybridResourcesTestServer(nil)
+	enableHybridResourcesSemantic(s, backend)
+	s.externalLexical = &fakeLexicalSearcher{}
+	index.folders = lexFieldValueResponse([3]string{"shared-folder", "Shared folder", ""})
+	for _, target := range req.Resources[:2] {
+		index.managers[schema.GroupResource{Group: target.Group, Resource: target.Resource}] = managerFieldValueResponse([3]string{"same-name", "repo", target.Resource + "-manager"})
+	}
+
+	response, err := s.HybridSearch(authedCtx(), req)
+	require.NoError(t, err)
+	require.Len(t, response.Results, 3)
+	for _, result := range response.Results {
+		assert.Equal(t, "same-name", result.Key.Name)
+		assert.Equal(t, "Shared folder", result.FolderTitle)
+		if result.Key.Resource == "documents" {
+			assert.Empty(t, result.ManagedByKind)
+			assert.Empty(t, result.ManagedById)
+		} else {
+			assert.Equal(t, "repo", result.ManagedByKind)
+			assert.Equal(t, result.Key.Resource+"-manager", result.ManagedById)
+		}
+	}
+	require.Len(t, index.lookups, 3)
+	for _, lookup := range index.lookups {
+		assert.Equal(t, int64(1), lookup.Limit)
+		assert.Equal(t, "ns", lookup.Options.Key.Namespace)
+		require.Len(t, lookup.Options.Fields, 1)
+		if slices.Contains(lookup.Fields, SEARCH_FIELD_MANAGER_KIND) {
+			assert.NotEqual(t, "documents", lookup.Options.Key.Resource)
+			assert.Equal(t, []string{"same-name"}, lookup.Options.Fields[0].Values)
+		} else {
+			assert.Equal(t, "folders", lookup.Options.Key.Resource)
+			assert.Equal(t, []string{"shared-folder"}, lookup.Options.Fields[0].Values)
+		}
+	}
 }

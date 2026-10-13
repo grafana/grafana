@@ -95,10 +95,6 @@ func (offlineSearchClient) HybridSearch(context.Context, *resourcepb.HybridSearc
 	return nil, errOffline
 }
 
-func (offlineSearchClient) HybridSearchResources(context.Context, *resourcepb.HybridSearchResourcesRequest, ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
-	return nil, errOffline
-}
-
 var _ appplugin.PluginClient = offlinePluginClient{}
 var _ appplugin.PluginContextWrapper = offlinePluginContext{}
 

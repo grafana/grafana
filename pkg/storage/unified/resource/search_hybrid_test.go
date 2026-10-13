@@ -352,27 +352,31 @@ func TestLexicalHitsFromResponseRejectsMalformedFieldValues(t *testing.T) {
 }
 
 func TestValidateHybridSearchRequest(t *testing.T) {
+	validate := func(req *resourcepb.HybridSearchRequest) error {
+		_, err := parseHybridSearchRequest(req)
+		return err
+	}
 	valid := func() *resourcepb.HybridSearchRequest {
 		return &resourcepb.HybridSearchRequest{Key: hybridKey(), Query: "q"}
 	}
 
-	assert.Nil(t, validateHybridSearchRequest(valid()))
+	assert.Nil(t, validate(valid()))
 
 	r := valid()
 	r.Key = nil
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	r = valid()
 	r.Query = "  "
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	r = valid()
 	r.Query = strings.Repeat("x", 1001)
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	r = valid()
 	r.SemanticQuery = strings.Repeat("x", 1001)
-	require.NotNil(t, validateHybridSearchRequest(r))
+	require.NotNil(t, validate(r))
 
 	// All validation failures are InvalidArgument status errors, never
 	// response-embedded.
@@ -386,41 +390,41 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 	// Kind-specific key checks live in validateHybridSearchFilters.
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "tags", Operator: "in", Values: []string{"prod"}}}
-	assert.Nil(t, validateHybridSearchRequest(r))
-	wantInvalid(validateHybridSearchFilters(r, false), "tags")
-	assert.Nil(t, validateHybridSearchFilters(r, true))
+	assert.Nil(t, validate(r))
+	wantInvalid(validateHybridSearchFilters(r.Filters, r.Key, false), "tags")
+	assert.Nil(t, validateHybridSearchFilters(r.Filters, r.Key, true))
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "", Operator: "in", Values: []string{"x"}}}
-	wantInvalid(validateHybridSearchRequest(r), "empty")
+	wantInvalid(validate(r), "empty")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "in"}}
-	wantInvalid(validateHybridSearchRequest(r), "no values")
+	wantInvalid(validate(r), "no values")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "uid", Operator: "notin", Values: []string{"u1"}}}
-	wantInvalid(validateHybridSearchRequest(r), "operator")
+	wantInvalid(validate(r), "operator")
 
 	r = valid()
 	r.SemanticQuery = "   "
-	wantInvalid(validateHybridSearchRequest(r), "whitespace")
+	wantInvalid(validate(r), "whitespace")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{
 		{Key: "uid", Operator: "in", Values: []string{"u1"}},
 		{Key: "uid", Operator: "in", Values: []string{"u2"}},
 	}
-	wantInvalid(validateHybridSearchRequest(r), "duplicate")
+	wantInvalid(validate(r), "duplicate")
 
 	r = valid()
 	r.Key.Resource = "dashboards"
 	r.Filters = []*resourcepb.Requirement{{Key: "language", Operator: "in", Values: []string{"promql", "cypher"}}}
-	wantInvalid(validateHybridSearchFilters(r, false), "cypher")
+	wantInvalid(validateHybridSearchFilters(r.Filters, r.Key, false), "cypher")
 
 	r = valid()
 	r.Filters = []*resourcepb.Requirement{{Key: "datasource_uid", Operator: "in", Values: []string{"d"}}}
-	wantInvalid(validateHybridSearchFilters(r, false), "dashboards")
+	wantInvalid(validateHybridSearchFilters(r.Filters, r.Key, false), "dashboards")
 
 	r = valid()
 	r.Key.Resource = "dashboards"
@@ -430,8 +434,8 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 		{Key: "datasource_uid", Operator: "in", Values: []string{"d"}},
 		{Key: "language", Operator: "in", Values: []string{"promql"}},
 	}
-	assert.Nil(t, validateHybridSearchRequest(r))
-	assert.Nil(t, validateHybridSearchFilters(r, false))
+	assert.Nil(t, validate(r))
+	assert.Nil(t, validateHybridSearchFilters(r.Filters, r.Key, false))
 
 	// External contract: no key allowlist.
 	r = valid()
@@ -441,32 +445,32 @@ func TestValidateHybridSearchRequest(t *testing.T) {
 		{Key: "folderUid", Operator: "in", Values: []string{"f"}},
 		{Key: "labels", Operator: "in", Values: []string{"team=infra"}},
 	}
-	assert.Nil(t, validateHybridSearchFilters(r, true))
+	assert.Nil(t, validateHybridSearchFilters(r.Filters, r.Key, true))
 
 	r = valid()
 	r.MinRelevance = "low"
-	assert.Nil(t, validateHybridSearchRequest(r))
+	assert.Nil(t, validate(r))
 
 	r = valid()
 	r.MinRelevance = ""
-	assert.Nil(t, validateHybridSearchRequest(r))
+	assert.Nil(t, validate(r))
 
 	r = valid()
 	r.MinRelevance = "med"
-	wantInvalid(validateHybridSearchRequest(r), "unsupported min_relevance")
+	wantInvalid(validate(r), "unsupported min_relevance")
 
 	r = valid()
 	r.MinRelevance = "0.5"
-	wantInvalid(validateHybridSearchRequest(r), "unsupported min_relevance")
+	wantInvalid(validate(r), "unsupported min_relevance")
 
 	r = valid()
 	r.SkipRerank = true
-	assert.Nil(t, validateHybridSearchRequest(r))
+	assert.Nil(t, validate(r))
 
 	r = valid()
 	r.SkipRerank = true
 	r.MinRelevance = "low"
-	wantInvalid(validateHybridSearchRequest(r), "min_relevance cannot be combined with skip_rerank")
+	wantInvalid(validate(r), "min_relevance cannot be combined with skip_rerank")
 }
 
 func TestHybridLexicalRequest(t *testing.T) {
@@ -480,7 +484,7 @@ func TestHybridLexicalRequest(t *testing.T) {
 			{Key: "language", Operator: "in", Values: []string{"promql", "logql"}},
 		},
 	}
-	out := hybridLexicalRequest(req, 40)
+	out := hybridLexicalRequest(req, req.Key, 40)
 
 	assert.Equal(t, "cpu", out.Query)
 	assert.Equal(t, int64(40), out.Limit)

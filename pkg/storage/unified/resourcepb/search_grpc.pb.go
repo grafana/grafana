@@ -19,12 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion8
 
 const (
-	ResourceIndex_Search_FullMethodName                = "/resource.ResourceIndex/Search"
-	ResourceIndex_GetStats_FullMethodName              = "/resource.ResourceIndex/GetStats"
-	ResourceIndex_RebuildIndexes_FullMethodName        = "/resource.ResourceIndex/RebuildIndexes"
-	ResourceIndex_VectorSearch_FullMethodName          = "/resource.ResourceIndex/VectorSearch"
-	ResourceIndex_HybridSearch_FullMethodName          = "/resource.ResourceIndex/HybridSearch"
-	ResourceIndex_HybridSearchResources_FullMethodName = "/resource.ResourceIndex/HybridSearchResources"
+	ResourceIndex_Search_FullMethodName         = "/resource.ResourceIndex/Search"
+	ResourceIndex_GetStats_FullMethodName       = "/resource.ResourceIndex/GetStats"
+	ResourceIndex_RebuildIndexes_FullMethodName = "/resource.ResourceIndex/RebuildIndexes"
+	ResourceIndex_VectorSearch_FullMethodName   = "/resource.ResourceIndex/VectorSearch"
+	ResourceIndex_HybridSearch_FullMethodName   = "/resource.ResourceIndex/HybridSearch"
 )
 
 // ResourceIndexClient is the client API for ResourceIndex service.
@@ -45,13 +44,12 @@ type ResourceIndexClient interface {
 	// Hybrid search: RRF fuse lexical and vector results with optional reranking.
 	// Without a vector backend or embedding provider, searches only the regular
 	// resource index using the lexical leg; reranking remains available.
-	HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
-	// Search several resource types, then rerank their combined candidates once.
-	// Without reranking, interleave results in the requested resource order while
-	// preserving each resource type's ranking.
+	// A single resource type behaves identically with either request selector.
+	// Multiple resource types are reranked together; without successful reranking,
+	// their results are interleaved in request order, preserving each type's ranking.
 	// A failure searching any requested resource fails the request; no partial
 	// results are returned.
-	HybridSearchResources(ctx context.Context, in *HybridSearchResourcesRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
+	HybridSearch(ctx context.Context, in *HybridSearchRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error)
 }
 
 type resourceIndexClient struct {
@@ -112,16 +110,6 @@ func (c *resourceIndexClient) HybridSearch(ctx context.Context, in *HybridSearch
 	return out, nil
 }
 
-func (c *resourceIndexClient) HybridSearchResources(ctx context.Context, in *HybridSearchResourcesRequest, opts ...grpc.CallOption) (*HybridSearchResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(HybridSearchResponse)
-	err := c.cc.Invoke(ctx, ResourceIndex_HybridSearchResources_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // ResourceIndexServer is the server API for ResourceIndex service.
 // All implementations should embed UnimplementedResourceIndexServer
 // for forward compatibility
@@ -140,13 +128,12 @@ type ResourceIndexServer interface {
 	// Hybrid search: RRF fuse lexical and vector results with optional reranking.
 	// Without a vector backend or embedding provider, searches only the regular
 	// resource index using the lexical leg; reranking remains available.
-	HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error)
-	// Search several resource types, then rerank their combined candidates once.
-	// Without reranking, interleave results in the requested resource order while
-	// preserving each resource type's ranking.
+	// A single resource type behaves identically with either request selector.
+	// Multiple resource types are reranked together; without successful reranking,
+	// their results are interleaved in request order, preserving each type's ranking.
 	// A failure searching any requested resource fails the request; no partial
 	// results are returned.
-	HybridSearchResources(context.Context, *HybridSearchResourcesRequest) (*HybridSearchResponse, error)
+	HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error)
 }
 
 // UnimplementedResourceIndexServer should be embedded to have forward compatible implementations.
@@ -167,9 +154,6 @@ func (UnimplementedResourceIndexServer) VectorSearch(context.Context, *VectorSea
 }
 func (UnimplementedResourceIndexServer) HybridSearch(context.Context, *HybridSearchRequest) (*HybridSearchResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method HybridSearch not implemented")
-}
-func (UnimplementedResourceIndexServer) HybridSearchResources(context.Context, *HybridSearchResourcesRequest) (*HybridSearchResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method HybridSearchResources not implemented")
 }
 
 // UnsafeResourceIndexServer may be embedded to opt out of forward compatibility for this service.
@@ -273,24 +257,6 @@ func _ResourceIndex_HybridSearch_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ResourceIndex_HybridSearchResources_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(HybridSearchResourcesRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ResourceIndexServer).HybridSearchResources(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: ResourceIndex_HybridSearchResources_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ResourceIndexServer).HybridSearchResources(ctx, req.(*HybridSearchResourcesRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 // ResourceIndex_ServiceDesc is the grpc.ServiceDesc for ResourceIndex service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -317,10 +283,6 @@ var ResourceIndex_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "HybridSearch",
 			Handler:    _ResourceIndex_HybridSearch_Handler,
-		},
-		{
-			MethodName: "HybridSearchResources",
-			Handler:    _ResourceIndex_HybridSearchResources_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

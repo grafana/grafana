@@ -233,42 +233,64 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 	require.Equal(t, []string{"the-token"}, gotMD.Get("x-access-token"))
 }
 
-func TestDistributorHybridSearchResourcesForwardsNamespaceAndCredentials(t *testing.T) {
-	testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
-	request := &resourcepb.HybridSearchResourcesRequest{
-		Namespace: "stacks-11794",
-		Resources: []*resourcepb.HybridSearchResourcesRequest_Resource{
-			{Group: "dashboard.grafana.app", Resource: "dashboards"},
-			{Group: "folder.grafana.app", Resource: "folders"},
+func TestDistributorHybridSearchForwardsNamespaceAndCredentials(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		request *resourcepb.HybridSearchRequest
+	}{
+		{
+			name: "key selector",
+			request: &resourcepb.HybridSearchRequest{
+				Key: &resourcepb.ResourceKey{
+					Namespace: "stacks-11794",
+					Group:     "dashboard.grafana.app",
+					Resource:  "dashboards",
+				},
+				Query: "monitoring",
+			},
 		},
-		Query: "monitoring",
-	}
-	want := &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{{Title: "Monitoring"}}}
-	mockClient := NewMockResourceClient(t)
-	mockClient.EXPECT().HybridSearchResources(mock.Anything, request).RunAndReturn(
-		func(ctx context.Context, _ *resourcepb.HybridSearchResourcesRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
-			namespace, err := userutils.ExtractOrgID(ctx)
+		{
+			name: "resources selector",
+			request: &resourcepb.HybridSearchRequest{
+				Namespace: "stacks-11794",
+				Resources: []*resourcepb.HybridSearchRequest_Resource{
+					{Group: "dashboard.grafana.app", Resource: "dashboards"},
+					{Group: "folder.grafana.app", Resource: "folders"},
+				},
+				Query: "monitoring",
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			testRing, _ := newSearchRingForTest(t, 1, ring.ACTIVE)
+			want := &resourcepb.HybridSearchResponse{Results: []*resourcepb.HybridSearchResult{{Title: "Monitoring"}}}
+			mockClient := NewMockResourceClient(t)
+			mockClient.EXPECT().HybridSearch(mock.Anything, test.request).RunAndReturn(
+				func(ctx context.Context, _ *resourcepb.HybridSearchRequest, _ ...grpc.CallOption) (*resourcepb.HybridSearchResponse, error) {
+					namespace, err := userutils.ExtractOrgID(ctx)
+					require.NoError(t, err)
+					require.Equal(t, "stacks-11794", namespace)
+					md, _ := metadata.FromOutgoingContext(ctx)
+					require.Equal(t, []string{"the-token"}, md.Get("x-access-token"))
+					return want, nil
+				}).Once()
+			pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+				ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
+					return &RingClient{Client: mockClient}, nil
+				}), nil, gokitlog.NewNopLogger())
+			ds := &distributorServer{
+				ring:           testRing,
+				searchRingRead: newSearchRingReadOp(false),
+				clientPool:     pool,
+				tracing:        noop.NewTracerProvider().Tracer("test"),
+				log:            log.NewNopLogger(),
+			}
+			ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("x-access-token", "the-token"))
+			response, err := ds.HybridSearch(ctx, test.request)
 			require.NoError(t, err)
-			require.Equal(t, request.Namespace, namespace)
-			md, _ := metadata.FromOutgoingContext(ctx)
-			require.Equal(t, []string{"the-token"}, md.Get("x-access-token"))
-			return want, nil
-		}).Once()
-	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
-		ringclient.PoolInstFunc(func(ring.InstanceDesc) (ringclient.PoolClient, error) {
-			return &RingClient{Client: mockClient}, nil
-		}), nil, gokitlog.NewNopLogger())
-	ds := &distributorServer{
-		ring:           testRing,
-		searchRingRead: newSearchRingReadOp(false),
-		clientPool:     pool,
-		tracing:        noop.NewTracerProvider().Tracer("test"),
-		log:            log.NewNopLogger(),
+			require.Same(t, want, response)
+		})
 	}
-	ctx := metadata.NewIncomingContext(t.Context(), metadata.Pairs("x-access-token", "the-token"))
-	response, err := ds.HybridSearchResources(ctx, request)
-	require.NoError(t, err)
-	require.Same(t, want, response)
 }
 
 // failoverTestClient records which instances were called and returns the
