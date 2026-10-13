@@ -19,7 +19,6 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	krequest "k8s.io/apiserver/pkg/endpoints/request"
 
-	"github.com/grafana/grafana/pkg/api/pluginproxy"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	datasourceV0 "github.com/grafana/grafana/pkg/apis/datasource/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/httpclient"
@@ -66,7 +65,9 @@ func TestSubProxyPDCRouting(t *testing.T) {
 	provider := &proxyMockDatasourceProvider{ds: ds}
 	provider.instanceSettings = &backend.DataSourceInstanceSettings{UID: ds.Name, Type: "test", URL: upstream.URL, JSONData: []byte(`{"enableSecureSocksProxy":true}`)}
 	builder := newProxyTestBuilder(provider)
-	builder.proxyDeps.GrafanaConfig = config.NewGrafanaCfg(map[string]string{
+	deps, err := builder.proxyDependencies(t.Context(), nil)
+	require.NoError(t, err)
+	deps.GrafanaConfig = config.NewGrafanaCfg(map[string]string{
 		sdkproxy.PluginSecureSocksProxyEnabled:       "true",
 		sdkproxy.PluginSecureSocksProxyAllowInsecure: "true",
 		sdkproxy.PluginSecureSocksProxyProxyAddress:  pdc.Addr().String(),
@@ -89,7 +90,7 @@ func TestSubProxyPDCRouting(t *testing.T) {
 	require.Zero(t, directRequests.Load())
 
 	// A datasource requesting PDC must also fail closed when the tenant has no PDC config.
-	builder.proxyDeps.GrafanaConfig = config.NewGrafanaCfg(nil)
+	deps.GrafanaConfig = config.NewGrafanaCfg(nil)
 	handler, err = storage.Connect(proxyTestContext(), ds.Name, nil, responder)
 	require.NoError(t, err)
 	handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/datasources/ds-1/proxy/query", nil))
@@ -117,13 +118,8 @@ func newProxyTestBuilder(provider PluginDatasourceProvider) *DataSourceAPIBuilde
 		pluginJSON:                 plugins.JSONData{ID: "test"},
 		datasources:                provider,
 		dataSourceRequestValidator: allowAllValidator{},
-		proxyDeps: &ProxyDependencies{
-			ProxyCfg:           pluginproxy.NewDataSourceProxySettings(setting.NewCfg()),
-			HTTPClientProvider: httpclient.NewProvider(),
-			OAuthTokenService:  &oauthtoken.Service{},
-			Tracer:             tracing.InitializeTracerForTest(),
-			Features:           featuremgmt.WithFeatures(),
-		},
+		proxyDependencies: ProvideProxyDependencies(setting.NewCfg(), httpclient.NewProvider(),
+			&oauthtoken.Service{}, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures()),
 	}
 }
 
@@ -142,11 +138,9 @@ func TestSubProxyREST_Connect(t *testing.T) {
 		ds.Spec.SetURL(target.URL)
 		ds.Spec.SetJSONData(map[string]any{"oauthPassThru": true})
 		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{ds: ds})
-		resolved := builder.proxyDeps
-		resolved.OAuthTokenService = nil
-		builder.proxyDeps = &ProxyDependencies{Resolve: func(context.Context, *http.Request) (*ProxyDependencies, error) {
-			return resolved, nil
-		}}
+		deps, err := builder.proxyDependencies(t.Context(), nil)
+		require.NoError(t, err)
+		deps.OAuthTokenService = nil
 		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
 		t.Cleanup(storage.Destroy)
 		responder := &resourceMockResponder{}
@@ -172,9 +166,27 @@ func TestSubProxyREST_Connect(t *testing.T) {
 		require.True(t, apierrors.IsNotFound(responder.lastErr))
 	})
 
+	t.Run("dependency resolution failure stops the request", func(t *testing.T) {
+		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{dsErr: errors.New("unexpected datasource read")})
+		ctx := proxyTestContext()
+		unavailable := errors.New("tenant settings unavailable")
+		builder.proxyDependencies = func(gotCtx context.Context, req *http.Request) (*ProxyDependencies, error) {
+			require.Equal(t, ctx, gotCtx)
+			require.Equal(t, ctx, req.Context())
+			return nil, unavailable
+		}
+		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
+		t.Cleanup(storage.Destroy)
+		responder := &resourceMockResponder{}
+		handler, err := storage.Connect(ctx, "test-ds", nil, responder)
+		require.NoError(t, err)
+		handler.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest(http.MethodGet, "/datasources/test-ds/proxy/query", nil))
+		require.ErrorIs(t, responder.lastErr, unavailable)
+	})
+
 	t.Run("returns an error when proxy dependencies are not configured", func(t *testing.T) {
 		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{})
-		builder.proxyDeps = nil
+		builder.proxyDependencies = nil
 		r := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
 
 		handler, err := r.Connect(proxyTestContext(), "test-ds", nil, &resourceMockResponder{})
@@ -274,11 +286,11 @@ func TestSubProxyREST_RouteAuthorization(t *testing.T) {
 				return authlib.CheckResponse{Allowed: tc.allowed}, tc.err
 			}}
 			resolved := 0
-			resolvedDeps := b.proxyDeps
-			b.proxyDeps = &ProxyDependencies{Resolve: func(ctx context.Context, req *http.Request) (*ProxyDependencies, error) {
+			dependencies := b.proxyDependencies
+			b.proxyDependencies = func(ctx context.Context, req *http.Request) (*ProxyDependencies, error) {
 				resolved++
-				return resolvedDeps, nil
-			}}
+				return dependencies(ctx, req)
+			}
 			who := &user.SignedInUser{OrgID: 1, OrgRole: org.RoleViewer}
 			if !tc.allowed {
 				who.OrgRole = org.RoleAdmin

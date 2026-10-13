@@ -27,14 +27,9 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-// ProxyDependencies bundles the proxy-only services the datasource frontend
-// proxy needs. It is wired as a single dependency so RegisterAPIService doesn't
-// have to thread each one through its signature. MT resolves the configuration
-// and request validator for the current tenant before constructing the proxy.
+// ProxyDependencies contains the services and configuration used to proxy a request.
 type ProxyDependencies struct {
-	RequestValidator validations.DataSourceRequestValidator
-	// Resolve supplies tenant- and request-specific dependencies in MT.
-	Resolve            func(context.Context, *http.Request) (*ProxyDependencies, error)
+	RequestValidator   validations.DataSourceRequestValidator
 	ProxyCfg           *pluginproxy.DataSourceProxySettings
 	HTTPClientProvider httpclient.Provider
 	GrafanaConfig      *config.GrafanaCfg
@@ -49,15 +44,19 @@ type ProxyDependencies struct {
 	IDTokenDeriver authnlib.IDTokenDeriver
 }
 
-// ProvideProxyDependencies is the wire provider for ProxyDependencies.
+// ProxyDependenciesProvider returns fixed dependencies in ordinary Grafana and
+// resolves tenant configuration per request in multi-tenant Grafana.
+type ProxyDependenciesProvider func(context.Context, *http.Request) (*ProxyDependencies, error)
+
+// ProvideProxyDependencies wires the fixed dependencies used by ordinary Grafana.
 func ProvideProxyDependencies(
 	cfg *setting.Cfg,
 	httpClientProvider httpclient.Provider,
 	oAuthTokenService *oauthtoken.Service,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
-) *ProxyDependencies {
-	return &ProxyDependencies{
+) ProxyDependenciesProvider {
+	deps := &ProxyDependencies{
 		ProxyCfg:           pluginproxy.NewDataSourceProxySettings(cfg),
 		HTTPClientProvider: httpClientProvider,
 		OAuthTokenService:  oAuthTokenService,
@@ -66,6 +65,9 @@ func ProvideProxyDependencies(
 		// Single-tenant Grafana mints its own id token at the edge, so requester always carries
 		// one and this fallback is never needed on the wire-injected (ST) path.
 		IDTokenDeriver: nil,
+	}
+	return func(context.Context, *http.Request) (*ProxyDependencies, error) {
+		return deps, nil
 	}
 }
 
@@ -104,8 +106,7 @@ func (r *subProxyREST) NewConnectOptions() (runtime.Object, bool, string) {
 func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	m := newConnectMetric("proxy", r.builder.pluginJSON.ID)
 
-	deps := r.builder.proxyDeps
-	if deps == nil {
+	if r.builder.proxyDependencies == nil {
 		m.SetError()
 		m.Record()
 		return nil, errors.New("datasource proxy is not configured")
@@ -122,15 +123,11 @@ func (r *subProxyREST) Connect(ctx context.Context, name string, opts runtime.Ob
 		// The apiserver request context carries the authenticated identity that
 		// NewDataSourceProxy reads via identity.GetRequester.
 		req = req.WithContext(ctx)
-		deps := deps
-		if deps.Resolve != nil {
-			var err error
-			deps, err = deps.Resolve(ctx, req)
-			if err != nil {
-				m.SetError()
-				responder.Error(err)
-				return
-			}
+		deps, err := r.builder.proxyDependencies(ctx, req)
+		if err != nil {
+			m.SetError()
+			responder.Error(err)
+			return
 		}
 		if deps.GrafanaConfig != nil {
 			req = req.WithContext(config.WithGrafanaConfig(req.Context(), deps.GrafanaConfig))
