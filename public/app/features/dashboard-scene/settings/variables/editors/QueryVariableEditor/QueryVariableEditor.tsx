@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { type QueryVariable, sceneGraph } from '@grafana/scenes';
 import { type VariableRefresh, type VariableSort } from '@grafana/schema';
 import { Field, Stack } from '@grafana/ui';

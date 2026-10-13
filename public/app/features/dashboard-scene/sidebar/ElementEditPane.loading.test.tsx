@@ -48,18 +48,19 @@ describe('ElementEditPane loading', () => {
     });
   });
 
-  it('renders nothing while loading, then renders the latest model', async () => {
+  it('shows a loading bar until the latest model can be rendered', async () => {
     const deferred = deferRenderer();
     const original = new ElementEditPane({ key: 'original' });
     const replacement = new ElementEditPane({ key: 'replacement' });
-    const { container, rerender } = render(<original.Component model={original} />);
+    const { rerender } = render(<original.Component model={original} />);
 
-    expect(container).toBeEmptyDOMElement();
+    expect(screen.getByRole('status', { name: 'Loading sidebar' })).toBeInTheDocument();
     rerender(<replacement.Component model={replacement} />);
 
     await act(async () => deferred.resolve(rendererModule));
 
     expect(await screen.findByText('Editing replacement')).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'Loading sidebar' })).not.toBeInTheDocument();
     expect(screen.queryByText('Editing original')).not.toBeInTheDocument();
   });
 
@@ -85,6 +86,7 @@ describe('ElementEditPane loading', () => {
 
       try {
         expect(screen.getByText('Editing reopened')).toBeInTheDocument();
+        expect(screen.queryByRole('status', { name: 'Loading sidebar' })).not.toBeInTheDocument();
         expect(screen.queryByText('Editing closed')).not.toBeInTheDocument();
       } finally {
         reopenedView.unmount();
@@ -109,6 +111,7 @@ describe('ElementEditPane loading', () => {
       await act(async () => deferred.reject(error));
 
       expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load dashboard options');
+      expect(screen.queryByRole('status', { name: 'Loading sidebar' })).not.toBeInTheDocument();
       await waitFor(() => expect(onError).toHaveBeenCalledWith(error));
     } finally {
       consoleError.mockRestore();

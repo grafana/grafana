@@ -682,6 +682,9 @@ export const versionedComponents = {
           '12.4.0': 'data-testid tableng row expander',
         },
         cellActions: {
+          triggerButton: {
+            '13.3.0': 'data-testid tableng cell-actions trigger-button',
+          },
           inspectButton: {
             '13.2.0': 'data-testid tableng cell-actions inspect-button',
           },
@@ -792,6 +795,14 @@ export const versionedComponents = {
       saveAsTitleInput: {
         '13.2.0': 'data-testid Save dashboard title field',
         '11.1.0': 'Save dashboard title field',
+      },
+    },
+    NewLibraryPanelDrawer: {
+      nameInput: {
+        '13.3.0': 'data-testid New library panel name field',
+      },
+      createButton: {
+        '13.3.0': 'data-testid New library panel create button',
       },
     },
   },
@@ -1876,6 +1887,35 @@ export const versionedComponents = {
     },
     variableLinkWrapper: {
       '11.1.1': 'data-testid variable-link-wrapper',
+    },
+  },
+  AdHocFiltersCombobox: {
+    filterInput: {
+      '13.3.0': 'data-testid ad hoc filters combobox filter input',
+    },
+    groupByInput: {
+      '13.3.0': 'data-testid ad hoc filters combobox group by input',
+    },
+    filterPill: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox filter pill ${key}`,
+    },
+    filterPillRemove: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox filter pill remove ${key}`,
+    },
+    groupByPill: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox group by pill ${key}`,
+    },
+    groupByPillRemove: {
+      '13.3.0': (key: string) => `data-testid ad hoc filters combobox group by pill remove ${key}`,
+    },
+    operatorPill: {
+      '13.3.0': 'data-testid ad hoc filters combobox operator pill',
+    },
+    clearAllButton: {
+      '13.3.0': 'data-testid ad hoc filters combobox clear all button',
+    },
+    optionValue: {
+      '13.3.0': (label: string) => `data-testid ad hoc filter option value ${label}`,
     },
   },
   Annotations: {

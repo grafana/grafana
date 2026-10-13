@@ -15,6 +15,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	authlib "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	sdkproxy "github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
@@ -150,7 +151,7 @@ func NewNameScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAt
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := datasources.GetDataSourceQuery{Name: dsName, OrgID: orgID}
+		query := datasources.GetDataSourceQuery{Name: dsName, OrgID: orgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := db.GetDataSource(ctx, &query)
 		if err != nil {
 			return nil, err
@@ -179,7 +180,7 @@ func NewIDScopeResolver(db DataSourceRetriever) (string, accesscontrol.ScopeAttr
 			return nil, accesscontrol.ErrInvalidScope
 		}
 
-		query := datasources.GetDataSourceQuery{ID: dsID, OrgID: orgID}
+		query := datasources.GetDataSourceQuery{ID: dsID, OrgID: orgID} //nolint:staticcheck // Preserve legacy field compatibility.
 		dataSource, err := db.GetDataSource(ctx, &query)
 		if err != nil {
 			return nil, err
@@ -309,12 +310,20 @@ func (s *Service) ListConnections(ctx context.Context, query queryV0.DataSourceC
 }
 
 func (s *Service) asConnection(ds *datasources.DataSource) (*queryV0.DataSourceConnection, error) {
+	var labels map[string]string
+	if ds.IsDefault {
+		labels = map[string]string{
+			"default": "true",
+		}
+	}
+
 	return &queryV0.DataSourceConnection{
 		Title:      ds.Name,
 		APIGroup:   fmt.Sprintf("%s.datasource.grafana.app", ds.Type),
 		APIVersion: "v0alpha1", // TODO, get this from the plugin
 		Name:       ds.UID,
 		Plugin:     ds.Type,
+		Labels:     labels,
 	}, nil
 }
 
@@ -605,7 +614,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 		var err error
 
 		query := &datasources.GetDataSourceQuery{
-			ID:    cmd.ID,
+			ID:    cmd.ID, //nolint:staticcheck // Preserve legacy field compatibility.
 			UID:   cmd.UID,
 			OrgID: cmd.OrgID,
 		}
@@ -680,7 +689,7 @@ func (s *Service) UpdateDataSource(ctx context.Context, cmd *datasources.UpdateD
 
 		if cmd.Name != "" && cmd.Name != dataSource.Name {
 			query := &datasources.GetDataSourceQuery{
-				Name:  cmd.Name,
+				Name:  cmd.Name, //nolint:staticcheck // Preserve legacy field compatibility.
 				OrgID: cmd.OrgID,
 			}
 			exist, err := s.SQLStore.GetDataSource(ctx, query)
@@ -884,9 +893,9 @@ func (s *Service) httpClientOptions(ctx context.Context, ds *datasources.DataSou
 			},
 			Timeouts: &sdkproxy.DefaultTimeoutOptions,
 			ClientCfg: &sdkproxy.ClientCfg{
-				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCertFilePath,
-				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKeyFilePath,
-				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAFilePaths,
+				ClientCert:    s.cfg.SecureSocksDSProxy.ClientCertFilePath, //nolint:staticcheck // Continue supporting certificate paths from the proxy configuration.
+				ClientKey:     s.cfg.SecureSocksDSProxy.ClientKeyFilePath,  //nolint:staticcheck // Continue supporting certificate paths from the proxy configuration.
+				RootCAs:       s.cfg.SecureSocksDSProxy.RootCAFilePaths,    //nolint:staticcheck // Continue supporting certificate paths from the proxy configuration.
 				ClientCertVal: s.cfg.SecureSocksDSProxy.ClientCert,
 				ClientKeyVal:  s.cfg.SecureSocksDSProxy.ClientKey,
 				RootCAsVals:   s.cfg.SecureSocksDSProxy.RootCAs,

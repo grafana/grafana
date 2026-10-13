@@ -35,7 +35,7 @@ import {
 } from '@grafana/schema/apis/dashboard.grafana.app/v2';
 import { handyTestingSchema } from '@grafana/schema/apis/dashboard.grafana.app/v2/examples';
 import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
-import { type DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
+import { type DashboardWithAccessInfo, type DashboardWithLoadInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { DashboardRoutes } from 'app/types/dashboard';
 
@@ -660,6 +660,18 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         expect(scene.state.meta.updatedBy).toBe('user:updatedBy');
         expect(scene.state.meta.folderUid).toBe('folder-uid');
         expect(scene.state.meta.version).toBe(123);
+      });
+
+      it('carries libraryPanelRepeatUnresolved through from the DTO', () => {
+        expect(transformSaveModelSchemaV2ToScene(defaultDashboard).state.meta.libraryPanelRepeatUnresolved).toBe(
+          undefined
+        );
+
+        const resolved: DashboardWithLoadInfo<DashboardV2Spec> = {
+          ...defaultDashboard,
+          libraryPanelRepeatUnresolved: true,
+        };
+        expect(transformSaveModelSchemaV2ToScene(resolved).state.meta.libraryPanelRepeatUnresolved).toBe(true);
       });
 
       it('handles access metadata values', () => {

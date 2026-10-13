@@ -304,7 +304,7 @@ func TestUploadSnapshot_SkipsWhenRecentSameVersionRemoteExists(t *testing.T) {
 	store := newHookableStore(t)
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	key := newTestNsResource()
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	idx := newUploadTestIndex(t, be, key, 42)
@@ -329,7 +329,7 @@ func TestUploadSnapshot_ProceedsWhenRemoteHasNewerIndexFormat(t *testing.T) {
 	key := newTestNsResource()
 	formatType, version, ok := parseIndexFormat(be.maxSupportedIndexFormat)
 	require.True(t, ok)
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{
 		BuildVersion: "11.5.0",
 		IndexFormat:  indexFormat(formatType, version+1),
 	})
@@ -343,7 +343,7 @@ func TestUploadSnapshot_ProceedsWhenRemoteIsDifferentVersion(t *testing.T) {
 	store := newHookableStore(t)
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	key := newTestNsResource()
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{BuildVersion: "11.4.0"})
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{BuildVersion: "11.4.0"})
 
 	be, _ := newTestBleveBackend(t, SnapshotOptions{Store: store, UploadInterval: time.Hour})
 	idx := newUploadTestIndex(t, be, key, 42)
@@ -387,7 +387,7 @@ func TestRunUploadSnapshots_SkipRecentRemote(t *testing.T) {
 	store := newHookableStore(t)
 	recent := makeULID(t, time.Now().Add(-5*time.Minute))
 	key := newTestNsResource()
-	seedSnapshot(t, context.Background(), store.bucket, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
+	seedSnapshot(t, context.Background(), store.inner, key, recent, &IndexMeta{BuildVersion: "11.5.0"})
 
 	be, metrics := newTestBleveBackend(t, SnapshotOptions{Store: store, MinDocCount: 1, UploadInterval: time.Hour, MinDocChanges: 1})
 	idx := newCachedUploadTestIndex(t, be, key, 42)

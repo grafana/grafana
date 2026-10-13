@@ -5,7 +5,6 @@ import { useMedia } from 'react-use';
 import { type GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContext,
@@ -17,6 +16,7 @@ import {
 } from '@grafana/ui';
 import NativeScrollbar, { DivScrollElement } from 'app/core/components/NativeScrollbar';
 import { useGrafana } from 'app/core/context/GrafanaContext';
+import { isDashboardNewLayoutsEnabled } from 'app/features/dashboard/api/utils';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { KioskMode } from 'app/types/dashboard';
@@ -42,7 +42,8 @@ interface Props {
 }
 
 export function DashboardSidebarSplitter(props: Props) {
-  if (config.featureToggles.dashboardNewLayouts) {
+  const dashboardNewLayoutsEnabled = isDashboardNewLayoutsEnabled();
+  if (dashboardNewLayoutsEnabled) {
     return <DashboardSidebarSplitterNewLayouts {...props} />;
   } else {
     return <DashboardSidebarSplitterLegacy {...props} />;
@@ -76,7 +77,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
    */
   useUpdateAppChromeActions(dashboard);
 
-  const { selectionContext, openPane, previousState } = useSceneObjectState(sidebar, {
+  const { selectionContext, openPane, previousState, isLoading } = useSceneObjectState(sidebar, {
     shouldActivateOrKeepAlive: true,
   });
 
@@ -92,7 +93,7 @@ function DashboardSidebarSplitterNewLayouts({ dashboard, isEditing, isPlanning, 
   const theme = useTheme2();
   const isMobile = useMedia(`(max-width: ${theme.breakpoints.values.sm}px)`);
   const sidebarContext = useSidebar({
-    hasOpenPane: Boolean(openPane),
+    hasOpenPane: Boolean(openPane) || Boolean(isLoading),
     contentMargin: 1,
     position: 'right',
     persistenceKey: isEditing ? 'dashboard' : 'dashboard-view',

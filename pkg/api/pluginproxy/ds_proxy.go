@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	authnlib "github.com/grafana/authlib/authn"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -65,6 +66,9 @@ type DataSourceProxy struct {
 	oAuthTokenService oauthtoken.OAuthTokenService
 	tracer            tracing.Tracer
 	features          featuremgmt.FeatureToggles
+	// idTokenDeriver mints X-Grafana-Id from requester's OBO access token when requester carries
+	// no id token of its own. Nil disables that fallback (see proxyutil.ApplyForwardIDHeader).
+	idTokenDeriver authnlib.IDTokenDeriver
 }
 
 type httpClient interface {
@@ -76,7 +80,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 	pluginRoutes []*plugins.Route, ctx HTTPContext,
 	proxyPath string, settings *DataSourceProxySettings, clientProvider httpclient.Provider,
 	oAuthTokenService oauthtoken.OAuthTokenService,
-	tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	tracer tracing.Tracer, features featuremgmt.FeatureToggles, idTokenDeriver authnlib.IDTokenDeriver,
 ) (*DataSourceProxy, error) {
 	ds, err := dataSource.DataSource(ctx.Req.Context())
 	if err != nil {
@@ -106,6 +110,7 @@ func NewDataSourceProxy(dataSource DataSourceLoader,
 		oAuthTokenService: oAuthTokenService,
 		tracer:            tracer,
 		features:          features,
+		idTokenDeriver:    idTokenDeriver,
 	}, nil
 }
 
@@ -302,7 +307,7 @@ func (proxy *DataSourceProxy) director(req *http.Request) {
 		}
 	}
 
-	proxyutil.ApplyForwardIDHeader(req, proxy.requester)
+	proxyutil.ApplyForwardIDHeader(req.Context(), req, proxy.requester, proxy.idTokenDeriver)
 }
 
 // dsInfo builds the DSInfo that ApplyRoute needs from a v0 datasource.

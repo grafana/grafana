@@ -23,10 +23,18 @@ func TestPluginManifestAccessControl(t *testing.T) {
 		{name: "app access", evaluator: appAccess, allowed: true},
 		{name: "another app", evaluator: accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, "plugins:id:another-app"), allowed: true},
 		{name: "unscoped app access", evaluator: accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess), allowed: true},
+		{name: "empty scope", evaluator: accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, ""), allowed: true},
+		{name: "non-plugin scope", evaluator: accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, "folders:uid:test-folder"), allowed: true},
+		{name: "multiple scopes", evaluator: accesscontrol.EvalPermission(pluginaccesscontrol.ActionAppAccess, "plugins:id:test-app", "plugins:id:another-app"), allowed: true},
 		{name: "unrelated action", evaluator: otherPermission},
 		{name: "empty action", evaluator: accesscontrol.EvalPermission("")},
 		{name: "all requires unrelated permission", evaluator: accesscontrol.EvalAll(appAccess, otherPermission)},
 		{name: "any accepts app access", evaluator: accesscontrol.EvalAny(otherPermission, appAccess), allowed: true},
+		{name: "all accepts app access", evaluator: accesscontrol.EvalAll(appAccess, appAccess), allowed: true},
+		{name: "any denies unrelated permission", evaluator: accesscontrol.EvalAny(otherPermission)},
+		{name: "nested evaluators", evaluator: accesscontrol.EvalAll(appAccess, accesscontrol.EvalAny(otherPermission, appAccess)), allowed: true},
+		{name: "empty all", evaluator: accesscontrol.EvalAll(), allowed: true},
+		{name: "empty any", evaluator: accesscontrol.EvalAny()},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for _, ac := range []accesscontrol.AccessControl{pluginManifestAccessControl{}, pluginManifestAccessControl{}.WithoutResolvers()} {

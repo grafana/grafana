@@ -44,6 +44,10 @@ func contextWithReqContext(orgID int64) context.Context {
 	return identity.WithRequester(ctx, &identity.StaticRequester{OrgID: orgID})
 }
 
+func contextWithoutReqContext(orgID int64) context.Context {
+	return identity.WithRequester(context.Background(), &identity.StaticRequester{OrgID: orgID})
+}
+
 func newTestStore(t *testing.T, handler http.HandlerFunc) *Store {
 	t.Helper()
 	server := httptest.NewServer(handler)
@@ -117,6 +121,26 @@ func TestHasTokenValue(t *testing.T) {
 			assert.Equal(t, tc.want, hasTokenValue(tc.tok))
 		})
 	}
+}
+
+func TestStore_ClientsWithoutReqContext(t *testing.T) {
+	t.Run("errors when ctx has no ReqContext, even with a caller identity/org present", func(t *testing.T) {
+		store := newTestStore(t, func(w http.ResponseWriter, r *http.Request) {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		})
+
+		_, err := store.GetUserAuthModules(contextWithoutReqContext(7), 42)
+		require.Error(t, err)
+	})
+
+	t.Run("no identity/org and no ReqContext also errors", func(t *testing.T) {
+		store := newTestStore(t, func(w http.ResponseWriter, r *http.Request) {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		})
+
+		_, err := store.GetUserAuthModules(context.Background(), 42)
+		require.Error(t, err)
+	})
 }
 
 func TestStore_GetAuthInfo(t *testing.T) {

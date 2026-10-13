@@ -70,8 +70,9 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 
 	hostEnv = append(hostEnv, p.featureToggleEnableVars(ctx)...)
 
-	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, plugin.PluginID())
-	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "envVars", envVarNames(marketplaceEnvVars))
+	licensePluginID := marketplaceLicensePluginID(plugin)
+	marketplaceEnvVars := p.marketplaceLicenseEnvVars(ctx, licensePluginID)
+	p.logger.Debug("Providing marketplace env vars", "pluginId", plugin.PluginID(), "licensePluginId", licensePluginID, "envVars", envVarNames(marketplaceEnvVars))
 	hostEnv = append(hostEnv, marketplaceEnvVars...)
 
 	hostEnv = append(hostEnv, p.awsEnvVars(plugin.PluginID())...)
@@ -90,6 +91,15 @@ func (p *EnvVarsProvider) PluginEnvVars(ctx context.Context, plugin *plugins.Plu
 	}
 
 	return hostEnv
+}
+
+// marketplaceLicensePluginID returns the plugin ID whose marketplace license applies to plugin.
+// Nested plugins are distributed and licensed as part of their parent, so they use the parent's license.
+func marketplaceLicensePluginID(plugin *plugins.Plugin) string {
+	if plugin.Parent != nil {
+		return plugin.Parent.PluginID()
+	}
+	return plugin.PluginID()
 }
 
 func (p *EnvVarsProvider) marketplaceLicenseEnvVars(ctx context.Context, pluginID string) []string {
@@ -290,6 +300,10 @@ func (p *EnvVarsProvider) tracingEnvVars(plugin *plugins.Plugin) []string {
 	return vars
 }
 
+// insecureSkipAuthenticationSetting makes a plugin serve plugin protocol v3
+// requests without verifying them. It is only passed on in development mode.
+const insecureSkipAuthenticationSetting = "insecure_skip_authentication"
+
 func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	const customConfigPrefix = "GF_PLUGIN"
 
@@ -298,6 +312,10 @@ func (p *EnvVarsProvider) pluginSettingsEnvVars(pluginID string) []string {
 	env := make([]string, 0, len(pluginSettings))
 	for k, v := range pluginSettings {
 		if k == "path" || strings.ToLower(k) == "id" {
+			continue
+		}
+		if strings.EqualFold(k, insecureSkipAuthenticationSetting) && !p.cfg.DevMode {
+			p.logger.Warn("Ignoring insecure_skip_authentication outside development mode", "pluginId", pluginID)
 			continue
 		}
 

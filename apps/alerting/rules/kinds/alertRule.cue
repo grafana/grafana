@@ -55,10 +55,52 @@ alertRulev0alpha1: alertRuleKind & {
 	// from spec.notificationSettings.* directly.
 	searchFields: [
 		{
+			name: "totalsHealthy"
+			path: "status.totals.healthy"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of healthy alert instances"
+		},
+		{
+			name: "totalsFiring"
+			path: "status.totals.firing"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of firing alert instances"
+		},
+		{
+			name: "totalsPending"
+			path: "status.totals.pending"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of pending alert instances"
+		},
+		{
+			name: "totalsRecovering"
+			path: "status.totals.recovering"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of recovering alert instances"
+		},
+		{
+			name: "totalsNoData"
+			path: "status.totals.nodata"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of no-data alert instances"
+		},
+		{
+			name: "totalsError"
+			path: "status.totals.error"
+			type: "int64"
+			capabilities: ["retrieve"]
+			description: "The number of alert instances with evaluation errors, including errors mapped to another state"
+		},
+		{
 			name: "health"
 			path: "status.health"
 			type: "string"
-			capabilities: ["retrieve"]
+			capabilities: ["filter", "retrieve"]
 			description: "The health of the rule"
 		},
 		{
@@ -86,7 +128,7 @@ alertRulev0alpha1: alertRuleKind & {
 			name: "state"
 			path: "status.state"
 			type: "string"
-			capabilities: ["retrieve"]
+			capabilities: ["filter", "retrieve"]
 			description: "The state of the alert rule"
 		},
 		{

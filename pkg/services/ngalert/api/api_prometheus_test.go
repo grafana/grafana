@@ -2421,7 +2421,7 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 			// create folders
 			for i := 1; i <= numGroups; i++ {
 				store.Folders[orgID] = append(store.Folders[orgID], &folder.Folder{
-					ID:       int64(i),
+					ID:       int64(i), //nolint:staticcheck // Exercise legacy field compatibility.
 					UID:      fmt.Sprintf("ns-%d", i),
 					Title:    fmt.Sprintf("Namespace %d", i),
 					Fullpath: fmt.Sprintf("/namespace-%d", i),

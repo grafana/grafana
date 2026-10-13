@@ -1,5 +1,4 @@
-import { customAlphabet } from 'nanoid';
-
+import { dateTimeFormat } from '@grafana/data';
 import { t } from '@grafana/i18n';
 import { dashboardAPIv2beta1 } from 'app/api/clients/dashboard/v2beta1';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
@@ -26,14 +25,15 @@ export interface NotebookLoadError {
 }
 
 /**
- * Names a new notebook something you can tell apart from the last one, because autosave creates them
- * without asking for a name and a library of identical titles is unreadable.
+ * Names a new notebook after the moment it was created, because autosave creates them without asking
+ * for a name and a library of identical titles is unreadable.
  *
- * The token is invented here and is not the notebook's uid. It cannot be: the title is part of the
- * spec that creates the notebook, and the apiserver does not pick a name until it has created it.
- * Alphabet and length copied from the provisioning drawer, which already needed a short readable one.
+ * The format is pinned rather than left to the user's date settings so that sorting the list by title
+ * still puts these in the order they were made. Minute precision, so two notebooks created in the same
+ * minute do share a title — titles are not unique (the uid comes from the apiserver's generateName),
+ * and the seconds are noise the rest of the time.
  */
-const generateTitleToken = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789', 12);
+const NEW_TITLE_DATE_FORMAT = 'YYYY-MM-DD HH:mm';
 
 export interface NotebookPageState {
   scene?: NotebookScene;
@@ -118,6 +118,11 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
         if (this.isSuperseded(seq)) {
           return;
         }
+        // Here rather than in the scene's own activation or teardown, both of which have the url in the
+        // way: `UrlSyncContextProvider` applies the url to the scene before the scene activates, so
+        // resetting there would throw away a `?from=&to=` somebody was linked to, and its cleanup runs
+        // after the scene's, by which point the router has moved on to the next page.
+        cached.scene.autosave.discardViewOnlyTimeChanges();
         NotebookAnalytics.loaded(cached.scene, true);
         this.setState({ scene: cached.scene, isLoading: false });
         return;
@@ -168,7 +173,9 @@ export class NotebookPageStateManager extends StateManagerBase<NotebookPageState
 
     const spec: NotebookSpec = {
       ...defaultNotebookSpec(),
-      title: t('notebooks.new.default-title', 'Notebook #{{token}}', { token: generateTitleToken() }),
+      title: t('notebooks.new.default-title-with-date', 'Notebook {{date}}', {
+        date: dateTimeFormat(Date.now(), { format: NEW_TITLE_DATE_FORMAT }),
+      }),
     };
 
     // Held so the page can keep this exact scene once its first save gives it a uid.

@@ -22,7 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-var _ authn.Client = new(ExtendedJWT)
+var _ authn.Client = (*ExtendedJWT)(nil)
 
 const (
 	ExtJWTAuthenticationHeaderName = "X-Access-Token"

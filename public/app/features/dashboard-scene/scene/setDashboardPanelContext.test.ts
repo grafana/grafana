@@ -1,3 +1,5 @@
+import { act, renderHook } from '@testing-library/react';
+import { createElement, type PropsWithChildren } from 'react';
 import { delay, of, Subject } from 'rxjs';
 
 import {
@@ -17,11 +19,12 @@ import {
   GroupByVariable,
   SceneDataNode,
   sceneGraph,
+  SceneDataTransformer,
   SceneQueryRunner,
   SceneVariableSet,
   VizPanel,
 } from '@grafana/scenes';
-import { type AdHocFilterItem, type PanelContext } from '@grafana/ui';
+import { type AdHocFilterItem, type PanelContext, PanelContextProvider, useAdHocTransformations } from '@grafana/ui';
 
 import { isAnnotationApiAvailable } from '../../annotations/isAnnotationApiAvailable';
 import { openPanelInspector } from '../inspect/panelInspectorOpener';
@@ -50,8 +53,8 @@ jest.mock('@grafana/runtime/internal', () => ({
   getDatasourcePluginMeta: jest.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn().mockResolvedValue({ uid: 'my-ds-uid', type: 'prometheus' }),
   getDataSourceInstanceSettings: jest.fn().mockResolvedValue(undefined),
 }));
@@ -74,7 +77,7 @@ const PANEL_CONTEXT_ITEM = Symbol('panel context item');
 
 const mockGetAssistantChatIdToContinue = jest.fn();
 
-jest.mock('app/core/components/AssistantTooltip/assistantSidebarState', () => ({
+jest.mock('app/core/assistant/assistantSidebarState', () => ({
   getAssistantChatIdToContinue: () => mockGetAssistantChatIdToContinue(),
 }));
 
@@ -121,6 +124,101 @@ beforeEach(() => {
 });
 
 describe('setDashboardPanelContext', () => {
+  describe('adHocTransformations', () => {
+    it('reads and updates only the selected owner through the panel context hook', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      api.set('table', [{ id: 'organize', options: {} }]);
+      api.set('other', [{ id: 'limit', options: { limitField: 2 } }]);
+      const { result, rerender } = renderHook(({ owner }) => useAdHocTransformations(owner), {
+        initialProps: { owner: 'table' },
+        wrapper: ({ children }: PropsWithChildren) => createElement(PanelContextProvider, { value: context }, children),
+      });
+
+      expect(result.current?.transformations).toEqual([{ id: 'organize', options: {} }]);
+      act(() => result.current?.setTransformations([]));
+      expect(api.get('table')).toEqual([]);
+      expect(api.get('other')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+
+      rerender({ owner: 'other' });
+      act(() => api.set('table', [{ id: 'organize', options: {} }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      act(() => api.set('other', [{ id: 'limit', options: { limitField: 3 } }]));
+      expect(result.current?.transformations).toEqual([{ id: 'limit', options: { limitField: 3 } }]);
+    });
+
+    it('keeps each panel’s single view list and subscriptions independent', () => {
+      const first = buildTestScene({});
+      const second = buildTestScene({});
+      const firstApi = first.context.adHocTransformations!;
+      const secondApi = second.context.adHocTransformations!;
+      const firstChanged = jest.fn();
+      const secondChanged = jest.fn();
+      const unsubscribe = firstApi.subscribe('grafana:table-view', firstChanged);
+      const unsubscribeSecond = secondApi.subscribe('grafana:table-view', secondChanged);
+
+      firstApi.set('grafana:table-view', [{ id: 'organize', options: { excludeByName: { hidden: true } } }]);
+      secondApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      firstApi.set('grafana:table-view', []);
+
+      expect(firstApi.get('grafana:table-view')).toEqual([]);
+      expect(secondApi.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      expect(secondChanged).toHaveBeenCalledTimes(1);
+      unsubscribe();
+      firstApi.set('grafana:table-view', [{ id: 'limit', options: { limitField: 1 } }]);
+      expect(firstChanged).toHaveBeenCalledTimes(2);
+      unsubscribeSecond();
+    });
+
+    it('replaces the entire view list with an immutable snapshot', () => {
+      const { context } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      const configs = [{ id: 'limit', options: { limitField: 2 } }];
+      api.set('grafana:table-view', configs);
+      const snapshot = api.get('grafana:table-view');
+      configs[0].options.limitField = 99;
+
+      expect(api.get('grafana:table-view')).toBe(snapshot);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      expect(Object.isFrozen(snapshot[0].options)).toBe(true);
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+
+    it('notifies subscribers when transformations are cleared or the panel plugin changes', () => {
+      const { context, vizPanel } = buildTestScene({});
+      const api = context.adHocTransformations!;
+      const changed = jest.fn();
+      const unsubscribe = api.subscribe('grafana:table-view', changed);
+
+      api.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      api.set('grafana:table-view', []);
+      expect(api.get('grafana:table-view')).toEqual([]);
+      expect(changed).toHaveBeenCalledTimes(2);
+      api.set('grafana:table-view', [{ id: 'limit', options: { limitField: 2 } }]);
+      expect(api.get('grafana:table-view')).toEqual([{ id: 'limit', options: { limitField: 2 } }]);
+      vizPanel.setState({ pluginId: 'table' });
+      expect(api.get('grafana:table-view')).toEqual([]);
+      expect(changed).toHaveBeenCalledTimes(4);
+      unsubscribe();
+    });
+
+    it('uses the panel runtime transformation controller across data replacements', () => {
+      const { context, vizPanel } = buildTestScene({ dashboardCanEdit: false });
+      const controller = vizPanel.getRuntimeTransformations();
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([]);
+
+      controller.set('grafana:table-view', [{ id: 'organize', options: {} }]);
+      vizPanel.setState({ $data: new SceneDataTransformer({ transformations: [] }) });
+
+      expect(context.adHocTransformations).toBe(controller);
+      expect(context.adHocTransformations?.get('grafana:table-view')).toEqual([{ id: 'organize', options: {} }]);
+    });
+  });
+
   describe('app', () => {
     it('Is PanelEditor while the panel edit pane is open', () => {
       const { scene, vizPanel, context } = buildTestScene({});
@@ -286,7 +384,6 @@ describe('setDashboardPanelContext', () => {
       await context.onAnnotationUpdate!({ from: 100, to: 200, id: 'event-id-123', description: 'updated', tags: [] });
 
       expect(putFn).toHaveBeenCalledWith('/api/annotations/event-id-123', {
-        id: 'event-id-123',
         dashboardUID: 'dash-1',
         isRegion: true,
         panelId: 4,
@@ -346,7 +443,7 @@ describe('setDashboardPanelContext', () => {
   });
 
   describe('onAnnotationDelete', () => {
-    it('should update annotation', async () => {
+    it('should delete annotation', async () => {
       const { context } = buildTestScene({ dashboardCanEdit: true, canAdd: true });
 
       await context.onAnnotationDelete!('I-do-not-want-you');
@@ -714,7 +811,9 @@ describe('setDashboardPanelContext', () => {
     });
 
     it('is not set when the new panel query errors UI feature flag is disabled', () => {
-      stubFFEnabled(false);
+      getBooleanValueFn.mockImplementation((key: string, defaultValue: boolean) =>
+        key === FlagKeys.GrafanaNewPanelQueryErrorsUI ? false : defaultValue
+      );
       mockIsAssistantAvailable.mockReturnValue(of(true));
 
       const { context } = buildTestScene({});

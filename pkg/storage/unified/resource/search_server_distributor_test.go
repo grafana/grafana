@@ -2,8 +2,12 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net"
+	"net/http"
 	"slices"
+	"sync"
 	"testing"
 	"time"
 
@@ -19,10 +23,60 @@ import (
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/test/bufconn"
+	"google.golang.org/protobuf/proto"
 
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/grpcserver"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
 )
+
+type distributorTestProvider struct {
+	grpcserver.Provider
+	server *grpc.Server
+}
+
+func (p distributorTestProvider) GetServer() *grpc.Server { return p.server }
+
+func TestSearchDistributorConvertsOwnErrors(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		t.Run(fmt.Sprintf("enabled=%t", enabled), func(t *testing.T) {
+			srv := grpc.NewServer()
+			_, err := ProvideSearchDistributorServer(noop.NewTracerProvider().Tracer("test"),
+				&setting.Cfg{UnifiedStorageGRPCErrorResultToStatus: enabled}, nil, nil,
+				distributorTestProvider{server: srv})
+			require.NoError(t, err)
+
+			listener := bufconn.Listen(1024 * 1024)
+			t.Cleanup(srv.Stop)
+			go func() { _ = srv.Serve(listener) }()
+			conn, err := grpc.NewClient("passthrough:///bufnet",
+				grpc.WithContextDialer(func(context.Context, string) (net.Conn, error) { return listener.Dial() }),
+				grpc.WithTransportCredentials(insecure.NewCredentials()))
+			require.NoError(t, err)
+			t.Cleanup(func() { _ = conn.Close() })
+
+			resp, err := resourcepb.NewResourceIndexClient(conn).RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{
+				Namespace: "default", Keys: []*resourcepb.ResourceKey{{Namespace: "other"}},
+			})
+			want := NewBadRequestError("key namespace does not match request namespace")
+			if !enabled {
+				require.NoError(t, err)
+				require.True(t, proto.Equal(want, resp.GetError()))
+				return
+			}
+			require.Equal(t, codes.InvalidArgument, status.Code(err))
+			details := status.Convert(err).Details()
+			require.Len(t, details, 1)
+			require.True(t, proto.Equal(want, details[0].(*resourcepb.ErrorResult)))
+		})
+	}
+}
 
 func TestSearchRingReadOpReplicaSetExtension(t *testing.T) {
 	t.Run("replication factor 1", func(t *testing.T) {
@@ -165,6 +219,7 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 		searchRingRead: newSearchRingReadOp(false),
 		clientPool:     pool,
 		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
 	}
 
 	ctx := metadata.NewIncomingContext(context.Background(), metadata.Pairs("x-access-token", "the-token"))
@@ -175,6 +230,173 @@ func TestDistributorVectorSearchForwardsIncomingMetadata(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, []string{"the-token"}, gotMD.Get("x-access-token"))
+}
+
+// failoverTestClient records which instances were called and returns the
+// error chosen by errFn for each call.
+type failoverTestClient struct {
+	ResourceClient
+	id    string
+	state *failoverTestState
+}
+
+type failoverTestState struct {
+	mu    sync.Mutex
+	calls []string
+	errFn func(call int, id string) error
+}
+
+func (s *failoverTestState) record(id string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	n := len(s.calls)
+	s.calls = append(s.calls, id)
+	if s.errFn == nil {
+		return nil
+	}
+	return s.errFn(n, id)
+}
+
+// embeddedTestError makes the fake client return the error inside the response.
+type embeddedTestError struct{ res *resourcepb.ErrorResult }
+
+func (e embeddedTestError) Error() string { return e.res.Message }
+
+func (c *failoverTestClient) Search(context.Context, *resourcepb.ResourceSearchRequest, ...grpc.CallOption) (*resourcepb.ResourceSearchResponse, error) {
+	if err := c.state.record(c.id); err != nil {
+		if e, ok := errors.AsType[embeddedTestError](err); ok {
+			return &resourcepb.ResourceSearchResponse{Error: e.res}, nil
+		}
+		return nil, err
+	}
+	return &resourcepb.ResourceSearchResponse{TotalHits: 1}, nil
+}
+
+func (c *failoverTestClient) RebuildIndexes(context.Context, *resourcepb.RebuildIndexesRequest, ...grpc.CallOption) (*resourcepb.RebuildIndexesResponse, error) {
+	if err := c.state.record(c.id); err != nil {
+		return nil, err
+	}
+	return &resourcepb.RebuildIndexesResponse{RebuildCount: 1}, nil
+}
+
+func newFailoverTestDistributor(t *testing.T, replicationFactor int, state *failoverTestState) *distributorServer {
+	t.Helper()
+	states := make([]ring.InstanceState, max(3, replicationFactor))
+	for i := range states {
+		states[i] = ring.ACTIVE
+	}
+	testRing, _ := newSearchRingWithDescForTest(t, replicationFactor, searchRingDescForTest(time.Now(), states...), true)
+	pool := ringclient.NewPool(RingName, ringclient.PoolConfig{}, nil,
+		ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
+			return &RingClient{Client: &failoverTestClient{id: inst.Id, state: state}}, nil
+		}), nil, gokitlog.NewNopLogger())
+
+	return &distributorServer{
+		ring:           testRing,
+		searchRingRead: newSearchRingReadOp(false),
+		clientPool:     pool,
+		tracing:        noop.NewTracerProvider().Tracer("test"),
+		log:            log.NewNopLogger(),
+	}
+}
+
+func TestDistributorSearchFailover(t *testing.T) {
+	unavailable := status.Error(codes.Unavailable, "connection refused")
+	exhausted := status.Error(codes.ResourceExhausted, "too many requests")
+	invalid := status.Error(codes.InvalidArgument, "bad request")
+	embeddedUnavailable := embeddedTestError{NewServiceUnavailableError("index not ready")}
+	embeddedExhausted := embeddedTestError{NewTooManyRequestsError("queue full")}
+	embeddedInternal := embeddedTestError{&resourcepb.ErrorResult{Code: http.StatusInternalServerError, Message: "failed"}}
+
+	tests := []struct {
+		name              string
+		replicationFactor int
+		// errors returned by each call, in call order
+		errs      []error
+		wantCalls int
+		// HTTP code of the final error, 0 for success
+		wantCode int32
+	}{
+		{name: "first replica succeeds", replicationFactor: 2, wantCalls: 1},
+		{name: "first replica unavailable", replicationFactor: 2, errs: []error{unavailable}, wantCalls: 2},
+		{name: "rate limited, not retried", replicationFactor: 2, errs: []error{exhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
+		{name: "both replicas fail, first succeeds on retry", replicationFactor: 2, errs: []error{unavailable, unavailable}, wantCalls: 3},
+		{name: "all attempts fail", replicationFactor: 2, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
+		{name: "non-retryable error", replicationFactor: 2, errs: []error{invalid}, wantCalls: 1, wantCode: http.StatusBadRequest},
+		{name: "first replica embedded unavailable", replicationFactor: 2, errs: []error{embeddedUnavailable}, wantCalls: 2},
+		{name: "embedded rate limited, not retried", replicationFactor: 2, errs: []error{embeddedExhausted}, wantCalls: 1, wantCode: http.StatusTooManyRequests},
+		{name: "all attempts fail with embedded error", replicationFactor: 2, errs: []error{embeddedUnavailable, embeddedUnavailable, embeddedUnavailable}, wantCalls: 3, wantCode: http.StatusServiceUnavailable},
+		{name: "embedded non-retryable error", replicationFactor: 2, errs: []error{embeddedInternal}, wantCalls: 1, wantCode: http.StatusInternalServerError},
+		{name: "single replica retried", replicationFactor: 1, errs: []error{unavailable, unavailable}, wantCalls: 3},
+		{name: "every replica tried before retrying", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable}, wantCalls: 4},
+		{name: "four replicas all fail", replicationFactor: 4, errs: []error{unavailable, unavailable, unavailable, unavailable, unavailable}, wantCalls: 5, wantCode: http.StatusServiceUnavailable},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := &failoverTestState{errFn: func(n int, _ string) error {
+				if n < len(tt.errs) {
+					return tt.errs[n]
+				}
+				return nil
+			}}
+			ds := newFailoverTestDistributor(t, tt.replicationFactor, state)
+
+			resp, err := ds.Search(t.Context(), &resourcepb.ResourceSearchRequest{
+				Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+			})
+			code, _ := callFailure(resp, err)
+			require.Equal(t, tt.wantCode, code)
+			if tt.wantCode == 0 {
+				require.Equal(t, int64(1), resp.TotalHits)
+			}
+
+			calls := state.calls
+			require.Len(t, calls, tt.wantCalls)
+			// Each replica is tried once before the first one is retried.
+			for i := range calls {
+				require.Equal(t, calls[i%tt.replicationFactor], calls[i])
+			}
+			require.Len(t, slices.Compact(slices.Sorted(slices.Values(calls))), min(len(calls), tt.replicationFactor))
+		})
+	}
+}
+
+func TestDistributorSearchReportsCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(t.Context())
+	state := &failoverTestState{errFn: func(int, string) error {
+		// The caller gives up while the first replica is failing.
+		cancel()
+		return status.Error(codes.Unavailable, "connection refused")
+	}}
+	ds := newFailoverTestDistributor(t, 2, state)
+
+	_, err := ds.Search(ctx, &resourcepb.ResourceSearchRequest{
+		Options: &resourcepb.ListOptions{Key: &resourcepb.ResourceKey{Namespace: "stacks-1"}},
+	})
+	require.Equal(t, codes.Canceled, status.Code(err))
+	require.Len(t, state.calls, 1)
+}
+
+func TestDistributorRebuildIndexesRetriesSameInstance(t *testing.T) {
+	var failed bool
+	state := &failoverTestState{errFn: func(_ int, id string) error {
+		if id == "instance-a" && !failed {
+			failed = true
+			return status.Error(codes.Unavailable, "connection refused")
+		}
+		return nil
+	}}
+	ds := newFailoverTestDistributor(t, 1, state)
+
+	resp, err := ds.RebuildIndexes(t.Context(), &resourcepb.RebuildIndexesRequest{Namespace: "stacks-1"})
+	require.NoError(t, err)
+	require.Nil(t, resp.Error)
+	require.True(t, resp.ContactedAllInstances)
+	require.Equal(t, int64(3), resp.RebuildCount)
+
+	slices.Sort(state.calls)
+	require.Equal(t, []string{"instance-a", "instance-a", "instance-b", "instance-c"}, state.calls)
 }
 
 func requireSearchReplicaSetIDs(t *testing.T, testRing *ring.Ring, extendReplicaSet bool, expectedIDs []string) {

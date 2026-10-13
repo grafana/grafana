@@ -13,22 +13,6 @@ labels:
 title: Group alert notifications
 menuTitle: Grouping
 weight: 114
-refs:
-  alert-labels:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/annotation-label/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/annotation-label/
-  notification-policies:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
-  silences:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/create-silence/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/create-silence/
 ---
 
 # Group alert notifications
@@ -43,7 +27,7 @@ For a practical example of grouping, refer to our [Getting Started with Grouping
 
 Grouping combines similar alert instances within a specific period into a single notification, reducing alert noise.
 
-In the [notification policy](ref:notification-policies), you can configure how to group multiple alerts into a single notification:
+In the [notification policy](/docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/), you can configure how to group multiple alerts into a single notification:
 
 - The `Group by` option specifies the criteria for grouping incoming alerts within the policy. The default is by alert rule.
 - [Timing options](#timing-options) determine when and how often to send the notification.

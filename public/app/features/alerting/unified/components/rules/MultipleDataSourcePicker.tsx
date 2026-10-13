@@ -9,7 +9,7 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
-import { type DataSourcePickerProps, getDataSourceSrv } from '@grafana/runtime';
+import { type DataSourcePickerProps, getDataSourceSrv, useDefaultDataSourceInstanceListItem } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { type ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
 
@@ -24,6 +24,8 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
   const dataSourceSrv = getDataSourceSrv();
 
   const [state, setState] = useState<{ error?: string }>();
+
+  const { item: defaultDataSource } = useDefaultDataSourceInstanceListItem(dataSourceSrv.getList());
 
   const onChange = (items: Array<SelectableValue<string>>, actionMeta: ActionMeta) => {
     if (actionMeta.action === 'clear' && props.onClear) {
@@ -107,7 +109,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
 
     const alertManagingDs = dataSources.filter(isDataSourceManagingAlerts).map((ds) => ({
       value: ds.name,
-      label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+      label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
       imgUrl: ds.meta.info.logos.small,
       meta: ds.meta,
     }));
@@ -116,7 +118,7 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       .filter((ds) => !isDataSourceManagingAlerts(ds))
       .map((ds) => ({
         value: ds.name,
-        label: `${ds.name}${ds.isDefault ? ' (default)' : ''}`,
+        label: `${ds.name}${ds.uid === defaultDataSource?.uid ? ' (default)' : ''}`,
         imgUrl: ds.meta.info.logos.small,
         meta: ds.meta,
       }));

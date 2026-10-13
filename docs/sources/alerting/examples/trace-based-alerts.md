@@ -12,12 +12,6 @@ labels:
     - oss
 title: Trace-based alerts
 weight: 1103
-refs:
-  testdata-data-source:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/testdata/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/testdata/
 ---
 
 # Examples of trace-based alerts

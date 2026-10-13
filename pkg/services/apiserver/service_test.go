@@ -218,7 +218,7 @@ func TestApplyOpenAPIV2Setting(t *testing.T) {
 		},
 		{
 			name:      "unrelated keys in the section do not disable it",
-			ini:       "[grafana-apiserver]\nenable_search_api = false\n",
+			ini:       "[grafana-apiserver]\nenable_hybrid_api = false\n",
 			wantV2Nil: false,
 		},
 	} {

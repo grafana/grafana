@@ -664,6 +664,36 @@ func TestRedactedValue(t *testing.T) {
 			value:    "some-token",
 			expected: RedactedPassword,
 		},
+		{
+			desc:     "token exchange token",
+			key:      "GF_AUTHN_SERVER_TOKEN_EXCHANGE_TOKEN",
+			value:    "some-token",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "settings service token exchange token",
+			key:      "GF_AUTHN_SERVER_SETTINGS_SERVICE_TOKEN_EXCHANGE_TOKEN",
+			value:    "some-token",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "token exchange section token",
+			key:      "GF_TOKEN_EXCHANGE_TOKEN",
+			value:    "some-token",
+			expected: RedactedPassword,
+		},
+		{
+			desc:     "boolean token setting stays visible",
+			key:      "GF_AUTH_GENERIC_OAUTH_USE_REFRESH_TOKEN",
+			value:    "true",
+			expected: "true",
+		},
+		{
+			desc:     "token exchange url stays visible",
+			key:      "GF_AUTHN_SERVER_TOKEN_EXCHANGE_URL",
+			value:    "http://example.com/token-exchange",
+			expected: "http://example.com/token-exchange",
+		},
 	}
 
 	for _, tc := range testCases {

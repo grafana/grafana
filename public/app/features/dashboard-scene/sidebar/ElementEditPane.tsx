@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 
+import { t } from '@grafana/i18n';
 import { type SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
+
+import { DashboardLoadingBar } from '../scene/DashboardLoadingBar';
 
 import { type ElementEditPaneRenderer } from './ElementEditPaneRenderer';
 
@@ -45,7 +48,11 @@ function LazyElementEditPaneRenderer(props: SceneComponentProps<ElementEditPane>
     throw loadError.error;
   }
 
-  return Renderer ? <Renderer {...props} /> : null;
+  return Renderer ? (
+    <Renderer {...props} />
+  ) : (
+    <DashboardLoadingBar label={t('dashboard.loading.sidebar', 'Loading sidebar')} />
+  );
 }
 
 export class ElementEditPane extends SceneObjectBase {
