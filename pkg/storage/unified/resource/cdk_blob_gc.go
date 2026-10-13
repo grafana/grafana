@@ -2,6 +2,7 @@ package resource
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"iter"
@@ -36,7 +37,7 @@ func (s *CDKBlobGCStore) Keys(ctx context.Context, section string, _ kv.ListOpti
 		for {
 			obj, err := it.Next(ctx)
 			if err != nil {
-				if err != io.EOF {
+				if !errors.Is(err, io.EOF) {
 					yield("", err)
 				}
 				return
