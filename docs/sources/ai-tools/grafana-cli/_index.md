@@ -8,7 +8,8 @@ keywords:
   - dashboards
   - git integration
   - git sync
-  - github
+  - CLI
+  - gcx
 labels:
   products:
     - cloud
@@ -16,7 +17,7 @@ labels:
     - oss
 cards:
   items:
-    - description: Overview of the Grafana CLI `gcx`, compatible with AI agents
+    - description: Learn how to use gcx, the Grafana CLI compatible with AI agents
       height: 24
       href: ./gcx
       title: gcx
@@ -30,10 +31,10 @@ menuTitle: Grafana CLI
 weight: 100
 canonical: https://grafana.com/docs/grafana/latest/ai-tools/grafana-cli/
 aliases:
-  - ../../as-code/observability-as-code/grafana-cli/
+  - ../../as-code/grafana-cli/
 ---
 
-# Introduction to the Grafana CLI tools
+# Introduction to Grafana CLI tools
 
 Grafana command-line tools are designed to simplify interaction with Grafana instances. You can authenticate, manage multiple environments, and perform administrative tasks through the Grafana REST API, all from the terminal. Whether you're automating workflows in CI/CD pipelines or switching between staging and production environments, the Grafana CLI tools provide a flexible and efficient way to manage your Grafana setup as code.
 
