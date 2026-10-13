@@ -6,12 +6,12 @@ import { TracedError } from '../../utils/TracedError';
  *
  * `isHandled` marks the failure as already logged, so `getCachedPromise` does not log it again.
  */
-export class DataSourceCacheFillError extends TracedError {
+export class DataSourceListFetchError extends TracedError {
   readonly isHandled = true;
 
   constructor(cause: unknown) {
     super('DataSource: failed to load the data source list', cause);
-    this.name = 'DataSourceCacheFillError';
+    this.name = 'DataSourceListFetchError';
   }
 }
 
@@ -34,5 +34,5 @@ export class DataSourceSettingsFetchError extends TracedError {
 }
 
 export function isDataSourceLoadError(error: unknown): boolean {
-  return error instanceof DataSourceCacheFillError || error instanceof DataSourceSettingsFetchError;
+  return error instanceof DataSourceListFetchError || error instanceof DataSourceSettingsFetchError;
 }

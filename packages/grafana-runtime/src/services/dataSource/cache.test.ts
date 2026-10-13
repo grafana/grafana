@@ -11,7 +11,7 @@ import {
   upsertRuntimeSettings,
 } from './cache';
 import { getDataSourceCacheGeneration } from './cacheGeneration';
-import { DataSourceCacheFillError } from './errors';
+import { DataSourceListFetchError } from './errors';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from './sources/types';
 
 function ds(uid: string, name: string): DataSourceInstanceSettings {
@@ -80,7 +80,7 @@ describe('fill', () => {
     expect(getListItemByUid('uid-alpha')?.name).toBe('Alpha');
   });
 
-  it('rejects waiting callers with a DataSourceCacheFillError when the list load fails, and starts a new load on the next call', async () => {
+  it('rejects waiting callers with a DataSourceListFetchError when the list load fails, and starts a new load on the next call', async () => {
     const loadList = jest
       .fn()
       .mockRejectedValueOnce(new Error('connections failed'))
@@ -88,7 +88,7 @@ describe('fill', () => {
     setDataSourceCacheSource(fetchingSource({ loadList }));
 
     const failure = await awaitFill().catch((error) => error);
-    expect(failure).toBeInstanceOf(DataSourceCacheFillError);
+    expect(failure).toBeInstanceOf(DataSourceListFetchError);
     expect(failure.cause).toEqual(new Error('connections failed'));
     await awaitFill();
 
@@ -100,7 +100,7 @@ describe('fill', () => {
     setDataSourceCacheSource(fetchingSource({ loadList: jest.fn().mockRejectedValue(new Error('down')) }));
     const generation = getDataSourceCacheGeneration();
 
-    await expect(awaitFill()).rejects.toBeInstanceOf(DataSourceCacheFillError);
+    await expect(awaitFill()).rejects.toBeInstanceOf(DataSourceListFetchError);
 
     expect(getDataSourceCacheGeneration()).toBe(generation);
   });

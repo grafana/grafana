@@ -4,7 +4,7 @@ import { getCachedPromise, invalidateCachedPromise } from '../../utils/getCached
 
 import { notifyDataSourceCacheChanged } from './cacheGeneration';
 import { MT_FILL_FAILED } from './constants';
-import { DataSourceCacheFillError } from './errors';
+import { DataSourceListFetchError } from './errors';
 import { logDataSourceInstanceError } from './logging';
 import { type DataSourceCacheSource, type DataSourceListSnapshot } from './sources/types';
 
@@ -82,7 +82,7 @@ export function awaitFill(): Promise<void> {
       // When a newer snapshot filled the cache meanwhile, this failure no longer matters.
       if (version === snapshotVersion) {
         logDataSourceInstanceError(MT_FILL_FAILED, error, { reason: 'boot', source: from.kind });
-        throw new DataSourceCacheFillError(error);
+        throw new DataSourceListFetchError(error);
       }
     } finally {
       // Settled fills are tracked by `filled`; keep the shared promise cache for in-flight work.

@@ -18,7 +18,7 @@ import {
   SETTINGS_NOT_FOUND_STALE_LIST_WARNING,
 } from '../../constants';
 import { getDataSourceInstance, setDataSourcePluginImporter } from '../../dataSource';
-import { DataSourceCacheFillError, DataSourceSettingsFetchError } from '../../errors';
+import { DataSourceListFetchError, DataSourceSettingsFetchError } from '../../errors';
 import { getDataSourceInstanceListItem } from '../../listItem';
 import {
   _resetForTests,
@@ -295,11 +295,11 @@ describe('settings', () => {
 });
 
 describe('failed fill', () => {
-  it('rejects the async APIs with DataSourceCacheFillError and logs the failure', async () => {
+  it('rejects the async APIs with DataSourceListFetchError and logs the failure', async () => {
     routes[CONNECTIONS_URL] = { status: 500 };
     initDataSourceInstanceSettings({}, '');
 
-    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceCacheFillError);
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceListFetchError);
     expect(logError.mock.calls.map(([error]) => error.message)).toContain(MT_FILL_FAILED);
   });
 
@@ -310,14 +310,14 @@ describe('failed fill', () => {
     routes[CONNECTIONS_URL] = { status: 500 };
     initDataSourceInstanceSettings({}, '');
 
-    await expect(getDataSourceInstance('uid-prom')).rejects.toBeInstanceOf(DataSourceCacheFillError);
+    await expect(getDataSourceInstance('uid-prom')).rejects.toBeInstanceOf(DataSourceListFetchError);
     expect(get).not.toHaveBeenCalled();
   });
 
   it('starts a new fill on the next call once the API recovers', async () => {
     routes[CONNECTIONS_URL] = { status: 500 };
     initDataSourceInstanceSettings({}, '');
-    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceCacheFillError);
+    await expect(getDataSourceInstanceList()).rejects.toBeInstanceOf(DataSourceListFetchError);
 
     routes[CONNECTIONS_URL] = { status: 200, body: { items: [promConnection] } };
     const items = await getDataSourceInstanceList();
