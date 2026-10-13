@@ -73,7 +73,7 @@ func TestSubProxyPDCRouting(t *testing.T) {
 		sdkproxy.PluginSecureSocksProxyAllowInsecure: "true",
 		sdkproxy.PluginSecureSocksProxyProxyAddress:  pdc.Addr().String(),
 	})
-	storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
+	storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
 	t.Cleanup(storage.Destroy)
 	responder := &resourceMockResponder{}
 	handler, err := storage.Connect(proxyTestContext(), ds.Name, nil, responder)
@@ -228,7 +228,7 @@ func TestSubProxyREST_Connect(t *testing.T) {
 		deps, err := builder.proxyDependencies(t.Context(), nil)
 		require.NoError(t, err)
 		deps.OAuthTokenService = nil
-		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
+		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
 		t.Cleanup(storage.Destroy)
 		responder := &resourceMockResponder{}
 		handler, err := storage.Connect(proxyTestContext(), "test-ds", nil, responder)
@@ -241,7 +241,8 @@ func TestSubProxyREST_Connect(t *testing.T) {
 
 	t.Run("responds NotFound when the datasource does not exist", func(t *testing.T) {
 		provider := &proxyMockDatasourceProvider{dsErr: datasources.ErrDataSourceNotFound}
-		r := &subProxyREST{builder: newProxyTestBuilder(provider), transports: newProxyTransportCache(256)}
+		r := &subProxyREST{builder: newProxyTestBuilder(provider), transports: newProxyTransportCache()}
+		t.Cleanup(r.Destroy)
 
 		responder := &resourceMockResponder{}
 		handler, err := r.Connect(proxyTestContext(), "missing", nil, responder)
@@ -262,7 +263,7 @@ func TestSubProxyREST_Connect(t *testing.T) {
 			require.Equal(t, ctx, req.Context())
 			return nil, unavailable
 		}
-		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
+		storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
 		t.Cleanup(storage.Destroy)
 		responder := &resourceMockResponder{}
 		handler, err := storage.Connect(ctx, "test-ds", nil, responder)
@@ -274,7 +275,8 @@ func TestSubProxyREST_Connect(t *testing.T) {
 	t.Run("returns an error when proxy dependencies are not configured", func(t *testing.T) {
 		builder := newProxyTestBuilder(&proxyMockDatasourceProvider{})
 		builder.proxyDependencies = nil
-		r := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
+		r := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
+		t.Cleanup(r.Destroy)
 
 		handler, err := r.Connect(proxyTestContext(), "test-ds", nil, &resourceMockResponder{})
 		require.Nil(t, handler)
@@ -300,7 +302,8 @@ func TestSubProxyREST_Connect(t *testing.T) {
 			URL:      target.URL,
 			JSONData: []byte("{}"),
 		}
-		r := &subProxyREST{builder: newProxyTestBuilder(provider), transports: newProxyTransportCache(256)}
+		r := &subProxyREST{builder: newProxyTestBuilder(provider), transports: newProxyTransportCache()}
+		t.Cleanup(r.Destroy)
 
 		ctx := proxyTestContext()
 		handler, err := r.Connect(ctx, "test-ds", nil, &resourceMockResponder{})
@@ -384,7 +387,9 @@ func TestSubProxyREST_RouteAuthorization(t *testing.T) {
 				who.Permissions = map[int64]map[string][]string{1: {"datasources:query": {"datasources:*"}}}
 			}
 			ctx := identity.WithRequester(krequest.WithNamespace(t.Context(), "stacks-11"), who)
-			handler, err := (&subProxyREST{builder: b, transports: newProxyTransportCache(256)}).Connect(ctx, "ds-1", nil, &resourceMockResponder{})
+			storage := &subProxyREST{builder: b, transports: newProxyTransportCache()}
+			t.Cleanup(storage.Destroy)
+			handler, err := storage.Connect(ctx, "ds-1", nil, &resourceMockResponder{})
 			require.NoError(t, err)
 			rec := httptest.NewRecorder()
 			handler.ServeHTTP(rec, httptest.NewRequestWithContext(t.Context(), "POST", "/namespaces/stacks-11/datasources/ds-1/proxy/api/v1/query", nil))

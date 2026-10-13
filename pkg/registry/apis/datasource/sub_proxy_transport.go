@@ -11,8 +11,10 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/proxy"
-	"github.com/hashicorp/golang-lru/v2/simplelru"
+	"github.com/maypok86/otter/v2"
 )
+
+const proxyTransportIdleTimeout = 5 * time.Minute
 
 type proxyTransportKey struct{ namespace, plugin, uid string }
 
@@ -22,20 +24,20 @@ type cachedProxyTransport struct {
 	closeIdle   func()
 }
 
-// Bound retained transports while leaving idle connection expiry to net/http.
+// Expiry tracks cache lookups; closing idle connections leaves active requests running.
 type proxyTransportCache struct {
 	mu      sync.Mutex
-	entries *simplelru.LRU[proxyTransportKey, *cachedProxyTransport]
+	entries *otter.Cache[proxyTransportKey, *cachedProxyTransport]
 	closed  bool
 }
 
-func newProxyTransportCache(size int) *proxyTransportCache {
-	entries, err := simplelru.NewLRU[proxyTransportKey, *cachedProxyTransport](size, func(_ proxyTransportKey, entry *cachedProxyTransport) {
-		entry.closeIdle()
+func newProxyTransportCache() *proxyTransportCache {
+	entries := otter.Must(&otter.Options[proxyTransportKey, *cachedProxyTransport]{
+		ExpiryCalculator: otter.ExpiryAccessing[proxyTransportKey, *cachedProxyTransport](proxyTransportIdleTimeout),
+		OnAtomicDeletion: func(e otter.DeletionEvent[proxyTransportKey, *cachedProxyTransport]) {
+			e.Value.closeIdle()
+		},
 	})
-	if err != nil {
-		panic(err)
-	}
 	return &proxyTransportCache{entries: entries}
 }
 
@@ -45,11 +47,11 @@ func (c *proxyTransportCache) get(key proxyTransportKey, fingerprint [sha256.Siz
 	if c.closed {
 		return nil, errors.New("datasource proxy transport cache is closed")
 	}
-	if entry, ok := c.entries.Get(key); ok {
+	if entry, ok := c.entries.GetIfPresent(key); ok {
 		if entry.fingerprint == fingerprint {
 			return entry.transport, nil
 		}
-		c.entries.Remove(key)
+		c.entries.Invalidate(key)
 	}
 	// Serialize construction so concurrent requests for a datasource share one pool.
 	rt, closeIdle, err := build()
@@ -57,16 +59,19 @@ func (c *proxyTransportCache) get(key proxyTransportKey, fingerprint [sha256.Siz
 		closeIdle()
 		return nil, err
 	}
-	entry := &cachedProxyTransport{fingerprint: fingerprint, transport: rt, closeIdle: closeIdle}
-	c.entries.Add(key, entry)
+	c.entries.Set(key, &cachedProxyTransport{fingerprint: fingerprint, transport: rt, closeIdle: closeIdle})
 	return rt, nil
 }
 
 func (c *proxyTransportCache) close() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	if c.closed {
+		return
+	}
 	c.closed = true
-	c.entries.Purge()
+	c.entries.InvalidateAll()
+	c.entries.StopAllGoroutines()
 }
 
 func proxyTransportFingerprint(settings *backend.DataSourceInstanceSettings, opts sdkhttpclient.Options, configKey string) ([sha256.Size]byte, error) {

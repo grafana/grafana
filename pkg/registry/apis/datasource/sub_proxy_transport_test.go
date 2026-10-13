@@ -10,6 +10,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"testing/synctest"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -22,8 +23,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func TestProxyTransportCacheConcurrentReuseAndEviction(t *testing.T) {
-	cache := newProxyTransportCache(2)
+func TestProxyTransportCacheConcurrentReuseAndInvalidation(t *testing.T) {
+	cache := newProxyTransportCache()
 	t.Cleanup(cache.close)
 	var built, closed atomic.Int32
 	build := func() (http.RoundTripper, func(), error) {
@@ -62,11 +63,104 @@ func TestProxyTransportCacheConcurrentReuseAndEviction(t *testing.T) {
 	_, err = cache.get(proxyTransportKey{"stack-1", "prometheus", "ds-2"}, version, build)
 	require.NoError(t, err)
 	require.EqualValues(t, 4, built.Load())
-	require.EqualValues(t, 2, closed.Load())
+	require.EqualValues(t, 1, closed.Load())
 	cache.close()
 	require.EqualValues(t, 4, closed.Load())
 	_, err = cache.get(key, version, build)
 	require.ErrorContains(t, err, "closed")
+}
+
+func TestProxyTransportCacheExpiresUnusedEntries(t *testing.T) {
+	synctest.Test(t, func(t *testing.T) {
+		cache := newProxyTransportCache()
+		defer cache.close()
+		closed := 0
+		build := func() (http.RoundTripper, func(), error) {
+			return &http.Transport{}, func() { closed++ }, nil
+		}
+		active := proxyTransportKey{"stack", "plugin", "active"}
+		idle := proxyTransportKey{"stack", "plugin", "idle"}
+		first, err := cache.get(active, [32]byte{}, build)
+		require.NoError(t, err)
+		_, err = cache.get(idle, [32]byte{}, build)
+		require.NoError(t, err)
+
+		time.Sleep(4 * time.Minute)
+		reused, err := cache.get(active, [32]byte{}, build)
+		require.NoError(t, err)
+		require.Same(t, first, reused)
+		time.Sleep(2 * time.Minute)
+		synctest.Wait()
+		require.Equal(t, 1, closed)
+		require.Equal(t, 1, cache.entries.EstimatedSize())
+		reused, err = cache.get(active, [32]byte{}, build)
+		require.NoError(t, err)
+		require.Same(t, first, reused)
+
+		time.Sleep(6 * time.Minute)
+		synctest.Wait()
+		require.Equal(t, 2, closed)
+		require.Zero(t, cache.entries.EstimatedSize())
+		cache.close()
+		synctest.Wait() // The cleanup goroutine must exit when storage is destroyed.
+		require.Equal(t, 2, closed)
+	})
+}
+
+func TestProxyTransportCacheExpiryAllowsActiveRequestToFinish(t *testing.T) {
+	started := make(chan struct{})
+	release := make(chan struct{})
+	var unblock sync.Once
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		close(started)
+		<-release
+		_, _ = io.WriteString(w, "pong")
+	}))
+	t.Cleanup(upstream.Close)
+	t.Cleanup(func() { unblock.Do(func() { close(release) }) })
+	cache := newProxyTransportCache()
+	t.Cleanup(cache.close)
+	var closed atomic.Int32
+	build := func() (http.RoundTripper, func(), error) {
+		transport := &http.Transport{}
+		return transport, func() {
+			closed.Add(1)
+			transport.CloseIdleConnections()
+		}, nil
+	}
+	first, err := cache.get(proxyTransportKey{}, [32]byte{}, build)
+	require.NoError(t, err)
+	finished := make(chan error, 1)
+	go func() {
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, upstream.URL, nil)
+		if err != nil {
+			finished <- err
+			return
+		}
+		resp, err := first.RoundTrip(req)
+		if err == nil {
+			_, err = io.Copy(io.Discard, resp.Body)
+			err = errors.Join(err, resp.Body.Close())
+		}
+		finished <- err
+	}()
+	select {
+	case <-started:
+	case <-time.After(5 * time.Second):
+		t.Fatal("request did not reach upstream")
+	}
+	cache.entries.SetExpiresAfter(proxyTransportKey{}, time.Nanosecond)
+	next, err := cache.get(proxyTransportKey{}, [32]byte{}, build)
+	require.NoError(t, err)
+	require.NotSame(t, first, next)
+	require.EqualValues(t, 1, closed.Load())
+	unblock.Do(func() { close(release) })
+	select {
+	case err := <-finished:
+		require.NoError(t, err)
+	case <-time.After(5 * time.Second):
+		t.Fatal("active request did not finish after cache expiry")
+	}
 }
 
 func TestProxyTransportCacheRetainsTransportAfterIdleConnectionCloses(t *testing.T) {
@@ -81,7 +175,7 @@ func TestProxyTransportCacheRetainsTransportAfterIdleConnectionCloses(t *testing
 	}
 	upstream.Start()
 	t.Cleanup(upstream.Close)
-	cache := newProxyTransportCache(2)
+	cache := newProxyTransportCache()
 	t.Cleanup(cache.close)
 	built := 0
 	build := func() (http.RoundTripper, func(), error) {
@@ -114,7 +208,7 @@ func TestProxyTransportCacheRetainsTransportAfterIdleConnectionCloses(t *testing
 }
 
 func TestProxyTransportCacheDoesNotCacheErrors(t *testing.T) {
-	cache := newProxyTransportCache(1)
+	cache := newProxyTransportCache()
 	t.Cleanup(cache.close)
 	for range 2 {
 		_, err := cache.get(proxyTransportKey{}, [32]byte{}, func() (http.RoundTripper, func(), error) {
@@ -122,7 +216,7 @@ func TestProxyTransportCacheDoesNotCacheErrors(t *testing.T) {
 		})
 		require.ErrorContains(t, err, "bad certificate")
 	}
-	require.Zero(t, cache.entries.Len())
+	require.Zero(t, cache.entries.EstimatedSize())
 }
 
 func TestProxyTransportFingerprint(t *testing.T) {
@@ -177,7 +271,7 @@ func TestSubProxyREST_ReusesConnectionsWithCurrentUserHeaders(t *testing.T) {
 	require.NoError(t, err)
 	deps.OAuthTokenService = nil
 	deps.ProxyCfg.SendUserHeader = true
-	storage := &subProxyREST{builder: builder, transports: newProxyTransportCache(256)}
+	storage := &subProxyREST{builder: builder, transports: newProxyTransportCache()}
 	t.Cleanup(storage.Destroy)
 	for _, tc := range []struct {
 		namespace, login string
