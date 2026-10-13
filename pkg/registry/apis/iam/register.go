@@ -1160,6 +1160,8 @@ func (b *IdentityAccessManagementAPIBuilder) validateCreate(ctx context.Context,
 		return team.ValidateOnCreate(ctx, b.teamSearchClient, typedObj, b.externalGroupReconciler)
 	case *iamv0.TeamBinding:
 		return teambinding.ValidateOnCreate(ctx, typedObj, b.teamGetter, b.userGetter)
+	case *iamv0.AuthInfo:
+		return authinfo.ValidateOnCreate(ctx, typedObj, b.userGetter)
 	case *iamv0.ResourcePermission:
 		return resourcepermission.ValidateCreateAndUpdateInput(ctx, typedObj, b.mappers)
 	case *iamv0.Role:
@@ -1208,6 +1210,12 @@ func (b *IdentityAccessManagementAPIBuilder) validateUpdate(ctx context.Context,
 			return fmt.Errorf("expected old object to be a TeamBinding, got %T", oldObj)
 		}
 		return teambinding.ValidateOnUpdate(ctx, typedObj, oldTeamBindingObj)
+	case *iamv0.AuthInfo:
+		oldAuthInfoObj, ok := oldObj.(*iamv0.AuthInfo)
+		if !ok {
+			return fmt.Errorf("expected old object to be an AuthInfo, got %T", oldObj)
+		}
+		return authinfo.ValidateOnUpdate(ctx, typedObj, oldAuthInfoObj)
 	case *iamv0.Role:
 		oldRoleObj, ok := oldObj.(*iamv0.Role)
 		if !ok {
