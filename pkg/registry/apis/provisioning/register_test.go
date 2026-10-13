@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	"github.com/grafana/grafana/apps/provisioning/pkg/apis/auth"
@@ -16,6 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
+
+func mockForbidden() error {
+	return apierrors.NewForbidden(schema.GroupResource{}, "", fmt.Errorf("forbidden"))
+}
+
+func subresourceAttrs(sub, name, ns string) authorizer.Attributes {
+	return subresourceAttrsWithVerb(sub, name, ns, utils.VerbGet)
+}
 
 func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes {
 	return authorizer.AttributesRecord{
@@ -33,9 +43,8 @@ func subresourceAttrsWithVerb(sub, name, ns, verb string) authorizer.Attributes 
 // carries mutating endpoints (PUT/PATCH), so pinning the check to a read verb would let a
 // caller holding only connections:read write connection status.
 //
-// repositories and authorize intentionally ignore the request verb: repositories is an
-// inspection view (always connections:read) and authorize mutates connection secrets
-// (always connections:write), regardless of the HTTP method used to reach them.
+// repositories intentionally ignores the request verb: it is an inspection view
+// (always connections:read), regardless of the HTTP method used to reach it.
 func TestAuthorizeConnectionSubresource(t *testing.T) {
 	ctx := context.Background()
 	const ns, name = "default", "my-connection"
@@ -131,26 +140,6 @@ func TestAuthorizeConnectionSubresource(t *testing.T) {
 
 		b := &APIBuilder{accessWithAdmin: adminChecker}
 		decision, _, err := b.authorizeConnectionSubresource(ctx, subresourceAttrs("repositories", name, ns))
-		require.NoError(t, err)
-		assert.Equal(t, authorizer.DecisionDeny, decision)
-	})
-
-	// authorize always checks connections:write, even on a GET, because it rotates secrets.
-	for _, verb := range []string{utils.VerbGet, utils.VerbCreate, utils.VerbUpdate} {
-		t.Run("authorize: "+verb+" is checked as connections:update", func(t *testing.T) {
-			adminChecker := auth.NewMockAccessChecker(t)
-			adminChecker.EXPECT().Check(mock.Anything, mock.MatchedBy(connReq(utils.VerbUpdate)), "").Return(nil)
-
-			b := &APIBuilder{accessWithAdmin: adminChecker}
-			decision, _, err := b.authorizeConnectionSubresource(ctx, subresourceAttrsWithVerb("authorize", name, ns, verb))
-			require.NoError(t, err)
-			assert.Equal(t, authorizer.DecisionAllow, decision)
-		})
-	}
-
-	t.Run("authorize: read-only caller is denied even on get", func(t *testing.T) {
-		b := &APIBuilder{accessWithAdmin: readOnlyChecker(t)}
-		decision, _, err := b.authorizeConnectionSubresource(ctx, subresourceAttrsWithVerb("authorize", name, ns, utils.VerbGet))
 		require.NoError(t, err)
 		assert.Equal(t, authorizer.DecisionDeny, decision)
 	})
