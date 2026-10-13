@@ -37,7 +37,7 @@ All Terraform configuration files should be saved in the same directory.
 
 This Terraform configuration sets up the [Grafana provider](https://registry.terraform.io/providers/grafana/grafana/latest/docs) to provide necessary authentication when managing knowledge graph resources.
 
-You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](/docs/grafana-cloud/as-code/infrastructure-as-code/terraform/terraform-cloud-stack/) to set up a service account and a token.
+You can reuse a similar setup to the one described in [Creating and managing a Grafana Cloud stack using Terraform](/docs/grafana-cloud/as-code/terraform/terraform-cloud-stack/) to set up a service account and a token.
 
 ### Steps
 

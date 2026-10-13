@@ -12,7 +12,7 @@ labels:
     - oss
 menuTitle: AI tools
 title: AI tools
-weight: 650
+weight: 800
 cards:
   items:
     - title: gcx CLI
@@ -26,6 +26,10 @@ canonical: https://grafana.com/docs/grafana/latest/ai-tools/
 # AI tools
 
 This section describes the tools that let you and your AI agents work with Grafana.
+
+## MCP, `gcx`, or Assistant?
+
+TBD
 
 ## Explore
 

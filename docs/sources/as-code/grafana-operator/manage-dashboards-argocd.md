@@ -22,7 +22,7 @@ This guide shows you how to set up a continuous deployment pipeline using ArgoCD
 Before you begin, make sure you have the following:
 
 - An existing Grafana Cloud stack
-- A Kubernetes cluster with Grafana Operator installed, as shown in [Grafana Operator Installation](/docs/grafana-cloud/as-code/infrastructure-as-code/grafana-operator/#installing-the-grafana-operator)
+- A Kubernetes cluster with Grafana Operator installed, as shown in [Grafana Operator Installation](/docs/grafana-cloud/as-code/grafana-operator/#installing-the-grafana-operator)
 - ArgoCD installed on your Kubernetes cluster. Refer to the [ArgoCD Installation Guide](https://argo-cd.readthedocs.io/en/stable/getting_started/)
 - A Git repository to store your dashboard configurations
 

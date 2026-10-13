@@ -53,7 +53,7 @@ cards:
       href: ./foundation-sdk/
       description: Define Grafana dashboards and resources using familiar programming languages like Go, TypeScript, Python, Java, and PHP. Use it in conjunction with `gcx` to push your programmatically generated resources.
   title_class: pt-0 lh-1
-weight: 900
+weight: 810
 canonical: https://grafana.com/docs/grafana/latest/as-code/
 ---
 
@@ -63,7 +63,7 @@ canonical: https://grafana.com/docs/grafana/latest/as-code/
 
 # Overview of Provisioning and as Code
 
-**As code** lets you apply code management best practices to your observability resources. By representing Grafana resources as code, you can integrate them into existing infrastructure-as-code workflows and apply standard development practices. Instead of manually configuring dashboards or settings through the Grafana UI, you can:
+**Provisioning and as code** let you apply code management best practices to your observability resources. By representing Grafana resources as code, you can integrate them into existing infrastructure-as-code workflows and apply standard development practices. Instead of manually configuring dashboards or settings through the Grafana UI, you can:
 
 - Write configurations in code: Define dashboards in JSON or other supported formats.
 - Sync your Grafana setup to GitHub: Track changes, collaborate, and roll back updates using Git and GitHub, or other remote sources.
@@ -78,6 +78,12 @@ For basic configuration provisioning refer to [Provision Grafana](https://grafan
 
 ## Explore
 
+{{< admonition type="note" >}}
+
+Most of the tools defined here can be used with one another.
+
+{{< /admonition >}}
+
 {{< card-grid key="cards" type="simple" >}}
 
 ## A new approach
@@ -90,34 +96,12 @@ Historically, managing Grafana as code involved various community and Grafana La
 
 In Grafana Cloud, you can create and manage dashboards via configuration files in source code, and incorporate them efficiently into your own use cases. This enables you to review code, reuse it, and create better workflows. Infrastructure as code tools include Terraform, Ansible, the Grafana Operator, and Grizzly.
 
-{{< admonition type="note" >}}
-
-Most of the tools defined here can be used with one another.
-
-{{< /admonition >}}
-
 ## as Code for Kubernetes: Grafana Operator and Grafana Crossplane provider
 
-The Grafana Operator is a Kubernetes operator that can provision, manage, and operate Grafana instances and their associated resources within Kubernetes through Custom Resources. This Kubernetes-native tool eases the administration of Grafana, including managing dashboards, data sources, and folders. It also automatically syncs the Kubernetes Custom resources and the actual resources in the Grafana Instance. It supports leveraging Grafonnet for generating Grafana dashboard definitions for seamless dashboard configuration as code.
+The Grafana Operator is a Kubernetes operator that can provision, manage, and operate Grafana instances and their associated resources within Kubernetes through Custom Resources. This Kubernetes-native tool eases the administration of Grafana, including managing dashboards, data sources, and folders. It also automatically syncs the Kubernetes Custom resources and the actual resources in the Grafana Instance.
 
-To get started, see the [quickstart guides for the Grafana Operator](https://grafana.com/docs/grafana-cloud/as-code/grafana-operator) or check out the [Grafana Operator's documentation](https://grafana.github.io/grafana-operator/).
+To get started, refer to the [quickstart guides for the Grafana Operator](https://grafana.com/docs/grafana-cloud/as-code/grafana-operator) or check out the [Grafana Operator's documentation](https://grafana.github.io/grafana-operator/). For Grafana Crossplane, refer to [Use the Grafana Crossplane provider](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/grafana-operator#use-the-grafana-crossplane-provider).
 
-### Grafana Crossplane provider
-
-[Grafana Crossplane provider](https://github.com/grafana/crossplane-provider-grafana) is built using Terrajet and provides support for all resources supported by the Grafana Terraform provider. It enables you to define Grafana resources as Kubernetes manifests and it also help users who build their GitOps pipelines around Kubernetes manifests using tools like ArgoCD.
-
-To get started with the Grafana Crossplane provider, install Crossplane in the Kubernetes cluster and use this command to install the provider:
-
-```shell
-kubectl crossplane install provider grafana/crossplane-provider-grafana:v0.1.0
-```
-
-During installation of the provider, CRDs for all the resources supported by the Terraform provider are added to the cluster so users can begin defining their Grafana resources as Kubernetes custom resources. The Crossplane provider ensures that whatever is defined in the custom resource definitions is what is visible in Grafana UI. If any changes are made directly in the UI, the changes will be discarded when the provider resyncs. This helps ensure that whatever is defined via code in the cluster will be the source of truth for Grafana resources.
-
-To get started, refer to the examples folder in the Grafana Crossplane repository.
-
-The Grafana Crossplane provider is intended for existing Crossplane users looking to manage Grafana resources from within Kubernetes and as Kubernetes manifests for the GitOps pipelines. To use the Crossplane provider, you must have the Crossplane CLI and Crossplane installed in the Kubernetes cluster. Note that the Crossplane provider is in an alpha stage, so it has not reached a stable state yet.
-
-## Additional as-code tools
+## Additional as code tools
 
 [Grafonnet](https://github.com/grafana/grafonnet) is a Jsonnet library for generating Grafana dashboard JSON definitions programmatically. **Grafonnet is not officially supported by Grafana. Instead, use the [Foundation SDK](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/as-code/foundation-sdk/)** to create dashboards as code.

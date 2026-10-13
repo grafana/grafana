@@ -21,7 +21,7 @@ This guide shows you how to manage data sources, folders, and dashboards using t
 Before you begin, make sure you have the following:
 
 - An existing Grafana Cloud stack
-- Grafana Operator installed in your cluster, as shown in [Grafana Operator Installation](/docs/grafana-cloud/as-code/infrastructure-as-code/grafana-operator/#installing-the-grafana-operator)
+- Grafana Operator installed in your cluster, as shown in [Grafana Operator Installation](/docs/grafana-cloud/as-code/grafana-operator/#installing-the-grafana-operator)
 
 ## Set up the Grafana Operator
 
