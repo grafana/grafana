@@ -896,7 +896,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
         // Not once stopped: the scene has deactivated (navigated away, tab closed), and this is the
         // teardown's own flush resolving after the fact. Publishing now would show this on whatever
         // page the user is on instead, with no route change left to come along and clear it.
-        if (isConflict && !this.stopped) {
+        // Not when an overwrite is already chosen and queued behind this save: asking again would put a
+        // question to the person after they answered it.
+        if (isConflict && !this.stopped && !this.overwriteNextSave) {
           const notebookUid = this.scene.state.uid ?? '';
           appEvents.publish(
             new ShowConfirmModalEvent({
@@ -933,7 +935,9 @@ export class NotebookAutosave extends StateManagerBase<NotebookAutosaveState> {
           // savedResourceVersion, so it can only conflict again and raise a second overwrite prompt.
           // The edits that set this flag are not lost — they're already merged into the pending
           // change above, and the next real edit (or the prompt's own "Save and overwrite") saves them.
-          if (!hitConflict) {
+          // Unless an overwrite was already chosen for it: that retry skips the precondition, and
+          // dropping it would leave a confirmed write unsent.
+          if (!hitConflict || this.overwriteNextSave) {
             this.saveNow();
           }
         }

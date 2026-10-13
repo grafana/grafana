@@ -104,10 +104,19 @@ export const applyNotebookSpecCommand: MutationCommand<ApplyNotebookSpecPayload,
       // Same shape as the check above, and for the same reason: whoever asked for this write is in a
       // conversation and chooses there, so it is refused before the scene is touched rather than
       // raising the overwrite modal afterwards over a change that is already on screen.
-      const savedVersion = scene.autosave.state.savedResourceVersion;
-      if (scene.state.uid && savedVersion !== undefined && payload.onConflict !== 'overwrite') {
+      if (
+        scene.state.uid &&
+        scene.autosave.state.savedResourceVersion !== undefined &&
+        payload.onConflict !== 'overwrite'
+      ) {
+        // Let this scene's own save land first. Otherwise the server can already hold a version this
+        // scene wrote but has not yet recorded, which would read as someone else's save. A failed save
+        // is not this check's business: the write below reports its own.
+        await scene.autosave.awaitPendingSave().catch(() => undefined);
         const serverVersion = await readNotebookResourceVersion(scene.state.uid);
-        if (serverVersion !== undefined && serverVersion !== savedVersion) {
+        // Read after the request, not before: a save that finished during it moved both versions.
+        const savedVersion = scene.autosave.state.savedResourceVersion;
+        if (serverVersion !== undefined && savedVersion !== undefined && serverVersion !== savedVersion) {
           return {
             success: false,
             error:

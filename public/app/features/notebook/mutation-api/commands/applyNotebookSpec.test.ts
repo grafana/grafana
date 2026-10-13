@@ -674,6 +674,24 @@ describe('APPLY_NOTEBOOK_SPEC', () => {
       expect(result.success).toBe(true);
     });
 
+    it('does not read this scene’s own save, landing during the check, as someone else’s', async () => {
+      const scene = notebookScene();
+      scene.autosave.setState({ savedResourceVersion: '5' });
+      // The scene's own autosave finishes while the server is being asked: both versions move to 6.
+      jest.mocked(readNotebookResourceVersion).mockImplementation(async () => {
+        scene.autosave.setState({ savedResourceVersion: '6' });
+        return '6';
+      });
+      jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '7' });
+
+      const result = await new NotebookMutationClient(scene).execute({
+        type: 'APPLY_NOTEBOOK_SPEC',
+        payload: { spec: spec() },
+      });
+
+      expect(result.success).toBe(true);
+    });
+
     it('applies when the server version cannot be read, leaving the save to carry its own precondition', async () => {
       const scene = notebookScene();
       scene.autosave.setState({ savedResourceVersion: '5' });

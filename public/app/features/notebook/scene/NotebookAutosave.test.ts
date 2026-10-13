@@ -647,6 +647,33 @@ describe('NotebookAutosave', () => {
     expect(jest.mocked(updateNotebook).mock.calls[1][2]).toBe('1757');
   });
 
+  it('still sends a chosen overwrite queued behind an in-flight save that conflicts, without a second prompt', async () => {
+    let finishFirstSave = () => {};
+    jest.mocked(updateNotebook).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          finishFirstSave = () => reject(new NotebookConflictError('the object has been modified'));
+        })
+    );
+    jest.mocked(updateNotebook).mockResolvedValueOnce({ generation: 3, resourceVersion: '1757' });
+    const publish = jest.spyOn(appEvents, 'publish');
+
+    const scene = activateEditing();
+    editFirstCell(scene, 'First');
+    await jest.advanceTimersByTimeAsync(IDLE_BEFORE_SAVE_MS);
+
+    // Arrives while the first save is in flight, so it queues behind it.
+    editFirstCell(scene, 'Second');
+    const saved = scene.autosave.saveDocumentChange({ overwrite: true });
+    finishFirstSave();
+    await saved;
+
+    expect(updateNotebook).toHaveBeenCalledTimes(2);
+    expect(jest.mocked(updateNotebook).mock.calls[1][2]).toBeUndefined();
+    expect(scene.autosave.state.status).toBe('saved');
+    expect(publish.mock.calls.some(([published]) => published instanceof ShowConfirmModalEvent)).toBe(false);
+  });
+
   it('does not raise the conflict prompt once the scene has deactivated, so it cannot appear on a page the user navigated to', async () => {
     let finishSave = () => {};
     jest.mocked(updateNotebook).mockImplementationOnce(
