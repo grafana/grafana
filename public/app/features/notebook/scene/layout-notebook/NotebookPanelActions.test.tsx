@@ -1,11 +1,10 @@
 import { act, fireEvent, render, screen, waitFor } from 'test/test-utils';
 
-import { getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
-import { getDataSourceInstance } from '@grafana/runtime/unstable';
+import { CoreApp, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
+import { getDataSourceInstance } from '@grafana/runtime';
 import { SceneQueryRunner, SceneReactObject, SceneTimeRange, type SceneObject, VizPanel } from '@grafana/scenes';
 import { tryGetExploreUrlForPanel } from 'app/features/dashboard-scene/utils/urlBuilders';
 import { getAllSuggestions } from 'app/features/panel/suggestions/getAllSuggestions';
-import { GrafanaQueryType } from 'app/plugins/datasource/grafana/types';
 
 import { NotebookCellItem } from './NotebookCellItem';
 import { NotebookLayoutManager } from './NotebookLayoutManager';
@@ -14,8 +13,8 @@ import { NotebookPanelActions } from './NotebookPanelActions';
 jest.mock('app/features/dashboard-scene/utils/urlBuilders', () => ({
   tryGetExploreUrlForPanel: jest.fn(),
 }));
-jest.mock('@grafana/runtime/unstable', () => ({
-  ...jest.requireActual('@grafana/runtime/unstable'),
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
   getDataSourceInstance: jest.fn(),
 }));
 jest.mock('app/features/panel/suggestions/getAllSuggestions', () => ({
@@ -51,13 +50,17 @@ function renderTitleAction(panel: VizPanel) {
   return render(<TitleAction model={titleAction!} />);
 }
 
+const getDefaultQuery = jest.fn();
+
 describe('NotebookPanelActions', () => {
   beforeEach(() => {
+    getDefaultQuery.mockReset().mockReturnValue({ queryType: 'randomWalk' });
     jest.mocked(tryGetExploreUrlForPanel).mockResolvedValue('/explore?panel=1');
     jest.mocked(getDataSourceInstance).mockImplementation(
       async (ref) =>
         ({
           uid: (typeof ref === 'string' ? ref : ref?.uid) ?? 'grafana',
+          getDefaultQuery,
         }) as Awaited<ReturnType<typeof getDataSourceInstance>>
     );
   });
@@ -85,8 +88,9 @@ describe('NotebookPanelActions', () => {
 
     await screen.findByRole('link', { name: 'Open in Explore' });
     expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, [
-      { refId: 'A', datasource: { uid: 'grafana', type: 'datasource' }, queryType: GrafanaQueryType.RandomWalk },
+      { refId: 'A', datasource: { uid: 'grafana', type: 'datasource' }, queryType: 'randomWalk' },
     ]);
+    expect(getDefaultQuery).toHaveBeenCalledWith(CoreApp.Explore);
     expect(runner.state.queries[0]).not.toHaveProperty('queryType');
   });
 
@@ -98,9 +102,7 @@ describe('NotebookPanelActions', () => {
     render(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
 
     await screen.findByRole('link', { name: 'Open in Explore' });
-    expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, [
-      { refId: 'A', queryType: GrafanaQueryType.RandomWalk },
-    ]);
+    expect(tryGetExploreUrlForPanel).toHaveBeenCalledWith(panel, [{ refId: 'A', queryType: 'randomWalk' }]);
     expect(runner.state.queries[0]).not.toHaveProperty('queryType');
   });
 
@@ -108,9 +110,7 @@ describe('NotebookPanelActions', () => {
     const { cell, panel } = buildPanelCell();
     const runner = panel.state.$data as SceneQueryRunner;
     runner.setState({
-      queries: [
-        { refId: 'A', datasource: { uid: 'grafana', type: 'datasource' }, queryType: GrafanaQueryType.Annotations },
-      ],
+      queries: [{ refId: 'A', datasource: { uid: 'grafana', type: 'datasource' }, queryType: 'annotations' }],
     });
 
     render(<NotebookPanelActions cell={cell} panel={panel} isEditing={false} />);
