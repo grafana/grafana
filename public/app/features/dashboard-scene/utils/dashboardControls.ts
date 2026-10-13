@@ -1,7 +1,7 @@
 import { filter, Observable, scan, share, type Subscriber } from 'rxjs';
 
 import { type DataSourceApi, type DataSourceInstanceSettings } from '@grafana/data';
-import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime/unstable';
+import { getDataSourceInstance, getDataSourceInstanceSettings } from '@grafana/runtime';
 import { type SceneVariable } from '@grafana/scenes';
 import { type DashboardLink, type DataSourceRef } from '@grafana/schema';
 import { type VariableKind } from '@grafana/schema/apis/dashboard.grafana.app/v2';
