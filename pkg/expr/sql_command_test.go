@@ -313,14 +313,16 @@ func TestSQLCommandLabelNamedLikeGeneratedColumn(t *testing.T) {
 		).SetMeta(&data.FrameMeta{Type: data.FrameTypeTimeSeriesMulti}),
 	}
 
+	tracer := tracing.NewNoopTracerService()
+
 	run := func(t *testing.T, format, query string) mathexp.Results {
 		t.Helper()
-		converted, _ := handleSqlInput(t.Context(), &testTracer{}, "A", map[string]struct{}{"B": {}}, "fakeDS", input)
+		converted, _ := handleSqlInput(t.Context(), tracer, "A", map[string]struct{}{"B": {}}, "fakeDS", input)
 		require.NoError(t, converted.Error)
 
 		cmd, err := NewSQLCommand(t.Context(), log.NewNullLogger(), "B", format, query, 0, 0, 0)
 		require.NoError(t, err)
-		res, err := cmd.Execute(t.Context(), time.Now(), mathexp.Vars{"A": converted}, tracing.NewNoopTracerService(), metrics.NewTestMetrics())
+		res, err := cmd.Execute(t.Context(), time.Now(), mathexp.Vars{"A": converted}, tracer, metrics.NewTestMetrics())
 		require.NoError(t, err)
 		require.NoError(t, res.Error)
 		return res
